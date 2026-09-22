@@ -3,6 +3,10 @@ import { randomUUID } from "node:crypto";
 
 const DOMAIN_ALLOWED_TYPES = new Set(["FALLBACK", "CUSTOM"]);
 const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED", "REMOVING"]);
+const DOMAIN_TYPE_CUSTOM = "CUSTOM";
+const TRANSIENT_CONFLICT_CODES = new Set(["40001", "OC001"]);
+const TRANSACTION_ATTEMPT_LIMIT = 2;
+const CLAIM_ATTEMPT_LIMIT = 2;
 const SITE_DOMAIN_SELECT_COLUMNS = `id,
         site_id,
         domain,
@@ -28,6 +32,29 @@ const resolveSchemaName = (client) => {
 };
 
 const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
+const buildUpdateDomainStatusStatement = (tableName) =>
+  `UPDATE ${tableName}
+      SET
+        status = $3,
+        verification_details_json = $4,
+        last_checked_at = $5,
+        updated_at = $5
+      WHERE id = $1 AND site_id = $2
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`;
+const buildRestoreFallbackStatement = (tableName) =>
+  `UPDATE ${tableName}
+      SET
+        is_primary = (domain_type = 'FALLBACK'),
+        updated_at = $2
+      WHERE site_id = $1
+        AND is_primary IS DISTINCT FROM (domain_type = 'FALLBACK')
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`;
+const buildDeleteDomainStatement = (tableName) =>
+  `DELETE FROM ${tableName}
+      WHERE id = $1 AND site_id = $2
+      RETURNING id`;
 const buildSiteDomainSelectQuery = (tableName, whereClause, suffix = "") =>
   `SELECT
         ${SITE_DOMAIN_SELECT_COLUMNS}
@@ -86,17 +113,51 @@ const normalizeJsonObject = (value) => {
 
 const normalizeTimestamp = (value) => (value == null ? null : Number(value));
 
+const toStructuredResult = (result) => ({
+  records: Array.isArray(result?.records) ? result.records : [],
+  affected: Number(result?.affected) || 0,
+});
+
+const runStatementOnRunner = async (queryRunner, statement, parameters) =>
+  toStructuredResult(await queryRunner.query(statement, parameters, true));
+
 const runStatement = async (client, statement, parameters) => {
   const queryRunner = client.createQueryRunner();
   try {
-    const result = await queryRunner.query(statement, parameters, true);
-    return {
-      records: Array.isArray(result?.records) ? result.records : [],
-      affected: Number(result?.affected) || 0,
-    };
+    return await runStatementOnRunner(queryRunner, statement, parameters);
   } finally {
     await queryRunner.release();
   }
+};
+
+const isTransientTransactionConflict = (error) =>
+  TRANSIENT_CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
+
+const runInTransaction = async (client, work) => {
+  let lastError = null;
+
+  for (let attempt = 0; attempt < TRANSACTION_ATTEMPT_LIMIT; attempt += 1) {
+    const queryRunner = client.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const result = await work(queryRunner);
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction().catch(() => undefined);
+      }
+      if (!isTransientTransactionConflict(error)) {
+        throw error;
+      }
+      lastError = error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  throw lastError;
 };
 
 const mapSiteDomainRow = (row) => {
@@ -128,15 +189,32 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    const { affected } = await runStatement(
-      client,
-      `DELETE FROM ${tableName}
-      WHERE id = $1 AND site_id = $2
-      RETURNING id`,
-      [domainId, siteId]
-    );
+    const { affected } = await runStatement(client, buildDeleteDomainStatement(tableName), [domainId, siteId]);
 
     return affected > 0;
+  }
+
+  async deleteDomainAndRestoreFallbackById(domainId, siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    return runInTransaction(client, async (queryRunner) => {
+      const { affected } = await runStatementOnRunner(queryRunner, buildDeleteDomainStatement(tableName), [
+        domainId,
+        siteId,
+      ]);
+      if (affected <= 0) {
+        return { deleted: false, changedRecords: [] };
+      }
+
+      const { records } = await runStatementOnRunner(queryRunner, buildRestoreFallbackStatement(tableName), [
+        siteId,
+        Date.now(),
+      ]);
+
+      return { deleted: true, changedRecords: records.map(mapSiteDomainRow).filter(Boolean) };
+    });
   }
 
   async deleteDomainsBySiteId(siteId) {
@@ -237,6 +315,63 @@ export class DirectBookingWebsiteDomainRepository {
     );
 
     return mapSiteDomainRow(rows?.[0] || null);
+  }
+
+  async claimCustomDomain({ siteId, domain, status, verificationDetails = {}, lastCheckedAt = Date.now() }) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const normalizedStatus = normalizeDomainStatus(status);
+    const normalizedDomain = String(domain || "").trim().toLowerCase();
+    const normalizedDetails = normalizeJsonObject(verificationDetails);
+    const checkedAt = normalizeTimestamp(lastCheckedAt);
+
+    for (let attempt = 0; attempt < CLAIM_ATTEMPT_LIMIT; attempt += 1) {
+      const now = Date.now();
+      const { records } = await runStatement(
+        client,
+        `INSERT INTO ${tableName} (
+        id,
+        site_id,
+        domain,
+        domain_type,
+        status,
+        is_primary,
+        verification_details_json,
+        last_checked_at,
+        created_at,
+        updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ON CONFLICT (domain) DO NOTHING
+      RETURNING
+        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+        [
+          randomUUID(),
+          siteId,
+          normalizedDomain,
+          DOMAIN_TYPE_CUSTOM,
+          normalizedStatus,
+          false,
+          normalizedDetails,
+          checkedAt,
+          now,
+          now,
+        ]
+      );
+
+      const insertedRecord = mapSiteDomainRow(records?.[0] || null);
+      if (insertedRecord) {
+        return { record: insertedRecord, created: true };
+      }
+
+      const storedRecord = await this.getDomainByName(normalizedDomain);
+      if (storedRecord) {
+        return { record: storedRecord, created: false };
+      }
+    }
+
+    return { record: null, created: false };
   }
 
   async ensureDomain({
@@ -369,20 +504,39 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    const { records } = await runStatement(
-      client,
-      `UPDATE ${tableName}
-      SET
-        is_primary = (domain_type = 'FALLBACK'),
-        updated_at = $2
-      WHERE site_id = $1
-        AND is_primary IS DISTINCT FROM (domain_type = 'FALLBACK')
-      RETURNING
-        ${SITE_DOMAIN_SELECT_COLUMNS}`,
-      [siteId, Date.now()]
-    );
+    const { records } = await runStatement(client, buildRestoreFallbackStatement(tableName), [siteId, Date.now()]);
 
     return records.map(mapSiteDomainRow).filter(Boolean);
+  }
+
+  async updateDomainStatusAndRestoreFallbackById(domainId, siteId, status, verificationDetails = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+    const normalizedStatus = normalizeDomainStatus(status);
+    const normalizedDetails = normalizeJsonObject(verificationDetails);
+
+    return runInTransaction(client, async (queryRunner) => {
+      const now = Date.now();
+      const updateResult = await runStatementOnRunner(queryRunner, buildUpdateDomainStatusStatement(tableName), [
+        domainId,
+        siteId,
+        normalizedStatus,
+        normalizedDetails,
+        now,
+      ]);
+      const record = mapSiteDomainRow(updateResult.records?.[0] || null);
+      if (!record) {
+        return { record: null, changedRecords: [] };
+      }
+
+      const { records } = await runStatementOnRunner(queryRunner, buildRestoreFallbackStatement(tableName), [
+        siteId,
+        now,
+      ]);
+
+      return { record, changedRecords: records.map(mapSiteDomainRow).filter(Boolean) };
+    });
   }
 
   async updateDomainStatusById(domainId, siteId, status, verificationDetails = {}) {
@@ -394,15 +548,7 @@ export class DirectBookingWebsiteDomainRepository {
 
     const { records } = await runStatement(
       client,
-      `UPDATE ${tableName}
-      SET
-        status = $3,
-        verification_details_json = $4,
-        last_checked_at = $5,
-        updated_at = $5
-      WHERE id = $1 AND site_id = $2
-      RETURNING
-        ${SITE_DOMAIN_SELECT_COLUMNS}`,
+      buildUpdateDomainStatusStatement(tableName),
       [domainId, siteId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
     );
 

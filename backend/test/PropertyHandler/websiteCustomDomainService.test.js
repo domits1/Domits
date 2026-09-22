@@ -40,13 +40,19 @@ const buildDomainRepository = (overrides = {}) => ({
   getDomainByName: jest.fn().mockResolvedValue(null),
   getCustomDomainBySiteId: jest.fn().mockResolvedValue(null),
   ensureDomain: jest.fn(async (input) => buildRecord(input)),
+  claimCustomDomain: jest.fn(async (input) => ({ record: buildRecord(input), created: true })),
   updateDomainStatusById: jest.fn(async (id, siteId, status, verificationDetails) =>
     buildRecord({ id, siteId, status, verificationDetails })
   ),
+  updateDomainStatusAndRestoreFallbackById: jest.fn(async (id, siteId, status, verificationDetails) => ({
+    record: buildRecord({ id, siteId, status, verificationDetails }),
+    changedRecords: [],
+  })),
   updateDomainVerificationDetailsById: jest.fn(async (id, siteId, verificationDetails) =>
     buildRecord({ id, siteId, verificationDetails })
   ),
   deleteDomainById: jest.fn().mockResolvedValue(true),
+  deleteDomainAndRestoreFallbackById: jest.fn().mockResolvedValue({ deleted: true, changedRecords: [] }),
   listDomainsBySiteId: jest.fn().mockResolvedValue([]),
   promoteDomainToPrimary: jest.fn().mockResolvedValue([]),
   restoreFallbackDomainAsPrimary: jest.fn().mockResolvedValue([]),
@@ -128,7 +134,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
     });
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
-    expect(domainRepository.ensureDomain).not.toHaveBeenCalled();
+    expect(domainRepository.claimCustomDomain).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
@@ -151,7 +157,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
         .fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(buildRecord({ domain: "www.first.com" })),
-      ensureDomain: jest.fn().mockRejectedValue(
+      claimCustomDomain: jest.fn().mockRejectedValue(
         Object.assign(
           new Error('duplicate key value violates unique constraint "standalone_site_domain_custom_site_unique"'),
           {
@@ -181,7 +187,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
         constraint: "standalone_site_domain_unique",
       }
     );
-    const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockRejectedValue(violation) });
+    const domainRepository = buildDomainRepository({ claimCustomDomain: jest.fn().mockRejectedValue(violation) });
     const { service, eventRepository } = buildService({ domainRepository });
 
     await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toBe(violation);
@@ -193,7 +199,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     const readFailure = new Error("connection reset");
     const domainRepository = buildDomainRepository({
       getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(null).mockRejectedValueOnce(readFailure),
-      ensureDomain: jest.fn().mockRejectedValue(
+      claimCustomDomain: jest.fn().mockRejectedValue(
         Object.assign(new Error("duplicate key"), {
           code: "23505",
           constraint: "standalone_site_domain_custom_site_unique",
@@ -222,7 +228,12 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
   });
 
   it("answers domain_taken and changes nothing when a delayed claim finds the row now belongs to another site", async () => {
-    const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockResolvedValue(null) });
+    const domainRepository = buildDomainRepository({
+      claimCustomDomain: jest.fn().mockResolvedValue({
+        record: buildRecord({ id: "domain-other", siteId: "site-2" }),
+        created: false,
+      }),
+    });
     const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
 
     await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
@@ -230,8 +241,8 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
       statusCode: 409,
     });
 
-    expect(domainRepository.ensureDomain).toHaveBeenCalledTimes(1);
-    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
+    expect(domainRepository.claimCustomDomain).toHaveBeenCalledTimes(1);
+    expect(domainRepository.claimCustomDomain).toHaveBeenCalledWith(
       expect.objectContaining({ siteId: SITE.id, domain: DOMAIN })
     );
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
@@ -251,7 +262,7 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
       verificationDetails: { tenantId: tenantB.id },
     });
     const domainRepository = buildDomainRepository({
-      ensureDomain: jest.fn().mockResolvedValue(null),
+      claimCustomDomain: jest.fn().mockResolvedValue({ record: rowOfB, created: false }),
       getCustomDomainBySiteId: jest.fn(async (siteId) => (siteId === siteB.id ? rowOfB : null)),
       countDomainsByTenantId: jest.fn(async (tenantId) => (tenantId === tenantB.id ? 1 : 0)),
     });
@@ -285,8 +296,8 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
 
     const record = await service.requestCustomDomain({ site: SITE, domain: DOMAIN });
 
-    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
-      expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, domainType: "CUSTOM", status: "PENDING" })
+    expect(domainRepository.claimCustomDomain).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: SITE.id, domain: DOMAIN, status: "PENDING" })
     );
     expect(record.siteId).toBe(SITE.id);
     expect(record.verificationDetails.reason).toBe("dns_required");
@@ -299,13 +310,11 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     const record = await service.requestCustomDomain({ site: SITE, domain: " WWW.Example.com. " });
 
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
-    expect(domainRepository.ensureDomain).toHaveBeenCalledWith(
+    expect(domainRepository.claimCustomDomain).toHaveBeenCalledWith(
       expect.objectContaining({
         siteId: SITE.id,
         domain: DOMAIN,
-        domainType: "CUSTOM",
         status: "PENDING",
-        isPrimary: false,
       })
     );
     expect(record.verificationDetails).toMatchObject({
@@ -769,7 +778,7 @@ describe("WebsiteCustomDomainService.syncCustomDomain", () => {
       certificateArn: ISSUED.arn,
     });
     expect(record.status).toBe("VERIFIED");
-    expect(domainRepository.updateDomainStatusById.mock.calls[0][3]).toMatchObject({
+    expect(domainRepository.updateDomainStatusAndRestoreFallbackById.mock.calls[0][3]).toMatchObject({
       certificateArn: ISSUED.arn,
       certificateApplied: true,
       reason: "certificate_applied",
@@ -858,7 +867,7 @@ describe("WebsiteCustomDomainService.syncCustomDomain", () => {
 
     expect(record.status).toBe("PENDING");
     expect(tenantRepository.verifyDns).toHaveBeenCalledWith({ tenantId: TENANT.id, domain: DOMAIN });
-    expect(domainRepository.updateDomainStatusById.mock.calls[0][3]).toMatchObject({ dnsVerified: true });
+    expect(domainRepository.updateDomainStatusAndRestoreFallbackById.mock.calls[0][3]).toMatchObject({ dnsVerified: true });
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
 
@@ -1019,14 +1028,14 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.disableTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: TENANT.etag });
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
+    expect(domainRepository.updateDomainStatusAndRestoreFallbackById).toHaveBeenCalledWith(
       "domain-1",
       SITE.id,
       "REMOVING",
       expect.objectContaining({ tenantId: TENANT.id, reason: "removal_requested" })
     );
-    expect(domainRepository.updateDomainStatusById.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(domainRepository.updateDomainStatusAndRestoreFallbackById.mock.invocationCallOrder[0]).toBeLessThan(
       tenantRepository.disableTenant.mock.invocationCallOrder[0]
     );
     expect(record.status).toBe("REMOVING");
@@ -1046,7 +1055,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
   });
 
   it("just deletes the row for a domain that never got a tenant", async () => {
@@ -1061,7 +1070,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.getTenant).not.toHaveBeenCalled();
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
     expect(eventRepository.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "SITE_DOMAIN_REMOVED",
@@ -1081,7 +1090,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
   });
 
   it("leaves a removing domain untouched on sync while the disable is still rolling out", async () => {
@@ -1094,7 +1103,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
     expect(tenantRepository.getManagedCertificate).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
   });
 
   it("deletes the tenant with the post-disable etag and removes the row once the disable is deployed", async () => {
@@ -1106,7 +1115,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
 
     expect(tenantRepository.deleteTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: "E3TAG" });
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
     expect(eventRepository.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "SITE_DOMAIN_REMOVED",
@@ -1122,7 +1131,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
 
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
   });
 
   it("leaves the row on REMOVING when the disable fails and retries the disable on the next sync", async () => {
@@ -1140,13 +1149,13 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
       code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
     });
-    expect(domainRepository.updateDomainStatusById).toHaveBeenCalledWith(
+    expect(domainRepository.updateDomainStatusAndRestoreFallbackById).toHaveBeenCalledWith(
       "domain-1",
       SITE.id,
       "REMOVING",
       expect.anything()
     );
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
 
     const record = await service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() });
 
@@ -1181,7 +1190,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainStatusById).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainVerificationDetailsById).toHaveBeenCalledWith(
       "domain-1",
       SITE.id,
@@ -1202,7 +1211,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
 
     expect(tenantRepository.deleteTenant).not.toHaveBeenCalled();
     expect(tenantRepository.disableTenant).not.toHaveBeenCalled();
-    expect(domainRepository.deleteDomainById).not.toHaveBeenCalled();
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).not.toHaveBeenCalled();
     expect(domainRepository.updateDomainVerificationDetailsById).toHaveBeenCalledWith(
       "domain-1",
       SITE.id,
@@ -1219,7 +1228,7 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
     await expect(service.syncCustomDomain({ site: SITE, domainRecord: removingRecord() })).resolves.toBeNull();
 
     expect(tenantRepository.deleteTenant).toHaveBeenCalledWith({ tenantId: TENANT.id, etag: "E3TAG" });
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
   });
 
   it("treats a row that was already deleted as removed without recording a second event", async () => {
@@ -1227,13 +1236,13 @@ describe("WebsiteCustomDomainService.removeCustomDomain", () => {
       getCustomDomainBySiteId: jest
         .fn()
         .mockResolvedValue(buildRecord({ verificationDetails: { tenantId: null, reason: "dns_required" } })),
-      deleteDomainById: jest.fn().mockResolvedValue(false),
+      deleteDomainAndRestoreFallbackById: jest.fn().mockResolvedValue({ deleted: false, changedRecords: [] }),
     });
     const { service, eventRepository } = buildService({ domainRepository });
 
     await expect(service.removeCustomDomain({ site: SITE, domain: DOMAIN })).resolves.toBeNull();
 
-    expect(domainRepository.deleteDomainById).toHaveBeenCalledWith("domain-1", SITE.id);
+    expect(domainRepository.deleteDomainAndRestoreFallbackById).toHaveBeenCalledWith("domain-1", SITE.id);
     expect(eventRepository.recordEvent).not.toHaveBeenCalled();
   });
 });
