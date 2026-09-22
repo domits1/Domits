@@ -1,3 +1,29 @@
+.onboarding-mode-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.onboarding-mode-tab {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.onboarding-mode-tab:hover {
+    color: #111827;
+    text-decoration: none;
+}
+
+.onboarding-mode-tab--active {
+    color: #16a34a;
+    border-bottom-color: #16a34a;
+}
+
 .onboarding-hub-loading,
 .onboarding-hub-error {
     font-size: 0.95rem;
@@ -275,6 +301,24 @@
     background: #d1d5db;
     color: #6b7280;
     cursor: not-allowed;
+}
+
+.onboarding-golive-pill {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.onboarding-golive-pill--ready {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.onboarding-golive-pill--not-ready {
+    background: #f3f4f6;
+    color: #374151;
 }
 
 .onboarding-golive-back-link {
