@@ -1,8 +1,11 @@
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// Only a secured booking blocks a night. Inquiry and Awaiting Payment aren't
+// secured yet, so the night still counts toward missed revenue until they convert.
+const BOOKED_STATUSES = new Set(["confirmed", "accepted", "paid", "completed"]);
+
 function isBookedStatus(status) {
-  const s = String(status || "").toLowerCase();
-  return s !== "cancelled" && s !== "canceled" && s !== "declined" && s !== "failed";
+  return BOOKED_STATUSES.has(String(status || "").toLowerCase());
 }
 
 function isoFromTimestamp(ts) {
