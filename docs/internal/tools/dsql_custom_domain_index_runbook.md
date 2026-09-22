@@ -151,3 +151,32 @@ Given that, the order used here is:
 4. Deploy the service change in `websiteCustomDomainService.js` immediately after check A passes. The old-handler window is the time between step 1 and this deploy; keep it short, and if a violation is seen in the logs during it, it is the known 500 path, not a new defect.
 
 If the service change is already deployed before the index is created, skip nothing: check A still has to pass, and a failing check A means the deployed constant is wrong and the mapping is not working even though it is live.
+
+## Recorded results
+
+### Check A, 2026-09-22: passed
+
+Index state confirmed first on `main.standalone_site_domain_custom_site_unique`: `indisvalid` true, `indisunique` true, key column `site_id`, predicate `((domain_type)::text = 'CUSTOM'::text)`.
+
+The probe script above, run from `backend/` against `main` through `Database.getInstance()` with the `domits` profile, printed:
+
+```json
+{
+  "thrownName": "QueryFailedError",
+  "code": "23505",
+  "constraint": "standalone_site_domain_custom_site_unique",
+  "driverCode": "23505",
+  "driverConstraint": "standalone_site_domain_custom_site_unique",
+  "schema": "main",
+  "table": "standalone_site_domain",
+  "message": "duplicate key value violates unique constraint \"standalone_site_domain_custom_site_unique\""
+}
+```
+
+followed by `probe rows left: 0`.
+
+Every passing condition is met. `error.constraint` on the thrown error equals `CUSTOM_DOMAIN_PER_SITE_INDEX` in `websiteCustomDomainService.js` character for character, so `isUniqueViolationOn` matches and a losing claim answers `domain_limit_reached` rather than `internal_error`. The name is present on the outer thrown error, not only on `driverError`, so the service reads the right field and the constant needs no change.
+
+### Check B, blocks 8 and 9: not run yet
+
+Still outstanding. Until it is run, it is unknown whether a claim that loses at commit time surfaces as `23505` on this index or as a `40001` serialization error; the service maps only `23505`, so a `40001` would still reach the host as `internal_error` 500.
