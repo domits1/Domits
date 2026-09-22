@@ -56,13 +56,23 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.unbookedNightsWithPriceData).toBe(2);
   });
 
-  test("still counts a night as missed revenue when the only booking is an Inquiry", async () => {
+  test.each([
+    ["Confirmed", true],
+    ["CONFIRMED", true],
+    ["confirmed", true],
+    ["Accepted", true],
+    ["Paid", true],
+    ["Completed", true],
+    ["cancelled", false],
+    ["Inquiry", false],
+    ["Awaiting Payment", false],
+  ])('a booking with status %p blocks the night from missed revenue: %s', async (status, blocksNight) => {
     const { service } = createService({
       priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
       bookings: [
         {
           property_id: "prop-1",
-          status: "Inquiry",
+          status,
           arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
           departuredate: Date.parse("2026-09-02T00:00:00Z"),
         },
@@ -71,68 +81,8 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
 
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
-  });
-
-  test("still counts a night as missed revenue when the only booking is Awaiting Payment", async () => {
-    const { service } = createService({
-      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
-      bookings: [
-        {
-          property_id: "prop-1",
-          status: "Awaiting Payment",
-          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
-          departuredate: Date.parse("2026-09-02T00:00:00Z"),
-        },
-      ],
-    });
-
-    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
-  });
-
-  test.each(["Confirmed", "CONFIRMED", "confirmed", "Accepted", "Paid", "Completed"])(
-    "excludes a night booked with status %p from missed revenue",
-    async (status) => {
-      const { service } = createService({
-        priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
-        bookings: [
-          {
-            property_id: "prop-1",
-            status,
-            arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
-            departuredate: Date.parse("2026-09-02T00:00:00Z"),
-          },
-        ],
-      });
-
-      const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-      expect(result.grossMissedRevenue).toBe(0);
-      expect(result.unbookedNightsWithPriceData).toBe(0);
-    }
-  );
-
-  test("excludes cancelled bookings from the booked set", async () => {
-    const { service } = createService({
-      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
-      bookings: [
-        {
-          property_id: "prop-1",
-          status: "cancelled",
-          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
-          departuredate: Date.parse("2026-09-02T00:00:00Z"),
-        },
-      ],
-    });
-
-    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
+    expect(result.grossMissedRevenue).toBe(blocksNight ? 0 : 100);
+    expect(result.unbookedNightsWithPriceData).toBe(blocksNight ? 0 : 1);
   });
 
   test("counts nights with a calendar row but no PriceLabs price separately from missed revenue", async () => {
@@ -193,58 +143,18 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     );
   });
 
-  test("excludes a night the host blocked (is_available false) from missed revenue", async () => {
+  test.each([
+    ["a night the host blocked (is_available false)", { is_available: false }, { is_available: true }],
+    ["a stop-sell night", { stop_sell: true }, { stop_sell: false }],
+    ["a night the host told PriceLabs to ignore", { pricelabs_ignored: true }, { pricelabs_ignored: false }],
+    ["a night for a DRAFT property", { property_status: "DRAFT" }, { property_status: "ACTIVE" }],
+    ["a night for an INACTIVE property", { property_status: "INACTIVE" }, { property_status: "ACTIVE" }],
+    ["a night for an ARCHIVED property", { property_status: "ARCHIVED" }, { property_status: "ACTIVE" }],
+  ])("excludes %s from missed revenue", async (_description, excludedFlags, sellableFlags) => {
     const { service } = createService({
       priceRows: [
-        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, is_available: false },
-        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, is_available: true },
-      ],
-      bookings: [],
-    });
-
-    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
-  });
-
-  test("excludes a stop-sell night from missed revenue", async () => {
-    const { service } = createService({
-      priceRows: [
-        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, stop_sell: true },
-        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, stop_sell: false },
-      ],
-      bookings: [],
-    });
-
-    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
-  });
-
-  test("excludes a night the host told PriceLabs to ignore from missed revenue", async () => {
-    const { service } = createService({
-      priceRows: [
-        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, pricelabs_ignored: true },
-        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, pricelabs_ignored: false },
-      ],
-      bookings: [],
-    });
-
-    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
-
-    expect(result.grossMissedRevenue).toBe(100);
-    expect(result.unbookedNightsWithPriceData).toBe(1);
-  });
-
-  test("excludes nights for a property that is not ACTIVE (draft, inactive, archived)", async () => {
-    const { service } = createService({
-      priceRows: [
-        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, property_status: "DRAFT" },
-        { property_id: "prop-2", calendar_date: 20260901, pricelabs_price: 100, property_status: "INACTIVE" },
-        { property_id: "prop-3", calendar_date: 20260901, pricelabs_price: 100, property_status: "ARCHIVED" },
-        { property_id: "prop-4", calendar_date: 20260901, pricelabs_price: 100, property_status: "ACTIVE" },
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, ...excludedFlags },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, ...sellableFlags },
       ],
       bookings: [],
     });
