@@ -22,26 +22,46 @@ async function getEnterpriseRatePlan(enterpriseId) {
   const client = await Database.getInstance();
   const ratePlanRepository = client.getRepository(EnterpriseRatePlan);
 
-  return ratePlanRepository.findOne({
-    where: {
-      enterprise_id: enterpriseId,
-      status: "active",
-    },
-    order: {
-      effective_from: "DESC",
-    },
-  });
+  return ratePlanRepository
+    .createQueryBuilder("ratePlan")
+    .where("ratePlan.enterprise_id = :enterpriseId", { enterpriseId })
+    .andWhere("ratePlan.status = :status", { status: "ACTIVE" })
+    .andWhere("ratePlan.effective_from <= CURRENT_TIMESTAMP")
+    .andWhere(
+      "(ratePlan.effective_until IS NULL OR ratePlan.effective_until >= CURRENT_TIMESTAMP)"
+    )
+    .orderBy("ratePlan.effective_from", "DESC")
+    .getOne();
 }
 
-async function getEnterpriseBillingDetails(enterpriseId) {
+async function authorizeEnterpriseAccess(enterpriseId, hostId) {
+  const client = await Database.getInstance();
+  const propertyRepository = client.getRepository(Property);
+
+  const ownedEnterpriseProperty = await propertyRepository.findOne({
+    where: {
+      enterpriseid: enterpriseId,
+      hostid: hostId,
+    },
+  });
+
+  if (!ownedEnterpriseProperty) {
+    const error = new Error("You do not have access to this enterprise.");
+    error.statusCode = 403;
+    throw error;
+  }
+}
+
+async function getEnterpriseBillingDetails(enterpriseId, hostId) {
+  await authorizeEnterpriseAccess(enterpriseId, hostId);
+
   const [activeProperties, ratePlan] = await Promise.all([
     getActivePropertyCount(enterpriseId),
     getEnterpriseRatePlan(enterpriseId),
   ]);
 
-  const pricePerPropertyCents = ratePlan
-    ? Math.round(Number(ratePlan.price_per_property) * 100)
-    : DEFAULT_PRICE_PER_PROPERTY_CENTS;
+  const pricePerPropertyCents =
+    ratePlan?.price_per_property_cents ?? DEFAULT_PRICE_PER_PROPERTY_CENTS;
 
   const estimatedMonthlyCostCents =
     activeProperties * pricePerPropertyCents;
@@ -55,6 +75,7 @@ async function getEnterpriseBillingDetails(enterpriseId) {
 }
 
 export {
+  authorizeEnterpriseAccess,
   getActivePropertyCount,
   getEnterpriseBillingDetails,
 };
