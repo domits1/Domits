@@ -489,16 +489,7 @@ describe("ContactList manual mark read/unread", () => {
     expect(setContacts).not.toHaveBeenCalled();
   });
 
-  test("completing Mark as read must not discard a genuine unread message that arrived from realtime while the request was in flight", async () => {
-    let resolveMarkRead;
-    markThreadRead.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveMarkRead = resolve;
-        })
-    );
-
-    const contact = { ...manualActionContact, unreadCount: 1 };
+  const renderForInFlightAction = (contact, actionLabel) => {
     const setContacts = jest.fn();
 
     const buildElement = (wsMessage) => (
@@ -520,8 +511,23 @@ describe("ContactList manual mark read/unread", () => {
 
     const { rerender } = render(buildElement(null));
 
-    fireEvent.contextMenu(screen.getByText("Reservation Host"));
-    fireEvent.click(screen.getByText("Mark as read"));
+    fireEvent.contextMenu(screen.getByText(contact.givenName));
+    fireEvent.click(screen.getByText(actionLabel));
+
+    return { setContacts, buildElement, rerender };
+  };
+
+  test("completing Mark as read must not discard a genuine unread message that arrived from realtime while the request was in flight", async () => {
+    let resolveMarkRead;
+    markThreadRead.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMarkRead = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, unreadCount: 1 };
+    const { setContacts, buildElement, rerender } = renderForInFlightAction(contact, "Mark as read");
 
     await waitFor(() => {
       expect(markThreadRead).toHaveBeenCalledWith("thread-1", "id-token-1");
@@ -754,29 +760,7 @@ describe("ContactList manual mark read/unread", () => {
     );
 
     const contact = { ...manualActionContact, unreadCount: 0 };
-    const setContacts = jest.fn();
-
-    const buildElement = (wsMessage) => (
-      <WebSocketContext.Provider value={{ messages: wsMessage ? [wsMessage] : [] }}>
-        <ContactList
-          userId="host-1"
-          dashboardType="host"
-          contacts={[contact]}
-          pendingContacts={[]}
-          loading={false}
-          setContacts={setContacts}
-          onContactClick={jest.fn()}
-          onCloseChat={jest.fn()}
-          onNewMessage={jest.fn()}
-          capabilities={getMessageCapabilities("host")}
-        />
-      </WebSocketContext.Provider>
-    );
-
-    const { rerender } = render(buildElement(null));
-
-    fireEvent.contextMenu(screen.getByText("Reservation Host"));
-    fireEvent.click(screen.getByText("Mark as unread"));
+    const { setContacts, buildElement, rerender } = renderForInFlightAction(contact, "Mark as unread");
 
     await waitFor(() => {
       expect(markThreadUnread).toHaveBeenCalledWith("thread-1", "id-token-1");
