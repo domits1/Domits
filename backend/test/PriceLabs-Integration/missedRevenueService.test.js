@@ -154,6 +154,17 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.priceDataCoveragePct).toBe(0);
   });
 
+  test("labels the amount as EUR, matching the other PriceLabs insights", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.currency).toBe("EUR");
+  });
+
   test("breaks the total down per property", async () => {
     const { service } = createService({
       priceRows: [

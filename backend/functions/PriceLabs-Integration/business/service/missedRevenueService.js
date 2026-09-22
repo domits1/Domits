@@ -121,6 +121,7 @@ export class MissedRevenueService {
       connected: true,
       startDate,
       endDate,
+      currency: "EUR",
       grossMissedRevenue,
       unbookedNightsWithPriceData,
       unbookedNightsWithoutPriceData,
