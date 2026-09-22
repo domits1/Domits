@@ -1139,7 +1139,8 @@
       "subtitle": "Track your progress for each listing, from creating it to going live.",
       "tabs": {
         "host": "Host",
-        "enterprise": "Enterprise"
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding mode"
       },
       "propertyPicker": {
         "label": "Listing",
@@ -1181,6 +1182,7 @@
       "statusComplete": "Complete",
       "statusIncomplete": "Not started",
       "statusUnknown": "Could not check status",
+      "channelsComingSoon": "Coming soon",
       "enterprise": {
         "breadcrumb": "Enterprise Onboarding",
         "title": "Enterprise Onboarding",

@@ -75,12 +75,17 @@ export const checkChannelsStatus = async (propertyId) => {
 
 // Stripe and PriceLabs are both account-wide (keyed by host, not property) —
 // see the plan discussion: there is no property_id on either connection
-// record today. "Complete" here means the host has connected once, and
-// applies identically to every one of the host's properties.
+// record today. "Complete" requires Stripe onboarding to actually be usable
+// (able to take charges and receive payouts), not just that an account row
+// exists — a host can create a Stripe account and still be blocked partway
+// through Stripe's own onboarding.
 export const checkPaymentsStatus = async () => {
   try {
     const stripeDetails = await getStripeAccountDetails();
-    return { complete: Boolean(stripeDetails), scope: "account" };
+    const complete = Boolean(
+      stripeDetails?.onboardingComplete && stripeDetails?.chargesEnabled && stripeDetails?.payoutsEnabled
+    );
+    return { complete, scope: "account" };
   } catch {
     return { complete: false, scope: "account", unknown: true };
   }
@@ -136,6 +141,14 @@ export const checkAnyPropertyListedStatus = (properties) => ({
 
 const WEBSITE_STATUS_BATCH_SIZE = 10;
 
+// Bounds the fan-out for very large portfolios (some hosts run into the
+// thousands of listings) until a backend "any draft exists" / count endpoint
+// exists. Past this many properties without a hit, the result is reported as
+// unknown rather than a false "not started" — checking a subset can't prove
+// a negative for the whole portfolio, and this keeps a single page visit to
+// at most WEBSITE_STATUS_CHECK_CAP requests instead of one per listing.
+const WEBSITE_STATUS_CHECK_CAP = 200;
+
 const checkSingleWebsiteDraft = async (propertyId) => {
   try {
     const draft = await fetchWebsiteDraftByPropertyId(propertyId);
@@ -152,9 +165,12 @@ const checkSingleWebsiteDraft = async (propertyId) => {
 // false "not started" — a run of network errors shouldn't read as "no host
 // has started a website".
 export const checkAnyWebsiteStatus = async (properties) => {
-  const propertyIds = (Array.isArray(properties) ? properties : [])
+  const allPropertyIds = (Array.isArray(properties) ? properties : [])
     .map((property) => property?.propertyId)
     .filter(Boolean);
+
+  const propertyIds = allPropertyIds.slice(0, WEBSITE_STATUS_CHECK_CAP);
+  const wasCapped = allPropertyIds.length > WEBSITE_STATUS_CHECK_CAP;
 
   if (propertyIds.length === 0) {
     return { complete: false, scope: "account" };
@@ -174,6 +190,9 @@ export const checkAnyWebsiteStatus = async (properties) => {
   }
 
   if (successCount === 0) {
+    return { complete: false, scope: "account", unknown: true };
+  }
+  if (wasCapped) {
     return { complete: false, scope: "account", unknown: true };
   }
   return { complete: false, scope: "account" };
@@ -202,3 +221,7 @@ export const checkAccountChannelsStatus = async () => {
 // today — same treatment as checkTasksStatus above: visibility only, never
 // blocks Go Live.
 export const checkMarketplaceStatus = async () => ({ complete: false, scope: "account", unknown: true });
+
+// Extracted so Go-Live readiness is testable without rendering the page.
+export const computeIsGoLiveReady = (stepStatus, requiredStepKeys) =>
+  [...requiredStepKeys].every((key) => stepStatus[key]?.complete === true);

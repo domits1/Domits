@@ -1140,7 +1140,8 @@
       "subtitle": "Verfolge den Fortschritt für jede Unterkunft, von der Erstellung bis zur Veröffentlichung.",
       "tabs": {
         "host": "Host",
-        "enterprise": "Enterprise"
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding-Modus"
       },
       "propertyPicker": {
         "label": "Unterkunft",
@@ -1182,6 +1183,7 @@
       "statusComplete": "Abgeschlossen",
       "statusIncomplete": "Noch nicht begonnen",
       "statusUnknown": "Status konnte nicht geprüft werden",
+      "channelsComingSoon": "Demnächst verfügbar",
       "enterprise": {
         "breadcrumb": "Enterprise-Onboarding",
         "title": "Enterprise-Onboarding",

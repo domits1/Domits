@@ -19,6 +19,7 @@ import {
   checkPricingStatus,
   checkTasksStatus,
   checkMarketplaceStatus,
+  computeIsGoLiveReady,
 } from "../services/onboardingStatusService";
 import "../../hostsettings/styles/hostSettings.css";
 import "../styles/onboardingHub.css";
@@ -104,13 +105,13 @@ const HostOnboardingEnterprise = () => {
   const completedCount = STEP_KEYS.filter((key) => stepStatus[key]?.complete).length;
 
   const isGoLiveReady = useMemo(
-    () => [...REQUIRED_STEP_KEYS].every((key) => stepStatus[key]?.complete === true),
+    () => computeIsGoLiveReady(stepStatus, REQUIRED_STEP_KEYS),
     [stepStatus]
   );
 
   return (
     <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={enterprise.breadcrumb} title={enterprise.title} subtitle={enterprise.subtitle}>
-      <OnboardingModeTabs hostLabel={t.tabs.host} enterpriseLabel={t.tabs.enterprise} />
+      <OnboardingModeTabs hostLabel={t.tabs.host} enterpriseLabel={t.tabs.enterprise} navLabel={t.tabs.navLabel} />
 
       <OnboardingProgressBar
         completedCount={completedCount}
@@ -133,7 +134,11 @@ const HostOnboardingEnterprise = () => {
               badges={[REQUIRED_STEP_KEYS.has(key) ? t.requiredBadge : t.optionalBadge, t.accountWideBadge]}
               statusCompleteLabel={t.statusComplete}
               statusIncompleteLabel={t.statusIncomplete}
-              statusUnknownLabel={t.statusUnknown}
+              // Channex account status is restricted to an allowlist today, so
+              // regular hosts always read "unknown" here — that's not a
+              // transient check failure like the other unknown tiles, so it
+              // gets its own honest copy instead of the generic wording.
+              statusUnknownLabel={key === "channels" ? t.channelsComingSoon : t.statusUnknown}
             />
           );
         })}

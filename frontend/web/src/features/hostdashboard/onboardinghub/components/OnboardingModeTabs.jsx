@@ -4,8 +4,8 @@ import { NavLink } from "react-router-dom";
 
 const tabClassName = ({ isActive }) => `onboarding-mode-tab${isActive ? " onboarding-mode-tab--active" : ""}`;
 
-const OnboardingModeTabs = ({ hostLabel, enterpriseLabel }) => (
-  <nav className="onboarding-mode-tabs" aria-label="Onboarding mode">
+const OnboardingModeTabs = ({ hostLabel, enterpriseLabel, navLabel }) => (
+  <nav className="onboarding-mode-tabs" aria-label={navLabel}>
     <NavLink to="/hostdashboard/settings/onboarding" end className={tabClassName}>
       {hostLabel}
     </NavLink>
@@ -18,6 +18,7 @@ const OnboardingModeTabs = ({ hostLabel, enterpriseLabel }) => (
 OnboardingModeTabs.propTypes = {
   hostLabel: PropTypes.string.isRequired,
   enterpriseLabel: PropTypes.string.isRequired,
+  navLabel: PropTypes.string.isRequired,
 };
 
 export default OnboardingModeTabs;

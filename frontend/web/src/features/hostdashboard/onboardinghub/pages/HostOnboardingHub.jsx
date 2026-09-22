@@ -135,7 +135,7 @@ const HostOnboardingHub = () => {
 
   return (
     <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={t.breadcrumb} title={t.title} subtitle={t.subtitle}>
-      <OnboardingModeTabs hostLabel={t.tabs.host} enterpriseLabel={t.tabs.enterprise} />
+      <OnboardingModeTabs hostLabel={t.tabs.host} enterpriseLabel={t.tabs.enterprise} navLabel={t.tabs.navLabel} />
 
       {isLoadingProperties && <p className="onboarding-hub-loading">{t.propertyPicker.loading}</p>}
 

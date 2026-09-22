@@ -1140,7 +1140,8 @@
       "subtitle": "Sigue el progreso de cada alojamiento, desde su creación hasta su publicación.",
       "tabs": {
         "host": "Host",
-        "enterprise": "Empresa"
+        "enterprise": "Empresa",
+        "navLabel": "Modo de incorporación"
       },
       "propertyPicker": {
         "label": "Alojamiento",
@@ -1182,6 +1183,7 @@
       "statusComplete": "Completado",
       "statusIncomplete": "Sin empezar",
       "statusUnknown": "No se pudo comprobar el estado",
+      "channelsComingSoon": "Próximamente",
       "enterprise": {
         "breadcrumb": "Incorporación empresarial",
         "title": "Incorporación empresarial",

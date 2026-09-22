@@ -1140,7 +1140,8 @@
       "subtitle": "Volg per woning de voortgang, van aanmelden tot livegang.",
       "tabs": {
         "host": "Host",
-        "enterprise": "Enterprise"
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding modus"
       },
       "propertyPicker": {
         "label": "Woning",
@@ -1182,6 +1183,7 @@
       "statusComplete": "Voltooid",
       "statusIncomplete": "Nog niet gestart",
       "statusUnknown": "Status kon niet worden gecontroleerd",
+      "channelsComingSoon": "Binnenkort beschikbaar",
       "enterprise": {
         "breadcrumb": "Enterprise-onboarding",
         "title": "Enterprise-onboarding",
