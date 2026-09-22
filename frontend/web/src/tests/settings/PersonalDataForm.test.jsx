@@ -153,6 +153,15 @@ describe("PersonalDataForm password management", () => {
     expect(onSubmitPasswordChange).toHaveBeenCalled();
   });
 
+  test("pressing Enter in a password field submits the form", async () => {
+    const onSubmitPasswordChange = jest.fn();
+    renderForm({ isChangingPassword: true, onSubmitPasswordChange });
+
+    await userEvent.type(screen.getByLabelText("Current password"), "{Enter}");
+
+    expect(onSubmitPasswordChange).toHaveBeenCalled();
+  });
+
   test("cancelling the password change flow calls onClosePasswordChange", async () => {
     const onClosePasswordChange = jest.fn();
     renderForm({ isChangingPassword: true, onClosePasswordChange });
@@ -172,6 +181,13 @@ describe("PersonalDataForm password management", () => {
     renderForm({ isChangingPassword: true, passwordChangeSuccess: true });
 
     expect(screen.getByText("Password changed successfully.")).toBeInTheDocument();
+  });
+
+  test("shows Close instead of Cancel once the password has been changed successfully", () => {
+    renderForm({ isChangingPassword: true, passwordChangeSuccess: true });
+
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
   });
 
   test("disables the save button while the password change is in flight", () => {

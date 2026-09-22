@@ -126,6 +126,11 @@ function getSaveLabel(isSaving, saveSuccess, t) {
     return t.buttons.save;
 }
 
+function getPasswordToggleLabel(isChangingPassword, passwordChangeSuccess, t) {
+    if (!isChangingPassword) return t.prefs.changePassword;
+    return passwordChangeSuccess ? t.buttons.close : t.buttons.cancel;
+}
+
 const PersonalDataForm = ({
     user,
     tempUser,
@@ -507,12 +512,18 @@ const PersonalDataForm = ({
                         className="pd-verify-btn"
                         onClick={isChangingPassword ? onClosePasswordChange : onOpenPasswordChange}
                     >
-                        {isChangingPassword ? t.buttons.cancel : t.prefs.changePassword}
+                        {getPasswordToggleLabel(isChangingPassword, passwordChangeSuccess, t)}
                     </button>
                 </div>
 
                 {isChangingPassword && (
-                    <div className="pd-password-inline">
+                    <form
+                        className="pd-password-inline"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            onSubmitPasswordChange();
+                        }}
+                    >
                         <p className="pd-password-inline-title">{t.prefs.changePasswordTitle}</p>
 
                         <PasswordField
@@ -558,15 +569,14 @@ const PersonalDataForm = ({
 
                         <div className="pd-password-inline-actions">
                             <button
-                                type="button"
+                                type="submit"
                                 className="pd-save-btn"
-                                onClick={onSubmitPasswordChange}
                                 disabled={isSavingPassword}
                             >
                                 {isSavingPassword ? t.buttons.saving : t.prefs.savePassword}
                             </button>
                         </div>
-                    </div>
+                    </form>
                 )}
 
                 {showAuthMfa && (
