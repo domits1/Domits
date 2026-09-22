@@ -3296,6 +3296,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
             }
@@ -3325,6 +3326,18 @@ export class PropertyController {
                 return this.badRequest(error.message);
             }
             return this.websiteServerError();
+        }
+    }
+
+    async releaseWebsiteCustomDomainSafely(site) {
+        const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
+        if (!customDomain?.verificationDetails?.tenantId) {
+            return;
+        }
+        try {
+            await this.getWebsiteCustomDomainService().releaseTenantForSite({ site, record: customDomain });
+        } catch (error) {
+            console.error(`[CustomDomain] disabling the tenant for ${customDomain.domain} on website delete failed (site ${site.id}).`, error);
         }
     }
 
@@ -3391,6 +3404,71 @@ export class PropertyController {
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
         }
+    }
+
+    // -------------------------
+    // GET /property/draft/:id
+    // -------------------------
+    async getDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const draft = await this.propertyService.getDraft(propertyId);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/draft/:id
+    // -------------------------
+    async updateDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const eventBody = JSON.parse(event.body || "{}");
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyService.updateDraft(propertyId, eventBody);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isDraftContentClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    isDraftContentClientError(error) {
+        return Boolean(error?.message?.startsWith("Draft "));
     }
 
     // -------------------------
