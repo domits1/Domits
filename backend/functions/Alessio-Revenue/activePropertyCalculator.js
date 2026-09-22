@@ -9,13 +9,12 @@ async function getActivePropertyCount(enterpriseId) {
   const client = await Database.getInstance();
   const propertyRepository = client.getRepository(Property);
 
-  return propertyRepository.count({
-    where: {
-      enterpriseid: enterpriseId,
-      status: "ACTIVE",
-      is_deleted: false,
-    },
-  });
+  return propertyRepository
+    .createQueryBuilder("property")
+    .where("property.enterpriseid = :enterpriseId", { enterpriseId })
+    .andWhere("property.status = :status", { status: "ACTIVE" })
+    .andWhere("property.is_deleted = :isDeleted", { isDeleted: false })
+    .getCount();
 }
 
 async function getEnterpriseRatePlan(enterpriseId) {
@@ -38,12 +37,11 @@ async function authorizeEnterpriseAccess(enterpriseId, hostId) {
   const client = await Database.getInstance();
   const propertyRepository = client.getRepository(Property);
 
-  const ownedEnterpriseProperty = await propertyRepository.findOne({
-    where: {
-      enterpriseid: enterpriseId,
-      hostid: hostId,
-    },
-  });
+  const ownedEnterpriseProperty = await propertyRepository
+    .createQueryBuilder("property")
+    .where("property.enterpriseid = :enterpriseId", { enterpriseId })
+    .andWhere("property.hostid = :hostId", { hostId })
+    .getOne();
 
   if (!ownedEnterpriseProperty) {
     const error = new Error("You do not have access to this enterprise.");
