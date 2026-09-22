@@ -112,4 +112,66 @@ describe("MissedRevenueService.getMissedRevenue", () => {
       ])
     );
   });
+
+  test("excludes a night the host blocked (is_available false) from missed revenue", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, is_available: false },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, is_available: true },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.grossMissedRevenue).toBe(100);
+    expect(result.unbookedNightsWithPriceData).toBe(1);
+  });
+
+  test("excludes a stop-sell night from missed revenue", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, stop_sell: true },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, stop_sell: false },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.grossMissedRevenue).toBe(100);
+    expect(result.unbookedNightsWithPriceData).toBe(1);
+  });
+
+  test("excludes a night the host told PriceLabs to ignore from missed revenue", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, pricelabs_ignored: true },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100, pricelabs_ignored: false },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.grossMissedRevenue).toBe(100);
+    expect(result.unbookedNightsWithPriceData).toBe(1);
+  });
+
+  test("excludes nights for a property that is not ACTIVE (draft, inactive, archived)", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, property_status: "DRAFT" },
+        { property_id: "prop-2", calendar_date: 20260901, pricelabs_price: 100, property_status: "INACTIVE" },
+        { property_id: "prop-3", calendar_date: 20260901, pricelabs_price: 100, property_status: "ARCHIVED" },
+        { property_id: "prop-4", calendar_date: 20260901, pricelabs_price: 100, property_status: "ACTIVE" },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.grossMissedRevenue).toBe(100);
+    expect(result.unbookedNightsWithPriceData).toBe(1);
+  });
 });

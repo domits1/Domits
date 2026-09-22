@@ -43,6 +43,19 @@ function bookedDateSetByProperty(bookings) {
   return map;
 }
 
+/**
+ * A calendar row does not represent real missed revenue when the host has taken
+ * it off the market themselves: blocked, stop-sell, ignored by PriceLabs, or the
+ * property isn't live.
+ */
+function isSellableNight(row) {
+  if (row.is_available === false) return false;
+  if (row.stop_sell === true) return false;
+  if (row.pricelabs_ignored === true) return false;
+  if (row.property_status && row.property_status !== "ACTIVE") return false;
+  return true;
+}
+
 export class MissedRevenueService {
   constructor({ repository } = {}) {
     this.repo = repository;
@@ -76,6 +89,8 @@ export class MissedRevenueService {
     const byPropertyMap = new Map();
 
     for (const row of priceRows) {
+      if (!isSellableNight(row)) continue;
+
       const iso = isoFromCalendarInt(row.calendar_date);
       const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
       if (isBooked) continue;
