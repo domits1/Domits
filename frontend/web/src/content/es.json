@@ -1182,13 +1182,21 @@
         "savePassword": "Guardar contraseña",
         "passwordChanged": "Contraseña cambiada con éxito.",
         "showPassword": "Mostrar contraseña",
-        "hidePassword": "Ocultar contraseña"
+        "hidePassword": "Ocultar contraseña",
+        "passwordFieldsRequired": "Por favor, complete todos los campos de contraseña.",
+        "passwordTooShort": "La contraseña debe tener al menos {min} caracteres.",
+        "passwordMismatch": "La nueva contraseña y la confirmación no coinciden.",
+        "passwordChangeFailed": "No se pudo cambiar la contraseña. Inténtalo de nuevo.",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta.",
+        "passwordPolicyViolation": "La nueva contraseña no cumple los requisitos.",
+        "tooManyPasswordAttempts": "Demasiados intentos. Inténtalo de nuevo más tarde."
       },
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
         "saved": "¡Guardado!",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "close": "Cerrar"
       }
     },
     "communicationPreferences": {

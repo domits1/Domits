@@ -110,17 +110,28 @@ describe("usePasswordChange", () => {
     expect(result.current.confirmPassword).toBe("");
   });
 
-  test("onSubmitPasswordChange: surfaces the Cognito error message when the change is rejected", async () => {
-    Auth.currentAuthenticatedUser.mockResolvedValue({ username: "user-123" });
-    Auth.changePassword.mockRejectedValue(new Error("Incorrect username or password."));
+  test.each([
+    ["NotAuthorizedException", "Current password is incorrect."],
+    ["InvalidPasswordException", "New password does not meet the requirements."],
+    ["LimitExceededException", "Too many attempts. Please try again later."],
+    ["SomeUnmappedException", "Failed to change password. Please try again."],
+    [undefined, "Failed to change password. Please try again."],
+  ])(
+    "onSubmitPasswordChange: maps Cognito error code %p to a translated message",
+    async (code, expectedError) => {
+      Auth.currentAuthenticatedUser.mockResolvedValue({ username: "user-123" });
+      const cognitoError = new Error("some raw AWS wording a user should never see");
+      cognitoError.code = code;
+      Auth.changePassword.mockRejectedValue(cognitoError);
 
-    const { result } = setup();
+      const { result } = setup();
 
-    fillPasswordFields(result, { current: "wrongPass1!", next: "newPass1!", confirm: "newPass1!" });
-    await submitPasswordChange(result);
+      fillPasswordFields(result, { current: "wrongPass1!", next: "newPass1!", confirm: "newPass1!" });
+      await submitPasswordChange(result);
 
-    expect(result.current.passwordError).toBe("Incorrect username or password.");
-    expect(result.current.passwordChangeSuccess).toBe(false);
-    expect(result.current.isSavingPassword).toBe(false);
-  });
+      expect(result.current.passwordError).toBe(expectedError);
+      expect(result.current.passwordChangeSuccess).toBe(false);
+      expect(result.current.isSavingPassword).toBe(false);
+    }
+  );
 });

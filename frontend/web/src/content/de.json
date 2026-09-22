@@ -1182,13 +1182,21 @@
         "savePassword": "Passwort speichern",
         "passwordChanged": "Passwort erfolgreich geändert.",
         "showPassword": "Passwort anzeigen",
-        "hidePassword": "Passwort verbergen"
+        "hidePassword": "Passwort verbergen",
+        "passwordFieldsRequired": "Bitte füllen Sie alle Passwortfelder aus.",
+        "passwordTooShort": "Das Passwort muss mindestens {min} Zeichen lang sein.",
+        "passwordMismatch": "Neues Passwort und Bestätigung stimmen nicht überein.",
+        "passwordChangeFailed": "Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+        "currentPasswordIncorrect": "Das aktuelle Passwort ist falsch.",
+        "passwordPolicyViolation": "Das neue Passwort erfüllt nicht die Anforderungen.",
+        "tooManyPasswordAttempts": "Zu viele Versuche. Bitte versuchen Sie es später erneut."
       },
       "buttons": {
         "save": "Änderungen speichern",
         "saving": "Wird gespeichert...",
         "saved": "Gespeichert!",
-        "cancel": "Abbrechen"
+        "cancel": "Abbrechen",
+        "close": "Schließen"
       }
     },
     "communicationPreferences": {
