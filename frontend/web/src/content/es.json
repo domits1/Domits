@@ -30,7 +30,7 @@
     },
     "search": {
       "destination": "Destino",
-      "accommodation": "Alojamiento",
+      "accommodation": "Tipo",
       "checkInOut": "Entrada • Salida",
       "guests": "Huéspedes",
       "adults": "Adultos",

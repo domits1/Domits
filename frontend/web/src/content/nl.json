@@ -30,7 +30,7 @@
     },
     "search": {
       "destination": "Bestemming",
-      "accommodation": "Accommodatie",
+      "accommodation": "Type",
       "checkInOut": "In • uitchecken",
       "guests": "Gasten",
       "adults": "Volwassenen",
