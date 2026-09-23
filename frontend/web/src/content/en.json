@@ -1248,12 +1248,31 @@
         "phoneVerifiedYes": "Phone verified: Yes",
         "phoneVerifiedNo": "Phone verified: No",
         "authenticatorApp": "Authenticator app",
-        "totp": "App-based codes (TOTP)"
+        "totp": "App-based codes (TOTP)",
+        "passwordLabel": "Password",
+        "changePassword": "Change Password",
+        "changePasswordTitle": "Change your password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "savePassword": "Save password",
+        "passwordChanged": "Password changed successfully.",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passwordFieldsRequired": "Please fill in all password fields.",
+        "passwordTooShort": "Password must be at least {min} characters.",
+        "passwordMismatch": "New password and confirmation do not match.",
+        "passwordChangeFailed": "Failed to change password. Please try again.",
+        "currentPasswordIncorrect": "Current password is incorrect.",
+        "passwordPolicyViolation": "New password does not meet the requirements.",
+        "tooManyPasswordAttempts": "Too many attempts. Please try again later."
       },
       "buttons": {
         "save": "Save changes",
         "saving": "Saving...",
-        "saved": "Saved!"
+        "saved": "Saved!",
+        "cancel": "Cancel",
+        "close": "Close"
       }
     },
     "communicationPreferences": {

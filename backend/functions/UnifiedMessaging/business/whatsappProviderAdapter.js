@@ -80,6 +80,21 @@ export default class WhatsAppProviderAdapter {
     this.credentialStore = new WhatsAppCredentialStore();
   }
 
+  describeFailure(payload, recipientId, error) {
+    return {
+      accepted: false,
+      mode: "live",
+      channel: "WHATSAPP",
+      integrationAccountId: payload.integrationAccountId ?? null,
+      externalAccountId: null,
+      recipientWhatsAppId: recipientId,
+      messageType: Array.isArray(payload.attachments) && payload.attachments.length > 0 ? "media" : "text",
+      text: payload.content || "",
+      error: error?.message || String(error),
+      details: error?.details || null,
+    };
+  }
+
   logTokenSource(level, message, integration, cause, extra = {}) {
     console[level](
       message,
