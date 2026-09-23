@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../../../features/auth/UserContext";
+import { navigateToHostDestination } from "../../../utils/hostRedirect";
 
 const FaqItem = ({ question, answer, answerLink, answerAfterLink, answerLinkHostRoute = "/hostdashboard", toggleOpen, isOpen }) => {
   const contentRef = useRef(null);
   const [height, setHeight] = useState(0);
   const navigate = useNavigate();
-  const { role } = useUser() || {};
 
   useEffect(() => {
     if (contentRef.current) {
@@ -15,10 +14,10 @@ const FaqItem = ({ question, answer, answerLink, answerAfterLink, answerLinkHost
     }
   }, [isOpen]);
 
-  // NOTE: role loads async on mount, so a host could still briefly land on /register if they click before it resolves.
+  // Resolves host status fresh via Auth.currentAuthenticatedUser() at click time, not from mount-time context.
   const handleLinkClick = (e) => {
     e.stopPropagation();
-    navigate(role === "Host" ? answerLinkHostRoute : "/register");
+    navigateToHostDestination({ navigate, hostPath: answerLinkHostRoute });
   };
 
   return (
