@@ -11,10 +11,14 @@ const mockThreadRepository = createMockThreadRepository();
 const mockBookingRepository = createMockBookingRepository();
 const mockWhatsAppAdapterInstance = { sendMessage: jest.fn(), describeFailure: jest.fn() };
 
-jest.mock("../data/messageRepository.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => mockMessageRepository),
-}));
+function mockRepositoryModule(instance) {
+  return {
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => instance),
+  };
+}
+
+jest.mock("../data/messageRepository.js", () => mockRepositoryModule(mockMessageRepository));
 
 jest.mock("../data/threadRepository.js", () => ({
   __esModule: true,
@@ -22,10 +26,7 @@ jest.mock("../data/threadRepository.js", () => ({
   default: jest.fn().mockImplementation(() => mockThreadRepository),
 }));
 
-jest.mock("../data/bookingRepository.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => mockBookingRepository),
-}));
+jest.mock("../data/bookingRepository.js", () => mockRepositoryModule(mockBookingRepository));
 
 jest.mock("./whatsappProviderAdapter.js", () => ({
   __esModule: true,
