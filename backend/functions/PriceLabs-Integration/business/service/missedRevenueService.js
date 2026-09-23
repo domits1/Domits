@@ -104,6 +104,21 @@ function isSellableNight(row) {
   return true;
 }
 
+/**
+ * Broader than isSellableNight: a night the host has booked still counts as a
+ * "potential occupied night" for Potential Revenue, priced at pricelabs_price
+ * rather than what was actually charged. is_available only disqualifies a
+ * night when it's a genuine host block (i.e. not booked) — is_available also
+ * goes false for already-booked nights, so it can't be used on its own here.
+ */
+function isPotentialNight(row, isBooked) {
+  if (row.stop_sell === true) return false;
+  if (row.pricelabs_ignored === true) return false;
+  if (row.property_status && row.property_status !== "ACTIVE") return false;
+  if (row.is_available === false && !isBooked) return false;
+  return true;
+}
+
 export class MissedRevenueService {
   constructor({ repository } = {}) {
     this.repo = repository;
@@ -137,14 +152,25 @@ export class MissedRevenueService {
     let grossMissedRevenue = 0;
     let unbookedNightsWithPriceData = 0;
     let unbookedNightsWithoutPriceData = 0;
+    let potentialRevenue = 0;
+    let potentialNightsWithPriceData = 0;
+    let potentialNightsWithoutPriceData = 0;
     const byPropertyMap = new Map();
 
     for (const row of priceRows) {
-      if (!isSellableNight(row)) continue;
-
       const iso = isoFromCalendarInt(row.calendar_date);
       const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
-      if (isBooked) continue;
+
+      if (isPotentialNight(row, isBooked)) {
+        if (row.pricelabs_price == null) {
+          potentialNightsWithoutPriceData += 1;
+        } else {
+          potentialRevenue += Number(row.pricelabs_price);
+          potentialNightsWithPriceData += 1;
+        }
+      }
+
+      if (!isSellableNight(row) || isBooked) continue;
 
       if (row.pricelabs_price == null) {
         unbookedNightsWithoutPriceData += 1;
@@ -161,6 +187,7 @@ export class MissedRevenueService {
       byPropertyMap.set(row.property_id, existing);
     }
 
+    const potentialOccupiedNights = potentialNightsWithPriceData + potentialNightsWithoutPriceData;
     const totalUnbookedNightsSeen = unbookedNightsWithPriceData + unbookedNightsWithoutPriceData;
     const priceDataCoveragePct =
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
@@ -172,6 +199,10 @@ export class MissedRevenueService {
       currency: "EUR",
       grossMissedRevenue,
       actualRevenue,
+      potentialRevenue,
+      potentialOccupiedNights,
+      potentialNightsWithPriceData,
+      potentialNightsWithoutPriceData,
       unbookedNightsWithPriceData,
       unbookedNightsWithoutPriceData,
       priceDataCoveragePct,
