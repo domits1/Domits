@@ -3,6 +3,7 @@ import { LambdaClient, GetFunctionCommand, CreateFunctionCommand, AddPermissionC
 import {
   APIGatewayClient,
   CreateRestApiCommand,
+  CreateResourceCommand,
   GetResourcesCommand,
   PutMethodCommand,
   PutIntegrationCommand,
@@ -85,11 +86,45 @@ class LambdaFactory {
     console.log("\n\x1b[32m%s\x1b[0m", `Global dependencies installed successfully.`);
     console.log("\n\x1b[33m", `Preparing directories for function: ${name}...`);
     const functionPath = `functions/${name}`;
-    await fs.cp("CD/template/function", functionPath, { recursive: true });
-    await fs.cp("CD/template/events", `events/${name}`, { recursive: true });
-    await fs.cp("CD/template/test", `test/${name}`, { recursive: true });
-    await fs.writeFile(`${functionPath}/metadata.json`, `{ "functionName": "${name}" }`);
+    await this.copyTemplateDirectory("CD/template/function", functionPath);
+    await this.copyTemplateDirectory("CD/template/events", `events/${name}`);
+    await this.copyTemplateDirectory("CD/template/test", `test/${name}`);
+    await this.ensureMetadata(functionPath, name);
     console.log("\n\x1b[32m%s\x1b[0m", `Directories created successfully.`);
+  }
+
+  async copyTemplateDirectory(templatePath, targetPath) {
+    // Review: Preserve an implemented Lambda such as ReviewSystem when rerunning the scaffolder.
+    if (await this.pathExists(targetPath)) {
+      console.log("\n\x1b[33m", `Preserving existing directory: ${targetPath}`);
+      return;
+    }
+
+    await fs.cp(templatePath, targetPath, { recursive: true, errorOnExist: true, force: false });
+  }
+
+  async ensureMetadata(functionPath, name) {
+    const metadataPath = `${functionPath}/metadata.json`;
+
+    if (!(await this.pathExists(metadataPath))) {
+      await fs.writeFile(metadataPath, `{ "functionName": "${name}" }`);
+      return;
+    }
+
+    const metadata = JSON.parse(await fs.readFile(metadataPath, "utf8"));
+    if (metadata.functionName !== name) {
+      throw new Error(`Existing metadata at ${metadataPath} targets '${metadata.functionName}', not '${name}'.`);
+    }
+  }
+
+  async pathExists(targetPath) {
+    try {
+      await fs.access(targetPath);
+      return true;
+    } catch (error) {
+      if (error.code === "ENOENT") return false;
+      throw error;
+    }
   }
 
   async createLambdaFunction(name) {
@@ -130,22 +165,30 @@ class LambdaFactory {
       restApiId: api,
     }));
     const rootResource = resources.items.find(r => r.path === "/").id;
-
-    await this.apiGatewayClient.send(new PutMethodCommand({
+    const proxyResource = await this.apiGatewayClient.send(new CreateResourceCommand({
+      // Review: The greedy proxy forwards nested review detail routes to the same Lambda.
       restApiId: api,
-      resourceId: rootResource,
-      httpMethod: "ANY",
-      authorizationType: "NONE",
+      parentId: rootResource,
+      pathPart: "{proxy+}",
     }));
 
-    await this.apiGatewayClient.send(new PutIntegrationCommand({
-      restApiId: api,
-      resourceId: rootResource,
-      httpMethod: "ANY",
-      type: "AWS_PROXY",
-      integrationHttpMethod: "POST",
-      uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
-    }));
+    for (const resourceId of [rootResource, proxyResource.id]) {
+      await this.apiGatewayClient.send(new PutMethodCommand({
+        restApiId: api,
+        resourceId,
+        httpMethod: "ANY",
+        authorizationType: "NONE",
+      }));
+
+      await this.apiGatewayClient.send(new PutIntegrationCommand({
+        restApiId: api,
+        resourceId,
+        httpMethod: "ANY",
+        type: "AWS_PROXY",
+        integrationHttpMethod: "POST",
+        uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
+      }));
+    }
 
     await this.lambdaClient.send(new AddPermissionCommand({
       Action: "lambda:InvokeFunction",
@@ -153,6 +196,14 @@ class LambdaFactory {
       Principal: "apigateway.amazonaws.com",
       StatementId: `${name}-InvokePermission`,
       SourceArn: `arn:aws:execute-api:eu-north-1:${await this.getAccountId()}:${api}/*/*/`,
+    }));
+
+    await this.lambdaClient.send(new AddPermissionCommand({
+      Action: "lambda:InvokeFunction",
+      FunctionName: name,
+      Principal: "apigateway.amazonaws.com",
+      StatementId: `${name}-ProxyInvokePermission`,
+      SourceArn: `arn:aws:execute-api:eu-north-1:${await this.getAccountId()}:${api}/*/*/*`,
     }));
 
     await this.apiGatewayClient.send(new CreateDeploymentCommand({
