@@ -472,4 +472,32 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.potentialNightsWithPriceData).toBe(1);
     expect(result.potentialNightsWithoutPriceData).toBe(1);
   });
+
+  test("computes revenue efficiency as actual revenue over potential revenue", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
+      bookings: [
+        {
+          property_id: "prop-2",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 25,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    // actualRevenue=25, potentialRevenue=100 => 25%
+    expect(result.revenueEfficiencyPct).toBeCloseTo(25);
+  });
+
+  test("revenue efficiency is 0 when potential revenue is 0", async () => {
+    const { service } = createService({ priceRows: [], bookings: [] });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.revenueEfficiencyPct).toBe(0);
+  });
 });

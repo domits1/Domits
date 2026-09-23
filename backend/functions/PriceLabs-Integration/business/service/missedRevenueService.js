@@ -213,6 +213,7 @@ export class MissedRevenueService {
     }
 
     const potentialOccupiedNights = potentialNightsWithPriceData + potentialNightsWithoutPriceData;
+    const revenueEfficiencyPct = potentialRevenue > 0 ? (actualRevenue / potentialRevenue) * 100 : 0;
     const totalUnbookedNightsSeen = unbookedNightsWithPriceData + unbookedNightsWithoutPriceData;
     const priceDataCoveragePct =
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
@@ -228,6 +229,7 @@ export class MissedRevenueService {
       potentialOccupiedNights,
       potentialNightsWithPriceData,
       potentialNightsWithoutPriceData,
+      revenueEfficiencyPct,
       unbookedNightsWithPriceData,
       unbookedNightsWithoutPriceData,
       priceDataCoveragePct,
