@@ -24,16 +24,16 @@ note() { LEDGER+=("$1"); }
 
 die() {
   log ""
-  log "GESTOPT: $1"
+  log "STOPPED: $1"
   summary
   exit 1
 }
 
 summary() {
   log ""
-  log "Wat er is gedaan:"
+  log "What was done:"
   if [ ${#LEDGER[@]} -eq 0 ]; then
-    log "  niets gewijzigd"
+    log "  nothing changed"
   else
     for l in "${LEDGER[@]}"; do log "  $l"; done
   fi
@@ -41,19 +41,19 @@ summary() {
 
 validate_domain() {
   local d="$1"
-  [ -n "$d" ] || { echo "leeg domein"; return 1; }
+  [ -n "$d" ] || { echo "empty domain"; return 1; }
   case "$d" in
-    "direct.domits.com")    echo "beschermd: de apex";                return 1 ;;
-    "*.direct.domits.com")  echo "beschermd: de wildcard";            return 1 ;;
-    \*.*)                   echo "beschermd: wildcards nooit";        return 1 ;;
-    _*)                     echo "validatierecord, nooit aanraken";   return 1 ;;
-    *[!a-z0-9.-]*)          echo "ongeldige tekens";                  return 1 ;;
+    "direct.domits.com")    echo "protected: the apex";             return 1 ;;
+    "*.direct.domits.com")  echo "protected: the wildcard";         return 1 ;;
+    \*.*)                   echo "protected: never a wildcard";     return 1 ;;
+    _*)                     echo "validation record, never touch";  return 1 ;;
+    *[!a-z0-9.-]*)          echo "invalid characters";              return 1 ;;
     *"$SUFFIX")             : ;;
-    *)                      echo "eindigt niet op $SUFFIX";           return 1 ;;
+    *)                      echo "does not end in $SUFFIX";         return 1 ;;
   esac
-  [ "$d" != "${SUFFIX#.}" ] || { echo "beschermd: de apex"; return 1; }
-  [ -f "$ALLOWLIST" ] || { echo "allowlist ontbreekt: $ALLOWLIST"; return 1; }
-  grep -qxF "$d" "$ALLOWLIST" || { echo "staat niet in published-domains.txt"; return 1; }
+  [ "$d" != "${SUFFIX#.}" ] || { echo "protected: the apex"; return 1; }
+  [ -f "$ALLOWLIST" ] || { echo "allowlist missing: $ALLOWLIST"; return 1; }
+  grep -qxF "$d" "$ALLOWLIST" || { echo "not in published-domains.txt"; return 1; }
   return 0
 }
 
@@ -102,7 +102,7 @@ apply_tenant_domains() {
       return 0
     fi
     if printf '%s' "$err" | grep -q "PreconditionFailed" && [ "$attempt" -eq 1 ]; then
-      step "ETag verlopen, opnieuw lezen" "poging 2"
+      step "ETag stale, re-reading" "attempt 2"
       continue
     fi
     printf '%s\n' "$err" >&2

@@ -10,14 +10,14 @@ const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((k) => 
 const problems = [];
 for (const k of keys) {
   const x = JSON.stringify(a[k] ?? null), y = JSON.stringify(b[k] ?? null);
-  if (x !== y) problems.push(`veld ${k} veranderde: was ${x} -> nu ${y}`);
+  if (x !== y) problems.push(`field ${k} changed: was ${x} -> now ${y}`);
 }
 
 const dom = (t) => (t.Domains || []).map((d) => d.Domain).sort();
 const before = dom(a), after = dom(b);
 
-console.log("domeinen voor : " + (before.join(", ") || "geen"));
-console.log("domeinen na   : " + (after.join(", ") || "geen"));
+console.log("domains before : " + (before.join(", ") || "none"));
+console.log("domains after  : " + (after.join(", ") || "none"));
 
 if (expectedAdded.length) {
   const expected = [...new Set([...before, ...expectedAdded])].sort();
@@ -25,17 +25,17 @@ if (expectedAdded.length) {
   const extra = after.filter((d) => !expected.includes(d));
   const vanished = before.filter((d) => !after.includes(d));
 
-  console.log("verwacht      : " + expected.join(", "));
-  if (vanished.length) problems.push("verdwenen uit de lijst: " + vanished.join(", "));
-  if (extra.length) problems.push("onverwacht bijgekomen: " + extra.join(", "));
+  console.log("expected       : " + expected.join(", "));
+  if (vanished.length) problems.push("vanished from the list: " + vanished.join(", "));
+  if (extra.length) problems.push("unexpectedly added: " + extra.join(", "));
   const missingNotVanished = missing.filter((d) => !vanished.includes(d));
-  if (missingNotVanished.length) problems.push("niet toegevoegd terwijl gevraagd: " + missingNotVanished.join(", "));
-  if (!problems.length) console.log(`exact ${expectedAdded.length} toegevoegd, niets verdwenen, niets extra`);
+  if (missingNotVanished.length) problems.push("not added although asked for: " + missingNotVanished.join(", "));
+  if (!problems.length) console.log(`exactly ${expectedAdded.length} added, nothing vanished, nothing extra`);
 }
 
 if (problems.length) {
-  console.log("AFGEKEURD:");
+  console.log("REJECTED:");
   problems.forEach((p) => console.log("  " + p));
   process.exit(2);
 }
-if (!expectedAdded.length) console.log("alle andere velden ongewijzigd");
+if (!expectedAdded.length) console.log("all other fields unchanged");
