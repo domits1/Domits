@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const [beforeFile, afterFile, ...expectedAdded] = process.argv.slice(2);
+const byCodeUnit = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const load = (f) => JSON.parse(readFileSync(f, "utf8")).DistributionTenant;
 const a = load(beforeFile), b = load(afterFile);
 
@@ -13,14 +14,14 @@ for (const k of keys) {
   if (x !== y) problems.push(`field ${k} changed: was ${x} -> now ${y}`);
 }
 
-const dom = (t) => (t.Domains || []).map((d) => d.Domain).sort();
+const dom = (t) => (t.Domains || []).map((d) => d.Domain).sort(byCodeUnit);
 const before = dom(a), after = dom(b);
 
 console.log("domains before : " + (before.join(", ") || "none"));
 console.log("domains after  : " + (after.join(", ") || "none"));
 
 if (expectedAdded.length) {
-  const expected = [...new Set([...before, ...expectedAdded])].sort();
+  const expected = [...new Set([...before, ...expectedAdded])].sort(byCodeUnit);
   const missing = expected.filter((d) => !after.includes(d));
   const extra = after.filter((d) => !expected.includes(d));
   const vanished = before.filter((d) => !after.includes(d));

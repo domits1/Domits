@@ -10,10 +10,10 @@ for a in "$@"; do
     *) ARGS+=("$a") ;;
   esac
 done
-[ ${#ARGS[@]} -gt 0 ] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
+[[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rollback-$(date +%F-%H%M%S).log"
-[ "$DRY_RUN" -eq 1 ] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
+[[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
 log ""
 
 log "Validation"
@@ -24,16 +24,16 @@ done
 log ""
 log "Current state"
 CURRENT=()
-while IFS= read -r _l; do [ -n "$_l" ] && CURRENT+=("$_l"); done < <(tenant_domains) || die "cannot read the tenant"
-[ ${#CURRENT[@]} -gt 0 ] || die "cannot read the tenant, or it is empty"
+while IFS= read -r _l; do [[ -n "$_l" ]] && CURRENT+=("$_l"); done < <(tenant_domains) || die "cannot read the tenant"
+[[ ${#CURRENT[@]} -gt 0 ]] || die "cannot read the tenant, or it is empty"
 step "domains on the tenant now" "${#CURRENT[@]}"
 
 TO_DELETE=()
 for d in "${ARGS[@]}"; do
   cur="$(record_value "$d")"
-  if [ -z "$cur" ]; then
+  if [[ -z "$cur" ]]; then
     step "$d" "no CNAME, nothing to delete"
-  elif [ "$cur" = "$ROUTING_ENDPOINT" ]; then
+  elif [[ "$cur" = "$ROUTING_ENDPOINT" ]]; then
     step "$d" "CNAME to the routing endpoint, will be deleted"
     TO_DELETE+=("$d")
   else
@@ -46,18 +46,18 @@ KEEP=()
 REMOVE=()
 for c in "${CURRENT[@]}"; do
   hit=0
-  for d in "${ARGS[@]}"; do [ "$c" = "$d" ] && hit=1; done
-  if [ "$hit" -eq 1 ]; then REMOVE+=("$c"); else KEEP+=("$c"); fi
+  for d in "${ARGS[@]}"; do [[ "$c" = "$d" ]] && hit=1; done
+  if [[ "$hit" -eq 1 ]]; then REMOVE+=("$c"); else KEEP+=("$c"); fi
 done
 step "stays on the tenant" "${#KEEP[@]}: ${KEEP[*]:-none}"
 step "comes off the tenant" "${#REMOVE[@]}: ${REMOVE[*]:-none}"
-[ ${#KEEP[@]} -gt 0 ] || die "this would empty the tenant; refusing"
+[[ ${#KEEP[@]} -gt 0 ]] || die "this would empty the tenant; refusing"
 
-if [ "$DRY_RUN" -eq 1 ]; then
+if [[ "$DRY_RUN" -eq 1 ]]; then
   log ""
   log "Would do:"
-  if [ ${#TO_DELETE[@]} -gt 0 ]; then log "  route53: delete ${#TO_DELETE[@]} CNAME(s): ${TO_DELETE[*]:-}"; else log "  route53: nothing to delete"; fi
-  if [ ${#REMOVE[@]} -gt 0 ]; then log "  tenant: remove ${#REMOVE[@]} domain(s), ${#KEEP[@]} stay"; else log "  tenant: nothing to remove"; fi
+  if [[ ${#TO_DELETE[@]} -gt 0 ]]; then log "  route53: delete ${#TO_DELETE[@]} CNAME(s): ${TO_DELETE[*]:-}"; else log "  route53: nothing to delete"; fi
+  if [[ ${#REMOVE[@]} -gt 0 ]]; then log "  tenant: remove ${#REMOVE[@]} domain(s), ${#KEEP[@]} stay"; else log "  tenant: nothing to remove"; fi
   log "  then wait for Deployed"
   log ""
   log "After deletion the address falls back to the wildcard, so to Amplify."
@@ -79,7 +79,7 @@ for d in "${TO_DELETE[@]}"; do
   fi
 done
 
-if [ ${#REMOVE[@]} -gt 0 ]; then
+if [[ ${#REMOVE[@]} -gt 0 ]]; then
   log ""
   log "Updating the tenant"
   SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S).json"

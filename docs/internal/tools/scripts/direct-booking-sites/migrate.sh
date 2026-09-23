@@ -10,10 +10,10 @@ for a in "$@"; do
     *) ARGS+=("$a") ;;
   esac
 done
-[ ${#ARGS[@]} -gt 0 ] || die "give at least one domain. Usage: migrate.sh [--dry-run] <domain...>"
+[[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: migrate.sh [--dry-run] <domain...>"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/migrate-$(date +%F-%H%M%S).log"
-[ "$DRY_RUN" -eq 1 ] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
+[[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
 log ""
 
 log "Validation"
@@ -24,31 +24,31 @@ done
 log ""
 log "Current state"
 CURRENT=()
-while IFS= read -r _l; do [ -n "$_l" ] && CURRENT+=("$_l"); done < <(tenant_domains) || die "cannot read the tenant"
-[ ${#CURRENT[@]} -gt 0 ] || die "cannot read the tenant, or it is empty"
+while IFS= read -r _l; do [[ -n "$_l" ]] && CURRENT+=("$_l"); done < <(tenant_domains) || die "cannot read the tenant"
+[[ ${#CURRENT[@]} -gt 0 ]] || die "cannot read the tenant, or it is empty"
 step "domains on the tenant now" "${#CURRENT[@]}"
 for d in "${CURRENT[@]}"; do step "  $d" "present"; done
 
 TO_ADD=()
 for d in "${ARGS[@]}"; do
   found=0
-  for c in "${CURRENT[@]}"; do [ "$c" = "$d" ] && found=1; done
-  [ "$found" -eq 0 ] && TO_ADD+=("$d") || step "$d" "was already on the tenant"
+  for c in "${CURRENT[@]}"; do [[ "$c" = "$d" ]] && found=1; done
+  [[ "$found" -eq 0 ]] && TO_ADD+=("$d") || step "$d" "was already on the tenant"
 done
 
 NEW_TOTAL=$(( ${#CURRENT[@]} + ${#TO_ADD[@]} ))
 step "after adding" "$NEW_TOTAL domains"
-[ "$NEW_TOTAL" -le "$MAX_TENANT_DOMAINS" ] || die "that would exceed the configured limit of $MAX_TENANT_DOMAINS"
+[[ "$NEW_TOTAL" -le "$MAX_TENANT_DOMAINS" ]] || die "that would exceed the configured limit of $MAX_TENANT_DOMAINS"
 
 log ""
 log "DNS precheck"
 TO_CREATE=()
 for d in "${ARGS[@]}"; do
   cur="$(record_value "$d")"
-  if [ -z "$cur" ]; then
+  if [[ -z "$cur" ]]; then
     step "$d" "no record, CREATE to $ROUTING_ENDPOINT TTL $TTL"
     TO_CREATE+=("$d")
-  elif [ "$cur" = "$ROUTING_ENDPOINT" ]; then
+  elif [[ "$cur" = "$ROUTING_ENDPOINT" ]]; then
     step "$d" "already points at the routing endpoint, skipping"
   else
     step "$d" "ALREADY EXISTS and points at $cur"
@@ -56,15 +56,15 @@ for d in "${ARGS[@]}"; do
   fi
 done
 
-if [ "$DRY_RUN" -eq 1 ]; then
+if [[ "$DRY_RUN" -eq 1 ]]; then
   log ""
   log "Full domain list on the tenant after merging (${NEW_TOTAL})"
   for d in "${CURRENT[@]}"; do step "  $d" "stays"; done
-  if [ ${#TO_ADD[@]} -gt 0 ]; then for d in "${TO_ADD[@]}"; do step "  $d" "NEW"; done; fi
+  if [[ ${#TO_ADD[@]} -gt 0 ]]; then for d in "${TO_ADD[@]}"; do step "  $d" "NEW"; done; fi
   log ""
   log "Would do:"
-  if [ ${#TO_ADD[@]} -gt 0 ]; then log "  tenant: add ${#TO_ADD[@]} domain(s): ${TO_ADD[*]:-}"; else log "  tenant: nothing to add"; fi
-  if [ ${#TO_CREATE[@]} -gt 0 ]; then log "  route53: create ${#TO_CREATE[@]} CNAME(s) to $ROUTING_ENDPOINT TTL $TTL: ${TO_CREATE[*]:-}"; else log "  route53: nothing to create"; fi
+  if [[ ${#TO_ADD[@]} -gt 0 ]]; then log "  tenant: add ${#TO_ADD[@]} domain(s): ${TO_ADD[*]:-}"; else log "  tenant: nothing to add"; fi
+  if [[ ${#TO_CREATE[@]} -gt 0 ]]; then log "  route53: create ${#TO_CREATE[@]} CNAME(s) to $ROUTING_ENDPOINT TTL $TTL: ${TO_CREATE[*]:-}"; else log "  route53: nothing to create"; fi
   log "  then wait for Deployed and check the tenant status per domain"
   log ""
   log "Left untouched: direct.domits.com, *.direct.domits.com, ACM validation records, Amplify."
@@ -76,7 +76,7 @@ exec > >(tee -a "$RUNLOG") 2>&1
 SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-before-$(date +%F-%H%M%S).json"
 SNAP_AFTER="${SNAP_BEFORE%-*.json}-after.json"
 
-if [ ${#TO_ADD[@]} -gt 0 ]; then
+if [[ ${#TO_ADD[@]} -gt 0 ]]; then
   log ""
   log "Updating the tenant"
   tenant_json > "$SNAP_BEFORE" || die "cannot save the tenant before the update"
@@ -121,7 +121,7 @@ for d in "${ARGS[@]}"; do
     esac
     sleep 10
   done
-  [ "$ok" -eq 1 ] || step "$d" "not confirmed yet, last status: ${st:-unknown}"
+  [[ "$ok" -eq 1 ]] || step "$d" "not confirmed yet, last status: ${st:-unknown}"
 done
 
 summary

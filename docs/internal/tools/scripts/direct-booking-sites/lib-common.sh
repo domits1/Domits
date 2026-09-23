@@ -15,12 +15,12 @@ TTL=60
 DRY_RUN=0
 LEDGER=()
 
-aws_cf() { aws cloudfront "$@" --profile "$PROFILE" --region "$REGION_CF"; }
-aws_r53() { aws route53 "$@" --profile "$PROFILE"; }
+aws_cf() { aws cloudfront "$@" --profile "$PROFILE" --region "$REGION_CF"; return $?; }
+aws_r53() { aws route53 "$@" --profile "$PROFILE"; return $?; }
 
-log()  { printf '%s\n' "$*"; }
-step() { printf '  %-58s %s\n' "$1" "$2"; }
-note() { LEDGER+=("$1"); }
+log()  { printf '%s\n' "$*"; return $?; }
+step() { printf '  %-58s %s\n' "$1" "$2"; return $?; }
+note() { LEDGER+=("$1"); return $?; }
 
 die() {
   log ""
@@ -32,16 +32,17 @@ die() {
 summary() {
   log ""
   log "What was done:"
-  if [ ${#LEDGER[@]} -eq 0 ]; then
+  if [[ ${#LEDGER[@]} -eq 0 ]]; then
     log "  nothing changed"
   else
     for l in "${LEDGER[@]}"; do log "  $l"; done
   fi
+  return $?
 }
 
 validate_domain() {
   local d="$1"
-  [ -n "$d" ] || { echo "empty domain"; return 1; }
+  [[ -n "$d" ]] || { echo "empty domain"; return 1; }
   case "$d" in
     "direct.domits.com")    echo "protected: the apex";             return 1 ;;
     "*.direct.domits.com")  echo "protected: the wildcard";         return 1 ;;
@@ -51,26 +52,26 @@ validate_domain() {
     *"$SUFFIX")             : ;;
     *)                      echo "does not end in $SUFFIX";         return 1 ;;
   esac
-  [ "$d" != "${SUFFIX#.}" ] || { echo "protected: the apex"; return 1; }
-  [ -f "$ALLOWLIST" ] || { echo "allowlist missing: $ALLOWLIST"; return 1; }
+  [[ "$d" != "${SUFFIX#.}" ]] || { echo "protected: the apex"; return 1; }
+  [[ -f "$ALLOWLIST" ]] || { echo "allowlist missing: $ALLOWLIST"; return 1; }
   grep -qxF "$d" "$ALLOWLIST" || { echo "not in published-domains.txt"; return 1; }
   return 0
 }
 
-tenant_json() { aws_cf get-distribution-tenant --identifier "$TENANT_ID" --output json; }
+tenant_json() { aws_cf get-distribution-tenant --identifier "$TENANT_ID" --output json; return $?; }
 
 tenant_domains() { tenant_json | node -e '
 let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
-  JSON.parse(s).DistributionTenant.Domains.forEach(d=>console.log(d.Domain));});'; }
+  JSON.parse(s).DistributionTenant.Domains.forEach(d=>console.log(d.Domain));});'; return $?; }
 
 tenant_status() { tenant_json | node -e '
 let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
-  console.log(JSON.parse(s).DistributionTenant.Status);});'; }
+  console.log(JSON.parse(s).DistributionTenant.Status);});'; return $?; }
 
 tenant_domain_status() { tenant_json | node -e '
 let s="";const want=process.argv[1];process.stdin.on("data",d=>s+=d).on("end",()=>{
   const m=JSON.parse(s).DistributionTenant.Domains.find(d=>d.Domain===want);
-  console.log(m?m.Status:"AFWEZIG");});' "$1"; }
+  console.log(m?m.Status:"ABSENT");});' "$1"; return $?; }
 
 apply_tenant_domains() {
   local -a want=("$@")
@@ -91,17 +92,17 @@ apply_tenant_domains() {
     domains="$(node -e 'console.log(JSON.stringify(process.argv.slice(1).map(Domain=>({Domain}))));' "${want[@]}")"
 
     local -a args=(update-distribution-tenant --id "$TENANT_ID" --if-match "$etag" --domains "$domains")
-    [ -n "$distid" ] && args+=(--distribution-id "$distid")
-    [ -n "$cgid" ]   && args+=(--connection-group-id "$cgid")
+    [[ -n "$distid" ]] && args+=(--distribution-id "$distid")
+    [[ -n "$cgid" ]]   && args+=(--connection-group-id "$cgid")
     args+=(--customizations "$cust")
-    [ -n "$params" ] && args+=(--parameters "$params")
-    if [ "$enabled" = "yes" ]; then args+=(--enabled); else args+=(--no-enabled); fi
+    [[ -n "$params" ]] && args+=(--parameters "$params")
+    if [[ "$enabled" = "yes" ]]; then args+=(--enabled); else args+=(--no-enabled); fi
 
     local err
     if err="$(aws_cf "${args[@]}" 2>&1 >/dev/null)"; then
       return 0
     fi
-    if printf '%s' "$err" | grep -q "PreconditionFailed" && [ "$attempt" -eq 1 ]; then
+    if printf '%s' "$err" | grep -q "PreconditionFailed" && [[ "$attempt" -eq 1 ]]; then
       step "ETag stale, re-reading" "attempt 2"
       continue
     fi
@@ -115,7 +116,7 @@ wait_deployed() {
   local i st
   for i in $(seq 1 60); do
     st="$(tenant_status)" || return 1
-    if [ "$st" = "Deployed" ]; then step "tenant status" "Deployed"; return 0; fi
+    if [[ "$st" = "Deployed" ]]; then step "tenant status" "Deployed"; return 0; fi
     sleep 10
   done
   return 1
@@ -127,9 +128,11 @@ record_value() {
   | node -e 'let s="";const want=process.argv[1]+".";process.stdin.on("data",d=>s+=d).on("end",()=>{
       const r=(JSON.parse(s).ResourceRecordSets||[])[0];
       if(r&&r.Name===want&&r.Type==="CNAME") console.log(r.ResourceRecords[0].Value);});' "$1"
+  return $?
 }
 
 change_batch() {
   printf '{"Comment":"%s","Changes":[{"Action":"%s","ResourceRecordSet":{"Name":"%s","Type":"CNAME","TTL":%s,"ResourceRecords":[{"Value":"%s"}]}}]}' \
     "$1" "$2" "$3" "$4" "$5"
+  return $?
 }
