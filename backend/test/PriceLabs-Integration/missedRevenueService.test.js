@@ -137,10 +137,55 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     expect(result.byProperty).toEqual(
       expect.arrayContaining([
-        { propertyId: "prop-1", missedRevenue: 100, unbookedNightsWithPriceData: 1 },
-        { propertyId: "prop-2", missedRevenue: 200, unbookedNightsWithPriceData: 1 },
+        {
+          propertyId: "prop-1",
+          missedRevenue: 100,
+          unbookedNightsWithPriceData: 1,
+          actualRevenue: 0,
+          potentialRevenue: 100,
+          potentialOccupiedNights: 1,
+        },
+        {
+          propertyId: "prop-2",
+          missedRevenue: 200,
+          unbookedNightsWithPriceData: 1,
+          actualRevenue: 0,
+          potentialRevenue: 200,
+          potentialOccupiedNights: 1,
+        },
       ])
     );
+  });
+
+  test("breaks actual and potential revenue down per property", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-2", calendar_date: 20260901, pricelabs_price: 200 },
+      ],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-02T00:00:00Z"),
+          departuredate: Date.parse("2026-09-03T00:00:00Z"),
+          total_price: 150,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    const prop1 = result.byProperty.find((p) => p.propertyId === "prop-1");
+    const prop2 = result.byProperty.find((p) => p.propertyId === "prop-2");
+
+    expect(prop1.actualRevenue).toBe(150);
+    expect(prop1.potentialRevenue).toBe(100);
+    expect(prop1.potentialOccupiedNights).toBe(1);
+
+    expect(prop2.actualRevenue).toBe(0);
+    expect(prop2.potentialRevenue).toBe(200);
+    expect(prop2.potentialOccupiedNights).toBe(1);
   });
 
   test.each([

@@ -91,6 +91,19 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
   return { total, byProperty };
 }
 
+function ensureProperty(byPropertyMap, propertyId) {
+  if (!byPropertyMap.has(propertyId)) {
+    byPropertyMap.set(propertyId, {
+      missedRevenue: 0,
+      unbookedNightsWithPriceData: 0,
+      actualRevenue: 0,
+      potentialRevenue: 0,
+      potentialOccupiedNights: 0,
+    });
+  }
+  return byPropertyMap.get(propertyId);
+}
+
 /**
  * A calendar row does not represent real missed revenue when the host has taken
  * it off the market themselves: blocked, stop-sell, ignored by PriceLabs, or the
@@ -147,7 +160,11 @@ export class MissedRevenueService {
     ]);
 
     const bookedByProperty = bookedDateSetByProperty(bookings);
-    const { total: actualRevenue } = actualRevenueByProperty(bookings, startDate, endDate);
+    const { total: actualRevenue, byProperty: actualRevenueByPropertyMap } = actualRevenueByProperty(
+      bookings,
+      startDate,
+      endDate
+    );
 
     let grossMissedRevenue = 0;
     let unbookedNightsWithPriceData = 0;
@@ -162,11 +179,16 @@ export class MissedRevenueService {
       const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
 
       if (isPotentialNight(row, isBooked)) {
+        const propEntry = ensureProperty(byPropertyMap, row.property_id);
+        propEntry.potentialOccupiedNights += 1;
+
         if (row.pricelabs_price == null) {
           potentialNightsWithoutPriceData += 1;
         } else {
-          potentialRevenue += Number(row.pricelabs_price);
+          const price = Number(row.pricelabs_price);
+          potentialRevenue += price;
           potentialNightsWithPriceData += 1;
+          propEntry.potentialRevenue += price;
         }
       }
 
@@ -181,10 +203,13 @@ export class MissedRevenueService {
       grossMissedRevenue += price;
       unbookedNightsWithPriceData += 1;
 
-      const existing = byPropertyMap.get(row.property_id) ?? { missedRevenue: 0, unbookedNightsWithPriceData: 0 };
+      const existing = ensureProperty(byPropertyMap, row.property_id);
       existing.missedRevenue += price;
       existing.unbookedNightsWithPriceData += 1;
-      byPropertyMap.set(row.property_id, existing);
+    }
+
+    for (const [propertyId, amount] of actualRevenueByPropertyMap) {
+      ensureProperty(byPropertyMap, propertyId).actualRevenue += amount;
     }
 
     const potentialOccupiedNights = potentialNightsWithPriceData + potentialNightsWithoutPriceData;
