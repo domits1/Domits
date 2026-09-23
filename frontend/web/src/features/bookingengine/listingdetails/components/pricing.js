@@ -5,8 +5,8 @@ import { calculatePriceSaving } from "../utils/calculatePriceSaving";
 import PriceSavingMessage from "./PriceSavingMessage";
 import getPricingSavingConfig from "../services/fetchPricingSavingConfig";
 
-const EURO_SYMBOL = "\u20AC";
-const fmt = (value) => `${EURO_SYMBOL}${Number(value).toFixed(2)}`;
+export const EURO_SYMBOL = "\u20AC";
+export const fmt = (value) => `${EURO_SYMBOL}${Number(value).toFixed(2)}`;
 
 const Pricing = ({ pricing = {}, nights = 1 }) => {
   const {

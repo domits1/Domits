@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { fmt } from "./pricing";
 
 const PriceSavingMessage = ({ saving }) => {
   if (!saving) {
@@ -8,7 +9,7 @@ const PriceSavingMessage = ({ saving }) => {
 
   return (
     <div className="price-saving-message">
-      ~€{saving.amount} less than {saving.platformLabel}
+      ~{fmt(saving.amount)} less than {saving.platformLabel}
     </div>
   );
 };

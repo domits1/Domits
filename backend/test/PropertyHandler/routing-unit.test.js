@@ -38,6 +38,7 @@ const directRouteSpecs = [
   ["GET website domains request", "listWebsiteDomains", "GET", "/property/website/domains", 200],
   ["DELETE website domain request", "removeWebsiteDomain", "DELETE", "/property/website/domains", 200],
   ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  ["GET pricing saving-config request", "getPricingSavingConfig", "GET", "/property/pricing/saving-config", 200],
   ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
   ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
   ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
