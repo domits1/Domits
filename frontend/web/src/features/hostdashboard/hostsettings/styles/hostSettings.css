@@ -599,6 +599,83 @@
     border-color: #fecaca;
 }
 
+.pd-password-dots {
+    flex: 1;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: #374151;
+}
+
+.pd-password-inline {
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pd-password-inline-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.pd-password-inline .pd-field-label {
+    width: 180px;
+    min-width: 180px;
+}
+
+.pd-password-inline .pd-field-input {
+    flex: none;
+    width: 100%;
+}
+
+.pd-password-input-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.pd-password-input-wrap .pd-field-input {
+    padding-right: 40px;
+}
+
+.pd-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.pd-password-toggle:hover {
+    color: #374151;
+}
+
+.pd-password-error {
+    margin: 0;
+}
+
+.pd-password-success {
+    font-size: 0.85rem;
+    color: #166534;
+    margin: 0;
+}
+
+.pd-password-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .pd-verified-check {
     display: flex;
     align-items: center;
@@ -696,7 +773,8 @@
         gap: 4px;
     }
 
-    .pd-field-label {
+    .pd-field-label,
+    .pd-password-inline .pd-field-label {
         width: auto;
         min-width: auto;
         padding-top: 0;
@@ -757,6 +835,19 @@
     }
 
     .pd-pref-select {
+        width: 100%;
+    }
+
+    .pd-password-dots {
+        flex: 1 1 100%;
+    }
+
+    .pd-password-inline {
+        padding: 16px;
+    }
+
+    .pd-password-input-wrap {
+        max-width: none;
         width: 100%;
     }
 }
