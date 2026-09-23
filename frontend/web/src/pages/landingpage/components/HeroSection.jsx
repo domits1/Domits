@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { Banknote, ShieldCheck, Phone, BadgeCheck } from "lucide-react";
+import { useUser } from "../../../features/auth/UserContext";
 
 import airbnbLogo from "../../../images/airbnb-logo.svg";
 import bookingLogo from "../../../images/booking-logo.svg";
@@ -14,9 +15,11 @@ import checkIcon from "../../../images/check-icon.svg";
 
 function HeroSection({ landingContent }) {
   const navigate = useNavigate();
+  const { role } = useUser() || {};
   const h = landingContent.hero;
 
-  const handleStartHosting = () => navigate("/register");
+  // NOTE: role loads async on mount, so a host could still briefly land on /register if they click before it resolves.
+  const handleStartHosting = () => navigate(role === "Host" ? "/hostdashboard" : "/register");
 
   return (
     <section className="hero">

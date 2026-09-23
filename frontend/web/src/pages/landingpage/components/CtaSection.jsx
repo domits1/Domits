@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
+import { useUser } from "../../../features/auth/UserContext";
 
 function CtaSection({ content }) {
   const navigate = useNavigate();
+  const { role } = useUser() || {};
 
-  const handleStartHosting = () => navigate("/register");
+  // NOTE: role loads async on mount, so a host could still briefly land on /register if they click before it resolves.
+  const handleStartHosting = () => navigate(role === "Host" ? "/hostdashboard" : "/register");
 
   return (
     <motion.section

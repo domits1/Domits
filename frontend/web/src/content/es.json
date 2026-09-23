@@ -1053,7 +1053,9 @@
       },
       "manage": {
         "title": "¿Cómo creo y gestiono mi cuenta de anfitrión?",
-        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón 'Sé un anfitrión' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
+        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón '",
+        "becomeHost": "Sé un anfitrión",
+        "description2": "' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
       },
       "payout": {
         "title": "Cómo funcionan los pagos y los impuestos",
@@ -1061,7 +1063,15 @@
       },
       "calendar": {
         "title": "Cómo gestionar tu calendario y reservas",
-        "description": "Una próxima función te permitirá gestionar tus reservas de manera más eficiente directamente desde el panel. ¡Mantente atento a las novedades!"
+        "description": "Puedes gestionar todo desde el Panel de Anfitrión: aceptar o rechazar reservas, y establecer tu disponibilidad y precios por fecha."
+      },
+      "cost": {
+        "title": "¿Cuánto cuesta?",
+        "description": "Domits es gratis de usar: sin costo por nuestro sistema de reservas, el panel o el sitio web de reserva directa. Solo cobramos una tarifa del 10% para el anfitrión por cada reserva realizada a través de Domits.com, lo que permite mantener la plataforma funcionando 24/7. ¿Necesitas más? Contáctanos para conocer complementos y precios empresariales."
+      },
+      "markets": {
+        "title": "¿En qué mercados operan?",
+        "description": "Domits está disponible para anfitriones y huéspedes en todo el mundo — puedes publicar tu propiedad sin importar dónde se encuentre."
       }
     },
     "advice": {

@@ -4,14 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe } from "lucide-react";
+import { useUser } from "../../../features/auth/UserContext";
 
 const CARD_ICONS = [ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe];
 const CARD_KEYS = ["verified", "rules", "how", "payments", "support", "renting"];
 
 function RegisterSection({ content }) {
   const navigate = useNavigate();
+  const { role } = useUser() || {};
 
-  const handleRegisterProperty = () => navigate("/register");
+  // NOTE: role loads async on mount, so a host could still briefly land on /register if they click before it resolves.
+  const handleRegisterProperty = () => navigate(role === "Host" ? "/hostdashboard" : "/register");
 
   return (
     <motion.section
