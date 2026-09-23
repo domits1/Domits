@@ -142,6 +142,82 @@ describe("WebsiteCustomDomainService.requestCustomDomain", () => {
     expect(tenantRepository.createTenant).not.toHaveBeenCalled();
   });
 
+  it("answers domain_limit_reached with the winning domain when the insert loses the race on the per-site index", async () => {
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(buildRecord({ domain: "www.first.com" })),
+      ensureDomain: jest.fn().mockRejectedValue(
+        Object.assign(
+          new Error('duplicate key value violates unique constraint "standalone_site_domain_custom_site_unique"'),
+          {
+            code: "23505",
+            constraint: "standalone_site_domain_custom_site_unique",
+          }
+        )
+      ),
+    });
+    const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+      code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
+      statusCode: 409,
+      message: "This website already uses www.first.com. Remove it before connecting another domain.",
+    });
+    expect(domainRepository.getCustomDomainBySiteId).toHaveBeenCalledTimes(2);
+    expect(tenantRepository.createTenant).not.toHaveBeenCalled();
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("passes a unique violation on any other index through untouched", async () => {
+    const violation = Object.assign(
+      new Error('duplicate key value violates unique constraint "standalone_site_domain_unique"'),
+      {
+        code: "23505",
+        constraint: "standalone_site_domain_unique",
+      }
+    );
+    const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockRejectedValue(violation) });
+    const { service, eventRepository } = buildService({ domainRepository });
+
+    await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toBe(violation);
+    expect(domainRepository.getCustomDomainBySiteId).toHaveBeenCalledTimes(1);
+    expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps domain_limit_reached with generic wording and logs when the winning row cannot be reread", async () => {
+    const readFailure = new Error("connection reset");
+    const domainRepository = buildDomainRepository({
+      getCustomDomainBySiteId: jest.fn().mockResolvedValueOnce(null).mockRejectedValueOnce(readFailure),
+      ensureDomain: jest.fn().mockRejectedValue(
+        Object.assign(new Error("duplicate key"), {
+          code: "23505",
+          constraint: "standalone_site_domain_custom_site_unique",
+        })
+      ),
+    });
+    const { service, eventRepository } = buildService({ domainRepository });
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      await expect(service.requestCustomDomain({ site: SITE, domain: DOMAIN })).rejects.toMatchObject({
+        code: WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_LIMIT_REACHED,
+        statusCode: 409,
+        message: "This website already has a custom domain. Remove it before connecting another domain.",
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `[CustomDomain] reading the winning custom domain failed after a duplicate claim (site ${SITE.id}).`
+        ),
+        readFailure
+      );
+      expect(eventRepository.recordEvent).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it("answers domain_taken and changes nothing when a delayed claim finds the row now belongs to another site", async () => {
     const domainRepository = buildDomainRepository({ ensureDomain: jest.fn().mockResolvedValue(null) });
     const { service, tenantRepository, eventRepository } = buildService({ domainRepository });
