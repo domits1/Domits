@@ -19,7 +19,7 @@ const HostRevenues = () => {
   const [availableNights, setAvailableNights] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
-  const [adr, setAdr] = useState(0);
+  const [adr, setAdr] = useState(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -83,7 +83,10 @@ const HostRevenues = () => {
         const nextNights = nights ?? 0;
         const nextAvailable = available ?? 0;
         const nextProperties = properties ?? 0;
-        const nextAdr = Number(kpiAll?.averageDailyRate ?? 0);
+        // kpiAll is null when the ADR fetch itself failed (distinct from a
+        // legitimate 0 rate) - keep that distinction so Gross Missed Revenue
+        // can show "unavailable" instead of implying nothing was missed.
+        const nextAdr = kpiAll == null ? null : Number(kpiAll?.averageDailyRate ?? 0);
 
         const changed =
           lastRef.current.revenue !== nextRevenue ||
@@ -157,19 +160,27 @@ const HostRevenues = () => {
 
   const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
   const unbookedNights = Math.max(availableNights - bookedNights, 0);
-  const grossMissedRevenue = adr * unbookedNights;
+  const grossMissedRevenue = adr == null ? null : adr * unbookedNights;
+  const grossMissedRevenueDisplay =
+    grossMissedRevenue == null
+      ? "–"
+      : `€${grossMissedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
   const handleDownloadReport = () => {
-    const year = new Date().getFullYear();
+    const now = new Date();
+    // These figures are the current calendar month (HostRevenueService/HostKpiAllService
+    // both default to filterType="monthly"), not the calendar year - label accordingly.
+    const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+    const monthSlug = now.toLocaleString("en-US", { month: "long" }).toLowerCase();
     const rows = [
       ["Metric", "Value"],
-      ["Year", year],
+      ["Month", monthLabel],
       ["Total Revenue (EUR)", totalRevenue],
       ["Booked Nights", bookedNights],
       ["Available Nights", availableNights],
       ["Total Properties", propertyCount],
       ["Occupancy Rate (%)", occupancyRate.toFixed(2)],
-      ["Gross Missed Revenue (EUR)", grossMissedRevenue.toFixed(2)],
+      ["Gross Missed Revenue (EUR)", grossMissedRevenue == null ? "N/A" : grossMissedRevenue.toFixed(2)],
     ];
 
     const csvContent = rows.map((row) => row.join(",")).join("\n");
@@ -178,7 +189,7 @@ const HostRevenues = () => {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `yearly-revenue-report-${year}.csv`;
+    link.download = `monthly-revenue-report-${monthSlug}-${now.getFullYear()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -199,8 +210,10 @@ const HostRevenues = () => {
 
   return (
     <main className="hr-page-body hr-container">
-      <h2>Yearly Revenue</h2>
-      <p className="hr-subtitle">Track your earning and key performance indicators for your vacation rentals.</p>
+      <h2>Monthly Revenue</h2>
+      <p className="hr-subtitle">
+        Track this month's earnings and key performance indicators for your vacation rentals.
+      </p>
 
       <section className="hr-host-revenues">
         <div className="hr-content">
@@ -223,7 +236,7 @@ const HostRevenues = () => {
                 icon={<FaExclamationTriangle />}
                 tone="warning"
                 title="Gross Missed Revenue"
-                value={`€${grossMissedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                value={grossMissedRevenueDisplay}
               />
             </div>
             {availableNights > 0 && (
@@ -245,7 +258,7 @@ const HostRevenues = () => {
           </div>
 
           <div className="hr-report-card">
-            <p className="hr-report-text">Export a CSV summary of your yearly revenue and performance data.</p>
+            <p className="hr-report-text">Export a CSV summary of this month's revenue and performance data.</p>
             <button type="button" className="hr-download-btn" onClick={handleDownloadReport}>
               Download Report
             </button>
