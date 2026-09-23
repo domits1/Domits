@@ -556,6 +556,18 @@ class MessageService {
     return { statusCode: 200, response: { threadId, updated } };
   }
 
+  async markThreadUnread(threadId, authenticatedUser) {
+    if (!threadId) throw badRequest("threadId is required.");
+    const thread = await this.threadRepository.getThreadById(threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+    const message = await this.messageRepository.getLatestIncomingMessage(threadId, authenticatedUser.userId);
+    if (!message) {
+      return { statusCode: 200, response: { threadId, updated: 0 } };
+    }
+    const updated = await this.messageRepository.markMessageUnread(message.id);
+    return { statusCode: 200, response: { threadId, updated } };
+  }
+
   async getThreads(authenticatedUser) {
     const threads = await this.threadRepository.getThreadsForUser(authenticatedUser.userId);
     const visible = [];
