@@ -164,4 +164,176 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.grossMissedRevenue).toBe(100);
     expect(result.unbookedNightsWithPriceData).toBe(1);
   });
+
+  test("sums actual revenue from a booking wholly inside the range", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-03T00:00:00Z"), // 2 nights
+          total_price: 200,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(200);
+  });
+
+  test("prorates actual revenue for a booking that spans the range boundary", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          // 10-night booking, 2026-08-30 -> 2026-09-09, total_price=1000 => 100/night.
+          // Range 2026-09-01 -> 2026-09-02 is inclusive on both ends (matches
+          // validateDateRange/defaultMonthRange), so only those 2 nights count.
+          arrivaldate: Date.parse("2026-08-30T00:00:00Z"),
+          departuredate: Date.parse("2026-09-09T00:00:00Z"),
+          total_price: 1000,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-02");
+
+    expect(result.actualRevenue).toBe(200);
+  });
+
+  test("contributes zero actual revenue for a booking wholly outside the range", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-08-01T00:00:00Z"),
+          departuredate: Date.parse("2026-08-03T00:00:00Z"),
+          total_price: 200,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(0);
+  });
+
+  test("nets actual revenue against refunded_amount, converting cents to euros", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 300,
+          refunded_amount: 10000, // cents => 100 EUR
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(200);
+  });
+
+  test("treats a null total_price as zero actual revenue without throwing", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: null,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(0);
+  });
+
+  test.each([
+    ["Confirmed", true],
+    ["Accepted", true],
+    ["Paid", true],
+    ["Completed", true],
+    ["cancelled", false],
+    ["Inquiry", false],
+    ["Awaiting Payment", false],
+  ])("a booking with status %p contributes to actual revenue: %s", async (status, contributes) => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status,
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 100,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(contributes ? 100 : 0);
+  });
+
+  test("clamps actual revenue at zero when a refund exceeds the booking's total_price", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 100,
+          refunded_amount: 20000, // cents => 200 EUR, exceeds total_price
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(0);
+  });
+
+  test("sums actual revenue from two overlapping bookings on the same property/night without deduping", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 100,
+        },
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 150,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(250);
+  });
 });

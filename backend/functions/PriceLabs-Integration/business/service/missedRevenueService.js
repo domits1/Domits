@@ -49,6 +49,49 @@ function bookedDateSetByProperty(bookings) {
 }
 
 /**
+ * Prorates each booking's total_price evenly across its nights and sums the
+ * nights that fall within [startDate, endDate], per property. Not gated on
+ * priceRows/PriceLabs sync coverage: a booking can predate the PriceLabs
+ * connection, and gating actual revenue on that would understate real money.
+ *
+ * total_price is stored in euros; refunded_amount is stored in cents (see
+ * General-Bookings-CRUD-Bookings-develop/data/stripeRepository.js and
+ * reservationController.js), so refunds are converted before netting.
+ */
+function actualRevenueByProperty(bookings, startDate, endDate) {
+  const rangeStartMs = Date.parse(`${startDate}T00:00:00Z`);
+  const rangeEndMs = Date.parse(`${endDate}T00:00:00Z`) + MS_PER_DAY; // exclusive
+
+  const byProperty = new Map();
+  let total = 0;
+
+  for (const b of bookings) {
+    if (!isBookedStatus(b.status)) continue;
+    const start = isoFromTimestamp(b.arrivaldate);
+    const end = isoFromTimestamp(b.departuredate);
+    if (!start || !end) continue;
+
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs = Date.parse(`${end}T00:00:00Z`);
+    const totalNights = Math.round((endMs - startMs) / MS_PER_DAY);
+    if (totalNights <= 0) continue;
+
+    // Clamped at 0: an over-refund (refunded_amount > total_price) is a data
+    // anomaly, not a real negative revenue contribution to show on a KPI card.
+    const netTotal = Math.max(0, (Number(b.total_price) || 0) - (Number(b.refunded_amount) || 0) / 100);
+    const nightlyShare = netTotal / totalNights;
+
+    for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) {
+      if (ms < rangeStartMs || ms >= rangeEndMs) continue;
+      total += nightlyShare;
+      byProperty.set(b.property_id, (byProperty.get(b.property_id) ?? 0) + nightlyShare);
+    }
+  }
+
+  return { total, byProperty };
+}
+
+/**
  * A calendar row does not represent real missed revenue when the host has taken
  * it off the market themselves: blocked, stop-sell, ignored by PriceLabs, or the
  * property isn't live.
@@ -89,6 +132,7 @@ export class MissedRevenueService {
     ]);
 
     const bookedByProperty = bookedDateSetByProperty(bookings);
+    const { total: actualRevenue } = actualRevenueByProperty(bookings, startDate, endDate);
 
     let grossMissedRevenue = 0;
     let unbookedNightsWithPriceData = 0;
@@ -127,6 +171,7 @@ export class MissedRevenueService {
       endDate,
       currency: "EUR",
       grossMissedRevenue,
+      actualRevenue,
       unbookedNightsWithPriceData,
       unbookedNightsWithoutPriceData,
       priceDataCoveragePct,
