@@ -21,7 +21,11 @@ import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
+  isMissingPublishedWebsiteError,
 } from "./services/websitePublicSiteService";
+import { buildWebsiteHeadTags } from "./seo/websiteHeadTags";
+import { useWebsiteHeadTags } from "./seo/useWebsiteHeadTags";
+import { resolveDirectBookingWebsiteSurface } from "./directBookingWebsiteSurface";
 import {
   subscribeToWebsiteLiveSiteUpdates,
   WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE,
@@ -97,6 +101,7 @@ function WebsitePublicSitePage() {
   const [renderPayload, setRenderPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [isMissingPublishedWebsite, setIsMissingPublishedWebsite] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refreshRetryIntervalRef = useRef(null);
   const refreshRetryTimeoutRef = useRef(null);
@@ -118,6 +123,7 @@ function WebsitePublicSitePage() {
     const loadPublishedWebsite = async () => {
       setIsLoading(true);
       setLoadError("");
+      setIsMissingPublishedWebsite(false);
 
       try {
         const nextRenderPayload = await fetchPublicWebsiteRenderModel({
@@ -159,6 +165,7 @@ function WebsitePublicSitePage() {
         setResolution(null);
         setRenderPayload(null);
         setLoadError(error?.message || "We could not load this published website.");
+        setIsMissingPublishedWebsite(isMissingPublishedWebsiteError(error));
         setIsLoading(false);
       }
     };
@@ -210,6 +217,42 @@ function WebsitePublicSitePage() {
     renderPayload,
     resolution,
     requestedDomain: resolvedDomain || requestedDomain,
+  });
+
+  const isDirectBookingWebsiteHost = resolveDirectBookingWebsiteSurface({
+    hostname: globalThis.location?.hostname || "",
+    pathname: globalThis.location?.pathname || "",
+  }).isHost;
+  const websiteHeadTags = useMemo(() => {
+    if (!isDirectBookingWebsiteHost) {
+      return buildWebsiteHeadTags({ model: publicModel, isDirectBookingHost: false });
+    }
+
+    if (canRenderPublishedSite) {
+      return buildWebsiteHeadTags({ model: publicModel, fallbackTitle: unavailableWebsiteTitle });
+    }
+
+    if (isLoading) {
+      return null;
+    }
+
+    return buildWebsiteHeadTags({
+      fallbackTitle: unavailableWebsiteTitle,
+      isUnavailable: true,
+      isMissing: isMissingPublishedWebsite,
+    });
+  }, [
+    canRenderPublishedSite,
+    isDirectBookingWebsiteHost,
+    isLoading,
+    isMissingPublishedWebsite,
+    publicModel,
+    unavailableWebsiteTitle,
+  ]);
+
+  useWebsiteHeadTags({
+    key: resolvedSiteId || resolvedDomain || requestedDomain,
+    tags: websiteHeadTags,
   });
 
   const clearRefreshRetryWindow = useCallback(() => {
@@ -298,14 +341,6 @@ function WebsitePublicSitePage() {
       clearRefreshRetryWindow();
     };
   }, [clearRefreshRetryWindow]);
-
-  useEffect(() => {
-    if (!publicModel?.site?.title) {
-      return;
-    }
-
-    document.title = publicModel.site.title;
-  }, [publicModel?.site?.title]);
 
   useEffect(() => {
     const publishedSiteId = String(renderPayload?.site?.id || "").trim();

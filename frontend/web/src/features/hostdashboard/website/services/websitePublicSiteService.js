@@ -1,6 +1,21 @@
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 
+const MISSING_PUBLISHED_WEBSITE_STATUSES = new Set([404, 410]);
+const PUBLIC_WEBSITE_REQUEST_ERROR_NAME = "PublicWebsiteRequestError";
+
+export class PublicWebsiteRequestError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = PUBLIC_WEBSITE_REQUEST_ERROR_NAME;
+    this.status = Number(status) || 0;
+  }
+}
+
+export const isMissingPublishedWebsiteError = (error) =>
+  error?.name === PUBLIC_WEBSITE_REQUEST_ERROR_NAME &&
+  MISSING_PUBLISHED_WEBSITE_STATUSES.has(Number(error.status));
+
 const buildPublicWebsiteResolveUrl = (domain) =>
   `${PROPERTY_API_BASE}/website/public/resolve?domain=${encodeURIComponent(domain)}`;
 const buildPublicWebsiteRenderUrl = ({ siteId, domain }) => {
@@ -63,7 +78,7 @@ export const fetchPublicWebsiteSiteResolution = async (domain) => {
 
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(response, "We could not resolve this published website.");
-    throw new Error(errorMessage);
+    throw new PublicWebsiteRequestError(errorMessage, response.status);
   }
 
   return normalizePublicWebsiteResolution(await response.json());
@@ -89,7 +104,7 @@ export const fetchPublicWebsiteRenderModel = async ({ siteId = "", domain = "" }
 
   if (!response.ok) {
     const errorMessage = await getApiErrorMessage(response, "We could not load this published website.");
-    throw new Error(errorMessage);
+    throw new PublicWebsiteRequestError(errorMessage, response.status);
   }
 
   return normalizePublicWebsiteRenderPayload(await response.json());
