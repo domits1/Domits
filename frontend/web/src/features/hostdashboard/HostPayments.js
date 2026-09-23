@@ -20,8 +20,7 @@ const HostRevenues = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
   const [adr, setAdr] = useState(null);
-
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [monthlyKpiAll, setMonthlyKpiAll] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,12 +87,9 @@ const HostRevenues = () => {
         // can show "unavailable" instead of implying nothing was missed.
         const nextAdr = kpiAll == null ? null : Number(kpiAll?.averageDailyRate ?? 0);
 
-        const changed =
-          lastRef.current.revenue !== nextRevenue ||
-          lastRef.current.nights !== nextNights ||
-          lastRef.current.available !== nextAvailable ||
-          lastRef.current.properties !== nextProperties ||
-          lastRef.current.adr !== nextAdr;
+        // Passed whole to MonthlyComparison so it doesn't need its own
+        // redundant metric=all fetch for the same current-month data.
+        setMonthlyKpiAll(kpiAll ?? null);
 
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);
@@ -115,8 +111,6 @@ const HostRevenues = () => {
           setAdr(nextAdr);
           lastRef.current.adr = nextAdr;
         }
-
-        if (changed) setRefreshKey((k) => k + 1);
       } catch (err) {
         if (isMountedRef.current && !silent) {
           setError("Failed to fetch revenue data");
@@ -250,7 +244,7 @@ const HostRevenues = () => {
           <div className="hr-monthly-comparison">
             <MonthlyComparison
               hostId={cognitoUserId}
-              refreshKey={refreshKey}
+              kpiAll={monthlyKpiAll}
               totalRevenue={totalRevenue}
               bookedNights={bookedNights}
               availableNights={availableNights}

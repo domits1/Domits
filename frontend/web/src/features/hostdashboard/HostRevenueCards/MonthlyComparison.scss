@@ -195,4 +195,33 @@ $card-shadow: rgba(0, 0, 0, 0.1);
       border-color: $accent-color;
     }
   }
+
+  .mc-chart-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .mc-chart-title {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-dark;
+  }
+
+  .mc-chart {
+    position: relative;
+    width: 100%;
+  }
+
+  .mc-no-data-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $text-muted;
+    font-size: 14px;
+    background: rgba(249, 249, 249, 0.6);
+  }
 }

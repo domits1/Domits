@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import "./MonthlyComparison.scss";
 
 import { HostKpiAllService } from "../services/HostKpiAllService";
+
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const METRIC_INFO = {
   OCC: { label: "Occupancy Rate", key: "occ", format: (v) => `${Number(v).toFixed(1)}%` },
@@ -10,94 +13,102 @@ const METRIC_INFO = {
   ALOS: { label: "Average Length of Stay", key: "alos", format: (v) => `${Number(v).toFixed(1)} nights` },
 };
 
-const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights = 0, availableNights = 0 }) => {
-  const [selectedMetric, setSelectedMetric] = useState("OCC");
-  const [metrics, setMetrics] = useState({ occ: 0, adr: 0, revpar: 0, alos: 0 });
+const getMonthRange = (year, monthIndex) => {
+  const start = new Date(year, monthIndex, 1);
+  const end = new Date(year, monthIndex + 1, 0);
+  const format = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { start: format(start), end: format(end) };
+};
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const extractAlos = (raw) => Number(raw?.averageLengthOfStay?.averageLengthOfStay ?? raw?.averageLengthOfStay ?? 0);
+
+const yTickFormatter = (selectedMetric) => (v) =>
+  selectedMetric === "ALOS" ? `${v}` : selectedMetric === "OCC" ? `${v}%` : `€${v}`;
+
+const tooltipFormatter = (selectedMetric) => (v) =>
+  selectedMetric === "ALOS" ? `${v} nights` : selectedMetric === "OCC" ? `${v}%` : `€${v}`;
+
+const MonthlyComparison = ({ hostId, kpiAll, totalRevenue = 0, bookedNights = 0, availableNights = 0 }) => {
+  const [selectedMetric, setSelectedMetric] = useState("OCC");
+  const [monthlyTrend, setMonthlyTrend] = useState({ occ: [], adr: [], revpar: [], alos: [] });
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendError, setTrendError] = useState(null);
 
   const isMountedRef = useRef(false);
-  const fetchingRef = useRef(false);
-  const refreshTimerRef = useRef(null);
-
-  const getCurrentMonthRange = () => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const format = (d) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { start: format(start), end: format(end) };
-  };
+  // The 12-month trend only needs to load once per host, not on every parent
+  // poll tick (that data doesn't change meaningfully every 2 seconds, and the
+  // old implementation refetching it on every refresh was a major source of
+  // redundant API calls).
+  const trendFetchedForHostRef = useRef(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
   }, []);
 
-  const fetchMetrics = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!hostId) return;
+  const fetchMonthlyTrend = useCallback(async () => {
+    if (!hostId) return;
+    if (trendFetchedForHostRef.current === hostId) return;
+    trendFetchedForHostRef.current = hostId;
+
+    setTrendLoading(true);
+    setTrendError(null);
+
+    try {
+      const year = new Date().getFullYear();
+      const results = await Promise.all(
+        Array.from({ length: 12 }, (_, monthIndex) => {
+          const { start, end } = getMonthRange(year, monthIndex);
+          return HostKpiAllService.fetchAll(hostId, "custom", start, end);
+        })
+      );
+
       if (!isMountedRef.current) return;
-      if (fetchingRef.current) return;
 
-      fetchingRef.current = true;
-      setError(null);
+      const occ = [];
+      const adr = [];
+      const revpar = [];
+      const alos = [];
 
-      if (!silent) setLoading(true);
+      results.forEach((raw, monthIndex) => {
+        const month = SHORT_MONTHS[monthIndex];
+        occ.push({ month, value: Number(raw?.occupancyRate ?? 0) });
+        adr.push({ month, value: Number(raw?.averageDailyRate ?? 0) });
+        revpar.push({ month, value: Number(raw?.revenuePerAvailableRoom ?? 0) });
+        alos.push({ month, value: extractAlos(raw) });
+      });
 
-      try {
-        const { start, end } = getCurrentMonthRange();
-        const allRaw = await HostKpiAllService.fetchAll(hostId, "custom", start, end);
-
-        if (!isMountedRef.current) return;
-
-        const alosValRaw = allRaw?.averageLengthOfStay?.averageLengthOfStay ?? allRaw?.averageLengthOfStay ?? 0;
-
-        setMetrics({
-          occ: Number(allRaw?.occupancyRate ?? 0),
-          adr: Number(allRaw?.averageDailyRate ?? 0),
-          revpar: Number(allRaw?.revenuePerAvailableRoom ?? 0),
-          alos: Number(alosValRaw) || 0,
-        });
-
-        if (!silent) setError(null);
-      } catch {
-        if (!silent && isMountedRef.current) {
-          setError("Failed to fetch key metrics");
-        }
-      } finally {
-        fetchingRef.current = false;
-        if (!silent && isMountedRef.current) setLoading(false);
+      setMonthlyTrend({ occ, adr, revpar, alos });
+    } catch {
+      if (isMountedRef.current) {
+        trendFetchedForHostRef.current = null;
+        setTrendError("Failed to fetch monthly trend");
       }
-    },
-    [hostId]
-  );
+    } finally {
+      if (isMountedRef.current) setTrendLoading(false);
+    }
+  }, [hostId]);
 
   useEffect(() => {
-    if (!hostId) return;
-    fetchMetrics({ silent: false });
-  }, [hostId, fetchMetrics]);
-
-  useEffect(() => {
-    if (!hostId) return;
-
-    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    refreshTimerRef.current = setTimeout(() => {
-      fetchMetrics({ silent: true });
-    }, 300);
-
-    return () => {
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    };
-  }, [refreshKey, hostId, fetchMetrics]);
+    fetchMonthlyTrend();
+  }, [fetchMonthlyTrend]);
 
   const activeMetric = METRIC_INFO[selectedMetric];
+
+  const metrics = {
+    occ: Number(kpiAll?.occupancyRate ?? 0),
+    adr: Number(kpiAll?.averageDailyRate ?? 0),
+    revpar: Number(kpiAll?.revenuePerAvailableRoom ?? 0),
+    alos: extractAlos(kpiAll),
+  };
   const currentValue = metrics[activeMetric.key];
-  const hasData = Number(currentValue) !== 0;
+  const hasData = kpiAll != null && Number(currentValue) !== 0;
+
+  const trendData = monthlyTrend[activeMetric.key] || [];
+  const hasTrendData = trendData.some((point) => Number(point.value || 0) !== 0);
 
   const renderVisual = () => {
     if (selectedMetric === "OCC") {
@@ -168,14 +179,19 @@ const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights 
     return null;
   };
 
-  let content;
+  return (
+    <div className="mc-comparison-card">
+      <div className="mc-header">
+        <h3 className="mc-title">Key Metrics Detail</h3>
+        <div className="mc-toggle">
+          {["OCC", "ADR", "RevPAR", "ALOS"].map((m) => (
+            <button key={m} className={selectedMetric === m ? "active" : ""} onClick={() => setSelectedMetric(m)}>
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
 
-  if (loading) {
-    content = <div className="mc-status">Loading metrics…</div>;
-  } else if (error) {
-    content = <div className="mc-status error">{error}</div>;
-  } else {
-    content = (
       <div className="mc-summary">
         <div className="mc-summary-header">
           <span className="mc-metric-name">
@@ -197,23 +213,35 @@ const MonthlyComparison = ({ hostId, refreshKey, totalRevenue = 0, bookedNights 
 
         {renderVisual()}
       </div>
-    );
-  }
 
-  return (
-    <div className="mc-comparison-card">
-      <div className="mc-header">
-        <h3 className="mc-title">Key Metrics Detail</h3>
-        <div className="mc-toggle">
-          {["OCC", "ADR", "RevPAR", "ALOS"].map((m) => (
-            <button key={m} className={selectedMetric === m ? "active" : ""} onClick={() => setSelectedMetric(m)}>
-              {m}
-            </button>
-          ))}
-        </div>
+      <div className="mc-chart-section">
+        <h4 className="mc-chart-title">{activeMetric.label} this year</h4>
+        {trendLoading ? (
+          <div className="mc-status">Loading chart…</div>
+        ) : trendError ? (
+          <div className="mc-status error">{trendError}</div>
+        ) : (
+          <div className="mc-chart mc-chart-wrapper">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={yTickFormatter(selectedMetric)} />
+                <Tooltip formatter={tooltipFormatter(selectedMetric)} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#0d9813"
+                  strokeWidth={3}
+                  dot={{ r: 3 }}
+                  name={activeMetric.label}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            {!hasTrendData && <div className="mc-no-data-overlay">No data</div>}
+          </div>
+        )}
       </div>
-
-      {content}
     </div>
   );
 };
