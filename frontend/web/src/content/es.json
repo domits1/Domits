@@ -1138,6 +1138,11 @@
       "breadcrumb": "Incorporación",
       "title": "Incorporación",
       "subtitle": "Sigue el progreso de cada alojamiento, desde su creación hasta su publicación.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Empresa",
+        "navLabel": "Modo de incorporación"
+      },
       "propertyPicker": {
         "label": "Alojamiento",
         "loading": "Cargando tus alojamientos...",
@@ -1177,7 +1182,57 @@
       },
       "statusComplete": "Completado",
       "statusIncomplete": "Sin empezar",
-      "statusUnknown": "No se pudo comprobar el estado"
+      "statusUnknown": "No se pudo comprobar el estado",
+      "channelsComingSoon": "Próximamente",
+      "enterprise": {
+        "breadcrumb": "Incorporación empresarial",
+        "title": "Incorporación empresarial",
+        "subtitle": "Sigue el progreso de toda tu cartera, desde la configuración de la empresa hasta la publicación.",
+        "goLiveSection": {
+          "title": "Poner en marcha",
+          "desc": "Preparación de tus pasos obligatorios.",
+          "readyLabel": "Listo para poner en marcha",
+          "notReadyLabel": "Aún no está listo"
+        },
+        "steps": {
+          "company": {
+            "title": "Configurar empresa",
+            "desc": "Añade los datos de tu empresa para que huéspedes y socios puedan encontrarte."
+          },
+          "team": {
+            "title": "Miembros del equipo",
+            "desc": "Invita a tu equipo y asigna roles en toda tu cartera."
+          },
+          "listProperties": {
+            "title": "Publicar tus alojamientos",
+            "desc": "Gestiona y añade alojamientos en toda tu cartera."
+          },
+          "website": {
+            "title": "Crear sitios web de reserva directa",
+            "desc": "Crea sitios web de reservas propios para tus alojamientos."
+          },
+          "channels": {
+            "title": "Conectar canales",
+            "desc": "Sincroniza tus alojamientos con Airbnb, Booking.com, Vrbo y más."
+          },
+          "payments": {
+            "title": "Configurar pagos",
+            "desc": "Conecta Stripe para recibir pagos en toda tu cartera."
+          },
+          "pricing": {
+            "title": "Configurar precios dinámicos",
+            "desc": "Conecta PriceLabs para automatizar los precios en toda tu cartera."
+          },
+          "tasks": {
+            "title": "Configurar gestión de tareas",
+            "desc": "Organiza las tareas operativas de tus alojamientos."
+          },
+          "marketplace": {
+            "title": "Utilizar Marketplace",
+            "desc": "Descubre integraciones para hacer crecer tu negocio."
+          }
+        }
+      }
     },
     "goLive": {
       "breadcrumb": "Poner en marcha",

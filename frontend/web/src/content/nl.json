@@ -1138,6 +1138,11 @@
       "breadcrumb": "Onboarding",
       "title": "Onboarding",
       "subtitle": "Volg per woning de voortgang, van aanmelden tot livegang.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding modus"
+      },
       "propertyPicker": {
         "label": "Woning",
         "loading": "Je woningen worden geladen...",
@@ -1177,7 +1182,57 @@
       },
       "statusComplete": "Voltooid",
       "statusIncomplete": "Nog niet gestart",
-      "statusUnknown": "Status kon niet worden gecontroleerd"
+      "statusUnknown": "Status kon niet worden gecontroleerd",
+      "channelsComingSoon": "Binnenkort beschikbaar",
+      "enterprise": {
+        "breadcrumb": "Enterprise-onboarding",
+        "title": "Enterprise-onboarding",
+        "subtitle": "Volg de voortgang van je hele portefeuille, van bedrijfsinstellingen tot livegang.",
+        "goLiveSection": {
+          "title": "Live gaan",
+          "desc": "Gereedheid van je verplichte stappen.",
+          "readyLabel": "Klaar om live te gaan",
+          "notReadyLabel": "Nog niet klaar"
+        },
+        "steps": {
+          "company": {
+            "title": "Bedrijf instellen",
+            "desc": "Voeg je bedrijfsgegevens toe zodat gasten en partners je kunnen vinden."
+          },
+          "team": {
+            "title": "Teamleden",
+            "desc": "Nodig je team uit en wijs rollen toe binnen je portefeuille."
+          },
+          "listProperties": {
+            "title": "Woningen aanmelden",
+            "desc": "Beheer en voeg woningen toe binnen je portefeuille."
+          },
+          "website": {
+            "title": "Boekingswebsites bouwen",
+            "desc": "Maak eigen boekingswebsites voor je woningen."
+          },
+          "channels": {
+            "title": "Kanalen koppelen",
+            "desc": "Synchroniseer je woningen met Airbnb, Booking.com, Vrbo en meer."
+          },
+          "payments": {
+            "title": "Betalingen instellen",
+            "desc": "Koppel Stripe om uitbetalingen te ontvangen voor je hele portefeuille."
+          },
+          "pricing": {
+            "title": "Dynamische prijzen instellen",
+            "desc": "Koppel PriceLabs om prijzen automatisch aan te passen binnen je portefeuille."
+          },
+          "tasks": {
+            "title": "Taakbeheer instellen",
+            "desc": "Organiseer operationele taken voor je woningen."
+          },
+          "marketplace": {
+            "title": "Marketplace gebruiken",
+            "desc": "Ontdek integraties om je bedrijf te laten groeien."
+          }
+        }
+      }
     },
     "goLive": {
       "breadcrumb": "Live gaan",
