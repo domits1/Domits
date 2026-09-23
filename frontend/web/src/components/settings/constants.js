@@ -1,5 +1,4 @@
 export const PROFILE_PHOTO_MAX_SIZE = 4 * 1024 * 1024;
-
 export const PROFILE_UPLOAD_URL_ENDPOINT = process.env.REACT_APP_PROFILE_UPLOAD_URL_ENDPOINT || "https://chwuyn0b23.execute-api.eu-north-1.amazonaws.com/default";
 export const UPDATE_EMAIL_ENDPOINT = process.env.REACT_APP_UPDATE_EMAIL_ENDPOINT || "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail";
 export const UPDATE_NAME_ENDPOINT = process.env.REACT_APP_UPDATE_NAME_ENDPOINT || "https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName";
