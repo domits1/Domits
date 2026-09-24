@@ -56,6 +56,11 @@ export function RefreshFunctions() {
     isMountedRef.current = true;
 
     if (demoMode) {
+      const demoAccount = FINANCE_DEMO_DATA.account;
+      setAccountId(demoAccount.accountId);
+      setOnboardingComplete(demoAccount.onboardingComplete);
+      setChargesEnabled(demoAccount.chargesEnabled);
+      setPayoutsEnabled(demoAccount.payoutsEnabled);
       setCharges(FINANCE_DEMO_DATA.charges);
       setPayouts(FINANCE_DEMO_DATA.payouts);
       setHostBalance(FINANCE_DEMO_DATA.balance);
@@ -70,6 +75,11 @@ export function RefreshFunctions() {
         getPayoutSchedule: false,
         faqs: false,
       });
+
+      return () => {
+        isMountedRef.current = false;
+        clearTimeout(toastTimeoutRef.current);
+      };
     }
 
     (async () => {
@@ -159,7 +169,7 @@ export function RefreshFunctions() {
       isMountedRef.current = false;
       clearTimeout(toastTimeoutRef.current);
     };
-  }, []);
+  }, [demoMode]);
 
   async function refreshAccountSilent() {
     if (demoMode) return;
@@ -218,6 +228,11 @@ export function RefreshFunctions() {
   }
 
   async function handlePayoutSchedule() {
+    if (demoMode) {
+      showToast("Demo mode: payout schedule changes are not saved to Stripe.");
+      return;
+    }
+
     try {
       const period = String(payoutInterval || "").toLowerCase();
       const payload = { interval: period };
@@ -291,6 +306,11 @@ export function RefreshFunctions() {
   }, [hostBalance]);
 
   async function handleStripeAction() {
+    if (demoMode) {
+      showToast("Demo mode: Stripe actions are disabled.");
+      return;
+    }
+
     try {
       if (isProcessing) return;
       setIsProcessing(true);
