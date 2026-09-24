@@ -46,11 +46,28 @@
   "paths": {
     "/reviews": {
       "get": {
-        "security": [
+        "parameters": [
           {
-            "DomitsCognito": [
-              "aws.cognito.signin.user.admin"
-            ]
+            "name": "propertyId",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string",
+            "enum": ["recent", "highest", "lowest"]
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "type": "string",
+            "enum": ["true"]
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
