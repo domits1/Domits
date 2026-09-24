@@ -111,7 +111,9 @@ For reference, the same probe against the existing `domain` index on 2026-09-18 
 
 ## Post-index check B: what a losing claim gets from the real statement
 
-Production does not run a plain `INSERT` with an explicit `COMMIT`. `ensureDomain` runs `INSERT ... ON CONFLICT (domain) DO UPDATE ...` through `client.query`, one statement in autocommit, and two Lambdas racing means two of those statements overlapping in time. Blocks 8 and 9 use that exact statement text with literal values. They show two interleavings, not every schedule DSQL can produce, so the result is an observed case for those two shapes and nothing more.
+Production does not run a plain `INSERT` with an explicit `COMMIT`. `claimCustomDomain` runs `INSERT ... ON CONFLICT (domain) DO NOTHING ...` through a query runner, one statement in autocommit, and two Lambdas racing means two of those statements overlapping in time. Blocks 8 and 9 use that exact statement text with literal values. They show two interleavings, not every schedule DSQL can produce, so the result is an observed case for those two shapes and nothing more.
+
+The `DO NOTHING` clause only covers the `domain` index, so it never suppresses the per-site index this runbook is about: both probe rows below use different domains on the same site, which is exactly the collision the partial unique index has to raise. `ensureDomain`, which still runs `ON CONFLICT (domain) DO UPDATE`, is now used only for the fallback domain on publish, where a republish has to update the existing row.
 
 Case 1, insert-time failure (block 8, one session, autocommit):
 

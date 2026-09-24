@@ -68,6 +68,12 @@ const buildController = ({
     requestCustomDomain: jest.fn().mockResolvedValue(CUSTOM_DOMAIN),
     syncCustomDomain: jest.fn().mockResolvedValue({ ...CUSTOM_DOMAIN, status: "VERIFIED" }),
     removeCustomDomain: jest.fn().mockResolvedValue({ ...CUSTOM_DOMAIN, status: "REMOVING" }),
+    promoteCustomDomain: jest
+      .fn()
+      .mockResolvedValue([
+        { ...FALLBACK_DOMAIN, isPrimary: false },
+        { ...CUSTOM_DOMAIN, status: "ACTIVE", isPrimary: true },
+      ]),
     ...service,
   };
   return controller;
@@ -190,8 +196,13 @@ describe("GET /property/website/domains", () => {
 describe("DELETE /property/website/domains", () => {
   const removeQuery = { siteId: SITE.id, domain: "www.example.com" };
 
-  it("starts the removal for the site and domain in the query and returns the removing domain", async () => {
-    const controller = buildController();
+  it("starts the removal for the site and domain in the query and returns the refreshed domain list", async () => {
+    const controller = buildController({
+      domains: [
+        { ...FALLBACK_DOMAIN, isPrimary: true },
+        { ...CUSTOM_DOMAIN, status: "REMOVING", isPrimary: false },
+      ],
+    });
 
     const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
 
@@ -200,7 +211,10 @@ describe("DELETE /property/website/domains", () => {
       site: SITE,
       domain: "www.example.com",
     });
-    expect(parseBody(response).domain).toMatchObject({ domain: "www.example.com", status: "REMOVING" });
+    expect(parseBody(response).domains.map((entry) => [entry.domain, entry.status, entry.isPrimary])).toEqual([
+      [FALLBACK_DOMAIN.domain, expect.any(String), true],
+      ["www.example.com", "REMOVING", false],
+    ]);
   });
 
   it("refuses a remove without the domain the host is looking at", async () => {
@@ -215,13 +229,30 @@ describe("DELETE /property/website/domains", () => {
     expect(controller.websiteCustomDomainService.removeCustomDomain).not.toHaveBeenCalled();
   });
 
-  it("answers with a null domain once the record is gone", async () => {
+  it("answers domains_unavailable instead of internal_error when the list read fails after the removal committed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
+
+    expect(controller.websiteCustomDomainService.removeCustomDomain).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error).toEqual({
+      code: "domains_unavailable",
+      message: "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
+      requestId: "req-1",
+    });
+  });
+
+  it("answers the list without the custom entry once the record is gone", async () => {
     const controller = buildController({ service: { removeCustomDomain: jest.fn().mockResolvedValue(null) } });
 
     const response = await controller.removeWebsiteDomain(buildEvent({ method: "DELETE", query: removeQuery }));
 
     expect(response.statusCode).toBe(200);
-    expect(parseBody(response)).toEqual({ domain: null });
+    expect(parseBody(response).domains).toEqual([expect.objectContaining({ domainType: "FALLBACK" })]);
   });
 
   it("answers 404 for another host's site and never reaches the service", async () => {
@@ -325,14 +356,43 @@ describe("POST /property/website/domains", () => {
 });
 
 describe("POST /property/website/domains/verify", () => {
-  it("runs a sync and returns the refreshed domain", async () => {
-    const controller = buildController();
+  it("runs a sync and returns the refreshed domain list", async () => {
+    const controller = buildController({ domains: [FALLBACK_DOMAIN, { ...CUSTOM_DOMAIN, status: "VERIFIED" }] });
 
     const response = await controller.verifyWebsiteDomain(buildEvent({ method: "POST", body: { siteId: SITE.id } }));
 
     expect(response.statusCode).toBe(200);
     expect(controller.websiteCustomDomainService.syncCustomDomain).toHaveBeenCalledWith({ site: SITE });
-    expect(parseBody(response).domain.status).toBe("VERIFIED");
+    expect(parseBody(response).domains.map((entry) => [entry.domainType, entry.status])).toEqual([
+      ["FALLBACK", expect.any(String)],
+      ["CUSTOM", "VERIFIED"],
+    ]);
+    expect(JSON.stringify(parseBody(response))).not.toContain("dt_1");
+  });
+
+  it("answers domains_unavailable when the list read fails after the sync committed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.verifyWebsiteDomain(buildEvent({ method: "POST", body: { siteId: SITE.id } }));
+
+    expect(controller.websiteCustomDomainService.syncCustomDomain).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error.code).toBe("domains_unavailable");
+  });
+
+  it("keeps internal_error for a list read failure on GET, where nothing was changed", async () => {
+    const controller = buildController();
+    controller.directBookingWebsiteDomainRepository.listDomainsBySiteId = jest
+      .fn()
+      .mockRejectedValue(new Error("connection reset"));
+
+    const response = await controller.listWebsiteDomains(buildEvent({ query: { siteId: SITE.id } }));
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response).error.code).toBe("internal_error");
   });
 
   it("answers 404 when the site has no custom domain", async () => {
@@ -350,5 +410,69 @@ describe("POST /property/website/domains/verify", () => {
 
     expect(response.statusCode).toBe(404);
     expect(parseBody(response).error.code).toBe("domain_not_found");
+  });
+});
+
+describe("POST /property/website/domains/primary", () => {
+  const promoteBody = { siteId: SITE.id, domain: "www.example.com" };
+
+  it("moves the main address for the site and domain in the body and returns every domain as a host view", async () => {
+    const controller = buildController();
+
+    const response = await controller.promoteWebsiteDomain(buildEvent({ method: "POST", body: promoteBody }));
+
+    expect(response.statusCode).toBe(200);
+    expect(controller.websiteCustomDomainService.promoteCustomDomain).toHaveBeenCalledWith({
+      site: SITE,
+      domain: "www.example.com",
+    });
+    const body = parseBody(response);
+    expect(body.siteId).toBe(SITE.id);
+    expect(body.domains.map((entry) => [entry.domain, entry.isPrimary])).toEqual([
+      [FALLBACK_DOMAIN.domain, false],
+      ["www.example.com", true],
+    ]);
+    expect(body.domains[1]).not.toHaveProperty("verificationDetails");
+    expect(JSON.stringify(body)).not.toContain("dt_1");
+  });
+
+  it("refuses a promote without the domain the host is looking at", async () => {
+    const controller = buildController();
+
+    const response = await controller.promoteWebsiteDomain(buildEvent({ method: "POST", body: { siteId: SITE.id } }));
+
+    expect(response.statusCode).toBe(400);
+    expect(parseBody(response).error.code).toBe("invalid_domain");
+    expect(controller.websiteCustomDomainService.promoteCustomDomain).not.toHaveBeenCalled();
+  });
+
+  it("passes a not-live refusal through as 409 domain_not_active", async () => {
+    const controller = buildController({
+      service: {
+        promoteCustomDomain: jest
+          .fn()
+          .mockRejectedValue(
+            new WebsiteCustomDomainError(
+              WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+              "www.example.com must be live before it can be the main address."
+            )
+          ),
+      },
+    });
+
+    const response = await controller.promoteWebsiteDomain(buildEvent({ method: "POST", body: promoteBody }));
+
+    expect(response.statusCode).toBe(409);
+    expect(parseBody(response).error).toMatchObject({ code: "domain_not_active", requestId: "req-1" });
+  });
+
+  it("answers 404 for another host's site and never reaches the service", async () => {
+    const controller = buildController({ authorizedHostId: "host-2" });
+
+    const response = await controller.promoteWebsiteDomain(buildEvent({ method: "POST", body: promoteBody }));
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response).error.code).toBe("site_not_found");
+    expect(controller.websiteCustomDomainService.promoteCustomDomain).not.toHaveBeenCalled();
   });
 });

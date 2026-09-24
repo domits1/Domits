@@ -4,7 +4,6 @@ import {
   WebsiteCustomDomainError,
 } from "../../util/exception/WebsiteCustomDomainError.js";
 
-const DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const DOMAIN_STATUS = Object.freeze({
   PENDING: "PENDING",
   VERIFIED: "VERIFIED",
@@ -24,6 +23,7 @@ const CLOUDFRONT_DOMAIN_STATUS_ACTIVE = "active";
 const CLOUDFRONT_TENANT_STATUS_DEPLOYED = "Deployed";
 const REASON_REMOVAL_REQUESTED = "removal_requested";
 const EVENT_DOMAIN_REMOVED = "SITE_DOMAIN_REMOVED";
+const EVENT_DOMAIN_PROMOTED = "SITE_DOMAIN_PROMOTED";
 const DNS_STATUS_VALID = "valid-configuration";
 const SDK_ERROR_DOMAIN_IN_USE = "CNAMEAlreadyExists";
 const SDK_ERROR_TENANT_NAME_EXISTS = "EntityAlreadyExists";
@@ -345,27 +345,27 @@ export class WebsiteCustomDomainService {
       return this.syncCustomDomain({ site, domainRecord: existingRecord });
     }
 
-    const record = await this.storeCustomDomainClaim({ site, normalizedDomain, existingRecord });
+    const { record, created } = await this.storeCustomDomainClaim({ site, normalizedDomain, existingRecord });
 
-    await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
-      siteId: site.id,
-      domain: normalizedDomain,
-      status: DOMAIN_STATUS.PENDING,
-      tenantId: null,
-    });
+    if (created) {
+      await this.recordEventSafely(site, EVENT_DOMAIN_REQUESTED, {
+        siteId: site.id,
+        domain: normalizedDomain,
+        status: DOMAIN_STATUS.PENDING,
+        tenantId: null,
+      });
+    }
 
     return record;
   }
 
   async storeCustomDomainClaim({ site, normalizedDomain, existingRecord }) {
-    let record;
+    let claim;
     try {
-      record = await this.domainRepository.ensureDomain({
+      claim = await this.domainRepository.claimCustomDomain({
         siteId: site.id,
         domain: normalizedDomain,
-        domainType: DOMAIN_TYPE_CUSTOM,
         status: DOMAIN_STATUS.PENDING,
-        isPrimary: false,
         verificationDetails: this.buildVerificationDetails({
           previous: existingRecord?.verificationDetails,
           domain: normalizedDomain,
@@ -380,14 +380,21 @@ export class WebsiteCustomDomainService {
       throw domainLimitReachedError(await this.readWinningCustomDomain(site));
     }
 
-    if (!record) {
+    if (!claim?.record) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.SYNC_FAILED,
+        `Could not connect ${normalizedDomain} just now. Check again in a moment.`
+      );
+    }
+
+    if (claim.record.siteId !== site.id) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_TAKEN,
         `${normalizedDomain} was connected to another website while it was being set up.`
       );
     }
 
-    return record;
+    return claim;
   }
 
   async readWinningCustomDomain(site) {
@@ -522,17 +529,21 @@ export class WebsiteCustomDomainService {
       domain: record.domain,
       currentStatus: record.status,
     });
-    const updatedRecord = await this.domainRepository.updateDomainStatusById(
-      record.id,
-      site.id,
-      status,
-      this.buildVerificationDetails({
-        previous: record.verificationDetails,
-        domain: record.domain,
-        ...cloudFrontState,
-        reason,
-      })
-    );
+    const verificationDetails = this.buildVerificationDetails({
+      previous: record.verificationDetails,
+      domain: record.domain,
+      ...cloudFrontState,
+      reason,
+    });
+    const updatedRecord =
+      status === DOMAIN_STATUS.ACTIVE
+        ? await this.domainRepository.updateDomainStatusById(record.id, site.id, status, verificationDetails)
+        : await this.applyStatusAndRestoreFallback({
+            domainId: record.id,
+            siteId: site.id,
+            status,
+            verificationDetails,
+          });
     if (!updatedRecord) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
@@ -556,6 +567,24 @@ export class WebsiteCustomDomainService {
       throw new TypeError("Missing website site.");
     }
 
+    const record = await this.findStoredCustomDomain({ site, domain });
+
+    try {
+      return await this.startRemoval({ site, record });
+    } catch (error) {
+      if (isForeignTenantError(error)) {
+        throw error;
+      }
+      logCloudFrontFailure({ operation: "Starting the removal", domain: record.domain, siteId: site.id, error });
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
+        `Could not remove ${record.domain}.`,
+        { cause: error }
+      );
+    }
+  }
+
+  async findStoredCustomDomain({ site, domain }) {
     const record = await this.domainRepository.getCustomDomainBySiteId(site.id);
     if (!record) {
       throw new WebsiteCustomDomainError(
@@ -573,20 +602,75 @@ export class WebsiteCustomDomainService {
         `${requestedDomain || "That domain"} is no longer this website's custom domain.`
       );
     }
+    return record;
+  }
 
-    try {
-      return await this.startRemoval({ site, record });
-    } catch (error) {
-      if (isForeignTenantError(error)) {
-        throw error;
-      }
-      logCloudFrontFailure({ operation: "Starting the removal", domain: record.domain, siteId: site.id, error });
+  async promoteCustomDomain({ site, domain }) {
+    if (!site?.id) {
+      throw new TypeError("Missing website site.");
+    }
+
+    const record = await this.findStoredCustomDomain({ site, domain });
+    if (record.status !== DOMAIN_STATUS.ACTIVE) {
       throw new WebsiteCustomDomainError(
-        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_REMOVE_FAILED,
-        `Could not remove ${record.domain}.`,
-        { cause: error }
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+        `${record.domain} must be live before it can be the main address.`
       );
     }
+    if (record.isPrimary) {
+      return this.domainRepository.listDomainsBySiteId(site.id);
+    }
+
+    const changedRecords = await this.domainRepository.promoteDomainToPrimary(site.id, record.id);
+    const promotedRecord = changedRecords.find((entry) => entry.id === record.id && entry.isPrimary);
+    if (!promotedRecord) {
+      await this.confirmPromotedMeanwhile({ site, record });
+      return this.domainRepository.listDomainsBySiteId(site.id);
+    }
+
+    await this.recordEventSafely(site, EVENT_DOMAIN_PROMOTED, {
+      siteId: site.id,
+      domain: record.domain,
+      previousPrimaryDomain: changedRecords.find((entry) => !entry.isPrimary)?.domain || null,
+    });
+
+    return this.domainRepository.listDomainsBySiteId(site.id);
+  }
+
+  async confirmPromotedMeanwhile({ site, record }) {
+    const currentRecord = await this.domainRepository.getCustomDomainBySiteId(site.id);
+    if (!currentRecord || currentRecord.id !== record.id) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
+        `${record.domain} is no longer this website's custom domain.`
+      );
+    }
+    if (currentRecord.status !== DOMAIN_STATUS.ACTIVE) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_ACTIVE,
+        `${record.domain} is no longer live, so it cannot be the main address.`
+      );
+    }
+    if (!currentRecord.isPrimary) {
+      throw new WebsiteCustomDomainError(
+        WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.PRIMARY_CHANGED,
+        "The main address of this website changed while this request was running. Check again to see the current one."
+      );
+    }
+  }
+
+  async applyStatusAndRestoreFallback({ domainId, siteId, status, verificationDetails }) {
+    const { record, changedRecords } = await this.domainRepository.updateDomainStatusAndRestoreFallbackById(
+      domainId,
+      siteId,
+      status,
+      verificationDetails
+    );
+    if (!record) {
+      return null;
+    }
+
+    return changedRecords.find((entry) => entry.id === record.id) || record;
   }
 
   async refuseForeignTenant({ record, tenant }) {
@@ -653,7 +737,9 @@ export class WebsiteCustomDomainService {
 
   async finishRemovalWhenDeployed({ site, record, tenant }) {
     if (tenant && tenant.status !== CLOUDFRONT_TENANT_STATUS_DEPLOYED) {
-      return record.status === DOMAIN_STATUS.REMOVING ? record : this.markDomainRemoving({ record, tenant });
+      return record.status === DOMAIN_STATUS.REMOVING && !record.isPrimary
+        ? record
+        : this.markDomainRemoving({ record, tenant });
     }
     if (tenant) {
       await this.tenantRepository.deleteTenant({ tenantId: tenant.id, etag: tenant.etag });
@@ -662,17 +748,17 @@ export class WebsiteCustomDomainService {
   }
 
   async markDomainRemoving({ record, tenant }) {
-    const removingRecord = await this.domainRepository.updateDomainStatusById(
-      record.id,
-      record.siteId,
-      DOMAIN_STATUS.REMOVING,
-      this.buildVerificationDetails({
+    const removingRecord = await this.applyStatusAndRestoreFallback({
+      domainId: record.id,
+      siteId: record.siteId,
+      status: DOMAIN_STATUS.REMOVING,
+      verificationDetails: this.buildVerificationDetails({
         previous: record.verificationDetails,
         domain: record.domain,
         tenant,
         reason: REASON_REMOVAL_REQUESTED,
-      })
-    );
+      }),
+    });
     if (!removingRecord) {
       throw new WebsiteCustomDomainError(
         WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAIN_NOT_FOUND,
@@ -683,7 +769,7 @@ export class WebsiteCustomDomainService {
   }
 
   async deleteCustomDomainRecord({ site, record }) {
-    const deleted = await this.domainRepository.deleteDomainById(record.id, record.siteId);
+    const { deleted } = await this.domainRepository.deleteDomainAndRestoreFallbackById(record.id, record.siteId);
     if (!deleted) {
       return null;
     }
