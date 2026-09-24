@@ -4,6 +4,7 @@ const mockMessageService = {
   getMessages: jest.fn(),
   markThreadRead: jest.fn(),
   markThreadUnread: jest.fn(),
+  closeThread: jest.fn(),
 };
 
 jest.mock("../business/messageService.js", () => ({
@@ -132,6 +133,7 @@ describe("MessageController authenticated user handling", () => {
   test.each([
     ["markThreadRead", "read"],
     ["markThreadUnread", "unread"],
+    ["closeThread", "close"],
   ])("%s extracts threadId from the path and forwards the authenticated user", async (methodName, pathSuffix) => {
     mockMessageService[methodName].mockResolvedValue({
       statusCode: 200,

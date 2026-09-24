@@ -356,3 +356,17 @@ export async function markThreadUnread(threadId, idToken = null) {
 
   return res.json();
 }
+
+export async function closeThread(threadId, idToken = null) {
+  const res = await fetch(`${UNIFIED_MESSAGING_API}/threads/${encodeURIComponent(threadId)}/close`, {
+    method: "POST",
+    headers: buildAuthHeaders(idToken, { requireAuth: true }),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`UnifiedMessaging /threads/{id}/close failed: ${res.status} ${txt}`);
+  }
+
+  return res.json();
+}

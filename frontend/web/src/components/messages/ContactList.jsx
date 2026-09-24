@@ -5,7 +5,11 @@ import { WebSocketContext } from "../../features/hostdashboard/hostmessages/cont
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 import { getMessageCapabilities } from "./messageCapabilities";
-import { markThreadRead, markThreadUnread } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import {
+  markThreadRead,
+  markThreadUnread,
+  closeThread,
+} from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
 
 const resolvePartnerId = (contact, selfUserId) => {
@@ -176,6 +180,11 @@ const markContactThreadUnreadLocally = (prevContacts, threadId, updatedCount) =>
       : c
   );
 
+const markContactThreadClosedLocally = (prevContacts, threadId) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, status: "CLOSED" } : c
+  );
+
 const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
   setContacts?.((prevContacts) => {
     const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
@@ -327,10 +336,21 @@ const ContactList = ({
     setContextMenu({ visible: true, contactKey: key, contact });
   };
 
-  const handleCloseSelectedChat = () => {
-    const partnerId = resolvePartnerId(contextMenu.contact, userId);
+  const handleCloseSelectedChat = async () => {
+    const contact = contextMenu.contact;
+    const partnerId = resolvePartnerId(contact, userId);
+    const threadId = contact?.threadId;
     if (partnerId) onCloseChat?.(partnerId);
     setContextMenu({ visible: false, contactKey: null, contact: null });
+    if (!threadId) return;
+
+    try {
+      const idToken = await getIdToken();
+      await closeThread(threadId, idToken);
+      setContacts?.((prevContacts) => markContactThreadClosedLocally(prevContacts, threadId));
+    } catch {
+      toast.error("Could not close this conversation. Please try again.");
+    }
   };
 
   const handleMarkAsRead = async () => {
