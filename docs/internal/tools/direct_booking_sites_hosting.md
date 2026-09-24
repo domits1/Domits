@@ -185,10 +185,22 @@ Putting a site back on Amplify:
 ./rollback.sh <slug>-<id8>.direct.domits.com
 ```
 
-It deletes the record first and then removes the domain from the tenant. Traffic is back on
-Amplify only once both are done and the tenant is `Deployed`; the record deletion alone does not
-move it. It refuses to delete a record whose value is not the routing endpoint, and refuses to
-empty the tenant.
+It deletes the record first, waits until Route 53 reports the change `INSYNC` (at most five
+minutes), then waits the deleted record's TTL plus 30 seconds so resolvers drop their cached
+copy, and only then removes the domain from the tenant. Traffic is back on Amplify only once the
+domain has left the tenant and the tenant is `Deployed`; the record deletion alone does not move
+it. A resolver that keeps a record longer than its TTL can still send a visitor to the routing
+endpoint after that and get a CloudFront error; the script cannot control that. It refuses to
+delete a record whose value is not the routing endpoint, and refuses to empty the tenant.
+
+If it stops or is interrupted at any point, run it again. Before each deletion it writes
+`rollback-pending-<domain>.txt` with the record's TTL, and adds the change id once Route 53 has
+accepted the deletion, so a rerun checks `INSYNC` and waits the TTL again before it touches the
+tenant; the file is removed once the tenant comparison has passed. When the change id is
+unknown, because the run stopped between the deletion and saving the id or because the record
+was deleted by hand, `INSYNC` cannot be checked. It then waits the five-minute `INSYNC` limit
+plus the TTL plus the margin instead, taking the TTL from the file, or 60 seconds, the TTL the
+scripts create records with, when there is no file.
 
 Never run two of these scripts at the same time.
 

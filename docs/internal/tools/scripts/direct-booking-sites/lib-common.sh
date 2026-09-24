@@ -11,10 +11,14 @@ SUFFIX=".direct.domits.com"
 ALLOWLIST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/published-domains.txt"
 MAX_TENANT_DOMAINS="${MAX_TENANT_DOMAINS:-100}"
 TTL=60
+SYNC_POLLS=60
+SYNC_INTERVAL=5
+DNS_MARGIN=30
 
 DRY_RUN=0
 LEDGER=()
 APPLY_RESULT=""
+R53_CHANGE_ID=""
 INCOMPLETE=()
 
 aws_cf() { aws cloudfront "$@" --profile "$PROFILE" --region "$REGION_CF"; return $?; }
@@ -196,22 +200,64 @@ wait_deployed() {
   return 2
 }
 
-record_value() {
+record_line() {
   aws_r53 list-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" \
     --start-record-name "$1" --start-record-type CNAME --max-items 1 --output json \
   | node -e 'let s="";const want=process.argv[1]+".";process.stdin.on("data",d=>s+=d).on("end",()=>{
       const r=(JSON.parse(s).ResourceRecordSets||[])[0];
-      if(r&&r.Name===want&&r.Type==="CNAME") console.log(r.ResourceRecords[0].Value);});' "$1"
+      if(r&&r.Name===want&&r.Type==="CNAME") console.log(r.ResourceRecords[0].Value+" "+(Number.isInteger(r.TTL)?r.TTL:"none"));});' "$1"
   return $?
 }
 
+record_value() {
+  local line
+  line="$(record_line "$1")" || return 1
+  [[ -z "$line" ]] || printf '%s\n' "${line%% *}"
+  return 0
+}
+
 r53_change() {
-  local err
-  if err="$(aws_r53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch "$1" 2>&1 >/dev/null)"; then
+  local out errf
+  R53_CHANGE_ID=""
+  errf="$(mktemp)" || return 1
+  if out="$(aws_r53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch "$1" --output json 2>"$errf")"; then
+    rm -f "$errf"
+    R53_CHANGE_ID="$(printf '%s' "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      console.log(String((JSON.parse(s).ChangeInfo||{}).Id||"").replace(/^\/change\//,""));});')" || R53_CHANGE_ID=""
     return 0
   fi
-  printf '%s\n' "$err" >&2
+  cat "$errf" >&2
+  rm -f "$errf"
   return 1
+}
+
+change_status() {
+  aws_r53 get-change --id "$1" --output json \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      console.log(String((JSON.parse(s).ChangeInfo||{}).Status||""));});'
+  return $?
+}
+
+wait_insync() {
+  local -a waiting=("$@")
+  local i id st
+  local -a still
+  for i in $(seq 1 "$SYNC_POLLS"); do
+    still=()
+    for id in "${waiting[@]}"; do
+      st="$(change_status "$id")" || { SYNC_DETAIL="the status of change $id could not be read"; return 1; }
+      case "$st" in
+        "INSYNC") step "change $id" "INSYNC" ;;
+        "PENDING") still+=("$id") ;;
+        *) SYNC_DETAIL="change $id returned the unexpected status '$st'"; return 3 ;;
+      esac
+    done
+    [[ ${#still[@]} -gt 0 ]] || return 0
+    waiting=("${still[@]}")
+    sleep "$SYNC_INTERVAL"
+  done
+  SYNC_DETAIL="change(s) ${waiting[*]} still PENDING after $(( SYNC_POLLS * SYNC_INTERVAL )) seconds"
+  return 2
 }
 
 change_batch() {
