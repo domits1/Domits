@@ -1,4 +1,4 @@
-import { deriveFinanceViewState, getTransactionType } from "./financeViewState.js";
+import { deriveFinanceViewState, getArrivingSoonAmount, getLastPayout, getTransactionType } from "./financeViewState.js";
 
 describe("deriveFinanceViewState", () => {
   test("marks a connected active host as live and shows financial data", () => {
@@ -107,5 +107,28 @@ describe("deriveFinanceViewState", () => {
     expect(getTransactionType({ transactionType: "refunds" })).toBe("refunds");
     expect(getTransactionType({ transactionType: "payments" })).toBe("payments");
     expect(getTransactionType({})).toBe("payments");
+  });
+});
+
+
+describe("payout display helpers", () => {
+  const payouts = [
+    { isProjected: true, amount: 0, arrivalDate: "26 Sep" },
+    { isProjected: true, amount: 120, arrivalDate: "28 Sep" },
+    { isProjected: true, amount: 80, arrivalDate: "30 Sep" },
+    { isProjected: false, amount: 670, arrivalDate: "20 Sep" },
+    { isProjected: false, amount: 540, arrivalDate: "12 Sep" },
+  ];
+
+  test("sums projected payouts after the forecast for arriving soon", () => {
+    expect(getArrivingSoonAmount(payouts)).toBe(200);
+  });
+
+  test("uses the first real payout as the last payout", () => {
+    expect(getLastPayout(payouts)).toMatchObject({
+      isProjected: false,
+      amount: 670,
+      arrivalDate: "20 Sep",
+    });
   });
 });
