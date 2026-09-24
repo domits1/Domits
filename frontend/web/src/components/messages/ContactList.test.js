@@ -8,7 +8,11 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import ContactList from "./ContactList";
 import { getMessageCapabilities } from "./messageCapabilities";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
-import { markThreadRead, markThreadUnread } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import {
+  markThreadRead,
+  markThreadUnread,
+  closeThread,
+} from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
 import { toast } from "react-toastify";
 
@@ -20,6 +24,7 @@ jest.mock("../../features/hostdashboard/hostmessages/services/messagingService",
   __esModule: true,
   markThreadRead: jest.fn(),
   markThreadUnread: jest.fn(),
+  closeThread: jest.fn(),
 }));
 
 jest.mock("../../services/getAccessToken", () => ({
@@ -348,7 +353,10 @@ describe("ContactList manual mark read/unread", () => {
     latestMessage: { text: "See you soon", createdAt: "2026-06-01T10:00:00.000Z" },
   };
 
-  const renderForManualAction = (contactOrContacts, { onContactClick = jest.fn() } = {}) => {
+  const renderForManualAction = (
+    contactOrContacts,
+    { onContactClick = jest.fn(), onCloseChat = jest.fn() } = {}
+  ) => {
     const setContacts = jest.fn();
     const contactsArray = Array.isArray(contactOrContacts) ? contactOrContacts : [contactOrContacts];
 
@@ -361,13 +369,13 @@ describe("ContactList manual mark read/unread", () => {
         loading={false}
         setContacts={setContacts}
         onContactClick={onContactClick}
-        onCloseChat={jest.fn()}
+        onCloseChat={onCloseChat}
         onNewMessage={jest.fn()}
         capabilities={getMessageCapabilities("host")}
       />
     );
 
-    return { setContacts };
+    return { setContacts, onCloseChat };
   };
 
   beforeEach(() => {
@@ -375,6 +383,7 @@ describe("ContactList manual mark read/unread", () => {
     getIdToken.mockResolvedValue("id-token-1");
     markThreadRead.mockResolvedValue({ threadId: "thread-1", updated: 3 });
     markThreadUnread.mockResolvedValue({ threadId: "thread-1", updated: 1 });
+    closeThread.mockResolvedValue({ threadId: "thread-1", status: "CLOSED" });
   });
 
   test("right-clicking an unread contact shows Mark as read in the context menu", () => {
@@ -487,6 +496,62 @@ describe("ContactList manual mark read/unread", () => {
     });
 
     expect(setContacts).not.toHaveBeenCalled();
+  });
+
+  test("closing a conversation updates its status locally only after the backend confirms success", async () => {
+    let resolveCloseThread;
+    closeThread.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCloseThread = resolve;
+        })
+    );
+
+    const contact = { ...manualActionContact, status: "OPEN" };
+    const { setContacts, onCloseChat } = renderForManualAction(contact);
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Close chat"));
+
+    await waitFor(() => {
+      expect(closeThread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    expect(setContacts).not.toHaveBeenCalled();
+    expect(onCloseChat).not.toHaveBeenCalled();
+
+    resolveCloseThread({ threadId: "thread-1", status: "CLOSED" });
+
+    await waitFor(() => {
+      expect(setContacts).toHaveBeenCalled();
+    });
+
+    expect(onCloseChat).toHaveBeenCalledWith("guest-1");
+
+    const updater = setContacts.mock.calls[0][0];
+    const updated = updater([contact]);
+    expect(updated[0].status).toBe("CLOSED");
+  });
+
+  test("closing a conversation leaves its status unchanged, keeps the chat open, and shows a visible error when the request fails", async () => {
+    closeThread.mockRejectedValue(new Error("network error"));
+
+    const contact = { ...manualActionContact, status: "OPEN" };
+    const { setContacts, onCloseChat } = renderForManualAction(contact);
+
+    fireEvent.contextMenu(screen.getByText("Reservation Host"));
+    fireEvent.click(screen.getByText("Close chat"));
+
+    await waitFor(() => {
+      expect(closeThread).toHaveBeenCalledWith("thread-1", "id-token-1");
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    expect(setContacts).not.toHaveBeenCalled();
+    expect(onCloseChat).not.toHaveBeenCalled();
   });
 
   const renderForInFlightAction = (contact, actionLabel) => {
