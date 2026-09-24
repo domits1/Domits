@@ -531,12 +531,11 @@ export default function HostFinanceTab() {
                 )}
                 {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
               </section>
+              <HelpPanel faqs={faqs} />
             </aside>
           </div>
         </>
       )}
-
-      <HelpPanel faqs={faqs} />
 
       <InvoicesSection />
     </main>
