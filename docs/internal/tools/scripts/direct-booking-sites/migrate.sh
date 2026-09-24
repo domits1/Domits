@@ -11,6 +11,7 @@ for a in "$@"; do
   esac
 done
 [[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: migrate.sh [--dry-run] <domain...>"
+unique_args "${ARGS[@]}"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/migrate-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -79,10 +80,8 @@ SNAP_AFTER="${SNAP_BEFORE%-*.json}-after.json"
 if [[ ${#TO_ADD[@]} -gt 0 ]]; then
   log ""
   log "Updating the tenant"
-  tenant_json > "$SNAP_BEFORE" || die "cannot save the tenant before the update"
+  apply_tenant_domains add "$SNAP_BEFORE" "${ARGS[@]}" || die "tenant update failed, DNS was not touched"
   step "snapshot before" "$(basename "$SNAP_BEFORE")"
-
-  apply_tenant_domains "${CURRENT[@]}" "${TO_ADD[@]}" || die "tenant update failed, DNS was not touched"
   note "tenant: added ${TO_ADD[*]:-}"
   step "added" "${TO_ADD[*]:-}"
   wait_deployed || die "tenant did not reach Deployed within ten minutes; DNS was not touched"
@@ -90,7 +89,7 @@ if [[ ${#TO_ADD[@]} -gt 0 ]]; then
   tenant_json > "$SNAP_AFTER" || die "cannot save the tenant after the update"
   log ""
   log "Comparison before and after"
-  if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" "${TO_ADD[@]}"; then
+  if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" --add "${ARGS[@]}"; then
     note "tenant: only the domain list changed"
   else
     die "the tenant looks different after the update than asked for; DNS was not touched"
@@ -100,6 +99,8 @@ fi
 log ""
 log "Creating DNS"
 for d in "${TO_CREATE[@]}"; do
+  st="$(tenant_domain_status "$d")" || die "cannot read the tenant before creating the record for $d"
+  [[ "$st" != "ABSENT" ]] || die "$d is no longer on the tenant, so its record was not created; run migrate.sh again"
   batch="$(change_batch "migrate $d" CREATE "$d" "$TTL" "$ROUTING_ENDPOINT")"
   if aws_r53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch "$batch" >/dev/null 2>&1; then
     note "route53: CNAME created for $d"
@@ -118,6 +119,7 @@ for d in "${ARGS[@]}"; do
     st="$(tenant_domain_status "$d")"
     case "$st" in
       "active"|"Pointed to CloudFront"|"pointed-to-cloudfront") step "$d" "$st"; ok=1; break ;;
+      *) ;;
     esac
     sleep 10
   done

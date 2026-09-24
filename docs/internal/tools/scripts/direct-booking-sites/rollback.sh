@@ -11,6 +11,7 @@ for a in "$@"; do
   esac
 done
 [[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
+unique_args "${ARGS[@]}"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rollback-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -84,16 +85,25 @@ if [[ ${#REMOVE[@]} -gt 0 ]]; then
   log "Updating the tenant"
   SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S).json"
   SNAP_AFTER="${SNAP_BEFORE%-*.json}-after.json"
-  tenant_json > "$SNAP_BEFORE" || die "cannot save the tenant before the update"
-  apply_tenant_domains "${KEEP[@]}" || die "tenant update failed; the DNS records were already deleted"
+  DNS_GONE="no DNS record was deleted in this run"
+  if [[ ${#TO_DELETE[@]} -gt 0 ]]; then
+    DNS_GONE="the DNS records for ${TO_DELETE[*]} were already deleted, so those addresses are served by Amplify through the wildcard"
+  fi
+  apply_tenant_domains remove "$SNAP_BEFORE" "${ARGS[@]}" \
+    || die "tenant update failed; $DNS_GONE. Check the domain list on tenant $TENANT_ID with get-distribution-tenant: the update may or may not have been applied. Run rollback.sh again once the cause is fixed."
+  step "snapshot before" "$(basename "$SNAP_BEFORE")"
   note "tenant: removed ${REMOVE[*]:-}"
   step "removed" "${REMOVE[*]:-}"
   wait_deployed || step "tenant" "not Deployed within ten minutes"
-  tenant_json > "$SNAP_AFTER" || true
+  tenant_json > "$SNAP_AFTER" \
+    || die "cannot save the tenant after the update; $DNS_GONE. Check the domain list on tenant $TENANT_ID against $(basename "$SNAP_BEFORE")."
   log ""
   log "Comparison before and after"
-  node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" \
-    || step "warning" "the tenant changed on more than the domain list"
+  if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" --remove "${ARGS[@]}"; then
+    note "tenant: only the domain list changed"
+  else
+    die "the tenant comparison was REJECTED; $DNS_GONE. Compare $(basename "$SNAP_BEFORE") with $(basename "$SNAP_AFTER"): check that no other domain vanished from the tenant, that no domain was added, and that Customizations, Parameters and Enabled are unchanged. Restore anything that vanished before running anything else."
+  fi
 fi
 
 summary
