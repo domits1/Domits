@@ -349,11 +349,15 @@ const buildReservationContent = ({
   }
 
   if (reservation) {
-    const normalizedReservationStatus = String(reservation.stay.status || "").trim().toLowerCase();
+    const normalizedReservationStatus = String(reservation.stay.status || "")
+      .trim()
+      .toLowerCase();
     const isCancelledReservation = normalizedReservationStatus === "cancelled";
     const isAwaitingInquiryPayment =
       normalizedReservationStatus === "awaiting payment" &&
-      String(reservation.stay.bookingType || "").trim().toLowerCase() === "inquiry";
+      String(reservation.stay.bookingType || "")
+        .trim()
+        .toLowerCase() === "inquiry";
 
     return (
       <>
@@ -514,9 +518,9 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
-      instructions: propertyDetails?.checkIn?.checkIn?.from
-  ? [`Check-in: ${propertyDetails.checkIn.checkIn.from}–${propertyDetails.checkIn.checkIn.till}`]
-  : [],
+    instructions: propertyDetails?.checkIn?.checkIn?.from
+      ? [`Check-in: ${propertyDetails.checkIn.checkIn.from}–${propertyDetails.checkIn.checkIn.till}`]
+      : [],
     amenities: Array.isArray(propertyDetails?.amenities) ? propertyDetails.amenities : [],
     specialInstructions: Array.isArray(propertyDetails?.customRules) ? propertyDetails.customRules : [],
     specialRequest: String(booking?.specialRequest || booking?.special_request || ""),
@@ -549,18 +553,12 @@ const enrichPropertyDetailsWithSummary = (propertyDetails, summary) => {
     enrichedDetails.property.name = enrichedDetails.property.name || summary.title;
   }
 
-  if (
-    (!enrichedDetails.location.city || !enrichedDetails.location.country) &&
-    (summary.city || summary.country)
-  ) {
+  if ((!enrichedDetails.location.city || !enrichedDetails.location.country) && (summary.city || summary.country)) {
     enrichedDetails.location.city = enrichedDetails.location.city || summary.city || "";
     enrichedDetails.location.country = enrichedDetails.location.country || summary.country || "";
   }
 
-  if (
-    (!Array.isArray(enrichedDetails.images) || enrichedDetails.images.length === 0) &&
-    summary.imageUrl
-  ) {
+  if ((!Array.isArray(enrichedDetails.images) || enrichedDetails.images.length === 0) && summary.imageUrl) {
     enrichedDetails.images = [summary.imageUrl];
   }
 
@@ -654,7 +652,11 @@ function ReservationDetails() {
         const bookingTitle = booking?.title || booking?.Title || booking?.property?.title || "";
 
         let enrichedPropertyDetails = propertyDetails;
-        enrichedPropertyDetails = await attemptPropertySummaryEnrichment(booking, bookingTitle, enrichedPropertyDetails);
+        enrichedPropertyDetails = await attemptPropertySummaryEnrichment(
+          booking,
+          bookingTitle,
+          enrichedPropertyDetails
+        );
 
         setReservation(buildReservationViewModel({ booking, propertyDetails: enrichedPropertyDetails }));
       } catch (loadError) {

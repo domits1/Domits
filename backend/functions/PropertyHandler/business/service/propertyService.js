@@ -757,33 +757,33 @@ export class PropertyService {
       await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
-isMissingCustomRulesTableError(error) {
-  return error instanceof QueryFailedError && error.code === "42P01";
-}
-
-async getCustomRules(propertyId) {
-  try {
-    return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
-  } catch (error) {
-    if (this.isMissingCustomRulesTableError(error)) {
-      console.warn(`Custom rules table not yet migrated for property ${propertyId}:`, error.message);
-      return [];
-    }
-    throw error;
+  isMissingCustomRulesTableError(error) {
+    return error instanceof QueryFailedError && error.code === "42P01";
   }
-}
 
-async updateCustomRules(propertyId, customRules) {
-  try {
-    return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
-  } catch (error) {
-    if (this.isMissingCustomRulesTableError(error)) {
-      console.warn(`Could not save custom rules (table not yet migrated) for property ${propertyId}:`, error.message);
-      return [];
+  async getCustomRules(propertyId) {
+    try {
+      return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
+    } catch (error) {
+      if (this.isMissingCustomRulesTableError(error)) {
+        console.warn(`Custom rules table not yet migrated for property ${propertyId}:`, error.message);
+        return [];
+      }
+      throw error;
     }
-    throw error;
   }
-}
+
+  async updateCustomRules(propertyId, customRules) {
+    try {
+      return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
+    } catch (error) {
+      if (this.isMissingCustomRulesTableError(error)) {
+        console.warn(`Could not save custom rules (table not yet migrated) for property ${propertyId}:`, error.message);
+        return [];
+      }
+      throw error;
+    }
+  }
 
   async createPropertyType(type) {
     const result = await this.propertyTypeRepository.create(type);

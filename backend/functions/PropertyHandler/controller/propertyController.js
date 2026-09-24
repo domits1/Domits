@@ -1034,8 +1034,6 @@ export class PropertyController {
             bookingType: this.resolveBookingType(payload.bookingType),
         };
     }
-        
-    
 
     normalizeCheckInPayload(checkIn) {
         if (!this.isPlainObject(checkIn) || !this.isPlainObject(checkIn.checkIn) || !this.isPlainObject(checkIn.checkOut)) {

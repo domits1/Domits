@@ -438,6 +438,13 @@ class BookingService {
       throw new Unauthorized("Missing Authorization header.");
     }
 
+    if (typeof specialRequest !== "string") {
+      throw new BadRequestException("Special request must be a string.");
+    }
+    if (specialRequest.length > 500) {
+      throw new BadRequestException("Special request must not exceed 500 characters.");
+    }
+
     const user = await this.authManager.authenticateUser(authToken);
     const bookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
     if (!bookingResult?.response) throw new NotFoundException("Booking not found.");

@@ -47,6 +47,7 @@ function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
         onChange={(e) => setValue(e.target.value)}
         placeholder="e.g. Late check-in around 9pm, extra pillows if possible"
         rows={3}
+        maxLength={500}
         disabled={isSubmitting}
       />
 

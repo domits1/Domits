@@ -261,11 +261,11 @@ function GuestBooking() {
     }
   };
   const TABS = [
-  { key: "all", label: "All" },
-  { key: "current", label: "Current" },
-  { key: "upcoming", label: "Upcoming" },
-  { key: "past", label: "Past" },
-];
+    { key: "all", label: "All" },
+    { key: "current", label: "Current" },
+    { key: "upcoming", label: "Upcoming" },
+    { key: "past", label: "Past" },
+  ];
 
   const { currentBookings, upcomingBookings, pastBookings } = useMemo(
     () => splitBookingsByTime(paidBookings),
@@ -283,41 +283,41 @@ function GuestBooking() {
   );
 
   const tabBookings = useMemo(() => {
-  switch (activeTab) {
-    case "current":
-      return currentBookings;
-    case "upcoming":
-      return upcomingBookings;
-    case "past":
-      return pastBookings;
-    default:
-      return paidBookings;
-  }
-}, [activeTab, paidBookings, currentBookings, upcomingBookings, pastBookings]);
+    switch (activeTab) {
+      case "current":
+        return currentBookings;
+      case "upcoming":
+        return upcomingBookings;
+      case "past":
+        return pastBookings;
+      default:
+        return paidBookings;
+    }
+  }, [activeTab, paidBookings, currentBookings, upcomingBookings, pastBookings]);
 
-const tabEmptyMessages = {
-  all: "You do not have any bookings yet.",
-  current: "No current bookings this week.",
-  upcoming: "You do not have any upcoming bookings yet.",
-  past: "You do not have any past bookings yet.",
-};
-const filteredBookings = useMemo(() => {
-  if (!searchQuery.trim()) return tabBookings;
-   const query = searchQuery.trim().toLowerCase();
-  return tabBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
-}, [tabBookings, searchQuery, propertyMap]);
+  const tabEmptyMessages = {
+    all: "You do not have any bookings yet.",
+    current: "No current bookings this week.",
+    upcoming: "You do not have any upcoming bookings yet.",
+    past: "You do not have any past bookings yet.",
+  };
+  const filteredBookings = useMemo(() => {
+    if (!searchQuery.trim()) return tabBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return tabBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [tabBookings, searchQuery, propertyMap]);
 
-const filteredInquiryBookings = useMemo(() => {
-  if (!searchQuery.trim()) return inquiryBookings;
-  const query = searchQuery.trim().toLowerCase();
-  return inquiryBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
-}, [inquiryBookings, searchQuery, propertyMap]);
+  const filteredInquiryBookings = useMemo(() => {
+    if (!searchQuery.trim()) return inquiryBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return inquiryBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [inquiryBookings, searchQuery, propertyMap]);
 
-const filteredCancelledBookings = useMemo(() => {
-  if (!searchQuery.trim()) return cancelledBookings;
-  const query = searchQuery.trim().toLowerCase();
-  return cancelledBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
-}, [cancelledBookings, searchQuery, propertyMap]);
+  const filteredCancelledBookings = useMemo(() => {
+    if (!searchQuery.trim()) return cancelledBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return cancelledBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [cancelledBookings, searchQuery, propertyMap]);
 
   let bookingContent;
   if (isLoading) {
@@ -333,7 +333,7 @@ const filteredCancelledBookings = useMemo(() => {
       <div className="guest-booking-bookingContent">
         {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
 
-               {filteredInquiryBookings.length > 0 && (
+        {filteredInquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
               title="Requests"
@@ -355,7 +355,7 @@ const filteredCancelledBookings = useMemo(() => {
           />
         </div>
 
-                <div className="guest-booking-tabs" role="tablist">
+        <div className="guest-booking-tabs" role="tablist">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -363,14 +363,13 @@ const filteredCancelledBookings = useMemo(() => {
               role="tab"
               aria-selected={activeTab === tab.key}
               className={`guest-booking-tab${activeTab === tab.key ? " guest-booking-tab--active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
+              onClick={() => setActiveTab(tab.key)}>
               {tab.label}
               <span className="guest-booking-tab-count">{tabCounts[tab.key]}</span>
             </button>
           ))}
         </div>
-                <div className="guest-booking-summary-grid">
+        <div className="guest-booking-summary-grid">
           <BookingSection
             title={TABS.find((t) => t.key === activeTab)?.label || "Bookings"}
             bookings={filteredBookings}
@@ -380,7 +379,7 @@ const filteredCancelledBookings = useMemo(() => {
             extraClassName={activeTab === "past" ? "guest-card--past" : ""}
           />
         </div>
-                  {filteredCancelledBookings.length > 0 && (
+        {filteredCancelledBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
               title="Cancelled Bookings"
@@ -400,15 +399,11 @@ const filteredCancelledBookings = useMemo(() => {
     <div className="guest-dashboard-shell">
       <div className="guest-dashboard-page-body guest-booking-page-body">
         <h1 className="guest-booking-title">Reservations</h1>
-<p className="guest-booking-subtitle">View and manage your bookings</p>
+        <p className="guest-booking-subtitle">View and manage your bookings</p>
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content guest-booking-dashboard-content">
-            <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">
-             
-
-              {bookingContent}
-            </div>
+            <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">{bookingContent}</div>
 
             <aside className="guest-dashboard-personalInfoContent guest-booking-right-empty" />
           </div>
