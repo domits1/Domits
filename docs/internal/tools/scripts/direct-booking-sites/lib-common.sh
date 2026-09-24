@@ -15,6 +15,7 @@ TTL=60
 DRY_RUN=0
 LEDGER=()
 APPLY_RESULT=""
+INCOMPLETE=()
 
 aws_cf() { aws cloudfront "$@" --profile "$PROFILE" --region "$REGION_CF"; return $?; }
 aws_r53() { aws route53 "$@" --profile "$PROFILE"; return $?; }
@@ -22,12 +23,33 @@ aws_r53() { aws route53 "$@" --profile "$PROFILE"; return $?; }
 log()  { printf '%s\n' "$*"; return $?; }
 step() { printf '  %-58s %s\n' "$1" "$2"; return $?; }
 note() { LEDGER+=("$1"); return $?; }
+incomplete() { INCOMPLETE+=("$1"); return $?; }
 
 die() {
   log ""
   log "STOPPED: $1"
   summary
+  report_incomplete
   exit 1
+}
+
+finish() {
+  summary
+  report_incomplete
+  if [[ ${#INCOMPLETE[@]} -gt 0 ]]; then
+    log ""
+    log "The run is incomplete; exit code 1."
+    exit 1
+  fi
+  exit 0
+}
+
+report_incomplete() {
+  [[ ${#INCOMPLETE[@]} -gt 0 ]] || return 0
+  log ""
+  log "Not confirmed:"
+  for l in "${INCOMPLETE[@]}"; do log "  $l"; done
+  return 0
 }
 
 summary() {
@@ -116,7 +138,7 @@ apply_tenant_domains() {
 let s="";const [mode,max,...given]=process.argv.slice(1);process.stdin.on("data",d=>s+=d).on("end",()=>{
   const fresh=[...new Set((JSON.parse(s).DistributionTenant.Domains||[]).map(d=>d.Domain))];
   const list=mode==="add"?[...new Set([...fresh,...given])]:fresh.filter(d=>!given.includes(d));
-  if(list.length>Number(max)){console.error(`the tenant would have ${list.length} domains, over the limit of ${max}`);process.exit(3);}
+  if(mode==="add"&&list.length>Number(max)){console.error(`the tenant would have ${list.length} domains, over the limit of ${max}`);process.exit(3);}
   if(!list.length){console.error("this would empty the tenant; refusing");process.exit(4);}
   const same=list.length===fresh.length&&list.every(d=>fresh.includes(d));
   console.log(same?"unchanged":"changed");
@@ -151,7 +173,7 @@ let s="";const [mode,max,...given]=process.argv.slice(1);process.stdin.on("data"
     if printf '%s' "$err" | grep -q "PreconditionFailed"; then
       if [[ "$attempt" -lt 3 ]]; then
         step "ETag stale, re-reading" "attempt $(( attempt + 1 ))"
-        APPLY_RESULT="refused"
+        APPLY_RESULT="stale"
         continue
       fi
       APPLY_RESULT="stale"
@@ -171,7 +193,7 @@ wait_deployed() {
     if [[ "$st" = "Deployed" ]]; then step "tenant status" "Deployed"; return 0; fi
     sleep 10
   done
-  return 1
+  return 2
 }
 
 record_value() {
@@ -181,6 +203,15 @@ record_value() {
       const r=(JSON.parse(s).ResourceRecordSets||[])[0];
       if(r&&r.Name===want&&r.Type==="CNAME") console.log(r.ResourceRecords[0].Value);});' "$1"
   return $?
+}
+
+r53_change() {
+  local err
+  if err="$(aws_r53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch "$1" 2>&1 >/dev/null)"; then
+    return 0
+  fi
+  printf '%s\n' "$err" >&2
+  return 1
 }
 
 change_batch() {

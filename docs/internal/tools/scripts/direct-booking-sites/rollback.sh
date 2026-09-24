@@ -12,7 +12,6 @@ for a in "$@"; do
 done
 [[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
 unique_args "${ARGS[@]}"
-msg="$(check_limit)" || die "$msg"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rollback-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -32,7 +31,7 @@ step "domains on the tenant now" "${#CURRENT[@]}"
 
 TO_DELETE=()
 for d in "${ARGS[@]}"; do
-  cur="$(record_value "$d")"
+  cur="$(record_value "$d")" || die "cannot read the DNS record for $d from Route 53; nothing was changed"
   if [[ -z "$cur" ]]; then
     step "$d" "no CNAME, nothing to delete"
   elif [[ "$cur" = "$ROUTING_ENDPOINT" ]]; then
@@ -62,59 +61,72 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   if [[ ${#REMOVE[@]} -gt 0 ]]; then log "  tenant: remove ${#REMOVE[@]} domain(s), ${#KEEP[@]} stay"; else log "  tenant: nothing to remove"; fi
   log "  then wait for Deployed"
   log ""
-  log "After deletion the address falls back to the wildcard, so to Amplify."
+  log "Only once the record is deleted and the domain has left the tenant does the address fall back to the wildcard, so to Amplify."
   exit 0
 fi
 
 exec > >(tee -a "$RUNLOG") 2>&1
 
+SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S)-$$.json"
+SNAP_AFTER="${SNAP_BEFORE%.json}-after.json"
+log ""
+log "Snapshots"
+step "before" "$SNAP_BEFORE"
+step "after" "$SNAP_AFTER"
+
 log ""
 log "Deleting DNS"
 for d in "${TO_DELETE[@]}"; do
   batch="$(change_batch "rollback $d" DELETE "$d" "$TTL" "$ROUTING_ENDPOINT")"
-  if aws_r53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --change-batch "$batch" >/dev/null 2>&1; then
-    note "route53: CNAME deleted for $d"
-    step "$d" "CNAME deleted"
+  if r53_change "$batch"; then
+    note "route53: deletion of the CNAME for $d accepted"
+    step "$d" "CNAME deletion accepted"
   else
     step "$d" "FAILED"
-    die "deleting the record failed for $d; the tenant was not touched yet"
+    note "route53: DELETE sent for $d, outcome unknown"
+    die "deleting the record for $d failed with the AWS error above, so the outcome is unknown. Check whether the CNAME for $d still exists in hosted zone $HOSTED_ZONE_ID with list-resource-record-sets. The tenant was not touched."
   fi
 done
 
-if [[ ${#REMOVE[@]} -gt 0 ]]; then
-  log ""
-  log "Updating the tenant"
-  SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S)-$$.json"
-  SNAP_AFTER="${SNAP_BEFORE%.json}-after.json"
-  DNS_GONE="no DNS record was deleted in this run"
-  if [[ ${#TO_DELETE[@]} -gt 0 ]]; then
-    DNS_GONE="the DNS records for ${TO_DELETE[*]} were already deleted, so those addresses are served by Amplify through the wildcard"
-  fi
-  if ! apply_tenant_domains remove "$SNAP_BEFORE" "${ARGS[@]}"; then
-    case "$APPLY_RESULT" in
-      "failed") die "tenant update failed; $DNS_GONE. Check the domain list on tenant $TENANT_ID with get-distribution-tenant: the update may or may not have been applied. Run rollback.sh again once the cause is fixed." ;;
-      "stale") die "tenant update not applied; $DNS_GONE. The tenant changed during every attempt, so each update was rejected and nothing was applied. Run rollback.sh again." ;;
-      *) die "tenant update refused; $DNS_GONE. Nothing was sent to the tenant. Fix the cause above and run rollback.sh again." ;;
-    esac
-  fi
-  step "snapshot before" "$(basename "$SNAP_BEFORE")"
-  if [[ "$APPLY_RESULT" = "unchanged" ]]; then
-    note "tenant: no update sent, ${ARGS[*]} already off it"
-    step "removed" "none, already off the tenant"
-  else
-    note "tenant: removed ${REMOVE[*]:-}"
-    step "removed" "${REMOVE[*]:-}"
-  fi
-  wait_deployed || step "tenant" "not Deployed within ten minutes"
-  tenant_json > "$SNAP_AFTER" \
-    || die "cannot save the tenant after the update; $DNS_GONE. Check the domain list on tenant $TENANT_ID against $(basename "$SNAP_BEFORE")."
-  log ""
-  log "Comparison before and after"
-  if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" --remove "${ARGS[@]}"; then
-    note "tenant: only the domain list changed"
-  else
-    die "the tenant comparison was REJECTED; $DNS_GONE. Compare $(basename "$SNAP_BEFORE") with $(basename "$SNAP_AFTER"): check that no other domain vanished from the tenant, that no domain was added, and that Customizations, Parameters and Enabled are unchanged. Restore anything that vanished before running anything else."
-  fi
+DNS_STATE="no DNS record was deleted in this run"
+if [[ ${#TO_DELETE[@]} -gt 0 ]]; then
+  DNS_STATE="Route 53 accepted the deletion of the records for ${TO_DELETE[*]}; removal from the tenant and traffic moving back to Amplify are not confirmed"
 fi
 
-summary
+log ""
+log "Updating the tenant"
+if ! apply_tenant_domains remove "$SNAP_BEFORE" "${ARGS[@]}"; then
+  case "$APPLY_RESULT" in
+    "failed")
+      note "tenant: update sent to remove ${ARGS[*]}, outcome unknown"
+      die "the tenant update call failed with the AWS error above, so the outcome is unknown; $DNS_STATE. Check the domain list on tenant $TENANT_ID with get-distribution-tenant against $SNAP_BEFORE, then run rollback.sh again." ;;
+    "stale") die "tenant update not applied: every update sent was rejected because the tenant had changed, so nothing was applied; $DNS_STATE. Run rollback.sh again." ;;
+    *) die "tenant update refused, nothing was sent to the tenant; $DNS_STATE. Fix the cause above and run rollback.sh again." ;;
+  esac
+fi
+if [[ "$APPLY_RESULT" = "unchanged" ]]; then
+  note "tenant: no update sent, ${ARGS[*]} already off it"
+  step "removed" "none, already off the tenant"
+else
+  note "tenant: updated, ${ARGS[*]} off it"
+  step "updated" "${ARGS[*]} off the tenant"
+fi
+wait_deployed
+case "$?" in
+  0) : ;;
+  1) step "tenant status" "read FAILED"
+     incomplete "tenant: the status could not be read, deployment not confirmed" ;;
+  *) step "tenant status" "not Deployed within ten minutes"
+     incomplete "tenant: not Deployed within ten minutes" ;;
+esac
+tenant_json > "$SNAP_AFTER" \
+  || die "cannot save the tenant after the update; $DNS_STATE. Check the domain list on tenant $TENANT_ID against $SNAP_BEFORE."
+log ""
+log "Comparison before and after"
+if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" --remove "${ARGS[@]}"; then
+  note "tenant: only the domain list changed"
+else
+  die "the tenant comparison was REJECTED; $DNS_STATE. Compare $SNAP_BEFORE with $SNAP_AFTER: check that no other domain vanished from the tenant, that no domain was added, and that Customizations, Parameters and Enabled are unchanged. Restore anything that vanished before running anything else."
+fi
+
+finish

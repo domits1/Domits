@@ -77,8 +77,10 @@ The tenant carries a wildcard ACM certificate for `*.direct.domits.com`
 (`arn:aws:acm:us-east-1:115462458880:certificate/84f32fca-feef-4a45-911f-2dabc20ebf84`,
 valid to 2027-04-09), so no per-domain certificate is needed.
 
-A specific record beats the wildcard, so moving a site is one `CNAME` and moving it back is
-deleting that same record.
+A specific record beats the wildcard in DNS, so moving a site takes one `CNAME` plus the exact
+domain on the tenant. Moving it back takes both as well: CloudFront routes a request to the most
+specific domain association regardless of which endpoint DNS resolved, so while the exact domain
+is still on the tenant, deleting the record alone does not move the site back to Amplify.
 
 Still on Amplify:
 
@@ -181,9 +183,12 @@ Putting a site back on Amplify:
 ./rollback.sh <slug>-<id8>.direct.domits.com
 ```
 
-DNS goes first there, so traffic is already back on Amplify through the wildcard before the
-domain leaves the tenant. It refuses to delete a record whose value is not the routing
-endpoint, and refuses to empty the tenant.
+It deletes the record first and then removes the domain from the tenant. Traffic is back on
+Amplify only once both are done and the tenant is `Deployed`; the record deletion alone does not
+move it. It refuses to delete a record whose value is not the routing endpoint, and refuses to
+empty the tenant.
+
+Never run two of these scripts at the same time.
 
 `published-domains.txt` is the allowlist both scripts validate against. It is a point-in-time
 snapshot; regenerate it from `main.standalone_site` joined to `main.standalone_site_domain`
