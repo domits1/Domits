@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { WEBSITE_HEAD_ROBOTS_META_NAME } from "./websiteHeadTags";
 import { registerWebsitePublicSitePage } from "./websiteHeadTagsRegistry";
 
 const OWNED_MARKER_ATTRIBUTE = "data-website-head-tag";
@@ -51,6 +52,19 @@ const restoreAppliedEntries = (appliedEntries) => {
   }
 };
 
+const isRobotsEntry = (appliedEntry) =>
+  appliedEntry.attributeName === "name" && appliedEntry.attributeValue === WEBSITE_HEAD_ROBOTS_META_NAME;
+
+const releaseRobotsEntries = (appliedEntries) => {
+  for (const appliedEntry of [...appliedEntries].reverse()) {
+    if (isRobotsEntry(appliedEntry)) {
+      restoreAppliedEntry(appliedEntry);
+    }
+  }
+
+  return appliedEntries.filter((appliedEntry) => !isRobotsEntry(appliedEntry));
+};
+
 export const useWebsiteHeadTags = ({ key = "", tags = null } = {}) => {
   const descriptorRef = useRef({ key, tags });
   const appliedEntriesRef = useRef([]);
@@ -86,8 +100,10 @@ export const useWebsiteHeadTags = ({ key = "", tags = null } = {}) => {
     if (!currentTags) {
       if (hasAppliedHead && appliedKeyRef.current !== currentKey) {
         restoreHead();
+        return;
       }
 
+      appliedEntriesRef.current = releaseRobotsEntries(appliedEntriesRef.current);
       return;
     }
 

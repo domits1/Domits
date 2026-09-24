@@ -55,6 +55,23 @@ describe("useWebsiteHeadTags", () => {
     expect(document.title).toBe("Villa A");
     expect(readMetaContent("name", "description")).toBe("Description A");
     expect(readMetaContent("property", "og:image")).toBe("https://img/a.jpg");
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  it("drops its own robots tag when a retry starts on the same site", () => {
+    const { rerender } = render(
+      <HeadTagsHarness
+        headKey="site-a"
+        tags={{ title: "Villa A", metaByName: { robots: "noindex, nofollow" }, metaByProperty: {} }}
+      />
+    );
+
+    expect(readMetaContent("name", "robots")).toBe("noindex, nofollow");
+
+    rerender(<HeadTagsHarness headKey="site-a" tags={null} />);
+
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(readMetaContent("name", "description")).toBe(MARKETPLACE_DESCRIPTION);
   });
 
   it("clears the previous tags when another site takes over while loading", () => {

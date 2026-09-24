@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import WebsitePublicSitePage from "../WebsitePublicSitePage";
 import { PublicWebsiteRequestError } from "../services/websitePublicSiteService";
@@ -207,6 +207,44 @@ describe("WebsitePublicSitePage head tags", () => {
     expect(document.head.querySelector('meta[property="og:title"]')).toBeNull();
     expect(document.head.querySelector('meta[property="og:image"]')).toBeNull();
     expect(readMetaContent("name", "description")).toBe(MARKETPLACE_DESCRIPTION);
+  });
+
+  it("drops noindex as soon as a retry starts and does not bring it back on success", async () => {
+    fetchPublicWebsiteRenderModel.mockRejectedValueOnce(
+      new PublicWebsiteRequestError("Published website not found.", 404)
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(readMetaContent("name", "robots")).toBe("noindex, nofollow");
+    });
+
+    let resolveRetry = () => {};
+    fetchPublicWebsiteRenderModel.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRetry = resolve;
+      })
+    );
+
+    await act(async () => {
+      globalThis.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "website-live-site-update", domain: globalThis.location.host },
+        })
+      );
+    });
+
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+
+    await act(async () => {
+      resolveRetry(buildRenderPayload());
+    });
+    await screen.findByTestId("published-site");
+
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(readMetaContent("property", "og:title")).toBe("Wellness Villa Bisous | Ubud, Indonesia");
+    expect(document.title).toBe("Wellness Villa Bisous | Ubud, Indonesia");
   });
 
   it("restores the marketplace head when the page unmounts", async () => {
