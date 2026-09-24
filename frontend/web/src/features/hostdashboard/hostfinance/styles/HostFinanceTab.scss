@@ -1025,6 +1025,17 @@ $color-muted: #6b7280;
   }
 }
 
+.finance-stripe-warning {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border: 1px solid #d7a3a3;
+  border-radius: 3px;
+  background: #fff4f4;
+  color: #8f1d1d;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .finance-outline-button {
   width: 100%;
   border: 1px solid #d3d3d3;
