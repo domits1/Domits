@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe } from "lucide-react";
+import { navigateToHostDestination } from "../../../utils/hostRedirect";
 
 const CARD_ICONS = [ShieldCheck, FileText, CheckCircle, Banknote, Headphones, Globe];
 const CARD_KEYS = ["verified", "rules", "how", "payments", "support", "renting"];
@@ -11,7 +12,8 @@ const CARD_KEYS = ["verified", "rules", "how", "payments", "support", "renting"]
 function RegisterSection({ content }) {
   const navigate = useNavigate();
 
-  const handleRegisterProperty = () => navigate("/register");
+  // Resolves host status fresh via Auth.currentAuthenticatedUser() at click time, not from mount-time context.
+  const handleRegisterProperty = () => navigateToHostDestination({ navigate });
 
   return (
     <motion.section

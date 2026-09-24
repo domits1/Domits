@@ -10,7 +10,7 @@ export const reviews = [
   {
     id: 2,
     text:
-      "Renting out my boat through this platform was a fantastic experience. Everything went smoothly and professionally, from the booking to the communication with renters. Perfect for boat owners!",
+      "Listing my apartment on this platform has been such a smooth experience. The dashboard makes it easy to manage bookings and stay on top of everything, and guests always mention how easy the check-in process was. I've had a steady stream of bookings since day one.",
     author: "Melissa Steenberk",
     location: "Host from the Netherlands",
     img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&h=200&q=80",
@@ -18,9 +18,9 @@ export const reviews = [
   {
     id: 3,
     text:
-      "As the owner of a luxury yacht company, this platform offers us the perfect opportunity to rent out our fleet easily and efficiently. From the user-friendly system to the excellent customer support, everything is flawlessly organized. Our clients appreciate the quality and luxury of our yachts, and thanks to the platform, we can provide them with a hassle-free booking experience. The team behind the platform ensures that our yachts receive optimal visibility for potential renters, resulting in frequent and reliable bookings. A valuable asset for our business!",
+      "As a host managing several vacation properties, this platform has completely simplified how I run things. The centralized dashboard, secure payments, and responsive support team mean I can focus on giving guests a great stay instead of chasing admin. Highly recommend for any serious host.",
     author: "James Heck",
-    location: "Owner of a luxury yacht company",
+    location: "Host with multiple properties",
     img: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=200&h=200&q=80",
   },
   {

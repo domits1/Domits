@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
+import { navigateToHostDestination } from "../../../utils/hostRedirect";
 
 function CtaSection({ content }) {
   const navigate = useNavigate();
 
-  const handleStartHosting = () => navigate("/register");
+  // Resolves host status fresh via Auth.currentAuthenticatedUser() at click time, not from mount-time context.
+  const handleStartHosting = () => navigateToHostDestination({ navigate });
 
   return (
     <motion.section

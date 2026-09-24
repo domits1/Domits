@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../utils/animations";
 import { Banknote, ShieldCheck, Phone, BadgeCheck } from "lucide-react";
+import { navigateToHostDestination } from "../../../utils/hostRedirect";
 
 import airbnbLogo from "../../../images/airbnb-logo.svg";
 import bookingLogo from "../../../images/booking-logo.svg";
@@ -16,7 +17,8 @@ function HeroSection({ landingContent }) {
   const navigate = useNavigate();
   const h = landingContent.hero;
 
-  const handleStartHosting = () => navigate("/register");
+  // Resolves host status fresh via Auth.currentAuthenticatedUser() at click time, not from mount-time context.
+  const handleStartHosting = () => navigateToHostDestination({ navigate });
 
   return (
     <section className="hero">

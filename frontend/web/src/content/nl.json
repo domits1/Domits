@@ -1053,7 +1053,9 @@
       },
       "manage": {
         "title": "Hoe maak en beheer ik mijn host-account?",
-        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop 'Word host' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
+        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop '",
+        "becomeHost": "Word host",
+        "description2": "' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
       },
       "payout": {
         "title": "Hoe uitbetalingen en belastingen werken",
@@ -1061,7 +1063,15 @@
       },
       "calendar": {
         "title": "Hoe beheert u uw agenda en boekingen",
-        "description": "Een komende functie stelt u in staat uw boekingen efficiënter te beheren, rechtstreeks via het dashboard. Houd de updates in de gaten."
+        "description": "U kunt alles beheren vanaf het Host Dashboard: boekingen accepteren of afwijzen, en uw beschikbaarheid en prijzen per datum instellen."
+      },
+      "cost": {
+        "title": "Wat kost het?",
+        "description": "Domits is gratis te gebruiken — geen kosten voor ons boekingssysteem, dashboard of directe boekingswebsite. Wij rekenen alleen een 10% hostvergoeding per boeking via Domits.com, waarmee het platform 24/7 blijft draaien. Meer nodig? Neem contact met ons op voor add-ons en zakelijke tarieven."
+      },
+      "markets": {
+        "title": "In welke markten is Domits actief?",
+        "description": "Domits is wereldwijd beschikbaar voor hosts en gasten — u kunt uw accommodatie aanbieden, ongeacht waar deze zich bevindt."
       }
     },
     "advice": {

@@ -25,10 +25,27 @@ const buildFaqs = (content) => {
   if (!content) return [];
   return [
     { id: "host", question: content.answerTo.host.title, answer: content.answerTo.host.description, isOpen: false },
-    { id: "how", question: content.answerTo.how.title, answer: content.answerTo.how.description, isOpen: false },
-    { id: "manage", question: content.answerTo.manage.title, answer: content.answerTo.manage.description, isOpen: false },
+    {
+      id: "how",
+      question: content.answerTo.how.title,
+      answer: content.answerTo.how.description,
+      answerLink: content.answerTo.how.becomeHost,
+      answerAfterLink: content.answerTo.how.description2,
+      answerLinkHostRoute: "/hostonboarding",
+      isOpen: false,
+    },
+    {
+      id: "manage",
+      question: content.answerTo.manage.title,
+      answer: content.answerTo.manage.description,
+      answerLink: content.answerTo.manage.becomeHost,
+      answerAfterLink: content.answerTo.manage.description2,
+      isOpen: false,
+    },
     { id: "payout", question: content.answerTo.payout.title, answer: content.answerTo.payout.description, isOpen: false },
     { id: "calendar", question: content.answerTo.calendar.title, answer: content.answerTo.calendar.description, isOpen: false },
+    { id: "cost", question: content.answerTo.cost.title, answer: content.answerTo.cost.description, isOpen: false },
+    { id: "markets", question: content.answerTo.markets.title, answer: content.answerTo.markets.description, isOpen: false },
   ];
 };
 
