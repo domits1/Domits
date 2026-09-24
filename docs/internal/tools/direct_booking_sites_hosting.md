@@ -196,11 +196,15 @@ delete a record whose value is not the routing endpoint, and refuses to empty th
 If it stops or is interrupted at any point, run it again. Before each deletion it writes
 `rollback-pending-<domain>.txt` with the record's TTL, and adds the change id once Route 53 has
 accepted the deletion, so a rerun checks `INSYNC` and waits the TTL again before it touches the
-tenant; the file is removed once the tenant comparison has passed. When the change id is
-unknown, because the run stopped between the deletion and saving the id or because the record
-was deleted by hand, `INSYNC` cannot be checked. It then waits the five-minute `INSYNC` limit
-plus the TTL plus the margin instead, taking the TTL from the file, or 60 seconds, the TTL the
-scripts create records with, when there is no file.
+tenant; the file is removed once the tenant comparison has passed.
+
+When a record is already gone and its change id is unknown, because the run stopped between
+the deletion and saving the id or because the record was deleted by hand, `INSYNC` cannot be
+checked and elapsed time proves nothing, so the script stops without touching the tenant and
+says so. Check with `list-resource-record-sets` that the record is really gone, wait at least
+the old record's TTL since it was deleted (the pending file holds it; 60 seconds for records
+these scripts create), and run it again with `--dns-already-gone <domain>`. Only with that flag
+does it continue to the tenant step for that domain without a change id.
 
 Never run two of these scripts at the same time.
 

@@ -3,15 +3,28 @@
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib-common.sh"
 
 ARGS=()
-for a in "$@"; do
-  case "$a" in
+DNS_GONE=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --dry-run) DRY_RUN=1 ;;
-    -*) die "unknown option: $a" ;;
-    *) ARGS+=("$a") ;;
+    --dns-already-gone)
+      [[ $# -ge 2 && "$2" != -* ]] || die "--dns-already-gone needs a domain"
+      DNS_GONE+=("$2")
+      shift ;;
+    -*) die "unknown option: $1" ;;
+    *) ARGS+=("$1") ;;
   esac
+  shift
 done
-[[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
+[[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] [--dns-already-gone <domain>]... <domain...>"
 unique_args "${ARGS[@]}"
+if [[ ${#DNS_GONE[@]} -gt 0 ]]; then
+  for g in "${DNS_GONE[@]}"; do
+    hit=0
+    for d in "${ARGS[@]}"; do [[ "$d" = "$g" ]] && hit=1; done
+    [[ "$hit" -eq 1 ]] || die "--dns-already-gone $g is not one of the domains to roll back"
+  done
+fi
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rollback-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -37,15 +50,36 @@ on_tenant() {
   return 1
 }
 not_in_sync() {
-  printf 'DNS deletion was accepted but not confirmed in sync: %s. The tenant was not touched, so the site is still served by the tenant. It is safe to run rollback.sh again.' "$1"
+  printf 'DNS deletion was accepted but not confirmed in sync: %s. This run did not update the tenant, and the current serving state is not confirmed. It is safe to run rollback.sh again.' "$1"
   return $?
+}
+confirmed_gone() {
+  local g
+  if [[ ${#DNS_GONE[@]} -gt 0 ]]; then
+    for g in "${DNS_GONE[@]}"; do [[ "$g" = "$1" ]] && return 0; done
+  fi
+  return 1
+}
+unknown_change() {
+  printf 'the record for %s is deleted, but its Route 53 change id is unknown, so neither when the deletion happened nor whether it is in sync can be established. This run did not update the tenant, and the current serving state is not confirmed. Check with list-resource-record-sets that no CNAME for %s exists in hosted zone %s, wait at least the TTL of the old record (%s) since it was deleted, then run rollback.sh again with --dns-already-gone %s' "$1" "$1" "$HOSTED_ZONE_ID" "$2" "$1"
+  return $?
+}
+write_pending() {
+  local tmp
+  tmp="$(mktemp "$SCRIPT_DIR/rollback-pending-XXXXXX")" || return 1
+  if printf '%s %s\n' "$2" "$3" > "$tmp" && mv -f "$tmp" "$(pending_file "$1")"; then
+    return 0
+  fi
+  rm -f "$tmp"
+  return 1
 }
 
 TO_DELETE=()
 DELETE_TTLS=()
 WAIT_IDS=()
 WAIT_FOR=()
-UNKNOWN_SYNC=()
+GONE_CONFIRMED=()
+UNCONFIRMED=()
 WAIT_TTL=0
 for d in "${ARGS[@]}"; do
   line="$(record_line "$d")" || die "cannot read the DNS record for $d from Route 53; nothing was changed"
@@ -64,17 +98,27 @@ for d in "${ARGS[@]}"; do
   elif [[ -f "$pending" ]]; then
     read -r change_id ttl < "$pending" || die "cannot read $pending; nothing was changed"
     [[ "$change_id" =~ ^[A-Za-z0-9]+$ && "$ttl" =~ ^[0-9]+$ ]] || die "$pending is not a valid pending file; nothing was changed"
-    if [[ "$change_id" = "unknown" ]]; then
-      step "$d" "no CNAME, deleted by an earlier run, change id unknown, TTL $ttl"
-      UNKNOWN_SYNC+=("$d")
-    else
+    if [[ "$change_id" != "unknown" ]]; then
       step "$d" "no CNAME, deleted by an earlier run as change $change_id, TTL $ttl"
       WAIT_IDS+=("$change_id")
+    elif confirmed_gone "$d"; then
+      step "$d" "no CNAME, change id unknown, confirmed with --dns-already-gone"
+      GONE_CONFIRMED+=("$d")
+      continue
+    else
+      step "$d" "no CNAME, deleted by an earlier run, change id UNKNOWN, TTL $ttl"
+      UNCONFIRMED+=("$(unknown_change "$d" "$ttl seconds")")
+      continue
     fi
   elif on_tenant "$d"; then
-    ttl="$TTL"
-    step "$d" "no CNAME but still on the tenant, TTL unknown, assuming $TTL"
-    UNKNOWN_SYNC+=("$d")
+    if confirmed_gone "$d"; then
+      step "$d" "no CNAME, still on the tenant, confirmed with --dns-already-gone"
+      GONE_CONFIRMED+=("$d")
+    else
+      step "$d" "no CNAME but still on the tenant, change id UNKNOWN"
+      UNCONFIRMED+=("$(unknown_change "$d" "unknown to this script; $TTL seconds for records these scripts create")")
+    fi
+    continue
   else
     step "$d" "no CNAME, nothing to delete"
     continue
@@ -82,10 +126,14 @@ for d in "${ARGS[@]}"; do
   WAIT_FOR+=("$d")
   [[ "$ttl" -le "$WAIT_TTL" ]] || WAIT_TTL="$ttl"
 done
+if [[ ${#UNCONFIRMED[@]} -gt 0 ]]; then
+  log ""
+  for u in "${UNCONFIRMED[@]}"; do log "UNKNOWN: $u."; done
+  die "propagation of an earlier DNS deletion cannot be established; nothing was changed"
+fi
 SYNC_LIMIT=$(( SYNC_POLLS * SYNC_INTERVAL ))
 WAIT_SECONDS=0
 [[ ${#WAIT_FOR[@]} -eq 0 ]] || WAIT_SECONDS=$(( WAIT_TTL + DNS_MARGIN ))
-[[ ${#UNKNOWN_SYNC[@]} -eq 0 ]] || WAIT_SECONDS=$(( WAIT_SECONDS + SYNC_LIMIT ))
 
 KEEP=()
 REMOVE=()
@@ -104,13 +152,9 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   if [[ ${#TO_DELETE[@]} -gt 0 ]]; then log "  route53: delete ${#TO_DELETE[@]} CNAME(s): ${TO_DELETE[*]:-}"; else log "  route53: nothing to delete"; fi
   if [[ ${#WAIT_FOR[@]} -gt 0 ]]; then
     log "  then wait until Route 53 reports the deletion INSYNC, at most $SYNC_LIMIT seconds"
-    if [[ ${#UNKNOWN_SYNC[@]} -gt 0 ]]; then
-      log "  INSYNC cannot be checked for ${UNKNOWN_SYNC[*]}: the change id of its earlier deletion is unknown"
-      log "  then wait $WAIT_SECONDS seconds: the INSYNC limit, $SYNC_LIMIT, plus the longest TTL, $WAIT_TTL, plus $DNS_MARGIN"
-    else
-      log "  then wait $WAIT_SECONDS seconds: the longest TTL, $WAIT_TTL, plus $DNS_MARGIN"
-    fi
+    log "  then wait $WAIT_SECONDS seconds: the longest TTL, $WAIT_TTL, plus $DNS_MARGIN"
   fi
+  if [[ ${#GONE_CONFIRMED[@]} -gt 0 ]]; then log "  no DNS wait for ${GONE_CONFIRMED[*]}: confirmed with --dns-already-gone"; fi
   if [[ ${#REMOVE[@]} -gt 0 ]]; then log "  tenant: remove ${#REMOVE[@]} domain(s), ${#KEEP[@]} stay"; else log "  tenant: nothing to remove"; fi
   log "  then wait for Deployed"
   log ""
@@ -132,14 +176,14 @@ log "Deleting DNS"
 for i in "${!TO_DELETE[@]}"; do
   d="${TO_DELETE[$i]}"
   batch="$(change_batch "rollback $d" DELETE "$d" "${DELETE_TTLS[$i]}" "$ROUTING_ENDPOINT")"
-  printf 'unknown %s\n' "${DELETE_TTLS[$i]}" > "$(pending_file "$d")" \
+  write_pending "$d" unknown "${DELETE_TTLS[$i]}" \
     || die "cannot write $(pending_file "$d"), so the record for $d was not deleted"
   if r53_change "$batch"; then
     note "route53: deletion of the CNAME for $d accepted"
     step "$d" "CNAME deletion accepted, change ${R53_CHANGE_ID:-unknown}"
-    [[ -n "$R53_CHANGE_ID" ]] || die "$(not_in_sync "Route 53 returned no change id for $d")"
-    printf '%s %s\n' "$R53_CHANGE_ID" "${DELETE_TTLS[$i]}" > "$(pending_file "$d")" \
-      || die "$(not_in_sync "cannot write $(pending_file "$d")")"
+    [[ -n "$R53_CHANGE_ID" ]] || die "Route 53 returned no change id; $(unknown_change "$d" "${DELETE_TTLS[$i]} seconds")"
+    write_pending "$d" "$R53_CHANGE_ID" "${DELETE_TTLS[$i]}" \
+      || die "cannot save change $R53_CHANGE_ID to $(pending_file "$d"); $(unknown_change "$d" "${DELETE_TTLS[$i]} seconds"), or put '$R53_CHANGE_ID ${DELETE_TTLS[$i]}' in that file and run rollback.sh again without the flag"
     WAIT_IDS+=("$R53_CHANGE_ID")
   else
     step "$d" "FAILED"
@@ -159,19 +203,15 @@ if [[ ${#WAIT_FOR[@]} -gt 0 ]]; then
       *) die "$(not_in_sync "$SYNC_DETAIL")" ;;
     esac
   fi
-  if [[ ${#UNKNOWN_SYNC[@]} -gt 0 ]]; then
-    step "INSYNC not checkable, change id unknown" "${UNKNOWN_SYNC[*]}"
-    step "waiting" "$WAIT_SECONDS seconds: INSYNC limit $SYNC_LIMIT plus TTL $WAIT_TTL plus $DNS_MARGIN"
-  else
-    step "waiting" "$WAIT_SECONDS seconds: TTL $WAIT_TTL plus $DNS_MARGIN"
-  fi
-  sleep "$WAIT_SECONDS"
+  step "waiting" "$WAIT_SECONDS seconds: TTL $WAIT_TTL plus $DNS_MARGIN"
+  sleep "$WAIT_SECONDS" \
+    || die "the wait after the DNS deletion did not complete. This run did not update the tenant, and the current serving state is not confirmed. The pending files are kept; run rollback.sh again."
   note "route53: waited $WAIT_SECONDS seconds for resolvers to drop the deleted record(s)"
 fi
 
 DNS_STATE="no DNS record was deleted"
-if [[ ${#WAIT_FOR[@]} -gt 0 ]]; then
-  DNS_STATE="the records for ${WAIT_FOR[*]} are deleted in Route 53; removal from the tenant and traffic moving back to Amplify are not confirmed"
+if [[ ${#WAIT_FOR[@]} -gt 0 || ${#GONE_CONFIRMED[@]} -gt 0 ]]; then
+  DNS_STATE="the records for ${WAIT_FOR[*]:-} ${GONE_CONFIRMED[*]:-} are deleted in Route 53; removal from the tenant and traffic moving back to Amplify are not confirmed"
 fi
 
 log ""
