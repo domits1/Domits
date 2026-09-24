@@ -35,3 +35,7 @@ export function deriveFinanceViewState({
     showFinancialData,
   };
 }
+
+export function getTransactionType(charge = {}) {
+  return charge.transactionType || "payments";
+}

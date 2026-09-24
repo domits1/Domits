@@ -51,6 +51,23 @@ export const FINANCE_DEMO_DATA = {
       createdAt: "2026-03-01T00:00:00.000Z",
     },
   ],
+  faqs: [
+    {
+      faq_id: "demo-faq-1",
+      question: "When will I be paid?",
+      answer: "Payment timelines depend on your payout schedule and Stripe account status.",
+    },
+    {
+      faq_id: "demo-faq-2",
+      question: "How do payouts work?",
+      answer: "Payments for your bookings are deposited into your linked Stripe account and paid out according to your Stripe schedule.",
+    },
+    {
+      faq_id: "demo-faq-3",
+      question: "Why do I have to share my details with Stripe?",
+      answer: "Stripe requires your details to verify your identity and securely process payments.",
+    },
+  ],
   schedule: {
     interval: "daily",
     weekly_anchor: null,

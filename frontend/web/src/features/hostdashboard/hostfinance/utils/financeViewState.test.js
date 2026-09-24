@@ -1,4 +1,4 @@
-import { deriveFinanceViewState } from "./financeViewState.js";
+import { deriveFinanceViewState, getTransactionType } from "./financeViewState.js";
 
 describe("deriveFinanceViewState", () => {
   test("marks a connected active host as live and shows financial data", () => {
@@ -102,5 +102,10 @@ describe("deriveFinanceViewState", () => {
       hasActivity: true,
       showFinancialData: true,
     });
+  });
+  test("uses the backend-provided transaction type and defaults to payments", () => {
+    expect(getTransactionType({ transactionType: "refunds" })).toBe("refunds");
+    expect(getTransactionType({ transactionType: "payments" })).toBe("payments");
+    expect(getTransactionType({})).toBe("payments");
   });
 });

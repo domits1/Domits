@@ -16,7 +16,7 @@ import { RefreshFunctions } from "../hooks/refreshFunctions.js";
 import { formatMoney } from "../utils/formatMoney";
 import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 import { isFinanceDemoMode } from "../mocks/financeDemoData";
-import { deriveFinanceViewState } from "../utils/financeViewState";
+import { deriveFinanceViewState, getTransactionType } from "../utils/financeViewState";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const DEMO_LISTINGS = [{ property: { id: "demo-property", status: "ACTIVE" } }];
@@ -49,23 +49,26 @@ function EmptyState({ title, description }) {
   );
 }
 
-function HelpPanel() {
-  const questions = [
-    ["When will I be paid?", "Payment timelines are currently under discussion, but typically, payments will be processed shortly after the guest checks in. Exact details will be provided in your Stripe account once finalized."],
-    ["How do payouts work?", "Payments for your bookings will be deposited into your linked Stripe account. From there, Stripe will transfer the funds to your bank account or connected wallet within a week."],
-    ["Why do I have to share my details with Stripe?", "Stripe requires your details to verify your identity and ensure secure payment processing. This verification helps protect both hosts and guests."],
-  ];
+function HelpPanel({ faqs }) {
+  if (faqs.length === 0) {
+    return (
+      <section className="finance-card finance-help-card">
+        <h2>Need help?</h2>
+        <EmptyState title="No FAQs found" description="Finance help content is currently unavailable." />
+      </section>
+    );
+  }
 
   return (
     <section className="finance-card finance-help-card">
       <h2>Need help?</h2>
-      {questions.map(([question, answer]) => (
-        <details key={question} className="finance-help-item">
+      {faqs.map((faq) => (
+        <details key={faq.faq_id || faq.question} className="finance-help-item">
           <summary>
-            {question}
+            {faq.question}
             <ChevronDown size={15} aria-hidden="true" />
           </summary>
-          <p>{answer}</p>
+          <p>{faq.answer}</p>
         </details>
       ))}
     </section>
@@ -87,6 +90,7 @@ export default function HostFinanceTab() {
     toast,
     payouts,
     charges,
+    faqs,
     accountId,
     onboardingComplete,
     chargesEnabled,
@@ -141,7 +145,7 @@ export default function HostFinanceTab() {
       ...charges.map((charge, index) => {
         return {
           id: `charge-${charge.paymentId || index}`,
-          type: charge.transactionType || "payments",
+          type: getTransactionType(charge),
           date: charge.createdDate,
           exportDate: charge.createdAt || charge.createdDate,
           description: charge.description || "Guest payment",
@@ -532,7 +536,7 @@ export default function HostFinanceTab() {
         </>
       )}
 
-      <HelpPanel />
+      <HelpPanel faqs={faqs} />
 
       <InvoicesSection />
     </main>

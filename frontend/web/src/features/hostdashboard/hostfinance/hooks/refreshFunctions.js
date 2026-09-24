@@ -7,6 +7,7 @@ import {
   getHostBalance,
   getPayoutSchedule,
   setPayoutSchedule,
+  getFaqs,
 } from "../services/stripeAccountService";
 import { FINANCE_DEMO_DATA, isFinanceDemoMode } from "../mocks/financeDemoData";
 
@@ -28,12 +29,14 @@ export function RefreshFunctions() {
   const [payoutInterval, setPayoutInterval] = useState(null);
   const [weekly_anchor, setWeeklyAnchor] = useState(null);
   const [monthly_anchor, setMonthlyAnchor] = useState(null);
+  const [faqs, setFaqs] = useState([]);
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: true,
     payouts: true,
     hostBalance: true,
     getPayoutSchedule: true,
+    faqs: true,
   });
 
   const [toast, setToast] = useState(null);
@@ -64,12 +67,14 @@ export function RefreshFunctions() {
       setPayoutInterval(FINANCE_DEMO_DATA.schedule.interval);
       setWeeklyAnchor(FINANCE_DEMO_DATA.schedule.weekly_anchor);
       setMonthlyAnchor(FINANCE_DEMO_DATA.schedule.monthly_anchor);
+      setFaqs(FINANCE_DEMO_DATA.faqs);
       setLoadingStates({
         account: false,
         charges: false,
         payouts: false,
         hostBalance: false,
         getPayoutSchedule: false,
+        faqs: false,
       });
 
       return () => {
@@ -145,6 +150,18 @@ export function RefreshFunctions() {
         console.error("Error fetching host payout schedule:", error);
       } finally {
         updateLoadingState("getPayoutSchedule", false);
+      }
+    })();
+
+    (async () => {
+      try {
+        updateLoadingState("faqs", true);
+        const details = await getFaqs();
+        setFaqs(details?.faqs ?? []);
+      } catch (error) {
+        console.error("Error fetching FAQs:", error);
+      } finally {
+        updateLoadingState("faqs", false);
       }
     })();
 
@@ -333,6 +350,7 @@ export function RefreshFunctions() {
     payoutInterval,
     weekly_anchor,
     monthly_anchor,
+    faqs,
     loadingStates,
 
     setPayoutInterval,
