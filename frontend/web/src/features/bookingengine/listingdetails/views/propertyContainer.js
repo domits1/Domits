@@ -9,6 +9,7 @@ import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
 import SkeletonBlock from "../components/SkeletonBlock";
 import LocationSection from "./locationSection";
+import ReviewsSection from "../components/ReviewsSection";
 
 import {
   getActiveCancellationPolicyId,
@@ -35,6 +36,20 @@ const PropertyContainer = ({
   },
   host = {},
   location = {},
+  reviews = [],
+  reviewSummary = null,
+  reviewsLoading = false,
+  reviewsError = "",
+  // Review: Controls pass from the listing page into the public review section.
+  reviewFilters = {
+    sort: "recent",
+    verifiedOnly: false,
+    category: "",
+  },
+  onReviewSortChange = () => {},
+  onReviewVerifiedOnlyChange = () => {},
+  onReviewCategoryChange = () => {},
+  onReviewFiltersClear = () => {},
   onContactHost,
   unavailableDateKeys = [],
   bookedDateKeys = [],
@@ -192,6 +207,26 @@ const PropertyContainer = ({
           />
         </section>
 
+        {/* Review: Public property feedback helps future guests evaluate this listing. */}
+        <section id="listing-reviews" className="listing-section-block">
+          <ReviewsSection
+            isLoading={reviewsLoading}
+            error={reviewsError}
+            reviews={reviews}
+            overallRating={reviewSummary?.averageRating}
+            totalReviews={reviewSummary?.totalReviews}
+            verifiedReviewCount={reviewSummary?.verifiedReviewCount}
+            categoryScores={reviewSummary?.categoryScores}
+            sortValue={reviewFilters.sort}
+            verifiedOnly={reviewFilters.verifiedOnly}
+            categoryFilter={reviewFilters.category}
+            onSortChange={onReviewSortChange}
+            onVerifiedOnlyChange={onReviewVerifiedOnlyChange}
+            onCategoryFilterChange={onReviewCategoryChange}
+            onClearFilters={onReviewFiltersClear}
+          />
+        </section>
+
         <section id="listing-host" className="listing-section-block">
           <HostSection host={host} onContactHost={onContactHost} isLoading={isHostLoading} />
         </section>
@@ -271,6 +306,25 @@ PropertyContainer.propTypes = {
     }),
   }),
   host: PropTypes.object,
+  reviews: PropTypes.array,
+  reviewSummary: PropTypes.shape({
+    averageRating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    totalReviews: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    verifiedReviewCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    categoryScores: PropTypes.object,
+  }),
+  reviewsLoading: PropTypes.bool,
+  reviewsError: PropTypes.string,
+  // Review: Control props used by ReviewsSection.
+  reviewFilters: PropTypes.shape({
+    sort: PropTypes.string,
+    verifiedOnly: PropTypes.bool,
+    category: PropTypes.string,
+  }),
+  onReviewSortChange: PropTypes.func,
+  onReviewVerifiedOnlyChange: PropTypes.func,
+  onReviewCategoryChange: PropTypes.func,
+  onReviewFiltersClear: PropTypes.func,
   onContactHost: PropTypes.func,
   children: PropTypes.node,
   isPropertyLoading: PropTypes.bool,

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
@@ -7,6 +7,7 @@ import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 import { normalizeAvailabilityRanges } from "../utils/dateAvailability";
+import { fetchPublicPropertyReviews } from "../services/fetchPropertyReviews";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -200,6 +201,35 @@ const ListingDetails2 = () => {
   const [error, setError] = useState(null);
   const [showMessageHost, setShowMessageHost] = useState(false);
 
+  // Review: Public summary and rows are loaded independently from property and host details.
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [propertyReviews, setPropertyReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState("");
+  // Review: Control state is translated into API-backed sorting and filtering.
+  const [reviewFilters, setReviewFilters] = useState({
+    sort: "recent",
+    verifiedOnly: false,
+    category: "",
+  });
+
+  // Review: Updates one control without resetting the other active review controls.
+  const updateReviewFilter = useCallback((key, value) => {
+    setReviewFilters((currentFilters) => ({
+      ...currentFilters,
+      [key]: value,
+    }));
+  }, []);
+
+  // Review: Clears controls back to the default public review list.
+  const clearReviewFilters = useCallback(() => {
+    setReviewFilters({
+      sort: "recent",
+      verifiedOnly: false,
+      category: "",
+    });
+  }, []);
+
   const externalBlockedDateKeys = useMemo(
     () =>
       Array.isArray(property?.calendarAvailability?.externalBlockedDates)
@@ -311,6 +341,38 @@ const ListingDetails2 = () => {
     };
   }, [id]);
 
+  // Review: Fetch public data whenever the listing ID or review controls change.
+  useEffect(() => {
+    let cancelled = false;
+
+    setReviewsLoading(true);
+    setReviewsError("");
+    setReviewSummary(null);
+    setPropertyReviews([]);
+
+    fetchPublicPropertyReviews(id, reviewFilters)
+      .then(({ summary, reviews }) => {
+        if (cancelled) return;
+
+        setReviewSummary(summary);
+        setPropertyReviews(reviews);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        setReviewsError(error.message || "Could not load reviews.");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setReviewsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, reviewFilters]);
+
   if (error) {
     return (
       <div className="listing-details-error">
@@ -321,10 +383,12 @@ const ListingDetails2 = () => {
 
   const hasAmenities = Array.isArray(property?.amenities) && property.amenities.length > 0;
   const hasLocation = Boolean(property?.location?.city || property?.location?.country);
+  const hasReviewSection = reviewsLoading || Boolean(reviewsError) || propertyReviews.length > 0 || Number(reviewSummary?.totalReviews || 0) > 0;
 
   const sectionItems = [
     { id: "photos", label: "Photos", targetId: "listing-photos" },
     ...(propertyLoading || hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
+    ...(hasReviewSection ? [{ id: "reviews", label: "Reviews", targetId: "listing-reviews" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
     ...(hasLocation ? [{ id: "location", label: "Location", targetId: "listing-location" }] : []),
     { id: "policies", label: "Policies", targetId: "listing-policies" },
@@ -345,6 +409,15 @@ const ListingDetails2 = () => {
           property={property}
           host={host}
           location={property.location}
+          reviews={propertyReviews}
+          reviewSummary={reviewSummary}
+          reviewsLoading={reviewsLoading}
+          reviewsError={reviewsError}
+          reviewFilters={reviewFilters}
+          onReviewSortChange={(sort) => updateReviewFilter("sort", sort)}
+          onReviewVerifiedOnlyChange={(verifiedOnly) => updateReviewFilter("verifiedOnly", verifiedOnly)}
+          onReviewCategoryChange={(category) => updateReviewFilter("category", category)}
+          onReviewFiltersClear={clearReviewFilters}
           onContactHost={
             (property?.property?.hostId || property?.property?.hostID)
               ? () => setShowMessageHost(true)
