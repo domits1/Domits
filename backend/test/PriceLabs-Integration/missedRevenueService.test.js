@@ -500,4 +500,73 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     expect(result.revenueEfficiencyPct).toBe(0);
   });
+
+  test("breaks missed revenue down by date", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 120 }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.byDate).toEqual([{ date: "2026-09-01", missedRevenue: 120 }]);
+  });
+
+  test("omits a date from byDate when its only night is booked", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 120 }],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.byDate).toEqual([]);
+  });
+
+  test("sums missed revenue from two properties on the same date into one portfolio-level entry", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-2", calendar_date: 20260901, pricelabs_price: 50 },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.byDate).toEqual([{ date: "2026-09-01", missedRevenue: 150 }]);
+  });
+
+  test("omits a date from byDate when its only contributing price is 0", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 0 }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.byDate).toEqual([]);
+  });
+
+  test("returns byDate sorted ascending regardless of input order", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260903, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.byDate.map((d) => d.date)).toEqual(["2026-09-01", "2026-09-02", "2026-09-03"]);
+  });
 });

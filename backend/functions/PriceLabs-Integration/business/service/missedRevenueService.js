@@ -183,6 +183,7 @@ export class MissedRevenueService {
     let potentialNightsWithPriceData = 0;
     let potentialNightsWithoutPriceData = 0;
     const byPropertyMap = new Map();
+    const byDateMap = new Map();
 
     for (const row of priceRows) {
       const iso = isoFromCalendarInt(row.calendar_date);
@@ -212,6 +213,7 @@ export class MissedRevenueService {
       const price = Number(row.pricelabs_price);
       grossMissedRevenue += price;
       unbookedNightsWithPriceData += 1;
+      byDateMap.set(iso, (byDateMap.get(iso) ?? 0) + price);
 
       const existing = ensureProperty(byPropertyMap, row.property_id);
       existing.missedRevenue += price;
@@ -228,6 +230,11 @@ export class MissedRevenueService {
     const priceDataCoveragePct =
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
 
+    const byDate = Array.from(byDateMap.entries())
+      .filter(([, missedRevenue]) => missedRevenue > 0)
+      .map(([date, missedRevenue]) => ({ date, missedRevenue }))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
     return {
       grossMissedRevenue,
       actualRevenue,
@@ -243,6 +250,7 @@ export class MissedRevenueService {
         propertyId,
         ...v,
       })),
+      byDate,
     };
   }
 }
