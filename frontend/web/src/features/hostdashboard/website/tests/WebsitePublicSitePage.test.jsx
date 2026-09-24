@@ -1,6 +1,6 @@
 import React from "react";
-import { act, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import WebsitePublicSitePage from "../WebsitePublicSitePage";
 import { PublicWebsiteRequestError } from "../services/websitePublicSiteService";
 
@@ -51,10 +51,10 @@ function TemplateStub() {
 const MARKETPLACE_TITLE = "Domits - Holiday rentals, campers, boats and more...";
 const MARKETPLACE_DESCRIPTION = "Explore the perfect holiday rental on Domits.";
 
-const buildRenderPayload = () => ({
-  resolution: { siteId: "site-1", templateKey: "panorama-landing" },
-  site: { id: "site-1", siteName: "Wellness Villa Bisous", templateKey: "panorama-landing" },
-  domain: { domain: "wellness-villa.direct.domits.com", isPrimary: true },
+const buildRenderPayload = ({ domain = globalThis.location.host, siteId = "site-1" } = {}) => ({
+  resolution: { siteId, templateKey: "panorama-landing" },
+  site: { id: siteId, siteName: "Wellness Villa Bisous", templateKey: "panorama-landing" },
+  domain: { domain, isPrimary: true },
   propertySnapshot: {
     property: {
       id: "property-1",
@@ -79,6 +79,33 @@ const readMetaContent = (attributeName, attributeValue) =>
   document.head.querySelector(`meta[${attributeName}="${attributeValue}"]`)?.getAttribute("content") ?? null;
 
 const renderPage = () => render(<WebsitePublicSitePage />, { wrapper: MemoryRouter });
+
+const NavigateToSiteB = () => {
+  const navigate = useNavigate();
+
+  return (
+    <button type="button" data-testid="go-to-site-b" onClick={() => navigate("/website-live/villa-b.example.com")}>
+      go
+    </button>
+  );
+};
+
+const renderPageOnLiveRoute = () =>
+  render(
+    <MemoryRouter initialEntries={["/website-live/villa-a.example.com"]}>
+      <Routes>
+        <Route
+          path="/website-live/:domain"
+          element={
+            <>
+              <WebsitePublicSitePage />
+              <NavigateToSiteB />
+            </>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
+  );
 
 describe("WebsitePublicSitePage head tags", () => {
   beforeEach(() => {
@@ -245,6 +272,28 @@ describe("WebsitePublicSitePage head tags", () => {
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
     expect(readMetaContent("property", "og:title")).toBe("Wellness Villa Bisous | Ubud, Indonesia");
     expect(document.title).toBe("Wellness Villa Bisous | Ubud, Indonesia");
+  });
+
+  it("drops site A's tags as soon as the route asks for site B", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValueOnce(
+      buildRenderPayload({ domain: "villa-a.example.com", siteId: "site-a" })
+    );
+
+    renderPageOnLiveRoute();
+    await screen.findByTestId("published-site");
+
+    expect(readMetaContent("property", "og:title")).toBe("Wellness Villa Bisous | Ubud, Indonesia");
+
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("go-to-site-b"));
+    });
+
+    expect(document.title).toBe(MARKETPLACE_TITLE);
+    expect(document.head.querySelector('meta[property="og:title"]')).toBeNull();
+    expect(document.head.querySelector('meta[property="og:image"]')).toBeNull();
+    expect(readMetaContent("name", "description")).toBe(MARKETPLACE_DESCRIPTION);
   });
 
   it("restores the marketplace head when the page unmounts", async () => {

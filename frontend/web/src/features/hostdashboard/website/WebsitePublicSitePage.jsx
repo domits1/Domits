@@ -223,9 +223,24 @@ function WebsitePublicSitePage() {
     hostname: globalThis.location?.hostname || "",
     pathname: globalThis.location?.pathname || "",
   }).isHost;
+  const requestedSiteKey = requestedSiteId || requestedDomain;
+  const isRequestedSiteLoaded = useMemo(() => {
+    const loadedSiteId = String(renderPayload?.site?.id || "").trim();
+    if (requestedSiteId) {
+      return !loadedSiteId || loadedSiteId === requestedSiteId;
+    }
+
+    const loadedDomain = normalizeWebsiteDomain(renderPayload?.domain?.domain || "");
+    return !loadedDomain || loadedDomain === requestedDomain;
+  }, [renderPayload, requestedDomain, requestedSiteId]);
+  const headTagsModel = isRequestedSiteLoaded ? publicModel : null;
   const websiteHeadTags = useMemo(() => {
     if (!isDirectBookingWebsiteHost) {
-      return buildWebsiteHeadTags({ model: publicModel, isDirectBookingHost: false });
+      return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false });
+    }
+
+    if (!isRequestedSiteLoaded) {
+      return null;
     }
 
     if (canRenderPublishedSite) {
@@ -243,17 +258,16 @@ function WebsitePublicSitePage() {
     });
   }, [
     canRenderPublishedSite,
+    headTagsModel,
     isDirectBookingWebsiteHost,
     isLoading,
     isMissingPublishedWebsite,
+    isRequestedSiteLoaded,
     publicModel,
     unavailableWebsiteTitle,
   ]);
 
-  useWebsiteHeadTags({
-    key: resolvedSiteId || resolvedDomain || requestedDomain,
-    tags: websiteHeadTags,
-  });
+  useWebsiteHeadTags({ key: requestedSiteKey, tags: websiteHeadTags });
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
