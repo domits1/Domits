@@ -24,16 +24,16 @@ export class Reviews20260910 {
       );
     `);
 
-    await queryRunner.query(`CREATE UNIQUE INDEX ASYNC review_id_unique_test ON test.review (id);`);
+    await queryRunner.query(`CREATE UNIQUE INDEX review_id_unique_test ON test.review (id);`);
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC review_booking_type_reviewer_unique_test
+      CREATE UNIQUE INDEX review_booking_type_reviewer_unique_test
       ON test.review (booking_id, review_type, reviewer_user_id);
     `);
-    await queryRunner.query(`CREATE INDEX ASYNC review_property_idx_test ON test.review (property_id);`);
-    await queryRunner.query(`CREATE INDEX ASYNC review_host_idx_test ON test.review (host_id);`);
-    await queryRunner.query(`CREATE INDEX ASYNC review_reviewer_idx_test ON test.review (reviewer_user_id);`);
+    await queryRunner.query(`CREATE INDEX review_property_idx_test ON test.review (property_id);`);
+    await queryRunner.query(`CREATE INDEX review_host_idx_test ON test.review (host_id);`);
+    await queryRunner.query(`CREATE INDEX review_reviewer_idx_test ON test.review (reviewer_user_id);`);
     await queryRunner.query(`
-      CREATE INDEX ASYNC review_public_property_idx_test
+      CREATE INDEX review_public_property_idx_test
       ON test.review (property_id, publication_status, created_at);
     `);
 
@@ -48,12 +48,12 @@ export class Reviews20260910 {
       );
     `);
 
-    await queryRunner.query(`CREATE UNIQUE INDEX ASYNC review_rating_id_unique_test ON test.review_rating (id);`);
+    await queryRunner.query(`CREATE UNIQUE INDEX review_rating_id_unique_test ON test.review_rating (id);`);
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC review_rating_review_category_unique_test
+      CREATE UNIQUE INDEX review_rating_review_category_unique_test
       ON test.review_rating (review_id, category);
     `);
-    await queryRunner.query(`CREATE INDEX ASYNC review_rating_review_idx_test ON test.review_rating (review_id);`);
+    await queryRunner.query(`CREATE INDEX review_rating_review_idx_test ON test.review_rating (review_id);`);
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS main.review (
@@ -77,16 +77,16 @@ export class Reviews20260910 {
       );
     `);
 
-    await queryRunner.query(`CREATE UNIQUE INDEX ASYNC review_id_unique ON main.review (id);`);
+    await queryRunner.query(`CREATE UNIQUE INDEX review_id_unique ON main.review (id);`);
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC review_booking_type_reviewer_unique
+      CREATE UNIQUE INDEX review_booking_type_reviewer_unique
       ON main.review (booking_id, review_type, reviewer_user_id);
     `);
-    await queryRunner.query(`CREATE INDEX ASYNC review_property_idx ON main.review (property_id);`);
-    await queryRunner.query(`CREATE INDEX ASYNC review_host_idx ON main.review (host_id);`);
-    await queryRunner.query(`CREATE INDEX ASYNC review_reviewer_idx ON main.review (reviewer_user_id);`);
+    await queryRunner.query(`CREATE INDEX review_property_idx ON main.review (property_id);`);
+    await queryRunner.query(`CREATE INDEX review_host_idx ON main.review (host_id);`);
+    await queryRunner.query(`CREATE INDEX review_reviewer_idx ON main.review (reviewer_user_id);`);
     await queryRunner.query(`
-      CREATE INDEX ASYNC review_public_property_idx
+      CREATE INDEX review_public_property_idx
       ON main.review (property_id, publication_status, created_at);
     `);
 
@@ -101,12 +101,12 @@ export class Reviews20260910 {
       );
     `);
 
-    await queryRunner.query(`CREATE UNIQUE INDEX ASYNC review_rating_id_unique ON main.review_rating (id);`);
+    await queryRunner.query(`CREATE UNIQUE INDEX review_rating_id_unique ON main.review_rating (id);`);
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC review_rating_review_category_unique
+      CREATE UNIQUE INDEX review_rating_review_category_unique
       ON main.review_rating (review_id, category);
     `);
-    await queryRunner.query(`CREATE INDEX ASYNC review_rating_review_idx ON main.review_rating (review_id);`);
+    await queryRunner.query(`CREATE INDEX review_rating_review_idx ON main.review_rating (review_id);`);
   }
 
   async down(queryRunner) {

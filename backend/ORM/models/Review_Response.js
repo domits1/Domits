@@ -15,7 +15,7 @@ export const Review_Response = new EntitySchema({
     reviewId: { name: "review_id", type: "varchar", nullable: false },
     authorId: { name: "author_id", type: "varchar", nullable: false },
     authorRole: { name: "author_role", type: "varchar", nullable: false },
-    status: { type: "varchar", nullable: false, default: "draft" },
+    status: { type: "varchar", nullable: false, default: "DRAFT" },
     message: { type: "text", nullable: false },
     createdAt: {
       name: "created_at",

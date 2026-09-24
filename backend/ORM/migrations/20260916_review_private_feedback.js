@@ -18,12 +18,12 @@ export class ReviewPrivateFeedback20260916 {
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_private_feedback_review_idx_${schema}
+        CREATE INDEX review_private_feedback_review_idx_${schema}
         ON ${schema}.review_private_feedback (review_id, feedback_type);
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_private_feedback_property_idx_${schema}
+        CREATE INDEX review_private_feedback_property_idx_${schema}
         ON ${schema}.review_private_feedback (property_id, feedback_type);
       `);
     }

@@ -4,7 +4,7 @@ export class ReviewResponseWorkflow20260915 {
     // Review: Creates a review-response status index in each schema.
     for (const schema of ["test", "main"]) {
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_response_review_status_idx_${schema}
+        CREATE INDEX review_response_review_status_idx_${schema}
         ON ${schema}.review_response (review_id, status, deleted_at);
       `);
     }

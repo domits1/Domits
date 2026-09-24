@@ -19,7 +19,7 @@ export class ReviewsEntities20260911 {
       `);
 
       await queryRunner.query(`
-        CREATE UNIQUE INDEX ASYNC review_category_key_type_unique_${schema}
+        CREATE UNIQUE INDEX review_category_key_type_unique_${schema}
         ON ${schema}.review_category (key, review_type);
       `);
 
@@ -42,7 +42,7 @@ export class ReviewsEntities20260911 {
       `);
 
       await queryRunner.query(`
-        CREATE UNIQUE INDEX ASYNC review_request_booking_type_guest_unique_${schema}
+        CREATE UNIQUE INDEX review_request_booking_type_guest_unique_${schema}
         ON ${schema}.review_request (booking_id, review_type, guest_id);
       `);
 
@@ -53,7 +53,7 @@ export class ReviewsEntities20260911 {
           author_id VARCHAR(255) NOT NULL,
           author_role VARCHAR(100) NOT NULL,
           message TEXT NOT NULL,
-          status VARCHAR(50) NOT NULL DEFAULT 'draft',
+          status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
           published_at BIGINT,
           deleted_at BIGINT,
           created_at BIGINT NOT NULL,
@@ -63,7 +63,7 @@ export class ReviewsEntities20260911 {
       `);
 
       await queryRunner.query(`
-        CREATE UNIQUE INDEX ASYNC review_response_review_unique_${schema}
+        CREATE UNIQUE INDEX review_response_review_unique_${schema}
         ON ${schema}.review_response (review_id);
       `);
 
@@ -84,7 +84,7 @@ export class ReviewsEntities20260911 {
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_moderation_review_idx_${schema}
+        CREATE INDEX review_moderation_review_idx_${schema}
         ON ${schema}.review_moderation (review_id);
       `);
 
@@ -104,7 +104,7 @@ export class ReviewsEntities20260911 {
       `);
 
       await queryRunner.query(`
-        CREATE UNIQUE INDEX ASYNC review_verification_review_unique_${schema}
+        CREATE UNIQUE INDEX review_verification_review_unique_${schema}
         ON ${schema}.review_verification (review_id);
       `);
     }
