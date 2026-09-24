@@ -416,7 +416,10 @@ describe("useUserProfile", () => {
     });
     expect(result.current.isVerifying).toBe(true);
     expect(result.current.emailError).toBe("");
-    expect(saveResult).toBe(true);
+    // Not a completed save yet - "pending" lets usePersonalDataSave tell this
+    // apart from a real success, so the Save button doesn't claim "Saved!"
+    // while the email is still waiting on its verification code.
+    expect(saveResult).toBe("pending");
   });
 
   test("onSaveUserEmail: sets emailError when API reports email already in use, even on a 400 response", async () => {

@@ -249,7 +249,10 @@ export default function useUserProfile() {
       if (result.message === "Email update successful, please verify your new email.") {
         pendingEmailRef.current = newEmail;
         setIsVerifying(true);
-        return true;
+        // Not a completed save - the email still needs the verification code
+        // entered. "pending" lets usePersonalDataSave distinguish this from a
+        // real success so the Save button doesn't claim "Saved!" too early.
+        return "pending";
       }
 
       if (result.message === "This email address is already in use.") {

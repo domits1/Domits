@@ -114,6 +114,20 @@ describe("usePersonalDataSave", () => {
     expect(result.current.saveSuccess).toBe(false);
   });
 
+  test("does not report success when the email save only started verification, not a completed save", async () => {
+    const props = baseProps();
+    props.tempUser.email = "new@example.com";
+    props.onSaveUserEmail = jest.fn().mockResolvedValue("pending");
+    const { result } = renderHook(() => usePersonalDataSave(props));
+
+    await act(async () => {
+      await result.current.saveAll();
+    });
+
+    expect(result.current.saveSuccess).toBe(false);
+    expect(result.current.saveError).toBe(false);
+  });
+
   test("still reports success when one field fails but is unchanged (not part of this save)", async () => {
     const props = baseProps();
     props.tempUser.title = "Ms.";

@@ -65,6 +65,16 @@ export default function usePersonalDataSave({
             return;
         }
 
+        // saveUserEmail returns "pending" (not true) when it only started email
+        // verification - that isn't a completed save, so don't claim "Saved!".
+        const hasPending = results.some(
+            (result) => result.status === "fulfilled" && result.value === "pending"
+        );
+
+        if (hasPending) {
+            return;
+        }
+
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
     };
