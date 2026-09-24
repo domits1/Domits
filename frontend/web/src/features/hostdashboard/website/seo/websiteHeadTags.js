@@ -7,6 +7,7 @@ export const WEBSITE_HEAD_OG_TYPE = "website";
 
 const ABSOLUTE_HTTP_URL_PATTERN = /^https?:\/\//i;
 const NON_HTTP_SCHEME_PATTERN = /^(?!https?:)[a-z][a-z0-9+.-]*:/i;
+const DATA_URI_IN_PATH_PATTERN = /(?:^|\/)data:/i;
 const TRAILING_SEPARATOR_PATTERN = /[\s,.;:!?-]+$/u;
 
 export const normalizeWebsiteHeadText = (value) =>
@@ -41,6 +42,9 @@ export const buildWebsiteHeadTitle = ({ title, city, country } = {}) => {
   return locationLabel ? `${normalizedTitle} | ${locationLabel}` : normalizedTitle;
 };
 
+const resolveUrlPath = (imageUrl) =>
+  imageUrl.replace(ABSOLUTE_HTTP_URL_PATTERN, "").replace(/^[^/]*\//, "");
+
 export const resolveWebsiteHeadImageUrl = (images) => {
   const candidateImages = Array.isArray(images) ? images : [images];
 
@@ -51,9 +55,15 @@ export const resolveWebsiteHeadImageUrl = (images) => {
     }
 
     const resolvedImageUrl = normalizeImageUrl(candidateImageKey);
-    if (ABSOLUTE_HTTP_URL_PATTERN.test(resolvedImageUrl)) {
-      return resolvedImageUrl;
+    if (!ABSOLUTE_HTTP_URL_PATTERN.test(resolvedImageUrl)) {
+      continue;
     }
+
+    if (DATA_URI_IN_PATH_PATTERN.test(resolveUrlPath(resolvedImageUrl))) {
+      continue;
+    }
+
+    return resolvedImageUrl;
   }
 
   return "";

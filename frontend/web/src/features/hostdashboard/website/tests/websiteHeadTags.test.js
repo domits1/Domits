@@ -1,4 +1,4 @@
-import { placeholderImage, S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
+import { normalizeImageUrl, placeholderImage, S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "../rendering/websiteDraftThemeOverrides";
@@ -10,6 +10,8 @@ import {
   WEBSITE_HEAD_OG_TYPE,
   WEBSITE_HEAD_ROBOTS_NOINDEX,
 } from "../seo/websiteHeadTags";
+
+const NORMALIZED_PLACEHOLDER = normalizeImageUrl(placeholderImage);
 
 const buildPublishedModel = (propertySnapshot, contentOverrides = {}) => {
   const baseModel = buildWebsiteTemplateModel({ propertyDetails: propertySnapshot, summaryProperty: null });
@@ -120,27 +122,37 @@ describe("buildWebsiteHeadTags", () => {
     expect(tags.metaByName.description).toBe("Subtitle copy that no template renders.");
   });
 
-  it("drops the placeholder image instead of exposing a data url", () => {
+  it("drops the placeholder in the shape the model builder produces it", () => {
     const tags = buildWebsiteHeadTags({
-      model: buildModel({ media: { heroImage: placeholderImage, galleryImages: [] } }),
+      model: buildModel({ media: { heroImage: NORMALIZED_PLACEHOLDER, galleryImages: [NORMALIZED_PLACEHOLDER] } }),
     });
 
+    expect(NORMALIZED_PLACEHOLDER).toMatch(/^https:\/\//);
     expect(tags.metaByProperty["og:image"]).toBeUndefined();
     expect(tags.metaByProperty["og:image:alt"]).toBeUndefined();
     expect(JSON.stringify(tags)).not.toContain("data:");
   });
 
-  it("skips the placeholder and takes the first absolute gallery image", () => {
+  it("skips the normalized placeholder and takes the next real image", () => {
     const tags = buildWebsiteHeadTags({
       model: buildModel({
         media: {
-          heroImage: placeholderImage,
-          galleryImages: [`${S3_ACCOMMODATION_URL}images/property/second/web.jpg`],
+          heroImage: NORMALIZED_PLACEHOLDER,
+          galleryImages: [NORMALIZED_PLACEHOLDER, `${S3_ACCOMMODATION_URL}images/property/second/web.jpg`],
         },
       }),
     });
 
     expect(tags.metaByProperty["og:image"]).toBe(`${S3_ACCOMMODATION_URL}images/property/second/web.jpg`);
+    expect(tags.metaByProperty["og:image:alt"]).toBe("Wellness Villa Bisous | Ubud, Indonesia");
+  });
+
+  it("keeps a storage key that merely contains the word data", () => {
+    const tags = buildWebsiteHeadTags({
+      model: buildModel({ media: { heroImage: "images/userdata:1/web.jpg", galleryImages: [] } }),
+    });
+
+    expect(tags.metaByProperty["og:image"]).toBe(`${S3_ACCOMMODATION_URL}images/userdata:1/web.jpg`);
   });
 
   it("resolves a bare storage key into an absolute url", () => {
@@ -254,6 +266,26 @@ describe("buildWebsiteHeadTags through the real model builder", () => {
 
     expect(tags.metaByName.description).toBe(model.hero.description);
     expect(tags.metaByName.description).not.toBe("Subtitle copy that no template renders.");
+  });
+
+  it("emits no og:image and no og:image:alt for a published snapshot without images", () => {
+    const model = buildPublishedModel({ ...propertySnapshot, images: [] });
+
+    const tags = buildWebsiteHeadTags({ model });
+
+    expect(model.media.heroImage).toContain("data:");
+    expect(tags.metaByProperty["og:image"]).toBeUndefined();
+    expect(tags.metaByProperty["og:image:alt"]).toBeUndefined();
+    expect(JSON.stringify(tags)).not.toContain("data:");
+  });
+
+  it("emits the real image for a published snapshot that has one", () => {
+    const model = buildPublishedModel(propertySnapshot);
+
+    const tags = buildWebsiteHeadTags({ model });
+
+    expect(tags.metaByProperty["og:image"]).toBe(`${S3_ACCOMMODATION_URL}images/property-1/image-1/web.jpg`);
+    expect(tags.metaByProperty["og:image:alt"]).toBe("Wellness Villa Bisous | Ubud, Indonesia");
   });
 });
 
