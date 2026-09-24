@@ -1,0 +1,3 @@
+migrate-*.log
+rollback-*.log
+tenant-*.json

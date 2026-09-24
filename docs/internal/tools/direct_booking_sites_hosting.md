@@ -112,8 +112,10 @@ The wildcard stays where it is because of the certificate, and that risk has not
   the new certificate may not validate at all and `direct.domits.com` can be left stuck.
 
 That failure is not cheap to undo. Putting `*` back means another managed-certificate request
-and another wait, during which neither Amplify nor the tenant serves the wildcard. Every
-per-site move so far was reversible in about a minute by deleting one record; this one is not.
+and another wait, during which neither Amplify nor the tenant serves the wildcard. A per-site
+move can be reversed with `rollback.sh`, which deletes the site's record and removes its domain
+from the tenant; the rollback is only done once the tenant is `Deployed` again. This one cannot
+be reversed that way.
 
 `wildcard-migrate.sh` and `wildcard-rollback.sh` exist for this step but live outside the
 repository, in `~/cutover-check`. Only their dry-runs have been run. Do not run the real thing
