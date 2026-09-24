@@ -110,18 +110,33 @@ describe("deriveFinanceViewState", () => {
   });
 });
 
-
 describe("payout display helpers", () => {
   const payouts = [
-    { isProjected: true, amount: 0, arrivalDate: "26 Sep" },
-    { isProjected: true, amount: 120, arrivalDate: "28 Sep" },
-    { isProjected: true, amount: 80, arrivalDate: "30 Sep" },
+    {
+      isProjected: true,
+      amount: 0,
+      arrivalDate: "26 Sep",
+      id: null,
+      status: "forecasted (not yet started)",
+    },
+    { isProjected: true, amount: 120, arrivalDate: "28 Sep", id: null, status: "incoming charge - pending" },
+    { isProjected: true, amount: 80, arrivalDate: "30 Sep", id: null, status: "incoming charge - pending" },
     { isProjected: false, amount: 670, arrivalDate: "20 Sep" },
     { isProjected: false, amount: 540, arrivalDate: "12 Sep" },
   ];
 
-  test("sums projected payouts after the forecast for arriving soon", () => {
+  test("sums projected payouts without the forecast for arriving soon", () => {
     expect(getArrivingSoonAmount(payouts)).toBe(200);
+  });
+
+  test("includes the first projected payout when there is no forecast", () => {
+    const payoutsWithoutForecast = [
+      { isProjected: true, amount: 120, arrivalDate: "28 Sep", id: null, status: "incoming charge - pending" },
+      { isProjected: true, amount: 80, arrivalDate: "30 Sep", id: null, status: "incoming charge - pending" },
+      { isProjected: false, amount: 670, arrivalDate: "20 Sep" },
+    ];
+
+    expect(getArrivingSoonAmount(payoutsWithoutForecast)).toBe(200);
   });
 
   test("uses the first real payout as the last payout", () => {
