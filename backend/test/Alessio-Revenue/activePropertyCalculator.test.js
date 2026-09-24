@@ -281,4 +281,31 @@ describe("Enterprise Active Property Calculator", () => {
       mockRatePlanRepository.createQueryBuilder
     ).not.toHaveBeenCalled();
   });
+  test("uses the host as the portfolio identifier when no explicit enterprise id exists", async () => {
+    mockPropertyQueryBuilder.getOne.mockResolvedValue({
+      id: "property_123",
+      enterpriseid: null,
+      hostid: "host_123",
+    });
+
+    mockPropertyQueryBuilder.getCount.mockResolvedValue(3);
+    mockRatePlanQueryBuilder.getOne.mockResolvedValue(null);
+
+    const result = await getEnterpriseBillingDetails("host_123", "host_123");
+
+    expect(mockPropertyQueryBuilder.where).toHaveBeenCalledWith(
+      "property.hostid = :hostId",
+      {
+        hostId: "host_123",
+      }
+    );
+
+    expect(result).toEqual({
+      activeProperties: 3,
+      pricePerProperty: 49,
+      currency: "EUR",
+      estimatedMonthlyCost: 147,
+    });
+  });
+
 });

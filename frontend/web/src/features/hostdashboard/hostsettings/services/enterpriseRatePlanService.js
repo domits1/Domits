@@ -1,4 +1,7 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
+import {
+  getAccessToken,
+  getCognitoUserId,
+} from "../../../../services/getAccessToken";
 import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 
 const BASE_URL =
@@ -21,16 +24,21 @@ const getEnterpriseIdFromListings = async () => {
 };
 
 export const getEnterpriseRatePlan = async () => {
-  const enterpriseId = await getEnterpriseIdFromListings();
+  const explicitEnterpriseId = await getEnterpriseIdFromListings();
+  const enterpriseId = explicitEnterpriseId || getCognitoUserId();
 
   if (!enterpriseId) {
-    throw new Error("No enterprise account could be found.");
+    throw new Error("No enterprise account could be identified.");
   }
 
-  const token = await getAccessToken();
+  const token = getAccessToken();
+
+  if (!token) {
+    throw new Error("You must be signed in to load the enterprise rate plan.");
+  }
 
   const response = await fetch(
-    `${BASE_URL}enterprise/${encodeURIComponent(enterpriseId)}`,
+    BASE_URL + "enterprise/" + encodeURIComponent(enterpriseId),
     {
       method: "GET",
       headers: {
