@@ -181,16 +181,16 @@ class ReviewService {
     }
 
     const now = this.clock();
-    const nextStatus =
-      body.status !== undefined
-        ? this.resolveUpdateStatus({
-            currentStatus: review.status,
-            requestedStatus: body.status,
-            actorUserId: user.sub,
-            authorUserId: review.reviewerUserId,
-            actorRole: user.role,
-          })
-        : review.status;
+    let nextStatus = review.status;
+    if (body.status !== undefined) {
+      nextStatus = this.resolveUpdateStatus({
+        currentStatus: review.status,
+        requestedStatus: body.status,
+        actorUserId: user.sub,
+        authorUserId: review.reviewerUserId,
+        actorRole: user.role,
+      });
+    }
     const updateData = this.buildReviewUpdateRecord(body, nextStatus, now);
 
     const ratings =
@@ -288,14 +288,15 @@ class ReviewService {
     this.statusService.validate(status);
   }
 
-  async validateCategoryRatings(categoryRatings = {}, reviewType) {
-    if (categoryRatings === null || Array.isArray(categoryRatings) || typeof categoryRatings !== "object") {
+  async validateCategoryRatings(categoryRatings, reviewType) {
+    const ratings = categoryRatings === undefined ? {} : categoryRatings;
+    if (ratings === null || Array.isArray(ratings) || typeof ratings !== "object") {
       throw new BadRequestException("categoryRatings must be an object.");
     }
 
     const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(reviewType);
 
-    Object.entries(categoryRatings).forEach(([category, rating]) => {
+    Object.entries(ratings).forEach(([category, rating]) => {
       if (!supportedCategories.has(category)) {
         throw new BadRequestException(`Unsupported rating category: ${category}.`);
       }
@@ -411,34 +412,42 @@ class ReviewService {
             updatedAt: now,
           }
         : null,
-      moderation:
-        status === REVIEW_STATUSES.PENDING_MODERATION
-          ? {
-              id: randomUUID(),
-              reviewId: review.id,
-              targetType: "REVIEW",
-              status: "PENDING",
-              reason: null,
-              notes: null,
-              moderatedByUserId: null,
-              moderatedAt: null,
-              createdAt: now,
-              updatedAt: now,
-            }
-          : status === REVIEW_STATUSES.PUBLISHED || status === REVIEW_STATUSES.REJECTED
-            ? {
-                id: randomUUID(),
-                reviewId: review.id,
-                targetType: "REVIEW",
-                status: status === REVIEW_STATUSES.PUBLISHED ? "APPROVED" : "REJECTED",
-                reason: null,
-                notes: null,
-                moderatedByUserId: null,
-                moderatedAt: now,
-                createdAt: now,
-                updatedAt: now,
-              }
-            : null,
+      moderation: this.buildModerationRecord({ review, status, now }),
+    };
+  }
+
+  buildModerationRecord({ review, status, now }) {
+    if (status === REVIEW_STATUSES.PENDING_MODERATION) {
+      return {
+        id: randomUUID(),
+        reviewId: review.id,
+        targetType: "REVIEW",
+        status: "PENDING",
+        reason: null,
+        notes: null,
+        moderatedByUserId: null,
+        moderatedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+
+    const isModerated = [REVIEW_STATUSES.PUBLISHED, REVIEW_STATUSES.REJECTED].includes(status);
+    if (!isModerated) {
+      return null;
+    }
+
+    return {
+      id: randomUUID(),
+      reviewId: review.id,
+      targetType: "REVIEW",
+      status: status === REVIEW_STATUSES.PUBLISHED ? "APPROVED" : "REJECTED",
+      reason: null,
+      notes: null,
+      moderatedByUserId: null,
+      moderatedAt: now,
+      createdAt: now,
+      updatedAt: now,
     };
   }
 

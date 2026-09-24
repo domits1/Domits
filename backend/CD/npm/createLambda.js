@@ -17,6 +17,14 @@ import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 import path from "path";
 
 const execAsync = promisify(exec);
+const LAMBDA_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
+const validateLambdaName = name => {
+  if (!LAMBDA_NAME_PATTERN.test(name)) {
+    throw new Error("Lambda name may contain only letters, numbers, hyphens, and underscores.");
+  }
+
+  return name;
+};
 const readlineInterface = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -32,6 +40,7 @@ class LambdaFactory {
   async create() {
     readlineInterface.question("What will your lambda function be called? \n", async name => {
       try {
+        name = validateLambdaName(name.trim());
         if (this.shouldCreateApi && await this.doesLambdaFunctionExist(name)) {
           console.error("\x1b[31m%s\x1b[0m", "\n[ERROR] This function already exists, please try again.\n");
           return this.create();
@@ -59,7 +68,7 @@ class LambdaFactory {
 
         readlineInterface.close();
       } catch (error) {
-        console.error("\x1b[31m%s\x1b[0m", error.message);
+        console.error("\x1b[31m%s\x1b[0m", "The Lambda setup failed.");
         console.error("\n\x1b[31m%s\x1b[0m", "[ERROR] Something went wrong.");
         console.error("\n\x1b[31m%s\x1b[0m", "Your function may not have been properly registered.");
         console.error("\n\x1b[31m%s\x1b[0m", "Please remove all traces of the function in API Gateway, Lambda and local.\n");
@@ -85,7 +94,7 @@ class LambdaFactory {
     await execAsync("npm ci");
     console.log("\n\x1b[32m%s\x1b[0m", `Global dependencies installed successfully.`);
     console.log("\n\x1b[33m", `Preparing directories for function: ${name}...`);
-    const functionPath = `functions/${name}`;
+    const functionPath = path.join("functions", validateLambdaName(name));
     await this.copyTemplateDirectory("CD/template/function", functionPath);
     await this.copyTemplateDirectory("CD/template/events", `events/${name}`);
     await this.copyTemplateDirectory("CD/template/test", `test/${name}`);
@@ -128,6 +137,7 @@ class LambdaFactory {
   }
 
   async createLambdaFunction(name) {
+    name = validateLambdaName(name);
     console.log("\n\x1b[33m", `Registering function: ${name}, to AWS Lambda...`);
     const folder = `functions/${name}`;
     const zipFileName = "function.zip";
@@ -223,9 +233,10 @@ class LambdaFactory {
   }
 
   async cleanUp(name) {
+    name = validateLambdaName(name);
     console.log("\n\x1b[33m", `Cleaning up directories...`);
     console.log("\n\x1b[33m", `Removing function-level node-modules from: ${name}`);
-    await fs.rm(`functions/${name}/node_modules`, { recursive: true });
+    await fs.rm(path.join("functions", name, "node_modules"), { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Function-level node-modules from: ${name}, were removed successfully.`);
 
     console.log("\n\x1b[33m", `Removing function.zip, if this gives an error, remove function.zip manually and you are done.`);
@@ -259,5 +270,5 @@ class LambdaFactory {
 
 }
 
-const shouldCreateApi = process.argv.pop();
+const shouldCreateApi = process.argv[2];
 new LambdaFactory(shouldCreateApi !== "false").create();

@@ -35,7 +35,7 @@ const initialCategoryRatings = REVIEW_CATEGORIES.reduce((ratings, category) => {
 
 const getEditReviewId = (pathname) => {
   // Review: Recognizes the edit route and safely decodes the selected review id.
-  const match = String(pathname || "").match(EDIT_ROUTE_PATTERN);
+  const match = EDIT_ROUTE_PATTERN.exec(String(pathname || ""));
 
   if (!match) {
     return "";
@@ -237,7 +237,7 @@ function GuestReviewForm() {
         setOverallRating(Number(review?.overallRating) || 0);
         setCategoryRatings({
           ...initialCategoryRatings,
-          ...(review?.categoryRatings || {}),
+          ...review?.categoryRatings,
         });
         setTitle(review?.title || "");
         setPublicReview(review?.publicReview || "");
@@ -355,14 +355,23 @@ function GuestReviewForm() {
         });
       }
 
+      let successTitle = "Review submitted";
+      if (isEditMode) {
+        successTitle = "Review updated";
+      } else if (status === "DRAFT") {
+        successTitle = "Review saved as draft";
+      }
+      let successMessage = "Thanks for sharing your stay. Your review is now ready for the next step.";
+      if (isEditMode) {
+        successMessage = "Your changes have been saved.";
+      } else if (status === "DRAFT") {
+        successMessage = "You can return to finish this review from your review history.";
+      }
+
       setSuccessState({
         status,
-        title: isEditMode ? "Review updated" : status === "DRAFT" ? "Review saved as draft" : "Review submitted",
-        message: isEditMode
-          ? "Your changes have been saved."
-          : status === "DRAFT"
-            ? "You can return to finish this review from your review history."
-            : "Thanks for sharing your stay. Your review is now ready for the next step.",
+        title: successTitle,
+        message: successMessage,
       });
     } catch (error) {
       setSubmitError(error.message || "Could not save your review.");
@@ -382,7 +391,7 @@ function GuestReviewForm() {
   if (successState) {
     return (
       <main className="guestReviewFormPage">
-        <section className="guestReviewSuccessState" role="status">
+        <output className="guestReviewSuccessState">
           <CheckCircleRoundedIcon aria-hidden="true" />
           <h1>{successState.title}</h1>
           <p>{successState.message}</p>
@@ -395,9 +404,14 @@ function GuestReviewForm() {
               Back to bookings
             </button>
           </div>
-        </section>
+        </output>
       </main>
     );
+  }
+
+  let submitButtonLabel = isEditMode ? "Update review" : "Submit review";
+  if (submittingStatus === "SUBMITTED") {
+    submitButtonLabel = isEditMode ? "Updating..." : "Submitting...";
   }
 
   return (
@@ -425,7 +439,7 @@ function GuestReviewForm() {
 
       <form className="guestReviewForm" onSubmit={(event) => event.preventDefault()}>
         <section className="guestReviewSection">
-          <label className="guestReviewLabel">Overall rating</label>
+          <p className="guestReviewLabel">Overall rating</p>
           <RatingInput
             value={overallRating}
             disabled={!isEditable}
@@ -440,7 +454,7 @@ function GuestReviewForm() {
         </section>
 
         <section className="guestReviewSection">
-          <label className="guestReviewLabel">Category ratings</label>
+          <p className="guestReviewLabel">Category ratings</p>
 
           <div className="guestReviewCategories">
             {REVIEW_CATEGORIES.map((category) => (
@@ -544,13 +558,7 @@ function GuestReviewForm() {
             onClick={() => handleSubmit("SUBMITTED")}
           >
             <SendRoundedIcon aria-hidden="true" />
-            {submittingStatus === "SUBMITTED"
-              ? isEditMode
-                ? "Updating..."
-                : "Submitting..."
-              : isEditMode
-                ? "Update review"
-                : "Submit review"}
+            {submitButtonLabel}
           </button>
         </div>
       </form>

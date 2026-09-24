@@ -84,7 +84,7 @@
   > svg {
     width: 48px;
     height: 48px;
-    color: #0d9813;
+    color: #08700d;
   }
 
   h2,
@@ -93,7 +93,7 @@
   }
 
   p {
-    color: #666666;
+    color: #4f4f4f;
   }
 }
 
@@ -125,7 +125,7 @@
 
   p {
     margin: 0;
-    color: #666666;
+    color: #4f4f4f;
     font-size: 14px;
   }
 }
@@ -142,7 +142,7 @@
 
 .status-published {
   background: #eaf7eb;
-  color: #0d9813;
+  color: #08700d;
 }
 
 .status-rejected {
@@ -153,7 +153,7 @@
 .status-submitted,
 .status-pending_moderation {
   background: #fff7df;
-  color: #8a5b00;
+  color: #6b4700;
 }
 
 .guestReviewHistoryStars {
@@ -189,7 +189,7 @@
 
   p {
     margin: 0;
-    color: #555555;
+    color: #4f4f4f;
     line-height: 22px;
   }
 }
@@ -216,10 +216,10 @@
   gap: 6px;
   width: fit-content;
   min-height: 38px;
-  border: 1px solid #0d9813;
+  border: 1px solid #08700d;
   border-radius: 8px;
   background: #ffffff;
-  color: #0d9813;
+  color: #08700d;
   font-weight: 700;
   padding: 0 12px;
   cursor: pointer;

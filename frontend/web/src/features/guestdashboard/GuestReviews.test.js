@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import GuestReviews from "./GuestReviews";
 import { getGuestReviewHistory } from "./services/reviewAPI";
@@ -35,7 +35,7 @@ describe("guest review history", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Failed to fetch");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => expect(screen.getByText("No reviews yet")).toBeInTheDocument());
+    expect(await screen.findByText("No reviews yet")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(getGuestReviewHistory).toHaveBeenCalledTimes(2);
   });

@@ -8,7 +8,7 @@ export const Review_Notification_Preference = new EntitySchema({
     userId: { name: "user_id", type: "varchar", primary: true },
     emailEnabled: { name: "email_enabled", type: "boolean", nullable: false, default: true },
     updatedAt: { name: "updated_at", type: "bigint", nullable: false, transformer: {
-      from: (value) => Number(value),
+      from: Number,
       to: (value) => value,
     } },
   },

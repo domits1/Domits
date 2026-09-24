@@ -12,7 +12,7 @@ import "./styles/guestReviews.scss";
 const formatStatus = (status) =>
   String(status || "draft")
     .toLowerCase()
-    .replace(/_/g, " ")
+    .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 
 const formatDate = (timestamp) => {

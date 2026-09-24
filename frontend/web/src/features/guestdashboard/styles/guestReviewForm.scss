@@ -31,7 +31,7 @@
 
 .guestReviewEyebrow {
   margin: 0 0 6px;
-  color: #0d9813;
+  color: #08700d;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -88,7 +88,7 @@
   width: fit-content;
   border-radius: 999px;
   background: #eaf7eb;
-  color: #0d9813;
+  color: #08700d;
   font-size: 14px;
   font-weight: 700;
   padding: 6px 10px;
@@ -118,7 +118,7 @@
     flex: 0 0 auto;
     width: 18px;
     height: 18px;
-    color: #0d9813;
+    color: #08700d;
   }
 
   span {
@@ -129,7 +129,7 @@
 
 .guestReviewVerifiedMessage {
   margin: 2px 0 0;
-  color: #5f5f5f;
+  color: #4f4f4f;
   font-size: 14px;
   line-height: 21px;
 }
@@ -173,7 +173,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: #666666;
+  color: #4f4f4f;
   font-size: 13px;
 
   span {
@@ -197,7 +197,7 @@
   > svg {
     width: 58px;
     height: 58px;
-    color: #0d9813;
+    color: #08700d;
   }
 
   h1 {
@@ -208,7 +208,7 @@
 
   p {
     margin: 0;
-    color: #555555;
+    color: #4f4f4f;
     font-size: 16px;
     line-height: 24px;
   }
@@ -328,7 +328,7 @@
 
   p {
     margin: 0;
-    color: #666;
+    color: #4f4f4f;
     font-size: 14px;
   }
 }
@@ -359,15 +359,15 @@
 }
 
 .guestReviewPrimaryButton {
-  border: 1px solid #0d9813;
-  background: #0d9813;
+  border: 1px solid #08700d;
+  background: #08700d;
   color: #ffffff;
 }
 
 .guestReviewSecondaryButton {
-  border: 1px solid #0d9813;
+  border: 1px solid #08700d;
   background: #ffffff;
-  color: #0d9813;
+  color: #08700d;
 }
 
 @media (max-width: 720px) {
