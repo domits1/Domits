@@ -385,7 +385,7 @@ class ReviewService {
 
     this.validateStatus(body.status, true);
     this.validateRating(body.overallRating, "overallRating");
-    await this.validateCategoryRatings(body.categoryRatings, body.reviewType);
+    await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
   }
 
   async validateUpdateReviewPayload(body) {
@@ -418,7 +418,7 @@ class ReviewService {
     }
 
     if (body.categoryRatings !== undefined) {
-      await this.validateCategoryRatings(body.categoryRatings, body.reviewType || "GUEST_TO_PROPERTY");
+      await this.validateCategoryRatings(body.reviewType || "GUEST_TO_PROPERTY", body.categoryRatings);
     }
   }
 
@@ -427,7 +427,7 @@ class ReviewService {
     this.statusService.validate(status);
   }
 
-  async validateCategoryRatings(categoryRatings = {}, reviewType) {
+  async validateCategoryRatings(reviewType, categoryRatings = {}) {
     if (categoryRatings === null || Array.isArray(categoryRatings) || typeof categoryRatings !== "object") {
       throw new BadRequestException("categoryRatings must be an object.");
     }

@@ -31,7 +31,7 @@ const withReviewId = (event) => {
   return {
     ...event,
     pathParameters: {
-      ...(event.pathParameters || {}),
+      ...event.pathParameters,
       id: reviewId,
     },
   };
@@ -39,6 +39,32 @@ const withReviewId = (event) => {
 
 const isReviewsCollectionPath = (event) => normalizePath(event) === "/reviews";
 const isReviewDetailPath = (event) => Boolean(getReviewIdFromPath(event));
+
+const routeResponseRequest = (event, routedEvent, responseRoute) => {
+  // Review: Routes host response actions separately to keep the Lambda entry point straightforward.
+  if (event.httpMethod === "POST" && responseRoute?.action === "response") {
+    return controller.saveDraftResponse(routedEvent);
+  }
+  if (event.httpMethod === "POST" && responseRoute?.action === "publish") {
+    return controller.publishResponse(routedEvent);
+  }
+  if (event.httpMethod === "PATCH" && responseRoute?.action === "response") {
+    return controller.editResponse(routedEvent);
+  }
+  if (event.httpMethod === "DELETE" && responseRoute?.action === "response") {
+    return controller.deleteResponse(routedEvent);
+  }
+  return null;
+};
+
+const routeReviewRequest = (event, routedEvent) => {
+  // Review: Routes review collection and detail operations after response routes are excluded.
+  if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) return controller.create(routedEvent);
+  if (event.httpMethod === "GET" && isReviewsCollectionPath(event)) return controller.get(routedEvent);
+  if (event.httpMethod === "GET" && isReviewDetailPath(event)) return controller.getById(routedEvent);
+  if (event.httpMethod === "PATCH" && isReviewDetailPath(event)) return controller.update(routedEvent);
+  return null;
+};
 
 export const handler = async (event) => {
   // Review: Routes collection and detail requests through one ReviewSystem Lambda entry point.
@@ -52,38 +78,12 @@ export const handler = async (event) => {
 
   const routedEvent = withReviewId(event);
   const responseRoute = getReviewResponseRouteFromPath(event);
+  const responseResult = routeResponseRequest(event, routedEvent, responseRoute);
 
-  if (event.httpMethod === "POST" && responseRoute?.action === "response") {
-    return controller.saveDraftResponse(routedEvent);
-  }
+  if (responseResult) return responseResult;
 
-  if (event.httpMethod === "POST" && responseRoute?.action === "publish") {
-    return controller.publishResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "PATCH" && responseRoute?.action === "response") {
-    return controller.editResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "DELETE" && responseRoute?.action === "response") {
-    return controller.deleteResponse(routedEvent);
-  }
-
-  if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) {
-    return controller.create(routedEvent);
-  }
-
-  if (event.httpMethod === "GET" && isReviewsCollectionPath(event)) {
-    return controller.get(routedEvent);
-  }
-
-  if (event.httpMethod === "GET" && isReviewDetailPath(event)) {
-    return controller.getById(routedEvent);
-  }
-
-  if (event.httpMethod === "PATCH" && isReviewDetailPath(event)) {
-    return controller.update(routedEvent);
-  }
+  const reviewResult = routeReviewRequest(event, routedEvent);
+  if (reviewResult) return reviewResult;
 
   return {
     statusCode: 404,

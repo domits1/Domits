@@ -12,7 +12,7 @@ import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyServi
 const formatStatus = (status) =>
   String(status || "draft")
     .toLowerCase()
-    .replace(/_/g, " ")
+    .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 
 const getReviewDate = (review) => review?.publishedAt || review?.createdAt || review?.date || "";
@@ -71,6 +71,50 @@ function HostReviews() {
   const publicReviews = sortedReviews.filter((review) => review.status === "PUBLISHED");
   // Review: Counts draft responses so hosts can quickly see unfinished reply work.
   const draftResponses = sortedReviews.filter((review) => review.response?.status === "draft");
+  let receivedReviewsContent;
+
+  if (identityLoading || isLoading) {
+    receivedReviewsContent = (
+      <div className={general.loadingContainer} aria-busy="true">
+        <img className={general.spinner} src={spinner} alt="Loading reviews" />
+      </div>
+    );
+  } else if (errorMessage) {
+    receivedReviewsContent = (
+      <p className={styles.reviewError} role="alert">
+        {errorMessage}
+      </p>
+    );
+  } else if (sortedReviews.length === 0) {
+    receivedReviewsContent = (
+      <p className={styles.reviewAlert}>No received reviews are ready for response yet.</p>
+    );
+  } else {
+    receivedReviewsContent = sortedReviews.map((review) => (
+      <article key={review.id || review.reviewId} className={styles.reviewTab}>
+        <div className={styles.reviewHeaderRow}>
+          <div>
+            <h3 className={styles.reviewHeader}>{getReviewTitle(review)}</h3>
+            <p className={styles.reviewDate}>
+              Written on: {getReviewDate(review) ? DateFormatterDD_MM_YYYY(getReviewDate(review)) : "-"}
+            </p>
+          </div>
+          <span className={styles.reviewStatus}>{formatStatus(review.status)}</span>
+        </div>
+
+        <p className={styles.reviewContent}>{getReviewText(review)}</p>
+
+        {review.privateFeedback && (
+          <div className={styles.privateFeedback}>
+            <strong>Private feedback from guest</strong>
+            <p>{review.privateFeedback}</p>
+          </div>
+        )}
+
+        <ReviewResponseEditor review={review} onChanged={loadReviews} styles={styles} />
+      </article>
+    ));
+  }
 
   return (
     <main className="page-body">
@@ -124,42 +168,7 @@ function HostReviews() {
                 </button>
               </div>
 
-              {identityLoading || isLoading ? (
-                <div className={general.loadingContainer} aria-busy="true">
-                  <img className={general.spinner} src={spinner} alt="Loading reviews" />
-                </div>
-              ) : errorMessage ? (
-                <p className={styles.reviewError} role="alert">
-                  {errorMessage}
-                </p>
-              ) : sortedReviews.length > 0 ? (
-                sortedReviews.map((review) => (
-                  <article key={review.id || review.reviewId} className={styles.reviewTab}>
-                    <div className={styles.reviewHeaderRow}>
-                      <div>
-                        <h3 className={styles.reviewHeader}>{getReviewTitle(review)}</h3>
-                        <p className={styles.reviewDate}>
-                          Written on: {getReviewDate(review) ? DateFormatterDD_MM_YYYY(getReviewDate(review)) : "-"}
-                        </p>
-                      </div>
-                      <span className={styles.reviewStatus}>{formatStatus(review.status)}</span>
-                    </div>
-
-                    <p className={styles.reviewContent}>{getReviewText(review)}</p>
-
-                    {review.privateFeedback && (
-                      <div className={styles.privateFeedback}>
-                        <strong>Private feedback from guest</strong>
-                        <p>{review.privateFeedback}</p>
-                      </div>
-                    )}
-
-                    <ReviewResponseEditor review={review} onChanged={loadReviews} styles={styles} />
-                  </article>
-                ))
-              ) : (
-                <p className={styles.reviewAlert}>No received reviews are ready for response yet.</p>
-              )}
+              {receivedReviewsContent}
             </div>
           </section>
         </div>

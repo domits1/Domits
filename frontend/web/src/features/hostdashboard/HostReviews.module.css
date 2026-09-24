@@ -20,7 +20,7 @@
 }
 
 .reviewTabs button[aria-selected="true"] {
-    border-bottom-color: #0d9813;
+    border-bottom-color: #08730d;
     color: #17291d;
     font-weight: 700;
 }
@@ -28,7 +28,7 @@
 .reviewTabs button:focus-visible,
 .comparisonControls button:focus-visible,
 .comparisonControls select:focus-visible {
-    outline: 2px solid #0d9813;
+    outline: 2px solid #08730d;
     outline-offset: 2px;
 }
 
@@ -227,8 +227,8 @@
 
 .refreshButton,
 .responseActions button {
-    border: 1px solid #0D9813;
-    background: #0D9813;
+    border: 1px solid #08730d;
+    background: #08730d;
     color: white;
     border-radius: 6px;
     padding: 8px 12px;
@@ -268,7 +268,7 @@
 }
 
 .contentContainer .reviewBox .reviewTab .reviewDate {
-    color: #0D9813;
+    color: #08730d;
 }
 
 .reviewStatus,
@@ -283,7 +283,7 @@
 
 .reviewStatus {
     background: #eef7ef;
-    color: #0D9813;
+    color: #08730d;
 }
 
 .privateFeedback,
@@ -319,7 +319,7 @@
 
 .responsePublishedBadge {
     background: #e9f7ec;
-    color: #0D9813;
+    color: #08730d;
 }
 
 .responseLabel {
@@ -348,7 +348,7 @@
 
 .responseActions button:last-child:not(:first-child) {
     background: white;
-    color: #0D9813;
+    color: #08730d;
 }
 
 .responseError,
@@ -379,7 +379,7 @@
 }
 
 .contentContainer .reviewBox .reviewTab:hover {
-    box-shadow: 4px 4px #0D9813;
+    box-shadow: 4px 4px #08730d;
     transition: .3s;
 }
 

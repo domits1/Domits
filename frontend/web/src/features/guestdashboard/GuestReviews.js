@@ -12,7 +12,7 @@ import "./styles/guestReviews.scss";
 const formatStatus = (status) =>
   String(status || "draft")
     .toLowerCase()
-    .replace(/_/g, " ")
+    .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 
 const formatDate = (timestamp) => {
@@ -85,6 +85,84 @@ function GuestReviews() {
     });
   };
 
+  let reviewHistoryContent;
+
+  if (loading) {
+    reviewHistoryContent = <div className="guestReviewHistoryState">Loading reviews...</div>;
+  } else if (errorMessage) {
+    reviewHistoryContent = (
+      <div className="guestReviewHistoryError" role="alert">
+        <ErrorOutlineRoundedIcon aria-hidden="true" />
+        <span>{errorMessage}</span>
+        <button type="button" className="guestReviewHistoryRefreshButton" onClick={loadReviews}>
+          <RefreshRoundedIcon aria-hidden="true" />
+          Retry
+        </button>
+      </div>
+    );
+  } else if (sortedReviews.length === 0) {
+    reviewHistoryContent = (
+      <section className="guestReviewHistoryEmpty">
+        <RateReviewRoundedIcon aria-hidden="true" />
+        <h2>No reviews yet</h2>
+        <p>Your submitted and draft reviews will appear here.</p>
+        <button type="button" className="guestReviewPrimaryButton" onClick={() => navigate("/guestdashboard/bookings")}>
+          View bookings
+        </button>
+      </section>
+    );
+  } else {
+    reviewHistoryContent = (
+      <section className="guestReviewHistoryList" aria-label="Your reviews">
+        {sortedReviews.map((review) => (
+          <article key={review.id} className="guestReviewHistoryCard">
+            <div className="guestReviewHistoryCardHeader">
+              <div>
+                <h2>{review.title || "Untitled review"}</h2>
+                <p>{formatDate(review.createdAt)}</p>
+              </div>
+              <span className={`guestReviewHistoryStatus status-${String(review.status || "draft").toLowerCase()}`}>
+                {formatStatus(review.status)}
+              </span>
+            </div>
+
+            <RatingStars value={review.overallRating} />
+
+            <p className="guestReviewHistoryText">{review.publicReview || "No written review yet."}</p>
+
+            {review.privateFeedback && (
+              <div className="guestReviewHistoryPrivate">
+                <strong>Private feedback</strong>
+                <p>{review.privateFeedback}</p>
+              </div>
+            )}
+
+            {review.categoryRatings && Object.keys(review.categoryRatings).length > 0 && (
+              <div className="guestReviewHistoryCategories">
+                {Object.entries(review.categoryRatings).map(([category, rating]) => (
+                  <span key={category}>
+                    {formatStatus(category)}: {Number(rating)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {canEditReview(review) && (
+              <button
+                type="button"
+                className="guestReviewHistoryEditButton"
+                onClick={() => handleEditReview(review)}
+              >
+                <EditRoundedIcon aria-hidden="true" />
+                Edit
+              </button>
+            )}
+          </article>
+        ))}
+      </section>
+    );
+  }
+
   return (
     <main className="guestReviewHistoryPage">
       <header className="guestReviewHistoryHeader">
@@ -99,75 +177,7 @@ function GuestReviews() {
         </button>
       </header>
 
-      {loading ? (
-        <div className="guestReviewHistoryState">Loading reviews...</div>
-      ) : errorMessage ? (
-        <div className="guestReviewHistoryError" role="alert">
-          <ErrorOutlineRoundedIcon aria-hidden="true" />
-          <span>{errorMessage}</span>
-          <button type="button" className="guestReviewHistoryRefreshButton" onClick={loadReviews}>
-            <RefreshRoundedIcon aria-hidden="true" />
-            Retry
-          </button>
-        </div>
-      ) : sortedReviews.length === 0 ? (
-        <section className="guestReviewHistoryEmpty">
-          <RateReviewRoundedIcon aria-hidden="true" />
-          <h2>No reviews yet</h2>
-          <p>Your submitted and draft reviews will appear here.</p>
-          <button type="button" className="guestReviewPrimaryButton" onClick={() => navigate("/guestdashboard/bookings")}>
-            View bookings
-          </button>
-        </section>
-      ) : (
-        <section className="guestReviewHistoryList" aria-label="Your reviews">
-          {sortedReviews.map((review) => (
-            <article key={review.id} className="guestReviewHistoryCard">
-              <div className="guestReviewHistoryCardHeader">
-                <div>
-                  <h2>{review.title || "Untitled review"}</h2>
-                  <p>{formatDate(review.createdAt)}</p>
-                </div>
-                <span className={`guestReviewHistoryStatus status-${String(review.status || "draft").toLowerCase()}`}>
-                  {formatStatus(review.status)}
-                </span>
-              </div>
-
-              <RatingStars value={review.overallRating} />
-
-              <p className="guestReviewHistoryText">{review.publicReview || "No written review yet."}</p>
-
-              {review.privateFeedback && (
-                <div className="guestReviewHistoryPrivate">
-                  <strong>Private feedback</strong>
-                  <p>{review.privateFeedback}</p>
-                </div>
-              )}
-
-              {review.categoryRatings && Object.keys(review.categoryRatings).length > 0 && (
-                <div className="guestReviewHistoryCategories">
-                  {Object.entries(review.categoryRatings).map(([category, rating]) => (
-                    <span key={category}>
-                      {formatStatus(category)}: {Number(rating)}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {canEditReview(review) && (
-                <button
-                  type="button"
-                  className="guestReviewHistoryEditButton"
-                  onClick={() => handleEditReview(review)}
-                >
-                  <EditRoundedIcon aria-hidden="true" />
-                  Edit
-                </button>
-              )}
-            </article>
-          ))}
-        </section>
-      )}
+      {reviewHistoryContent}
     </main>
   );
 }
