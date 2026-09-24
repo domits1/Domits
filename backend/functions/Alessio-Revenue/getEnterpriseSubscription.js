@@ -1,5 +1,6 @@
 import { CognitoRepository } from "./data/cognitoRepository.js";
 import { getEnterpriseBillingDetails } from "./activePropertyCalculator.js";
+import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
 
 const cognitoRepository = new CognitoRepository();
 
@@ -20,9 +21,7 @@ export const handler = async (event) => {
     if (!accessToken) {
       return {
         statusCode: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: responseHeaders,
         body: JSON.stringify({
           message: "You must be logged in.",
         }),
@@ -34,9 +33,7 @@ export const handler = async (event) => {
     if (getGroup(user) !== "Host") {
       return {
         statusCode: 403,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: responseHeaders,
         body: JSON.stringify({
           message: "You must be a Host.",
         }),
@@ -48,9 +45,7 @@ export const handler = async (event) => {
     if (!enterpriseId) {
       return {
         statusCode: 400,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: responseHeaders,
         body: JSON.stringify({
           message: "enterpriseId is required",
         }),
@@ -64,9 +59,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: responseHeaders,
       body: JSON.stringify({
         enterpriseId,
         planName: "Enterprise",
@@ -78,9 +71,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: error.statusCode || 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: responseHeaders,
       body: JSON.stringify({
         message:
           error.statusCode === 403
