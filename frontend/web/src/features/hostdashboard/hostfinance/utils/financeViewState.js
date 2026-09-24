@@ -39,3 +39,15 @@ export function deriveFinanceViewState({
 export function getTransactionType(charge = {}) {
   return charge.transactionType || "payments";
 }
+
+
+export function getArrivingSoonAmount(payouts = []) {
+  return (Array.isArray(payouts) ? payouts : [])
+    .slice(1)
+    .filter((payout) => payout?.isProjected === true)
+    .reduce((total, payout) => total + Number(payout?.amount || 0), 0);
+}
+
+export function getLastPayout(payouts = []) {
+  return (Array.isArray(payouts) ? payouts : []).find((payout) => payout?.isProjected === false) || null;
+}
