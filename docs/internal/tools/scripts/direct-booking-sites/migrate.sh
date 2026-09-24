@@ -12,6 +12,7 @@ for a in "$@"; do
 done
 [[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: migrate.sh [--dry-run] <domain...>"
 unique_args "${ARGS[@]}"
+msg="$(check_limit)" || die "$msg"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/migrate-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -74,16 +75,23 @@ fi
 
 exec > >(tee -a "$RUNLOG") 2>&1
 
-SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-before-$(date +%F-%H%M%S).json"
-SNAP_AFTER="${SNAP_BEFORE%-*.json}-after.json"
+SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-before-$(date +%F-%H%M%S)-$$.json"
+SNAP_AFTER="${SNAP_BEFORE%.json}-after.json"
 
 if [[ ${#TO_ADD[@]} -gt 0 ]]; then
   log ""
   log "Updating the tenant"
   apply_tenant_domains add "$SNAP_BEFORE" "${ARGS[@]}" || die "tenant update failed, DNS was not touched"
   step "snapshot before" "$(basename "$SNAP_BEFORE")"
-  note "tenant: added ${TO_ADD[*]:-}"
-  step "added" "${TO_ADD[*]:-}"
+  if [[ "$APPLY_RESULT" = "unchanged" ]]; then
+    note "tenant: no update sent, ${ARGS[*]} already on it"
+    step "added" "none, already on the tenant"
+    TENANT_STATE="this run sent no tenant update, yet the tenant differs from what was asked"
+  else
+    note "tenant: added ${TO_ADD[*]:-}"
+    step "added" "${TO_ADD[*]:-}"
+    TENANT_STATE="the tenant was already updated by this run"
+  fi
   wait_deployed || die "tenant did not reach Deployed within ten minutes; DNS was not touched"
 
   tenant_json > "$SNAP_AFTER" || die "cannot save the tenant after the update"
@@ -92,7 +100,7 @@ if [[ ${#TO_ADD[@]} -gt 0 ]]; then
   if node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compare-tenant.mjs" "$SNAP_BEFORE" "$SNAP_AFTER" --add "${ARGS[@]}"; then
     note "tenant: only the domain list changed"
   else
-    die "the tenant looks different after the update than asked for; DNS was not touched"
+    die "the tenant comparison was REJECTED; $TENANT_STATE. Compare $(basename "$SNAP_BEFORE") with $(basename "$SNAP_AFTER") and restore anything that vanished. DNS was not touched."
   fi
 fi
 

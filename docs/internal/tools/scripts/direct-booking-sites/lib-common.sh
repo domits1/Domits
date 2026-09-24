@@ -14,6 +14,7 @@ TTL=60
 
 DRY_RUN=0
 LEDGER=()
+APPLY_RESULT=""
 
 aws_cf() { aws cloudfront "$@" --profile "$PROFILE" --region "$REGION_CF"; return $?; }
 aws_r53() { aws route53 "$@" --profile "$PROFILE"; return $?; }
@@ -73,6 +74,12 @@ let s="";const want=process.argv[1];process.stdin.on("data",d=>s+=d).on("end",()
   const m=JSON.parse(s).DistributionTenant.Domains.find(d=>d.Domain===want);
   console.log(m?m.Status:"ABSENT");});' "$1"; return $?; }
 
+check_limit() {
+  [[ "$MAX_TENANT_DOMAINS" =~ ^[1-9][0-9]*$ ]] && return 0
+  echo "MAX_TENANT_DOMAINS must be a positive integer, got '$MAX_TENANT_DOMAINS'"
+  return 1
+}
+
 unique_args() {
   local a u dup
   local -a out=()
@@ -92,6 +99,7 @@ apply_tenant_domains() {
   local mode="$1" snap="$2"
   shift 2
   local -a given=("$@")
+  APPLY_RESULT="refused"
   [[ "$mode" = "add" || "$mode" = "remove" ]] || { echo "apply_tenant_domains: mode must be add or remove" >&2; return 1; }
   [[ -n "$snap" ]] || { echo "apply_tenant_domains: no snapshot path" >&2; return 1; }
   [[ ${#given[@]} -gt 0 ]] || { echo "apply_tenant_domains: no domains given" >&2; return 1; }
@@ -117,6 +125,7 @@ let s="";const [mode,max,...given]=process.argv.slice(1);process.stdin.on("data"
     domains="${built#*$'\n'}"
     if [[ "$change" = "unchanged" ]]; then
       step "tenant list" "already as asked, no update sent"
+      APPLY_RESULT="unchanged"
       return 0
     fi
 
@@ -136,11 +145,18 @@ let s="";const [mode,max,...given]=process.argv.slice(1);process.stdin.on("data"
 
     local err
     if err="$(aws_cf "${args[@]}" 2>&1 >/dev/null)"; then
+      APPLY_RESULT="updated"
       return 0
     fi
-    if printf '%s' "$err" | grep -q "PreconditionFailed" && [[ "$attempt" -lt 3 ]]; then
-      step "ETag stale, re-reading" "attempt $(( attempt + 1 ))"
-      continue
+    if printf '%s' "$err" | grep -q "PreconditionFailed"; then
+      if [[ "$attempt" -lt 3 ]]; then
+        step "ETag stale, re-reading" "attempt $(( attempt + 1 ))"
+        APPLY_RESULT="refused"
+        continue
+      fi
+      APPLY_RESULT="stale"
+    else
+      APPLY_RESULT="failed"
     fi
     printf '%s\n' "$err" >&2
     return 1

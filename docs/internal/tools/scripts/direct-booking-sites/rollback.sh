@@ -12,6 +12,7 @@ for a in "$@"; do
 done
 [[ ${#ARGS[@]} -gt 0 ]] || die "give at least one domain. Usage: rollback.sh [--dry-run] <domain...>"
 unique_args "${ARGS[@]}"
+msg="$(check_limit)" || die "$msg"
 
 RUNLOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/rollback-$(date +%F-%H%M%S).log"
 [[ "$DRY_RUN" -eq 1 ]] && log "DRY RUN, nothing will be changed" || log "REAL RUN, log: $RUNLOG"
@@ -83,17 +84,27 @@ done
 if [[ ${#REMOVE[@]} -gt 0 ]]; then
   log ""
   log "Updating the tenant"
-  SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S).json"
-  SNAP_AFTER="${SNAP_BEFORE%-*.json}-after.json"
+  SNAP_BEFORE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tenant-rb-before-$(date +%F-%H%M%S)-$$.json"
+  SNAP_AFTER="${SNAP_BEFORE%.json}-after.json"
   DNS_GONE="no DNS record was deleted in this run"
   if [[ ${#TO_DELETE[@]} -gt 0 ]]; then
     DNS_GONE="the DNS records for ${TO_DELETE[*]} were already deleted, so those addresses are served by Amplify through the wildcard"
   fi
-  apply_tenant_domains remove "$SNAP_BEFORE" "${ARGS[@]}" \
-    || die "tenant update failed; $DNS_GONE. Check the domain list on tenant $TENANT_ID with get-distribution-tenant: the update may or may not have been applied. Run rollback.sh again once the cause is fixed."
+  if ! apply_tenant_domains remove "$SNAP_BEFORE" "${ARGS[@]}"; then
+    case "$APPLY_RESULT" in
+      "failed") die "tenant update failed; $DNS_GONE. Check the domain list on tenant $TENANT_ID with get-distribution-tenant: the update may or may not have been applied. Run rollback.sh again once the cause is fixed." ;;
+      "stale") die "tenant update not applied; $DNS_GONE. The tenant changed during every attempt, so each update was rejected and nothing was applied. Run rollback.sh again." ;;
+      *) die "tenant update refused; $DNS_GONE. Nothing was sent to the tenant. Fix the cause above and run rollback.sh again." ;;
+    esac
+  fi
   step "snapshot before" "$(basename "$SNAP_BEFORE")"
-  note "tenant: removed ${REMOVE[*]:-}"
-  step "removed" "${REMOVE[*]:-}"
+  if [[ "$APPLY_RESULT" = "unchanged" ]]; then
+    note "tenant: no update sent, ${ARGS[*]} already off it"
+    step "removed" "none, already off the tenant"
+  else
+    note "tenant: removed ${REMOVE[*]:-}"
+    step "removed" "${REMOVE[*]:-}"
+  fi
   wait_deployed || step "tenant" "not Deployed within ten minutes"
   tenant_json > "$SNAP_AFTER" \
     || die "cannot save the tenant after the update; $DNS_GONE. Check the domain list on tenant $TENANT_ID against $(basename "$SNAP_BEFORE")."
