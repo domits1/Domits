@@ -277,6 +277,21 @@ export default function HostFinanceTab() {
   const arrivingSoonDisplay = isBalanceLoading ? "—" : getAmount(arrivingSoonAmountForDisplay, currency);
   const processingDisplay = isBalanceLoading ? "—" : getAmount(processingAmountForDisplay, currency);
 
+  let payoutStatusMessage = "Connect Stripe to enable payouts";
+  let payoutSettingsDescription =
+    "You will be able to set your bank account and payout schedule after connecting.";
+  let payoutStatusConnected = false;
+
+  if (stripeIssues) {
+    payoutStatusMessage = "Action required: Stripe account issue";
+    payoutSettingsDescription =
+      "Stripe has disabled charges or payouts. Open your Stripe account to resolve the issue.";
+  } else if (isConnected) {
+    payoutStatusMessage = "Stripe Connected";
+    payoutSettingsDescription = "Bank account connected and ready for payouts.";
+    payoutStatusConnected = true;
+  }
+
   let statusTitle = "You are almost there";
 
   if (listingError) {
@@ -479,20 +494,11 @@ export default function HostFinanceTab() {
               )}
               <section id="finance-payout-settings" className="finance-card finance-settings-card">
                 <h2>Payout Settings</h2>
-                <div className={`finance-stripe-status${isConnected && !stripeIssues ? " is-connected" : ""}`}>
-                  {stripeIssues
-                    ? "Action required: Stripe account issue"
-                    : isConnected
-                      ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</>
-                      : "Connect Stripe to enable payouts"}
+                <div className={`finance-stripe-status${payoutStatusConnected ? " is-connected" : ""}`}>
+                  {payoutStatusConnected && <CheckCircle2 size={14} aria-hidden="true" />}
+                  {payoutStatusMessage}
                 </div>
-                <p>
-                  {stripeIssues
-                    ? "Stripe has disabled charges or payouts. Open your Stripe account to resolve the issue."
-                    : isConnected
-                      ? "Bank account connected and ready for payouts."
-                      : "You will be able to set your bank account and payout schedule after connecting."}
-                </p>
+                <p>{payoutSettingsDescription}</p>
                 <button
                   type="button"
                   className="finance-outline-button"
