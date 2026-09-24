@@ -3,6 +3,7 @@ import { LambdaClient, GetFunctionCommand, CreateFunctionCommand, AddPermissionC
 import {
   APIGatewayClient,
   CreateRestApiCommand,
+  CreateResourceCommand,
   GetResourcesCommand,
   PutMethodCommand,
   PutIntegrationCommand,
@@ -16,6 +17,8 @@ import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 import path from "path";
 
 const execAsync = promisify(exec);
+const WORKSPACE_ROOT = path.resolve();
+const LAMBDA_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 const readlineInterface = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -31,15 +34,17 @@ class LambdaFactory {
   async create() {
     readlineInterface.question("What will your lambda function be called? \n", async name => {
       try {
-        if (this.shouldCreateApi && await this.doesLambdaFunctionExist(name)) {
+        const safeName = this.validateFunctionName(name);
+
+        if (this.shouldCreateApi && await this.doesLambdaFunctionExist(safeName)) {
           console.error("\x1b[31m%s\x1b[0m", "\n[ERROR] This function already exists, please try again.\n");
           return this.create();
-        } else if (!this.shouldCreateApi && !await this.doesLambdaFunctionExist(name)) {
+        } else if (!this.shouldCreateApi && !await this.doesLambdaFunctionExist(safeName)) {
           console.error("\x1b[31m%s\x1b[0m", "\n[ERROR] This function does not exist yet, please try again.\n");
           return this.create();
         }
 
-        await this.prepareFunctionDirectories(name);
+        await this.prepareFunctionDirectories(safeName);
         if (!this.shouldCreateApi) {
           console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
           console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
@@ -47,18 +52,17 @@ class LambdaFactory {
           return;
         }
 
-        const lambdaFunction = await this.createLambdaFunction(name);
+        const lambdaFunction = await this.createLambdaFunction(safeName);
 
-        await this.createApiGateway(name, lambdaFunction);
+        await this.createApiGateway(safeName, lambdaFunction);
 
-        await this.cleanUp(name);
+        await this.cleanUp(safeName);
 
         console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
         console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
 
         readlineInterface.close();
-      } catch (error) {
-        console.error("\x1b[31m%s\x1b[0m", error.message);
+      } catch {
         console.error("\n\x1b[31m%s\x1b[0m", "[ERROR] Something went wrong.");
         console.error("\n\x1b[31m%s\x1b[0m", "Your function may not have been properly registered.");
         console.error("\n\x1b[31m%s\x1b[0m", "Please remove all traces of the function in API Gateway, Lambda and local.\n");
@@ -67,6 +71,25 @@ class LambdaFactory {
         readlineInterface.close();
       }
     });
+  }
+
+  validateFunctionName(input) {
+    // Review: Restrict CLI input before it is used in AWS identifiers or local filesystem paths.
+    const name = String(input || "").trim();
+    if (!LAMBDA_NAME_PATTERN.test(name)) {
+      throw new Error("Function names must use letters, numbers, underscores, or hyphens.");
+    }
+    return name;
+  }
+
+  resolveWorkspacePath(...segments) {
+    // Review: Ensure generated Lambda paths cannot escape the checked-out repository.
+    const resolvedPath = path.resolve(WORKSPACE_ROOT, ...segments);
+    const relativePath = path.relative(WORKSPACE_ROOT, resolvedPath);
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      throw new Error("Generated path must remain inside the workspace.");
+    }
+    return resolvedPath;
   }
 
   async doesLambdaFunctionExist(name) {
@@ -84,21 +107,61 @@ class LambdaFactory {
     await execAsync("npm ci");
     console.log("\n\x1b[32m%s\x1b[0m", `Global dependencies installed successfully.`);
     console.log("\n\x1b[33m", `Preparing directories for function: ${name}...`);
-    const functionPath = `functions/${name}`;
-    await fs.cp("CD/template/function", functionPath, { recursive: true });
-    await fs.cp("CD/template/events", `events/${name}`, { recursive: true });
-    await fs.cp("CD/template/test", `test/${name}`, { recursive: true });
-    await fs.writeFile(`${functionPath}/metadata.json`, `{ "functionName": "${name}" }`);
+    const functionPath = this.resolveWorkspacePath("functions", name);
+    await this.copyTemplateDirectory(this.resolveWorkspacePath("CD", "template", "function"), functionPath);
+    await this.copyTemplateDirectory(
+      this.resolveWorkspacePath("CD", "template", "events"),
+      this.resolveWorkspacePath("events", name)
+    );
+    await this.copyTemplateDirectory(
+      this.resolveWorkspacePath("CD", "template", "test"),
+      this.resolveWorkspacePath("test", name)
+    );
+    await this.ensureMetadata(functionPath, name);
     console.log("\n\x1b[32m%s\x1b[0m", `Directories created successfully.`);
+  }
+
+  async copyTemplateDirectory(templatePath, targetPath) {
+    // Review: Preserve an implemented Lambda such as ReviewSystem when rerunning the scaffolder.
+    if (await this.pathExists(targetPath)) {
+      console.log("\n\x1b[33m", `Preserving existing directory: ${targetPath}`);
+      return;
+    }
+
+    await fs.cp(templatePath, targetPath, { recursive: true, errorOnExist: true, force: false });
+  }
+
+  async ensureMetadata(functionPath, name) {
+    const metadataPath = path.join(functionPath, "metadata.json");
+
+    if (!(await this.pathExists(metadataPath))) {
+      await fs.writeFile(metadataPath, JSON.stringify({ functionName: name }));
+      return;
+    }
+
+    const metadata = JSON.parse(await fs.readFile(metadataPath, "utf8"));
+    if (metadata.functionName !== name) {
+      throw new Error(`Existing metadata at ${metadataPath} targets '${metadata.functionName}', not '${name}'.`);
+    }
+  }
+
+  async pathExists(targetPath) {
+    try {
+      await fs.access(targetPath);
+      return true;
+    } catch (error) {
+      if (error.code === "ENOENT") return false;
+      throw error;
+    }
   }
 
   async createLambdaFunction(name) {
     console.log("\n\x1b[33m", `Registering function: ${name}, to AWS Lambda...`);
-    const folder = `functions/${name}`;
-    const zipFileName = "function.zip";
+    const folder = this.resolveWorkspacePath("functions", name);
+    const zipFileName = this.resolveWorkspacePath("function.zip");
 
     console.log("\n\x1b[33m", "Copying node modules.")
-    await this.copyDir('node_modules', `functions/${name}/node_modules`);
+    await this.copyDir(this.resolveWorkspacePath("node_modules"), path.join(folder, "node_modules"));
     console.log("\n\x1b[32m%s\x1b[0m", "Finished copying node modules.")
 
     await zip.archiveFolder(folder, zipFileName);
@@ -130,22 +193,30 @@ class LambdaFactory {
       restApiId: api,
     }));
     const rootResource = resources.items.find(r => r.path === "/").id;
-
-    await this.apiGatewayClient.send(new PutMethodCommand({
+    const proxyResource = await this.apiGatewayClient.send(new CreateResourceCommand({
+      // Review: The greedy proxy forwards nested review detail routes to the same Lambda.
       restApiId: api,
-      resourceId: rootResource,
-      httpMethod: "ANY",
-      authorizationType: "NONE",
+      parentId: rootResource,
+      pathPart: "{proxy+}",
     }));
 
-    await this.apiGatewayClient.send(new PutIntegrationCommand({
-      restApiId: api,
-      resourceId: rootResource,
-      httpMethod: "ANY",
-      type: "AWS_PROXY",
-      integrationHttpMethod: "POST",
-      uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
-    }));
+    for (const resourceId of [rootResource, proxyResource.id]) {
+      await this.apiGatewayClient.send(new PutMethodCommand({
+        restApiId: api,
+        resourceId,
+        httpMethod: "ANY",
+        authorizationType: "NONE",
+      }));
+
+      await this.apiGatewayClient.send(new PutIntegrationCommand({
+        restApiId: api,
+        resourceId,
+        httpMethod: "ANY",
+        type: "AWS_PROXY",
+        integrationHttpMethod: "POST",
+        uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
+      }));
+    }
 
     await this.lambdaClient.send(new AddPermissionCommand({
       Action: "lambda:InvokeFunction",
@@ -153,6 +224,14 @@ class LambdaFactory {
       Principal: "apigateway.amazonaws.com",
       StatementId: `${name}-InvokePermission`,
       SourceArn: `arn:aws:execute-api:eu-north-1:${await this.getAccountId()}:${api}/*/*/`,
+    }));
+
+    await this.lambdaClient.send(new AddPermissionCommand({
+      Action: "lambda:InvokeFunction",
+      FunctionName: name,
+      Principal: "apigateway.amazonaws.com",
+      StatementId: `${name}-ProxyInvokePermission`,
+      SourceArn: `arn:aws:execute-api:eu-north-1:${await this.getAccountId()}:${api}/*/*/*`,
     }));
 
     await this.apiGatewayClient.send(new CreateDeploymentCommand({
@@ -174,11 +253,11 @@ class LambdaFactory {
   async cleanUp(name) {
     console.log("\n\x1b[33m", `Cleaning up directories...`);
     console.log("\n\x1b[33m", `Removing function-level node-modules from: ${name}`);
-    await fs.rm(`functions/${name}/node_modules`, { recursive: true });
+    await fs.rm(this.resolveWorkspacePath("functions", name, "node_modules"), { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Function-level node-modules from: ${name}, were removed successfully.`);
 
     console.log("\n\x1b[33m", `Removing function.zip, if this gives an error, remove function.zip manually and you are done.`);
-    await fs.rm("function.zip", { recursive: true });
+    await fs.rm(this.resolveWorkspacePath("function.zip"), { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Zip-file: function.zip, was removed successfully.`);
   }
 

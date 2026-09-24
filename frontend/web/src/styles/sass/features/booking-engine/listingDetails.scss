@@ -1339,6 +1339,83 @@
         color: #555;
     }
 
+    /* Review sorting and filtering controls. */
+    &__controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 12px;
+        margin: 0 0 20px;
+    }
+
+    &__control {
+        display: grid;
+        gap: 6px;
+        min-width: 180px;
+    }
+
+    &__control-label {
+        color: #555;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    &__select {
+        min-height: 42px;
+        border: 1px solid #d7dde5;
+        border-radius: 8px;
+        background: #fff;
+        color: #1a1a1a;
+        padding: 0 12px;
+        font: inherit;
+    }
+
+    &__toggle {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #1a1a1a;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    &__checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #49a35a;
+    }
+
+    &__clear {
+        min-height: 42px;
+        border: 1px solid #49a35a;
+        border-radius: 8px;
+        background: #fff;
+        color: #2f7d3d;
+        padding: 0 14px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.18s ease;
+
+        &:hover,
+        &:focus-visible {
+            background: #f0f8f2;
+        }
+    }
+
+    @media (max-width: 768px) {
+        &__controls {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        &__control,
+        &__clear {
+            width: 100%;
+        }
+    }
+
     &__categories {
         display: flex;
         gap: 10px;
@@ -1476,6 +1553,45 @@
         font-size: 0.875rem;
         color: #444;
         line-height: 1.55;
+    }
+
+    &__host-response {
+        margin-top: 4px;
+        padding: 14px 16px;
+        border-left: 3px solid #49a35a;
+        border-radius: 8px;
+        background: #f0f8f2;
+
+        p {
+            margin: 0;
+            color: #3f4a43;
+            font-size: 0.875rem;
+            line-height: 1.55;
+        }
+    }
+
+    &__host-response-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+
+        strong {
+            color: #1a1a1a;
+            font-size: 0.85rem;
+        }
+
+        span {
+            flex-shrink: 0;
+            color: #777;
+            font-size: 0.78rem;
+        }
+
+        @media (max-width: 480px) {
+            flex-direction: column;
+            gap: 2px;
+        }
     }
 
     &__show-all-btn {
