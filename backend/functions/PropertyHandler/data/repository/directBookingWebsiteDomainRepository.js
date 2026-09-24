@@ -324,10 +324,6 @@ export class DirectBookingWebsiteDomainRepository {
     return mapSiteDomainRow(rows?.[0] || null);
   }
 
-  async getPrimaryLiveDomainBySiteId(siteId) {
-    return this.getFallbackDomainBySiteId(siteId);
-  }
-
   async getCustomDomainBySiteId(siteId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -501,10 +497,6 @@ export class DirectBookingWebsiteDomainRepository {
     );
 
     return mapSiteDomainRow(records[0] || null);
-  }
-
-  async updatePrimaryLiveDomainStatus(siteId, status, verificationDetails = {}) {
-    return this.updateFallbackDomainStatus(siteId, status, verificationDetails);
   }
 
   async promoteDomainToPrimary(siteId, domainId) {
