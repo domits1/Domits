@@ -40,11 +40,13 @@ export function getTransactionType(charge = {}) {
   return charge.transactionType || "payments";
 }
 
-
 export function getArrivingSoonAmount(payouts = []) {
   return (Array.isArray(payouts) ? payouts : [])
-    .slice(1)
-    .filter((payout) => payout?.isProjected === true)
+    .filter(
+      (payout) =>
+        payout?.isProjected === true &&
+        !(payout?.id === null && payout?.status !== "incoming charge - pending")
+    )
     .reduce((total, payout) => total + Number(payout?.amount || 0), 0);
 }
 
