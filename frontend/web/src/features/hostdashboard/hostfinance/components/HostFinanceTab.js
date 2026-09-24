@@ -204,12 +204,14 @@ export default function HostFinanceTab() {
   }, [demoMode, listingReloadKey]);
 
   const ctaLabel = () => {
-    if (!isProcessing) {
-      if (!hasProperty) return "List your property";
-      if (!isConnected) return "Connect Stripe";
-      return isLive ? "Withdraw Funds" : "Go live";
+    if (isProcessing) {
+      return processingStep === "opening" ? "Opening link..." : "Working on it...";
     }
-    return processingStep === "opening" ? "Opening link..." : "Working on it...";
+    if (listingError) return "Retry";
+    if (!hasProperty) return "List your property";
+    if (!isConnected) return "Connect Stripe";
+    if (stripeIssues) return "Fix Stripe account";
+    return isLive ? "Withdraw Funds" : "Go live";
   };
 
   const handlePrimaryAction = () => {
@@ -222,6 +224,10 @@ export default function HostFinanceTab() {
       return;
     }
     if (!isConnected) {
+      handleStripeAction();
+      return;
+    }
+    if (stripeIssues) {
       handleStripeAction();
       return;
     }
@@ -317,7 +323,12 @@ export default function HostFinanceTab() {
               <span className="finance-step-divider" />
               <Step number="2" label="Connect Stripe" complete={isConnected} active={hasProperty && !isConnected} />
               <span className="finance-step-divider" />
-              <Step number="3" label="Go live" complete={isLive} active={isConnected && hasProperty && !isLive} />
+              <Step
+                number="3"
+                label="Go live"
+                complete={isLive}
+                active={isConnected && hasProperty && !isLive && !stripeIssues}
+              />
             </div>
             <div className="finance-status-content">
               <div>
