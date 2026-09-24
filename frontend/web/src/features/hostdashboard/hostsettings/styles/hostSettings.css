@@ -1007,3 +1007,259 @@
         width: 68px;
     }
 }
+
+/* ─── Enterprise Rate Plan ─────────────────────────────────────────────── */
+
+.rate-plan-enterprise-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.rate-plan-enterprise-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.enterprise-rate-plan-card {
+    margin-top: 14px;
+}
+
+.enterprise-plan-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+.enterprise-plan-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.enterprise-plan-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.enterprise-plan-header h2 {
+    margin: 0 0 6px;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+.enterprise-plan-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.enterprise-plan-status {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.enterprise-plan-divider {
+    margin: 24px 0;
+    border-top: 1px solid #f3f4f6;
+}
+
+.enterprise-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.enterprise-stat-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.enterprise-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.enterprise-stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-stat-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.enterprise-stat-value {
+    color: #111827;
+    font-size: 1.15rem;
+}
+
+.enterprise-stat-description {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.enterprise-pricing-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 28px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.enterprise-pricing-card > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-pricing-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.enterprise-pricing-card strong {
+    color: #111827;
+    font-size: 2rem;
+}
+
+.enterprise-pricing-card > div:first-child > span:last-child {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.enterprise-pricing-formula {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #374151;
+    font-size: 0.85rem;
+}
+
+.enterprise-pricing-formula strong {
+    font-size: 1rem;
+    color: #15803d;
+}
+
+.enterprise-invoice-card {
+    padding: 0;
+}
+
+.enterprise-invoice-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.enterprise-invoice-row:last-child {
+    border-bottom: none;
+}
+
+.enterprise-invoice-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.enterprise-invoice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-invoice-content span {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.enterprise-invoice-content strong {
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.enterprise-empty-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+}
+
+.enterprise-empty-card strong {
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.enterprise-empty-card span {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.enterprise-rate-plan-loading,
+.enterprise-rate-plan-error {
+    padding: 24px;
+    color: #6b7280;
+}
+
+.enterprise-rate-plan-error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+@media (max-width: 800px) {
+    .enterprise-plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .enterprise-pricing-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .enterprise-pricing-formula {
+        flex-wrap: wrap;
+    }
+}
