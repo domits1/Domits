@@ -16,7 +16,7 @@ import { RefreshFunctions } from "../hooks/refreshFunctions.js";
 import { formatMoney } from "../utils/formatMoney";
 import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 import { isFinanceDemoMode } from "../mocks/financeDemoData";
-import { deriveFinanceViewState, getTransactionType } from "../utils/financeViewState";
+import { deriveFinanceViewState, getArrivingSoonAmount, getTransactionType, getLastPayout } from "../utils/financeViewState";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const DEMO_LISTINGS = [{ property: { id: "demo-property", status: "ACTIVE" } }];
@@ -270,8 +270,9 @@ export default function HostFinanceTab() {
     document.getElementById("finance-payout-settings")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const nextPayout = recentPayouts[0];
-  const arrivingSoonAmount = recentPayouts[1]?.amount || 0;
+  const nextPayout = payouts[0];
+  const arrivingSoonAmount = getArrivingSoonAmount(payouts);
+  const lastPayout = getLastPayout(payouts);
   const processingAmount = balanceView.incomingTotal;
   const availableAmount = balanceView.availableTotal;
   const availableAmountForDisplay = showFinancialData ? availableAmount : 0;
@@ -332,7 +333,7 @@ export default function HostFinanceTab() {
             </button>
             <div className="finance-live-meta">
               <span><CalendarDays size={13} aria-hidden="true" /> Next payout: {nextPayout?.arrivalDate || "Scheduled"}</span>
-              <span><CalendarDays size={13} aria-hidden="true" /> Last payout: {recentPayouts[1]?.arrivalDate || "No previous payout"}</span>
+              <span><CalendarDays size={13} aria-hidden="true" /> Last payout: {lastPayout?.arrivalDate || "No previous payout"}</span>
             </div>
           </div>
         ) : (
