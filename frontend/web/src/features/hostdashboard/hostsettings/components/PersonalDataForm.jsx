@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect, useContext, useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -82,6 +82,11 @@ function getSaveLabel(isSaving, saveSuccess, saveError, t) {
     return t.buttons.save;
 }
 
+function getPasswordToggleLabel(isChangingPassword, passwordChangeSuccess, t) {
+    if (!isChangingPassword) return t.prefs.changePassword;
+    return passwordChangeSuccess ? t.buttons.close : t.buttons.cancel;
+}
+
 const PersonalDataForm = ({
     user,
     tempUser,
@@ -130,9 +135,29 @@ const PersonalDataForm = ({
     showAuthMfa,
     authStatus,
     breadcrumbPath,
+    isChangingPassword,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    passwordError,
+    isSavingPassword,
+    passwordChangeSuccess,
+    onOpenPasswordChange,
+    onClosePasswordChange,
+    onCurrentPasswordChange,
+    onNewPasswordChange,
+    onConfirmPasswordChange,
+    onSubmitPasswordChange,
 }) => {
     const { language: lang } = useContext(LanguageContext);
     const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
+    const [visiblePasswordFields, setVisiblePasswordFields] = useState({
+        current: false,
+        new: false,
+        confirm: false,
+    });
+    const togglePasswordVisibility = (field) =>
+        setVisiblePasswordFields((prev) => ({ ...prev, [field]: !prev[field] }));
 
     return (
     <div className="personal-data-page">
@@ -469,6 +494,81 @@ const PersonalDataForm = ({
                     )}
                 </div>
 
+                <div className="pd-auth-row">
+                    <span className="pd-pref-label">{t.prefs.passwordLabel}</span>
+                    <span className="pd-password-dots">{"•".repeat(8)}</span>
+                    <button
+                        type="button"
+                        className="pd-verify-btn"
+                        onClick={isChangingPassword ? onClosePasswordChange : onOpenPasswordChange}
+                    >
+                        {getPasswordToggleLabel(isChangingPassword, passwordChangeSuccess, t)}
+                    </button>
+                </div>
+
+                {isChangingPassword && (
+                    <form
+                        className="pd-password-inline"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            onSubmitPasswordChange();
+                        }}
+                    >
+                        <p className="pd-password-inline-title">{t.prefs.changePasswordTitle}</p>
+
+                        <PasswordField
+                            id="pd-current-password"
+                            label={t.prefs.currentPassword}
+                            value={currentPassword}
+                            onChange={onCurrentPasswordChange}
+                            autoComplete="current-password"
+                            isVisible={visiblePasswordFields.current}
+                            onToggleVisibility={() => togglePasswordVisibility("current")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
+
+                        <PasswordField
+                            id="pd-new-password"
+                            label={t.prefs.newPassword}
+                            value={newPassword}
+                            onChange={onNewPasswordChange}
+                            autoComplete="new-password"
+                            isVisible={visiblePasswordFields.new}
+                            onToggleVisibility={() => togglePasswordVisibility("new")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
+
+                        <PasswordField
+                            id="pd-confirm-password"
+                            label={t.prefs.confirmPassword}
+                            value={confirmPassword}
+                            onChange={onConfirmPasswordChange}
+                            autoComplete="new-password"
+                            isVisible={visiblePasswordFields.confirm}
+                            onToggleVisibility={() => togglePasswordVisibility("confirm")}
+                            showLabel={t.prefs.showPassword}
+                            hideLabel={t.prefs.hidePassword}
+                        />
+
+                        {passwordError && <p className="pd-field-error pd-password-error">{passwordError}</p>}
+                        {passwordChangeSuccess && (
+                            <p className="pd-password-success">{t.prefs.passwordChanged}</p>
+                        )}
+
+                        <div className="pd-password-inline-actions">
+                            <button
+                                type="submit"
+                                className="pd-save-btn"
+                                disabled={isSavingPassword}
+                            >
+                                {isSavingPassword ? t.buttons.saving : t.prefs.savePassword}
+                            </button>
+                        </div>
+                    </form>
+                )}
+
                 {showAuthMfa && (
                     <>
                         <div className="pd-auth-row">
@@ -544,6 +644,19 @@ PersonalDataForm.propTypes = {
     showAuthMfa: PropTypes.bool.isRequired,
     authStatus: authStatusShape.isRequired,
     breadcrumbPath: PropTypes.string,
+    isChangingPassword: PropTypes.bool.isRequired,
+    currentPassword: PropTypes.string.isRequired,
+    newPassword: PropTypes.string.isRequired,
+    confirmPassword: PropTypes.string.isRequired,
+    passwordError: PropTypes.string,
+    isSavingPassword: PropTypes.bool.isRequired,
+    passwordChangeSuccess: PropTypes.bool.isRequired,
+    onOpenPasswordChange: PropTypes.func.isRequired,
+    onClosePasswordChange: PropTypes.func.isRequired,
+    onCurrentPasswordChange: PropTypes.func.isRequired,
+    onNewPasswordChange: PropTypes.func.isRequired,
+    onConfirmPasswordChange: PropTypes.func.isRequired,
+    onSubmitPasswordChange: PropTypes.func.isRequired,
 };
 
 export default PersonalDataForm;

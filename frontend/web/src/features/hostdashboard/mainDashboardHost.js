@@ -20,6 +20,7 @@ import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
+import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
@@ -136,6 +137,7 @@ function MainDashboardHost() {
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
+          <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />
 
           <Route path="reservations/:id" element={<HostReservationDetails />} />

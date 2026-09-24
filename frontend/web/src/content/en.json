@@ -1137,6 +1137,11 @@
       "breadcrumb": "Onboarding",
       "title": "Onboarding",
       "subtitle": "Track your progress for each listing, from creating it to going live.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding mode"
+      },
       "propertyPicker": {
         "label": "Listing",
         "loading": "Loading your listings...",
@@ -1176,7 +1181,57 @@
       },
       "statusComplete": "Complete",
       "statusIncomplete": "Not started",
-      "statusUnknown": "Could not check status"
+      "statusUnknown": "Could not check status",
+      "channelsComingSoon": "Coming soon",
+      "enterprise": {
+        "breadcrumb": "Enterprise Onboarding",
+        "title": "Enterprise Onboarding",
+        "subtitle": "Track your progress across your whole portfolio, from company setup to going live.",
+        "goLiveSection": {
+          "title": "Go Live",
+          "desc": "Readiness across your required steps.",
+          "readyLabel": "Ready to go live",
+          "notReadyLabel": "Not ready yet"
+        },
+        "steps": {
+          "company": {
+            "title": "Set Up Company",
+            "desc": "Add your company details so guests and partners can find you."
+          },
+          "team": {
+            "title": "Team Members",
+            "desc": "Invite your team and assign roles across your portfolio."
+          },
+          "listProperties": {
+            "title": "List Your Properties",
+            "desc": "Manage and add listings across your portfolio."
+          },
+          "website": {
+            "title": "Build Direct Booking Websites",
+            "desc": "Create branded booking websites for your properties."
+          },
+          "channels": {
+            "title": "Connect Channels",
+            "desc": "Sync your properties with Airbnb, Booking.com, Vrbo and more."
+          },
+          "payments": {
+            "title": "Set Up Payments",
+            "desc": "Connect Stripe to receive payouts across your portfolio."
+          },
+          "pricing": {
+            "title": "Set Up Dynamic Pricing",
+            "desc": "Connect PriceLabs to automate pricing across your portfolio."
+          },
+          "tasks": {
+            "title": "Set Up Task Management",
+            "desc": "Organize operational tasks across your properties."
+          },
+          "marketplace": {
+            "title": "Utilize Marketplace",
+            "desc": "Discover integrations to grow your business."
+          }
+        }
+      }
     },
     "goLive": {
       "breadcrumb": "Go Live",
@@ -1249,7 +1304,24 @@
         "phoneVerifiedYes": "Phone verified: Yes",
         "phoneVerifiedNo": "Phone verified: No",
         "authenticatorApp": "Authenticator app",
-        "totp": "App-based codes (TOTP)"
+        "totp": "App-based codes (TOTP)",
+        "passwordLabel": "Password",
+        "changePassword": "Change Password",
+        "changePasswordTitle": "Change your password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "savePassword": "Save password",
+        "passwordChanged": "Password changed successfully.",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "passwordFieldsRequired": "Please fill in all password fields.",
+        "passwordTooShort": "Password must be at least {min} characters.",
+        "passwordMismatch": "New password and confirmation do not match.",
+        "passwordChangeFailed": "Failed to change password. Please try again.",
+        "currentPasswordIncorrect": "Current password is incorrect.",
+        "passwordPolicyViolation": "New password does not meet the requirements.",
+        "tooManyPasswordAttempts": "Too many attempts. Please try again later."
       },
       "buttons": {
         "save": "Save changes",

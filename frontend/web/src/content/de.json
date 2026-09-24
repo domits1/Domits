@@ -1138,6 +1138,11 @@
       "breadcrumb": "Onboarding",
       "title": "Onboarding",
       "subtitle": "Verfolge den Fortschritt für jede Unterkunft, von der Erstellung bis zur Veröffentlichung.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding-Modus"
+      },
       "propertyPicker": {
         "label": "Unterkunft",
         "loading": "Deine Unterkünfte werden geladen...",
@@ -1177,7 +1182,57 @@
       },
       "statusComplete": "Abgeschlossen",
       "statusIncomplete": "Noch nicht begonnen",
-      "statusUnknown": "Status konnte nicht geprüft werden"
+      "statusUnknown": "Status konnte nicht geprüft werden",
+      "channelsComingSoon": "Demnächst verfügbar",
+      "enterprise": {
+        "breadcrumb": "Enterprise-Onboarding",
+        "title": "Enterprise-Onboarding",
+        "subtitle": "Verfolge den Fortschritt für dein gesamtes Portfolio, von der Unternehmenseinrichtung bis zur Veröffentlichung.",
+        "goLiveSection": {
+          "title": "Veröffentlichen",
+          "desc": "Bereitschaft deiner erforderlichen Schritte.",
+          "readyLabel": "Bereit zur Veröffentlichung",
+          "notReadyLabel": "Noch nicht bereit"
+        },
+        "steps": {
+          "company": {
+            "title": "Unternehmen einrichten",
+            "desc": "Füge deine Unternehmensdaten hinzu, damit Gäste und Partner dich finden."
+          },
+          "team": {
+            "title": "Teammitglieder",
+            "desc": "Lade dein Team ein und weise Rollen für dein Portfolio zu."
+          },
+          "listProperties": {
+            "title": "Unterkünfte eintragen",
+            "desc": "Verwalte und füge Unterkünfte in deinem Portfolio hinzu."
+          },
+          "website": {
+            "title": "Direktbuchungs-Websites erstellen",
+            "desc": "Erstelle eigene Buchungs-Websites für deine Unterkünfte."
+          },
+          "channels": {
+            "title": "Kanäle verbinden",
+            "desc": "Synchronisiere deine Unterkünfte mit Airbnb, Booking.com, Vrbo und mehr."
+          },
+          "payments": {
+            "title": "Zahlungen einrichten",
+            "desc": "Verbinde Stripe, um Auszahlungen für dein gesamtes Portfolio zu erhalten."
+          },
+          "pricing": {
+            "title": "Dynamische Preise einrichten",
+            "desc": "Verbinde PriceLabs, um die Preise in deinem Portfolio zu automatisieren."
+          },
+          "tasks": {
+            "title": "Aufgabenverwaltung einrichten",
+            "desc": "Organisiere betriebliche Aufgaben für deine Unterkünfte."
+          },
+          "marketplace": {
+            "title": "Marketplace nutzen",
+            "desc": "Entdecke Integrationen, um dein Geschäft auszubauen."
+          }
+        }
+      }
     },
     "goLive": {
       "breadcrumb": "Veröffentlichen",
@@ -1250,7 +1305,24 @@
         "phoneVerifiedYes": "Telefon verifiziert: Ja",
         "phoneVerifiedNo": "Telefon verifiziert: Nein",
         "authenticatorApp": "Authenticator-App",
-        "totp": "App-basierte Codes (TOTP)"
+        "totp": "App-basierte Codes (TOTP)",
+        "passwordLabel": "Passwort",
+        "changePassword": "Passwort ändern",
+        "changePasswordTitle": "Passwort ändern",
+        "currentPassword": "Aktuelles Passwort",
+        "newPassword": "Neues Passwort",
+        "confirmPassword": "Neues Passwort bestätigen",
+        "savePassword": "Passwort speichern",
+        "passwordChanged": "Passwort erfolgreich geändert.",
+        "showPassword": "Passwort anzeigen",
+        "hidePassword": "Passwort verbergen",
+        "passwordFieldsRequired": "Bitte füllen Sie alle Passwortfelder aus.",
+        "passwordTooShort": "Das Passwort muss mindestens {min} Zeichen lang sein.",
+        "passwordMismatch": "Neues Passwort und Bestätigung stimmen nicht überein.",
+        "passwordChangeFailed": "Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+        "currentPasswordIncorrect": "Das aktuelle Passwort ist falsch.",
+        "passwordPolicyViolation": "Das neue Passwort erfüllt nicht die Anforderungen.",
+        "tooManyPasswordAttempts": "Zu viele Versuche. Bitte versuchen Sie es später erneut."
       },
       "buttons": {
         "save": "Änderungen speichern",

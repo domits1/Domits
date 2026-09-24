@@ -6,6 +6,7 @@ import nl from "../../../../content/nl.json";
 import de from "../../../../content/de.json";
 import es from "../../../../content/es.json";
 import SettingsSubPage from "../../hostsettings/components/SettingsSubPage";
+import OnboardingModeTabs from "../components/OnboardingModeTabs";
 import PropertyPicker from "../components/PropertyPicker";
 import OnboardingStepTile from "../components/OnboardingStepTile";
 import OnboardingProgressBar from "../components/OnboardingProgressBar";
@@ -134,6 +135,8 @@ const HostOnboardingHub = () => {
 
   return (
     <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={t.breadcrumb} title={t.title} subtitle={t.subtitle}>
+      <OnboardingModeTabs hostLabel={t.tabs.host} enterpriseLabel={t.tabs.enterprise} navLabel={t.tabs.navLabel} />
+
       {isLoadingProperties && <p className="onboarding-hub-loading">{t.propertyPicker.loading}</p>}
 
       {!isLoadingProperties && propertiesError && (

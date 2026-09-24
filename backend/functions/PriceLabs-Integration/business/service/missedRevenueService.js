@@ -1,0 +1,139 @@
+import { validateDateRange } from "../../util/dateRange.js";
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// Only a secured booking blocks a night. Inquiry and Awaiting Payment aren't
+// secured yet, so the night still counts toward missed revenue until they convert.
+const BOOKED_STATUSES = new Set(["confirmed", "accepted", "paid", "completed"]);
+
+function isBookedStatus(status) {
+  return BOOKED_STATUSES.has(String(status || "").toLowerCase());
+}
+
+function isoFromTimestamp(ts) {
+  if (!ts) return null;
+  return new Date(Number(ts)).toISOString().slice(0, 10);
+}
+
+function isoFromCalendarInt(calendarDate) {
+  const s = String(calendarDate);
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+function calendarIntFromDate(dateStr) {
+  return Number(String(dateStr).replaceAll("-", ""));
+}
+
+/**
+ * Maps bookings to a per-property Set of booked ISO dates (checkout day excluded).
+ * Mirrors the equivalent private helper in priceLabsService.js.
+ */
+function bookedDateSetByProperty(bookings) {
+  const map = new Map();
+  for (const b of bookings) {
+    if (!isBookedStatus(b.status)) continue;
+    const start = isoFromTimestamp(b.arrivaldate);
+    const end = isoFromTimestamp(b.departuredate);
+    if (!start || !end) continue;
+
+    const startMs = Date.parse(`${start}T00:00:00Z`);
+    const endMs = Date.parse(`${end}T00:00:00Z`);
+
+    if (!map.has(b.property_id)) map.set(b.property_id, new Set());
+    const set = map.get(b.property_id);
+    for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) {
+      set.add(new Date(ms).toISOString().slice(0, 10));
+    }
+  }
+  return map;
+}
+
+/**
+ * A calendar row does not represent real missed revenue when the host has taken
+ * it off the market themselves: blocked, stop-sell, ignored by PriceLabs, or the
+ * property isn't live.
+ */
+function isSellableNight(row) {
+  if (row.is_available === false) return false;
+  if (row.stop_sell === true) return false;
+  if (row.pricelabs_ignored === true) return false;
+  if (row.property_status && row.property_status !== "ACTIVE") return false;
+  return true;
+}
+
+export class MissedRevenueService {
+  constructor({ repository } = {}) {
+    this.repo = repository;
+  }
+
+  /**
+   * v1-plus: gross missed revenue for unbooked nights only, priced at PriceLabs'
+   * suggested nightly rate rather than the host's flat average ADR. Booked nights
+   * are intentionally excluded, since estimating an "underpriced booked night" gap
+   * would require assumptions this data doesn't reliably support yet.
+   */
+  async getMissedRevenue(hostId, startDate, endDate) {
+    validateDateRange(startDate, endDate);
+
+    const connection = await this.repo.getConnectionByHost(hostId);
+    if (!connection?.is_active) {
+      return { connected: false };
+    }
+
+    const from = calendarIntFromDate(startDate);
+    const to = calendarIntFromDate(endDate);
+
+    const [priceRows, bookings] = await Promise.all([
+      this.repo.getCalendarPriceDataForHost(hostId, from, to),
+      this.repo.getBookingsByHost(hostId),
+    ]);
+
+    const bookedByProperty = bookedDateSetByProperty(bookings);
+
+    let grossMissedRevenue = 0;
+    let unbookedNightsWithPriceData = 0;
+    let unbookedNightsWithoutPriceData = 0;
+    const byPropertyMap = new Map();
+
+    for (const row of priceRows) {
+      if (!isSellableNight(row)) continue;
+
+      const iso = isoFromCalendarInt(row.calendar_date);
+      const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
+      if (isBooked) continue;
+
+      if (row.pricelabs_price == null) {
+        unbookedNightsWithoutPriceData += 1;
+        continue;
+      }
+
+      const price = Number(row.pricelabs_price);
+      grossMissedRevenue += price;
+      unbookedNightsWithPriceData += 1;
+
+      const existing = byPropertyMap.get(row.property_id) ?? { missedRevenue: 0, unbookedNightsWithPriceData: 0 };
+      existing.missedRevenue += price;
+      existing.unbookedNightsWithPriceData += 1;
+      byPropertyMap.set(row.property_id, existing);
+    }
+
+    const totalUnbookedNightsSeen = unbookedNightsWithPriceData + unbookedNightsWithoutPriceData;
+    const priceDataCoveragePct =
+      totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
+
+    return {
+      connected: true,
+      startDate,
+      endDate,
+      currency: "EUR",
+      grossMissedRevenue,
+      unbookedNightsWithPriceData,
+      unbookedNightsWithoutPriceData,
+      priceDataCoveragePct,
+      byProperty: Array.from(byPropertyMap.entries()).map(([propertyId, v]) => ({
+        propertyId,
+        ...v,
+      })),
+    };
+  }
+}

@@ -16,6 +16,7 @@ const AUTH_ROUTES = {
   "POST:/connect":            (c, e) => c.connect(e),
   "DELETE:/disconnect":       (c, e) => c.disconnect(e),
   "GET:/status":              (c, e) => c.getStatus(e),
+  "GET:/insights/missed-revenue": (c, e) => c.getMissedRevenue(e),
   "POST:/push/listings":      (c, e) => c.pushListings(e),
   "POST:/push/calendar":      (c, e) => c.pushCalendar(e),
   "POST:/push/reservations":  (c, e) => c.pushReservations(e),
