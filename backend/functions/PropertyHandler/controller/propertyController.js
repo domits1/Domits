@@ -2308,6 +2308,27 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/pricing/saving-config
+    // -------------------------
+    async getPricingSavingConfig(event) {
+        try {
+            const config = await this.propertyService.getPricingSavingConfig();
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(config)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // GET /property/bookingEngine/country
     // -------------------------
     async getActivePropertiesCardByCountry(event) {
