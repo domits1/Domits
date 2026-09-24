@@ -159,6 +159,35 @@ function categorizeMissedNight(row, price, meansByProperty) {
   return "occupancy";
 }
 
+/**
+ * Same day-count as [startDate, endDate], ending the day immediately before
+ * startDate. Deliberately NOT calendar-month-aligned: querying Sep 1-30 (30
+ * days) compares against Aug 2-31 (30 days), not the full calendar month of
+ * August - an equal-length comparison is the more defensible baseline.
+ */
+function priorPeriodRange(startDate, endDate) {
+  const startMs = Date.parse(`${startDate}T00:00:00Z`);
+  const endMs = Date.parse(`${endDate}T00:00:00Z`);
+  const rangeDays = Math.round((endMs - startMs) / MS_PER_DAY) + 1;
+
+  const priorEndMs = startMs - MS_PER_DAY;
+  const priorStartMs = priorEndMs - (rangeDays - 1) * MS_PER_DAY;
+
+  return {
+    startDate: new Date(priorStartMs).toISOString().slice(0, 10),
+    endDate: new Date(priorEndMs).toISOString().slice(0, 10),
+  };
+}
+
+/**
+ * previous === 0 makes growth rate undefined, not infinite - report null unless
+ * current is also 0, in which case "no change" (0%) is accurate and useful.
+ */
+function percentChange(current, previous) {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / previous) * 100;
+}
+
 function ensureProperty(byPropertyMap, propertyId) {
   if (!byPropertyMap.has(propertyId)) {
     byPropertyMap.set(propertyId, {
@@ -220,7 +249,12 @@ export class MissedRevenueService {
     }
 
     const bookings = await this.repo.getBookingsByHost(hostId);
-    const current = await this._computePeriodMetrics(hostId, startDate, endDate, bookings);
+    const prior = priorPeriodRange(startDate, endDate);
+
+    const [current, previous] = await Promise.all([
+      this._computePeriodMetrics(hostId, startDate, endDate, bookings),
+      this._computePeriodMetrics(hostId, prior.startDate, prior.endDate, bookings),
+    ]);
 
     return {
       connected: true,
@@ -228,6 +262,26 @@ export class MissedRevenueService {
       endDate,
       currency: "EUR",
       ...current,
+      comparison: {
+        previousPeriod: {
+          startDate: prior.startDate,
+          endDate: prior.endDate,
+          grossMissedRevenue: previous.grossMissedRevenue,
+          actualRevenue: previous.actualRevenue,
+          potentialRevenue: previous.potentialRevenue,
+          revenueEfficiencyPct: previous.revenueEfficiencyPct,
+        },
+        delta: {
+          grossMissedRevenue: current.grossMissedRevenue - previous.grossMissedRevenue,
+          actualRevenue: current.actualRevenue - previous.actualRevenue,
+          potentialRevenue: current.potentialRevenue - previous.potentialRevenue,
+        },
+        percentChange: {
+          grossMissedRevenue: percentChange(current.grossMissedRevenue, previous.grossMissedRevenue),
+          actualRevenue: percentChange(current.actualRevenue, previous.actualRevenue),
+          potentialRevenue: percentChange(current.potentialRevenue, previous.potentialRevenue),
+        },
+      },
     };
   }
 

@@ -2,9 +2,16 @@ const {
   MissedRevenueService,
 } = require("../../functions/PriceLabs-Integration/business/service/missedRevenueService.js");
 
-const createRepository = ({ connection = { is_active: true }, priceRows = [], bookings = [] } = {}) => ({
+const createRepository = ({
+  connection = { is_active: true },
+  priceRows = [],
+  bookings = [],
+  priceRowsForRange = null, // (from, to) => priceRows; overrides priceRows when provided
+} = {}) => ({
   getConnectionByHost: jest.fn(async () => connection),
-  getCalendarPriceDataForHost: jest.fn(async () => priceRows),
+  getCalendarPriceDataForHost: jest.fn(async (hostId, from, to) =>
+    priceRowsForRange ? priceRowsForRange(from, to) : priceRows
+  ),
   getBookingsByHost: jest.fn(async () => bookings),
 });
 
@@ -704,5 +711,69 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     const nightsSum =
       result.rootCause.restriction.nights + result.rootCause.pricing.nights + result.rootCause.occupancy.nights;
     expect(nightsSum).toBe(result.unbookedNightsWithPriceData);
+  });
+
+  test("compares the current period against the prior period of equal length immediately before it", async () => {
+    const { service } = createService({
+      priceRowsForRange: (from) => {
+        if (from === 20260901) {
+          return [
+            { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+            { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+          ];
+        }
+        if (from === 20260830) {
+          return [
+            { property_id: "prop-1", calendar_date: 20260830, pricelabs_price: 50 },
+            { property_id: "prop-1", calendar_date: 20260831, pricelabs_price: 50 },
+          ];
+        }
+        return [];
+      },
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-02");
+
+    expect(result.grossMissedRevenue).toBe(200);
+    expect(result.comparison.previousPeriod.startDate).toBe("2026-08-30");
+    expect(result.comparison.previousPeriod.endDate).toBe("2026-08-31");
+    expect(result.comparison.previousPeriod.grossMissedRevenue).toBe(100);
+    expect(result.comparison.delta.grossMissedRevenue).toBe(100);
+    expect(result.comparison.percentChange.grossMissedRevenue).toBe(100);
+  });
+
+  test("computes the prior-period range as the same day-count immediately before startDate, not calendar-month-aligned", async () => {
+    const { service } = createService({ priceRows: [], bookings: [] });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.comparison.previousPeriod.startDate).toBe("2026-08-02");
+    expect(result.comparison.previousPeriod.endDate).toBe("2026-08-31");
+  });
+
+  test("percentChange is null, not Infinity, when the previous period was 0 and the current period isn't", async () => {
+    const { service } = createService({
+      priceRowsForRange: (from) => {
+        if (from === 20260901) {
+          return [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 50 }];
+        }
+        return [];
+      },
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-01");
+
+    expect(result.comparison.previousPeriod.grossMissedRevenue).toBe(0);
+    expect(result.comparison.percentChange.grossMissedRevenue).toBeNull();
+  });
+
+  test("percentChange is 0 when both the current and previous periods are 0", async () => {
+    const { service } = createService({ priceRows: [], bookings: [] });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-01");
+
+    expect(result.comparison.percentChange.grossMissedRevenue).toBe(0);
   });
 });
