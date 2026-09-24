@@ -24,7 +24,7 @@ const contentByLanguage = { en, nl, de, es };
 
 const fixedPopperProps = { strategy: "fixed" };
 
-const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange }) => {
+const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange, ariaDescribedBy }) => {
     const selectRef = useRef(null);
 
     useEffect(() => {
@@ -62,6 +62,7 @@ const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, st
                 onChange={onPhoneChange}
                 className="pd-field-input pd-phone-number"
                 placeholder="Phone number"
+                aria-describedby={ariaDescribedBy}
             />
         </div>
     );
@@ -73,6 +74,7 @@ PhoneField.propTypes = {
     onCountryCodeChange: PropTypes.func.isRequired,
     stripPhone: PropTypes.string.isRequired,
     onPhoneChange: PropTypes.func.isRequired,
+    ariaDescribedBy: PropTypes.string,
 };
 
 const EyeIcon = () => (
@@ -157,6 +159,8 @@ const PersonalDataForm = ({
     dateOfBirthError,
     nationalityError,
     emailError,
+    nameError,
+    phoneError,
     emailSuccess,
     isVerifying,
     verificationCode,
@@ -280,6 +284,7 @@ const PersonalDataForm = ({
                                 onChange={onInputChange}
                                 className="pd-field-input"
                                 placeholder={t.fields.firstName}
+                                aria-describedby={nameError ? "pd-name-error" : undefined}
                             />
                         </div>
 
@@ -293,7 +298,11 @@ const PersonalDataForm = ({
                                 onChange={onInputChange}
                                 className="pd-field-input"
                                 placeholder={t.fields.lastName}
+                                aria-describedby={nameError ? "pd-name-error" : undefined}
                             />
+                            {nameError && (
+                                <p id="pd-name-error" className="pd-field-error" role="alert">{nameError}</p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -372,7 +381,11 @@ const PersonalDataForm = ({
                                 stripPhone={stripPhone}
                                 onPhoneChange={onPhoneChange}
                                 placeholder={t.fields.phoneNumber}
+                                ariaDescribedBy={phoneError ? "pd-phone-error" : undefined}
                             />
+                            {phoneError && (
+                                <p id="pd-phone-error" className="pd-field-error" role="alert">{phoneError}</p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -672,6 +685,8 @@ PersonalDataForm.propTypes = {
     dateOfBirthError: PropTypes.string,
     nationalityError: PropTypes.string,
     emailError: PropTypes.string,
+    nameError: PropTypes.string,
+    phoneError: PropTypes.string,
     emailSuccess: PropTypes.bool,
     isVerifying: PropTypes.bool.isRequired,
     verificationCode: PropTypes.string.isRequired,

@@ -64,6 +64,8 @@ export default function useUserProfile() {
   const [dateOfBirthError, setDateOfBirthError] = useState("");
   const [nationalityError, setNationalityError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [authStatus, setAuthStatus] = useState({
     emailVerified: false,
@@ -91,6 +93,9 @@ export default function useUserProfile() {
     }
     if (name === "email" && emailSuccess) {
       setEmailSuccess(false);
+    }
+    if ((name === "firstName" || name === "lastName") && nameError) {
+      setNameError("");
     }
   };
 
@@ -143,6 +148,9 @@ export default function useUserProfile() {
 
   const handlePhoneChange = (e) => {
     setStripPhone(e.target.value);
+    if (phoneError) {
+      setPhoneError("");
+    }
   };
 
   const handleVerificationInputChange = (e) => {
@@ -282,15 +290,17 @@ export default function useUserProfile() {
 
     const firstNameError = validateName(tempUser.firstName || "", { fieldName: "first name" });
     if (firstNameError) {
-      alert(firstNameError);
+      setNameError(firstNameError);
       return false;
     }
 
     const lastNameError = validateName(tempUser.lastName || "", { fieldName: "last name", required: false });
     if (lastNameError) {
-      alert(lastNameError);
+      setNameError(lastNameError);
       return false;
     }
+
+    setNameError("");
 
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
@@ -315,11 +325,11 @@ export default function useUserProfile() {
         return true;
       }
 
-      alert("Failed to update name. Please try again.");
+      setNameError("Failed to update name. Please try again.");
       return false;
     } catch (error) {
       console.error("Error updating username:", error);
-      alert("Failed to update name. Please try again.");
+      setNameError("Failed to update name. Please try again.");
       return false;
     }
   };
@@ -327,18 +337,20 @@ export default function useUserProfile() {
   const saveUserPhone = async () => {
     const trimmedPhone = stripPhone?.trim();
     if (!trimmedPhone) {
-      alert("Please enter a phone number.");
+      setPhoneError("Please enter a phone number.");
       return false;
     }
     if (!/^[\d\s-]+$/.test(trimmedPhone)) {
-      alert("Phone number may only contain digits, spaces, or hyphens.");
+      setPhoneError("Phone number may only contain digits, spaces, or hyphens.");
       return false;
     }
     const digitCount = trimmedPhone.replaceAll(/[\s-]/g, "").length;
     if (digitCount < 4 || digitCount > 13) {
-      alert("Phone number must be between 4 and 13 digits.");
+      setPhoneError("Phone number must be between 4 and 13 digits.");
       return false;
     }
+
+    setPhoneError("");
 
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
@@ -359,11 +371,11 @@ export default function useUserProfile() {
         return true;
       }
 
-      alert("Failed to update phone number. Please try again.");
+      setPhoneError("Failed to update phone number. Please try again.");
       return false;
     } catch (error) {
       console.error("Error updating phone number:", error);
-      alert("Failed to update phone number. Please try again.");
+      setPhoneError("Failed to update phone number. Please try again.");
       return false;
     }
   };
@@ -385,7 +397,7 @@ export default function useUserProfile() {
       return true;
     } catch (error) {
       console.error("Error updating birthdate:", error);
-      alert("Failed to update birthdate. Please try again.");
+      setDateOfBirthError("Failed to update birthdate. Please try again.");
       return false;
     }
   };
@@ -499,6 +511,8 @@ export default function useUserProfile() {
     dateOfBirthError,
     nationalityError,
     emailError,
+    nameError,
+    phoneError,
     emailSuccess,
     authStatus,
     placeOfBirthOptions,
