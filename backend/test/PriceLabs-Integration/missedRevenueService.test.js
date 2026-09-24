@@ -612,4 +612,97 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     expect(result.rootCause.occupancy).toEqual({ missedRevenue: 100, nights: 1 });
   });
+
+  test("categorizes a night priced well below its property's own mean as pricing, the rest as occupancy", async () => {
+    // mean of 100,100,100,40 = 85; threshold = 85*0.8 = 68; 40 < 68 -> pricing
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260903, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260904, pricelabs_price: 40 },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.pricing).toEqual({ missedRevenue: 40, nights: 1 });
+    expect(result.rootCause.occupancy).toEqual({ missedRevenue: 300, nights: 3 });
+  });
+
+  test("includes booked nights in the pricing baseline, not just the unbooked nights being judged", async () => {
+    // Baseline must include booked nights (160, 160) alongside the unbooked ones
+    // (40, 40) being judged, or the mean becomes self-referential (computed only
+    // from the same low-priced unbooked nights it's supposed to compare against).
+    // Correct mean = (40+40+160+160)/4 = 100, threshold = 80 -> the 40s are outliers.
+    // Buggy mean (unbooked only) = (40+40)/2 = 40, threshold = 32 -> 40 is NOT an outlier.
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 40 },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 40 },
+        { property_id: "prop-1", calendar_date: 20260903, pricelabs_price: 160, is_available: false },
+        { property_id: "prop-1", calendar_date: 20260904, pricelabs_price: 160, is_available: false },
+      ],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-03T00:00:00Z"),
+          departuredate: Date.parse("2026-09-05T00:00:00Z"),
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.pricing).toEqual({ missedRevenue: 80, nights: 2 });
+    expect(result.rootCause.occupancy).toEqual({ missedRevenue: 0, nights: 0 });
+  });
+
+  test("does not categorize as pricing when the property has fewer than 2 priced sellable nights to average over", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 10 }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.pricing).toEqual({ missedRevenue: 0, nights: 0 });
+    expect(result.rootCause.occupancy).toEqual({ missedRevenue: 10, nights: 1 });
+  });
+
+  test("categorizes a night that is both a pricing outlier and closed_to_arrival as restriction, not pricing", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260903, pricelabs_price: 40, closed_to_arrival: true },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.restriction).toEqual({ missedRevenue: 40, nights: 1 });
+    expect(result.rootCause.pricing).toEqual({ missedRevenue: 0, nights: 0 });
+  });
+
+  test("rootCause bucket nights always sum to unbookedNightsWithPriceData", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, closed_to_arrival: true },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260903, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260904, pricelabs_price: 40 },
+      ],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    const nightsSum =
+      result.rootCause.restriction.nights + result.rootCause.pricing.nights + result.rootCause.occupancy.nights;
+    expect(nightsSum).toBe(result.unbookedNightsWithPriceData);
+  });
 });

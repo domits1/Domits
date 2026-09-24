@@ -113,13 +113,49 @@ function hasRestrictionSignal(row) {
   return false;
 }
 
+// Heuristic, not a market-rate comparison: this codebase has no external demand
+// data. "Outlier" means the night's own pricelabs_price sits more than 20% below
+// this property's own mean pricelabs_price across sellable nights (booked or
+// unbooked, so the baseline isn't self-referential on the very nights being
+// judged) in the queried range. Needs at least PRICING_OUTLIER_MIN_SAMPLE priced
+// sellable nights for that property, or the mean isn't trusted and every night
+// falls through to occupancy instead.
+const PRICING_OUTLIER_RATIO = 0.8; // price < 80% of the property's own mean
+const PRICING_OUTLIER_MIN_SAMPLE = 2;
+
+function meanPriceByProperty(priceRows, bookedByProperty) {
+  const stats = new Map();
+  for (const row of priceRows) {
+    const iso = isoFromCalendarInt(row.calendar_date);
+    const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
+    if (!isPotentialNight(row, isBooked)) continue;
+    if (row.pricelabs_price == null) continue;
+    const entry = stats.get(row.property_id) ?? { sum: 0, count: 0 };
+    entry.sum += Number(row.pricelabs_price);
+    entry.count += 1;
+    stats.set(row.property_id, entry);
+  }
+  const means = new Map();
+  for (const [propertyId, { sum, count }] of stats) {
+    if (count >= PRICING_OUTLIER_MIN_SAMPLE) means.set(propertyId, sum / count);
+  }
+  return means;
+}
+
+function isPricingOutlier(propertyId, price, meansByProperty) {
+  const mean = meansByProperty.get(propertyId);
+  if (mean == null) return false;
+  return price < mean * PRICING_OUTLIER_RATIO;
+}
+
 /**
  * restriction > pricing > occupancy: restriction is the most concrete/certain
  * signal, pricing is a same-property heuristic (see isPricingOutlier), occupancy
  * is the fallback when neither concrete signal applies.
  */
-function categorizeMissedNight(row) {
+function categorizeMissedNight(row, price, meansByProperty) {
   if (hasRestrictionSignal(row)) return "restriction";
+  if (isPricingOutlier(row.property_id, price, meansByProperty)) return "pricing";
   return "occupancy";
 }
 
@@ -221,6 +257,7 @@ export class MissedRevenueService {
       pricing: { missedRevenue: 0, nights: 0 },
       occupancy: { missedRevenue: 0, nights: 0 },
     };
+    const meansByProperty = meanPriceByProperty(priceRows, bookedByProperty);
 
     for (const row of priceRows) {
       const iso = isoFromCalendarInt(row.calendar_date);
@@ -252,7 +289,7 @@ export class MissedRevenueService {
       unbookedNightsWithPriceData += 1;
       byDateMap.set(iso, (byDateMap.get(iso) ?? 0) + price);
 
-      const category = categorizeMissedNight(row);
+      const category = categorizeMissedNight(row, price, meansByProperty);
       rootCause[category].missedRevenue += price;
       rootCause[category].nights += 1;
 
