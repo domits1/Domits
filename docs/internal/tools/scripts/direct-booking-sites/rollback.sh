@@ -60,8 +60,12 @@ confirmed_gone() {
   fi
   return 1
 }
+cloudtrail_cmd() {
+  printf '%s' "aws cloudtrail lookup-events --profile $PROFILE --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=ChangeResourceRecordSets --query \"Events[?contains(CloudTrailEvent, '\\\"DELETE\\\"') && contains(CloudTrailEvent, '\\\"$1\\\"')].CloudTrailEvent\" --output text | grep -o '/change/[A-Z0-9]*'"
+  return $?
+}
 unknown_change() {
-  printf 'the record for %s is deleted, but its Route 53 change id is unknown, so neither when the deletion happened nor whether it is in sync can be established. This run did not update the tenant, and the current serving state is not confirmed. Check with list-resource-record-sets that no CNAME for %s exists in hosted zone %s, wait at least the TTL of the old record (%s) since it was deleted, then run rollback.sh again with --dns-already-gone %s' "$1" "$1" "$HOSTED_ZONE_ID" "$2" "$1"
+  printf 'the record for %s is deleted, but its Route 53 change id is unknown, so it cannot be established that the deletion is in sync; the record being gone proves nothing, because a resolver can fetch the old record during propagation and cache it for a full TTL from then. This run did not update the tenant, and the current serving state is not confirmed. To continue: (1) find the change id in CloudTrail; events usually appear within 15 minutes: %s If it prints more than one change id, use only the first line, which is the newest. (2) run "aws route53 get-change --profile %s --id <change id> --query ChangeInfo.Status --output text" until it prints INSYNC; (3) wait at least the TTL of the old record (%s), counted from the moment it was INSYNC; (4) only then run rollback.sh again with --dns-already-gone %s. If the change id cannot be found, do not use --dns-already-gone: leave the domain on the tenant, which keeps the site working, and ask someone before going further' "$1" "$(cloudtrail_cmd "$1")" "$PROFILE" "$2" "$1"
   return $?
 }
 write_pending() {

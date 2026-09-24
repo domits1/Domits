@@ -200,11 +200,28 @@ tenant; the file is removed once the tenant comparison has passed.
 
 When a record is already gone and its change id is unknown, because the run stopped between
 the deletion and saving the id or because the record was deleted by hand, `INSYNC` cannot be
-checked and elapsed time proves nothing, so the script stops without touching the tenant and
-says so. Check with `list-resource-record-sets` that the record is really gone, wait at least
-the old record's TTL since it was deleted (the pending file holds it; 60 seconds for records
-these scripts create), and run it again with `--dns-already-gone <domain>`. Only with that flag
-does it continue to the tenant step for that domain without a change id.
+checked, so the script stops without touching the tenant and says so. The record being gone
+proves nothing: a resolver can fetch the old record during propagation and cache it for a full
+TTL from then. To continue:
+
+1. Find the change id in CloudTrail. Route 53 calls are logged in `us-east-1` with the change id
+   in the response; events usually appear within 15 minutes.
+
+   ```
+   aws cloudtrail lookup-events --profile domits --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=ChangeResourceRecordSets --query "Events[?contains(CloudTrailEvent, '\"DELETE\"') && contains(CloudTrailEvent, '\"<domain>\"')].CloudTrailEvent" --output text | grep -o '/change/[A-Z0-9]*'
+   ```
+
+   If it prints more than one change id, use only the first line, which is the newest.
+
+2. Run `aws route53 get-change --profile domits --id <change id> --query ChangeInfo.Status --output text`
+   until it prints `INSYNC`.
+3. Wait at least the old record's TTL, counted from the moment it was `INSYNC`. The pending file
+   holds the TTL when there is one; records these scripts create have 60 seconds.
+4. Only then run it again with `--dns-already-gone <domain>`. Only with that flag does it
+   continue to the tenant step for that domain without a change id.
+
+If the change id cannot be found, do not use `--dns-already-gone`. Leave the domain on the
+tenant, which keeps the site working, and ask someone before going further.
 
 Never run two of these scripts at the same time.
 
