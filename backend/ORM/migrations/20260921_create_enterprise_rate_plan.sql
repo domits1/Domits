@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS main.enterprise_rate_plans (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_enterprise_rate_plans_enterprise_id
+CREATE INDEX ASYNC idx_enterprise_rate_plans_enterprise_id
 ON main.enterprise_rate_plans (enterprise_id);
 
 SELECT table_schema, table_name, column_name, data_type, is_nullable, column_default
