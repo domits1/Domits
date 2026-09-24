@@ -133,6 +133,23 @@ const runStatement = async (client, statement, parameters) => {
 const isTransientTransactionConflict = (error) =>
   TRANSIENT_CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
 
+const runStatementRetryingConflict = async (client, statement, buildParameters) => {
+  let lastError = null;
+
+  for (let attempt = 0; attempt < TRANSACTION_ATTEMPT_LIMIT; attempt += 1) {
+    try {
+      return await runStatement(client, statement, buildParameters());
+    } catch (error) {
+      if (!isTransientTransactionConflict(error)) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+};
+
 const rollbackReportingFailure = async (queryRunner) => {
   try {
     await queryRunner.rollbackTransaction();
@@ -495,7 +512,7 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    const { records } = await runStatement(
+    const { records } = await runStatementRetryingConflict(
       client,
       `UPDATE ${tableName}
       SET
@@ -513,7 +530,7 @@ export class DirectBookingWebsiteDomainRepository {
         )
       RETURNING
         ${SITE_DOMAIN_SELECT_COLUMNS}`,
-      [siteId, domainId, Date.now()]
+      () => [siteId, domainId, Date.now()]
     );
 
     return records.map(mapSiteDomainRow).filter(Boolean);
