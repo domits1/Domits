@@ -1283,6 +1283,7 @@
         "emailAddress": "Dirección de correo electrónico",
         "verificationCode": "Código de verificación enviado a tu correo electrónico",
         "verify": "Verificar",
+        "emailUpdated": "¡Correo electrónico actualizado!",
         "phone": "Teléfono",
         "phoneNumber": "Número de teléfono",
         "sex": "Sexo",
@@ -1327,6 +1328,7 @@
         "save": "Guardar cambios",
         "saving": "Guardando...",
         "saved": "¡Guardado!",
+        "saveError": "Error al guardar. Inténtalo de nuevo.",
         "cancel": "Cancelar",
         "close": "Cerrar"
       }

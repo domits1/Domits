@@ -1283,6 +1283,7 @@
         "emailAddress": "E-mailadres",
         "verificationCode": "Verificatiecode verzonden naar je e-mail",
         "verify": "Verifiëren",
+        "emailUpdated": "E-mail bijgewerkt!",
         "phone": "Telefoon",
         "phoneNumber": "Telefoonnummer",
         "sex": "Geslacht",
@@ -1327,6 +1328,7 @@
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
         "saved": "Opgeslagen!",
+        "saveError": "Opslaan mislukt. Probeer het opnieuw.",
         "cancel": "Annuleren",
         "close": "Sluiten"
       }
