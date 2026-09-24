@@ -1,0 +1,282 @@
+/* Review: Guest review history and reminder-email preference controls. */
+
+.guestReviewHistoryPage {
+  width: min(1040px, 100%);
+  padding: 32px;
+}
+
+.guestReviewHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    color: #111111;
+    font-size: 32px;
+    font-weight: 700;
+  }
+}
+
+.guestReviewNotificationSettings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: #333333;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: #0d9813;
+  }
+
+  p {
+    margin: 0;
+    color: #9f1c1c;
+  }
+}
+
+.guestReviewHistoryRefreshButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #222222;
+  font-weight: 700;
+  padding: 0 14px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.guestReviewHistoryError {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid #f0b8b8;
+  border-radius: 8px;
+  background: #fff4f4;
+  color: #9f1c1c;
+  font-weight: 600;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    flex: 1 1 240px;
+  }
+}
+
+.guestReviewHistoryState,
+.guestReviewHistoryEmpty {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 32px;
+}
+
+.guestReviewHistoryEmpty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+
+  > svg {
+    width: 48px;
+    height: 48px;
+    color: #08730d;
+  }
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  p {
+    color: #666666;
+  }
+}
+
+.guestReviewHistoryList {
+  display: grid;
+  gap: 16px;
+}
+
+.guestReviewHistoryCard {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.guestReviewHistoryCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  h2 {
+    margin: 0 0 4px;
+    color: #111111;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    color: #666666;
+    font-size: 14px;
+  }
+}
+
+.guestReviewHistoryStatus {
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #333333;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.status-published {
+  background: #eaf7eb;
+  color: #08730d;
+}
+
+.status-rejected {
+  background: #fff1f1;
+  color: #a22222;
+}
+
+.status-submitted,
+.status-pending_moderation {
+  background: #fff7df;
+  color: #8a5b00;
+}
+
+.guestReviewHistoryStars {
+  display: inline-flex;
+  color: #cfcfcf;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .filled {
+    color: #f7b500;
+  }
+}
+
+.guestReviewHistoryText {
+  margin: 0;
+  color: #333333;
+  line-height: 24px;
+}
+
+.guestReviewHistoryPrivate {
+  border-radius: 8px;
+  background: #f8f8f8;
+  padding: 12px;
+
+  strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #222222;
+  }
+
+  p {
+    margin: 0;
+    color: #555555;
+    line-height: 22px;
+  }
+}
+
+.guestReviewHistoryCategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  span {
+    border-radius: 999px;
+    background: #f4f4f4;
+    color: #444444;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+  }
+}
+
+.guestReviewHistoryEditButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 38px;
+  border: 1px solid #08730d;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #08730d;
+  font-weight: 700;
+  padding: 0 12px;
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: #eaf7eb;
+    outline: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .guestReviewHistoryPage {
+    padding: 20px;
+  }
+
+  .guestReviewHistoryHeader,
+  .guestReviewHistoryCardHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .guestReviewHistoryRefreshButton {
+    width: 100%;
+  }
+}
