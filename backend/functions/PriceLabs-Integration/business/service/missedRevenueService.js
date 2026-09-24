@@ -151,13 +151,23 @@ export class MissedRevenueService {
       return { connected: false };
     }
 
+    const bookings = await this.repo.getBookingsByHost(hostId);
+    const current = await this._computePeriodMetrics(hostId, startDate, endDate, bookings);
+
+    return {
+      connected: true,
+      startDate,
+      endDate,
+      currency: "EUR",
+      ...current,
+    };
+  }
+
+  async _computePeriodMetrics(hostId, startDate, endDate, bookings) {
     const from = calendarIntFromDate(startDate);
     const to = calendarIntFromDate(endDate);
 
-    const [priceRows, bookings] = await Promise.all([
-      this.repo.getCalendarPriceDataForHost(hostId, from, to),
-      this.repo.getBookingsByHost(hostId),
-    ]);
+    const priceRows = await this.repo.getCalendarPriceDataForHost(hostId, from, to);
 
     const bookedByProperty = bookedDateSetByProperty(bookings);
     const { total: actualRevenue, byProperty: actualRevenueByPropertyMap } = actualRevenueByProperty(
@@ -219,10 +229,6 @@ export class MissedRevenueService {
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
 
     return {
-      connected: true,
-      startDate,
-      endDate,
-      currency: "EUR",
       grossMissedRevenue,
       actualRevenue,
       potentialRevenue,
