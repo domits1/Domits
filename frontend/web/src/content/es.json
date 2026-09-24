@@ -1328,7 +1328,9 @@
         "save": "Guardar cambios",
         "saving": "Guardando...",
         "saved": "¡Guardado!",
-        "saveError": "Error al guardar. Inténtalo de nuevo."
+        "saveError": "Error al guardar. Inténtalo de nuevo.",
+        "cancel": "Cancelar",
+        "close": "Cerrar"
       }
     },
     "communicationPreferences": {

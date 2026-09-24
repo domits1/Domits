@@ -196,3 +196,40 @@ describe("PersonalDataForm password management", () => {
     expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
   });
 });
+
+describe("PersonalDataForm photo feedback", () => {
+  test("shows an uploaded confirmation as a status message when photoSuccess is 'uploaded'", () => {
+    renderForm({ photoSuccess: "uploaded" });
+
+    const message = screen.getByText("Photo uploaded!");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "status");
+    expect(message).toHaveClass("pd-photo-success");
+  });
+
+  test("shows a removed confirmation as a status message when photoSuccess is 'removed'", () => {
+    renderForm({ photoSuccess: "removed" });
+
+    const message = screen.getByText("Photo removed!");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "status");
+    expect(message).toHaveClass("pd-photo-success");
+  });
+
+  test("shows a photo error as an alert with the dedicated photo-error style, not the generic field style", () => {
+    renderForm({ photoError: "Photo must be smaller than 5MB." });
+
+    const message = screen.getByText("Photo must be smaller than 5MB.");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "alert");
+    expect(message).toHaveClass("pd-photo-error");
+    expect(message).not.toHaveClass("pd-field-error");
+  });
+
+  test("shows no photo feedback message when there is neither an error nor a success state", () => {
+    renderForm({ photoError: "", photoSuccess: "" });
+
+    expect(screen.queryByText("Photo uploaded!")).not.toBeInTheDocument();
+    expect(screen.queryByText("Photo removed!")).not.toBeInTheDocument();
+  });
+});

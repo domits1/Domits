@@ -1327,7 +1327,9 @@
         "save": "Save changes",
         "saving": "Saving...",
         "saved": "Saved!",
-        "saveError": "Failed to save. Please try again."
+        "saveError": "Failed to save. Please try again.",
+        "cancel": "Cancel",
+        "close": "Close"
       }
     },
     "communicationPreferences": {

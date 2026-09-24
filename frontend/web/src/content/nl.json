@@ -1328,7 +1328,9 @@
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
         "saved": "Opgeslagen!",
-        "saveError": "Opslaan mislukt. Probeer het opnieuw."
+        "saveError": "Opslaan mislukt. Probeer het opnieuw.",
+        "cancel": "Annuleren",
+        "close": "Sluiten"
       }
     },
     "communicationPreferences": {
