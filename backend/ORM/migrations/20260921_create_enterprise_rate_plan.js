@@ -32,7 +32,7 @@ export class EnterpriseRatePlan20260921 {
         `);
 
         await queryRunner.query(`
-            CREATE INDEX ASYNC idx_enterprise_rate_plans_enterprise_id
+            CREATE INDEX idx_enterprise_rate_plans_enterprise_id
             ON main.enterprise_rate_plans (enterprise_id);
         `);
     }
