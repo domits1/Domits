@@ -114,8 +114,10 @@ The worker reads the current value from the database when it sends. Sending the 
 **D2. One row per save.**
 A row holds a property, a date range and the change types. Rejected: one row per date (a 500-day change becomes 500 rows) and one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13).
 
-**D3. Send after 60 seconds of quiet per property, at most 5 minutes after the oldest pending row.**
+**D3. Send after 60 seconds of quiet per property, at most 5 minutes after the oldest pending row. Bookings skip the quiet period.**
 A host saving December to April month by month (the calendar selects within one month, `hostcalen/hooks/useCalendarSelection.js:739-741`) produces several rows; waiting for quiet merges them into one call, which scenarios 3 and 8 need. The 5-minute cap prevents starvation for a host who keeps saving. Rejected: sending whatever is pending every minute (scenario 8 would split over several runs) and relying only on multi-month calendar selection (scenario 3 still needs batching).
+
+Rows with source `BOOKING` or `CHANNEX_IMPORT` are ready on the next run, without the quiet period. A booking closes dates, and every minute those dates stay open on the other channels is a double-booking risk, which is exactly what D8 is for. Waiting up to 5 minutes would make that risk larger than it is today, where the call happens during the request. Accepted consequence: a booking is now pushed up to about 60 seconds later instead of immediately, because the worker runs once a minute. Rejected: invoking the worker directly from the booking transaction (that restores the coupling the outbox removes) and giving bookings their own shorter quiet period (added complexity for a case where merging has no value, since a booking covers one contiguous stay).
 
 **D4. The rate limit is guaranteed by construction, not by counting.**
 A run sends at most one availability call and one restrictions call per property, and runs once a minute, so a property receives at most one call of each type per minute from the worker. Rejected: a counter table (extra writes and DSQL conflicts) and an in-memory counter (a Lambda keeps no memory between runs and concurrent runs cannot see each other).
@@ -124,7 +126,7 @@ A run sends at most one availability call and one restrictions call per property
 Background calls to Channex, including back-off, must not share capacity, timeouts or logs with the guest and host inbox in `UnifiedMessaging`. `ChannelManagement` already exists, uses the same shared code (`.shared/channelManagement`) and its role already has what the worker needs (section 9). Rejected: `UnifiedMessaging` (couples Channex batch work to real-time messaging) and a new Lambda (`ChannelManagement` already exists).
 
 **D6. The date range is stored as `dateFrom` and `dateTo`, integers in `YYYYMMDD`.**
-Every write site produces a contiguous range (a calendar selection, a booking stay, a forward range). Integers match `calendar_date` in `property_calendar_override`, so the write sites store them without conversion. The existing payload builders take ISO dates (`channexAriPayloadService.js:652`), so the worker converts to ISO only when it calls them. Rejected: a JSON list of dates (unbounded size, not indexable).
+Every write site produces a contiguous range (a calendar selection, a booking stay, a forward range). `dateTo` is inclusive: it is the last date that changed. For a booking that is the **last night**, not the checkout date, which is what the current booking sync already sends (`buildBookingNightDateKeys` loops up to but not including the departure date, `channexBookingAvailabilityBridge.js:103-112`). The outbox keeps that behaviour. Integers match `calendar_date` in `property_calendar_override`, so the write sites store them without conversion. The existing payload builders take ISO dates (`channexAriPayloadService.js:652`), so the worker converts to ISO only when it calls them. Rejected: a JSON list of dates (unbounded size, not indexable).
 
 **D7. A per-property lock in `integration_sync_state`.**
 The worker takes a lock with `syncType = "channex_ari:<domitsPropertyId>"` for the property's Channex integration account before it claims rows. Two runs never send for the same property at the same time, so a slow earlier push cannot land after a newer one and overwrite it. The existing `tryAcquireLock` takes over a lock older than 5 minutes, which recovers from a crashed run. Rejected: claiming rows only (two overlapping runs could each claim different rows for the same property and race over the network) and a new lock table (the existing one is proven on DSQL). A `syncType` per property follows the booking poll, which locks with `booking_poll:<domitsPropertyId>` (`channexBookingPollingService.js:87`, `CHANNEX_BOOKING_POLL_SYNC_TYPE = "booking_poll"` in `utils/channexBookingPollUtils.js:3`).
@@ -208,6 +210,8 @@ The inline calls (`notifyChannexCalendarOverrideChange`, `notifyChannexOverviewC
 
 **Shared code in new Lambdas.** PropertyHandler and General-Bookings do not import from `.shared/` today; the writer makes them the first. This works because the deploy copies `.shared` into every Lambda (`.github/workflows/deploy.yml:142-143`), but any change under `.shared/` redeploys all Lambdas (`deploy.yml:75`).
 
+**Conflicts on the write side.** Booking create and cancel, the Channex import and the two global settings paths get a transaction they do not have today, and on Aurora DSQL a transaction can fail at commit with SQLSTATE `40001` when another one touched the same rows. The only retry for that today sits around `acceptInquiryWithOverlapDecline` (`reservationRepository.js:483-492`, three attempts); `markBookingPaidWithOutbox` has none and there is no shared helper. This work therefore adds a small shared retry helper, modelled on that loop, and every write site uses it, so a host save or a booking does not fail on a conflict that a retry would resolve.
+
 **Response change.** After step 3, the `PATCH /property/calendar/overrides` response no longer contains `channexCalendarChangeSync`, because no Channex call happens during the request. No frontend code reads that field (checked in `frontend/web/src` and `frontend/app`).
 
 **Layering.** Working out which dates and change types changed moves from the controller (`collectCalendarOverrideChangeTypes`, `propertyController.js:692`) to the business layer, next to the transaction. `CLAUDE.md` keeps the controller to parsing and authorisation.
@@ -239,12 +243,12 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 
 | Step | What happens | Why |
 |---|---|---|
-| **1. Find** | Properties with `PENDING` rows where the newest is older than 60 seconds (the host has stopped saving) or the oldest is older than 5 minutes. Rows waiting for a retry do not count. `PROCESSING` rows untouched for 5 minutes are from a crashed run and go back to `PENDING` | D3 |
+| **1. Find** | Properties with `PENDING` rows where the newest is older than 60 seconds (the host has stopped saving) or the oldest is older than 5 minutes. A row from a booking or a Channex import makes the property ready straight away. A property with any row still waiting for `nextAttemptAt` is skipped entirely until that time has passed. `PROCESSING` rows untouched for 5 minutes are from a crashed run and go back to `PENDING` | D3 |
 | **2a. Lock** | Find the Channex account and lock `channex_ari:<propertyId>`. Already locked, or a `40001`, means another run has it, so skip this property. No longer linked to Channex means the rows become `SKIPPED` with reason `NOT_MAPPED` | D7, edge case a |
-| **2b. Claim** | The property's `PENDING` rows created before this run started become `PROCESSING`, with attempts + 1. Rows that arrive during the run wait for the next run | |
+| **2b. Claim** | The property's `PENDING` rows created before this run started, and whose `nextAttemptAt` is empty or passed, become `PROCESSING`, with attempts + 1. Rows that arrive during the run wait for the next run | |
 | **2c. Merge** | Per change type, ranges that touch or overlap become one. A `FULL_SYNC` row replaces everything: 500 days, all types | D9, #3282 |
 | **2d. Read** | Build the payloads from the current values in the database, once per change type with only that type's dates | D1 |
-| **2e. Send** | At most one availability call and one restrictions call | D4 |
+| **2e. Send** | At most one availability call and one restrictions call, each with an 8 second timeout | D4 |
 | **2f. Record** | Mark the claimed rows with the result | See 8.3 |
 | **2g. Unlock** | Always release the lock, also after an error. A failing unlock is logged, not thrown | |
 | **3. Stop** | Start no new property after about 45 of the 60 seconds. Because the oldest goes first, a property left over waits one run longer | |
@@ -273,6 +277,8 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 
 **Why the `finally`.** Without it, an unexpected error (for example while building a payload) would leave the lock held until its 5-minute lease expires, and the property would get no updates in that time. Releasing the lock alone is not enough: the claimed rows would stay `PROCESSING` until stale recovery. The `catch` returns them to `PENDING` straight away.
 
+**Every push has a timeout.** `postChannexPushRequest` only applies a timeout when the caller passes one (`providerClient.js:189-197`), and today only the full sync does, with 8 seconds (`CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS`, `channexAriPayloadUtils.js:19`). The calendar path passes `options?.providerRequestTimeoutMs`, which its callers leave undefined, so a hanging Channex call has nothing to stop it. The worker always passes the same 8 seconds. Without it, one slow call can outlast the 60 second Lambda timeout, and the lock plus the claimed rows stay stuck until the 5 minute stale recovery.
+
 **Cleanup batch size.** Aurora DSQL allows a transaction to change at most 3,000 rows and 10 MiB of data, and to run for at most 5 minutes. None of these is adjustable ([AWS: cluster quotas and database limits](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html), checked 23 September 2026). Over the limit, the transaction fails with `ERROR: transaction row limit exceeded`. The cleanup therefore deletes at most 1,000 rows per run, well under the limit, and the rest follows in the next runs.
 
 ## 9. Infrastructure prerequisites
@@ -299,12 +305,13 @@ Checked read-only on 21 September 2026:
 | c. Old rows pile up | Sent and skipped rows are deleted after 30 days, failed rows after 90 days, a small batch at the end of every run (section 8, step 4) |
 | d. Someone needs to see what failed | Failed rows per property feed the monitoring dashboard (#2869) |
 | e. The worker crashes after sending but before marking the row | The row is sent again. That is harmless: it sends the same current values (D1) |
+| f. The worker stops running (broken schedule, broken Lambda) | Rows simply stay `PENDING` and nothing fails, so nobody notices. A CloudWatch alarm on the age of the oldest `PENDING` row catches this. Set up with this work, before the full monitoring of #2869 |
 
 ## 11. Testing
 
-**Unit (test-first, every commit):** change detection per save; range merging (D9) including `FULL_SYNC`; rates on one range and restrictions on another produce one restrictions request that sends each field only for its own dates; properties processed oldest pending row first; readiness (D3) including the 5-minute cap and ignoring rows that wait for `nextAttemptAt`; one call succeeding and the other failing returns the claimed rows as a failure; at most one call per type per property per run (D4); result classification including `SKIPPED` and the 401/403 stop; lock taken → skip, stale lock → take over, `40001` on the lock → skip, an error on one property still processes the next; a successful `FULL_SYNC` marks the `CHANGE` rows claimed with it as `PROCESSED`; an unexpected error returns the claimed rows to `PENDING` and still releases the lock; cleanup deletes only rows past their retention and no more than one batch per run.
+**Unit (test-first, every commit):** change detection per save; range merging (D9) including `FULL_SYNC`; rates on one range and restrictions on another produce one restrictions request that sends each field only for its own dates; properties processed oldest pending row first; readiness (D3) including the 5-minute cap, a booking row making a property ready straight away, and a property with a row in back-off being skipped as a whole; the claim skipping rows whose `nextAttemptAt` has not passed; every push carrying the 8 second timeout; one call succeeding and the other failing returns the claimed rows as a failure; at most one call per type per property per run (D4); result classification including `SKIPPED` and the 401/403 stop; lock taken → skip, stale lock → take over, `40001` on the lock → skip, an error on one property still processes the next; a successful `FULL_SYNC` marks the `CHANGE` rows claimed with it as `PROCESSED`; an unexpected error returns the claimed rows to `PENDING` and still releases the lock; cleanup deletes only rows past their retention and no more than one batch per run.
 
-**Transaction tests per write site:** the domain write and the row commit together; a failure writing the row rolls back the domain write (D8); an unmapped property writes no row (D10).
+**Transaction tests per write site:** the domain write and the row commit together; a failure writing the row rolls back the domain write (D8); an unmapped property writes no row (D10); a `40001` at commit is retried by the shared helper and succeeds on the second attempt; a booking row covers the nights of the stay, with `dateTo` as the last night and not the checkout date.
 
 **Real systems:**
 - Against Aurora DSQL (`test` schema): the conditional claim and the lock behave correctly under optimistic concurrency. Mocked repositories cannot show SQLSTATE `40001` behaviour or wrong query predicates.
@@ -321,8 +328,8 @@ Checked read-only on 21 September 2026:
 | Scenario 12: queue or limiter | yes, D4 |
 | Scenario 13: only changes | yes, D1, D2 and D9; full sync limited by #3282 |
 
-## 13. Open questions for the reviewer
+## 13. Questions and their answers
 
-1. Is 60 seconds of quiet with a 5-minute cap acceptable for hosts, given that OTAs themselves process updates within minutes?
-2. Should the Secrets Manager permissions of the `ChannelManagement` role be narrowed as part of this work or separately?
-3. #3149 routed internal sync calls to `ChannelManagement`. With the outbox the write sites no longer call a Lambda, so this design replaces it. Agreed to close #3149?
+1. **Is 60 seconds of quiet with a 5-minute cap acceptable for hosts?** Answered in review: yes for prices and restrictions, no for bookings. D3 now lets bookings and Channex imports skip the quiet period.
+2. **Should the Secrets Manager permissions of the `ChannelManagement` role be narrowed as part of this work or separately?** Separately, with an issue created now.
+3. **Does this design replace #3149?** Only in part. #3149 also moved about 30 API Gateway routes to `ChannelManagement`; the outbox only removes the two internal sync calls. #3149 itself was closed on 23 September because its branch was three months old and its author had left, and its route migration runbook was kept.
