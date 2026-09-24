@@ -1127,8 +1127,137 @@
         "compliance": {
           "title": "Cumplimiento",
           "desc": "Gestiona tu número de registro y verificación."
+        },
+        "onboarding": {
+          "title": "Incorporación",
+          "desc": "Sigue tu progreso desde publicar tu alojamiento hasta ponerlo en marcha."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Incorporación",
+      "title": "Incorporación",
+      "subtitle": "Sigue el progreso de cada alojamiento, desde su creación hasta su publicación.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Empresa",
+        "navLabel": "Modo de incorporación"
+      },
+      "propertyPicker": {
+        "label": "Alojamiento",
+        "loading": "Cargando tus alojamientos...",
+        "loadError": "No se pudieron cargar tus alojamientos.",
+        "empty": "Todavía no tienes ningún alojamiento publicado."
+      },
+      "progress": {
+        "label": "{completed} de {total} pasos completados"
+      },
+      "accountWideBadge": "Para toda la cuenta",
+      "requiredBadge": "Obligatorio",
+      "optionalBadge": "Opcional",
+      "goLiveButton": "Poner en marcha",
+      "goLiveBlockedText": "Completa primero los pasos obligatorios",
+      "pricingConnectedSubDetail": "Los precios dinámicos de PriceLabs también están conectados.",
+      "steps": {
+        "listProperty": {
+          "title": "Publicar tu alojamiento",
+          "desc": "Añade los detalles, fotos y precios de tu alojamiento."
+        },
+        "website": {
+          "title": "Crear sitio web de reserva directa",
+          "desc": "Crea un sitio web de reservas propio para este alojamiento."
+        },
+        "channels": {
+          "title": "Conectar canales",
+          "desc": "Sincroniza este alojamiento con Airbnb, Booking.com, Vrbo y más."
+        },
+        "automate": {
+          "title": "Automatizar operaciones",
+          "desc": "Configura los pagos y los precios dinámicos de tu cuenta."
+        },
+        "goLive": {
+          "title": "Poner en marcha",
+          "desc": "Revisa tu alojamiento y publícalo en Domits."
+        }
+      },
+      "statusComplete": "Completado",
+      "statusIncomplete": "Sin empezar",
+      "statusUnknown": "No se pudo comprobar el estado",
+      "channelsComingSoon": "Próximamente",
+      "enterprise": {
+        "breadcrumb": "Incorporación empresarial",
+        "title": "Incorporación empresarial",
+        "subtitle": "Sigue el progreso de toda tu cartera, desde la configuración de la empresa hasta la publicación.",
+        "goLiveSection": {
+          "title": "Poner en marcha",
+          "desc": "Preparación de tus pasos obligatorios.",
+          "readyLabel": "Listo para poner en marcha",
+          "notReadyLabel": "Aún no está listo"
+        },
+        "steps": {
+          "company": {
+            "title": "Configurar empresa",
+            "desc": "Añade los datos de tu empresa para que huéspedes y socios puedan encontrarte."
+          },
+          "team": {
+            "title": "Miembros del equipo",
+            "desc": "Invita a tu equipo y asigna roles en toda tu cartera."
+          },
+          "listProperties": {
+            "title": "Publicar tus alojamientos",
+            "desc": "Gestiona y añade alojamientos en toda tu cartera."
+          },
+          "website": {
+            "title": "Crear sitios web de reserva directa",
+            "desc": "Crea sitios web de reservas propios para tus alojamientos."
+          },
+          "channels": {
+            "title": "Conectar canales",
+            "desc": "Sincroniza tus alojamientos con Airbnb, Booking.com, Vrbo y más."
+          },
+          "payments": {
+            "title": "Configurar pagos",
+            "desc": "Conecta Stripe para recibir pagos en toda tu cartera."
+          },
+          "pricing": {
+            "title": "Configurar precios dinámicos",
+            "desc": "Conecta PriceLabs para automatizar los precios en toda tu cartera."
+          },
+          "tasks": {
+            "title": "Configurar gestión de tareas",
+            "desc": "Organiza las tareas operativas de tus alojamientos."
+          },
+          "marketplace": {
+            "title": "Utilizar Marketplace",
+            "desc": "Descubre integraciones para hacer crecer tu negocio."
+          }
+        }
+      }
+    },
+    "goLive": {
+      "breadcrumb": "Poner en marcha",
+      "title": "Poner en marcha {propertyName}",
+      "subtitle": "Revisa la siguiente lista y, después, publica tu alojamiento.",
+      "loading": "Cargando la lista de comprobación...",
+      "loadError": "No se pudo cargar este alojamiento.",
+      "missingPropertyId": "No se especificó ningún alojamiento.",
+      "requiredSection": "Obligatorio",
+      "optionalSection": "Opcional",
+      "items": {
+        "listProperty": "Publicar tu alojamiento",
+        "website": "Crear sitio web de reserva directa",
+        "payments": "Pagos (Stripe)",
+        "channels": "Conectar canales",
+        "pricing": "Precios dinámicos (PriceLabs)",
+        "tasks": "Gestión de tareas"
+      },
+      "activateButton": "Publicar alojamiento",
+      "activating": "Publicando...",
+      "alreadyLive": "Este alojamiento ya está en marcha.",
+      "blockedMessage": "Completa los pasos obligatorios anteriores antes de poner en marcha el alojamiento.",
+      "successMessage": "¡Tu alojamiento ya está en marcha!",
+      "errorMessage": "Ha ocurrido un error al publicar este alojamiento.",
+      "backToHub": "Volver a Incorporación"
     },
     "personalData": {
       "breadcrumb": "Datos personales",
@@ -1138,8 +1267,11 @@
       "prefsSection": "Preferencias / Autenticación",
       "photo": {
         "upload": "Subir",
-        "uploading": "Procesando...",
-        "remove": "Eliminar"
+        "uploading": "Subiendo...",
+        "remove": "Eliminar",
+        "removing": "Eliminando...",
+        "uploaded": "¡Foto subida!",
+        "removed": "¡Foto eliminada!"
       },
       "fields": {
         "fullName": "Nombre completo",
@@ -1172,12 +1304,31 @@
         "phoneVerifiedYes": "Teléfono verificado: Sí",
         "phoneVerifiedNo": "Teléfono verificado: No",
         "authenticatorApp": "Aplicación de autenticación",
-        "totp": "Códigos basados en aplicación (TOTP)"
+        "totp": "Códigos basados en aplicación (TOTP)",
+        "passwordLabel": "Contraseña",
+        "changePassword": "Cambiar contraseña",
+        "changePasswordTitle": "Cambia tu contraseña",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmPassword": "Confirmar nueva contraseña",
+        "savePassword": "Guardar contraseña",
+        "passwordChanged": "Contraseña cambiada con éxito.",
+        "showPassword": "Mostrar contraseña",
+        "hidePassword": "Ocultar contraseña",
+        "passwordFieldsRequired": "Por favor, complete todos los campos de contraseña.",
+        "passwordTooShort": "La contraseña debe tener al menos {min} caracteres.",
+        "passwordMismatch": "La nueva contraseña y la confirmación no coinciden.",
+        "passwordChangeFailed": "No se pudo cambiar la contraseña. Inténtalo de nuevo.",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta.",
+        "passwordPolicyViolation": "La nueva contraseña no cumple los requisitos.",
+        "tooManyPasswordAttempts": "Demasiados intentos. Inténtalo de nuevo más tarde."
       },
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
-        "saved": "¡Guardado!"
+        "saved": "¡Guardado!",
+        "cancel": "Cancelar",
+        "close": "Cerrar"
       }
     },
     "communicationPreferences": {
@@ -1209,14 +1360,41 @@
       "breadcrumb": "Empresa",
       "title": "Empresa",
       "subtitle": "Gestiona la información de tu empresa.",
-      "section": "Detalles de la empresa",
+      "privateSection": "Privado",
+      "privateSectionNote": "Solo visible para ti: se usa en facturas e informes.",
+      "publicSection": "Información pública",
+      "publicSectionNote": "Visible para los huéspedes en tus alojamientos.",
       "fields": {
         "companyName": "Nombre de la empresa",
         "placeholder": "Introduce el nombre de la empresa",
-        "hint": "Esta información aparecerá en facturas e informes."
+        "hint": "Esta información aparecerá en facturas e informes.",
+        "displayName": "Nombre visible",
+        "displayNamePlaceholder": "Nombre que verán los huéspedes",
+        "logo": "Logotipo",
+        "logoUpload": "Subir logotipo",
+        "logoUploading": "Subiendo...",
+        "logoRemove": "Eliminar",
+        "description": "Descripción",
+        "descriptionPlaceholder": "Cuéntales a los huéspedes sobre tu empresa",
+        "website": "Sitio web",
+        "websitePlaceholder": "https://ejemplo.com",
+        "publicEmail": "Correo electrónico público",
+        "publicEmailPlaceholder": "contacto@ejemplo.com",
+        "publicPhone": "Teléfono público",
+        "publicPhonePlaceholder": "+34 612 345 678",
+        "country": "País",
+        "countryPlaceholder": "Introduce el país"
+      },
+      "errors": {
+        "website": "Introduce una URL de sitio web válida.",
+        "publicEmail": "Introduce una dirección de correo electrónico válida.",
+        "publicPhone": "Introduce un número de teléfono válido.",
+        "logo": "No se pudo subir el logotipo. Inténtalo de nuevo."
       },
       "buttons": {
-        "comingSoon": "Próximamente"
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Guardado"
       }
     },
     "compliance": {

@@ -1127,8 +1127,137 @@
         "compliance": {
           "title": "Compliance",
           "desc": "Verwalte deine Registrierungsnummer und Verifizierung."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Verfolge deinen Fortschritt vom Eintragen deiner Unterkunft bis zur Veröffentlichung."
         }
       }
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Verfolge den Fortschritt für jede Unterkunft, von der Erstellung bis zur Veröffentlichung.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding-Modus"
+      },
+      "propertyPicker": {
+        "label": "Unterkunft",
+        "loading": "Deine Unterkünfte werden geladen...",
+        "loadError": "Wir konnten deine Unterkünfte nicht laden.",
+        "empty": "Du hast noch keine veröffentlichten Unterkünfte."
+      },
+      "progress": {
+        "label": "{completed} von {total} Schritten abgeschlossen"
+      },
+      "accountWideBadge": "Kontoweit",
+      "requiredBadge": "Erforderlich",
+      "optionalBadge": "Optional",
+      "goLiveButton": "Veröffentlichen",
+      "goLiveBlockedText": "Schließe zuerst die erforderlichen Schritte ab",
+      "pricingConnectedSubDetail": "Dynamische Preise über PriceLabs sind ebenfalls verbunden.",
+      "steps": {
+        "listProperty": {
+          "title": "Unterkunft eintragen",
+          "desc": "Füge die Details, Fotos und Preise deiner Unterkunft hinzu."
+        },
+        "website": {
+          "title": "Direktbuchungs-Website erstellen",
+          "desc": "Erstelle eine eigene Buchungs-Website für diese Unterkunft."
+        },
+        "channels": {
+          "title": "Kanäle verbinden",
+          "desc": "Synchronisiere diese Unterkunft mit Airbnb, Booking.com, Vrbo und mehr."
+        },
+        "automate": {
+          "title": "Abläufe automatisieren",
+          "desc": "Richte Zahlungen und dynamische Preise für dein Konto ein."
+        },
+        "goLive": {
+          "title": "Veröffentlichen",
+          "desc": "Überprüfe deine Unterkunft und veröffentliche sie auf Domits."
+        }
+      },
+      "statusComplete": "Abgeschlossen",
+      "statusIncomplete": "Noch nicht begonnen",
+      "statusUnknown": "Status konnte nicht geprüft werden",
+      "channelsComingSoon": "Demnächst verfügbar",
+      "enterprise": {
+        "breadcrumb": "Enterprise-Onboarding",
+        "title": "Enterprise-Onboarding",
+        "subtitle": "Verfolge den Fortschritt für dein gesamtes Portfolio, von der Unternehmenseinrichtung bis zur Veröffentlichung.",
+        "goLiveSection": {
+          "title": "Veröffentlichen",
+          "desc": "Bereitschaft deiner erforderlichen Schritte.",
+          "readyLabel": "Bereit zur Veröffentlichung",
+          "notReadyLabel": "Noch nicht bereit"
+        },
+        "steps": {
+          "company": {
+            "title": "Unternehmen einrichten",
+            "desc": "Füge deine Unternehmensdaten hinzu, damit Gäste und Partner dich finden."
+          },
+          "team": {
+            "title": "Teammitglieder",
+            "desc": "Lade dein Team ein und weise Rollen für dein Portfolio zu."
+          },
+          "listProperties": {
+            "title": "Unterkünfte eintragen",
+            "desc": "Verwalte und füge Unterkünfte in deinem Portfolio hinzu."
+          },
+          "website": {
+            "title": "Direktbuchungs-Websites erstellen",
+            "desc": "Erstelle eigene Buchungs-Websites für deine Unterkünfte."
+          },
+          "channels": {
+            "title": "Kanäle verbinden",
+            "desc": "Synchronisiere deine Unterkünfte mit Airbnb, Booking.com, Vrbo und mehr."
+          },
+          "payments": {
+            "title": "Zahlungen einrichten",
+            "desc": "Verbinde Stripe, um Auszahlungen für dein gesamtes Portfolio zu erhalten."
+          },
+          "pricing": {
+            "title": "Dynamische Preise einrichten",
+            "desc": "Verbinde PriceLabs, um die Preise in deinem Portfolio zu automatisieren."
+          },
+          "tasks": {
+            "title": "Aufgabenverwaltung einrichten",
+            "desc": "Organisiere betriebliche Aufgaben für deine Unterkünfte."
+          },
+          "marketplace": {
+            "title": "Marketplace nutzen",
+            "desc": "Entdecke Integrationen, um dein Geschäft auszubauen."
+          }
+        }
+      }
+    },
+    "goLive": {
+      "breadcrumb": "Veröffentlichen",
+      "title": "{propertyName} veröffentlichen",
+      "subtitle": "Überprüfe die Checkliste unten und veröffentliche anschließend deine Unterkunft.",
+      "loading": "Checkliste wird geladen...",
+      "loadError": "Wir konnten diese Unterkunft nicht laden.",
+      "missingPropertyId": "Es wurde keine Unterkunft angegeben.",
+      "requiredSection": "Erforderlich",
+      "optionalSection": "Optional",
+      "items": {
+        "listProperty": "Unterkunft eintragen",
+        "website": "Direktbuchungs-Website erstellen",
+        "payments": "Zahlungen (Stripe)",
+        "channels": "Kanäle verbinden",
+        "pricing": "Dynamische Preise (PriceLabs)",
+        "tasks": "Aufgabenverwaltung"
+      },
+      "activateButton": "Unterkunft veröffentlichen",
+      "activating": "Wird veröffentlicht...",
+      "alreadyLive": "Diese Unterkunft ist bereits veröffentlicht.",
+      "blockedMessage": "Schließe zuerst die erforderlichen Schritte oben ab, um zu veröffentlichen.",
+      "successMessage": "Deine Unterkunft ist jetzt live!",
+      "errorMessage": "Beim Veröffentlichen dieser Unterkunft ist etwas schiefgelaufen.",
+      "backToHub": "Zurück zu Onboarding"
     },
     "personalData": {
       "breadcrumb": "Persönliche Daten",
@@ -1138,8 +1267,11 @@
       "prefsSection": "Einstellungen / Authentifizierung",
       "photo": {
         "upload": "Hochladen",
-        "uploading": "Wird verarbeitet...",
-        "remove": "Entfernen"
+        "uploading": "Wird hochgeladen...",
+        "remove": "Entfernen",
+        "removing": "Wird entfernt...",
+        "uploaded": "Foto hochgeladen!",
+        "removed": "Foto entfernt!"
       },
       "fields": {
         "fullName": "Vollständiger Name",
@@ -1172,12 +1304,31 @@
         "phoneVerifiedYes": "Telefon verifiziert: Ja",
         "phoneVerifiedNo": "Telefon verifiziert: Nein",
         "authenticatorApp": "Authenticator-App",
-        "totp": "App-basierte Codes (TOTP)"
+        "totp": "App-basierte Codes (TOTP)",
+        "passwordLabel": "Passwort",
+        "changePassword": "Passwort ändern",
+        "changePasswordTitle": "Passwort ändern",
+        "currentPassword": "Aktuelles Passwort",
+        "newPassword": "Neues Passwort",
+        "confirmPassword": "Neues Passwort bestätigen",
+        "savePassword": "Passwort speichern",
+        "passwordChanged": "Passwort erfolgreich geändert.",
+        "showPassword": "Passwort anzeigen",
+        "hidePassword": "Passwort verbergen",
+        "passwordFieldsRequired": "Bitte füllen Sie alle Passwortfelder aus.",
+        "passwordTooShort": "Das Passwort muss mindestens {min} Zeichen lang sein.",
+        "passwordMismatch": "Neues Passwort und Bestätigung stimmen nicht überein.",
+        "passwordChangeFailed": "Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+        "currentPasswordIncorrect": "Das aktuelle Passwort ist falsch.",
+        "passwordPolicyViolation": "Das neue Passwort erfüllt nicht die Anforderungen.",
+        "tooManyPasswordAttempts": "Zu viele Versuche. Bitte versuchen Sie es später erneut."
       },
       "buttons": {
         "save": "Änderungen speichern",
         "saving": "Wird gespeichert...",
-        "saved": "Gespeichert!"
+        "saved": "Gespeichert!",
+        "cancel": "Abbrechen",
+        "close": "Schließen"
       }
     },
     "communicationPreferences": {
@@ -1209,14 +1360,41 @@
       "breadcrumb": "Unternehmen",
       "title": "Unternehmen",
       "subtitle": "Verwalte deine Unternehmensinformationen.",
-      "section": "Unternehmensdetails",
+      "privateSection": "Privat",
+      "privateSectionNote": "Nur für dich sichtbar — wird für Rechnungen und Berichte verwendet.",
+      "publicSection": "Öffentliche Informationen",
+      "publicSectionNote": "Für Gäste auf deinen Inseraten sichtbar.",
       "fields": {
         "companyName": "Unternehmensname",
         "placeholder": "Unternehmensnamen eingeben",
-        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten."
+        "hint": "Diese Informationen erscheinen auf Rechnungen und Berichten.",
+        "displayName": "Anzeigename",
+        "displayNamePlaceholder": "Name, den Gäste sehen",
+        "logo": "Logo",
+        "logoUpload": "Logo hochladen",
+        "logoUploading": "Wird hochgeladen...",
+        "logoRemove": "Entfernen",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Erzähle Gästen von deinem Unternehmen",
+        "website": "Website",
+        "websitePlaceholder": "https://beispiel.de",
+        "publicEmail": "Öffentliche E-Mail-Adresse",
+        "publicEmailPlaceholder": "kontakt@beispiel.de",
+        "publicPhone": "Öffentliche Telefonnummer",
+        "publicPhonePlaceholder": "+49 30 12345678",
+        "country": "Land",
+        "countryPlaceholder": "Land eingeben"
+      },
+      "errors": {
+        "website": "Gib eine gültige Website-URL ein.",
+        "publicEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "publicPhone": "Gib eine gültige Telefonnummer ein.",
+        "logo": "Logo-Upload fehlgeschlagen. Bitte versuche es erneut."
       },
       "buttons": {
-        "comingSoon": "Demnächst verfügbar"
+        "save": "Speichern",
+        "saving": "Wird gespeichert...",
+        "saved": "Gespeichert"
       }
     },
     "compliance": {

@@ -28,3 +28,10 @@ export const extractThreadIdForRead = (path) => {
   const match = threadIdForReadPattern.exec(String(path || ""));
   return match?.[1] || null;
 };
+
+const threadIdForUnreadPattern = /\/threads\/([^/]+)\/unread/;
+
+export const extractThreadIdForUnread = (path) => {
+  const match = threadIdForUnreadPattern.exec(String(path || ""));
+  return match?.[1] || null;
+};

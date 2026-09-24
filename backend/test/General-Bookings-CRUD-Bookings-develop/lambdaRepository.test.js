@@ -61,7 +61,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
     ]);
   });
 
-  it("throws NotFoundException when the endpoint responds with no properties", async () => {
+  it("resolves to an empty array when the endpoint reports no properties for the host", async () => {
     jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,
       json: async () => "No property found.",
@@ -69,7 +69,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
 
     const repository = new LambdaRepository();
 
-    await expect(repository.getPropertiesFromHostId("host-3")).rejects.toBeInstanceOf(NotFoundException);
+    await expect(repository.getPropertiesFromHostId("host-3")).resolves.toEqual([]);
   });
 
   it("throws NotFoundException on unexpected non-array payloads", async () => {

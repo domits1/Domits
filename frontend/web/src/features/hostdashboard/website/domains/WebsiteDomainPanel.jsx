@@ -50,7 +50,10 @@ function DomainRow({ entry }) {
       ) : (
         <span className={styles.domainName}>{entry.domain}</span>
       )}
-      <span className={builderStyles.statusPill}>{STATUS_LABELS[entry.status] || entry.status}</span>
+      <span className={styles.domainMeta}>
+        {entry.isPrimary ? <span className={styles.primaryPill}>Main address</span> : null}
+        <span className={builderStyles.statusPill}>{STATUS_LABELS[entry.status] || entry.status}</span>
+      </span>
     </li>
   );
 }
@@ -60,6 +63,7 @@ DomainRow.propTypes = {
     domain: PropTypes.string.isRequired,
     domainType: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
+    isPrimary: PropTypes.bool,
   }).isRequired,
 };
 
@@ -165,12 +169,13 @@ ConnectDomainForm.propTypes = {
   fieldError: PropTypes.string.isRequired,
 };
 
-function CustomDomainStatus({ domain, onCheckAgain, onRemove, isChecking, isRemoving }) {
+function CustomDomainStatus({ domain, onCheckAgain, onRemove, onPromote, isChecking, isRemoving, isPromoting }) {
   const isHalted = isDomainHalted(domain);
   const isBeingRemoved = isDomainRemoving(domain);
   const isLive = domain.status === "ACTIVE";
+  const canPromote = isLive && !domain.isPrimary;
   const showDnsRecord = Boolean(domain.dnsRecord) && !isHalted && !isBeingRemoved;
-  const isBusy = isChecking || isRemoving;
+  const isBusy = isChecking || isRemoving || isPromoting;
   const checkedAt = formatCheckedAt(domain.lastCheckedAt);
 
   return (
@@ -190,6 +195,15 @@ function CustomDomainStatus({ domain, onCheckAgain, onRemove, isChecking, isRemo
         <button type="button" className={builderStyles.secondaryButton} onClick={onCheckAgain} disabled={isBusy}>
           {isChecking ? "Checking…" : "Check again"}
         </button>
+        {canPromote ? (
+          <button
+            type="button"
+            className={builderStyles.secondaryButton}
+            onClick={() => onPromote(domain.domain)}
+            disabled={isBusy}>
+            {isPromoting ? "Making main address…" : "Make main address"}
+          </button>
+        ) : null}
         {isBeingRemoved ? null : (
           <button
             type="button"
@@ -209,14 +223,17 @@ CustomDomainStatus.propTypes = {
   domain: PropTypes.shape({
     domain: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
+    isPrimary: PropTypes.bool,
     reason: PropTypes.string,
     dnsRecord: PropTypes.shape({}),
     lastCheckedAt: PropTypes.number,
   }).isRequired,
   onCheckAgain: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
+  onPromote: PropTypes.func.isRequired,
   isChecking: PropTypes.bool.isRequired,
   isRemoving: PropTypes.bool.isRequired,
+  isPromoting: PropTypes.bool.isRequired,
 };
 
 function DomainPanelBody({ state }) {
@@ -262,8 +279,10 @@ function DomainPanelBody({ state }) {
           domain={state.customDomain}
           onCheckAgain={state.checkAgain}
           onRemove={state.remove}
+          onPromote={state.promote}
           isChecking={state.isChecking}
           isRemoving={state.isRemoving}
+          isPromoting={state.isPromoting}
         />
       ) : (
         <ConnectDomainForm onConnect={state.connect} isConnecting={state.isConnecting} fieldError={state.fieldError} />
@@ -282,9 +301,11 @@ DomainPanelBody.propTypes = {
     isConnecting: PropTypes.bool.isRequired,
     isChecking: PropTypes.bool.isRequired,
     isRemoving: PropTypes.bool.isRequired,
+    isPromoting: PropTypes.bool.isRequired,
     connect: PropTypes.func.isRequired,
     checkAgain: PropTypes.func.isRequired,
     remove: PropTypes.func.isRequired,
+    promote: PropTypes.func.isRequired,
     reload: PropTypes.func.isRequired,
   }).isRequired,
 };

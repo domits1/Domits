@@ -3070,13 +3070,30 @@ export class PropertyController {
                 await this.refreshWebsiteCustomDomainSafely({ site, customDomain });
             }
 
-            const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-            const summary = this.buildDirectBookingWebsiteSummary(site, domains);
-            return {
-                statusCode: 200,
-                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
-            };
+            return this.buildWebsiteDomainsResponse(site);
         });
+    }
+
+    async buildWebsiteDomainsResponse(site, domains = null) {
+        const siteDomains = domains || (await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id));
+        const summary = this.buildDirectBookingWebsiteSummary(site, siteDomains);
+        return {
+            statusCode: 200,
+            body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
+        };
+    }
+
+    async readWebsiteDomainsAfterChange(site) {
+        try {
+            return await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        } catch (error) {
+            console.error(`[CustomDomain] domain list read failed after a completed change (site ${site.id}).`, error);
+            throw new WebsiteCustomDomainError(
+                WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAINS_UNAVAILABLE,
+                "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
+                { cause: error }
+            );
+        }
     }
 
     // -------------------------
@@ -3099,8 +3116,8 @@ export class PropertyController {
     // -------------------------
     async verifyWebsiteDomain(event) {
         return this.handleWebsiteDomainRequest(event, async ({ site }) => {
-            const record = await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
         });
     }
 
@@ -3114,8 +3131,20 @@ export class PropertyController {
                 throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
             }
 
-            const record = await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
+        });
+    }
+
+    async promoteWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const domains = await this.getWebsiteCustomDomainService().promoteCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, domains);
         });
     }
 
@@ -3296,6 +3325,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
             }
@@ -3325,6 +3355,18 @@ export class PropertyController {
                 return this.badRequest(error.message);
             }
             return this.websiteServerError();
+        }
+    }
+
+    async releaseWebsiteCustomDomainSafely(site) {
+        const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
+        if (!customDomain?.verificationDetails?.tenantId) {
+            return;
+        }
+        try {
+            await this.getWebsiteCustomDomainService().releaseTenantForSite({ site, record: customDomain });
+        } catch (error) {
+            console.error(`[CustomDomain] disabling the tenant for ${customDomain.domain} on website delete failed (site ${site.id}).`, error);
         }
     }
 
@@ -3391,6 +3433,71 @@ export class PropertyController {
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
         }
+    }
+
+    // -------------------------
+    // GET /property/draft/:id
+    // -------------------------
+    async getDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const draft = await this.propertyService.getDraft(propertyId);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/draft/:id
+    // -------------------------
+    async updateDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const eventBody = JSON.parse(event.body || "{}");
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyService.updateDraft(propertyId, eventBody);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isDraftContentClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    isDraftContentClientError(error) {
+        return Boolean(error?.message?.startsWith("Draft "));
     }
 
     // -------------------------
