@@ -569,4 +569,47 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     expect(result.byDate.map((d) => d.date)).toEqual(["2026-09-01", "2026-09-02", "2026-09-03"]);
   });
+
+  test.each([
+    ["closed_to_arrival", { closed_to_arrival: true }],
+    ["closed_to_departure", { closed_to_departure: true }],
+    ["a min_stay greater than 1", { min_stay: 3 }],
+  ])("categorizes a missed night as restriction when the row has %s", async (_label, flags) => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, ...flags }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.restriction).toEqual({ missedRevenue: 100, nights: 1 });
+    expect(result.rootCause.pricing).toEqual({ missedRevenue: 0, nights: 0 });
+    expect(result.rootCause.occupancy).toEqual({ missedRevenue: 0, nights: 0 });
+  });
+
+  test.each([
+    ["min_stay is exactly 1", { min_stay: 1 }],
+    ["min_stay is null", { min_stay: null }],
+    ["min_stay is omitted", {}],
+  ])("does not categorize a missed night as restriction when %s", async (_label, flags) => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, ...flags }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.restriction).toEqual({ missedRevenue: 0, nights: 0 });
+  });
+
+  test("categorizes a plain unrestricted missed night as occupancy", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
+      bookings: [],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.rootCause.occupancy).toEqual({ missedRevenue: 100, nights: 1 });
+  });
 });

@@ -91,6 +91,38 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
   return { total, byProperty };
 }
 
+/**
+ * A night is flagged "restriction" when PriceLabs closed it to arrival/departure,
+ * or when a min_stay greater than 1 was in effect. min_stay is nullable with no
+ * reliable default (null after disconnect or if never synced; only PriceLabs-fresh
+ * rows default it to 1) - null/undefined means "no restriction data", not
+ * "min_stay=1".
+ *
+ * This does NOT claim the restriction caused the missed booking - min_stay's
+ * scope (arrival-day-only vs. stay-through) is unresolved in this codebase: the
+ * Channex ARI integration maps it to "min_stay_through", but the PriceLabs
+ * webhook bundles it per-date alongside check_in/check_out, suggesting
+ * arrival-scoped. Nothing reconciles these. We only surface that a restriction
+ * signal was present on the date, as a contributing-factor category, not a
+ * sentence asserting causation.
+ */
+function hasRestrictionSignal(row) {
+  if (row.closed_to_arrival === true) return true;
+  if (row.closed_to_departure === true) return true;
+  if (row.min_stay != null && Number(row.min_stay) > 1) return true;
+  return false;
+}
+
+/**
+ * restriction > pricing > occupancy: restriction is the most concrete/certain
+ * signal, pricing is a same-property heuristic (see isPricingOutlier), occupancy
+ * is the fallback when neither concrete signal applies.
+ */
+function categorizeMissedNight(row) {
+  if (hasRestrictionSignal(row)) return "restriction";
+  return "occupancy";
+}
+
 function ensureProperty(byPropertyMap, propertyId) {
   if (!byPropertyMap.has(propertyId)) {
     byPropertyMap.set(propertyId, {
@@ -184,6 +216,11 @@ export class MissedRevenueService {
     let potentialNightsWithoutPriceData = 0;
     const byPropertyMap = new Map();
     const byDateMap = new Map();
+    const rootCause = {
+      restriction: { missedRevenue: 0, nights: 0 },
+      pricing: { missedRevenue: 0, nights: 0 },
+      occupancy: { missedRevenue: 0, nights: 0 },
+    };
 
     for (const row of priceRows) {
       const iso = isoFromCalendarInt(row.calendar_date);
@@ -214,6 +251,10 @@ export class MissedRevenueService {
       grossMissedRevenue += price;
       unbookedNightsWithPriceData += 1;
       byDateMap.set(iso, (byDateMap.get(iso) ?? 0) + price);
+
+      const category = categorizeMissedNight(row);
+      rootCause[category].missedRevenue += price;
+      rootCause[category].nights += 1;
 
       const existing = ensureProperty(byPropertyMap, row.property_id);
       existing.missedRevenue += price;
@@ -251,6 +292,7 @@ export class MissedRevenueService {
         ...v,
       })),
       byDate,
+      rootCause,
     };
   }
 }
