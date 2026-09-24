@@ -59,7 +59,8 @@ const buildRenderPayload = () => ({
     property: {
       id: "property-1",
       title: "Wellness Villa Bisous",
-      subtitle: "A serene four bedroom villa with a private pool.",
+      subtitle: "Subtitle copy that no template renders.",
+      description: "A serene four bedroom villa with a private pool.",
     },
     location: {
       city: "Ubud",

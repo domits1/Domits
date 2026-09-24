@@ -61,7 +61,7 @@ export const resolveWebsiteHeadImageUrl = (images) => {
 
 const selectWebsiteHeadSource = (model) => ({
   title: normalizeWebsiteHeadText(model?.site?.title),
-  description: normalizeWebsiteHeadText(model?.site?.subtitle || model?.hero?.description),
+  description: normalizeWebsiteHeadText(model?.hero?.description || model?.site?.subtitle),
   city: normalizeWebsiteHeadText(model?.location?.city),
   country: normalizeWebsiteHeadText(model?.location?.country),
   images: [

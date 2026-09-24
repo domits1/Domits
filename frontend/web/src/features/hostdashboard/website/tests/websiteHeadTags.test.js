@@ -1,4 +1,7 @@
 import { placeholderImage, S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
+import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
+import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
+import { applyWebsiteDraftThemeOverrides } from "../rendering/websiteDraftThemeOverrides";
 import {
   buildWebsiteHeadTags,
   buildWebsiteHeadTitle,
@@ -8,13 +11,20 @@ import {
   WEBSITE_HEAD_ROBOTS_NOINDEX,
 } from "../seo/websiteHeadTags";
 
+const buildPublishedModel = (propertySnapshot, contentOverrides = {}) => {
+  const baseModel = buildWebsiteTemplateModel({ propertyDetails: propertySnapshot, summaryProperty: null });
+  const themedModel = applyWebsiteDraftThemeOverrides(baseModel, {});
+
+  return applyWebsiteDraftContentOverrides(themedModel, contentOverrides, "panorama-landing");
+};
+
 const buildModel = (overrides = {}) => ({
   site: {
     title: "Wellness Villa Bisous",
-    subtitle: "A serene four bedroom villa with a private pool.",
+    subtitle: "Subtitle copy that no template renders.",
   },
   hero: {
-    description: "Generated hero description.",
+    description: "A serene four bedroom villa with a private pool.",
   },
   location: {
     city: "Ubud",
@@ -95,12 +105,19 @@ describe("buildWebsiteHeadTags", () => {
     expect(tags.metaByProperty["og:title"]).toBe("Wellness Villa Bisous | Ubud, Indonesia");
   });
 
-  it("falls back to the hero description when there is no subtitle", () => {
+  it("prefers the hero description that the guest actually reads", () => {
+    const tags = buildWebsiteHeadTags({ model: buildModel() });
+
+    expect(tags.metaByName.description).toBe("A serene four bedroom villa with a private pool.");
+    expect(tags.metaByName.description).not.toContain("no template renders");
+  });
+
+  it("falls back to the subtitle when the model carries no hero description", () => {
     const tags = buildWebsiteHeadTags({
-      model: buildModel({ site: { title: "Wellness Villa Bisous", subtitle: "" } }),
+      model: buildModel({ hero: { description: "" } }),
     });
 
-    expect(tags.metaByName.description).toBe("Generated hero description.");
+    expect(tags.metaByName.description).toBe("Subtitle copy that no template renders.");
   });
 
   it("drops the placeholder image instead of exposing a data url", () => {
@@ -137,7 +154,7 @@ describe("buildWebsiteHeadTags", () => {
   it("normalizes whitespace and shortens the description on a word boundary", () => {
     const longDescription = `${"detail ".repeat(60)}end`;
     const tags = buildWebsiteHeadTags({
-      model: buildModel({ site: { title: "Wellness Villa Bisous", subtitle: longDescription } }),
+      model: buildModel({ hero: { description: longDescription } }),
     });
     const description = tags.metaByName.description;
 
@@ -150,7 +167,10 @@ describe("buildWebsiteHeadTags", () => {
 
   it("collapses newlines and repeated spaces", () => {
     const tags = buildWebsiteHeadTags({
-      model: buildModel({ site: { title: "Wellness  Villa\nBisous", subtitle: "Serene\n\n  villa." } }),
+      model: buildModel({
+        site: { title: "Wellness  Villa\nBisous", subtitle: "" },
+        hero: { description: "Serene\n\n  villa." },
+      }),
     });
 
     expect(tags.title).toBe("Wellness Villa Bisous | Ubud, Indonesia");
@@ -193,6 +213,47 @@ describe("buildWebsiteHeadTags", () => {
 
     expect(tags.metaByName).toEqual({});
     expect(tags.metaByProperty).toEqual({});
+  });
+});
+
+describe("buildWebsiteHeadTags through the real model builder", () => {
+  const propertySnapshot = {
+    property: {
+      id: "property-1",
+      title: "Wellness Villa Bisous",
+      subtitle: "Subtitle copy that no template renders.",
+      description: "Imported description copy.",
+    },
+    location: {
+      city: "Ubud",
+      country: "Indonesia",
+      street: "Jl. Ir. Sutami, Kemenuh",
+      houseNumber: 1,
+      postalCode: "80581",
+    },
+    images: [{ image_id: "image-1", key: "images/property-1/image-1/web.jpg", status: "READY" }],
+  };
+
+  it("uses the heroDescription override the host published", () => {
+    const model = buildPublishedModel(propertySnapshot, { heroDescription: "Wake up to the rice fields." });
+
+    const tags = buildWebsiteHeadTags({ model });
+
+    expect(model.hero.description).toBe("Wake up to the rice fields.");
+    expect(tags.metaByName.description).toBe("Wake up to the rice fields.");
+    expect(tags.metaByProperty["og:description"]).toBe("Wake up to the rice fields.");
+  });
+
+  it("uses the generated hero sentence when the property has no description of its own", () => {
+    const model = buildPublishedModel({
+      ...propertySnapshot,
+      property: { ...propertySnapshot.property, description: "" },
+    });
+
+    const tags = buildWebsiteHeadTags({ model });
+
+    expect(tags.metaByName.description).toBe(model.hero.description);
+    expect(tags.metaByName.description).not.toBe("Subtitle copy that no template renders.");
   });
 });
 
