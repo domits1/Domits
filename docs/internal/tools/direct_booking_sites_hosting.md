@@ -4,6 +4,11 @@ How the public direct booking websites (`*.direct.domits.com` today, hosts' own 
 
 ## Today
 
+> Superseded for the fallback subdomains. Since 2026-09-23 every published
+> `*.direct.domits.com` site is served by the multi-tenant distribution, not by Amplify. The
+> table below still describes the marketplace hosts and the wildcard. See "Where the fallback
+> subdomains run today" for the current picture.
+
 The marketplace web app is hosted by AWS Amplify Hosting, app `d34jwd0sihmsus` (eu-north-1), branch auto-build:
 
 | Hostname | Amplify branch | CloudFront distribution |
@@ -61,6 +66,170 @@ aws amplify get-branch --app-id d34jwd0sihmsus --branch-name acceptance --query 
 
 For a site bundle the values that matter are `REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE` (where booking requests go; the code falls back to the `development` stage of API `92a7z9y2m5`) and `REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX` (defaults to `direct.domits.com`). The quote endpoint base is not configurable; it is `PROPERTY_API_BASE` in `hostproperty/constants.js`.
 
+## Where the fallback subdomains run today (2026-09-23, final state)
+
+All nine published fallback addresses are served by the multi-tenant distribution, not by
+Amplify. This is the end state of the per-site cutover; only the wildcard and the apex are
+left on Amplify, on purpose. Each one has its own `CNAME` in hosted zone `Z05841473F67D0RNUMZZ9` pointing at
+`d3lo4q6asaa174.cloudfront.net` with a TTL of 60, and each is listed as an exact domain on
+tenant `test-direct` (`dt_3JidivSSrpsHkv7QdwDnx0FxwTu`) on distribution `E18TUBOKUXD9TW`.
+The tenant carries a wildcard ACM certificate for `*.direct.domits.com`
+(`arn:aws:acm:us-east-1:115462458880:certificate/84f32fca-feef-4a45-911f-2dabc20ebf84`,
+valid to 2027-04-09), so no per-domain certificate is needed.
+
+A specific record beats the wildcard in DNS, so moving a site takes one `CNAME` plus the exact
+domain on the tenant. Moving it back takes both as well: CloudFront routes a request to the most
+specific domain association regardless of which endpoint DNS resolved, so while the exact domain
+is still on the tenant, deleting the record alone does not move the site back to Amplify.
+
+Still on Amplify:
+
+| Record | Type | Target |
+| --- | --- | --- |
+| `*.direct.domits.com` | `CNAME` | `d1q86xmwckzc37.cloudfront.net` |
+| `direct.domits.com` | `A` alias | `d1q86xmwckzc37.cloudfront.net` |
+
+Because the wildcard still resolves to Amplify, a newly published site lands on Amplify until
+someone adds it explicitly. The Amplify domain association must stay in place for as long as
+that is true; removing it would break every address that still falls through to the wildcard.
+
+### Why the wildcard is deliberately still on Amplify
+
+The IAM role is no longer the blocker. `AWSAmplifyDomainRole-Z05841473F67D0RNUMZZ9` was
+recreated on 2026-09-23, trusted by `amplify.amazonaws.com`, with one inline policy
+`AmplifyRoute53DomainAccess` that grants `ChangeResourceRecordSets`, `ListResourceRecordSets`
+and `GetHostedZone` on hosted zone `Z05841473F67D0RNUMZZ9` only, plus `GetChange` and the two
+list-zones calls. Nothing outside Route 53 and nothing outside this zone.
+
+The wildcard stays where it is because of the certificate, and that risk has not gone away:
+
+- The association's certificate is `AMPLIFY_MANAGED`. Dropping `*` from the name set makes
+  Amplify request a new certificate for whatever remains, which brings a new validation
+  record and a spell in a pending state.
+- The apex subdomain reports `verified: false` while `*` reports `verified: true`. The apex is
+  an `A` alias because Route 53 cannot put a `CNAME` on an apex, while Amplify expects a
+  `CNAME` there. Remove `*` and the only subdomain left is one Amplify has never verified, so
+  the new certificate may not validate at all and `direct.domits.com` can be left stuck.
+
+That failure is not cheap to undo. Putting `*` back means another managed-certificate request
+and another wait, during which neither Amplify nor the tenant serves the wildcard. A per-site
+move can be reversed with `rollback.sh`, which deletes the site's record and removes its domain
+from the tenant; the rollback is only done once the tenant is `Deployed` again. This one cannot
+be reversed that way.
+
+`wildcard-migrate.sh` and `wildcard-rollback.sh` exist for this step but live outside the
+repository, in `~/cutover-check`. Only their dry-runs have been run. Do not run the real thing
+without someone on hand who can repair `direct.domits.com` if the association hangs.
+
+### Checking whether the Amplify certificate was renewed
+
+The Amplify-managed certificate covering the wildcard path runs to 2026-11-25. Both paths
+present a certificate whose subject is `CN=*.direct.domits.com`, so the subject cannot tell
+them apart; the expiry date can.
+
+```
+echo | openssl s_client -connect nonexistent-probe.direct.domits.com:443 \
+  -servername nonexistent-probe.direct.domits.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+```
+
+A name with no record of its own resolves through the wildcard, so this reads the Amplify
+certificate. `notAfter=Nov 25 23:59:59 2026 GMT` means it has not been renewed yet; a later
+date means Amplify has reissued it and the deadline has moved.
+
+`openssl` prints in UTC while `acm describe-certificate` prints in the account's local offset,
+so the tenant certificate reads `Apr 8 23:59:59 2027 GMT` on the wire and `2027-04-09` in ACM.
+Same instant, two renderings.
+
+For contrast, the same command against an address that has already moved reads the tenant's
+own certificate instead, which expires 2027-04-09:
+
+```
+echo | openssl s_client -connect wellness-villa-bisous-bf378265.direct.domits.com:443 \
+  -servername wellness-villa-bisous-bf378265.direct.domits.com 2>/dev/null \
+  | openssl x509 -noout -subject -dates
+```
+
+If the Amplify certificate is approaching expiry and the wildcard has still not moved, that is
+the moment to decide: let Amplify renew it, or accept the risk above and move the wildcard.
+
+## Adding or rolling back a single site
+
+The scripts live in `docs/internal/tools/scripts/direct-booking-sites/`. They use the `domits`
+profile, refuse anything that is not an exact published fallback address, and never touch
+`direct.domits.com`, `*.direct.domits.com`, ACM validation records, or Amplify.
+
+Both take `--dry-run`, which prints the full merged domain list and the records it would create
+or delete without changing anything. Run that first, every time.
+
+Adding a newly published site:
+
+```
+cd docs/internal/tools/scripts/direct-booking-sites
+./migrate.sh --dry-run <slug>-<id8>.direct.domits.com
+./migrate.sh <slug>-<id8>.direct.domits.com
+```
+
+It adds the domain to the tenant while keeping the domains already on it, waits for `Deployed`,
+compares the tenant before and after, and only then creates the `CNAME`. The comparison fails
+the run if any field other than the domain list changed, or if the list is not exactly the old
+list plus the domains asked for. `update-distribution-tenant` treats every field as optional,
+so the scripts pass `DistributionId`, `ConnectionGroupId`, `Customizations`, `Parameters` and
+`Enabled` back explicitly; a dropped `Customizations` would take the certificate with it and
+break TLS for every domain on the tenant.
+
+Putting a site back on Amplify:
+
+```
+./rollback.sh --dry-run <slug>-<id8>.direct.domits.com
+./rollback.sh <slug>-<id8>.direct.domits.com
+```
+
+It deletes the record first, waits until Route 53 reports the change `INSYNC` (at most five
+minutes), then waits the deleted record's TTL plus 30 seconds so resolvers drop their cached
+copy, and only then removes the domain from the tenant. Traffic is back on Amplify only once the
+domain has left the tenant and the tenant is `Deployed`; the record deletion alone does not move
+it. A resolver that keeps a record longer than its TTL can still send a visitor to the routing
+endpoint after that and get a CloudFront error; the script cannot control that. It refuses to
+delete a record whose value is not the routing endpoint, and refuses to empty the tenant.
+
+If it stops or is interrupted at any point, run it again. Before each deletion it writes
+`rollback-pending-<domain>.txt` with the record's TTL, and adds the change id once Route 53 has
+accepted the deletion, so a rerun checks `INSYNC` and waits the TTL again before it touches the
+tenant; the file is removed once the tenant comparison has passed.
+
+When a record is already gone and its change id is unknown, because the run stopped between
+the deletion and saving the id or because the record was deleted by hand, `INSYNC` cannot be
+checked, so the script stops without touching the tenant and says so. The record being gone
+proves nothing: a resolver can fetch the old record during propagation and cache it for a full
+TTL from then. To continue:
+
+1. Find the change id in CloudTrail. Route 53 calls are logged in `us-east-1` with the change id
+   in the response; events usually appear within 15 minutes.
+
+   ```
+   aws cloudtrail lookup-events --profile domits --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=ChangeResourceRecordSets --query "Events[?contains(CloudTrailEvent, '\"DELETE\"') && contains(CloudTrailEvent, '\"<domain>\"')].CloudTrailEvent" --output text | grep -o '/change/[A-Z0-9]*'
+   ```
+
+   If it prints more than one change id, use only the first line, which is the newest.
+
+2. Run `aws route53 get-change --profile domits --id <change id> --query ChangeInfo.Status --output text`
+   until it prints `INSYNC`.
+3. Wait at least the old record's TTL, counted from the moment it was `INSYNC`. The pending file
+   holds the TTL when there is one; records these scripts create have 60 seconds.
+4. Only then run it again with `--dns-already-gone <domain>`. Only with that flag does it
+   continue to the tenant step for that domain without a change id.
+
+If the change id cannot be found, do not use `--dns-already-gone`. Leave the domain on the
+tenant, which keeps the site working, and ask someone before going further.
+
+Never run two of these scripts at the same time.
+
+`published-domains.txt` is the allowlist both scripts validate against. It is a point-in-time
+snapshot; regenerate it from `main.standalone_site` joined to `main.standalone_site_domain`
+for `status = 'PUBLISHED'` and `domain_type = 'FALLBACK'` before adding a site published after
+2026-09-23, or the script will refuse the new address.
+
 ## Console steps, in order
 
 1. Bucket `domits-direct-booking-sites-acceptance`: private, versioning on. Done.
@@ -68,7 +237,7 @@ For a site bundle the values that matter are `REACT_APP_DIRECT_BOOKING_WEBSITE_B
 3. CloudFront: an Origin Access Control for the bucket; a multi-tenant distribution with the bucket as origin, default root object `index.html`, custom error responses `403` and `404` to `/index.html` with code `200`, caching that ignores query strings for `static/*`; a connection group, whose routing endpoint is the CNAME target hosts will use; managed certificates enabled. Bucket policy allows only that OAC.
 4. Set `DIRECT_BOOKING_SITES_DISTRIBUTION_ID`; re-run the workflow and confirm the invalidation.
 5. Create one tenant by hand for a domain we control and verify quote and booking request end to end before any host is offered the feature.
-6. Only after custom domains are live for hosts: add a wildcard tenant for `*.direct.domits.com`, repoint DNS from the Amplify association to the routing endpoint, remove the Amplify domain association.
+6. Done per site instead of per wildcard, see "Where the fallback subdomains run today". The wildcard itself is still on Amplify, held there by the managed-certificate risk rather than by permissions.
 
 ## Verifying a deploy
 
