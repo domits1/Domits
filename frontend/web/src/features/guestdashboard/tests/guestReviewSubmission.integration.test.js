@@ -1,6 +1,6 @@
 import React from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import GuestReviewForm from "../GuestReviewForm";
 import ReservationDetails from "../ReservationDetails";
@@ -8,7 +8,9 @@ import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
 import { getGuestBookingPropertyDetails, getGuestBookings } from "../services/bookingAPI";
 import { createReview } from "../services/reviewAPI";
 import { fetchPropertySummaries } from "../services/propertySummaryService";
+import { normalizeImageUrl, placeholderImage, resolvePrimaryAccommodationImageUrl } from "../utils/image";
 
+// Review: Covers reservation entry points, reminder deep links, and private feedback submission.
 jest.mock("../../../hooks/useDashboardIdentity");
 jest.mock("../services/bookingAPI");
 jest.mock("../services/reviewAPI");
@@ -110,7 +112,7 @@ const renderWithRoutes = ({ initialEntry, reviewFormElement = <GuestReviewForm /
 
 const clickFiveStarsFor = (label) => {
   const ratingGroup = screen.getByLabelText(label);
-  fireEvent.click(ratingGroup.querySelector('button[aria-label="5 stars"]'));
+  fireEvent.click(within(ratingGroup).getByRole("button", { name: "5 stars" }));
 };
 
 const fillValidReviewForm = () => {
@@ -130,8 +132,12 @@ const fillValidReviewForm = () => {
     target: { value: "The apartment was clean, calm, and close to everything we needed." },
   });
 
-  fireEvent.change(screen.getByLabelText("Private feedback"), {
+  fireEvent.change(screen.getByLabelText("Private feedback for the host"), {
     target: { value: "A second set of towels would be helpful." },
+  });
+
+  fireEvent.change(screen.getByLabelText("Private feedback for Domits"), {
+    target: { value: "Domits should know the payment receipt was confusing." },
   });
 };
 
@@ -146,7 +152,10 @@ describe("guest review submission integration", () => {
     });
 
     getGuestBookingPropertyDetails.mockResolvedValue(propertyDetails);
+    getGuestBookings.mockResolvedValue([completedBooking]);
     fetchPropertySummaries.mockResolvedValue({});
+    normalizeImageUrl.mockImplementation((value) => value || placeholderImage);
+    resolvePrimaryAccommodationImageUrl.mockReturnValue(placeholderImage);
     createReview.mockResolvedValue({
       review: {
         id: "review-1",
@@ -186,6 +195,7 @@ describe("guest review submission integration", () => {
         title: "Wonderful stay",
         publicReview: "The apartment was clean, calm, and close to everything we needed.",
         privateFeedback: "A second set of towels would be helpful.",
+        domitsPrivateFeedback: "Domits should know the payment receipt was confusing.",
         categoryRatings: {
           cleanliness: 5,
           accuracy: 5,
@@ -224,6 +234,111 @@ describe("guest review submission integration", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit review/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Missing booking information for this review.");
+    expect(createReview).not.toHaveBeenCalled();
+  });
+
+  it("loads the reservation and property when opened from a review email link", async () => {
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=property-1",
+    });
+
+    expect(screen.getByText("Loading reservation...")).toBeInTheDocument();
+    expect(await screen.findByText("Canal Apartment")).toBeInTheDocument();
+    expect(screen.getByText("Amsterdam, Netherlands")).toBeInTheDocument();
+    expect(screen.getByText(/hosted by mila/i)).toBeInTheDocument();
+    expect(screen.getByText(/verified stay/i)).toBeInTheDocument();
+    expect(getGuestBookings).toHaveBeenCalledWith("guest-1");
+    expect(getGuestBookingPropertyDetails).toHaveBeenCalledWith("booking-1");
+
+    fillValidReviewForm();
+    fireEvent.click(screen.getByRole("button", { name: /submit review/i }));
+
+    await waitFor(() => {
+      expect(createReview).toHaveBeenCalledWith(expect.objectContaining({
+        bookingId: "booking-1",
+        propertyId: "property-1",
+        status: "SUBMITTED",
+      }));
+    });
+  });
+
+  it("loads the listing summary image and title when booking details omit them", async () => {
+    getGuestBookingPropertyDetails.mockResolvedValue({ property: {}, images: [] });
+    fetchPropertySummaries.mockResolvedValue({
+      "property-1": {
+        title: "Canal Loft",
+        imageUrl: "https://example.com/canal-loft.jpg",
+        city: "Amsterdam",
+        country: "Netherlands",
+      },
+    });
+
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=property-1",
+    });
+
+    const image = await screen.findByRole("img", { name: "Canal Loft" });
+    expect(image).toHaveAttribute("src", "https://example.com/canal-loft.jpg");
+    expect(screen.getByText("Amsterdam, Netherlands")).toBeInTheDocument();
+    expect(fetchPropertySummaries).toHaveBeenCalledWith(["property-1"]);
+  });
+
+  it("uses a booking image when listing details resolve only to the placeholder", async () => {
+    getGuestBookings.mockResolvedValue([{
+      ...completedBooking,
+      property_image_url: "https://example.com/booking-property.jpg",
+    }]);
+    getGuestBookingPropertyDetails.mockResolvedValue({
+      ...propertyDetails,
+      images: [{ key: "unusable-image" }],
+    });
+
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=property-1",
+    });
+
+    const image = await screen.findByRole("img", { name: "Canal Apartment" });
+    expect(normalizeImageUrl).toHaveBeenCalledWith("https://example.com/booking-property.jpg");
+    expect(image).toHaveAttribute("src", "https://example.com/booking-property.jpg");
+    expect(fetchPropertySummaries).not.toHaveBeenCalled();
+  });
+
+  it("rejects a review link whose property does not match the guest booking", async () => {
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=another-property",
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This review link does not match the reservation property.");
+    expect(getGuestBookingPropertyDetails).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /submit review/i })).not.toBeInTheDocument();
+  });
+
+  it("rejects a review link for a booking outside the guest account", async () => {
+    getGuestBookings.mockResolvedValue([]);
+
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=someone-elses-booking&propertyId=property-1",
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This reservation could not be found in your bookings.");
+    expect(getGuestBookingPropertyDetails).not.toHaveBeenCalled();
+    expect(createReview).not.toHaveBeenCalled();
+  });
+
+  it("validates private feedback for Domits before submitting", async () => {
+    renderWithRoutes({
+      initialEntry: "/guestdashboard/reviews/new?bookingId=booking-1&propertyId=property-1",
+    });
+
+    expect(await screen.findByText("Canal Apartment")).toBeInTheDocument();
+    fillValidReviewForm();
+    fireEvent.change(screen.getByLabelText("Private feedback for Domits"), {
+      target: { value: "x".repeat(2001) },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /submit review/i }));
+
+    expect(await screen.findByText("Private feedback to Domits must be 2000 characters or less.")).toBeInTheDocument();
     expect(createReview).not.toHaveBeenCalled();
   });
 });

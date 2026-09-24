@@ -1,12 +1,15 @@
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import GuestReviews from "./GuestReviews";
-import { getGuestReviewHistory } from "./services/reviewAPI";
+import { getGuestReviewHistory, getReviewNotificationPreference, setReviewNotificationPreference } from "./services/reviewAPI";
 
+// Review: Covers review history states and guest reminder-email preferences.
 jest.mock("./services/reviewAPI", () => ({
   getGuestReviewHistory: jest.fn(),
+  getReviewNotificationPreference: jest.fn(),
+  setReviewNotificationPreference: jest.fn(),
 }));
 
 const renderPage = () => render(
@@ -16,6 +19,7 @@ const renderPage = () => render(
 );
 
 describe("guest review history", () => {
+  beforeEach(() => getReviewNotificationPreference.mockResolvedValue({ emailEnabled: true }));
   afterEach(() => jest.clearAllMocks());
 
   test("shows an error instead of an empty history when loading fails", async () => {
@@ -38,5 +42,16 @@ describe("guest review history", () => {
     expect(await screen.findByText("No reviews yet")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(getGuestReviewHistory).toHaveBeenCalledTimes(2);
+  });
+
+  test("lets a guest turn off review request emails", async () => {
+    getGuestReviewHistory.mockResolvedValue([]);
+    setReviewNotificationPreference.mockResolvedValue({ emailEnabled: false });
+    renderPage();
+    const toggle = await screen.findByRole("checkbox", { name: "Review request emails" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).not.toBeChecked());
+    expect(setReviewNotificationPreference).toHaveBeenCalledWith(false);
   });
 });

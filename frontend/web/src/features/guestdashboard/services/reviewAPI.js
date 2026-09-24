@@ -1,4 +1,4 @@
-// reviewAPI.js
+// Review: reviewAPI.js
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
@@ -10,7 +10,7 @@ export const getReviewApiBase = () => {
   return reviewApiBase;
 };
 
-// Review: Fails locally with a clear message when the ReviewSystem endpoint is not configured.
+// Review: Fails early when the frontend review API base URL is missing.
 const requireReviewApiBase = () => {
   const reviewApiBase = getReviewApiBase();
 
@@ -26,7 +26,7 @@ const buildReviewUrl = (path = "") => `${requireReviewApiBase()}${path}`;
 const buildReviewCollectionUrl = () => new URL(requireReviewApiBase(), window.location.origin);
 
 const parseJsonResponse = async (response) => {
-  // Review: Supports both JSON API payloads and empty Lambda responses.
+  // Review: Allows review endpoints to return either JSON payloads or empty responses.
   const responseText = await response.text().catch(() => "");
 
   if (!responseText) {
@@ -41,7 +41,7 @@ const parseJsonResponse = async (response) => {
 };
 
 export async function createReview(payload) {
-  // Review: Submits one authenticated guest review to the collection endpoint.
+  // Review: Submits a new guest review to the ReviewSystem API.
   const response = await fetch(buildReviewUrl(), {
     method: "POST",
     headers: {
@@ -61,6 +61,7 @@ export async function createReview(payload) {
 }
 
 export async function getReviewById(reviewId) {
+  // Review: Loads one review so an author can edit or inspect it.
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "GET",
     headers: {
@@ -78,6 +79,7 @@ export async function getReviewById(reviewId) {
 }
 
 export async function updateReview(reviewId, payload) {
+  // Review: Saves edits or status changes for an existing guest review.
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "PATCH",
     headers: {
@@ -97,7 +99,7 @@ export async function updateReview(reviewId, payload) {
 }
 
 export async function getGuestReviewHistory() {
-  // Review: Requests only reviews written by the authenticated guest.
+  // Review: Requests the authenticated guest's own review history.
   const requestUrl = buildReviewCollectionUrl();
   requestUrl.searchParams.set("mine", "true");
 
@@ -115,4 +117,26 @@ export async function getGuestReviewHistory() {
   }
 
   return Array.isArray(data) ? data : data?.reviews || [];
+}
+
+export async function getReviewNotificationPreference() {
+  // Review: Reads whether review request emails are enabled for the guest.
+  const response = await fetch(buildReviewUrl("/notification-preferences"), {
+    headers: { Authorization: getAccessToken() },
+  });
+  const data = await parseJsonResponse(response);
+  if (!response.ok) throw new Error(data?.message || "Could not load review email settings.");
+  return data;
+}
+
+export async function setReviewNotificationPreference(emailEnabled) {
+  // Review: Updates review request email preferences for the guest.
+  const response = await fetch(buildReviewUrl("/notification-preferences"), {
+    method: "PATCH",
+    headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ emailEnabled }),
+  });
+  const data = await parseJsonResponse(response);
+  if (!response.ok) throw new Error(data?.message || "Could not update review email settings.");
+  return data;
 }

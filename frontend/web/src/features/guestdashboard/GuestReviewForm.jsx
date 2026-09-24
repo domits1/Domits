@@ -12,8 +12,24 @@ import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import { createReview, getReviewById, updateReview } from "./services/reviewAPI";
+import { getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
+import { fetchPropertySummaries } from "./services/propertySummaryService";
+import useDashboardIdentity from "../../hooks/useDashboardIdentity";
+import {
+  getArrivalDate,
+  getBookingId,
+  getDepartureDate,
+  getPropertyId,
+  getReservationNumber,
+  normalizeGuestBookingsResponse,
+} from "./utils/guestDashboardUtils";
 import { canEditReview } from "./utils/reviewRules";
-import { placeholderImage } from "./utils/image";
+import {
+  normalizeImageUrl,
+  placeholderImage,
+  resolveAccommodationImageUrl,
+  resolvePrimaryAccommodationImageUrl,
+} from "./utils/image";
 import "./styles/guestReviewForm.scss";
 
 const REVIEW_CATEGORIES = [
@@ -25,9 +41,9 @@ const REVIEW_CATEGORIES = [
   { key: "value", label: "Value" },
 ];
 
+// Review: Recognizes the edit route so the form can switch between create and update mode.
 const EDIT_ROUTE_PATTERN = /^\/guestdashboard\/reviews\/([^/]+)\/edit$/;
 
-// Review: Creates a stable rating object for every category shown in the guest form.
 const initialCategoryRatings = REVIEW_CATEGORIES.reduce((ratings, category) => {
   ratings[category.key] = 0;
   return ratings;
@@ -93,7 +109,7 @@ const getSubmitButtonLabel = ({ isEditMode, submittingStatus }) => {
 };
 
 const buildReviewContext = ({ searchParams, state }) => ({
-  // Review: Merges reservation context passed by navigation with URL fallbacks.
+  // Review: Merges review context from router state and URL parameters.
   bookingId: readContextValue({ searchParams, state, key: "bookingId" }),
   reservationId: readContextValue({ searchParams, state, key: "reservationId" }),
   propertyId: readContextValue({ searchParams, state, key: "propertyId" }),
@@ -117,8 +133,53 @@ const buildContextFromReview = (context, review) => ({
   verifiedStay: context.verifiedStay || review?.verificationStatus === "VERIFIED_STAY",
 });
 
+const formatStayDate = (date) =>
+  date && !Number.isNaN(date.getTime())
+    ? new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(date)
+    : "";
+
+const buildContextFromBooking = (booking, details, summary = {}) => {
+  // Review: Converts booking and listing details into the reservation card shown above the form.
+  const property = details?.property || {};
+  const location = details?.location || {};
+  const host = details?.host || details?.hostInfo || property?.host || property?.hostInfo || {};
+  const propertyId = String(getPropertyId(booking));
+  const imageCandidates = [
+    Array.isArray(details?.images) && details.images.length > 0
+      ? resolvePrimaryAccommodationImageUrl(details.images, "thumb")
+      : "",
+    Array.isArray(booking.images) && booking.images.length > 0
+      ? resolveAccommodationImageUrl(booking.images[0], "thumb")
+      : "",
+    Array.isArray(booking.property?.images) && booking.property.images.length > 0
+      ? resolveAccommodationImageUrl(booking.property.images[0], "thumb")
+      : "",
+    booking.property_image_url || booking.propertyImage || booking.image || booking.property?.coverImage
+      ? normalizeImageUrl(booking.property_image_url || booking.propertyImage || booking.image || booking.property?.coverImage)
+      : "",
+    summary.imageUrl,
+  ];
+
+  return {
+    bookingId: String(getBookingId(booking)),
+    propertyId,
+    reservationId: String(getReservationNumber(booking)),
+    propertyTitle: property.title || property.name || summary.title || booking.title || booking.Title || `Property #${propertyId}`,
+    propertyLocation: [location.city || summary.city || booking.city, location.country || summary.country || booking.country]
+      .filter(Boolean)
+      .join(", "),
+    propertyImage: imageCandidates.find((image) => image && image !== placeholderImage) || placeholderImage,
+    hostId: property.hostId || host.id || summary.hostId || booking.hostid || booking.hostId || "",
+    hostName: host.givenName || host.name || host.fullName || summary.hostName || booking.hostname || "Host",
+    checkInDate: formatStayDate(getArrivalDate(booking)),
+    checkOutDate: formatStayDate(getDepartureDate(booking)),
+    guests: booking.guests || "",
+    verifiedStay: String(booking.status || "").toLowerCase() === "completed",
+  };
+};
+
 const buildUpdatePayload = ({ status, currentReviewStatus, overallRating, title, publicReview, privateFeedback, categoryRatings }) => {
-  // Review: Sends a status only when the guest actually changes the review lifecycle state.
+  // Review: Sends status only when the guest is actually changing the review workflow state.
   const payload = {
     overallRating,
     title: title.trim(),
@@ -135,7 +196,7 @@ const buildUpdatePayload = ({ status, currentReviewStatus, overallRating, title,
 };
 
 function RatingInput({ value, onChange, label, compact = false, invalid = false, disabled = false }) {
-  // Review: Presents the overall and category scores as accessible star controls.
+  // Review: Lets guests select an overall or category rating without typing numbers.
   return (
     <div className={compact ? "reviewStars reviewStarsCompact" : "reviewStars"} aria-label={label}>
       {[1, 2, 3, 4, 5].map((rating) => {
@@ -159,7 +220,7 @@ function RatingInput({ value, onChange, label, compact = false, invalid = false,
 }
 
 function ReservationContextCard({ context }) {
-  // Review: Shows the completed booking that makes this a verified-stay review.
+  // Review: Shows the booking details that prove which completed stay is being reviewed.
   const stayDateLabel =
     context.checkInDate && context.checkOutDate
       ? `${context.checkInDate} - ${context.checkOutDate}`
@@ -221,6 +282,7 @@ function ReservationContextCard({ context }) {
 function GuestReviewForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userId: guestId, loading: identityLoading, error: identityError } = useDashboardIdentity("Guest");
 
   const editReviewId = useMemo(() => getEditReviewId(location.pathname), [location.pathname]);
   const isEditMode = Boolean(editReviewId);
@@ -229,13 +291,18 @@ function GuestReviewForm() {
     () => buildReviewContext({ searchParams, state: location.state || {} }),
     [searchParams, location.state]
   );
+  const needsBookingLookup = !isEditMode && Boolean(baseReviewContext.bookingId) && !location.state?.propertyTitle;
 
   const [loadedReview, setLoadedReview] = useState(location.state?.review || null);
+  const [loadedBookingContext, setLoadedBookingContext] = useState(null);
+  const [loadingContext, setLoadingContext] = useState(needsBookingLookup);
+  const [contextError, setContextError] = useState("");
   const [overallRating, setOverallRating] = useState(0);
   const [categoryRatings, setCategoryRatings] = useState(initialCategoryRatings);
   const [title, setTitle] = useState("");
   const [publicReview, setPublicReview] = useState("");
   const [privateFeedback, setPrivateFeedback] = useState("");
+  const [domitsPrivateFeedback, setDomitsPrivateFeedback] = useState("");
   const [loadingReview, setLoadingReview] = useState(Boolean(editReviewId));
   const [submittingStatus, setSubmittingStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -243,13 +310,94 @@ function GuestReviewForm() {
   const [successState, setSuccessState] = useState(null);
 
   const reviewContext = useMemo(
-    () => buildContextFromReview(baseReviewContext, loadedReview),
-    [baseReviewContext, loadedReview]
+    () => buildContextFromReview({ ...baseReviewContext, ...loadedBookingContext }, loadedReview),
+    [baseReviewContext, loadedBookingContext, loadedReview]
   );
-  const isEditable = !isEditMode || canEditReview(loadedReview);
+  const isEditable = (!isEditMode || canEditReview(loadedReview)) && !contextError && !loadingContext;
 
   useEffect(() => {
-    // Review: Loads existing review content when the guest opens the edit route directly.
+    // Review: Loads booking context when the review form is opened from a booking link.
+    if (!needsBookingLookup) {
+      setLoadingContext(false);
+      setContextError("");
+      setLoadedBookingContext(null);
+      return;
+    }
+
+    if (identityLoading) {
+      return;
+    }
+
+    if (!guestId || identityError) {
+      setContextError("Could not identify the guest for this reservation.");
+      setLoadingContext(false);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingContext(true);
+    setContextError("");
+    setLoadedBookingContext(null);
+
+    const loadBookingContext = async () => {
+      try {
+        const response = await getGuestBookings(guestId);
+        const booking = normalizeGuestBookingsResponse(response).find(
+          (entry) => String(getBookingId(entry)) === String(baseReviewContext.bookingId)
+        );
+
+        if (!booking || !getPropertyId(booking)) {
+          throw new Error("This reservation could not be found in your bookings.");
+        }
+
+        if (baseReviewContext.propertyId && String(getPropertyId(booking)) !== String(baseReviewContext.propertyId)) {
+          throw new Error("This review link does not match the reservation property.");
+        }
+
+        let details = null;
+        try {
+          details = await getGuestBookingPropertyDetails(getBookingId(booking));
+        } catch {
+          // Review: Booking data is enough to keep the review available when listing details fail.
+        }
+
+        const bookingContext = buildContextFromBooking(booking, details);
+        let summary = null;
+        if (
+          bookingContext.propertyImage === placeholderImage ||
+          bookingContext.propertyTitle === `Property #${getPropertyId(booking)}` ||
+          !bookingContext.propertyLocation
+        ) {
+          try {
+            const summaries = await fetchPropertySummaries([getPropertyId(booking)]);
+            summary = summaries?.[getPropertyId(booking)] || null;
+          } catch {
+            // Review: Keep the booking context when the public listing summary is unavailable.
+          }
+        }
+
+        if (isMounted) {
+          setLoadedBookingContext(buildContextFromBooking(booking, details, summary || {}));
+        }
+      } catch (error) {
+        if (isMounted) {
+          setContextError(error.message?.startsWith("This ") ? error.message : "Could not load this reservation.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingContext(false);
+        }
+      }
+    };
+
+    loadBookingContext();
+    return () => {
+      isMounted = false;
+    };
+  }, [baseReviewContext.bookingId, baseReviewContext.propertyId, guestId, identityError, identityLoading, needsBookingLookup]);
+
+  useEffect(() => {
+    // Review: Hydrates the form with an existing review when editing a draft or submitted review.
     let isMounted = true;
 
     const hydrateEditableReview = async () => {
@@ -299,6 +447,7 @@ function GuestReviewForm() {
   }, [editReviewId, location.state]);
 
   const updateCategoryRating = (categoryKey, rating) => {
+    // Review: Updates one category score and clears its validation error.
     setFieldErrors((currentErrors) => ({ ...currentErrors, [categoryKey]: "" }));
     setCategoryRatings((currentRatings) => ({
       ...currentRatings,
@@ -307,8 +456,12 @@ function GuestReviewForm() {
   };
 
   const validateForm = () => {
-    // Review: Validates required scores, written feedback, and API length limits before saving.
+    // Review: Checks required review content, ratings, and private feedback limits before saving.
     const nextErrors = {};
+
+    if (contextError || loadingContext) {
+      nextErrors.context = contextError || "Reservation details are still loading.";
+    }
 
     if (!isEditMode && (!reviewContext.bookingId || !reviewContext.propertyId)) {
       nextErrors.context = "Missing booking information for this review.";
@@ -348,12 +501,16 @@ function GuestReviewForm() {
       nextErrors.privateFeedback = "Private feedback must be 2000 characters or less.";
     }
 
+    if (!isEditMode && domitsPrivateFeedback.trim().length > 2000) {
+      nextErrors.domitsPrivateFeedback = "Private feedback to Domits must be 2000 characters or less.";
+    }
+
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (status) => {
-    // Review: Creates a new draft/submission or updates an editable existing review.
+    // Review: Saves a draft, submits a new review, or updates an editable existing review.
     setSubmitError("");
 
     if (!validateForm()) {
@@ -384,6 +541,7 @@ function GuestReviewForm() {
           title: title.trim(),
           publicReview: publicReview.trim(),
           privateFeedback: privateFeedback.trim() || null,
+          domitsPrivateFeedback: domitsPrivateFeedback.trim() || null,
           categoryRatings,
           status,
         });
@@ -397,10 +555,24 @@ function GuestReviewForm() {
     }
   };
 
-  if (loadingReview) {
+  if (loadingReview || loadingContext) {
     return (
       <main className="guestReviewFormPage">
-        <div className="guestReviewLoadingState">Loading review...</div>
+        <div className="guestReviewLoadingState">{loadingContext ? "Loading reservation..." : "Loading review..."}</div>
+      </main>
+    );
+  }
+
+  if (contextError) {
+    return (
+      <main className="guestReviewFormPage">
+        <div className="guestReviewErrorBanner" role="alert">
+          <ErrorOutlineRoundedIcon aria-hidden="true" />
+          <span>{contextError}</span>
+        </div>
+        <button type="button" className="guestReviewSecondaryButton" onClick={() => navigate("/guestdashboard/bookings")}>
+          Back to bookings
+        </button>
       </main>
     );
   }
@@ -531,7 +703,7 @@ function GuestReviewForm() {
 
         <section className="guestReviewSection guestReviewPrivateSection">
           <label className="guestReviewLabel" htmlFor="private-feedback">
-            Private feedback
+            Private feedback for the host
           </label>
           <textarea
             id="private-feedback"
@@ -551,6 +723,33 @@ function GuestReviewForm() {
           </div>
           <p>This feedback is only shared privately with the host.</p>
         </section>
+
+        {!isEditMode && (
+          <section className="guestReviewSection guestReviewDomitsPrivateSection">
+            <label className="guestReviewLabel" htmlFor="domits-private-feedback">
+              Private feedback for Domits
+            </label>
+            <textarea
+              id="domits-private-feedback"
+              className={`guestReviewTextarea ${fieldErrors.domitsPrivateFeedback ? "guestReviewInputInvalid" : ""}`}
+              value={domitsPrivateFeedback}
+              disabled={!isEditable}
+              onChange={(event) => {
+                setDomitsPrivateFeedback(event.target.value);
+                setFieldErrors((currentErrors) => ({ ...currentErrors, domitsPrivateFeedback: "" }));
+              }}
+              maxLength={2000}
+              placeholder="Share issues, suggestions, or concerns privately with Domits."
+            />
+            <div className="guestReviewInputMeta">
+              {fieldErrors.domitsPrivateFeedback && (
+                <p className="guestReviewFieldError">{fieldErrors.domitsPrivateFeedback}</p>
+              )}
+              <span>{domitsPrivateFeedback.length}/2000</span>
+            </div>
+            <p>This is private for Domits internal support and will not appear publicly or be shared with the host.</p>
+          </section>
+        )}
 
         <div className="guestReviewActions">
           <button
