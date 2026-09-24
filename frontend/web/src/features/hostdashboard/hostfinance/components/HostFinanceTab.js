@@ -16,6 +16,7 @@ import { RefreshFunctions } from "../hooks/refreshFunctions.js";
 import { formatMoney } from "../utils/formatMoney";
 import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
 import { isFinanceDemoMode } from "../mocks/financeDemoData";
+import { deriveFinanceViewState } from "../utils/financeViewState";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const DEMO_LISTINGS = [{ property: { id: "demo-property", status: "ACTIVE" } }];
@@ -73,7 +74,13 @@ function HelpPanel() {
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
-  const [listingState, setListingState] = useState({ hasProperty: false, isLive: false, loading: true });
+  const [listingState, setListingState] = useState({
+    hasProperty: false,
+    isLive: false,
+    loading: true,
+    error: false,
+  });
+  const [listingReloadKey, setListingReloadKey] = useState(0);
   const [transactionFilter, setTransactionFilter] = useState("all");
   const [showAllPayouts, setShowAllPayouts] = useState(false);
   const {
@@ -82,6 +89,8 @@ export default function HostFinanceTab() {
     charges,
     accountId,
     onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
     isProcessing,
     processingStep,
     payoutInterval,
@@ -102,15 +111,27 @@ export default function HostFinanceTab() {
 
   const showFinanceSections = onboardingComplete;
   const showFinanceSectionSkeletons = isAccountLoading;
-
-  const isConnected = Boolean(accountId && onboardingComplete);
   const demoMode = isFinanceDemoMode();
-  const hasProperty = listingState.hasProperty;
-  const hasActivity = charges.length > 0 || payouts.length > 0 || balanceView.total > 0;
-  const isLive = isConnected && listingState.isLive;
-  const showFinancialData = isLive || (demoMode && hasActivity);
+  const {
+    isConnected,
+    stripeIssues,
+    hasProperty,
+    listingError,
+    isLive,
+    showFinancialData,
+  } = deriveFinanceViewState({
+    accountId,
+    onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
+    listingState,
+    demoMode,
+    charges,
+    payouts,
+    balanceTotal: balanceView.total,
+  });
   const currency = balanceView.currency || "EUR";
-  const needsListing = !hasProperty;
+  const needsListing = !hasProperty && !listingError;
   const needsStripe = hasProperty && !isConnected;
 
   const recentPayouts = useMemo(() => payouts.slice(0, 3), [payouts]);
@@ -164,18 +185,23 @@ export default function HostFinanceTab() {
             (listing) => String(listing?.property?.status || "").toUpperCase() === "ACTIVE"
           ),
           loading: false,
+          error: false,
         });
       })
       .catch((error) => {
         if (isCancelled) return;
         console.error("Error fetching host listings for finance status:", error);
-        setListingState({ hasProperty: false, isLive: false, loading: false });
+        setListingState((previous) => ({
+          ...previous,
+          loading: false,
+          error: true,
+        }));
       });
 
     return () => {
       isCancelled = true;
     };
-  }, [demoMode]);
+  }, [demoMode, listingReloadKey]);
 
   const ctaLabel = () => {
     if (!isProcessing) {
@@ -187,6 +213,10 @@ export default function HostFinanceTab() {
   };
 
   const handlePrimaryAction = () => {
+    if (listingError) {
+      setListingReloadKey((key) => key + 1);
+      return;
+    }
     if (!hasProperty) {
       navigate("/hostonboarding");
       return;
@@ -243,10 +273,14 @@ export default function HostFinanceTab() {
 
   let statusTitle = "You are almost there";
 
-  if (!hasProperty) {
+  if (listingError) {
+    statusTitle = "We couldn't check your property status";
+  } else if (!hasProperty) {
     statusTitle = "List your property to get started";
   } else if (!isConnected) {
     statusTitle = "Securely connect your account to receive payouts";
+  } else if (stripeIssues) {
+    statusTitle = "Action required: Stripe account needs attention";
   }
 
   return (
@@ -288,6 +322,9 @@ export default function HostFinanceTab() {
             <div className="finance-status-content">
               <div>
                 <strong>{statusTitle}</strong>
+                {listingError && (
+                  <p>We couldn't load your property status. Your financial data remains available while we retry.</p>
+                )}
                 {needsListing && (
                   <p>Add your property details before connecting Stripe and making it visible to guests.</p>
                 )}
@@ -298,7 +335,12 @@ export default function HostFinanceTab() {
                     <li>Your data is secure and encrypted</li>
                   </ul>
                 )}
-                {!needsListing && !needsStripe && (
+                {stripeIssues && (
+                  <p className="finance-stripe-warning" role="alert">
+                    Stripe has disabled charges or payouts for this account. Open Stripe to resolve the account issue.
+                  </p>
+                )}
+                {!listingError && !needsListing && !needsStripe && !stripeIssues && (
                   <p>Make your property visible to guests and start to<br />receive bookings.</p>
                 )}
               </div>
@@ -439,7 +481,16 @@ export default function HostFinanceTab() {
                 </select>
                 {payoutInterval === "weekly" && <select value={weekly_anchor || ""} onChange={(event) => setWeeklyAnchor(event.target.value)}><option value="">Select weekday</option>{WEEKDAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>}
                 {payoutInterval === "monthly" && <select value={monthly_anchor || ""} onChange={(event) => setMonthlyAnchor(Number(event.target.value))}><option value="">Select day</option>{Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select>}
-                {isConnected && <button type="button" className="finance-save-button" onClick={handlePayoutSchedule}>Save schedule</button>}
+                {isConnected && (
+                  <button
+                    type="button"
+                    className="finance-save-button"
+                    onClick={handlePayoutSchedule}
+                    disabled={demoMode}
+                  >
+                    Save schedule
+                  </button>
+                )}
                 {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
               </section>
             </aside>
