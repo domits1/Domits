@@ -258,7 +258,9 @@ class ReviewService {
     this.statusService.validate(status);
   }
 
-  async validateCategoryRatings(reviewType, categoryRatings = {}) {
+  async validateCategoryRatings(reviewType, categoryRatings) {
+    if (categoryRatings === undefined) return;
+
     if (categoryRatings === null || Array.isArray(categoryRatings) || typeof categoryRatings !== "object") {
       throw new BadRequestException("categoryRatings must be an object.");
     }
