@@ -2,7 +2,13 @@
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
-export const getReviewApiBase = () => String(process.env.REACT_APP_REVIEW_API_BASE || "").trim().replace(/\/+$/, "");
+export const getReviewApiBase = () => {
+  let reviewApiBase = String(process.env.REACT_APP_REVIEW_API_BASE || "").trim();
+  while (reviewApiBase.endsWith("/")) {
+    reviewApiBase = reviewApiBase.slice(0, -1);
+  }
+  return reviewApiBase;
+};
 
 // Review: Fails locally with a clear message when the ReviewSystem endpoint is not configured.
 const requireReviewApiBase = () => {

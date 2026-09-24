@@ -6,21 +6,34 @@ let controller = null;
 // Review: Normalizes API Gateway path variants before route matching.
 const normalizePath = (event) => {
   const rawPath = event.rawPath || event.path || event.resource || "";
-  return rawPath.replace(/\/+$/, "") || "/";
+  let normalizedPath = rawPath;
+  while (normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+  return normalizedPath || "/";
 };
+
+const getPathParts = (event) => normalizePath(event).split("/");
 
 const getReviewIdFromPath = (event) => {
   // Review: Restores the review id when API Gateway proxy routing does not supply path parameters.
   if (event.pathParameters?.id) return event.pathParameters.id;
 
-  const match = /^\/reviews\/([^/]+)$/.exec(normalizePath(event));
-  return match?.[1] || null;
+  const pathParts = getPathParts(event);
+  return pathParts.length === 3 && pathParts[1] === "reviews" ? pathParts[2] : null;
 };
 
 const getReviewResponseRouteFromPath = (event) => {
   // Review: Matches draft, publish, edit, and delete routes for one host response.
-  const match = /^\/reviews\/([^/]+)\/response(?:\/(publish))?$/.exec(normalizePath(event));
-  return match ? { reviewId: match[1], action: match[2] || "response" } : null;
+  const pathParts = getPathParts(event);
+  const isResponseRoute =
+    (pathParts.length === 4 || pathParts.length === 5) &&
+    pathParts[1] === "reviews" &&
+    pathParts[3] === "response";
+
+  if (!isResponseRoute) return null;
+
+  return { reviewId: pathParts[2], action: pathParts[4] || "response" };
 };
 
 const withReviewId = (event) => {

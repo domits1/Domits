@@ -25,6 +25,10 @@ function ReviewResponseEditor({ review, onChanged, styles = {} }) {
   const isDraft = existingResponse?.status === "draft";
   const isDisabled = isSaving || !message.trim();
   const saveButtonLabel = existingResponse && !isDraft ? "Save changes" : "Save draft";
+  const saveResponse = () => {
+    if (existingResponse) return editReviewResponse(review.id, message);
+    return saveDraftReviewResponse(review.id, message);
+  };
 
   const runAction = async (action, closeEditor = true) => {
     // Review: Runs the selected response action and refreshes the parent review list.
@@ -109,13 +113,7 @@ function ReviewResponseEditor({ review, onChanged, styles = {} }) {
       <div className={styles.responseActions}>
         <button
           type="button"
-          onClick={() =>
-            runAction(() =>
-              existingResponse
-                ? editReviewResponse(review.id, message)
-                : saveDraftReviewResponse(review.id, message)
-            )
-          }
+          onClick={() => runAction(saveResponse)}
           disabled={isDisabled}
         >
           {saveButtonLabel}

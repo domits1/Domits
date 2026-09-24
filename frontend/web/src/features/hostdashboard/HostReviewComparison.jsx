@@ -31,6 +31,45 @@ export default function HostReviewComparison({ reviews, properties, isLoading, e
     });
   }, [reviews, properties, sortBy]);
 
+  let reviewContent;
+  if (isLoading) {
+    reviewContent = <output>Loading property ratings...</output>;
+  } else if (errorMessage) {
+    reviewContent = <p className={styles.reviewError} role="alert">{errorMessage}</p>;
+  } else if (rows.length === 0) {
+    reviewContent = <p>No properties or published guest ratings are available yet.</p>;
+  } else {
+    reviewContent = (
+      <div className={styles.comparisonTableScroll}>
+        <table className={styles.comparisonTable}>
+          <thead>
+            <tr>
+              <th scope="col">Property</th>
+              <th scope="col">Reviews</th>
+              <th scope="col">Overall</th>
+              {REVIEW_CATEGORIES.map(({ key, label }) => <th key={key} scope="col">{label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.propertyId}>
+                <th scope="row">
+                  <span className={styles.propertyName}>{row.title}</span>
+                  <span className={styles.propertyId}>{row.propertyId}</span>
+                </th>
+                <td>{row.reviewCount}</td>
+                <td><RatingCell rating={row.overallRating} /></td>
+                {REVIEW_CATEGORIES.map(({ key }) => (
+                  <td key={key}><RatingCell rating={row.categoryRatings[key]} /></td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <section className={styles.comparisonSection} aria-label="Compare property ratings">
       <div className={styles.comparisonHeader}>
@@ -51,41 +90,7 @@ export default function HostReviewComparison({ reviews, properties, isLoading, e
         </div>
       </div>
 
-      {isLoading ? (
-        <p role="status">Loading property ratings...</p>
-      ) : errorMessage ? (
-        <p className={styles.reviewError} role="alert">{errorMessage}</p>
-      ) : rows.length === 0 ? (
-        <p>No properties or published guest ratings are available yet.</p>
-      ) : (
-        <div className={styles.comparisonTableScroll}>
-          <table className={styles.comparisonTable}>
-            <thead>
-              <tr>
-                <th scope="col">Property</th>
-                <th scope="col">Reviews</th>
-                <th scope="col">Overall</th>
-                {REVIEW_CATEGORIES.map(({ key, label }) => <th key={key} scope="col">{label}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.propertyId}>
-                  <th scope="row">
-                    <span className={styles.propertyName}>{row.title}</span>
-                    <span className={styles.propertyId}>{row.propertyId}</span>
-                  </th>
-                  <td>{row.reviewCount}</td>
-                  <td><RatingCell rating={row.overallRating} /></td>
-                  {REVIEW_CATEGORIES.map(({ key }) => (
-                    <td key={key}><RatingCell rating={row.categoryRatings[key]} /></td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {reviewContent}
     </section>
   );
 }

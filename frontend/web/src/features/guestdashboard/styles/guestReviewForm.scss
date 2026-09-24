@@ -31,7 +31,7 @@
 
 .guestReviewEyebrow {
   margin: 0 0 6px;
-  color: #0d9813;
+  color: #087a0c;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -88,7 +88,7 @@
   width: fit-content;
   border-radius: 999px;
   background: #eaf7eb;
-  color: #0d9813;
+  color: #087a0c;
   font-size: 14px;
   font-weight: 700;
   padding: 6px 10px;
@@ -318,6 +318,7 @@
 }
 
 .guestReviewTextarea {
+  display: block;
   min-height: 140px;
   resize: vertical;
 }
@@ -361,15 +362,15 @@
 }
 
 .guestReviewPrimaryButton {
-  border: 1px solid #0d9813;
-  background: #0d9813;
+  border: 1px solid #087a0c;
+  background: #087a0c;
   color: #ffffff;
 }
 
 .guestReviewSecondaryButton {
-  border: 1px solid #0d9813;
+  border: 1px solid #087a0c;
   background: #ffffff;
-  color: #0d9813;
+  color: #087a0c;
 }
 
 @media (max-width: 720px) {
