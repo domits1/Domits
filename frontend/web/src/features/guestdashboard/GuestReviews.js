@@ -12,7 +12,7 @@ import "./styles/guestReviews.scss";
 const formatStatus = (status) =>
   String(status || "draft")
     .toLowerCase()
-    .replace(/_/g, " ")
+    .replaceAll("_", " ")
     .replace(/^\w/, (char) => char.toUpperCase());
 
 const formatDate = (timestamp) => {
@@ -84,6 +84,9 @@ function GuestReviews() {
       },
     });
   };
+  const showError = !loading && Boolean(errorMessage);
+  const showEmptyState = !loading && !errorMessage && sortedReviews.length === 0;
+  const showReviewList = !loading && !errorMessage && sortedReviews.length > 0;
 
   return (
     <main className="guestReviewHistoryPage">
@@ -99,9 +102,10 @@ function GuestReviews() {
         </button>
       </header>
 
-      {loading ? (
+      {loading && (
         <div className="guestReviewHistoryState">Loading reviews...</div>
-      ) : errorMessage ? (
+      )}
+      {showError && (
         <div className="guestReviewHistoryError" role="alert">
           <ErrorOutlineRoundedIcon aria-hidden="true" />
           <span>{errorMessage}</span>
@@ -110,7 +114,8 @@ function GuestReviews() {
             Retry
           </button>
         </div>
-      ) : sortedReviews.length === 0 ? (
+      )}
+      {showEmptyState && (
         <section className="guestReviewHistoryEmpty">
           <RateReviewRoundedIcon aria-hidden="true" />
           <h2>No reviews yet</h2>
@@ -119,7 +124,8 @@ function GuestReviews() {
             View bookings
           </button>
         </section>
-      ) : (
+      )}
+      {showReviewList && (
         <section className="guestReviewHistoryList" aria-label="Your reviews">
           {sortedReviews.map((review) => (
             <article key={review.id} className="guestReviewHistoryCard">

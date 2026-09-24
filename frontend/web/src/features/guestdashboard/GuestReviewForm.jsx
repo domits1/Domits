@@ -35,7 +35,7 @@ const initialCategoryRatings = REVIEW_CATEGORIES.reduce((ratings, category) => {
 
 const getEditReviewId = (pathname) => {
   // Review: Recognizes the edit route and safely decodes the selected review id.
-  const match = String(pathname || "").match(EDIT_ROUTE_PATTERN);
+  const match = EDIT_ROUTE_PATTERN.exec(String(pathname || ""));
 
   if (!match) {
     return "";
@@ -56,6 +56,40 @@ const readContextValue = ({ searchParams, state, key, fallback = "" }) => {
 const readBooleanContextValue = ({ searchParams, state, key }) => {
   const value = readContextValue({ searchParams, state, key, fallback: false });
   return value === true || value === "true";
+};
+
+const buildSuccessState = ({ isEditMode, status }) => {
+  // Review: Selects the confirmation copy for create, draft, and edit submissions.
+  if (isEditMode) {
+    return {
+      status,
+      title: "Review updated",
+      message: "Your changes have been saved.",
+    };
+  }
+
+  if (status === "DRAFT") {
+    return {
+      status,
+      title: "Review saved as draft",
+      message: "You can return to finish this review from your review history.",
+    };
+  }
+
+  return {
+    status,
+    title: "Review submitted",
+    message: "Thanks for sharing your stay. Your review is now ready for the next step.",
+  };
+};
+
+const getSubmitButtonLabel = ({ isEditMode, submittingStatus }) => {
+  // Review: Keeps the submit action label clear while a create or update request is running.
+  if (submittingStatus === "SUBMITTED") {
+    return isEditMode ? "Updating..." : "Submitting...";
+  }
+
+  return isEditMode ? "Update review" : "Submit review";
 };
 
 const buildReviewContext = ({ searchParams, state }) => ({
@@ -237,7 +271,7 @@ function GuestReviewForm() {
         setOverallRating(Number(review?.overallRating) || 0);
         setCategoryRatings({
           ...initialCategoryRatings,
-          ...(review?.categoryRatings || {}),
+          ...review?.categoryRatings,
         });
         setTitle(review?.title || "");
         setPublicReview(review?.publicReview || "");
@@ -355,15 +389,7 @@ function GuestReviewForm() {
         });
       }
 
-      setSuccessState({
-        status,
-        title: isEditMode ? "Review updated" : status === "DRAFT" ? "Review saved as draft" : "Review submitted",
-        message: isEditMode
-          ? "Your changes have been saved."
-          : status === "DRAFT"
-            ? "You can return to finish this review from your review history."
-            : "Thanks for sharing your stay. Your review is now ready for the next step.",
-      });
+      setSuccessState(buildSuccessState({ isEditMode, status }));
     } catch (error) {
       setSubmitError(error.message || "Could not save your review.");
     } finally {
@@ -382,10 +408,10 @@ function GuestReviewForm() {
   if (successState) {
     return (
       <main className="guestReviewFormPage">
-        <section className="guestReviewSuccessState" role="status">
+        <section className="guestReviewSuccessState">
           <CheckCircleRoundedIcon aria-hidden="true" />
           <h1>{successState.title}</h1>
-          <p>{successState.message}</p>
+          <output className="guestReviewSuccessMessage">{successState.message}</output>
 
           <div className="guestReviewActions guestReviewSuccessActions">
             <button type="button" className="guestReviewSecondaryButton" onClick={() => navigate("/guestdashboard/reviews")}>
@@ -425,7 +451,7 @@ function GuestReviewForm() {
 
       <form className="guestReviewForm" onSubmit={(event) => event.preventDefault()}>
         <section className="guestReviewSection">
-          <label className="guestReviewLabel">Overall rating</label>
+          <h2 className="guestReviewLabel">Overall rating</h2>
           <RatingInput
             value={overallRating}
             disabled={!isEditable}
@@ -440,7 +466,7 @@ function GuestReviewForm() {
         </section>
 
         <section className="guestReviewSection">
-          <label className="guestReviewLabel">Category ratings</label>
+          <h2 className="guestReviewLabel">Category ratings</h2>
 
           <div className="guestReviewCategories">
             {REVIEW_CATEGORIES.map((category) => (
@@ -544,13 +570,7 @@ function GuestReviewForm() {
             onClick={() => handleSubmit("SUBMITTED")}
           >
             <SendRoundedIcon aria-hidden="true" />
-            {submittingStatus === "SUBMITTED"
-              ? isEditMode
-                ? "Updating..."
-                : "Submitting..."
-              : isEditMode
-                ? "Update review"
-                : "Submit review"}
+            {getSubmitButtonLabel({ isEditMode, submittingStatus })}
           </button>
         </div>
       </form>

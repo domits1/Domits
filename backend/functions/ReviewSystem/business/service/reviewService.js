@@ -216,7 +216,7 @@ class ReviewService {
 
     this.validateStatus(body.status, true);
     this.validateRating(body.overallRating, "overallRating");
-    await this.validateCategoryRatings(body.categoryRatings, body.reviewType);
+    await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
   }
 
   async validateUpdateReviewPayload(body) {
@@ -249,7 +249,7 @@ class ReviewService {
     }
 
     if (body.categoryRatings !== undefined) {
-      await this.validateCategoryRatings(body.categoryRatings, body.reviewType || "GUEST_TO_PROPERTY");
+      await this.validateCategoryRatings(body.reviewType || "GUEST_TO_PROPERTY", body.categoryRatings);
     }
   }
 
@@ -258,7 +258,7 @@ class ReviewService {
     this.statusService.validate(status);
   }
 
-  async validateCategoryRatings(categoryRatings = {}, reviewType) {
+  async validateCategoryRatings(reviewType, categoryRatings = {}) {
     if (categoryRatings === null || Array.isArray(categoryRatings) || typeof categoryRatings !== "object") {
       throw new BadRequestException("categoryRatings must be an object.");
     }
@@ -352,6 +352,35 @@ class ReviewService {
       REVIEW_STATUSES.PENDING_MODERATION,
       REVIEW_STATUSES.PUBLISHED,
     ].includes(status);
+    let moderation = null;
+
+    if (status === REVIEW_STATUSES.PENDING_MODERATION) {
+      moderation = {
+        id: randomUUID(),
+        reviewId: review.id,
+        targetType: "REVIEW",
+        status: "PENDING",
+        reason: null,
+        notes: null,
+        moderatedByUserId: null,
+        moderatedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+    } else if (status === REVIEW_STATUSES.PUBLISHED || status === REVIEW_STATUSES.REJECTED) {
+      moderation = {
+        id: randomUUID(),
+        reviewId: review.id,
+        targetType: "REVIEW",
+        status: status === REVIEW_STATUSES.PUBLISHED ? "APPROVED" : "REJECTED",
+        reason: null,
+        notes: null,
+        moderatedByUserId: null,
+        moderatedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
 
     return {
       reviewRequest: {
@@ -381,34 +410,7 @@ class ReviewService {
             updatedAt: now,
           }
         : null,
-      moderation:
-        status === REVIEW_STATUSES.PENDING_MODERATION
-          ? {
-              id: randomUUID(),
-              reviewId: review.id,
-              targetType: "REVIEW",
-              status: "PENDING",
-              reason: null,
-              notes: null,
-              moderatedByUserId: null,
-              moderatedAt: null,
-              createdAt: now,
-              updatedAt: now,
-            }
-          : status === REVIEW_STATUSES.PUBLISHED || status === REVIEW_STATUSES.REJECTED
-            ? {
-                id: randomUUID(),
-                reviewId: review.id,
-                targetType: "REVIEW",
-                status: status === REVIEW_STATUSES.PUBLISHED ? "APPROVED" : "REJECTED",
-                reason: null,
-                notes: null,
-                moderatedByUserId: null,
-                moderatedAt: now,
-                createdAt: now,
-                updatedAt: now,
-              }
-            : null,
+      moderation,
     };
   }
 

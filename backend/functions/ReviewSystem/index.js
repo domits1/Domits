@@ -5,8 +5,14 @@ let controller = null;
 
 // Review: Normalizes API Gateway path variants before route matching.
 const normalizePath = (event) => {
-  const rawPath = event.rawPath || event.path || event.resource || "";
-  return rawPath.replace(/\/+$/, "") || "/";
+  const rawPath = String(event.rawPath || event.path || event.resource || "");
+  let pathEnd = rawPath.length;
+
+  while (pathEnd > 1 && rawPath[pathEnd - 1] === "/") {
+    pathEnd -= 1;
+  }
+
+  return rawPath.slice(0, pathEnd) || "/";
 };
 
 const getReviewIdFromPath = (event) => {
@@ -25,7 +31,7 @@ const withReviewId = (event) => {
   return {
     ...event,
     pathParameters: {
-      ...(event.pathParameters || {}),
+      ...event.pathParameters,
       id: reviewId,
     },
   };

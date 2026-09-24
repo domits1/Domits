@@ -17,6 +17,8 @@ import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 import path from "path";
 
 const execAsync = promisify(exec);
+const WORKSPACE_ROOT = path.resolve();
+const LAMBDA_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 const readlineInterface = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -32,15 +34,17 @@ class LambdaFactory {
   async create() {
     readlineInterface.question("What will your lambda function be called? \n", async name => {
       try {
-        if (this.shouldCreateApi && await this.doesLambdaFunctionExist(name)) {
+        const safeName = this.validateFunctionName(name);
+
+        if (this.shouldCreateApi && await this.doesLambdaFunctionExist(safeName)) {
           console.error("\x1b[31m%s\x1b[0m", "\n[ERROR] This function already exists, please try again.\n");
           return this.create();
-        } else if (!this.shouldCreateApi && !await this.doesLambdaFunctionExist(name)) {
+        } else if (!this.shouldCreateApi && !await this.doesLambdaFunctionExist(safeName)) {
           console.error("\x1b[31m%s\x1b[0m", "\n[ERROR] This function does not exist yet, please try again.\n");
           return this.create();
         }
 
-        await this.prepareFunctionDirectories(name);
+        await this.prepareFunctionDirectories(safeName);
         if (!this.shouldCreateApi) {
           console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
           console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
@@ -48,18 +52,17 @@ class LambdaFactory {
           return;
         }
 
-        const lambdaFunction = await this.createLambdaFunction(name);
+        const lambdaFunction = await this.createLambdaFunction(safeName);
 
-        await this.createApiGateway(name, lambdaFunction);
+        await this.createApiGateway(safeName, lambdaFunction);
 
-        await this.cleanUp(name);
+        await this.cleanUp(safeName);
 
         console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
         console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
 
         readlineInterface.close();
-      } catch (error) {
-        console.error("\x1b[31m%s\x1b[0m", error.message);
+      } catch {
         console.error("\n\x1b[31m%s\x1b[0m", "[ERROR] Something went wrong.");
         console.error("\n\x1b[31m%s\x1b[0m", "Your function may not have been properly registered.");
         console.error("\n\x1b[31m%s\x1b[0m", "Please remove all traces of the function in API Gateway, Lambda and local.\n");
@@ -68,6 +71,25 @@ class LambdaFactory {
         readlineInterface.close();
       }
     });
+  }
+
+  validateFunctionName(input) {
+    // Review: Restrict CLI input before it is used in AWS identifiers or local filesystem paths.
+    const name = String(input || "").trim();
+    if (!LAMBDA_NAME_PATTERN.test(name)) {
+      throw new Error("Function names must use letters, numbers, underscores, or hyphens.");
+    }
+    return name;
+  }
+
+  resolveWorkspacePath(...segments) {
+    // Review: Ensure generated Lambda paths cannot escape the checked-out repository.
+    const resolvedPath = path.resolve(WORKSPACE_ROOT, ...segments);
+    const relativePath = path.relative(WORKSPACE_ROOT, resolvedPath);
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      throw new Error("Generated path must remain inside the workspace.");
+    }
+    return resolvedPath;
   }
 
   async doesLambdaFunctionExist(name) {
@@ -85,10 +107,16 @@ class LambdaFactory {
     await execAsync("npm ci");
     console.log("\n\x1b[32m%s\x1b[0m", `Global dependencies installed successfully.`);
     console.log("\n\x1b[33m", `Preparing directories for function: ${name}...`);
-    const functionPath = `functions/${name}`;
-    await this.copyTemplateDirectory("CD/template/function", functionPath);
-    await this.copyTemplateDirectory("CD/template/events", `events/${name}`);
-    await this.copyTemplateDirectory("CD/template/test", `test/${name}`);
+    const functionPath = this.resolveWorkspacePath("functions", name);
+    await this.copyTemplateDirectory(this.resolveWorkspacePath("CD", "template", "function"), functionPath);
+    await this.copyTemplateDirectory(
+      this.resolveWorkspacePath("CD", "template", "events"),
+      this.resolveWorkspacePath("events", name)
+    );
+    await this.copyTemplateDirectory(
+      this.resolveWorkspacePath("CD", "template", "test"),
+      this.resolveWorkspacePath("test", name)
+    );
     await this.ensureMetadata(functionPath, name);
     console.log("\n\x1b[32m%s\x1b[0m", `Directories created successfully.`);
   }
@@ -104,10 +132,10 @@ class LambdaFactory {
   }
 
   async ensureMetadata(functionPath, name) {
-    const metadataPath = `${functionPath}/metadata.json`;
+    const metadataPath = path.join(functionPath, "metadata.json");
 
     if (!(await this.pathExists(metadataPath))) {
-      await fs.writeFile(metadataPath, `{ "functionName": "${name}" }`);
+      await fs.writeFile(metadataPath, JSON.stringify({ functionName: name }));
       return;
     }
 
@@ -129,11 +157,11 @@ class LambdaFactory {
 
   async createLambdaFunction(name) {
     console.log("\n\x1b[33m", `Registering function: ${name}, to AWS Lambda...`);
-    const folder = `functions/${name}`;
-    const zipFileName = "function.zip";
+    const folder = this.resolveWorkspacePath("functions", name);
+    const zipFileName = this.resolveWorkspacePath("function.zip");
 
     console.log("\n\x1b[33m", "Copying node modules.")
-    await this.copyDir('node_modules', `functions/${name}/node_modules`);
+    await this.copyDir(this.resolveWorkspacePath("node_modules"), path.join(folder, "node_modules"));
     console.log("\n\x1b[32m%s\x1b[0m", "Finished copying node modules.")
 
     await zip.archiveFolder(folder, zipFileName);
@@ -225,11 +253,11 @@ class LambdaFactory {
   async cleanUp(name) {
     console.log("\n\x1b[33m", `Cleaning up directories...`);
     console.log("\n\x1b[33m", `Removing function-level node-modules from: ${name}`);
-    await fs.rm(`functions/${name}/node_modules`, { recursive: true });
+    await fs.rm(this.resolveWorkspacePath("functions", name, "node_modules"), { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Function-level node-modules from: ${name}, were removed successfully.`);
 
     console.log("\n\x1b[33m", `Removing function.zip, if this gives an error, remove function.zip manually and you are done.`);
-    await fs.rm("function.zip", { recursive: true });
+    await fs.rm(this.resolveWorkspacePath("function.zip"), { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Zip-file: function.zip, was removed successfully.`);
   }
 

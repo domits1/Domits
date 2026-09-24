@@ -96,6 +96,13 @@ class ReviewStatusService {
 
   getDerivedStatuses(status) {
     const normalizedStatus = this.validate(status);
+    let publicationStatus = REVIEW_PUBLICATION_STATUSES.UNPUBLISHED;
+
+    if (normalizedStatus === REVIEW_STATUSES.PUBLISHED) {
+      publicationStatus = REVIEW_PUBLICATION_STATUSES.PUBLISHED;
+    } else if (normalizedStatus === REVIEW_STATUSES.REJECTED) {
+      publicationStatus = REVIEW_PUBLICATION_STATUSES.REJECTED;
+    }
 
     return {
       verificationStatus: [
@@ -105,12 +112,7 @@ class ReviewStatusService {
       ].includes(normalizedStatus)
         ? REVIEW_VERIFICATION_STATUSES.VERIFIED_STAY
         : REVIEW_VERIFICATION_STATUSES.UNVERIFIED,
-      publicationStatus:
-        normalizedStatus === REVIEW_STATUSES.PUBLISHED
-          ? REVIEW_PUBLICATION_STATUSES.PUBLISHED
-          : normalizedStatus === REVIEW_STATUSES.REJECTED
-            ? REVIEW_PUBLICATION_STATUSES.REJECTED
-            : REVIEW_PUBLICATION_STATUSES.UNPUBLISHED,
+      publicationStatus,
     };
   }
 }

@@ -2,7 +2,18 @@
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
-export const getReviewApiBase = () => String(process.env.REACT_APP_REVIEW_API_BASE || "").trim().replace(/\/+$/, "");
+const removeTrailingSlashes = (value) => {
+  // Review: Normalizes the configured API URL without a backtracking regular expression.
+  let urlEnd = value.length;
+
+  while (urlEnd > 0 && value[urlEnd - 1] === "/") {
+    urlEnd -= 1;
+  }
+
+  return value.slice(0, urlEnd);
+};
+
+export const getReviewApiBase = () => removeTrailingSlashes(String(process.env.REACT_APP_REVIEW_API_BASE || "").trim());
 
 // Review: Fails locally with a clear message when the ReviewSystem endpoint is not configured.
 const requireReviewApiBase = () => {
