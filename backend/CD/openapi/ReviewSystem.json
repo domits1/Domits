@@ -53,6 +53,12 @@
             "type": "string"
           },
           {
+            "name": "hostId",
+            "in": "query",
+            "type": "string",
+            "description": "Returns host-visible reviews after Cognito authorization"
+          },
+          {
             "name": "sort",
             "in": "query",
             "type": "string",
@@ -145,6 +151,126 @@
         "responses": {
           "200": {
             "description": "Review updated"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": {
+          "200": {
+            "description": "CORS response"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/{id}/response": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "post": {
+        "security": [
+          {
+            "DomitsCognito": [
+              "aws.cognito.signin.user.admin"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review response draft saved"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "DomitsCognito": [
+              "aws.cognito.signin.user.admin"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review response edited"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "DomitsCognito": [
+              "aws.cognito.signin.user.admin"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review response deleted"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": {
+          "200": {
+            "description": "CORS response"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/{id}/response/publish": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "post": {
+        "security": [
+          {
+            "DomitsCognito": [
+              "aws.cognito.signin.user.admin"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review response published"
           }
         },
         "x-amazon-apigateway-integration": {

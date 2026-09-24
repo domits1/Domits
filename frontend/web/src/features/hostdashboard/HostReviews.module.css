@@ -1,7 +1,183 @@
 .reviewGrid {
+    width: 100%;
+}
+
+.reviewTabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid #dce3e0;
+    margin: 16px 0 24px;
+}
+
+.reviewTabs button {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    padding: 10px 2px;
+    color: #43534b;
+    font: inherit;
+    cursor: pointer;
+}
+
+.reviewTabs button[aria-selected="true"] {
+    border-bottom-color: #0d9813;
+    color: #17291d;
+    font-weight: 700;
+}
+
+.reviewTabs button:focus-visible,
+.comparisonControls button:focus-visible,
+.comparisonControls select:focus-visible {
+    outline: 2px solid #0d9813;
+    outline-offset: 2px;
+}
+
+.comparisonSection {
+    width: 100%;
+    max-width: 1400px;
+}
+
+.comparisonHeader {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.comparisonHeader h3 {
+    margin: 0 0 5px;
+    font-size: 1.1rem;
+}
+
+.comparisonHeader p {
+    margin: 0;
+    color: #526059;
+    font-size: 0.9rem;
+}
+
+.comparisonControls {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    white-space: nowrap;
+}
+
+.comparisonControls label {
+    font-size: 0.9rem;
+}
+
+.comparisonControls select {
+    height: 38px;
+    border: 1px solid #bbc9c0;
+    border-radius: 4px;
+    background: white;
+    padding: 0 9px;
+    font: inherit;
+}
+
+.comparisonControls button {
     display: grid;
-    grid-template-columns: 250px auto;
-    gap: 5%;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #bbc9c0;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+.comparisonControls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.comparisonControls svg {
+    width: 19px;
+    height: 19px;
+}
+
+.comparisonTableScroll {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dce3e0;
+    border-radius: 6px;
+}
+
+.comparisonTable {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.comparisonTable th,
+.comparisonTable td {
+    border-bottom: 1px solid #e8eeea;
+    padding: 13px 12px;
+    vertical-align: middle;
+}
+
+.comparisonTable thead th {
+    background: #f5f8f6;
+    color: #39483e;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.comparisonTable tbody tr:last-child th,
+.comparisonTable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.comparisonTable tbody tr:hover {
+    background: #fafcfb;
+}
+
+.comparisonTable tbody th {
+    min-width: 190px;
+    max-width: 260px;
+    font-weight: 600;
+}
+
+.propertyName,
+.propertyId {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.propertyId {
+    margin-top: 3px;
+    color: #6c7870;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.ratingCell {
+    display: grid;
+    gap: 5px;
+    min-width: 66px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.ratingTrack {
+    width: 64px;
+    height: 4px;
+    overflow: hidden;
+    background: #e0e8e2;
+    border-radius: 2px;
+}
+
+.ratingFill {
+    display: block;
+    height: 100%;
+    background: #168a48;
+}
+
+.noRating {
+    color: #77827b;
 }
 
 .contentContainer {
@@ -21,6 +197,11 @@
     flex-direction: column;
 }
 
+.reviewColumnWide {
+    width: min(100%, 980px);
+    margin: 10px;
+}
+
 .contentContainer .reviewBox {
     margin-right: 5px;
     margin-top: 10px;
@@ -31,18 +212,55 @@
     flex-wrap: wrap;
 }
 
+.reviewBoxHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.reviewSubtext {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.refreshButton,
+.responseActions button {
+    border: 1px solid #0D9813;
+    background: #0D9813;
+    color: white;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.refreshButton:disabled,
+.responseActions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .contentContainer .reviewBox .reviewTab {
     display: flex;
     flex-direction: column;
-    border: 2px;
-    border-radius: 15px;
-    margin: 5%;
+    border: 1px solid #e7e7e7;
+    border-radius: 8px;
+    margin: 24px 0;
     animation: fade-up 1s;
-    padding: 12px;
+    padding: 18px;
 }
 
-.contentContainer .reviewBox .reviewTab .reviewHeader {
-    font-size: 1.5em;
+.reviewHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewHeader,
+.reviewHeader {
+    font-size: 1.25rem;
+    margin: 0;
 }
 
 .contentContainer .reviewBox .reviewTab .reviewContent {
@@ -51,6 +269,94 @@
 
 .contentContainer .reviewBox .reviewTab .reviewDate {
     color: #0D9813;
+}
+
+.reviewStatus,
+.responseDraftBadge,
+.responsePublishedBadge {
+    align-self: flex-start;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.reviewStatus {
+    background: #eef7ef;
+    color: #0D9813;
+}
+
+.privateFeedback,
+.responsePreview,
+.responseEditor {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #f7f8f8;
+}
+
+.privateFeedback p,
+.responsePreview p {
+    margin-bottom: 0;
+}
+
+.responseDisabled {
+    margin-top: 14px;
+    color: #777;
+}
+
+.responsePreviewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.responseDraftBadge {
+    background: #fff7e8;
+    color: #8a5a00;
+}
+
+.responsePublishedBadge {
+    background: #e9f7ec;
+    color: #0D9813;
+}
+
+.responseLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.responseLabel textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid #d7d7d7;
+    border-radius: 6px;
+    padding: 10px;
+    font: inherit;
+    font-weight: 400;
+}
+
+.responseActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.responseActions button:last-child:not(:first-child) {
+    background: white;
+    color: #0D9813;
+}
+
+.responseError,
+.reviewError {
+    color: #b42318;
+    background: #fff1f0;
+    border-radius: 6px;
+    padding: 10px 12px;
 }
 
 .contentContainer .reviewBox .reviewTab .reviewDelete {
@@ -85,6 +391,10 @@
 }
 
 @media (max-width: 768px) {
+    .comparisonHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
     .reviewGrid {
         grid-template-columns: 1fr;
         gap: 20px;
@@ -98,6 +408,15 @@
 
     .contentContainer .reviewColumn {
         width: 90%;
+    }
+
+    .reviewColumnWide {
+        width: 90%;
+    }
+
+    .reviewBoxHeader,
+    .reviewHeaderRow {
+        flex-direction: column;
     }
 
     .contentContainer .reviewBox {

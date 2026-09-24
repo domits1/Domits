@@ -2,6 +2,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import ReviewService from "../../functions/ReviewSystem/business/service/reviewService.js";
 import ConflictException from "../../functions/ReviewSystem/util/exception/conflictException.js";
 
+// Review: Covers the guest review lifecycle and authenticated host response workflow.
 const NOW = Date.parse("2026-09-10T12:00:00.000Z");
 
 const createEvent = (body, overrides = {}) => ({
@@ -73,8 +74,16 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
     updateReviewWithRatings: jest.fn(),
     softDeleteReview: jest.fn(),
     getPublishedReviewsByPropertyId: jest.fn(),
+    getReviewsForHost: jest.fn(),
     getReviewsByBookingForUser: jest.fn(),
     getReviewsWrittenByUser: jest.fn(),
+    hasActiveTeamMembership: jest.fn().mockResolvedValue(false),
+    getResponseByReviewId: jest.fn().mockResolvedValue(null),
+    saveReviewResponse: jest.fn().mockImplementation(async (response) => response),
+    updateReviewResponse: jest.fn().mockImplementation(async (responseId, updateData) => ({
+      id: responseId,
+      ...updateData,
+    })),
     toPublicReview: jest.fn((review) => ({
       id: review.id,
       overallRating: review.overallRating,
@@ -497,5 +506,201 @@ describe("ReviewService day 5 unit coverage", () => {
     ).rejects.toMatchObject({ statusCode: 400, message: "verified must be true when provided." });
 
     expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("returns host reviews only after host access is authorized", async () => {
+    const hostReviews = [createReview()];
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewsForHost: jest.fn().mockResolvedValue(hostReviews),
+      },
+    });
+
+    const result = await service.getReviews({
+      headers: { Authorization: "Bearer access-token-1" },
+      queryStringParameters: { hostId: "host-1" },
+    });
+
+    expect(result).toEqual({ reviews: hostReviews });
+    expect(reviewRepository.getReviewsForHost).toHaveBeenCalledWith("host-1");
+  });
+
+  it("saves a draft response for an eligible public review", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+      },
+    });
+
+    const result = await service.saveDraftResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thank you for staying with us." }),
+    });
+
+    expect(reviewRepository.saveReviewResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewId: "review-1",
+        authorId: "host-1",
+        authorRole: "host",
+        status: "draft",
+        message: "Thank you for staying with us.",
+        createdAt: NOW,
+        updatedAt: NOW,
+        publishedAt: null,
+        deletedAt: null,
+      })
+    );
+    expect(result.response.status).toBe("draft");
+  });
+
+  it("publishes an existing draft response", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getResponseByReviewId: jest.fn().mockResolvedValue({
+          id: "response-1",
+          reviewId: "review-1",
+          status: "draft",
+          message: "Draft response.",
+        }),
+      },
+    });
+
+    const result = await service.publishResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Published response." }),
+    });
+
+    expect(reviewRepository.updateReviewResponse).toHaveBeenCalledWith(
+      "response-1",
+      expect.objectContaining({
+        status: "published",
+        message: "Published response.",
+        publishedAt: NOW,
+        deletedAt: null,
+      })
+    );
+    expect(result.response.status).toBe("published");
+  });
+
+  it("rejects responses for reviews that are not public", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(
+          createReview({ status: "SUBMITTED", publicationStatus: "UNPUBLISHED" })
+        ),
+      },
+    });
+
+    await expect(
+      service.saveDraftResponse({
+        headers: { Authorization: "Bearer access-token-1" },
+        pathParameters: { id: "review-1" },
+        body: JSON.stringify({ message: "Thanks." }),
+      })
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "Only approved public reviews can receive host responses.",
+    });
+    expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
+  });
+
+  it("allows an active property manager to respond for the host", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({
+          sub: "team-member-1",
+          role: "Property Operations Manager",
+        }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        hasActiveTeamMembership: jest.fn().mockResolvedValue(true),
+      },
+    });
+
+    await service.saveDraftResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Thanks for the feedback." }),
+    });
+
+    expect(reviewRepository.hasActiveTeamMembership).toHaveBeenCalledWith("team-member-1", "host-1");
+    expect(reviewRepository.saveReviewResponse).toHaveBeenCalled();
+  });
+
+  it("rejects unrelated users from creating responses", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "guest-2", role: "Guest" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+      },
+    });
+
+    await expect(
+      service.saveDraftResponse({
+        headers: { Authorization: "Bearer access-token-1" },
+        pathParameters: { id: "review-1" },
+        body: JSON.stringify({ message: "Thanks." }),
+      })
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "You are not allowed to respond to this review.",
+    });
+    expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
+  });
+
+  it("edits and soft deletes an existing response", async () => {
+    const existingResponse = {
+      id: "response-1",
+      reviewId: "review-1",
+      status: "published",
+      message: "Published response.",
+    };
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview()),
+        getResponseByReviewId: jest.fn().mockResolvedValue(existingResponse),
+      },
+    });
+
+    await service.editResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+      body: JSON.stringify({ message: "Updated response." }),
+    });
+    const deleted = await service.deleteResponse({
+      headers: { Authorization: "Bearer access-token-1" },
+      pathParameters: { id: "review-1" },
+    });
+
+    expect(reviewRepository.updateReviewResponse).toHaveBeenNthCalledWith(1, "response-1", {
+      message: "Updated response.",
+      updatedAt: NOW,
+    });
+    expect(reviewRepository.updateReviewResponse).toHaveBeenNthCalledWith(2, "response-1", {
+      deletedAt: NOW,
+      updatedAt: NOW,
+    });
+    expect(deleted).toEqual({ message: "Review response deleted successfully." });
   });
 });

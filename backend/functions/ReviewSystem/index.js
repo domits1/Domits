@@ -17,8 +17,14 @@ const getReviewIdFromPath = (event) => {
   return match?.[1] || null;
 };
 
+const getReviewResponseRouteFromPath = (event) => {
+  // Review: Matches draft, publish, edit, and delete routes for one host response.
+  const match = /^\/reviews\/([^/]+)\/response(?:\/(publish))?$/.exec(normalizePath(event));
+  return match ? { reviewId: match[1], action: match[2] || "response" } : null;
+};
+
 const withReviewId = (event) => {
-  const reviewId = getReviewIdFromPath(event);
+  const reviewId = getReviewIdFromPath(event) || getReviewResponseRouteFromPath(event)?.reviewId;
 
   if (!reviewId) return event;
 
@@ -45,6 +51,23 @@ export const handler = async (event) => {
   }
 
   const routedEvent = withReviewId(event);
+  const responseRoute = getReviewResponseRouteFromPath(event);
+
+  if (event.httpMethod === "POST" && responseRoute?.action === "response") {
+    return controller.saveDraftResponse(routedEvent);
+  }
+
+  if (event.httpMethod === "POST" && responseRoute?.action === "publish") {
+    return controller.publishResponse(routedEvent);
+  }
+
+  if (event.httpMethod === "PATCH" && responseRoute?.action === "response") {
+    return controller.editResponse(routedEvent);
+  }
+
+  if (event.httpMethod === "DELETE" && responseRoute?.action === "response") {
+    return controller.deleteResponse(routedEvent);
+  }
 
   if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) {
     return controller.create(routedEvent);

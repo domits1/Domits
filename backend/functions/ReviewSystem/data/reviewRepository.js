@@ -6,8 +6,10 @@ import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+import { Review_Response } from "database/models/Review_Response";
 import { Review_Moderation } from "database/models/Review_Moderation";
 import { Review_Verification } from "database/models/Review_Verification";
+import { Team_Member } from "database/models/Team_Member";
 
 // Review: Provides transactional storage and read models for reviews, ratings, and workflow records.
 class ReviewRepository {
@@ -74,7 +76,8 @@ class ReviewRepository {
       .getMany();
 
     const reviewsWithRatings = await this.attachRatingsToReviews(reviews);
-    return this.buildPublicReviewResponse(reviewsWithRatings, options);
+    const reviewsWithResponses = await this.attachResponsesToReviews(reviewsWithRatings);
+    return this.buildPublicReviewResponse(reviewsWithResponses, options);
   }
 
   buildPublicReviewResponse(reviews, options = {}) {
@@ -146,6 +149,51 @@ class ReviewRepository {
       .getMany();
 
     return this.attachRatingsToReviews(reviews);
+  }
+
+  async getReviewsForHost(hostId) {
+    // Review: Loads received reviews with draft and published responses for host management.
+    const client = await Database.getInstance();
+    const reviews = await client
+      .getRepository(Review)
+      .createQueryBuilder("review")
+      .where("review.host_id = :hostId", { hostId })
+      .orderBy("review.created_at", "DESC")
+      .getMany();
+
+    const reviewsWithRatings = await this.attachRatingsToReviews(reviews);
+    return this.attachResponsesToReviews(reviewsWithRatings, { includeDrafts: true });
+  }
+
+  async hasActiveTeamMembership(memberUserId, hostId) {
+    // Review: Verifies that a response author is still an active member of the host team.
+    const client = await Database.getInstance();
+    const membership = await client.getRepository(Team_Member).findOne({
+      where: { member_user_id: memberUserId, host_id: hostId, status: "active" },
+    });
+    return Boolean(membership);
+  }
+
+  async getResponseByReviewId(reviewId, { includeDeleted = false } = {}) {
+    const client = await Database.getInstance();
+    const query = client
+      .getRepository(Review_Response)
+      .createQueryBuilder("response")
+      .where("response.review_id = :reviewId", { reviewId });
+
+    if (!includeDeleted) query.andWhere("response.deleted_at IS NULL");
+    return query.getOne();
+  }
+
+  async saveReviewResponse(response) {
+    const client = await Database.getInstance();
+    return client.getRepository(Review_Response).save(response);
+  }
+
+  async updateReviewResponse(responseId, updateData) {
+    const client = await Database.getInstance();
+    await client.getRepository(Review_Response).update(responseId, updateData);
+    return client.getRepository(Review_Response).findOne({ where: { id: responseId } });
   }
 
   async createReviewWithRatings(review, ratings, workflowRecords = {}) {
@@ -259,6 +307,25 @@ class ReviewRepository {
     }));
   }
 
+  async attachResponsesToReviews(reviews, { includeDrafts = false } = {}) {
+    // Review: Hydrates public or host-visible review rows with their one active response.
+    if (reviews.length === 0) return reviews;
+
+    const client = await Database.getInstance();
+    const reviewIds = reviews.map((review) => review.id);
+    const query = client
+      .getRepository(Review_Response)
+      .createQueryBuilder("response")
+      .where("response.review_id IN (:...reviewIds)", { reviewIds })
+      .andWhere("response.deleted_at IS NULL");
+
+    if (!includeDrafts) query.andWhere("response.status = :status", { status: "published" });
+
+    const responses = await query.getMany();
+    const responseByReviewId = Object.fromEntries(responses.map((response) => [response.reviewId, response]));
+    return reviews.map((review) => ({ ...review, response: responseByReviewId[review.id] || null }));
+  }
+
   mapRatingsByCategory(ratings) {
     return ratings.reduce((acc, rating) => {
       acc[rating.category] = Number(rating.rating);
@@ -277,6 +344,15 @@ class ReviewRepository {
       status: review.status,
       createdAt: review.createdAt,
       categoryRatings: review.categoryRatings || {},
+      response:
+        review.response?.status === "published" && !review.response.deletedAt
+          ? {
+              id: review.response.id,
+              authorRole: review.response.authorRole,
+              message: review.response.message,
+              publishedAt: review.response.publishedAt,
+            }
+          : null,
     };
   }
 

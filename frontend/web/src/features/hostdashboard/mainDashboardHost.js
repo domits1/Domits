@@ -6,6 +6,7 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
+import HostReviews from "./HostReviews";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
@@ -20,7 +21,6 @@ import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
-import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
@@ -117,6 +117,8 @@ function MainDashboardHost() {
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
+          {/* Review: Makes host review management available from the dashboard route. */}
+          <Route path="reviews" element={<HostReviews />} />
 
           <Route path="tasks" element={<HostPropertyCare />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
@@ -137,7 +139,6 @@ function MainDashboardHost() {
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
-          <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />
 
           <Route path="reservations/:id" element={<HostReservationDetails />} />
