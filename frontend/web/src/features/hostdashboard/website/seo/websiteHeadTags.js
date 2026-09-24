@@ -2,6 +2,7 @@ import { normalizeImageUrl, resolveAccommodationImageKey } from "../../../../uti
 
 export const WEBSITE_HEAD_DESCRIPTION_MAX_LENGTH = 155;
 export const WEBSITE_HEAD_ROBOTS_NOINDEX = "noindex, nofollow";
+export const WEBSITE_HEAD_ROBOTS_META_NAME = "robots";
 export const WEBSITE_HEAD_OG_TYPE = "website";
 
 const ABSOLUTE_HTTP_URL_PATTERN = /^https?:\/\//i;
@@ -71,7 +72,7 @@ const selectWebsiteHeadSource = (model) => ({
 
 const buildRobotsOnlyTags = (title) => ({
   title,
-  metaByName: { robots: WEBSITE_HEAD_ROBOTS_NOINDEX },
+  metaByName: { [WEBSITE_HEAD_ROBOTS_META_NAME]: WEBSITE_HEAD_ROBOTS_NOINDEX },
   metaByProperty: {},
 });
 

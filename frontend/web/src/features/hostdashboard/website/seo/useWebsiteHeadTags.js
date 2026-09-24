@@ -21,6 +21,8 @@ const applyMetaEntries = (documentRef, attributeName, entries, appliedEntries) =
 
     appliedEntries.push({
       element,
+      attributeName,
+      attributeValue,
       wasCreated: !existingElement,
       previousContent: existingElement ? existingElement.getAttribute("content") : null,
     });
@@ -29,19 +31,23 @@ const applyMetaEntries = (documentRef, attributeName, entries, appliedEntries) =
   }
 };
 
+const restoreAppliedEntry = (appliedEntry) => {
+  if (appliedEntry.wasCreated) {
+    appliedEntry.element.remove();
+    return;
+  }
+
+  if (appliedEntry.previousContent === null) {
+    appliedEntry.element.removeAttribute("content");
+    return;
+  }
+
+  appliedEntry.element.setAttribute("content", appliedEntry.previousContent);
+};
+
 const restoreAppliedEntries = (appliedEntries) => {
   for (const appliedEntry of [...appliedEntries].reverse()) {
-    if (appliedEntry.wasCreated) {
-      appliedEntry.element.remove();
-      continue;
-    }
-
-    if (appliedEntry.previousContent === null) {
-      appliedEntry.element.removeAttribute("content");
-      continue;
-    }
-
-    appliedEntry.element.setAttribute("content", appliedEntry.previousContent);
+    restoreAppliedEntry(appliedEntry);
   }
 };
 

@@ -45,20 +45,6 @@ describe("useWebsiteHeadTags", () => {
     expect(document.title).toBe("Villa A");
   });
 
-  it("restores the original title and description when it leaves", () => {
-    const { unmount } = render(
-      <HeadTagsHarness headKey="site-a" tags={buildTags("Villa A", "Description A", "https://img/a.jpg")} />
-    );
-
-    unmount();
-
-    expect(document.title).toBe(MARKETPLACE_TITLE);
-    expect(readMetaContent("name", "description")).toBe(MARKETPLACE_DESCRIPTION);
-    expect(document.head.querySelector('meta[property="og:title"]')).toBeNull();
-    expect(document.head.querySelector('meta[property="og:image"]')).toBeNull();
-    expect(document.head.querySelectorAll("meta")).toHaveLength(1);
-  });
-
   it("keeps valid tags while the same site refreshes", () => {
     const { rerender } = render(
       <HeadTagsHarness headKey="site-a" tags={buildTags("Villa A", "Description A", "https://img/a.jpg")} />
@@ -119,7 +105,7 @@ describe("useWebsiteHeadTags", () => {
     expect(readMetaContent("name", "description")).toBe("Description A");
   });
 
-  it("restores the original head after a full cycle of site changes", () => {
+  it("restores the original head when it leaves, after a site change", () => {
     const { rerender, unmount } = render(
       <HeadTagsHarness headKey="site-a" tags={buildTags("Villa A", "Description A", "https://img/a.jpg")} />
     );
@@ -129,6 +115,8 @@ describe("useWebsiteHeadTags", () => {
 
     expect(document.title).toBe(MARKETPLACE_TITLE);
     expect(readMetaContent("name", "description")).toBe(MARKETPLACE_DESCRIPTION);
+    expect(document.head.querySelector('meta[property="og:title"]')).toBeNull();
+    expect(document.head.querySelector('meta[property="og:image"]')).toBeNull();
     expect(document.head.querySelectorAll("meta")).toHaveLength(1);
   });
 
