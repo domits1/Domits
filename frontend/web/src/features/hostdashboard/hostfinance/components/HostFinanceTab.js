@@ -211,7 +211,7 @@ export default function HostFinanceTab() {
     if (!hasProperty) return "List your property";
     if (!isConnected) return "Connect Stripe";
     if (stripeIssues) return "Fix Stripe account";
-    return isLive ? "Withdraw Funds" : "Go live";
+    return isLive ? "Open Stripe Dashboard" : "Go live";
   };
 
   const handlePrimaryAction = () => {
@@ -479,11 +479,28 @@ export default function HostFinanceTab() {
               )}
               <section id="finance-payout-settings" className="finance-card finance-settings-card">
                 <h2>Payout Settings</h2>
-                <div className={`finance-stripe-status${isConnected ? " is-connected" : ""}`}>
-                  {isConnected ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</> : "Connect Stripe to enable payouts"}
+                <div className={`finance-stripe-status${isConnected && !stripeIssues ? " is-connected" : ""}`}>
+                  {stripeIssues
+                    ? "Action required: Stripe account issue"
+                    : isConnected
+                      ? <><CheckCircle2 size={14} aria-hidden="true" /> Stripe Connected</>
+                      : "Connect Stripe to enable payouts"}
                 </div>
-                <p>{isConnected ? "Bank account connected and ready for payouts." : "You will be able to set your bank account and payout schedule after connecting."}</p>
-                <button type="button" className="finance-outline-button" onClick={handleStripeAction} disabled={!isConnected || isProcessing}>{isConnected ? "Manage account" : "Connect Stripe"}</button>
+                <p>
+                  {stripeIssues
+                    ? "Stripe has disabled charges or payouts. Open your Stripe account to resolve the issue."
+                    : isConnected
+                      ? "Bank account connected and ready for payouts."
+                      : "You will be able to set your bank account and payout schedule after connecting."}
+                </p>
+                <button
+                  type="button"
+                  className="finance-outline-button"
+                  onClick={handleStripeAction}
+                  disabled={!isConnected || isProcessing || demoMode}
+                >
+                  {isConnected ? "Manage account" : "Connect Stripe"}
+                </button>
                 <label htmlFor="finance-payout-frequency">Payout frequency</label>
                 <select id="finance-payout-frequency" value={payoutInterval || "daily"} onChange={(event) => setPayoutInterval(event.target.value)} disabled={!isConnected || isPayoutScheduleLoading}>
                   <option value="daily">Daily</option>
