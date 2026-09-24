@@ -340,14 +340,18 @@ const ContactList = ({
     const contact = contextMenu.contact;
     const partnerId = resolvePartnerId(contact, userId);
     const threadId = contact?.threadId;
-    if (partnerId) onCloseChat?.(partnerId);
     setContextMenu({ visible: false, contactKey: null, contact: null });
-    if (!threadId) return;
+
+    if (!threadId) {
+      if (partnerId) onCloseChat?.(partnerId);
+      return;
+    }
 
     try {
       const idToken = await getIdToken();
       await closeThread(threadId, idToken);
       setContacts?.((prevContacts) => markContactThreadClosedLocally(prevContacts, threadId));
+      if (partnerId) onCloseChat?.(partnerId);
     } catch {
       toast.error("Could not close this conversation. Please try again.");
     }

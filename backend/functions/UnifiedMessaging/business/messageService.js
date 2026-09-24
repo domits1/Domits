@@ -581,6 +581,9 @@ class MessageService {
     const thread = await this.threadRepository.getThreadById(threadId);
     const access = await this.assertThreadAccess(thread, authenticatedUser);
     if (access.role !== "host") throw forbidden("Only the host can close this conversation.");
+    if (access.thread.status === "CLOSED") {
+      return { statusCode: 200, response: { threadId, status: "CLOSED" } };
+    }
     await this.threadRepository.updateThreadStatus(threadId, "CLOSED");
     return { statusCode: 200, response: { threadId, status: "CLOSED" } };
   }

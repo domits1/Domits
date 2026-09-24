@@ -387,7 +387,7 @@ describe("MessageService authorization and booking scoping", () => {
     const result = await service.closeThread("thread-1", hostAuth);
 
     expect(result).toEqual({ statusCode: 200, response: { threadId: "thread-1", status: "CLOSED" } });
-    expect(mockThreadRepository.updateThreadStatus).toHaveBeenCalledWith("thread-1", "CLOSED");
+    expect(mockThreadRepository.updateThreadStatus).not.toHaveBeenCalled();
   });
 
   test("rejects spoofed sender ids", async () => {

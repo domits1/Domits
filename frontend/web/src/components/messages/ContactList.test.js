@@ -353,7 +353,10 @@ describe("ContactList manual mark read/unread", () => {
     latestMessage: { text: "See you soon", createdAt: "2026-06-01T10:00:00.000Z" },
   };
 
-  const renderForManualAction = (contactOrContacts, { onContactClick = jest.fn() } = {}) => {
+  const renderForManualAction = (
+    contactOrContacts,
+    { onContactClick = jest.fn(), onCloseChat = jest.fn() } = {}
+  ) => {
     const setContacts = jest.fn();
     const contactsArray = Array.isArray(contactOrContacts) ? contactOrContacts : [contactOrContacts];
 
@@ -366,13 +369,13 @@ describe("ContactList manual mark read/unread", () => {
         loading={false}
         setContacts={setContacts}
         onContactClick={onContactClick}
-        onCloseChat={jest.fn()}
+        onCloseChat={onCloseChat}
         onNewMessage={jest.fn()}
         capabilities={getMessageCapabilities("host")}
       />
     );
 
-    return { setContacts };
+    return { setContacts, onCloseChat };
   };
 
   beforeEach(() => {
@@ -505,7 +508,7 @@ describe("ContactList manual mark read/unread", () => {
     );
 
     const contact = { ...manualActionContact, status: "OPEN" };
-    const { setContacts } = renderForManualAction(contact);
+    const { setContacts, onCloseChat } = renderForManualAction(contact);
 
     fireEvent.contextMenu(screen.getByText("Reservation Host"));
     fireEvent.click(screen.getByText("Close chat"));
@@ -515,6 +518,7 @@ describe("ContactList manual mark read/unread", () => {
     });
 
     expect(setContacts).not.toHaveBeenCalled();
+    expect(onCloseChat).not.toHaveBeenCalled();
 
     resolveCloseThread({ threadId: "thread-1", status: "CLOSED" });
 
@@ -522,16 +526,18 @@ describe("ContactList manual mark read/unread", () => {
       expect(setContacts).toHaveBeenCalled();
     });
 
+    expect(onCloseChat).toHaveBeenCalledWith("guest-1");
+
     const updater = setContacts.mock.calls[0][0];
     const updated = updater([contact]);
     expect(updated[0].status).toBe("CLOSED");
   });
 
-  test("closing a conversation leaves its status unchanged and shows a visible error when the request fails", async () => {
+  test("closing a conversation leaves its status unchanged, keeps the chat open, and shows a visible error when the request fails", async () => {
     closeThread.mockRejectedValue(new Error("network error"));
 
     const contact = { ...manualActionContact, status: "OPEN" };
-    const { setContacts } = renderForManualAction(contact);
+    const { setContacts, onCloseChat } = renderForManualAction(contact);
 
     fireEvent.contextMenu(screen.getByText("Reservation Host"));
     fireEvent.click(screen.getByText("Close chat"));
@@ -545,6 +551,7 @@ describe("ContactList manual mark read/unread", () => {
     });
 
     expect(setContacts).not.toHaveBeenCalled();
+    expect(onCloseChat).not.toHaveBeenCalled();
   });
 
   const renderForInFlightAction = (contact, actionLabel) => {
