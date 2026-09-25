@@ -48,6 +48,7 @@ import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThr
 import { MessageAutomation } from "../../models/automation/MessageAutomation.js";
 import { MessageAutomationDelivery } from "../../models/automation/MessageAutomationDelivery.js";
 import { BookingAutomationOutbox } from "../../models/automation/BookingAutomationOutbox.js";
+import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbox.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
@@ -108,6 +109,7 @@ export const Tables = [
   MessageAutomation,
   MessageAutomationDelivery,
   BookingAutomationOutbox,
+  ChannexAriOutbox,
 
   User_Table,
   PropertyTask,
