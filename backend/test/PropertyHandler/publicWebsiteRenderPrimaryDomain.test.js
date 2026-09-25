@@ -429,3 +429,70 @@ describe("public render primaryDomain, resolved by site id", () => {
     });
   });
 });
+
+describe("public render primaryDomain, concurrent domain changes", () => {
+  const siteRepositoryRunningBeforeSiteRead = (change) => ({
+    getSiteById: async (siteId) => {
+      await change();
+      return siteId === SITE.id ? { ...SITE } : null;
+    },
+  });
+
+  it.each([FALLBACK_NAME, CUSTOM_NAME])(
+    "answers from the state after a removal of the flagged custom domain that lands after %s was read",
+    async (requested) => {
+      let domainRepository;
+      const built = buildController({
+        rows: [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true })],
+        siteRepository: siteRepositoryRunningBeforeSiteRead(() =>
+          domainRepository.deleteDomainAndRestoreFallbackById("domain-custom", SITE.id)
+        ),
+      });
+      domainRepository = built.domainRepository;
+      const requestedRowAsRead = storedRowNamed(domainRepository, requested);
+
+      const { statusCode, body } = await renderByDomain(built.controller, requested);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
+      expect(body.domain).toEqual(requestedRowAsRead);
+    }
+  );
+
+  it("answers from the state after a promotion that lands after the requested fallback was read", async () => {
+    let domainRepository;
+    const built = buildController({
+      rows: [fallbackRow(), customRow()],
+      siteRepository: siteRepositoryRunningBeforeSiteRead(() =>
+        domainRepository.promoteDomainToPrimary(SITE.id, "domain-custom")
+      ),
+    });
+    domainRepository = built.domainRepository;
+    const requestedRowAsRead = domainRepository.rowById("domain-fallback");
+
+    const { statusCode, body } = await renderByDomain(built.controller, FALLBACK_NAME);
+
+    expect(statusCode).toBe(200);
+    expect(domainRepository.rowById("domain-custom").isPrimary).toBe(true);
+    expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
+    expect(body.domain).toEqual(requestedRowAsRead);
+  });
+
+  it("answers domain and primaryDomain from the same read on the site id path when a promotion lands during the render", async () => {
+    const { controller, domainRepository } = buildController({ rows: [fallbackRow(), customRow()] });
+    const rowsBeforePromotion = domainRepository.snapshot();
+    controller.propertyService = {
+      getPublicCalendarAvailability: async () => {
+        await domainRepository.promoteDomainToPrimary(SITE.id, "domain-custom");
+        return {};
+      },
+    };
+
+    const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+    expect(statusCode).toBe(200);
+    expect(domainRepository.rowById("domain-custom").isPrimary).toBe(true);
+    expect(body.domain).toEqual(rowsBeforePromotion.find((row) => row.id === "domain-fallback"));
+    expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
+  });
+});
