@@ -59,7 +59,7 @@ const MISSED_REVENUE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "revenue-efficiency",
     "Revenue efficiency",
     "revenueEfficiencyPct",
-    "Actual revenue as a share of potential revenue.",
+    "Actual revenue on nights with a PriceLabs price, as a share of potential revenue.",
     "percentage",
     "potentialRevenue"
   ),
