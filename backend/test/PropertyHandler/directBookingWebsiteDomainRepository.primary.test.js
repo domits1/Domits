@@ -44,6 +44,29 @@ const buildClient = (records) => {
   return { client, queryRunner };
 };
 
+const conflictError = (code) => Object.assign(new Error("serialization failure"), { code });
+
+const buildRunner = (responses) => ({
+  query: jest.fn(async () => {
+    const next = responses.shift();
+    if (next instanceof Error) {
+      throw next;
+    }
+    return next;
+  }),
+  release: jest.fn().mockResolvedValue(undefined),
+});
+
+const buildSequentialClient = (runners) => {
+  const client = {
+    options: { schema: "main" },
+    createQueryRunner: jest.fn(() => runners.shift()),
+    query: jest.fn(),
+  };
+  Database.getInstance.mockResolvedValue(client);
+  return { client };
+};
+
 describe("DirectBookingWebsiteDomainRepository main address statements", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -77,6 +100,60 @@ describe("DirectBookingWebsiteDomainRepository main address statements", () => {
     await expect(
       new DirectBookingWebsiteDomainRepository().promoteDomainToPrimary("site-1", "domain-1")
     ).resolves.toEqual([]);
+  });
+
+  it.each(["40001", "OC001"])(
+    "retries the promotion once on a fresh connection when it conflicts with %s and returns only the retry's rows",
+    async (code) => {
+      const failing = buildRunner([conflictError(code)]);
+      const succeeding = buildRunner([{ records: [FALLBACK_ROW, CUSTOM_ROW], affected: 2 }]);
+      const { client } = buildSequentialClient([failing, succeeding]);
+
+      const records = await new DirectBookingWebsiteDomainRepository().promoteDomainToPrimary("site-1", "domain-1");
+
+      expect(client.createQueryRunner).toHaveBeenCalledTimes(2);
+      expect(succeeding.query.mock.calls[0][0]).toBe(failing.query.mock.calls[0][0]);
+      expect(succeeding.query.mock.calls[0][1].slice(0, 2)).toEqual(["site-1", "domain-1"]);
+      expect(failing.release).toHaveBeenCalledTimes(1);
+      expect(succeeding.release).toHaveBeenCalledTimes(1);
+      expect(records.map((record) => [record.id, record.isPrimary])).toEqual([
+        ["domain-0", false],
+        ["domain-1", true],
+      ]);
+    }
+  );
+
+  it("recognises a conflict code carried on the driver error", async () => {
+    const failing = buildRunner([Object.assign(new Error("commit failed"), { driverError: { code: "OC001" } })]);
+    const succeeding = buildRunner([{ records: [], affected: 0 }]);
+    const { client } = buildSequentialClient([failing, succeeding]);
+
+    await expect(
+      new DirectBookingWebsiteDomainRepository().promoteDomainToPrimary("site-1", "domain-1")
+    ).resolves.toEqual([]);
+    expect(client.createQueryRunner).toHaveBeenCalledTimes(2);
+  });
+
+  it("surfaces a non-transient failure without retrying", async () => {
+    const failing = buildRunner([Object.assign(new Error("permission denied"), { code: "42501" })]);
+    const { client } = buildSequentialClient([failing]);
+
+    await expect(
+      new DirectBookingWebsiteDomainRepository().promoteDomainToPrimary("site-1", "domain-1")
+    ).rejects.toMatchObject({ code: "42501" });
+    expect(client.createQueryRunner).toHaveBeenCalledTimes(1);
+    expect(failing.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up and surfaces the conflict after a second one", async () => {
+    const runners = [buildRunner([conflictError("40001")]), buildRunner([conflictError("OC001")])];
+    const { client } = buildSequentialClient([...runners]);
+
+    await expect(
+      new DirectBookingWebsiteDomainRepository().promoteDomainToPrimary("site-1", "domain-1")
+    ).rejects.toMatchObject({ code: "OC001" });
+    expect(client.createQueryRunner).toHaveBeenCalledTimes(2);
+    runners.forEach((runner) => expect(runner.release).toHaveBeenCalledTimes(1));
   });
 
   it("restores the fallback as main address with one statement scoped to the site", async () => {
