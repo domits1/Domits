@@ -124,7 +124,7 @@ related:
 ## Public Render Main Address
 
 - `GET /property/website/public/render` returns `domain` and `primaryDomain` side by side. They answer different questions.
-- `domain` is unchanged: the stored row the request resolved to. That is the requested hostname's row for `?domain=`, and the flagged or oldest row for `?site=`. The frontend compares it with the hostname.
+- `domain` is unchanged: the row the request resolved to. That is the requested hostname's row for `?domain=`, and the flagged or oldest row for `?site=`. When a published site has no fallback row and storing one fails, it is a synthetic fallback row that exists only in the response. The frontend compares it with the hostname.
 - `primaryDomain` is the site's main address for canonical and `og:url`, as `{ domain, status }` only. It is the site's row flagged `is_primary` when that row is a `CUSTOM` domain whose status is `ACTIVE`; in every other case it is the site's `FALLBACK` row. If a site ever has two flagged rows, the live custom domain wins, whichever hostname was requested.
 - `status` is the runtime status, so a stored `PENDING` fallback reads `ACTIVE` while fallback routing is on.
 - `primaryDomain` is `null` when the site has no row that qualifies, or when the separate main address read fails. That separate read is the one `?domain=` always makes, and the one `?site=` makes only when the site had no stored rows and the fallback had to be stored first. The page still renders with `200`. `null` means unknown: set no canonical rather than guessing the fallback.
