@@ -127,5 +127,10 @@ export const Booking = new EntitySchema({
       name: "idempotency_key",
       nullable: true,
     },
+    special_request: {
+      type: "text",
+      name: "special_request",
+      nullable: true,
+    },
   },
 });
