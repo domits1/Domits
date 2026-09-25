@@ -1843,14 +1843,20 @@ export class PropertyController {
             null;
         const healedPrimaryDomain =
             primaryDomain || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
+        const storedSiteDomains = primaryDomain ? domains : null;
 
         return {
             site,
             domain: healedPrimaryDomain,
+            siteDomains: storedSiteDomains,
         };
     }
 
-    async loadPublicDirectBookingWebsiteMainAddress(site) {
+    async loadPublicDirectBookingWebsiteMainAddress(site, loadedSiteDomains = null) {
+        if (Array.isArray(loadedSiteDomains)) {
+            return selectDirectBookingWebsiteMainAddress(site, loadedSiteDomains);
+        }
+
         try {
             const siteDomains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
             return selectDirectBookingWebsiteMainAddress(site, siteDomains);
@@ -2981,7 +2987,7 @@ export class PropertyController {
 
             const [propertySnapshot, primaryDomain] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
-                this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site),
+                this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
             ]);
 
             return {

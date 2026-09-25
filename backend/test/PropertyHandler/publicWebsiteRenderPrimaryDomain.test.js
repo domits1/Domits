@@ -316,5 +316,55 @@ describe("public render primaryDomain, resolved by site id", () => {
     expect(body.domain).toEqual(domainRepository.rowById("domain-custom"));
   });
 
-  it.todo("reads the site's domain rows once");
+  it.each([
+    ["the fallback carries the flag", [fallbackRow(), customRow()]],
+    ["a live custom domain carries the flag", [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true })]],
+    [
+      "a custom domain that is not live carries the flag",
+      [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true, status: "VERIFIED" })],
+    ],
+    ["no row carries the flag", [fallbackRow({ isPrimary: false }), customRow()]],
+  ])("reads the site's domain rows once when %s", async (_label, rows) => {
+    const { controller, domainRepository } = buildController({ rows });
+
+    const { statusCode } = await renderBySiteId(controller, SITE.id);
+
+    expect(statusCode).toBe(200);
+    expect(domainRepository.calls).toEqual([["listDomainsBySiteId", SITE.id]]);
+  });
+
+  it("names the fallback it just stored for a site that had no domain rows", async () => {
+    await withFallbackRoutingActive(async () => {
+      const { controller, domainRepository } = buildController({ rows: [] });
+      const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
+
+      const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: fallbackName, status: "ACTIVE" });
+      expect(body.domain).toEqual(storedRowNamed(domainRepository, fallbackName));
+    });
+  });
+
+  it("answers primaryDomain null, not the synthetic fallback, when storing the fallback for a site without rows fails", async () => {
+    await withFallbackRoutingActive(async () => {
+      const { controller, domainRepository } = buildController({ rows: [] });
+      domainRepository.failNext("ensureDomain", new Error("connection reset"));
+      const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
+      const originalConsoleError = console.error;
+      console.error = () => {};
+
+      try {
+        const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+        expect(statusCode).toBe(200);
+        expect(body.domain.domain).toBe(fallbackName);
+        expect(body.domain.isPrimary).toBe(true);
+        expect(domainRepository.snapshot()).toEqual([]);
+        expect(body.primaryDomain).toBeNull();
+      } finally {
+        console.error = originalConsoleError;
+      }
+    });
+  });
 });
