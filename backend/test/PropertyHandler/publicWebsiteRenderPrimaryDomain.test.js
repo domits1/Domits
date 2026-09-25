@@ -215,7 +215,50 @@ describe("public render primaryDomain, resolved by domain", () => {
     }
   );
 
-  it.todo("prefers a live custom domain over the fallback when both carry the flag, whichever address was requested");
+  it.each([
+    ["the fallback is older", FALLBACK_NAME, { fallbackCreatedAt: 1, customCreatedAt: 2 }],
+    ["the fallback is older", CUSTOM_NAME, { fallbackCreatedAt: 1, customCreatedAt: 2 }],
+    ["the custom domain is older", FALLBACK_NAME, { fallbackCreatedAt: 2, customCreatedAt: 1 }],
+    ["the custom domain is older", CUSTOM_NAME, { fallbackCreatedAt: 2, customCreatedAt: 1 }],
+  ])(
+    "prefers the live custom domain when both it and the fallback carry the flag, %s and %s is requested",
+    async (_order, requested, { fallbackCreatedAt, customCreatedAt }) => {
+      const { controller, domainRepository } = buildController({
+        rows: [
+          fallbackRow({ isPrimary: true, createdAt: fallbackCreatedAt }),
+          customRow({ isPrimary: true, createdAt: customCreatedAt }),
+        ],
+      });
+
+      const { statusCode, body } = await renderByDomain(controller, requested);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
+      expect(body.domain).toEqual(storedRowNamed(domainRepository, requested));
+    }
+  );
+
+  it.each([
+    ["the fallback is older", { fallbackCreatedAt: 1, customCreatedAt: 2 }],
+    ["the custom domain is older", { fallbackCreatedAt: 2, customCreatedAt: 1 }],
+  ])(
+    "names the fallback when both it and a custom domain that is not live carry the flag, %s",
+    async (_order, { fallbackCreatedAt, customCreatedAt }) => {
+      const { controller, domainRepository } = buildController({
+        rows: [
+          fallbackRow({ isPrimary: true, createdAt: fallbackCreatedAt }),
+          customRow({ isPrimary: true, status: "VERIFIED", createdAt: customCreatedAt }),
+        ],
+      });
+
+      const { statusCode, body } = await renderByDomain(controller, FALLBACK_NAME);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
+      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+    }
+  );
+
   it.todo("never takes the main address from a synthetic fallback row");
 });
 

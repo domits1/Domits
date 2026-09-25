@@ -182,14 +182,14 @@ const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) 
 const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
     String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
 const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
-    const flaggedDomain = domains.find((domainEntry) => domainEntry?.isPrimary);
-    const isFlaggedCustomDomainNotLive =
-        isDirectBookingWebsiteCustomDomain(flaggedDomain) &&
-        resolveDirectBookingWebsiteRuntimeDomainStatus(site, flaggedDomain) !== "ACTIVE";
-    const shouldUseFallbackDomain = !flaggedDomain || isFlaggedCustomDomainNotLive;
-    const mainAddress = shouldUseFallbackDomain
-        ? domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry))
-        : flaggedDomain;
+    const liveFlaggedCustomDomain = domains.find(
+        (domainEntry) =>
+            domainEntry?.isPrimary === true &&
+            isDirectBookingWebsiteCustomDomain(domainEntry) &&
+            resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry) === "ACTIVE"
+    );
+    const mainAddress =
+        liveFlaggedCustomDomain || domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry));
     if (!mainAddress?.domain) {
         return null;
     }
