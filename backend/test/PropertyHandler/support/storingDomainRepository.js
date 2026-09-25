@@ -134,6 +134,10 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
 
     listDomainsBySiteId: async (siteId) => {
       calls.push(["listDomainsBySiteId", siteId]);
+      const failure = takeFailure("listDomainsBySiteId");
+      if (failure) {
+        throw failure;
+      }
       return rowsForSite(siteId)
         .sort(
           (left, right) =>
