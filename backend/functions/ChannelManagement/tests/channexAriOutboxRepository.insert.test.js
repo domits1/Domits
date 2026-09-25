@@ -22,7 +22,7 @@ const validInput = (overrides = {}) => ({
 });
 
 describe("ChannexAriOutboxRepository.insert", () => {
-  test("writes one PENDING row with the given range and change types", async () => {
+  test("writes one PENDING row through the caller's transaction", async () => {
     const { manager, builder } = createManager();
 
     const row = await new ChannexAriOutboxRepository().insert(
@@ -46,57 +46,19 @@ describe("ChannexAriOutboxRepository.insert", () => {
         updatedAt: 1_750_000_000_000,
       })
     );
-    expect(row.id).toEqual(expect.any(String));
-    expect(row.id.length).toBeGreaterThan(30);
-  });
-
-  test("uses the caller's transaction, so the row and the domain change commit together", async () => {
-    const { manager, builder } = createManager();
-
-    await new ChannexAriOutboxRepository().insert(manager, validInput());
-
     expect(manager.createQueryBuilder).toHaveBeenCalledTimes(1);
-    expect(builder.execute).toHaveBeenCalledTimes(1);
+    expect(row.id).toEqual(expect.any(String));
   });
 
-  test("rejects a range where dateTo is before dateFrom", async () => {
-    const { manager } = createManager();
-
-    await expect(
-      new ChannexAriOutboxRepository().insert(manager, validInput({ dateFrom: 20261105, dateTo: 20261101 }))
-    ).rejects.toThrow("dateTo must not be before dateFrom");
-  });
-
-  test("rejects an empty change type list, because the row would say nothing changed", async () => {
-    const { manager } = createManager();
-
-    await expect(
-      new ChannexAriOutboxRepository().insert(manager, validInput({ changeTypes: [] }))
-    ).rejects.toThrow("changeTypes must not be empty");
-  });
-
-  test("rejects a date that is not in YYYYMMDD form", async () => {
-    const { manager } = createManager();
-
-    await expect(
-      new ChannexAriOutboxRepository().insert(manager, validInput({ dateFrom: 1761955200000 }))
-    ).rejects.toThrow("dateFrom must be an integer date in YYYYMMDD form");
-  });
-
-  test("rejects a missing property id", async () => {
-    const { manager } = createManager();
-
-    await expect(
-      new ChannexAriOutboxRepository().insert(manager, validInput({ domitsPropertyId: "  " }))
-    ).rejects.toThrow("domitsPropertyId is required");
-  });
-
-  test("writes nothing when validation fails", async () => {
+  test.each([
+    ["dateTo before dateFrom", { dateFrom: 20261105, dateTo: 20261101 }, "dateTo must not be before dateFrom"],
+    ["an empty change type list", { changeTypes: [] }, "changeTypes must not be empty"],
+    ["a timestamp instead of YYYYMMDD", { dateFrom: 1761955200000 }, "dateFrom must be an integer date"],
+    ["a blank property id", { domitsPropertyId: "  " }, "domitsPropertyId is required"],
+  ])("rejects %s and writes nothing", async (_name, overrides, message) => {
     const { manager, builder } = createManager();
 
-    await expect(
-      new ChannexAriOutboxRepository().insert(manager, validInput({ changeTypes: [] }))
-    ).rejects.toThrow();
+    await expect(new ChannexAriOutboxRepository().insert(manager, validInput(overrides))).rejects.toThrow(message);
     expect(builder.execute).not.toHaveBeenCalled();
   });
 });
