@@ -152,7 +152,15 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
       return row ? clone(row) : null;
     },
 
-    ensureDomain: async ({ siteId, domain, domainType, status, isPrimary = true, verificationDetails, lastCheckedAt }) => {
+    ensureDomain: async ({
+      siteId,
+      domain,
+      domainType,
+      status,
+      isPrimary = true,
+      verificationDetails,
+      lastCheckedAt,
+    }) => {
       calls.push(["ensureDomain", siteId, domain]);
       const failure = takeFailure("ensureDomain");
       if (failure) {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
 import { createStoringDomainRepository } from "./support/storingDomainRepository.js";
 
@@ -96,6 +96,12 @@ const withFallbackRoutingActive = async (work) => {
   }
 };
 
+const silenceConsoleError = () => jest.spyOn(console, "error").mockImplementation(() => {});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe("public render primaryDomain, resolved by domain", () => {
   it.each([FALLBACK_NAME, CUSTOM_NAME])(
     "names the flagged fallback as main address when %s is requested, and keeps the requested row as domain",
@@ -174,21 +180,15 @@ describe("public render primaryDomain, resolved by domain", () => {
       rows: [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true })],
     });
     domainRepository.failNext("listDomainsBySiteId", new Error("connection reset"));
-    const logged = [];
-    const originalConsoleError = console.error;
-    console.error = (...args) => logged.push(args);
+    const consoleError = silenceConsoleError();
 
-    try {
-      const { statusCode, body } = await renderByDomain(controller, FALLBACK_NAME);
+    const { statusCode, body } = await renderByDomain(controller, FALLBACK_NAME);
 
-      expect(statusCode).toBe(200);
-      expect(body.primaryDomain).toBeNull();
-      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
-      expect(body.site.id).toBe(SITE.id);
-      expect(logged).toHaveLength(1);
-    } finally {
-      console.error = originalConsoleError;
-    }
+    expect(statusCode).toBe(200);
+    expect(body.primaryDomain).toBeNull();
+    expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+    expect(body.site.id).toBe(SITE.id);
+    expect(consoleError).toHaveBeenCalledTimes(1);
   });
 
   it.each(["PENDING", "VERIFIED", "FAILED", "DISABLED", "REMOVING"])(
@@ -288,20 +288,15 @@ describe("public render primaryDomain, resolved by domain", () => {
           });
           domainRepository.failNext("ensureDomain", new Error("connection reset"));
           const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
-          const originalConsoleError = console.error;
-          console.error = () => {};
+          silenceConsoleError();
 
-          try {
-            const { statusCode, body } = await renderByDomain(controller, fallbackName);
+          const { statusCode, body } = await renderByDomain(controller, fallbackName);
 
-            expect(statusCode).toBe(200);
-            expect(body.domain.domain).toBe(fallbackName);
-            expect(body.domain.isPrimary).toBe(true);
-            expect(storedRowNamed(domainRepository, fallbackName)).toBeUndefined();
-            expect(body.primaryDomain).toEqual(expectedMainAddress);
-          } finally {
-            console.error = originalConsoleError;
-          }
+          expect(statusCode).toBe(200);
+          expect(body.domain.domain).toBe(fallbackName);
+          expect(body.domain.isPrimary).toBe(true);
+          expect(storedRowNamed(domainRepository, fallbackName)).toBeUndefined();
+          expect(body.primaryDomain).toEqual(expectedMainAddress);
         });
       }
     );
@@ -412,20 +407,15 @@ describe("public render primaryDomain, resolved by site id", () => {
       const { controller, domainRepository } = buildController({ rows: [] });
       domainRepository.failNext("ensureDomain", new Error("connection reset"));
       const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
-      const originalConsoleError = console.error;
-      console.error = () => {};
+      silenceConsoleError();
 
-      try {
-        const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+      const { statusCode, body } = await renderBySiteId(controller, SITE.id);
 
-        expect(statusCode).toBe(200);
-        expect(body.domain.domain).toBe(fallbackName);
-        expect(body.domain.isPrimary).toBe(true);
-        expect(domainRepository.snapshot()).toEqual([]);
-        expect(body.primaryDomain).toBeNull();
-      } finally {
-        console.error = originalConsoleError;
-      }
+      expect(statusCode).toBe(200);
+      expect(body.domain.domain).toBe(fallbackName);
+      expect(body.domain.isPrimary).toBe(true);
+      expect(domainRepository.snapshot()).toEqual([]);
+      expect(body.primaryDomain).toBeNull();
     });
   });
 });
