@@ -3,6 +3,8 @@ const mockMessageControllerMethods = {
   getThreads: jest.fn(),
   getMessages: jest.fn(),
   markThreadRead: jest.fn(),
+  markThreadUnread: jest.fn(),
+  closeThread: jest.fn(),
 };
 const mockIntegrationControllerMethods = {
   startWhatsAppConnect: jest.fn(),
@@ -80,6 +82,8 @@ describe("UnifiedMessaging retained route contracts", () => {
     ["GET", "/default/threads", mockMessageControllerMethods.getThreads, "threads"],
     ["GET", "/default/messages", mockMessageControllerMethods.getMessages, "messages"],
     ["POST", "/default/threads/thread-1/read", mockMessageControllerMethods.markThreadRead, "mark-read"],
+    ["POST", "/default/threads/thread-1/unread", mockMessageControllerMethods.markThreadUnread, "mark-unread"],
+    ["POST", "/default/threads/thread-1/close", mockMessageControllerMethods.closeThread, "close"],
     [
       "POST",
       "/default/integrations/whatsapp/ingest/messages",

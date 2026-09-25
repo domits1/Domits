@@ -3,6 +3,8 @@ const mockMessageService = {
   getThreads: jest.fn(),
   getMessages: jest.fn(),
   markThreadRead: jest.fn(),
+  markThreadUnread: jest.fn(),
+  closeThread: jest.fn(),
 };
 
 jest.mock("../business/messageService.js", () => ({
@@ -128,15 +130,19 @@ describe("MessageController authenticated user handling", () => {
     });
   });
 
-  test("markThreadRead extracts threadId from the path and forwards the authenticated user", async () => {
-    mockMessageService.markThreadRead.mockResolvedValue({
+  test.each([
+    ["markThreadRead", "read"],
+    ["markThreadUnread", "unread"],
+    ["closeThread", "close"],
+  ])("%s extracts threadId from the path and forwards the authenticated user", async (methodName, pathSuffix) => {
+    mockMessageService[methodName].mockResolvedValue({
       statusCode: 200,
-      response: { threadId: "thread-1", updated: 2 },
+      response: { threadId: "thread-1", updated: 1 },
     });
 
-    await controller.markThreadRead(buildEvent({ path: "/default/threads/thread-1/read" }));
+    await controller[methodName](buildEvent({ path: `/default/threads/thread-1/${pathSuffix}` }));
 
-    expect(mockMessageService.markThreadRead).toHaveBeenCalledWith(
+    expect(mockMessageService[methodName]).toHaveBeenCalledWith(
       "thread-1",
       expect.objectContaining({ userId: "guest-1", isGuest: true })
     );

@@ -6,6 +6,7 @@ import { Availability_Restrictions } from "../../models/Availability_Restriction
 import { Booking } from "../../models/Booking.js";
 import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
+import { EnterpriseRatePlan } from "../../models/EnterpriseRatePlan.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
@@ -53,6 +54,7 @@ import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
+import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
@@ -114,8 +116,10 @@ export const Tables = [
   Property_Task_Activity,
   Host_Settings,
   Communication_Preferences,
+  Company_Profile,
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,
   Invoice,
+  EnterpriseRatePlan,
 ];

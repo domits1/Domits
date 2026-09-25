@@ -8,14 +8,7 @@
     background-color: #f9f9f9;
     text-align: center;
     height: 440px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
     color: #0D9813;
-    
-  
-    &:hover {
-      transform: scale(1.02);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
 
     select {
       color: #0D9813;

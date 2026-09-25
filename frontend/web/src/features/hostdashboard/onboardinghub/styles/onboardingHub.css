@@ -1,0 +1,329 @@
+.onboarding-mode-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.onboarding-mode-tab {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.onboarding-mode-tab:hover {
+    color: #111827;
+    text-decoration: none;
+}
+
+.onboarding-mode-tab--active {
+    color: #16a34a;
+    border-bottom-color: #16a34a;
+}
+
+.onboarding-hub-loading,
+.onboarding-hub-error {
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+.onboarding-hub-error {
+    color: #b91c1c;
+}
+
+.onboarding-hub-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 24px;
+    border: 1px dashed #d1d5db;
+    border-radius: 14px;
+    color: #6b7280;
+}
+
+.onboarding-hub-empty-cta {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #111827;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.onboarding-property-picker {
+    margin-bottom: 24px;
+}
+
+.onboarding-property-picker-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.onboarding-property-picker-select {
+    width: 100%;
+    max-width: 360px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.onboarding-progress {
+    margin-bottom: 28px;
+}
+
+.onboarding-progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.onboarding-progress-fill {
+    height: 100%;
+    background: #16a34a;
+    transition: width 0.25s ease;
+}
+
+.onboarding-progress-label {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.onboarding-hub-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.onboarding-step-tile {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 20px 24px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.onboarding-step-tile:hover {
+    border-color: #bbf7d0;
+    box-shadow: 0 4px 16px rgba(21, 128, 61, 0.08);
+    background: #f0fdf4;
+    color: inherit;
+    text-decoration: none;
+}
+
+.onboarding-step-tile-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.onboarding-step-tile-icon {
+    font-size: 1.8rem !important;
+}
+
+.onboarding-step-tile-icon-complete {
+    color: #16a34a;
+}
+
+.onboarding-step-tile-icon-incomplete {
+    color: #d1d5db;
+}
+
+.onboarding-step-tile-icon-unknown {
+    color: #f59e0b;
+}
+
+.onboarding-step-tile-status-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    border-top-color: #9ca3af;
+    animation: onboarding-status-spin 0.8s linear infinite;
+}
+
+@keyframes onboarding-status-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.onboarding-step-tile-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.onboarding-step-tile-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.onboarding-step-tile-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.onboarding-step-tile-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6b7280;
+    background: #f3f4f6;
+    border-radius: 999px;
+    padding: 2px 10px;
+}
+
+.onboarding-step-tile-desc {
+    font-size: 0.88rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.onboarding-step-tile-sub-detail {
+    font-size: 0.8rem;
+    color: #16a34a;
+    margin-top: 4px;
+}
+
+.onboarding-step-tile-status-label {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+.onboarding-step-tile-chevron {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.onboarding-golive-cta {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.onboarding-golive-cta-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 4px;
+}
+
+.onboarding-golive-cta-desc {
+    font-size: 0.88rem;
+    color: #6b7280;
+    margin: 0 0 16px;
+}
+
+.onboarding-golive-section {
+    margin-bottom: 28px;
+}
+
+.onboarding-golive-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 14px;
+}
+
+.onboarding-golive-checklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.onboarding-golive-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: #111827;
+}
+
+.onboarding-golive-blocked {
+    font-size: 0.9rem;
+    color: #b45309;
+    margin-bottom: 16px;
+}
+
+.onboarding-golive-already-live {
+    font-size: 0.9rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.onboarding-golive-success {
+    font-size: 0.9rem;
+    color: #16a34a;
+    margin-bottom: 16px;
+}
+
+.onboarding-golive-activate-button {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    background: #16a34a;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.onboarding-golive-activate-button:disabled {
+    background: #d1d5db;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.onboarding-golive-pill {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.onboarding-golive-pill--ready {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.onboarding-golive-pill--not-ready {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.onboarding-golive-back-link {
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #6b7280;
+}

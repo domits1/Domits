@@ -505,7 +505,7 @@ export function TemplateSoftCallout({
       }, activeTargetId)}
     >
       <strong>{model.callToAction.label}</strong>
-      <p>{model.callToAction.note}</p>
+      {model.callToAction.note ? <p>{model.callToAction.note}</p> : null}
     </div>
   );
 }

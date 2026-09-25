@@ -49,3 +49,13 @@ export const removeTeamMember = async (memberId) => {
     if (!response.ok) throw new Error(`Failed to remove team member: ${response.status}`);
     return response.json();
 };
+
+export const updateTeamMemberRole = async (memberId, role) => {
+    const response = await fetch(`${TEAM_API_URL}?id=${memberId}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ role }),
+    });
+    if (!response.ok) throw new Error(`Failed to update team member role: ${response.status}`);
+    return response.json();
+};

@@ -1,4 +1,11 @@
-import { getGuestBookingDetailsByBookingId, getHostBookingDetails, sendUnifiedMessage, markThreadRead } from "./messagingService";
+import {
+  getGuestBookingDetailsByBookingId,
+  getHostBookingDetails,
+  sendUnifiedMessage,
+  markThreadRead,
+  markThreadUnread,
+  closeThread,
+} from "./messagingService";
 
 describe("messagingService unified REST client", () => {
   beforeEach(() => {
@@ -85,6 +92,52 @@ describe("messagingService unified REST client", () => {
     globalThis.fetch.mockClear();
 
     await expect(markThreadRead("thread-1", null)).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REQUIRED",
+    });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("markThreadUnread posts to /threads/{id}/unread with the Cognito ID token", async () => {
+    globalThis.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ threadId: "thread-1", updated: 1 }) });
+
+    const result = await markThreadUnread("thread-1", "id-token-1");
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads/thread-1/unread",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer id-token-1",
+        },
+      })
+    );
+    expect(result).toEqual({ threadId: "thread-1", updated: 1 });
+  });
+
+  test("closeThread posts to /threads/{id}/close with the Cognito ID token", async () => {
+    globalThis.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ threadId: "thread-1", status: "CLOSED" }) });
+
+    const result = await closeThread("thread-1", "id-token-1");
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads/thread-1/close",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer id-token-1",
+        },
+      })
+    );
+    expect(result).toEqual({ threadId: "thread-1", status: "CLOSED" });
+  });
+
+  test("closeThread does not call the API without a token", async () => {
+    globalThis.fetch.mockClear();
+
+    await expect(closeThread("thread-1", null)).rejects.toMatchObject({
       code: "AUTH_TOKEN_REQUIRED",
     });
 

@@ -1,6 +1,8 @@
 import { PropertyBuilder } from "../business/service/propertyBuilder.js";
 import { PropertyService } from "../business/service/propertyService.js";
 import { WebsiteQuoteService } from "../business/service/websiteQuoteService.js";
+import { WebsiteCustomDomainService, isCustomDomainSyncable } from "../business/service/websiteCustomDomainService.js";
+import { CloudFrontTenantRepository } from "../data/repository/cloudFrontTenantRepository.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -19,6 +21,11 @@ import ChannexCalendarChangeSyncClient, {
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import {
+    WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
+    WebsiteCustomDomainError,
+} from "../util/exception/WebsiteCustomDomainError.js";
+import { toHostWebsiteDomainView } from "../util/websiteDomainView.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -193,6 +200,7 @@ export class PropertyController {
         this.channexCalendarChangeSyncClient = channexCalendarChangeSyncClient;
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
+        this.websiteCustomDomainService = null;
         this.websiteQuoteTokenSecretPromise = null;
     }
 
@@ -2316,6 +2324,27 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/pricing/saving-config
+    // -------------------------
+    async getPricingSavingConfig(event) {
+        try {
+            const config = await this.propertyService.getPricingSavingConfig();
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(config)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // GET /property/bookingEngine/country
     // -------------------------
     async getActivePropertiesCardByCountry(event) {
@@ -3068,6 +3097,166 @@ export class PropertyController {
         }
     }
 
+    // -------------------------
+    // GET /property/website/domains
+    // -------------------------
+    async listWebsiteDomains(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site }) => {
+            const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
+            if (isCustomDomainSyncable(customDomain)) {
+                await this.refreshWebsiteCustomDomainSafely({ site, customDomain });
+            }
+
+            return this.buildWebsiteDomainsResponse(site);
+        });
+    }
+
+    async buildWebsiteDomainsResponse(site, domains = null) {
+        const siteDomains = domains || (await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id));
+        const summary = this.buildDirectBookingWebsiteSummary(site, siteDomains);
+        return {
+            statusCode: 200,
+            body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
+        };
+    }
+
+    async readWebsiteDomainsAfterChange(site) {
+        try {
+            return await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        } catch (error) {
+            console.error(`[CustomDomain] domain list read failed after a completed change (site ${site.id}).`, error);
+            throw new WebsiteCustomDomainError(
+                WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAINS_UNAVAILABLE,
+                "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
+                { cause: error }
+            );
+        }
+    }
+
+    // -------------------------
+    // POST /property/website/domains
+    // -------------------------
+    async createWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const record = await this.getWebsiteCustomDomainService().requestCustomDomain({ site, domain });
+            return { statusCode: 201, body: { domain: toHostWebsiteDomainView(record) } };
+        });
+    }
+
+    // -------------------------
+    // POST /property/website/domains/verify
+    // -------------------------
+    async verifyWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site }) => {
+            await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
+        });
+    }
+
+    // -------------------------
+    // DELETE /property/website/domains?siteId=&domain=
+    // -------------------------
+    async removeWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(event?.queryStringParameters?.domain || body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
+        });
+    }
+
+    async promoteWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const domains = await this.getWebsiteCustomDomainService().promoteCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, domains);
+        });
+    }
+
+    async handleWebsiteDomainRequest(event, handle) {
+        const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
+        try {
+            const body = this.parseWebsiteDomainRequestBody(event);
+            if (!body) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "A JSON object request body is required.", requestId);
+            }
+
+            const siteId = cleanWebsiteText(event?.queryStringParameters?.siteId || body.siteId);
+            if (!siteId) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "siteId is required.", requestId);
+            }
+
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const site = await this.directBookingWebsiteSiteRepository.getSiteById(siteId);
+            if (!site || site.hostId !== hostId) {
+                return this.websiteQuoteErrorResponse(404, "site_not_found", "No website was found for this request.", requestId);
+            }
+
+            const { statusCode, body: responseBody } = await handle({ site, body, requestId });
+            return {
+                statusCode,
+                headers: draftResponseHeaders,
+                body: JSON.stringify(responseBody),
+            };
+        } catch (error) {
+            if (error instanceof WebsiteCustomDomainError) {
+                return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
+            }
+            if (error?.statusCode === 401 || error?.statusCode === 403) {
+                const code = error.statusCode === 401 ? "unauthorized" : "forbidden";
+                return this.websiteQuoteErrorResponse(error.statusCode, code, error.message, requestId);
+            }
+            console.error("Website domain request failed.", error);
+            return this.websiteQuoteErrorResponse(500, "internal_error", "We could not complete this domain request. Please try again.", requestId);
+        }
+    }
+
+    parseWebsiteDomainRequestBody(event) {
+        if (!event?.body) {
+            return {};
+        }
+
+        try {
+            const parsedBody = JSON.parse(event.body);
+            return parsedBody && typeof parsedBody === "object" && !Array.isArray(parsedBody) ? parsedBody : null;
+        } catch {
+            return null;
+        }
+    }
+
+    async refreshWebsiteCustomDomainSafely({ site, customDomain }) {
+        try {
+            await this.getWebsiteCustomDomainService().syncCustomDomain({ site, domainRecord: customDomain });
+        } catch (error) {
+            if (!(error instanceof WebsiteCustomDomainError)) {
+                throw error;
+            }
+            console.error("Website custom domain refresh failed; returning the stored status.", error);
+        }
+    }
+
+    getWebsiteCustomDomainService() {
+        this.websiteCustomDomainService ??= new WebsiteCustomDomainService({
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            tenantRepository: new CloudFrontTenantRepository(),
+            eventRepository: this.directBookingWebsiteEventRepository,
+        });
+        return this.websiteCustomDomainService;
+    }
+
     websiteQuoteErrorResponse(statusCode, code, message, requestId) {
         return {
             statusCode,
@@ -3173,6 +3362,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
             }
@@ -3202,6 +3392,18 @@ export class PropertyController {
                 return this.badRequest(error.message);
             }
             return this.websiteServerError();
+        }
+    }
+
+    async releaseWebsiteCustomDomainSafely(site) {
+        const customDomain = await this.directBookingWebsiteDomainRepository.getCustomDomainBySiteId(site.id);
+        if (!customDomain?.verificationDetails?.tenantId) {
+            return;
+        }
+        try {
+            await this.getWebsiteCustomDomainService().releaseTenantForSite({ site, record: customDomain });
+        } catch (error) {
+            console.error(`[CustomDomain] disabling the tenant for ${customDomain.domain} on website delete failed (site ${site.id}).`, error);
         }
     }
 
@@ -3268,6 +3470,71 @@ export class PropertyController {
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
         }
+    }
+
+    // -------------------------
+    // GET /property/draft/:id
+    // -------------------------
+    async getDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const draft = await this.propertyService.getDraft(propertyId);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(draft),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/draft/:id
+    // -------------------------
+    async updateDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const propertyId = event.pathParameters?.id;
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const eventBody = JSON.parse(event.body || "{}");
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyService.updateDraft(propertyId, eventBody);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isDraftContentClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    isDraftContentClientError(error) {
+        return Boolean(error?.message?.startsWith("Draft "));
     }
 
     // -------------------------

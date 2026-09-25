@@ -405,6 +405,21 @@
     margin: 4px 0 0 136px;
 }
 
+.pd-photo-error,
+.pd-photo-success {
+    font-size: 0.8rem;
+    text-align: center;
+    margin: 0;
+}
+
+.pd-photo-error {
+    color: #dc2626;
+}
+
+.pd-photo-success {
+    color: #15803d;
+}
+
 .personal-data-card-footer {
     display: flex;
     justify-content: flex-end;
@@ -492,6 +507,38 @@
     }
 }
 
+.settings-section-note {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: -8px 0 14px;
+}
+
+.company-logo-preview {
+    display: block;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+}
+
+.company-logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    border: 1px dashed #d1d5db;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
 /* ─── Preferences / Authentication card ─────────────────────────────────── */
 
 .personal-data-pref-card {
@@ -550,6 +597,83 @@
     background: #fef2f2;
     color: #b91c1c;
     border-color: #fecaca;
+}
+
+.pd-password-dots {
+    flex: 1;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: #374151;
+}
+
+.pd-password-inline {
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pd-password-inline-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.pd-password-inline .pd-field-label {
+    width: 180px;
+    min-width: 180px;
+}
+
+.pd-password-inline .pd-field-input {
+    flex: none;
+    width: 100%;
+}
+
+.pd-password-input-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.pd-password-input-wrap .pd-field-input {
+    padding-right: 40px;
+}
+
+.pd-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.pd-password-toggle:hover {
+    color: #374151;
+}
+
+.pd-password-error {
+    margin: 0;
+}
+
+.pd-password-success {
+    font-size: 0.85rem;
+    color: #166534;
+    margin: 0;
+}
+
+.pd-password-inline-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .pd-verified-check {
@@ -649,7 +773,8 @@
         gap: 4px;
     }
 
-    .pd-field-label {
+    .pd-field-label,
+    .pd-password-inline .pd-field-label {
         width: auto;
         min-width: auto;
         padding-top: 0;
@@ -710,6 +835,19 @@
     }
 
     .pd-pref-select {
+        width: 100%;
+    }
+
+    .pd-password-dots {
+        flex: 1 1 100%;
+    }
+
+    .pd-password-inline {
+        padding: 16px;
+    }
+
+    .pd-password-input-wrap {
+        max-width: none;
         width: 100%;
     }
 }
