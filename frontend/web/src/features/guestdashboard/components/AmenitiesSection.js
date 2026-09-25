@@ -2,6 +2,11 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import Amenities from "../../../store/amenities";
 
+const amenitiesScrollBoxStyle = {
+  maxHeight: 300,
+  overflowY: "auto",
+};
+
 function AmenitiesSection({ amenityIds = [] }) {
   const amenityObjects = useMemo(() => {
     if (!Array.isArray(amenityIds)) {
@@ -20,7 +25,7 @@ function AmenitiesSection({ amenityIds = [] }) {
       {amenityObjects.length === 0 ? (
         <p>No amenities have been listed for this property.</p>
       ) : (
-        <ul>
+        <ul style={amenitiesScrollBoxStyle}>
           {amenityObjects.map((amenity) => (
             <li key={amenity.id}>{amenity.amenity}</li>
           ))}

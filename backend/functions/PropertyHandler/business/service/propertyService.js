@@ -33,6 +33,10 @@ import {
   normalizeBlockedDateKeys,
 } from "../../util/calendarAvailability.js";
 
+// Terminal booking statuses: the booking never happened or is over, so there is nothing left to view.
+const DEAD_BOOKING_STATUSES = new Set(["cancelled", "canceled", "declined", "failed"]);
+const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
     this.propertyRepository = new PropertyRepository(systemManagerRepository);
@@ -51,7 +55,7 @@ export class PropertyService {
     this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
     this.propertyExternalCalendarRepository = new PropertyExternalCalendarRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
-    this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+    this.bookingRepository = new BookingRepository(systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
     this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
     this.propertyCancellationPolicyRepository = new PropertyCancellationPolicyRepository(systemManagerRepository);
@@ -274,8 +278,8 @@ export class PropertyService {
 
   async getFullPropertyByBookingId(bookingId) {
     const booking = await this.bookingRepository.getBookingById(bookingId);
-    if (booking.status !== "Paid") {
-      throw new Forbidden("Payment must be processed before accessing the full property details.");
+    if (DEAD_BOOKING_STATUSES.has(normalizeBookingStatus(booking.status))) {
+      throw new Forbidden("This booking is no longer active.");
     }
     const basePropertyInfo = await this.getBasePropertyInfo(booking.property_id);
     if (!basePropertyInfo) {
