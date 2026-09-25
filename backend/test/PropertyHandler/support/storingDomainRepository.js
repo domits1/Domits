@@ -134,12 +134,69 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
 
     listDomainsBySiteId: async (siteId) => {
       calls.push(["listDomainsBySiteId", siteId]);
+      const failure = takeFailure("listDomainsBySiteId");
+      if (failure) {
+        throw failure;
+      }
       return rowsForSite(siteId)
         .sort(
           (left, right) =>
             Number(right.isPrimary) - Number(left.isPrimary) || Number(left.createdAt) - Number(right.createdAt)
         )
         .map(clone);
+    },
+
+    getPrimaryLiveDomainBySiteId: async (siteId) => {
+      calls.push(["getPrimaryLiveDomainBySiteId", siteId]);
+      const row = rowsForSite(siteId).find((entry) => entry.domainType === "FALLBACK");
+      return row ? clone(row) : null;
+    },
+
+    ensureDomain: async ({
+      siteId,
+      domain,
+      domainType,
+      status,
+      isPrimary = true,
+      verificationDetails,
+      lastCheckedAt,
+    }) => {
+      calls.push(["ensureDomain", siteId, domain]);
+      const failure = takeFailure("ensureDomain");
+      if (failure) {
+        throw failure;
+      }
+
+      const now = clock();
+      const existing = [...store.values()].find((entry) => entry.domain === domain);
+      if (existing) {
+        if (existing.siteId !== siteId) {
+          return null;
+        }
+        Object.assign(existing, {
+          domainType,
+          status,
+          verificationDetails: { ...(verificationDetails || {}) },
+          lastCheckedAt: lastCheckedAt ?? now,
+          updatedAt: now,
+        });
+        return clone(existing);
+      }
+
+      const record = {
+        id: `ensured-${nextId++}`,
+        siteId,
+        domain,
+        domainType,
+        status,
+        isPrimary: Boolean(isPrimary),
+        verificationDetails: { ...(verificationDetails || {}) },
+        lastCheckedAt: lastCheckedAt ?? now,
+        createdAt: now,
+        updatedAt: now,
+      };
+      store.set(record.id, record);
+      return clone(record);
     },
 
     countDomainsByTenantId: async (tenantId) =>

@@ -67,6 +67,7 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
 const CALENDAR_CHANGE_FIELD_GROUPS = Object.freeze({
     availability: ["isAvailable"],
@@ -177,6 +178,26 @@ const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) 
         domainEntry?.verificationDetails?.disabledByHost === true;
 
     return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
+};
+const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
+    String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
+const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
+    const liveFlaggedCustomDomain = domains.find(
+        (domainEntry) =>
+            domainEntry?.isPrimary === true &&
+            isDirectBookingWebsiteCustomDomain(domainEntry) &&
+            resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry) === "ACTIVE"
+    );
+    const mainAddress =
+        liveFlaggedCustomDomain || domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry));
+    if (!mainAddress?.domain) {
+        return null;
+    }
+
+    return {
+        domain: mainAddress.domain,
+        status: resolveDirectBookingWebsiteRuntimeDomainStatus(site, mainAddress),
+    };
 };
 
 export class PropertyController {
@@ -1705,7 +1726,7 @@ export class PropertyController {
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined) {
+    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined, primaryDomain = null) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
@@ -1724,6 +1745,7 @@ export class PropertyController {
                 publishedAt: site.publishedAt,
             },
             domain,
+            primaryDomain,
             propertySnapshot:
                 propertySnapshot && typeof propertySnapshot === "object"
                     ? propertySnapshot
@@ -1821,11 +1843,27 @@ export class PropertyController {
             null;
         const healedPrimaryDomain =
             primaryDomain || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
+        const storedSiteDomains = primaryDomain ? domains : null;
 
         return {
             site,
             domain: healedPrimaryDomain,
+            siteDomains: storedSiteDomains,
         };
+    }
+
+    async loadPublicDirectBookingWebsiteMainAddress(site, loadedSiteDomains = null) {
+        if (Array.isArray(loadedSiteDomains)) {
+            return selectDirectBookingWebsiteMainAddress(site, loadedSiteDomains);
+        }
+
+        try {
+            const siteDomains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+            return selectDirectBookingWebsiteMainAddress(site, siteDomains);
+        } catch (error) {
+            console.error("Failed to load the main address of a direct booking website.", error);
+            return null;
+        }
     }
 
     isPublicDirectBookingWebsiteReachable(site, domain) {
@@ -2947,9 +2985,10 @@ export class PropertyController {
                 },
             });
 
-            const propertySnapshot = await this.buildPublicPropertySnapshotForWebsiteRender(
-                resolutionResult.site
-            );
+            const [propertySnapshot, primaryDomain] = await Promise.all([
+                this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
+                this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
+            ]);
 
             return {
                 statusCode: 200,
@@ -2957,7 +2996,8 @@ export class PropertyController {
                 body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
                     resolutionResult.site,
                     resolutionResult.domain,
-                    propertySnapshot
+                    propertySnapshot,
+                    primaryDomain
                 )),
             };
         } catch (error) {
