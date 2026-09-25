@@ -10,17 +10,17 @@ const BASE_URL =
 const getEnterpriseIdFromListings = async () => {
   const listings = await fetchHostOwnedListings();
 
-  const enterpriseIds = listings
-    .map(
-      (listing) =>
-        listing?.property?.enterpriseid ||
-        listing?.property?.enterpriseId ||
-        listing?.enterpriseid ||
-        listing?.enterpriseId
-    )
-    .filter(Boolean);
-
-  return enterpriseIds[0] || null;
+  return (
+    listings
+      .map(
+        (listing) =>
+          listing?.property?.enterpriseid ||
+          listing?.property?.enterpriseId ||
+          listing?.enterpriseid ||
+          listing?.enterpriseId
+      )
+      .find(Boolean) || null
+  );
 };
 
 export const getEnterpriseRatePlan = async () => {
