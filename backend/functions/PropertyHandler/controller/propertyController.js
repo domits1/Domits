@@ -2981,7 +2981,7 @@ export class PropertyController {
 
             const [propertySnapshot, primaryDomain] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
-                requestedDomain ? this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site) : null,
+                this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site),
             ]);
 
             return {

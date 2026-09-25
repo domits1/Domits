@@ -78,6 +78,8 @@ const render = async (controller, query) => {
 
 const renderByDomain = (controller, domain) => render(controller, { domain });
 
+const renderBySiteId = (controller, siteId) => render(controller, { site: siteId });
+
 const storedRowNamed = (domainRepository, name) => domainRepository.snapshot().find((row) => row.domain === name);
 
 const withFallbackRoutingActive = async (work) => {
@@ -263,8 +265,56 @@ describe("public render primaryDomain, resolved by domain", () => {
 });
 
 describe("public render primaryDomain, resolved by site id", () => {
-  it.todo("names the same main address as the domain path");
-  it.todo("keeps the existing domain field unchanged");
-  it.todo("answers primaryDomain null when the site has no usable main address");
+  it.each([
+    ["the fallback carries the flag", [fallbackRow(), customRow()], FALLBACK_NAME, "domain-fallback"],
+    [
+      "a live custom domain carries the flag",
+      [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true })],
+      CUSTOM_NAME,
+      "domain-custom",
+    ],
+    [
+      "a custom domain that is not live carries the flag",
+      [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true, status: "VERIFIED" })],
+      FALLBACK_NAME,
+      "domain-custom",
+    ],
+    [
+      "no row carries the flag",
+      [customRow({ createdAt: 0 }), fallbackRow({ isPrimary: false })],
+      FALLBACK_NAME,
+      "domain-custom",
+    ],
+    [
+      "both the older fallback and a live custom domain carry the flag",
+      [fallbackRow({ createdAt: 1 }), customRow({ isPrimary: true, createdAt: 2 })],
+      CUSTOM_NAME,
+      "domain-fallback",
+    ],
+  ])(
+    "names the same main address as the domain path when %s, and keeps the flagged or oldest row as domain",
+    async (_label, rows, expectedMainAddress, expectedDomainRowId) => {
+      const { controller, domainRepository } = buildController({ rows });
+
+      const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: expectedMainAddress, status: "ACTIVE" });
+      expect(body.domain).toEqual(domainRepository.rowById(expectedDomainRowId));
+    }
+  );
+
+  it("answers primaryDomain null when the flagged custom domain is not live and the site has no fallback row", async () => {
+    const { controller, domainRepository } = buildController({
+      rows: [customRow({ isPrimary: true, status: "VERIFIED" })],
+    });
+
+    const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+    expect(statusCode).toBe(200);
+    expect(body.primaryDomain).toBeNull();
+    expect(body.domain).toEqual(domainRepository.rowById("domain-custom"));
+  });
+
   it.todo("reads the site's domain rows once");
 });
