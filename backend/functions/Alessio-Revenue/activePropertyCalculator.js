@@ -5,13 +5,18 @@ import { EnterpriseRatePlan } from "database/models/EnterpriseRatePlan";
 const DEFAULT_PRICE_PER_PROPERTY_CENTS = 4900;
 const DEFAULT_CURRENCY = "EUR";
 
-async function getActivePropertyCount(enterpriseId) {
+async function getActivePropertyCount(enterpriseId, hostId = null) {
   const client = await Database.getInstance();
   const propertyRepository = client.getRepository(Property);
+  const queryBuilder = propertyRepository.createQueryBuilder("property");
 
-  return propertyRepository
-    .createQueryBuilder("property")
-    .where("property.enterpriseid = :enterpriseId", { enterpriseId })
+  if (hostId && enterpriseId === hostId) {
+    queryBuilder.where("property.hostid = :hostId", { hostId });
+  } else {
+    queryBuilder.where("property.enterpriseid = :enterpriseId", { enterpriseId });
+  }
+
+  return queryBuilder
     .andWhere("property.status = :status", { status: "ACTIVE" })
     .andWhere("property.is_deleted = :isDeleted", { isDeleted: false })
     .getCount();
@@ -37,6 +42,21 @@ async function authorizeEnterpriseAccess(enterpriseId, hostId) {
   const client = await Database.getInstance();
   const propertyRepository = client.getRepository(Property);
 
+  if (enterpriseId === hostId) {
+    const hostProperty = await propertyRepository
+      .createQueryBuilder("property")
+      .where("property.hostid = :hostId", { hostId })
+      .getOne();
+
+    if (!hostProperty) {
+      const error = new Error("You do not have access to this enterprise.");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    return;
+  }
+
   const ownedEnterpriseProperty = await propertyRepository
     .createQueryBuilder("property")
     .where("property.enterpriseid = :enterpriseId", { enterpriseId })
@@ -54,7 +74,7 @@ async function getEnterpriseBillingDetails(enterpriseId, hostId) {
   await authorizeEnterpriseAccess(enterpriseId, hostId);
 
   const [activeProperties, ratePlan] = await Promise.all([
-    getActivePropertyCount(enterpriseId),
+    getActivePropertyCount(enterpriseId, hostId),
     getEnterpriseRatePlan(enterpriseId),
   ]);
 

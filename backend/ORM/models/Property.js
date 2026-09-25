@@ -30,6 +30,10 @@ export const Property = new EntitySchema({
             type: "varchar",
             nullable: false
         },
+        enterpriseid: {
+            type: "varchar",
+            nullable: true,
+        },
         status: {
             type: "varchar",
             nullable: false

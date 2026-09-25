@@ -46,6 +46,7 @@ import PropertyAvailabilityView from "../hostonboarding/views/11_PropertyAvailab
 import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
 import HostReservationDetails from "./HostReservationDetails";
+import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -135,6 +136,7 @@ function MainDashboardHost() {
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
+          <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />

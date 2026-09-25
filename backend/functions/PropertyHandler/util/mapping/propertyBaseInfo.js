@@ -6,6 +6,7 @@ export class PropertyBaseInfoMapping {
         return new PropertyBaseDetails({
             id: propertyBaseInfoEntry.id,
             hostId: propertyBaseInfoEntry.hostid,
+            enterpriseId: propertyBaseInfoEntry.enterpriseid || null,
             title: propertyBaseInfoEntry.title,
             subtitle: propertyBaseInfoEntry.subtitle,
             description: propertyBaseInfoEntry.description,
