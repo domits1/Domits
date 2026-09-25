@@ -478,7 +478,7 @@ describe("MissedRevenueService.getMissedRevenue", () => {
       priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
       bookings: [
         {
-          property_id: "prop-2",
+          property_id: "prop-1",
           status: "confirmed",
           arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
           departuredate: Date.parse("2026-09-02T00:00:00Z"),
@@ -491,6 +491,70 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     // actualRevenue=25, potentialRevenue=100 => 25%
     expect(result.revenueEfficiencyPct).toBeCloseTo(25);
+  });
+
+  test("revenue efficiency ignores actual revenue from a property with no priced potential nights, but actualRevenue keeps it", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
+      bookings: [
+        {
+          property_id: "prop-2",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 25,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(25);
+    expect(result.revenueEfficiencyPct).toBe(0);
+  });
+
+  test("revenue efficiency only counts booked nights that have a priced calendar row, so partial coverage cannot exceed the real ratio", async () => {
+    const { service } = createService({
+      priceRows: [{ property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 }],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-03T00:00:00Z"),
+          total_price: 200,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    // Night 2 has no calendar row: it is in actualRevenue (200) but not in potential (100).
+    expect(result.actualRevenue).toBe(200);
+    expect(result.revenueEfficiencyPct).toBeCloseTo(100);
+  });
+
+  test("revenue efficiency excludes a booked night that potential revenue excludes (stop-sell)", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100, stop_sell: true },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 100 },
+      ],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 100,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.potentialRevenue).toBe(100);
+    expect(result.revenueEfficiencyPct).toBe(0);
   });
 
   test("revenue efficiency is 0 when potential revenue is 0", async () => {

@@ -53,6 +53,8 @@ function bookedDateSetByProperty(bookings) {
  * nights that fall within [startDate, endDate], per property. Not gated on
  * priceRows/PriceLabs sync coverage: a booking can predate the PriceLabs
  * connection, and gating actual revenue on that would understate real money.
+ * byPropertyDate keeps the per-night amounts so revenue efficiency can be
+ * restricted to the nights potential revenue actually covers.
  *
  * total_price is stored in euros; refunded_amount is stored in cents (see
  * General-Bookings-CRUD-Bookings-develop/data/stripeRepository.js and
@@ -63,6 +65,7 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
   const rangeEndMs = Date.parse(`${endDate}T00:00:00Z`) + MS_PER_DAY; // exclusive
 
   const byProperty = new Map();
+  const byPropertyDate = new Map();
   let total = 0;
 
   for (const b of bookings) {
@@ -85,10 +88,15 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
       if (ms < rangeStartMs || ms >= rangeEndMs) continue;
       total += nightlyShare;
       byProperty.set(b.property_id, (byProperty.get(b.property_id) ?? 0) + nightlyShare);
+
+      if (!byPropertyDate.has(b.property_id)) byPropertyDate.set(b.property_id, new Map());
+      const nights = byPropertyDate.get(b.property_id);
+      const iso = new Date(ms).toISOString().slice(0, 10);
+      nights.set(iso, (nights.get(iso) ?? 0) + nightlyShare);
     }
   }
 
-  return { total, byProperty };
+  return { total, byProperty, byPropertyDate };
 }
 
 function ensureProperty(byPropertyMap, propertyId) {
@@ -160,16 +168,19 @@ export class MissedRevenueService {
     ]);
 
     const bookedByProperty = bookedDateSetByProperty(bookings);
-    const { total: actualRevenue, byProperty: actualRevenueByPropertyMap } = actualRevenueByProperty(
-      bookings,
-      startDate,
-      endDate
-    );
+    const {
+      total: actualRevenue,
+      byProperty: actualRevenueByPropertyMap,
+      byPropertyDate: actualRevenueByPropertyDate,
+    } = actualRevenueByProperty(bookings, startDate, endDate);
 
     let grossMissedRevenue = 0;
     let unbookedNightsWithPriceData = 0;
     let unbookedNightsWithoutPriceData = 0;
     let potentialRevenue = 0;
+    // Numerator for revenue efficiency: actual revenue only on the nights that also
+    // count toward potentialRevenue, so both sides cover the same nights.
+    let actualRevenueOnPricedNights = 0;
     let potentialNightsWithPriceData = 0;
     let potentialNightsWithoutPriceData = 0;
     const byPropertyMap = new Map();
@@ -189,6 +200,7 @@ export class MissedRevenueService {
           potentialRevenue += price;
           potentialNightsWithPriceData += 1;
           propEntry.potentialRevenue += price;
+          actualRevenueOnPricedNights += actualRevenueByPropertyDate.get(row.property_id)?.get(iso) ?? 0;
         }
       }
 
@@ -213,7 +225,7 @@ export class MissedRevenueService {
     }
 
     const potentialOccupiedNights = potentialNightsWithPriceData + potentialNightsWithoutPriceData;
-    const revenueEfficiencyPct = potentialRevenue > 0 ? (actualRevenue / potentialRevenue) * 100 : 0;
+    const revenueEfficiencyPct = potentialRevenue > 0 ? (actualRevenueOnPricedNights / potentialRevenue) * 100 : 0;
     const totalUnbookedNightsSeen = unbookedNightsWithPriceData + unbookedNightsWithoutPriceData;
     const priceDataCoveragePct =
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
