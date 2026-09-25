@@ -1402,12 +1402,31 @@
       "subtitle": "Verify your property and host identity to meet local registrations.",
       "section": "Compliance Details",
       "fields": {
+        "property": "Listing",
+        "untitledListing": "Untitled listing",
         "propertyRegistration": "Property registration",
         "placeholder": "Registration number",
+        "noRegistrationYet": "No registration number added yet.",
         "hint": "This number proves your property is registered with local authorities. Additional compliance methods (ID verification, address proof) will be available soon."
       },
+      "states": {
+        "loading": "Loading your listings...",
+        "empty": "You don't have any listings yet.",
+        "createListing": "Create your first listing"
+      },
+      "unsavedChangesConfirm": "You have unsaved changes. Switch listing and discard them?",
+      "errors": {
+        "load": "We could not load your listings. Please try again.",
+        "duplicate": "This registration number is already used by another listing.",
+        "noAccess": "You do not have access to change this listing.",
+        "validation": "Enter a valid registration number. It cannot be empty, start with AUTO- or be longer than 255 characters.",
+        "generic": "We could not save your registration number. Please try again.",
+        "registrationUnavailable": "We could not load the registration number for this listing. Please refresh the page or contact support."
+      },
       "buttons": {
-        "comingSoon": "Coming soon"
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Saved"
       }
     },
     "ratePlans": {
