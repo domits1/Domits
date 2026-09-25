@@ -557,11 +557,31 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.revenueEfficiencyPct).toBe(0);
   });
 
-  test("revenue efficiency is 0 when potential revenue is 0", async () => {
+  test("revenue efficiency is null, not 0, when potential revenue is 0", async () => {
     const { service } = createService({ priceRows: [], bookings: [] });
 
     const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
 
-    expect(result.revenueEfficiencyPct).toBe(0);
+    expect(result.revenueEfficiencyPct).toBeNull();
+  });
+
+  test("revenue efficiency is null for a host who earned money but has no priced potential nights", async () => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 100,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(100);
+    expect(result.revenueEfficiencyPct).toBeNull();
   });
 });
