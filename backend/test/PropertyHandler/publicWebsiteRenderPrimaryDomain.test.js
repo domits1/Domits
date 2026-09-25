@@ -185,7 +185,21 @@ describe("public render primaryDomain, resolved by domain", () => {
     }
   });
 
-  it.todo("falls back to the fallback domain when the flagged custom domain is not ACTIVE");
+  it.each(["PENDING", "VERIFIED", "FAILED", "DISABLED", "REMOVING"])(
+    "names the fallback as main address when the flagged custom domain is %s, and keeps the requested row as domain",
+    async (status) => {
+      const { controller, domainRepository } = buildController({
+        rows: [fallbackRow({ isPrimary: false }), customRow({ isPrimary: true, status })],
+      });
+
+      const { statusCode, body } = await renderByDomain(controller, FALLBACK_NAME);
+
+      expect(statusCode).toBe(200);
+      expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
+      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+    }
+  );
+
   it.todo("falls back to the fallback domain when no row of the site carries the flag");
   it.todo("prefers a live custom domain over the fallback when both carry the flag, whichever address was requested");
   it.todo("never takes the main address from a synthetic fallback row");

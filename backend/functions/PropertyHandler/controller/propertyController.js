@@ -67,6 +67,7 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
+const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
 const CALENDAR_CHANGE_FIELD_GROUPS = Object.freeze({
     availability: ["isAvailable"],
@@ -178,8 +179,16 @@ const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) 
 
     return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
 };
+const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
+    String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
 const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
-    const mainAddress = domains.find((domainEntry) => domainEntry?.isPrimary);
+    const flaggedDomain = domains.find((domainEntry) => domainEntry?.isPrimary);
+    const isFlaggedCustomDomainNotLive =
+        isDirectBookingWebsiteCustomDomain(flaggedDomain) &&
+        resolveDirectBookingWebsiteRuntimeDomainStatus(site, flaggedDomain) !== "ACTIVE";
+    const mainAddress = isFlaggedCustomDomainNotLive
+        ? domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry))
+        : flaggedDomain;
     if (!mainAddress?.domain) {
         return null;
     }
