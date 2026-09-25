@@ -568,6 +568,36 @@ export class PropertyController {
     }
 
     // -------------------------
+    // PATCH /property/registration
+    // -------------------------
+    async updateRegistrationNumber(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const rawBody = JSON.parse(event.body || "{}");
+            const propertyId = String(rawBody.propertyId || rawBody.property || "").trim();
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const result = await this.propertyService.updateRegistrationNumber(propertyId, rawBody.registrationNumber);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(result),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message || "Something went wrong, please contact support." }),
+            };
+        }
+    }
+
+    // -------------------------
     // GET /property/calendar/overrides
     // -------------------------
     async getPropertyCalendarOverrides(event) {

@@ -1403,12 +1403,31 @@
       "subtitle": "Verifiziere deine Unterkunft und Hostidentität für lokale Registrierungen.",
       "section": "Compliance-Details",
       "fields": {
+        "property": "Unterkunft",
+        "untitledListing": "Unterkunft ohne Titel",
         "propertyRegistration": "Unterkunftsregistrierung",
         "placeholder": "Registrierungsnummer",
+        "noRegistrationYet": "Noch keine Registrierungsnummer hinzugefügt.",
         "hint": "Diese Nummer beweist, dass deine Unterkunft bei den lokalen Behörden registriert ist. Weitere Compliance-Methoden (ID-Verifizierung, Adressnachweis) sind bald verfügbar."
       },
+      "states": {
+        "loading": "Deine Unterkünfte werden geladen...",
+        "empty": "Du hast noch keine Unterkünfte.",
+        "createListing": "Erstelle deine erste Unterkunft"
+      },
+      "unsavedChangesConfirm": "Du hast ungespeicherte Änderungen. Die Unterkunft wechseln und die Änderungen verwerfen?",
+      "errors": {
+        "load": "Wir konnten deine Unterkünfte nicht laden. Bitte versuche es erneut.",
+        "duplicate": "Diese Registrierungsnummer wird bereits von einer anderen Unterkunft verwendet.",
+        "noAccess": "Du hast keinen Zugriff, um diese Unterkunft zu ändern.",
+        "validation": "Gib eine gültige Registrierungsnummer ein. Sie darf nicht leer sein, nicht mit AUTO- beginnen und nicht länger als 255 Zeichen sein.",
+        "generic": "Wir konnten deine Registrierungsnummer nicht speichern. Bitte versuche es erneut.",
+        "registrationUnavailable": "Wir konnten die Registrierungsnummer dieser Unterkunft nicht laden. Bitte lade die Seite neu oder kontaktiere den Support."
+      },
       "buttons": {
-        "comingSoon": "Demnächst verfügbar"
+        "save": "Speichern",
+        "saving": "Wird gespeichert...",
+        "saved": "Gespeichert"
       }
     },
     "ratePlans": {

@@ -36,3 +36,5 @@ As there are many different HTTP methods implemented in the PropertyHandler lamb
 [POST](./property_handler_post_format.md)
 
 [GET](./property_handler_get_format.md)
+
+[PATCH registration number](./property_handler_patch_registration_format.md)

@@ -1403,12 +1403,31 @@
       "subtitle": "Verifica tu propiedad e identidad como anfitrión para cumplir con los registros locales.",
       "section": "Detalles de cumplimiento",
       "fields": {
+        "property": "Alojamiento",
+        "untitledListing": "Alojamiento sin título",
         "propertyRegistration": "Registro de propiedad",
         "placeholder": "Número de registro",
+        "noRegistrationYet": "Todavía no se ha añadido ningún número de registro.",
         "hint": "Este número demuestra que tu propiedad está registrada con las autoridades locales. Pronto estarán disponibles métodos de cumplimiento adicionales (verificación de identidad, comprobante de domicilio)."
       },
+      "states": {
+        "loading": "Cargando tus alojamientos...",
+        "empty": "Todavía no tienes alojamientos.",
+        "createListing": "Crea tu primer alojamiento"
+      },
+      "unsavedChangesConfirm": "Tienes cambios sin guardar. ¿Cambiar de alojamiento y descartarlos?",
+      "errors": {
+        "load": "No pudimos cargar tus alojamientos. Inténtalo de nuevo.",
+        "duplicate": "Este número de registro ya lo usa otro alojamiento.",
+        "noAccess": "No tienes acceso para modificar este alojamiento.",
+        "validation": "Introduce un número de registro válido. No puede estar vacío, empezar por AUTO- ni superar los 255 caracteres.",
+        "generic": "No pudimos guardar tu número de registro. Inténtalo de nuevo.",
+        "registrationUnavailable": "No pudimos cargar el número de registro de este alojamiento. Actualiza la página o contacta con soporte."
+      },
       "buttons": {
-        "comingSoon": "Próximamente"
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Guardado"
       }
     },
     "ratePlans": {

@@ -1403,12 +1403,31 @@
       "subtitle": "Verifieer je accommodatie en hostidentiteit voor lokale registraties.",
       "section": "Compliancegegevens",
       "fields": {
+        "property": "Accommodatie",
+        "untitledListing": "Accommodatie zonder titel",
         "propertyRegistration": "Accommodatieregistratie",
         "placeholder": "Registratienummer",
+        "noRegistrationYet": "Er is nog geen registratienummer toegevoegd.",
         "hint": "Dit nummer bewijst dat je accommodatie is geregistreerd bij de lokale autoriteiten. Aanvullende compliancemethoden (ID-verificatie, adresbewijs) zijn binnenkort beschikbaar."
       },
+      "states": {
+        "loading": "Je accommodaties worden geladen...",
+        "empty": "Je hebt nog geen accommodaties.",
+        "createListing": "Maak je eerste accommodatie aan"
+      },
+      "unsavedChangesConfirm": "Je hebt niet-opgeslagen wijzigingen. Van accommodatie wisselen en de wijzigingen negeren?",
+      "errors": {
+        "load": "We konden je accommodaties niet laden. Probeer het opnieuw.",
+        "duplicate": "Dit registratienummer wordt al gebruikt door een andere accommodatie.",
+        "noAccess": "Je hebt geen toegang om deze accommodatie te wijzigen.",
+        "validation": "Voer een geldig registratienummer in. Het mag niet leeg zijn, niet beginnen met AUTO- en niet langer zijn dan 255 tekens.",
+        "generic": "We konden je registratienummer niet opslaan. Probeer het opnieuw.",
+        "registrationUnavailable": "We konden het registratienummer van deze accommodatie niet laden. Vernieuw de pagina of neem contact op met support."
+      },
       "buttons": {
-        "comingSoon": "Binnenkort beschikbaar"
+        "save": "Opslaan",
+        "saving": "Opslaan...",
+        "saved": "Opgeslagen"
       }
     },
     "ratePlans": {
