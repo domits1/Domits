@@ -125,18 +125,22 @@ describe("public render primaryDomain, resolved by domain", () => {
     }
   );
 
-  it("looks the main address up by the resolved site id and ignores another site's flagged row", async () => {
-    const { controller, domainRepository } = buildController({
-      rows: [fallbackRow(), customRow(), otherSiteCustomRow()],
-    });
+  it.each([FALLBACK_NAME, CUSTOM_NAME])(
+    "reads the main address by the resolved site id when %s is requested, and ignores another site's flagged row",
+    async (requested) => {
+      const { controller, domainRepository } = buildController({
+        rows: [fallbackRow(), customRow(), otherSiteCustomRow()],
+      });
 
-    const { body } = await renderByDomain(controller, CUSTOM_NAME);
+      const { body } = await renderByDomain(controller, requested);
 
-    expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-    expect(domainRepository.calls.filter(([name]) => name === "listDomainsBySiteId")).toEqual([
-      ["listDomainsBySiteId", SITE.id],
-    ]);
-  });
+      expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
+      expect(domainRepository.calls).toEqual([
+        ["getDomainByName", requested],
+        ["listDomainsBySiteId", SITE.id],
+      ]);
+    }
+  );
 
   it("reports the runtime status of the main address and leaves the stored status in domain", async () => {
     await withFallbackRoutingActive(async () => {
@@ -261,7 +265,64 @@ describe("public render primaryDomain, resolved by domain", () => {
     }
   );
 
-  it.todo("never takes the main address from a synthetic fallback row");
+  describe("when the requested fallback address has no stored row yet", () => {
+    const siteRepositoryResolvingFallbackNames = {
+      getSiteById: async (siteId) => (siteId === SITE.id ? { ...SITE } : null),
+      getPublishedSiteByNormalizedIdPrefix: async (idPrefix) => (idPrefix ? { ...SITE } : null),
+    };
+
+    it.each([
+      ["answers null when the site has no other row", [], null],
+      [
+        "names the flagged live custom domain",
+        [customRow({ isPrimary: true })],
+        { domain: CUSTOM_NAME, status: "ACTIVE" },
+      ],
+    ])(
+      "%s instead of the synthetic fallback when storing the fallback fails",
+      async (_label, rows, expectedMainAddress) => {
+        await withFallbackRoutingActive(async () => {
+          const { controller, domainRepository } = buildController({
+            rows,
+            siteRepository: siteRepositoryResolvingFallbackNames,
+          });
+          domainRepository.failNext("ensureDomain", new Error("connection reset"));
+          const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
+          const originalConsoleError = console.error;
+          console.error = () => {};
+
+          try {
+            const { statusCode, body } = await renderByDomain(controller, fallbackName);
+
+            expect(statusCode).toBe(200);
+            expect(body.domain.domain).toBe(fallbackName);
+            expect(body.domain.isPrimary).toBe(true);
+            expect(storedRowNamed(domainRepository, fallbackName)).toBeUndefined();
+            expect(body.primaryDomain).toEqual(expectedMainAddress);
+          } finally {
+            console.error = originalConsoleError;
+          }
+        });
+      }
+    );
+
+    it("names the flagged live custom domain when storing the fallback gives the site a second flagged row", async () => {
+      await withFallbackRoutingActive(async () => {
+        const { controller, domainRepository } = buildController({
+          rows: [customRow({ isPrimary: true })],
+          siteRepository: siteRepositoryResolvingFallbackNames,
+        });
+        const fallbackName = controller.buildSyntheticPrimaryLiveDomain(SITE).domain;
+
+        const { statusCode, body } = await renderByDomain(controller, fallbackName);
+
+        expect(statusCode).toBe(200);
+        expect(domainRepository.snapshot().filter((row) => row.isPrimary)).toHaveLength(2);
+        expect(body.domain).toEqual(storedRowNamed(domainRepository, fallbackName));
+        expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
+      });
+    });
+  });
 });
 
 describe("public render primaryDomain, resolved by site id", () => {
