@@ -18,13 +18,20 @@ const formatMetricValue = (value, formatterKey) => {
   return formatters[formatterKey](value);
 };
 
-const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey) => ({
+const MISSED_REVENUE_NOT_APPLICABLE_VALUE = "–";
+
+const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey, requiresPositiveKey) => ({
   id,
   title,
   valueKey,
   meta,
   formatterKey,
+  requiresPositiveKey,
 });
+
+// A ratio over a zero denominator is undefined, not 0%: without PriceLabs prices there is nothing to compare against.
+const isMetricApplicable = (missedRevenue, definition) =>
+  !definition.requiresPositiveKey || missedRevenue?.[definition.requiresPositiveKey] > 0;
 
 const MISSED_REVENUE_METRIC_CARD_DEFINITIONS = Object.freeze([
   createMetricCardDefinition(
@@ -53,7 +60,8 @@ const MISSED_REVENUE_METRIC_CARD_DEFINITIONS = Object.freeze([
     "Revenue efficiency",
     "revenueEfficiencyPct",
     "Actual revenue as a share of potential revenue.",
-    "percentage"
+    "percentage",
+    "potentialRevenue"
   ),
 ]);
 
@@ -61,6 +69,8 @@ export const buildMissedRevenueMetricCards = (missedRevenue) =>
   MISSED_REVENUE_METRIC_CARD_DEFINITIONS.map((definition) => ({
     id: definition.id,
     title: definition.title,
-    value: formatMetricValue(missedRevenue?.[definition.valueKey], definition.formatterKey),
+    value: isMetricApplicable(missedRevenue, definition)
+      ? formatMetricValue(missedRevenue?.[definition.valueKey], definition.formatterKey)
+      : MISSED_REVENUE_NOT_APPLICABLE_VALUE,
     meta: definition.meta,
   }));

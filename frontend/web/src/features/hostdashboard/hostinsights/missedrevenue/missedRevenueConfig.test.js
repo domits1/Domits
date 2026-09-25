@@ -18,11 +18,29 @@ describe("buildMissedRevenueMetricCards", () => {
   });
 
   test("formats revenue efficiency as a percentage", () => {
-    const cards = buildMissedRevenueMetricCards({ ...EMPTY_MISSED_REVENUE, revenueEfficiencyPct: 62.345 });
+    const cards = buildMissedRevenueMetricCards({
+      ...EMPTY_MISSED_REVENUE,
+      potentialRevenue: 2000,
+      revenueEfficiencyPct: 62.345,
+    });
 
     const byId = Object.fromEntries(cards.map((card) => [card.id, card]));
 
     expect(byId["revenue-efficiency"].value).toBe("62.3%");
+  });
+
+  test("shows a dash for revenue efficiency when there is no potential revenue, even if the host earned money", () => {
+    const cards = buildMissedRevenueMetricCards({
+      ...EMPTY_MISSED_REVENUE,
+      actualRevenue: 500,
+      potentialRevenue: 0,
+      revenueEfficiencyPct: 0,
+    });
+
+    const byId = Object.fromEntries(cards.map((card) => [card.id, card]));
+
+    expect(byId["revenue-efficiency"].value).toBe("–");
+    expect(byId["actual-revenue"].value).toBe("EUR 500.00");
   });
 
   test("shows a fallback value for a non-finite metric instead of throwing", () => {
