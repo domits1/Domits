@@ -25,6 +25,7 @@ import { Property_Image_Variant } from "../../models/Property_Image_Variant.js";
 import { Property_Location } from "../../models/Property_Location.js";
 import { Property_Pricing } from "../../models/Property_Pricing.js";
 import { Property_Calendar_Override } from "../../models/Property_Calendar_Override.js";
+import { Property_CustomRule } from "../../models/Property_CustomRule.js";
 import { Property_Rule } from "../../models/Property_Rule.js";
 import { Property_Technical_Details } from "../../models/Property_Technical_Details.js";
 import { Property_Types } from "../../models/Property_Types.js";
@@ -84,6 +85,7 @@ export const Tables = [
   Property_Location,
   Property_Pricing,
   Property_Calendar_Override,
+  Property_CustomRule,
   Property_Rule,
   Property_Technical_Details,
   Property_Test_Status,

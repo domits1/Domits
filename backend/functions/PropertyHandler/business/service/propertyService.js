@@ -1,4 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { QueryFailedError } from "typeorm";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
@@ -34,7 +35,12 @@ import {
   normalizeBlockedDateKeys,
 } from "../../util/calendarAvailability.js";
 
+
+// Terminal booking statuses: the booking never happened or is over, so there is nothing left to view.
+const DEAD_BOOKING_STATUSES = new Set(["cancelled", "canceled", "declined", "failed"]);
+const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
 const DRAFT_NUMERIC_FIELDS = ["capacity", "bedrooms", "bathrooms"];
+
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -54,7 +60,7 @@ export class PropertyService {
     this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
     this.propertyExternalCalendarRepository = new PropertyExternalCalendarRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
-    this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+    this.bookingRepository = new BookingRepository(systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
     this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
     this.propertyCancellationPolicyRepository = new PropertyCancellationPolicyRepository(systemManagerRepository);
@@ -351,8 +357,8 @@ export class PropertyService {
 
   async getFullPropertyByBookingId(bookingId) {
     const booking = await this.bookingRepository.getBookingById(bookingId);
-    if (booking.status !== "Paid") {
-      throw new Forbidden("Payment must be processed before accessing the full property details.");
+    if (DEAD_BOOKING_STATUSES.has(normalizeBookingStatus(booking.status))) {
+      throw new Forbidden("This booking is no longer active.");
     }
     const basePropertyInfo = await this.getBasePropertyInfo(booking.property_id);
     if (!basePropertyInfo) {
@@ -834,13 +840,32 @@ export class PropertyService {
       await this.#upsertPropertyRule(propertyId, ruleName, isEnabled);
     }
   }
+  isMissingCustomRulesTableError(error) {
+    return error instanceof QueryFailedError && error.code === "42P01";
+  }
 
   async getCustomRules(propertyId) {
-    return [];
+    try {
+      return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
+    } catch (error) {
+      if (this.isMissingCustomRulesTableError(error)) {
+        console.warn(`Custom rules table not yet migrated for property ${propertyId}:`, error.message);
+        return [];
+      }
+      throw error;
+    }
   }
 
   async updateCustomRules(propertyId, customRules) {
-    // Custom rules storage to be implemented
+    try {
+      return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
+    } catch (error) {
+      if (this.isMissingCustomRulesTableError(error)) {
+        console.warn(`Could not save custom rules (table not yet migrated) for property ${propertyId}:`, error.message);
+        return [];
+      }
+      throw error;
+    }
   }
 
   async createPropertyType(type) {

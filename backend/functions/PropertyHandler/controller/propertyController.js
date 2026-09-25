@@ -540,6 +540,7 @@ export class PropertyController {
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                     bookingType: normalizedOverviewPayload.bookingType,
+                    customRules: normalizedOverviewPayload.customRules,
                 }
             );
 
@@ -804,6 +805,7 @@ export class PropertyController {
             amenities: body.amenities,
             rules: body.rules,
             bookingType: body.bookingType,
+            customRules: body.customRules,
         };
     }
 
@@ -1020,6 +1022,20 @@ export class PropertyController {
                             }))
                             .filter((rule) => rule.rule)
                             .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined,
+            customRules: Array.isArray(payload.customRules)
+                ? Array.from(
+                    new Map(
+                        payload.customRules
+                            .map((rule) => ({
+                                category: String(rule?.category || "").trim(),
+                                rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                                enabled: rule?.enabled !== false,
+                            }))
+                            .filter((rule) => rule.category && rule.rule_text)
+                            .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])
                     ).values()
                 )
                 : undefined,
