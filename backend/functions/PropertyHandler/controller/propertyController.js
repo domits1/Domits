@@ -186,7 +186,8 @@ const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
     const isFlaggedCustomDomainNotLive =
         isDirectBookingWebsiteCustomDomain(flaggedDomain) &&
         resolveDirectBookingWebsiteRuntimeDomainStatus(site, flaggedDomain) !== "ACTIVE";
-    const mainAddress = isFlaggedCustomDomainNotLive
+    const shouldUseFallbackDomain = !flaggedDomain || isFlaggedCustomDomainNotLive;
+    const mainAddress = shouldUseFallbackDomain
         ? domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry))
         : flaggedDomain;
     if (!mainAddress?.domain) {
