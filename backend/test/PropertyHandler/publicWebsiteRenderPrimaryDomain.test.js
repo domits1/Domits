@@ -360,6 +360,18 @@ describe("public render primaryDomain, resolved by site id", () => {
     }
   );
 
+  it("fails the render as before, without guessing a main address, when the site's domain rows cannot be read", async () => {
+    const { controller, domainRepository } = buildController({ rows: [fallbackRow(), customRow()] });
+    domainRepository.failNext("listDomainsBySiteId", new Error("connection reset"));
+    silenceConsoleError();
+
+    const { statusCode, body } = await renderBySiteId(controller, SITE.id);
+
+    expect(statusCode).toBe(500);
+    expect(body).not.toHaveProperty("primaryDomain");
+    expect(body).not.toHaveProperty("domain");
+  });
+
   it("answers primaryDomain null when the flagged custom domain is not live and the site has no fallback row", async () => {
     const { controller, domainRepository } = buildController({
       rows: [customRow({ isPrimary: true, status: "VERIFIED" })],
