@@ -12,6 +12,7 @@ import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
+import MissedRevenueDashboardPage from "./hostinsights/missedrevenue/MissedRevenueDashboardPage";
 import HostTeam from "./HostTeam";
 import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
 import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
@@ -128,6 +129,7 @@ function MainDashboardHost() {
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
           <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
+          <Route path="hostinsights/missed-revenue" element={<MissedRevenueDashboardPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettingsHub />} />
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
