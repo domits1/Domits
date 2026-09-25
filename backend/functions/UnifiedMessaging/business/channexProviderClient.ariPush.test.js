@@ -340,19 +340,20 @@ describe("ChannexProviderClient ARI push", () => {
     });
   });
 
-  // results.every(...) is vacuously true on an empty results array, so a batch that pushed
-  // nothing still reports overall success. Pinned because a caller reading only `success`
-  // cannot tell "everything synced" apart from "there was nothing to sync".
-  describe("an empty batch reports success without pushing anything", () => {
+  // [].every(...) is vacuously true, so success must be checked explicitly against an empty
+  // results array rather than relying on .every() alone: otherwise a batch that pushed nothing
+  // would report success, and a caller reading only `success` couldn't tell "everything synced"
+  // apart from "there was nothing to sync".
+  describe("an empty batch does not report success", () => {
     it.each([
       { description: "an empty array", groups: [] },
       { description: "undefined", groups: undefined },
       { description: "a non-array value", groups: "not-a-batch" },
-    ])("$description yields success true with no results", async ({ groups }) => {
+    ])("$description yields success false with no results", async ({ groups }) => {
       const result = await client.pushAvailability(CREDENTIALS, groups);
 
       expect(global.fetch).not.toHaveBeenCalled();
-      expect(result).toEqual({ success: true, results: [] });
+      expect(result).toEqual({ success: false, results: [] });
     });
   });
 

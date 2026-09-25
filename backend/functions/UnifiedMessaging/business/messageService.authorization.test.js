@@ -3,6 +3,8 @@ const mockMessageRepository = {
   getMessagesByThreadId: jest.fn(),
   markThreadMessagesRead: jest.fn(),
   getUnreadCountsForThreads: jest.fn(),
+  getLatestIncomingMessage: jest.fn(),
+  markMessageUnread: jest.fn(),
 };
 const mockThreadRepository = {
   createThread: jest.fn(),
@@ -11,6 +13,7 @@ const mockThreadRepository = {
   getThreadById: jest.fn(),
   getThreadsForUser: jest.fn(),
   updateThreadActivity: jest.fn(),
+  updateThreadStatus: jest.fn(),
   upsertExternalThread: jest.fn(),
 };
 const mockBookingRepository = {
@@ -306,6 +309,85 @@ describe("MessageService authorization and booking scoping", () => {
       service.markThreadRead("thread-1", { userId: "stranger-1", isGuest: true, isHost: false })
     ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
     expect(mockMessageRepository.markThreadMessagesRead).not.toHaveBeenCalled();
+  });
+
+  test("markThreadUnread marks only the latest incoming message as unread", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, propertyId: null }));
+    mockMessageRepository.getLatestIncomingMessage.mockResolvedValue({
+      id: "message-9",
+      threadId: "thread-1",
+      recipientId: "host-1",
+    });
+    mockMessageRepository.markMessageUnread.mockResolvedValue(1);
+
+    const result = await service.markThreadUnread("thread-1", hostAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: { threadId: "thread-1", updated: 1 } });
+    expect(mockMessageRepository.getLatestIncomingMessage).toHaveBeenCalledWith("thread-1", "host-1");
+    expect(mockMessageRepository.markMessageUnread).toHaveBeenCalledWith("message-9");
+  });
+
+  test("markThreadUnread is a no-op when there is no incoming message for the recipient", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null, propertyId: null }));
+    mockMessageRepository.getLatestIncomingMessage.mockResolvedValue(null);
+
+    const result = await service.markThreadUnread("thread-1", hostAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: { threadId: "thread-1", updated: 0 } });
+    expect(mockMessageRepository.markMessageUnread).not.toHaveBeenCalled();
+  });
+
+  test("rejects markThreadUnread for a user who is not a participant in the thread", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(
+      thread({ hostId: "host-1", guestId: "guest-1", bookingId: null, propertyId: null })
+    );
+
+    await expect(
+      service.markThreadUnread("thread-1", { userId: "stranger-1", isGuest: true, isHost: false })
+    ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(mockMessageRepository.getLatestIncomingMessage).not.toHaveBeenCalled();
+    expect(mockMessageRepository.markMessageUnread).not.toHaveBeenCalled();
+  });
+
+  test("closeThread closes the thread when the authenticated user is the host", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ status: "OPEN", bookingId: null, propertyId: null }));
+
+    const result = await service.closeThread("thread-1", hostAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: { threadId: "thread-1", status: "CLOSED" } });
+    expect(mockThreadRepository.updateThreadStatus).toHaveBeenCalledWith("thread-1", "CLOSED");
+  });
+
+  test("rejects closeThread for the guest participant", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(
+      thread({ status: "OPEN", bookingId: null, propertyId: "property-1", platform: "DOMITS" })
+    );
+
+    await expect(service.closeThread("thread-1", guestAuth)).rejects.toMatchObject({
+      statusCode: 403,
+      code: "FORBIDDEN",
+    });
+    expect(mockThreadRepository.updateThreadStatus).not.toHaveBeenCalled();
+  });
+
+  test("rejects closeThread for a user who is not a participant in the thread", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(
+      thread({ hostId: "host-1", guestId: "guest-1", bookingId: null, propertyId: null })
+    );
+
+    await expect(
+      service.closeThread("thread-1", { userId: "stranger-1", isGuest: true, isHost: false })
+    ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(mockThreadRepository.updateThreadStatus).not.toHaveBeenCalled();
+  });
+
+  test("closing an already-closed thread is idempotent for the host", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ status: "CLOSED", bookingId: null, propertyId: null }));
+
+    const result = await service.closeThread("thread-1", hostAuth);
+
+    expect(result).toEqual({ statusCode: 200, response: { threadId: "thread-1", status: "CLOSED" } });
+    expect(mockThreadRepository.updateThreadStatus).not.toHaveBeenCalled();
   });
 
   test("rejects spoofed sender ids", async () => {

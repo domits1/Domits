@@ -23,19 +23,24 @@ import { PropertyCancellationPolicyRepository } from "../../data/repository/prop
 import { PropertyLateCheckinRepository } from "../../data/repository/propertyLateCheckinRepository.js";
 import { PropertyHouseRuleRepository } from "../../data/repository/propertyHouseRuleRepository.js";
 import { PropertyCustomRuleRepository } from "../../data/repository/propertyCustomRuleRepository.js";
+import { PropertyDraftRepository } from "../../data/repository/propertyDraftRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
 import {
   extractAvailableOverrideDateKeys,
   extractUnavailableOverrideDateKeys,
   normalizeBlockedDateKeys,
 } from "../../util/calendarAvailability.js";
 
+
 // Terminal booking statuses: the booking never happened or is over, so there is nothing left to view.
 const DEAD_BOOKING_STATUSES = new Set(["cancelled", "canceled", "declined", "failed"]);
 const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const DRAFT_NUMERIC_FIELDS = ["capacity", "bedrooms", "bathrooms"];
+
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -62,6 +67,7 @@ export class PropertyService {
     this.propertyLateCheckinRepository = new PropertyLateCheckinRepository(systemManagerRepository);
     this.propertyHouseRuleRepository = new PropertyHouseRuleRepository(systemManagerRepository);
     this.propertyCustomRuleRepository = new PropertyCustomRuleRepository(systemManagerRepository);
+    this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -123,6 +129,71 @@ export class PropertyService {
       throw new DatabaseException("Property status update was not completed.");
     }
     return updatedProperty;
+  }
+
+  async getDraft(propertyId) {
+    const draft = await this.propertyDraftRepository.getDraftById(propertyId);
+    if (!draft) {
+      throw new NotFoundException(`Property draft ${propertyId} not found.`);
+    }
+    return this.mapDraft(draft);
+  }
+
+  async updateDraft(propertyId, fields) {
+    const draft = await this.propertyDraftRepository.getDraftById(propertyId);
+    if (!draft) {
+      throw new NotFoundException(`Property draft ${propertyId} not found.`);
+    }
+    const validatedFields = this.validateDraftContent(fields);
+    await this.propertyDraftRepository.updateDraftContent(propertyId, validatedFields);
+  }
+
+  validateDraftContent(fields = {}) {
+    const name = typeof fields.name === "string" ? fields.name.trim() : "";
+    if (!name) {
+      throw new Error("Draft name is required.");
+    }
+
+    const addressLine = typeof fields.addressLine === "string" ? fields.addressLine.trim() : "";
+    if (!addressLine) {
+      throw new Error("Draft addressLine is required.");
+    }
+
+    const validatedFields = { name, addressLine };
+
+    for (const field of DRAFT_NUMERIC_FIELDS) {
+      if (fields[field] === undefined) continue;
+      const value = Number(fields[field]);
+      if (!Number.isInteger(value) || value <= 0) {
+        throw new Error(`Draft ${field} must be a number greater than 0.`);
+      }
+      validatedFields[field] = value;
+    }
+
+    if (fields.propertyType !== undefined) {
+      if (!ALLOWED_PROPERTY_TYPES.includes(fields.propertyType)) {
+        throw new Error(`Draft propertyType must be one of: ${ALLOWED_PROPERTY_TYPES.join(", ")}.`);
+      }
+      validatedFields.propertyType = fields.propertyType;
+    }
+
+    return validatedFields;
+  }
+
+  mapDraft(draft) {
+    return {
+      propertyId: draft.property_id,
+      hostId: draft.host_id,
+      createdAt: Number(draft.created_at),
+      lastActivityAt: Number(draft.last_activity_at),
+      name: draft.name ?? null,
+      addressLine: draft.address_line ?? null,
+      propertyType: draft.property_type ?? null,
+      capacity: draft.capacity ?? null,
+      bedrooms: draft.bedrooms ?? null,
+      bathrooms: draft.bathrooms ?? null,
+      status: draft.status,
+    };
   }
 
   async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
@@ -224,6 +295,14 @@ export class PropertyService {
     return {
       properties: properties,
       lastEvaluatedKey: propertyIdentifiers.lastEvaluatedKey,
+    };
+  }
+
+  async getPricingSavingConfig() {
+    return {
+      domitsCommissionRate: 0.10,
+      comparisonCommissionRate: 0.155,
+      comparisonPlatformLabel: "other sites",
     };
   }
 

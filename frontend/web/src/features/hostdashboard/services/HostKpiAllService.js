@@ -25,21 +25,21 @@ export const HostKpiAllService = {
     });
 
     if (!response.ok) {
-      return {};
+      return null;
     }
 
-    let data = {};
+    let data;
     try {
       data = await response.json();
     } catch {
-      return {};
+      return null;
     }
 
     if (data?.body) {
       try {
         data = JSON.parse(data.body);
       } catch {
-        return {};
+        return null;
       }
     }
 
