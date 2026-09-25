@@ -62,6 +62,7 @@ import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
 import { resolveDirectBookingWebsiteSurface } from "./features/hostdashboard/website/directBookingWebsiteSurface";
+import { isWebsitePublicSitePageActive } from "./features/hostdashboard/website/seo/websiteHeadTagsRegistry";
 import AcceptInvite from "./features/hostdashboard/AcceptInvite";
 
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
@@ -88,6 +89,10 @@ function App() {
   const currentLocation = globalThis.location || { pathname: "", hostname: "" };
 
   useEffect(() => {
+    if (isWebsitePublicSitePageActive()) {
+      return;
+    }
+
     document.title = "Domits";
   }, [searchResults]);
 
