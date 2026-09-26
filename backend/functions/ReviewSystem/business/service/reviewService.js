@@ -12,6 +12,9 @@ import NotFoundException from "../../util/exception/notFoundException.js";
 
 const REVIEW_WINDOW_DAYS = 30;
 const REVIEW_TYPES = new Set(["GUEST_TO_PROPERTY"]);
+const PUBLIC_REVIEW_TYPE = "GUEST_TO_PROPERTY";
+const PUBLIC_REVIEW_SORTS = new Set(["recent", "highest", "lowest"]);
+const DEFAULT_PUBLIC_REVIEW_SORT = "recent";
 
 // Review: Coordinates review validation, lifecycle transitions, and persistence for the API controller.
 class ReviewService {
@@ -38,9 +41,11 @@ class ReviewService {
   // Review: Selects the authenticated guest history, booking-scoped reviews, or published property reviews.
   async getReviews(event) {
     const query = event.queryStringParameters || {};
+    const propertyId = query.propertyId || event.pathParameters?.propertyId;
 
-    if (query.propertyId) {
-      return this.reviewRepository.getPublishedReviewsByPropertyId(query.propertyId);
+    if (propertyId) {
+      const publicReviewQuery = await this.parsePublicReviewQuery(query);
+      return this.reviewRepository.getPublishedReviewsByPropertyId(propertyId, publicReviewQuery);
     }
 
     if (query.bookingId) {
@@ -54,6 +59,31 @@ class ReviewService {
     }
 
     throw new BadRequestException("Missing review query.");
+  }
+
+  async parsePublicReviewQuery(query) {
+    // Review: Converts public sort and filter query parameters into validated repository options.
+    const sort = query.sort || DEFAULT_PUBLIC_REVIEW_SORT;
+    const verifiedOnly = query.verified === "true";
+    const category = query.category?.trim() || null;
+
+    if (!PUBLIC_REVIEW_SORTS.has(sort)) {
+      throw new BadRequestException("Unsupported review sort value.");
+    }
+
+    if (query.verified !== undefined && query.verified !== "true") {
+      throw new BadRequestException("verified must be true when provided.");
+    }
+
+    if (category) {
+      const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(PUBLIC_REVIEW_TYPE);
+
+      if (!supportedCategories.has(category)) {
+        throw new BadRequestException(`Unsupported rating category: ${category}.`);
+      }
+    }
+
+    return { sort, verifiedOnly, category };
   }
 
   // Read a single review while enforcing public and access-restricted visibility rules.
