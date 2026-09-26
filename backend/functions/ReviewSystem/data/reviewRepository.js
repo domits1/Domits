@@ -61,7 +61,7 @@ class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
-  async getPublishedReviewsByPropertyId(propertyId) {
+  async getPublishedReviewsByPropertyId(propertyId, options = {}) {
     // Review: Produces the public review list and its overall and category rating summaries.
     const client = await Database.getInstance();
 
@@ -74,13 +74,52 @@ class ReviewRepository {
       .getMany();
 
     const reviewsWithRatings = await this.attachRatingsToReviews(reviews);
+    return this.buildPublicReviewResponse(reviewsWithRatings, options);
+  }
+
+  buildPublicReviewResponse(reviews, options = {}) {
+    // Review: Applies public filters before calculating the summary shown on the listing page.
+    const filteredReviews = this.applyPublicReviewFilters(reviews, options);
+    const sortedReviews = this.sortPublicReviews(filteredReviews, options.sort || "recent");
 
     return {
-      reviews: reviewsWithRatings.map((review) => this.toPublicReview(review)),
-      totalReviews: reviewsWithRatings.length,
-      overallRating: this.calculateAverage(reviewsWithRatings.map((review) => review.overallRating)),
-      categoryRatings: this.calculateCategoryAverages(reviewsWithRatings),
+      reviews: sortedReviews.map((review) => this.toPublicReview(review)),
+      totalReviews: sortedReviews.length,
+      overallRating: this.calculateAverage(sortedReviews.map((review) => review.overallRating)),
+      categoryRatings: this.calculateCategoryAverages(sortedReviews),
     };
+  }
+
+  applyPublicReviewFilters(reviews, { verifiedOnly = false, category = null } = {}) {
+    // Review: Limits public results to verified stays or reviews containing the selected category.
+    return reviews.filter((review) => {
+      if (verifiedOnly && review.verificationStatus !== "VERIFIED_STAY") return false;
+      if (category && review.categoryRatings?.[category] === undefined) return false;
+      return true;
+    });
+  }
+
+  sortPublicReviews(reviews, sort = "recent") {
+    // Review: Uses creation time as a stable tie-breaker for rating-based public sorting.
+    const sortedReviews = [...reviews];
+
+    if (sort === "highest") {
+      return sortedReviews.sort(
+        (first, second) =>
+          Number(second.overallRating) - Number(first.overallRating) ||
+          Number(second.createdAt) - Number(first.createdAt)
+      );
+    }
+
+    if (sort === "lowest") {
+      return sortedReviews.sort(
+        (first, second) =>
+          Number(first.overallRating) - Number(second.overallRating) ||
+          Number(second.createdAt) - Number(first.createdAt)
+      );
+    }
+
+    return sortedReviews.sort((first, second) => Number(second.createdAt) - Number(first.createdAt));
   }
 
   async getReviewsByBookingForUser(bookingId, userId) {

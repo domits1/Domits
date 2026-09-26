@@ -438,7 +438,64 @@ describe("ReviewService day 5 unit coverage", () => {
     });
 
     expect(authManager.authenticate).not.toHaveBeenCalled();
-    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1");
+    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1", {
+      sort: "recent",
+      verifiedOnly: false,
+      category: null,
+    });
     expect(result).toEqual(publicSummary);
+  });
+
+  it("passes public review sorting and filters to the repository", async () => {
+    const publicSummary = { reviews: [], totalReviews: 0, overallRating: null, categoryRatings: {} };
+    const { service, reviewRepository } = buildService({
+      repositoryOverrides: {
+        getPublishedReviewsByPropertyId: jest.fn().mockResolvedValue(publicSummary),
+      },
+    });
+
+    await expect(
+      service.getReviews({
+        headers: {},
+        pathParameters: { propertyId: "property-1" },
+        queryStringParameters: { sort: "highest", verified: "true", category: "cleanliness" },
+      })
+    ).resolves.toEqual(publicSummary);
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).toHaveBeenCalledWith("property-1", {
+      sort: "highest",
+      verifiedOnly: true,
+      category: "cleanliness",
+    });
+  });
+
+  it("rejects unsupported public review sort values", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({ headers: {}, queryStringParameters: { propertyId: "property-1", sort: "oldest" } })
+    ).rejects.toMatchObject({ statusCode: 400, message: "Unsupported review sort value." });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported public review category filters", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({ headers: {}, queryStringParameters: { propertyId: "property-1", category: "wifi" } })
+    ).rejects.toMatchObject({ statusCode: 400, message: "Unsupported rating category: wifi." });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported verified filter values", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await expect(
+      service.getReviews({ headers: {}, queryStringParameters: { propertyId: "property-1", verified: "false" } })
+    ).rejects.toMatchObject({ statusCode: 400, message: "verified must be true when provided." });
+
+    expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
   });
 });
