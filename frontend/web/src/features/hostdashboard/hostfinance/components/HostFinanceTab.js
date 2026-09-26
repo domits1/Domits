@@ -1,219 +1,96 @@
-import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
-import { RefreshFunctions } from "../hooks/refreshFunctions.js";
-import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "../utils/pagination";
-import { formatMoney } from "../utils/formatMoney";
+import {
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  CircleDollarSign,
+  Download,
+  Info,
+  WalletCards,
+} from "lucide-react";
 import InvoicesSection from "./InvoicesSection";
-import { StatusBadge } from "./StatusBadge/StatusBadge";
-import { TablePager } from "./TabelPager/TablePager";
+import { RefreshFunctions } from "../hooks/refreshFunctions.js";
+import { formatMoney } from "../utils/formatMoney";
+import { fetchHostOwnedListings } from "../../services/hostTaskPropertyService";
+import { isFinanceDemoMode } from "../mocks/financeDemoData";
+import { deriveFinanceViewState, getArrivingSoonAmount, getTransactionType, getLastPayout } from "../utils/financeViewState";
 
-const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const DEMO_LISTINGS = [{ property: { id: "demo-property", status: "ACTIVE" } }];
 
-function FinanceSectionLoader({ message, children }) {
+const formatDate = (value) => {
+  if (!value) return null;
+  const date = new Date(Number(value));
+  return Number.isNaN(date.getTime())
+    ? String(value)
+    : date.toLocaleDateString("en-GB", { month: "short", day: "numeric" });
+};
+
+const getAmount = (value, currency) => formatMoney(Number(value || 0), currency || "EUR");
+
+function Step({ number, label, complete, active }) {
   return (
-    <div className="finance-section-loader">
-      {children}
-      <PulseBarsLoader inline message={message} />
+    <div className={`finance-step${complete ? " is-complete" : ""}${active ? " is-active" : ""}`}>
+      {complete ? <CheckCircle2 size={14} aria-hidden="true" /> : <span className="finance-step-number">{number}</span>}
+      <span>{label}</span>
     </div>
   );
 }
 
-FinanceSectionLoader.propTypes = {
-  message: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
-};
+function EmptyState({ title, description }) {
+  return (
+    <div className="finance-empty-state">
+      <strong>{title}</strong>
+      <span>{description}</span>
+    </div>
+  );
+}
 
-function FinanceTableSkeleton({ columns = 4, rows = 4 }) {
-  const gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+function HelpPanel({ faqs }) {
+  if (faqs.length === 0) {
+    return (
+      <section className="finance-card finance-help-card">
+        <h2>Need help?</h2>
+        <EmptyState title="No FAQs found" description="Finance help content is currently unavailable." />
+      </section>
+    );
+  }
 
   return (
-    <div className="finance-skeleton-table" aria-hidden="true">
-      <div className="finance-skeleton-table__header" style={{ gridTemplateColumns }}>
-        {Array.from({ length: columns }, (_, index) => (
-          <span key={`header-${index}`} className="finance-skeleton-block finance-skeleton-block--table-cell" />
-        ))}
-      </div>
-
-      {Array.from({ length: rows }, (_, rowIndex) => (
-        <div key={`row-${rowIndex}`} className="finance-skeleton-table__row" style={{ gridTemplateColumns }}>
-          {Array.from({ length: columns }, (_, cellIndex) => (
-            <span
-              key={`row-${rowIndex}-cell-${cellIndex}`}
-              className="finance-skeleton-block finance-skeleton-block--table-cell"
-            />
-          ))}
-        </div>
+    <section className="finance-card finance-help-card">
+      <h2>Need help?</h2>
+      {faqs.map((faq) => (
+        <details key={faq.faq_id || faq.question} className="finance-help-item">
+          <summary>
+            {faq.question}
+            <ChevronDown size={15} aria-hidden="true" />
+          </summary>
+          <p>{faq.answer}</p>
+        </details>
       ))}
-    </div>
+    </section>
   );
 }
-
-FinanceTableSkeleton.propTypes = {
-  columns: PropTypes.number,
-  rows: PropTypes.number,
-};
-
-function FinanceBalanceSkeleton() {
-  return (
-    <div className="finance-balance-skeleton" aria-hidden="true">
-      <span className="finance-skeleton-block finance-skeleton-block--meter" />
-
-      <div className="finance-balance-skeleton__list">
-        {Array.from({ length: 2 }, (_, index) => (
-          <div key={`balance-row-${index}`} className="finance-balance-skeleton__row">
-            <span className="finance-skeleton-block finance-skeleton-block--label" />
-            <span className="finance-skeleton-block finance-skeleton-block--value" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FinanceScheduleSkeleton() {
-  return (
-    <div className="finance-form-skeleton" aria-hidden="true">
-      {Array.from({ length: 2 }, (_, index) => (
-        <div key={`schedule-row-${index}`} className="finance-form-skeleton__row">
-          <span className="finance-skeleton-block finance-skeleton-block--label" />
-          <span className="finance-skeleton-block finance-skeleton-block--input" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FinanceFaqSkeleton({ items = 3 }) {
-  return (
-    <div className="faq-skeleton-list" aria-hidden="true">
-      {Array.from({ length: items }, (_, index) => (
-        <div key={`faq-skeleton-${index}`} className="faq-skeleton-item">
-          <span className="finance-skeleton-block finance-skeleton-block--faq-title" />
-          <span className="finance-skeleton-block finance-skeleton-block--faq-body" />
-          <span className="finance-skeleton-block finance-skeleton-block--faq-body finance-skeleton-block--faq-body-short" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-FinanceFaqSkeleton.propTypes = {
-  items: PropTypes.number,
-};
-
-const renderStripeActionLink = ({
-  isProcessing,
-  handleStripeAction,
-  renderCtaLabel,
-  label,
-}) => (
-  <span
-    className={`finance-span ${isProcessing ? "disabled" : ""}`}
-    onClick={isProcessing ? undefined : handleStripeAction}
-  >
-    {renderCtaLabel(label)}
-  </span>
-);
-
-const renderStripeStepContent = ({
-  isAccountLoading,
-  accountId,
-  onboardingComplete,
-  isProcessing,
-  handleStripeAction,
-  renderCtaLabel,
-}) => {
-  if (isAccountLoading) {
-    return (
-      <>
-        <strong>Step 2: </strong>
-        &nbsp;
-        <PulseBarsLoader inline message="Loading Stripe setup..." className="finance-inline-loader" />
-      </>
-    );
-  }
-
-  if (accountId && onboardingComplete) {
-    return (
-      <>
-        <strong>Step 2: </strong> &nbsp; You're connected to Stripe. Well done! &nbsp;
-        {renderStripeActionLink({
-          isProcessing,
-          handleStripeAction,
-          renderCtaLabel,
-          label: "Open Stripe Dashboard",
-        })}
-      </>
-    );
-  }
-
-  if (accountId) {
-    return (
-      <>
-        <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
-        {renderStripeActionLink({
-          isProcessing,
-          handleStripeAction,
-          renderCtaLabel,
-          label: "Continue Stripe onboarding",
-        })}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe account to receive
-      payments: &nbsp;
-      {renderStripeActionLink({
-        isProcessing,
-        handleStripeAction,
-        renderCtaLabel,
-        label: "Create Stripe account",
-      })}
-    </>
-  );
-};
-
-const buildFaqContent = ({ isFaqLoading, faqs }) => {
-  if (isFaqLoading) {
-    return (
-      <FinanceSectionLoader message="Loading FAQs...">
-        <FinanceFaqSkeleton />
-      </FinanceSectionLoader>
-    );
-  }
-
-  if (faqs.length > 0) {
-    return (
-      <ul className="faq-list">
-        {faqs.map((faq) => (
-          <li key={faq.faq_id} className="faq-item">
-            <details className="faq-details">
-              <summary className="faq-q">
-                <strong>{faq.question}</strong>
-              </summary>
-              <p className="faq-a">{faq.answer}</p>
-            </details>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  return <p>No FAQs found.</p>;
-};
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
-
+  const [listingState, setListingState] = useState({
+    hasProperty: false,
+    isLive: false,
+    loading: true,
+    error: false,
+  });
+  const [listingReloadKey, setListingReloadKey] = useState(0);
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [showAllPayouts, setShowAllPayouts] = useState(false);
   const {
     toast,
     payouts,
     charges,
+    faqs,
     accountId,
     onboardingComplete,
     chargesEnabled,
@@ -225,394 +102,443 @@ export default function HostFinanceTab() {
     monthly_anchor,
     loadingStates,
     balanceView,
-    faqs,
-
     setPayoutInterval,
     setWeeklyAnchor,
     setMonthlyAnchor,
-
     handleStripeAction,
     handlePayoutSchedule,
   } = RefreshFunctions();
 
   const isAccountLoading = Boolean(loadingStates.account);
-  const isChargesLoading = Boolean(loadingStates.charges);
   const isBalanceLoading = Boolean(loadingStates.hostBalance);
-  const isPayoutsLoading = Boolean(loadingStates.payouts);
   const isPayoutScheduleLoading = Boolean(loadingStates.getPayoutSchedule);
-  const isFaqLoading = Boolean(loadingStates.faqs);
-  const stripeIssues = !isAccountLoading && onboardingComplete && (!chargesEnabled || !payoutsEnabled);
 
-  let stripeAlertMessage = "Payouts are currently disabled on your Stripe account. You will not receive funds.";
-  if (!chargesEnabled && !payoutsEnabled) {
-    stripeAlertMessage = "Charges and payouts are currently disabled on your Stripe account.";
-  } else if (!chargesEnabled) {
-    stripeAlertMessage = "Charges are currently disabled on your Stripe account. Guests cannot complete payments.";
-  }
+  const showFinanceSections = onboardingComplete;
+  const showFinanceSectionSkeletons = isAccountLoading;
+  const demoMode = isFinanceDemoMode();
+  const {
+    isConnected,
+    stripeIssues,
+    hasProperty,
+    listingError,
+    isLive,
+    showFinancialData,
+  } = deriveFinanceViewState({
+    accountId,
+    onboardingComplete,
+    chargesEnabled,
+    payoutsEnabled,
+    listingState,
+    demoMode,
+    charges,
+    payouts,
+    balanceTotal: balanceView.total,
+  });
+  const currency = balanceView.currency || "EUR";
+  const needsListing = !hasProperty && !listingError;
+  const needsStripe = hasProperty && !isConnected;
 
-  const [chargesPage, setChargesPage] = useState(1);
-  const [payoutsPage, setPayoutsPage] = useState(1);
-
-  const handleNavigation = (value) => navigate(value);
-
-  const chargesTotalPages = getTotalPages(charges.length, MAX_ITEMS_PER_PAGE);
-  const payoutsTotalPages = getTotalPages(payouts.length, MAX_ITEMS_PER_PAGE);
+  const recentPayouts = useMemo(() => payouts.slice(0, 3), [payouts]);
+  const displayedPayouts = showAllPayouts ? payouts : recentPayouts;
+  const transactions = useMemo(
+    () => [
+      ...charges.map((charge, index) => {
+        return {
+          id: `charge-${charge.paymentId || index}`,
+          type: getTransactionType(charge),
+          date: charge.createdDate,
+          exportDate: charge.createdAt || charge.createdDate,
+          description: charge.description || "Guest payment",
+          channel: charge.channel || charge.paymentMethod || "Stripe",
+          amount:
+            charge.transactionType === "refunds"
+              ? -Math.abs(charge.amountRefunded || charge.hostReceives || 0)
+              : charge.hostReceives,
+          currency: charge.currency || currency,
+          status: charge.status,
+          projected: false,
+        };
+      }),
+      ...payouts.filter((payout) => !payout.isProjected && payout.id).map((payout, index) => ({
+        id: `payout-${payout.id || index}`,
+        type: "payouts",
+        date: payout.arrivalDate,
+        exportDate: payout.arrivalDateAt || payout.arrivalDate,
+        description: payout.isProjected ? "Projected payout" : "Payout to bank account",
+        channel: "Stripe",
+        amount: payout.amount,
+        currency: payout.currency || currency,
+        status: payout.status,
+        projected: Boolean(payout.isProjected),
+      })),
+    ],
+    [charges, currency, payouts]
+  );
+  const filteredTransactions =
+    transactionFilter === "all" ? transactions : transactions.filter((transaction) => transaction.type === transactionFilter);
 
   useEffect(() => {
-    setChargesPage((page) => Math.min(Math.max(1, page), chargesTotalPages));
-  }, [charges.length, chargesTotalPages]);
+    let isCancelled = false;
+    const listingsRequest = demoMode ? Promise.resolve(DEMO_LISTINGS) : fetchHostOwnedListings();
+    listingsRequest
+      .then((listings) => {
+        if (isCancelled) return;
+        setListingState({
+          hasProperty: listings.length > 0,
+          isLive: listings.some(
+            (listing) => String(listing?.property?.status || "").toUpperCase() === "ACTIVE"
+          ),
+          loading: false,
+          error: false,
+        });
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        console.error("Error fetching host listings for finance status:", error);
+        setListingState((previous) => ({
+          ...previous,
+          loading: false,
+          error: true,
+        }));
+      });
 
-  useEffect(() => {
-    setPayoutsPage((page) => Math.min(Math.max(1, page), payoutsTotalPages));
-  }, [payouts.length, payoutsTotalPages]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [demoMode, listingReloadKey]);
 
-  const renderCtaLabel = (idleText) => {
-    if (!isProcessing) {
-      return idleText;
+  const ctaLabel = () => {
+    if (isProcessing) {
+      return processingStep === "opening" ? "Opening link..." : "Working on it...";
     }
-
-    if (processingStep === "opening") {
-      return "Opening link...";
-    }
-
-    return "Working on it...";
+    if (listingError) return "Retry";
+    if (!hasProperty) return "List your property";
+    if (!isConnected) return "Connect Stripe";
+    if (stripeIssues) return "Fix Stripe account";
+    return isLive ? "Open Stripe Dashboard" : "Go live";
   };
 
-  const faqContent = buildFaqContent({ isFaqLoading, faqs });
+  const handlePrimaryAction = () => {
+    if (listingError) {
+      setListingReloadKey((key) => key + 1);
+      return;
+    }
+    if (!hasProperty) {
+      navigate("/hostonboarding");
+      return;
+    }
+    if (!isConnected) {
+      handleStripeAction();
+      return;
+    }
+    if (stripeIssues) {
+      handleStripeAction();
+      return;
+    }
+    if (!isLive) {
+      navigate("/hostdashboard/listings");
+      return;
+    }
+    handleStripeAction();
+  };
+
+  const handleExportTransactions = () => {
+    if (filteredTransactions.length === 0) return;
+
+    const headers = ["Date", "Description", "Channel", "Amount", "Currency", "Status", "Projected"];
+    const rows = filteredTransactions.map((transaction) => [
+      transaction.exportDate,
+      transaction.description,
+      transaction.channel,
+      transaction.amount,
+      transaction.currency,
+      transaction.status,
+      transaction.projected ? "Yes" : "No",
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(","))
+      .join("\r\n");
+    const blobUrl = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `domits-transactions-${transactionFilter}.csv`;
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const scrollToPayoutSettings = () => {
+    document.getElementById("finance-payout-settings")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const nextPayout = payouts[0];
+  const arrivingSoonAmount = getArrivingSoonAmount(payouts);
+  const lastPayout = getLastPayout(payouts);
+  const processingAmount = balanceView.incomingTotal;
+  const availableAmount = balanceView.availableTotal;
+  const availableAmountForDisplay = showFinancialData ? availableAmount : 0;
+  const arrivingSoonAmountForDisplay = showFinancialData ? arrivingSoonAmount : 0;
+  const processingAmountForDisplay = showFinancialData ? processingAmount : 0;
+  const availableDisplay = isBalanceLoading ? "—" : getAmount(availableAmountForDisplay, currency);
+  const arrivingSoonDisplay = isBalanceLoading ? "—" : getAmount(arrivingSoonAmountForDisplay, currency);
+  const processingDisplay = isBalanceLoading ? "—" : getAmount(processingAmountForDisplay, currency);
+
+  let payoutStatusMessage = "Connect Stripe to enable payouts";
+  let payoutSettingsDescription =
+    "You will be able to set your bank account and payout schedule after connecting.";
+  let payoutStatusConnected = false;
+
+  if (stripeIssues) {
+    payoutStatusMessage = "Action required: Stripe account issue";
+    payoutSettingsDescription =
+      "Stripe has disabled charges or payouts. Open your Stripe account to resolve the issue.";
+  } else if (isConnected) {
+    payoutStatusMessage = "Stripe Connected";
+    payoutSettingsDescription = "Bank account connected and ready for payouts.";
+    payoutStatusConnected = true;
+  }
+
+  let statusTitle = "You are almost there";
+
+  if (listingError) {
+    statusTitle = "We couldn't check your property status";
+  } else if (!hasProperty) {
+    statusTitle = "List your property to get started";
+  } else if (!isConnected) {
+    statusTitle = "Securely connect your account to receive payouts";
+  } else if (stripeIssues) {
+    statusTitle = "Action required: Stripe account needs attention";
+  }
 
   return (
-    <main className="page-Host">
-      <p className="page-Host-title">Finance</p>
-      <div className="page-Host-content">
-        <section className="host-pc-finance">
-          <div className="finance-content">
-            {stripeIssues ? (
-              <div className="finance-stripe-alert">
-                <strong>Action required: Stripe account issue detected</strong>
-                <p>
-                  {stripeAlertMessage}{" "}
-                  Your listings with direct booking enabled are not accepting new reservations until this is resolved.
-                </p>
-                <button
-                  type="button"
-                  className={`finance-span ${isProcessing ? "disabled" : ""}`}
-                  onClick={isProcessing ? undefined : handleStripeAction}
-                  disabled={isProcessing}
-                >
-                  {renderCtaLabel("Open Stripe Dashboard to fix")}
-                </button>
+    <main className="page-Host finance-page">
+      <div className="finance-page-heading">
+        <h1>Finance</h1>
+        <p>Manage your earnings, payouts, and cashflow.</p>
+      </div>
+
+      <section className={`finance-status-card${isLive ? " is-live" : ""}`}>
+        {isLive ? (
+          <div className="finance-live-summary">
+            <div className="finance-live-icon"><WalletCards size={24} aria-hidden="true" /></div>
+            <div>
+              <strong>Ready to withdraw</strong>
+              <b>{getAmount(availableAmount, currency)}</b>
+              <small>
+                {getAmount(arrivingSoonAmount, currency)} arriving soon <Info size={11} aria-hidden="true" />{" "}
+                <span>•</span> {getAmount(processingAmount, currency)} processing <Info size={11} aria-hidden="true" />
+              </small>
+            </div>
+            <button type="button" className="finance-button" onClick={handleStripeAction} disabled={isProcessing}>
+              {ctaLabel()}
+            </button>
+            <div className="finance-live-meta">
+              <span><CalendarDays size={13} aria-hidden="true" /> Next payout: {nextPayout?.arrivalDate || "Scheduled"}</span>
+              <span><CalendarDays size={13} aria-hidden="true" /> Last payout: {lastPayout?.arrivalDate || "No previous payout"}</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="finance-progress-steps">
+              <Step number="1" label="List your property" complete={hasProperty} active={!hasProperty} />
+              <span className="finance-step-divider" />
+              <Step number="2" label="Connect Stripe" complete={isConnected} active={hasProperty && !isConnected} />
+              <span className="finance-step-divider" />
+              <Step
+                number="3"
+                label="Go live"
+                complete={isLive}
+                active={isConnected && hasProperty && !isLive && !stripeIssues}
+              />
+            </div>
+            <div className="finance-status-content">
+              <div>
+                <strong>{statusTitle}</strong>
+                {listingError && (
+                  <p>We couldn't load your property status. Your financial data remains available while we retry.</p>
+                )}
+                {needsListing && (
+                  <p>Add your property details before connecting Stripe and making it visible to guests.</p>
+                )}
+                {needsStripe && (
+                  <ul>
+                    <li>Takes 2–3 minutes</li>
+                    <li>You&apos;ll be redirected to Stripe</li>
+                    <li>Your data is secure and encrypted</li>
+                  </ul>
+                )}
+                {stripeIssues && (
+                  <p className="finance-stripe-warning" role="alert">
+                    Stripe has disabled charges or payouts for this account. Open Stripe to resolve the account issue.
+                  </p>
+                )}
+                {!listingError && !needsListing && !needsStripe && !stripeIssues && (
+                  <p>Make your property visible to guests and start to<br />receive bookings.</p>
+                )}
               </div>
-            ) : null}
+              <button type="button" className="finance-button" onClick={handlePrimaryAction} disabled={isProcessing || isAccountLoading || listingState.loading}>
+                {ctaLabel()}
+              </button>
+            </div>
+          </>
+        )}
+      </section>
 
-            <div className="finance-steps">
-              <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
-              <ul>
-                <li>
-                  <strong>Step 1: </strong>
-                  &nbsp;&nbsp;
-                  <span className="finance-span" onClick={() => handleNavigation("/hostonboarding")}>
-                    List your property.
-                  </span>
-                </li>
+      {(showFinanceSections || showFinanceSectionSkeletons) && (
+        <>
+          <section className="finance-section">
+            <h2>Balance Details</h2>
+            <div className="finance-balance-grid">
+              <div className="finance-balance-card">
+                <CircleDollarSign size={24} aria-hidden="true" />
+                <div><b>{availableDisplay}</b><span>Next payout</span></div>
+                {showFinancialData && <small>{nextPayout?.arrivalDate || "Scheduled"}</small>}
+              </div>
+              <div className="finance-balance-card">
+                <WalletCards size={24} aria-hidden="true" />
+                <div><b>{arrivingSoonDisplay}</b><span>Arriving soon</span></div>
+                {showFinancialData && <small>1–3 days</small>}
+              </div>
+              <div className="finance-balance-card">
+                <Building2 size={24} aria-hidden="true" />
+                <div><b>{processingDisplay}</b><span>Processing</span></div>
+                {showFinancialData && <small>Pending confirmation</small>}
+              </div>
+            </div>
+          </section>
 
-                <li>
-                  {renderStripeStepContent({
-                    isAccountLoading,
-                    accountId,
-                    onboardingComplete,
-                    isProcessing,
-                    handleStripeAction,
-                    renderCtaLabel,
-                  })}
-                </li>
+          <div className="finance-main-grid">
+            <div className="finance-main-column">
+              <section className="finance-section">
+                <div className="finance-section-title">
+                  <h2>Upcoming Payouts</h2>
+                  {showFinancialData && payouts.length > 0 && (
+                    <button
+                      type="button"
+                      className={`finance-section-action${showAllPayouts ? " is-expanded" : ""}`}
+                      onClick={() => setShowAllPayouts((expanded) => !expanded)}
+                      aria-label={showAllPayouts ? "Show fewer payouts" : "Show all payouts"}
+                      aria-expanded={showAllPayouts}
+                    >
+                      <ArrowRight size={17} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+                <div className="finance-card finance-payouts-card">
+                  {!showFinancialData || recentPayouts.length === 0 ? (
+                    <EmptyState title="No upcoming payouts" description="Payouts will appear here once you receive bookings." />
+                  ) : (
+                    displayedPayouts.map((payout, index) => (
+                      <div className="finance-payout-row" key={payout.id || `${payout.arrivalDate}-${index}`}>
+                        <div><span>{formatDate(payout.arrivalDate) || "Upcoming payout"}</span><small>{payout.status || "In 2 days"}</small></div>
+                        <b>{getAmount(payout.amount, payout.currency || currency)}</b>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
 
-                <li>
-                  <strong>Step 3: </strong> &nbsp; Set your property live &nbsp;
-                  <span className="finance-span" onClick={() => handleNavigation("/hostdashboard/listings")}>
-                    here
-                  </span>
-                  &nbsp; to receive payouts.
-                </li>
-              </ul>
+              <section className="finance-section finance-transactions-section">
+                <div className="finance-section-title">
+                  <h2>Transactions</h2>
+                  {showFinancialData && (
+                    <button
+                      type="button"
+                      className="finance-export-button"
+                      onClick={handleExportTransactions}
+                      disabled={filteredTransactions.length === 0}
+                    >
+                      <Download size={12} aria-hidden="true" /> Export
+                    </button>
+                  )}
+                </div>
+                {!showFinancialData ? (
+                  <div className="finance-card"><EmptyState title="No transactions yet" description="Your earnings and payouts will appear here once your property is live." /></div>
+                ) : (
+                  <div className="finance-card finance-transactions-card">
+                    <div className="finance-tabs">
+                      {[
+                        ["all", "All"],
+                        ["payments", "Payments"],
+                        ["payouts", "Payouts"],
+                        ["refunds", "Refunds"],
+                      ].map(([filter, label]) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          className={transactionFilter === filter ? "is-selected" : ""}
+                          onClick={() => setTransactionFilter(filter)}
+                          aria-pressed={transactionFilter === filter}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {filteredTransactions.length === 0 ? <EmptyState title="No transactions yet" description="Your transactions will appear here." /> : (
+                      <div className="finance-transaction-table">
+                        <div className="finance-transaction-head"><span>Date</span><span>Description</span><span>Channel</span><span>Amount</span></div>
+                        {filteredTransactions.map((transaction) => (
+                          <div className="finance-transaction-row" key={transaction.id}>
+                            <span>{transaction.date || "—"}</span><span>{transaction.description}</span><span>{transaction.channel}</span><span>{getAmount(transaction.amount, transaction.currency)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
             </div>
 
-            <>
-                <div className="payouts-section">
-                  <h3>Recent guest payments</h3>
-
-                  {isChargesLoading ? (
-                    <FinanceSectionLoader message="Loading recent guest payments...">
-                      <FinanceTableSkeleton columns={5} rows={4} />
-                    </FinanceSectionLoader>
-                  ) : charges.length > 0 ? (
-                    <>
-                      <small className="pf-note">
-                        Succeeded charges by guest(s) become available 7 days after the payment date.
-                      </small>
-                      <br />
-                      <div className="table-wrap">
-                        <table className="payout-table">
-                          <thead>
-                            <tr>
-                              <th>Payment date</th>
-                              <th>Property</th>
-                              <th>Guest</th>
-                              <th>Amount received</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {pageSlice(charges, chargesPage).map((charge, index) => (
-                              <tr key={`${charge.createdDate}-${index}-${charge.propertyTitle}`}>
-                                <td>{charge.createdDate}</td>
-                                <td className="property-cell">
-                                  <img
-                                    className="property-thumb"
-                                    src={`${S3_URL}${charge.propertyImage}`}
-                                    alt={charge.propertyTitle}
-                                  />
-                                  <div className="property-meta">
-                                    <div className="property-title" title={charge.propertyTitle}>
-                                      {charge.propertyTitle}
-                                    </div>
-                                    <div className="property-sub">Booking id:&nbsp;{charge.bookingId}</div>
-                                    <div className="property-sub">Payment id:&nbsp;{charge.paymentId}</div>
-                                  </div>
-                                </td>
-                                <td>{charge.customerName}</td>
-                                <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
-                                <td>
-                                  <StatusBadge status={charge.status} />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <TablePager page={chargesPage} setPage={setChargesPage} totalPages={chargesTotalPages} />
-                    </>
-                  ) : (
-                    <p>No charges found.</p>
-                  )}
+            <aside className="finance-side-column">
+              {isLive && (
+                <section className="finance-card finance-receive-card">
+                  <button type="button" className="finance-card-action" onClick={scrollToPayoutSettings}>
+                    <h2>Receive payouts in 3 steps <ArrowRight size={16} aria-hidden="true" /></h2>
+                    <p>You are all set! Updates will appear here if changes are needed.</p>
+                  </button>
+                </section>
+              )}
+              <section id="finance-payout-settings" className="finance-card finance-settings-card">
+                <h2>Payout Settings</h2>
+                <div className={`finance-stripe-status${payoutStatusConnected ? " is-connected" : ""}`}>
+                  {payoutStatusConnected && <CheckCircle2 size={14} aria-hidden="true" />}
+                  {payoutStatusMessage}
                 </div>
-
-                <div className="payouts-section balance-section">
-                  <h3>Withdrawable balance overview</h3>
-
-                  {isBalanceLoading ? (
-                    <FinanceSectionLoader message="Loading withdrawable balance...">
-                      <FinanceBalanceSkeleton />
-                    </FinanceSectionLoader>
-                  ) : (
-                    <>
-                      <div
-                        className="balance-meter"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={balanceView.pctAvailable}
-                      >
-                        <div
-                          className="bm-seg bm-seg--available"
-                          style={{ width: `${balanceView.pctAvailable}%` }}
-                          data-label="Available"
-                          data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
-                          data-desc="Funds that have been received and are ready to be paid out"
-                        />
-                        <div
-                          className="bm-seg bm-seg--incoming"
-                          style={{
-                            width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
-                          }}
-                          data-label="Incoming"
-                          data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                          data-desc="Yet to be received funds from bookings that are still within the pending period"
-                        />
-                      </div>
-
-                      <div className="balance-list">
-                        <div className="balance-header">
-                          <span>Payment type</span>
-                          <span>Amount</span>
-                        </div>
-                        <div className="balance-divider" />
-
-                        <div className="balance-item">
-                          <div className="balance-left">
-                            <span className="balance-dot balance-dot--incoming" />
-                            <span className="balance-label">Incoming</span>
-                          </div>
-                          <div className="balance-amount">
-                            {formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                          </div>
-                        </div>
-                        <div className="balance-divider" />
-
-                        <div className="balance-item">
-                          <div className="balance-left">
-                            <span className="balance-dot balance-dot--available" />
-                            <span className="balance-label">Available</span>
-                          </div>
-                          <div className="balance-amount">
-                            {formatMoney(balanceView.availableTotal, balanceView.currency)}
-                          </div>
-                        </div>
-                        <div className="balance-divider" />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="payouts-section">
-                  <h3>Recent Payouts</h3>
-
-                  {isPayoutsLoading ? (
-                    <FinanceSectionLoader message="Loading recent payouts...">
-                      <FinanceTableSkeleton columns={4} rows={4} />
-                    </FinanceSectionLoader>
-                  ) : payouts.length > 0 ? (
-                    <>
-                      <div className="table-wrap">
-                        <table className="payout-table">
-                          <thead>
-                            <tr>
-                              <th>Payout date</th>
-                              <th>Amount</th>
-                              <th>Status</th>
-                              <th>Payout ID</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {pageSlice(payouts, payoutsPage).map((payout) => (
-                              <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
-                                <td>{payout.arrivalDate}</td>
-                                <td>{formatMoney(payout.amount, payout.currency)}</td>
-                                <td>
-                                  <StatusBadge status={payout.status} />
-                                </td>
-                                <td title={payout.id || ""}>{payout.id || " - "}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <TablePager page={payoutsPage} setPage={setPayoutsPage} totalPages={payoutsTotalPages} />
-                    </>
-                  ) : (
-                    <p>No payouts found.</p>
-                  )}
-                </div>
-
-                <div className="payout-frequency">
-                  <h3>Payout Frequency</h3>
-
-                  {isPayoutScheduleLoading ? (
-                    <FinanceSectionLoader message="Loading payout schedule...">
-                      <FinanceScheduleSkeleton />
-                    </FinanceSectionLoader>
-                  ) : (
-                    <>
-                      <div className="pf-grid">
-                        <div className="pf-row">
-                          <label className="pf-label" htmlFor="pf-interval">
-                            Payout frequency
-                          </label>
-                          <select
-                            id="pf-interval"
-                            className="pf-select"
-                            value={payoutInterval ?? ""}
-                            onChange={(event) => {
-                              const period = event.target.value;
-                              setPayoutInterval(period);
-                              if (period !== "weekly") setWeeklyAnchor(null);
-                              if (period !== "monthly") setMonthlyAnchor(null);
-                            }}
-                          >
-                            <option value="" disabled>
-                              Select payout frequency
-                            </option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                          </select>
-                        </div>
-
-                        {payoutInterval === "weekly" && (
-                          <div className="pf-row">
-                            <label className="pf-label" htmlFor="pf-weekday">
-                              Weekly anchor
-                            </label>
-                            <select
-                              id="pf-weekday"
-                              className="pf-select"
-                              value={weekly_anchor ?? ""}
-                              onChange={(event) => setWeeklyAnchor(event.target.value.toLowerCase())}
-                            >
-                              <option value="" disabled>
-                                Select weekday...
-                              </option>
-                              {WEEKDAYS.map((day) => (
-                                <option key={day} value={day}>
-                                  {day.charAt(0).toUpperCase() + day.slice(1)}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-
-                        {payoutInterval === "monthly" && (
-                          <div className="pf-row">
-                            <label className="pf-label" htmlFor="pf-monthday">
-                              Monthly anchor (day)
-                            </label>
-                            <select
-                              id="pf-monthday"
-                              className="pf-select"
-                              value={monthly_anchor ?? ""}
-                              onChange={(event) => setMonthlyAnchor(Number(event.target.value))}
-                            >
-                              <option value="" disabled>
-                                Select day...
-                              </option>
-                              {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
-                                <option key={day} value={day}>
-                                  {day}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </div>
-
-                      <small className="pf-note">
-                        If your scheduled payout date falls on a weekend, a holiday, or a day that does not exist in
-                        that month, your payout will begin the next business day.
-                      </small>
-
-                      {toast ? <div className={`toast ${toast.type}`}>{toast.message}</div> : null}
-
-                      <div className="pf-actions">
-                        <button type="button" className="btn btn-primary" onClick={handlePayoutSchedule}>
-                          Save payout schedule
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-            </>
-
-            <InvoicesSection />
+                <p>{payoutSettingsDescription}</p>
+                <button
+                  type="button"
+                  className="finance-outline-button"
+                  onClick={handleStripeAction}
+                  disabled={!isConnected || isProcessing || demoMode}
+                >
+                  {isConnected ? "Manage account" : "Connect Stripe"}
+                </button>
+                <label htmlFor="finance-payout-frequency">Payout frequency</label>
+                <select id="finance-payout-frequency" value={payoutInterval || "daily"} onChange={(event) => setPayoutInterval(event.target.value)} disabled={!isConnected || isPayoutScheduleLoading}>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {payoutInterval === "weekly" && <select value={weekly_anchor || ""} onChange={(event) => setWeeklyAnchor(event.target.value)}><option value="">Select weekday</option>{WEEKDAYS.map((day) => <option key={day} value={day}>{day}</option>)}</select>}
+                {payoutInterval === "monthly" && <select value={monthly_anchor || ""} onChange={(event) => setMonthlyAnchor(Number(event.target.value))}><option value="">Select day</option>{Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select>}
+                {isConnected && (
+                  <button
+                    type="button"
+                    className="finance-save-button"
+                    onClick={handlePayoutSchedule}
+                    disabled={demoMode}
+                  >
+                    Save schedule
+                  </button>
+                )}
+                {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
+              </section>
+              <HelpPanel faqs={faqs} />
+            </aside>
           </div>
-        </section>
+        </>
+      )}
 
-        <div className="faqs">
-          <p className="faqs-title">FAQs</p>
-
-          {faqContent}
-        </div>
-      </div>
+      <InvoicesSection />
     </main>
   );
 }
