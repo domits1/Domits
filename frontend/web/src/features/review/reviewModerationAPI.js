@@ -7,7 +7,7 @@ const request = async (path, options = {}) => {
   if (!base) throw new Error("Review service is not configured.");
   const response = await fetch(`${base}${path}`, {
     ...options,
-    headers: { Authorization: getAccessToken(), ...(options.body ? { "Content-Type": "application/json" } : {}) },
+    headers: { Authorization: await getAccessToken(), ...(options.body ? { "Content-Type": "application/json" } : {}) },
   });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.message || "Review moderation request failed.");

@@ -50,7 +50,7 @@ export async function createReview(payload) {
   const response = await fetch(buildReviewUrl(), {
     method: "POST",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -70,7 +70,7 @@ export async function getReviewById(reviewId) {
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "GET",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
     },
   });
 
@@ -88,7 +88,7 @@ export async function updateReview(reviewId, payload) {
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "PATCH",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -111,7 +111,7 @@ export async function getGuestReviewHistory() {
   const response = await fetch(requestUrl.toString(), {
     method: "GET",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
     },
   });
 
@@ -127,7 +127,7 @@ export async function getGuestReviewHistory() {
 export async function getReviewNotificationPreference() {
   // Review: Reads whether review request emails are enabled for the guest.
   const response = await fetch(buildReviewUrl("/notification-preferences"), {
-    headers: { Authorization: getAccessToken() },
+    headers: { Authorization: await getAccessToken() },
   });
   const data = await parseJsonResponse(response);
   if (!response.ok) throw new Error(data?.message || "Could not load review email settings.");
@@ -138,7 +138,7 @@ export async function setReviewNotificationPreference(emailEnabled) {
   // Review: Updates review request email preferences for the guest.
   const response = await fetch(buildReviewUrl("/notification-preferences"), {
     method: "PATCH",
-    headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
+    headers: { Authorization: await getAccessToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ emailEnabled }),
   });
   const data = await parseJsonResponse(response);

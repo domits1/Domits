@@ -165,8 +165,8 @@ const parseJsonResponse = async (response) => {
   }
 };
 
-const buildHeaders = () => ({
-  Authorization: getAccessToken(),
+const buildHeaders = async () => ({
+  Authorization: await getAccessToken(),
   "Content-Type": "application/json",
 });
 
@@ -184,7 +184,7 @@ export async function fetchHostReviews(hostId) {
 
   const response = await fetch(requestUrl.toString(), {
     method: "GET",
-    headers: buildHeaders(),
+    headers: await buildHeaders(),
   });
   const data = await parseJsonResponse(response);
 
@@ -219,7 +219,7 @@ async function sendReviewResponseRequest(reviewId, method, action, payload = nul
 
   const response = await fetch(`${getReviewApiBase()}/${encodeURIComponent(reviewId)}/${action}`, {
     method,
-    headers: buildHeaders(),
+    headers: await buildHeaders(),
     body: payload ? JSON.stringify(payload) : undefined,
   });
   const data = await parseJsonResponse(response);
