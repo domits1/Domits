@@ -5,7 +5,7 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { useNavigate } from "react-router-dom";
-import { getGuestReviewHistory } from "./services/reviewAPI";
+import { getGuestReviewHistory, getReviewNotificationPreference, setReviewNotificationPreference } from "./services/reviewAPI";
 import { canEditReview } from "./utils/reviewRules";
 import "./styles/guestReviews.scss";
 
@@ -28,8 +28,8 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
+// Review: Renders a five-star display for each review in the guest history list.
 function RatingStars({ value }) {
-  // Review: Renders the saved overall score as a read-only five-star display.
   const rating = Number(value) || 0;
 
   return (
@@ -46,9 +46,12 @@ function GuestReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [emailEnabled, setEmailEnabled] = useState(null);
+  const [preferenceBusy, setPreferenceBusy] = useState(false);
+  const [preferenceError, setPreferenceError] = useState("");
 
   const loadReviews = useCallback(async () => {
-    // Review: Loads the authenticated guest's own draft and submitted review history.
+    // Review: Loads the authenticated guest's own reviews for the history page.
     setLoading(true);
     setErrorMessage("");
 
@@ -66,14 +69,37 @@ function GuestReviews() {
     loadReviews();
   }, [loadReviews]);
 
+  useEffect(() => {
+    // Review: Loads the guest's review email preference separately from review history.
+    let active = true;
+    getReviewNotificationPreference()
+      .then((preference) => { if (active) setEmailEnabled(preference.emailEnabled); })
+      .catch((error) => { if (active) setPreferenceError(error.message || "Could not load review email settings."); });
+    return () => { active = false; };
+  }, []);
+
+  const changeEmailPreference = async (enabled) => {
+    // Review: Persists whether the guest wants review request reminder emails.
+    setPreferenceBusy(true);
+    setPreferenceError("");
+    try {
+      const preference = await setReviewNotificationPreference(enabled);
+      setEmailEnabled(preference.emailEnabled);
+    } catch (error) {
+      setPreferenceError(error.message || "Could not update review email settings.");
+    } finally {
+      setPreferenceBusy(false);
+    }
+  };
+
   const sortedReviews = useMemo(
-    // Review: Keeps the most recently changed reviews at the top of the history page.
+    // Review: Shows recently updated review drafts and submissions first.
     () => [...reviews].sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0)),
     [reviews]
   );
 
   const handleEditReview = (review) => {
-    // Review: Passes the selected review and booking context into the edit form.
+    // Review: Sends editable review and booking context into the review form route.
     navigate(`/guestdashboard/reviews/${encodeURIComponent(review.id)}/edit`, {
       state: {
         review,
@@ -132,7 +158,7 @@ function GuestReviews() {
 
             {review.privateFeedback && (
               <div className="guestReviewHistoryPrivate">
-                <strong>Private feedback</strong>
+                <strong>Private feedback for host</strong>
                 <p>{review.privateFeedback}</p>
               </div>
             )}
@@ -176,6 +202,15 @@ function GuestReviews() {
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </header>
+
+      <section className="guestReviewNotificationSettings" aria-label="Review notifications">
+        <label>
+          <input type="checkbox" checked={emailEnabled === true} disabled={emailEnabled === null || preferenceBusy}
+            onChange={(event) => changeEmailPreference(event.target.checked)} />
+          <span>Review request emails</span>
+        </label>
+        {preferenceError && <p role="alert">{preferenceError}</p>}
+      </section>
 
       {reviewHistoryContent}
     </main>

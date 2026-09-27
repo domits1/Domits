@@ -9,8 +9,10 @@ import "./styles/toast-notifications.scss";
 import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import { AuthProvider } from "./features/auth/AuthContext";
+import ProtectedRoute from "./features/auth/ProtectedRoute";
 import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
+import { REVIEW_MODERATOR_ROLES } from "./features/auth/roles";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
@@ -25,6 +27,7 @@ import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import ReviewPage from "./features/review/ReviewPage";
+import ReviewModerationPage from "./features/review/ReviewModerationPage";
 import StripeCallback from "./features/stripe/StripeCallback";
 import Sustainability from "./features/sustainability/Sustainability";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
@@ -219,6 +222,14 @@ function App() {
 
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
+                  <Route
+                    path="/admin/reviews"
+                    element={
+                      <ProtectedRoute allowedRoles={REVIEW_MODERATOR_ROLES} loginRedirect>
+                        <ReviewModerationPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Guest Dashboard */}
                   <Route

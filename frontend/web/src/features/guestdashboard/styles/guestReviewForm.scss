@@ -1,6 +1,5 @@
-/* guestReviewForm.scss */
+/* Review: Layout and states for guest review creation, reminder links, and private feedback. */
 
-/* Review: Layout and interaction states for creating and editing a guest review. */
 .guestReviewFormPage {
   width: min(920px, 100%);
   padding: 32px;
@@ -332,6 +331,19 @@
   p {
     margin: 0;
     color: #666;
+    font-size: 14px;
+  }
+}
+
+.guestReviewDomitsPrivateSection {
+  padding: 16px;
+  border: 1px solid #b9d6ff;
+  border-radius: 8px;
+  background: #f4f8ff;
+
+  p {
+    margin: 0;
+    color: #3d5878;
     font-size: 14px;
   }
 }
