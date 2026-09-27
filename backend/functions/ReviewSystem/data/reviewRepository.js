@@ -160,10 +160,15 @@ class ReviewRepository {
   async decideReview({ reviewId, expectedStatus, status, verification, moderation, now }) {
     // Review: Atomically applies moderation status, verification evidence, and moderation history.
     const client = await Database.getInstance();
+    const publicationStatusByReviewStatus = {
+      PUBLISHED: "PUBLISHED",
+      REJECTED: "REJECTED",
+    };
+    const publicationStatus = publicationStatusByReviewStatus[status] || "UNPUBLISHED";
     await client.transaction(async (manager) => {
       const result = await manager.getRepository(Review).createQueryBuilder().update()
         .set({ status, verificationStatus: verification.status === "VERIFIED_STAY" ? "VERIFIED_STAY" : "UNVERIFIED",
-          publicationStatus: status === "PUBLISHED" ? "PUBLISHED" : status === "REJECTED" ? "REJECTED" : "UNPUBLISHED",
+          publicationStatus,
           updatedAt: now })
         .where("id = :reviewId AND status = :expectedStatus", { reviewId, expectedStatus }).execute();
       if (result.affected !== 1) throw new ConflictException("Review changed during moderation. Please reload.");
@@ -588,7 +593,7 @@ class ReviewRepository {
       createdAt: review.createdAt,
       categoryRatings: review.categoryRatings || {},
       response:
-        review.response && review.response.status === "published" && !review.response.deletedAt
+        review.response?.status === "published" && !review.response.deletedAt
           ? {
               id: review.response.id,
               authorRole: review.response.authorRole,
