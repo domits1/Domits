@@ -1,4 +1,0 @@
-migrate-*.log
-rollback-*.log
-tenant-*.json
-rollback-pending-*
