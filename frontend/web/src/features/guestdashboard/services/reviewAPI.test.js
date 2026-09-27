@@ -1,5 +1,6 @@
-import { createReview, getGuestReviewHistory, updateReview } from "./reviewAPI";
+import { createReview, getGuestReviewHistory, getReviewNotificationPreference, setReviewNotificationPreference, updateReview } from "./reviewAPI";
 
+// Review: Covers guest review writes, history, and notification-preference requests.
 jest.mock("../../../services/getAccessToken", () => ({
   getAccessToken: () => "access-token-1",
 }));
@@ -40,6 +41,19 @@ describe("guest review API", () => {
 
     await expect(getGuestReviewHistory()).rejects.toThrow("Review service is not configured.");
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("reads and updates review email preferences with authorization", async () => {
+    global.fetch.mockResolvedValue({ ok: true, text: async () => JSON.stringify({ emailEnabled: false }) });
+    await expect(getReviewNotificationPreference()).resolves.toEqual({ emailEnabled: false });
+    await expect(setReviewNotificationPreference(false)).resolves.toEqual({ emailEnabled: false });
+    expect(global.fetch).toHaveBeenNthCalledWith(1, "https://example.test/reviews/notification-preferences", {
+      headers: { Authorization: "access-token-1" },
+    });
+    expect(global.fetch).toHaveBeenNthCalledWith(2, "https://example.test/reviews/notification-preferences", {
+      method: "PATCH", headers: { Authorization: "access-token-1", "Content-Type": "application/json" },
+      body: JSON.stringify({ emailEnabled: false }),
+    });
   });
 
   test("surfaces backend errors when loading history fails", async () => {

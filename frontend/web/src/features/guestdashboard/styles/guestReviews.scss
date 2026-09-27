@@ -1,4 +1,5 @@
-/* Review: History, status, empty, loading, and error states for guest reviews. */
+/* Review: Guest review history and reminder-email preference controls. */
+
 .guestReviewHistoryPage {
   width: min(1040px, 100%);
   padding: 32px;
@@ -16,6 +17,34 @@
     color: #111111;
     font-size: 32px;
     font-weight: 700;
+  }
+}
+
+.guestReviewNotificationSettings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: #333333;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: #0d9813;
+  }
+
+  p {
+    margin: 0;
+    color: #9f1c1c;
   }
 }
 

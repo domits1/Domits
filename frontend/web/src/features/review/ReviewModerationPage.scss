@@ -1,0 +1,234 @@
+/* Review: Internal moderation queue, verification evidence, and private-feedback inbox. */
+
+.reviewModerationPage {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  color: #242424;
+}
+
+.reviewModerationHeader,
+.reviewModerationDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.reviewModerationHeader {
+  margin-bottom: 20px;
+  h1 { margin: 0; font-size: 28px; }
+  p { margin: 4px 0 0; color: #606060; }
+  button {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+  }
+}
+
+.reviewModerationError {
+  margin: 0 0 16px;
+  padding: 12px;
+  border-left: 3px solid #b22c2c;
+  background: #fff4f4;
+  color: #9f1c1c;
+}
+
+.reviewModerationState { color: #606060; }
+
+.reviewModerationInbox {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dedede;
+}
+
+.reviewModerationInboxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+  h2 svg { width: 19px; height: 19px; }
+  p { margin: 4px 0 0; color: #666; font-size: 13px; }
+  button {
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid #147b39;
+    border-radius: 5px;
+    background: #fff;
+    color: #147b39;
+    font-weight: 700;
+    cursor: pointer;
+    &:disabled { opacity: .55; cursor: not-allowed; }
+  }
+}
+
+.reviewModerationInboxList {
+  display: grid;
+  gap: 10px;
+  max-height: 340px;
+  margin-top: 14px;
+  overflow-y: auto;
+  article {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    gap: 18px;
+    padding: 12px 0;
+    border-top: 1px solid #e5e5e5;
+  }
+  strong, span { display: block; overflow-wrap: anywhere; }
+  span { margin-top: 3px; color: #666; font-size: 12px; }
+  p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+
+.reviewModerationLayout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 28px;
+}
+
+.reviewModerationQueue {
+  display: grid;
+  align-content: start;
+  border-top: 1px solid #dedede;
+  button {
+    display: grid;
+    width: 100%;
+    gap: 4px;
+    padding: 14px 12px;
+    border: 0;
+    border-bottom: 1px solid #dedede;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    strong { overflow-wrap: anywhere; }
+    span { font-size: 13px; color: #666; }
+    &.selected { background: #edf6ee; border-left: 3px solid #147b39; padding-left: 9px; }
+    &:focus-visible { outline: 2px solid #147b39; outline-offset: -2px; }
+  }
+}
+
+.reviewModerationDetail {
+  min-width: 0;
+  h2 { margin: 0 0 5px; font-size: 20px; overflow-wrap: anywhere; }
+  h3 { margin: 0 0 10px; font-size: 16px; }
+}
+
+.reviewModerationDetailHeader {
+  p { margin: 0; color: #666; font-size: 14px; overflow-wrap: anywhere; }
+  > span { flex: none; font-size: 13px; font-weight: 700; }
+  .flagged { color: #9b5b00; }
+  .verified { color: #147b39; }
+}
+
+.reviewModerationText { line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.reviewModerationRatings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 18px 0;
+  div { display: grid; gap: 2px; }
+  dt { color: #666; text-transform: capitalize; font-size: 13px; }
+  dd { margin: 0; font-weight: 700; }
+}
+
+.reviewModerationEvidence,
+.reviewModerationPrivateFeedback,
+.reviewModerationHistory {
+  padding: 16px 0;
+  border-top: 1px solid #dedede;
+  p { margin: 0; }
+  ul, ol { margin: 8px 0 0; padding-left: 22px; }
+  li { margin-top: 4px; }
+}
+
+.reviewModerationPrivateFeedback {
+  > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  h3 {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  h3 svg { width: 18px; height: 18px; }
+  button {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid #147b39;
+    border-radius: 5px;
+    background: #fff;
+    color: #147b39;
+    font-weight: 700;
+    cursor: pointer;
+    &:disabled { opacity: .55; cursor: not-allowed; }
+  }
+  .reviewModerationError { margin-top: 10px; }
+}
+
+.reviewModerationPrivateFeedbackList {
+  display: grid;
+  gap: 10px;
+  article {
+    padding: 12px;
+    border-left: 3px solid #147b39;
+    background: #f4f8f5;
+  }
+  p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  span { display: block; margin-top: 7px; color: #666; font-size: 12px; }
+}
+
+.reviewModerationDecision {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #dedede;
+  fieldset { display: flex; gap: 22px; margin: 0 0 8px; padding: 0; border: 0; }
+  legend { margin-bottom: 8px; font-weight: 700; }
+  label { font-weight: 600; }
+  fieldset label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+  input:not([type="radio"]), textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #c9c9c9;
+    border-radius: 5px;
+    background: #fff;
+    font: inherit;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    justify-self: start;
+    min-height: 40px;
+    margin-top: 6px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 5px;
+    background: #147b39;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    &:disabled { opacity: .55; cursor: not-allowed; }
+  }
+}
+
+@media (max-width: 760px) {
+  .reviewModerationPage { padding: 20px 16px 48px; }
+  .reviewModerationLayout { grid-template-columns: 1fr; gap: 20px; }
+  .reviewModerationQueue { max-height: 230px; overflow-y: auto; }
+  .reviewModerationDetailHeader { flex-direction: column; gap: 8px; }
+  .reviewModerationPrivateFeedback > div:first-child { align-items: flex-start; flex-direction: column; }
+  .reviewModerationInboxHeader { align-items: flex-start; flex-direction: column; }
+  .reviewModerationInboxList article { grid-template-columns: 1fr; gap: 8px; }
+}

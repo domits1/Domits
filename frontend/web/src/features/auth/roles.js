@@ -29,3 +29,13 @@ export const GUEST_ROLES = [
   ROLES.TRAVELER,
   ...HOST_ROLES,
 ];
+
+// Review: Restricts the internal moderation workspace to recognized review staff roles.
+export const REVIEW_MODERATOR_ROLES = [
+  ROLES.ADMIN,
+  "admin",
+  "Moderator",
+  "moderator",
+  "Review Moderator",
+  "review_moderator",
+];
