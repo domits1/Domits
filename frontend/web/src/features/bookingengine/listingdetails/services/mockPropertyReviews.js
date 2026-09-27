@@ -1,4 +1,4 @@
-// Review: Mock public review payloads used when listing details runs without the review API.
+// Review: Mock public review payloads used when the listing details page runs without the review API.
 
 export const getMockPropertyReviewsByPropertyId = (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
@@ -28,6 +28,12 @@ export const getMockPropertyReviewsByPropertyId = (propertyId) => {
           location: 4.8,
           value: 4.7,
         },
+        response: {
+          id: `${normalizedPropertyId}-response-1`,
+          authorRole: "host",
+          message: "Thank you for staying with us. We are delighted you enjoyed the calm location.",
+          publishedAt: Date.parse("2026-09-02T10:00:00.000Z"),
+        },
       },
       {
         id: `${normalizedPropertyId}-review-2`,
@@ -42,6 +48,12 @@ export const getMockPropertyReviewsByPropertyId = (propertyId) => {
           communication: 5,
           location: 4,
           value: 4,
+        },
+        response: {
+          id: `${normalizedPropertyId}-response-2`,
+          authorRole: "property_manager",
+          message: "We appreciate your feedback and are glad the listing matched your expectations.",
+          publishedAt: Date.parse("2026-08-22T10:00:00.000Z"),
         },
       },
     ],

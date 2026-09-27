@@ -1,4 +1,5 @@
 import React from "react";
+import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
@@ -38,6 +39,15 @@ describe("Pages2 Channex certification navigation", () => {
 
     expect(await screen.findByText("Channex Certification")).toBeTruthy();
     expect(getChannexAdminAccess).toHaveBeenCalledWith({ userId: "allowed-user" });
+  });
+
+  test("shows Reviews nav item for hosts", () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+
+    renderPages();
+
+    expect(screen.getByText("Reviews")).toBeTruthy();
+    expect(screen.getByRole("link", { name: /reviews/i })).toHaveAttribute("href", "/reviews");
   });
 
   test("hides Channex certification nav item when backend admin-access denies the user", async () => {

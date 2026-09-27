@@ -1,4 +1,4 @@
-// Review: Covers public summary, cards, filters, loading, empty, and error states.
+// frontend/web/src/features/bookingengine/listingdetails/components/ReviewsSection.test.js
 
 import React from "react";
 import "@testing-library/jest-dom";
@@ -88,6 +88,69 @@ describe("ReviewsSection", () => {
 
     expect(screen.getByText("Clean, calm, and close to everything we needed.")).toBeInTheDocument();
     expect(screen.getByText("The host was responsive and the listing matched the photos.")).toBeInTheDocument();
+  });
+
+  test("renders published host responses under the matching public review", () => {
+    const publishedAt = Date.parse("2026-09-02T10:00:00.000Z");
+    const expectedResponseDate = new Date(publishedAt).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    render(
+      <ReviewsSection
+        reviews={[
+          {
+            ...reviews[0],
+            response: {
+              id: "response-1",
+              authorRole: "host",
+              status: "published",
+              message: "Thank you for staying with us.",
+              publishedAt,
+            },
+          },
+        ]}
+        overallRating={5}
+        totalReviews={1}
+        categoryScores={{ cleanliness: 5 }}
+      />
+    );
+
+    expect(screen.getByText("Clean, calm, and close to everything we needed.")).toBeInTheDocument();
+    expect(screen.getByText("Response from host")).toBeInTheDocument();
+    expect(screen.getByText("Thank you for staying with us.")).toBeInTheDocument();
+    expect(screen.getByText(expectedResponseDate)).toBeInTheDocument();
+  });
+
+  test("labels property-manager responses clearly", () => {
+    render(
+      <ReviewsSection
+        reviews={[
+          {
+            ...reviews[0],
+            response: {
+              id: "response-1",
+              authorRole: "property_manager",
+              message: "We appreciate your feedback.",
+              publishedAt: Date.parse("2026-09-02T10:00:00.000Z"),
+            },
+          },
+        ]}
+        totalReviews={1}
+      />
+    );
+
+    expect(screen.getByText("Response from property manager")).toBeInTheDocument();
+    expect(screen.getByText("We appreciate your feedback.")).toBeInTheDocument();
+  });
+
+  test("renders reviews without responses normally", () => {
+    render(<ReviewsSection reviews={reviews} overallRating={4.5} totalReviews={2} categoryScores={{}} />);
+
+    expect(screen.getByText("Clean, calm, and close to everything we needed.")).toBeInTheDocument();
+    expect(screen.queryByText(/Response from/i)).not.toBeInTheDocument();
   });
 
   test("shows verified stay badge only for verified reviews", () => {

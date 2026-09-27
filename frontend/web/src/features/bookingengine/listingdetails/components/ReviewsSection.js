@@ -7,7 +7,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PeopleIcon from "@mui/icons-material/People";
 import SkeletonBlock from "./SkeletonBlock";
 
-// Review: Categories shown publicly when scores are available.
+// Review categories shown publicly when scores are available.
 const CATEGORY_LABELS = [
   { key: "cleanliness", label: "Cleanliness" },
   { key: "communication", label: "Communication" },
@@ -18,14 +18,14 @@ const CATEGORY_LABELS = [
   { key: "checkIn", label: "Check-in" },
 ];
 
-// Review: Sort options shown in the public controls.
+// Review sort options shown in the public controls.
 const SORT_OPTIONS = [
   { value: "recent", label: "Most recent" },
   { value: "highest", label: "Highest rated" },
   { value: "lowest", label: "Lowest rated" },
 ];
 
-// Review: Formatting helpers keep public review payload variations safe to display.
+// Small formatting helpers for resilient display data.
 const toNumberOrNull = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
@@ -47,6 +47,16 @@ const formatReviewDate = (value) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+const formatResponseAuthorRole = (role) => {
+  const normalizedRole = String(role || "").trim().toLowerCase();
+
+  if (normalizedRole.includes("property")) {
+    return "Response from property manager";
+  }
+
+  return "Response from host";
 };
 
 const isVerifiedReview = (review) =>
@@ -78,7 +88,7 @@ const getReviewDate = (review) =>
 const getReviewRating = (review) =>
   toNumberOrNull(review?.overallRating ?? review?.rating ?? review?.score) || 0;
 
-// Review: Star display supports half stars for average and individual ratings.
+// Star display with half-star support for average and individual ratings.
 const StarRating = ({ value = 0 }) => {
   const safeValue = Math.max(0, Math.min(5, Number(value) || 0));
 
@@ -101,7 +111,7 @@ const StarRating = ({ value = 0 }) => {
   );
 };
 
-// Review: Loading placeholder preserves the listing layout while public reviews load.
+// Loading placeholder for the full reviews block.
 const ReviewsLoadingState = () => (
   <div className="reviews-section" aria-busy="true">
     <div className="reviews-section__header">
@@ -129,13 +139,15 @@ const ReviewsLoadingState = () => (
   </div>
 );
 
-// Review: One public review card with a verified-stay badge only when applicable.
+// One public review card with verified stay badge only when applicable.
 const ReviewCard = ({ review }) => {
   const reviewerName = getReviewerName(review);
   const reviewDate = formatReviewDate(getReviewDate(review));
   const rating = getReviewRating(review);
   const text = getReviewText(review);
   const verified = isVerifiedReview(review);
+  const responseDate = formatReviewDate(review?.response?.publishedAt);
+
   return (
     <article className="reviews-section__card">
       <div className="reviews-section__card-header">
@@ -171,6 +183,15 @@ const ReviewCard = ({ review }) => {
 
       <p className="reviews-section__card-text">{text || "No written review provided."}</p>
 
+      {review?.response?.message && (
+        <div className="reviews-section__host-response">
+          <div className="reviews-section__host-response-header">
+            <strong>{formatResponseAuthorRole(review.response.authorRole)}</strong>
+            {responseDate && <span>{responseDate}</span>}
+          </div>
+          <p>{review.response.message}</p>
+        </div>
+      )}
     </article>
   );
 };
@@ -196,9 +217,9 @@ const ReviewsSection = ({
     return <ReviewsLoadingState />;
   }
 
-  // Review: Category summary pills only show categories with average scores.
+  // Category summary pills only show categories with average scores.
   const visibleCategories = CATEGORY_LABELS.filter(({ key }) => categoryScores?.[key] != null);
-  // Review: Filter options come from summary scores, review rows, or the active filter.
+  // Category filter options come from summary scores, review rows, or the active filter.
   const filterableCategoryKeys = new Set(
     CATEGORY_LABELS.filter(
       ({ key }) =>
@@ -251,7 +272,7 @@ const ReviewsSection = ({
 
       {!error && shouldShowControls && (
         <div className="reviews-section__controls" aria-label="Review sorting and filters">
-          {/* Review: Sorting control connected to the API sort query parameter. */}
+          {/* Review sorting control connected to the API sort query parameter. */}
           <label className="reviews-section__control">
             <span className="reviews-section__control-label">Sort</span>
             <select
@@ -268,7 +289,7 @@ const ReviewsSection = ({
             </select>
           </label>
 
-          {/* Review: Verified-stay filter connected to the API verified query parameter. */}
+          {/* Verified stay filter connected to the API verified query parameter. */}
           <label className="reviews-section__toggle">
             <input
               className="reviews-section__checkbox"
@@ -280,7 +301,7 @@ const ReviewsSection = ({
             <span>Verified stays only</span>
           </label>
 
-          {/* Review: Category filter appears only when category review data exists. */}
+          {/* Category filter appears only when category review data exists. */}
           {filterableCategories.length > 0 && (
             <label className="reviews-section__control">
               <span className="reviews-section__control-label">Category</span>
@@ -300,7 +321,7 @@ const ReviewsSection = ({
             </label>
           )}
 
-          {/* Review: Reset action clears sort and filters together. */}
+          {/* Reset action clears sort and filters together. */}
           {hasActiveFilters && (
             <button className="reviews-section__clear" type="button" onClick={onClearFilters}>
               Clear filters
