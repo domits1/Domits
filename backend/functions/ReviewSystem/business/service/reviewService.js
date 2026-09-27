@@ -272,26 +272,8 @@ class ReviewService {
     }
 
     const isContentUpdate = this.hasReviewContentUpdate(body);
-
-    if (body.status && this.statusService.isModerator(user.role) && review.reviewerUserId !== user.sub) {
-      throw new BadRequestException("Use the moderation endpoint for moderator decisions.");
-    }
-
-    if (isContentUpdate && review.reviewerUserId !== user.sub) {
-      throw new ForbiddenException("Only the author can update review content.");
-    }
-
-    if (isContentUpdate && !this.statusService.canAuthorEditContent(review.status)) {
-      throw new ForbiddenException("Review content can only be edited while draft or submitted.");
-    }
-
-    const needsBookingCheck = isContentUpdate || this.statusService.normalize(body.status) === REVIEW_STATUSES.SUBMITTED;
-    const booking = needsBookingCheck ? await this.reviewRepository.getBookingById(review.bookingId) : null;
-    if (needsBookingCheck) {
-      if (!booking) throw new NotFoundException("Booking not found.");
-      this.eligibilityService.assertCompletedStay(booking);
-      this.eligibilityService.assertReviewWindowOpen(booking);
-    }
+    this.assertReviewUpdateAllowed({ body, review, user, isContentUpdate });
+    const booking = await this.getReviewUpdateBooking({ body, review, isContentUpdate });
 
     const now = this.clock();
     const nextStatus =
@@ -324,15 +306,59 @@ class ReviewService {
         })
       : {};
 
-    if (nextStatus === REVIEW_STATUSES.SUBMITTED && (review.status !== REVIEW_STATUSES.SUBMITTED || isContentUpdate)) {
-      const recentReviews = await this.reviewRepository.getRecentReviewsByReviewer(user.sub, now);
-      workflowRecords.verification = this.verificationService.evaluate({ review: { ...review, ...updateData }, booking, now, recentReviews });
-      if (workflowRecords.verification.status === "NEEDS_REVIEW") {
-        workflowRecords.moderation = this.buildModerationRecord(reviewId, now, "PENDING", "AUTOMATED_FLAG");
-      }
-    }
+    await this.applySubmissionVerification({
+      booking,
+      isContentUpdate,
+      nextStatus,
+      now,
+      review,
+      reviewId,
+      updateData,
+      user,
+      workflowRecords,
+    });
 
     return this.reviewRepository.updateReviewWithRatings(reviewId, updateData, ratings, workflowRecords);
+  }
+
+  assertReviewUpdateAllowed({ body, review, user, isContentUpdate }) {
+    if (body.status && this.statusService.isModerator(user.role) && review.reviewerUserId !== user.sub) {
+      throw new BadRequestException("Use the moderation endpoint for moderator decisions.");
+    }
+    if (isContentUpdate && review.reviewerUserId !== user.sub) {
+      throw new ForbiddenException("Only the author can update review content.");
+    }
+    if (isContentUpdate && !this.statusService.canAuthorEditContent(review.status)) {
+      throw new ForbiddenException("Review content can only be edited while draft or submitted.");
+    }
+  }
+
+  async getReviewUpdateBooking({ body, review, isContentUpdate }) {
+    const isSubmission = this.statusService.normalize(body.status) === REVIEW_STATUSES.SUBMITTED;
+    if (!isContentUpdate && !isSubmission) return null;
+
+    const booking = await this.reviewRepository.getBookingById(review.bookingId);
+    if (!booking) throw new NotFoundException("Booking not found.");
+    this.eligibilityService.assertCompletedStay(booking);
+    this.eligibilityService.assertReviewWindowOpen(booking);
+    return booking;
+  }
+
+  async applySubmissionVerification({ booking, isContentUpdate, nextStatus, now, review, reviewId, updateData, user, workflowRecords }) {
+    const shouldVerify = nextStatus === REVIEW_STATUSES.SUBMITTED &&
+      (review.status !== REVIEW_STATUSES.SUBMITTED || isContentUpdate);
+    if (!shouldVerify) return;
+
+    const recentReviews = await this.reviewRepository.getRecentReviewsByReviewer(user.sub, now);
+    workflowRecords.verification = this.verificationService.evaluate({
+      review: { ...review, ...updateData },
+      booking,
+      now,
+      recentReviews,
+    });
+    if (workflowRecords.verification.status === "NEEDS_REVIEW") {
+      workflowRecords.moderation = this.buildModerationRecord(reviewId, now, "PENDING", "AUTOMATED_FLAG");
+    }
   }
 
   // Review: Reviews are soft-deleted to preserve the moderation and booking history tied to the stay.
@@ -396,40 +422,72 @@ class ReviewService {
     this.assertModerator(user);
     const reviewId = this.getRequiredReviewId(event);
     const body = this.parseBody(event.body);
+    const decision = this.validateModerationRequest(body);
+    const review = await this.getModeratableReview(reviewId);
+    const booking = await this.getModerationBooking(review);
+    const now = this.clock();
+    const verification = await this.getModerationVerification({ review, booking, now });
+    this.applyModerationOverride({ body, decision, now, user, verification });
+    const status = decision === "APPROVE" ? "PUBLISHED" : "REJECTED";
+    const moderation = this.buildModerationRecord(reviewId, now, decision === "APPROVE" ? "APPROVED" : "REJECTED", body.reason?.trim() || null, user.sub, body.notes?.trim() || null);
+    const updated = await this.reviewRepository.decideReview({ reviewId, expectedStatus: review.status, status, verification, moderation, now });
+    return { review: updated, moderation };
+  }
+
+  validateModerationRequest(body) {
     const decision = String(body.decision || "").toUpperCase();
     if (!["APPROVE", "REJECT"].includes(decision)) throw new BadRequestException("decision must be APPROVE or REJECT.");
     if (body.reason !== undefined && (typeof body.reason !== "string" || body.reason.length > 255)) throw new BadRequestException("reason must be 255 characters or less.");
     if (body.notes !== undefined && (typeof body.notes !== "string" || body.notes.length > 2000)) throw new BadRequestException("notes must be 2000 characters or less.");
     if (decision === "REJECT" && !body.reason?.trim()) throw new BadRequestException("reason is required when rejecting a review.");
+    return decision;
+  }
+
+  async getModeratableReview(reviewId) {
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) throw new NotFoundException("Review not found.");
     if (!["SUBMITTED", "VERIFIED", "PENDING_MODERATION"].includes(review.status)) {
       throw new BadRequestException("Review is not awaiting moderation.");
     }
+    return review;
+  }
+
+  async getModerationBooking(review) {
     const booking = await this.reviewRepository.getBookingById(review.bookingId);
-    if (!booking || String(booking.status).toLowerCase() !== "completed" ||
-        booking.guestid !== review.reviewerUserId || booking.property_id !== review.propertyId ||
-        Number(booking.departuredate) > this.clock()) {
-      throw new ForbiddenException("Review booking could not be verified.");
-    }
-    const now = this.clock();
-    const currentVerification = await this.reviewRepository.getReviewVerification(reviewId);
-    const recentReviews = currentVerification ? [] : await this.reviewRepository.getRecentReviewsByReviewer(review.reviewerUserId, now);
-    const verification = currentVerification || this.verificationService.evaluate({ review, booking, now, recentReviews });
-    if (decision === "APPROVE" && verification.status === "NEEDS_REVIEW" && !body.reason?.trim()) {
+    const isVerifiedBooking = booking &&
+      String(booking.status).toLowerCase() === "completed" &&
+      booking.guestid === review.reviewerUserId &&
+      booking.property_id === review.propertyId &&
+      Number(booking.departuredate) <= this.clock();
+
+    if (!isVerifiedBooking) throw new ForbiddenException("Review booking could not be verified.");
+    return booking;
+  }
+
+  async getModerationVerification({ review, booking, now }) {
+    const currentVerification = await this.reviewRepository.getReviewVerification(review.id);
+    if (currentVerification) return currentVerification;
+
+    const recentReviews = await this.reviewRepository.getRecentReviewsByReviewer(review.reviewerUserId, now);
+    return this.verificationService.evaluate({ review, booking, now, recentReviews });
+  }
+
+  applyModerationOverride({ body, decision, now, user, verification }) {
+    if (decision !== "APPROVE" || verification.status !== "NEEDS_REVIEW") return;
+
+    const overrideReason = body.reason?.trim();
+    if (!overrideReason) {
       throw new BadRequestException("reason is required to approve a flagged review.");
     }
-    if (decision === "APPROVE" && verification.status === "NEEDS_REVIEW") {
-      verification.evidenceJson = JSON.stringify({ ...JSON.parse(verification.evidenceJson || "{}"),
-        overrideReason: body.reason.trim(), overrideBy: user.sub });
-      verification.status = "VERIFIED_STAY";
-      verification.verifiedAt = now;
-      verification.updatedAt = now;
-    }
-    const status = decision === "APPROVE" ? "PUBLISHED" : "REJECTED";
-    const moderation = this.buildModerationRecord(reviewId, now, decision === "APPROVE" ? "APPROVED" : "REJECTED", body.reason?.trim() || null, user.sub, body.notes?.trim() || null);
-    const updated = await this.reviewRepository.decideReview({ reviewId, expectedStatus: review.status, status, verification, moderation, now });
-    return { review: updated, moderation };
+
+    verification.evidenceJson = JSON.stringify({
+      ...JSON.parse(verification.evidenceJson || "{}"),
+      overrideReason,
+      overrideBy: user.sub,
+    });
+    verification.status = "VERIFIED_STAY";
+    verification.verifiedAt = now;
+    verification.updatedAt = now;
   }
 
   // Review: Guard moderation endpoints against non-moderator callers.
@@ -863,10 +921,7 @@ class ReviewService {
   // Review: Assemble request, verification, moderation, and internal-feedback records together.
   buildWorkflowRecords({ review, booking, status, now, domitsPrivateFeedback = null }) {
     const isDraft = status === REVIEW_STATUSES.DRAFT;
-    const normalizedDomitsPrivateFeedback =
-      domitsPrivateFeedback === undefined || domitsPrivateFeedback === null
-        ? ""
-        : String(domitsPrivateFeedback).trim();
+    const normalizedDomitsPrivateFeedback = String(domitsPrivateFeedback ?? "").trim();
     const isVerified = [
       REVIEW_STATUSES.VERIFIED,
       REVIEW_STATUSES.PENDING_MODERATION,
