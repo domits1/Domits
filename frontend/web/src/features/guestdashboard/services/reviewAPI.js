@@ -50,7 +50,7 @@ export async function createReview(payload) {
   const response = await fetch(buildReviewUrl(), {
     method: "POST",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -69,7 +69,7 @@ export async function getReviewById(reviewId) {
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "GET",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
     },
   });
 
@@ -86,7 +86,7 @@ export async function updateReview(reviewId, payload) {
   const response = await fetch(buildReviewUrl(`/${encodeURIComponent(reviewId)}`), {
     method: "PATCH",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -109,7 +109,7 @@ export async function getGuestReviewHistory() {
   const response = await fetch(requestUrl.toString(), {
     method: "GET",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: await getAccessToken(),
     },
   });
 
