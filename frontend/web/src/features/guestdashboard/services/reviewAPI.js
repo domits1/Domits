@@ -2,33 +2,14 @@
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
-const removeTrailingSlashes = (value) => {
-  let urlEnd = value.length;
-
-  while (urlEnd > 0 && value[urlEnd - 1] === "/") {
-    urlEnd -= 1;
-  }
-
-  return value.slice(0, urlEnd);
-};
-
 export const getReviewApiBase = () =>
-  removeTrailingSlashes(String(process.env.REACT_APP_REVIEW_API_BASE || "").trim());
+  "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews";
 
-const requireReviewApiBase = () => {
-  const reviewApiBase = getReviewApiBase();
-
-  if (!reviewApiBase) {
-    throw new Error("Review service is not configured.");
-  }
-
-  return reviewApiBase;
-};
-
-const buildReviewUrl = (path = "") => `${requireReviewApiBase()}${path}`;
+const buildReviewUrl = (path = "") =>
+  `${getReviewApiBase()}${path}`;
 
 const buildReviewCollectionUrl = () =>
-  new URL(requireReviewApiBase(), window.location.origin);
+  new URL(getReviewApiBase());
 
 const parseJsonResponse = async (response) => {
   const responseText = await response.text().catch(() => "");
