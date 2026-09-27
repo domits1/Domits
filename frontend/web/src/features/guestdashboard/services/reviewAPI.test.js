@@ -1,4 +1,12 @@
-import { createReview, getGuestReviewHistory, getReviewApiBase, getReviewById, updateReview } from "./reviewAPI";
+import {
+  createReview,
+  getGuestReviewHistory,
+  getReviewApiBase,
+  getReviewById,
+  getReviewNotificationPreference,
+  setReviewNotificationPreference,
+  updateReview,
+} from "./reviewAPI";
 
 jest.mock("../../../services/getAccessToken", () => ({
   getAccessToken: () => "access-token-1",
@@ -32,6 +40,54 @@ describe("guest review API", () => {
         Authorization: "access-token-1",
       },
     });
+  });
+
+  test("reads and updates review email preferences with authorization", async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          emailEnabled: false,
+        }),
+    });
+
+    await expect(
+      getReviewNotificationPreference()
+    ).resolves.toEqual({
+      emailEnabled: false,
+    });
+
+    await expect(
+      setReviewNotificationPreference(false)
+    ).resolves.toEqual({
+      emailEnabled: false,
+    });
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      `${getReviewApiBase()}/notification-preferences`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: "access-token-1",
+        },
+      }
+    );
+
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      `${getReviewApiBase()}/notification-preferences`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: "access-token-1",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          emailEnabled: false,
+        }),
+      }
+    );
   });
 
   test("surfaces backend errors when loading history fails", async () => {
@@ -74,5 +130,4 @@ describe("guest review API", () => {
       body: JSON.stringify({ title: "An excellent stay" }),
     });
   });
-
 });

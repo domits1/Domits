@@ -101,3 +101,51 @@ export async function getGuestReviewHistory() {
 
   return Array.isArray(data) ? data : data?.reviews || [];
 }
+
+// Review: Loads the authenticated guest's review email preference.
+export async function getReviewNotificationPreference() {
+  const response = await fetch(
+    buildReviewUrl("/notification-preferences"),
+    {
+      method: "GET",
+      headers: {
+        Authorization: await getAccessToken(),
+      },
+    }
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message || "Could not load review email settings."
+    );
+  }
+
+  return data;
+}
+
+// Review: Updates the authenticated guest's review email preference.
+export async function setReviewNotificationPreference(emailEnabled) {
+  const response = await fetch(
+    buildReviewUrl("/notification-preferences"),
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: await getAccessToken(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ emailEnabled }),
+    }
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message || "Could not update review email settings."
+    );
+  }
+
+  return data;
+}
