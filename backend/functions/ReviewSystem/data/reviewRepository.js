@@ -1,18 +1,177 @@
-// backend/functions/ReviewSystem/data/reviewRepository.js
+// Review: backend/functions/ReviewSystem/data/reviewRepository.js
 
 import Database from "database";
+import { randomUUID } from "node:crypto";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
 import { Review_Response } from "database/models/Review_Response";
+import { Review_Private_Feedback } from "database/models/Review_Private_Feedback";
 import { Review_Moderation } from "database/models/Review_Moderation";
 import { Review_Verification } from "database/models/Review_Verification";
+import { Review_Notification_Preference } from "database/models/Review_Notification_Preference";
 import { Team_Member } from "database/models/Team_Member";
+import { REVIEW_MAX_EMAILS, REVIEW_REMINDER_DAYS, REVIEW_REQUEST_DELAY_HOURS, REVIEW_WINDOW_DAYS } from "../util/reviewPolicy.js";
+import ConflictException from "../util/exception/conflictException.js";
 
-// Review: Provides transactional storage and read models for reviews, ratings, and workflow records.
+// Review: Database access layer for review creation, publication, moderation, responses, and reminders.
 class ReviewRepository {
+  async listBookingsNeedingReviewRequests(now, limit) {
+    // Review: Finds completed stays that still need an invitation to leave a review.
+    const client = await Database.getInstance();
+    const query = client.getRepository(Booking).createQueryBuilder("booking");
+    const existingRequest = query.subQuery().select("1").from(Review_Request, "request")
+      .where("request.booking_id = booking.id")
+      .andWhere("request.review_type = :type")
+      .andWhere("request.guest_id = booking.guestid").getQuery();
+    return query
+      .where("LOWER(booking.status) = :status", { status: "completed" })
+      .andWhere("booking.departuredate <= :cutoff", { cutoff: now - REVIEW_REQUEST_DELAY_HOURS * 60 * 60 * 1000 })
+      .andWhere("booking.departuredate >= :oldest", { oldest: now - REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000 })
+      .andWhere(`NOT EXISTS ${existingRequest}`, { type: "GUEST_TO_PROPERTY" })
+      .orderBy("booking.departuredate", "ASC").take(limit).getMany();
+  }
+
+  async createReviewRequestForBooking(booking, now) {
+    // Review: Creates an open review request tied to one completed booking.
+    const client = await Database.getInstance();
+
+    const request = {
+      id: randomUUID(),
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      hostId: booking.hostid,
+      guestId: booking.guestid,
+      reviewType: "GUEST_TO_PROPERTY",
+      status: "OPEN",
+      requestedAt: now,
+      expiresAt:
+        Number(booking.departuredate) +
+        REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+      sendCount: 0,
+      nextSendAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await client
+      .getRepository(Review_Request)
+      .createQueryBuilder()
+      .insert()
+      .values(request)
+      .orIgnore()
+      .execute();
+  }
+
+  async listDueReviewRequests(now, limit) {
+    // Review: Pulls open review reminders that are due and not already claimed by another worker.
+    const client = await Database.getInstance();
+    return client.getRepository(Review_Request).createQueryBuilder("request")
+      .where("request.status = :status", { status: "OPEN" })
+      .andWhere("request.next_send_at <= :now", { now })
+      .andWhere("request.expires_at > :now", { now })
+      .andWhere("COALESCE(request.send_count, 0) < :maxSends", { maxSends: REVIEW_MAX_EMAILS })
+      .andWhere("(request.claimed_at IS NULL OR request.claimed_at < :stale)", { stale: now - 10 * 60 * 1000 })
+      .orderBy("request.next_send_at", "ASC").take(limit).getMany();
+  }
+
+  async claimReviewRequest(id, now) {
+    // Review: Locks a due review request so concurrent schedulers do not send duplicate emails.
+    const client = await Database.getInstance();
+    const result = await client.getRepository(Review_Request).createQueryBuilder().update()
+      .set({ claimedAt: now }).where("id = :id AND status = 'OPEN' AND next_send_at <= :now AND (claimed_at IS NULL OR claimed_at < :stale)",
+        { id, now, stale: now - 10 * 60 * 1000 }).execute();
+    return result.affected === 1;
+  }
+
+  async finishReviewRequestSend(id, now, success) {
+    // Review: Advances a sent request to its next reminder time or schedules a short retry.
+    const client = await Database.getInstance();
+    await client.getRepository(Review_Request).createQueryBuilder().update()
+      .set(
+        success
+          ? {
+              claimedAt: null,
+              lastSentAt: now,
+              sendCount: () => "COALESCE(send_count, 0) + 1",
+              nextSendAt:
+                now + REVIEW_REMINDER_DAYS * 24 * 60 * 60 * 1000,
+              updatedAt: now,
+            }
+          : {
+              claimedAt: null,
+              nextSendAt: now + 60 * 60 * 1000,
+              updatedAt: now,
+            }
+      )
+      .where("id = :id AND status = 'OPEN'", { id }).execute();
+  }
+
+  async suppressReviewRequest(id, now) {
+    // Review: Stops a review request when the stay, preference, or duplicate state no longer qualifies.
+    const client = await Database.getInstance();
+    await client.getRepository(Review_Request).createQueryBuilder().update()
+      .set({ status: "SUPPRESSED", claimedAt: null, nextSendAt: null, updatedAt: now })
+      .where("id = :id AND status = 'OPEN'", { id }).execute();
+  }
+
+  async getReviewNotificationPreference(userId) {
+    // Review: Reads whether a guest wants review request emails.
+    const client = await Database.getInstance();
+    const row = await client.getRepository(Review_Notification_Preference).findOne({ where: { userId } });
+    return { emailEnabled: row?.emailEnabled !== false };
+  }
+
+  async saveReviewNotificationPreference(userId, emailEnabled, now) {
+    // Review: Persists review email preferences and reopens suppressed requests when email is re-enabled.
+    const client = await Database.getInstance();
+    await client.getRepository(Review_Notification_Preference).upsert({ userId, emailEnabled, updatedAt: now }, ["userId"]);
+    if (emailEnabled) {
+      await client.getRepository(Review_Request).createQueryBuilder().update()
+        .set({ status: "OPEN", nextSendAt: now, updatedAt: now })
+        .where("guest_id = :userId AND status = 'SUPPRESSED' AND expires_at > :now", { userId, now }).execute();
+    }
+    return { emailEnabled };
+  }
+
+  async listModerationQueue(limit = 50) {
+    // Review: Loads submitted and verified reviews that still need a moderator decision.
+    const client = await Database.getInstance();
+    const reviews = await client.getRepository(Review).createQueryBuilder("review")
+      .where("review.status IN (:...statuses)", { statuses: ["SUBMITTED", "VERIFIED", "PENDING_MODERATION"] })
+      .orderBy("review.created_at", "ASC").take(limit).getMany();
+    return this.attachRatingsToReviews(reviews);
+  }
+
+  async getReviewModerationHistory(reviewId) {
+    const client = await Database.getInstance();
+    return client.getRepository(Review_Moderation).createQueryBuilder("moderation")
+      .where("moderation.review_id = :reviewId", { reviewId })
+      .orderBy("moderation.created_at", "ASC").getMany();
+  }
+
+  async getReviewVerification(reviewId) {
+    const client = await Database.getInstance();
+    return client.getRepository(Review_Verification).findOne({ where: { reviewId } });
+  }
+
+  async decideReview({ reviewId, expectedStatus, status, verification, moderation, now }) {
+    // Review: Atomically applies moderation status, verification evidence, and moderation history.
+    const client = await Database.getInstance();
+    await client.transaction(async (manager) => {
+      const result = await manager.getRepository(Review).createQueryBuilder().update()
+        .set({ status, verificationStatus: verification.status === "VERIFIED_STAY" ? "VERIFIED_STAY" : "UNVERIFIED",
+          publicationStatus: status === "PUBLISHED" ? "PUBLISHED" : status === "REJECTED" ? "REJECTED" : "UNPUBLISHED",
+          updatedAt: now })
+        .where("id = :reviewId AND status = :expectedStatus", { reviewId, expectedStatus }).execute();
+      if (result.affected !== 1) throw new ConflictException("Review changed during moderation. Please reload.");
+      await manager.getRepository(Review_Verification).upsert(verification, ["reviewId"]);
+      await manager.getRepository(Review_Moderation).save(moderation);
+    });
+    return this.getReviewById(reviewId);
+  }
   async getBookingById(bookingId) {
     const client = await Database.getInstance();
 
@@ -64,7 +223,7 @@ class ReviewRepository {
   }
 
   async getPublishedReviewsByPropertyId(propertyId, options = {}) {
-    // Review: Produces the public review list and its overall and category rating summaries.
+    // Review: Returns only published public reviews with ratings and published host responses.
     const client = await Database.getInstance();
 
     const reviews = await client
@@ -76,12 +235,23 @@ class ReviewRepository {
       .getMany();
 
     const reviewsWithRatings = await this.attachRatingsToReviews(reviews);
-    const reviewsWithResponses = await this.attachResponsesToReviews(reviewsWithRatings);
+    const reviewsWithResponses = await this.attachResponsesToReviews(reviewsWithRatings, {
+      includeDrafts: false,
+    });
+
     return this.buildPublicReviewResponse(reviewsWithResponses, options);
   }
 
+  async getRecentReviewsByReviewer(reviewerUserId, now) {
+    const client = await Database.getInstance();
+    return client.getRepository(Review).createQueryBuilder("review")
+      .where("review.reviewer_user_id = :reviewerUserId", { reviewerUserId })
+      .andWhere("review.created_at >= :since", { since: now - 30 * 24 * 60 * 60 * 1000 })
+      .orderBy("review.created_at", "DESC").take(100).getMany();
+  }
+
   buildPublicReviewResponse(reviews, options = {}) {
-    // Review: Applies public filters before calculating the summary shown on the listing page.
+    // Review: Builds the public listing summary after filters and sorting have been applied.
     const filteredReviews = this.applyPublicReviewFilters(reviews, options);
     const sortedReviews = this.sortPublicReviews(filteredReviews, options.sort || "recent");
 
@@ -94,35 +264,39 @@ class ReviewRepository {
   }
 
   applyPublicReviewFilters(reviews, { verifiedOnly = false, category = null } = {}) {
-    // Review: Limits public results to verified stays or reviews containing the selected category.
     return reviews.filter((review) => {
-      if (verifiedOnly && review.verificationStatus !== "VERIFIED_STAY") return false;
-      if (category && review.categoryRatings?.[category] === undefined) return false;
+      if (verifiedOnly && review.verificationStatus !== "VERIFIED_STAY") {
+        return false;
+      }
+
+      if (category && review.categoryRatings?.[category] === undefined) {
+        return false;
+      }
+
       return true;
     });
   }
 
   sortPublicReviews(reviews, sort = "recent") {
-    // Review: Uses creation time as a stable tie-breaker for rating-based public sorting.
     const sortedReviews = [...reviews];
 
     if (sort === "highest") {
       return sortedReviews.sort(
-        (first, second) =>
-          Number(second.overallRating) - Number(first.overallRating) ||
-          Number(second.createdAt) - Number(first.createdAt)
+        (a, b) =>
+          Number(b.overallRating) - Number(a.overallRating) ||
+          Number(b.createdAt) - Number(a.createdAt)
       );
     }
 
     if (sort === "lowest") {
       return sortedReviews.sort(
-        (first, second) =>
-          Number(first.overallRating) - Number(second.overallRating) ||
-          Number(second.createdAt) - Number(first.createdAt)
+        (a, b) =>
+          Number(a.overallRating) - Number(b.overallRating) ||
+          Number(b.createdAt) - Number(a.createdAt)
       );
     }
 
-    return sortedReviews.sort((first, second) => Number(second.createdAt) - Number(first.createdAt));
+    return sortedReviews.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
   }
 
   async getReviewsByBookingForUser(bookingId, userId) {
@@ -152,12 +326,16 @@ class ReviewRepository {
   }
 
   async getReviewsForHost(hostId) {
-    // Review: Loads received reviews with draft and published responses for host management.
+    // Review: Loads host-visible reviews and includes draft responses so hosts can continue editing.
     const client = await Database.getInstance();
+
     const reviews = await client
       .getRepository(Review)
       .createQueryBuilder("review")
       .where("review.host_id = :hostId", { hostId })
+      .andWhere("review.status IN (:...statuses)", {
+        statuses: ["SUBMITTED", "VERIFIED", "PENDING_MODERATION", "PUBLISHED"],
+      })
       .orderBy("review.created_at", "DESC")
       .getMany();
 
@@ -166,22 +344,31 @@ class ReviewRepository {
   }
 
   async hasActiveTeamMembership(memberUserId, hostId) {
-    // Review: Verifies that a response author is still an active member of the host team.
     const client = await Database.getInstance();
+
     const membership = await client.getRepository(Team_Member).findOne({
-      where: { member_user_id: memberUserId, host_id: hostId, status: "active" },
+      where: {
+        member_user_id: memberUserId,
+        host_id: hostId,
+        status: "active",
+      },
     });
+
     return Boolean(membership);
   }
 
   async getResponseByReviewId(reviewId, { includeDeleted = false } = {}) {
     const client = await Database.getInstance();
+
     const query = client
       .getRepository(Review_Response)
       .createQueryBuilder("response")
       .where("response.review_id = :reviewId", { reviewId });
 
-    if (!includeDeleted) query.andWhere("response.deleted_at IS NULL");
+    if (!includeDeleted) {
+      query.andWhere("response.deleted_at IS NULL");
+    }
+
     return query.getOne();
   }
 
@@ -192,12 +379,40 @@ class ReviewRepository {
 
   async updateReviewResponse(responseId, updateData) {
     const client = await Database.getInstance();
+
     await client.getRepository(Review_Response).update(responseId, updateData);
-    return client.getRepository(Review_Response).findOne({ where: { id: responseId } });
+
+    return client.getRepository(Review_Response).findOne({
+      where: { id: responseId },
+    });
+  }
+
+  async getDomitsPrivateFeedbackForReview(reviewId) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(Review_Private_Feedback)
+      .createQueryBuilder("feedback")
+      .where("feedback.review_id = :reviewId", { reviewId })
+      .andWhere("feedback.feedback_type = :feedbackType", { feedbackType: "domits_private" })
+      .orderBy("feedback.created_at", "DESC")
+      .getMany();
+  }
+
+  async listDomitsPrivateFeedback(limit = 100) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(Review_Private_Feedback)
+      .createQueryBuilder("feedback")
+      .where("feedback.feedback_type = :feedbackType", { feedbackType: "domits_private" })
+      .orderBy("feedback.created_at", "DESC")
+      .take(limit)
+      .getMany();
   }
 
   async createReviewWithRatings(review, ratings, workflowRecords = {}) {
-    // Review: Saves a review and all related records atomically so partial submissions cannot persist.
+    // Review: Saves a review and all workflow side records in one transaction.
     const client = await Database.getInstance();
 
     return client.transaction(async (manager) => {
@@ -208,7 +423,15 @@ class ReviewRepository {
       }
 
       if (workflowRecords.reviewRequest) {
-        await manager.getRepository(Review_Request).save(workflowRecords.reviewRequest);
+        await manager.getRepository(Review_Request).createQueryBuilder().insert()
+          .values(workflowRecords.reviewRequest).orIgnore().execute();
+        if (workflowRecords.reviewRequest.status === "COMPLETED") {
+          await manager.getRepository(Review_Request).createQueryBuilder().update()
+            .set({ status: "COMPLETED", completedAt: review.createdAt, nextSendAt: null, updatedAt: review.createdAt })
+            .where("booking_id = :bookingId AND review_type = :reviewType AND guest_id = :guestId", {
+              bookingId: review.bookingId, reviewType: review.reviewType, guestId: review.reviewerUserId,
+            }).execute();
+        }
       }
 
       if (workflowRecords.verification) {
@@ -217,6 +440,10 @@ class ReviewRepository {
 
       if (workflowRecords.moderation) {
         await manager.getRepository(Review_Moderation).save(workflowRecords.moderation);
+      }
+
+      if (workflowRecords.domitsPrivateFeedback) {
+        await manager.getRepository(Review_Private_Feedback).save(workflowRecords.domitsPrivateFeedback);
       }
 
       return {
@@ -229,7 +456,7 @@ class ReviewRepository {
   }
 
   async updateReviewWithRatings(reviewId, updateData, ratings, workflowRecords = {}) {
-    // Review: Updates content, ratings, and lifecycle records in one transaction.
+    // Review: Updates review content, ratings, verification, and moderation records together.
     const client = await Database.getInstance();
 
     await client.transaction(async (manager) => {
@@ -251,11 +478,17 @@ class ReviewRepository {
       }
 
       if (workflowRecords.reviewRequest) {
-        await manager.getRepository(Review_Request).upsert(workflowRecords.reviewRequest, [
-          "bookingId",
-          "reviewType",
-          "guestId",
-        ]);
+        await manager.getRepository(Review_Request).createQueryBuilder().insert()
+          .values(workflowRecords.reviewRequest).orIgnore().execute();
+        if (workflowRecords.reviewRequest.status === "COMPLETED") {
+          await manager.getRepository(Review_Request).createQueryBuilder().update()
+            .set({ status: "COMPLETED", completedAt: updateData.updatedAt, nextSendAt: null, updatedAt: updateData.updatedAt })
+            .where("booking_id = :bookingId AND review_type = :reviewType AND guest_id = :guestId", {
+              bookingId: workflowRecords.reviewRequest.bookingId,
+              reviewType: workflowRecords.reviewRequest.reviewType,
+              guestId: workflowRecords.reviewRequest.guestId,
+            }).execute();
+        }
       }
 
       if (workflowRecords.verification) {
@@ -283,7 +516,7 @@ class ReviewRepository {
   }
 
   async attachRatingsToReviews(reviews) {
-    // Review: Hydrates review rows with the category-rating shape expected by API clients.
+    // Review: Hydrates review rows with their category ratings for API responses.
     if (reviews.length === 0) return reviews;
 
     const client = await Database.getInstance();
@@ -308,22 +541,32 @@ class ReviewRepository {
   }
 
   async attachResponsesToReviews(reviews, { includeDrafts = false } = {}) {
-    // Review: Hydrates public or host-visible review rows with their one active response.
+    // Review: Hydrates review rows with host responses, optionally including drafts for host dashboards.
     if (reviews.length === 0) return reviews;
 
     const client = await Database.getInstance();
     const reviewIds = reviews.map((review) => review.id);
+
     const query = client
       .getRepository(Review_Response)
       .createQueryBuilder("response")
       .where("response.review_id IN (:...reviewIds)", { reviewIds })
       .andWhere("response.deleted_at IS NULL");
 
-    if (!includeDrafts) query.andWhere("response.status = :status", { status: "published" });
+    if (!includeDrafts) {
+      query.andWhere("response.status = :status", { status: "published" });
+    }
 
     const responses = await query.getMany();
-    const responseByReviewId = Object.fromEntries(responses.map((response) => [response.reviewId, response]));
-    return reviews.map((review) => ({ ...review, response: responseByReviewId[review.id] || null }));
+    const responseByReviewId = responses.reduce((acc, response) => {
+      acc[response.reviewId] = response;
+      return acc;
+    }, {});
+
+    return reviews.map((review) => ({
+      ...review,
+      response: responseByReviewId[review.id] || null,
+    }));
   }
 
   mapRatingsByCategory(ratings) {
@@ -334,7 +577,7 @@ class ReviewRepository {
   }
 
   toPublicReview(review) {
-    // Review: Removes private feedback and account identifiers from public review responses.
+    // Review: Removes private review fields before returning data to listing pages.
     return {
       id: review.id,
       overallRating: review.overallRating,
@@ -345,7 +588,7 @@ class ReviewRepository {
       createdAt: review.createdAt,
       categoryRatings: review.categoryRatings || {},
       response:
-        review.response?.status === "published" && !review.response.deletedAt
+        review.response && review.response.status === "published" && !review.response.deletedAt
           ? {
               id: review.response.id,
               authorRole: review.response.authorRole,

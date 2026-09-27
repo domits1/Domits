@@ -44,6 +44,112 @@
     }
   },
   "paths": {
+    "/reviews/notification-preferences": {
+      "get": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Review email preference" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "patch": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Review email preference updated" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": { "200": { "description": "CORS response" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/moderation": {
+      "get": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Moderator review queue" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": { "200": { "description": "CORS response" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/{id}/moderate": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+      "post": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Review moderation decision" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": { "200": { "description": "CORS response" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/domits-private-feedback": {
+      "get": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Domits private feedback inbox" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": { "200": { "description": "CORS response" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
+    "/reviews/{id}/domits-private-feedback": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+      "get": {
+        "security": [{ "DomitsCognito": ["aws.cognito.signin.user.admin"] }],
+        "responses": { "200": { "description": "Domits private feedback for one review" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      },
+      "options": {
+        "responses": { "200": { "description": "CORS response" } },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:115462458880:function:ReviewSystem/invocations"
+        }
+      }
+    },
     "/reviews": {
       "get": {
         "parameters": [

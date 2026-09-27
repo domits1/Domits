@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import ReviewRepository from "../../functions/ReviewSystem/data/reviewRepository.js";
 
-// Review: Builds public-safe rows for deterministic repository sorting and filtering tests.
+// Review: Covers public DTO privacy, filtering, sorting, and response visibility.
 const createReview = (overrides = {}) => ({
   id: "review-1",
   overallRating: 4,
@@ -10,83 +10,241 @@ const createReview = (overrides = {}) => ({
   verificationStatus: "UNVERIFIED",
   status: "PUBLISHED",
   createdAt: Date.parse("2026-09-01T10:00:00.000Z"),
-  categoryRatings: { cleanliness: 4 },
+  categoryRatings: {
+    cleanliness: 4,
+  },
   ...overrides,
 });
 
+const buildRepository = () => new ReviewRepository();
+
 describe("ReviewRepository public review sorting and filtering", () => {
-  const repository = new ReviewRepository();
+  it("sorts reviews by recent first", () => {
+    const repository = buildRepository();
 
-  it.each([
-    ["recent", [createReview({ id: "older", createdAt: 1 }), createReview({ id: "newer", createdAt: 2 })], ["newer", "older"]],
-    ["highest", [createReview({ id: "low", overallRating: 2 }), createReview({ id: "high", overallRating: 5 })], ["high", "low"]],
-    ["lowest", [createReview({ id: "high", overallRating: 5 }), createReview({ id: "low", overallRating: 2 })], ["low", "high"]],
-  ])("sorts public reviews by %s", (sort, reviews, expectedIds) => {
-    const response = repository.buildPublicReviewResponse(reviews, { sort });
-    expect(response.reviews.map((review) => review.id)).toEqual(expectedIds);
-  });
-
-  it("filters verified reviews and category ratings before building the summary", () => {
     const response = repository.buildPublicReviewResponse(
       [
-        createReview({ id: "verified-clean", overallRating: 5, verificationStatus: "VERIFIED_STAY" }),
-        createReview({ id: "unverified-clean", overallRating: 4 }),
-        createReview({ id: "verified-location", verificationStatus: "VERIFIED_STAY", categoryRatings: { location: 3 } }),
+        createReview({ id: "older", createdAt: Date.parse("2026-08-01T10:00:00.000Z") }),
+        createReview({ id: "newer", createdAt: Date.parse("2026-09-01T10:00:00.000Z") }),
       ],
-      { verifiedOnly: true, category: "cleanliness" }
+      { sort: "recent" }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual(["newer", "older"]);
+  });
+
+  it("sorts reviews by highest rating first", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({ id: "low", overallRating: 2 }),
+        createReview({ id: "high", overallRating: 5 }),
+      ],
+      { sort: "highest" }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual(["high", "low"]);
+  });
+
+  it("sorts reviews by lowest rating first", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({ id: "high", overallRating: 5 }),
+        createReview({ id: "low", overallRating: 2 }),
+      ],
+      { sort: "lowest" }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual(["low", "high"]);
+  });
+
+  it("filters verified-stay reviews only", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({ id: "unverified", verificationStatus: "UNVERIFIED" }),
+        createReview({ id: "verified", verificationStatus: "VERIFIED_STAY" }),
+      ],
+      { verifiedOnly: true }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual(["verified"]);
+    expect(response.totalReviews).toBe(1);
+  });
+
+  it("filters reviews by category existence", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({ id: "has-cleanliness", categoryRatings: { cleanliness: 5 } }),
+        createReview({ id: "has-location", categoryRatings: { location: 4 } }),
+      ],
+      { category: "location" }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual(["has-location"]);
+    expect(response.categoryRatings).toEqual({ location: 4 });
+  });
+
+  it("combines sorting, verified filtering, and category filtering", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({
+          id: "verified-low-cleanliness",
+          overallRating: 2,
+          verificationStatus: "VERIFIED_STAY",
+          categoryRatings: { cleanliness: 2 },
+        }),
+        createReview({
+          id: "verified-high-cleanliness",
+          overallRating: 5,
+          verificationStatus: "VERIFIED_STAY",
+          categoryRatings: { cleanliness: 5 },
+        }),
+        createReview({
+          id: "unverified-high-cleanliness",
+          overallRating: 5,
+          verificationStatus: "UNVERIFIED",
+          categoryRatings: { cleanliness: 5 },
+        }),
+        createReview({
+          id: "verified-high-location",
+          overallRating: 5,
+          verificationStatus: "VERIFIED_STAY",
+          categoryRatings: { location: 5 },
+        }),
+      ],
+      {
+        sort: "highest",
+        verifiedOnly: true,
+        category: "cleanliness",
+      }
+    );
+
+    expect(response.reviews.map((review) => review.id)).toEqual([
+      "verified-high-cleanliness",
+      "verified-low-cleanliness",
+    ]);
+  });
+
+  it("returns a consistent empty response shape when filters remove all reviews", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse(
+      [
+        createReview({
+          id: "location-only",
+          verificationStatus: "UNVERIFIED",
+          categoryRatings: { location: 4 },
+        }),
+      ],
+      {
+        verifiedOnly: true,
+        category: "cleanliness",
+      }
     );
 
     expect(response).toEqual({
-      reviews: [expect.objectContaining({ id: "verified-clean" })],
-      totalReviews: 1,
-      overallRating: 5,
-      categoryRatings: { cleanliness: 4 },
+      reviews: [],
+      totalReviews: 0,
+      overallRating: null,
+      categoryRatings: {},
     });
   });
 
-  it("returns an empty public summary when filters remove all reviews", () => {
-    const response = repository.buildPublicReviewResponse(
-      [createReview({ categoryRatings: { location: 4 } })],
-      { verifiedOnly: true, category: "cleanliness" }
-    );
+  it("includes only public-safe published response fields in public review DTOs", () => {
+    const repository = buildRepository();
 
-    expect(response).toEqual({ reviews: [], totalReviews: 0, overallRating: null, categoryRatings: {} });
-  });
-
-  it("exposes only safe fields from a published host response", () => {
-    const response = repository.toPublicReview(
+    const response = repository.buildPublicReviewResponse([
       createReview({
         response: {
           id: "response-1",
+          reviewId: "review-1",
+          status: "published",
           authorId: "host-1",
           authorRole: "host",
-          status: "published",
           message: "Thank you for staying with us.",
-          publishedAt: 123,
-          deletedAt: null,
+          publishedAt: Date.parse("2026-09-02T10:00:00.000Z"),
+          updatedAt: Date.parse("2026-09-02T10:00:00.000Z"),
+          auditData: { ipAddress: "127.0.0.1" },
         },
-      })
-    );
+      }),
+    ]);
 
-    expect(response.response).toEqual({
+    expect(response.reviews[0].response).toEqual({
       id: "response-1",
       authorRole: "host",
       message: "Thank you for staying with us.",
-      publishedAt: 123,
+      publishedAt: Date.parse("2026-09-02T10:00:00.000Z"),
     });
-    expect(response.response.authorId).toBeUndefined();
+    expect(response.reviews[0].response.authorId).toBeUndefined();
+    expect(response.reviews[0].response.reviewId).toBeUndefined();
+    expect(response.reviews[0].response.status).toBeUndefined();
+    expect(response.reviews[0].response.updatedAt).toBeUndefined();
+    expect(response.reviews[0].response.auditData).toBeUndefined();
   });
 
-  it.each([
-    ["draft", null],
-    ["published", 456],
-  ])("hides a %s response when it is not publicly visible", (status, deletedAt) => {
-    const response = repository.toPublicReview(
-      createReview({
-        response: { id: "response-1", status, message: "Hidden response.", deletedAt },
-      })
-    );
+  it("excludes Domits private feedback from public review DTOs", () => {
+    const repository = buildRepository();
 
-    expect(response.response).toBeNull();
+    const response = repository.buildPublicReviewResponse([
+      createReview({
+        privateFeedback: "Host-only note.",
+        domitsPrivateFeedback: {
+          id: "feedback-1",
+          feedbackType: "domits_private",
+          message: "Internal support note.",
+        },
+      }),
+    ]);
+
+    expect(response.reviews[0].privateFeedback).toBeUndefined();
+    expect(response.reviews[0].domitsPrivateFeedback).toBeUndefined();
+  });
+
+  it.each(["draft", "unpublished", "rejected", "hidden"])(
+    "hides %s responses from public review DTOs",
+    (status) => {
+      const repository = buildRepository();
+
+      const response = repository.buildPublicReviewResponse([
+        createReview({
+          response: {
+            id: "response-1",
+            status,
+            authorRole: "host",
+            message: "Internal response.",
+          },
+        }),
+      ]);
+
+      expect(response.reviews[0].response).toBeNull();
+    }
+  );
+
+  it("hides deleted published responses from public review DTOs", () => {
+    const repository = buildRepository();
+
+    const response = repository.buildPublicReviewResponse([
+      createReview({
+        response: {
+          id: "response-1",
+          status: "published",
+          authorRole: "host",
+          message: "Deleted response.",
+          publishedAt: Date.parse("2026-09-02T10:00:00.000Z"),
+          deletedAt: Date.parse("2026-09-03T10:00:00.000Z"),
+        },
+      }),
+    ]);
+
+    expect(response.reviews[0].response).toBeNull();
   });
 });
