@@ -713,7 +713,6 @@ export class DirectBookingWebsiteEventRepository {
          LEFT JOIN ${directBookingWebsiteDomainTable} fallback_domain
            ON fallback_domain.site_id = site.id
           AND fallback_domain.domain_type = 'FALLBACK'
-          AND fallback_domain.is_primary = TRUE
          ${siteWhereClause}`,
         queryParameters
       ),
