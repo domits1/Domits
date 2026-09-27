@@ -113,9 +113,10 @@ the Amplify domain association for `direct.domits.com` was deleted, `*.direct.do
 the wildcard record was pointed at the routing endpoint. Finally the bare name and Amplify's leftover certificate
 validation record were removed.
 
-Addresses that were **not** an exact name on the tenant, so typos, scanners and the bare name, were unreachable for
-**6 minutes and 20 seconds**. No published site was affected at any moment. Amplify released the wildcard about three
-minutes after the association was deleted, and left every record in the hosted zone untouched.
+Addresses that were **not** an exact name on the tenant, so typos and scanners, were unreachable for **6 minutes and
+20 seconds** and then worked again through the wildcard. No published site was affected at any moment. The bare name is
+the exception: it stopped working at the same moment and stayed gone, which was the intention. Amplify released the
+wildcard about three minutes after the association was deleted, and left every record in the hosted zone untouched.
 
 The full log of the evening, with every command and its output, is kept outside this repository by whoever ran it.
 
@@ -181,7 +182,10 @@ The tenant's certificate runs to 2027-04-09. ACM renews it by itself as long as 
 and resolves publicly. To check both:
 
 ```
-CERT=arn:aws:acm:us-east-1:115462458880:certificate/84f32fca-feef-4a45-911f-2dabc20ebf84
+CERT=$(aws cloudfront get-distribution-tenant --profile domits --region us-east-1 \
+  --id dt_3JidivSSrpsHkv7QdwDnx0FxwTu \
+  --query 'DistributionTenant.Customizations.Certificate.Arn' --output text)
+
 aws acm describe-certificate --profile domits --region us-east-1 --certificate-arn "$CERT" \
   --query 'Certificate.{Status:Status,NotAfter:NotAfter,Renewal:RenewalEligibility}'
 
@@ -191,8 +195,10 @@ dig +short CNAME "$VALIDATION"
 ```
 
 `Status` should be `ISSUED`, `Renewal` should be `ELIGIBLE`, and the `dig` must return an `acm-validations.aws` target.
-A missing validation record is the one thing that quietly stops renewal. Asking ACM for the record's name rather than
-writing it down here keeps this working if the certificate is ever reissued.
+A missing validation record is the one thing that quietly stops renewal.
+
+Both the certificate and the record's name are read from the tenant rather than written down here, so this keeps
+working if the certificate is ever replaced or reissued.
 
 `openssl` and the browser print certificate dates in UTC while `acm describe-certificate` prints them in the account's
 local offset, so the same certificate reads `Apr 8 23:59:59 2027 GMT` on the wire and `2027-04-09` in ACM.
