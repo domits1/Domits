@@ -98,7 +98,7 @@ function ReviewResponseEditor({ review, onChanged, styles = {} }) {
   return (
     <div className={styles.responseEditor}>
       <label className={styles.responseLabel}>
-        Response
+        <span>Response</span>
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
