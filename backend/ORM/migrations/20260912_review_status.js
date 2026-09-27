@@ -6,7 +6,7 @@ export class ReviewStatus20260912 {
     // Review: Creates the status lookup index for each schema.
     for (const schema of ["test", "main"]) {
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_status_idx_${schema}
+        CREATE INDEX review_status_idx_${schema}
         ON ${schema}.review (status);
       `);
     }

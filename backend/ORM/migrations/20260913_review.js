@@ -2,6 +2,7 @@
 export class Review20260913 {
   async up(queryRunner) {
     // Review: Makes new reviews unpublished by default and prepares category/request/moderation indexes.
+    const now = Date.now();
     for (const schema of ["test", "main"]) {
       await queryRunner.query(`
         ALTER TABLE ${schema}.review
@@ -26,12 +27,12 @@ export class Review20260913 {
           updated_at
         )
         VALUES
-          ('${schema}-review-category-cleanliness', 'cleanliness', 'Cleanliness', 'How clean the property was.', 'GUEST_TO_PROPERTY', true, 10, 0, 0),
-          ('${schema}-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, 0, 0),
-          ('${schema}-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, 0, 0),
-          ('${schema}-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, 0, 0),
-          ('${schema}-review-category-checkin', 'checkIn', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
-          ('${schema}-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, 0, 0)
+          ('${schema}-review-category-cleanliness', 'cleanliness', 'Cleanliness', 'How clean the property was.', 'GUEST_TO_PROPERTY', true, 10, ${now}, ${now}),
+          ('${schema}-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, ${now}, ${now}),
+          ('${schema}-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, ${now}, ${now}),
+          ('${schema}-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, ${now}, ${now}),
+          ('${schema}-review-category-checkin', 'checkin', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, ${now}, ${now}),
+          ('${schema}-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, ${now}, ${now})
         ON CONFLICT (key, review_type) DO UPDATE SET
           label = EXCLUDED.label,
           description = EXCLUDED.description,
@@ -41,22 +42,22 @@ export class Review20260913 {
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_request_guest_status_idx_${schema}
+        CREATE INDEX review_request_guest_status_idx_${schema}
         ON ${schema}.review_request (guest_id, status);
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_request_booking_idx_${schema}
+        CREATE INDEX review_request_booking_idx_${schema}
         ON ${schema}.review_request (booking_id);
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_moderation_status_created_idx_${schema}
+        CREATE INDEX review_moderation_status_created_idx_${schema}
         ON ${schema}.review_moderation (status, created_at);
       `);
 
       await queryRunner.query(`
-        CREATE INDEX ASYNC review_verification_booking_idx_${schema}
+        CREATE INDEX review_verification_booking_idx_${schema}
         ON ${schema}.review_verification (booking_id);
       `);
     }
@@ -73,7 +74,7 @@ export class Review20260913 {
       await queryRunner.query(`
         DELETE FROM ${schema}.review_category
         WHERE review_type = 'GUEST_TO_PROPERTY'
-          AND key IN ('cleanliness', 'accuracy', 'communication', 'location', 'checkIn', 'value');
+          AND key IN ('cleanliness', 'accuracy', 'communication', 'location', 'checkin', 'value');
       `);
 
       await queryRunner.query(`

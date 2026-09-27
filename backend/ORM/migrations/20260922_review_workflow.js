@@ -12,7 +12,7 @@ export class ReviewWorkflow20260922 {
         email_enabled BOOLEAN NOT NULL DEFAULT true,
         updated_at BIGINT NOT NULL
       )`);
-      await queryRunner.query(`CREATE INDEX ASYNC review_request_due_${schema} ON ${schema}.review_request (next_send_at, status)`);
+      await queryRunner.query(`CREATE INDEX review_request_due_${schema} ON ${schema}.review_request (next_send_at, status)`);
     }
   }
 
