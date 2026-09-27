@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { handler } from "../../functions/ReviewSystem/index.js";
 
+// Review: Verifies each review API path reaches the intended controller operation.
 const mockCreateController = () => ({
   options: jest.fn(() => ({ statusCode: 200, headers: {}, body: "" })),
   get: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "list" }) })),
   getById: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "detail" }) })),
   create: jest.fn(() => ({ statusCode: 201, headers: {}, body: JSON.stringify({ route: "create" }) })),
   update: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "update" }) })),
+  saveDraftResponse: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "response-draft" }) })),
+  publishResponse: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "response-publish" }) })),
+  editResponse: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "response-edit" }) })),
+  deleteResponse: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "response-delete" }) })),
 });
 
 let mockController;
@@ -54,6 +59,22 @@ describe("ReviewSystem routing", () => {
 
     expect(response.statusCode).toBe(200);
     expect(mockController.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathParameters: expect.objectContaining({ id: "review-1" }),
+      })
+    );
+  });
+
+  it.each([
+    ["POST", "/reviews/review-1/response", "saveDraftResponse"],
+    ["POST", "/reviews/review-1/response/publish", "publishResponse"],
+    ["PATCH", "/reviews/review-1/response", "editResponse"],
+    ["DELETE", "/reviews/review-1/response", "deleteResponse"],
+  ])("routes %s %s to %s", async (httpMethod, path, controllerMethod) => {
+    const response = await handler({ httpMethod, path });
+
+    expect(response.statusCode).toBe(200);
+    expect(mockController[controllerMethod]).toHaveBeenCalledWith(
       expect.objectContaining({
         pathParameters: expect.objectContaining({ id: "review-1" }),
       })

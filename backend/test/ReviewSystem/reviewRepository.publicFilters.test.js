@@ -52,4 +52,41 @@ describe("ReviewRepository public review sorting and filtering", () => {
 
     expect(response).toEqual({ reviews: [], totalReviews: 0, overallRating: null, categoryRatings: {} });
   });
+
+  it("exposes only safe fields from a published host response", () => {
+    const response = repository.toPublicReview(
+      createReview({
+        response: {
+          id: "response-1",
+          authorId: "host-1",
+          authorRole: "host",
+          status: "published",
+          message: "Thank you for staying with us.",
+          publishedAt: 123,
+          deletedAt: null,
+        },
+      })
+    );
+
+    expect(response.response).toEqual({
+      id: "response-1",
+      authorRole: "host",
+      message: "Thank you for staying with us.",
+      publishedAt: 123,
+    });
+    expect(response.response.authorId).toBeUndefined();
+  });
+
+  it.each([
+    ["draft", null],
+    ["published", 456],
+  ])("hides a %s response when it is not publicly visible", (status, deletedAt) => {
+    const response = repository.toPublicReview(
+      createReview({
+        response: { id: "response-1", status, message: "Hidden response.", deletedAt },
+      })
+    );
+
+    expect(response.response).toBeNull();
+  });
 });

@@ -57,6 +57,42 @@ class ReviewController {
     }
   }
 
+  async saveDraftResponse(event) {
+    // Review: Saves a host response without exposing it on the public listing.
+    try {
+      return this.ok(await this.reviewService.saveDraftResponse(event));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async publishResponse(event) {
+    // Review: Publishes a host response so it becomes part of the public review DTO.
+    try {
+      return this.ok(await this.reviewService.publishResponse(event));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async editResponse(event) {
+    // Review: Edits the existing host response while preserving its lifecycle status.
+    try {
+      return this.ok(await this.reviewService.editResponse(event));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async deleteResponse(event) {
+    // Review: Removes the host response from host and public review views.
+    try {
+      return this.ok(await this.reviewService.deleteResponse(event));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async delete(event) {
     try {
       const result = await this.reviewService.deleteReview(event);

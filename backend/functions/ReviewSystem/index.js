@@ -5,26 +5,39 @@ let controller = null;
 
 // Review: Normalizes API Gateway path variants before route matching.
 const normalizePath = (event) => {
-  const rawPath = String(event.rawPath || event.path || event.resource || "");
-  let pathEnd = rawPath.length;
-
-  while (pathEnd > 1 && rawPath[pathEnd - 1] === "/") {
-    pathEnd -= 1;
+  const rawPath = event.rawPath || event.path || event.resource || "";
+  let normalizedPath = rawPath;
+  while (normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
   }
-
-  return rawPath.slice(0, pathEnd) || "/";
+  return normalizedPath || "/";
 };
+
+const getPathParts = (event) => normalizePath(event).split("/");
 
 const getReviewIdFromPath = (event) => {
   // Review: Restores the review id when API Gateway proxy routing does not supply path parameters.
   if (event.pathParameters?.id) return event.pathParameters.id;
 
-  const match = /^\/reviews\/([^/]+)$/.exec(normalizePath(event));
-  return match?.[1] || null;
+  const pathParts = getPathParts(event);
+  return pathParts.length === 3 && pathParts[1] === "reviews" ? pathParts[2] : null;
+};
+
+const getReviewResponseRouteFromPath = (event) => {
+  // Review: Matches draft, publish, edit, and delete routes for one host response.
+  const pathParts = getPathParts(event);
+  const isResponseRoute =
+    (pathParts.length === 4 || pathParts.length === 5) &&
+    pathParts[1] === "reviews" &&
+    pathParts[3] === "response";
+
+  if (!isResponseRoute) return null;
+
+  return { reviewId: pathParts[2], action: pathParts[4] || "response" };
 };
 
 const withReviewId = (event) => {
-  const reviewId = getReviewIdFromPath(event);
+  const reviewId = getReviewIdFromPath(event) || getReviewResponseRouteFromPath(event)?.reviewId;
 
   if (!reviewId) return event;
 
@@ -40,6 +53,32 @@ const withReviewId = (event) => {
 const isReviewsCollectionPath = (event) => normalizePath(event) === "/reviews";
 const isReviewDetailPath = (event) => Boolean(getReviewIdFromPath(event));
 
+const routeResponseRequest = (event, routedEvent, responseRoute) => {
+  // Review: Routes host response actions separately to keep the Lambda entry point straightforward.
+  if (event.httpMethod === "POST" && responseRoute?.action === "response") {
+    return controller.saveDraftResponse(routedEvent);
+  }
+  if (event.httpMethod === "POST" && responseRoute?.action === "publish") {
+    return controller.publishResponse(routedEvent);
+  }
+  if (event.httpMethod === "PATCH" && responseRoute?.action === "response") {
+    return controller.editResponse(routedEvent);
+  }
+  if (event.httpMethod === "DELETE" && responseRoute?.action === "response") {
+    return controller.deleteResponse(routedEvent);
+  }
+  return null;
+};
+
+const routeReviewRequest = (event, routedEvent) => {
+  // Review: Routes review collection and detail operations after response routes are excluded.
+  if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) return controller.create(routedEvent);
+  if (event.httpMethod === "GET" && isReviewsCollectionPath(event)) return controller.get(routedEvent);
+  if (event.httpMethod === "GET" && isReviewDetailPath(event)) return controller.getById(routedEvent);
+  if (event.httpMethod === "PATCH" && isReviewDetailPath(event)) return controller.update(routedEvent);
+  return null;
+};
+
 export const handler = async (event) => {
   // Review: Routes collection and detail requests through one ReviewSystem Lambda entry point.
   if (!controller) {
@@ -51,22 +90,13 @@ export const handler = async (event) => {
   }
 
   const routedEvent = withReviewId(event);
+  const responseRoute = getReviewResponseRouteFromPath(event);
+  const responseResult = routeResponseRequest(event, routedEvent, responseRoute);
 
-  if (event.httpMethod === "POST" && isReviewsCollectionPath(event)) {
-    return controller.create(routedEvent);
-  }
+  if (responseResult) return responseResult;
 
-  if (event.httpMethod === "GET" && isReviewsCollectionPath(event)) {
-    return controller.get(routedEvent);
-  }
-
-  if (event.httpMethod === "GET" && isReviewDetailPath(event)) {
-    return controller.getById(routedEvent);
-  }
-
-  if (event.httpMethod === "PATCH" && isReviewDetailPath(event)) {
-    return controller.update(routedEvent);
-  }
+  const reviewResult = routeReviewRequest(event, routedEvent);
+  if (reviewResult) return reviewResult;
 
   return {
     statusCode: 404,

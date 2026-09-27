@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import ReviewController from "../../functions/ReviewSystem/controller/reviewController.js";
 
+// Review: Verifies review service results and errors are mapped to HTTP responses.
 describe("ReviewController", () => {
   it("returns public reviews from the service", async () => {
     const reviewService = {
@@ -64,6 +65,25 @@ describe("ReviewController", () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ id: "review-1", title: "Updated" });
     expect(reviewService.updateReview).toHaveBeenCalledWith(event);
+  });
+
+  it.each([
+    ["saveDraftResponse", "saveDraftResponse"],
+    ["publishResponse", "publishResponse"],
+    ["editResponse", "editResponse"],
+    ["deleteResponse", "deleteResponse"],
+  ])("maps %s response operations through the service", async (controllerMethod, serviceMethod) => {
+    const reviewService = {
+      [serviceMethod]: jest.fn().mockResolvedValue({ response: { id: "response-1" } }),
+    };
+    const controller = new ReviewController({ reviewService });
+    const event = { pathParameters: { id: "review-1" }, body: "{}" };
+
+    const response = await controller[controllerMethod](event);
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({ response: { id: "response-1" } });
+    expect(reviewService[serviceMethod]).toHaveBeenCalledWith(event);
   });
 
   it("maps service errors to HTTP responses", async () => {

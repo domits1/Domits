@@ -6,6 +6,7 @@ import AuthManager from "../../auth/authManager.js";
 import ReviewEligibilityService from "./reviewEligibilityService.js";
 import ReviewStatusService from "./reviewStatusService.js";
 import { REVIEW_STATUSES } from "./reviewStatus.js";
+import { HOST_RESPONSE_ROLES, REVIEW_RESPONSE_STATUSES } from "./reviewResponseStatus.js";
 import BadRequestException from "../../util/exception/badRequestException.js";
 import ForbiddenException from "../../util/exception/forbiddenException.js";
 import NotFoundException from "../../util/exception/notFoundException.js";
@@ -47,6 +48,10 @@ class ReviewService {
       return this.reviewRepository.getPublishedReviewsByPropertyId(propertyId, publicReviewQuery);
     }
 
+    if (query.hostId) {
+      return this.getHostReviews(event, query.hostId);
+    }
+
     if (query.bookingId) {
       const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
       return this.reviewRepository.getReviewsByBookingForUser(query.bookingId, user.sub);
@@ -58,6 +63,13 @@ class ReviewService {
     }
 
     throw new BadRequestException("Missing review query.");
+  }
+
+  async getHostReviews(event, hostId) {
+    // Review: Returns received reviews only after host or active team-member authorization.
+    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    await this.assertHostReviewAccess(user, hostId);
+    return { reviews: await this.reviewRepository.getReviewsForHost(hostId) };
   }
 
   async parsePublicReviewQuery(query) {
@@ -233,6 +245,133 @@ class ReviewService {
     }
 
     return this.reviewRepository.softDeleteReview(reviewId);
+  }
+
+  async saveDraftResponse(event) {
+    // Review: Creates or restores the one draft response associated with a public review.
+    return this.upsertResponse(event, REVIEW_RESPONSE_STATUSES.DRAFT);
+  }
+
+  async publishResponse(event) {
+    // Review: Creates or promotes the response to its public published state.
+    return this.upsertResponse(event, REVIEW_RESPONSE_STATUSES.PUBLISHED);
+  }
+
+  async editResponse(event) {
+    // Review: Updates response text while preserving its existing draft or published state.
+    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const reviewId = this.getRequiredResponseReviewId(event);
+    const body = this.parseBody(event.body);
+    this.validateResponseMessage(body.message);
+
+    const review = await this.getResponseEligibleReview(reviewId);
+    await this.assertHostReviewAccess(user, review.hostId);
+
+    const existingResponse = await this.reviewRepository.getResponseByReviewId(reviewId);
+    if (!existingResponse) throw new NotFoundException("Review response not found.");
+
+    const response = await this.reviewRepository.updateReviewResponse(existingResponse.id, {
+      message: body.message.trim(),
+      updatedAt: this.clock(),
+    });
+
+    return { response };
+  }
+
+  async deleteResponse(event) {
+    // Review: Soft-deletes a response so its audit history remains available in storage.
+    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const reviewId = this.getRequiredResponseReviewId(event);
+    const review = await this.getResponseEligibleReview(reviewId);
+    await this.assertHostReviewAccess(user, review.hostId);
+
+    const existingResponse = await this.reviewRepository.getResponseByReviewId(reviewId);
+    if (!existingResponse) throw new NotFoundException("Review response not found.");
+
+    const now = this.clock();
+    await this.reviewRepository.updateReviewResponse(existingResponse.id, { deletedAt: now, updatedAt: now });
+    return { message: "Review response deleted successfully." };
+  }
+
+  async upsertResponse(event, status) {
+    // Review: Shares validation and persistence between draft-save and publish commands.
+    const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
+    const reviewId = this.getRequiredResponseReviewId(event);
+    const body = this.parseBody(event.body);
+    this.validateResponseMessage(body.message);
+
+    const review = await this.getResponseEligibleReview(reviewId);
+    await this.assertHostReviewAccess(user, review.hostId);
+
+    const now = this.clock();
+    const existingResponse = await this.reviewRepository.getResponseByReviewId(reviewId, { includeDeleted: true });
+
+    if (existingResponse?.status === REVIEW_RESPONSE_STATUSES.PUBLISHED && status === REVIEW_RESPONSE_STATUSES.DRAFT) {
+      throw new BadRequestException("Published responses cannot be saved as draft.");
+    }
+
+    const responseData = {
+      reviewId,
+      authorId: user.sub,
+      authorRole: this.normalizeResponseAuthorRole(user.role),
+      status,
+      message: body.message.trim(),
+      updatedAt: now,
+      publishedAt: status === REVIEW_RESPONSE_STATUSES.PUBLISHED ? existingResponse?.publishedAt || now : null,
+      deletedAt: null,
+    };
+
+    const response = existingResponse
+      ? await this.reviewRepository.updateReviewResponse(existingResponse.id, responseData)
+      : await this.reviewRepository.saveReviewResponse({ id: randomUUID(), ...responseData, createdAt: now });
+
+    return { response };
+  }
+
+  getRequiredResponseReviewId(event) {
+    const reviewId = event.pathParameters?.id;
+    if (!reviewId) throw new BadRequestException("Missing review id.");
+    return reviewId;
+  }
+
+  validateResponseMessage(message) {
+    if (!message?.trim()) throw new BadRequestException("message is required.");
+  }
+
+  async getResponseEligibleReview(reviewId) {
+    // Review: Host replies are limited to approved public reviews with visible written feedback.
+    const review = await this.reviewRepository.getReviewById(reviewId);
+    if (!review) throw new NotFoundException("Review not found.");
+
+    const isEligible =
+      review.status === REVIEW_STATUSES.PUBLISHED &&
+      review.publicationStatus === "PUBLISHED" &&
+      Boolean(review.publicReview?.trim());
+
+    if (!isEligible) {
+      throw new ForbiddenException("Only approved public reviews can receive host responses.");
+    }
+
+    return review;
+  }
+
+  async assertHostReviewAccess(user, hostId) {
+    // Review: Property owners and active host-team roles can manage received review responses.
+    const actorRole = this.normalizeResponseAuthorRole(user.role);
+    if (user.sub === hostId && !this.isGuestOnlyRole(actorRole)) return;
+
+    const hasTeamAccess = await this.reviewRepository.hasActiveTeamMembership(user.sub, hostId);
+    if (hasTeamAccess && HOST_RESPONSE_ROLES.has(actorRole)) return;
+
+    throw new ForbiddenException("You are not allowed to respond to this review.");
+  }
+
+  normalizeResponseAuthorRole(role) {
+    return String(role || "host").trim().toLowerCase();
+  }
+
+  isGuestOnlyRole(role) {
+    return ["guest", "traveler", "customer"].includes(String(role || "").trim().toLowerCase());
   }
 
   async validateCreateReviewPayload(body) {
