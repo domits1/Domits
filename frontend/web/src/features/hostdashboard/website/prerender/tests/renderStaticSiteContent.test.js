@@ -36,11 +36,9 @@ describe("static site content for a crawler without JavaScript", () => {
     const text = stripTags(renderContentFor());
 
     expect(text).toContain("Escape to a serene four-bedroom private villa");
-    expect(text).toContain("Ubud, Indonesia");
     expect(text).toContain("Freezer");
     expect(text).toContain("Oven");
-    expect(text).toContain("8 Guests");
-    expect(text).toContain("4 Bedrooms");
+    expect(text).toContain("Ubud, Indonesia");
   });
 
   it("leaves the nightly rate out, because a snapshot cannot keep a price current", () => {
@@ -48,7 +46,6 @@ describe("static site content for a crawler without JavaScript", () => {
 
     expect(text).not.toContain("550");
     expect(text).not.toContain("Base rate");
-    expect(text).toContain("2 night minimum");
   });
 
   it("never exposes the street, house number or postal code", () => {
@@ -92,17 +89,15 @@ describe("static site content for a crawler without JavaScript", () => {
   it("hides the sections a host switched off, like the live page does", () => {
     const html = renderContentFor({
       contentOverrides: {
-        visibility: { amenitiesPanel: false, gallerySection: false, contactSection: false, trustCards: false },
+        visibility: { amenitiesPanel: false, gallerySection: false, contactSection: false },
       },
     });
 
     expect(html).not.toContain("Freezer");
     expect(html).not.toContain("Your host");
-    expect(html).not.toContain("House rules");
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).not.toContain("second/web.jpg");
     expect(html).toContain("<h1>");
-    expect(html).toContain("Location");
   });
 
   it("uses the heading a host wrote for the hero instead of the listing title", () => {
@@ -127,11 +122,25 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("Untitled listing");
   });
 
-  it("shows the check-in and check-out times, which do not go stale", () => {
+  it("renders only the sections the panorama template renders itself", () => {
+    const html = renderContentFor();
+
+    expect(html).toContain("static-site-hero");
+    expect(html).toContain("static-site-amenities");
+    expect(html).toContain("static-site-gallery");
+    expect(html).not.toContain("static-site-stats");
+    expect(html).not.toContain("static-site-arrival");
+    expect(html).not.toContain("static-site-location");
+    expect(html).not.toContain("static-site-policies");
+  });
+
+  it("publishes no house rule and no check-in time, because panorama only shows those through an overridable card", () => {
     const text = stripTags(renderContentFor());
 
-    expect(text).toContain("Check-in from 15:00");
-    expect(text).toContain("Check-out until 11:00");
+    expect(text).not.toContain("No smoking");
+    expect(text).not.toContain("House rules");
+    expect(text).not.toContain("Check-in");
+    expect(text).not.toContain("15:00");
   });
 
   it("refuses to render a page without a title", () => {
@@ -171,9 +180,7 @@ describe("what happens when the model is malformed", () => {
   it("does not crash when every list is the wrong type", () => {
     const html = renderWith({
       site: { title: "Villa Aura" },
-      stay: { stats: "nope" },
       amenities: { all: 42 },
-      policies: { all: { nope: true } },
       media: { galleryImages: "nope", heroImage: null },
       location: {},
       hero: {},

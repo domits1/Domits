@@ -46,54 +46,6 @@ const renderHero = (model, heading, imageAlt) => {
   ].join("");
 };
 
-const renderArrival = (model) => {
-  const checkInLabel = cleanText(model?.stay?.checkInLabel);
-  const checkOutLabel = cleanText(model?.stay?.checkOutLabel);
-  if (!checkInLabel && !checkOutLabel) {
-    return "";
-  }
-
-  return [
-    '<section class="static-site-arrival"><h2>Arrival</h2><dl>',
-    checkInLabel ? `<dt>Check-in from</dt><dd>${escapeHtml(checkInLabel)}</dd>` : "",
-    checkOutLabel ? `<dt>Check-out until</dt><dd>${escapeHtml(checkOutLabel)}</dd>` : "",
-    "</dl></section>",
-  ].join("");
-};
-
-const renderStats = (model) => {
-  const stats = toArray(model?.stay?.stats).filter(
-    (stat) => cleanText(stat?.value) && !VOLATILE_STAT_IDS.has(stat?.id)
-  );
-  if (stats.length === 0) {
-    return "";
-  }
-
-  return [
-    '<section class="static-site-stats"><h2>The stay</h2><dl>',
-    renderList(
-      stats,
-      (stat) => `<dt>${escapeHtml(cleanText(stat.label))}</dt><dd>${escapeHtml(cleanText(stat.value))}</dd>`
-    ),
-    "</dl></section>",
-  ].join("");
-};
-
-const renderLocation = (model) => {
-  const label = cleanText(model?.location?.label);
-  if (!label) {
-    return "";
-  }
-
-  const narrative = cleanText(model?.location?.narrative);
-  return [
-    '<section class="static-site-location"><h2>Location</h2>',
-    `<p>${escapeHtml(label)}</p>`,
-    narrative && narrative !== label ? `<p>${escapeHtml(narrative)}</p>` : "",
-    "</section>",
-  ].join("");
-};
-
 const renderAmenities = (model) => {
   const amenities = toArray(model?.amenities?.all).map((amenity) => cleanText(amenity?.label)).filter(Boolean);
   if (amenities.length === 0) {
@@ -126,19 +78,6 @@ const renderGallery = (model, title) => {
   ].join("");
 };
 
-const renderPolicies = (model) => {
-  const policies = toArray(model?.policies?.all).map(cleanText).filter(Boolean);
-  if (policies.length === 0) {
-    return "";
-  }
-
-  return [
-    '<section class="static-site-policies"><h2>House rules</h2><ul>',
-    renderList(policies, (policy) => `<li>${escapeHtml(policy)}</li>`),
-    "</ul></section>",
-  ].join("");
-};
-
 const renderHost = (model) => {
   const hostName = cleanText(model?.host?.name);
   if (!hostName || hostName === "Host") {
@@ -165,12 +104,8 @@ export const renderStaticSiteContent = (input) => {
   return [
     '<main class="static-site-content">',
     renderHero(model, heading, resolvedTitle),
-    renderStats(model),
-    renderArrival(model),
-    renderLocation(model),
     isSectionVisible(model, "amenitiesPanel") ? renderAmenities(model) : "",
     isSectionVisible(model, "gallerySection") ? renderGallery(model, resolvedTitle) : "",
-    isSectionVisible(model, "trustCards") ? renderPolicies(model) : "",
     isSectionVisible(model, "contactSection") ? renderHost(model) : "",
     "</main>",
   ]
