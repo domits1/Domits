@@ -9,6 +9,7 @@ import {
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 const CHANNEX_BOOKING_POLL_EVENT_SOURCE = "domits.channex.booking-poll";
 const CHANNEX_BOOKING_POLL_EVENT_ACTION = "CHANNEX_BOOKING_POLL";
+const CHANNEX_ARI_OUTBOX_EVENT_ACTION = "PROCESS_CHANNEX_ARI_OUTBOX";
 const controller = new ChannelManagementController();
 const notFound = { statusCode: 404, response: "Not Found" };
 const corsHeaders = {
@@ -104,6 +105,8 @@ const isChannexBookingPollEvent = (event) =>
   event?.source === CHANNEX_BOOKING_POLL_EVENT_SOURCE ||
   event?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION ||
   event?.detail?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION;
+export const isChannexAriOutboxEvent = (event) =>
+  event?.action === CHANNEX_ARI_OUTBOX_EVENT_ACTION || event?.detail?.action === CHANNEX_ARI_OUTBOX_EVENT_ACTION;
 const isProtectedChannexCertificationAdminRoute = (method, path) =>
   protectedChannexCertificationAdminRoutes.some(
     (route) =>
@@ -285,12 +288,20 @@ const findRouteHandler = (httpMethod, path) =>
   null;
 
 export const handleChannelManagementEvent = async (event) => {
-  if (!isChannexBookingPollEvent(event) && !isChannelHttpPath(event?.path)) {
+  if (
+    !isChannexAriOutboxEvent(event) &&
+    !isChannexBookingPollEvent(event) &&
+    !isChannelHttpPath(event?.path)
+  ) {
     return null;
   }
 
   const { httpMethod, path } = event;
   try {
+    if (isChannexAriOutboxEvent(event)) {
+      return createLambdaResponse(await controller.processChannexAriOutbox(event));
+    }
+
     if (isChannexBookingPollEvent(event)) {
       return createLambdaResponse(
         await controller.pollLatestChannexBookings(event)

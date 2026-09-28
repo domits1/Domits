@@ -12,10 +12,14 @@ import ChannexCredentialStore from "./providers/channex/credentialStore.js";
 import ChannexProviderClient from "./providers/channex/providerClient.js";
 import HoliduCredentialStore from "./providers/holidu/credentialStore.js";
 import HoliduProviderClient from "./providers/holidu/providerClient.js";
+import ChannexAriOutboxRepository from "./repositories/channexAriOutboxRepository.js";
 import ChannexBookingRevisionRepository from "./repositories/channexBookingRevisionRepository.js";
+import ChannelManagementSchemaRepository from "./repositories/channelManagementSchemaRepository.js";
 import ChannexExternalBookingImportRepository from "./repositories/channexExternalBookingImportRepository.js";
 import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRepository.js";
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
+import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
+import ChannexAriSchemaGuard from "./services/channexAriSchemaGuard.js";
 import ChannexAriOrchestrationService from "./services/channexAriOrchestrationService.js";
 import ChannexAriPayloadService from "./services/channexAriPayloadService.js";
 import ChannexAvailabilitySyncService from "./services/channexAvailabilitySyncService.js";
@@ -205,6 +209,14 @@ export default class ChannelManagementApiService {
           ...args
         ),
     });
+    this.channexAriOutboxWorker = new ChannexAriOutboxWorker({
+      outbox: new ChannexAriOutboxRepository(),
+      props,
+      accounts,
+      sync,
+      schemaGuard: new ChannexAriSchemaGuard(new ChannelManagementSchemaRepository()),
+      syncCalendarChange: (...args) => this.syncChannexCalendarChange(...args),
+    });
   }
 
   async connectHolidu(...args) {
@@ -321,6 +333,10 @@ export default class ChannelManagementApiService {
 
   async pollLatestChannexBookings(...args) {
     return this.channexBookingPollingService.pollLatestChannexBookings(...args);
+  }
+
+  async processChannexAriOutbox() {
+    return { statusCode: 200, response: await this.channexAriOutboxWorker.run() };
   }
 
   async acknowledgeChannexBookingRevisions(...args) {

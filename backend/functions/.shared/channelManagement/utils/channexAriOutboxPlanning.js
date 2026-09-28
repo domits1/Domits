@@ -1,0 +1,103 @@
+import { CHANNEX_ARI_CHANGE_TYPE } from "./channexAriOutboxConstants.js";
+
+const TYPE_ORDER = [
+  CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY,
+  CHANNEX_ARI_CHANGE_TYPE.RATES,
+  CHANNEX_ARI_CHANGE_TYPE.RESTRICTIONS,
+];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const dateIntToUtcMs = (value) =>
+  Date.UTC(Math.floor(value / 10000), Math.floor((value % 10000) / 100) - 1, value % 100);
+
+export const expandDateRange = (dateFrom, dateTo) => {
+  const dates = [];
+  for (let cursor = dateIntToUtcMs(dateFrom); cursor <= dateIntToUtcMs(dateTo); cursor += DAY_MS) {
+    dates.push(new Date(cursor).toISOString().slice(0, 10));
+  }
+  return dates;
+};
+
+// The pipeline applies one set of change types to every date it receives, so a
+// call may only combine types that changed on exactly the same dates. Otherwise a
+// date where only the minimum stay changed would also receive a price (design D9).
+export const groupChangesForSend = (rows) => {
+  const datesByType = new Map();
+  for (const row of rows) {
+    const dates = expandDateRange(row.dateFrom, row.dateTo);
+    for (const type of row.changeTypes) {
+      if (!datesByType.has(type)) datesByType.set(type, new Set());
+      for (const date of dates) datesByType.get(type).add(date);
+    }
+  }
+
+  const groups = new Map();
+  for (const type of TYPE_ORDER) {
+    if (!datesByType.has(type)) continue;
+    const changedDates = [...datesByType.get(type)].sort();
+    const key = changedDates.join(",");
+    if (!groups.has(key)) groups.set(key, { changeTypes: [], changedDates });
+    groups.get(key).changeTypes.push(type);
+  }
+  return [...groups.values()];
+};
+
+export const OUTCOME = Object.freeze({
+  PROCESSED: "PROCESSED",
+  SKIPPED: "SKIPPED",
+  FAILED: "FAILED",
+  RETRY: "RETRY",
+});
+
+const OUTCOME_SEVERITY = [OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.RETRY, OUTCOME.PROCESSED];
+
+const isTemporary = (httpStatus) =>
+  httpStatus === null || httpStatus === undefined || httpStatus === 429 || httpStatus >= 500;
+
+// A provider call in the 2xx range is accepted even when Channex reports warnings as a
+// failure (providerClient.js:156 sets success: false but httpStatus stays 200).
+const isAccepted = (httpStatus) => httpStatus >= 200 && httpStatus < 300;
+
+// These errorCodes mean the pipeline never reached the provider: a local exception with no
+// results (channexAvailabilitySyncService.js:636-643) or a secret that could not be read
+// (channexAriExecutionService.js:149-156). Neither is the provider rejecting the request, so
+// both are worth retrying rather than failing outright.
+const RETRYABLE_LOCAL_ERROR_CODES = new Set(["CHANNEX_CALENDAR_CHANGE_SYNC_FAILED", "CHANNEX_SECRET_READ_FAILED"]);
+
+export const classifySyncResponse = (result) => {
+  const body = result?.response || {};
+  if (body.ready === false) return { outcome: OUTCOME.SKIPPED, reason: "NOT_MAPPED", taskIds: [] };
+
+  const results = (body.steps || []).flatMap((step) => step.results || []);
+
+  if (results.length && results.every((item) => isAccepted(item.httpStatus))) {
+    return { outcome: OUTCOME.PROCESSED, reason: null, taskIds: body.taskIds || [] };
+  }
+
+  const failed = results.filter((item) => !isAccepted(item.httpStatus));
+
+  if (failed.length) {
+    const auth = failed.find((item) => item.httpStatus === 401 || item.httpStatus === 403);
+    if (auth) return { outcome: OUTCOME.FAILED, reason: auth.errorCode || "CHANNEX_UNAUTHORIZED", taskIds: [] };
+
+    const temporary = failed.find((item) => isTemporary(item.httpStatus));
+    if (temporary) return { outcome: OUTCOME.RETRY, reason: temporary.errorCode || "CHANNEX_TEMPORARY", taskIds: [] };
+
+    return { outcome: OUTCOME.FAILED, reason: failed[0].errorCode || "CHANNEX_REJECTED", taskIds: [] };
+  }
+
+  // No provider call failed, but the pipeline stopped earlier (for example missing credentials).
+  if (result?.statusCode >= 400) {
+    if (RETRYABLE_LOCAL_ERROR_CODES.has(body.errorCode)) {
+      return { outcome: OUTCOME.RETRY, reason: body.errorCode, taskIds: [] };
+    }
+    return { outcome: OUTCOME.FAILED, reason: body.errorCode || "CHANNEX_SYNC_FAILED", taskIds: [] };
+  }
+
+  return { outcome: OUTCOME.PROCESSED, reason: null, taskIds: body.taskIds || [] };
+};
+
+// A property can need several calls. If they disagree, the worst outcome applies to
+// all its rows: resending a change that already went out is harmless (design D1).
+export const worstOutcome = (outcomes) =>
+  OUTCOME_SEVERITY.find((outcome) => outcomes.includes(outcome)) || OUTCOME.PROCESSED;

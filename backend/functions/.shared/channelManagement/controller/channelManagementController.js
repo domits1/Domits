@@ -198,6 +198,10 @@ export default class ChannelManagementController {
     );
   }
 
+  async processChannexAriOutbox() {
+    return this.channelManagementApiService.processChannexAriOutbox();
+  }
+
   async acknowledgeChannexBookingRevisions(event) {
     return this.channelManagementApiService.acknowledgeChannexBookingRevisions(
       event.queryStringParameters?.userId || null,
