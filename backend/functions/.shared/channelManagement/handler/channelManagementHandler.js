@@ -287,7 +287,7 @@ const findRouteHandler = (httpMethod, path) =>
   routeDefinitions.find((route) => route.matches(httpMethod, path))?.handle ||
   null;
 
-export const handleChannelManagementEvent = async (event) => {
+export const handleChannelManagementEvent = async (event, context) => {
   if (
     !isChannexAriOutboxEvent(event) &&
     !isChannexBookingPollEvent(event) &&
@@ -299,7 +299,7 @@ export const handleChannelManagementEvent = async (event) => {
   const { httpMethod, path } = event;
   try {
     if (isChannexAriOutboxEvent(event)) {
-      return createLambdaResponse(await controller.processChannexAriOutbox(event));
+      return createLambdaResponse(await controller.processChannexAriOutbox(event, context));
     }
 
     if (isChannexBookingPollEvent(event)) {
@@ -472,6 +472,6 @@ export const handleChannelManagementEvent = async (event) => {
   }
 };
 
-export const channelManagementHandler = async (event) =>
-  (await handleChannelManagementEvent(event)) ||
+export const channelManagementHandler = async (event, context) =>
+  (await handleChannelManagementEvent(event, context)) ||
   createLambdaResponse(notFound);

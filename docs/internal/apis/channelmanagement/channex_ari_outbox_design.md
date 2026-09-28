@@ -263,6 +263,7 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 | Other client error (4xx) | `FAILED` | The reason is stored in `failurereason` |
 | Too many requests (429), server error (5xx), timeout, or a local error before any provider call (for example a secret that could not be read) | `PENDING` | There is no `nextAttemptAt` yet (#3280): the rows simply go back to `PENDING` and are retried on the next run |
 | One group succeeds, a later group fails or needs a retry | Handled as that failure/retry; remaining groups are not sent | The next run sends the unsent groups again |
+| The pipeline sent nothing (no values were generated for the change) | `FAILED` | With reason `CHANNEX_NOTHING_SENT`, so the change is visible instead of recorded as sent |
 | An unexpected error in our own code | `PENDING` | With a `failurereason`; no `nextAttemptAt` yet (#3280) |
 
 ### 8.4 Why it works this way

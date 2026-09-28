@@ -19,6 +19,7 @@ import ChannexExternalBookingImportRepository from "./repositories/channexExtern
 import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRepository.js";
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
+import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
 import ChannexAriSchemaGuard from "./services/channexAriSchemaGuard.js";
 import ChannexAriOrchestrationService from "./services/channexAriOrchestrationService.js";
 import ChannexAriPayloadService from "./services/channexAriPayloadService.js";
@@ -335,8 +336,9 @@ export default class ChannelManagementApiService {
     return this.channexBookingPollingService.pollLatestChannexBookings(...args);
   }
 
-  async processChannexAriOutbox() {
-    return { statusCode: 200, response: await this.channexAriOutboxWorker.run() };
+  async processChannexAriOutbox({ remainingTimeMs } = {}) {
+    const timeBudgetMs = outboxTimeBudgetMs(remainingTimeMs);
+    return { statusCode: 200, response: await this.channexAriOutboxWorker.run({ timeBudgetMs }) };
   }
 
   async acknowledgeChannexBookingRevisions(...args) {

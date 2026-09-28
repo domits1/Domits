@@ -132,7 +132,7 @@ export default class ChannexAriOutboxWorker {
 
     for (const { domitsPropertyId } of ready) {
       // The Lambda stops at 60 seconds; a property started late would be cut off mid-send.
-      if (this.now() - runStartedAt > timeBudgetMs) {
+      if (this.now() - runStartedAt >= timeBudgetMs) {
         summary.stoppedEarly = true;
         break;
       }

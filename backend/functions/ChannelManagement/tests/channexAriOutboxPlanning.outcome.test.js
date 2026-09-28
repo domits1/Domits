@@ -71,6 +71,20 @@ describe("classifySyncResponse", () => {
   });
 });
 
+describe("classifySyncResponse, review fixes", () => {
+  test("any 5xx before a provider call is retried, e.g. a failed mapping read", () => {
+    const result = answer(500, { ready: true, errorCode: "CHANNEX_ARI_TARGETS_FAILED" });
+
+    expect(classifySyncResponse(result)).toMatchObject({ outcome: OUTCOME.RETRY, reason: "CHANNEX_ARI_TARGETS_FAILED" });
+  });
+
+  test("a 200 where nothing was sent to Channex is FAILED, not recorded as sent", () => {
+    const result = answer(200, { ready: true, calledProvider: false, overallSuccess: false });
+
+    expect(classifySyncResponse(result)).toMatchObject({ outcome: OUTCOME.FAILED, reason: "CHANNEX_NOTHING_SENT" });
+  });
+});
+
 describe("worstOutcome", () => {
   test("one retry among successes sends everything again, which is harmless", () => {
     expect(worstOutcome([OUTCOME.PROCESSED, OUTCOME.RETRY])).toBe(OUTCOME.RETRY);

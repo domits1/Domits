@@ -75,4 +75,13 @@ describe("ChannexAriOutboxWorker.run", () => {
 
     await expect(worker.run()).resolves.toMatchObject({ properties: 1, cleaned: 0 });
   });
+
+  test("with no time left it starts no property at all", async () => {
+    const { worker } = createWorker();
+
+    const summary = await worker.run({ timeBudgetMs: 0 });
+
+    expect(worker.processProperty).not.toHaveBeenCalled();
+    expect(summary.stoppedEarly).toBe(true);
+  });
 });

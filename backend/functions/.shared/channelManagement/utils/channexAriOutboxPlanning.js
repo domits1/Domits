@@ -62,7 +62,6 @@ const isAccepted = (httpStatus) => httpStatus >= 200 && httpStatus < 300;
 // results (channexAvailabilitySyncService.js:636-643) or a secret that could not be read
 // (channexAriExecutionService.js:149-156). Neither is the provider rejecting the request, so
 // both are worth retrying rather than failing outright.
-const RETRYABLE_LOCAL_ERROR_CODES = new Set(["CHANNEX_CALENDAR_CHANGE_SYNC_FAILED", "CHANNEX_SECRET_READ_FAILED"]);
 
 export const classifySyncResponse = (result) => {
   const body = result?.response || {};
@@ -88,10 +87,19 @@ export const classifySyncResponse = (result) => {
 
   // No provider call failed, but the pipeline stopped earlier (for example missing credentials).
   if (result?.statusCode >= 400) {
-    if (RETRYABLE_LOCAL_ERROR_CODES.has(body.errorCode)) {
-      return { outcome: OUTCOME.RETRY, reason: body.errorCode, taskIds: [] };
-    }
-    return { outcome: OUTCOME.FAILED, reason: body.errorCode || "CHANNEX_SYNC_FAILED", taskIds: [] };
+    // No provider call failed, so the problem was ours: a 5xx is a database or network
+    // blip and is safe to retry, as is a secret that could not be read. Anything else,
+    // such as a Channex account that needs reconnecting, will not fix itself.
+    const temporary = result.statusCode >= 500 || body.errorCode === "CHANNEX_SECRET_READ_FAILED";
+    return {
+      outcome: temporary ? OUTCOME.RETRY : OUTCOME.FAILED,
+      reason: body.errorCode || "CHANNEX_SYNC_FAILED",
+      taskIds: [],
+    };
+  }
+
+  if (body.calledProvider === false) {
+    return { outcome: OUTCOME.FAILED, reason: "CHANNEX_NOTHING_SENT", taskIds: [] };
   }
 
   return { outcome: OUTCOME.PROCESSED, reason: null, taskIds: body.taskIds || [] };
@@ -101,3 +109,12 @@ export const classifySyncResponse = (result) => {
 // all its rows: resending a change that already went out is harmless (design D1).
 export const worstOutcome = (outcomes) =>
   OUTCOME_SEVERITY.find((outcome) => outcomes.includes(outcome)) || OUTCOME.PROCESSED;
+
+// Stop starting new properties while there is still time to finish the one that is
+// running; with less than the reserve left, start nothing instead of being cut off.
+export const outboxTimeBudgetMs = (remainingTimeMs) => {
+  const maxBudgetMs = 45_000;
+  const reserveMs = 20_000;
+  if (!Number.isFinite(remainingTimeMs)) return maxBudgetMs;
+  return Math.max(0, Math.min(maxBudgetMs, remainingTimeMs - reserveMs));
+};
