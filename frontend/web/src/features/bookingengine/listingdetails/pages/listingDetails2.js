@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import FetchPropertyById from "../services/fetchPropertyById";
+import { isListingNotFoundError } from "../services/listingErrors";
 import fetchHostInfo from "../services/fetchHostInfo";
 import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 import { normalizeAvailabilityRanges } from "../utils/dateAvailability";
+import { useNoindexMeta } from "../../../seo/ownedHeadTags";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -197,7 +199,7 @@ const ListingDetails2 = () => {
   const [propertyLoading, setPropertyLoading] = useState(true);
   const [hostLoading, setHostLoading] = useState(true);
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [failure, setFailure] = useState(null);
   const [showMessageHost, setShowMessageHost] = useState(false);
 
   const externalBlockedDateKeys = useMemo(
@@ -243,12 +245,20 @@ const ListingDetails2 = () => {
     setPropertyLoading(true);
     setHostLoading(true);
     setAvailabilityLoading(true);
-    setError(null);
+    setFailure(null);
     setProperty({});
     setHost({});
     setAcceptedBookingDateKeys([]);
     setCheckInDate("");
     setCheckOutDate("");
+
+    if (!id) {
+      setFailure("not-found");
+      setPropertyLoading(false);
+      setHostLoading(false);
+      setAvailabilityLoading(false);
+      return undefined;
+    }
 
     FetchPropertyById(id)
       .then((fetchedProperty) => {
@@ -281,9 +291,9 @@ const ListingDetails2 = () => {
             }
           });
       })
-      .catch(() => {
+      .catch((fetchError) => {
         if (!cancelled) {
-          setError("Something went wrong while fetching the requested data, please try again later.");
+          setFailure(isListingNotFoundError(fetchError) ? "not-found" : "unavailable");
           setPropertyLoading(false);
           setHostLoading(false);
         }
@@ -311,10 +321,22 @@ const ListingDetails2 = () => {
     };
   }, [id]);
 
-  if (error) {
+  useNoindexMeta(failure === "not-found", "listing-not-found");
+
+  if (failure === "not-found") {
     return (
       <div className="listing-details-error">
-        <h2>{error}</h2>
+        <h2>This listing is no longer available</h2>
+        <p>The listing you are looking for does not exist or has been taken offline.</p>
+        <Link to="/home">Browse other places to stay</Link>
+      </div>
+    );
+  }
+
+  if (failure) {
+    return (
+      <div className="listing-details-error">
+        <h2>Something went wrong while fetching the requested data, please try again later.</h2>
       </div>
     );
   }
