@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
+import { MOCK_CONNECT_FLOW_ENABLED } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
 import ComingSoonCard from "../components/ComingSoonCard";
+import ConnectChannexModal from "../components/ConnectChannexModal";
+import DisconnectChannexModal from "../components/DisconnectChannexModal";
 import "../styles/HostChannelDistribution.css";
 
 const COMING_SOON_CARDS = [
@@ -14,9 +17,23 @@ const COMING_SOON_CARDS = [
 
 function HostChannelDistribution() {
   const userId = useFetchUser();
-  const { status, syncEvidence, loading } = useChannexDistribution({ userId });
+  const { status, syncEvidence, loading, refresh } = useChannexDistribution({ userId });
+  const [activeModal, setActiveModal] = useState(null);
 
   const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
+  const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
+
+  const closeModal = () => setActiveModal(null);
+
+  const handleConnected = () => {
+    closeModal();
+    refresh();
+  };
+
+  const handleDisconnected = () => {
+    closeModal();
+    refresh();
+  };
 
   return (
     <div className="host-chdist">
@@ -27,7 +44,11 @@ function HostChannelDistribution() {
             Connect your channel manager to distribute availability, prices and bookings
           </p>
         </div>
-        <button className="chdist-btn chdist-btn--primary" disabled>
+        <button
+          className="chdist-btn chdist-btn--primary"
+          disabled={!canAddChannel}
+          onClick={() => setActiveModal("add")}
+        >
           + Add channel
         </button>
       </div>
@@ -40,7 +61,12 @@ function HostChannelDistribution() {
 
       {isConnectedOrNeedsAttention && (
         <div className="chdist-card-list">
-          <ChannexStatusCard status={status} />
+          <ChannexStatusCard
+            status={status}
+            onReconnectClick={() => setActiveModal("reconnect")}
+            onDisconnectClick={() => setActiveModal("disconnect")}
+            manageEnabled={MOCK_CONNECT_FLOW_ENABLED}
+          />
           <LastSyncCard syncEvidence={syncEvidence} />
         </div>
       )}
@@ -50,6 +76,19 @@ function HostChannelDistribution() {
           <ComingSoonCard key={card.title} title={card.title} description={card.description} />
         ))}
       </div>
+
+      {(activeModal === "add" || activeModal === "reconnect") && (
+        <ConnectChannexModal
+          variant={activeModal}
+          userId={userId}
+          onClose={closeModal}
+          onConnected={handleConnected}
+        />
+      )}
+
+      {activeModal === "disconnect" && (
+        <DisconnectChannexModal userId={userId} onClose={closeModal} onDisconnected={handleDisconnected} />
+      )}
     </div>
   );
 }

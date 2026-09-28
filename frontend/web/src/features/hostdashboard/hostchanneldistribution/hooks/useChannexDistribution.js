@@ -28,5 +28,5 @@ export function useChannexDistribution({ userId, domitsPropertyId } = {}) {
     load();
   }, [load]);
 
-  return { status, syncEvidence, loading, error };
+  return { status, syncEvidence, loading, error, refresh: load };
 }
