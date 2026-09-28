@@ -122,6 +122,15 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("Untitled listing");
   });
 
+  it("lists the amenities panorama puts in its grid, not the ones behind its show all button", () => {
+    const model = buildModelFor();
+    const html = renderStaticSiteContent({ model, title: "Villa", templateKey: "panorama-landing" });
+    const listed = [...html.matchAll(/<li>([^<]*)<\/li>/g)].map((match) => match[1]);
+
+    expect(listed).toEqual(model.amenities.featured.map((amenity) => amenity.label));
+    expect(model.amenities.featured.length).toBeLessThanOrEqual(6);
+  });
+
   it("renders only the sections the panorama template renders itself", () => {
     const html = renderContentFor();
 
@@ -180,7 +189,7 @@ describe("what happens when the model is malformed", () => {
   it("does not crash when every list is the wrong type", () => {
     const html = renderWith({
       site: { title: "Villa Aura" },
-      amenities: { all: 42 },
+      amenities: { featured: 42, all: [] },
       media: { galleryImages: "nope", heroImage: null },
       location: {},
       hero: {},

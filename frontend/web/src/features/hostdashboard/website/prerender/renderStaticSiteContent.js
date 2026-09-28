@@ -47,7 +47,7 @@ const renderHero = (model, heading, imageAlt) => {
 };
 
 const renderAmenities = (model) => {
-  const amenities = toArray(model?.amenities?.all).map((amenity) => cleanText(amenity?.label)).filter(Boolean);
+  const amenities = toArray(model?.amenities?.featured).map((amenity) => cleanText(amenity?.label)).filter(Boolean);
   if (amenities.length === 0) {
     return "";
   }
