@@ -18,7 +18,10 @@ export function useChannexDistribution({ userId, domitsPropertyId } = {}) {
       setStatus(statusResult);
       setSyncEvidence(syncResult);
     } catch (err) {
-      setError(err?.message || "Failed to load Channex distribution data.");
+      // Keep the raw error (not just its message) so callers can branch on err.status --
+      // requestChannex in hostintegrations/channexApi.js attaches it for HTTP error responses,
+      // and leaves it unset for a network failure.
+      setError(err);
     } finally {
       setLoading(false);
     }

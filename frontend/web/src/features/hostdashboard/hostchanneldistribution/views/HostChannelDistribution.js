@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
 import { MOCK_CONNECT_FLOW_ENABLED } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
@@ -16,12 +15,16 @@ const COMING_SOON_CARDS = [
 ];
 
 function HostChannelDistribution() {
-  const userId = useFetchUser();
-  const { status, syncEvidence, loading, refresh } = useChannexDistribution({ userId });
+  // No userId here: the backend takes the user from the Cognito ID token on every request
+  // (hostintegrations/channexApi.js), not from a client-supplied value.
+  const { status, syncEvidence, loading, error, refresh } = useChannexDistribution();
   const [activeModal, setActiveModal] = useState(null);
 
-  const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
-  const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
+  const isForbidden = !loading && error?.status === 403;
+  const isOtherError = !loading && !!error && !isForbidden;
+  const isConnectedOrNeedsAttention = !loading && !error && status && status.status !== "NOT_CONNECTED";
+  const isEmpty = !loading && !error && status && status.status === "NOT_CONNECTED";
+  const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && !error && status?.status === "NOT_CONNECTED";
 
   const closeModal = () => setActiveModal(null);
 
@@ -53,7 +56,22 @@ function HostChannelDistribution() {
         </button>
       </div>
 
-      {!loading && !isConnectedOrNeedsAttention && (
+      {isForbidden && (
+        <div className="host-chdist__notice">
+          <p className="host-chdist__notice-text">Channel distribution isn't available for your account yet.</p>
+        </div>
+      )}
+
+      {isOtherError && (
+        <div className="host-chdist__notice">
+          <p className="host-chdist__notice-text">Something went wrong loading your Channex connection.</p>
+          <button type="button" className="chdist-btn chdist-btn--secondary" onClick={refresh}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {isEmpty && (
         <div className="host-chdist__empty">
           <p className="host-chdist__empty-text">No channel connected yet</p>
         </div>
@@ -78,16 +96,11 @@ function HostChannelDistribution() {
       </div>
 
       {(activeModal === "add" || activeModal === "reconnect") && (
-        <ConnectChannexModal
-          variant={activeModal}
-          userId={userId}
-          onClose={closeModal}
-          onConnected={handleConnected}
-        />
+        <ConnectChannexModal variant={activeModal} onClose={closeModal} onConnected={handleConnected} />
       )}
 
       {activeModal === "disconnect" && (
-        <DisconnectChannexModal userId={userId} onClose={closeModal} onDisconnected={handleDisconnected} />
+        <DisconnectChannexModal onClose={closeModal} onDisconnected={handleDisconnected} />
       )}
     </div>
   );
