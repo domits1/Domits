@@ -1,0 +1,11 @@
+export const createElement = () => null;
+export const cloneElement = () => null;
+export const isValidElement = () => false;
+export const Fragment = "Fragment";
+export const useCallback = (callback) => callback;
+export const useEffect = () => {};
+export const useLayoutEffect = () => {};
+export const useMemo = (factory) => factory();
+export const useRef = () => ({ current: null });
+export const useState = (initialValue) => [initialValue, () => {}];
+export default { createElement, cloneElement, isValidElement, Fragment };

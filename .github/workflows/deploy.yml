@@ -80,6 +80,14 @@ jobs:
           fi
 
       # Find and deploy all modified Lambda functions
+      - name: Bundle the static page generator for PropertyHandler
+        run: |
+          set -euo pipefail
+          npm install --silent --no-save --prefix "$RUNNER_TEMP/esbuild" esbuild@0.25.10
+          ESBUILD_MODULE="$RUNNER_TEMP/esbuild/node_modules/esbuild/lib/main.js" \
+            node backend/prerender/buildStaticPageBundle.mjs
+          test -s backend/functions/PropertyHandler/generated/staticPageBundle.mjs
+
       - name: Find and deploy modified Lambda functions
         run: |
           set -euo pipefail  # Fail on errors and undefined variables
