@@ -3,6 +3,7 @@ import { fetchMissedRevenue } from "./services/missedRevenueService";
 import { buildMissedRevenueMetricCards } from "./missedRevenueConfig";
 import { MissedRevenueCards } from "./MissedRevenueCards";
 import { MissedRevenueRootCause } from "./MissedRevenueRootCause";
+import { MissedRevenueByDate } from "./MissedRevenueByDate";
 import styles from "./styles/MissedRevenueDashboardPage.module.scss";
 import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
@@ -98,6 +99,11 @@ export default function MissedRevenueDashboardPage() {
       <section className={styles.periodSection}>
         <h2>Missed revenue by root cause (current month)</h2>
         <MissedRevenueRootCause rootCause={currentMonthData.rootCause} />
+      </section>
+
+      <section className={styles.periodSection}>
+        <h2>Missed revenue by date (current month)</h2>
+        <MissedRevenueByDate byDate={currentMonthData.byDate} />
       </section>
 
       <section className={styles.periodSection}>

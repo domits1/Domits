@@ -70,6 +70,18 @@ describe("MissedRevenueDashboardPage", () => {
     expect(screen.getByText(/^Occupancy/)).toBeInTheDocument();
   });
 
+  test("renders the by-date breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      byDate: [{ date: "2026-09-15", missedRevenue: 150 }],
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("2026-09-15")).toBeInTheDocument());
+    expect(screen.getByText(/missed revenue by date/i)).toBeInTheDocument();
+  });
+
   test("shows a connect-PriceLabs message when the host has no active connection", async () => {
     fetchMissedRevenue.mockResolvedValue({ ...EMPTY_MISSED_REVENUE, connected: false });
 
