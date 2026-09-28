@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Current template pick",
+    "availabilityHint": "Essentials is the template you can use now. Elite is coming soon.",
+    "selected": "Selected",
+    "comingSoon": "Coming soon",
+    "title": "Choose a website template",
+    "unsupportedPreview": "Preview not available for this template yet.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Single-page website, basic customization and essential features"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Multi-everything website, advanced customization and elite features"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Where you'll be",
