@@ -253,7 +253,7 @@ const ListingDetails2 = () => {
     setCheckOutDate("");
 
     if (!id) {
-      setFailure("not-found");
+      setFailure({ id, reason: "not-found" });
       setPropertyLoading(false);
       setHostLoading(false);
       setAvailabilityLoading(false);
@@ -293,7 +293,7 @@ const ListingDetails2 = () => {
       })
       .catch((fetchError) => {
         if (!cancelled) {
-          setFailure(isListingNotFoundError(fetchError) ? "not-found" : "unavailable");
+          setFailure({ id, reason: isListingNotFoundError(fetchError) ? "not-found" : "unavailable" });
           setPropertyLoading(false);
           setHostLoading(false);
         }
@@ -321,9 +321,11 @@ const ListingDetails2 = () => {
     };
   }, [id]);
 
-  useNoindexMeta(failure === "not-found", "listing-not-found");
+  const activeFailure = failure?.id === id ? failure.reason : null;
 
-  if (failure === "not-found") {
+  useNoindexMeta(activeFailure === "not-found", "listing-not-found");
+
+  if (activeFailure === "not-found") {
     return (
       <div className="listing-details-error">
         <h2>This listing is no longer available</h2>
@@ -333,7 +335,7 @@ const ListingDetails2 = () => {
     );
   }
 
-  if (failure) {
+  if (activeFailure) {
     return (
       <div className="listing-details-error">
         <h2>Something went wrong while fetching the requested data, please try again later.</h2>

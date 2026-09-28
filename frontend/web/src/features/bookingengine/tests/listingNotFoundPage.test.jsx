@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import ListingDetails2 from "../listingdetails/pages/listingDetails2";
 import FetchPropertyById from "../listingdetails/services/fetchPropertyById";
 import { createListingError, LISTING_NOT_FOUND, LISTING_REQUEST_FAILED } from "../listingdetails/services/listingErrors";
@@ -92,5 +92,55 @@ describe("what a visitor and a crawler get for a listing that is gone", () => {
 
     await waitFor(() => expect(screen.getByTestId("property-container")).toBeInTheDocument());
     expect(robotsContent()).toBeNull();
+  });
+});
+
+describe("moving between listings", () => {
+  beforeEach(() => {
+    FetchPropertyById.mockReset();
+    globalThis.fetch = jest.fn(() => new Promise(() => {}));
+  });
+
+  afterEach(() => {
+    document.head.querySelectorAll("meta").forEach((element) => element.remove());
+  });
+
+  it("drops the noindex the moment another listing is opened, before its answer arrives", async () => {
+    FetchPropertyById.mockRejectedValue(createListingError(LISTING_NOT_FOUND, "gone"));
+
+    const GoToOtherListing = () => {
+      const navigate = useNavigate();
+      return (
+        <button type="button" onClick={() => navigate("/listingdetails?ID=alive")}>
+          next listing
+        </button>
+      );
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/listingdetails?ID=gone"]}>
+        <Routes>
+          <Route
+            path="/listingdetails"
+            element={
+              <>
+                <GoToOtherListing />
+                <ListingDetails2 />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("This listing is no longer available")).toBeInTheDocument();
+    expect(robotsContent()).toBe("noindex");
+
+    FetchPropertyById.mockReset();
+    FetchPropertyById.mockReturnValue(new Promise(() => {}));
+    fireEvent.click(screen.getByRole("button", { name: "next listing" }));
+
+    expect(robotsContent()).toBeNull();
+    expect(screen.queryByText("This listing is no longer available")).not.toBeInTheDocument();
   });
 });
