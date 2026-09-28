@@ -22,6 +22,18 @@ const renderPages = () =>
     </MemoryRouter>
   );
 
+describe("Pages2 missed revenue navigation", () => {
+  test("links to the missed revenue dashboard route", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
+
+    renderPages();
+
+    const link = await screen.findByRole("link", { name: /missed revenue/i });
+    expect(link.getAttribute("href")).toMatch(/hostinsights\/missed-revenue$/);
+  });
+});
+
 describe("Pages2 Channex certification navigation", () => {
   beforeEach(() => {
     delete process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS;
