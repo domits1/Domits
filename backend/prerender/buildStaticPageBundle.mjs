@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,6 +44,17 @@ export const buildStaticPageBundle = async ({ outfile = DEFAULT_OUTFILE, esbuild
   }
 
   const [output] = Object.values(result.metafile.outputs);
+  const remainingImports = (output?.imports ?? []).map((entry) => entry.path);
+  if (remainingImports.length > 0) {
+    throw new Error(`The static page bundle must not import anything: ${remainingImports.join(", ")}`);
+  }
+
+  const bundled = readFileSync(outfile, "utf8");
+  const dynamicRequest = /\b(?:import|require)\s*\(/.exec(bundled);
+  if (dynamicRequest) {
+    const around = bundled.slice(dynamicRequest.index, dynamicRequest.index + 80);
+    throw new Error(`The static page bundle must not ask for anything at runtime: ${around}`);
+  }
 
   return { outfile, moduleCount: inputs.length, bytes: output?.bytes ?? 0 };
 };
