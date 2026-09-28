@@ -1008,8 +1008,6 @@
     }
 }
 
-/* ─── Enterprise Rate Plan ─────────────────────────────────────────────── */
-
 .rate-plan-enterprise-link {
     text-decoration: none;
     color: inherit;
@@ -1237,8 +1235,9 @@
     font-size: 0.85rem;
 }
 
-.enterprise-rate-plan-loading,
-.enterprise-rate-plan-error {
+ .enterprise-rate-plan-loading,
+.enterprise-rate-plan-error,
+.enterprise-rate-plan-inactive {
     padding: 24px;
     color: #6b7280;
 }
@@ -1247,6 +1246,13 @@
     color: #b91c1c;
     background: #fef2f2;
     border-color: #fecaca;
+}
+
+.enterprise-rate-plan-inactive {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
 }
 
 @media (max-width: 800px) {

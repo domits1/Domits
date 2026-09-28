@@ -3,7 +3,6 @@ import { TypeException } from "../../util/exception/TypeException.js";
 export class PropertyBaseDetails {
     id;
     hostId;
-    enterpriseId;
     title;
     subtitle;
     description;
@@ -16,7 +15,6 @@ export class PropertyBaseDetails {
     constructor(params) {
         this._id = params.id;
         this._hostId = params.hostId;
-        this.enterpriseId = params.enterpriseId || null;
         this._title = params.title;
         this._subtitle = params.subtitle;
         this._description = params.description;

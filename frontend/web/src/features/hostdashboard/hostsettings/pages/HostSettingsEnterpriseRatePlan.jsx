@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
@@ -20,23 +20,19 @@ const formatMoney = (amount, currency = "EUR") => {
 const StatCard = ({ icon, label, value, description }) => (
   <div className="enterprise-stat-card">
     <div className="enterprise-stat-icon">{icon}</div>
-
     <div className="enterprise-stat-content">
       <span className="enterprise-stat-label">{label}</span>
       <strong className="enterprise-stat-value">{value}</strong>
-
       {description && (
-        <span className="enterprise-stat-description">
-          {description}
-        </span>
+        <span className="enterprise-stat-description">{description}</span>
       )}
     </div>
   </div>
 );
 
 const HostSettingsEnterpriseRatePlan = () => {
-  const { hub } = useSettingsTrans("ratePlans");
-
+  const { hub, t } = useSettingsTrans("ratePlans");
+  const enterprise = t.enterprise;
   const [ratePlan, setRatePlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,19 +44,14 @@ const HostSettingsEnterpriseRatePlan = () => {
       try {
         setLoading(true);
         setError("");
-
         const data = await getEnterpriseRatePlan();
 
         if (!cancelled) {
           setRatePlan(data);
         }
       } catch (loadError) {
-        console.error("Failed to load enterprise rate plan:", loadError);
-
         if (!cancelled) {
-          setError(
-            "We couldn't load your enterprise rate plan right now."
-          );
+          setError(enterprise.loadError);
         }
       } finally {
         if (!cancelled) {
@@ -74,30 +65,23 @@ const HostSettingsEnterpriseRatePlan = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enterprise.loadError]);
 
-  const monthlyCost = useMemo(() => {
-    if (!ratePlan) {
-      return 0;
-    }
-
-    return Number(ratePlan.estimatedMonthlyCost || 0);
-  }, [ratePlan]);
-
-  const pricePerProperty = Number(ratePlan?.pricePerProperty || 49);
+  const monthlyCost = Number(ratePlan?.estimatedMonthlyCost || 0);
+  const pricePerProperty = Number(ratePlan?.pricePerProperty ?? 0);
   const currency = ratePlan?.currency || "EUR";
   const activeProperties = Number(ratePlan?.activeProperties || 0);
 
   return (
     <SettingsSubPage
       hubLabel={hub.breadcrumb}
-      breadcrumb="Enterprise Rate Plan"
-      title="Enterprise Rate Plan"
-      subtitle="Simple pricing that scales with your active property portfolio."
+      breadcrumb={enterprise.breadcrumb}
+      title={enterprise.title}
+      subtitle={enterprise.subtitle}
     >
       {loading && (
         <div className="personal-data-card enterprise-rate-plan-loading">
-          Loading enterprise rate plan...
+          {enterprise.loading}
         </div>
       )}
 
@@ -107,30 +91,35 @@ const HostSettingsEnterpriseRatePlan = () => {
         </div>
       )}
 
+      {!loading && !error && !ratePlan && (
+        <div className="personal-data-card enterprise-rate-plan-inactive">
+          <strong>{enterprise.notActiveTitle}</strong>
+          <span>{enterprise.notActiveDescription}</span>
+        </div>
+      )}
+
       {!loading && !error && ratePlan && (
         <>
           <section className="personal-data-section">
             <h2 className="personal-data-section-title">
-              Current Plan
+              {enterprise.currentPlan}
             </h2>
 
             <div className="enterprise-plan-card">
               <div className="enterprise-plan-header">
                 <div>
                   <span className="enterprise-plan-eyebrow">
-                    Current Rate
+                    {enterprise.currentRate}
                   </span>
-
-                  <h2>Enterprise</h2>
-
+                  <h2>{enterprise.planName}</h2>
                   <p>
                     {formatMoney(pricePerProperty, currency)}
-                    {" / active property / month"}
+                    {" / "}
+                    {enterprise.perActivePropertyMonth}
                   </p>
                 </div>
-
                 <span className="enterprise-plan-status">
-                  Active
+                  {enterprise.active}
                 </span>
               </div>
 
@@ -139,71 +128,56 @@ const HostSettingsEnterpriseRatePlan = () => {
               <div className="enterprise-plan-grid">
                 <StatCard
                   icon={<BusinessOutlinedIcon />}
-                  label="Active Properties"
+                  label={enterprise.activeProperties}
                   value={activeProperties.toLocaleString("en-US")}
-                  description="Billable properties in your portfolio"
+                  description={enterprise.billableProperties}
                 />
-
                 <StatCard
                   icon={<PaymentsOutlinedIcon />}
-                  label="Price per Property"
+                  label={enterprise.pricePerProperty}
                   value={formatMoney(pricePerProperty, currency)}
-                  description="Per active property per month"
+                  description={enterprise.perActivePropertyMonth}
                 />
-
                 <StatCard
                   icon={<AccountBalanceWalletOutlinedIcon />}
-                  label="Estimated Monthly Cost"
+                  label={enterprise.estimatedMonthlyCost}
                   value={formatMoney(monthlyCost, currency)}
-                  description="Based on your current property count"
+                  description={enterprise.basedOnPropertyCount}
                 />
               </div>
             </div>
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">
-              Pricing
-            </h2>
-
+            <h2 className="personal-data-section-title">{enterprise.pricing}</h2>
             <div className="enterprise-pricing-card">
               <div>
                 <span className="enterprise-pricing-label">
-                  Enterprise pricing
+                  {enterprise.pricingLabel}
                 </span>
-
-                <strong>
-                  {formatMoney(pricePerProperty, currency)}
-                </strong>
-
-                <span>
-                  per active property / month
-                </span>
+                <strong>{formatMoney(pricePerProperty, currency)}</strong>
+                <span>{enterprise.perActivePropertyMonth}</span>
               </div>
 
               <div className="enterprise-pricing-formula">
-                <span>Active Properties</span>
+                <span>{enterprise.activeProperties}</span>
                 <strong>×</strong>
                 <span>{formatMoney(pricePerProperty, currency)}</span>
                 <strong>=</strong>
-                <span>Monthly Subscription</span>
+                <span>{enterprise.monthlySubscription}</span>
               </div>
             </div>
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">
-              Next Invoice
-            </h2>
-
+            <h2 className="personal-data-section-title">{enterprise.nextInvoice}</h2>
             <div className="personal-data-card enterprise-invoice-card">
               <div className="enterprise-invoice-row">
                 <div className="enterprise-invoice-icon">
                   <CalendarMonthOutlinedIcon />
                 </div>
-
                 <div className="enterprise-invoice-content">
-                  <span>Next invoice</span>
+                  <span>{enterprise.nextInvoiceLabel}</span>
                   <strong>{formatMoney(monthlyCost, currency)}</strong>
                 </div>
               </div>
@@ -212,10 +186,9 @@ const HostSettingsEnterpriseRatePlan = () => {
                 <div className="enterprise-invoice-icon">
                   <AccountBalanceWalletOutlinedIcon />
                 </div>
-
                 <div className="enterprise-invoice-content">
-                  <span>Billing frequency</span>
-                  <strong>Monthly</strong>
+                  <span>{enterprise.billingFrequency}</span>
+                  <strong>{enterprise.monthly}</strong>
                 </div>
               </div>
 
@@ -223,39 +196,27 @@ const HostSettingsEnterpriseRatePlan = () => {
                 <div className="enterprise-invoice-icon">
                   <BusinessOutlinedIcon />
                 </div>
-
                 <div className="enterprise-invoice-content">
-                  <span>Billing unit</span>
-                  <strong>Active Property</strong>
+                  <span>{enterprise.billingUnit}</span>
+                  <strong>{enterprise.activeProperty}</strong>
                 </div>
               </div>
             </div>
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">
-              Billing History
-            </h2>
-
+            <h2 className="personal-data-section-title">{enterprise.billingHistory}</h2>
             <div className="personal-data-card enterprise-empty-card">
-              <strong>No invoices available yet</strong>
-              <span>
-                Your enterprise invoices will appear here once billing
-                history is available.
-              </span>
+              <strong>{enterprise.noInvoices}</strong>
+              <span>{enterprise.invoicesDescription}</span>
             </div>
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">
-              Billing Contact
-            </h2>
-
+            <h2 className="personal-data-section-title">{enterprise.billingContact}</h2>
             <div className="personal-data-card enterprise-empty-card">
-              <strong>Billing contact</strong>
-              <span>
-                Billing contact management will be available here.
-              </span>
+              <strong>{enterprise.billingContactTitle}</strong>
+              <span>{enterprise.billingContactDescription}</span>
             </div>
           </section>
         </>
