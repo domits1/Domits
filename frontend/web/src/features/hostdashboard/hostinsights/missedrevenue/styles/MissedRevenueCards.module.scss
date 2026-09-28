@@ -1,0 +1,32 @@
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(200px, 22vw, 280px), 1fr));
+  gap: clamp(12px, 2vw, 20px);
+}
+
+.card {
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+}
+
+.cardTitle {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.cardValue {
+  margin: 0 0 8px;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 600;
+  color: #0d9813;
+}
+
+.cardMeta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #777;
+}
