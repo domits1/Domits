@@ -119,7 +119,7 @@ jobs:
             --content-type "text/html; charset=utf-8" \
             --no-progress
 
-      - name: Invalidate index.html on every CloudFront tenant
+      - name: Invalidate the shared files on every CloudFront tenant
         if: vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID != ''
         env:
           DISTRIBUTION_ID: ${{ vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID }}
@@ -135,14 +135,14 @@ jobs:
           fi
 
           for tenant_id in $tenant_ids; do
-            batch=$(printf '{"Paths":{"Quantity":2,"Items":["/index.html","/"]},"CallerReference":"deploy-%s-%s-%s"}' \
+            batch=$(printf '{"Paths":{"Quantity":4,"Items":["/index.html","/","/robots.txt","/sitemap.xml"]},"CallerReference":"deploy-%s-%s-%s"}' \
               "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$tenant_id")
             aws cloudfront create-invalidation-for-distribution-tenant \
               --id "$tenant_id" \
               --invalidation-batch "$batch" \
               --query 'Invalidation.Id' \
               --output text
-            echo "Invalidated /index.html and / on tenant $tenant_id"
+            echo "Invalidated /index.html, /, /robots.txt and /sitemap.xml on tenant $tenant_id"
           done
 
       - name: Skip invalidation
