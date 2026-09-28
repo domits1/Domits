@@ -1,0 +1,10 @@
+{
+  "name": "review-system",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.812.0",
+    "database": "file:../../ORM"
+  }
+}
