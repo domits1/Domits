@@ -29,6 +29,19 @@ describe("EMPTY_MISSED_REVENUE", () => {
     expect(EMPTY_MISSED_REVENUE.byProperty).toEqual([]);
   });
 
+  test("defaults byDate to an empty array and comparison to null", () => {
+    expect(EMPTY_MISSED_REVENUE.byDate).toEqual([]);
+    expect(EMPTY_MISSED_REVENUE.comparison).toBeNull();
+  });
+
+  test("defaults every root-cause category to zero missed revenue and zero nights", () => {
+    expect(EMPTY_MISSED_REVENUE.rootCause).toEqual({
+      restriction: { missedRevenue: 0, nights: 0 },
+      pricing: { missedRevenue: 0, nights: 0 },
+      occupancy: { missedRevenue: 0, nights: 0 },
+    });
+  });
+
   test("is frozen so callers cannot mutate the shared default", () => {
     expect(Object.isFrozen(EMPTY_MISSED_REVENUE)).toBe(true);
   });
