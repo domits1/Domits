@@ -54,6 +54,22 @@ describe("MissedRevenueDashboardPage", () => {
     await waitFor(() => expect(screen.getByText("prop-1")).toBeInTheDocument());
   });
 
+  test("renders the root-cause breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      rootCause: {
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 0, nights: 0 },
+        occupancy: { missedRevenue: 300, nights: 3 },
+      },
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText(/root cause/i)).toBeInTheDocument());
+    expect(screen.getByText(/^Occupancy/)).toBeInTheDocument();
+  });
+
   test("shows a connect-PriceLabs message when the host has no active connection", async () => {
     fetchMissedRevenue.mockResolvedValue({ ...EMPTY_MISSED_REVENUE, connected: false });
 
