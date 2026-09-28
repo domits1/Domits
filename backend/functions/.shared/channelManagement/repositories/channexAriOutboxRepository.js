@@ -37,6 +37,8 @@ const toRow = (row) => ({
   attemptCount: Number(row.attemptcount ?? 0),
 });
 
+// For UPDATE and DELETE, TypeORM's raw query returns [rows, rowCount] instead of the
+// rows, which is why those methods destructure the first element.
 export default class ChannexAriOutboxRepository {
   async table() {
     const client = await Database.getInstance();
@@ -117,7 +119,7 @@ export default class ChannexAriOutboxRepository {
   async claim(domitsPropertyId, { now = Date.now(), runStartedAt = now } = {}) {
     const { client, table } = await this.table();
 
-    const rows = await client.query(
+    const [rows] = await client.query(
       `UPDATE ${table}
           SET status = $1,
               attemptcount = attemptcount + 1,
@@ -139,7 +141,7 @@ export default class ChannexAriOutboxRepository {
   async recoverStaleProcessing({ now = Date.now(), staleMs = CHANNEX_ARI_OUTBOX_DEFAULTS.STALE_PROCESSING_MS } = {}) {
     const { client, table } = await this.table();
 
-    const rows = await client.query(
+    const [rows] = await client.query(
       `UPDATE ${table}
           SET status = $1,
               updatedat = $2
@@ -195,7 +197,7 @@ export default class ChannexAriOutboxRepository {
     }
 
     const { client, table } = await this.table();
-    const rows = await client.query(
+    const [rows] = await client.query(
       `UPDATE ${table} SET ${assignments.join(", ")} WHERE id = ANY($6)${guard} RETURNING id`,
       parameters
     );
@@ -246,7 +248,7 @@ export default class ChannexAriOutboxRepository {
   } = {}) {
     const { client, table } = await this.table();
 
-    const rows = await client.query(
+    const [rows] = await client.query(
       `DELETE FROM ${table}
         WHERE id IN (
           SELECT id
