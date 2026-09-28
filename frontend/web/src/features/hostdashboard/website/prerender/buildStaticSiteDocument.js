@@ -8,7 +8,8 @@ const META_PATTERN = new RegExp(`<meta\\b${TAG_BODY}>\\s*`, "gi");
 const LINK_PATTERN = new RegExp(`<link\\b${TAG_BODY}>\\s*`, "gi");
 const OWNED_META_NAME_PATTERN = /\b(?:name|property)\s*=\s*["']?(description|robots|og:[\w:-]+|twitter:[\w:-]+)["']?/i;
 const ROBOTS_META_PATTERN = /\bname\s*=\s*["']?robots\b/i;
-const NOINDEX_PATTERN = /\bnoindex\b/i;
+const CONTENT_ATTRIBUTE_PATTERN = /\bcontent\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i;
+const ENTITY_PATTERN = /&(?:[a-z]+|#\d+);/gi;
 const CANONICAL_REL_PATTERN = /\brel\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i;
 
 const isCanonicalLink = (tag) => {
@@ -17,7 +18,23 @@ const isCanonicalLink = (tag) => {
   return relValue.toLowerCase().split(/\s+/).includes("canonical");
 };
 
-const stripTags = (value) => value.replaceAll(/<[^>]*>/g, " ");
+const stripTags = (value) => value.replaceAll(/<[^>]*>/g, " ").replaceAll(ENTITY_PATTERN, " ");
+
+const readRobotsDirectives = (tag) => {
+  const match = CONTENT_ATTRIBUTE_PATTERN.exec(tag);
+  const content = match ? match[1] ?? match[2] ?? match[3] ?? "" : "";
+  return content
+    .toLowerCase()
+    .split(",")
+    .map((directive) => directive.trim())
+    .filter(Boolean);
+};
+
+const combineRobotsDirectives = (directiveSets) => {
+  const directives = directiveSets.flat();
+  return [directives.includes("noindex") ? "noindex" : "index", directives.includes("nofollow") ? "nofollow" : "follow"]
+    .join(", ");
+};
 
 const asText = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
 
@@ -46,12 +63,12 @@ const serializeJsonLd = (jsonLd) =>
     .replaceAll(">", "\\u003e")
     .replaceAll("&", "\\u0026");
 
-export const renderStaticSiteHead = (metadata, { includeRobots = true } = {}) =>
+export const renderStaticSiteHead = (metadata) =>
   [
     `<title>${escapeHtml(metadata.title)}</title>`,
     metadata.description ? renderMetaTag("name", "description", metadata.description) : "",
     metadata.canonicalUrl ? `<link rel="canonical" href="${escapeHtml(metadata.canonicalUrl)}" />` : "",
-    includeRobots ? renderMetaTag("name", "robots", metadata.robots) : "",
+    renderMetaTag("name", "robots", metadata.robots),
     ...Object.entries(metadata.openGraph).map(([property, content]) => renderMetaTag("property", property, content)),
     ...Object.entries(metadata.twitter).map(([name, content]) => renderMetaTag("name", name, content)),
     metadata.jsonLd
@@ -78,19 +95,13 @@ export const buildStaticSiteDocument = (input) => {
     templateKey: resolveStaticSiteTemplateKey(renderPayload),
   });
 
-  const shellForbidsIndexing = [...template.matchAll(META_PATTERN)].some(
-    (match) => ROBOTS_META_PATTERN.test(match[0]) && NOINDEX_PATTERN.test(match[0])
-  );
+  const shellRobotsDirectives = [...template.matchAll(META_PATTERN)]
+    .filter((match) => ROBOTS_META_PATTERN.test(match[0]))
+    .map((match) => readRobotsDirectives(match[0]));
 
   const documentWithoutOwnedTags = template
     .replace(TITLE_PATTERN, "")
-    .replace(META_PATTERN, (match) => {
-      if (!OWNED_META_NAME_PATTERN.test(match)) {
-        return match;
-      }
-
-      return shellForbidsIndexing && ROBOTS_META_PATTERN.test(match) ? match : "";
-    })
+    .replace(META_PATTERN, (match) => (OWNED_META_NAME_PATTERN.test(match) ? "" : match))
     .replace(LINK_PATTERN, (match) => (isCanonicalLink(match) ? "" : match))
     .replace(NOSCRIPT_PATTERN, (match, noscriptContent) =>
       /enable\s+javascript/i.test(stripTags(noscriptContent)) ? "" : match
@@ -100,7 +111,8 @@ export const buildStaticSiteDocument = (input) => {
     throw new TypeError("Cannot prerender without an app shell containing a </head> tag.");
   }
 
-  const head = renderStaticSiteHead(metadata, { includeRobots: !shellForbidsIndexing });
+  const robots = combineRobotsDirectives([...shellRobotsDirectives, readRobotsDirectives(`content="${metadata.robots}"`)]);
+  const head = renderStaticSiteHead({ ...metadata, robots });
 
   return documentWithoutOwnedTags
     .replace(
