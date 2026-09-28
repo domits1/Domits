@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -87,6 +88,27 @@ describe("inserting the robots noindex tag", () => {
   it("refuses an app shell without a closing head tag", () => {
     expect(() => addNoindexTag("<html><body><div id=\"root\"></div></body></html>")).toThrow(/<\/head>/);
   });
+
+  it("ignores a robots tag that only sits inside a comment", () => {
+    const shellWithCommentedTag = APP_SHELL.replace("</head>", `<!--! ${NOINDEX_TAG} --></head>`);
+    const tagged = addNoindexTag(shellWithCommentedTag);
+
+    expect(tagged).toContain(`${NOINDEX_TAG}</head>`);
+    expect(tagged.match(/name="robots"/g)).toHaveLength(2);
+    expect(addNoindexTag(tagged)).toBe(tagged);
+  });
+
+  it("recognises a conflicting robots tag however it is written", () => {
+    ['<meta name=robots content="index, follow">', '<meta name = "robots" content="all">'].forEach((tag) => {
+      expect(() => addNoindexTag(APP_SHELL.replace("</head>", `${tag}</head>`))).toThrow(/different robots tag/);
+    });
+  });
+
+  it("refuses when a conflicting tag sits next to our own", () => {
+    const shellWithBoth = APP_SHELL.replace("</head>", `${NOINDEX_TAG}<meta name="robots" content="all"></head>`);
+
+    expect(() => addNoindexTag(shellWithBoth)).toThrow(/different robots tag/);
+  });
 });
 
 describe("running the step the way the build runs it", () => {
@@ -137,6 +159,41 @@ describe("running the step the way the build runs it", () => {
     const cwd = mkdtempSync(join(tmpdir(), "noindex-"));
 
     expect(run({ ...silence, env: { AWS_BRANCH: "main" }, cwd })).toBe(0);
+  });
+
+  it("fails loudly on acceptance when the built page cannot be read", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "noindex-"));
+    mkdirSync(join(cwd, "build", "index.html"), { recursive: true });
+    const reported = [];
+
+    expect(run({ env: { AWS_BRANCH: "acceptance" }, cwd, log: () => {}, logError: (m) => reported.push(m) })).toBe(1);
+    expect(reported.join(" ")).toContain("failed to add the robots noindex tag");
+  });
+
+  it("fails loudly on acceptance when the built page carries a conflicting robots tag", () => {
+    const { cwd } = buildDirWith(APP_SHELL.replace("</head>", '<meta name="robots" content="all"></head>'));
+    const reported = [];
+
+    expect(run({ env: { AWS_BRANCH: "acceptance" }, cwd, log: () => {}, logError: (m) => reported.push(m) })).toBe(1);
+    expect(reported.join(" ")).toContain("different robots tag");
+  });
+
+  it("makes the build fail, by exiting non-zero when it is run as a command", () => {
+    const scriptPath = require.resolve("../../scripts/addNoindexToAcceptanceBuild");
+    const { cwd } = buildDirWith(APP_SHELL);
+    const missing = mkdtempSync(join(tmpdir(), "noindex-"));
+
+    const onAcceptance = spawnSync(process.execPath, [scriptPath], { cwd, env: { AWS_BRANCH: "acceptance" } });
+    const onAcceptanceWithoutBuild = spawnSync(process.execPath, [scriptPath], {
+      cwd: missing,
+      env: { AWS_BRANCH: "acceptance" },
+    });
+    const onMainWithoutBuild = spawnSync(process.execPath, [scriptPath], { cwd: missing, env: { AWS_BRANCH: "main" } });
+
+    expect(onAcceptance.status).toBe(0);
+    expect(readFileSync(join(cwd, "build", "index.html"), "utf8")).toContain(NOINDEX_TAG);
+    expect(onAcceptanceWithoutBuild.status).toBe(1);
+    expect(onMainWithoutBuild.status).toBe(0);
   });
 
   it("says in the log which branch it decided on", () => {
