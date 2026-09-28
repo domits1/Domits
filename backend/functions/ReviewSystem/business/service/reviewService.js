@@ -71,7 +71,7 @@ class ReviewService {
     const propertyId = query.propertyId || event.pathParameters?.propertyId;
 
     if (propertyId) {
-      const publicReviewQuery = await this.parsePublicReviewQuery(query);
+      const publicReviewQuery = await this.parsePublicReviewQuery(query, propertyId);
       return this.reviewRepository.getPublishedReviewsByPropertyId(propertyId, publicReviewQuery);
     }
 
@@ -104,9 +104,68 @@ class ReviewService {
     };
   }
 
+  async getReviewCategories(event) {
+    const query = event.queryStringParameters || {};
+    const reviewType = query.reviewType || REVIEW_TYPES.GUEST_TO_PROPERTY;
+
+    this.validateReviewType(reviewType);
+
+    return {
+      categories: await this.reviewRepository.getRatingCategories(reviewType, {
+        propertyId: query.propertyId || null,
+      }),
+    };
+  }
+
+  async getReviewCategoryConfiguration(event) {
+    const user = await this.getAuthenticatedUser(event);
+    const query = event.queryStringParameters || {};
+    const propertyId = String(query.propertyId || "").trim();
+    const reviewType = query.reviewType || REVIEW_TYPES.GUEST_TO_PROPERTY;
+
+    if (!propertyId) throw new BadRequestException("propertyId is required.");
+    this.validateReviewType(reviewType);
+
+    const property = await this.assertReviewCategoryConfigurationAccess(user, propertyId);
+    const categories = await this.reviewRepository.getRatingCategories(reviewType, {
+      propertyId,
+      includeInactive: true,
+    });
+
+    return { propertyId, hostId: property.hostid, reviewType, categories };
+  }
+
+  async saveReviewCategoryConfiguration(event) {
+    const user = await this.getAuthenticatedUser(event);
+    const body = this.parseBody(event.body);
+    const propertyId = String(body.propertyId || "").trim();
+    const reviewType = body.reviewType || REVIEW_TYPES.GUEST_TO_PROPERTY;
+
+    if (!propertyId) throw new BadRequestException("propertyId is required.");
+    this.validateReviewType(reviewType);
+
+    const property = await this.assertReviewCategoryConfigurationAccess(user, propertyId);
+    const categories = await this.validateReviewCategoryConfiguration({
+      propertyId,
+      reviewType,
+      categories: body.categories,
+    });
+
+    const savedCategories = await this.reviewRepository.savePropertyRatingCategoryConfiguration({
+      propertyId,
+      hostId: property.hostid,
+      reviewType,
+      categories,
+      actorUserId: user.sub,
+      now: this.clock(),
+    });
+
+    return { propertyId, hostId: property.hostid, reviewType, categories: savedCategories };
+  }
+
   // Normalizes sort, verification, and category filters for public review queries.
   // Validates each supplied filter before returning repository query options.
-  async parsePublicReviewQuery(query) {
+  async parsePublicReviewQuery(query, propertyId = null) {
     const sort = query.sort || DEFAULT_PUBLIC_REVIEW_SORT;
     const verifiedOnly = query.verified === "true";
     const category = query.category?.trim() || null;
@@ -115,7 +174,7 @@ class ReviewService {
     this.validatePublicReviewVerified(query.verified);
 
     if (category) {
-      await this.validatePublicReviewCategory(category);
+      await this.validatePublicReviewCategory(category, propertyId);
     }
 
     return {
@@ -143,8 +202,8 @@ class ReviewService {
 
   // Loads the active categories for public property reviews.
   // Rejects a requested category that is not currently supported.
-  async validatePublicReviewCategory(category) {
-    const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(PUBLIC_REVIEW_TYPE);
+  async validatePublicReviewCategory(category, propertyId = null) {
+    const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(PUBLIC_REVIEW_TYPE, propertyId);
 
     if (!supportedCategories.has(category)) {
       throw new BadRequestException(`Unsupported rating category: ${category}.`);
@@ -281,12 +340,12 @@ class ReviewService {
     const reviewId = this.getRequiredReviewId(event, { allowQueryString: true });
     const body = this.parseBody(event.body);
 
-    await this.validateUpdateReviewPayload(body);
-
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) {
       throw new NotFoundException("Review not found.");
     }
+
+    await this.validateUpdateReviewPayload(body, review.reviewType, review.propertyId);
 
     const isContentUpdate = this.hasReviewContentUpdate(body);
     this.assertReviewUpdateAllowed({ body, review, user, isContentUpdate });
@@ -713,7 +772,7 @@ class ReviewService {
     if (!body.bookingId) throw new BadRequestException("bookingId is required.");
     if (!body.propertyId) throw new BadRequestException("propertyId is required.");
     if (!body.reviewType) throw new BadRequestException("reviewType is required.");
-    if (!getReviewTypePolicy(body.reviewType)) throw new BadRequestException("reviewType is not supported.");
+    this.validateReviewType(body.reviewType);
     if (!body.title?.trim()) throw new BadRequestException("title is required.");
     if (!body.publicReview?.trim()) throw new BadRequestException("publicReview is required.");
     this.validatePrivateFeedback(body.privateFeedback);
@@ -721,12 +780,12 @@ class ReviewService {
 
     this.validateStatus(body.status, true);
     this.validateRating(body.overallRating, "overallRating");
-    await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
+    await this.validateCategoryRatings(body.reviewType, body.categoryRatings, body.propertyId);
   }
 
   // Validates only fields supplied in an update request.
   // Rejects empty content and invalid status or rating values.
-  async validateUpdateReviewPayload(body) {
+  async validateUpdateReviewPayload(body, reviewType = REVIEW_TYPES.GUEST_TO_PROPERTY, propertyId = null) {
     const hasEditableField =
       body.title !== undefined ||
       body.publicReview !== undefined ||
@@ -758,7 +817,13 @@ class ReviewService {
     }
 
     if (body.categoryRatings !== undefined) {
-      await this.validateCategoryRatings(body.reviewType || "GUEST_TO_PROPERTY", body.categoryRatings);
+      await this.validateCategoryRatings(reviewType, body.categoryRatings, propertyId);
+    }
+  }
+
+  validateReviewType(reviewType) {
+    if (!getReviewTypePolicy(reviewType)) {
+      throw new BadRequestException("reviewType is not supported.");
     }
   }
 
@@ -771,14 +836,14 @@ class ReviewService {
 
   // Checks category ratings against active categories for the review type.
   // Validates each rating using the shared five-star range rule.
-  async validateCategoryRatings(reviewType, categoryRatings) {
+  async validateCategoryRatings(reviewType, categoryRatings, propertyId = null) {
     if (categoryRatings === undefined) return;
 
     if (categoryRatings === null || Array.isArray(categoryRatings) || typeof categoryRatings !== "object") {
       throw new BadRequestException("categoryRatings must be an object.");
     }
 
-    const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(reviewType);
+    const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(reviewType, propertyId);
 
     Object.entries(categoryRatings).forEach(([category, rating]) => {
       if (!supportedCategories.has(category)) {
@@ -787,6 +852,66 @@ class ReviewService {
 
       this.validateRating(rating, `categoryRatings.${category}`);
     });
+  }
+
+  async assertReviewCategoryConfigurationAccess(user, propertyId) {
+    const property = await this.reviewRepository.getPropertyById(propertyId);
+
+    if (!property) {
+      throw new NotFoundException("Property not found.");
+    }
+
+    await this.assertHostReviewAccess(
+      user,
+      property.hostid,
+      "You are not allowed to configure review categories for this property."
+    );
+
+    return property;
+  }
+
+  async validateReviewCategoryConfiguration({ propertyId, reviewType, categories }) {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      throw new BadRequestException("categories must be a non-empty array.");
+    }
+
+    const catalog = await this.reviewRepository.getRatingCategories(reviewType, { includeInactive: true });
+    const catalogKeys = new Set(catalog.map((category) => category.key));
+    const submittedKeys = new Set();
+
+    const normalizedCategories = categories.map((category) => {
+      const key = String(category?.key || "").trim();
+      const sortOrder = Number(category?.sortOrder);
+
+      if (!catalogKeys.has(key)) {
+        throw new BadRequestException(`Unsupported rating category: ${key || "unknown"}.`);
+      }
+
+      if (submittedKeys.has(key)) {
+        throw new BadRequestException(`Duplicate rating category: ${key}.`);
+      }
+
+      if (typeof category.isActive !== "boolean") {
+        throw new BadRequestException(`categories.${key}.isActive must be a boolean.`);
+      }
+
+      if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 10000) {
+        throw new BadRequestException(`categories.${key}.sortOrder must be an integer between 0 and 10000.`);
+      }
+
+      submittedKeys.add(key);
+      return { key, isActive: category.isActive, sortOrder };
+    });
+
+    if (submittedKeys.size !== catalogKeys.size) {
+      throw new BadRequestException("Configuration must include every available category exactly once.");
+    }
+
+    if (!normalizedCategories.some((category) => category.isActive)) {
+      throw new BadRequestException("At least one review category must remain active.");
+    }
+
+    return normalizedCategories;
   }
 
   // Converts a rating to a number and checks the supported scale.

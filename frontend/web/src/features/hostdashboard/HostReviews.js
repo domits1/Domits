@@ -6,6 +6,7 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import ReviewResponseEditor from "./components/ReviewResponseEditor";
 import HostReviewComparison from "./HostReviewComparison";
+import ReviewCategorySettings from "./ReviewCategorySettings";
 import { fetchHostReviews } from "./services/reviewResponseService";
 import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
 
@@ -140,8 +141,22 @@ function HostReviews() {
         >
           Compare ratings
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="category-settings-tab"
+          aria-selected={activeView === "categories"}
+          aria-controls="category-settings-panel"
+          onClick={() => setActiveView("categories")}
+        >
+          Category settings
+        </button>
       </div>
-      {activeView === "compare" ? (
+      {activeView === "categories" ? (
+        <div id="category-settings-panel" role="tabpanel" aria-labelledby="category-settings-tab">
+          <ReviewCategorySettings properties={properties} styles={styles} />
+        </div>
+      ) : activeView === "compare" ? (
         <div id="compare-ratings-panel" role="tabpanel" aria-labelledby="compare-ratings-tab">
           <HostReviewComparison
             reviews={reviews}

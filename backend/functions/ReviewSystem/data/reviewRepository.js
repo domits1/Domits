@@ -6,6 +6,7 @@ import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
+import { Review_Category_Configuration } from "database/models/Review_Category_Configuration";
 import { Review_Request } from "database/models/Review_Request";
 import { Review_Response } from "database/models/Review_Response";
 import { Review_Private_Feedback } from "database/models/Review_Private_Feedback";
@@ -13,6 +14,7 @@ import { Review_Moderation } from "database/models/Review_Moderation";
 import { Review_Verification } from "database/models/Review_Verification";
 import { Review_Notification_Preference } from "database/models/Review_Notification_Preference";
 import { Team_Member } from "database/models/Team_Member";
+import { Property } from "database/models/Property";
 import { REVIEW_MAX_EMAILS, REVIEW_REMINDER_DAYS, REVIEW_REQUEST_DELAY_HOURS, REVIEW_WINDOW_DAYS } from "../util/reviewPolicy.js";
 import ConflictException from "../util/exception/conflictException.js";
 
@@ -214,7 +216,7 @@ class ReviewRepository {
       .getOne();
   }
 
-  async getActiveRatingCategoryKeys(reviewType) {
+  async getRatingCategories(reviewType, { propertyId = null, includeInactive = false } = {}) {
     const client = await Database.getInstance();
 
     const categories = await client
@@ -222,9 +224,75 @@ class ReviewRepository {
       .createQueryBuilder("category")
       .where("category.review_type = :reviewType", { reviewType })
       .andWhere("category.is_active = true")
+      .orderBy("category.sort_order", "ASC")
+      .addOrderBy("category.label", "ASC")
       .getMany();
 
+    let configurations = [];
+    if (propertyId) {
+      configurations = await client.getRepository(Review_Category_Configuration).find({
+        where: { propertyId, reviewType },
+      });
+    }
+
+    const configurationByKey = new Map(
+      configurations.map((configuration) => [configuration.categoryKey, configuration])
+    );
+
+    return categories
+      .map((category) => {
+        const configuration = configurationByKey.get(category.key);
+        return {
+          key: category.key,
+          label: category.label,
+          description: category.description,
+          reviewType: category.reviewType,
+          isActive: configuration?.isActive ?? true,
+          sortOrder: configuration?.sortOrder ?? category.sortOrder,
+        };
+      })
+      .filter((category) => includeInactive || category.isActive)
+      .sort((left, right) => left.sortOrder - right.sortOrder || left.label.localeCompare(right.label));
+  }
+
+  async getActiveRatingCategoryKeys(reviewType, propertyId = null) {
+    const categories = await this.getRatingCategories(reviewType, { propertyId });
     return new Set(categories.map((category) => category.key));
+  }
+
+  async getPropertyById(propertyId) {
+    const client = await Database.getInstance();
+    return client.getRepository(Property).findOne({ where: { id: propertyId } });
+  }
+
+  async savePropertyRatingCategoryConfiguration({ propertyId, hostId, reviewType, categories, actorUserId, now }) {
+    const client = await Database.getInstance();
+
+    await client.transaction(async (manager) => {
+      const repository = manager.getRepository(Review_Category_Configuration);
+      const existingConfigurations = await repository.find({ where: { propertyId, reviewType } });
+      const existingByKey = new Map(
+        existingConfigurations.map((configuration) => [configuration.categoryKey, configuration])
+      );
+
+      for (const category of categories) {
+        const existing = existingByKey.get(category.key);
+        await repository.save({
+          id: existing?.id || randomUUID(),
+          propertyId,
+          hostId,
+          reviewType,
+          categoryKey: category.key,
+          isActive: category.isActive,
+          sortOrder: category.sortOrder,
+          createdByUserId: actorUserId,
+          createdAt: existing?.createdAt || now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    return this.getRatingCategories(reviewType, { propertyId, includeInactive: true });
   }
 
   async getPublishedReviewsByPropertyId(propertyId, options = {}) {

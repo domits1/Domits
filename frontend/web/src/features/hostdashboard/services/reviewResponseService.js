@@ -7,6 +7,29 @@ const shouldUseMockHostReviews = () =>
   process.env.REACT_APP_USE_MOCK_REVIEWS === "true" || !getReviewApiBase();
 
 const mockReviewsByHostId = new Map();
+const mockCategoryConfigurationByProperty = new Map();
+
+const DEFAULT_PROPERTY_REVIEW_CATEGORIES = [
+  ["cleanliness", "Cleanliness"],
+  ["accuracy", "Accuracy"],
+  ["communication", "Communication"],
+  ["location", "Location"],
+  ["checkin", "Check-in"],
+  ["value", "Value"],
+  ["comfort", "Comfort"],
+  ["amenities", "Amenities"],
+  ["service", "Service"],
+  ["privacy", "Privacy"],
+  ["experience", "Experience"],
+  ["hospitality", "Hospitality"],
+].map(([key, label], index) => ({
+  key,
+  label,
+  description: "",
+  reviewType: "GUEST_TO_PROPERTY",
+  isActive: true,
+  sortOrder: (index + 1) * 10,
+}));
 
 const cloneResponse = (response) => (response ? { ...response } : null);
 
@@ -14,6 +37,8 @@ const cloneReview = (review) => ({
   ...review,
   response: cloneResponse(review.response),
 });
+
+const cloneCategories = (categories) => categories.map((category) => ({ ...category }));
 
 const getMockHostReviews = (hostId) => {
   // Review: Seeds host response workflows with stable demo reviews for local development.
@@ -193,6 +218,59 @@ export async function fetchHostReviews(hostId) {
   }
 
   return Array.isArray(data) ? data : data?.reviews || [];
+}
+
+export async function fetchReviewCategoryConfiguration(propertyId, reviewType = "GUEST_TO_PROPERTY") {
+  const normalizedPropertyId = String(propertyId || "").trim();
+  if (!normalizedPropertyId) return [];
+
+  if (shouldUseMockHostReviews()) {
+    const categories = mockCategoryConfigurationByProperty.get(normalizedPropertyId) || DEFAULT_PROPERTY_REVIEW_CATEGORIES;
+    return cloneCategories(categories);
+  }
+
+  const requestUrl = new URL(`${getReviewApiBase()}/categories/configuration`);
+  requestUrl.searchParams.set("propertyId", normalizedPropertyId);
+  requestUrl.searchParams.set("reviewType", reviewType);
+
+  const response = await fetch(requestUrl.toString(), {
+    method: "GET",
+    headers: await buildHeaders(),
+  });
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Could not load review category settings.");
+  }
+
+  return data?.categories || [];
+}
+
+export async function saveReviewCategoryConfiguration(
+  propertyId,
+  categories,
+  reviewType = "GUEST_TO_PROPERTY"
+) {
+  const normalizedPropertyId = String(propertyId || "").trim();
+
+  if (shouldUseMockHostReviews()) {
+    const saved = cloneCategories(categories);
+    mockCategoryConfigurationByProperty.set(normalizedPropertyId, saved);
+    return saved;
+  }
+
+  const response = await fetch(`${getReviewApiBase()}/categories/configuration`, {
+    method: "PUT",
+    headers: await buildHeaders(),
+    body: JSON.stringify({ propertyId: normalizedPropertyId, reviewType, categories }),
+  });
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Could not save review category settings.");
+  }
+
+  return data?.categories || [];
 }
 
 export async function saveDraftReviewResponse(reviewId, message) {

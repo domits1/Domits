@@ -11,7 +11,7 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
-import { createReview, getReviewById, updateReview } from "./services/reviewAPI";
+import { createReview, fetchReviewCategories, getReviewById, updateReview } from "./services/reviewAPI";
 import { getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
@@ -32,7 +32,7 @@ import {
 } from "./utils/image";
 import "./styles/guestReviewForm.scss";
 
-const REVIEW_CATEGORIES = [
+const DEFAULT_REVIEW_CATEGORIES = [
   { key: "cleanliness", label: "Cleanliness" },
   { key: "accuracy", label: "Accuracy" },
   { key: "communication", label: "Communication" },
@@ -44,7 +44,12 @@ const REVIEW_CATEGORIES = [
 // Review: Recognizes the edit route so the form can switch between create and update mode.
 const EDIT_ROUTE_PATTERN = /^\/guestdashboard\/reviews\/([^/]+)\/edit$/;
 
-const initialCategoryRatings = REVIEW_CATEGORIES.reduce((ratings, category) => {
+const buildInitialCategoryRatings = (categories, existingRatings = {}) => categories.reduce((ratings, category) => {
+  ratings[category.key] = Number(existingRatings[category.key]) || 0;
+  return ratings;
+}, {});
+
+const initialCategoryRatings = DEFAULT_REVIEW_CATEGORIES.reduce((ratings, category) => {
   ratings[category.key] = 0;
   return ratings;
 }, {});
@@ -298,6 +303,8 @@ function GuestReviewForm() {
   const [loadingContext, setLoadingContext] = useState(needsBookingLookup);
   const [contextError, setContextError] = useState("");
   const [overallRating, setOverallRating] = useState(0);
+  const [reviewCategories, setReviewCategories] = useState(DEFAULT_REVIEW_CATEGORIES);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryRatings, setCategoryRatings] = useState(initialCategoryRatings);
   const [title, setTitle] = useState("");
   const [publicReview, setPublicReview] = useState("");
@@ -314,6 +321,41 @@ function GuestReviewForm() {
     [baseReviewContext, loadedBookingContext, loadedReview]
   );
   const isEditable = (!isEditMode || canEditReview(loadedReview)) && !contextError && !loadingContext;
+
+  useEffect(() => {
+    const propertyId = reviewContext.propertyId;
+    const reviewType = loadedReview?.reviewType || "GUEST_TO_PROPERTY";
+
+    if (!propertyId) {
+      setReviewCategories(DEFAULT_REVIEW_CATEGORIES);
+      return undefined;
+    }
+
+    let isMounted = true;
+    setLoadingCategories(true);
+
+    fetchReviewCategories(reviewType, propertyId)
+      .then((categories) => {
+        if (!isMounted || !Array.isArray(categories) || categories.length === 0) return;
+
+        setReviewCategories(categories);
+        setCategoryRatings((currentRatings) => buildInitialCategoryRatings(categories, currentRatings));
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setReviewCategories(DEFAULT_REVIEW_CATEGORIES);
+        setCategoryRatings((currentRatings) =>
+          buildInitialCategoryRatings(DEFAULT_REVIEW_CATEGORIES, currentRatings)
+        );
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCategories(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loadedReview?.reviewType, reviewContext.propertyId]);
 
   useEffect(() => {
     // Review: Loads booking context when the review form is opened from a booking link.
@@ -475,7 +517,7 @@ function GuestReviewForm() {
       nextErrors.overallRating = "Please add an overall rating.";
     }
 
-    REVIEW_CATEGORIES.forEach((category) => {
+    reviewCategories.forEach((category) => {
       if (categoryRatings[category.key] < 1) {
         nextErrors[category.key] = `Please rate ${category.label.toLowerCase()}.`;
       }
@@ -555,10 +597,12 @@ function GuestReviewForm() {
     }
   };
 
-  if (loadingReview || loadingContext) {
+  if (loadingReview || loadingContext || loadingCategories) {
     return (
       <main className="guestReviewFormPage">
-        <div className="guestReviewLoadingState">{loadingContext ? "Loading reservation..." : "Loading review..."}</div>
+        <div className="guestReviewLoadingState">
+          {loadingContext ? "Loading reservation..." : loadingCategories ? "Loading review categories..." : "Loading review..."}
+        </div>
       </main>
     );
   }
@@ -641,7 +685,7 @@ function GuestReviewForm() {
           <h2 className="guestReviewLabel">Category ratings</h2>
 
           <div className="guestReviewCategories">
-            {REVIEW_CATEGORIES.map((category) => (
+            {reviewCategories.map((category) => (
               <div key={category.key} className="guestReviewCategoryRow">
                 <span>{category.label}</span>
                 <RatingInput

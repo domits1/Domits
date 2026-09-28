@@ -8,15 +8,26 @@ import PeopleIcon from "@mui/icons-material/People";
 import SkeletonBlock from "./SkeletonBlock";
 
 // Review categories shown publicly when scores are available.
-const CATEGORY_LABELS = [
-  { key: "cleanliness", label: "Cleanliness" },
-  { key: "communication", label: "Communication" },
-  { key: "location", label: "Location" },
-  { key: "value", label: "Value" },
-  { key: "amenities", label: "Amenities" },
-  { key: "accuracy", label: "Accuracy" },
-  { key: "checkIn", label: "Check-in" },
-];
+const CATEGORY_LABELS = {
+  cleanliness: "Cleanliness",
+  accuracy: "Accuracy",
+  communication: "Communication",
+  location: "Location",
+  checkin: "Check-in",
+  value: "Value",
+  comfort: "Comfort",
+  amenities: "Amenities",
+  service: "Service",
+  privacy: "Privacy",
+  experience: "Experience",
+  hospitality: "Hospitality",
+};
+
+const formatCategoryLabel = (key) =>
+  CATEGORY_LABELS[key] ||
+  String(key || "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
 // Review sort options shown in the public controls.
 const SORT_OPTIONS = [
@@ -218,21 +229,27 @@ const ReviewsSection = ({
   }
 
   // Category summary pills only show categories with average scores.
-  const visibleCategories = CATEGORY_LABELS.filter(({ key }) => categoryScores?.[key] != null);
+  const visibleCategories = Object.keys(categoryScores || {})
+    .filter((key) => categoryScores?.[key] != null)
+    .map((key) => ({ key, label: formatCategoryLabel(key) }));
   // Category filter options come from summary scores, review rows, or the active filter.
   const filterableCategoryKeys = new Set(
-    CATEGORY_LABELS.filter(
-      ({ key }) =>
-        categoryScores?.[key] != null ||
-        reviews.some((review) => review?.categoryRatings?.[key] != null || review?.categoryScores?.[key] != null)
-    ).map(({ key }) => key)
+    [
+      ...Object.keys(categoryScores || {}),
+      ...reviews.flatMap((review) => [
+        ...Object.keys(review?.categoryRatings || {}),
+        ...Object.keys(review?.categoryScores || {}),
+      ]),
+    ]
   );
 
   if (categoryFilter) {
     filterableCategoryKeys.add(categoryFilter);
   }
 
-  const filterableCategories = CATEGORY_LABELS.filter(({ key }) => filterableCategoryKeys.has(key));
+  const filterableCategories = [...filterableCategoryKeys]
+    .sort((left, right) => formatCategoryLabel(left).localeCompare(formatCategoryLabel(right)))
+    .map((key) => ({ key, label: formatCategoryLabel(key) }));
   const hasReviews = reviews.length > 0;
   const formattedAverage = formatScore(overallRating);
   const safeTotalReviews = Number(totalReviews) || reviews.length;

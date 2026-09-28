@@ -171,3 +171,22 @@ export async function setReviewNotificationPreference(emailEnabled) {
 
   return data;
 }
+
+// Loads the active category configuration for a review type and optional property.
+export async function fetchReviewCategories(reviewType = "GUEST_TO_PROPERTY", propertyId = "") {
+  const requestUrl = new URL(buildReviewUrl("/categories"));
+  requestUrl.searchParams.set("reviewType", reviewType);
+
+  if (propertyId) {
+    requestUrl.searchParams.set("propertyId", propertyId);
+  }
+
+  const response = await fetch(requestUrl.toString(), { method: "GET" });
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Could not load review categories.");
+  }
+
+  return Array.isArray(data) ? data : data?.categories || [];
+}

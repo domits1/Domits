@@ -6,13 +6,36 @@ import ConflictException from "../../functions/ReviewSystem/util/exception/confl
 const NOW = Date.parse("2026-09-10T12:00:00.000Z");
 
 const CATEGORY_KEYS_BY_REVIEW_TYPE = {
-  GUEST_TO_PROPERTY: ["cleanliness", "accuracy", "communication", "location", "checkin", "value"],
+  GUEST_TO_PROPERTY: [
+    "cleanliness",
+    "accuracy",
+    "communication",
+    "location",
+    "checkin",
+    "value",
+    "comfort",
+    "amenities",
+    "service",
+    "privacy",
+    "experience",
+    "hospitality",
+  ],
   GUEST_TO_HOST: ["communication", "hospitality", "responsiveness"],
   HOST_TO_GUEST: ["communication", "cleanliness", "house_rules"],
   GUEST_TO_EXPERIENCE: ["quality", "accuracy", "value"],
   GUEST_TO_SERVICE: ["quality", "communication", "value"],
   GUEST_TO_RESERVATION: ["booking_process", "communication", "checkin"],
 };
+
+const createCategoryCatalog = (reviewType = "GUEST_TO_PROPERTY") =>
+  (CATEGORY_KEYS_BY_REVIEW_TYPE[reviewType] || []).map((key, index) => ({
+    key,
+    label: key.replaceAll("_", " "),
+    description: "",
+    reviewType,
+    isActive: true,
+    sortOrder: (index + 1) * 10,
+  }));
 
 // Builds an authenticated request event with a JSON body.
 const createEvent = (body, overrides = {}) => ({
@@ -78,6 +101,13 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
   const reviewRepository = {
     getActiveRatingCategoryKeys: jest.fn().mockImplementation(
       async (reviewType) => new Set(CATEGORY_KEYS_BY_REVIEW_TYPE[reviewType] || [])
+    ),
+    getRatingCategories: jest.fn().mockImplementation(
+      async (reviewType) => createCategoryCatalog(reviewType)
+    ),
+    getPropertyById: jest.fn().mockResolvedValue({ id: "property-1", hostid: "host-1" }),
+    savePropertyRatingCategoryConfiguration: jest.fn().mockImplementation(async ({ categories, reviewType }) =>
+      categories.map((category) => ({ ...category, reviewType }))
     ),
     createReviewWithRatings: jest.fn().mockImplementation(async (review, ratings, workflowRecords) => ({
       review,
@@ -299,6 +329,86 @@ describe("ReviewService day 5 unit coverage", () => {
 
     expect(reviewRepository.createReviewWithRatings).not.toHaveBeenCalled();
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
+  });
+
+  it("returns the active category configuration for a property", async () => {
+    const { service, reviewRepository } = buildService();
+
+    const result = await service.getReviewCategories({
+      queryStringParameters: { reviewType: "GUEST_TO_PROPERTY", propertyId: "property-1" },
+    });
+
+    expect(reviewRepository.getRatingCategories).toHaveBeenCalledWith("GUEST_TO_PROPERTY", {
+      propertyId: "property-1",
+    });
+    expect(result.categories).toEqual(createCategoryCatalog());
+  });
+
+  it("allows a host to configure every category for an owned property", async () => {
+    const categories = createCategoryCatalog().map(({ key, sortOrder }, index) => ({
+      key,
+      isActive: index !== 0,
+      sortOrder,
+    }));
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+    });
+
+    const result = await service.saveReviewCategoryConfiguration(
+      createEvent({ propertyId: "property-1", reviewType: "GUEST_TO_PROPERTY", categories })
+    );
+
+    expect(reviewRepository.savePropertyRatingCategoryConfiguration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        propertyId: "property-1",
+        hostId: "host-1",
+        reviewType: "GUEST_TO_PROPERTY",
+        actorUserId: "host-1",
+        categories,
+      })
+    );
+    expect(result.categories).toHaveLength(categories.length);
+  });
+
+  it("rejects category configurations that disable every category", async () => {
+    const categories = createCategoryCatalog().map(({ key, sortOrder }) => ({
+      key,
+      isActive: false,
+      sortOrder,
+    }));
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+    });
+
+    await expect(
+      service.saveReviewCategoryConfiguration(
+        createEvent({ propertyId: "property-1", reviewType: "GUEST_TO_PROPERTY", categories })
+      )
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "At least one review category must remain active.",
+    });
+
+    expect(reviewRepository.savePropertyRatingCategoryConfiguration).not.toHaveBeenCalled();
+  });
+
+  it("validates edited ratings against the review's own type and property", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await service.validateUpdateReviewPayload(
+      { categoryRatings: { hospitality: 5 } },
+      "GUEST_TO_HOST",
+      "property-1"
+    );
+
+    expect(reviewRepository.getActiveRatingCategoryKeys).toHaveBeenCalledWith(
+      "GUEST_TO_HOST",
+      "property-1"
+    );
   });
 
   // Confirms an overall rating is required.

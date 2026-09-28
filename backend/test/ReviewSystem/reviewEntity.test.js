@@ -4,6 +4,7 @@ import { DataSource } from "typeorm";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
+import { Review_Category_Configuration } from "database/models/Review_Category_Configuration";
 import { Review_Request } from "database/models/Review_Request";
 import { Review_Response } from "database/models/Review_Response";
 import { Review_Private_Feedback } from "database/models/Review_Private_Feedback";
@@ -52,6 +53,22 @@ const REVIEW_ENTITIES = [
       "review_type",
       "is_active",
       "sort_order",
+      "created_at",
+      "updated_at",
+    ],
+  },
+  {
+    entity: Review_Category_Configuration,
+    tableName: "review_category_configuration",
+    columns: [
+      "id",
+      "property_id",
+      "host_id",
+      "review_type",
+      "category_key",
+      "is_active",
+      "sort_order",
+      "created_by_user_id",
       "created_at",
       "updated_at",
     ],

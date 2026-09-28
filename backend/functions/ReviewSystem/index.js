@@ -121,6 +121,12 @@ const routeEvent = (event) => withReviewResponsePathParameters(withPropertyRevie
 
 const ROUTES = [
   // Review: Ordered route table for notification, moderation, response, collection, and detail endpoints.
+  { method: "GET", matches: (event) => normalizePath(event) === "/reviews/categories", prepare: routeEvent,
+    handle: (controller, event) => controller.getCategories(event) },
+  { method: "GET", matches: (event) => normalizePath(event) === "/reviews/categories/configuration", prepare: routeEvent,
+    handle: (controller, event) => controller.getCategoryConfiguration(event) },
+  { method: "PUT", matches: (event) => normalizePath(event) === "/reviews/categories/configuration", prepare: routeEvent,
+    handle: (controller, event) => controller.saveCategoryConfiguration(event) },
   { method: "GET", matches: (event) => normalizePath(event) === "/reviews/notification-preferences", prepare: routeEvent,
     handle: (controller, event) => controller.notificationPreference(event) },
   { method: "PATCH", matches: (event) => normalizePath(event) === "/reviews/notification-preferences", prepare: routeEvent,

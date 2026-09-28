@@ -6,7 +6,7 @@ import GuestReviewForm from "../GuestReviewForm";
 import ReservationDetails from "../ReservationDetails";
 import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
 import { getGuestBookingPropertyDetails, getGuestBookings } from "../services/bookingAPI";
-import { createReview } from "../services/reviewAPI";
+import { createReview, fetchReviewCategories } from "../services/reviewAPI";
 import { fetchPropertySummaries } from "../services/propertySummaryService";
 import { normalizeImageUrl, placeholderImage, resolvePrimaryAccommodationImageUrl } from "../utils/image";
 
@@ -97,6 +97,15 @@ const propertyDetails = {
   },
 };
 
+const reviewCategories = [
+  { key: "cleanliness", label: "Cleanliness", sortOrder: 10, isActive: true },
+  { key: "accuracy", label: "Accuracy", sortOrder: 20, isActive: true },
+  { key: "communication", label: "Communication", sortOrder: 30, isActive: true },
+  { key: "location", label: "Location", sortOrder: 40, isActive: true },
+  { key: "checkin", label: "Check-in", sortOrder: 50, isActive: true },
+  { key: "value", label: "Value", sortOrder: 60, isActive: true },
+];
+
 const renderWithRoutes = ({ initialEntry, reviewFormElement = <GuestReviewForm /> }) => {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -162,6 +171,7 @@ describe("guest review submission integration", () => {
         status: "SUBMITTED",
       },
     });
+    fetchReviewCategories.mockResolvedValue(reviewCategories);
   });
 
   it("lets a guest open and submit a review from an eligible completed reservation", async () => {
@@ -181,6 +191,7 @@ describe("guest review submission integration", () => {
     expect(screen.getByText("Canal Apartment")).toBeInTheDocument();
     expect(screen.getByText(/hosted by mila/i)).toBeInTheDocument();
     expect(screen.getByText(/verified stay/i)).toBeInTheDocument();
+    await screen.findByLabelText("Cleanliness rating");
 
     fillValidReviewForm();
 

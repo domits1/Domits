@@ -6,6 +6,9 @@ const mockCreateController = () => ({
   options: jest.fn(() => ({ statusCode: 200, headers: {}, body: "" })),
   get: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "list" }) })),
   getById: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ route: "detail" }) })),
+  getCategories: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ categories: [] }) })),
+  getCategoryConfiguration: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ categories: [] }) })),
+  saveCategoryConfiguration: jest.fn(() => ({ statusCode: 200, headers: {}, body: JSON.stringify({ categories: [] }) })),
   getDomitsPrivateFeedback: jest.fn(() => ({
     statusCode: 200,
     headers: {},
@@ -53,6 +56,17 @@ describe("ReviewSystem routing", () => {
     expect(mockController.setNotificationPreference).toHaveBeenCalledTimes(1);
     expect(mockController.moderationQueue).toHaveBeenCalledTimes(1);
     expect(mockController.moderate).toHaveBeenCalledWith(expect.objectContaining({ pathParameters: { id: "review-1" } }));
+    expect(mockController.getById).not.toHaveBeenCalled();
+  });
+
+  it("routes public and manager review category endpoints before review detail", async () => {
+    await handler({ httpMethod: "GET", path: "/reviews/categories" });
+    await handler({ httpMethod: "GET", path: "/reviews/categories/configuration" });
+    await handler({ httpMethod: "PUT", path: "/reviews/categories/configuration" });
+
+    expect(mockController.getCategories).toHaveBeenCalledTimes(1);
+    expect(mockController.getCategoryConfiguration).toHaveBeenCalledTimes(1);
+    expect(mockController.saveCategoryConfiguration).toHaveBeenCalledTimes(1);
     expect(mockController.getById).not.toHaveBeenCalled();
   });
 

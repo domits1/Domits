@@ -3,12 +3,20 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HostReviews from "./HostReviews";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
-import { fetchHostReviews } from "./services/reviewResponseService";
+import {
+  fetchHostReviews,
+  fetchReviewCategoryConfiguration,
+  saveReviewCategoryConfiguration,
+} from "./services/reviewResponseService";
 import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
 
 // Review: Covers host review loading and property rating comparison behavior.
 jest.mock("../../hooks/useEffectiveHostId");
-jest.mock("./services/reviewResponseService", () => ({ fetchHostReviews: jest.fn() }));
+jest.mock("./services/reviewResponseService", () => ({
+  fetchHostReviews: jest.fn(),
+  fetchReviewCategoryConfiguration: jest.fn(),
+  saveReviewCategoryConfiguration: jest.fn(),
+}));
 jest.mock("./services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
 jest.mock("./components/ReviewResponseEditor", () => () => null);
 
@@ -30,6 +38,11 @@ describe("HostReviews comparison", () => {
       { value: "property-b", title: "Garden Apartment" },
       { value: "property-c", title: "Unreviewed Loft" },
     ]);
+    fetchReviewCategoryConfiguration.mockResolvedValue([
+      { key: "cleanliness", label: "Cleanliness", isActive: true, sortOrder: 10 },
+      { key: "comfort", label: "Comfort", isActive: true, sortOrder: 20 },
+    ]);
+    saveReviewCategoryConfiguration.mockImplementation(async (_propertyId, categories) => categories);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -62,5 +75,24 @@ describe("HostReviews comparison", () => {
 
     expect(await screen.findByRole("rowheader", { name: /Canal Suite/ })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("loads and saves per-property review category settings", async () => {
+    render(<HostReviews />);
+
+    await screen.findByText("Great stay");
+    fireEvent.click(screen.getByRole("tab", { name: "Category settings" }));
+
+    const comfortToggle = await screen.findByRole("checkbox", { name: "Comfort" });
+    fireEvent.click(comfortToggle);
+    fireEvent.click(screen.getByRole("button", { name: "Save categories" }));
+
+    expect(saveReviewCategoryConfiguration).toHaveBeenCalledWith(
+      "property-a",
+      expect.arrayContaining([
+        expect.objectContaining({ key: "comfort", isActive: false, sortOrder: 20 }),
+      ])
+    );
+    expect(await screen.findByText("Review category settings saved.")).toBeInTheDocument();
   });
 });
