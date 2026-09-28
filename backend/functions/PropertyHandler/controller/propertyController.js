@@ -1882,7 +1882,7 @@ export class PropertyController {
             return null;
         }
 
-        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId(site.id);
         if (existingLiveDomain?.domain) {
             return existingLiveDomain;
         }
@@ -1953,7 +1953,7 @@ export class PropertyController {
         const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
             getDirectBookingWebsiteFallbackRoutingStatus()
         );
-        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId(site.id);
         const liveDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
             siteId: site.id,
             domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
@@ -1987,7 +1987,7 @@ export class PropertyController {
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
         const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
-        const liveDomain = await this.directBookingWebsiteDomainRepository.updatePrimaryLiveDomainStatus(
+        const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
             site.id,
             "DISABLED",
             {
