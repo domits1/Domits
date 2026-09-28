@@ -3,7 +3,8 @@ const { join } = require("node:path");
 
 const ACCEPTANCE_BRANCH = "acceptance";
 const NOINDEX_TAG = '<meta name="robots" content="noindex, nofollow" />';
-const ROBOTS_META_PATTERN = /<meta[^>]+name=["']robots["'][^>]*>/i;
+const ROBOTS_META_PATTERN = /<meta\b[^>]*\bname\s*=\s*["']?robots\b["']?[^>]*>/gi;
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 
 const isDirectBookingWebsiteSurfaceBuild = (env) =>
   String(env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE || "").trim().toLowerCase() === "true";
@@ -16,14 +17,19 @@ const shouldAddNoindexTag = (env = {}) => {
   return env.AWS_BRANCH === ACCEPTANCE_BRANCH;
 };
 
-const addNoindexTag = (html) => {
-  const existingRobotsMeta = ROBOTS_META_PATTERN.exec(html);
-  if (existingRobotsMeta) {
-    if (existingRobotsMeta[0] === NOINDEX_TAG) {
-      return html;
-    }
+const findActiveRobotsMetaTags = (html) => [
+  ...html.replace(HTML_COMMENT_PATTERN, "").matchAll(ROBOTS_META_PATTERN),
+].map((match) => match[0]);
 
-    throw new Error(`a different robots tag is already present: ${existingRobotsMeta[0]}`);
+const addNoindexTag = (html) => {
+  const activeRobotsMetaTags = findActiveRobotsMetaTags(html);
+  const conflicting = activeRobotsMetaTags.filter((tag) => tag !== NOINDEX_TAG);
+  if (conflicting.length > 0) {
+    throw new Error(`a different robots tag is already present: ${conflicting[0]}`);
+  }
+
+  if (activeRobotsMetaTags.length > 0) {
+    return html;
   }
 
   if (!html.includes("</head>")) {
