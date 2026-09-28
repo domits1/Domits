@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { ROOT_CAUSE_KEYS } from "./missedRevenueFields";
-import styles from "./styles/MissedRevenueRootCause.module.scss";
+import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
 // These are contributing-factor signals present on a missed night, not proof of what stopped the booking.
 const ROOT_CAUSE_LABELS = Object.freeze({
@@ -18,7 +18,7 @@ export function MissedRevenueRootCause({ rootCause }) {
   }
 
   return (
-    <table className={styles.rootCauseTable}>
+    <table className={tableStyles.table}>
       <thead>
         <tr>
           <th>Cause</th>

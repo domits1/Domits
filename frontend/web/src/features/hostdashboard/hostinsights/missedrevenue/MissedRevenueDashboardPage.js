@@ -4,6 +4,7 @@ import { buildMissedRevenueMetricCards } from "./missedRevenueConfig";
 import { MissedRevenueCards } from "./MissedRevenueCards";
 import { MissedRevenueRootCause } from "./MissedRevenueRootCause";
 import styles from "./styles/MissedRevenueDashboardPage.module.scss";
+import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
 const toIsoDate = (date) => date.toISOString().slice(0, 10);
 
@@ -101,7 +102,7 @@ export default function MissedRevenueDashboardPage() {
 
       <section className={styles.periodSection}>
         <h2>By property (current month)</h2>
-        <table className={styles.propertyTable}>
+        <table className={tableStyles.table}>
           <thead>
             <tr>
               <th>Property</th>
