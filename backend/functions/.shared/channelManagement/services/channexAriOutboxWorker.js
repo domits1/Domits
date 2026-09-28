@@ -3,6 +3,7 @@ import {
   OUTCOME,
   classifySyncResponse,
   groupChangesForSend,
+  nextRetryDelayMs,
   worstOutcome,
 } from "../utils/channexAriOutboxPlanning.js";
 
@@ -10,7 +11,7 @@ const SERIALIZATION_FAILURE = "40001";
 const lockName = (domitsPropertyId) => `channex_ari:${domitsPropertyId}`;
 
 export default class ChannexAriOutboxWorker {
-  constructor({ outbox, props, accounts, sync, schemaGuard, syncCalendarChange, now = Date.now, log = console }) {
+  constructor({ outbox, props, accounts, sync, schemaGuard, syncCalendarChange, now = Date.now, random = Math.random, log = console }) {
     this.outbox = outbox;
     this.props = props;
     this.accounts = accounts;
@@ -18,6 +19,7 @@ export default class ChannexAriOutboxWorker {
     this.schemaGuard = schemaGuard;
     this.syncCalendarChange = syncCalendarChange;
     this.now = now;
+    this.random = random;
     this.log = log;
   }
 
@@ -87,9 +89,25 @@ export default class ChannexAriOutboxWorker {
     } else if (outcome === OUTCOME.FAILED) {
       await this.outbox.markFailed(ids, { now, failureReason: reason });
     } else {
-      await this.outbox.returnToPending(ids, { now, failureReason: reason });
+      return this.scheduleRetry(rows, results, { now, reason });
     }
     return outcome;
+  }
+
+  // Waits longer after each attempt, or as long as Channex asks, and gives up after
+  // MAX_ATTEMPTS so a change that keeps failing ends up FAILED instead of looping.
+  async scheduleRetry(rows, results, { now, reason }) {
+    const ids = rows.map((row) => row.id);
+    const attempts = Math.max(...rows.map((row) => row.attemptCount || 1));
+    if (attempts >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS) {
+      await this.outbox.markFailed(ids, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      return OUTCOME.FAILED;
+    }
+
+    const retryAfterMs = results.find((result) => result.outcome === OUTCOME.RETRY)?.retryAfterMs;
+    const delayMs = retryAfterMs ?? nextRetryDelayMs(attempts, this.random);
+    await this.outbox.returnToPending(ids, { now, failureReason: reason, nextAttemptAt: now + delayMs });
+    return OUTCOME.RETRY;
   }
 
   async tryLock(accountId, domitsPropertyId) {

@@ -1,4 +1,4 @@
-import { CHANNEX_ARI_CHANGE_TYPE } from "./channexAriOutboxConstants.js";
+import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_DEFAULTS } from "./channexAriOutboxConstants.js";
 
 const TYPE_ORDER = [
   CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY,
@@ -96,7 +96,14 @@ export const classifySyncResponse = (result) => {
     if (auth) return { outcome: OUTCOME.FAILED, reason: auth.errorCode || "CHANNEX_UNAUTHORIZED", taskIds: [] };
 
     const temporary = failed.find((item) => isTemporary(item.httpStatus));
-    if (temporary) return { outcome: OUTCOME.RETRY, reason: temporary.errorCode || "CHANNEX_TEMPORARY", taskIds: [] };
+    if (temporary) {
+      return {
+        outcome: OUTCOME.RETRY,
+        reason: temporary.errorCode || "CHANNEX_TEMPORARY",
+        taskIds: [],
+        retryAfterMs: temporary.retryAfterMs ?? null,
+      };
+    }
 
     return { outcome: OUTCOME.FAILED, reason: failed[0].errorCode || "CHANNEX_REJECTED", taskIds: [] };
   }
@@ -133,4 +140,12 @@ export const outboxTimeBudgetMs = (remainingTimeMs) => {
   const reserveMs = 20_000;
   if (!Number.isFinite(remainingTimeMs)) return maxBudgetMs;
   return Math.max(0, Math.min(maxBudgetMs, remainingTimeMs - reserveMs));
+};
+
+// 1, 2, 4, 8, 16, 32 minutes, then capped at an hour, plus up to 10% jitter so
+// many properties hit by the same Channex outage do not all retry together.
+export const nextRetryDelayMs = (attempt, random = Math.random) => {
+  const { RETRY_BASE_MS, RETRY_CAP_MS, RETRY_JITTER } = CHANNEX_ARI_OUTBOX_DEFAULTS;
+  const delay = Math.min(RETRY_CAP_MS, RETRY_BASE_MS * 2 ** (Math.max(1, attempt) - 1));
+  return Math.round(delay * (1 + RETRY_JITTER * random()));
 };

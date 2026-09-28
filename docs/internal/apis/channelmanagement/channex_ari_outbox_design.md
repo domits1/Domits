@@ -77,7 +77,7 @@ If a call fails, the error is labelled and nothing tries again.
 - Every push is auditable afterwards (what was sent, when, which Channex task).
 
 **Non-goals (separate issues, but the design leaves room for them)**
-- Retry timing, back-off and `Retry-After` handling: #3280. This design adds the `nextAttemptAt` column and the error classification hook. Growing back-off, `Retry-After` and giving up after N attempts are #3280; until then a failed push is retried on the next run.
+- Retry timing, back-off and `Retry-After` handling are built in #3280: see section 8.3.
 - Full sync triggers (go-live, recovery, nightly): #3282. This design adds the `FULL_SYNC` kind.
 - The booking webhook: #3281.
 
@@ -261,10 +261,10 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 | Success (2xx), including a push Channex accepted with warnings | `PROCESSED` | What was sent is stored in `sentsummary` |
 | API key rejected (401, 403) | `FAILED` | The worker does **not** yet stop for the whole account in this run; only this property's claimed rows become `FAILED` (edge case b tracks the account-wide stop as future work) |
 | Other client error (4xx) | `FAILED` | The reason is stored in `failurereason` |
-| Too many requests (429), server error (5xx), timeout, or a local error before any provider call (for example a secret that could not be read) | `PENDING` | There is no `nextAttemptAt` yet (#3280): the rows simply go back to `PENDING` and are retried on the next run |
+| Too many requests (429), server error (5xx), timeout, or a local error before any provider call (for example a secret that could not be read) | `PENDING` | With a `nextAttemptAt`: the wait doubles from 1 minute (1, 2, 4, 8, 16, 32, capped at 60) plus up to 10% jitter, or follows Channex's `Retry-After` when it sends one. After 8 attempts the rows become `FAILED` with `MAX_ATTEMPTS_EXCEEDED`. While any row of a property waits, the whole property is skipped (section 8.2, step 1), which also covers #3280's request to pause after a 429 |
 | One group succeeds, a later group fails or needs a retry | Handled as that failure/retry; remaining groups are not sent | The next run sends the unsent groups again |
 | The pipeline sent nothing (no values were generated for the change) | `FAILED` | With reason `CHANNEX_NOTHING_SENT`, so the change is visible instead of recorded as sent |
-| An unexpected error in our own code | `PENDING` | With a `failurereason`; no `nextAttemptAt` yet (#3280) |
+| An unexpected error in our own code | `PENDING` | With a `failurereason` and no wait: stale-or-crash cases are tried again on the next run |
 
 ### 8.4 Why it works this way
 
@@ -326,7 +326,7 @@ Checked read-only on 21 September 2026:
 |---|---|
 | Pre-flight 1: change observed by the integration | yes: the outbox row, written in the save transaction |
 | Pre-flight 2: outbox instead of a direct call | yes |
-| Pre-flight 3: back-off on 429 | with #3280 |
+| Pre-flight 3: back-off on 429 | yes: `nextRetryDelayMs` and `Retry-After` in the worker (#3280) |
 | Scenarios 3, 4, 7, 8: one call | yes, through D3 and D9 |
 | Scenario 12: queue or limiter | yes, D4 |
 | Scenario 13: only changes | yes, D1, D2 and D9; full sync limited by #3282 |

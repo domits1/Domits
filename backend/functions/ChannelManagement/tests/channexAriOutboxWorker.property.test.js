@@ -28,7 +28,7 @@ const createWorker = (overrides = {}) => {
     releaseLock: jest.fn(async () => undefined),
   };
   const syncCalendarChange = jest.fn(async () => sent);
-  const deps = { outbox, props, accounts, sync, syncCalendarChange, now: () => NOW, log: { error: jest.fn() }, ...overrides };
+  const deps = { outbox, props, accounts, sync, syncCalendarChange, now: () => NOW, random: () => 0, log: { error: jest.fn() }, ...overrides };
   return { worker: new ChannexAriOutboxWorker(deps), ...deps };
 };
 
@@ -102,7 +102,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     });
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_RATE_LIMITED" });
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_RATE_LIMITED", nextAttemptAt: NOW + 60_000 });
   });
 
   test("marks the rows FAILED when Channex rejects the API key", async () => {
@@ -131,7 +131,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(2);
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN" });
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN", nextAttemptAt: NOW + 60_000 });
   });
 
   test("stops sending further groups after the first non-PROCESSED result", async () => {
@@ -147,7 +147,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(1);
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN" });
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN", nextAttemptAt: NOW + 60_000 });
   });
 
   test("an unexpected error puts the claimed rows back and still releases the lock", async () => {
