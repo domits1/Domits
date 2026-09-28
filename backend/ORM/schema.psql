@@ -671,7 +671,7 @@ VALUES
   ('main-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, 0, 0),
   ('main-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, 0, 0),
   ('main-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, 0, 0),
-  ('main-review-category-checkin', 'checkIn', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
+  ('main-review-category-checkin', 'checkin', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
   ('main-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, 0, 0)
 ON CONFLICT (key, review_type) DO UPDATE SET
   label = EXCLUDED.label,
@@ -825,7 +825,7 @@ VALUES
   ('test-review-category-accuracy', 'accuracy', 'Accuracy', 'How accurately the listing represented the stay.', 'GUEST_TO_PROPERTY', true, 20, 0, 0),
   ('test-review-category-communication', 'communication', 'Communication', 'How clear and helpful communication was.', 'GUEST_TO_PROPERTY', true, 30, 0, 0),
   ('test-review-category-location', 'location', 'Location', 'How suitable the property location was.', 'GUEST_TO_PROPERTY', true, 40, 0, 0),
-  ('test-review-category-checkin', 'checkIn', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
+  ('test-review-category-checkin', 'checkin', 'Check-in', 'How smooth the check-in experience was.', 'GUEST_TO_PROPERTY', true, 50, 0, 0),
   ('test-review-category-value', 'value', 'Value', 'How good the stay felt for the price.', 'GUEST_TO_PROPERTY', true, 60, 0, 0)
 ON CONFLICT (key, review_type) DO UPDATE SET
   label = EXCLUDED.label,

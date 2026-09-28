@@ -128,12 +128,12 @@ class ReviewService {
       throw new BadRequestException("Missing review id.");
     }
 
-    await this.validateUpdateReviewPayload(body);
-
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) {
       throw new NotFoundException("Review not found.");
     }
+
+    await this.validateUpdateReviewPayload(body, review);
 
     const isContentUpdate =
       body.title !== undefined ||
@@ -206,20 +206,28 @@ class ReviewService {
   }
 
   async validateCreateReviewPayload(body) {
-    // Review: Rejects incomplete or unsupported review payloads before booking eligibility is queried.
+    // Review: Drafts may be partial, while submitted reviews require complete public content.
     if (!body.bookingId) throw new BadRequestException("bookingId is required.");
     if (!body.propertyId) throw new BadRequestException("propertyId is required.");
     if (!body.reviewType) throw new BadRequestException("reviewType is required.");
     if (!REVIEW_TYPES.has(body.reviewType)) throw new BadRequestException("reviewType is not supported.");
-    if (!body.title?.trim()) throw new BadRequestException("title is required.");
-    if (!body.publicReview?.trim()) throw new BadRequestException("publicReview is required.");
 
     this.validateStatus(body.status, true);
-    this.validateRating(body.overallRating, "overallRating");
+
+    const requestedStatus = this.statusService.normalize(body.status || REVIEW_STATUSES.SUBMITTED);
+    const isDraft = requestedStatus === REVIEW_STATUSES.DRAFT;
+
+    if (!isDraft && !body.title?.trim()) throw new BadRequestException("title is required.");
+    if (!isDraft && !body.publicReview?.trim()) throw new BadRequestException("publicReview is required.");
+
+    if (!isDraft || body.overallRating !== undefined) {
+      this.validateRating(body.overallRating, "overallRating");
+    }
+
     await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
   }
 
-  async validateUpdateReviewPayload(body) {
+  async validateUpdateReviewPayload(body, review) {
     const hasEditableField =
       body.title !== undefined ||
       body.publicReview !== undefined ||
@@ -232,11 +240,17 @@ class ReviewService {
       throw new BadRequestException("At least one review field is required.");
     }
 
-    if (body.title !== undefined && !body.title?.trim()) {
+    const targetStatus = this.statusService.normalize(body.status || review.status);
+    const isDraft = targetStatus === REVIEW_STATUSES.DRAFT;
+    const nextTitle = body.title !== undefined ? body.title : review.title;
+    const nextPublicReview = body.publicReview !== undefined ? body.publicReview : review.publicReview;
+    const nextOverallRating = body.overallRating !== undefined ? body.overallRating : review.overallRating;
+
+    if (!isDraft && !nextTitle?.trim()) {
       throw new BadRequestException("title cannot be empty.");
     }
 
-    if (body.publicReview !== undefined && !body.publicReview?.trim()) {
+    if (!isDraft && !nextPublicReview?.trim()) {
       throw new BadRequestException("publicReview cannot be empty.");
     }
 
@@ -244,8 +258,8 @@ class ReviewService {
       this.validateStatus(body.status, false);
     }
 
-    if (body.overallRating !== undefined) {
-      this.validateRating(body.overallRating, "overallRating");
+    if (!isDraft || (body.overallRating !== undefined && Number(body.overallRating) !== 0)) {
+      this.validateRating(nextOverallRating, "overallRating");
     }
 
     if (body.categoryRatings !== undefined) {
@@ -309,9 +323,9 @@ class ReviewService {
       reviewerUserId,
       revieweeUserId: booking.hostid,
       reviewType: body.reviewType,
-      overallRating: Number(body.overallRating),
-      title: body.title.trim(),
-      publicReview: body.publicReview.trim(),
+      overallRating: body.overallRating === undefined ? 0 : Number(body.overallRating),
+      title: body.title?.trim() || "",
+      publicReview: body.publicReview?.trim() || "",
       privateFeedback: body.privateFeedback?.trim() || null,
       verificationStatus: derivedStatuses.verificationStatus,
       publicationStatus: derivedStatuses.publicationStatus,

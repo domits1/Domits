@@ -62,7 +62,7 @@ const createReview = (overrides = {}) => ({
 const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilityOverrides = {} } = {}) => {
   const reviewRepository = {
     getActiveRatingCategoryKeys: jest.fn().mockResolvedValue(
-      new Set(["cleanliness", "accuracy", "communication", "location", "checkIn", "value"])
+      new Set(["cleanliness", "accuracy", "communication", "location", "checkin", "value"])
     ),
     createReviewWithRatings: jest.fn().mockImplementation(async (review, ratings, workflowRecords) => ({
       review,
@@ -112,6 +112,29 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
 };
 
 describe("ReviewService day 5 unit coverage", () => {
+  it("creates a partial draft without requiring public review content", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await service.createReview(createEvent({
+      bookingId: "booking-1",
+      propertyId: "property-1",
+      reviewType: "GUEST_TO_PROPERTY",
+      status: "DRAFT",
+      categoryRatings: {},
+    }));
+
+    expect(reviewRepository.createReviewWithRatings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        overallRating: 0,
+        title: "",
+        publicReview: "",
+        status: "DRAFT",
+      }),
+      [],
+      expect.any(Object)
+    );
+  });
+
   it("creates a submitted review after validating eligibility", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
@@ -291,6 +314,59 @@ describe("ReviewService day 5 unit coverage", () => {
     });
 
     expect(reviewRepository.createReviewWithRatings).not.toHaveBeenCalled();
+  });
+
+  it("allows the author to clear optional content while a review is a draft", async () => {
+    const draft = createReview({ status: "DRAFT" });
+    const { service, reviewRepository } = buildService({
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(draft),
+        updateReviewWithRatings: jest.fn().mockResolvedValue({ review: draft }),
+      },
+    });
+
+    await service.updateReview(createEvent(
+      {
+        title: "",
+        publicReview: "",
+        overallRating: 0,
+        categoryRatings: {},
+      },
+      { pathParameters: { id: "review-1" } }
+    ));
+
+    expect(reviewRepository.updateReviewWithRatings).toHaveBeenCalledWith(
+      "review-1",
+      expect.objectContaining({
+        title: "",
+        publicReview: "",
+        overallRating: 0,
+        status: "DRAFT",
+      }),
+      [],
+      {}
+    );
+  });
+
+  it("rejects submitting a draft without complete public content", async () => {
+    const { service } = buildService({
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(createReview({
+          status: "DRAFT",
+          title: "",
+          publicReview: "",
+          overallRating: 0,
+        })),
+      },
+    });
+
+    await expect(service.updateReview(createEvent(
+      { status: "SUBMITTED" },
+      { pathParameters: { id: "review-1" } }
+    ))).rejects.toMatchObject({
+      statusCode: 400,
+      message: "title cannot be empty.",
+    });
   });
 
   it("returns published review details without private feedback", async () => {
