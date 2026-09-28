@@ -32,10 +32,12 @@ import { resolveAccommodationImageUrl, resolvePrimaryAccommodationImageUrl } fro
 import { getActiveCancellationPolicyId } from "../../utils/policyDisplayUtils.js";
 import { isValidDate, startOfDay } from "../../utils/dashboardShared";
 import { fetchPropertySummaries } from "./services/propertySummaryService";
+import { getGuestReviewHistory } from "./services/reviewAPI";
 
 const RESERVATION_ROUTE_PREFIX = "/guestdashboard/reservation/";
 const PAY_ROUTE_PREFIX = "/guestdashboard/pay/";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const REVIEW_WINDOW_MS = 30 * DAY_IN_MS;
 
 const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
@@ -326,6 +328,7 @@ const buildReservationContent = ({
   reservation,
   handleCompletePayment,
   handleMessageHost,
+  handleWriteReview,
   handleOpenCancelBooking,
 }) => {
   if (isPageLoading) {
@@ -348,6 +351,14 @@ const buildReservationContent = ({
   if (reservation) {
     const normalizedReservationStatus = String(reservation.stay.status || "").trim().toLowerCase();
     const isCancelledReservation = normalizedReservationStatus === "cancelled";
+    const timeSinceCheckout = Date.now() - Number(reservation.stay.departureTimestamp);
+    const canWriteReview =
+      normalizedReservationStatus === "completed" &&
+      reservation.stay.reviewEligibilityChecked &&
+      !reservation.stay.hasExistingReview &&
+      Number.isFinite(timeSinceCheckout) &&
+      timeSinceCheckout >= 0 &&
+      timeSinceCheckout <= REVIEW_WINDOW_MS;
     const isAwaitingInquiryPayment =
       normalizedReservationStatus === "awaiting payment" &&
       String(reservation.stay.bookingType || "").trim().toLowerCase() === "inquiry";
@@ -387,6 +398,16 @@ const buildReservationContent = ({
             <CancellationPolicySection policy={reservation.cancellationPolicy} />
 
             <HouseRules rules={reservation.rules} />
+
+            {canWriteReview && (
+              <div className="card helpCard">
+                <h3>Review your stay</h3>
+                <p>Share your experience with future guests and send private feedback to the host.</p>
+                <button type="button" className="primaryBtn" onClick={handleWriteReview}>
+                  Write a review
+                </button>
+              </div>
+            )}
 
             {isAwaitingInquiryPayment && (
               <div className="card helpCard">
@@ -436,7 +457,7 @@ const buildReservationContent = ({
   );
 };
 
-const buildReservationViewModel = ({ booking, propertyDetails }) => {
+const buildReservationViewModel = ({ booking, propertyDetails, hasExistingReview, reviewEligibilityChecked }) => {
   const propertyId = getPropertyId(booking);
   const property = propertyDetails?.property || {};
   const location = propertyDetails?.location || {};
@@ -490,6 +511,9 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
       bookingType: String(booking?.bookingtype ?? booking?.bookingType ?? "direct"),
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
+      departureTimestamp: departureDate?.getTime() || null,
+      hasExistingReview,
+      reviewEligibilityChecked,
       bookedDate: formatDisplayDate(bookedDate),
       checkInDate: formatDisplayDate(arrivalDate),
       checkOutDate: formatDisplayDate(departureDate),
@@ -642,7 +666,23 @@ function ReservationDetails() {
         let enrichedPropertyDetails = propertyDetails;
         enrichedPropertyDetails = await attemptPropertySummaryEnrichment(booking, bookingTitle, enrichedPropertyDetails);
 
-        setReservation(buildReservationViewModel({ booking, propertyDetails: enrichedPropertyDetails }));
+        let hasExistingReview = false;
+        let reviewEligibilityChecked = false;
+        try {
+          const guestReviews = await getGuestReviewHistory();
+          hasExistingReview = Array.isArray(guestReviews) &&
+            guestReviews.some((review) => String(review.bookingId) === String(bookingId));
+          reviewEligibilityChecked = true;
+        } catch (reviewError) {
+          console.warn("Could not check review eligibility for reservation:", reviewError);
+        }
+
+        setReservation(buildReservationViewModel({
+          booking,
+          propertyDetails: enrichedPropertyDetails,
+          hasExistingReview,
+          reviewEligibilityChecked,
+        }));
       } catch (loadError) {
         if (isMounted) {
           let nextError = "Could not load this reservation.";
@@ -708,6 +748,31 @@ function ReservationDetails() {
     navigate(`${PAY_ROUTE_PREFIX}${encodeURIComponent(bookingId)}`);
   };
 
+  const handleWriteReview = () => {
+    if (!reservation?.stay?.bookingId || !reservation?.property?.id) {
+      toast.error("This reservation is missing review information.");
+      return;
+    }
+
+    navigate("/guestdashboard/reviews/new", {
+      state: {
+        bookingId: reservation.stay.bookingId,
+        reservationId: reservation.stay.reservationId,
+        propertyId: reservation.property.id,
+        propertyTitle: reservation.property.title,
+        propertyLocation: reservation.property.locationLabel,
+        propertyImage: reservation.property.image,
+        hostId: reservation.host.id,
+        hostName: reservation.host.name,
+        checkInDate: reservation.stay.checkInDate,
+        checkOutDate: reservation.stay.checkOutDate,
+        guests: reservation.stay.guests,
+        guestsDetails: reservation.stay.guestsDetails,
+        verifiedStay: true,
+      },
+    });
+  };
+
   const handleOpenCancelBooking = () => {
     setCancelBookingError("");
     setIsCancelModalOpen(true);
@@ -760,6 +825,7 @@ function ReservationDetails() {
     reservation,
     handleCompletePayment,
     handleMessageHost,
+    handleWriteReview,
     handleOpenCancelBooking,
   });
 
