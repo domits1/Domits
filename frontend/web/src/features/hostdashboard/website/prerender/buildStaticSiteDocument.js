@@ -3,9 +3,31 @@ import { canRenderStaticSiteContent, escapeHtml, renderStaticSiteContent } from 
 
 const ROOT_PLACEHOLDER_PATTERN = /<div id="root">\s*<\/div>/;
 const TITLE_PATTERN = /<title>[\s\S]*?<\/title>\s*/i;
-const META_PATTERN = /<meta\b[^>]*>\s*/gi;
-const CANONICAL_LINK_PATTERN = /<link\b[^>]*\brel=["']?canonical["']?[^>]*>\s*/gi;
+const TAG_BODY = '(?:[^>"\']|"[^"]*"|\'[^\']*\')*';
+const META_PATTERN = new RegExp(`<meta\\b${TAG_BODY}>\\s*`, "gi");
+const LINK_PATTERN = new RegExp(`<link\\b${TAG_BODY}>\\s*`, "gi");
 const OWNED_META_NAME_PATTERN = /\b(?:name|property)\s*=\s*["']?(description|robots|og:[\w:-]+|twitter:[\w:-]+)["']?/i;
+const ROBOTS_META_PATTERN = /\bname\s*=\s*["']?robots\b/i;
+const NOINDEX_PATTERN = /\bnoindex\b/i;
+const CANONICAL_REL_PATTERN = /\brel\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i;
+
+const isCanonicalLink = (tag) => {
+  const match = CANONICAL_REL_PATTERN.exec(tag);
+  const relValue = match ? match[1] ?? match[2] ?? match[3] ?? "" : "";
+  return relValue.toLowerCase().split(/\s+/).includes("canonical");
+};
+
+const stripTags = (value) => value.replaceAll(/<[^>]*>/g, " ");
+
+const asText = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
+
+const hasRenderableModel = (model) => {
+  if (!model || typeof model !== "object" || Array.isArray(model)) {
+    return false;
+  }
+
+  return Boolean(asText(model.site?.title) || asText(model.hero?.title));
+};
 const HTML_LANG_PATTERN = /(<html\b[^>]*\blang=")[^"]*(")/i;
 const NOSCRIPT_PATTERN = /<noscript>([\s\S]*?)<\/noscript>\s*/gi;
 
@@ -24,12 +46,12 @@ const serializeJsonLd = (jsonLd) =>
     .replaceAll(">", "\\u003e")
     .replaceAll("&", "\\u0026");
 
-export const renderStaticSiteHead = (metadata) =>
+export const renderStaticSiteHead = (metadata, { includeRobots = true } = {}) =>
   [
     `<title>${escapeHtml(metadata.title)}</title>`,
     metadata.description ? renderMetaTag("name", "description", metadata.description) : "",
     metadata.canonicalUrl ? `<link rel="canonical" href="${escapeHtml(metadata.canonicalUrl)}" />` : "",
-    renderMetaTag("name", "robots", metadata.robots),
+    includeRobots ? renderMetaTag("name", "robots", metadata.robots) : "",
     ...Object.entries(metadata.openGraph).map(([property, content]) => renderMetaTag("property", property, content)),
     ...Object.entries(metadata.twitter).map(([name, content]) => renderMetaTag("name", name, content)),
     metadata.jsonLd
@@ -45,6 +67,10 @@ export const buildStaticSiteDocument = (input) => {
     throw new TypeError('Cannot prerender without an app shell containing an empty <div id="root"></div>.');
   }
 
+  if (!hasRenderableModel(model)) {
+    throw new TypeError("Cannot prerender without a model that carries a heading.");
+  }
+
   const metadata = buildStaticSiteMetadata({ renderPayload, model });
   const content = renderStaticSiteContent({
     model,
@@ -52,19 +78,29 @@ export const buildStaticSiteDocument = (input) => {
     templateKey: resolveStaticSiteTemplateKey(renderPayload),
   });
 
+  const shellForbidsIndexing = [...template.matchAll(META_PATTERN)].some(
+    (match) => ROBOTS_META_PATTERN.test(match[0]) && NOINDEX_PATTERN.test(match[0])
+  );
+
   const documentWithoutOwnedTags = template
     .replace(TITLE_PATTERN, "")
-    .replace(META_PATTERN, (match) => (OWNED_META_NAME_PATTERN.test(match) ? "" : match))
-    .replace(CANONICAL_LINK_PATTERN, "")
+    .replace(META_PATTERN, (match) => {
+      if (!OWNED_META_NAME_PATTERN.test(match)) {
+        return match;
+      }
+
+      return shellForbidsIndexing && ROBOTS_META_PATTERN.test(match) ? match : "";
+    })
+    .replace(LINK_PATTERN, (match) => (isCanonicalLink(match) ? "" : match))
     .replace(NOSCRIPT_PATTERN, (match, noscriptContent) =>
-      /javascript/i.test(noscriptContent) ? "" : match
+      /enable\s+javascript/i.test(stripTags(noscriptContent)) ? "" : match
     );
 
   if (!documentWithoutOwnedTags.includes("</head>")) {
     throw new TypeError("Cannot prerender without an app shell containing a </head> tag.");
   }
 
-  const head = renderStaticSiteHead(metadata);
+  const head = renderStaticSiteHead(metadata, { includeRobots: !shellForbidsIndexing });
 
   return documentWithoutOwnedTags
     .replace(

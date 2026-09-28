@@ -53,7 +53,7 @@ describe("a complete static document for a published direct booking website", ()
     expect(html).toMatch(/<meta property="og:image" content="https:\/\/[^"]+web\.jpg" \/>/);
   });
 
-  it("removes a conflicting robots or Open Graph tag the shell already carries", () => {
+  it("replaces an Open Graph tag the shell already carries, and keeps a noindex it brought", () => {
     const html = buildDocumentFor({
       template: APP_SHELL_TEMPLATE.replace(
         '<meta charset="utf-8" />',
@@ -62,9 +62,10 @@ describe("a complete static document for a published direct booking website", ()
     });
 
     expect(html.match(/name="robots"/g)).toHaveLength(1);
-    expect(html).toContain('<meta name="robots" content="index, follow" />');
-    expect(html).not.toContain('content="noindex"');
+    expect(html).toContain('content="noindex"');
+    expect(html).not.toContain("index, follow");
     expect(html.match(/property="?og:title/g)).toHaveLength(1);
+    expect(html).toContain('<meta property="og:title" content="Wellness Villa Bisous | Ubud, Indonesia" />');
     expect(html).toContain('<meta charset="utf-8" />');
     expect(html).toContain('<meta name="viewport"');
   });
@@ -175,5 +176,103 @@ describe("which sites get a document at all", () => {
     [undefined, null, {}].forEach((input) => {
       expect(() => buildStaticSiteDocument(input)).toThrow(TypeError);
     });
+  });
+});
+
+describe("respecting a robots policy the shell already carries", () => {
+  const shellWithNoindex = APP_SHELL_TEMPLATE.replace(
+    "</head>",
+    '<meta name="robots" content="noindex, nofollow" /></head>'
+  );
+
+  it("keeps a noindex the shell brought and never overrides it with index", () => {
+    const html = buildDocumentFor({ template: shellWithNoindex });
+
+    expect(html.match(/name="robots"/g)).toHaveLength(1);
+    expect(html).toContain('content="noindex, nofollow"');
+    expect(html).not.toContain("index, follow");
+  });
+
+  it("still writes its own robots tag when the shell has no policy", () => {
+    const html = buildDocumentFor();
+
+    expect(html).toContain('<meta name="robots" content="index, follow" />');
+  });
+
+  it("replaces a permissive robots tag from the shell with its own", () => {
+    const html = buildDocumentFor({
+      template: APP_SHELL_TEMPLATE.replace("</head>", '<meta name="robots" content="all" /></head>'),
+    });
+
+    expect(html.match(/name="robots"/g)).toHaveLength(1);
+    expect(html).toContain('content="index, follow"');
+  });
+});
+
+describe("cleaning the head without breaking the shell", () => {
+  it("removes a meta tag whose value contains a closing bracket", () => {
+    const html = buildDocumentFor({
+      template: APP_SHELL_TEMPLATE.replace(
+        '<meta name="description" content="Book your next stay" />',
+        '<meta name="description" content="Book > enjoy">'
+      ),
+    });
+
+    expect(html).not.toContain('enjoy">');
+    expect(html).not.toContain("Book > enjoy");
+    expect(html.match(/name="description"/g)).toHaveLength(1);
+  });
+
+  it("removes a canonical whose rel carries more than one token", () => {
+    const html = buildDocumentFor({
+      template: APP_SHELL_TEMPLATE.replace(
+        "</head>",
+        '<link rel="alternate canonical" href="https://old.example/" /></head>'
+      ),
+    });
+
+    expect(html.match(/rel="[^"]*canonical/g)).toHaveLength(1);
+    expect(html).not.toContain("old.example");
+  });
+
+  it("keeps the stylesheet and icon links of the shell", () => {
+    const html = buildDocumentFor();
+
+    expect(html).toContain('<link rel="stylesheet" href="/static/css/main.abc123.css" />');
+  });
+
+  it("keeps a noscript that only mentions javascript in a file name", () => {
+    const html = buildDocumentFor({
+      template: APP_SHELL_TEMPLATE.replace(
+        '<div id="root"></div>',
+        '<noscript><img src="https://example.com/javascript-disabled.gif" alt="" /></noscript><div id="root"></div>'
+      ),
+    });
+
+    expect(html).toContain("javascript-disabled.gif");
+  });
+});
+
+describe("refusing to assemble a page that would say almost nothing", () => {
+  it("declines a missing or unusable model, so the app shell keeps serving", () => {
+    [undefined, null, 42, {}, [], { site: {} }, { site: { title: "   " } }].forEach((model) => {
+      expect(() =>
+        buildStaticSiteDocument({
+          template: APP_SHELL_TEMPLATE,
+          renderPayload: buildPublishedSiteRenderPayload(),
+          model,
+        })
+      ).toThrow(/carries a heading/);
+    });
+  });
+
+  it("accepts a model that only has a hero title", () => {
+    const html = buildStaticSiteDocument({
+      template: APP_SHELL_TEMPLATE,
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { hero: { title: "Villa Aura" } },
+    });
+
+    expect(html).toContain("<h1>Villa Aura</h1>");
   });
 });
