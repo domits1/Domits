@@ -31,10 +31,14 @@ const MODERATOR_ROLES = new Set(["admin", "moderator", "review_moderator"]);
 
 // Review: Validates lifecycle transitions and derives publication and verification states.
 class ReviewStatusService {
+  // Normalize a review status value before comparing or validating it.
+  // Review: This keeps status checks consistent regardless of casing or extra whitespace.
   normalize(status) {
     return String(status || "").trim().toUpperCase();
   }
 
+  // Validate that a review status is supported by the workflow.
+  // Review: This blocks invalid or unknown statuses before they can affect transitions.
   validate(status) {
     const normalizedStatus = this.normalize(status);
 
@@ -45,6 +49,8 @@ class ReviewStatusService {
     return normalizedStatus;
   }
 
+  // Resolve the starting status for a new review.
+  // Review: New reviews can only start as draft or submitted, never in a later lifecycle state.
   resolveInitialStatus(requestedStatus = REVIEW_STATUSES.SUBMITTED) {
     const status = this.validate(requestedStatus);
 
@@ -55,6 +61,8 @@ class ReviewStatusService {
     return status;
   }
 
+  // Resolve the next review status for a status change request.
+  // Review: This enforces the correct transition rules for authors versus moderators.
   resolveUpdateStatus({ currentStatus, requestedStatus, actorUserId, authorUserId, actorRole }) {
     const current = this.validate(currentStatus);
     const requested = this.validate(requestedStatus);
@@ -70,6 +78,8 @@ class ReviewStatusService {
     throw new ForbiddenException("You are not allowed to change this review status.");
   }
 
+  // Apply the author’s allowed review status transitions.
+  // Review: This prevents authors from moving reviews beyond the supported editing lifecycle.
   resolveAuthorTransition(currentStatus, requestedStatus) {
     if (!AUTHOR_TRANSITIONS[currentStatus]?.has(requestedStatus)) {
       throw new BadRequestException("Review status transition is not allowed.");
@@ -78,6 +88,8 @@ class ReviewStatusService {
     return requestedStatus;
   }
 
+  // Apply the moderator’s allowed review status transitions.
+  // Review: This keeps moderation actions inside the valid status graph for review approval flows.
   resolveModeratorTransition(currentStatus, requestedStatus) {
     if (!MODERATOR_TRANSITIONS[currentStatus]?.has(requestedStatus)) {
       throw new BadRequestException("Review status transition is not allowed.");
@@ -86,14 +98,20 @@ class ReviewStatusService {
     return requestedStatus;
   }
 
+  // Check whether the acting user has moderator permissions.
+  // Review: This ensures only trusted moderator roles can trigger moderation transitions.
   isModerator(role) {
     return MODERATOR_ROLES.has(String(role || "").trim().toLowerCase());
   }
 
+  // Check whether the author is allowed to continue editing review content.
+  // Review: Only draft and submitted reviews remain editable by their author.
   canAuthorEditContent(status) {
     return [REVIEW_STATUSES.DRAFT, REVIEW_STATUSES.SUBMITTED].includes(this.validate(status));
   }
 
+  // Derive the publication and verification metadata for a review.
+  // Review: This creates the status-specific metadata that downstream logic depends on.
   getDerivedStatuses(status) {
     const normalizedStatus = this.validate(status);
     let publicationStatus = REVIEW_PUBLICATION_STATUSES.UNPUBLISHED;
