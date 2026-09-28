@@ -29,6 +29,29 @@ const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey, req
   requiresPositiveKey,
 });
 
+const COMPARISON_LABEL = "vs previous period";
+
+// percentChange is null when the previous period was 0: growth is undefined there, which is not the same as 0%.
+// Only the amount cards are compared; the backend sends no percent change for revenue efficiency.
+const formatChange = (missedRevenue, valueKey) => {
+  const percentChange = missedRevenue?.comparison?.percentChange;
+  if (!percentChange || !(valueKey in percentChange)) {
+    return null;
+  }
+
+  const value = percentChange[valueKey];
+  if (value === null) {
+    return "No previous-period baseline";
+  }
+
+  const rounded = Number(Math.abs(value).toFixed(1));
+  if (rounded === 0) {
+    return `No change ${COMPARISON_LABEL}`;
+  }
+
+  return `${value > 0 ? "+" : "-"}${rounded.toFixed(1)}% ${COMPARISON_LABEL}`;
+};
+
 // A ratio over a zero denominator is undefined, not 0%: without PriceLabs prices there is nothing to compare against.
 const isMetricApplicable = (missedRevenue, definition) =>
   !definition.requiresPositiveKey || missedRevenue?.[definition.requiresPositiveKey] > 0;
@@ -73,4 +96,5 @@ export const buildMissedRevenueMetricCards = (missedRevenue) =>
       ? formatMetricValue(missedRevenue?.[definition.valueKey], definition.formatterKey)
       : MISSED_REVENUE_NOT_APPLICABLE_VALUE,
     meta: definition.meta,
+    change: formatChange(missedRevenue, definition.valueKey),
   }));

@@ -61,3 +61,48 @@ describe("buildMissedRevenueMetricCards", () => {
     });
   });
 });
+
+describe("buildMissedRevenueMetricCards change line", () => {
+  const withPercentChange = (percentChange) => ({
+    ...EMPTY_MISSED_REVENUE,
+    comparison: {
+      previousPeriod: {},
+      delta: {},
+      percentChange: { grossMissedRevenue: 0, actualRevenue: 0, potentialRevenue: 0, ...percentChange },
+    },
+  });
+
+  const cardsById = (missedRevenue) =>
+    Object.fromEntries(buildMissedRevenueMetricCards(missedRevenue).map((card) => [card.id, card]));
+
+  test("shows an increase with a plus sign and a decrease with a minus sign, to one decimal", () => {
+    const byId = cardsById(withPercentChange({ grossMissedRevenue: 12.345, actualRevenue: -8 }));
+
+    expect(byId["gross-missed-revenue"].change).toBe("+12.3% vs previous period");
+    expect(byId["actual-revenue"].change).toBe("-8.0% vs previous period");
+  });
+
+  test("says there is no change when the percent change is zero", () => {
+    const byId = cardsById(withPercentChange({ potentialRevenue: 0 }));
+
+    expect(byId["potential-revenue"].change).toBe("No change vs previous period");
+  });
+
+  test("says there is no baseline, not 0%, when the previous period was zero", () => {
+    const byId = cardsById(withPercentChange({ grossMissedRevenue: null }));
+
+    expect(byId["gross-missed-revenue"].change).toBe("No previous-period baseline");
+  });
+
+  test("shows no change line when the response has no comparison", () => {
+    const byId = cardsById(EMPTY_MISSED_REVENUE);
+
+    expect(byId["gross-missed-revenue"].change).toBeNull();
+  });
+
+  test("never shows a change line on the revenue efficiency card", () => {
+    const byId = cardsById(withPercentChange({ grossMissedRevenue: 5 }));
+
+    expect(byId["revenue-efficiency"].change).toBeNull();
+  });
+});
