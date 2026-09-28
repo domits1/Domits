@@ -201,7 +201,7 @@ describe("guest review submission integration", () => {
           accuracy: 5,
           communication: 5,
           location: 5,
-          checkIn: 5,
+          checkin: 5,
           value: 5,
         },
         status: "SUBMITTED",
