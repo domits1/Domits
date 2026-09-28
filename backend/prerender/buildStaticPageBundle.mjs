@@ -50,7 +50,7 @@ export const buildStaticPageBundle = async ({ outfile = DEFAULT_OUTFILE, esbuild
   }
 
   const bundled = readFileSync(outfile, "utf8");
-  const dynamicRequest = /\b(?:import|require)\s*\(/.exec(bundled);
+  const dynamicRequest = /(?:\b|_)(?:import|require|__require|__toESM)\s*\(/.exec(bundled);
   if (dynamicRequest) {
     const around = bundled.slice(dynamicRequest.index, dynamicRequest.index + 80);
     throw new Error(`The static page bundle must not ask for anything at runtime: ${around}`);
