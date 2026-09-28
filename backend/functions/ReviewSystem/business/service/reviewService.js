@@ -5,7 +5,7 @@ import ReviewRepository from "../../data/reviewRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import ReviewEligibilityService from "./reviewEligibilityService.js";
 import ReviewStatusService from "./reviewStatusService.js";
-import { REVIEW_STATUSES } from "./reviewStatus.js";
+import { REVIEW_STATUSES } from "../model/reviewStatus.js";
 import BadRequestException from "../../util/exception/badRequestException.js";
 import ForbiddenException from "../../util/exception/forbiddenException.js";
 import NotFoundException from "../../util/exception/notFoundException.js";

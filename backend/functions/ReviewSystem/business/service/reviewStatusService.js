@@ -4,7 +4,7 @@ import {
   REVIEW_PUBLICATION_STATUSES,
   REVIEW_STATUSES,
   REVIEW_VERIFICATION_STATUSES,
-} from "./reviewStatus.js";
+} from "../model/reviewStatus.js";
 
 const AUTHOR_TRANSITIONS = Object.freeze({
   [REVIEW_STATUSES.DRAFT]: new Set([REVIEW_STATUSES.DRAFT, REVIEW_STATUSES.SUBMITTED]),
