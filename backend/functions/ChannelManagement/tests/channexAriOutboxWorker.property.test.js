@@ -116,10 +116,10 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
   });
 
-  test("makes one call per group and lets the worst answer decide for all rows", async () => {
+  test("records each row by its own call: a sent row is PROCESSED while another row retries", async () => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([
-      claimedRow({ id: "row-1", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-1", changeTypes: ["availability"], dateFrom: 20261101, dateTo: 20261101 }),
       claimedRow({ id: "row-2", changeTypes: ["restrictions"], dateFrom: 20261120, dateTo: 20261120 }),
     ]);
     syncCalendarChange
@@ -131,7 +131,12 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(2);
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN", nextAttemptAt: NOW + 60_000 });
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-1"], expect.objectContaining({ now: NOW }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-2"], {
+      now: NOW,
+      failureReason: "CHANNEX_DOWN",
+      nextAttemptAt: NOW + 60_000,
+    });
   });
 
   test("stops sending further groups after the first non-PROCESSED result", async () => {

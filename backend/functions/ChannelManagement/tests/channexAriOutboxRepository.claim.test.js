@@ -50,6 +50,8 @@ describe("ChannexAriOutboxRepository.claim", () => {
     expect(sql).toContain("createdat <= $5");
     expect(sql).toContain("(nextattemptat IS NULL OR nextattemptat <= $2)");
     expect(sql).toContain("RETURNING");
+    expect(sql).toContain("NOT EXISTS");
+    expect(sql).toContain("waiting.nextattemptat > $2");
     expect(params).toEqual(["PROCESSING", NOW, "property-1", "PENDING", RUN_STARTED_AT]);
   });
 

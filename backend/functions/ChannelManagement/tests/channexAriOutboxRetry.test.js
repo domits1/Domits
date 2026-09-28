@@ -117,3 +117,87 @@ describe("the worker on a retry", () => {
     expect(outbox.returnToPending).not.toHaveBeenCalled();
   });
 });
+
+describe("retry per call type and per row (#3280 review)", () => {
+  const answerWith = (httpStatus, retryAfterMs = null) =>
+    httpStatus === 200
+      ? { statusCode: 200, response: { ready: true, overallSuccess: true, taskIds: ["task-1"], steps: [] } }
+      : {
+          statusCode: 500,
+          response: {
+            ready: true,
+            steps: [{ results: [{ success: false, httpStatus, errorCode: `CHANNEX_${httpStatus}`, retryAfterMs }] }],
+          },
+        };
+
+  const createWorker = (rows, answers) => {
+    const outbox = {
+      claim: jest.fn(async () => rows),
+      markProcessed: jest.fn(async () => 1),
+      markFailed: jest.fn(async () => 1),
+      returnToPending: jest.fn(async () => 1),
+    };
+    const syncCalendarChange = jest.fn();
+    answers.forEach((answer) => syncCalendarChange.mockResolvedValueOnce(answer));
+    const worker = new ChannexAriOutboxWorker({
+      outbox,
+      props: { listActiveByDomitsPropertyId: async () => [{ integrationAccountId: "account-1" }] },
+      accounts: { getById: async () => ({ id: "account-1", userId: "owner-1", channel: "CHANNEX", status: "CONNECTED" }) },
+      sync: { tryAcquireLock: async () => ({ acquired: true }), releaseLock: async () => undefined },
+      syncCalendarChange,
+      now: () => NOW,
+      random: () => 0,
+      log: { error: jest.fn() },
+    });
+    return { worker, outbox, syncCalendarChange };
+  };
+  const row = (id, changeTypes, date, attemptCount = 1) => ({
+    id,
+    domitsPropertyId: "property-1",
+    changeTypes,
+    dateFrom: date,
+    dateTo: date,
+    attemptCount,
+  });
+
+  test("a 429 on prices holds back further price and restriction calls, but availability still goes out", async () => {
+    const { worker, outbox, syncCalendarChange } = createWorker(
+      [row("availability-1", ["availability"], 20261101), row("rates-1", ["rates"], 20261102), row("restrictions-1", ["restrictions"], 20261103)],
+      [answerWith(200), answerWith(429)]
+    );
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["availability-1"], expect.anything());
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["rates-1", "restrictions-1"], expect.anything());
+  });
+
+  test("only the row that used up its attempts fails; a fresh row in the same call keeps retrying", async () => {
+    const { worker, outbox } = createWorker(
+      [row("old", ["rates"], 20261101, 8), row("fresh", ["rates"], 20261101, 1)],
+      [answerWith(503)]
+    );
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.markFailed).toHaveBeenCalledWith(["old"], { now: NOW, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["fresh"], expect.objectContaining({ nextAttemptAt: NOW + MINUTE }));
+  });
+
+  test("a huge Retry-After is capped at 60 minutes", async () => {
+    const { worker, outbox } = createWorker([row("rates-1", ["rates"], 20261101)], [answerWith(429, 86_400_000)]);
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.returnToPending.mock.calls[0][1].nextAttemptAt).toBe(NOW + 60 * MINUTE);
+  });
+
+  test("a Retry-After of 0 falls back to our own delay instead of no wait at all", async () => {
+    const { worker, outbox } = createWorker([row("rates-1", ["rates"], 20261101)], [answerWith(429, 0)]);
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.returnToPending.mock.calls[0][1].nextAttemptAt).toBe(NOW + MINUTE);
+  });
+});

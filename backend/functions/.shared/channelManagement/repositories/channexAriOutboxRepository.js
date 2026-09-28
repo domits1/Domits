@@ -98,7 +98,7 @@ export default class ChannexAriOutboxRepository {
          FROM ${table}
         WHERE status = $1
         GROUP BY domitspropertyid
-       HAVING SUM(CASE WHEN nextattemptat IS NOT NULL AND nextattemptat > $2 THEN 1 ELSE 0 END) = 0
+       HAVING SUM(CASE WHEN nextattemptat IS NULL OR nextattemptat <= $2 THEN 1 ELSE 0 END) > 0
           AND (SUM(CASE WHEN source = ANY($3) THEN 1 ELSE 0 END) > 0
                OR MAX(createdat) <= $4
                OR MIN(createdat) <= $5)
@@ -116,11 +116,13 @@ export default class ChannexAriOutboxRepository {
   // One conditional UPDATE. On Aurora DSQL two runs that claim the same rows both
   // appear to succeed, and the loser fails at commit with SQLSTATE 40001, which the
   // caller treats as "another run has these rows".
+  // Channex limits availability calls and price/restriction calls separately, so a row
+  // waiting after a 429 only holds back rows of the same call type (#3280).
   async claim(domitsPropertyId, { now = Date.now(), runStartedAt = now } = {}) {
     const { client, table } = await this.table();
 
     const [rows] = await client.query(
-      `UPDATE ${table}
+      `UPDATE ${table} AS target
           SET status = $1,
               attemptcount = attemptcount + 1,
               updatedat = $2
@@ -128,6 +130,16 @@ export default class ChannexAriOutboxRepository {
           AND status = $4
           AND createdat <= $5
           AND (nextattemptat IS NULL OR nextattemptat <= $2)
+          AND NOT EXISTS (
+            SELECT 1
+              FROM ${table} AS waiting
+             WHERE waiting.domitspropertyid = $3
+               AND waiting.status = $4
+               AND waiting.nextattemptat > $2
+               AND ((waiting.changetypes LIKE '%availability%' AND target.changetypes LIKE '%availability%')
+                 OR ((waiting.changetypes LIKE '%rates%' OR waiting.changetypes LIKE '%restrictions%')
+                     AND (target.changetypes LIKE '%rates%' OR target.changetypes LIKE '%restrictions%')))
+          )
         RETURNING id, domitspropertyid, kind, changetypes, datefrom, dateto, source, attemptcount`,
       [CHANNEX_ARI_OUTBOX_STATUS.PROCESSING, now, domitsPropertyId, CHANNEX_ARI_OUTBOX_STATUS.PENDING, runStartedAt]
     );

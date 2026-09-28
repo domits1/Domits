@@ -4,6 +4,7 @@ import {
   classifySyncResponse,
   groupChangesForSend,
   nextRetryDelayMs,
+  sharesCallType,
   worstOutcome,
 } from "../utils/channexAriOutboxPlanning.js";
 
@@ -62,51 +63,76 @@ export default class ChannexAriOutboxWorker {
   }
 
   async sendAndRecord(account, domitsPropertyId, rows) {
-    const results = [];
+    const sends = [];
+    const pausedTypes = [];
     for (const group of groupChangesForSend(rows)) {
+      // After a failed call, the rest of that call type waits for the next run; the
+      // other call type has its own Channex limit and still goes out.
+      if (sharesCallType(group.changeTypes, pausedTypes)) continue;
       const answer = await this.syncCalendarChange(
         { userId: account.userId, domitsPropertyId, source: "CHANNEX_ARI_OUTBOX", ...group },
         { providerRequestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
       );
-      const classified = classifySyncResponse(answer);
-      results.push(classified);
-      // A group that did not go through (RETRY/FAILED/SKIPPED) already decides the
-      // outcome for every row (see worstOutcome below), so further groups would only
-      // send more Channex calls without changing what gets recorded.
-      if (classified.outcome !== OUTCOME.PROCESSED) break;
+      const result = classifySyncResponse(answer);
+      sends.push({ group, result });
+      if (result.outcome !== OUTCOME.PROCESSED) pausedTypes.push(...group.changeTypes);
     }
 
-    const outcome = worstOutcome(results.map((result) => result.outcome));
-    const reason = results.find((result) => result.outcome === outcome)?.reason ?? null;
-    const ids = rows.map((row) => row.id);
+    // Each row gets the worst outcome of the calls that carried its change types; a
+    // type that was not sent at all counts as a retry.
+    const rowsByOutcome = new Map();
+    for (const row of rows) {
+      const outcomes = row.changeTypes.map(
+        (type) => sends.find(({ group }) => group.changeTypes.includes(type))?.result.outcome ?? OUTCOME.RETRY
+      );
+      const outcome = worstOutcome(outcomes);
+      rowsByOutcome.set(outcome, [...(rowsByOutcome.get(outcome) || []), row]);
+    }
+
     const now = this.now();
-
-    if (outcome === OUTCOME.PROCESSED) {
-      const taskIds = results.flatMap((result) => result.taskIds);
-      await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: results.length } });
-    } else if (outcome === OUTCOME.SKIPPED) {
-      await this.outbox.markSkipped(ids, { now, failureReason: reason });
-    } else if (outcome === OUTCOME.FAILED) {
-      await this.outbox.markFailed(ids, { now, failureReason: reason });
-    } else {
-      return this.scheduleRetry(rows, results, { now, reason });
+    const results = sends.map(({ result }) => result);
+    const reasonFor = (outcome) => results.find((result) => result.outcome === outcome)?.reason ?? null;
+    const recorded = [];
+    for (const [outcome, outcomeRows] of rowsByOutcome) {
+      const ids = outcomeRows.map((row) => row.id);
+      if (outcome === OUTCOME.PROCESSED) {
+        const taskIds = results.flatMap((result) => result.taskIds);
+        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: sends.length } });
+        recorded.push(outcome);
+      } else if (outcome === OUTCOME.SKIPPED) {
+        await this.outbox.markSkipped(ids, { now, failureReason: reasonFor(outcome) });
+        recorded.push(outcome);
+      } else if (outcome === OUTCOME.FAILED) {
+        await this.outbox.markFailed(ids, { now, failureReason: reasonFor(outcome) });
+        recorded.push(outcome);
+      } else {
+        recorded.push(await this.scheduleRetry(outcomeRows, results, { now, reason: reasonFor(outcome) }));
+      }
     }
-    return outcome;
+    return worstOutcome(recorded);
   }
 
-  // Waits longer after each attempt, or as long as Channex asks, and gives up after
-  // MAX_ATTEMPTS so a change that keeps failing ends up FAILED instead of looping.
+  // Exhaustion is decided per row, so a change on its eighth attempt cannot drag a
+  // fresh booking into FAILED with it.
   async scheduleRetry(rows, results, { now, reason }) {
-    const ids = rows.map((row) => row.id);
-    const attempts = Math.max(...rows.map((row) => row.attemptCount || 1));
-    if (attempts >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS) {
-      await this.outbox.markFailed(ids, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
-      return OUTCOME.FAILED;
-    }
+    const { MAX_ATTEMPTS, RETRY_CAP_MS } = CHANNEX_ARI_OUTBOX_DEFAULTS;
+    const exhausted = rows.filter((row) => (row.attemptCount || 1) >= MAX_ATTEMPTS);
+    const waiting = rows.filter((row) => (row.attemptCount || 1) < MAX_ATTEMPTS);
 
-    const retryAfterMs = results.find((result) => result.outcome === OUTCOME.RETRY)?.retryAfterMs;
-    const delayMs = retryAfterMs ?? nextRetryDelayMs(attempts, this.random);
-    await this.outbox.returnToPending(ids, { now, failureReason: reason, nextAttemptAt: now + delayMs });
+    if (exhausted.length) {
+      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+    }
+    if (!waiting.length) return OUTCOME.FAILED;
+
+    // Channex's Retry-After wins when it asks for a wait: the longest one, capped at an hour.
+    const retryAfterMs = Math.max(0, ...results.map((result) => result.retryAfterMs || 0));
+    const attempts = Math.max(...waiting.map((row) => row.attemptCount || 1));
+    const delayMs = retryAfterMs > 0 ? Math.min(retryAfterMs, RETRY_CAP_MS) : nextRetryDelayMs(attempts, this.random);
+    await this.outbox.returnToPending(waiting.map((row) => row.id), {
+      now,
+      failureReason: reason,
+      nextAttemptAt: now + delayMs,
+    });
     return OUTCOME.RETRY;
   }
 

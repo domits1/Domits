@@ -36,13 +36,13 @@ describe("ChannexAriOutboxRepository.findReadyProperties", () => {
     expect(params).toEqual(["PENDING", NOW, ["BOOKING", "CHANNEX_IMPORT"], NOW - 60_000, NOW - 300_000, 25]);
   });
 
-  test("skips a property entirely while any of its rows waits for nextAttemptAt", async () => {
+  test("a property is ready while at least one of its rows is not waiting for a retry", async () => {
     const client = mockClient();
 
     await new ChannexAriOutboxRepository().findReadyProperties({ now: NOW });
 
     const [sql] = client.query.mock.calls[0];
-    expect(sql).toContain("SUM(CASE WHEN nextattemptat IS NOT NULL AND nextattemptat > $2 THEN 1 ELSE 0 END) = 0");
+    expect(sql).toContain("SUM(CASE WHEN nextattemptat IS NULL OR nextattemptat <= $2 THEN 1 ELSE 0 END) > 0");
   });
 
   test("returns an empty list when no property is ready", async () => {
