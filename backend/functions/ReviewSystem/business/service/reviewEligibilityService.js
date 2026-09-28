@@ -13,8 +13,9 @@ class ReviewEligibilityService {
     this.clock = clock;
   }
 
+  // Validate the booking, reviewer, and timing checks before a review is created.
+  // Review: This is the main eligibility gate that prevents invalid review creation.
   async validateReservationEligibility({ bookingId, propertyId, reviewType, reviewerUserId }) {
-    // Review: Runs all eligibility checks before any review or workflow records are created.
     if (!bookingId) {
       throw new BadRequestException("bookingId is required.");
     }
@@ -51,18 +52,24 @@ class ReviewEligibilityService {
     return booking;
   }
 
+  // Ensure the reviewer is the same guest attached to the booking.
+  // Review: This blocks a different user from filing a review for someone else’s stay.
   assertCorrectGuest({ booking, reviewerUserId }) {
     if (booking.guestid !== reviewerUserId) {
       throw new ForbiddenException("Only the guest of this booking can leave a review.");
     }
   }
 
+  // Confirm the review targets the same property as the reservation.
+  // Review: This prevents mismatched property reviews from being submitted.
   assertPropertyMatchesBooking({ booking, propertyId }) {
     if (booking.property_id !== propertyId) {
       throw new BadRequestException("Review property does not match booking property.");
     }
   }
 
+  // Only completed stays can be reviewed after checkout.
+  // Review: This enforces the booking status and departure timing requirement.
   assertCompletedStay(booking) {
     if (!COMPLETED_BOOKING_STATUSES.has(String(booking.status || "").toLowerCase())) {
       throw new ForbiddenException("Only completed bookings can be reviewed.");
@@ -75,6 +82,8 @@ class ReviewEligibilityService {
     }
   }
 
+  // Reject review attempts that fall outside the allowed review window.
+  // Review: This stops expired reviews from being accepted after the deadline.
   assertReviewWindowOpen(booking) {
     const departureDate = Number(booking.departuredate);
     const reviewWindowMs = REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -84,8 +93,9 @@ class ReviewEligibilityService {
     }
   }
 
+  // Block duplicate reviews for the same booking and review type.
+  // Review: This prevents retries or repeat submissions from creating a second review.
   async assertNoDuplicateReview({ bookingId, reviewType, reviewerUserId }) {
-    // Review: Keeps retries and repeat submissions from creating a second review for the same stay.
     const existingReview = await this.reviewRepository.getReviewByBookingTypeAndReviewer({
       bookingId,
       reviewType,
