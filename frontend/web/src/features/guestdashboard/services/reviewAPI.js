@@ -2,15 +2,23 @@
 
 import { getAccessToken } from "../../../services/getAccessToken";
 
+// Returns the configured review API endpoint.
+// Keeps requests in this module pointed at the same service.
 export const getReviewApiBase = () =>
   "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews";
 
+// Appends a resource path to the review API endpoint.
+// Used for requests targeting a specific review or subresource.
 const buildReviewUrl = (path = "") =>
   `${getReviewApiBase()}${path}`;
 
+// Creates a URL for collection requests with query parameters.
+// The returned URL can be safely updated through searchParams.
 const buildReviewCollectionUrl = () =>
   new URL(getReviewApiBase());
 
+// Parses JSON response bodies while preserving plain-text error responses.
+// Returns null for an empty body so callers can handle no-content responses.
 const parseJsonResponse = async (response) => {
   const responseText = await response.text().catch(() => "");
 
@@ -25,7 +33,8 @@ const parseJsonResponse = async (response) => {
   }
 };
 
-// CREATE REVIEW
+// Submits a review payload to the API.
+// Returns the parsed result or throws the server's error message.
 export async function createReview(payload) {
   const response = await fetch(buildReviewUrl(), {
     method: "POST",
@@ -45,7 +54,8 @@ export async function createReview(payload) {
   return data;
 }
 
-// GET REVIEW
+// Loads a review by its identifier.
+// Unwraps the API's review field when the response includes it.
 export async function getReviewById(reviewId) {
   const response = await fetch(
     buildReviewUrl(`/${encodeURIComponent(reviewId)}`),
@@ -66,7 +76,8 @@ export async function getReviewById(reviewId) {
   return data?.review || data;
 }
 
-// UPDATE REVIEW
+// Applies partial changes to an existing review.
+// Returns the parsed update result or throws the server's error message.
 export async function updateReview(reviewId, payload) {
   const response = await fetch(
     buildReviewUrl(`/${encodeURIComponent(reviewId)}`),
@@ -89,7 +100,8 @@ export async function updateReview(reviewId, payload) {
   return data;
 }
 
-// GUEST REVIEW HISTORY
+// Loads the authenticated guest's review history.
+// Normalizes either supported API response shape to an array.
 export async function getGuestReviewHistory() {
   const requestUrl = buildReviewCollectionUrl();
   requestUrl.searchParams.set("mine", "true");
@@ -110,7 +122,8 @@ export async function getGuestReviewHistory() {
   return Array.isArray(data) ? data : data?.reviews || [];
 }
 
-// GET NOTIFICATION PREFERENCE
+// Loads the authenticated user's review email preference.
+// Returns the parsed preference response from the API.
 export async function getReviewNotificationPreference() {
   const response = await fetch(
     buildReviewUrl("/notification-preferences"),
@@ -133,7 +146,8 @@ export async function getReviewNotificationPreference() {
   return data;
 }
 
-// UPDATE NOTIFICATION PREFERENCE
+// Updates whether the authenticated user receives review emails.
+// Sends the preference as a boolean and returns the API response.
 export async function setReviewNotificationPreference(emailEnabled) {
   const response = await fetch(
     buildReviewUrl("/notification-preferences"),

@@ -12,20 +12,28 @@ jest.mock("../../../services/getAccessToken", () => ({
 }));
 
 describe("guest review API", () => {
+  // Replaces fetch with a mock before each test.
+  // This isolates request behavior from the network.
   beforeEach(() => {
     global.fetch = jest.fn();
   });
 
+  // Clears mock call history after each test.
+  // Prevents assertions from leaking across cases.
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  // Confirms the API helper returns the expected Gateway endpoint.
+  // Keeps the frontend pointed at the ReviewSystem API.
   test("uses the ReviewSystem API Gateway", () => {
     expect(getReviewApiBase()).toBe(
       "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews"
     );
   });
 
+  // Confirms history is fetched for the authenticated guest.
+  // Verifies the query parameter and authorization header.
   test("fetches guest review history with authorization", async () => {
     global.fetch.mockResolvedValue({
       ok: true,
@@ -50,6 +58,8 @@ describe("guest review API", () => {
     );
   });
 
+  // Confirms preference reads and updates include authorization.
+  // Verifies the GET and PATCH request formats.
   test("reads and updates review email preferences with authorization", async () => {
     global.fetch.mockResolvedValue({
       ok: true,
@@ -98,6 +108,8 @@ describe("guest review API", () => {
     );
   });
 
+  // Confirms backend error messages are surfaced to the caller.
+  // Exercises the history request failure path.
   test("surfaces backend errors when loading history fails", async () => {
     global.fetch.mockResolvedValue({
       ok: false,
@@ -112,6 +124,8 @@ describe("guest review API", () => {
     ).rejects.toThrow("Review service unavailable.");
   });
 
+  // Confirms review creation sends the payload with authorization.
+  // Verifies the response is returned to the caller.
   test("creates a review with authorization", async () => {
     const payload = {
       rating: 5,
@@ -145,6 +159,8 @@ describe("guest review API", () => {
     );
   });
 
+  // Confirms review updates use the review-specific endpoint.
+  // Verifies the PATCH method, payload, and authorization header.
   test("updates a review with authorization", async () => {
     const payload = {
       rating: 4,
