@@ -3,16 +3,20 @@ import ForbiddenException from "../../util/exception/forbiddenException.js";
 import ConflictException from "../../util/exception/conflictException.js";
 import NotFoundException from "../../util/exception/notFoundException.js";
 import { REVIEW_WINDOW_DAYS } from "../../util/reviewPolicy.js";
+import { getReviewTypePolicy } from "../model/reviewTypes.js";
 
 const COMPLETED_BOOKING_STATUSES = new Set(["completed"]);
 
 class ReviewEligibilityService {
+  // Stores dependencies used for booking lookups and time-based checks.
+  // An injectable clock keeps date rules deterministic in tests.
   constructor({ reviewRepository, clock = Date.now } = {}) {
     this.reviewRepository = reviewRepository;
     this.clock = clock;
   }
 
-  // Review: Walk through every rule before allowing a guest to start a review.
+  // Validates request fields, loads the booking, and runs all eligibility checks.
+  // Returns the booking only after reviewer, stay, window, and duplicate checks pass.
   async validateReservationEligibility({ bookingId, propertyId, reviewType, reviewerUserId }) {
     if (!bookingId) {
       throw new BadRequestException("bookingId is required.");
@@ -36,7 +40,7 @@ class ReviewEligibilityService {
       throw new NotFoundException("Booking not found.");
     }
 
-    this.assertCorrectGuest({ booking, reviewerUserId });
+    this.assertCorrectReviewer({ booking, reviewType, reviewerUserId });
     this.assertPropertyMatchesBooking({ booking, propertyId });
     this.assertCompletedStay(booking);
     this.assertReviewWindowOpen(booking);
@@ -50,21 +54,34 @@ class ReviewEligibilityService {
     return booking;
   }
 
-  // Review: A booking can only be reviewed by the guest who made it.
-  assertCorrectGuest({ booking, reviewerUserId }) {
-    if (booking.guestid !== reviewerUserId) {
-      throw new ForbiddenException("Only the guest of this booking can leave a review.");
+  // Matches the authenticated author to the guest or host required by the review type.
+  // Rejects unsupported types and reviewers who are not part of the booking.
+  assertCorrectReviewer({ booking, reviewType, reviewerUserId }) {
+    const policy = getReviewTypePolicy(reviewType);
+
+    if (!policy) {
+      throw new BadRequestException("reviewType is not supported.");
+    }
+
+    if (booking[policy.reviewerBookingField] !== reviewerUserId) {
+      throw new ForbiddenException(
+        policy.reviewerBookingField === "hostid"
+          ? "Only the host of this booking can leave this review."
+          : "Only the guest of this booking can leave a review."
+      );
     }
   }
 
-  // Review: Keep reviews attached to the property that was actually booked.
+  // Keeps a review attached to the property recorded on its booking.
+  // Rejects requests that identify a different property.
   assertPropertyMatchesBooking({ booking, propertyId }) {
     if (booking.property_id !== propertyId) {
       throw new BadRequestException("Review property does not match booking property.");
     }
   }
 
-  // Review: Reviews open only after a completed stay has ended.
+  // Requires a completed booking whose checkout time has passed.
+  // Prevents reviews for active stays or bookings with invalid checkout dates.
   assertCompletedStay(booking) {
     if (!COMPLETED_BOOKING_STATUSES.has(String(booking.status || "").toLowerCase())) {
       throw new ForbiddenException("Only completed bookings can be reviewed.");
@@ -77,7 +94,8 @@ class ReviewEligibilityService {
     }
   }
 
-  // Review: Stop guests from submitting reviews long after the stay is over.
+  // Checks whether the booking is still within the configured review period.
+  // Rejects reviews submitted after that period has elapsed.
   assertReviewWindowOpen(booking) {
     const departureDate = Number(booking.departuredate);
     const reviewWindowMs = REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
@@ -87,7 +105,8 @@ class ReviewEligibilityService {
     }
   }
 
-  // Review: Prevent the same guest from reviewing the same booking twice.
+  // Looks up an existing review for this booking, type, and reviewer.
+  // Rejects the request if that reviewer has already submitted one.
   async assertNoDuplicateReview({ bookingId, reviewType, reviewerUserId }) {
     const existingReview = await this.reviewRepository.getReviewByBookingTypeAndReviewer({
       bookingId,

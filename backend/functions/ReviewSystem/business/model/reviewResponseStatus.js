@@ -4,6 +4,8 @@ export const REVIEW_RESPONSE_STATUSES = Object.freeze({
   PUBLISHED: "published",
 });
 
+// Roles permitted to create and manage public host responses.
+// Both spaced and underscored names support differing role formats.
 export const HOST_RESPONSE_ROLES = new Set([
   "host",
   "property manager",

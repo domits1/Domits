@@ -235,6 +235,7 @@ class ReviewRepository {
       .getRepository(Review)
       .createQueryBuilder("review")
       .where("review.property_id = :propertyId", { propertyId })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .orderBy("review.created_at", "DESC")
       .getMany();

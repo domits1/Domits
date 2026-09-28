@@ -4,7 +4,7 @@ import {
   REVIEW_PUBLICATION_STATUSES,
   REVIEW_STATUSES,
   REVIEW_VERIFICATION_STATUSES,
-} from "./reviewStatus.js";
+} from "../model/reviewStatus.js";
 
 const AUTHOR_TRANSITIONS = Object.freeze({
   [REVIEW_STATUSES.DRAFT]: new Set([REVIEW_STATUSES.DRAFT, REVIEW_STATUSES.SUBMITTED]),
@@ -31,12 +31,14 @@ const MODERATOR_ROLES = new Set(["admin", "moderator", "review_moderator", "revi
 
 // Review: Enforces author and moderator transitions across the review lifecycle.
 class ReviewStatusService {
-  // Review: Keep status comparisons consistent even when callers use mixed casing.
+  // Trims and uppercases a status value for consistent comparisons.
+  // Returns an empty string when no status is provided.
   normalize(status) {
     return String(status || "").trim().toUpperCase();
   }
 
-  // Review: Reject statuses that are not part of the review workflow.
+  // Normalizes a value and checks it against supported review statuses.
+  // Returns the normalized status or rejects unsupported values.
   validate(status) {
     const normalizedStatus = this.normalize(status);
 
@@ -47,7 +49,8 @@ class ReviewStatusService {
     return normalizedStatus;
   }
 
-  // Review: Limit newly created reviews to the two states an author can choose.
+  // Resolves and validates the initial status requested by an author.
+  // New reviews may start only as drafts or submitted reviews.
   resolveInitialStatus(requestedStatus = REVIEW_STATUSES.SUBMITTED) {
     const status = this.validate(requestedStatus);
 
@@ -58,7 +61,8 @@ class ReviewStatusService {
     return status;
   }
 
-  // Review: Route a status change through the author or moderator rules.
+  // Validates both states and identifies the actor's transition rules.
+  // Delegates the change to author or moderator policy based on identity and role.
   resolveUpdateStatus({ currentStatus, requestedStatus, actorUserId, authorUserId, actorRole }) {
     const current = this.validate(currentStatus);
     const requested = this.validate(requestedStatus);
@@ -74,7 +78,8 @@ class ReviewStatusService {
     throw new ForbiddenException("You are not allowed to change this review status.");
   }
 
-  // Review: Apply the narrower transitions available to the review author.
+  // Checks a requested status change against author transition rules.
+  // Rejects any transition not explicitly allowed for the current state.
   resolveAuthorTransition(currentStatus, requestedStatus) {
     if (!AUTHOR_TRANSITIONS[currentStatus]?.has(requestedStatus)) {
       throw new BadRequestException("Review status transition is not allowed.");
@@ -83,7 +88,8 @@ class ReviewStatusService {
     return requestedStatus;
   }
 
-  // Review: Apply the broader transitions available to moderators.
+  // Checks a requested status change against moderator transition rules.
+  // Rejects any transition not explicitly allowed for the current state.
   resolveModeratorTransition(currentStatus, requestedStatus) {
     if (!MODERATOR_TRANSITIONS[currentStatus]?.has(requestedStatus)) {
       throw new BadRequestException("Review status transition is not allowed.");
@@ -92,17 +98,20 @@ class ReviewStatusService {
     return requestedStatus;
   }
 
-  // Review: Identify roles that are allowed to moderate reviews.
+  // Checks whether a role belongs to the supported moderator roles.
+  // Normalizes casing and whitespace before matching.
   isModerator(role) {
     return MODERATOR_ROLES.has(String(role || "").trim().toLowerCase());
   }
 
-  // Review: Tell callers whether the author may still edit review content.
+  // Checks whether the review is still in an author-editable state.
+  // Validates the status before comparing it to the editable states.
   canAuthorEditContent(status) {
     return [REVIEW_STATUSES.DRAFT, REVIEW_STATUSES.SUBMITTED].includes(this.validate(status));
   }
 
-  // Review: Derive publication and verification states from the workflow status.
+  // Maps a workflow status to its publication and verification states.
+  // Keeps derived state consistent with the review lifecycle.
   getDerivedStatuses(status) {
     const normalizedStatus = this.validate(status);
     let publicationStatus = REVIEW_PUBLICATION_STATUSES.UNPUBLISHED;

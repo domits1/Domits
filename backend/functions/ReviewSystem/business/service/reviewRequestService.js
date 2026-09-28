@@ -4,13 +4,16 @@ const DEFAULT_LIMIT = 10;
 
 // Review: Generates, claims, sends, retries, and suppresses review invitation emails.
 export default class ReviewRequestService {
+  // Stores the repository, clock, and Lambda client used by this service.
+  // Defaults allow scheduled processing to run with production integrations.
   constructor({ reviewRepository, clock = Date.now, client = new LambdaClient({ region: process.env.AWS_REGION || "eu-north-1" }) } = {}) {
     this.repository = reviewRepository;
     this.clock = clock;
     this.client = client;
   }
 
-  // Review: Resolve the guest address from the booking or the user information service.
+  // Gets the guest email directly from the booking when it is available.
+  // Otherwise looks it up through the user information Lambda.
   async getGuestEmail(booking) {
     if (booking.guest_email) return booking.guest_email;
     const response = await this.client.send(new InvokeCommand({
@@ -25,7 +28,8 @@ export default class ReviewRequestService {
     return body?.[0]?.Attributes?.find((attribute) => attribute.Name === "email")?.Value || null;
   }
 
-  // Review: Send a review invitation or reminder with a link tied to the booking.
+  // Builds an invitation or reminder email with links for the specific booking.
+  // Invokes the email Lambda and throws when delivery reports a failure.
   async sendEmail(booking, request, reminder, guestEmail) {
     const url = new URL("/guestdashboard/reviews/new", process.env.REVIEW_FRONTEND_URL || "https://domits.com");
     url.searchParams.set("bookingId", booking.id);
@@ -45,7 +49,8 @@ export default class ReviewRequestService {
     if (result?.statusCode && Number(result.statusCode) >= 400) throw new Error("Review email delivery failed.");
   }
 
-  // Review: Create missing requests, claim due requests, and deliver eligible reminders.
+  // Creates missing review requests, then claims and processes requests that are due.
+  // Suppresses ineligible requests, records delivery outcomes, and retries failures.
   async processDue({ limit = DEFAULT_LIMIT } = {}) {
     const now = this.clock();
     const boundedLimit = Math.min(Math.max(Number(limit) || DEFAULT_LIMIT, 1), 100);

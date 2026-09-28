@@ -5,12 +5,23 @@ import ConflictException from "../../functions/ReviewSystem/util/exception/confl
 // Review: Covers the complete guest, host, private-feedback, and moderation service workflow.
 const NOW = Date.parse("2026-09-10T12:00:00.000Z");
 
+const CATEGORY_KEYS_BY_REVIEW_TYPE = {
+  GUEST_TO_PROPERTY: ["cleanliness", "accuracy", "communication", "location", "checkin", "value"],
+  GUEST_TO_HOST: ["communication", "hospitality", "responsiveness"],
+  HOST_TO_GUEST: ["communication", "cleanliness", "house_rules"],
+  GUEST_TO_EXPERIENCE: ["quality", "accuracy", "value"],
+  GUEST_TO_SERVICE: ["quality", "communication", "value"],
+  GUEST_TO_RESERVATION: ["booking_process", "communication", "checkin"],
+};
+
+// Builds an authenticated request event with a JSON body.
 const createEvent = (body, overrides = {}) => ({
   headers: { Authorization: "Bearer access-token-1" },
   body: JSON.stringify(body),
   ...overrides,
 });
 
+// Builds a valid review payload with optional field overrides.
 const createReviewPayload = (overrides = {}) => ({
   bookingId: "booking-1",
   propertyId: "property-1",
@@ -27,6 +38,7 @@ const createReviewPayload = (overrides = {}) => ({
   ...overrides,
 });
 
+// Builds a default completed booking with optional field overrides.
 const createBooking = (overrides = {}) => ({
   id: "booking-1",
   guestid: "guest-1",
@@ -37,6 +49,7 @@ const createBooking = (overrides = {}) => ({
   ...overrides,
 });
 
+// Builds a default review record with optional field overrides.
 const createReview = (overrides = {}) => ({
   id: "review-1",
   bookingId: "booking-1",
@@ -60,10 +73,11 @@ const createReview = (overrides = {}) => ({
   ...overrides,
 });
 
+// Creates the service and its mocked repository, authentication, and eligibility dependencies.
 const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilityOverrides = {} } = {}) => {
   const reviewRepository = {
-    getActiveRatingCategoryKeys: jest.fn().mockResolvedValue(
-      new Set(["cleanliness", "accuracy", "communication", "location", "checkin", "value"])
+    getActiveRatingCategoryKeys: jest.fn().mockImplementation(
+      async (reviewType) => new Set(CATEGORY_KEYS_BY_REVIEW_TYPE[reviewType] || [])
     ),
     createReviewWithRatings: jest.fn().mockImplementation(async (review, ratings, workflowRecords) => ({
       review,
@@ -128,7 +142,9 @@ const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilit
   };
 };
 
+// Covers review creation, access control, public queries, and response workflows.
 describe("ReviewService day 5 unit coverage", () => {
+  // Confirms submitted reviews are created after eligibility validation.
   it("creates a submitted review after validating eligibility", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
@@ -186,6 +202,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result.review.reviewerUserId).toBe("guest-1");
   });
 
+  // Confirms draft reviews retain an open review request.
   it("creates a draft review with an open review request", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -209,6 +226,7 @@ describe("ReviewService day 5 unit coverage", () => {
     );
   });
 
+  // Confirms Domits-only feedback is persisted separately from review feedback.
   it("stores Domits private feedback separately when a guest submits a review", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -238,6 +256,7 @@ describe("ReviewService day 5 unit coverage", () => {
     );
   });
 
+  // Confirms Domits private feedback cannot exceed its length limit.
   it("rejects Domits private feedback that is too long", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
@@ -252,6 +271,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms host private feedback cannot exceed its length limit.
   it("rejects host private feedback that is too long", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
@@ -266,11 +286,12 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms unsupported review types are rejected before persistence.
   it("rejects unsupported review types", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
     await expect(
-      service.createReview(createEvent(createReviewPayload({ reviewType: "HOST_TO_GUEST" })))
+      service.createReview(createEvent(createReviewPayload({ reviewType: "UNKNOWN" })))
     ).rejects.toMatchObject({
       statusCode: 400,
       message: "reviewType is not supported.",
@@ -280,6 +301,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms an overall rating is required.
   it("rejects missing overall rating", async () => {
     const { service, reviewRepository, eligibilityService } = buildService();
 
@@ -294,6 +316,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms overall ratings below the supported range are rejected.
   it("rejects overall rating below the allowed range", async () => {
     const { service, eligibilityService } = buildService();
 
@@ -305,6 +328,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms overall ratings above the supported range are rejected.
   it("rejects overall rating above the allowed range", async () => {
     const { service, eligibilityService } = buildService();
 
@@ -316,6 +340,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms configured check-in category ratings are accepted and persisted.
   it("accepts and persists the configured check-in category", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -339,6 +364,57 @@ describe("ReviewService day 5 unit coverage", () => {
     );
   });
 
+  // Confirms supported review types create reviews with the provided categories.
+  it.each([
+    ["GUEST_TO_HOST", { communication: 5, hospitality: 4, responsiveness: 5 }],
+    ["GUEST_TO_EXPERIENCE", { quality: 5, accuracy: 4, value: 5 }],
+    ["GUEST_TO_SERVICE", { quality: 5, communication: 4, value: 5 }],
+    ["GUEST_TO_RESERVATION", { booking_process: 5, communication: 4, checkin: 5 }],
+  ])("creates a reservation-backed %s review", async (reviewType, categoryRatings) => {
+    const { service, reviewRepository } = buildService();
+
+    await service.createReview(createEvent(createReviewPayload({ reviewType, categoryRatings })));
+
+    expect(reviewRepository.createReviewWithRatings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewType,
+        reviewerUserId: "guest-1",
+        revieweeUserId: "host-1",
+      }),
+      expect.any(Array),
+      expect.objectContaining({ reviewRequest: null })
+    );
+  });
+
+  // Confirms host-to-guest reviews are created privately without a guest review request.
+  it("creates a private host-to-guest review without a guest review request", async () => {
+    const { service, reviewRepository } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+    });
+
+    await service.createReview(
+      createEvent(
+        createReviewPayload({
+          reviewType: "HOST_TO_GUEST",
+          categoryRatings: { communication: 5, cleanliness: 4, house_rules: 5 },
+        })
+      )
+    );
+
+    expect(reviewRepository.createReviewWithRatings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewType: "HOST_TO_GUEST",
+        reviewerUserId: "host-1",
+        revieweeUserId: "guest-1",
+      }),
+      expect.any(Array),
+      expect.objectContaining({ reviewRequest: null })
+    );
+  });
+
+  // Confirms unsupported rating categories are rejected before eligibility checks.
   it("rejects unsupported rating categories", async () => {
     const { service, eligibilityService } = buildService();
 
@@ -352,6 +428,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms category ratings outside the supported range are rejected.
   it("rejects category ratings outside the allowed range", async () => {
     const { service, eligibilityService } = buildService();
 
@@ -365,6 +442,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms category ratings must be provided as an object.
   it("rejects non-object category ratings", async () => {
     const { service, eligibilityService } = buildService();
 
@@ -378,6 +456,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
   });
 
+  // Confirms duplicate-review conflicts prevent review persistence.
   it("does not create a review when eligibility detects a duplicate", async () => {
     const duplicateError = new ConflictException("You have already reviewed this booking.");
     const { service, reviewRepository } = buildService({
@@ -394,6 +473,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.createReviewWithRatings).not.toHaveBeenCalled();
   });
 
+  // Confirms public review details omit private and identifying fields.
   it("returns published review details without private feedback", async () => {
     const review = createReview();
     const { service, reviewRepository, authManager } = buildService({
@@ -425,6 +505,30 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result.review.domitsPrivateFeedback).toBeUndefined();
   });
 
+  // Confirms a host-to-guest review is visible only to its guest reviewee.
+  it("returns a published host-to-guest review only to its guest reviewee", async () => {
+    const review = createReview({
+      reviewType: "HOST_TO_GUEST",
+      reviewerUserId: "host-1",
+      revieweeUserId: "guest-1",
+    });
+    const { service, reviewRepository, authManager } = buildService({
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(review),
+      },
+    });
+
+    const result = await service.getReviewById(
+      { headers: { Authorization: "Bearer access-token-1" } },
+      "review-1"
+    );
+
+    expect(authManager.authenticate).toHaveBeenCalled();
+    expect(reviewRepository.toPublicReview).not.toHaveBeenCalled();
+    expect(result.review).toEqual(review);
+  });
+
+  // Confirms authorized internal users can read and audit Domits private feedback.
   it("allows authorized Domits internal users to read Domits private feedback", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -468,6 +572,7 @@ describe("ReviewService day 5 unit coverage", () => {
     );
   });
 
+  // Confirms hosts cannot read Domits private feedback.
   it("blocks hosts from reading Domits private feedback", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -489,6 +594,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getDomitsPrivateFeedbackForReview).not.toHaveBeenCalled();
   });
 
+  // Confirms the private feedback inbox is limited to internal users.
   it("returns the Domits private feedback inbox only to internal users", async () => {
     const feedback = [{ id: "feedback-1", reviewId: "review-1", message: "Internal support note." }];
     const { service, reviewRepository } = buildService({
@@ -507,6 +613,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.listDomitsPrivateFeedback).toHaveBeenCalledWith(100);
   });
 
+  // Confirms hosts cannot access the Domits private feedback inbox.
   it("blocks hosts from the Domits private feedback inbox", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -521,6 +628,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.listDomitsPrivateFeedback).not.toHaveBeenCalled();
   });
 
+  // Confirms review authors can view their unpublished private review data.
   it("allows the author to view unpublished review private data", async () => {
     const unpublishedReview = createReview({
       status: "DRAFT",
@@ -542,6 +650,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result.review.privateFeedback).toBe("Private host feedback.");
   });
 
+  // Confirms the host can view unpublished review private data shared with them.
   it("allows the host to view unpublished review private data", async () => {
     const unpublishedReview = createReview({
       status: "SUBMITTED",
@@ -566,6 +675,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result.review.privateFeedback).toBe("Private host feedback.");
   });
 
+  // Confirms draft private feedback is not shared with the host.
   it("does not share draft private feedback with the host", async () => {
     const { service } = buildService({
       authOverrides: {
@@ -586,6 +696,7 @@ describe("ReviewService day 5 unit coverage", () => {
     });
   });
 
+  // Confirms unrelated users cannot view unpublished review details.
   it("rejects unrelated users from unpublished review details", async () => {
     const { service } = buildService({
       authOverrides: {
@@ -610,6 +721,7 @@ describe("ReviewService day 5 unit coverage", () => {
     });
   });
 
+  // Confirms booking review queries are scoped to the authenticated user.
   it("returns only booking reviews scoped to the authenticated user", async () => {
     const { service, reviewRepository } = buildService({
       repositoryOverrides: {
@@ -626,6 +738,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getReviewsByBookingForUser).toHaveBeenCalledWith("booking-1", "guest-1");
   });
 
+  // Confirms property review summaries use the public repository query.
   it("returns public property review summaries through the repository public query", async () => {
     const publicSummary = {
       reviews: [
@@ -665,6 +778,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result).toEqual(publicSummary);
   });
 
+  // Confirms public sorting and filtering options are forwarded to the repository.
   it("passes public review sorting and filters to the repository", async () => {
     const publicSummary = {
       reviews: [],
@@ -697,6 +811,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result).toEqual(publicSummary);
   });
 
+  // Confirms unsupported public sort values are rejected.
   it("rejects unsupported public review sort values", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -716,6 +831,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
   });
 
+  // Confirms unsupported public category filters are rejected.
   it("rejects unsupported public review category filters", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -735,6 +851,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
   });
 
+  // Confirms invalid verified filter values are rejected.
   it("rejects unsupported verified filter values", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -754,6 +871,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getPublishedReviewsByPropertyId).not.toHaveBeenCalled();
   });
 
+  // Confirms host reviews are returned only after host access is authorized.
   it("returns host reviews only after host access is authorized", async () => {
     const hostReviews = [createReview()];
     const { service, reviewRepository } = buildService({
@@ -774,6 +892,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.getReviewsForHost).toHaveBeenCalledWith("host-1");
   });
 
+  // Confirms drafts and rejected reviews are excluded from host results.
   it("filters guest drafts and rejected reviews out of the host response", async () => {
     const submittedReview = createReview({ id: "submitted-review", status: "SUBMITTED" });
     const { service } = buildService({
@@ -795,6 +914,7 @@ describe("ReviewService day 5 unit coverage", () => {
     })).resolves.toEqual({ reviews: [submittedReview] });
   });
 
+  // Confirms an authorized host can save a draft response to an eligible public review.
   it("saves a draft response for an eligible public review", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -834,6 +954,7 @@ describe("ReviewService day 5 unit coverage", () => {
     );
   });
 
+  // Confirms an existing draft response can be published.
   it("publishes an existing draft response", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -868,6 +989,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(result.response.status).toBe("published");
   });
 
+  // Confirms unpublished ineligible reviews cannot receive host responses.
   it("rejects responses for ineligible unpublished reviews", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -898,6 +1020,36 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
   });
 
+  // Confirms private host-to-guest reviews cannot receive host responses.
+  it("rejects host responses to private host-to-guest reviews", async () => {
+    const { service } = buildService({
+      authOverrides: {
+        authenticate: jest.fn().mockResolvedValue({ sub: "host-1", role: "Host" }),
+      },
+      repositoryOverrides: {
+        getReviewById: jest.fn().mockResolvedValue(
+          createReview({
+            reviewType: "HOST_TO_GUEST",
+            reviewerUserId: "host-1",
+            revieweeUserId: "guest-1",
+          })
+        ),
+      },
+    });
+
+    await expect(
+      service.saveDraftResponse({
+        headers: { Authorization: "Bearer access-token-1" },
+        pathParameters: { id: "review-1" },
+        body: JSON.stringify({ message: "Response" }),
+      })
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "Only approved public reviews can receive host responses.",
+    });
+  });
+
+  // Confirms unrelated users cannot create review responses.
   it("rejects unrelated users from creating responses", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -923,6 +1075,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.saveReviewResponse).not.toHaveBeenCalled();
   });
 
+  // Confirms active property-manager team members can respond to reviews.
   it("allows active property-manager team members to respond", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {
@@ -946,6 +1099,7 @@ describe("ReviewService day 5 unit coverage", () => {
     expect(reviewRepository.saveReviewResponse).toHaveBeenCalled();
   });
 
+  // Confirms an existing response can be soft deleted.
   it("soft deletes an existing response", async () => {
     const { service, reviewRepository } = buildService({
       authOverrides: {

@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 
 // Review: Produces verification evidence and moderation signals for submitted reviews.
 export default class ReviewVerificationService {
-  // Review: Check the review text and recent activity before trusting the booking match.
+  // Evaluates review content and recent reviewer activity for risk signals.
+  // Returns booking-match evidence, flagging reviews that need moderation.
   evaluate({ review, booking, now, recentReviews = [] }) {
     const text = `${review.title || ""} ${review.publicReview || ""}`.trim();
     const signals = [];

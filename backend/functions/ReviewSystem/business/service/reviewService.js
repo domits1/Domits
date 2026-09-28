@@ -7,15 +7,15 @@ import ReviewEligibilityService from "./reviewEligibilityService.js";
 import ReviewStatusService from "./reviewStatusService.js";
 import ReviewVerificationService from "./reviewVerificationService.js";
 import ReviewRequestService from "./reviewRequestService.js";
-import { REVIEW_STATUSES } from "./reviewStatus.js";
-import { HOST_RESPONSE_ROLES, REVIEW_RESPONSE_STATUSES } from "./reviewResponseStatus.js";
+import { REVIEW_STATUSES } from "../model/reviewStatus.js";
+import { HOST_RESPONSE_ROLES, REVIEW_RESPONSE_STATUSES } from "../model/reviewResponseStatus.js";
+import { getReviewTypePolicy, isPublicReviewType, REVIEW_TYPES } from "../model/reviewTypes.js";
 import BadRequestException from "../../util/exception/badRequestException.js";
 import ForbiddenException from "../../util/exception/forbiddenException.js";
 import NotFoundException from "../../util/exception/notFoundException.js";
 import { REVIEW_REQUEST_DELAY_HOURS, REVIEW_WINDOW_DAYS } from "../../util/reviewPolicy.js";
 
-const REVIEW_TYPES = new Set(["GUEST_TO_PROPERTY"]);
-const PUBLIC_REVIEW_TYPE = "GUEST_TO_PROPERTY";
+const PUBLIC_REVIEW_TYPE = REVIEW_TYPES.GUEST_TO_PROPERTY;
 const PUBLIC_REVIEW_SORTS = new Set(["recent", "highest", "lowest"]);
 const DEFAULT_PUBLIC_REVIEW_SORT = "recent";
 const HOST_VISIBLE_REVIEW_STATUSES = new Set([
@@ -39,6 +39,8 @@ const DOMITS_INTERNAL_ROLES = new Set([
 
 // Review: Coordinates guest submissions, reminders, moderation, private feedback, and host responses.
 class ReviewService {
+  // Receives the services that coordinate review workflows.
+  // Defaults provide production dependencies while allowing test overrides.
   constructor({
     reviewRepository = new ReviewRepository(),
     authManager = new AuthManager(),
@@ -62,7 +64,8 @@ class ReviewService {
       });
   }
 
-  // Review: Property reviews are public; booking, host, and personal views stay scoped to the authenticated caller.
+  // Routes property queries publicly and booking, host, or personal queries by scope.
+  // Authenticates only the caller-specific views before reading reviews.
   async getReviews(event) {
     const query = event.queryStringParameters || {};
     const propertyId = query.propertyId || event.pathParameters?.propertyId;
@@ -89,7 +92,8 @@ class ReviewService {
     throw new BadRequestException("Missing review query.");
   }
 
-  // Review: Return reviews visible to a host after checking host or team access.
+  // Loads reviews for a host after confirming host or team-member access.
+  // Filters the results to statuses visible to hosts.
   async getHostReviews(event, hostId) {
     const user = await this.getAuthenticatedUser(event);
     await this.assertHostReviewAccess(user, hostId, "You are not allowed to view these reviews.");
@@ -100,7 +104,8 @@ class ReviewService {
     };
   }
 
-  // Review: Normalize public-review filters before passing them to the repository.
+  // Normalizes sort, verification, and category filters for public review queries.
+  // Validates each supplied filter before returning repository query options.
   async parsePublicReviewQuery(query) {
     const sort = query.sort || DEFAULT_PUBLIC_REVIEW_SORT;
     const verifiedOnly = query.verified === "true";
@@ -120,21 +125,24 @@ class ReviewService {
     };
   }
 
-  // Review: Keep public review sorting limited to the supported choices.
+  // Allows only the supported public review sort options.
+  // Rejects invalid values before they reach the repository.
   validatePublicReviewSort(sort) {
     if (!PUBLIC_REVIEW_SORTS.has(sort)) {
       throw new BadRequestException("Unsupported review sort value.");
     }
   }
 
-  // Review: Reject malformed verification filters instead of silently broadening the query.
+  // Accepts only the supported public verification filter value.
+  // Rejects malformed values rather than broadening the query silently.
   validatePublicReviewVerified(verified) {
     if (verified !== undefined && verified !== "true") {
       throw new BadRequestException("verified must be true when provided.");
     }
   }
 
-  // Review: Ensure a requested category is active for the public review type.
+  // Loads the active categories for public property reviews.
+  // Rejects a requested category that is not currently supported.
   async validatePublicReviewCategory(category) {
     const supportedCategories = await this.reviewRepository.getActiveRatingCategoryKeys(PUBLIC_REVIEW_TYPE);
 
@@ -143,7 +151,8 @@ class ReviewService {
     }
   }
 
-  // Review: Published detail views use the public DTO so private reviewer and Domits feedback never leaks by id.
+  // Returns published public reviews through a privacy-filtered DTO.
+  // Restricts unpublished and private review details to authorized users.
   async getReviewById(event, reviewId) {
     const review = await this.reviewRepository.getReviewById(reviewId);
 
@@ -151,7 +160,7 @@ class ReviewService {
       throw new NotFoundException("Review not found.");
     }
 
-    if (review.status === REVIEW_STATUSES.PUBLISHED) {
+    if (review.status === REVIEW_STATUSES.PUBLISHED && isPublicReviewType(review.reviewType)) {
       return { review: this.reviewRepository.toPublicReview(review) };
     }
 
@@ -165,11 +174,16 @@ class ReviewService {
       throw new ForbiddenException("This review has not been shared with the host.");
     }
 
+    if (review.revieweeUserId === user.sub) {
+      return { review };
+    }
+
     await this.assertHostReviewAccess(user, review.hostId, "You are not allowed to view this review.");
     return { review };
   }
 
-  // Review: Eligibility is checked before records are built so duplicate, stay-window, and booking errors stop one workflow.
+  // Validates the submission and booking before building review records.
+  // Creates ratings and workflow records only after eligibility succeeds.
   async createReview(event) {
     const user = await this.getAuthenticatedUser(event);
     const body = this.parseBody(event.body);
@@ -219,7 +233,8 @@ class ReviewService {
     return this.reviewRepository.createReviewWithRatings(review, ratings, workflowRecords);
   }
 
-  // Review: Internal Domits feedback is audited on read because it is intentionally hidden from hosts and public DTOs.
+  // Returns internal feedback only to authorized Domits users.
+  // Records an audit event when feedback is accessed.
   async getDomitsPrivateFeedback(event) {
     const user = await this.getAuthenticatedUser(event);
     this.assertDomitsInternalAccess(user);
@@ -246,7 +261,8 @@ class ReviewService {
     return { feedback };
   }
 
-  // Review: The internal inbox includes feedback from reviews that have already left the moderation queue.
+  // Returns the internal Domits feedback inbox to authorized users.
+  // Bounds the requested page size before querying the repository.
   async getDomitsPrivateFeedbackInbox(event) {
     const user = await this.getAuthenticatedUser(event);
     this.assertDomitsInternalAccess(user);
@@ -258,7 +274,8 @@ class ReviewService {
     };
   }
 
-  // Review: Content edits and status transitions have different actors, so each rule is enforced before persistence.
+  // Validates edits, authorization, and any required booking checks before updating.
+  // Rebuilds affected review and workflow records, then persists the changes.
   async updateReview(event) {
     const user = await this.getAuthenticatedUser(event);
     const reviewId = this.getRequiredReviewId(event, { allowQueryString: true });
@@ -321,6 +338,8 @@ class ReviewService {
     return this.reviewRepository.updateReviewWithRatings(reviewId, updateData, ratings, workflowRecords);
   }
 
+  // Checks whether the caller may change review content or status.
+  // Keeps moderator decisions on the moderation workflow.
   assertReviewUpdateAllowed({ body, review, user, isContentUpdate }) {
     if (body.status && this.statusService.isModerator(user.role) && review.reviewerUserId !== user.sub) {
       throw new BadRequestException("Use the moderation endpoint for moderator decisions.");
@@ -333,6 +352,8 @@ class ReviewService {
     }
   }
 
+  // Loads the booking when content changes or a review is submitted.
+  // Rechecks checkout and review-window eligibility before proceeding.
   async getReviewUpdateBooking({ body, review, isContentUpdate }) {
     const isSubmission = this.statusService.normalize(body.status) === REVIEW_STATUSES.SUBMITTED;
     if (!isContentUpdate && !isSubmission) return null;
@@ -344,6 +365,8 @@ class ReviewService {
     return booking;
   }
 
+  // Re-evaluates verification when a review is newly submitted or edited.
+  // Adds a moderation record when the verification rules flag the review.
   async applySubmissionVerification({ booking, isContentUpdate, nextStatus, now, review, reviewId, updateData, user, workflowRecords }) {
     const shouldVerify = nextStatus === REVIEW_STATUSES.SUBMITTED &&
       (review.status !== REVIEW_STATUSES.SUBMITTED || isContentUpdate);
@@ -361,7 +384,8 @@ class ReviewService {
     }
   }
 
-  // Review: Reviews are soft-deleted to preserve the moderation and booking history tied to the stay.
+  // Allows only the review author to delete their review.
+  // Uses soft deletion to preserve its booking and moderation history.
   async deleteReview(event) {
     const user = await this.getAuthenticatedUser(event);
     const reviewId = this.getRequiredReviewId(event, { allowQueryString: true });
@@ -378,18 +402,21 @@ class ReviewService {
     return this.reviewRepository.softDeleteReview(reviewId);
   }
 
-  // Review: Delegate scheduled invitation work to the service that owns request timing.
+  // Delegates scheduled invitation processing to the request service.
+  // Keeps request timing and delivery behavior outside this service.
   async processReviewRequests(detail = {}) {
     return this.requestService.processDue(detail);
   }
 
-  // Review: Return the caller's current review-email preference.
+  // Gets the authenticated caller's review email preference.
+  // Uses the caller identity rather than accepting a user id from the request.
   async getNotificationPreference(event) {
     const user = await this.getAuthenticatedUser(event);
     return this.reviewRepository.getReviewNotificationPreference(user.sub);
   }
 
-  // Review: Persist whether the caller wants future review invitations.
+  // Validates and saves the caller's review email preference.
+  // Requires an explicit boolean value and records the update time.
   async setNotificationPreference(event) {
     const user = await this.getAuthenticatedUser(event);
     const body = this.parseBody(event.body);
@@ -397,7 +424,8 @@ class ReviewService {
     return this.reviewRepository.saveReviewNotificationPreference(user.sub, body.emailEnabled, this.clock());
   }
 
-  // Review: Load reviews awaiting moderation together with verification evidence and history.
+  // Loads the moderation queue for an authorized moderator.
+  // Includes verification evidence and prior moderation history for each review.
   async getModerationQueue(event) {
     const user = await this.getAuthenticatedUser(event);
     this.assertModerator(user);
@@ -416,7 +444,8 @@ class ReviewService {
     })) };
   }
 
-  // Review: Apply a moderator decision only after rechecking the booking and verification evidence.
+  // Validates a moderator decision and rechecks booking and verification evidence.
+  // Persists the resulting status and moderation audit record.
   async moderateReview(event) {
     const user = await this.getAuthenticatedUser(event);
     this.assertModerator(user);
@@ -434,6 +463,8 @@ class ReviewService {
     return { review: updated, moderation };
   }
 
+  // Validates the requested moderation decision and optional text fields.
+  // Requires a reason when rejecting a review.
   validateModerationRequest(body) {
     const decision = String(body.decision || "").toUpperCase();
     if (!["APPROVE", "REJECT"].includes(decision)) throw new BadRequestException("decision must be APPROVE or REJECT.");
@@ -443,6 +474,8 @@ class ReviewService {
     return decision;
   }
 
+  // Loads the review selected for moderation.
+  // Rejects reviews that are missing or no longer awaiting a decision.
   async getModeratableReview(reviewId) {
     const review = await this.reviewRepository.getReviewById(reviewId);
     if (!review) throw new NotFoundException("Review not found.");
@@ -452,6 +485,8 @@ class ReviewService {
     return review;
   }
 
+  // Loads the review's booking and verifies it matches the reviewer and property.
+  // Rejects moderation when the completed stay cannot be confirmed.
   async getModerationBooking(review) {
     const booking = await this.reviewRepository.getBookingById(review.bookingId);
     const isVerifiedBooking = booking &&
@@ -464,6 +499,8 @@ class ReviewService {
     return booking;
   }
 
+  // Uses stored verification evidence when it is already available.
+  // Otherwise evaluates the review against the booking and reviewer history.
   async getModerationVerification({ review, booking, now }) {
     const currentVerification = await this.reviewRepository.getReviewVerification(review.id);
     if (currentVerification) return currentVerification;
@@ -472,6 +509,8 @@ class ReviewService {
     return this.verificationService.evaluate({ review, booking, now, recentReviews });
   }
 
+  // Applies a moderator override only when approving a flagged review.
+  // Stores the reason and actor in verification evidence.
   applyModerationOverride({ body, decision, now, user, verification }) {
     if (decision !== "APPROVE" || verification.status !== "NEEDS_REVIEW") return;
 
@@ -490,28 +529,33 @@ class ReviewService {
     verification.updatedAt = now;
   }
 
-  // Review: Guard moderation endpoints against non-moderator callers.
+  // Ensures moderation actions are restricted to moderator roles.
+  // Rejects all other authenticated callers.
   assertModerator(user) {
     if (!this.statusService.isModerator(user.role)) throw new ForbiddenException("Moderator access is required.");
   }
 
-  // Review: Build the audit record that explains how a review moderation decision was made.
+  // Builds the record describing a moderation decision and its actor.
+  // Leaves moderator identity and decision time empty for automated records.
   buildModerationRecord(reviewId, now, status, reason = null, actorId = null, notes = null) {
     return { id: randomUUID(), reviewId, targetType: "REVIEW", status, reason, notes,
       moderatedByUserId: actorId, moderatedAt: actorId ? now : null, createdAt: now, updatedAt: now };
   }
 
-  // Review: Save a host response without making it publicly visible yet.
+  // Saves a host response in draft state.
+  // Delegates shared validation and persistence to the response workflow.
   async saveDraftResponse(event) {
     return this.upsertResponse(event, REVIEW_RESPONSE_STATUSES.DRAFT);
   }
 
-  // Review: Save and publish a host response in one workflow step.
+  // Saves a host response in published state.
+  // Delegates shared validation and persistence to the response workflow.
   async publishResponse(event) {
     return this.upsertResponse(event, REVIEW_RESPONSE_STATUSES.PUBLISHED);
   }
 
-  // Review: Update an existing host response while preserving its audit trail.
+  // Validates access and updates an existing host response.
+  // Records the change in the review response audit history.
   async editResponse(event) {
     const user = await this.getAuthenticatedUser(event);
     const reviewId = this.getRequiredReviewId(event);
@@ -544,7 +588,8 @@ class ReviewService {
     return { response };
   }
 
-  // Review: Soft-delete a host response so its history remains available for auditing.
+  // Allows an authorized host or team member to remove a response from view.
+  // Soft-deletes the response and records the action for auditing.
   async deleteResponse(event) {
     const user = await this.getAuthenticatedUser(event);
     const reviewId = this.getRequiredReviewId(event);
@@ -574,7 +619,8 @@ class ReviewService {
     return { message: "Review response deleted successfully." };
   }
 
-  // Review: Create or update a host response with the requested publication state.
+  // Creates or updates a response in the requested publication state.
+  // Enforces response eligibility and access, then records an audit event.
   async upsertResponse(event, status) {
     const user = await this.getAuthenticatedUser(event);
     const reviewId = this.getRequiredReviewId(event);
@@ -625,17 +671,20 @@ class ReviewService {
     return { response };
   }
 
-  // Review: Authenticate the caller using the request's authorization header.
+  // Authenticates the request caller through the configured auth manager.
+  // Extracts the authorization value using the shared header helper.
   async getAuthenticatedUser(event) {
     return this.authManager.authenticate(this.getAuthorizationHeader(event));
   }
 
-  // Review: Accept either capitalization used by API Gateway clients for authorization.
+  // Reads the authorization header in either common capitalization.
+  // Returns undefined when the request has no authorization header.
   getAuthorizationHeader(event) {
     return event.headers?.Authorization || event.headers?.authorization;
   }
 
-  // Review: Resolve the review id from the route, optionally allowing a query parameter.
+  // Reads the review id from the route or an allowed query parameter.
+  // Rejects requests that do not provide an id.
   getRequiredReviewId(event, { allowQueryString = false } = {}) {
     const reviewId = event.pathParameters?.id || (allowQueryString ? event.queryStringParameters?.id : null);
 
@@ -646,7 +695,8 @@ class ReviewService {
     return reviewId;
   }
 
-  // Review: Detect whether an update changes review content rather than only its status.
+  // Detects whether an update includes editable review content or ratings.
+  // Separates content authorization rules from status-only changes.
   hasReviewContentUpdate(body) {
     return (
       body.title !== undefined ||
@@ -657,12 +707,13 @@ class ReviewService {
     );
   }
 
-  // Review: Validate the fields required to create a review and its ratings.
+  // Validates required creation fields, feedback, status, and ratings.
+  // Checks category names against the active review type configuration.
   async validateCreateReviewPayload(body) {
     if (!body.bookingId) throw new BadRequestException("bookingId is required.");
     if (!body.propertyId) throw new BadRequestException("propertyId is required.");
     if (!body.reviewType) throw new BadRequestException("reviewType is required.");
-    if (!REVIEW_TYPES.has(body.reviewType)) throw new BadRequestException("reviewType is not supported.");
+    if (!getReviewTypePolicy(body.reviewType)) throw new BadRequestException("reviewType is not supported.");
     if (!body.title?.trim()) throw new BadRequestException("title is required.");
     if (!body.publicReview?.trim()) throw new BadRequestException("publicReview is required.");
     this.validatePrivateFeedback(body.privateFeedback);
@@ -673,7 +724,8 @@ class ReviewService {
     await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
   }
 
-  // Review: Validate only the fields supplied when an existing review is edited.
+  // Validates only fields supplied in an update request.
+  // Rejects empty content and invalid status or rating values.
   async validateUpdateReviewPayload(body) {
     const hasEditableField =
       body.title !== undefined ||
@@ -710,13 +762,15 @@ class ReviewService {
     }
   }
 
-  // Review: Reuse the status service while allowing drafts to omit a status on creation.
+  // Delegates status validation to the shared status service.
+  // Allows an omitted status only when the caller permits it.
   validateStatus(status, allowEmpty) {
     if (status === undefined && allowEmpty) return;
     this.statusService.validate(status);
   }
 
-  // Review: Check category names and rating ranges against the active configuration.
+  // Checks category ratings against active categories for the review type.
+  // Validates each rating using the shared five-star range rule.
   async validateCategoryRatings(reviewType, categoryRatings) {
     if (categoryRatings === undefined) return;
 
@@ -735,7 +789,8 @@ class ReviewService {
     });
   }
 
-  // Review: Keep every overall and category rating within the five-star scale.
+  // Converts a rating to a number and checks the supported scale.
+  // Reports the specific field when its value is invalid.
   validateRating(value, fieldName) {
     const rating = Number(value);
 
@@ -744,14 +799,16 @@ class ReviewService {
     }
   }
 
-  // Review: Require a non-empty message before creating or updating a host response.
+  // Ensures a host response contains a non-empty message.
+  // Rejects blank text before any response is persisted.
   validateResponseMessage(message) {
     if (!message?.trim()) {
       throw new BadRequestException("message is required.");
     }
   }
 
-  // Review: Validate optional internal feedback without rejecting an intentionally empty value.
+  // Enforces the length limit for optional Domits-only feedback.
+  // Allows the field to be omitted or left blank.
   validateDomitsPrivateFeedback(message) {
     if (message === undefined || message === null || !String(message).trim()) {
       return;
@@ -762,7 +819,8 @@ class ReviewService {
     }
   }
 
-  // Review: Host feedback is private, but it still needs the same server-side size boundary as the form.
+  // Enforces the server-side length limit for private host feedback.
+  // Allows the field to be omitted or left blank.
   validatePrivateFeedback(message) {
     if (message === undefined || message === null || !String(message).trim()) {
       return;
@@ -773,14 +831,16 @@ class ReviewService {
     }
   }
 
-  // Review: Restrict internal feedback access to authorized Domits roles.
+  // Restricts internal feedback endpoints to approved Domits roles.
+  // Normalizes role names before checking authorization.
   assertDomitsInternalAccess(user) {
     if (!DOMITS_INTERNAL_ROLES.has(this.normalizeRole(user.role))) {
       throw new ForbiddenException("Only authorized Domits internal users can view this feedback.");
     }
   }
 
-  // Review: Only published public reviews may receive a host response.
+  // Loads a review and checks whether it can receive a host response.
+  // Requires a published public review with visible text.
   async getResponseEligibleReview(reviewId) {
     const review = await this.reviewRepository.getReviewById(reviewId);
 
@@ -788,7 +848,9 @@ class ReviewService {
       throw new NotFoundException("Review not found.");
     }
 
+    const reviewTypePolicy = getReviewTypePolicy(review.reviewType);
     const isEligible =
+      reviewTypePolicy?.allowsHostResponse === true &&
       review.status === REVIEW_STATUSES.PUBLISHED &&
       review.publicationStatus === "PUBLISHED" &&
       Boolean(review.publicReview?.trim());
@@ -800,7 +862,8 @@ class ReviewService {
     return review;
   }
 
-  // Review: Confirm that the host or an authorized team member owns the response context.
+  // Checks whether the caller is the host or an authorized team member.
+  // Rejects guests and callers without active host-team access.
   async assertHostReviewAccess(user, hostId, deniedMessage = "You are not allowed to respond to this review.") {
     const actorRole = this.normalizeResponseAuthorRole(user.role);
 
@@ -816,27 +879,32 @@ class ReviewService {
     throw new ForbiddenException(deniedMessage);
   }
 
-  // Review: Normalize response roles before applying host-access rules.
+  // Normalizes a response author's role, defaulting missing roles to host.
+  // Provides a consistent role value for response authorization checks.
   normalizeResponseAuthorRole(role) {
     return this.normalizeRole(role || "host");
   }
 
-  // Review: Normalize role values for reliable authorization comparisons.
+  // Trims and lowercases role values for consistent comparisons.
+  // Returns an empty string when no role is provided.
   normalizeRole(role) {
     return String(role || "").trim().toLowerCase();
   }
 
-  // Review: Check whether a role can publish a response on behalf of a host.
+  // Checks whether a normalized role may respond for a host.
+  // Uses the shared set of permitted host response roles.
   isHostResponseRole(role) {
     return HOST_RESPONSE_ROLES.has(this.normalizeResponseAuthorRole(role));
   }
 
-  // Review: Identify roles that must never act as host responders.
+  // Identifies guest-only roles that cannot respond on behalf of a host.
+  // Normalizes the role before checking the restricted role list.
   isGuestOnlyRole(role) {
     return ["guest", "traveler", "customer"].includes(this.normalizeResponseAuthorRole(role));
   }
 
-  // Review: Record response reads and changes when repository audit support is available.
+  // Writes an audit event when the repository supports response auditing.
+  // Includes the review, response, actor, and occurrence time.
   async logReviewResponseAudit({ action, review, response, actor, occurredAt }) {
     if (typeof this.reviewRepository.recordReviewAuditEvent !== "function") {
       return;
@@ -852,12 +920,14 @@ class ReviewService {
     });
   }
 
-  // Review: Resolve the allowed starting status for a new review.
+  // Resolves the valid initial status for a new review.
+  // Delegates status policy to the shared status service.
   resolveInitialStatus(status) {
     return this.statusService.resolveInitialStatus(status);
   }
 
-  // Review: Resolve an author or moderator transition through the status service.
+  // Resolves a requested status transition for an author or moderator.
+  // Delegates transition rules to the shared status service.
   resolveUpdateStatus({ currentStatus, requestedStatus, actorUserId, authorUserId, actorRole }) {
     return this.statusService.resolveUpdateStatus({
       currentStatus,
@@ -868,9 +938,11 @@ class ReviewService {
     });
   }
 
-  // Review: Build the persisted review fields from the verified booking and request body.
+  // Creates the persisted review record from validated input and booking data.
+  // Derives reviewer, reviewee, and publication fields from policy and status.
   buildReviewRecord({ booking, body, reviewerUserId, status, now }) {
     const derivedStatuses = this.statusService.getDerivedStatuses(status);
+    const reviewTypePolicy = getReviewTypePolicy(body.reviewType);
 
     return {
       id: randomUUID(),
@@ -878,7 +950,7 @@ class ReviewService {
       propertyId: booking.property_id,
       hostId: booking.hostid,
       reviewerUserId,
-      revieweeUserId: booking.hostid,
+      revieweeUserId: booking[reviewTypePolicy.revieweeBookingField],
       reviewType: body.reviewType,
       overallRating: Number(body.overallRating),
       title: body.title.trim(),
@@ -892,7 +964,8 @@ class ReviewService {
     };
   }
 
-  // Review: Build only the changed review fields while refreshing derived statuses.
+  // Builds an update containing only the supplied content fields.
+  // Refreshes derived statuses and the update timestamp.
   buildReviewUpdateRecord(body, status, now) {
     const derivedStatuses = this.statusService.getDerivedStatuses(status);
 
@@ -908,7 +981,8 @@ class ReviewService {
     };
   }
 
-  // Review: Convert category ratings into database records for the review transaction.
+  // Converts category ratings into records associated with a review id.
+  // Adds generated ids and a shared creation timestamp to each record.
   buildReviewRatingRecords({ reviewId, categoryRatings = {}, createdAt }) {
     return Object.entries(categoryRatings).map(([category, rating]) => ({
       id: randomUUID(),
@@ -919,9 +993,11 @@ class ReviewService {
     }));
   }
 
-  // Review: Assemble request, verification, moderation, and internal-feedback records together.
+  // Builds the related workflow records for a review's current status.
+  // Includes only the request, verification, moderation, and private feedback records that apply.
   buildWorkflowRecords({ review, booking, status, now, domitsPrivateFeedback = null }) {
     const isDraft = status === REVIEW_STATUSES.DRAFT;
+    const reviewTypePolicy = getReviewTypePolicy(review.reviewType);
     const normalizedDomitsPrivateFeedback = String(domitsPrivateFeedback ?? "").trim();
     const isVerified = [
       REVIEW_STATUSES.VERIFIED,
@@ -959,12 +1035,12 @@ class ReviewService {
     }
 
     return {
-      reviewRequest: {
+      reviewRequest: reviewTypePolicy.createsGuestRequest ? {
         id: randomUUID(),
         bookingId: review.bookingId,
         propertyId: review.propertyId,
         hostId: review.hostId,
-        guestId: review.reviewerUserId,
+        guestId: booking.guestid,
         reviewType: review.reviewType,
         status: isDraft ? "OPEN" : "COMPLETED",
         requestedAt: now,
@@ -973,7 +1049,7 @@ class ReviewService {
         nextSendAt: isDraft ? Math.max(now, Number(booking.departuredate || now) + REVIEW_REQUEST_DELAY_HOURS * 60 * 60 * 1000) : null,
         createdAt: now,
         updatedAt: now,
-      },
+      } : null,
       verification: isVerified
         ? {
             id: randomUUID(),
@@ -993,7 +1069,7 @@ class ReviewService {
             id: randomUUID(),
             reviewId: review.id,
             reservationId: booking.id || review.bookingId,
-            guestId: review.reviewerUserId,
+            guestId: booking.guestid,
             propertyId: review.propertyId,
             feedbackType: DOMITS_PRIVATE_FEEDBACK_TYPE,
             message: normalizedDomitsPrivateFeedback,
@@ -1004,7 +1080,8 @@ class ReviewService {
     };
   }
 
-  // Review: Parse JSON request bodies and return a consistent client error for malformed input.
+  // Parses string request bodies and defaults empty bodies to an object.
+  // Converts malformed JSON into a consistent client error.
   parseBody(rawBody) {
     try {
       return typeof rawBody === "string" ? JSON.parse(rawBody || "{}") : rawBody || {};

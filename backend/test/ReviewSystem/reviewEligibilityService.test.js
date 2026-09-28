@@ -4,6 +4,7 @@ import ReviewEligibilityService from "../../functions/ReviewSystem/business/serv
 const NOW = Date.parse("2026-09-10T12:00:00.000Z");
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+// Builds a default booking with optional field overrides.
 const createBooking = (overrides = {}) => ({
   id: "booking-1",
   guestid: "guest-1",
@@ -14,6 +15,7 @@ const createBooking = (overrides = {}) => ({
   ...overrides,
 });
 
+// Builds a valid eligibility request with optional field overrides.
 const eligibilityPayload = (overrides = {}) => ({
   bookingId: "booking-1",
   propertyId: "property-1",
@@ -22,6 +24,7 @@ const eligibilityPayload = (overrides = {}) => ({
   ...overrides,
 });
 
+// Creates the service and its mocked repository dependencies.
 const buildService = ({ repositoryOverrides = {} } = {}) => {
   const reviewRepository = {
     getBookingById: jest.fn().mockResolvedValue(createBooking()),
@@ -38,7 +41,9 @@ const buildService = ({ repositoryOverrides = {} } = {}) => {
   };
 };
 
+// Covers reservation eligibility validation behavior.
 describe("ReviewEligibilityService", () => {
+  // Confirms an eligible reservation returns its booking and performs the expected lookups.
   it("returns the booking when the reservation is eligible", async () => {
     const { service, reviewRepository } = buildService();
 
@@ -53,6 +58,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms a booking identifier is required.
   it("rejects missing booking id", async () => {
     const { service } = buildService();
 
@@ -64,6 +70,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms a property identifier is required.
   it("rejects missing property id", async () => {
     const { service } = buildService();
 
@@ -75,6 +82,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms a review type is required.
   it("rejects missing review type", async () => {
     const { service } = buildService();
 
@@ -86,6 +94,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms the reviewer must be authenticated.
   it("rejects missing authenticated reviewer", async () => {
     const { service } = buildService();
 
@@ -97,6 +106,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms an unknown booking is rejected.
   it("rejects unknown bookings", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -110,6 +120,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms only the booking guest can submit a guest-to-property review.
   it("rejects users who are not the booking guest", async () => {
     const { service } = buildService();
 
@@ -121,6 +132,42 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms the booking host can submit a host-to-guest review.
+  it("allows the booking host to review the guest", async () => {
+    const { service } = buildService();
+
+    await expect(
+      service.validateReservationEligibility(
+        eligibilityPayload({ reviewType: "HOST_TO_GUEST", reviewerUserId: "host-1" })
+      )
+    ).resolves.toEqual(createBooking());
+  });
+
+  // Confirms guests cannot submit host-to-guest reviews.
+  it("rejects a guest attempting to submit a host-to-guest review", async () => {
+    const { service } = buildService();
+
+    await expect(
+      service.validateReservationEligibility(eligibilityPayload({ reviewType: "HOST_TO_GUEST" }))
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: "Only the host of this booking can leave this review.",
+    });
+  });
+
+  // Confirms unsupported review types are rejected.
+  it("rejects unsupported review types", async () => {
+    const { service } = buildService();
+
+    await expect(
+      service.validateReservationEligibility(eligibilityPayload({ reviewType: "UNKNOWN" }))
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "reviewType is not supported.",
+    });
+  });
+
+  // Confirms the requested property must match the booking property.
   it("rejects property mismatch", async () => {
     const { service } = buildService();
 
@@ -132,6 +179,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms only completed bookings can be reviewed.
   it("rejects bookings that are not completed", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -145,6 +193,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms completed booking status matching is case-insensitive.
   it("accepts completed booking status case-insensitively", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -157,6 +206,7 @@ describe("ReviewEligibilityService", () => {
     );
   });
 
+  // Confirms reviews are unavailable before checkout.
   it("rejects stays before checkout", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -170,6 +220,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms invalid checkout dates are rejected.
   it("rejects invalid checkout dates", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -183,6 +234,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms a review remains valid on the final day of its window.
   it("allows reviews on the last day of the review window", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -195,6 +247,7 @@ describe("ReviewEligibilityService", () => {
     );
   });
 
+  // Confirms reviews are rejected after the review window expires.
   it("rejects expired review windows", async () => {
     const { service } = buildService({
       repositoryOverrides: {
@@ -208,6 +261,7 @@ describe("ReviewEligibilityService", () => {
     });
   });
 
+  // Confirms a reviewer cannot submit a duplicate review for the booking.
   it("rejects duplicate reviews", async () => {
     const { service } = buildService({
       repositoryOverrides: {
