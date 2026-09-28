@@ -134,31 +134,35 @@ describe("static site metadata for a published direct booking website", () => {
       url: "https://wellness-villa-bisous-bf378265.direct.domits.com/",
       address: { "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" },
     });
-    expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Freezer", "Oven"]);
-
+    expect(metadata.jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "LodgingBusiness",
+      name: "Wellness Villa Bisous",
+      description: metadata.description,
+      url: "https://wellness-villa-bisous-bf378265.direct.domits.com/",
+      address: { "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" },
+    });
     const serializedJsonLd = JSON.stringify(metadata.jsonLd);
     expect(serializedJsonLd).not.toContain("550");
     expect(serializedJsonLd).not.toMatch(/price|offer/i);
   });
 
-  it("leaves hidden amenities and hidden photos out of the structured data too", () => {
-    const { metadata } = buildMetadataFor({
-      contentOverrides: { visibility: { amenitiesPanel: false, gallerySection: false } },
-    });
+  it("claims no photos and no amenities in the structured data, because a template may hide them", () => {
+    const { metadata } = buildMetadataFor();
 
+    expect(metadata.jsonLd.image).toBeUndefined();
     expect(metadata.jsonLd.amenityFeature).toBeUndefined();
-    expect(JSON.stringify(metadata)).not.toContain("Freezer");
-    expect(metadata.jsonLd.image).toEqual([
-      "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg",
-    ]);
+    expect(metadata.jsonLd.alternateName).toBeUndefined();
     expect(metadata.openGraph["og:image"]).toContain("first/web.jpg");
   });
+
 
   it("does not report bedrooms as the total number of rooms", () => {
     const { metadata, model } = buildMetadataFor();
 
     expect(model.stay.bedrooms).toBe(4);
     expect(metadata.jsonLd.numberOfRooms).toBeUndefined();
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("4");
   });
 
   it("falls back to the site name when the snapshot carries no listing title", () => {
@@ -232,5 +236,81 @@ describe("what happens when the input is missing or malformed", () => {
       expect(metadata.canonicalUrl).toBe("");
       expect(metadata.robots).toBe("noindex, nofollow");
     });
+  });
+});
+
+describe("the boundary of the privacy rules", () => {
+  it("never puts the street, house number or postal code in a field it composes itself", () => {
+    const { metadata } = buildMetadataFor();
+    const composed = JSON.stringify([metadata.title, metadata.canonicalUrl, metadata.openGraph, metadata.jsonLd]);
+
+    expect(composed).not.toContain("Jalan Raya Sayan");
+    expect(composed).not.toContain("80571");
+    expect(composed).not.toContain('"17"');
+    expect(metadata.jsonLd.address).toEqual({
+      "@type": "PostalAddress",
+      addressLocality: "Ubud",
+      addressCountry: "Indonesia",
+    });
+  });
+
+  it("passes the description the host published through unchanged, because it is already public", () => {
+    const hostWrote = "Our villa on Jalan Raya Sayan 17, from EUR 550 per night.";
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: { property: { title: "Wellness Villa Bisous", description: hostWrote } },
+    });
+
+    expect(metadata.description).toBe(hostWrote);
+  });
+});
+
+describe("calling it with no argument at all", () => {
+  it("does not crash and produces a non indexable result", () => {
+    [() => buildStaticSiteMetadata(), () => buildStaticSiteMetadata({})].forEach((call) => {
+      expect(call).not.toThrow();
+      expect(call().robots).toBe("noindex, nofollow");
+      expect(call().jsonLd).toBeNull();
+    });
+  });
+
+  it("survives a value that cannot be turned into text", () => {
+    const hostile = { toString: 0 };
+
+    expect(() =>
+      buildStaticSiteMetadata({
+        renderPayload: buildPublishedSiteRenderPayload({ site: { siteName: hostile } }),
+        model: { location: { city: hostile, country: hostile }, site: { title: hostile } },
+      })
+    ).not.toThrow();
+  });
+
+  it("never writes an object into the structured data", () => {
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { site: { title: "Villa" }, location: { city: { nope: true }, country: ["nope"] } },
+    });
+
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("[object Object]");
+    expect(metadata.jsonLd.address).toBeUndefined();
+  });
+});
+
+describe("the canonical never drifts to another domain", () => {
+  it("accepts a custom domain when it is the primary one", () => {
+    const { metadata } = buildMetadataFor({
+      domain: { domain: "www.villasensual.nl", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true },
+    });
+
+    expect(metadata.canonicalUrl).toBe("https://www.villasensual.nl/");
+    expect(metadata.robots).toBe("index, follow");
+  });
+
+  it("claims nothing when the fallback domain is not the primary one", () => {
+    const { metadata } = buildMetadataFor({
+      domain: { domain: "villa-x-12345678.direct.domits.com", domainType: "FALLBACK", status: "ACTIVE", isPrimary: false },
+    });
+
+    expect(metadata.canonicalUrl).toBe("");
+    expect(metadata.robots).toBe("noindex, nofollow");
   });
 });
