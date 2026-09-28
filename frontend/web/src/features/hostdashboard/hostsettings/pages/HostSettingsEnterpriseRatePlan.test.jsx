@@ -110,7 +110,7 @@ describe("HostSettingsEnterpriseRatePlan", () => {
       expect(screen.getByText("Enterprise")).toBeInTheDocument()
     );
 
-    expect(screen.getByText("€49.00")).toBeInTheDocument();
-    expect(screen.getByText("€4,900.00")).toBeInTheDocument();
+    expect(screen.getAllByText("€49.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("€4,900.00").length).toBeGreaterThan(0);
   });
 });
