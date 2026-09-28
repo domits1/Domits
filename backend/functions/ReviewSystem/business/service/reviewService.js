@@ -34,8 +34,9 @@ class ReviewService {
       });
   }
 
+  // Fetch reviews for a user, property, or booking context.
+  // Review: This retrieves the correct review set for the authenticated caller and route parameters.
   async getReviews(event) {
-    // Review: Selects the authenticated guest history, booking-scoped reviews, or published property reviews.
     const query = event.queryStringParameters || {};
 
     if (query.propertyId) {
@@ -55,8 +56,9 @@ class ReviewService {
     throw new BadRequestException("Missing review query.");
   }
 
+  // Read a single review while enforcing the correct visibility rules.
+  // Review: Published reviews are public; unpublished data stays restricted to the guest or host.
   async getReviewById(event, reviewId) {
-    // Review: Published reviews are public; unpublished data stays limited to the guest or host.
     const review = await this.reviewRepository.getReviewById(reviewId);
 
     if (!review) {
@@ -76,8 +78,9 @@ class ReviewService {
     return { review };
   }
 
+  // Create a review after validating the reservation and payload.
+  // Review: This validates the stay, builds the review record, and saves the linked workflow state.
   async createReview(event) {
-    // Review: Validates the completed stay before building the review, ratings, and workflow records.
     const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
     const body = this.parseBody(event.body);
 
@@ -118,8 +121,9 @@ class ReviewService {
     return this.reviewRepository.createReviewWithRatings(review, ratings, workflowRecords);
   }
 
+  // Update a review’s content or lifecycle state if the caller is allowed to do so.
+  // Review: This limits edits to the author and delegates workflow transitions to the status service.
   async updateReview(event) {
-    // Review: Limits content changes to the author and delegates status transitions to the status service.
     const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
     const reviewId = event.pathParameters?.id || event.queryStringParameters?.id;
     const body = this.parseBody(event.body);
@@ -184,8 +188,9 @@ class ReviewService {
     return this.reviewRepository.updateReviewWithRatings(reviewId, updateData, ratings, workflowRecords);
   }
 
+  // Remove a review only if the author is the caller.
+  // Review: Only the review author can delete it while keeping the workflow history intact.
   async deleteReview(event) {
-    // Review: Allows only the author to remove a review while retaining its workflow history.
     const user = await this.authManager.authenticate(event.headers?.Authorization || event.headers?.authorization);
     const reviewId = event.pathParameters?.id || event.queryStringParameters?.id;
 
@@ -205,8 +210,9 @@ class ReviewService {
     return this.reviewRepository.softDeleteReview(reviewId);
   }
 
+  // Validate the review creation payload before a booking check is attempted.
+  // Review: This rejects incomplete or unsupported inputs before eligibility logic runs.
   async validateCreateReviewPayload(body) {
-    // Review: Rejects incomplete or unsupported review payloads before booking eligibility is queried.
     if (!body.bookingId) throw new BadRequestException("bookingId is required.");
     if (!body.propertyId) throw new BadRequestException("propertyId is required.");
     if (!body.reviewType) throw new BadRequestException("reviewType is required.");
@@ -219,6 +225,8 @@ class ReviewService {
     await this.validateCategoryRatings(body.reviewType, body.categoryRatings);
   }
 
+  // Validate review update data before saving changes.
+  // Review: This ensures the update payload is non-empty and consistent with the current review state.
   async validateUpdateReviewPayload(body) {
     const hasEditableField =
       body.title !== undefined ||
@@ -253,11 +261,15 @@ class ReviewService {
     }
   }
 
+  // Validate a review status before it is used in a workflow or payload.
+  // Review: This centralizes status checks and lets empty values pass only when explicitly allowed.
   validateStatus(status, allowEmpty) {
     if (status === undefined && allowEmpty) return;
     this.statusService.validate(status);
   }
 
+  // Validate category-level ratings against the supported review type.
+  // Review: This ensures every category score belongs to a valid supported category and range.
   async validateCategoryRatings(reviewType, categoryRatings) {
     if (categoryRatings === undefined) return;
 
@@ -276,6 +288,8 @@ class ReviewService {
     });
   }
 
+  // Validate a numeric rating before storing or passing it along.
+  // Review: Every rating must be a finite value between 1 and 5.
   validateRating(value, fieldName) {
     const rating = Number(value);
 
@@ -284,10 +298,14 @@ class ReviewService {
     }
   }
 
+  // Resolve the starting status of a new review.
+  // Review: This delegates the lifecycle decision to the status service for consistent rules.
   resolveInitialStatus(status) {
     return this.statusService.resolveInitialStatus(status);
   }
 
+  // Resolve the next status during an update request.
+  // Review: This delegates transition rules to the status service based on actor and review context.
   resolveUpdateStatus({ currentStatus, requestedStatus, actorUserId, authorUserId, actorRole }) {
     return this.statusService.resolveUpdateStatus({
       currentStatus,
@@ -298,6 +316,8 @@ class ReviewService {
     });
   }
 
+  // Build the persisted review record for a newly created review.
+  // Review: This creates the base record with the correct metadata and normalized values.
   buildReviewRecord({ booking, body, reviewerUserId, status, now }) {
     const derivedStatuses = this.statusService.getDerivedStatuses(status);
 
@@ -321,6 +341,8 @@ class ReviewService {
     };
   }
 
+  // Prepare the change record for updating an existing review.
+  // Review: This keeps the update payload aligned with the selected status and trimmed fields.
   buildReviewUpdateRecord(body, status, now) {
     const derivedStatuses = this.statusService.getDerivedStatuses(status);
 
@@ -336,6 +358,8 @@ class ReviewService {
     };
   }
 
+  // Convert category ratings into persistent records for the review.
+  // Review: Each category produces a separate rating row so they can be queried later.
   buildReviewRatingRecords({ reviewId, categoryRatings = {}, createdAt }) {
     return Object.entries(categoryRatings).map(([category, rating]) => ({
       id: randomUUID(),
@@ -346,8 +370,9 @@ class ReviewService {
     }));
   }
 
+  // Build the review request, verification, and moderation workflow records.
+  // Review: This creates the side records that follow the review lifecycle and moderation status.
   buildWorkflowRecords({ review, booking, status, now }) {
-    // Review: Builds the request, verification, and moderation side records that match the review status.
     const isDraft = status === REVIEW_STATUSES.DRAFT;
     const isVerified = [
       REVIEW_STATUSES.VERIFIED,
@@ -416,6 +441,8 @@ class ReviewService {
     };
   }
 
+  // Parse the incoming request body and normalize it to an object.
+  // Review: This turns malformed JSON into a clear API error before the workflow continues.
   parseBody(rawBody) {
     try {
       return typeof rawBody === "string" ? JSON.parse(rawBody || "{}") : rawBody || {};
