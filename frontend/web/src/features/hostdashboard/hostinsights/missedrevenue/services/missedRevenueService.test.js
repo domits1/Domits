@@ -79,6 +79,77 @@ describe("fetchMissedRevenue", () => {
     ]);
   });
 
+  describe("breakdown fields", () => {
+    const mockConnectedBody = (body) => {
+      globalThis.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ connected: true, ...body }),
+      });
+    };
+
+    test("normalizes byDate entries, coercing amounts to numbers", async () => {
+      mockConnectedBody({
+        byDate: [
+          { date: "2026-09-02", missedRevenue: 120 },
+          { date: "2026-09-03", missedRevenue: "bad" },
+        ],
+      });
+
+      const result = await fetchMissedRevenue({ startDate: "2026-09-01", endDate: "2026-09-30" });
+
+      expect(result.byDate).toEqual([
+        { date: "2026-09-02", missedRevenue: 120 },
+        { date: "2026-09-03", missedRevenue: 0 },
+      ]);
+    });
+
+    test("normalizes the root-cause split and fills any missing category with zeros", async () => {
+      mockConnectedBody({ rootCause: { pricing: { missedRevenue: 80, nights: 2 } } });
+
+      const result = await fetchMissedRevenue({ startDate: "2026-09-01", endDate: "2026-09-30" });
+
+      expect(result.rootCause).toEqual({
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 80, nights: 2 },
+        occupancy: { missedRevenue: 0, nights: 0 },
+      });
+    });
+
+    test("keeps an undefined percent change as null instead of coercing it to 0", async () => {
+      mockConnectedBody({
+        comparison: {
+          previousPeriod: {
+            startDate: "2026-08-02",
+            endDate: "2026-08-31",
+            grossMissedRevenue: 0,
+            actualRevenue: 100,
+            potentialRevenue: 200,
+            revenueEfficiencyPct: 50,
+          },
+          delta: { grossMissedRevenue: 300, actualRevenue: 20, potentialRevenue: 40 },
+          percentChange: { grossMissedRevenue: null, actualRevenue: 20, potentialRevenue: 20 },
+        },
+      });
+
+      const result = await fetchMissedRevenue({ startDate: "2026-09-01", endDate: "2026-09-30" });
+
+      expect(result.comparison.percentChange.grossMissedRevenue).toBeNull();
+      expect(result.comparison.percentChange.actualRevenue).toBe(20);
+      expect(result.comparison.delta.grossMissedRevenue).toBe(300);
+      expect(result.comparison.previousPeriod.startDate).toBe("2026-08-02");
+    });
+
+    test("defaults the breakdown fields when the backend omits them", async () => {
+      mockConnectedBody({});
+
+      const result = await fetchMissedRevenue({ startDate: "2026-09-01", endDate: "2026-09-30" });
+
+      expect(result.byDate).toEqual([]);
+      expect(result.comparison).toBeNull();
+      expect(result.rootCause.occupancy).toEqual({ missedRevenue: 0, nights: 0 });
+    });
+  });
+
   test("throws the backend's error message on a non-OK response", async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({
       ok: false,

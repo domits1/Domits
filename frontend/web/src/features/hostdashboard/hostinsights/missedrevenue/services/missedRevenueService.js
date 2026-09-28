@@ -5,6 +5,7 @@ import {
   MISSED_REVENUE_AMOUNT_FIELD_KEYS,
   MISSED_REVENUE_COUNT_FIELD_KEYS,
   MISSED_REVENUE_PERCENTAGE_FIELD_KEYS,
+  ROOT_CAUSE_KEYS,
 } from "../missedRevenueFields";
 
 const BASE = "https://wq2aughzk2.execute-api.eu-north-1.amazonaws.com/default";
@@ -34,6 +35,55 @@ const normalizeByProperty = (byProperty) =>
         unbookedNightsWithPriceData: normalizeNumericMetric(entry?.unbookedNightsWithPriceData),
       }))
     : [];
+
+const normalizeByDate = (byDate) =>
+  Array.isArray(byDate)
+    ? byDate.map((entry) => ({
+        date: String(entry?.date || ""),
+        missedRevenue: normalizeNumericMetric(entry?.missedRevenue),
+      }))
+    : [];
+
+const normalizeRootCause = (rootCause) =>
+  Object.fromEntries(
+    ROOT_CAUSE_KEYS.map((causeKey) => [
+      causeKey,
+      {
+        missedRevenue: normalizeNumericMetric(rootCause?.[causeKey]?.missedRevenue),
+        nights: normalizeNumericMetric(rootCause?.[causeKey]?.nights),
+      },
+    ])
+  );
+
+// null means "growth undefined" (previous period was 0), which is not the same
+// as 0% change, so it must survive normalization.
+const normalizePercentChange = (value) => {
+  if (value === null || value === undefined) return null;
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const normalizeComparison = (comparison) => {
+  if (!comparison?.previousPeriod) return null;
+
+  const { previousPeriod, delta, percentChange } = comparison;
+
+  return {
+    previousPeriod: {
+      startDate: previousPeriod.startDate ?? null,
+      endDate: previousPeriod.endDate ?? null,
+      ...normalizeMetricGroup(previousPeriod, MISSED_REVENUE_AMOUNT_FIELD_KEYS),
+      revenueEfficiencyPct: normalizeNumericMetric(previousPeriod.revenueEfficiencyPct),
+    },
+    delta: normalizeMetricGroup(delta, MISSED_REVENUE_AMOUNT_FIELD_KEYS),
+    percentChange: Object.fromEntries(
+      MISSED_REVENUE_AMOUNT_FIELD_KEYS.map((fieldKey) => [
+        fieldKey,
+        normalizePercentChange(percentChange?.[fieldKey]),
+      ])
+    ),
+  };
+};
 
 const buildUrl = (startDate, endDate) => {
   const params = new URLSearchParams();
@@ -69,5 +119,8 @@ export const fetchMissedRevenue = async ({ startDate, endDate } = {}) => {
     ...normalizeMetricGroup(parsedBody, MISSED_REVENUE_AMOUNT_FIELD_KEYS),
     ...normalizeMetricGroup(parsedBody, MISSED_REVENUE_PERCENTAGE_FIELD_KEYS),
     byProperty: normalizeByProperty(parsedBody?.byProperty),
+    byDate: normalizeByDate(parsedBody?.byDate),
+    rootCause: normalizeRootCause(parsedBody?.rootCause),
+    comparison: normalizeComparison(parsedBody?.comparison),
   };
 };

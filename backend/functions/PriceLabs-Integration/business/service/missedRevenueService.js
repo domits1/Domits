@@ -99,6 +99,103 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
   return { total, byProperty, byPropertyDate };
 }
 
+/**
+ * A night is flagged "restriction" when PriceLabs closed it to arrival/departure,
+ * or when a min_stay greater than 1 was in effect. min_stay is nullable with no
+ * reliable default (null after disconnect or if never synced; only PriceLabs-fresh
+ * rows default it to 1) - null/undefined means "no restriction data", not
+ * "min_stay=1".
+ *
+ * This does NOT claim the restriction caused the missed booking - min_stay's
+ * scope (arrival-day-only vs. stay-through) is unresolved in this codebase: the
+ * Channex ARI integration maps it to "min_stay_through", but the PriceLabs
+ * webhook bundles it per-date alongside check_in/check_out, suggesting
+ * arrival-scoped. Nothing reconciles these. We only surface that a restriction
+ * signal was present on the date, as a contributing-factor category, not a
+ * sentence asserting causation.
+ */
+function hasRestrictionSignal(row) {
+  if (row.closed_to_arrival === true) return true;
+  if (row.closed_to_departure === true) return true;
+  if (row.min_stay != null && Number(row.min_stay) > 1) return true;
+  return false;
+}
+
+// Heuristic, not a market-rate comparison: this codebase has no external demand
+// data. "Outlier" means the night's own pricelabs_price sits more than 20% below
+// this property's own mean pricelabs_price across sellable nights (booked or
+// unbooked, so the baseline isn't self-referential on the very nights being
+// judged) in the queried range. Needs at least PRICING_OUTLIER_MIN_SAMPLE priced
+// sellable nights for that property, or the mean isn't trusted and every night
+// falls through to occupancy instead.
+const PRICING_OUTLIER_RATIO = 0.8; // price < 80% of the property's own mean
+const PRICING_OUTLIER_MIN_SAMPLE = 2;
+
+function meanPriceByProperty(priceRows, bookedByProperty) {
+  const stats = new Map();
+  for (const row of priceRows) {
+    const iso = isoFromCalendarInt(row.calendar_date);
+    const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
+    if (!isPotentialNight(row, isBooked)) continue;
+    if (row.pricelabs_price == null) continue;
+    const entry = stats.get(row.property_id) ?? { sum: 0, count: 0 };
+    entry.sum += Number(row.pricelabs_price);
+    entry.count += 1;
+    stats.set(row.property_id, entry);
+  }
+  const means = new Map();
+  for (const [propertyId, { sum, count }] of stats) {
+    if (count >= PRICING_OUTLIER_MIN_SAMPLE) means.set(propertyId, sum / count);
+  }
+  return means;
+}
+
+function isPricingOutlier(propertyId, price, meansByProperty) {
+  const mean = meansByProperty.get(propertyId);
+  if (mean == null) return false;
+  return price < mean * PRICING_OUTLIER_RATIO;
+}
+
+/**
+ * restriction > pricing > occupancy: restriction is the most concrete/certain
+ * signal, pricing is a same-property heuristic (see isPricingOutlier), occupancy
+ * is the fallback when neither concrete signal applies.
+ */
+function categorizeMissedNight(row, price, meansByProperty) {
+  if (hasRestrictionSignal(row)) return "restriction";
+  if (isPricingOutlier(row.property_id, price, meansByProperty)) return "pricing";
+  return "occupancy";
+}
+
+/**
+ * Same day-count as [startDate, endDate], ending the day immediately before
+ * startDate. Deliberately NOT calendar-month-aligned: querying Sep 1-30 (30
+ * days) compares against Aug 2-31 (30 days), not the full calendar month of
+ * August - an equal-length comparison is the more defensible baseline.
+ */
+function priorPeriodRange(startDate, endDate) {
+  const startMs = Date.parse(`${startDate}T00:00:00Z`);
+  const endMs = Date.parse(`${endDate}T00:00:00Z`);
+  const rangeDays = Math.round((endMs - startMs) / MS_PER_DAY) + 1;
+
+  const priorEndMs = startMs - MS_PER_DAY;
+  const priorStartMs = priorEndMs - (rangeDays - 1) * MS_PER_DAY;
+
+  return {
+    startDate: new Date(priorStartMs).toISOString().slice(0, 10),
+    endDate: new Date(priorEndMs).toISOString().slice(0, 10),
+  };
+}
+
+/**
+ * previous === 0 makes growth rate undefined, not infinite - report null unless
+ * current is also 0, in which case "no change" (0%) is accurate and useful.
+ */
+function percentChange(current, previous) {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / previous) * 100;
+}
+
 function ensureProperty(byPropertyMap, propertyId) {
   if (!byPropertyMap.has(propertyId)) {
     byPropertyMap.set(propertyId, {
@@ -159,13 +256,48 @@ export class MissedRevenueService {
       return { connected: false };
     }
 
+    const bookings = await this.repo.getBookingsByHost(hostId);
+    const prior = priorPeriodRange(startDate, endDate);
+
+    const [current, previous] = await Promise.all([
+      this._computePeriodMetrics(hostId, startDate, endDate, bookings),
+      this._computePeriodMetrics(hostId, prior.startDate, prior.endDate, bookings),
+    ]);
+
+    return {
+      connected: true,
+      startDate,
+      endDate,
+      currency: "EUR",
+      ...current,
+      comparison: {
+        previousPeriod: {
+          startDate: prior.startDate,
+          endDate: prior.endDate,
+          grossMissedRevenue: previous.grossMissedRevenue,
+          actualRevenue: previous.actualRevenue,
+          potentialRevenue: previous.potentialRevenue,
+          revenueEfficiencyPct: previous.revenueEfficiencyPct,
+        },
+        delta: {
+          grossMissedRevenue: current.grossMissedRevenue - previous.grossMissedRevenue,
+          actualRevenue: current.actualRevenue - previous.actualRevenue,
+          potentialRevenue: current.potentialRevenue - previous.potentialRevenue,
+        },
+        percentChange: {
+          grossMissedRevenue: percentChange(current.grossMissedRevenue, previous.grossMissedRevenue),
+          actualRevenue: percentChange(current.actualRevenue, previous.actualRevenue),
+          potentialRevenue: percentChange(current.potentialRevenue, previous.potentialRevenue),
+        },
+      },
+    };
+  }
+
+  async _computePeriodMetrics(hostId, startDate, endDate, bookings) {
     const from = calendarIntFromDate(startDate);
     const to = calendarIntFromDate(endDate);
 
-    const [priceRows, bookings] = await Promise.all([
-      this.repo.getCalendarPriceDataForHost(hostId, from, to),
-      this.repo.getBookingsByHost(hostId),
-    ]);
+    const priceRows = await this.repo.getCalendarPriceDataForHost(hostId, from, to);
 
     const bookedByProperty = bookedDateSetByProperty(bookings);
     const {
@@ -184,6 +316,13 @@ export class MissedRevenueService {
     let potentialNightsWithPriceData = 0;
     let potentialNightsWithoutPriceData = 0;
     const byPropertyMap = new Map();
+    const byDateMap = new Map();
+    const rootCause = {
+      restriction: { missedRevenue: 0, nights: 0 },
+      pricing: { missedRevenue: 0, nights: 0 },
+      occupancy: { missedRevenue: 0, nights: 0 },
+    };
+    const meansByProperty = meanPriceByProperty(priceRows, bookedByProperty);
 
     for (const row of priceRows) {
       const iso = isoFromCalendarInt(row.calendar_date);
@@ -214,6 +353,11 @@ export class MissedRevenueService {
       const price = Number(row.pricelabs_price);
       grossMissedRevenue += price;
       unbookedNightsWithPriceData += 1;
+      byDateMap.set(iso, (byDateMap.get(iso) ?? 0) + price);
+
+      const category = categorizeMissedNight(row, price, meansByProperty);
+      rootCause[category].missedRevenue += price;
+      rootCause[category].nights += 1;
 
       const existing = ensureProperty(byPropertyMap, row.property_id);
       existing.missedRevenue += price;
@@ -231,11 +375,12 @@ export class MissedRevenueService {
     const priceDataCoveragePct =
       totalUnbookedNightsSeen > 0 ? (unbookedNightsWithPriceData / totalUnbookedNightsSeen) * 100 : 0;
 
+    const byDate = Array.from(byDateMap.entries())
+      .filter(([, missedRevenue]) => missedRevenue > 0)
+      .map(([date, missedRevenue]) => ({ date, missedRevenue }))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
     return {
-      connected: true,
-      startDate,
-      endDate,
-      currency: "EUR",
       grossMissedRevenue,
       actualRevenue,
       potentialRevenue,
@@ -250,6 +395,8 @@ export class MissedRevenueService {
         propertyId,
         ...v,
       })),
+      byDate,
+      rootCause,
     };
   }
 }
