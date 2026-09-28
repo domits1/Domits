@@ -63,7 +63,7 @@ const createReview = (overrides = {}) => ({
 const buildService = ({ repositoryOverrides = {}, authOverrides = {}, eligibilityOverrides = {} } = {}) => {
   const reviewRepository = {
     getActiveRatingCategoryKeys: jest.fn().mockResolvedValue(
-      new Set(["cleanliness", "accuracy", "communication", "location", "checkIn", "value"])
+      new Set(["cleanliness", "accuracy", "communication", "location", "checkin", "value"])
     ),
     createReviewWithRatings: jest.fn().mockImplementation(async (review, ratings, workflowRecords) => ({
       review,
@@ -314,6 +314,29 @@ describe("ReviewService day 5 unit coverage", () => {
     });
 
     expect(eligibilityService.validateReservationEligibility).not.toHaveBeenCalled();
+  });
+
+  it("accepts and persists the configured check-in category", async () => {
+    const { service, reviewRepository } = buildService();
+
+    await service.createReview(
+      createEvent(
+        createReviewPayload({
+          categoryRatings: { checkin: 5 },
+        })
+      )
+    );
+
+    expect(reviewRepository.createReviewWithRatings).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: "checkin",
+          rating: 5,
+        }),
+      ]),
+      expect.any(Object)
+    );
   });
 
   it("rejects unsupported rating categories", async () => {

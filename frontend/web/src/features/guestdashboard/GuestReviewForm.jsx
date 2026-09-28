@@ -37,7 +37,7 @@ const REVIEW_CATEGORIES = [
   { key: "accuracy", label: "Accuracy" },
   { key: "communication", label: "Communication" },
   { key: "location", label: "Location" },
-  { key: "checkIn", label: "Check-in" },
+  { key: "checkin", label: "Check-in" },
   { key: "value", label: "Value" },
 ];
 
