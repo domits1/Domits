@@ -99,8 +99,18 @@ jobs:
           aws s3 sync frontend/web/build "s3://$SITES_BUCKET" \
             --exclude "static/*" \
             --exclude "index.html" \
+            --exclude "robots.txt" \
+            --exclude "sitemap.xml" \
             --cache-control "public, max-age=300" \
             --no-progress
+
+      - name: Upload the crawl files that belong to a host site
+        run: |
+          aws s3 cp frontend/web/public-sites/robots.txt "s3://$SITES_BUCKET/robots.txt" \
+            --cache-control "public, max-age=300" \
+            --content-type "text/plain; charset=utf-8" \
+            --no-progress
+          aws s3 rm "s3://$SITES_BUCKET/sitemap.xml"
 
       - name: Upload index.html
         run: |
