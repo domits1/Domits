@@ -8,32 +8,12 @@ const META_PATTERN = new RegExp(`<meta\\b${TAG_BODY}>\\s*`, "gi");
 const LINK_PATTERN = new RegExp(`<link\\b${TAG_BODY}>\\s*`, "gi");
 const OWNED_META_NAME_PATTERN = /\b(?:name|property)\s*=\s*["']?(description|robots|og:[\w:-]+|twitter:[\w:-]+)["']?/i;
 const ROBOTS_META_PATTERN = /\bname\s*=\s*["']?robots\b/i;
-const CONTENT_ATTRIBUTE_PATTERN = /\bcontent\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i;
-const ENTITY_PATTERN = /&(?:[a-z]+|#\d+);/gi;
 const CANONICAL_REL_PATTERN = /\brel\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i;
 
 const isCanonicalLink = (tag) => {
   const match = CANONICAL_REL_PATTERN.exec(tag);
   const relValue = match ? match[1] ?? match[2] ?? match[3] ?? "" : "";
   return relValue.toLowerCase().split(/\s+/).includes("canonical");
-};
-
-const stripTags = (value) => value.replaceAll(/<[^>]*>/g, " ").replaceAll(ENTITY_PATTERN, " ");
-
-const readRobotsDirectives = (tag) => {
-  const match = CONTENT_ATTRIBUTE_PATTERN.exec(tag);
-  const content = match ? match[1] ?? match[2] ?? match[3] ?? "" : "";
-  return content
-    .toLowerCase()
-    .split(",")
-    .map((directive) => directive.trim())
-    .filter(Boolean);
-};
-
-const combineRobotsDirectives = (directiveSets) => {
-  const directives = directiveSets.flat();
-  return [directives.includes("noindex") ? "noindex" : "index", directives.includes("nofollow") ? "nofollow" : "follow"]
-    .join(", ");
 };
 
 const asText = (value) => (typeof value === "string" || typeof value === "number" ? String(value).trim() : "");
@@ -47,6 +27,7 @@ const hasRenderableModel = (model) => {
 };
 const HTML_LANG_PATTERN = /(<html\b[^>]*\blang=")[^"]*(")/i;
 const NOSCRIPT_PATTERN = /<noscript>([\s\S]*?)<\/noscript>\s*/gi;
+const APP_SHELL_NOSCRIPT_NOTICE = "You need to enable JavaScript to run this app.";
 
 export const resolveStaticSiteTemplateKey = (renderPayload) =>
   String(renderPayload?.site?.templateKey || renderPayload?.resolution?.templateKey || "").trim();
@@ -95,24 +76,23 @@ export const buildStaticSiteDocument = (input) => {
     templateKey: resolveStaticSiteTemplateKey(renderPayload),
   });
 
-  const shellRobotsDirectives = [...template.matchAll(META_PATTERN)]
-    .filter((match) => ROBOTS_META_PATTERN.test(match[0]))
-    .map((match) => readRobotsDirectives(match[0]));
+  if ([...template.matchAll(META_PATTERN)].some((match) => ROBOTS_META_PATTERN.test(match[0]))) {
+    throw new TypeError("Cannot prerender an app shell that already carries a robots policy.");
+  }
 
   const documentWithoutOwnedTags = template
     .replace(TITLE_PATTERN, "")
     .replace(META_PATTERN, (match) => (OWNED_META_NAME_PATTERN.test(match) ? "" : match))
     .replace(LINK_PATTERN, (match) => (isCanonicalLink(match) ? "" : match))
     .replace(NOSCRIPT_PATTERN, (match, noscriptContent) =>
-      /enable\s+javascript/i.test(stripTags(noscriptContent)) ? "" : match
+      noscriptContent.trim() === APP_SHELL_NOSCRIPT_NOTICE ? "" : match
     );
 
   if (!documentWithoutOwnedTags.includes("</head>")) {
     throw new TypeError("Cannot prerender without an app shell containing a </head> tag.");
   }
 
-  const robots = combineRobotsDirectives([...shellRobotsDirectives, readRobotsDirectives(`content="${metadata.robots}"`)]);
-  const head = renderStaticSiteHead({ ...metadata, robots });
+  const head = renderStaticSiteHead(metadata);
 
   return documentWithoutOwnedTags
     .replace(

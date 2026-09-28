@@ -53,16 +53,16 @@ describe("a complete static document for a published direct booking website", ()
     expect(html).toMatch(/<meta property="og:image" content="https:\/\/[^"]+web\.jpg" \/>/);
   });
 
-  it("replaces an Open Graph tag the shell already carries and folds its robots policy in", () => {
+  it("replaces an Open Graph tag the shell already carries", () => {
     const html = buildDocumentFor({
       template: APP_SHELL_TEMPLATE.replace(
         '<meta charset="utf-8" />',
-        '<meta charset="utf-8" /><meta content="noindex" name="robots"><meta property=og:title content="Domits">'
+        '<meta charset="utf-8" /><meta property=og:title content="Domits">'
       ),
     });
 
     expect(html.match(/name="robots"/g)).toHaveLength(1);
-    expect(html).toContain('content="noindex, follow"');
+    expect(html).toContain('content="index, follow"');
     expect(html.match(/property="?og:title/g)).toHaveLength(1);
     expect(html).toContain('<meta property="og:title" content="Wellness Villa Bisous | Ubud, Indonesia" />');
     expect(html).toContain('<meta charset="utf-8" />');
@@ -178,55 +178,33 @@ describe("which sites get a document at all", () => {
   });
 });
 
-describe("combining the robots policy with the one the shell carries", () => {
-  const withShellRobots = (content) =>
-    buildDocumentFor({
-      template: APP_SHELL_TEMPLATE.replace("</head>", `<meta name="robots" content="${content}" /></head>`),
-    });
-
-  it("writes exactly one robots tag, always", () => {
+describe("an app shell that already carries a robots policy", () => {
+  it("declines rather than guess what the policy means", () => {
     [
-      APP_SHELL_TEMPLATE,
-      APP_SHELL_TEMPLATE.replace("</head>", '<meta name="robots" content="noindex" /></head>'),
-      APP_SHELL_TEMPLATE.replace(
-        "</head>",
-        '<meta name="robots" content="index, follow" /><meta name="robots" content="noindex" /></head>'
-      ),
-    ].forEach((template) => {
-      expect(buildDocumentFor({ template }).match(/name="robots"/g)).toHaveLength(1);
+      '<meta name="robots" content="noindex" />',
+      '<meta name="robots" content="none">',
+      '<meta name=robots content="noindex, nofollow">',
+      '<meta name="robots" data-content="index, follow" content="noindex&#44; nofollow">',
+      '<meta name="robots" content="index, follow" data-note="noindex on staging" />',
+    ].forEach((robotsTag) => {
+      expect(() =>
+        buildDocumentFor({ template: APP_SHELL_TEMPLATE.replace("</head>", `${robotsTag}</head>`) })
+      ).toThrow(/already carries a robots policy/);
     });
   });
 
-  it("keeps the most restrictive directive from either side", () => {
-    expect(withShellRobots("noindex")).toContain('content="noindex, follow"');
-    expect(withShellRobots("nofollow")).toContain('content="index, nofollow"');
-    expect(withShellRobots("noindex, nofollow")).toContain('content="noindex, nofollow"');
-    expect(withShellRobots("index, follow")).toContain('content="index, follow"');
+  it("writes exactly one robots tag when the shell carries none", () => {
+    const html = buildDocumentFor();
+
+    expect(html.match(/name="robots"/g)).toHaveLength(1);
+    expect(html).toContain('<meta name="robots" content="index, follow" />');
   });
 
-  it("never loses its own nofollow when the shell is less strict", () => {
-    const html = buildDocumentFor({
-      site: { status: "SUSPENDED" },
-      template: APP_SHELL_TEMPLATE.replace("</head>", '<meta name="robots" content="noindex, follow" /></head>'),
-    });
+  it("writes noindex for a suspended site", () => {
+    const html = buildDocumentFor({ site: { status: "SUSPENDED" } });
 
+    expect(html.match(/name="robots"/g)).toHaveLength(1);
     expect(html).toContain('content="noindex, nofollow"');
-  });
-
-  it("reads only the content attribute, not any other attribute that mentions noindex", () => {
-    const html = buildDocumentFor({
-      site: { status: "SUSPENDED" },
-      template: APP_SHELL_TEMPLATE.replace(
-        "</head>",
-        '<meta name="robots" content="index, follow" data-note="noindex on staging" /></head>'
-      ),
-    });
-
-    expect(html).toContain('content="noindex, nofollow"');
-  });
-
-  it("still writes its own policy when the shell has none", () => {
-    expect(buildDocumentFor()).toContain('<meta name="robots" content="index, follow" />');
   });
 });
 
@@ -262,7 +240,7 @@ describe("cleaning the head without breaking the shell", () => {
     expect(html).toContain('<link rel="stylesheet" href="/static/css/main.abc123.css" />');
   });
 
-  it("removes the notice even when it is written with an entity", () => {
+  it("keeps a notice it does not recognise, rather than delete someone else's content", () => {
     const html = buildDocumentFor({
       template: APP_SHELL_TEMPLATE.replace(
         "You need to enable JavaScript to run this app.",
@@ -270,8 +248,8 @@ describe("cleaning the head without breaking the shell", () => {
       ),
     });
 
-    expect(html).not.toContain("<noscript>");
-    expect(html).not.toContain("JavaScript to run this app");
+    expect(html).toContain("<noscript>");
+    expect(html).toContain("enable&nbsp;JavaScript");
   });
 
   it("keeps a noscript that only mentions javascript in a file name", () => {
