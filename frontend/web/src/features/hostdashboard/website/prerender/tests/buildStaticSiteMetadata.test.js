@@ -266,7 +266,11 @@ describe("the boundary of the privacy rules", () => {
 
 describe("calling it with no argument at all", () => {
   it("does not crash and produces a non indexable result", () => {
-    [() => buildStaticSiteMetadata(), () => buildStaticSiteMetadata({})].forEach((call) => {
+    [
+      () => buildStaticSiteMetadata(),
+      () => buildStaticSiteMetadata(null),
+      () => buildStaticSiteMetadata({}),
+    ].forEach((call) => {
       expect(call).not.toThrow();
       expect(call().robots).toBe("noindex, nofollow");
       expect(call().jsonLd).toBeNull();

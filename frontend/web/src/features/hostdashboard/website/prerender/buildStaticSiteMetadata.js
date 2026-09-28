@@ -135,7 +135,8 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
   return jsonLd;
 };
 
-export const buildStaticSiteMetadata = ({ renderPayload, model } = {}) => {
+export const buildStaticSiteMetadata = (input) => {
+  const { renderPayload, model } = input ?? {};
   const indexable = isStaticSitePubliclyIndexable(renderPayload);
   const canonicalUrl = resolveStaticSiteCanonicalUrl(renderPayload);
   const listingName = resolveStaticSiteListingName(renderPayload, model);
