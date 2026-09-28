@@ -49,7 +49,7 @@ const HostSettingsEnterpriseRatePlan = () => {
         if (!cancelled) {
           setRatePlan(data);
         }
-      } catch (loadError) {
+      } catch {
         if (!cancelled) {
           setError(enterprise.loadError);
         }

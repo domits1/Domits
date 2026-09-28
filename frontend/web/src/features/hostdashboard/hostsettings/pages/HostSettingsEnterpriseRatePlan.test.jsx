@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import HostSettingsEnterpriseRatePlan from "./HostSettingsEnterpriseRatePlan";
 import { getEnterpriseRatePlan } from "../services/enterpriseRatePlanService";
 
@@ -106,9 +106,7 @@ describe("HostSettingsEnterpriseRatePlan", () => {
 
     render(<HostSettingsEnterpriseRatePlan />);
 
-    await waitFor(() =>
-      expect(screen.getByText("Enterprise")).toBeInTheDocument()
-    );
+    expect(await screen.findByText("Enterprise")).toBeInTheDocument();
 
     expect(screen.getAllByText("€49.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("€4,900.00").length).toBeGreaterThan(0);
