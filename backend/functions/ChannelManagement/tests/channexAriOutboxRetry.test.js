@@ -57,6 +57,21 @@ describe("classifySyncResponse", () => {
 
     expect(result).toMatchObject({ outcome: OUTCOME.RETRY, retryAfterMs: 30_000 });
   });
+
+  test("uses the longest Retry-After when several calls in one answer were refused", () => {
+    const result = classifySyncResponse({
+      statusCode: 500,
+      response: {
+        ready: true,
+        steps: [
+          { results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] },
+          { results: [{ success: false, httpStatus: 429, errorCode: "CHANNEX_RATE_LIMITED", retryAfterMs: 90_000 }] },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({ outcome: OUTCOME.RETRY, reason: "CHANNEX_DOWN", retryAfterMs: 90_000 });
+  });
 });
 
 describe("the worker on a retry", () => {

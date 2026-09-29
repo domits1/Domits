@@ -95,13 +95,16 @@ export const classifySyncResponse = (result) => {
     const auth = failed.find((item) => item.httpStatus === 401 || item.httpStatus === 403);
     if (auth) return { outcome: OUTCOME.FAILED, reason: auth.errorCode || "CHANNEX_UNAUTHORIZED", taskIds: [] };
 
-    const temporary = failed.find((item) => isTemporary(item.httpStatus));
-    if (temporary) {
+    const temporary = failed.filter((item) => isTemporary(item.httpStatus));
+    if (temporary.length) {
+      // One answer can hold several refused calls; waiting for the longest Retry-After
+      // respects every one of them.
+      const retryAfterMs = Math.max(0, ...temporary.map((item) => item.retryAfterMs || 0));
       return {
         outcome: OUTCOME.RETRY,
-        reason: temporary.errorCode || "CHANNEX_TEMPORARY",
+        reason: temporary[0].errorCode || "CHANNEX_TEMPORARY",
         taskIds: [],
-        retryAfterMs: temporary.retryAfterMs ?? null,
+        retryAfterMs: retryAfterMs || null,
       };
     }
 
