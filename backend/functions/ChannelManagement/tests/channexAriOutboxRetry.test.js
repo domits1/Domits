@@ -89,6 +89,7 @@ describe("the worker on a retry", () => {
         { id: "row-1", domitsPropertyId: "property-1", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101, attemptCount },
       ]),
       returnToPending: jest.fn(async () => 1),
+      release: jest.fn(async () => 1),
       markFailed: jest.fn(async () => 1),
     };
     const worker = new ChannexAriOutboxWorker({
@@ -151,6 +152,7 @@ describe("retry per call type and per row (#3280 review)", () => {
       markProcessed: jest.fn(async () => 1),
       markFailed: jest.fn(async () => 1),
       returnToPending: jest.fn(async () => 1),
+      release: jest.fn(async () => 1),
     };
     const syncCalendarChange = jest.fn();
     answers.forEach((answer) => syncCalendarChange.mockResolvedValueOnce(answer));
@@ -185,7 +187,9 @@ describe("retry per call type and per row (#3280 review)", () => {
 
     expect(syncCalendarChange).toHaveBeenCalledTimes(2);
     expect(outbox.markProcessed).toHaveBeenCalledWith(["availability-1"], expect.anything());
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["rates-1", "restrictions-1"], expect.anything());
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["rates-1"], expect.anything());
+    // Never sent, so it waits as long but keeps its attempt.
+    expect(outbox.release).toHaveBeenCalledWith(["restrictions-1"], expect.anything());
   });
 
   test("only the row that used up its attempts fails; a fresh row in the same call keeps retrying", async () => {

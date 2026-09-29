@@ -164,10 +164,31 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(2);
     expect(outbox.markFailed).not.toHaveBeenCalled();
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], expect.objectContaining({ now: NOW }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], expect.objectContaining({ now: NOW }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-2"], expect.objectContaining({ now: NOW }));
   });
 
-  test("stops sending further groups after the first non-PROCESSED result", async () => {
+  test("a rejected rates call does not stop restrictions: only a rate limit or outage pauses a call type", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-rates", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-restrictions", changeTypes: ["restrictions"], dateFrom: 20261120, dateTo: 20261120 }),
+    ]);
+    syncCalendarChange
+      .mockResolvedValueOnce({
+        statusCode: 500,
+        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 400, errorCode: "CHANNEX_REJECTED" }] }] },
+      })
+      .mockResolvedValueOnce(sent);
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-rates"], { now: NOW, failureReason: "CHANNEX_REJECTED" });
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-restrictions"], expect.objectContaining({ now: NOW }));
+  });
+
+  test("pauses the call type after an outage; a row that was never sent waits without using an attempt", async () => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([
       claimedRow({ id: "row-1", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
@@ -177,7 +198,28 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(1);
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], { now: NOW, failureReason: "CHANNEX_DOWN", nextAttemptAt: NOW + 60_000 });
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_DOWN", nextAttemptAt: NOW + 60_000 });
+    expect(outbox.release).toHaveBeenCalledWith(["row-2"], { now: NOW, nextAttemptAt: NOW + 60_000 });
+  });
+
+  test("a Retry-After on one call type does not delay the other", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-availability", changeTypes: ["availability"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-rates", changeTypes: ["rates"], dateFrom: 20261120, dateTo: 20261120 }),
+    ]);
+    syncCalendarChange.mockResolvedValueOnce(channexDown).mockResolvedValueOnce({
+      statusCode: 500,
+      response: {
+        ready: true,
+        steps: [{ results: [{ success: false, httpStatus: 429, errorCode: "CHANNEX_RATE_LIMITED", retryAfterMs: 1_800_000 }] }],
+      },
+    });
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-availability"], expect.objectContaining({ nextAttemptAt: NOW + 60_000 }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-rates"], expect.objectContaining({ nextAttemptAt: NOW + 1_800_000 }));
   });
 
   test("an unexpected error puts the claimed rows back and still releases the lock", async () => {
