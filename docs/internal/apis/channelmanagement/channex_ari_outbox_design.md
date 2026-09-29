@@ -111,8 +111,8 @@ Each decision lists what was chosen, why, and what was rejected.
 **D1. An outbox row is a marker ("this changed"), not a snapshot of the value.**
 The worker reads the current value from the database when it sends. Sending the latest value makes duplicates and out-of-order processing harmless, because pushes send state per date, not a difference (idempotent, at-least-once delivery is acceptable). Rejected: storing the value in the row, because an older row processed after a newer one would push a stale value to Channex.
 
-**D2. One row per save.**
-A row holds a property, a date range and the change types. Rejected: one row per date (a 500-day change becomes 500 rows) and one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13).
+**D2. One row per change type per save.**
+A row holds a property, a date range and one change type, so a save that changes prices and minimum stay writes two rows. Change types can go out in different calls, and a row with several types could end with a retry for one and a rejection for another, which no single status can record (review of #3347). The worker still merges rows into as few calls as before. Rejected: one row per date (a 500-day change becomes 500 rows), one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13), and one row with several types (see above).
 
 **D3. Send after 60 seconds of quiet per property, at most 5 minutes after the oldest pending row. Bookings skip the quiet period.**
 A host saving December to April month by month (the calendar selects within one month, `hostcalen/hooks/useCalendarSelection.js:739-741`) produces several rows; waiting for quiet merges them into one call, which scenarios 3 and 8 need. The 5-minute cap prevents starvation for a host who keeps saving. Rejected: sending whatever is pending every minute (scenario 8 would split over several runs) and relying only on multi-month calendar selection (scenario 3 still needs batching).
