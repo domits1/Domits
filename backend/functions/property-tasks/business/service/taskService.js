@@ -22,6 +22,10 @@ export const createTask = async (hostId, taskData) => {
         ? await resolveAssigneeName(dataSource, hostId, taskData.assignee_team_member_id)
         : taskData.assignee_name || null;
 
+    const parentTaskId = taskData.parent_task_id
+        ? await resolveParentTaskId(dataSource, hostId, taskData.parent_task_id)
+        : null;
+
     const taskRecord = {
         host_id: hostId,
         property_id: taskData.property_id,
@@ -34,6 +38,7 @@ export const createTask = async (hostId, taskData) => {
         due_date: taskData.due_date ? new Date(taskData.due_date).getTime() : null,
         assignee_name: assigneeName,
         assignee_team_member_id: taskData.assignee_team_member_id || null,
+        parent_task_id: parentTaskId,
         attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -80,6 +85,18 @@ export const updateTask = async (hostId, taskId, updateData) => {
         fieldsToUpdate.assignee_name = fieldsToUpdate.assignee_team_member_id
             ? await resolveAssigneeName(dataSource, hostId, fieldsToUpdate.assignee_team_member_id)
             : null;
+    }
+
+    if (fieldsToUpdate.parent_task_id !== undefined) {
+        if (fieldsToUpdate.parent_task_id) {
+            if (!isValidUuid(fieldsToUpdate.parent_task_id)) {
+                throw new BadRequestException("parent_task_id must be a valid UUID");
+            }
+            if (fieldsToUpdate.parent_task_id === taskId) {
+                throw new BadRequestException("parent_task_id cannot reference itself");
+            }
+            fieldsToUpdate.parent_task_id = await resolveParentTaskId(dataSource, hostId, fieldsToUpdate.parent_task_id);
+        }
     }
 
     if (fieldsToUpdate.attachments !== undefined) {
@@ -165,6 +182,14 @@ const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
         throw new BadRequestException("assignee_team_member_id does not belong to this host");
     }
     return teamMember.member_email;
+};
+
+const resolveParentTaskId = async (dataSource, hostId, parentTaskId) => {
+    const parentTask = await taskRepository.getTaskById(dataSource, parentTaskId, hostId);
+    if (!parentTask) {
+        throw new BadRequestException("parent_task_id does not belong to this host");
+    }
+    return parentTaskId;
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {
