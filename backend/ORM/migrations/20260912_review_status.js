@@ -4,18 +4,22 @@
 export class ReviewStatus20260912 {
   async up(queryRunner) {
     // Review: Creates the status lookup index for each schema.
-    for (const schema of ["test", "main"]) {
-      await queryRunner.query(`
-        CREATE INDEX review_status_idx_${schema}
-        ON ${schema}.review (status);
-      `);
-    }
+    await Promise.all(
+      ["test", "main"].map(async (schema) => {
+        await queryRunner.query(`
+          CREATE INDEX review_status_idx_${schema}
+          ON ${schema}.review (status);
+        `);
+      })
+    );
   }
 
   async down(queryRunner) {
     // Review: Removes the status lookup index for each schema.
-    for (const schema of ["main", "test"]) {
-      await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_status_idx_${schema};`);
-    }
+    await Promise.all(
+      ["main", "test"].map(async (schema) => {
+        await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_status_idx_${schema};`);
+      })
+    );
   }
 }
