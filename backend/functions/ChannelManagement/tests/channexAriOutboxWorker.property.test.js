@@ -10,6 +10,10 @@ const claimedRow = (overrides = {}) => ({
   ...overrides,
 });
 const sent = { statusCode: 200, response: { ready: true, overallSuccess: true, taskIds: ["task-1"], steps: [] } };
+const channexDown = {
+  statusCode: 500,
+  response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] }] },
+};
 
 const createWorker = (overrides = {}) => {
   const outbox = {
@@ -116,46 +120,27 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
   });
 
-  test("records each row by its own call: a sent row is PROCESSED while another row retries", async () => {
+  // The first call goes through and the second fails; only the row the first call
+  // carried may be PROCESSED.
+  test.each([
+    ["a row of another call type", ["availability"], 20261101, ["restrictions"], 20261120],
+    ["a row of the same type whose dates went in a later call", ["rates"], 20261101, ["rates"], 20280601],
+  ])("records each row by the call that carried it: %s still retries", async (_, sentTypes, sentDate, laterTypes, laterDate) => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([
-      claimedRow({ id: "row-1", changeTypes: ["availability"], dateFrom: 20261101, dateTo: 20261101 }),
-      claimedRow({ id: "row-2", changeTypes: ["restrictions"], dateFrom: 20261120, dateTo: 20261120 }),
+      claimedRow({ id: "row-sent", changeTypes: sentTypes, dateFrom: sentDate, dateTo: sentDate }),
+      claimedRow({ id: "row-later", changeTypes: laterTypes, dateFrom: laterDate, dateTo: laterDate }),
     ]);
-    syncCalendarChange
-      .mockResolvedValueOnce(sent)
-      .mockResolvedValueOnce({
-        statusCode: 500,
-        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] }] },
-      });
+    syncCalendarChange.mockResolvedValueOnce(sent).mockResolvedValueOnce(channexDown);
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(2);
-    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-1"], expect.objectContaining({ now: NOW }));
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-2"], {
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-sent"], expect.objectContaining({ now: NOW }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-later"], {
       now: NOW,
       failureReason: "CHANNEX_DOWN",
       nextAttemptAt: NOW + 60_000,
     });
-  });
-
-  test("a row is only PROCESSED by the call that carried its dates, not by an earlier call of the same type", async () => {
-    const { worker, syncCalendarChange, outbox } = createWorker();
-    outbox.claim.mockResolvedValue([
-      claimedRow({ id: "row-near", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
-      claimedRow({ id: "row-far", changeTypes: ["rates"], dateFrom: 20280601, dateTo: 20280601 }),
-    ]);
-    syncCalendarChange
-      .mockResolvedValueOnce(sent)
-      .mockResolvedValueOnce({
-        statusCode: 500,
-        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] }] },
-      });
-
-    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
-    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
-    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-near"], expect.objectContaining({ now: NOW }));
-    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-far"], expect.objectContaining({ failureReason: "CHANNEX_DOWN" }));
   });
 
   test("stops sending further groups after the first non-PROCESSED result", async () => {
@@ -164,10 +149,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
       claimedRow({ id: "row-1", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
       claimedRow({ id: "row-2", changeTypes: ["restrictions"], dateFrom: 20261120, dateTo: 20261120 }),
     ]);
-    syncCalendarChange.mockResolvedValue({
-      statusCode: 500,
-      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] }] },
-    });
+    syncCalendarChange.mockResolvedValue(channexDown);
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
     expect(syncCalendarChange).toHaveBeenCalledTimes(1);
