@@ -14,9 +14,8 @@ import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBoo
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
-import ChannexCalendarChangeSyncClient, {
-    createCalendarChangeFallbackEvidence,
-} from "../business/service/channexCalendarChangeSyncClient.js";
+import ChannexCalendarChangeSyncClient from "../business/service/channexCalendarChangeSyncClient.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -667,20 +666,16 @@ export class PropertyController {
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
             const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
+            const channexChange = this.buildChannexCalendarChange(propertyId, previousOverrides, normalizedOverrides);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
                 normalizedOverrides,
-                normalizedRange
+                normalizedRange,
+                channexChange
             );
 
             await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
-            const channexCalendarChangeSync = await this.notifyChannexCalendarOverrideChange({
-                hostId,
-                propertyId,
-                previousOverrides,
-                normalizedOverrides,
-            });
 
             return {
                 statusCode: 200,
@@ -688,7 +683,6 @@ export class PropertyController {
                 body: JSON.stringify({
                     propertyId,
                     overrides,
-                    channexCalendarChangeSync,
                 }),
             };
         } catch (error) {
@@ -764,33 +758,22 @@ export class PropertyController {
         });
     }
 
-    async notifyChannexCalendarOverrideChange({
-        hostId,
-        propertyId,
-        previousOverrides,
-        normalizedOverrides,
-    }) {
+    // One row per save, from the first to the last changed date. The worker sends the
+    // current values, so unchanged dates in between are sent unchanged, which is harmless.
+    buildChannexCalendarChange(propertyId, previousOverrides, normalizedOverrides) {
         const { changedDates, changeTypes } = this.collectCalendarOverrideChangeTypes(
             previousOverrides,
             normalizedOverrides
         );
-        const payload = {
-            userId: hostId,
+        if (!changedDates.length || !changeTypes.length) return null;
+
+        return {
             domitsPropertyId: propertyId,
-            changedDates,
             changeTypes,
-            source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+            dateFrom: changedDates[0],
+            dateTo: changedDates[changedDates.length - 1],
+            source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
         };
-
-        if (!changedDates.length || !changeTypes.length) {
-            return createCalendarChangeFallbackEvidence({
-                payload,
-                skipped: true,
-                reason: "NO_CHANNEX_RELEVANT_CALENDAR_CHANGES",
-            });
-        }
-
-        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
     }
 
     getForwardCalendarSyncRange() {
