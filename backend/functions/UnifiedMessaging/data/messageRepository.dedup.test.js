@@ -40,6 +40,13 @@ const uniqueViolation = (constraint) => {
   return error;
 };
 
+const uniqueViolationWithoutConstraintName = (detail) => {
+  const error = new Error("duplicate key value violates unique constraint");
+  error.code = "23505";
+  error.detail = detail;
+  return error;
+};
+
 describe("MessageRepository external message de-duplication", () => {
   test("inserts a new external message and reports it as inserted", async () => {
     const insertExecute = jest.fn(async () => ({}));
@@ -61,6 +68,26 @@ describe("MessageRepository external message de-duplication", () => {
   test("treats a duplicate external message delivery as already stored, without throwing", async () => {
     const insertExecute = jest.fn(async () => {
       throw uniqueViolation(NEW_DEDUP_CONSTRAINT);
+    });
+    Database.getInstance.mockResolvedValue(mockClient({ existingCount: 0, insertExecute }));
+    const repository = new MessageRepository();
+
+    await expect(
+      repository.createMessageIfNotExists({
+        threadId: "thread-1",
+        senderId: "guest-1",
+        recipientId: "host-1",
+        content: "Hello again",
+        platformMessageId: "platform-msg-1",
+      })
+    ).resolves.toBe(false);
+  });
+
+  test("treats a duplicate as already stored when the driver omits error.constraint but the detail names the dedup index", async () => {
+    const insertExecute = jest.fn(async () => {
+      throw uniqueViolationWithoutConstraintName(
+        `Key (threadId, platformMessageId)=(thread-1, platform-msg-1) already exists. (${NEW_DEDUP_CONSTRAINT})`
+      );
     });
     Database.getInstance.mockResolvedValue(mockClient({ existingCount: 0, insertExecute }));
     const repository = new MessageRepository();
