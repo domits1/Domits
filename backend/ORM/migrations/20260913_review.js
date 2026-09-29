@@ -3,7 +3,7 @@ export class Review20260913 {
   async up(queryRunner) {
     // Review: Makes new reviews unpublished by default and prepares category/request/moderation indexes.
     const now = Date.now();
-    for (const schema of ["test", "main"]) {
+    await Promise.all(["test", "main"].map(async (schema) => {
       await queryRunner.query(`
         ALTER TABLE ${schema}.review
         ALTER COLUMN verification_status SET DEFAULT 'UNVERIFIED';
@@ -60,12 +60,12 @@ export class Review20260913 {
         CREATE INDEX review_verification_booking_idx_${schema}
         ON ${schema}.review_verification (booking_id);
       `);
-    }
+    }));
   }
 
   async down(queryRunner) {
     // Review: Removes seeded categories and restores the earlier review publication defaults.
-    for (const schema of ["main", "test"]) {
+    await Promise.all(["main", "test"].map(async (schema) => {
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_verification_booking_idx_${schema};`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_moderation_status_created_idx_${schema};`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_request_booking_idx_${schema};`);
@@ -86,6 +86,6 @@ export class Review20260913 {
         ALTER TABLE ${schema}.review
         ALTER COLUMN publication_status SET DEFAULT 'PUBLISHED';
       `);
-    }
+    }));
   }
 }

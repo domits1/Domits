@@ -200,7 +200,7 @@ class LambdaFactory {
       pathPart: "{proxy+}",
     }));
 
-    for (const resourceId of [rootResource, proxyResource.id]) {
+    await Promise.all([rootResource, proxyResource.id].map(async (resourceId) => {
       await this.apiGatewayClient.send(new PutMethodCommand({
         restApiId: api,
         resourceId,
@@ -216,7 +216,7 @@ class LambdaFactory {
         integrationHttpMethod: "POST",
         uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
       }));
-    }
+    }));
 
     await this.lambdaClient.send(new AddPermissionCommand({
       Action: "lambda:InvokeFunction",

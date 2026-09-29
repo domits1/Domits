@@ -287,7 +287,7 @@ function GuestReviewForm() {
       }
     };
 
-    hydrateEditableReview();
+    void hydrateEditableReview();
 
     return () => {
       isMounted = false;

@@ -2,7 +2,7 @@
 export class ReviewsEntities20260911 {
   async up(queryRunner) {
     // Review: Creates review workflow tables in both application schemas.
-    for (const schema of ["test", "main"]) {
+    await Promise.all(["test", "main"].map(async (schema) => {
       await queryRunner.query(`
         CREATE TABLE IF NOT EXISTS ${schema}.review_category (
           id VARCHAR(255) NOT NULL,
@@ -107,17 +107,17 @@ export class ReviewsEntities20260911 {
         CREATE UNIQUE INDEX review_verification_review_unique_${schema}
         ON ${schema}.review_verification (review_id);
       `);
-    }
+    }));
   }
 
   async down(queryRunner) {
     // Review: Drops review workflow tables in dependency order.
-    for (const schema of ["main", "test"]) {
+    await Promise.all(["main", "test"].map(async (schema) => {
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_verification;`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_moderation;`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_response;`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_request;`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_category;`);
-    }
+    }));
   }
 }

@@ -2,7 +2,7 @@
 export class ReviewPrivateFeedback20260916 {
   async up(queryRunner) {
     // Review: Creates private review feedback storage for each schema.
-    for (const schema of ["test", "main"]) {
+    await Promise.all(["test", "main"].map(async (schema) => {
       await queryRunner.query(`
         CREATE TABLE IF NOT EXISTS ${schema}.review_private_feedback (
           id VARCHAR(255) PRIMARY KEY,
@@ -26,15 +26,15 @@ export class ReviewPrivateFeedback20260916 {
         CREATE INDEX review_private_feedback_property_idx_${schema}
         ON ${schema}.review_private_feedback (property_id, feedback_type);
       `);
-    }
+    }));
   }
 
   async down(queryRunner) {
     // Review: Removes private feedback indexes and storage for each schema.
-    for (const schema of ["main", "test"]) {
+    await Promise.all(["main", "test"].map(async (schema) => {
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_private_feedback_property_idx_${schema};`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.review_private_feedback_review_idx_${schema};`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_private_feedback;`);
-    }
+    }));
   }
 }
