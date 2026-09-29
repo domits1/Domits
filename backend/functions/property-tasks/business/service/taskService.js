@@ -1,5 +1,5 @@
 import * as taskRepository from "../../data/taskRepository.js";
-import { validateTaskPayload, VALID_TASK_TYPES, isPastDueDate } from "../model/taskValidator.js";
+import { validateTaskPayload, VALID_TASK_TYPES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -18,6 +18,10 @@ export const createTask = async (hostId, taskData) => {
 
     validateTaskPayload(taskData);
 
+    const assigneeName = taskData.assignee_team_member_id
+        ? await resolveAssigneeName(dataSource, hostId, taskData.assignee_team_member_id)
+        : taskData.assignee_name || null;
+
     const taskRecord = {
         host_id: hostId,
         property_id: taskData.property_id,
@@ -28,7 +32,8 @@ export const createTask = async (hostId, taskData) => {
         status: 'Pending',
         priority: taskData.priority || 'Medium',
         due_date: taskData.due_date ? new Date(taskData.due_date).getTime() : null,
-        assignee_name: taskData.assignee_name || null,
+        assignee_name: assigneeName,
+        assignee_team_member_id: taskData.assignee_team_member_id || null,
         attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -66,6 +71,15 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
     if (fieldsToUpdate.type && !VALID_TASK_TYPES.includes(fieldsToUpdate.type)) {
         throw new BadRequestException(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
+    }
+
+    if (fieldsToUpdate.assignee_team_member_id !== undefined) {
+        if (fieldsToUpdate.assignee_team_member_id && !isValidUuid(fieldsToUpdate.assignee_team_member_id)) {
+            throw new BadRequestException("assignee_team_member_id must be a valid UUID");
+        }
+        fieldsToUpdate.assignee_name = fieldsToUpdate.assignee_team_member_id
+            ? await resolveAssigneeName(dataSource, hostId, fieldsToUpdate.assignee_team_member_id)
+            : null;
     }
 
     if (fieldsToUpdate.attachments !== undefined) {
@@ -143,6 +157,14 @@ export const getViewUrl = async (key) => {
         Key: key,
     });
     return await getSignedUrl(s3, command, { expiresIn: 3600 });
+};
+
+const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
+    const teamMember = await taskRepository.getTeamMemberById(dataSource, teamMemberId, hostId);
+    if (!teamMember) {
+        throw new BadRequestException("assignee_team_member_id does not belong to this host");
+    }
+    return teamMember.member_email;
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {
