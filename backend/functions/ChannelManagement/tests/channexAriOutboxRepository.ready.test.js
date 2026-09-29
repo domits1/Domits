@@ -3,7 +3,9 @@ jest.mock("../../.shared/integrations/ORM/index.js", () => ({
   default: { getInstance: jest.fn() },
 }));
 
-import ChannexAriOutboxRepository from "../../.shared/channelManagement/repositories/channexAriOutboxRepository.js";
+import ChannexAriOutboxRepository, {
+  claimableRowSql,
+} from "../../.shared/channelManagement/repositories/channexAriOutboxRepository.js";
 import { NOW, mockClient } from "./support/outboxTestSupport.js";
 
 describe("ChannexAriOutboxRepository.findReadyProperties", () => {
@@ -28,21 +30,23 @@ describe("ChannexAriOutboxRepository.findReadyProperties", () => {
 
     const [sql, params] = client.query.mock.calls[0];
     expect(sql).toContain("main.channex_ari_outbox");
-    expect(sql).toContain("GROUP BY domitspropertyid");
-    expect(sql).toContain("source = ANY($3)");
-    expect(sql).toContain("MAX(createdat) <= $4");
-    expect(sql).toContain("MIN(createdat) <= $5");
+    expect(sql).toContain("GROUP BY pending.domitspropertyid");
+    expect(sql).toContain("pending.source = ANY($3)");
+    expect(sql).toContain("MAX(pending.createdat) <= $4");
+    expect(sql).toContain("MIN(pending.createdat) <= $5");
     expect(sql).toContain("ORDER BY oldestcreatedat ASC");
     expect(params).toEqual(["PENDING", NOW, ["BOOKING", "CHANNEX_IMPORT"], NOW - 60_000, NOW - 300_000, 25]);
   });
 
-  test("a property is ready while at least one of its rows is not waiting for a retry", async () => {
+  test("a property is only ready when the claim could take one of its rows: both use the same rule", async () => {
     const client = mockClient();
 
     await new ChannexAriOutboxRepository().findReadyProperties({ now: NOW });
 
     const [sql] = client.query.mock.calls[0];
-    expect(sql).toContain("SUM(CASE WHEN nextattemptat IS NULL OR nextattemptat <= $2 THEN 1 ELSE 0 END) > 0");
+    expect(sql).toContain(`EXISTS (SELECT 1 FROM main.channex_ari_outbox AS target
+        WHERE target.domitspropertyid = pending.domitspropertyid
+          AND ${claimableRowSql("main.channex_ari_outbox", { pending: "$1", now: "$2" })})`);
   });
 
   test("returns an empty list when no property is ready", async () => {

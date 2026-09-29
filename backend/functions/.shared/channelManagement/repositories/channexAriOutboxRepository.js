@@ -4,10 +4,43 @@ import { ChannexAriOutbox } from "database/models/channelManagement/ChannexAriOu
 
 import Database from "../../integrations/ORM/index.js";
 import {
+  CHANNEX_ARI_CHANGE_TYPE,
   CHANNEX_ARI_OUTBOX_DEFAULTS,
   CHANNEX_ARI_OUTBOX_STATUS,
   URGENT_SOURCES,
 } from "../utils/channexAriOutboxConstants.js";
+import { callTypeOf } from "../utils/channexAriOutboxPlanning.js";
+
+// changetypes is a comma-separated list, so a type is matched as a whole name
+// between commas; "rates" must not match a future "rates_extra".
+const carriesTypeSql = (alias, type) => `',' || ${alias}.changetypes || ',' LIKE '%,${type},%'`;
+
+// Built from the change types themselves, so a new type lands in the right call type.
+const CALL_TYPES = [...new Set(Object.values(CHANNEX_ARI_CHANGE_TYPE).map(callTypeOf))];
+const carriesCallTypeSql = (alias, callType) =>
+  Object.values(CHANNEX_ARI_CHANGE_TYPE)
+    .filter((type) => callTypeOf(type) === callType)
+    .map((type) => carriesTypeSql(alias, type))
+    .join(" OR ");
+const sharesCallTypeSql = (aliasA, aliasB) =>
+  CALL_TYPES.map(
+    (callType) => `((${carriesCallTypeSql(aliasA, callType)}) AND (${carriesCallTypeSql(aliasB, callType)}))`
+  ).join(" OR ");
+
+// A row can be claimed when it is due and no row of the same call type is waiting
+// after a failed call (Channex limits the two call types separately, #3280). The
+// readiness query and the claim share this rule, so a property is never "ready"
+// while its claim would come back empty.
+export const claimableRowSql = (table, { pending, now }) => `target.status = ${pending}
+          AND (target.nextattemptat IS NULL OR target.nextattemptat <= ${now})
+          AND NOT EXISTS (
+            SELECT 1
+              FROM ${table} AS waiting
+             WHERE waiting.domitspropertyid = target.domitspropertyid
+               AND waiting.status = ${pending}
+               AND waiting.nextattemptat > ${now}
+               AND (${sharesCallTypeSql("waiting", "target")})
+          )`;
 
 const requireStr = (value, field) => {
   const normalized = typeof value === "string" ? value.trim() : "";
@@ -93,15 +126,17 @@ export default class ChannexAriOutboxRepository {
     const { client, table } = await this.table();
 
     const rows = await client.query(
-      `SELECT domitspropertyid,
-              MIN(createdat) AS oldestcreatedat
-         FROM ${table}
-        WHERE status = $1
-        GROUP BY domitspropertyid
-       HAVING SUM(CASE WHEN nextattemptat IS NULL OR nextattemptat <= $2 THEN 1 ELSE 0 END) > 0
-          AND (SUM(CASE WHEN source = ANY($3) THEN 1 ELSE 0 END) > 0
-               OR MAX(createdat) <= $4
-               OR MIN(createdat) <= $5)
+      `SELECT pending.domitspropertyid,
+              MIN(pending.createdat) AS oldestcreatedat
+         FROM ${table} AS pending
+        WHERE pending.status = $1
+        GROUP BY pending.domitspropertyid
+       HAVING EXISTS (SELECT 1 FROM ${table} AS target
+        WHERE target.domitspropertyid = pending.domitspropertyid
+          AND ${claimableRowSql(table, { pending: "$1", now: "$2" })})
+          AND (SUM(CASE WHEN pending.source = ANY($3) THEN 1 ELSE 0 END) > 0
+               OR MAX(pending.createdat) <= $4
+               OR MIN(pending.createdat) <= $5)
         ORDER BY oldestcreatedat ASC
         LIMIT $6`,
       [CHANNEX_ARI_OUTBOX_STATUS.PENDING, now, [...URGENT_SOURCES], now - quietMs, now - capMs, limit]
@@ -126,20 +161,9 @@ export default class ChannexAriOutboxRepository {
           SET status = $1,
               attemptcount = attemptcount + 1,
               updatedat = $2
-        WHERE domitspropertyid = $3
-          AND status = $4
-          AND createdat <= $5
-          AND (nextattemptat IS NULL OR nextattemptat <= $2)
-          AND NOT EXISTS (
-            SELECT 1
-              FROM ${table} AS waiting
-             WHERE waiting.domitspropertyid = $3
-               AND waiting.status = $4
-               AND waiting.nextattemptat > $2
-               AND ((waiting.changetypes LIKE '%availability%' AND target.changetypes LIKE '%availability%')
-                 OR ((waiting.changetypes LIKE '%rates%' OR waiting.changetypes LIKE '%restrictions%')
-                     AND (target.changetypes LIKE '%rates%' OR target.changetypes LIKE '%restrictions%')))
-          )
+        WHERE target.domitspropertyid = $3
+          AND target.createdat <= $5
+          AND ${claimableRowSql(table, { pending: "$4", now: "$2" })}
         RETURNING id, domitspropertyid, kind, changetypes, datefrom, dateto, source, attemptcount`,
       [CHANNEX_ARI_OUTBOX_STATUS.PROCESSING, now, domitsPropertyId, CHANNEX_ARI_OUTBOX_STATUS.PENDING, runStartedAt]
     );
