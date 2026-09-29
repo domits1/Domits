@@ -1,21 +1,12 @@
-jest.mock("database", () => ({
-    __esModule: true,
-    default: { getInstance: jest.fn(async () => ({})) },
-}));
+jest.mock("database", () => require("./taskRepositoryTestDoubles.js").databaseMock);
+jest.mock("../../functions/property-tasks/data/taskRepository.js", () => require("./taskRepositoryTestDoubles.js").taskRepositoryMock);
 
-const mockGetTaskById = jest.fn();
-const mockSaveTaskToDb = jest.fn();
-const mockUpdateTaskInDb = jest.fn();
-const mockSaveActivityToDb = jest.fn();
-const mockGetTeamMemberById = jest.fn();
-
-jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
-    getTaskById: (...args) => mockGetTaskById(...args),
-    saveTaskToDb: (...args) => mockSaveTaskToDb(...args),
-    updateTaskInDb: (...args) => mockUpdateTaskInDb(...args),
-    saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
-    getTeamMemberById: (...args) => mockGetTeamMemberById(...args),
-}));
+const {
+    mockGetTaskById,
+    mockSaveTaskToDb,
+    mockUpdateTaskInDb,
+    resetTaskRepositoryMocks,
+} = require("./taskRepositoryTestDoubles.js");
 
 const { createTask, updateTask } = require("../../functions/property-tasks/business/service/taskService.js");
 
@@ -30,10 +21,7 @@ const PARENT_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 describe("task dependency", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        mockSaveTaskToDb.mockImplementation(async (dataSource, record) => ({ id: "task-1", ...record }));
-        mockUpdateTaskInDb.mockResolvedValue();
-        mockSaveActivityToDb.mockResolvedValue();
+        resetTaskRepositoryMocks();
     });
 
     describe("createTask", () => {
