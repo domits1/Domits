@@ -603,6 +603,11 @@ const attemptPropertySummaryEnrichment = async (booking, bookingTitle, propertyD
   return propertyDetails;
 };
 
+const getReservationLoadErrorMessage = (loadError) =>
+  loadError?.message === "Reservation not found."
+    ? loadError.message
+    : "Could not load this reservation.";
+
 function ReservationDetails() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -685,11 +690,7 @@ function ReservationDetails() {
         }));
       } catch (loadError) {
         if (isMounted) {
-          let nextError = "Could not load this reservation.";
-          if (loadError?.message === "Reservation not found.") {
-            nextError = loadError.message;
-          }
-          setError(nextError);
+          setError(getReservationLoadErrorMessage(loadError));
           setReservation(null);
         }
       } finally {
@@ -699,7 +700,7 @@ function ReservationDetails() {
       }
     };
 
-    loadReservation();
+    void loadReservation();
 
     return () => {
       isMounted = false;
