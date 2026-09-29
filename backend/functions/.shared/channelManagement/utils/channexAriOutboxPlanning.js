@@ -63,11 +63,13 @@ export const OUTCOME = Object.freeze({
   SKIPPED: "SKIPPED",
   FAILED: "FAILED",
   RETRY: "RETRY",
+  // Not sent because this run reached the Channex call limit; goes out in the next run.
+  DEFERRED: "DEFERRED",
 });
 
 // RETRY comes first: a row can go out in several calls, and while one of them still has
 // to be retried, ending the row would drop that part. Exhaustion still ends it (#3280).
-const OUTCOME_SEVERITY = [OUTCOME.RETRY, OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.PROCESSED];
+const OUTCOME_SEVERITY = [OUTCOME.RETRY, OUTCOME.DEFERRED, OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.PROCESSED];
 
 const isTemporary = (httpStatus) =>
   httpStatus === null || httpStatus === undefined || httpStatus === 429 || httpStatus >= 500;

@@ -204,6 +204,7 @@ export default class ChannexAriOutboxRepository {
       sentSummary = null,
       processed = false,
       expectedStatus = null,
+      undoAttempt = false,
     }
   ) {
     const list = Array.isArray(ids) ? ids.filter(Boolean) : [];
@@ -217,6 +218,7 @@ export default class ChannexAriOutboxRepository {
       "nextattemptat = $5",
     ];
     if (processed) assignments.push("processedat = $2");
+    if (undoAttempt) assignments.push("attemptcount = GREATEST(attemptcount - 1, 0)");
 
     const parameters = [
       status,
@@ -281,6 +283,18 @@ export default class ChannexAriOutboxRepository {
 
   // Aurora DSQL refuses a transaction that changes more than 3,000 rows, so the
   // delete is capped well under that and whatever is left waits for the next run.
+  // For rows the run did not send because the Channex call limit was reached. They
+  // were never tried, so the attempt the claim counted is taken back.
+  async release(ids, { now = Date.now(), nextAttemptAt = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.PENDING,
+      now,
+      nextAttemptAt,
+      undoAttempt: true,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
   async cleanup({
     now = Date.now(),
     batch = CHANNEX_ARI_OUTBOX_DEFAULTS.CLEANUP_BATCH,

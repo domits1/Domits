@@ -22,6 +22,7 @@ const createWorker = (overrides = {}) => {
     markFailed: jest.fn(async () => 1),
     markSkipped: jest.fn(async () => 1),
     returnToPending: jest.fn(async () => 1),
+    release: jest.fn(async () => 1),
   };
   const props = { listActiveByDomitsPropertyId: jest.fn(async () => [{ integrationAccountId: "account-1" }]) };
   const accounts = {
@@ -194,5 +195,79 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("EMPTY");
     expect(syncCalendarChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("ChannexAriOutboxWorker call limit", () => {
+  // One row per 500-day span, so every row needs a call of its own.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const spanDate = (index, offsetDays = 0) => {
+    const iso = new Date(Date.UTC(2026, 10, 1) + (index * 500 + offsetDays) * DAY_MS).toISOString().slice(0, 10);
+    return Number(iso.replaceAll("-", ""));
+  };
+  const spreadRows = (count, changeTypes, prefix, offsetDays = 0) =>
+    Array.from({ length: count }, (_, index) => {
+      const date = spanDate(index, offsetDays);
+      return claimedRow({ id: `${prefix}-${index + 1}`, changeTypes, dateFrom: date, dateTo: date });
+    });
+
+  test("sends up to 10 calls per bucket in one run", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue(spreadRows(10, ["availability"], "row"));
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("PROCESSED");
+    expect(syncCalendarChange).toHaveBeenCalledTimes(10);
+    expect(outbox.release).not.toHaveBeenCalled();
+  });
+
+  test("leaves the 11th call for the next run, without counting it as an attempt", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue(spreadRows(11, ["availability"], "row"));
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("DEFERRED");
+    expect(syncCalendarChange).toHaveBeenCalledTimes(10);
+    expect(outbox.release).toHaveBeenCalledWith(["row-11"], { now: NOW, nextAttemptAt: NOW + 60_000 });
+    expect(outbox.returnToPending).not.toHaveBeenCalled();
+    expect(outbox.markProcessed).toHaveBeenCalledWith(spreadRows(10, ["availability"], "row").map((row) => row.id), expect.anything());
+  });
+
+  test("counts availability and prices/restrictions separately", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    // Rates one day later, so availability and rates never share a call.
+    outbox.claim.mockResolvedValue([...spreadRows(10, ["availability"], "avail"), ...spreadRows(10, ["rates"], "rate", 1)]);
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("PROCESSED");
+    expect(syncCalendarChange).toHaveBeenCalledTimes(20);
+    expect(outbox.release).not.toHaveBeenCalled();
+  });
+
+  // A partly sent row keeps its attempt, so a row too wide to ever fit in one run
+  // ends as FAILED after MAX_ATTEMPTS instead of sending 10 calls every minute.
+  test("a row that was only partly sent waits a minute and keeps its attempt", async () => {
+    const { worker, outbox } = createWorker();
+    const rows = spreadRows(10, ["availability"], "row");
+    rows[9] = { ...rows[9], dateTo: spanDate(10) };
+    outbox.claim.mockResolvedValue(rows);
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-10"], {
+      now: NOW,
+      failureReason: "CHANNEX_CALL_LIMIT",
+      nextAttemptAt: NOW + 60_000,
+    });
+    expect(outbox.release).not.toHaveBeenCalled();
+    expect(outbox.markProcessed.mock.calls[0][0]).not.toContain("row-10");
+  });
+
+  test("a row too wide to ever fit in one run ends as FAILED after its last attempt", async () => {
+    const { worker, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-wide", changeTypes: ["availability"], dateFrom: spanDate(0), dateTo: spanDate(11), attemptCount: 8 }),
+    ]);
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-wide"], { now: NOW, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+    expect(outbox.release).not.toHaveBeenCalled();
   });
 });

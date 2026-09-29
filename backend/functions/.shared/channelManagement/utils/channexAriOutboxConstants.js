@@ -53,4 +53,7 @@ export const CHANNEX_ARI_OUTBOX_DEFAULTS = Object.freeze({
   RETRY_CAP_MS: 60 * 60 * 1000,
   RETRY_JITTER: 0.1,
   MAX_ATTEMPTS: 8,
+  // Channex allows 10 availability and 10 price/restriction calls per property per
+  // minute, and the worker runs once a minute; calls above this wait for the next run.
+  MAX_CALLS_PER_BUCKET_PER_RUN: 10,
 });

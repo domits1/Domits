@@ -1,6 +1,7 @@
 import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "../utils/channexAriOutboxConstants.js";
 import {
   OUTCOME,
+  callTypeOf,
   classifySyncResponse,
   groupChangesForSend,
   nextRetryDelayMs,
@@ -9,6 +10,8 @@ import {
 } from "../utils/channexAriOutboxPlanning.js";
 
 const SERIALIZATION_FAILURE = "40001";
+// Channex counts its call limit per minute.
+const CALL_LIMIT_WINDOW_MS = 60_000;
 const lockName = (domitsPropertyId) => `channex_ari:${domitsPropertyId}`;
 // Rows store YYYYMMDD integers; calls carry ISO dates, which compare correctly as text.
 const toIsoDate = (value) => String(value).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3");
@@ -67,16 +70,30 @@ export default class ChannexAriOutboxWorker {
   async sendAndRecord(account, domitsPropertyId, rows) {
     const sends = [];
     const pausedTypes = [];
+    const callsPerBucket = new Map();
     for (const group of groupChangesForSend(rows)) {
       // After a failed call, the rest of that call type waits for the next run; the
       // other call type has its own Channex limit and still goes out.
       if (sharesCallType(group.changeTypes, pausedTypes)) continue;
+
+      // A call with several types hits each of their Channex endpoints, so it counts
+      // against every bucket it touches. Above the limit the group waits for the next run.
+      const buckets = [...new Set(group.changeTypes.map(callTypeOf))];
+      const limitReached = buckets.some(
+        (bucket) => (callsPerBucket.get(bucket) || 0) >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_CALLS_PER_BUCKET_PER_RUN
+      );
+      if (limitReached) {
+        sends.push({ group, sent: false, result: { outcome: OUTCOME.DEFERRED, reason: null, taskIds: [] } });
+        continue;
+      }
+      for (const bucket of buckets) callsPerBucket.set(bucket, (callsPerBucket.get(bucket) || 0) + 1);
+
       const answer = await this.syncCalendarChange(
         { userId: account.userId, domitsPropertyId, source: "CHANNEX_ARI_OUTBOX", ...group },
         { providerRequestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
       );
       const result = classifySyncResponse(answer);
-      sends.push({ group, result });
+      sends.push({ group, sent: true, result });
       if (result.outcome !== OUTCOME.PROCESSED) pausedTypes.push(...group.changeTypes);
     }
 
@@ -84,6 +101,7 @@ export default class ChannexAriOutboxWorker {
     // dates; one type can go out in several calls when its dates lie far apart. A type
     // that was not sent for the row's dates counts as a retry.
     const rowsByOutcome = new Map();
+    const partlySent = new Set();
     for (const row of rows) {
       const [rowFrom, rowTo] = [row.dateFrom, row.dateTo].map(toIsoDate);
       const outcomes = row.changeTypes.flatMap((type) => {
@@ -91,6 +109,7 @@ export default class ChannexAriOutboxWorker {
           ({ group }) =>
             group.changeTypes.includes(type) && group.changedDates[0] <= rowTo && group.changedDates.at(-1) >= rowFrom
         );
+        if (carriers.some(({ sent }) => sent)) partlySent.add(row.id);
         return carriers.length ? carriers.map(({ result }) => result.outcome) : [OUTCOME.RETRY];
       });
       const outcome = worstOutcome(outcomes);
@@ -105,8 +124,11 @@ export default class ChannexAriOutboxWorker {
       const ids = outcomeRows.map((row) => row.id);
       if (outcome === OUTCOME.PROCESSED) {
         const taskIds = results.flatMap((result) => result.taskIds);
-        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: sends.length } });
+        const calls = sends.filter(({ sent }) => sent).length;
+        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls } });
         recorded.push(outcome);
+      } else if (outcome === OUTCOME.DEFERRED) {
+        recorded.push(...(await this.deferRows(outcomeRows, { now, partlySent })));
       } else if (outcome === OUTCOME.SKIPPED) {
         await this.outbox.markSkipped(ids, { now, failureReason: reasonFor(outcome) });
         recorded.push(outcome);
@@ -118,6 +140,39 @@ export default class ChannexAriOutboxWorker {
       }
     }
     return worstOutcome(recorded);
+  }
+
+  // Rows the call limit held back wait one minute: while they wait, the claim holds
+  // back their call type, so a property never gets two batches of calls within one
+  // Channex rate-limit minute, even when two runs handle it seconds apart. A row that
+  // was not sent at all gets its attempt back. A row that was partly sent keeps it, so
+  // a row too wide to ever fit in one run ends as FAILED instead of sending the
+  // maximum number of calls every minute forever.
+  async deferRows(rows, { now, partlySent }) {
+    const untouched = rows.filter((row) => !partlySent.has(row.id));
+    const partial = rows.filter((row) => partlySent.has(row.id));
+    const exhausted = partial.filter((row) => (row.attemptCount || 1) >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS);
+    const waiting = partial.filter((row) => (row.attemptCount || 1) < CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS);
+
+    const nextAttemptAt = now + CALL_LIMIT_WINDOW_MS;
+    const recorded = [];
+    if (untouched.length) {
+      await this.outbox.release(untouched.map((row) => row.id), { now, nextAttemptAt });
+      recorded.push(OUTCOME.DEFERRED);
+    }
+    if (waiting.length) {
+      await this.outbox.returnToPending(waiting.map((row) => row.id), {
+        now,
+        failureReason: "CHANNEX_CALL_LIMIT",
+        nextAttemptAt,
+      });
+      recorded.push(OUTCOME.DEFERRED);
+    }
+    if (exhausted.length) {
+      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      recorded.push(OUTCOME.FAILED);
+    }
+    return recorded;
   }
 
   // Exhaustion is decided per row, so a change on its eighth attempt cannot drag a
