@@ -58,4 +58,22 @@ describe("groupChangesForSend", () => {
   test("no rows means no calls", () => {
     expect(groupChangesForSend([])).toEqual([]);
   });
+
+  test("dates more than 500 days apart go out in separate calls", () => {
+    const groups = groupChangesForSend([row(["rates"], 20261101, 20261101), row(["rates"], 20280315, 20280316)]);
+
+    expect(groups).toEqual([
+      { changeTypes: ["rates"], changedDates: ["2026-11-01"] },
+      { changeTypes: ["rates"], changedDates: ["2028-03-15", "2028-03-16"] },
+    ]);
+  });
+
+  test("no call spans more than 500 days", () => {
+    const groups = groupChangesForSend([row(["restrictions"], 20261101, 20280601)]);
+
+    const spans = groups.map(({ changedDates }) => (Date.parse(changedDates.at(-1)) - Date.parse(changedDates[0])) / 86_400_000 + 1);
+    expect(groups).toHaveLength(2);
+    expect(Math.max(...spans)).toBe(500);
+    expect(groups.flatMap((group) => group.changedDates)).toHaveLength(579);
+  });
 });

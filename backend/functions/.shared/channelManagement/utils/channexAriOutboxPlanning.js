@@ -34,12 +34,28 @@ export const groupChangesForSend = (rows) => {
   const groups = new Map();
   for (const type of TYPE_ORDER) {
     if (!datesByType.has(type)) continue;
-    const changedDates = [...datesByType.get(type)].sort();
-    const key = changedDates.join(",");
-    if (!groups.has(key)) groups.set(key, { changeTypes: [], changedDates });
-    groups.get(key).changeTypes.push(type);
+    for (const changedDates of splitIntoSpans([...datesByType.get(type)].sort())) {
+      const key = changedDates.join(",");
+      if (!groups.has(key)) groups.set(key, { changeTypes: [], changedDates });
+      groups.get(key).changeTypes.push(type);
+    }
   }
   return [...groups.values()];
+};
+
+// The sync pipeline refuses a call whose first and last date are more than 500 days
+// apart (channexAriExecutionUtils.js:161), so dates far apart go out in separate calls.
+const MAX_SPAN_DAYS = 500;
+
+const splitIntoSpans = (sortedDates) => {
+  const spans = [];
+  for (const date of sortedDates) {
+    const current = spans.at(-1);
+    const withinSpan = current && (Date.parse(date) - Date.parse(current[0])) / DAY_MS < MAX_SPAN_DAYS;
+    if (withinSpan) current.push(date);
+    else spans.push([date]);
+  }
+  return spans;
 };
 
 export const OUTCOME = Object.freeze({
