@@ -14,7 +14,6 @@ import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBoo
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
-import ChannexCalendarChangeSyncClient from "../business/service/channexCalendarChangeSyncClient.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -66,7 +65,6 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
-const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
 const CALENDAR_CHANGE_FIELD_GROUPS = Object.freeze({
     availability: ["isAvailable"],
     rates: ["nightlyPrice"],
@@ -197,8 +195,7 @@ export class PropertyController {
 
     constructor(
         dynamoDbClient = new DynamoDBClient({}),
-        systemManagerRepository = new SystemManagerRepository(),
-        { channexCalendarChangeSyncClient = new ChannexCalendarChangeSyncClient() } = {}
+        systemManagerRepository = new SystemManagerRepository()
     ) {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
@@ -208,7 +205,6 @@ export class PropertyController {
         this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
-        this.channexCalendarChangeSyncClient = channexCalendarChangeSyncClient;
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
         this.websiteCustomDomainService = null;
@@ -555,11 +551,6 @@ export class PropertyController {
             );
 
             await new PriceLabsCalendarNotifier().notifyListingChange(hostId);
-            await this.notifyChannexOverviewCalendarChange({
-                hostId,
-                propertyId: normalizedOverviewPayload.propertyId,
-                normalizedOverviewPayload,
-            });
 
             return {
                 statusCode: 204,
@@ -768,43 +759,6 @@ export class PropertyController {
                 source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
             }))
         );
-    }
-
-    getForwardCalendarSyncRange() {
-        const startDate = new Date();
-        const endDate = new Date(startDate);
-        endDate.setUTCDate(endDate.getUTCDate() + CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS - 1);
-
-        return {
-            dateFrom: startDate.toISOString().slice(0, 10),
-            dateTo: endDate.toISOString().slice(0, 10),
-        };
-    }
-
-    getOverviewCalendarChangeTypes(normalizedOverviewPayload) {
-        const changeTypes = [];
-        if (normalizedOverviewPayload.pricing !== undefined) {
-            changeTypes.push("rates");
-        }
-        if (normalizedOverviewPayload.availabilityRestrictions !== undefined) {
-            changeTypes.push("restrictions");
-        }
-        return changeTypes;
-    }
-
-    async notifyChannexOverviewCalendarChange({ hostId, propertyId, normalizedOverviewPayload }) {
-        const changeTypes = this.getOverviewCalendarChangeTypes(normalizedOverviewPayload);
-        if (!changeTypes.length) return null;
-
-        const payload = {
-            userId: hostId,
-            domitsPropertyId: propertyId,
-            ...this.getForwardCalendarSyncRange(),
-            changeTypes,
-            source: "HOST_CALENDAR_GLOBAL_SETTINGS_CHANGED",
-        };
-
-        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
     }
 
     extractOverviewPayload(body) {
