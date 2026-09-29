@@ -10,6 +10,8 @@ import {
 
 const SERIALIZATION_FAILURE = "40001";
 const lockName = (domitsPropertyId) => `channex_ari:${domitsPropertyId}`;
+// Rows store YYYYMMDD integers; calls carry ISO dates, which compare correctly as text.
+const toIsoDate = (value) => String(value).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3");
 
 export default class ChannexAriOutboxWorker {
   constructor({ outbox, props, accounts, sync, schemaGuard, syncCalendarChange, now = Date.now, random = Math.random, log = console }) {
@@ -78,13 +80,19 @@ export default class ChannexAriOutboxWorker {
       if (result.outcome !== OUTCOME.PROCESSED) pausedTypes.push(...group.changeTypes);
     }
 
-    // Each row gets the worst outcome of the calls that carried its change types; a
-    // type that was not sent at all counts as a retry.
+    // Each row gets the worst outcome of the calls that carried its change types on its
+    // dates; one type can go out in several calls when its dates lie far apart. A type
+    // that was not sent for the row's dates counts as a retry.
     const rowsByOutcome = new Map();
     for (const row of rows) {
-      const outcomes = row.changeTypes.map(
-        (type) => sends.find(({ group }) => group.changeTypes.includes(type))?.result.outcome ?? OUTCOME.RETRY
-      );
+      const [rowFrom, rowTo] = [row.dateFrom, row.dateTo].map(toIsoDate);
+      const outcomes = row.changeTypes.flatMap((type) => {
+        const carriers = sends.filter(
+          ({ group }) =>
+            group.changeTypes.includes(type) && group.changedDates[0] <= rowTo && group.changedDates.at(-1) >= rowFrom
+        );
+        return carriers.length ? carriers.map(({ result }) => result.outcome) : [OUTCOME.RETRY];
+      });
       const outcome = worstOutcome(outcomes);
       rowsByOutcome.set(outcome, [...(rowsByOutcome.get(outcome) || []), row]);
     }

@@ -139,6 +139,25 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     });
   });
 
+  test("a row is only PROCESSED by the call that carried its dates, not by an earlier call of the same type", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-near", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-far", changeTypes: ["rates"], dateFrom: 20280601, dateTo: 20280601 }),
+    ]);
+    syncCalendarChange
+      .mockResolvedValueOnce(sent)
+      .mockResolvedValueOnce({
+        statusCode: 500,
+        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 503, errorCode: "CHANNEX_DOWN" }] }] },
+      });
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
+    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-near"], expect.objectContaining({ now: NOW }));
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-far"], expect.objectContaining({ failureReason: "CHANNEX_DOWN" }));
+  });
+
   test("stops sending further groups after the first non-PROCESSED result", async () => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([
