@@ -143,6 +143,29 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     });
   });
 
+  test("keeps a row alive when one of its calls must be retried and another was rejected", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    // row-2 gives availability another date, so row-1's two types go out in two calls.
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-1", changeTypes: ["availability", "rates"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-2", changeTypes: ["availability"], dateFrom: 20261105, dateTo: 20261105 }),
+    ]);
+    syncCalendarChange
+      .mockResolvedValueOnce({
+        statusCode: 500,
+        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 429, errorCode: "CHANNEX_RATE_LIMITED" }] }] },
+      })
+      .mockResolvedValueOnce({
+        statusCode: 500,
+        response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 400, errorCode: "CHANNEX_REJECTED" }] }] },
+      });
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("RETRY");
+    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1", "row-2"], expect.objectContaining({ now: NOW }));
+  });
+
   test("stops sending further groups after the first non-PROCESSED result", async () => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([

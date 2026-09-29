@@ -65,7 +65,9 @@ export const OUTCOME = Object.freeze({
   RETRY: "RETRY",
 });
 
-const OUTCOME_SEVERITY = [OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.RETRY, OUTCOME.PROCESSED];
+// RETRY comes first: a row can go out in several calls, and while one of them still has
+// to be retried, ending the row would drop that part. Exhaustion still ends it (#3280).
+const OUTCOME_SEVERITY = [OUTCOME.RETRY, OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.PROCESSED];
 
 const isTemporary = (httpStatus) =>
   httpStatus === null || httpStatus === undefined || httpStatus === 429 || httpStatus >= 500;
