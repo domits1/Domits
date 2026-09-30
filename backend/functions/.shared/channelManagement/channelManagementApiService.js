@@ -167,7 +167,6 @@ export default class ChannelManagementApiService {
         resLinks,
         channexBookingRevisions,
         externalBookingImportRepository,
-        channexBookingAvailabilityBridge,
         channexCredentialStore,
         channexProviderClient,
         finalizeChannexSyncResult: (...args) => this.finalizeChannexSyncResult(...args),
