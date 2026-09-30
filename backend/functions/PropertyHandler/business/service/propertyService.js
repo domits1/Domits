@@ -27,7 +27,14 @@ import { PropertyDraftRepository } from "../../data/repository/propertyDraftRepo
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import { ConflictException } from "../../util/exception/ConflictException.js";
+import { TypeException } from "../../util/exception/TypeException.js";
 import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
+import {
+  AUTO_REGISTRATION_NUMBER_PATTERN,
+  MAX_REGISTRATION_NUMBER_LENGTH,
+  REGISTRATION_NUMBER_TAKEN_MESSAGE,
+} from "../../util/constant/registrationNumber.js";
 import {
   extractAvailableOverrideDateKeys,
   extractUnavailableOverrideDateKeys,
@@ -123,6 +130,50 @@ export class PropertyService {
       throw new DatabaseException("Property status update was not completed.");
     }
     return updatedProperty;
+  }
+
+  normalizeRegistrationNumber(registrationNumber) {
+    if (typeof registrationNumber !== "string") {
+      throw new TypeException("Registration number must be a string.");
+    }
+    const normalized = registrationNumber.trim();
+    if (!normalized) {
+      throw new TypeException("Registration number is required.");
+    }
+    if (AUTO_REGISTRATION_NUMBER_PATTERN.test(normalized)) {
+      throw new TypeException("Registration number cannot be the automatically generated placeholder.");
+    }
+    if (normalized.length > MAX_REGISTRATION_NUMBER_LENGTH) {
+      throw new TypeException(`Registration number cannot be longer than ${MAX_REGISTRATION_NUMBER_LENGTH} characters.`);
+    }
+    return normalized;
+  }
+
+  async updateRegistrationNumber(propertyId, registrationNumber) {
+    const normalizedRegistrationNumber = this.normalizeRegistrationNumber(registrationNumber);
+
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    const isUsedByAnotherProperty = await this.propertyRepository.isRegistrationNumberUsedByAnotherProperty(
+      normalizedRegistrationNumber,
+      propertyId
+    );
+    if (isUsedByAnotherProperty) {
+      throw new ConflictException(REGISTRATION_NUMBER_TAKEN_MESSAGE);
+    }
+
+    const updatedProperty = await this.propertyRepository.updateRegistrationNumber(
+      propertyId,
+      normalizedRegistrationNumber
+    );
+    if (!updatedProperty) {
+      throw new DatabaseException("Registration number update was not completed.");
+    }
+
+    return { propertyId, registrationNumber: updatedProperty.registrationNumber };
   }
 
   async getDraft(propertyId) {

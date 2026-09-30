@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useContext, useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import standardAvatar from "../../../../images/standard.png";
 import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
+import { parseDateOfBirth } from "../../../../components/settings/utils/settingsFormatters";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
@@ -19,7 +22,9 @@ import {
 
 const contentByLanguage = { en, nl, de, es };
 
-const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange }) => {
+const fixedPopperProps = { strategy: "fixed" };
+
+const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange, ariaDescribedBy }) => {
     const selectRef = useRef(null);
 
     useEffect(() => {
@@ -57,6 +62,7 @@ const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, st
                 onChange={onPhoneChange}
                 className="pd-field-input pd-phone-number"
                 placeholder="Phone number"
+                aria-describedby={ariaDescribedBy}
             />
         </div>
     );
@@ -68,6 +74,7 @@ PhoneField.propTypes = {
     onCountryCodeChange: PropTypes.func.isRequired,
     stripPhone: PropTypes.string.isRequired,
     onPhoneChange: PropTypes.func.isRequired,
+    ariaDescribedBy: PropTypes.string,
 };
 
 const EyeIcon = () => (
@@ -120,8 +127,9 @@ PasswordField.propTypes = {
     hideLabel: PropTypes.string.isRequired,
 };
 
-function getSaveLabel(isSaving, saveSuccess, t) {
+function getSaveLabel(isSaving, saveSuccess, saveError, t) {
     if (isSaving) return t.buttons.saving;
+    if (saveError) return t.buttons.saveError;
     if (saveSuccess) return t.buttons.saved;
     return t.buttons.save;
 }
@@ -150,6 +158,10 @@ const PersonalDataForm = ({
     stripPhone,
     dateOfBirthError,
     nationalityError,
+    emailError,
+    nameError,
+    phoneError,
+    emailSuccess,
     isVerifying,
     verificationCode,
     onTitleChange,
@@ -162,6 +174,7 @@ const PersonalDataForm = ({
     onSaveAll,
     isSaving,
     saveSuccess,
+    saveError,
     onVerifyEmail,
     language,
     languageOptions,
@@ -243,9 +256,13 @@ const PersonalDataForm = ({
                                 {isRemovingPhoto ? t.photo.removing : t.photo.remove}
                             </button>
                         </div>
-                        {photoError && <p className="pd-photo-error">{photoError}</p>}
-                        {photoSuccess === "uploaded" && <p className="pd-photo-success">{t.photo.uploaded}</p>}
-                        {photoSuccess === "removed" && <p className="pd-photo-success">{t.photo.removed}</p>}
+                        {photoError && <p className="pd-photo-error" role="alert">{photoError}</p>}
+                        {photoSuccess === "uploaded" && (
+                            <p className="pd-photo-success" role="status">{t.photo.uploaded}</p>
+                        )}
+                        {photoSuccess === "removed" && (
+                            <p className="pd-photo-success" role="status">{t.photo.removed}</p>
+                        )}
                         <input
                             ref={photoInputRef}
                             type="file"
@@ -267,6 +284,7 @@ const PersonalDataForm = ({
                                 onChange={onInputChange}
                                 className="pd-field-input"
                                 placeholder={t.fields.firstName}
+                                aria-describedby={nameError ? "pd-name-error" : undefined}
                             />
                         </div>
 
@@ -280,7 +298,11 @@ const PersonalDataForm = ({
                                 onChange={onInputChange}
                                 className="pd-field-input"
                                 placeholder={t.fields.lastName}
+                                aria-describedby={nameError ? "pd-name-error" : undefined}
                             />
+                            {nameError && (
+                                <p id="pd-name-error" className="pd-field-error" role="alert">{nameError}</p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -314,6 +336,7 @@ const PersonalDataForm = ({
                                         onChange={onVerificationInputChange}
                                         className="pd-field-input"
                                         placeholder={t.fields.verificationCode}
+                                        aria-describedby={emailError ? "pd-email-error" : undefined}
                                     />
                                     <button
                                         type="button"
@@ -332,7 +355,20 @@ const PersonalDataForm = ({
                                     onChange={onInputChange}
                                     className="pd-field-input"
                                     placeholder={t.fields.emailAddress}
+                                    aria-describedby={
+                                        emailError ? "pd-email-error" : emailSuccess ? "pd-email-success" : undefined
+                                    }
                                 />
+                            )}
+                            {emailError && (
+                                <p id="pd-email-error" className="pd-field-error" role="alert">
+                                    {emailError}
+                                </p>
+                            )}
+                            {emailSuccess && (
+                                <p id="pd-email-success" className="pd-field-success" role="status">
+                                    {t.fields.emailUpdated}
+                                </p>
                             )}
                         </div>
 
@@ -345,7 +381,11 @@ const PersonalDataForm = ({
                                 stripPhone={stripPhone}
                                 onPhoneChange={onPhoneChange}
                                 placeholder={t.fields.phoneNumber}
+                                ariaDescribedBy={phoneError ? "pd-phone-error" : undefined}
                             />
+                            {phoneError && (
+                                <p id="pd-phone-error" className="pd-field-error" role="alert">{phoneError}</p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -369,17 +409,27 @@ const PersonalDataForm = ({
 
                         <div className="pd-field">
                             <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
-                            <input
+                            <DatePicker
                                 id="pd-dob"
-                                type="text"
-                                name="dateOfBirth"
-                                value={tempUser.dateOfBirth || ""}
+                                selected={parseDateOfBirth(tempUser.dateOfBirth)}
                                 onChange={onDateOfBirthChange}
                                 className="pd-field-input"
-                                placeholder="DD-MM-YYYY"
-                                inputMode="numeric"
+                                placeholderText="DD-MM-YYYY"
+                                dateFormat="dd-MM-yyyy"
+                                maxDate={new Date()}
+                                showYearDropdown
+                                showMonthDropdown
+                                dropdownMode="select"
+                                wrapperClassName="pd-field-input-wrapper"
+                                portalId="datepicker-portal"
+                                popperProps={fixedPopperProps}
+                                ariaDescribedBy={dateOfBirthError ? "pd-dob-error" : undefined}
                             />
-                            {dateOfBirthError && <p className="pd-field-error">{dateOfBirthError}</p>}
+                            {dateOfBirthError && (
+                                <p id="pd-dob-error" className="pd-field-error" role="alert">
+                                    {dateOfBirthError}
+                                </p>
+                            )}
                         </div>
 
                         <div className="pd-field">
@@ -411,6 +461,7 @@ const PersonalDataForm = ({
                                     value={tempUser.nationality || ""}
                                     onChange={onInputChange}
                                     className="pd-field-input pd-field-select"
+                                    aria-describedby={nationalityError ? "pd-nationality-error" : undefined}
                                 >
                                     <option value="">{t.fields.nationality}</option>
                                     {placeOfBirthOptions.map((country) => (
@@ -420,7 +471,11 @@ const PersonalDataForm = ({
                                     ))}
                                 </select>
                             </div>
-                            {nationalityError && <p className="pd-field-error">{nationalityError}</p>}
+                            {nationalityError && (
+                                <p id="pd-nationality-error" className="pd-field-error" role="alert">
+                                    {nationalityError}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -428,11 +483,11 @@ const PersonalDataForm = ({
                 <div className="personal-data-card-footer">
                     <button
                         type="button"
-                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}`}
+                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}${saveError ? " pd-save-btn--error" : ""}`}
                         onClick={onSaveAll}
                         disabled={isSaving}
                     >
-                        {getSaveLabel(isSaving, saveSuccess, t)}
+                        {getSaveLabel(isSaving, saveSuccess, saveError, t)}
                     </button>
                 </div>
             </div>
@@ -629,6 +684,10 @@ PersonalDataForm.propTypes = {
     stripPhone: PropTypes.string.isRequired,
     dateOfBirthError: PropTypes.string,
     nationalityError: PropTypes.string,
+    emailError: PropTypes.string,
+    nameError: PropTypes.string,
+    phoneError: PropTypes.string,
+    emailSuccess: PropTypes.bool,
     isVerifying: PropTypes.bool.isRequired,
     verificationCode: PropTypes.string.isRequired,
     onTitleChange: PropTypes.func.isRequired,
@@ -641,6 +700,7 @@ PersonalDataForm.propTypes = {
     onSaveAll: PropTypes.func.isRequired,
     isSaving: PropTypes.bool.isRequired,
     saveSuccess: PropTypes.bool.isRequired,
+    saveError: PropTypes.bool.isRequired,
     onVerifyEmail: PropTypes.func.isRequired,
     language: PropTypes.string.isRequired,
     languageOptions: PropTypes.arrayOf(optionShape).isRequired,

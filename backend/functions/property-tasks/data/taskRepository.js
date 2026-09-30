@@ -1,5 +1,6 @@
 import { PropertyTask as TaskEntity } from "database/models/Property_Task";
 import { Property_Task_Activity as TaskActivityEntity } from "database/models/Property_Task_Activity";
+import { Team_Member as TeamMemberEntity } from "database/models/Team_Member";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const repository = dataSource.getRepository(TaskEntity);
@@ -25,6 +26,10 @@ export const getTasksFromDb = async (dataSource, hostId, filters) => {
 
     if (filters.assignee) {
         query = query.andWhere("task.assignee_name = :assignee", { assignee: filters.assignee });
+    }
+
+    if (filters.assigneeTeamMemberId) {
+        query = query.andWhere("task.assignee_team_member_id = :assigneeTeamMemberId", { assigneeTeamMemberId: filters.assigneeTeamMemberId });
     }
 
     if (filters.dateFrom) {
@@ -81,4 +86,9 @@ export const getTaskById = async (dataSource, taskId, hostId) => {
 export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.update(taskId, updateData);
+};
+
+export const getTeamMemberById = async (dataSource, teamMemberId, hostId) => {
+    const repository = dataSource.getRepository(TeamMemberEntity);
+    return await repository.findOne({ where: { id: teamMemberId, host_id: hostId } });
 };

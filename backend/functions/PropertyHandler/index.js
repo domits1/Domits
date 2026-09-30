@@ -68,6 +68,9 @@ const handlePatch = async (event) => {
   if (isPath(event, "/property/overview")) {
     return controller.updatePropertyOverview(event);
   }
+  if (isPath(event, "/property/registration")) {
+    return controller.updateRegistrationNumber(event);
+  }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.updatePropertyCalendarOverrides(event);
   }
