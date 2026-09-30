@@ -54,6 +54,52 @@ describe("MissedRevenueDashboardPage", () => {
     await waitFor(() => expect(screen.getByText("prop-1")).toBeInTheDocument());
   });
 
+  test("renders the root-cause breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      rootCause: {
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 0, nights: 0 },
+        occupancy: { missedRevenue: 300, nights: 3 },
+      },
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText(/root cause/i)).toBeInTheDocument());
+    expect(screen.getByText(/^Occupancy/)).toBeInTheDocument();
+  });
+
+  test("renders the by-date breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      byDate: [{ date: "2026-09-15", missedRevenue: 150 }],
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("2026-09-15")).toBeInTheDocument());
+    expect(screen.getByText(/missed revenue by date/i)).toBeInTheDocument();
+  });
+
+  test("formats the root-cause and by-date tables with the response's currency", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      currency: "USD",
+      byDate: [{ date: "2026-09-15", missedRevenue: 150 }],
+      rootCause: {
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 0, nights: 0 },
+        occupancy: { missedRevenue: 175, nights: 3 },
+      },
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("USD 150.00")).toBeInTheDocument());
+    expect(screen.getByText("USD 175.00")).toBeInTheDocument();
+  });
+
   test("shows a connect-PriceLabs message when the host has no active connection", async () => {
     fetchMissedRevenue.mockResolvedValue({ ...EMPTY_MISSED_REVENUE, connected: false });
 
