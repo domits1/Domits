@@ -1112,6 +1112,10 @@
           "title": "Communicatievoorkeuren",
           "desc": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt."
         },
+        "privacySecurity": {
+          "title": "Privacy & beveiliging",
+          "desc": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie."
+        },
         "company": {
           "title": "Bedrijf",
           "desc": "Beheer je bedrijfsnaam en basisgegevens."
@@ -1329,6 +1333,28 @@
         "saved": "Opgeslagen!",
         "cancel": "Annuleren",
         "close": "Sluiten"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & beveiliging",
+      "title": "Privacy & beveiliging",
+      "subtitle": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie.",
+      "authenticationSection": "Authenticatie",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-mail",
+        "active": "Actief",
+        "inactive": "Inactief",
+        "unavailable": "Niet beschikbaar",
+        "verified": "Geverifieerd",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-app",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "loading": "Je authenticatiestatus wordt geladen...",
+        "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
+      },
+      "pin": {
+        "comingSoon": "Binnenkort beschikbaar."
       }
     },
     "communicationPreferences": {

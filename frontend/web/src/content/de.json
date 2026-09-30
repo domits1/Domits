@@ -1112,6 +1112,10 @@
           "title": "Kommunikationseinstellungen",
           "desc": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst."
         },
+        "privacySecurity": {
+          "title": "Datenschutz & Sicherheit",
+          "desc": "Verwalte deine Anmeldesicherheit, dein Passwort und die Zwei-Faktor-Authentifizierung."
+        },
         "company": {
           "title": "Unternehmen",
           "desc": "Verwalte deinen Unternehmensnamen und grundlegende Daten."
@@ -1329,6 +1333,28 @@
         "saved": "Gespeichert!",
         "cancel": "Abbrechen",
         "close": "Schließen"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Datenschutz & Sicherheit",
+      "title": "Datenschutz & Sicherheit",
+      "subtitle": "Verwalte deine Anmeldesicherheit, dein Passwort und die Zwei-Faktor-Authentifizierung.",
+      "authenticationSection": "Authentifizierung",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-Mail",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "unavailable": "Nicht verfügbar",
+        "verified": "Verifiziert",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-App",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "loading": "Dein Authentifizierungsstatus wird geladen...",
+        "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
+      },
+      "pin": {
+        "comingSoon": "Demnächst verfügbar."
       }
     },
     "communicationPreferences": {

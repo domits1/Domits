@@ -26,9 +26,17 @@ describe("HostSettingsHub", () => {
         expect(within(personalSection).getByRole("link", { name: /personal data/i })).toBeInTheDocument();
         expect(within(personalSection).getByRole("link", { name: /communication preferences/i })).toBeInTheDocument();
         expect(screen.queryByRole("heading", { name: "Communication Preferences" })).not.toBeInTheDocument();
+        expect(within(personalSection).getByRole("link", { name: /privacy & security/i })).toBeInTheDocument();
         expect(within(accountSection).getByRole("link", { name: /company/i })).toBeInTheDocument();
         expect(within(accountSection).getByRole("link", { name: /team/i })).toBeInTheDocument();
         expect(within(accountSection).getByRole("link", { name: /rate plans/i })).toBeInTheDocument();
         expect(within(accountSection).getByRole("link", { name: /compliance/i })).toBeInTheDocument();
+    });
+
+    test("privacy & security card links to the privacy-security route", () => {
+        renderHub();
+
+        const link = screen.getByRole("link", { name: /privacy & security/i });
+        expect(link).toHaveAttribute("href", "/privacy-security");
     });
 });

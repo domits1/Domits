@@ -67,6 +67,11 @@ export default function useUserProfile() {
     phoneVerified: false,
     preferredMFA: "NOMFA",
   });
+  // authStatusError covers the whole profile fetch failing (email/phone verification also unknown).
+  // mfaStatusError covers only Auth.getPreferredMFA failing, with email/phone verification still valid.
+  const [authStatusLoading, setAuthStatusLoading] = useState(true);
+  const [authStatusError, setAuthStatusError] = useState(false);
+  const [mfaStatusError, setMfaStatusError] = useState(false);
   const previousDobRef = useRef("");
   const pendingEmailRef = useRef("");
 
@@ -388,6 +393,9 @@ export default function useUserProfile() {
   };
 
   const fetchUserData = async () => {
+    setAuthStatusLoading(true);
+    setAuthStatusError(false);
+    setMfaStatusError(false);
     try {
       const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
       const attributes = currentUser?.attributes || {};
@@ -396,6 +404,7 @@ export default function useUserProfile() {
         preferredMFA = normalizePreferredMfa(await Auth.getPreferredMFA(currentUser));
       } catch (error) {
         console.warn("Unable to load preferred MFA:", error);
+        setMfaStatusError(true);
       }
       const emailVerified = attributes.email_verified === true || attributes.email_verified === "true";
       const phoneVerified = attributes.phone_number_verified === true || attributes.phone_number_verified === "true";
@@ -433,6 +442,9 @@ export default function useUserProfile() {
       });
     } catch (error) {
       console.error("Error fetching user data:", error);
+      setAuthStatusError(true);
+    } finally {
+      setAuthStatusLoading(false);
     }
   };
 
@@ -466,6 +478,9 @@ export default function useUserProfile() {
     dateOfBirthError,
     nationalityError,
     authStatus,
+    authStatusLoading,
+    authStatusError,
+    mfaStatusError,
     placeOfBirthOptions,
     countryCodes,
     titleOptions,
