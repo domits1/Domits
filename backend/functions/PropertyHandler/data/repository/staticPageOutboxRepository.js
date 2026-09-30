@@ -1,11 +1,17 @@
 import Database from "database";
 
 const STATIC_PAGE_STATUS_PENDING = "PENDING";
+const STATIC_PAGE_STATUS_BUILDING = "BUILDING";
 const STATIC_PAGE_STATUS_ACTIVE = "ACTIVE";
 const STATIC_PAGE_STATUS_FAILED = "FAILED";
+const STATIC_PAGE_STATUS_SKIPPED = "SKIPPED";
 const STATIC_PAGE_STATUSES_TO_BUILD = [STATIC_PAGE_STATUS_PENDING, STATIC_PAGE_STATUS_FAILED];
+const STATIC_PAGE_STATUSES_WITH_A_PAGE = [STATIC_PAGE_STATUS_BUILDING, STATIC_PAGE_STATUS_ACTIVE];
+export const STATIC_PAGE_BUILD_LEASE_MS = 15 * 60 * 1000;
+export const STATIC_PAGE_ATTEMPT_LIMIT = 5;
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
+const TRANSIENT_CONFLICT_CODES = new Set(["40001", "OC001"]);
 const OUTBOX_SELECT_COLUMNS = `site_id,
         property_id,
         host_id,
@@ -44,6 +50,9 @@ const runStatement = async (client, statement, parameters) => {
     await queryRunner.release();
   }
 };
+
+const isTransientTransactionConflict = (error) =>
+  TRANSIENT_CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
 
 const requireSiteId = (siteId) => {
   const normalized = String(siteId || "").trim();
@@ -92,7 +101,7 @@ const mapOutboxRow = (row) => {
 };
 
 export class StaticPageOutboxRepository {
-  async listPagesToBuild({ limit = DEFAULT_PAGE_LIMIT } = {}) {
+  async listPagesToBuild({ limit = DEFAULT_PAGE_LIMIT, now = Date.now() } = {}) {
     const client = await Database.getInstance();
     const tableName = outboxTableName(resolveSchemaName(client));
 
@@ -100,16 +109,81 @@ export class StaticPageOutboxRepository {
       `SELECT
         ${OUTBOX_SELECT_COLUMNS}
       FROM ${tableName}
-      WHERE status = ANY($1)
+      WHERE (status = ANY($1) OR (status = 'BUILDING' AND updated_at < $2))
+        AND attempt_count < $3
       ORDER BY updated_at ASC
-      LIMIT $2`,
-      [[...STATIC_PAGE_STATUSES_TO_BUILD], normalizeLimit(limit)]
+      LIMIT $4`,
+      [[...STATIC_PAGE_STATUSES_TO_BUILD], now - STATIC_PAGE_BUILD_LEASE_MS, STATIC_PAGE_ATTEMPT_LIMIT, normalizeLimit(limit)]
     );
 
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
   }
 
+  async claimPage(siteId, revision, { now = Date.now() } = {}) {
+    const normalizedSiteId = requireSiteId(siteId);
+    const normalizedRevision = requireRevision(revision);
+    const client = await Database.getInstance();
+    const tableName = outboxTableName(resolveSchemaName(client));
+
+    try {
+      const { records } = await runStatement(
+        client,
+        `UPDATE ${tableName}
+      SET status = 'BUILDING',
+          attempt_count = attempt_count + 1,
+          updated_at = $3
+      WHERE site_id = $1
+        AND revision = $2
+        AND (status = ANY($4) OR (status = 'BUILDING' AND updated_at < $5))
+        AND attempt_count < $6
+      RETURNING site_id`,
+        [
+          normalizedSiteId,
+          normalizedRevision,
+          now,
+          [...STATIC_PAGE_STATUSES_TO_BUILD],
+          now - STATIC_PAGE_BUILD_LEASE_MS,
+          STATIC_PAGE_ATTEMPT_LIMIT,
+        ]
+      );
+
+      return records.length > 0;
+    } catch (error) {
+      if (isTransientTransactionConflict(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   async markPageActive(siteId, revision, { now = Date.now() } = {}) {
+    return this.#finishBuild(siteId, revision, {
+      status: STATIC_PAGE_STATUS_ACTIVE,
+      failureReason: null,
+      processedAt: now,
+      now,
+    });
+  }
+
+  async markPageFailed(siteId, revision, failureReason, { now = Date.now() } = {}) {
+    return this.#finishBuild(siteId, revision, {
+      status: STATIC_PAGE_STATUS_FAILED,
+      failureReason: String(failureReason || "").slice(0, 500),
+      processedAt: null,
+      now,
+    });
+  }
+
+  async skipPage(siteId, revision, reason, { now = Date.now() } = {}) {
+    return this.#finishBuild(siteId, revision, {
+      status: STATIC_PAGE_STATUS_SKIPPED,
+      failureReason: String(reason || "").slice(0, 500),
+      processedAt: now,
+      now,
+    });
+  }
+
+  async requeueNewerRevision(siteId, revision, { now = Date.now() } = {}) {
     const normalizedSiteId = requireSiteId(siteId);
     const normalizedRevision = requireRevision(revision);
     const client = await Database.getInstance();
@@ -118,20 +192,19 @@ export class StaticPageOutboxRepository {
     const { records } = await runStatement(
       client,
       `UPDATE ${tableName}
-      SET status = $3,
-          failure_reason = NULL,
-          processed_at = $4,
+      SET status = 'PENDING',
           updated_at = $4
       WHERE site_id = $1
-        AND revision = $2
+        AND revision > $2
+        AND status = ANY($3)
       RETURNING site_id`,
-      [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_ACTIVE, now]
+      [normalizedSiteId, normalizedRevision, [...STATIC_PAGE_STATUSES_WITH_A_PAGE], now]
     );
 
     return records.length > 0;
   }
 
-  async markPageFailed(siteId, revision, failureReason, { now = Date.now() } = {}) {
+  async #finishBuild(siteId, revision, { status, failureReason, processedAt, now }) {
     const normalizedSiteId = requireSiteId(siteId);
     const normalizedRevision = requireRevision(revision);
     const client = await Database.getInstance();
@@ -142,12 +215,13 @@ export class StaticPageOutboxRepository {
       `UPDATE ${tableName}
       SET status = $3,
           failure_reason = $4,
-          attempt_count = attempt_count + 1,
+          processed_at = COALESCE($6, processed_at),
           updated_at = $5
       WHERE site_id = $1
         AND revision = $2
+        AND status = 'BUILDING'
       RETURNING site_id`,
-      [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_FAILED, String(failureReason || "").slice(0, 500), now]
+      [normalizedSiteId, normalizedRevision, status, failureReason, now, processedAt]
     );
 
     return records.length > 0;
