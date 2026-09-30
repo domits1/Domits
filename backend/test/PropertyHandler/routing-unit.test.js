@@ -187,6 +187,17 @@ describe("Routing unit tests", () => {
     }
   );
 
+  it("should run the static page worker for a task event that carries no HTTP method", async () => {
+    const buildStaticPages = jest
+      .spyOn(PropertyController.prototype, "buildStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "build-static-pages", limit: 5 });
+
+    expect(response.statusCode).toBe(200);
+    expect(buildStaticPages).toHaveBeenCalledWith({ task: "build-static-pages", limit: 5 });
+  });
+
   it.each(notFoundCases)("should return 404 for $name", async ({ event, expectedBody }) => {
     const response = await handler(event);
     expect(response.statusCode).toBe(404);
