@@ -132,7 +132,9 @@ describe("StaticPageOutboxRepository", () => {
     expect(statement).toContain("AND status = 'BUILDING'");
     expect(statement).toContain(`FROM ${SCHEMA}.standalone_site AS site`);
     expect(statement).toContain("AND site.status = 'PUBLISHED'");
+    expect(statement).toContain("WHERE site.id = $5");
     expect(statement).toContain("AND site.static_page_revision = $2");
+    expect(statement).toContain("FOR UPDATE");
     expect(parameters).toEqual(["site-1", 4, "ACTIVE", NOW, "site-1"]);
     expect(useStructuredResult).toBe(true);
     expect(client.queryRunner.release).toHaveBeenCalledTimes(1);
@@ -179,15 +181,17 @@ describe("StaticPageOutboxRepository", () => {
     expect(claimed).toBe(true);
   });
 
-  it("loses the claim when the database rejects the concurrent write, and reports any other error", async () => {
+  it("loses a claim or an activation the database rejects as a concurrent write, and reports any other error", async () => {
     const client = buildClient([{ site_id: "site-1" }]);
     const repository = new StaticPageOutboxRepository();
     client.queryRunner.query.mockRejectedValueOnce(Object.assign(new Error("conflict"), { code: "OC001" }));
+    client.queryRunner.query.mockRejectedValueOnce(Object.assign(new Error("conflict"), { code: "40001" }));
     client.queryRunner.query.mockRejectedValueOnce(new Error("connection lost"));
 
     await expect(repository.claimPage("site-1", 4, { now: NOW })).resolves.toBe(false);
+    await expect(repository.markPageActive("site-1", 4, { now: NOW })).resolves.toBe(false);
     await expect(repository.claimPage("site-1", 4, { now: NOW })).rejects.toThrow("connection lost");
-    expect(client.queryRunner.release).toHaveBeenCalledTimes(2);
+    expect(client.queryRunner.release).toHaveBeenCalledTimes(3);
   });
 
   it("skips a page whose site is gone or unpublished, so it waits for the next publish", async () => {

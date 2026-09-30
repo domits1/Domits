@@ -68,3 +68,15 @@ export const isDirectBookingWebsitePublishedFallbackReachable = ({
   String(siteStatus || "").trim().toUpperCase() === "PUBLISHED" &&
   Boolean(cleanWebsiteText(domainEntry?.domain)) &&
   resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry) === "ACTIVE";
+
+export const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
+  const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
+  const shouldTreatPublishedFallbackDomainAsActive =
+    String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
+    isDirectBookingWebsiteFallbackRoutingActive() &&
+    isDirectBookingWebsiteFallbackDomain(domainEntry) &&
+    resolvedStatus === "DISABLED" &&
+    domainEntry?.verificationDetails?.disabledByHost === true;
+
+  return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
+};
