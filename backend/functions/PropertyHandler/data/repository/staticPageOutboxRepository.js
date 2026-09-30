@@ -1,12 +1,11 @@
 import Database from "database";
 
-const STATIC_PAGE_STATUS_PENDING = "PENDING";
 const STATIC_PAGE_STATUS_BUILDING = "BUILDING";
 const STATIC_PAGE_STATUS_ACTIVE = "ACTIVE";
 const STATIC_PAGE_STATUS_FAILED = "FAILED";
 const STATIC_PAGE_STATUS_SKIPPED = "SKIPPED";
-const STATIC_PAGE_STATUSES_TO_BUILD = [STATIC_PAGE_STATUS_PENDING, STATIC_PAGE_STATUS_FAILED];
 export const STATIC_PAGE_BUILD_LEASE_MS = 15 * 60 * 1000;
+export const STATIC_PAGE_RETRY_DELAY_MS = 10 * 60 * 1000;
 export const STATIC_PAGE_ATTEMPT_LIMIT = 5;
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
@@ -103,17 +102,23 @@ export class StaticPageOutboxRepository {
   async listPagesToBuild({ limit = DEFAULT_PAGE_LIMIT, now = Date.now() } = {}) {
     const client = await Database.getInstance();
     const tableName = outboxTableName(resolveSchemaName(client));
-    const staleBefore = now - STATIC_PAGE_BUILD_LEASE_MS;
 
     const rows = await client.query(
       `SELECT
         ${OUTBOX_SELECT_COLUMNS}
       FROM ${tableName}
-      WHERE (status = ANY($1) OR (status = 'BUILDING' AND updated_at < $2))
+      WHERE (status = 'PENDING'
+        OR (status = 'FAILED' AND updated_at < $1)
+        OR (status = 'BUILDING' AND updated_at < $2))
         AND attempt_count < $3
       ORDER BY updated_at ASC
       LIMIT $4`,
-      [[...STATIC_PAGE_STATUSES_TO_BUILD], staleBefore, STATIC_PAGE_ATTEMPT_LIMIT, normalizeLimit(limit)]
+      [
+        now - STATIC_PAGE_RETRY_DELAY_MS,
+        now - STATIC_PAGE_BUILD_LEASE_MS,
+        STATIC_PAGE_ATTEMPT_LIMIT,
+        normalizeLimit(limit),
+      ]
     );
 
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
@@ -124,6 +129,8 @@ export class StaticPageOutboxRepository {
     const normalizedRevision = requireRevision(revision);
     const client = await Database.getInstance();
     const tableName = outboxTableName(resolveSchemaName(client));
+    const retryBefore = now - STATIC_PAGE_RETRY_DELAY_MS;
+    const staleBefore = now - STATIC_PAGE_BUILD_LEASE_MS;
 
     try {
       const { records } = await runStatement(
@@ -134,17 +141,12 @@ export class StaticPageOutboxRepository {
           updated_at = $3
       WHERE site_id = $1
         AND revision = $2
-        AND (status = ANY($4) OR (status = 'BUILDING' AND updated_at < $5))
+        AND (status = 'PENDING'
+          OR (status = 'FAILED' AND updated_at < $4)
+          OR (status = 'BUILDING' AND updated_at < $5))
         AND attempt_count < $6
       RETURNING site_id`,
-        [
-          normalizedSiteId,
-          normalizedRevision,
-          now,
-          [...STATIC_PAGE_STATUSES_TO_BUILD],
-          now - STATIC_PAGE_BUILD_LEASE_MS,
-          STATIC_PAGE_ATTEMPT_LIMIT,
-        ]
+        [normalizedSiteId, normalizedRevision, now, retryBefore, staleBefore, STATIC_PAGE_ATTEMPT_LIMIT]
       );
 
       return records.length > 0;
@@ -157,30 +159,41 @@ export class StaticPageOutboxRepository {
   }
 
   async markPageActive(siteId, revision, { now = Date.now() } = {}) {
-    return this.#finishBuild(siteId, revision, {
-      status: STATIC_PAGE_STATUS_ACTIVE,
-      failureReason: null,
-      processedAt: now,
-      now,
-    });
+    const normalizedSiteId = requireSiteId(siteId);
+    const normalizedRevision = requireRevision(revision);
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+
+    const { records } = await runStatement(
+      client,
+      `UPDATE ${outboxTableName(schemaName)}
+      SET status = $3,
+          failure_reason = NULL,
+          processed_at = $4,
+          updated_at = $4
+      WHERE site_id = $1
+        AND revision = $2
+        AND status = 'BUILDING'
+        AND EXISTS (
+          SELECT 1
+          FROM ${schemaName}.standalone_site AS site
+          WHERE site.id = $5
+            AND site.status = 'PUBLISHED'
+            AND site.static_page_revision = $2
+        )
+      RETURNING site_id`,
+      [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_ACTIVE, now, normalizedSiteId]
+    );
+
+    return records.length > 0;
   }
 
   async markPageFailed(siteId, revision, failureReason, { now = Date.now() } = {}) {
-    return this.#finishBuild(siteId, revision, {
-      status: STATIC_PAGE_STATUS_FAILED,
-      failureReason: String(failureReason || "").slice(0, 500),
-      processedAt: null,
-      now,
-    });
+    return this.#finishBuild(siteId, revision, STATIC_PAGE_STATUS_FAILED, failureReason, null, now);
   }
 
   async skipPage(siteId, revision, reason, { now = Date.now() } = {}) {
-    return this.#finishBuild(siteId, revision, {
-      status: STATIC_PAGE_STATUS_SKIPPED,
-      failureReason: String(reason || "").slice(0, 500),
-      processedAt: now,
-      now,
-    });
+    return this.#finishBuild(siteId, revision, STATIC_PAGE_STATUS_SKIPPED, reason, now, now);
   }
 
   async requeueNewerRevision(siteId, revision, { now = Date.now() } = {}) {
@@ -204,7 +217,7 @@ export class StaticPageOutboxRepository {
     return records.length > 0;
   }
 
-  async #finishBuild(siteId, revision, { status, failureReason, processedAt, now }) {
+  async #finishBuild(siteId, revision, status, failureReason, processedAt, now) {
     const normalizedSiteId = requireSiteId(siteId);
     const normalizedRevision = requireRevision(revision);
     const client = await Database.getInstance();
@@ -221,7 +234,7 @@ export class StaticPageOutboxRepository {
         AND revision = $2
         AND status = 'BUILDING'
       RETURNING site_id`,
-      [normalizedSiteId, normalizedRevision, status, failureReason, now, processedAt]
+      [normalizedSiteId, normalizedRevision, status, String(failureReason || "").slice(0, 500), now, processedAt]
     );
 
     return records.length > 0;
