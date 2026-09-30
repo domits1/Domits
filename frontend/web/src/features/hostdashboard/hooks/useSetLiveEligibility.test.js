@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { getStripeAccountDetails } from "../hostfinance/services/stripeAccountService";
 import { isLiveEligible, useSetLiveEligibility } from "./useSetLiveEligibility";
 
@@ -29,7 +29,11 @@ describe("useSetLiveEligibility", () => {
 
     const { result } = renderHook(() => useSetLiveEligibility());
 
-    await waitFor(() => expect(result.current.liveEligibility).toBe(true));
+    await act(async () => {
+      await result.current.fetchLiveEligibility();
+    });
+
+    expect(result.current.liveEligibility).toBe(true);
     expect(getStripeAccountDetails).toHaveBeenCalledTimes(1);
     expect(result.current.liveEligibilityError).toBe("");
   });
@@ -44,7 +48,10 @@ describe("useSetLiveEligibility", () => {
 
     const { result } = renderHook(() => useSetLiveEligibility());
 
-    await waitFor(() => expect(result.current.liveEligibilityLoading).toBe(false));
+    await act(async () => {
+      await result.current.fetchLiveEligibility();
+    });
+
     expect(result.current.liveEligibility).toBe(false);
   });
 });
