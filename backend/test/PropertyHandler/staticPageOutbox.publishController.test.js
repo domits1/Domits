@@ -90,12 +90,15 @@ describe("publishing a website site queues its static page", () => {
     expect(controller.recordStandaloneWebsiteEventSafely).not.toHaveBeenCalled();
   });
 
-  it("still publishes when a step after the transaction fails, because the page is already queued", async () => {
-    const { controller, domainRepository } = buildController();
+  it("keeps the committed site and its queued page when a later step fails, so a retry converges", async () => {
+    const { controller, siteRepository, domainRepository } = buildController();
     domainRepository.ensureDomain.mockRejectedValue(new Error("domain unavailable"));
 
     await expect(
       controller.publishDirectBookingWebsiteForDraft({ draft: DRAFT, hostId: "host-1", propertyId: "property-1" })
     ).rejects.toThrow("domain unavailable");
+
+    expect(siteRepository.upsertSiteWithStaticPageOutbox).toHaveBeenCalledTimes(1);
+    expect(controller.recordStandaloneWebsiteEventSafely).not.toHaveBeenCalled();
   });
 });
