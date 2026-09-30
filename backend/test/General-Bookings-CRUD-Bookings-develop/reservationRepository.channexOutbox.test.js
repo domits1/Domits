@@ -57,4 +57,12 @@ describe("ReservationRepository Channex outbox rows", () => {
     expect(client.createQueryBuilder).toHaveBeenCalled();
     expect(channexAriOutboxWriter.enqueueChannexAriChange).not.toHaveBeenCalled();
   });
+
+  test("new dates and the outbox row are saved in one transaction", async () => {
+    const { repository, manager, channexAriOutboxWriter } = setup();
+
+    await repository.updateBookingDates("booking-1", Date.parse("2026-11-10"), Date.parse("2026-11-12"), change);
+
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
+  });
 });

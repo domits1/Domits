@@ -400,8 +400,9 @@ describe("BookingService Channex booking availability hooks", () => {
       property_id: "domits-property-1",
       hostid: "host-1",
       guestid: "guest-1",
-      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
-      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      // Postgres returns bigint columns as text.
+      arrivaldate: String(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: String(Date.parse("2026-06-03T00:00:00.000Z")),
       status: "Paid",
       paymentid: "pi_1",
     };
@@ -435,10 +436,12 @@ describe("BookingService Channex booking availability hooks", () => {
       departureDateMs: Date.parse("2026-06-06T00:00:00.000Z"),
       excludeBookingId: "booking-1",
     });
+    // The old nights reopen and the new ones close, so the row spans both.
     expect(dependencies.reservationRepository.updateBookingDates).toHaveBeenCalledWith(
       "booking-1",
       Date.parse("2026-06-04T00:00:00.000Z"),
-      Date.parse("2026-06-06T00:00:00.000Z")
+      Date.parse("2026-06-06T00:00:00.000Z"),
+      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-05", source: "BOOKING" })
     );
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
       userId: "host-1",

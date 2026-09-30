@@ -413,7 +413,15 @@ class BookingService {
       excludeBookingId: normalizedBookingId,
     });
 
-    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs);
+    // The old nights reopen and the new ones close, so the change covers both stays.
+    const channexChange = isActiveBookingStatus(bookingBefore.status)
+      ? bookingAvailabilityChange(
+          propertyId,
+          { arrivalMs: Number(bookingBefore.arrivaldate), departureMs: Number(bookingBefore.departuredate) },
+          { arrivalMs: arrivalDateMs, departureMs: departureDateMs }
+        )
+      : null;
+    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChange);
 
     const updatedBookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
     const bookingAfter = updatedBookingResult?.response || {

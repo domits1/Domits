@@ -550,17 +550,18 @@ class ReservationRepository {
     });
   }
 
-  async updateBookingDates(id, arrivalDateMs, departureDateMs) {
-    const client = await Database.getInstance();
-    const query = await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({
-        arrivaldate: Number.parseFloat(arrivalDateMs),
-        departuredate: Number.parseFloat(departureDateMs),
-      })
-      .where("id = :id", { id })
-      .execute();
+  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChange = null) {
+    const query = await this.#saveWithOutbox(channexChange, (manager) =>
+      manager
+        .createQueryBuilder()
+        .update(Booking)
+        .set({
+          arrivaldate: Number.parseFloat(arrivalDateMs),
+          departuredate: Number.parseFloat(departureDateMs),
+        })
+        .where("id = :id", { id })
+        .execute()
+    );
 
     return {
       response: query,
