@@ -22,8 +22,13 @@ function HostChannelDistribution() {
 
   const isForbidden = !loading && error?.status === 403;
   const isOtherError = !loading && !!error && !isForbidden;
-  const isConnectedOrNeedsAttention = !loading && !error && status && status.status !== "NOT_CONNECTED";
-  const isEmpty = !loading && !error && status && status.status === "NOT_CONNECTED";
+  // status?.status !== "NOT_CONNECTED" alone would be true when status is null/undefined
+  // (undefined !== "NOT_CONNECTED"), which would flip this to true instead of false -- so the
+  // guard is kept explicit, just moved onto the optional-chained access instead of a bare &&.
+  const isConnectedOrNeedsAttention = !loading && !error && !!status?.status && status.status !== "NOT_CONNECTED";
+  // Safe to chain directly here: with ===, a null status naturally evaluates to
+  // undefined === "NOT_CONNECTED" -> false, the same result the old status && guard gave.
+  const isEmpty = !loading && !error && status?.status === "NOT_CONNECTED";
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && !error && status?.status === "NOT_CONNECTED";
 
   const closeModal = () => setActiveModal(null);

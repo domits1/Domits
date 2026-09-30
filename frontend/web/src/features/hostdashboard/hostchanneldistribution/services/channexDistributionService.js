@@ -107,8 +107,9 @@ export const getChannexStatus = async ({ userId } = {}) => fetchRealChannexStatu
 // domitsPropertyId is required by the real endpoint (400 without it). Stays mock: open question
 // for Enes on whether this tab should scope to one property or show the latest sync across all
 // of a host's mapped properties -- the mock ignores the argument's value either way for now.
+// eslint-disable-next-line no-unused-vars
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
-  void domitsPropertyId; // unused until this reads live data
+  // domitsPropertyId is unused until this reads live data
   return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
 };
 
@@ -119,7 +120,6 @@ export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
 // longer has any in-memory connection state to advance -- a mock "successful" connect closes the
 // modal but the status card, now reading the real backend, simply won't reflect it.
 export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
-  void userId;
   await mockDelay();
 
   if (MOCK_CONNECT_OUTCOME === "ERROR") {
@@ -169,8 +169,8 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
 // may call the real disconnect endpoint. Gated unreachable by MOCK_CONNECT_FLOW_ENABLED = false
 // above. Same note as connectChannex: no in-memory connection state left to advance now that
 // getChannexStatus is real.
+// eslint-disable-next-line no-unused-vars
 export const disconnectChannex = async ({ userId } = {}) => {
-  void userId;
   await mockDelay();
 
   if (MOCK_DISCONNECT_OUTCOME === "ERROR") {
