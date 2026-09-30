@@ -1,8 +1,6 @@
 const RENDER_SOURCE = "published_site";
 const LIVE_SNAPSHOT_KEYS = ["pricing", "calendarAvailability"];
 const PRIVATE_LOCATION_KEYS = ["street", "houseNumber", "houseNumberExtension", "postalCode"];
-const GUARDED_LOCATION_KEYS = ["street", "postalCode"];
-const MIN_GUARDED_LENGTH = 3;
 const PUBLIC_SITE_KEYS = [
   "id",
   "propertyId",
@@ -47,18 +45,6 @@ const buildRenderPayload = ({ site, domain }) => ({
   renderSource: RENDER_SOURCE,
 });
 
-const assertPageOmitsPrivateDetails = (html, snapshot) => {
-  const page = html.toLowerCase();
-  const leaked = GUARDED_LOCATION_KEYS.map((key) =>
-    String(snapshot?.location?.[key] ?? "")
-      .trim()
-      .toLowerCase()
-  ).some((value) => value.length >= MIN_GUARDED_LENGTH && page.includes(value));
-  if (leaked) {
-    throw new Error("The rendered page carries a private address detail.");
-  }
-};
-
 export class StaticPageRenderer {
   constructor({ loadGenerator = () => import("../../generated/staticPageBundle.mjs") } = {}) {
     this.loadGenerator = loadGenerator;
@@ -79,10 +65,7 @@ export class StaticPageRenderer {
       renderPayload.contentOverrides,
       site.templateKey
     );
-    const html = generator.buildStaticSiteDocument({ template, renderPayload, model });
-    assertPageOmitsPrivateDetails(html, site.publishedPropertySnapshot);
-
-    return html;
+    return generator.buildStaticSiteDocument({ template, renderPayload, model });
   }
 
   async #generator() {

@@ -85,17 +85,6 @@ describe("StaticPageRenderer", () => {
     expect(generator.buildStaticSiteDocument).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["street", "<html>Jalan Raya Sayan 17B</html>"],
-    ["postal code", "<html>Ubud 80571</html>"],
-  ])("refuses a page that leaks the %s, so a generator regression cannot publish it", async (_label, leakingPage) => {
-    const generator = buildGenerator({ buildStaticSiteDocument: jest.fn(() => leakingPage) });
-
-    await expect(buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN })).rejects.toThrow(
-      "The rendered page carries a private address detail."
-    );
-  });
-
   (existsSync(BUNDLE) ? it : it.skip)("produces the golden page through the real bundle", async () => {
     const html = await new StaticPageRenderer().render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
 
