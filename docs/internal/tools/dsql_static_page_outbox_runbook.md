@@ -10,7 +10,22 @@ Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_
 
 `main.standalone_site.static_page_revision` (`BIGINT NULL`) counts the publishes of a site. `upsertSiteWithStaticPageOutbox` raises it in SQL with `COALESCE(standalone_site.static_page_revision, 0) + 1`, so the counter is monotonic per site and never comes from an application clock.
 
-`main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. `status` moves `PENDING` → `ACTIVE` or `FAILED`, and a `FAILED` row is offered to the worker again, the way `booking_automation_outbox` does, so one failed attempt does not strand a page until its host publishes again. `attempt_count` counts those attempts and is what a backoff will read. Every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
+`main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. Every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
+
+## How the worker moves a row
+
+```
+PENDING ──claim──▶ BUILDING ──page uploaded──▶ ACTIVE
+FAILED  ──claim──▶ BUILDING ──render or upload failed──▶ FAILED
+                   BUILDING ──site gone or not PUBLISHED──▶ SKIPPED
+```
+
+- The worker runs when `PropertyHandler` is invoked with `{"task": "build-static-pages"}` and takes the rows oldest first, one site at a time.
+- **Claim.** `claimPage` moves a `PENDING` or `FAILED` row to `BUILDING` and adds one to `attempt_count`, guarded by `site_id`, `revision` and the current status, so two workers cannot take the same row. A `BUILDING` row whose `updated_at` is older than 15 minutes counts as abandoned and can be claimed again, so a worker that died mid-render does not strand its page.
+- **Limit.** A row with `attempt_count` of 5 is not offered again. It keeps its status and `failure_reason` for the operator, and the next publish resets the counter to 0. Only `attempt_count`, not the status, tells a row that gave up from one that will be retried.
+- **Outcome.** `ACTIVE`, `FAILED` and `SKIPPED` are written only from `BUILDING` at the claimed revision. `SKIPPED` means the site was deleted or no longer `PUBLISHED` when the worker looked; nothing was uploaded and the row waits for the next publish. `failure_reason` starts with a code: `NO_ACTIVE_DOMAIN`, `INVALID_DOMAIN`, `RENDER_FAILED`, `S3_PUT_FAILED`.
+- **A newer publish during a render.** The publish rewrites the row to the new revision, so the older worker's status write finds nothing and writes nothing. Because its upload may still have landed after the newer one, it then sets a newer row that is `BUILDING` or `ACTIVE` back to `PENDING`, and the next run renders the newer revision again. Retrying is always safe: the same revision renders the same bytes to the same key.
+- **The shell.** The worker reads `index.html` from the sites bucket once per run and claims nothing when that read fails.
 
 Only `main` has the standalone tables; the `test` schema has none, so there is no `test` variant.
 
