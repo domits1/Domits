@@ -1,0 +1,197 @@
+.host-chdist {
+  --chdist-dark: #1a1a2e;
+  --chdist-border: #e0e0e0;
+  --chdist-primary: #3cb750;
+  --chdist-primary-hover: #33a446;
+  --chdist-success-bg: #f0fdf4;
+  --chdist-success-border: #86efac;
+  --chdist-success-text: #166534;
+  --chdist-error-bg: #fff5f5;
+  --chdist-error-border: #fca5a5;
+  --chdist-error-text: #c0392b;
+  --chdist-pending-bg: #fffbeb;
+  --chdist-pending-border: #fde68a;
+  --chdist-pending-text: #92400e;
+  --chdist-danger: #c0392b;
+  --chdist-danger-hover: #a93226;
+
+  padding: 1rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.host-chdist__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.host-chdist__heading { display: flex; flex-direction: column; gap: .5rem; }
+.host-chdist__title { font-size: 1.4rem; font-weight: 700; color: var(--chdist-dark); margin: 0; }
+.host-chdist__description { color: #666; font-size: .95rem; line-height: 1.5; margin: 0; }
+
+.host-chdist__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: #fff;
+  border: 1px dashed var(--chdist-border);
+  border-radius: 12px;
+  text-align: center;
+}
+.host-chdist__empty-text { color: #888; font-size: .95rem; margin: 0; }
+
+.host-chdist__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: #fff;
+  border: 1px dashed var(--chdist-border);
+  border-radius: 12px;
+  text-align: center;
+}
+.host-chdist__notice-text { color: #888; font-size: .95rem; margin: 0; }
+
+.chdist-card-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+
+.chdist-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
+  box-sizing: border-box;
+}
+.chdist-card--coming-soon { opacity: .85; }
+
+.chdist-card__row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.chdist-card__name { font-weight: 600; color: var(--chdist-dark); }
+.chdist-card__reason { margin: .5rem 0 0; font-size: .85rem; color: var(--chdist-error-text); }
+.chdist-card__meta { margin: .5rem 0 0; font-size: .85rem; color: #888; }
+
+.chdist-badge { display: inline-block; padding: .25rem .7rem; border-radius: 99px; font-size: .78rem; font-weight: 600; }
+.chdist-badge--success { background: var(--chdist-success-bg); color: var(--chdist-success-text); border: 1px solid var(--chdist-success-border); }
+.chdist-badge--error   { background: var(--chdist-error-bg);   color: var(--chdist-error-text);   border: 1px solid var(--chdist-error-border); }
+.chdist-badge--pending { background: var(--chdist-pending-bg); color: var(--chdist-pending-text); border: 1px solid var(--chdist-pending-border); }
+
+.chdist-btn {
+  padding: .7rem 1.4rem;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity .2s, background .2s;
+}
+.chdist-btn:disabled { opacity: .5; cursor: not-allowed; }
+.chdist-btn--primary { background: var(--chdist-primary); color: #fff; }
+.chdist-btn--primary:hover:not(:disabled) { background: var(--chdist-primary-hover); }
+.chdist-btn--manage { background: #f0f0f0; color: #333; }
+.chdist-btn--secondary { background: #f0f0f0; color: #333; }
+.chdist-btn--secondary:hover:not(:disabled) { background: #e0e0e0; }
+.chdist-btn--danger { background: var(--chdist-danger); color: #fff; }
+.chdist-btn--danger:hover:not(:disabled) { background: var(--chdist-danger-hover); }
+
+.chdist-manage { position: relative; }
+.chdist-manage__menu {
+  position: absolute;
+  top: calc(100% + .25rem);
+  right: 0;
+  z-index: 1;
+  min-width: 140px;
+  margin: 0;
+  padding: .35rem;
+  list-style: none;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+}
+.chdist-manage__item {
+  display: block;
+  width: 100%;
+  padding: .5rem .6rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--chdist-dark);
+  font-size: .875rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.chdist-manage__item:hover { background: #f5f5f5; }
+.chdist-manage__item--danger { color: var(--chdist-danger); }
+
+.chdist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(26, 26, 46, .5);
+}
+.chdist-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+}
+.chdist-modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.chdist-modal__title { font-size: 1.15rem; font-weight: 700; color: var(--chdist-dark); margin: 0; }
+.chdist-modal__close {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  line-height: 1;
+  font-size: 1.25rem;
+  color: #666;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.chdist-modal__close:hover:not(:disabled) { background: #f0f0f0; }
+.chdist-modal__close:disabled { opacity: .5; cursor: not-allowed; }
+
+.chdist-modal__form { display: flex; flex-direction: column; gap: 1rem; }
+.chdist-modal__field { display: flex; flex-direction: column; gap: .35rem; }
+.chdist-modal__label { font-weight: 600; font-size: .85rem; color: #333; }
+.chdist-modal__input-row { display: flex; gap: .5rem; }
+.chdist-modal__input {
+  flex: 1;
+  min-width: 0;
+  padding: .6rem .75rem;
+  border: 1.5px solid var(--chdist-border);
+  border-radius: 8px;
+  font-size: .95rem;
+  color: #333;
+  background: #fafafa;
+}
+.chdist-modal__input:focus { outline: 2px solid var(--chdist-primary); outline-offset: 1px; border-color: var(--chdist-primary); background: #fff; }
+.chdist-modal__input:disabled { opacity: .6; cursor: not-allowed; }
+
+.chdist-modal__note { font-size: .85rem; color: #666; line-height: 1.5; margin: 0 0 1rem; }
+.chdist-modal__error { font-size: .85rem; color: var(--chdist-error-text); margin: 0; }
+.chdist-modal__actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: .25rem; }
+
+@media (max-width: 600px) {
+  .host-chdist__empty { padding: 2rem 1rem; }
+  .chdist-modal__actions { flex-direction: column-reverse; }
+  .chdist-modal__actions .chdist-btn { width: 100%; }
+}
