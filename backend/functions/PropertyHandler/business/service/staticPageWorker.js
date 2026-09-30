@@ -2,8 +2,6 @@ import { buildStaticPageKey } from "../../data/repository/staticPageStore.js";
 import { resolveDirectBookingWebsiteFallbackDomainStatus } from "../../util/directBookingWebsiteRouting.js";
 
 const DEFAULT_RUN_LIMIT = 20;
-const SITE_STATUS_PUBLISHED = "PUBLISHED";
-const DOMAIN_STATUS_ACTIVE = "ACTIVE";
 
 class PageBuildFailure extends Error {
   constructor(code, cause) {
@@ -16,19 +14,9 @@ const failWith = (code) => (cause) => {
   throw new PageBuildFailure(code, cause);
 };
 
-const isActiveDomain = (domain) => resolveDirectBookingWebsiteFallbackDomainStatus(domain) === DOMAIN_STATUS_ACTIVE;
+const isActiveDomain = (domain) => resolveDirectBookingWebsiteFallbackDomainStatus(domain) === "ACTIVE";
 
 const pickPrimaryDomain = (domains) => domains.find((domain) => domain.isPrimary) || domains[0];
-
-const emptySummary = (listed) => ({
-  listed,
-  built: 0,
-  skipped: 0,
-  superseded: 0,
-  notClaimed: 0,
-  failed: 0,
-  errors: [],
-});
 
 export class StaticPageWorker {
   constructor({ outboxRepository, siteRepository, domainRepository, pageStore, renderer }) {
@@ -42,7 +30,7 @@ export class StaticPageWorker {
   async run({ limit = DEFAULT_RUN_LIMIT } = {}) {
     const template = await this.pageStore.readAppShell();
     const jobs = await this.outboxRepository.listPagesToBuild({ limit });
-    const summary = emptySummary(jobs.length);
+    const summary = { listed: jobs.length, built: 0, skipped: 0, superseded: 0, notClaimed: 0, failed: 0, errors: [] };
 
     for (const job of jobs) {
       try {
@@ -68,7 +56,7 @@ export class StaticPageWorker {
       await this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_FOUND");
       return "skipped";
     }
-    if (site.status !== SITE_STATUS_PUBLISHED) {
+    if (site.status !== "PUBLISHED") {
       await this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_PUBLISHED");
       return "skipped";
     }

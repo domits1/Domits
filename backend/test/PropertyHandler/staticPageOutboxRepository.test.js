@@ -48,7 +48,9 @@ describe("StaticPageOutboxRepository", () => {
   });
 
   it("offers a page that failed once back to the worker, like the booking outbox does", async () => {
-    const client = buildClient([{ ...OUTBOX_ROW, status: "FAILED", failure_reason: "S3_PUT_FAILED", attempt_count: 1 }]);
+    const client = buildClient([
+      { ...OUTBOX_ROW, status: "FAILED", failure_reason: "S3_PUT_FAILED", attempt_count: 1 },
+    ]);
 
     const pages = await new StaticPageOutboxRepository().listPagesToBuild();
 
@@ -67,24 +69,15 @@ describe("StaticPageOutboxRepository", () => {
     expect(client.query.mock.calls[0][1][0]).not.toContain("ACTIVE");
   });
 
-  it("offers a page whose build lease ran out, so a worker that died cannot strand it", async () => {
+  it("offers a page whose build lease ran out, and stops offering one at the attempt limit", async () => {
     const client = buildClient([]);
 
     await new StaticPageOutboxRepository().listPagesToBuild({ now: NOW });
 
     const [statement, parameters] = client.query.mock.calls[0];
     expect(statement).toContain("OR (status = 'BUILDING' AND updated_at < $2)");
-    expect(parameters[1]).toBe(NOW - 15 * 60 * 1000);
-  });
-
-  it("stops offering a page once it reached the attempt limit", async () => {
-    const client = buildClient([]);
-
-    await new StaticPageOutboxRepository().listPagesToBuild({ now: NOW });
-
-    const [statement, parameters] = client.query.mock.calls[0];
     expect(statement).toContain("AND attempt_count < $3");
-    expect(parameters[2]).toBe(5);
+    expect(parameters.slice(1, 3)).toEqual([NOW - 15 * 60 * 1000, 5]);
   });
 
   it("lists the pages oldest first and maps the row to numbers", async () => {
@@ -213,7 +206,7 @@ describe("StaticPageOutboxRepository", () => {
     expect(client.queryRunner.release).toHaveBeenCalledTimes(2);
   });
 
-  it("skips a page whose site is gone or no longer published, so it is not retried until the next publish", async () => {
+  it("skips a page whose site is gone or unpublished, so it waits for the next publish", async () => {
     const client = buildClient([{ site_id: "site-1" }]);
 
     const applied = await new StaticPageOutboxRepository().skipPage("site-1", 4, "SITE_NOT_PUBLISHED", { now: NOW });

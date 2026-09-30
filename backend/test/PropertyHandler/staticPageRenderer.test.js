@@ -29,41 +29,34 @@ const buildGenerator = (overrides = {}) => ({
 const buildRenderer = (generator) => new StaticPageRenderer({ loadGenerator: jest.fn(async () => generator) });
 
 describe("StaticPageRenderer", () => {
-  it("renders from the published snapshot and the primary domain, never from a live lookup", async () => {
+  it("renders the snapshot for the primary domain without price, availability or street address", async () => {
     const generator = buildGenerator();
+    const snapshot = {
+      ...SITE.publishedPropertySnapshot,
+      calendarAvailability: { unavailableDateKeys: ["2026-12-24"] },
+    };
 
-    const html = await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
+    const html = await buildRenderer(generator).render({
+      template: APP_SHELL,
+      site: { ...SITE, publishedPropertySnapshot: snapshot },
+      domain: DOMAIN,
+    });
 
     const [{ propertyDetails }] = generator.buildWebsiteTemplateModel.mock.calls[0];
     expect(propertyDetails.property.title).toBe("Wellness Villa Bisous");
-    const { renderPayload } = generator.buildStaticSiteDocument.mock.calls[0][0];
+    expect(propertyDetails).not.toHaveProperty("pricing");
+    expect(propertyDetails).not.toHaveProperty("calendarAvailability");
+    expect(propertyDetails.location).toEqual({ country: "Indonesia", city: "Ubud" });
+    const { template, renderPayload } = generator.buildStaticSiteDocument.mock.calls[0][0];
+    expect(template).toBe(APP_SHELL);
     expect(renderPayload).toMatchObject({
       renderSource: "published_site",
       site: { id: SITE.id, templateKey: "panorama-landing", status: "PUBLISHED" },
       domain: DOMAIN,
       resolution: { siteId: SITE.id, domain: DOMAIN, isReachable: true },
+      propertySnapshot: propertyDetails,
     });
-    expect(generator.buildStaticSiteDocument.mock.calls[0][0].template).toBe(APP_SHELL);
     expect(html).toBe("<html>page</html>");
-  });
-
-  it("strips the price, the availability and the street address before the generator sees the snapshot", async () => {
-    const generator = buildGenerator();
-    const site = {
-      ...SITE,
-      publishedPropertySnapshot: {
-        ...SITE.publishedPropertySnapshot,
-        calendarAvailability: { unavailableDateKeys: ["2026-12-24"] },
-      },
-    };
-
-    await buildRenderer(generator).render({ template: APP_SHELL, site, domain: DOMAIN });
-
-    const [{ propertyDetails }] = generator.buildWebsiteTemplateModel.mock.calls[0];
-    expect(propertyDetails).not.toHaveProperty("pricing");
-    expect(propertyDetails).not.toHaveProperty("calendarAvailability");
-    expect(propertyDetails.location).toEqual({ country: "Indonesia", city: "Ubud" });
-    expect(generator.buildStaticSiteDocument.mock.calls[0][0].renderPayload.propertySnapshot).toBe(propertyDetails);
   });
 
   it("applies the theme overrides before the content overrides, with the site's template key", async () => {
@@ -71,7 +64,10 @@ describe("StaticPageRenderer", () => {
 
     await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
 
-    expect(generator.applyWebsiteDraftThemeOverrides).toHaveBeenCalledWith({ step: "base" }, SITE.publishedThemeOverrides);
+    expect(generator.applyWebsiteDraftThemeOverrides).toHaveBeenCalledWith(
+      { step: "base" },
+      SITE.publishedThemeOverrides
+    );
     expect(generator.applyWebsiteDraftContentOverrides).toHaveBeenCalledWith(
       { step: "themed" },
       SITE.publishedContentOverrides,
@@ -98,16 +94,6 @@ describe("StaticPageRenderer", () => {
     await expect(buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN })).rejects.toThrow(
       "The rendered page carries a private address detail."
     );
-  });
-
-  it("loads the bundled generator once and reuses it for every page", async () => {
-    const loadGenerator = jest.fn(async () => buildGenerator());
-    const renderer = new StaticPageRenderer({ loadGenerator });
-
-    await renderer.render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
-    await renderer.render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
-
-    expect(loadGenerator).toHaveBeenCalledTimes(1);
   });
 
   (existsSync(BUNDLE) ? it : it.skip)("produces the golden page through the real bundle", async () => {

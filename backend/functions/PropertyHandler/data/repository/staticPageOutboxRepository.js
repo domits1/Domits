@@ -6,7 +6,6 @@ const STATIC_PAGE_STATUS_ACTIVE = "ACTIVE";
 const STATIC_PAGE_STATUS_FAILED = "FAILED";
 const STATIC_PAGE_STATUS_SKIPPED = "SKIPPED";
 const STATIC_PAGE_STATUSES_TO_BUILD = [STATIC_PAGE_STATUS_PENDING, STATIC_PAGE_STATUS_FAILED];
-const STATIC_PAGE_STATUSES_WITH_A_PAGE = [STATIC_PAGE_STATUS_BUILDING, STATIC_PAGE_STATUS_ACTIVE];
 export const STATIC_PAGE_BUILD_LEASE_MS = 15 * 60 * 1000;
 export const STATIC_PAGE_ATTEMPT_LIMIT = 5;
 const DEFAULT_PAGE_LIMIT = 50;
@@ -104,6 +103,7 @@ export class StaticPageOutboxRepository {
   async listPagesToBuild({ limit = DEFAULT_PAGE_LIMIT, now = Date.now() } = {}) {
     const client = await Database.getInstance();
     const tableName = outboxTableName(resolveSchemaName(client));
+    const staleBefore = now - STATIC_PAGE_BUILD_LEASE_MS;
 
     const rows = await client.query(
       `SELECT
@@ -113,7 +113,7 @@ export class StaticPageOutboxRepository {
         AND attempt_count < $3
       ORDER BY updated_at ASC
       LIMIT $4`,
-      [[...STATIC_PAGE_STATUSES_TO_BUILD], now - STATIC_PAGE_BUILD_LEASE_MS, STATIC_PAGE_ATTEMPT_LIMIT, normalizeLimit(limit)]
+      [[...STATIC_PAGE_STATUSES_TO_BUILD], staleBefore, STATIC_PAGE_ATTEMPT_LIMIT, normalizeLimit(limit)]
     );
 
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
@@ -198,7 +198,7 @@ export class StaticPageOutboxRepository {
         AND revision > $2
         AND status = ANY($3)
       RETURNING site_id`,
-      [normalizedSiteId, normalizedRevision, [...STATIC_PAGE_STATUSES_WITH_A_PAGE], now]
+      [normalizedSiteId, normalizedRevision, [STATIC_PAGE_STATUS_BUILDING, STATIC_PAGE_STATUS_ACTIVE], now]
     );
 
     return records.length > 0;

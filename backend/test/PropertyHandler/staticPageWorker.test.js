@@ -3,22 +3,23 @@ import { StaticPageWorker } from "../../functions/PropertyHandler/business/servi
 
 const SHELL = '<html><head></head><body><div id="root"></div></body></html>';
 const PAGE = "<html>rendered</html>";
-const FALLBACK = { id: "d-1", siteId: "site-1", domain: "cliff-house-site-1.direct.domits.com", domainType: "FALLBACK", status: "ACTIVE", isPrimary: false };
-const CUSTOM = { id: "d-2", siteId: "site-1", domain: "www.cliffhouse.nl", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
+const FALLBACK = {
+  domain: "cliff-house-site-1.direct.domits.com",
+  domainType: "FALLBACK",
+  status: "ACTIVE",
+  isPrimary: false,
+};
+const CUSTOM = { domain: "www.cliffhouse.nl", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
 
-const buildSite = (overrides = {}) => ({
-  id: "site-1",
-  propertyId: "property-1",
-  hostId: "host-1",
-  siteName: "Cliff House",
-  status: "PUBLISHED",
-  templateKey: "panorama-landing",
-  publishedPropertySnapshot: { property: { title: "Cliff House" } },
-  staticPageRevision: 4,
+const buildSite = (overrides = {}) => ({ id: "site-1", status: "PUBLISHED", staticPageRevision: 4, ...overrides });
+
+const buildJob = (overrides = {}) => ({
+  siteId: "site-1",
+  revision: 4,
+  status: "PENDING",
+  attemptCount: 0,
   ...overrides,
 });
-
-const buildJob = (overrides = {}) => ({ siteId: "site-1", revision: 4, status: "PENDING", attemptCount: 0, ...overrides });
 
 const isClaimable = (row) => ["PENDING", "FAILED"].includes(row.status) && row.attemptCount < 5;
 
@@ -58,29 +59,32 @@ const buildOutbox = (rows) => {
 };
 
 const buildWorker = ({ rows = [buildJob()], sites = [buildSite()], domains = [FALLBACK, CUSTOM] } = {}) => {
-  const outbox = buildOutbox(rows);
-  const siteRepository = { getSiteById: jest.fn(async (siteId) => sites.find((site) => site.id === siteId) || null) };
-  const domainRepository = { listDomainsBySiteId: jest.fn(async () => domains) };
-  const pageStore = { readAppShell: jest.fn(async () => SHELL), putPage: jest.fn(async () => undefined) };
-  const renderer = { render: jest.fn(async () => PAGE) };
-  const worker = new StaticPageWorker({ outboxRepository: outbox, siteRepository, domainRepository, pageStore, renderer });
-  return { worker, outbox, siteRepository, domainRepository, pageStore, renderer };
+  const deps = {
+    outboxRepository: buildOutbox(rows),
+    siteRepository: { getSiteById: jest.fn(async (siteId) => sites.find((site) => site.id === siteId) || null) },
+    domainRepository: { listDomainsBySiteId: jest.fn(async () => domains) },
+    pageStore: { readAppShell: jest.fn(async () => SHELL), putPage: jest.fn(async () => undefined) },
+    renderer: { render: jest.fn(async () => PAGE) },
+  };
+  return { worker: new StaticPageWorker(deps), outbox: deps.outboxRepository, ...deps };
 };
-
-const publishAgain = (outbox, siteId, revision) =>
-  Object.assign(outbox.table.get(siteId), { revision, status: "PENDING", attemptCount: 0 });
 
 describe("StaticPageWorker", () => {
   beforeEach(() => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
-  it("renders a queued page with the shell and the primary domain, uploads one object per active domain and marks it active", async () => {
+  it("renders with the shell and the primary domain, uploads per active domain and marks the page active", async () => {
     const { worker, outbox, pageStore, renderer } = buildWorker();
 
-    const summary = await worker.run();
+    const summary = await worker.run({ limit: 7 });
 
-    expect(renderer.render).toHaveBeenCalledWith({ template: SHELL, site: expect.objectContaining({ id: "site-1" }), domain: CUSTOM });
+    expect(outbox.listPagesToBuild).toHaveBeenCalledWith({ limit: 7 });
+    expect(renderer.render).toHaveBeenCalledWith({
+      template: SHELL,
+      site: expect.objectContaining(buildSite()),
+      domain: CUSTOM,
+    });
     expect(pageStore.putPage.mock.calls.map(([call]) => call)).toEqual([
       { hostname: FALLBACK.domain, html: PAGE, siteId: "site-1", revision: 4 },
       { hostname: CUSTOM.domain, html: PAGE, siteId: "site-1", revision: 4 },
@@ -89,7 +93,7 @@ describe("StaticPageWorker", () => {
     expect(summary).toEqual({ listed: 1, built: 1, skipped: 0, superseded: 0, notClaimed: 0, failed: 0, errors: [] });
   });
 
-  it("claims nothing when the shell cannot be read, so no attempt is spent on a shell that is not there", async () => {
+  it("claims nothing when the shell cannot be read, so no attempt is spent without a shell", async () => {
     const { worker, outbox, pageStore } = buildWorker();
     pageStore.readAppShell.mockRejectedValueOnce(new Error("NoSuchKey"));
 
@@ -133,23 +137,28 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ superseded: 1 });
   });
 
-  it("fails a site without an active domain, and gives a disabled domain no page", async () => {
-    const { worker, outbox, pageStore } = buildWorker({ domains: [{ ...FALLBACK, status: "DISABLED" }] });
+  it.each([
+    [
+      "has no active domain, so a disabled domain gets no page",
+      [{ ...FALLBACK, status: "DISABLED" }],
+      "NO_ACTIVE_DOMAIN",
+    ],
+    [
+      "carries a hostname that is not a domain name",
+      [{ ...CUSTOM, domain: "Cliff House/../index" }],
+      "INVALID_DOMAIN: ",
+    ],
+  ])("fails a site that %s, and uploads nothing", async (_label, domains, reasonStart) => {
+    const { worker, outbox, pageStore } = buildWorker({ domains });
 
     const summary = await worker.run();
 
     expect(pageStore.putPage).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: "NO_ACTIVE_DOMAIN" });
+    expect(outbox.table.get("site-1")).toMatchObject({
+      status: "FAILED",
+      failureReason: expect.stringContaining(reasonStart),
+    });
     expect(summary).toMatchObject({ failed: 1 });
-  });
-
-  it("refuses a hostname from the database that is not a valid domain name", async () => {
-    const { worker, outbox, pageStore } = buildWorker({ domains: [{ ...CUSTOM, domain: "Cliff House/../index" }] });
-
-    await worker.run();
-
-    expect(pageStore.putPage).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: expect.stringMatching(/^INVALID_DOMAIN: /) });
   });
 
   it("records a render failure with its reason and uploads nothing", async () => {
@@ -166,7 +175,7 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ failed: 1 });
   });
 
-  it("records an upload failure and never marks the page active when one of the objects did not land", async () => {
+  it("records an upload failure and never marks the page active when one object did not land", async () => {
     const { worker, outbox, pageStore } = buildWorker();
     pageStore.putPage.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("AccessDenied"));
 
@@ -174,30 +183,26 @@ describe("StaticPageWorker", () => {
 
     expect(pageStore.putPage).toHaveBeenCalledTimes(2);
     expect(outbox.markPageActive).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: "S3_PUT_FAILED: AccessDenied" });
+    expect(outbox.table.get("site-1")).toMatchObject({
+      status: "FAILED",
+      failureReason: "S3_PUT_FAILED: AccessDenied",
+    });
   });
 
-  it("never marks a newer publish done when it lands during the upload; the newer revision stays queued", async () => {
+  it.each([
+    ["is still queued", "PENDING"],
+    ["was already built by another worker, so it is queued again", "ACTIVE"],
+  ])("never marks a newer publish done when it lands during the upload and %s", async (_label, newerStatus) => {
     const { worker, outbox, pageStore } = buildWorker();
-    pageStore.putPage.mockImplementationOnce(async () => publishAgain(outbox, "site-1", 5));
+    pageStore.putPage.mockImplementationOnce(async () => {
+      Object.assign(outbox.table.get("site-1"), { revision: 5, status: newerStatus, attemptCount: 0 });
+    });
 
     const summary = await worker.run();
 
-    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
-    expect(summary).toMatchObject({ superseded: 1, built: 0 });
-  });
-
-  it("queues the newer revision again when its page may have been overwritten by the older upload", async () => {
-    const { worker, outbox, pageStore } = buildWorker();
-    pageStore.putPage.mockImplementationOnce(async () => {
-      publishAgain(outbox, "site-1", 5);
-      outbox.table.get("site-1").status = "ACTIVE";
-    });
-
-    await worker.run();
-
     expect(outbox.requeueNewerRevision).toHaveBeenCalledWith("site-1", 4);
     expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+    expect(summary).toMatchObject({ superseded: 1, built: 0 });
   });
 
   it("reports a status write that fails and carries on with the next site", async () => {
@@ -211,10 +216,13 @@ describe("StaticPageWorker", () => {
 
     expect(pageStore.putPage).toHaveBeenCalledTimes(4);
     expect(outbox.table.get("site-2").status).toBe("ACTIVE");
-    expect(summary).toMatchObject({ built: 1, errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }] });
+    expect(summary).toMatchObject({
+      built: 1,
+      errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }],
+    });
   });
 
-  it("builds the sites one at a time, so two renders of the same run can never interleave", async () => {
+  it("builds the sites one at a time, so two renders of one run cannot interleave", async () => {
     const order = [];
     const { worker, outbox, renderer } = buildWorker({
       rows: [buildJob(), buildJob({ siteId: "site-2" })],
@@ -226,13 +234,5 @@ describe("StaticPageWorker", () => {
     await worker.run();
 
     expect(order).toEqual(["claim site-1", "render site-1", "claim site-2", "render site-2"]);
-  });
-
-  it("asks the outbox for at most the run limit", async () => {
-    const { worker, outbox } = buildWorker({ rows: [] });
-
-    await worker.run({ limit: 7 });
-
-    expect(outbox.listPagesToBuild).toHaveBeenCalledWith({ limit: 7 });
   });
 });

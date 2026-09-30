@@ -2,8 +2,6 @@ import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3
 
 const BUCKET_ENV_NAME = "DIRECT_BOOKING_WEBSITE_SITES_BUCKET";
 const APP_SHELL_KEY = "index.html";
-const PAGE_KEY_PREFIX = "sites/by-host/";
-const PAGE_KEY_SUFFIX = "/index.html";
 const PAGE_CONTENT_TYPE = "text/html; charset=utf-8";
 const PAGE_CACHE_CONTROL = "public, max-age=300";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
@@ -19,7 +17,7 @@ export const buildStaticPageKey = (hostname) => {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
-  return `${PAGE_KEY_PREFIX}${hostname}${PAGE_KEY_SUFFIX}`;
+  return `sites/by-host/${hostname}/index.html`;
 };
 
 const resolveBucketName = () => {

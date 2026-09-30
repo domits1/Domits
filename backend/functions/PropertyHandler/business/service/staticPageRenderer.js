@@ -3,6 +3,16 @@ const LIVE_SNAPSHOT_KEYS = ["pricing", "calendarAvailability"];
 const PRIVATE_LOCATION_KEYS = ["street", "houseNumber", "houseNumberExtension", "postalCode"];
 const GUARDED_LOCATION_KEYS = ["street", "postalCode"];
 const MIN_GUARDED_LENGTH = 3;
+const PUBLIC_SITE_KEYS = [
+  "id",
+  "propertyId",
+  "hostId",
+  "siteName",
+  "primaryLocale",
+  "status",
+  "templateKey",
+  "publishedAt",
+];
 
 const withoutKeys = (object, keys) =>
   Object.fromEntries(Object.entries(object || {}).filter(([key]) => !keys.includes(key)));
@@ -16,45 +26,34 @@ const stripLiveAndPrivateDetails = (snapshot) => {
   return publicSnapshot;
 };
 
-const buildRenderPayload = ({ site, domain }) => {
-  const publicSite = {
-    id: site.id,
+const buildRenderPayload = ({ site, domain }) => ({
+  resolution: {
+    siteId: site.id,
     propertyId: site.propertyId,
     hostId: site.hostId,
-    siteName: site.siteName,
-    primaryLocale: site.primaryLocale,
-    status: site.status,
     templateKey: site.templateKey,
+    primaryLocale: site.primaryLocale,
+    siteName: site.siteName,
+    siteStatus: site.status,
     publishedAt: site.publishedAt,
-  };
-
-  return {
-    resolution: {
-      siteId: site.id,
-      propertyId: site.propertyId,
-      hostId: site.hostId,
-      templateKey: site.templateKey,
-      primaryLocale: site.primaryLocale,
-      siteName: site.siteName,
-      siteStatus: site.status,
-      publishedAt: site.publishedAt,
-      isReachable: site.status === "PUBLISHED" && domain.status === "ACTIVE",
-      domain,
-    },
-    site: publicSite,
+    isReachable: site.status === "PUBLISHED" && domain.status === "ACTIVE",
     domain,
-    propertySnapshot: stripLiveAndPrivateDetails(site.publishedPropertySnapshot),
-    contentOverrides: site.publishedContentOverrides || {},
-    themeOverrides: site.publishedThemeOverrides || {},
-    renderSource: RENDER_SOURCE,
-  };
-};
+  },
+  site: Object.fromEntries(PUBLIC_SITE_KEYS.map((key) => [key, site[key]])),
+  domain,
+  propertySnapshot: stripLiveAndPrivateDetails(site.publishedPropertySnapshot),
+  contentOverrides: site.publishedContentOverrides || {},
+  themeOverrides: site.publishedThemeOverrides || {},
+  renderSource: RENDER_SOURCE,
+});
 
 const assertPageOmitsPrivateDetails = (html, snapshot) => {
   const page = html.toLowerCase();
-  const leaked = GUARDED_LOCATION_KEYS.map((key) => String(snapshot?.location?.[key] ?? "").trim().toLowerCase()).some(
-    (value) => value.length >= MIN_GUARDED_LENGTH && page.includes(value)
-  );
+  const leaked = GUARDED_LOCATION_KEYS.map((key) =>
+    String(snapshot?.location?.[key] ?? "")
+      .trim()
+      .toLowerCase()
+  ).some((value) => value.length >= MIN_GUARDED_LENGTH && page.includes(value));
   if (leaked) {
     throw new Error("The rendered page carries a private address detail.");
   }
