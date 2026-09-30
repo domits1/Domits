@@ -9,7 +9,7 @@ import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
-import { fetchTeamMembers, fetchMemberships, inviteTeamMember } from './services/teamService';
+import { fetchTeamMembers, fetchMemberships } from './services/teamService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -20,6 +20,7 @@ import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBu
 import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
 import AttachmentThumb from './hosttasks/components/AttachmentThumb';
 import ConfirmDialog from './hosttasks/components/ConfirmDialog';
+import TeamInviteModal from './hosttasks/components/TeamInviteModal';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -65,9 +66,6 @@ const HostPropertyCare = () => {
     const [teamMembers, setTeamMembers] = useState([]);
     const [teamMemberships, setTeamMemberships] = useState([]);
     const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
-    const [teamInviteEmail, setTeamInviteEmail] = useState('');
-    const [teamInviteError, setTeamInviteError] = useState('');
-    const [teamInviteSent, setTeamInviteSent] = useState(false);
 
     useEffect(() => {
         Auth.currentAuthenticatedUser()
@@ -805,50 +803,11 @@ const HostPropertyCare = () => {
                 <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
             </div>
 
-            {showTeamInviteModal && (
-                <div className="team-modal-overlay">
-                    <dialog className="team-modal" open aria-modal="true" aria-labelledby="hk-invite-title">
-                        <h3 id="hk-invite-title">Invite team member</h3>
-                        {teamInviteSent ? (
-                            <p className="team-invite-success">✓ Invitation sent to {teamInviteEmail}</p>
-                        ) : (
-                            <form onSubmit={async (e) => {
-                                e.preventDefault();
-                                setTeamInviteError('');
-                                try {
-                                    const created = await inviteTeamMember(teamInviteEmail, 'Property Operations Manager');
-                                    setTeamMembers(prev => [...prev, created]);
-                                    setTeamInviteSent(true);
-                                    setTimeout(() => {
-                                        setTeamInviteSent(false);
-                                        setTeamInviteEmail('');
-                                        setShowTeamInviteModal(false);
-                                    }, 2500);
-                                } catch {
-                                    setTeamInviteError('Failed to send invitation. Please try again.');
-                                }
-                            }}>
-                                <label className="team-modal-label">
-                                    <span>Email address</span>
-                                    <input
-                                        type="email"
-                                        className="team-modal-input"
-                                        placeholder="colleague@example.com"
-                                        value={teamInviteEmail}
-                                        onChange={(e) => setTeamInviteEmail(e.target.value)}
-                                        required
-                                    />
-                                </label>
-                                {teamInviteError && <p className="team-invite-error">{teamInviteError}</p>}
-                                <div className="team-modal-actions">
-                                    <button type="submit" className="team-invite-btn">Send invitation</button>
-                                    <button type="button" className="team-cancel-btn" onClick={() => setShowTeamInviteModal(false)}>Cancel</button>
-                                </div>
-                            </form>
-                        )}
-                    </dialog>
-                </div>
-            )}
+            <TeamInviteModal
+                isOpen={showTeamInviteModal}
+                onClose={() => setShowTeamInviteModal(false)}
+                onInvited={(created) => setTeamMembers(prev => [...prev, created])}
+            />
         </div>
     );
 
