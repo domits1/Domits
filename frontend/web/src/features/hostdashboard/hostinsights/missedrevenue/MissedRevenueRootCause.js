@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { ROOT_CAUSE_KEYS } from "./missedRevenueFields";
+import { ROOT_CAUSE_KEYS, formatMissedRevenueCurrency } from "./missedRevenueFields";
 import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
 // These are contributing-factor signals present on a missed night, not proof of what stopped the booking.
@@ -10,7 +10,7 @@ const ROOT_CAUSE_LABELS = Object.freeze({
   occupancy: "Occupancy (no restriction or pricing signal)",
 });
 
-export function MissedRevenueRootCause({ rootCause }) {
+export function MissedRevenueRootCause({ rootCause, currency }) {
   const totalNights = ROOT_CAUSE_KEYS.reduce((sum, causeKey) => sum + rootCause[causeKey].nights, 0);
 
   if (totalNights === 0) {
@@ -30,7 +30,7 @@ export function MissedRevenueRootCause({ rootCause }) {
         {ROOT_CAUSE_KEYS.map((causeKey) => (
           <tr key={causeKey}>
             <td>{ROOT_CAUSE_LABELS[causeKey]}</td>
-            <td>EUR {rootCause[causeKey].missedRevenue.toFixed(2)}</td>
+            <td>{formatMissedRevenueCurrency(rootCause[causeKey].missedRevenue, currency)}</td>
             <td>{rootCause[causeKey].nights}</td>
           </tr>
         ))}
@@ -50,6 +50,7 @@ MissedRevenueRootCause.propTypes = {
     pricing: causeShape.isRequired,
     occupancy: causeShape.isRequired,
   }).isRequired,
+  currency: PropTypes.string.isRequired,
 };
 
 export default MissedRevenueRootCause;

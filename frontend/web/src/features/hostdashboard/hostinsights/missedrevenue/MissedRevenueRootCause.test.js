@@ -10,7 +10,7 @@ const ROOT_CAUSE = {
 
 describe("MissedRevenueRootCause", () => {
   test("renders one row per cause with its missed revenue and night count", () => {
-    render(<MissedRevenueRootCause rootCause={ROOT_CAUSE} />);
+    render(<MissedRevenueRootCause currency="EUR" rootCause={ROOT_CAUSE} />);
 
     const restrictionRow = screen.getByText(/^Restriction/).closest("tr");
     expect(within(restrictionRow).getByText("EUR 120.50")).toBeInTheDocument();
@@ -24,6 +24,12 @@ describe("MissedRevenueRootCause", () => {
     expect(within(occupancyRow).getByText("4")).toBeInTheDocument();
   });
 
+  test("formats the missed revenue with the given currency instead of a hardcoded one", () => {
+    render(<MissedRevenueRootCause currency="USD" rootCause={ROOT_CAUSE} />);
+
+    expect(screen.getByText("USD 120.50")).toBeInTheDocument();
+  });
+
   test("shows an empty message instead of a table when no night was missed", () => {
     const emptyRootCause = {
       restriction: { missedRevenue: 0, nights: 0 },
@@ -31,7 +37,7 @@ describe("MissedRevenueRootCause", () => {
       occupancy: { missedRevenue: 0, nights: 0 },
     };
 
-    render(<MissedRevenueRootCause rootCause={emptyRootCause} />);
+    render(<MissedRevenueRootCause currency="EUR" rootCause={emptyRootCause} />);
 
     expect(screen.getByText(/no missed nights/i)).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();

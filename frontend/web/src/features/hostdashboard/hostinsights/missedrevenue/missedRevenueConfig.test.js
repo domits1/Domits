@@ -43,6 +43,18 @@ describe("buildMissedRevenueMetricCards", () => {
     expect(byId["actual-revenue"].value).toBe("EUR 500.00");
   });
 
+  test("formats amounts with the response's currency instead of a hardcoded one", () => {
+    const cards = buildMissedRevenueMetricCards({
+      ...EMPTY_MISSED_REVENUE,
+      currency: "USD",
+      actualRevenue: 500,
+    });
+
+    const byId = Object.fromEntries(cards.map((card) => [card.id, card]));
+
+    expect(byId["actual-revenue"].value).toBe("USD 500.00");
+  });
+
   test("shows a fallback value for a non-finite metric instead of throwing", () => {
     const cards = buildMissedRevenueMetricCards({ ...EMPTY_MISSED_REVENUE, actualRevenue: NaN });
 

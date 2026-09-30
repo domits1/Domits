@@ -6,6 +6,7 @@ describe("MissedRevenueByDate", () => {
   test("renders one row per date, in the order given, with its missed revenue", () => {
     render(
       <MissedRevenueByDate
+        currency="EUR"
         byDate={[
           { date: "2026-09-02", missedRevenue: 120.5 },
           { date: "2026-09-10", missedRevenue: 80 },
@@ -22,8 +23,14 @@ describe("MissedRevenueByDate", () => {
     expect(within(rows[1]).getByText("EUR 80.00")).toBeInTheDocument();
   });
 
+  test("formats the missed revenue with the given currency instead of a hardcoded one", () => {
+    render(<MissedRevenueByDate currency="USD" byDate={[{ date: "2026-09-02", missedRevenue: 120.5 }]} />);
+
+    expect(screen.getByText("USD 120.50")).toBeInTheDocument();
+  });
+
   test("shows an empty message instead of a table when no night was missed", () => {
-    render(<MissedRevenueByDate byDate={[]} />);
+    render(<MissedRevenueByDate currency="EUR" byDate={[]} />);
 
     expect(screen.getByText(/no missed nights/i)).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();

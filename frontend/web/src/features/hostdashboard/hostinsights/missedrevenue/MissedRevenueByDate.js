@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { formatMissedRevenueCurrency } from "./missedRevenueFields";
 import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
-export function MissedRevenueByDate({ byDate }) {
+export function MissedRevenueByDate({ byDate, currency }) {
   if (byDate.length === 0) {
     return <p>No missed nights in this period.</p>;
   }
@@ -19,7 +20,7 @@ export function MissedRevenueByDate({ byDate }) {
         {byDate.map((entry) => (
           <tr key={entry.date}>
             <td>{entry.date}</td>
-            <td>EUR {entry.missedRevenue.toFixed(2)}</td>
+            <td>{formatMissedRevenueCurrency(entry.missedRevenue, currency)}</td>
           </tr>
         ))}
       </tbody>
@@ -34,6 +35,7 @@ MissedRevenueByDate.propTypes = {
       missedRevenue: PropTypes.number.isRequired,
     })
   ).isRequired,
+  currency: PropTypes.string.isRequired,
 };
 
 export default MissedRevenueByDate;

@@ -1,18 +1,24 @@
-export { EMPTY_MISSED_REVENUE } from "./missedRevenueFields";
+import { EMPTY_MISSED_REVENUE, formatMissedRevenueCurrency } from "./missedRevenueFields";
+
+export { EMPTY_MISSED_REVENUE };
 
 const MISSED_REVENUE_EMPTY_VALUE = "No data yet";
 
-const createCurrencyFormatter = () => (value) => `EUR ${value.toFixed(2)}`;
 const createPercentageFormatter = () => (value) => `${value.toFixed(1)}%`;
 
 const formatters = Object.freeze({
-  eur: createCurrencyFormatter(),
   percentage: createPercentageFormatter(),
 });
 
-const formatMetricValue = (value, formatterKey) => {
+// "eur" is a formatter key name, not a hardcoded currency: the amount is
+// formatted with whichever currency the response carries.
+const formatMetricValue = (value, formatterKey, currency) => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return MISSED_REVENUE_EMPTY_VALUE;
+  }
+
+  if (formatterKey === "eur") {
+    return formatMissedRevenueCurrency(value, currency);
   }
 
   return formatters[formatterKey](value);
@@ -93,7 +99,11 @@ export const buildMissedRevenueMetricCards = (missedRevenue) =>
     id: definition.id,
     title: definition.title,
     value: isMetricApplicable(missedRevenue, definition)
-      ? formatMetricValue(missedRevenue?.[definition.valueKey], definition.formatterKey)
+      ? formatMetricValue(
+          missedRevenue?.[definition.valueKey],
+          definition.formatterKey,
+          missedRevenue?.currency ?? EMPTY_MISSED_REVENUE.currency
+        )
       : MISSED_REVENUE_NOT_APPLICABLE_VALUE,
     meta: definition.meta,
     change: formatChange(missedRevenue, definition.valueKey),

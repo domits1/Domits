@@ -98,12 +98,12 @@ export default function MissedRevenueDashboardPage() {
 
       <section className={styles.periodSection}>
         <h2>Missed revenue by root cause (current month)</h2>
-        <MissedRevenueRootCause rootCause={currentMonthData.rootCause} />
+        <MissedRevenueRootCause rootCause={currentMonthData.rootCause} currency={currentMonthData.currency} />
       </section>
 
       <section className={styles.periodSection}>
         <h2>Missed revenue by date (current month)</h2>
-        <MissedRevenueByDate byDate={currentMonthData.byDate} />
+        <MissedRevenueByDate byDate={currentMonthData.byDate} currency={currentMonthData.currency} />
       </section>
 
       <section className={styles.periodSection}>
