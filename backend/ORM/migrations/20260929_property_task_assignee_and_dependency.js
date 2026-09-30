@@ -2,8 +2,8 @@ export class PropertyTaskAssigneeAndDependency20260929 {
     async up(queryRunner) {
         await queryRunner.query(`
             ALTER TABLE main.property_task
-                ADD COLUMN IF NOT EXISTS assignee_team_member_id UUID DEFAULT NULL,
-                ADD COLUMN IF NOT EXISTS parent_task_id UUID DEFAULT NULL;
+                ADD COLUMN IF NOT EXISTS assignee_team_member_id UUID,
+                ADD COLUMN IF NOT EXISTS parent_task_id UUID;
         `);
         await queryRunner.query(
             `CREATE INDEX ASYNC property_task_assignee_idx ON main.property_task (assignee_team_member_id);`
