@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
-import { MOCK_CONNECT_FLOW_ENABLED } from "../services/channexDistributionService";
+import { MOCK_CONNECT_FLOW_ENABLED, getPropertyMappingRows } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
 import ComingSoonCard from "../components/ComingSoonCard";
 import ConnectChannexModal from "../components/ConnectChannexModal";
 import DisconnectChannexModal from "../components/DisconnectChannexModal";
+import PropertyMappingTable from "../components/PropertyMappingTable";
 import "../styles/HostChannelDistribution.css";
 
 const COMING_SOON_CARDS = [
@@ -14,17 +15,41 @@ const COMING_SOON_CARDS = [
   { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
 
+// Mirrors the set in components/ChannexStatusCard.js -- kept as a separate local copy rather
+// than a shared export so this feature doesn't gain a cross-file refactor as a side effect.
+const RECONNECT_BUCKET_STATUSES = new Set(["RECONNECT_REQUIRED", "VALIDATION_FAILED", "DISCONNECTED"]);
+
 function HostChannelDistribution() {
   // No userId here: the backend takes the user from the Cognito ID token on every request
   // (hostintegrations/channexApi.js), not from a client-supplied value.
   const { status, syncEvidence, loading, error, refresh } = useChannexDistribution();
   const [activeModal, setActiveModal] = useState(null);
+  const [propertyMappings, setPropertyMappings] = useState([]);
 
   const isForbidden = !loading && error?.status === 403;
   const isOtherError = !loading && !!error && !isForbidden;
   const isConnectedOrNeedsAttention = !loading && !error && status && status.status !== "NOT_CONNECTED";
   const isEmpty = !loading && !error && status && status.status === "NOT_CONNECTED";
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && !error && status?.status === "NOT_CONNECTED";
+  // Narrower than isConnectedOrNeedsAttention: excludes PENDING_PROVIDER_VALIDATION, since
+  // there's nothing confirmed to map against mid-validation.
+  const showPropertyMapping =
+    !loading &&
+    !error &&
+    (status?.status === "CONNECTED" || RECONNECT_BUCKET_STATUSES.has(status?.status));
+
+  useEffect(() => {
+    if (!showPropertyMapping) return;
+    let mounted = true;
+
+    getPropertyMappingRows().then((rows) => {
+      if (mounted) setPropertyMappings(rows);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [showPropertyMapping]);
 
   const closeModal = () => setActiveModal(null);
 
@@ -94,6 +119,13 @@ function HostChannelDistribution() {
           <ComingSoonCard key={card.title} title={card.title} description={card.description} />
         ))}
       </div>
+
+      {showPropertyMapping && (
+        <div className="chdist-property-section">
+          <h3 className="chdist-section-title">Property mapping</h3>
+          <PropertyMappingTable properties={propertyMappings} />
+        </div>
+      )}
 
       {(activeModal === "add" || activeModal === "reconnect") && (
         <ConnectChannexModal variant={activeModal} onClose={closeModal} onConnected={handleConnected} />

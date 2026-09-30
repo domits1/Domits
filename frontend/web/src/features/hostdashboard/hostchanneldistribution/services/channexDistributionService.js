@@ -77,6 +77,69 @@ const MOCK_SYNC_EVIDENCE_BY_STATE = {
   },
 };
 
+// Property rows for the "Property mapping" table (#2578). Not a mirror of one real endpoint --
+// once wired, this will orchestrate GET /property/hostDashboard/all (id/title/location/image/
+// guests/bedrooms/bathrooms, per HostListings.js), one getChannexAriTargets call per property
+// (ready/missingMappings, per channexMappingService.js), and an availability source still to be
+// decided. mapping shape mirrors getChannexAriTargets's real response exactly.
+const MOCK_PROPERTY_MAPPING_ROWS = [
+  {
+    id: "mock-property-1",
+    title: "Canal View Loft",
+    location: "Amsterdam",
+    image: null,
+    guests: 4,
+    bedrooms: 2,
+    bathrooms: 1,
+    mapping: { ready: true, missingMappings: [] },
+    availableNights: 22,
+    totalNights: 30,
+    nightlyRate: 145,
+  },
+  {
+    id: "mock-property-2",
+    title: "Harbour Studio",
+    location: "Rotterdam",
+    image: null,
+    guests: 2,
+    bedrooms: 1,
+    bathrooms: 1,
+    mapping: { ready: true, missingMappings: [] },
+    availableNights: 30,
+    totalNights: 30,
+    nightlyRate: 89,
+  },
+  {
+    id: "mock-property-3",
+    title: "Windmill Cottage",
+    location: "Zaanse Schans",
+    image: null,
+    guests: 6,
+    bedrooms: 3,
+    bathrooms: 2,
+    mapping: {
+      ready: false,
+      missingMappings: ["PROPERTY_MAPPING_MISSING", "ROOM_TYPE_MAPPING_MISSING", "RATE_PLAN_MAPPING_MISSING"],
+    },
+    availableNights: 18,
+    totalNights: 30,
+    nightlyRate: 210,
+  },
+  {
+    id: "mock-property-4",
+    title: "City Centre Apartment",
+    location: "Utrecht",
+    image: null,
+    guests: 3,
+    bedrooms: 1,
+    bathrooms: 1,
+    mapping: { ready: false, missingMappings: ["RATE_PLAN_MAPPING_MISSING"] },
+    availableNights: 9,
+    totalNights: 30,
+    nightlyRate: 120,
+  },
+];
+
 const mockDelay = () => new Promise((resolve) => setTimeout(resolve, MOCK_REQUEST_DELAY_MS));
 
 // Mirrors the masked preview the real backend returns (buildChannexCredentialSummary /
@@ -111,6 +174,9 @@ export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
   void domitsPropertyId; // unused until this reads live data
   return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
 };
+
+// Not a single real endpoint yet -- see the comment on MOCK_PROPERTY_MAPPING_ROWS above.
+export const getPropertyMappingRows = async () => MOCK_PROPERTY_MAPPING_ROWS;
 
 // Real endpoint: POST /integrations/channex/connect ({ credentials: { apiKey }, displayName? }).
 // Stays mock: nothing here may call the real connect endpoint. apiKey is only ever read here to
