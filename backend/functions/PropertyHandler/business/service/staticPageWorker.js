@@ -1,5 +1,5 @@
 import { buildStaticPageKey } from "../../data/repository/staticPageStore.js";
-import { resolveDirectBookingWebsiteFallbackDomainStatus } from "../../util/directBookingWebsiteRouting.js";
+import { resolveDirectBookingWebsiteRuntimeDomainStatus } from "../../util/directBookingWebsiteRouting.js";
 
 const DEFAULT_RUN_LIMIT = 20;
 
@@ -14,9 +14,9 @@ const failWith = (code) => (cause) => {
   throw new PageBuildFailure(code, cause);
 };
 
-const withEffectiveStatus = (domain) => ({
+const withEffectiveStatus = (site) => (domain) => ({
   ...domain,
-  status: resolveDirectBookingWebsiteFallbackDomainStatus(domain),
+  status: resolveDirectBookingWebsiteRuntimeDomainStatus(site, domain),
 });
 
 const pickPrimaryDomain = (domains) => domains.find((domain) => domain.isPrimary) || domains[0];
@@ -70,7 +70,7 @@ export class StaticPageWorker {
     }
 
     try {
-      const domains = await this.#activeDomains(site.id);
+      const domains = await this.#activeDomains(site);
       const html = await this.renderer
         .render({ template, site, domain: pickPrimaryDomain(domains) })
         .catch(failWith("RENDER_FAILED"));
@@ -96,9 +96,9 @@ export class StaticPageWorker {
     return "superseded";
   }
 
-  async #activeDomains(siteId) {
-    const domains = (await this.domainRepository.listDomainsBySiteId(siteId))
-      .map(withEffectiveStatus)
+  async #activeDomains(site) {
+    const domains = (await this.domainRepository.listDomainsBySiteId(site.id))
+      .map(withEffectiveStatus(site))
       .filter((domain) => domain.status === "ACTIVE");
     if (domains.length === 0) {
       throw new PageBuildFailure("NO_ACTIVE_DOMAIN");

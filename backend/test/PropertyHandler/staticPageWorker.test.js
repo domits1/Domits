@@ -189,31 +189,42 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ failed: 1 });
   });
 
-  it("gives a fallback domain the status the public site gives it, so the page is not rendered as unreachable", async () => {
-    process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
-    const { worker, pageStore, renderer } = buildWorker({
-      domains: [{ ...FALLBACK, status: "PENDING", isPrimary: true }],
-    });
+  it.each([
+    ["stored PENDING", { ...FALLBACK, status: "PENDING", isPrimary: true }],
+    [
+      "disabled by the host",
+      { ...FALLBACK, status: "DISABLED", isPrimary: true, verificationDetails: { disabledByHost: true } },
+    ],
+  ])(
+    "gives a fallback domain %s the status the public site gives it, so the page is not rendered as unreachable",
+    async (_label, fallback) => {
+      process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
+      const { worker, pageStore, renderer } = buildWorker({ domains: [fallback] });
 
-    await worker.run();
+      await worker.run();
 
-    delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
-    expect(renderer.render.mock.calls[0][0].domain).toEqual({ ...FALLBACK, status: "ACTIVE", isPrimary: true });
-    expect(pageStore.putPage).toHaveBeenCalledTimes(1);
-  });
+      delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+      expect(renderer.render.mock.calls[0][0].domain).toEqual({ ...fallback, status: "ACTIVE" });
+      expect(pageStore.putPage).toHaveBeenCalledTimes(1);
+    }
+  );
 
-  it("records an upload failure and never marks the page active when one object did not land", async () => {
+  it("records an upload failure, never marks the page active, and the retry writes the same keys again", async () => {
     const { worker, outbox, pageStore } = buildWorker();
     pageStore.putPage.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("AccessDenied"));
 
     await worker.run();
-
-    expect(pageStore.putPage).toHaveBeenCalledTimes(2);
+    const firstRun = pageStore.putPage.mock.calls.map(([call]) => call);
     expect(outbox.markPageActive).not.toHaveBeenCalled();
     expect(outbox.table.get("site-1")).toMatchObject({
       status: "FAILED",
       failureReason: "S3_PUT_FAILED: AccessDenied",
     });
+
+    await worker.run();
+
+    expect(pageStore.putPage.mock.calls.slice(2).map(([call]) => call)).toEqual(firstRun);
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 2 });
   });
 
   it.each([
@@ -245,6 +256,7 @@ describe("StaticPageWorker", () => {
     const summary = await worker.run();
 
     expect(pageStore.putPage).toHaveBeenCalledTimes(4);
+    expect(outbox.table.get("site-1").status).toBe("BUILDING");
     expect(outbox.table.get("site-2").status).toBe("ACTIVE");
     expect(summary).toMatchObject({
       built: 1,
