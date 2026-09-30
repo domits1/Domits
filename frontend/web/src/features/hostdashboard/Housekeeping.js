@@ -11,19 +11,14 @@ import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, g
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { fetchTeamMembers, fetchMemberships, inviteTeamMember } from './services/teamService';
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-    PieChart, Pie, Cell 
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell
 } from 'recharts';
-
-const DEFAULT_FILTERS = {
-    property: 'All properties',
-    status: 'All statuses',
-    assignee: 'Anyone',
-    date: 'Any date',
-    priority: 'Any priority',
-    search: '',
-};
+import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from './hosttasks/utils/taskFilters';
+import { sortTasks } from './hosttasks/utils/taskSort';
+import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBuckets';
+import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -37,8 +32,6 @@ const DEFAULT_NEW_TASK = {
     priority: 'Medium',
     attachments: null,
 };
-
-const getTodayString = () => new Date().toISOString().split('T')[0];
 
 const AttachmentThumb = ({ attachment, onRemove }) => {
     const [url, setUrl] = React.useState(null);
@@ -77,107 +70,9 @@ const AttachmentThumb = ({ attachment, onRemove }) => {
     );
 };
 
-
 AttachmentThumb.propTypes = {
     attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
     onRemove: PropTypes.func,
-};
-
-const isTaskOverdue = (task, todayStr) => (
-    Boolean(task?.dueDate) &&
-    task.dueDate < todayStr &&
-    task.status !== 'Completed' &&
-    task.status !== 'Cancelled'
-);
-
-const normalizeTaskStatus = (task, todayStr) => {
-    if (isTaskOverdue(task, todayStr)) {
-        return { ...task, status: 'Overdue' };
-    }
-
-    return task;
-};
-
-const matchesFilterSelection = (selectedValue, defaultValue, taskValue) => (
-    selectedValue === defaultValue || taskValue === selectedValue
-);
-
-const matchesSearchFields = (task, searchTerm, searchFields) => {
-    if (!searchTerm) {
-        return true;
-    }
-
-    const searchLower = searchTerm.toLowerCase();
-    return searchFields.some((field) => String(task?.[field] || '').toLowerCase().includes(searchLower));
-};
-
-const matchesDateFilter = (task, dateFilter) => {
-    if (dateFilter === DEFAULT_FILTERS.date) {
-        return true;
-    }
-
-    if (dateFilter === 'Today') {
-        return task.dueDate === getTodayString();
-    }
-
-    if (dateFilter === 'This Week' && task.dueDate) {
-        const taskDate = new Date(task.dueDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + 7);
-
-        return taskDate >= today && taskDate <= nextWeek;
-    }
-
-    return true;
-};
-
-const matchesTaskFilters = (
-    task,
-    filters,
-    {
-        includeAssignee = false,
-        includeDate = false,
-        excludeLegacy = false,
-        excludeCompleted = false,
-        searchFields = ['title'],
-    } = {}
-) => {
-    if (excludeLegacy && task.isLegacy) {
-        return false;
-    }
-
-    if (excludeCompleted && task.status === 'Completed') {
-        return false;
-    }
-
-    if (!matchesFilterSelection(filters.property, DEFAULT_FILTERS.property, task.property)) {
-        return false;
-    }
-
-    if (!matchesFilterSelection(filters.status, DEFAULT_FILTERS.status, task.status)) {
-        return false;
-    }
-
-    if (includeAssignee && !matchesFilterSelection(filters.assignee, DEFAULT_FILTERS.assignee, task.assignee)) {
-        return false;
-    }
-
-    if (!matchesFilterSelection(filters.priority, DEFAULT_FILTERS.priority, task.priority)) {
-        return false;
-    }
-
-    if (!matchesSearchFields(task, filters.search, searchFields)) {
-        return false;
-    }
-
-    if (!includeDate) {
-        return true;
-    }
-
-    return matchesDateFilter(task, filters.date);
 };
 
 const HostPropertyCare = () => {
@@ -381,34 +276,10 @@ const HostPropertyCare = () => {
             { name: 'Overdue', value: overdue, color: '#dc3545' },
         ];
 
-        const getIntervalKey = (timestamp) => {
-            if (!timestamp) return null;
-            const date = new Date(Number(timestamp));
-            if (timeView === 'Daily') {
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-            const monday = new Date(date);
-            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return `${fmt(monday)} – ${fmt(sunday)}`;
-        };
-
-        const getSortTimestamp = (timestamp) => {
-            if (!timestamp) return 0;
-            const date = new Date(Number(timestamp));
-            if (timeView === 'Daily') return date.getTime();
-            const monday = new Date(date);
-            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-            monday.setHours(0, 0, 0, 0);
-            return monday.getTime();
-        };
-
         const timeMap = {};
         filtered.forEach(task => {
-            const key = getIntervalKey(task.created_at);
-            const sortTs = getSortTimestamp(task.created_at);
+            const key = getIntervalKey(task.created_at, timeView);
+            const sortTs = getSortTimestamp(task.created_at, timeView);
             if (!key) return;
             if (!timeMap[key]) timeMap[key] = { date: key, _sort: sortTs, pending: 0, progress: 0, completed: 0, overdue: 0 };
             if (task.status === 'Pending') timeMap[key].pending++;
@@ -778,31 +649,7 @@ const HostPropertyCare = () => {
         setSortConfig({ key, direction });
     };
 
-    const getSortedTasks = (tasksToSort) => {
-        return [...tasksToSort].sort((a, b) => {
-            const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-
-            if (sortConfig.key === 'priority') {
-                const priorityValues = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-                const aVal = priorityValues[a.priority] || 0;
-                const bVal = priorityValues[b.priority] || 0;
-                return (aVal - bVal) * modifier;
-            }
-            if (sortConfig.key === 'dueDate') {
-                const aDate = a.dueDate ? new Date(a.dueDate).getTime() : new Date('9999-12-31').getTime();
-                const bDate = b.dueDate ? new Date(b.dueDate).getTime() : new Date('9999-12-31').getTime();
-                return (aDate - bDate) * modifier;
-            }
-            const aStr = (a[sortConfig.key] || '').toString().toLowerCase();
-            const bStr = (b[sortConfig.key] || '').toString().toLowerCase();
-            
-            if (aStr < bStr) return -1 * modifier;
-            if (aStr > bStr) return 1 * modifier;
-            return 0;
-        });
-    };
-
-    const displayedTasks = getSortedTasks(filteredTasks);
+    const displayedTasks = sortTasks(filteredTasks, sortConfig);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
     const filterPropertyOptions = useMemo(() => {
         const labelSet = new Set(propertyOptions.map(o => o.label));
@@ -862,55 +709,8 @@ const HostPropertyCare = () => {
         const now = new Date();
         const dateStr = now.toLocaleDateString('en-GB').replaceAll('/', '-');
         const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replaceAll(':', '-');
-        const timeDisplay = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        const lines = [];
-        
-
-        lines.push(
-            'TASK REPORT SUMMARY',
-            `Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`,
-            '',
-            'KPI METRICS',
-            `Completion Rate,${reportData.completionRate}%`,
-            `Avg Completion Time,${reportData.avgCompletionTime}`,
-            `Total Tasks,${reportData.total}`,
-            `Completed,${reportData.completed}`,
-            `Pending,${reportData.pending}`,
-            `In Progress,${reportData.inProgress}`,
-            `Overdue,${reportData.overdue}`,
-            `Overdue This Week,${reportData.overdueThisWeek}`,
-            '',
-            'TASKS BY PROPERTY',
-            'Property,Total,Completed,In Progress,Overdue'
-        );
-
-        reportData.byProperty.forEach(prop => {
-            lines.push(`"${prop.label}",${prop.total},${prop.completed},${prop.inProgress},${prop.overdue}`);
-        });
-
-        lines.push(
-            '',
-            'TASK LIST',
-            'Title,Status,Priority,Property,Assignee,Due Date'
-        );
-        const filtered = tasks.filter(t => matchesTaskFilters(t, filters, {
-            includeAssignee: true,
-            includeDate: true,
-            excludeLegacy: true,
-        }));
-        filtered.forEach(t => {
-            lines.push([
-                `"${(t.title || '').replaceAll('"', '""')}"`,
-                t.status || '',
-                t.priority || '',
-                `"${(t.property || '').replaceAll('"', '""')}"`,
-                t.assignee || '',
-                t.dueDate || '',
-            ].join(','));
-        });
-
-        const csv = lines.join('\n');
+        const csv = buildTasksCsvReport({ reportData, tasks, filters });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
