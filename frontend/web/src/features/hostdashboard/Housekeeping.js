@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight, LuTriangleAlert, LuX, LuCheck, LuPartyPopper
+    LuSearch, LuChevronRight, LuX, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, getAttachmentViewUrl } from './services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
 import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 import { fetchTeamMembers, fetchMemberships, inviteTeamMember } from './services/teamService';
@@ -19,6 +18,8 @@ import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } fr
 import { sortTasks } from './hosttasks/utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBuckets';
 import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
+import AttachmentThumb from './hosttasks/components/AttachmentThumb';
+import ConfirmDialog from './hosttasks/components/ConfirmDialog';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -31,48 +32,6 @@ const DEFAULT_NEW_TASK = {
     dueDate: '',
     priority: 'Medium',
     attachments: null,
-};
-
-const AttachmentThumb = ({ attachment, onRemove }) => {
-    const [url, setUrl] = React.useState(null);
-
-    React.useEffect(() => {
-        if (attachment instanceof File) {
-            const objectUrl = URL.createObjectURL(attachment);
-            setUrl(objectUrl);
-            return () => URL.revokeObjectURL(objectUrl);
-        } else {
-            getAttachmentViewUrl(attachment).then(setUrl).catch(() => {});
-        }
-    }, [attachment]);
-
-    if (!url) return <div className="attachment-thumb attachment-loading" />;
-
-    const name = attachment instanceof File ? attachment.name : attachment.split('/').pop();
-    const isPdf = name.endsWith('.pdf');
-
-    return (
-        <div className="attachment-thumb-wrapper">
-            <a href={url} target="_blank" rel="noreferrer" className="attachment-thumb">
-                {isPdf ? <div className="attachment-pdf-icon">PDF</div> : <img src={url} alt={name} />}
-            </a>
-            {onRemove && (
-                <button
-                    type="button"
-                    className="attachment-remove-btn"
-                    aria-label={`Remove ${name}`}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
-                >
-                    <LuX />
-                </button>
-            )}
-        </div>
-    );
-};
-
-AttachmentThumb.propTypes = {
-    attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
-    onRemove: PropTypes.func,
 };
 
 const HostPropertyCare = () => {
@@ -1667,19 +1626,7 @@ const HostPropertyCare = () => {
                 </>
             )}
 
-            {confirmDialog.isOpen && (
-                <div className="confirm-modal-overlay">
-                    <div className="confirm-modal-content">
-                        <div className="confirm-modal-icon"><LuTriangleAlert /></div>
-                        <h3>{confirmDialog.title}</h3>
-                        <p>{confirmDialog.message}</p>
-                        <div className="confirm-modal-actions">
-                            <button className="btn-text" onClick={closeConfirmDialog}>{confirmDialog.cancelText}</button>
-                            <button className="btn-danger" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />
         </main>
     );
 };
