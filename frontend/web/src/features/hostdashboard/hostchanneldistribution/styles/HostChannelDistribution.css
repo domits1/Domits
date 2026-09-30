@@ -125,9 +125,21 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(26, 26, 46, .5);
 }
+.chdist-modal-backdrop__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(26, 26, 46, .5);
+  cursor: default;
+}
+.chdist-modal-backdrop__overlay:disabled { cursor: not-allowed; }
 .chdist-modal {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 420px;
   max-height: 100%;
