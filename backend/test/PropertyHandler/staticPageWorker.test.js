@@ -69,6 +69,9 @@ const buildWorker = ({ rows = [buildJob()], sites = [buildSite()], domains = [FA
   return { worker: new StaticPageWorker(deps), outbox: deps.outboxRepository, ...deps };
 };
 
+const publishAgainWhileBuilding = (outbox) =>
+  Object.assign(outbox.table.get("site-1"), { revision: 5, attemptCount: 0 });
+
 describe("StaticPageWorker", () => {
   beforeEach(() => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
@@ -93,12 +96,19 @@ describe("StaticPageWorker", () => {
     expect(summary).toEqual({ listed: 1, built: 1, skipped: 0, superseded: 0, notClaimed: 0, failed: 0, errors: [] });
   });
 
-  it("claims nothing when the shell cannot be read, so no attempt is spent without a shell", async () => {
-    const { worker, outbox, pageStore } = buildWorker();
-    pageStore.readAppShell.mockRejectedValueOnce(new Error("NoSuchKey"));
+  it("reads the shell again for every page, and claims nothing for a page whose shell cannot be read", async () => {
+    const { worker, outbox, pageStore, renderer } = buildWorker({
+      rows: [buildJob(), buildJob({ siteId: "site-2" })],
+      sites: [buildSite(), buildSite({ id: "site-2" })],
+    });
+    pageStore.readAppShell.mockResolvedValueOnce("<html>first</html>").mockRejectedValueOnce(new Error("NoSuchKey"));
 
-    await expect(worker.run()).rejects.toThrow("NoSuchKey");
-    expect(outbox.claimPage).not.toHaveBeenCalled();
+    const summary = await worker.run();
+
+    expect(renderer.render.mock.calls[0][0].template).toBe("<html>first</html>");
+    expect(outbox.claimPage).toHaveBeenCalledTimes(1);
+    expect(outbox.table.get("site-2").status).toBe("PENDING");
+    expect(summary).toMatchObject({ built: 1, errors: [{ siteId: "site-2", revision: 4, message: "NoSuchKey" }] });
   });
 
   it("leaves a page that another worker claimed first, without touching the site or the bucket", async () => {
@@ -126,53 +136,70 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ skipped: 1 });
   });
 
-  it("stops before rendering when the site already carries a newer revision than the claimed row", async () => {
+  it("stops before rendering when the site carries a newer revision, and hands the row to the next run", async () => {
     const { worker, outbox, pageStore, renderer } = buildWorker({ sites: [buildSite({ staticPageRevision: 5 })] });
+    outbox.claimPage.mockImplementationOnce(async () => {
+      Object.assign(publishAgainWhileBuilding(outbox), { status: "BUILDING" });
+      return true;
+    });
 
     const summary = await worker.run();
 
     expect(renderer.render).not.toHaveBeenCalled();
     expect(pageStore.putPage).not.toHaveBeenCalled();
-    expect(outbox.markPageActive).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
     expect(summary).toMatchObject({ superseded: 1 });
   });
 
   it.each([
     [
       "has no active domain, so a disabled domain gets no page",
+      "domainRepository",
       [{ ...FALLBACK, status: "DISABLED" }],
       "NO_ACTIVE_DOMAIN",
     ],
     [
       "carries a hostname that is not a domain name",
+      "domainRepository",
       [{ ...CUSTOM, domain: "Cliff House/../index" }],
       "INVALID_DOMAIN: ",
     ],
-  ])("fails a site that %s, and uploads nothing", async (_label, domains, reasonStart) => {
-    const { worker, outbox, pageStore } = buildWorker({ domains });
+    [
+      "cannot be rendered",
+      "renderer",
+      new Error("Cannot prerender without a heading."),
+      "RENDER_FAILED: Cannot prerender without a heading.",
+    ],
+  ])("fails a site that %s, records the reason and uploads nothing", async (_label, dependency, outcome, reason) => {
+    const deps = buildWorker();
+    const { worker, outbox, pageStore } = deps;
+    if (outcome instanceof Error) {
+      deps[dependency].render.mockRejectedValueOnce(outcome);
+    } else {
+      deps[dependency].listDomainsBySiteId.mockResolvedValueOnce(outcome);
+    }
 
     const summary = await worker.run();
 
     expect(pageStore.putPage).not.toHaveBeenCalled();
     expect(outbox.table.get("site-1")).toMatchObject({
       status: "FAILED",
-      failureReason: expect.stringContaining(reasonStart),
+      failureReason: expect.stringContaining(reason),
     });
     expect(summary).toMatchObject({ failed: 1 });
   });
 
-  it("records a render failure with its reason and uploads nothing", async () => {
-    const { worker, outbox, pageStore, renderer } = buildWorker();
-    renderer.render.mockRejectedValueOnce(new Error("Cannot prerender without a model that carries a heading."));
-
-    const summary = await worker.run();
-
-    expect(pageStore.putPage).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({
-      status: "FAILED",
-      failureReason: "RENDER_FAILED: Cannot prerender without a model that carries a heading.",
+  it("gives a fallback domain the status the public site gives it, so the page is not rendered as unreachable", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
+    const { worker, pageStore, renderer } = buildWorker({
+      domains: [{ ...FALLBACK, status: "PENDING", isPrimary: true }],
     });
-    expect(summary).toMatchObject({ failed: 1 });
+
+    await worker.run();
+
+    delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+    expect(renderer.render.mock.calls[0][0].domain).toEqual({ ...FALLBACK, status: "ACTIVE", isPrimary: true });
+    expect(pageStore.putPage).toHaveBeenCalledTimes(1);
   });
 
   it("records an upload failure and never marks the page active when one object did not land", async () => {
@@ -190,20 +217,23 @@ describe("StaticPageWorker", () => {
   });
 
   it.each([
-    ["is still queued", "PENDING"],
-    ["was already built by another worker, so it is queued again", "ACTIVE"],
-  ])("never marks a newer publish done when it lands during the upload and %s", async (_label, newerStatus) => {
-    const { worker, outbox, pageStore } = buildWorker();
-    pageStore.putPage.mockImplementationOnce(async () => {
-      Object.assign(outbox.table.get("site-1"), { revision: 5, status: newerStatus, attemptCount: 0 });
-    });
+    ["the upload succeeds", async () => undefined],
+    ["the next upload fails", async () => Promise.reject(new Error("AccessDenied"))],
+  ])(
+    "never marks a newer publish done when it lands during the upload and %s; the newer row is queued again",
+    async (_label, nextUpload) => {
+      const { worker, outbox, pageStore } = buildWorker();
+      pageStore.putPage
+        .mockImplementationOnce(async () => publishAgainWhileBuilding(outbox))
+        .mockImplementationOnce(nextUpload);
 
-    const summary = await worker.run();
+      const summary = await worker.run();
 
-    expect(outbox.requeueNewerRevision).toHaveBeenCalledWith("site-1", 4);
-    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
-    expect(summary).toMatchObject({ superseded: 1, built: 0 });
-  });
+      expect(outbox.requeueNewerRevision).toHaveBeenCalledWith("site-1", 4);
+      expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+      expect(summary).toMatchObject({ superseded: 1, built: 0, failed: 0 });
+    }
+  );
 
   it("reports a status write that fails and carries on with the next site", async () => {
     const { worker, outbox, pageStore } = buildWorker({

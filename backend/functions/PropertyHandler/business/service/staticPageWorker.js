@@ -14,7 +14,10 @@ const failWith = (code) => (cause) => {
   throw new PageBuildFailure(code, cause);
 };
 
-const isActiveDomain = (domain) => resolveDirectBookingWebsiteFallbackDomainStatus(domain) === "ACTIVE";
+const withEffectiveStatus = (domain) => ({
+  ...domain,
+  status: resolveDirectBookingWebsiteFallbackDomainStatus(domain),
+});
 
 const pickPrimaryDomain = (domains) => domains.find((domain) => domain.isPrimary) || domains[0];
 
@@ -28,13 +31,12 @@ export class StaticPageWorker {
   }
 
   async run({ limit = DEFAULT_RUN_LIMIT } = {}) {
-    const template = await this.pageStore.readAppShell();
     const jobs = await this.outboxRepository.listPagesToBuild({ limit });
     const summary = { listed: jobs.length, built: 0, skipped: 0, superseded: 0, notClaimed: 0, failed: 0, errors: [] };
 
     for (const job of jobs) {
       try {
-        const outcome = await this.#buildPage(job, template);
+        const outcome = await this.#buildPage(job);
         summary[outcome] += 1;
       } catch (error) {
         console.error(`[StaticPageWorker] site ${job.siteId} revision ${job.revision} was not finished:`, error);
@@ -45,7 +47,8 @@ export class StaticPageWorker {
     return summary;
   }
 
-  async #buildPage(job, template) {
+  async #buildPage(job) {
+    const template = await this.pageStore.readAppShell();
     const claimed = await this.outboxRepository.claimPage(job.siteId, job.revision);
     if (!claimed) {
       return "notClaimed";
@@ -53,15 +56,17 @@ export class StaticPageWorker {
 
     const site = await this.siteRepository.getSiteById(job.siteId);
     if (!site) {
-      await this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_FOUND");
-      return "skipped";
+      return this.#record(job, "skipped", () =>
+        this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_FOUND")
+      );
     }
     if (site.status !== "PUBLISHED") {
-      await this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_PUBLISHED");
-      return "skipped";
+      return this.#record(job, "skipped", () =>
+        this.outboxRepository.skipPage(job.siteId, job.revision, "SITE_NOT_PUBLISHED")
+      );
     }
     if (site.staticPageRevision !== job.revision) {
-      return "superseded";
+      return this.#record(job, "superseded", async () => false);
     }
 
     try {
@@ -74,13 +79,17 @@ export class StaticPageWorker {
       if (!(error instanceof PageBuildFailure)) {
         throw error;
       }
-      await this.outboxRepository.markPageFailed(job.siteId, job.revision, error.message);
-      return "failed";
+      return this.#record(job, "failed", () =>
+        this.outboxRepository.markPageFailed(job.siteId, job.revision, error.message)
+      );
     }
 
-    const active = await this.outboxRepository.markPageActive(job.siteId, job.revision);
-    if (active) {
-      return "built";
+    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision));
+  }
+
+  async #record(job, outcome, write) {
+    if (await write()) {
+      return outcome;
     }
 
     await this.outboxRepository.requeueNewerRevision(job.siteId, job.revision);
@@ -88,7 +97,9 @@ export class StaticPageWorker {
   }
 
   async #activeDomains(siteId) {
-    const domains = (await this.domainRepository.listDomainsBySiteId(siteId)).filter(isActiveDomain);
+    const domains = (await this.domainRepository.listDomainsBySiteId(siteId))
+      .map(withEffectiveStatus)
+      .filter((domain) => domain.status === "ACTIVE");
     if (domains.length === 0) {
       throw new PageBuildFailure("NO_ACTIVE_DOMAIN");
     }
