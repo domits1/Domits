@@ -5,6 +5,8 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const toIsoDate = (ms) => new Date(ms).toISOString().slice(0, 10);
+// ISO dates sort correctly as text.
+const byText = (left, right) => left.localeCompare(right);
 
 // The nights a booking blocks run from arrival to the day before departure: the
 // checkout day stays bookable. A stay without a whole night blocks nothing, and
@@ -19,8 +21,8 @@ export const bookingAvailabilityChange = (domitsPropertyId, ...stays) => {
   return {
     domitsPropertyId,
     changeTypes: [CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY],
-    dateFrom: nights.map(({ from }) => from).sort()[0],
-    dateTo: nights.map(({ to }) => to).sort().at(-1),
+    dateFrom: nights.map(({ from }) => from).sort(byText)[0],
+    dateTo: nights.map(({ to }) => to).sort(byText).at(-1),
     source: CHANNEX_ARI_OUTBOX_SOURCE.BOOKING,
   };
 };
