@@ -151,21 +151,7 @@ export class DirectBookingWebsiteSiteRepository {
       `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2
       RETURNING
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at`,
+        ${SITE_SELECT_COLUMNS}`,
       [propertyId, hostId]
     );
 
@@ -353,21 +339,7 @@ export class DirectBookingWebsiteSiteRepository {
         updated_at = $4
       WHERE id = $1
       RETURNING
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at`,
+        ${SITE_SELECT_COLUMNS}`,
       [siteId, normalizedStatus, suspendedAt, now]
     );
 

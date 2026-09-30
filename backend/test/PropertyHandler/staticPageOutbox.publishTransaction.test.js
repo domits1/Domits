@@ -188,3 +188,49 @@ describe("publishing a site writes its page outbox row in the same transaction",
     expect(client.transactionRunner.release).not.toHaveBeenCalled();
   });
 });
+
+describe("every site query reports the static page revision", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("returns the stored revision from the status update and the delete, not a silent zero", async () => {
+    const records = [{ ...SITE_ROW, static_page_revision: 7 }];
+    const queryRunner = {
+      query: jest.fn(async () => ({ records, affected: 1 })),
+      release: jest.fn().mockResolvedValue(undefined),
+    };
+    Database.getInstance.mockResolvedValue({
+      options: { schema: "main" },
+      createQueryRunner: jest.fn(() => queryRunner),
+      query: jest.fn(async () => records),
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await expect(repository.updateSiteStatus("site-1", "preview")).resolves.toMatchObject({ staticPageRevision: 7 });
+    await expect(repository.deleteSiteByPropertyIdAndHostId("property-1", "host-1")).resolves.toMatchObject({
+      staticPageRevision: 7,
+    });
+    await expect(repository.getSiteById("site-1")).resolves.toMatchObject({ staticPageRevision: 7 });
+
+    for (const call of queryRunner.query.mock.calls) {
+      expect(call[0]).toContain("static_page_revision");
+    }
+  });
+
+  it("reads a site that has never been published as revision zero", async () => {
+    const records = [{ ...SITE_ROW, static_page_revision: null }];
+    Database.getInstance.mockResolvedValue({
+      options: { schema: "main" },
+      createQueryRunner: jest.fn(() => ({
+        query: jest.fn(async () => ({ records, affected: 1 })),
+        release: jest.fn().mockResolvedValue(undefined),
+      })),
+      query: jest.fn(async () => records),
+    });
+
+    await expect(new DirectBookingWebsiteSiteRepository().getSiteById("site-1")).resolves.toMatchObject({
+      staticPageRevision: 0,
+    });
+  });
+});
