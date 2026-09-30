@@ -573,7 +573,17 @@ export class PropertyController {
     async updateRegistrationNumber(event) {
         try {
             const accessToken = event.headers.Authorization || event.headers.authorization;
-            const rawBody = JSON.parse(event.body || "{}");
+
+            let rawBody;
+            try {
+                rawBody = JSON.parse(event.body || "{}");
+            } catch {
+                return this.badRequest("Invalid request body.");
+            }
+            if (rawBody === null || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+                return this.badRequest("Invalid request body.");
+            }
+
             const propertyId = String(rawBody.propertyId || rawBody.property || "").trim();
             if (!propertyId) {
                 return this.badRequest("Missing propertyId.");

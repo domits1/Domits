@@ -55,6 +55,39 @@ describe("PropertyController.updateRegistrationNumber", () => {
     expect(controller.propertyService.updateRegistrationNumber).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["malformed JSON", "{not json"],
+    ["a JSON null body", "null"],
+    ["a JSON array body", "[]"],
+    ["a JSON string body", '"text"'],
+  ])("returns 400 for %s without authorizing or updating", async (_label, body) => {
+    const response = await controller.updateRegistrationNumber({
+      httpMethod: "PATCH",
+      path: "/property/registration",
+      headers: { Authorization: "access-token" },
+      body,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body).message).toBe("Invalid request body.");
+    expect(controller.authManager.authorizeOwnerRequest).not.toHaveBeenCalled();
+    expect(controller.propertyService.updateRegistrationNumber).not.toHaveBeenCalled();
+  });
+
+  it("returns the existing missing-propertyId 400 for an empty body", async () => {
+    const response = await controller.updateRegistrationNumber({
+      httpMethod: "PATCH",
+      path: "/property/registration",
+      headers: { Authorization: "access-token" },
+      body: undefined,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body).message).toBe("Missing propertyId.");
+    expect(controller.authManager.authorizeOwnerRequest).not.toHaveBeenCalled();
+    expect(controller.propertyService.updateRegistrationNumber).not.toHaveBeenCalled();
+  });
+
   it("returns 403 and never updates when the caller does not own the property", async () => {
     controller.authManager.authorizeOwnerRequest.mockRejectedValue(
       new Forbidden("You must be the owner of the property to access it.")
