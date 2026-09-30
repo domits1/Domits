@@ -1,5 +1,7 @@
 import { PropertyController } from "./controller/propertyController.js";
 
+const STATIC_PAGE_TASK = "build-static-pages";
+
 let controller = new PropertyController();
 
 const notFound = (body) => ({
@@ -185,6 +187,9 @@ export const handler = async (event) => {
   }
 
   try {
+    if (event?.task === STATIC_PAGE_TASK) {
+      return await controller.buildStaticPages(event);
+    }
     const methodHandler = methodHandlers[event.httpMethod];
     if (!methodHandler) {
       return notFound("Method not found.");
