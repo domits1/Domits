@@ -160,8 +160,3 @@ export const nextRetryDelayMs = (attempt, random = Math.random) => {
 // The Channex endpoint a change type goes to; each has its own rate limit.
 export const callTypeOf = (changeType) =>
   changeType === CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY ? "availability" : "restrictions";
-
-export const sharesCallType = (changeTypesA, changeTypesB) => {
-  const callTypes = new Set(changeTypesA.map(callTypeOf));
-  return changeTypesB.some((type) => callTypes.has(callTypeOf(type)));
-};

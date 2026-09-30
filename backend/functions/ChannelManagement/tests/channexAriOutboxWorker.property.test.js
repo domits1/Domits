@@ -188,6 +188,48 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     expect(outbox.markProcessed).toHaveBeenCalledWith(["row-restrictions"], expect.objectContaining({ now: NOW }));
   });
 
+  // Review example: restrictions' first 500 days share a call with availability, their
+  // last 79 days go in a later call that a 429 on rates pauses. Those days must not be lost.
+  test("a row whose later call was paused is not PROCESSED by its earlier call", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-restrictions", changeTypes: ["restrictions"], dateFrom: 20261101, dateTo: 20280601 }),
+      claimedRow({ id: "row-availability", changeTypes: ["availability"], dateFrom: 20261101, dateTo: 20280314 }),
+      claimedRow({ id: "row-rates", changeTypes: ["rates"], dateFrom: 20261102, dateTo: 20261102 }),
+    ]);
+    syncCalendarChange.mockResolvedValueOnce(sent).mockResolvedValueOnce({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 429, errorCode: "CHANNEX_RATE_LIMITED" }] }] },
+    });
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(syncCalendarChange).toHaveBeenCalledTimes(2);
+    expect(outbox.markProcessed).toHaveBeenCalledWith(["row-availability"], expect.anything());
+    expect(outbox.returnToPending).toHaveBeenCalledWith(
+      ["row-restrictions", "row-rates"],
+      expect.objectContaining({ failureReason: "CHANNEX_RATE_LIMITED" })
+    );
+  });
+
+  test("each row gets the failure reason of its own call", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-rates", changeTypes: ["rates"], dateFrom: 20261101, dateTo: 20261101 }),
+      claimedRow({ id: "row-availability", changeTypes: ["availability"], dateFrom: 20261120, dateTo: 20261120 }),
+    ]);
+    const rejected = (errorCode) => ({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 400, errorCode }] }] },
+    });
+    syncCalendarChange.mockResolvedValueOnce(rejected("AVAILABILITY_INVALID")).mockResolvedValueOnce(rejected("RATE_INVALID"));
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-availability"], { now: NOW, failureReason: "AVAILABILITY_INVALID" });
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-rates"], { now: NOW, failureReason: "RATE_INVALID" });
+  });
+
   test("pauses the call type after an outage; a row that was never sent waits without using an attempt", async () => {
     const { worker, syncCalendarChange, outbox } = createWorker();
     outbox.claim.mockResolvedValue([

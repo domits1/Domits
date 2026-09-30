@@ -5,7 +5,6 @@ import {
   classifySyncResponse,
   groupChangesForSend,
   nextRetryDelayMs,
-  sharesCallType,
   worstOutcome,
 } from "../utils/channexAriOutboxPlanning.js";
 
@@ -70,17 +69,25 @@ export default class ChannexAriOutboxWorker {
   }
 
   async sendAndRecord(account, domitsPropertyId, rows) {
+    // Every group ends up in `sends`, also the ones not sent, so every date of every row
+    // has an outcome and a date that never went out can't be recorded as sent.
     const sends = [];
-    const pausedTypes = [];
+    const pausedBuckets = new Map();
     const callsPerBucket = new Map();
     for (const group of groupChangesForSend(rows)) {
-      // After a rate limit or outage, the rest of that call type waits for the next run;
-      // the other call type has its own Channex limit and still goes out.
-      if (sharesCallType(group.changeTypes, pausedTypes)) continue;
+      const buckets = bucketsOf(group.changeTypes);
+
+      // After a rate limit or outage, the rest of that call type waits; the other call
+      // type has its own Channex limit and still goes out.
+      const pausedBucket = buckets.find((bucket) => pausedBuckets.has(bucket));
+      if (pausedBucket) {
+        const reason = pausedBuckets.get(pausedBucket);
+        sends.push({ group, sent: false, result: { outcome: OUTCOME.RETRY, reason, taskIds: [] } });
+        continue;
+      }
 
       // A call with several types hits each of their Channex endpoints, so it counts
       // against every bucket it touches. Above the limit the group waits for the next run.
-      const buckets = bucketsOf(group.changeTypes);
       const limitReached = buckets.some(
         (bucket) => (callsPerBucket.get(bucket) || 0) >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_CALLS_PER_BUCKET_PER_RUN
       );
@@ -98,53 +105,56 @@ export default class ChannexAriOutboxWorker {
       sends.push({ group, sent: true, result });
       // Only a rate limit or an outage says more calls of this type would fail too; a
       // rejected call (4xx) is about its own values.
-      if (result.outcome === OUTCOME.RETRY) pausedTypes.push(...group.changeTypes);
+      if (result.outcome === OUTCOME.RETRY) {
+        for (const bucket of buckets) pausedBuckets.set(bucket, result.reason);
+      }
     }
 
     // Each row gets the worst outcome of the calls that carried its change types on its
-    // dates; one type can go out in several calls when its dates lie far apart. A type
-    // that was not sent for the row's dates counts as a retry.
-    const rowsByOutcome = new Map();
+    // dates, and the reason of that call; one type can go out in several calls when its
+    // dates lie far apart.
+    const rowsByResult = new Map();
     const partlySent = new Set();
     for (const row of rows) {
       const [rowFrom, rowTo] = [row.dateFrom, row.dateTo].map(toIsoDate);
-      const outcomes = row.changeTypes.flatMap((type) => {
-        const carriers = sends.filter(
-          ({ group }) =>
-            group.changeTypes.includes(type) && group.changedDates[0] <= rowTo && group.changedDates.at(-1) >= rowFrom
-        );
-        if (carriers.some(({ sent }) => sent)) partlySent.add(row.id);
-        return carriers.length ? carriers.map(({ result }) => result.outcome) : [OUTCOME.RETRY];
-      });
-      const outcome = worstOutcome(outcomes);
-      rowsByOutcome.set(outcome, [...(rowsByOutcome.get(outcome) || []), row]);
+      const carriers = sends.filter(
+        ({ group }) =>
+          group.changeTypes.some((type) => row.changeTypes.includes(type)) &&
+          group.changedDates[0] <= rowTo &&
+          group.changedDates.at(-1) >= rowFrom
+      );
+      if (carriers.some(({ sent }) => sent)) partlySent.add(row.id);
+      const outcome = carriers.length ? worstOutcome(carriers.map(({ result }) => result.outcome)) : OUTCOME.RETRY;
+      const reason = carriers.find(({ result }) => result.outcome === outcome)?.result.reason ?? null;
+      const key = `${outcome}|${reason}`;
+      if (!rowsByResult.has(key)) rowsByResult.set(key, { outcome, reason, rows: [] });
+      rowsByResult.get(key).rows.push(row);
     }
 
     const now = this.now();
-    const results = sends.map(({ result }) => result);
-    const reasonFor = (outcome) => results.find((result) => result.outcome === outcome)?.reason ?? null;
     const recorded = [];
-    for (const [outcome, outcomeRows] of rowsByOutcome) {
+    for (const { outcome, reason, rows: outcomeRows } of rowsByResult.values()) {
       const ids = outcomeRows.map((row) => row.id);
       if (outcome === OUTCOME.PROCESSED) {
-        const taskIds = results.flatMap((result) => result.taskIds);
-        const calls = sends.filter(({ sent }) => sent).length;
-        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls } });
+        const sentCalls = sends.filter(({ sent }) => sent);
+        const taskIds = sentCalls.flatMap(({ result }) => result.taskIds);
+        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: sentCalls.length } });
         recorded.push(outcome);
       } else if (outcome === OUTCOME.DEFERRED) {
         recorded.push(...(await this.deferRows(outcomeRows, { now, partlySent })));
       } else if (outcome === OUTCOME.SKIPPED) {
-        await this.outbox.markSkipped(ids, { now, failureReason: reasonFor(outcome) });
+        await this.outbox.markSkipped(ids, { now, failureReason: reason });
         recorded.push(outcome);
       } else if (outcome === OUTCOME.FAILED) {
-        await this.outbox.markFailed(ids, { now, failureReason: reasonFor(outcome) });
+        await this.outbox.markFailed(ids, { now, failureReason: reason });
         recorded.push(outcome);
       } else {
-        recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason: reasonFor(outcome), partlySent })));
+        recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason, partlySent })));
       }
     }
     return worstOutcome(recorded);
   }
+
 
   // Rows the call limit held back wait one minute: while they wait, the claim holds
   // back their call type, so a property never gets two batches of calls within one
