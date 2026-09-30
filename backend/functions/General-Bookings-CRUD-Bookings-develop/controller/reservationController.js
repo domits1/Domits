@@ -11,7 +11,8 @@ import { PublicBookingRequestError } from "../util/exception/PublicBookingReques
 import { randomUUID } from "node:crypto";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
-import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
+import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 const responseHeaderJSON = responsejson;
 const REFUND_CURRENCY = "eur";
 const STRIPE_REFUND_REASON = "requested_by_customer";
@@ -326,7 +327,7 @@ class ReservationController {
     // Cancel first: the cancellation and its Channex outbox row commit together before any
     // money moves, so a failed cancellation never leaves a refund behind.
     const channexChange = shouldSyncChannexCancellation(booking)
-      ? bookingAvailabilityChange(booking.property_id, {
+      ? bookingAvailabilityChange(booking.property_id, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
           arrivalMs: Number(booking.arrivaldate),
           departureMs: Number(booking.departuredate),
         })
