@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -46,7 +46,7 @@ const renderPage = async () => {
             </MemoryRouter>
         </LanguageContext.Provider>
     );
-    await waitFor(() => expect(screen.getByLabelText(REGISTRATION_LABEL)).toBeInTheDocument());
+    expect(await screen.findByLabelText(REGISTRATION_LABEL)).toBeInTheDocument();
 };
 
 const registrationInput = () => screen.getByLabelText(REGISTRATION_LABEL);
@@ -106,7 +106,7 @@ describe("HostSettingsCompliance page against the raw /hostDashboard/all respons
         fireEvent.change(registrationInput(), { target: { value: " Auto-5678 " } });
         fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-        await waitFor(() => expect(screen.getByRole("button", { name: "Saved" })).toBeInTheDocument());
+        expect(await screen.findByRole("button", { name: "Saved" })).toBeInTheDocument();
         const patchCall = global.fetch.mock.calls.find(([, options]) => options?.method === "PATCH");
         expect(JSON.parse(patchCall[1].body)).toEqual({ propertyId: VILLA_ID, registrationNumber: "Auto-5678" });
         expect(registrationInput()).toHaveValue("Auto-5678");

@@ -3,7 +3,15 @@ import {
   MISSED_REVENUE_AMOUNT_FIELD_KEYS,
   MISSED_REVENUE_COUNT_FIELD_KEYS,
   MISSED_REVENUE_PERCENTAGE_FIELD_KEYS,
+  formatMissedRevenueCurrency,
 } from "./missedRevenueFields";
+
+describe("formatMissedRevenueCurrency", () => {
+  test("prefixes the amount with the given currency code instead of a hardcoded one", () => {
+    expect(formatMissedRevenueCurrency(120.5, "EUR")).toBe("EUR 120.50");
+    expect(formatMissedRevenueCurrency(120.5, "USD")).toBe("USD 120.50");
+  });
+});
 
 describe("EMPTY_MISSED_REVENUE", () => {
   test("defaults to not connected with no date range", () => {

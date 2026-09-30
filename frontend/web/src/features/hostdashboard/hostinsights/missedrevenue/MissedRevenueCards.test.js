@@ -30,4 +30,23 @@ describe("MissedRevenueCards", () => {
 
     expect(container.querySelectorAll("article")).toHaveLength(0);
   });
+
+  test("renders the change line when a card has one and omits it otherwise", () => {
+    render(
+      <MissedRevenueCards
+        cards={[
+          {
+            id: "gross-missed-revenue",
+            title: "Gross missed revenue",
+            value: "EUR 300.00",
+            change: "+5.0% vs previous period",
+          },
+          { id: "revenue-efficiency", title: "Revenue efficiency", value: "25.0%", change: null },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("+5.0% vs previous period")).toBeInTheDocument();
+    expect(screen.getAllByText(/vs previous period/)).toHaveLength(1);
+  });
 });

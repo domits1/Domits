@@ -9,6 +9,7 @@ export function MissedRevenueCards({ cards }) {
         <article key={card.id} className={styles.card}>
           <p className={styles.cardTitle}>{card.title}</p>
           <p className={styles.cardValue}>{card.value}</p>
+          {card.change ? <p className={styles.cardChange}>{card.change}</p> : null}
           {card.meta ? <p className={styles.cardMeta}>{card.meta}</p> : null}
         </article>
       ))}
@@ -23,6 +24,7 @@ MissedRevenueCards.propTypes = {
       title: PropTypes.string.isRequired,
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       meta: PropTypes.string,
+      change: PropTypes.string,
     })
   ).isRequired,
 };

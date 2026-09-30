@@ -112,7 +112,7 @@ const HostSettingsCompliance = () => {
                             <button
                                 type="button"
                                 className={`pd-save-btn${compliance.saveSuccess ? " pd-save-btn--saved" : ""}`}
-                                onClick={compliance.save}
+                                onClick={() => void compliance.save()}
                                 disabled={!compliance.isDirty || compliance.isSaving}
                             >
                                 {getSaveLabel(compliance.isSaving, compliance.saveSuccess, buttons)}
