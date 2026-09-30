@@ -41,6 +41,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/site/unpublish")) {
     return controller.unpublishWebsiteSite(event);
   }
+  if (isPath(event, "/property/website/domains/primary")) {
+    return controller.promoteWebsiteDomain(event);
+  }
   if (isPath(event, "/property/website/domains/verify")) {
     return controller.verifyWebsiteDomain(event);
   }
@@ -126,7 +129,9 @@ const handleGet = async (event) => {
   if (isPath(event, DRAFT_ID_RESOURCE)) {
     return controller.getDraft(event);
   }
-
+  if (isPath(event, "/property/pricing/saving-config")) {
+    return controller.getPricingSavingConfig(event);
+  }
   const hostDashboardSubResource = getSubResource(
     event,
     "/property/hostDashboard/{subResource}",

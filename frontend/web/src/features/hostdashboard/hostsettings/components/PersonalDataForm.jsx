@@ -1,554 +1,613 @@
-import React, { useRef, useEffect, useContext } from "react";
-import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
-import standardAvatar from "../../../../images/standard.png";
-import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
-import { LanguageContext } from "../../../../context/LanguageContext";
-import en from "../../../../content/en.json";
-import nl from "../../../../content/nl.json";
-import de from "../../../../content/de.json";
-import es from "../../../../content/es.json";
-import PasswordChangeSection from "../../../../components/settings/PasswordChangeSection";
-import {
-    optionShape,
-    countryCodeShape,
-    authStatusShape,
-    userShape,
-    tempUserShape,
-    refShape,
-} from "../../../../components/settings/propTypes";
+  import React, { useRef, useEffect, useContext } from "react";
+  import PropTypes from "prop-types";
+  import { Link } from "react-router-dom";
+  import DatePicker from "react-datepicker";
+  import "react-datepicker/dist/react-datepicker.css";
+  import standardAvatar from "../../../../images/standard.png";
+  import { normalizeImageUrl } from "../../../guestdashboard/utils/image";
+  import { parseDateOfBirth } from "../../../../components/settings/utils/settingsFormatters";
+  import { LanguageContext } from "../../../../context/LanguageContext";
+  import en from "../../../../content/en.json";
+  import nl from "../../../../content/nl.json";
+  import de from "../../../../content/de.json";
+  import es from "../../../../content/es.json";
+  import PasswordChangeSection from "../../../../components/settings/PasswordChangeSection";
+  import {
+      optionShape,
+      countryCodeShape,
+      authStatusShape,
+      userShape,
+      tempUserShape,
+      refShape,
+  } from "../../../../components/settings/propTypes";
 
-const contentByLanguage = { en, nl, de, es };
+  const contentByLanguage = { en, nl, de, es };
 
-const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange }) => {
-    const selectRef = useRef(null);
+  const fixedPopperProps = { strategy: "fixed" };
 
-    useEffect(() => {
-        const select = selectRef.current;
-        if (!select) return;
-        const text = select.options[select.selectedIndex]?.text || "";
-        const sizer = document.createElement("span");
-        sizer.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-size:0.9rem;padding:0 32px 0 12px;";
-        sizer.textContent = text;
-        document.body.appendChild(sizer);
-        select.style.width = `${sizer.offsetWidth + 2}px`;
-        sizer.remove();
-    }, [selectedCountryCode]);
+  const PhoneField = ({ countryCodes, selectedCountryCode, onCountryCodeChange, stripPhone, onPhoneChange, ariaDescribedBy }) => {
+      const selectRef = useRef(null);
 
-    return (
-        <div className="pd-phone-row">
-            <select
-                ref={selectRef}
-                value={selectedCountryCode}
-                onChange={onCountryCodeChange}
-                className="pd-field-input pd-phone-code"
-                aria-label="Country code"
-            >
-                {countryCodes.map((c) => (
-                    <option key={c.code} value={c.code}>
-                        {c.name} ({c.code})
-                    </option>
-                ))}
-            </select>
-            <input
-                id="pd-phone"
-                type="text"
-                name="phone"
-                value={stripPhone || ""}
-                onChange={onPhoneChange}
-                className="pd-field-input pd-phone-number"
-                placeholder="Phone number"
-            />
-        </div>
-    );
-};
+      useEffect(() => {
+          const select = selectRef.current;
+          if (!select) return;
+          const text = select.options[select.selectedIndex]?.text || "";
+          const sizer = document.createElement("span");
+          sizer.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font-size:0.9rem;padding:0 32px 0 12px;";
+          sizer.textContent = text;
+          document.body.appendChild(sizer);
+          select.style.width = `${sizer.offsetWidth + 2}px`;
+          sizer.remove();
+      }, [selectedCountryCode]);
 
-PhoneField.propTypes = {
-    countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
-    selectedCountryCode: PropTypes.string.isRequired,
-    onCountryCodeChange: PropTypes.func.isRequired,
-    stripPhone: PropTypes.string.isRequired,
-    onPhoneChange: PropTypes.func.isRequired,
-};
+      return (
+          <div className="pd-phone-row">
+              <select
+                  ref={selectRef}
+                  value={selectedCountryCode}
+                  onChange={onCountryCodeChange}
+                  className="pd-field-input pd-phone-code"
+                  aria-label="Country code"
+              >
+                  {countryCodes.map((c) => (
+                      <option key={c.code} value={c.code}>
+                          {c.name} ({c.code})
+                      </option>
+                  ))}
+              </select>
+              <input
+                  id="pd-phone"
+                  type="text"
+                  name="phone"
+                  value={stripPhone || ""}
+                  onChange={onPhoneChange}
+                  className="pd-field-input pd-phone-number"
+                  placeholder="Phone number"
+                  aria-describedby={ariaDescribedBy}
+              />
+          </div>
+      );
+  };
 
-function getSaveLabel(isSaving, saveSuccess, t) {
-    if (isSaving) return t.buttons.saving;
-    if (saveSuccess) return t.buttons.saved;
-    return t.buttons.save;
-}
+  PhoneField.propTypes = {
+      countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
+      selectedCountryCode: PropTypes.string.isRequired,
+      onCountryCodeChange: PropTypes.func.isRequired,
+      stripPhone: PropTypes.string.isRequired,
+      onPhoneChange: PropTypes.func.isRequired,
+      ariaDescribedBy: PropTypes.string,
+  };
+  function getSaveLabel(isSaving, saveSuccess, saveError, t) {
+      if (isSaving) return t.buttons.saving;
+      if (saveError) return t.buttons.saveError;
+      if (saveSuccess) return t.buttons.saved;
+      return t.buttons.save;
+  }
 
-const PersonalDataForm = ({
-    user,
-    tempUser,
-    isUploadingPhoto,
-    isRemovingPhoto,
-    photoError,
-    photoSuccess,
-    photoInputRef,
-    onPhotoButtonClick,
-    onPhotoRemove,
-    onPhotoInputChange,
-    titleOptions,
-    sexOptions,
-    placeOfBirthOptions,
-    countryCodes,
-    selectedCountryCode,
-    stripPhone,
-    dateOfBirthError,
-    nationalityError,
-    isVerifying,
-    verificationCode,
-    onTitleChange,
-    onInputChange,
-    onSexChange,
-    onCountryCodeChange,
-    onPhoneChange,
-    onDateOfBirthChange,
-    onVerificationInputChange,
-    onSaveAll,
-    isSaving,
-    saveSuccess,
-    onVerifyEmail,
-    language,
-    languageOptions,
-    onLanguageChange,
-    dateFormat,
-    dateFormatOptions,
-    onDateFormatChange,
-    priceFormat,
-    priceFormatOptions,
-    onPriceFormatChange,
-    showPrefFormats,
-    showAuthMfa,
-    authStatus,
-    breadcrumbPath,
-    isChangingPassword,
-    currentPassword,
-    newPassword,
-    confirmPassword,
-    passwordError,
-    isSavingPassword,
-    passwordChangeSuccess,
-    onOpenPasswordChange,
-    onClosePasswordChange,
-    onCurrentPasswordChange,
-    onNewPasswordChange,
-    onConfirmPasswordChange,
-    onSubmitPasswordChange,
-}) => {
-    const { language: lang } = useContext(LanguageContext);
-    const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
+  const PersonalDataForm = ({
+      user,
+      tempUser,
+      isUploadingPhoto,
+      isRemovingPhoto,
+      photoError,
+      photoSuccess,
+      photoInputRef,
+      onPhotoButtonClick,
+      onPhotoRemove,
+      onPhotoInputChange,
+      titleOptions,
+      sexOptions,
+      placeOfBirthOptions,
+      countryCodes,
+      selectedCountryCode,
+      stripPhone,
+      dateOfBirthError,
+      nationalityError,
+      emailError,
+      nameError,
+      phoneError,
+      emailSuccess,
+      isVerifying,
+      verificationCode,
+      onTitleChange,
+      onInputChange,
+      onSexChange,
+      onCountryCodeChange,
+      onPhoneChange,
+      onDateOfBirthChange,
+      onVerificationInputChange,
+      onSaveAll,
+      isSaving,
+      saveSuccess,
+      saveError,
+      onVerifyEmail,
+      language,
+      languageOptions,
+      onLanguageChange,
+      dateFormat,
+      dateFormatOptions,
+      onDateFormatChange,
+      priceFormat,
+      priceFormatOptions,
+      onPriceFormatChange,
+      showPrefFormats,
+      showAuthMfa,
+      authStatus,
+      breadcrumbPath,
+      isChangingPassword,
+      currentPassword,
+      newPassword,
+      confirmPassword,
+      passwordError,
+      isSavingPassword,
+      passwordChangeSuccess,
+      onOpenPasswordChange,
+      onClosePasswordChange,
+      onCurrentPasswordChange,
+      onNewPasswordChange,
+      onConfirmPasswordChange,
+      onSubmitPasswordChange,
+  }) => {
+      const { language: lang } = useContext(LanguageContext);
+      const t = contentByLanguage[lang]?.settings?.personalData ?? contentByLanguage.en.settings.personalData;
 
-    return (
-    <div className="personal-data-page">
-        {breadcrumbPath && (
-            <nav className="personal-data-breadcrumb">
-                <Link to={breadcrumbPath}>{t.hub?.breadcrumb ?? "Settings"}</Link>
-                <span className="personal-data-breadcrumb-sep">/</span>
-                <span className="personal-data-breadcrumb-current">{t.breadcrumb}</span>
-            </nav>
-        )}
+      return (
+      <div className="personal-data-page">
+          {breadcrumbPath && (
+              <nav className="personal-data-breadcrumb">
+                  <Link to={breadcrumbPath}>{t.hub?.breadcrumb ?? "Settings"}</Link>
+                  <span className="personal-data-breadcrumb-sep">/</span>
+                  <span className="personal-data-breadcrumb-current">{t.breadcrumb}</span>
+              </nav>
+          )}
 
-        <header className="personal-data-header">
-            <h1 className="personal-data-title">{t.title}</h1>
-            <p className="personal-data-subtitle">{t.subtitle}</p>
-        </header>
+          <header className="personal-data-header">
+              <h1 className="personal-data-title">{t.title}</h1>
+              <p className="personal-data-subtitle">{t.subtitle}</p>
+          </header>
 
-        <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{t.profileSection}</h2>
-            <div className="personal-data-card">
-                <div className="personal-data-card-inner">
-                    <div className="personal-data-photo-col">
-                        <img
-                            src={user.picture ? normalizeImageUrl(user.picture) : standardAvatar}
-                            alt="Profile"
-                            className="personal-data-photo"
-                        />
-                        <div className="personal-data-photo-actions">
-                            <button
-                                type="button"
-                                onClick={onPhotoButtonClick}
-                                className="pd-photo-btn pd-photo-btn--primary"
-                                disabled={isUploadingPhoto || isRemovingPhoto}
-                            >
-                                {isUploadingPhoto ? t.photo.uploading : t.photo.upload}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={onPhotoRemove}
-                                className="pd-photo-btn pd-photo-btn--secondary"
-                                disabled={isUploadingPhoto || isRemovingPhoto || !user.picture}
-                            >
-                                {isRemovingPhoto ? t.photo.removing : t.photo.remove}
-                            </button>
-                        </div>
-                        {photoError && <p className="pd-photo-error">{photoError}</p>}
-                        {photoSuccess === "uploaded" && <p className="pd-photo-success">{t.photo.uploaded}</p>}
-                        {photoSuccess === "removed" && <p className="pd-photo-success">{t.photo.removed}</p>}
-                        <input
-                            ref={photoInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={onPhotoInputChange}
-                            style={{ display: "none" }}
-                            aria-label="Upload profile photo"
-                        />
-                    </div>
+          <section className="personal-data-section">
+              <h2 className="personal-data-section-title">{t.profileSection}</h2>
+              <div className="personal-data-card">
+                  <div className="personal-data-card-inner">
+                      <div className="personal-data-photo-col">
+                          <img
+                              src={user.picture ? normalizeImageUrl(user.picture) : standardAvatar}
+                              alt="Profile"
+                              className="personal-data-photo"
+                          />
+                          <div className="personal-data-photo-actions">
+                              <button
+                                  type="button"
+                                  onClick={onPhotoButtonClick}
+                                  className="pd-photo-btn pd-photo-btn--primary"
+                                  disabled={isUploadingPhoto || isRemovingPhoto}
+                              >
+                                  {isUploadingPhoto ? t.photo.uploading : t.photo.upload}
+                              </button>
+                              <button
+                                  type="button"
+                                  onClick={onPhotoRemove}
+                                  className="pd-photo-btn pd-photo-btn--secondary"
+                                  disabled={isUploadingPhoto || isRemovingPhoto || !user.picture}
+                              >
+                                  {isRemovingPhoto ? t.photo.removing : t.photo.remove}
+                              </button>
+                          </div>
+                          {photoError && <p className="pd-photo-error" role="alert">{photoError}</p>}
+                          {photoSuccess === "uploaded" && (
+                              <p className="pd-photo-success" role="status">{t.photo.uploaded}</p>
+                          )}
+                          {photoSuccess === "removed" && (
+                              <p className="pd-photo-success" role="status">{t.photo.removed}</p>
+                          )}
+                          <input
+                              ref={photoInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={onPhotoInputChange}
+                              style={{ display: "none" }}
+                              aria-label="Upload profile photo"
+                          />
+                      </div>
 
-                    <div className="personal-data-fields-col">
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-first-name">{t.fields.firstName}</label>
-                            <input
-                                id="pd-first-name"
-                                type="text"
-                                name="firstName"
-                                value={tempUser.firstName || ""}
-                                onChange={onInputChange}
-                                className="pd-field-input"
-                                placeholder={t.fields.firstName}
-                            />
-                        </div>
+                      <div className="personal-data-fields-col">
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-first-name">{t.fields.firstName}</label>
+                              <input
+                                  id="pd-first-name"
+                                  type="text"
+                                  name="firstName"
+                                  value={tempUser.firstName || ""}
+                                  onChange={onInputChange}
+                                  className="pd-field-input"
+                                  placeholder={t.fields.firstName}
+                                  aria-describedby={nameError ? "pd-name-error" : undefined}
+                              />
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-last-name">{t.fields.lastName}</label>
-                            <input
-                                id="pd-last-name"
-                                type="text"
-                                name="lastName"
-                                value={tempUser.lastName || ""}
-                                onChange={onInputChange}
-                                className="pd-field-input"
-                                placeholder={t.fields.lastName}
-                            />
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-last-name">{t.fields.lastName}</label>
+                              <input
+                                  id="pd-last-name"
+                                  type="text"
+                                  name="lastName"
+                                  value={tempUser.lastName || ""}
+                                  onChange={onInputChange}
+                                  className="pd-field-input"
+                                  placeholder={t.fields.lastName}
+                                  aria-describedby={nameError ? "pd-name-error" : undefined}
+                              />
+                              {nameError && (
+                                  <p id="pd-name-error" className="pd-field-error" role="alert">{nameError}</p>
+                              )}
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-title">{t.fields.title}</label>
-                            <div className="pd-select-wrapper">
-                                <select
-                                    id="pd-title"
-                                    name="title"
-                                    value={tempUser.title || ""}
-                                    onChange={onTitleChange}
-                                    className="pd-field-input pd-field-select"
-                                >
-                                    {titleOptions.map((opt) => (
-                                        <option key={opt || "empty"} value={opt}>
-                                            {opt || t.fields.selectTitle}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-title">{t.fields.title}</label>
+                              <div className="pd-select-wrapper">
+                                  <select
+                                      id="pd-title"
+                                      name="title"
+                                      value={tempUser.title || ""}
+                                      onChange={onTitleChange}
+                                      className="pd-field-input pd-field-select"
+                                  >
+                                      {titleOptions.map((opt) => (
+                                          <option key={opt || "empty"} value={opt}>
+                                              {opt || t.fields.selectTitle}
+                                          </option>
+                                      ))}
+                                  </select>
+                              </div>
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-email">{t.fields.email}</label>
-                            {isVerifying ? (
-                                <div className="pd-verify-row">
-                                    <input
-                                        id="pd-email-code"
-                                        type="text"
-                                        name="verificationCode"
-                                        value={verificationCode}
-                                        onChange={onVerificationInputChange}
-                                        className="pd-field-input"
-                                        placeholder={t.fields.verificationCode}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="pd-verify-btn"
-                                        onClick={onVerifyEmail}
-                                    >
-                                        {t.fields.verify}
-                                    </button>
-                                </div>
-                            ) : (
-                                <input
-                                    id="pd-email"
-                                    type="email"
-                                    name="email"
-                                    value={tempUser.email || ""}
-                                    onChange={onInputChange}
-                                    className="pd-field-input"
-                                    placeholder={t.fields.emailAddress}
-                                />
-                            )}
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-email">{t.fields.email}</label>
+                              {isVerifying ? (
+                                  <div className="pd-verify-row">
+                                      <input
+                                          id="pd-email-code"
+                                          type="text"
+                                          name="verificationCode"
+                                          value={verificationCode}
+                                          onChange={onVerificationInputChange}
+                                          className="pd-field-input"
+                                          placeholder={t.fields.verificationCode}
+                                          aria-describedby={emailError ? "pd-email-error" : undefined}
+                                      />
+                                      <button
+                                          type="button"
+                                          className="pd-verify-btn"
+                                          onClick={onVerifyEmail}
+                                      >
+                                          {t.fields.verify}
+                                      </button>
+                                  </div>
+                              ) : (
+                                  <input
+                                      id="pd-email"
+                                      type="email"
+                                      name="email"
+                                      value={tempUser.email || ""}
+                                      onChange={onInputChange}
+                                      className="pd-field-input"
+                                      placeholder={t.fields.emailAddress}
+                                      aria-describedby={
+                                          emailError ? "pd-email-error" : emailSuccess ? "pd-email-success" : undefined
+                                      }
+                                  />
+                              )}
+                              {emailError && (
+                                  <p id="pd-email-error" className="pd-field-error" role="alert">
+                                      {emailError}
+                                  </p>
+                              )}
+                              {emailSuccess && (
+                                  <p id="pd-email-success" className="pd-field-success" role="status">
+                                      {t.fields.emailUpdated}
+                                  </p>
+                              )}
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-phone">{t.fields.phone}</label>
-                            <PhoneField
-                                countryCodes={countryCodes}
-                                selectedCountryCode={selectedCountryCode}
-                                onCountryCodeChange={onCountryCodeChange}
-                                stripPhone={stripPhone}
-                                onPhoneChange={onPhoneChange}
-                                placeholder={t.fields.phoneNumber}
-                            />
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-phone">{t.fields.phone}</label>
+                              <PhoneField
+                                  countryCodes={countryCodes}
+                                  selectedCountryCode={selectedCountryCode}
+                                  onCountryCodeChange={onCountryCodeChange}
+                                  stripPhone={stripPhone}
+                                  onPhoneChange={onPhoneChange}
+                                  placeholder={t.fields.phoneNumber}
+                                  ariaDescribedBy={phoneError ? "pd-phone-error" : undefined}
+                              />
+                              {phoneError && (
+                                  <p id="pd-phone-error" className="pd-field-error" role="alert">{phoneError}</p>
+                              )}
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-sex">{t.fields.sex}</label>
-                            <div className="pd-select-wrapper">
-                                <select
-                                    id="pd-sex"
-                                    name="sex"
-                                    value={tempUser.sex || ""}
-                                    onChange={onSexChange}
-                                    className="pd-field-input pd-field-select"
-                                >
-                                    {sexOptions.map((opt) => (
-                                        <option key={opt || "empty"} value={opt}>
-                                            {opt || t.fields.selectSex}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-sex">{t.fields.sex}</label>
+                              <div className="pd-select-wrapper">
+                                  <select
+                                      id="pd-sex"
+                                      name="sex"
+                                      value={tempUser.sex || ""}
+                                      onChange={onSexChange}
+                                      className="pd-field-input pd-field-select"
+                                  >
+                                      {sexOptions.map((opt) => (
+                                          <option key={opt || "empty"} value={opt}>
+                                              {opt || t.fields.selectSex}
+                                          </option>
+                                      ))}
+                                  </select>
+                              </div>
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
-                            <input
-                                id="pd-dob"
-                                type="text"
-                                name="dateOfBirth"
-                                value={tempUser.dateOfBirth || ""}
-                                onChange={onDateOfBirthChange}
-                                className="pd-field-input"
-                                placeholder="DD-MM-YYYY"
-                                inputMode="numeric"
-                            />
-                            {dateOfBirthError && <p className="pd-field-error">{dateOfBirthError}</p>}
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-dob">{t.fields.dateOfBirth}</label>
+                              <DatePicker
+                                  id="pd-dob"
+                                  selected={parseDateOfBirth(tempUser.dateOfBirth)}
+                                  onChange={onDateOfBirthChange}
+                                  className="pd-field-input"
+                                  placeholderText="DD-MM-YYYY"
+                                  dateFormat="dd-MM-yyyy"
+                                  maxDate={new Date()}
+                                  showYearDropdown
+                                  showMonthDropdown
+                                  dropdownMode="select"
+                                  wrapperClassName="pd-field-input-wrapper"
+                                  portalId="datepicker-portal"
+                                  popperProps={fixedPopperProps}
+                                  ariaDescribedBy={dateOfBirthError ? "pd-dob-error" : undefined}
+                              />
+                              {dateOfBirthError && (
+                                  <p id="pd-dob-error" className="pd-field-error" role="alert">
+                                      {dateOfBirthError}
+                                  </p>
+                              )}
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-pob">{t.fields.placeOfBirth}</label>
-                            <div className="pd-select-wrapper">
-                                <select
-                                    id="pd-pob"
-                                    name="placeOfBirth"
-                                    value={tempUser.placeOfBirth || ""}
-                                    onChange={onInputChange}
-                                    className="pd-field-input pd-field-select"
-                                >
-                                    <option value="">{t.fields.country}</option>
-                                    {placeOfBirthOptions.map((country) => (
-                                        <option key={country} value={country}>
-                                            {country}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-pob">{t.fields.placeOfBirth}</label>
+                              <div className="pd-select-wrapper">
+                                  <select
+                                      id="pd-pob"
+                                      name="placeOfBirth"
+                                      value={tempUser.placeOfBirth || ""}
+                                      onChange={onInputChange}
+                                      className="pd-field-input pd-field-select"
+                                  >
+                                      <option value="">{t.fields.country}</option>
+                                      {placeOfBirthOptions.map((country) => (
+                                          <option key={country} value={country}>
+                                              {country}
+                                          </option>
+                                      ))}
+                                  </select>
+                              </div>
+                          </div>
 
-                        <div className="pd-field">
-                            <label className="pd-field-label" htmlFor="pd-nationality">{t.fields.nationality}</label>
-                            <div className="pd-select-wrapper">
-                                <select
-                                    id="pd-nationality"
-                                    name="nationality"
-                                    value={tempUser.nationality || ""}
-                                    onChange={onInputChange}
-                                    className="pd-field-input pd-field-select"
-                                >
-                                    <option value="">{t.fields.nationality}</option>
-                                    {placeOfBirthOptions.map((country) => (
-                                        <option key={country} value={country}>
-                                            {country}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            {nationalityError && <p className="pd-field-error">{nationalityError}</p>}
-                        </div>
-                    </div>
-                </div>
+                          <div className="pd-field">
+                              <label className="pd-field-label" htmlFor="pd-nationality">{t.fields.nationality}</label>
+                              <div className="pd-select-wrapper">
+                                  <select
+                                      id="pd-nationality"
+                                      name="nationality"
+                                      value={tempUser.nationality || ""}
+                                      onChange={onInputChange}
+                                      className="pd-field-input pd-field-select"
+                                      aria-describedby={nationalityError ? "pd-nationality-error" : undefined}
+                                  >
+                                      <option value="">{t.fields.nationality}</option>
+                                      {placeOfBirthOptions.map((country) => (
+                                          <option key={country} value={country}>
+                                              {country}
+                                          </option>
+                                      ))}
+                                  </select>
+                              </div>
+                              {nationalityError && (
+                                  <p id="pd-nationality-error" className="pd-field-error" role="alert">
+                                      {nationalityError}
+                                  </p>
+                              )}
+                          </div>
+                      </div>
+                  </div>
 
-                <div className="personal-data-card-footer">
-                    <button
-                        type="button"
-                        className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}`}
-                        onClick={onSaveAll}
-                        disabled={isSaving}
-                    >
-                        {getSaveLabel(isSaving, saveSuccess, t)}
-                    </button>
-                </div>
-            </div>
-        </section>
+                  <div className="personal-data-card-footer">
+                      <button
+                          type="button"
+                          className={`pd-save-btn${saveSuccess ? " pd-save-btn--saved" : ""}${saveError ? " pd-save-btn--error" : ""}`}
+                          onClick={onSaveAll}
+                          disabled={isSaving}
+                      >
+                          {getSaveLabel(isSaving, saveSuccess, saveError, t)}
+                      </button>
+                  </div>
+              </div>
+          </section>
 
-        <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{t.prefsSection}</h2>
-            <div className="personal-data-card personal-data-pref-card">
-                <div className="pd-pref-row">
-                    <span className="pd-pref-label">{t.prefs.defaultLanguage}</span>
-                    <select
-                        name="defaultLanguage"
-                        value={language}
-                        onChange={onLanguageChange}
-                        className="pd-field-input pd-pref-select"
-                    >
-                        {languageOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+          <section className="personal-data-section">
+              <h2 className="personal-data-section-title">{t.prefsSection}</h2>
+              <div className="personal-data-card personal-data-pref-card">
+                  <div className="pd-pref-row">
+                      <span className="pd-pref-label">{t.prefs.defaultLanguage}</span>
+                      <select
+                          name="defaultLanguage"
+                          value={language}
+                          onChange={onLanguageChange}
+                          className="pd-field-input pd-pref-select"
+                      >
+                          {languageOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                              </option>
+                          ))}
+                      </select>
+                  </div>
 
-                {showPrefFormats && (
-                    <>
-                        <div className="pd-pref-row">
-                            <span className="pd-pref-label">Date format</span>
-                            <select
-                                name="dateFormat"
-                                value={dateFormat}
-                                onChange={onDateFormatChange}
-                                className="pd-field-input pd-pref-select"
-                            >
-                                {dateFormatOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                  {showPrefFormats && (
+                      <>
+                          <div className="pd-pref-row">
+                              <span className="pd-pref-label">Date format</span>
+                              <select
+                                  name="dateFormat"
+                                  value={dateFormat}
+                                  onChange={onDateFormatChange}
+                                  className="pd-field-input pd-pref-select"
+                              >
+                                  {dateFormatOptions.map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                          {opt.label}
+                                      </option>
+                                  ))}
+                              </select>
+                          </div>
 
-                        <div className="pd-pref-row">
-                            <span className="pd-pref-label">Price format</span>
-                            <select
-                                name="priceFormat"
-                                value={priceFormat}
-                                onChange={onPriceFormatChange}
-                                className="pd-field-input pd-pref-select"
-                            >
-                                {priceFormatOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </>
-                )}
+                          <div className="pd-pref-row">
+                              <span className="pd-pref-label">Price format</span>
+                              <select
+                                  name="priceFormat"
+                                  value={priceFormat}
+                                  onChange={onPriceFormatChange}
+                                  className="pd-field-input pd-pref-select"
+                              >
+                                  {priceFormatOptions.map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                          {opt.label}
+                                      </option>
+                                  ))}
+                              </select>
+                          </div>
+                      </>
+                  )}
 
-                <div className="pd-auth-row">
-                    <span className="pd-pref-label">{t.prefs.emailLabel}</span>
-                    <span className={`pd-status-pill ${authStatus.emailVerified ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                        {authStatus.emailVerified ? t.prefs.active : t.prefs.inactive}
-                    </span>
-                    {authStatus.emailVerified && (
-                        <span className="pd-verified-check">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M3 8l3.5 3.5L13 5" stroke="#15803d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            {t.prefs.verified}
-                        </span>
-                    )}
-                </div>
+                  <div className="pd-auth-row">
+                      <span className="pd-pref-label">{t.prefs.emailLabel}</span>
+                      <span className={`pd-status-pill ${authStatus.emailVerified ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
+                          {authStatus.emailVerified ? t.prefs.active : t.prefs.inactive}
+                      </span>
+                      {authStatus.emailVerified && (
+                          <span className="pd-verified-check">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                  <path d="M3 8l3.5 3.5L13 5" stroke="#15803d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              {t.prefs.verified}
+                          </span>
+                      )}
+                  </div>
 
-                <PasswordChangeSection
-                    t={t}
-                    isChangingPassword={isChangingPassword}
-                    currentPassword={currentPassword}
-                    newPassword={newPassword}
-                    confirmPassword={confirmPassword}
-                    passwordError={passwordError}
-                    isSavingPassword={isSavingPassword}
-                    passwordChangeSuccess={passwordChangeSuccess}
-                    onOpenPasswordChange={onOpenPasswordChange}
-                    onClosePasswordChange={onClosePasswordChange}
-                    onCurrentPasswordChange={onCurrentPasswordChange}
-                    onNewPasswordChange={onNewPasswordChange}
-                    onConfirmPasswordChange={onConfirmPasswordChange}
-                    onSubmitPasswordChange={onSubmitPasswordChange}
-                />
+                  <PasswordChangeSection
+                      t={t}
+                      isChangingPassword={isChangingPassword}
+                      currentPassword={currentPassword}
+                      newPassword={newPassword}
+                      confirmPassword={confirmPassword}
+                      passwordError={passwordError}
+                      isSavingPassword={isSavingPassword}
+                      passwordChangeSuccess={passwordChangeSuccess}
+                      onOpenPasswordChange={onOpenPasswordChange}
+                      onClosePasswordChange={onClosePasswordChange}
+                      onCurrentPasswordChange={onCurrentPasswordChange}
+                      onNewPasswordChange={onNewPasswordChange}
+                      onConfirmPasswordChange={onConfirmPasswordChange}
+                      onSubmitPasswordChange={onSubmitPasswordChange}
+                  />
 
-                {showAuthMfa && (
-                    <>
-                        <div className="pd-auth-row">
-                            <span className="pd-pref-label">{t.prefs.sms}</span>
-                            <span className={`pd-status-pill ${authStatus.preferredMFA === "SMS" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                                {authStatus.preferredMFA === "SMS" ? t.prefs.active : t.prefs.inactive}
-                            </span>
-                            <span className="pd-auth-subtext">
-                                {authStatus.phoneVerified ? t.prefs.phoneVerifiedYes : t.prefs.phoneVerifiedNo}
-                            </span>
-                        </div>
+                  {showAuthMfa && (
+                      <>
+                          <div className="pd-auth-row">
+                              <span className="pd-pref-label">{t.prefs.sms}</span>
+                              <span className={`pd-status-pill ${authStatus.preferredMFA === "SMS" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
+                                  {authStatus.preferredMFA === "SMS" ? t.prefs.active : t.prefs.inactive}
+                              </span>
+                              <span className="pd-auth-subtext">
+                                  {authStatus.phoneVerified ? t.prefs.phoneVerifiedYes : t.prefs.phoneVerifiedNo}
+                              </span>
+                          </div>
 
-                        <div className="pd-auth-row">
-                            <span className="pd-pref-label">{t.prefs.authenticatorApp}</span>
-                            <span className={`pd-status-pill ${authStatus.preferredMFA === "TOTP" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                                {authStatus.preferredMFA === "TOTP" ? t.prefs.active : t.prefs.inactive}
-                            </span>
-                            <span className="pd-auth-subtext">{t.prefs.totp}</span>
-                        </div>
-                    </>
-                )}
-            </div>
-        </section>
-    </div>
-    );
-};
+                          <div className="pd-auth-row">
+                              <span className="pd-pref-label">{t.prefs.authenticatorApp}</span>
+                              <span className={`pd-status-pill ${authStatus.preferredMFA === "TOTP" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
+                                  {authStatus.preferredMFA === "TOTP" ? t.prefs.active : t.prefs.inactive}
+                              </span>
+                              <span className="pd-auth-subtext">{t.prefs.totp}</span>
+                          </div>
+                      </>
+                  )}
+              </div>
+          </section>
+      </div>
+      );
+  };
 
-PersonalDataForm.propTypes = {
-    user: userShape.isRequired,
-    tempUser: tempUserShape.isRequired,
-    isUploadingPhoto: PropTypes.bool.isRequired,
-    isRemovingPhoto: PropTypes.bool.isRequired,
-    photoError: PropTypes.string,
-    photoSuccess: PropTypes.string,
-    photoInputRef: refShape.isRequired,
-    onPhotoButtonClick: PropTypes.func.isRequired,
-    onPhotoRemove: PropTypes.func.isRequired,
-    onPhotoInputChange: PropTypes.func.isRequired,
-    titleOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
-    sexOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
-    placeOfBirthOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
-    countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
-    selectedCountryCode: PropTypes.string.isRequired,
-    stripPhone: PropTypes.string.isRequired,
-    dateOfBirthError: PropTypes.string,
-    nationalityError: PropTypes.string,
-    isVerifying: PropTypes.bool.isRequired,
-    verificationCode: PropTypes.string.isRequired,
-    onTitleChange: PropTypes.func.isRequired,
-    onInputChange: PropTypes.func.isRequired,
-    onSexChange: PropTypes.func.isRequired,
-    onCountryCodeChange: PropTypes.func.isRequired,
-    onPhoneChange: PropTypes.func.isRequired,
-    onDateOfBirthChange: PropTypes.func.isRequired,
-    onVerificationInputChange: PropTypes.func.isRequired,
-    onSaveAll: PropTypes.func.isRequired,
-    isSaving: PropTypes.bool.isRequired,
-    saveSuccess: PropTypes.bool.isRequired,
-    onVerifyEmail: PropTypes.func.isRequired,
-    language: PropTypes.string.isRequired,
-    languageOptions: PropTypes.arrayOf(optionShape).isRequired,
-    onLanguageChange: PropTypes.func.isRequired,
-    dateFormat: PropTypes.string.isRequired,
-    dateFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
-    onDateFormatChange: PropTypes.func.isRequired,
-    priceFormat: PropTypes.string.isRequired,
-    priceFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
-    onPriceFormatChange: PropTypes.func.isRequired,
-    showPrefFormats: PropTypes.bool.isRequired,
-    showAuthMfa: PropTypes.bool.isRequired,
-    authStatus: authStatusShape.isRequired,
-    breadcrumbPath: PropTypes.string,
-    isChangingPassword: PropTypes.bool.isRequired,
-    currentPassword: PropTypes.string.isRequired,
-    newPassword: PropTypes.string.isRequired,
-    confirmPassword: PropTypes.string.isRequired,
-    passwordError: PropTypes.string,
-    isSavingPassword: PropTypes.bool.isRequired,
-    passwordChangeSuccess: PropTypes.bool.isRequired,
-    onOpenPasswordChange: PropTypes.func.isRequired,
-    onClosePasswordChange: PropTypes.func.isRequired,
-    onCurrentPasswordChange: PropTypes.func.isRequired,
-    onNewPasswordChange: PropTypes.func.isRequired,
-    onConfirmPasswordChange: PropTypes.func.isRequired,
-    onSubmitPasswordChange: PropTypes.func.isRequired,
-};
+  PersonalDataForm.propTypes = {
+      user: userShape.isRequired,
+      tempUser: tempUserShape.isRequired,
+      isUploadingPhoto: PropTypes.bool.isRequired,
+      isRemovingPhoto: PropTypes.bool.isRequired,
+      photoError: PropTypes.string,
+      photoSuccess: PropTypes.string,
+      photoInputRef: refShape.isRequired,
+      onPhotoButtonClick: PropTypes.func.isRequired,
+      onPhotoRemove: PropTypes.func.isRequired,
+      onPhotoInputChange: PropTypes.func.isRequired,
+      titleOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+      sexOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+      placeOfBirthOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+      countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
+      selectedCountryCode: PropTypes.string.isRequired,
+      stripPhone: PropTypes.string.isRequired,
+      dateOfBirthError: PropTypes.string,
+      nationalityError: PropTypes.string,
+      emailError: PropTypes.string,
+      nameError: PropTypes.string,
+      phoneError: PropTypes.string,
+      emailSuccess: PropTypes.bool,
+      isVerifying: PropTypes.bool.isRequired,
+      verificationCode: PropTypes.string.isRequired,
+      onTitleChange: PropTypes.func.isRequired,
+      onInputChange: PropTypes.func.isRequired,
+      onSexChange: PropTypes.func.isRequired,
+      onCountryCodeChange: PropTypes.func.isRequired,
+      onPhoneChange: PropTypes.func.isRequired,
+      onDateOfBirthChange: PropTypes.func.isRequired,
+      onVerificationInputChange: PropTypes.func.isRequired,
+      onSaveAll: PropTypes.func.isRequired,
+      isSaving: PropTypes.bool.isRequired,
+      saveSuccess: PropTypes.bool.isRequired,
+      saveError: PropTypes.bool.isRequired,
+      onVerifyEmail: PropTypes.func.isRequired,
+      language: PropTypes.string.isRequired,
+      languageOptions: PropTypes.arrayOf(optionShape).isRequired,
+      onLanguageChange: PropTypes.func.isRequired,
+      dateFormat: PropTypes.string.isRequired,
+      dateFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+      onDateFormatChange: PropTypes.func.isRequired,
+      priceFormat: PropTypes.string.isRequired,
+      priceFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+      onPriceFormatChange: PropTypes.func.isRequired,
+      showPrefFormats: PropTypes.bool.isRequired,
+      showAuthMfa: PropTypes.bool.isRequired,
+      authStatus: authStatusShape.isRequired,
+      breadcrumbPath: PropTypes.string,
+      isChangingPassword: PropTypes.bool.isRequired,
+      currentPassword: PropTypes.string.isRequired,
+      newPassword: PropTypes.string.isRequired,
+      confirmPassword: PropTypes.string.isRequired,
+      passwordError: PropTypes.string,
+      isSavingPassword: PropTypes.bool.isRequired,
+      passwordChangeSuccess: PropTypes.bool.isRequired,
+      onOpenPasswordChange: PropTypes.func.isRequired,
+      onClosePasswordChange: PropTypes.func.isRequired,
+      onCurrentPasswordChange: PropTypes.func.isRequired,
+      onNewPasswordChange: PropTypes.func.isRequired,
+      onConfirmPasswordChange: PropTypes.func.isRequired,
+      onSubmitPasswordChange: PropTypes.func.isRequired,
+  };
 
-export default PersonalDataForm;
+  export default PersonalDataForm;

@@ -57,14 +57,25 @@ jobs:
           REACT_APP_UPDATE_EMAIL_ENDPOINT: ${{ vars.REACT_APP_UPDATE_EMAIL_ENDPOINT }}
           REACT_APP_UPDATE_NAME_ENDPOINT: ${{ vars.REACT_APP_UPDATE_NAME_ENDPOINT }}
           REACT_APP_UPDATE_PHONE_ENDPOINT: ${{ vars.REACT_APP_UPDATE_PHONE_ENDPOINT }}
+          REACT_APP_COMPANY_PROFILE_API_URL: ${{ vars.REACT_APP_COMPANY_PROFILE_API_URL }}
+          REACT_APP_COMMUNICATION_PREFERENCES_API_URL: ${{ vars.REACT_APP_COMMUNICATION_PREFERENCES_API_URL }}
           REACT_APP_CHANNEX_CERTIFICATION_USER_IDS: ${{ vars.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS }}
           REACT_APP_DEMO_OWNER_ID: ${{ vars.REACT_APP_DEMO_OWNER_ID }}
           REACT_APP_DEMO_TESTER_ID: ${{ vars.REACT_APP_DEMO_TESTER_ID }}
+          REACT_APP_STRIPE: ${{ secrets.REACT_APP_STRIPE }}
           REACT_APP_STRIPE_PUBLIC_KEY: ${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}
         run: |
-          for name in REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE; do
+          for name in REACT_APP_DIRECT_BOOKING_WEBSITE_FALLBACK_DOMAIN_SUFFIX \
+                      REACT_APP_AUTOMATED_MESSAGING_API_URL \
+                      REACT_APP_COMMUNICATION_PREFERENCES_API_URL \
+                      REACT_APP_COMPANY_PROFILE_API_URL \
+                      REACT_APP_DEMO_OWNER_ID \
+                      REACT_APP_DEMO_TESTER_ID \
+                      REACT_APP_STRIPE \
+                      REACT_APP_STRIPE_PUBLIC_KEY \
+                      REACT_APP_DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE; do
             if [ -z "${!name}" ]; then
-              echo "::warning::$name is not set; the bundle will use the fallback compiled into the code."
+              echo "::warning::$name is not set."
             fi
           done
           npm run build

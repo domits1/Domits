@@ -79,6 +79,7 @@ function Team() {
     { name: "Omer", src: Omer, role: aboutContent.crew.developer },
     { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
     { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
+    { name: "Achraf", src: standard, role: aboutContent.crew.developer },
     { name: "Enes", src: Enes, role: aboutContent.crew.developer },
     { name: "Mounir", src: Mounir, role: aboutContent.crew.developer },
   ].sort((a, b) => a.name.localeCompare(b.name));

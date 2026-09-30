@@ -54,6 +54,8 @@ export default class StripePayoutsService {
         const platformFeeGross = appFee.amount;
         const platformFeeNet = platformFeeGross - stripeProcessingFees;
         const hostReceives = customerPaid - platformFeeGross;
+        const amountRefunded = Number(charge.amount_refunded || 0);
+        const isRefunded = charge.refunded === true || amountRefunded > 0;
 
         const propertyId = charge.metadata.propertyId;
         const bookingId = charge.metadata.bookingId;
@@ -67,8 +69,12 @@ export default class StripePayoutsService {
           platformFeeGross: toAmount(platformFeeGross),
           platformFeeNet: toAmount(platformFeeNet),
           hostReceives: toAmount(hostReceives),
+          amountRefunded: toAmount(amountRefunded),
+          refunded: isRefunded,
+          transactionType: isRefunded ? "refunds" : "payments",
           currency: bt.currency.toUpperCase(),
           status: charge.status,
+          createdAt: new Date(charge.created * 1000).toISOString(),
           createdDate: new Date(charge.created * 1000).toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "short",
@@ -111,8 +117,10 @@ export default class StripePayoutsService {
       .sort((a, b) => (b.arrival_date || 0) - (a.arrival_date || 0))
       .map((payout) => ({
         id: payout.id,
+        isProjected: false,
         amount: toAmount(payout.amount),
         currency: payout.currency.toUpperCase(),
+        arrivalDateAt: new Date(payout.arrival_date * 1000).toISOString(),
         arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
           day: "2-digit",
           month: "short",
@@ -142,9 +150,11 @@ export default class StripePayoutsService {
       ...forecast ? [forecast] : [],
       ...pendingAfterCutoff.map((x) => ({
         arrivalDate: x.availableOn,
+        arrivalDateAt: x.availableOnAt,
         amount: x.amount,
         currency: x.currency,
         status: "incoming charge - pending",
+        isProjected: true,
         id: null,
       })),
       ...payoutDetails
@@ -226,6 +236,7 @@ export default class StripePayoutsService {
             currency: txn.currency.toUpperCase(),
             amount: 0,
             availableOn: date,
+            availableOnAt: new Date(txn.available_on * 1000).toISOString(),
             availableOnTs: txn.available_on,
           };
           groups[date].amount += toAmount(txn.net);
@@ -307,8 +318,10 @@ export default class StripePayoutsService {
 
     const forecast = {
       id: null,
+      isProjected: true,
       amount: toAmount(totalCents),
       currency,
+      arrivalDateAt: nextDate.toISOString(),
       arrivalDate: nextDate.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",

@@ -1,0 +1,23 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.periodSection h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+}
+
+.propertyTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+}

@@ -105,7 +105,7 @@ const fetchListingsByHostId = async ({ hostId, token }) => {
     return Array.isArray(data) ? data : [];
 };
 
-const fetchHostOwnedListings = async (effectiveHostId) => {
+export const fetchHostOwnedListings = async (effectiveHostId) => {
     const token = getAccessToken();
     if (!token) {
         throw new Error("You must be signed in to load your listings.");

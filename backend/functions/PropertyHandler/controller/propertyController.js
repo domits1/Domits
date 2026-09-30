@@ -1922,7 +1922,7 @@ export class PropertyController {
             return null;
         }
 
-        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId(site.id);
         if (existingLiveDomain?.domain) {
             return existingLiveDomain;
         }
@@ -1993,7 +1993,7 @@ export class PropertyController {
         const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
             getDirectBookingWebsiteFallbackRoutingStatus()
         );
-        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getPrimaryLiveDomainBySiteId(site.id);
+        const existingLiveDomain = await this.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId(site.id);
         const liveDomain = await this.directBookingWebsiteDomainRepository.ensureDomain({
             siteId: site.id,
             domain: existingLiveDomain?.domain || buildLiveSiteDomain(site.siteName, site.id),
@@ -2027,7 +2027,7 @@ export class PropertyController {
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
         const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
-        const liveDomain = await this.directBookingWebsiteDomainRepository.updatePrimaryLiveDomainStatus(
+        const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
             site.id,
             "DISABLED",
             {
@@ -2336,6 +2336,27 @@ export class PropertyController {
                 statusCode: 200,
                 headers: responseHeaders,
                 body: JSON.stringify(properties)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // GET /property/pricing/saving-config
+    // -------------------------
+    async getPricingSavingConfig(event) {
+        try {
+            const config = await this.propertyService.getPricingSavingConfig();
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(config)
             }
         } catch (error) {
             console.error(error);
@@ -3110,13 +3131,30 @@ export class PropertyController {
                 await this.refreshWebsiteCustomDomainSafely({ site, customDomain });
             }
 
-            const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-            const summary = this.buildDirectBookingWebsiteSummary(site, domains);
-            return {
-                statusCode: 200,
-                body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
-            };
+            return this.buildWebsiteDomainsResponse(site);
         });
+    }
+
+    async buildWebsiteDomainsResponse(site, domains = null) {
+        const siteDomains = domains || (await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id));
+        const summary = this.buildDirectBookingWebsiteSummary(site, siteDomains);
+        return {
+            statusCode: 200,
+            body: { siteId: site.id, domains: summary.domains.map((domainEntry) => toHostWebsiteDomainView(domainEntry)) },
+        };
+    }
+
+    async readWebsiteDomainsAfterChange(site) {
+        try {
+            return await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+        } catch (error) {
+            console.error(`[CustomDomain] domain list read failed after a completed change (site ${site.id}).`, error);
+            throw new WebsiteCustomDomainError(
+                WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.DOMAINS_UNAVAILABLE,
+                "The request completed, but the domain list could not be reloaded. Check again to see the current state.",
+                { cause: error }
+            );
+        }
     }
 
     // -------------------------
@@ -3139,8 +3177,8 @@ export class PropertyController {
     // -------------------------
     async verifyWebsiteDomain(event) {
         return this.handleWebsiteDomainRequest(event, async ({ site }) => {
-            const record = await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().syncCustomDomain({ site });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
         });
     }
 
@@ -3154,8 +3192,20 @@ export class PropertyController {
                 throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
             }
 
-            const record = await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
-            return { statusCode: 200, body: { domain: toHostWebsiteDomainView(record) } };
+            await this.getWebsiteCustomDomainService().removeCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, await this.readWebsiteDomainsAfterChange(site));
+        });
+    }
+
+    async promoteWebsiteDomain(event) {
+        return this.handleWebsiteDomainRequest(event, async ({ site, body }) => {
+            const domain = cleanWebsiteText(body.domain);
+            if (!domain) {
+                throw new WebsiteCustomDomainError(WEBSITE_CUSTOM_DOMAIN_ERROR_CODES.INVALID_DOMAIN, "domain is required.");
+            }
+
+            const domains = await this.getWebsiteCustomDomainService().promoteCustomDomain({ site, domain });
+            return this.buildWebsiteDomainsResponse(site, domains);
         });
     }
 
