@@ -31,7 +31,7 @@ export default function useComplianceSettings() {
             }
         };
 
-        loadProperties();
+        void loadProperties();
 
         return () => {
             isMounted = false;

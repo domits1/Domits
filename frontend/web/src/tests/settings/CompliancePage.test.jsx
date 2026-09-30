@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -42,7 +42,7 @@ const renderPage = () =>
 
 const renderLoaded = async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByLabelText("Property registration")).toBeInTheDocument());
+    expect(await screen.findByLabelText("Property registration")).toBeInTheDocument();
 };
 
 const registrationInput = () => screen.getByLabelText("Property registration");
@@ -97,7 +97,7 @@ describe("HostSettingsCompliance page", () => {
         typeRegistration("  NL-9999  ");
         fireEvent.click(saveButton());
 
-        await waitFor(() => expect(saveButton()).toHaveTextContent("Saved"));
+        expect(await screen.findByRole("button", { name: "Saved" })).toBeInTheDocument();
         expect(saveRegistrationNumber).toHaveBeenCalledWith("a", "NL-9999");
         expect(registrationInput()).toHaveValue("NL-9999");
         expect(saveButton()).toBeDisabled();
