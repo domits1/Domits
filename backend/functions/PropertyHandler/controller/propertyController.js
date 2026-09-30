@@ -12,10 +12,6 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
-import { StaticPageOutboxRepository } from "../data/repository/staticPageOutboxRepository.js";
-import { StaticPageStore } from "../data/repository/staticPageStore.js";
-import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
-import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import ChannexCalendarChangeSyncClient, {
@@ -1829,25 +1825,6 @@ export class PropertyController {
         return {
             site,
             domain: healedPrimaryDomain,
-        };
-    }
-
-    createStaticPageWorker() {
-        return new StaticPageWorker({
-            outboxRepository: new StaticPageOutboxRepository(),
-            siteRepository: this.directBookingWebsiteSiteRepository,
-            domainRepository: this.directBookingWebsiteDomainRepository,
-            pageStore: new StaticPageStore(),
-            renderer: new StaticPageRenderer(),
-        });
-    }
-
-    async buildStaticPages(event) {
-        const summary = await this.createStaticPageWorker().run({ limit: event?.limit });
-
-        return {
-            statusCode: summary.errors.length > 0 ? 500 : 200,
-            body: JSON.stringify(summary),
         };
     }
 
