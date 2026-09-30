@@ -84,12 +84,12 @@ function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, ini
       */}
       <div
         className="chdist-modal"
-        role="dialog" // NOSONAR: kept intentionally -- see the jsdom explanation just above.
+        role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         ref={dialogRef}
         tabIndex={-1}
-      >
+      >{/* NOSONAR: role="dialog" kept intentionally -- see the jsdom explanation just above. */}
         <div className="chdist-modal__header">
           <h3 className="chdist-modal__title" id={titleId}>
             {title}

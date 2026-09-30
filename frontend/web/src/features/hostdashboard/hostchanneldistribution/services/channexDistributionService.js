@@ -194,8 +194,9 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
 };
 
 // Real endpoint: GET /integrations/channex/status?userId=
+// eslint-disable-next-line no-unused-vars
 export const getChannexStatus = async ({ userId } = {}) => {
-  void userId; // unused until this reads live data
+  // userId is unused until this reads live data
   return MOCK_CHANNEX_STATUS_BY_STATE[currentConnectionState];
 };
 
@@ -203,15 +204,15 @@ export const getChannexStatus = async ({ userId } = {}) => {
 // domitsPropertyId is required by the real endpoint (400 without it). Open question for Enes:
 // whether this tab should scope to one property or show the latest sync across all of a host's
 // mapped properties -- the mock ignores the argument's value either way for now.
+// eslint-disable-next-line no-unused-vars
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
-  void domitsPropertyId; // unused until this reads live data
+  // domitsPropertyId is unused until this reads live data
   return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
 };
 
 // Real endpoint: POST /integrations/channex/connect ({ credentials: { apiKey }, displayName? }).
 // apiKey is only ever read here to build a masked preview; it is never stored or logged.
 export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
-  void userId;
   await mockDelay();
 
   if (MOCK_CONNECT_OUTCOME === "ERROR") {
@@ -263,8 +264,8 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
 // The real backend leaves the integration row's status as DISCONNECTED (it clears
 // credentialsRef/externalAccountId but never deletes the row), and GET /status keeps reporting
 // that same status afterwards -- so the mock advances here to DISCONNECTED, not NOT_CONNECTED.
+// eslint-disable-next-line no-unused-vars
 export const disconnectChannex = async ({ userId } = {}) => {
-  void userId;
   await mockDelay();
 
   if (MOCK_DISCONNECT_OUTCOME === "ERROR") {
