@@ -1,5 +1,5 @@
 import * as taskRepository from "../../data/taskRepository.js";
-import { validateTaskPayload, VALID_TASK_TYPES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
+import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -65,6 +65,14 @@ export const updateTask = async (hostId, taskId, updateData) => {
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
+
+    if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
+        throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
+    }
+
+    if (oldTask.status === 'Cancelled' && fieldsToUpdate.status !== undefined && fieldsToUpdate.status !== 'Cancelled') {
+        throw new BadRequestException("Cancelled tasks cannot change status");
+    }
 
     if (fieldsToUpdate.due_date !== undefined) {
     const nextDueDate = fieldsToUpdate.due_date === null ? null : new Date(fieldsToUpdate.due_date).getTime();
