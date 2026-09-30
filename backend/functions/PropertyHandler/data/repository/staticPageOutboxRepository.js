@@ -108,23 +108,6 @@ export class StaticPageOutboxRepository {
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
   }
 
-  async getPageBySiteId(siteId) {
-    const normalizedSiteId = requireSiteId(siteId);
-    const client = await Database.getInstance();
-    const tableName = outboxTableName(resolveSchemaName(client));
-
-    const rows = await client.query(
-      `SELECT
-        ${OUTBOX_SELECT_COLUMNS}
-      FROM ${tableName}
-      WHERE site_id = $1
-      LIMIT 1`,
-      [normalizedSiteId]
-    );
-
-    return mapOutboxRow(rows?.[0] || null);
-  }
-
   async markPageActive(siteId, revision, { now = Date.now() } = {}) {
     const normalizedSiteId = requireSiteId(siteId);
     const normalizedRevision = requireRevision(revision);

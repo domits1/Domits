@@ -87,20 +87,6 @@ describe("StaticPageOutboxRepository", () => {
     await expect(new StaticPageOutboxRepository().listPendingPages()).resolves.toEqual([]);
   });
 
-  it("reads one site's queued page and reports null when the site has none", async () => {
-    const client = buildClient([OUTBOX_ROW]);
-    const repository = new StaticPageOutboxRepository();
-
-    const page = await repository.getPageBySiteId("site-1");
-
-    expect(client.query.mock.calls[0][1]).toEqual(["site-1"]);
-    expect(page).toMatchObject({ siteId: "site-1", revision: 4, status: "PENDING" });
-
-    buildClient([]);
-    await expect(repository.getPageBySiteId("site-9")).resolves.toBeNull();
-    await expect(repository.getPageBySiteId("  ")).rejects.toThrow("A site id is required.");
-  });
-
   it("marks a page active only for the revision the caller rendered", async () => {
     const client = buildClient([{ site_id: "site-1" }]);
 
