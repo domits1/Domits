@@ -164,9 +164,10 @@ export class StaticPageOutboxRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
 
-    const { records } = await runStatement(
-      client,
-      `UPDATE ${outboxTableName(schemaName)}
+    try {
+      const { records } = await runStatement(
+        client,
+        `UPDATE ${outboxTableName(schemaName)}
       SET status = $3,
           failure_reason = NULL,
           processed_at = $4,
@@ -180,12 +181,19 @@ export class StaticPageOutboxRepository {
           WHERE site.id = $5
             AND site.status = 'PUBLISHED'
             AND site.static_page_revision = $2
+          FOR UPDATE
         )
       RETURNING site_id`,
-      [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_ACTIVE, now, normalizedSiteId]
-    );
+        [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_ACTIVE, now, normalizedSiteId]
+      );
 
-    return records.length > 0;
+      return records.length > 0;
+    } catch (error) {
+      if (isTransientTransactionConflict(error)) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   async markPageFailed(siteId, revision, failureReason, { now = Date.now() } = {}) {
