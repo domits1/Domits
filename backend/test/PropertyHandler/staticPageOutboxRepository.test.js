@@ -47,16 +47,36 @@ describe("StaticPageOutboxRepository", () => {
     jest.clearAllMocks();
   });
 
-  it("lists the pending pages oldest first and maps the row to numbers", async () => {
+  it("offers a page that failed once back to the worker, like the booking outbox does", async () => {
+    const client = buildClient([{ ...OUTBOX_ROW, status: "FAILED", failure_reason: "S3_PUT_FAILED", attempt_count: 1 }]);
+
+    const pages = await new StaticPageOutboxRepository().listPagesToBuild();
+
+    expect(client.query.mock.calls[0][0]).toContain("WHERE status = ANY($1)");
+    expect(client.query.mock.calls[0][1][0]).toEqual(["PENDING", "FAILED"]);
+    expect(pages).toEqual([
+      expect.objectContaining({ siteId: "site-1", status: "FAILED", failureReason: "S3_PUT_FAILED", attemptCount: 1 }),
+    ]);
+  });
+
+  it("leaves a page that is already active alone", async () => {
+    const client = buildClient([]);
+
+    await new StaticPageOutboxRepository().listPagesToBuild();
+
+    expect(client.query.mock.calls[0][1][0]).not.toContain("ACTIVE");
+  });
+
+  it("lists the pages oldest first and maps the row to numbers", async () => {
     const client = buildClient([OUTBOX_ROW]);
 
-    const pages = await new StaticPageOutboxRepository().listPendingPages({ limit: 10 });
+    const pages = await new StaticPageOutboxRepository().listPagesToBuild({ limit: 10 });
 
     const [statement, parameters] = client.query.mock.calls[0];
     expect(statement).toContain(`FROM ${SCHEMA}.static_page_outbox`);
-    expect(statement).toContain("WHERE status = $1");
+    expect(statement).toContain("WHERE status = ANY($1)");
     expect(statement).toContain("ORDER BY updated_at ASC");
-    expect(parameters).toEqual(["PENDING", 10]);
+    expect(parameters).toEqual([["PENDING", "FAILED"], 10]);
     expect(pages).toEqual([
       {
         siteId: "site-1",
@@ -76,15 +96,15 @@ describe("StaticPageOutboxRepository", () => {
   it("caps the page size so one run cannot pull the whole table", async () => {
     const client = buildClient([]);
 
-    await new StaticPageOutboxRepository().listPendingPages({ limit: 5000 });
+    await new StaticPageOutboxRepository().listPagesToBuild({ limit: 5000 });
 
-    expect(client.query.mock.calls[0][1]).toEqual(["PENDING", 200]);
+    expect(client.query.mock.calls[0][1]).toEqual([["PENDING", "FAILED"], 200]);
   });
 
   it("reads an empty list when nothing is pending", async () => {
     buildClient([]);
 
-    await expect(new StaticPageOutboxRepository().listPendingPages()).resolves.toEqual([]);
+    await expect(new StaticPageOutboxRepository().listPagesToBuild()).resolves.toEqual([]);
   });
 
   it("marks a page active only for the revision the caller rendered", async () => {

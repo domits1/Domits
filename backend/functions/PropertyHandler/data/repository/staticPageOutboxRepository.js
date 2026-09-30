@@ -3,6 +3,7 @@ import Database from "database";
 const STATIC_PAGE_STATUS_PENDING = "PENDING";
 const STATIC_PAGE_STATUS_ACTIVE = "ACTIVE";
 const STATIC_PAGE_STATUS_FAILED = "FAILED";
+const STATIC_PAGE_STATUSES_TO_BUILD = [STATIC_PAGE_STATUS_PENDING, STATIC_PAGE_STATUS_FAILED];
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
 const OUTBOX_SELECT_COLUMNS = `site_id,
@@ -91,7 +92,7 @@ const mapOutboxRow = (row) => {
 };
 
 export class StaticPageOutboxRepository {
-  async listPendingPages({ limit = DEFAULT_PAGE_LIMIT } = {}) {
+  async listPagesToBuild({ limit = DEFAULT_PAGE_LIMIT } = {}) {
     const client = await Database.getInstance();
     const tableName = outboxTableName(resolveSchemaName(client));
 
@@ -99,10 +100,10 @@ export class StaticPageOutboxRepository {
       `SELECT
         ${OUTBOX_SELECT_COLUMNS}
       FROM ${tableName}
-      WHERE status = $1
+      WHERE status = ANY($1)
       ORDER BY updated_at ASC
       LIMIT $2`,
-      [STATIC_PAGE_STATUS_PENDING, normalizeLimit(limit)]
+      [[...STATIC_PAGE_STATUSES_TO_BUILD], normalizeLimit(limit)]
     );
 
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
