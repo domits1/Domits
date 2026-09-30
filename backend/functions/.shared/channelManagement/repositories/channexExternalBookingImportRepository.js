@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import Database from "../../integrations/ORM/index.js";
+import { withDsqlRetry } from "../../dsqlRetry.js";
+import ChannexAriOutboxWriter from "../services/channexAriOutboxWriter.js";
 
 const CHANNEL_CHANNEX = "CHANNEX";
 const BOOKING_STATUS_PAID = "Paid";
@@ -45,6 +47,23 @@ const normalizeBookingRow = (row) => {
 };
 
 class ChannexExternalBookingImportRepository {
+  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+  }
+
+  // An imported booking change that opens or closes nights must reach Channex, so its
+  // outbox row is saved in the same transaction (design D8). Without a change the write runs as before.
+  async #saveWithOutbox(client, channexChange, work) {
+    if (!channexChange) return work(client);
+    return withDsqlRetry(() =>
+      client.transaction(async (manager) => {
+        const result = await work(manager);
+        await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+        return result;
+      })
+    );
+  }
+
   async getDomitsPropertyContext(domitsPropertyId) {
     const normalizedPropertyId = requireStr(domitsPropertyId);
     if (!normalizedPropertyId) return null;
@@ -96,6 +115,7 @@ class ChannexExternalBookingImportRepository {
     guestName,
     arrivalDateMs,
     departureDateMs,
+    channexChange = null,
   }) {
     const client = await Database.getInstance();
     const now = Date.now();
@@ -118,74 +138,80 @@ class ChannexExternalBookingImportRepository {
       bookingtype: BOOKING_TYPE_CHANNEX,
     };
 
-    await client.query(
-      `
-        INSERT INTO ${qualifyTableName(client, "booking")}
-          (id, arrivaldate, departuredate, createdat, guestid, guests, hostid, latepayment, paymentid,
-           property_id, status, guestname, hostname, cancellation_policy, bookingtype)
-        VALUES
-          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      `,
-      [
-        row.id,
-        row.arrivaldate,
-        row.departuredate,
-        row.createdat,
-        row.guestid,
-        row.guests,
-        row.hostid,
-        row.latepayment,
-        row.paymentid,
-        row.property_id,
-        row.status,
-        row.guestname,
-        row.hostname,
-        row.cancellation_policy,
-        row.bookingtype,
-      ]
+    await this.#saveWithOutbox(client, channexChange, (db) =>
+      db.query(
+        `
+          INSERT INTO ${qualifyTableName(client, "booking")}
+            (id, arrivaldate, departuredate, createdat, guestid, guests, hostid, latepayment, paymentid,
+             property_id, status, guestname, hostname, cancellation_policy, bookingtype)
+          VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        `,
+        [
+          row.id,
+          row.arrivaldate,
+          row.departuredate,
+          row.createdat,
+          row.guestid,
+          row.guests,
+          row.hostid,
+          row.latepayment,
+          row.paymentid,
+          row.property_id,
+          row.status,
+          row.guestname,
+          row.hostname,
+          row.cancellation_policy,
+          row.bookingtype,
+        ]
+      )
     );
 
     return this.getBookingById(row.id);
   }
 
-  async updateImportedBooking({ bookingId, guestName, arrivalDateMs, departureDateMs }) {
+  async updateImportedBooking({ bookingId, guestName, arrivalDateMs, departureDateMs, channexChange = null }) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
     const client = await Database.getInstance();
-    await client.query(
-      `
-        UPDATE ${qualifyTableName(client, "booking")}
-        SET arrivaldate = $2,
-            departuredate = $3,
-            guestname = $4,
-            status = $5
-        WHERE id = $1
-      `,
-      [
-        normalizedBookingId,
-        Math.trunc(Number(arrivalDateMs)),
-        Math.trunc(Number(departureDateMs)),
-        requireStr(guestName) || "Channex guest",
-        BOOKING_STATUS_PAID,
-      ]
+    await this.#saveWithOutbox(client, channexChange, (db) =>
+      db.query(
+        `
+          UPDATE ${qualifyTableName(client, "booking")}
+          SET arrivaldate = $2,
+              departuredate = $3,
+              guestname = $4,
+              status = $5
+          WHERE id = $1
+        `,
+        [
+          normalizedBookingId,
+          Math.trunc(Number(arrivalDateMs)),
+          Math.trunc(Number(departureDateMs)),
+          requireStr(guestName) || "Channex guest",
+          BOOKING_STATUS_PAID,
+        ]
+      )
     );
 
     return this.getBookingById(normalizedBookingId);
   }
 
-  async cancelImportedBooking(bookingId) {
+  async cancelImportedBooking(bookingId, channexChange = null) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
     const client = await Database.getInstance();
-    await client.query(
-      `
-        UPDATE ${qualifyTableName(client, "booking")}
-        SET status = $2
-        WHERE id = $1
-      `,
-      [normalizedBookingId, BOOKING_STATUS_CANCELLED]
+    await this.#saveWithOutbox(client, channexChange, (db) =>
+      db.query(
+        `
+          UPDATE ${qualifyTableName(client, "booking")}
+          SET status = $2
+          WHERE id = $1
+        `,
+        [normalizedBookingId, BOOKING_STATUS_CANCELLED]
+      )
     );
 
     return this.getBookingById(normalizedBookingId);
