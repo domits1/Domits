@@ -201,7 +201,12 @@ class BookingService {
   async failPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
     if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
-      await this.reservationRepository.updateBookingStatus(booking.id, "Failed");
+      // A failed payment frees the nights the booking held, so Channex has to reopen them.
+      const channexChange = bookingAvailabilityChange(booking.property_id, {
+        arrivalMs: Number(booking.arrivaldate),
+        departureMs: Number(booking.departuredate),
+      });
+      await this.reservationRepository.updateBookingStatus(booking.id, "Failed", channexChange);
       return true;
     }
   }

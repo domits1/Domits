@@ -32,6 +32,7 @@ describe("bookingAvailabilityChange", () => {
     ["departure before arrival", { arrivalMs: day("2026-11-03"), departureMs: day("2026-11-01") }],
     ["same day", { arrivalMs: day("2026-11-01"), departureMs: day("2026-11-01") }],
     ["missing dates", { arrivalMs: undefined, departureMs: undefined }],
+    ["a stay without a whole night", { arrivalMs: 1000, departureMs: 2000 }],
   ])("returns null for %s", (_, stay) => {
     expect(bookingAvailabilityChange("property-1", stay)).toBeNull();
   });

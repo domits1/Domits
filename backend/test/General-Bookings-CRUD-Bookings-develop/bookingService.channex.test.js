@@ -325,6 +325,28 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
   });
 
+  test("a failed payment reopens the nights on Channex", async () => {
+    const { service, dependencies } = buildService();
+    dependencies.reservationRepository.getBookingByPaymentId = jest.fn().mockResolvedValue({
+      id: "booking-1",
+      property_id: "domits-property-1",
+      status: "Awaiting Payment",
+      // Postgres returns bigint columns as text.
+      arrivaldate: String(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: String(Date.parse("2026-06-03T00:00:00.000Z")),
+    });
+
+    await service.failPayment("pi_1");
+
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Failed", {
+      domitsPropertyId: "domits-property-1",
+      changeTypes: ["availability"],
+      dateFrom: "2026-06-01",
+      dateTo: "2026-06-02",
+      source: "BOOKING",
+    });
+  });
+
   test("getPayment read returns the stored client secret for the booking guest", async () => {
     const { service, dependencies } = buildService({
       reservationRepository: {

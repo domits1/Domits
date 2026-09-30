@@ -10,6 +10,7 @@ import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
 import { withDsqlRetry } from "../.shared/dsqlRetry.js";
 import ChannexAriOutboxWriter from "../.shared/channelManagement/services/channexAriOutboxWriter.js";
+import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
@@ -536,6 +537,13 @@ class ReservationRepository {
       }
 
       await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
+
+      // The accepted booking now blocks its nights, so Channex has to close them too.
+      const channexChange = bookingAvailabilityChange(propertyId, {
+        arrivalMs: Number(arrivalDateMs),
+        departureMs: Number(departureDateMs),
+      });
+      if (channexChange) await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
 
       const overlapping = lockedRows.filter((row) => row.id !== bookingId);
       for (const overlap of overlapping) {
