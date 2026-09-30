@@ -206,7 +206,7 @@ enqueueChannexAriChange(transactionManager, { domitsPropertyId, kind, changeType
 
 The inline calls (`notifyChannexCalendarOverrideChange`, `notifyChannexOverviewCalendarChange`, `syncChannexBookingAvailabilityIfEnabled`, `syncChannexImportedBookingAvailability`) are removed in rollout step 3.
 
-*Status:* the calendar save and global settings (pricing, restrictions) write their rows from their own repository transactions through `ChannexAriOutboxWriter`, and their inline calls are removed. The booking lifecycle and the Channex import follow in the bookings pull request.
+*Status:* the calendar save and global settings (pricing, restrictions) write their rows from their own repository transactions through `ChannexAriOutboxWriter`, and their inline calls are removed. Direct bookings write one `availability` row with source `BOOKING` from `ReservationRepository` in the same transaction as the booking change: creating a booking awaiting payment, changing its dates (old and new nights), a host or guest cancelling an active booking, accepting an inquiry, and a failed payment. Their direct call and the `CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED` flag are removed. The Channex import follows in the import pull request.
 
 **The table must exist before any write site uses the writer.** The writer runs inside the transactions of PropertyHandler, General-Bookings, UnifiedMessaging and ChannelManagement (the Channex booking poll imports bookings there, `channelManagementHandler.js:104-106`). If the table is missing, those transactions fail, and with them host saves and bookings. The migration is therefore applied in rollout step 1 (D11), and step 3 is not merged until it is confirmed on the `main` schema.
 
