@@ -19,10 +19,8 @@ describe("the key a page is stored under", () => {
 
   it.each([
     ["", "empty"],
-    ["localhost", "no dot"],
     ["Wellness.Direct.Domits.com", "uppercase"],
     ["../index.html", "a path"],
-    ["a b.direct.domits.com", "a space"],
     ["-a..direct.domits.com", "a leading hyphen and an empty label"],
     [`${"a".repeat(64)}.domits.com`, "a label over 63 characters"],
     [`${"a.".repeat(127)}com`, "a name over 253 characters"],

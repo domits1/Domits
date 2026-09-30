@@ -20,19 +20,13 @@ export const buildStaticPageKey = (hostname) => {
   return `sites/by-host/${hostname}/index.html`;
 };
 
-const resolveBucketName = () => {
-  const bucketName = String(process.env[BUCKET_ENV_NAME] || "").trim();
-  if (!bucketName) {
-    throw new Error(`${BUCKET_ENV_NAME} must name the direct booking sites bucket.`);
-  }
-
-  return bucketName;
-};
-
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
     this.client = client;
-    this.bucketName = resolveBucketName();
+    this.bucketName = String(process.env[BUCKET_ENV_NAME] || "").trim();
+    if (!this.bucketName) {
+      throw new Error(`${BUCKET_ENV_NAME} must name the direct booking sites bucket.`);
+    }
   }
 
   async readAppShell() {

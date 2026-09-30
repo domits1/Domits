@@ -1,16 +1,7 @@
 const RENDER_SOURCE = "published_site";
 const LIVE_SNAPSHOT_KEYS = ["pricing", "calendarAvailability"];
 const PRIVATE_LOCATION_KEYS = ["street", "houseNumber", "houseNumberExtension", "postalCode"];
-const PUBLIC_SITE_KEYS = [
-  "id",
-  "propertyId",
-  "hostId",
-  "siteName",
-  "primaryLocale",
-  "status",
-  "templateKey",
-  "publishedAt",
-];
+const PUBLIC_SITE_KEYS = "id propertyId hostId siteName primaryLocale status templateKey publishedAt".split(" ");
 
 const withoutKeys = (object, keys) =>
   Object.fromEntries(Object.entries(object || {}).filter(([key]) => !keys.includes(key)));
