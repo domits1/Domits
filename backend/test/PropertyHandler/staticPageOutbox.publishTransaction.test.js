@@ -7,6 +7,8 @@ jest.mock("database", () => ({
   default: { getInstance: jest.fn() },
 }));
 
+const SCHEMA = process.env.TEST === "true" ? "test" : "main";
+
 const SITE_ROW = {
   id: "site-1",
   property_id: "property-1",
@@ -90,8 +92,8 @@ describe("publishing a site writes its page outbox row in the same transaction",
 
     expect(client.transaction).toHaveBeenCalledTimes(1);
     expect(client.statements).toHaveLength(2);
-    expect(statementFor(client, /INSERT INTO main\.standalone_site/)).toBeDefined();
-    expect(statementFor(client, /INSERT INTO main\.static_page_outbox/)).toBeDefined();
+    expect(statementFor(client, new RegExp(`INSERT INTO ${SCHEMA}\\.standalone_site`))).toBeDefined();
+    expect(statementFor(client, new RegExp(`INSERT INTO ${SCHEMA}\\.static_page_outbox`))).toBeDefined();
     expect(client.committed).toBe(true);
     expect(site).toMatchObject({ id: "site-1", propertyId: "property-1", hostId: "host-1", status: "PUBLISHED" });
   });

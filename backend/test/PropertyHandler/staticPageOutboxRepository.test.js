@@ -7,6 +7,7 @@ jest.mock("database", () => ({
   default: { getInstance: jest.fn() },
 }));
 
+const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 const NOW = 1_790_000_000_000;
 
 const OUTBOX_ROW = {
@@ -52,7 +53,7 @@ describe("StaticPageOutboxRepository", () => {
     const pages = await new StaticPageOutboxRepository().listPendingPages({ limit: 10 });
 
     const [statement, parameters] = client.query.mock.calls[0];
-    expect(statement).toContain("FROM main.static_page_outbox");
+    expect(statement).toContain(`FROM ${SCHEMA}.static_page_outbox`);
     expect(statement).toContain("WHERE status = $1");
     expect(statement).toContain("ORDER BY updated_at ASC");
     expect(parameters).toEqual(["PENDING", 10]);
@@ -106,7 +107,7 @@ describe("StaticPageOutboxRepository", () => {
     const applied = await new StaticPageOutboxRepository().markPageActive("site-1", 4, { now: NOW });
 
     const [statement, parameters, useStructuredResult] = client.queryRunner.query.mock.calls[0];
-    expect(statement).toContain("UPDATE main.static_page_outbox");
+    expect(statement).toContain(`UPDATE ${SCHEMA}.static_page_outbox`);
     expect(statement).toContain("WHERE site_id = $1");
     expect(statement).toContain("AND revision = $2");
     expect(parameters).toEqual(["site-1", 4, "ACTIVE", NOW]);
