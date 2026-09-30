@@ -58,6 +58,23 @@ describe("StaticPageRenderer", () => {
     expect(html).toBe("<html>page</html>");
   });
 
+  it("applies the theme overrides before the content overrides, with the site's template key", async () => {
+    const generator = buildGenerator();
+
+    await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
+
+    expect(generator.applyWebsiteDraftThemeOverrides).toHaveBeenCalledWith(
+      { step: "base" },
+      SITE.publishedThemeOverrides
+    );
+    expect(generator.applyWebsiteDraftContentOverrides).toHaveBeenCalledWith(
+      { step: "themed" },
+      SITE.publishedContentOverrides,
+      "panorama-landing"
+    );
+    expect(generator.buildStaticSiteDocument.mock.calls[0][0].model).toEqual({ step: "content" });
+  });
+
   it("refuses a template the generator cannot build instead of uploading the bare shell", async () => {
     const generator = buildGenerator({ canBuildStaticSiteDocument: jest.fn(() => false) });
 

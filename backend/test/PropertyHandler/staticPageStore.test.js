@@ -63,13 +63,9 @@ describe("StaticPageStore", () => {
 
   it("writes the page as html under the hostname, tagged with the site and revision it came from", async () => {
     const send = jest.fn(async () => ({}));
+    const page = { hostname: "www.villasensual.nl", html: "<html>page</html>", siteId: "site-1", revision: 4 };
 
-    await buildStore(send).putPage({
-      hostname: "www.villasensual.nl",
-      html: "<html>page</html>",
-      siteId: "site-1",
-      revision: 4,
-    });
+    await buildStore(send).putPage(page);
 
     const [command] = send.mock.calls[0];
     expect(command).toBeInstanceOf(PutObjectCommand);
@@ -81,5 +77,12 @@ describe("StaticPageStore", () => {
       CacheControl: "public, max-age=300",
       Metadata: { "site-id": "site-1", revision: "4" },
     });
+  });
+
+  it("lets an upload failure reach the caller instead of reporting a page that is not there", async () => {
+    const send = jest.fn(async () => Promise.reject(new Error("AccessDenied")));
+    const page = { hostname: "www.villasensual.nl", html: "<html>page</html>", siteId: "site-1", revision: 4 };
+
+    await expect(buildStore(send).putPage(page)).rejects.toThrow("AccessDenied");
   });
 });
