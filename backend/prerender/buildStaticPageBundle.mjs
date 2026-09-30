@@ -60,7 +60,6 @@ export const buildStaticPageBundle = async ({ outfile = DEFAULT_OUTFILE, esbuild
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const outfile = process.argv[2] ? resolve(process.argv[2]) : DEFAULT_OUTFILE;
-  const { moduleCount, bytes } = await buildStaticPageBundle({ outfile });
-  console.log(`bundled ${moduleCount} modules into ${outfile} (${bytes} bytes)`);
+  const { moduleCount, bytes } = await buildStaticPageBundle({ outfile: DEFAULT_OUTFILE });
+  console.log(`bundled ${moduleCount} modules into ${DEFAULT_OUTFILE} (${bytes} bytes)`);
 }
