@@ -1833,9 +1833,15 @@ export class PropertyController {
 
     async buildStaticPages(event) {
         const summary = await this.createStaticPageWorker().run({ limit: event?.limit });
+        if (summary.failed > 0 || summary.errors.length > 0) {
+            throw new Error(
+                `The static page run left ${summary.failed} failed and ${summary.errors.length} unfinished pages: ` +
+                    JSON.stringify(summary)
+            );
+        }
 
         return {
-            statusCode: summary.errors.length > 0 ? 500 : 200,
+            statusCode: 200,
             body: JSON.stringify(summary),
         };
     }

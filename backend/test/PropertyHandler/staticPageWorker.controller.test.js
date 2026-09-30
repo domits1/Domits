@@ -21,14 +21,17 @@ describe("running the static page worker from the controller", () => {
     expect(response).toEqual({ statusCode: 200, body: JSON.stringify(SUMMARY) });
   });
 
-  it("answers 500 when a site could not be finished, so a failed run is visible", async () => {
-    const errors = [{ siteId: "site-1", revision: 4, message: "connection lost" }];
-    const { controller } = buildController({ ...SUMMARY, built: 0, errors });
+  it.each([
+    ["a page failed to build", { ...SUMMARY, built: 0, failed: 1 }, "1 failed and 0 unfinished"],
+    [
+      "a page was not finished",
+      { ...SUMMARY, built: 0, errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }] },
+      "0 failed and 1 unfinished",
+    ],
+  ])("rejects the run when %s, so the failure reaches whatever invoked it", async (_label, summary, message) => {
+    const { controller } = buildController(summary);
 
-    const response = await controller.buildStaticPages({ task: "build-static-pages" });
-
-    expect(response.statusCode).toBe(500);
-    expect(JSON.parse(response.body).errors).toEqual(errors);
+    await expect(controller.buildStaticPages({ task: "build-static-pages" })).rejects.toThrow(message);
   });
 
   it("wires the worker to the site and domain repositories the controller already owns", () => {

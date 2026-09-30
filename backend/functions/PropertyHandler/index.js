@@ -186,10 +186,11 @@ export const handler = async (event) => {
     controller = new PropertyController();
   }
 
+  if (event?.task === STATIC_PAGE_TASK && !event.httpMethod) {
+    return controller.buildStaticPages(event);
+  }
+
   try {
-    if (event?.task === STATIC_PAGE_TASK) {
-      return await controller.buildStaticPages(event);
-    }
     const methodHandler = methodHandlers[event.httpMethod];
     if (!methodHandler) {
       return notFound("Method not found.");

@@ -162,6 +162,11 @@ const notFoundCases = [
     expectedBody: "Method not found.",
   },
   {
+    name: "unknown task name",
+    event: { task: "something-else" },
+    expectedBody: "Method not found.",
+  },
+  {
     name: "unknown path",
     event: withHttpMethod("GET", { resource: "some/path/that/does/not/exist", pathParameters: {} }),
     expectedBody: "Path not found.",
@@ -196,6 +201,22 @@ describe("Routing unit tests", () => {
 
     expect(response.statusCode).toBe(200);
     expect(buildStaticPages).toHaveBeenCalledWith({ task: "build-static-pages", limit: 5 });
+  });
+
+  it("should fail the invocation when the static page run fails, so a scheduler sees it", async () => {
+    jest.spyOn(PropertyController.prototype, "buildStaticPages").mockRejectedValue(new Error("connection lost"));
+
+    await expect(handler({ task: "build-static-pages" })).rejects.toThrow("connection lost");
+  });
+
+  it("should route an HTTP request that also carries the task name as an HTTP request", async () => {
+    const buildStaticPages = jest.spyOn(PropertyController.prototype, "buildStaticPages");
+    jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });
+
+    const response = await handler({ httpMethod: "POST", task: "build-static-pages" });
+
+    expect(response.statusCode).toBe(201);
+    expect(buildStaticPages).not.toHaveBeenCalled();
   });
 
   it.each(notFoundCases)("should return 404 for $name", async ({ event, expectedBody }) => {
