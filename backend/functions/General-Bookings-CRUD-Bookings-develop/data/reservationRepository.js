@@ -8,6 +8,8 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { withDsqlRetry } from "../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter from "../.shared/channelManagement/services/channexAriOutboxWriter.js";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
@@ -22,6 +24,24 @@ const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((s
 export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
+  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+  }
+
+  // A booking change that opens or closes nights must reach Channex, so its outbox row
+  // is saved in the same transaction (design D8). Without a change the write runs as before.
+  async #saveWithOutbox(channexChange, work) {
+    const client = await Database.getInstance();
+    if (!channexChange) return work(client);
+    return withDsqlRetry(() =>
+      client.transaction(async (manager) => {
+        const result = await work(manager);
+        await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+        return result;
+      })
+    );
+  }
+
   // ---------
   // Booking Create (auth)
   // ---------
@@ -31,36 +51,38 @@ class ReservationRepository {
     hostId,
     cancellationPolicy,
     status = "Awaiting Payment",
-    bookingType = "direct"
+    bookingType = "direct",
+    channexChange = null
   ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
     const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
     const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
-    const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Booking)
-      .values({
-        id: id,
-        arrivaldate: arrivalDate,
-        createdat: date,
-        departuredate: departureDate,
-        guestid: userId,
-        hostid: hostId,
-        hostname: "WIP-Host",
-        guests: requestBody.general.guests.toString(),
-        guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
-        latepayment: false,
-        paymentid: "FAILED: ",
-        tempPaymentId,
-        property_id: requestBody.identifiers.property_Id,
-        status: status,
-        bookingtype: bookingType,
-      })
-      .execute();
+    await this.#saveWithOutbox(channexChange, (manager) =>
+      manager
+        .createQueryBuilder()
+        .insert()
+        .into(Booking)
+        .values({
+          id: id,
+          arrivaldate: arrivalDate,
+          createdat: date,
+          departuredate: departureDate,
+          guestid: userId,
+          hostid: hostId,
+          hostname: "WIP-Host",
+          guests: requestBody.general.guests.toString(),
+          guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
+          latepayment: false,
+          paymentid: "FAILED: ",
+          tempPaymentId,
+          property_id: requestBody.identifiers.property_Id,
+          status: status,
+          bookingtype: bookingType,
+        })
+        .execute()
+    );
     try {
       await this.getBookingById(id);
     } catch (error) {

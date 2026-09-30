@@ -152,7 +152,14 @@ describe("BookingService Channex booking availability hooks", () => {
       "host-1",
       "strict",
       "Awaiting Payment",
-      "direct"
+      "direct",
+      {
+        domitsPropertyId: "domits-property-1",
+        changeTypes: ["availability"],
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-02",
+        source: "BOOKING",
+      }
     );
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
@@ -301,7 +308,8 @@ describe("BookingService Channex booking availability hooks", () => {
       "host-1",
       "strict",
       "Inquiry",
-      "inquiry"
+      "inquiry",
+      null
     );
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
     expect(result.channexAvailabilitySync).toBeUndefined();

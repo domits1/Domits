@@ -19,6 +19,7 @@ import ChannexBookingAvailabilityClient, {
   CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
   createBookingAvailabilityFallbackEvidence,
 } from "./channexBookingAvailabilityClient.js";
+import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
@@ -131,13 +132,19 @@ class BookingService {
       },
     };
 
+    // An inquiry does not block nights yet; it reaches Channex when the host accepts it.
+    const channexChange =
+      bookingStatus === BOOKING_STATUS_AWAITING_PAYMENT
+        ? bookingAvailabilityChange(propertyId, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })
+        : null;
     const result = await this.reservationRepository.addBookingToTable(
       eventWithParsedDates,
       authenticatedUser.sub,
       fetchedProperty.hostId,
       cancellationPolicy,
       bookingStatus,
-      fetchedProperty.bookingType
+      fetchedProperty.bookingType,
+      channexChange
     );
 
     if (bookingStatus !== BOOKING_STATUS_AWAITING_PAYMENT) {
