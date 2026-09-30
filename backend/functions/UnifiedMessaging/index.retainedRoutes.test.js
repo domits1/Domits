@@ -14,6 +14,7 @@ const mockIntegrationControllerMethods = {
   checkWhatsAppTokenHealth: jest.fn(),
   refreshWhatsAppToken: jest.fn(),
   listIntegrations: jest.fn(),
+  upsertIntegrationProperty: jest.fn(),
 };
 const mockIngestionControllerMethods = {
   ingestMessages: jest.fn(),
@@ -145,6 +146,21 @@ describe("UnifiedMessaging retained route contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual([{ id: "integration-1", channel: "WHATSAPP" }]);
     expect(mockIntegrationControllerMethods.listIntegrations).toHaveBeenCalledWith(event);
+  });
+
+  // Saving a mapping without a user check let any caller pick the account a property's data
+  // goes through; mappings are saved through the Channex routes, which check the owner (#3365).
+  test("POST /integrations/{id}/properties is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/integration-1/properties",
+        body: JSON.stringify({ domitsPropertyId: "property-1", externalPropertyId: "external-property-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
   });
 
   test("OPTIONS keeps the existing CORS response without invoking a controller", async () => {
