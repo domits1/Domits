@@ -470,7 +470,14 @@ class BookingService {
 
     const alreadyCancelled = isCancelledBookingStatus(bookingBefore.status);
     if (!alreadyCancelled) {
-      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED);
+      // Only a booking that blocked nights has nights to reopen on Channex.
+      const channexChange = isActiveBookingStatus(bookingBefore.status)
+        ? bookingAvailabilityChange(getPropertyId(bookingBefore), {
+            arrivalMs: Number(bookingBefore.arrivaldate),
+            departureMs: Number(bookingBefore.departuredate),
+          })
+        : null;
+      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED, channexChange);
     }
 
     const updatedBookingResult = alreadyCancelled

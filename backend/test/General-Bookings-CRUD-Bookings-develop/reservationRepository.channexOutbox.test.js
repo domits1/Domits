@@ -65,4 +65,22 @@ describe("ReservationRepository Channex outbox rows", () => {
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });
+
+  test("a status change and its outbox row are saved in one transaction", async () => {
+    const { repository, manager, channexAriOutboxWriter } = setup();
+
+    await repository.updateBookingStatus("booking-1", "Cancelled", change);
+
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
+  });
+
+  test("a guest cancellation and its outbox row are saved in one transaction", async () => {
+    const { repository, manager, client, channexAriOutboxWriter } = setup();
+    const read = { where: jest.fn(() => read), getOne: jest.fn().mockResolvedValue({ id: "booking-1", guestid: "guest-1" }) };
+    client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
+
+    await repository.cancelBookingByGuest("booking-1", "guest-1", {}, change);
+
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
+  });
 });

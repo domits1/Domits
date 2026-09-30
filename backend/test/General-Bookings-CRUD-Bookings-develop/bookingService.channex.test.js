@@ -567,7 +567,11 @@ describe("BookingService Channex booking availability hooks", () => {
 
     const result = await service.cancelBooking("booking-1", "Bearer host-token", { reason: "Demo cancel" });
 
-    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Cancelled");
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith(
+      "booking-1",
+      "Cancelled",
+      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })
+    );
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
       userId: "host-1",
@@ -587,8 +591,9 @@ describe("BookingService Channex booking availability hooks", () => {
       property_id: "domits-property-1",
       hostid: "host-1",
       guestid: "guest-1",
-      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
-      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      // Postgres returns bigint columns as text.
+      arrivaldate: String(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: String(Date.parse("2026-06-03T00:00:00.000Z")),
       status: "Awaiting Payment",
     };
     const bookingAfter = {
@@ -609,7 +614,11 @@ describe("BookingService Channex booking availability hooks", () => {
 
     const result = await service.cancelBooking("booking-1", "Bearer guest-token");
 
-    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Cancelled");
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith(
+      "booking-1",
+      "Cancelled",
+      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })
+    );
     expect(dependencies.channexBookingAvailabilityClient.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
     expect(result.booking.status).toBe("Cancelled");
     expect(result.channexAvailabilitySync.trigger).toBe("BOOKING_CANCELLED");
@@ -696,11 +705,12 @@ describe("BookingService Channex booking availability hooks", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(cancelBookingByGuest).toHaveBeenCalledWith("booking-1", "guest-1", {
-      refundedAmount: 0,
-      stripeRefundId: null,
-      refundError: null,
-    });
+    expect(cancelBookingByGuest).toHaveBeenCalledWith(
+      "booking-1",
+      "guest-1",
+      { refundedAmount: 0, stripeRefundId: null, refundError: null },
+      expect.objectContaining({ domitsPropertyId: "domits-property-1", changeTypes: ["availability"], source: "BOOKING" })
+    );
     expect(syncChannexBookingAvailabilityIfEnabled).toHaveBeenCalledWith({
       userId: "host-1",
       bookingBefore,

@@ -438,14 +438,10 @@ class ReservationRepository {
     return booking || null;
   }
 
-  async updateBookingStatus(id, status) {
-    const client = await Database.getInstance();
-    const query = await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({ status: status })
-      .where("id = :id ", { id: id })
-      .execute();
+  async updateBookingStatus(id, status, channexChange = null) {
+    const query = await this.#saveWithOutbox(channexChange, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
+    );
 
     if (query.length < 1) {
       return {
@@ -569,7 +565,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
+  async cancelBookingByGuest(id, guestId, refundInfo = {}, channexChange = null) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -597,7 +593,9 @@ class ReservationRepository {
       updateData.refund_error = refundInfo.refundError;
     }
 
-    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    await this.#saveWithOutbox(channexChange, (manager) =>
+      manager.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute()
+    );
 
     const updated = await client
       .getRepository(Booking)

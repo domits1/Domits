@@ -11,6 +11,7 @@ import { PublicBookingRequestError } from "../util/exception/PublicBookingReques
 import { randomUUID } from "node:crypto";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
+import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 const responseHeaderJSON = responsejson;
 const REFUND_CURRENCY = "eur";
 const STRIPE_REFUND_REASON = "requested_by_customer";
@@ -350,11 +351,18 @@ class ReservationController {
       refundError = error.message;
     }
 
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, {
-      refundedAmount: refundAmountCents,
-      stripeRefundId,
-      refundError,
-    });
+    const channexChange = shouldSyncChannexCancellation(booking)
+      ? bookingAvailabilityChange(booking.property_id, {
+          arrivalMs: Number(booking.arrivaldate),
+          departureMs: Number(booking.departuredate),
+        })
+      : null;
+    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(
+      bookingId,
+      user.sub,
+      { refundedAmount: refundAmountCents, stripeRefundId, refundError },
+      channexChange
+    );
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
 

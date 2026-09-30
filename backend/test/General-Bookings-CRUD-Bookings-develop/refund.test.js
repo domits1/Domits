@@ -211,12 +211,10 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       return booking;
     };
 
+    // The fourth argument is the Channex outbox change, covered in bookingService.channex.test.js.
     const expectCancelRecord = (bookingId, refundInfo) => {
-      expect(mockBookingService.reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith(
-        bookingId,
-        "guest123",
-        refundInfo
-      );
+      const [call] = mockBookingService.reservationRepository.cancelBookingByGuest.mock.calls;
+      expect(call.slice(0, 3)).toEqual([bookingId, "guest123", refundInfo]);
     };
 
     it("should process refund successfully for Moderate policy 3 days before", async () => {
