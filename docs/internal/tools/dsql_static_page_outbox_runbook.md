@@ -10,7 +10,7 @@ Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_
 
 `main.standalone_site.static_page_revision` (`BIGINT NULL`) counts the publishes of a site. `upsertSiteWithStaticPageOutbox` raises it in SQL with `COALESCE(standalone_site.static_page_revision, 0) + 1`, so the counter is monotonic per site and never comes from an application clock.
 
-`main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. `status` moves `PENDING` → `ACTIVE` or `FAILED`, and every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
+`main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. `status` moves `PENDING` → `ACTIVE` or `FAILED`, and a `FAILED` row is offered to the worker again, the way `booking_automation_outbox` does, so one failed attempt does not strand a page until its host publishes again. `attempt_count` counts those attempts and is what a backoff will read. Every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
 
 Only `main` has the standalone tables; the `test` schema has none, so there is no `test` variant.
 
