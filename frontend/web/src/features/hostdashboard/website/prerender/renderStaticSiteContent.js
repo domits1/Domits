@@ -61,7 +61,7 @@ const renderAmenities = (model) => {
 
 const renderGallery = (model, title) => {
   const imageUrls = [
-    ...new Set(toArray(model?.media?.galleryImages).map(resolveStaticSiteImageUrl).filter(Boolean)),
+    ...new Set(toArray(model?.media?.galleryImages).map((image) => resolveStaticSiteImageUrl(image)).filter(Boolean)),
   ].slice(0, MAX_CONTENT_IMAGES);
   if (imageUrls.length === 0) {
     return "";
