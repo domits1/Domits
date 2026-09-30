@@ -14,12 +14,12 @@ Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_
 
 ## How the worker moves a row
 
-`PropertyHandler` invoked with `{"task": "build-static-pages"}` takes the rows oldest first, one site at a time. It reads the shell `index.html` from the sites bucket once per run and claims nothing when that read fails.
+`PropertyHandler` invoked with `{"task": "build-static-pages"}` takes the rows oldest first, one site at a time. It reads the shell `index.html` from the sites bucket before every page and claims nothing for a page whose shell it cannot read.
 
-- `claimPage` moves a `PENDING` or `FAILED` row to `BUILDING` and adds one to `attempt_count`, guarded by `site_id`, `revision` and the current status, so two workers cannot take the same row. A `BUILDING` row older than 15 minutes counts as abandoned and can be claimed again, so a worker that died mid-render does not strand its page.
+- `claimPage` moves a `PENDING` row, or a `FAILED` row older than 10 minutes, to `BUILDING` and adds one to `attempt_count`, guarded by `site_id`, `revision` and the current status, so two workers cannot take the same row. A `BUILDING` row older than 15 minutes counts as abandoned and can be claimed again, so a worker that died mid-render does not strand its page.
 - A row with `attempt_count` of 5 is not offered again. It keeps its status and `failure_reason` for the operator, and the next publish resets the counter to 0.
-- `ACTIVE`, `FAILED` and `SKIPPED` are written only from `BUILDING` at the claimed revision. `SKIPPED` means the site was deleted or no longer `PUBLISHED` when the worker looked; nothing was uploaded. A `failure_reason` starts with `NO_ACTIVE_DOMAIN`, `INVALID_DOMAIN`, `RENDER_FAILED` or `S3_PUT_FAILED`.
-- A publish during a render rewrites the row to the new revision, so the older worker's status write finds nothing. Because its upload may still have landed after the newer one, it sets a newer row that is `BUILDING` or `ACTIVE` back to `PENDING`, and the next run renders the newer revision again. Retrying is always safe: one revision renders the same bytes to the same key.
+- `ACTIVE`, `FAILED` and `SKIPPED` are written only from `BUILDING` at the claimed revision, and `ACTIVE` additionally only while `standalone_site` still says `PUBLISHED` at that revision. `SKIPPED` means the site was deleted or no longer `PUBLISHED` when the worker looked; nothing was uploaded. A `failure_reason` starts with `NO_ACTIVE_DOMAIN`, `INVALID_DOMAIN`, `RENDER_FAILED` or `S3_PUT_FAILED`.
+- A publish during a render moves the row to the new revision but leaves it `BUILDING`, so no second worker can start on the new revision while the first still holds the site. The first worker's status write then finds nothing, and on every such exit it sets the newer row back to `PENDING`; the next run renders the newer revision, and one writer per site is kept at all times. Retrying is always safe: one revision renders the same bytes to the same key.
 
 ## Why this is safe to run while hosts are publishing
 
