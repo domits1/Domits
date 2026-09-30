@@ -14,11 +14,6 @@ import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
 import ExternalCalendarService from "./externalCalendarService.js";
-import ChannexBookingAvailabilityClient, {
-  CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
-  CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-  createBookingAvailabilityFallbackEvidence,
-} from "./channexBookingAvailabilityClient.js";
 import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
@@ -28,11 +23,6 @@ const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
 const BOOKING_STATUS_INQUIRY = "Inquiry";
 const BOOKING_STATUS_PAID = "Paid";
 const BOOKING_STATUS_CANCELLED = "Cancelled";
-const TRIGGER_BOOKING_CREATED = "BOOKING_CREATED";
-const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
-const TRIGGER_BOOKING_CANCELLED = "BOOKING_CANCELLED";
-const CHANNEX_CANCEL_BOOKING_ALREADY_CANCELLED = "BOOKING_ALREADY_CANCELLED";
-const CHANNEX_CANCEL_BOOKING_NOT_ACTIVE = "BOOKING_STATUS_NOT_ACTIVE_FOR_CHANNEX_CANCEL";
 
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
@@ -54,7 +44,6 @@ class BookingService {
     authManager = new AuthManager(),
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
-    channexBookingAvailabilityClient = new ChannexBookingAvailabilityClient(),
     priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
@@ -66,7 +55,6 @@ class BookingService {
     this.authManager = authManager;
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
-    this.channexBookingAvailabilityClient = channexBookingAvailabilityClient;
     this.priceLabsBookingNotifier = priceLabsBookingNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
@@ -151,29 +139,9 @@ class BookingService {
       return { ...result, isInquiry };
     }
 
-    const bookingAfter = {
-      id: result.bookingId,
-      property_id: propertyId,
-      hostid: fetchedProperty.hostId,
-      guestid: authenticatedUser.sub,
-      arrivaldate: arrivalDateMs,
-      departuredate: departureDateMs,
-      status: bookingStatus,
-      bookingtype: fetchedProperty.bookingType,
-    };
-    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
-      userId: fetchedProperty.hostId,
-      bookingAfter,
-      trigger: TRIGGER_BOOKING_CREATED,
-    });
-
     await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
 
-    return {
-      ...result,
-      isInquiry,
-      ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
-    };
+    return { ...result, isInquiry };
   }
 
   parseBookingDateToMs(value, fieldName) {
@@ -328,53 +296,6 @@ class BookingService {
     return { bookingId, status: "Declined" };
   }
 
-  isChannexBookingAvailabilitySyncEnabled() {
-    return String(process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED || "").trim().toLowerCase() === "true";
-  }
-
-  async syncChannexBookingAvailabilityIfEnabled({
-    userId,
-    bookingBefore = null,
-    bookingAfter = null,
-    trigger,
-    includeDisabledEvidence = false,
-  }) {
-    const referenceBooking = bookingAfter || bookingBefore || {};
-    if (!this.isChannexBookingAvailabilitySyncEnabled()) {
-      return includeDisabledEvidence
-        ? createBookingAvailabilityFallbackEvidence({
-            booking: referenceBooking,
-            trigger,
-            skipped: true,
-            reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
-          })
-        : undefined;
-    }
-
-    try {
-      return await this.channexBookingAvailabilityClient.syncAvailabilityForBookingChange({
-        userId,
-        bookingBefore,
-        bookingAfter,
-        trigger,
-      });
-    } catch (error) {
-      return createBookingAvailabilityFallbackEvidence({
-        booking: referenceBooking,
-        trigger,
-        skipped: false,
-        reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-        errors: [
-          {
-            code: error?.code || error?.name || CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-            message: error?.message || "Channex booking availability sync failed.",
-            httpStatus: error?.statusCode ?? null,
-          },
-        ],
-      });
-    }
-  }
-
   async modifyBookingDates(bookingId, arrivalDate, departureDate, authToken) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) {
@@ -435,21 +356,12 @@ class BookingService {
       departuredate: departureDateMs,
     };
 
-    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
-      userId: bookingAfter.hostid,
-      bookingBefore,
-      bookingAfter,
-      trigger: TRIGGER_BOOKING_MODIFIED,
-      includeDisabledEvidence: true,
-    });
-
     await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid, "booking_modified");
 
     return {
       booking: bookingAfter,
       bookingBefore,
       bookingAfter,
-      channexAvailabilitySync,
     };
   }
 
@@ -493,22 +405,6 @@ class BookingService {
       status: BOOKING_STATUS_CANCELLED,
     };
 
-    const shouldSyncChannex = !alreadyCancelled && isActiveBookingStatus(bookingBefore.status);
-    const channexAvailabilitySync = shouldSyncChannex
-      ? await this.syncChannexBookingAvailabilityIfEnabled({
-          userId: bookingAfter.hostid || bookingBefore.hostid,
-          bookingBefore,
-          bookingAfter,
-          trigger: TRIGGER_BOOKING_CANCELLED,
-          includeDisabledEvidence: true,
-        })
-      : createBookingAvailabilityFallbackEvidence({
-          booking: bookingAfter,
-          trigger: TRIGGER_BOOKING_CANCELLED,
-          skipped: true,
-          reason: alreadyCancelled ? CHANNEX_CANCEL_BOOKING_ALREADY_CANCELLED : CHANNEX_CANCEL_BOOKING_NOT_ACTIVE,
-        });
-
     if (!alreadyCancelled) {
       await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid || bookingBefore.hostid, "booking_cancelled");
     }
@@ -519,7 +415,6 @@ class BookingService {
       bookingAfter,
       alreadyCancelled,
       reason: requireStr(reason),
-      channexAvailabilitySync,
     };
   }
 
