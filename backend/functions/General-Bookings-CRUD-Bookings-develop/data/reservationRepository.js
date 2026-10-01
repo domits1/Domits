@@ -577,7 +577,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId, refundInfo = {}, channexChanges = []) {
+  async cancelBookingByGuest(id, guestId, channexChanges = []) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -594,7 +594,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    const updateData = { status: "Cancelled" };
+    await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute()
+    );
+
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
+
+  // Runs after the cancellation has committed and the refund was attempted, so a failing
+  // cancellation never leaves money refunded on a booking that is still active.
+  async recordGuestRefund(id, refundInfo = {}) {
+    const client = await Database.getInstance();
+    const updateData = {};
     if (refundInfo.refundedAmount !== undefined) {
       updateData.refunded_amount = refundInfo.refundedAmount;
     }
@@ -604,21 +615,15 @@ class ReservationRepository {
     if (refundInfo.refundError) {
       updateData.refund_error = refundInfo.refundError;
     }
+    if (Object.keys(updateData).length) {
+      await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    }
 
-    await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute()
-    );
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
 
-    const updated = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.id = :id", { id })
-      .getOne();
-
-    return {
-      response: updated,
-      statusCode: 200,
-    };
+  async #readBooking(client, id) {
+    return client.getRepository(Booking).createQueryBuilder("booking").where("booking.id = :id", { id }).getOne();
   }
 }
 

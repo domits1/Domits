@@ -323,6 +323,16 @@ class ReservationController {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
+    // Cancel first: the cancellation and its Channex outbox row commit together before any
+    // money moves, so a failed cancellation never leaves a refund behind.
+    const channexChange = shouldSyncChannexCancellation(booking)
+      ? bookingAvailabilityChange(booking.property_id, {
+          arrivalMs: Number(booking.arrivaldate),
+          departureMs: Number(booking.departuredate),
+        })
+      : null;
+    await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, [channexChange]);
+
     let refundAmountCents = 0;
     let stripeRefundId = null;
     let refundError = null;
@@ -347,18 +357,11 @@ class ReservationController {
       refundError = error.message;
     }
 
-    const channexChange = shouldSyncChannexCancellation(booking)
-      ? bookingAvailabilityChange(booking.property_id, {
-          arrivalMs: Number(booking.arrivaldate),
-          departureMs: Number(booking.departuredate),
-        })
-      : null;
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(
-      bookingId,
-      user.sub,
-      { refundedAmount: refundAmountCents, stripeRefundId, refundError },
-      [channexChange]
-    );
+    const canceled = await this.bookingService.reservationRepository.recordGuestRefund(bookingId, {
+      refundedAmount: refundAmountCents,
+      stripeRefundId,
+      refundError,
+    });
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
 

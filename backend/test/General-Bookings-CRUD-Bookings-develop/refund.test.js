@@ -186,6 +186,10 @@ describe("Refund Logic - 10 Test Scenarios", () => {
             response: { id: "booking123", status: "Cancelled" },
             statusCode: 200,
           }),
+          recordGuestRefund: jest.fn().mockResolvedValue({
+            response: { id: "booking123", status: "Cancelled" },
+            statusCode: 200,
+          }),
         },
         priceLabsBookingNotifier: {
           notifyBookingChange: jest.fn().mockResolvedValue({}),
@@ -211,11 +215,38 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       return booking;
     };
 
-    // The fourth argument is the Channex outbox change, covered in bookingService.channex.test.js.
+    // The Channex outbox change passed to the cancel is covered in bookingService.channex.test.js.
     const expectCancelRecord = (bookingId, refundInfo) => {
-      const [call] = mockBookingService.reservationRepository.cancelBookingByGuest.mock.calls;
-      expect(call.slice(0, 3)).toEqual([bookingId, "guest123", refundInfo]);
+      const { cancelBookingByGuest, recordGuestRefund } = mockBookingService.reservationRepository;
+      expect(cancelBookingByGuest).toHaveBeenCalledWith(bookingId, "guest123", expect.any(Array));
+      expect(recordGuestRefund).toHaveBeenCalledWith(bookingId, refundInfo);
     };
+
+    it("cancels the booking before any money moves", async () => {
+      const bookingId = "booking_order";
+      mockBooking({ id: bookingId, cancellation_policy: "flexible" });
+
+      await controller.cancelBooking(bookingId, authEvent);
+
+      const { cancelBookingByGuest, recordGuestRefund } = mockBookingService.reservationRepository;
+      expect(cancelBookingByGuest.mock.invocationCallOrder[0]).toBeLessThan(
+        mockStripe.refunds.create.mock.invocationCallOrder[0]
+      );
+      expect(mockStripe.refunds.create.mock.invocationCallOrder[0]).toBeLessThan(
+        recordGuestRefund.mock.invocationCallOrder[0]
+      );
+    });
+
+    it("refunds nothing when the cancellation fails", async () => {
+      const bookingId = "booking_cancel_fails";
+      mockBooking({ id: bookingId, cancellation_policy: "flexible" });
+      mockBookingService.reservationRepository.cancelBookingByGuest.mockRejectedValue(new Error("conflict"));
+
+      await expect(controller.cancelBooking(bookingId, authEvent)).rejects.toThrow("conflict");
+
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expect(mockBookingService.reservationRepository.recordGuestRefund).not.toHaveBeenCalled();
+    });
 
     it("should process refund successfully for Moderate policy 3 days before", async () => {
       const bookingId = "booking_moderate_3d";

@@ -79,9 +79,22 @@ describe("ReservationRepository Channex outbox rows", () => {
     const read = { where: jest.fn(() => read), getOne: jest.fn().mockResolvedValue({ id: "booking-1", guestid: "guest-1" }) };
     client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
 
-    await repository.cancelBookingByGuest("booking-1", "guest-1", {}, [change]);
+    await repository.cancelBookingByGuest("booking-1", "guest-1", [change]);
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
+  });
+
+  test("records the refund on the already cancelled booking, outside the cancel transaction", async () => {
+    const { repository, client, channexAriOutboxWriter } = setup();
+    const read = { where: jest.fn(() => read), getOne: jest.fn().mockResolvedValue({ id: "booking-1" }) };
+    client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
+
+    await repository.recordGuestRefund("booking-1", { refundedAmount: 5000, stripeRefundId: "re_1", refundError: null });
+
+    const update = client.createQueryBuilder.mock.results[0].value;
+    expect(update.set).toHaveBeenCalledWith({ refunded_amount: 5000, stripe_refund_id: "re_1" });
+    expect(client.transaction).not.toHaveBeenCalled();
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).not.toHaveBeenCalled();
   });
 
   // The dates passed in were read before the lock; the locked row holds the real ones.
