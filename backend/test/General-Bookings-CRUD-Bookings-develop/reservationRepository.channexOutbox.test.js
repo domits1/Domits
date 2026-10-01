@@ -58,6 +58,19 @@ describe("ReservationRepository Channex outbox rows", () => {
     expect(channexAriOutboxWriter.enqueueChannexAriChange).not.toHaveBeenCalled();
   });
 
+  // A real database rolls the booking back with the failing transaction; the fake one can only
+  // show that the booking was written inside it and that the failure reaches the caller.
+  test("a failing outbox write fails the booking save instead of being swallowed", async () => {
+    const { repository, manager, client, channexAriOutboxWriter } = setup();
+    channexAriOutboxWriter.enqueueChannexAriChange.mockRejectedValue(new Error("outbox down"));
+
+    await expect(
+      repository.addBookingToTable(requestBody, "guest-1", "host-1", "strict", "Awaiting Payment", "direct", [change])
+    ).rejects.toThrow("outbox down");
+    expect(manager.createQueryBuilder).toHaveBeenCalled();
+    expect(client.createQueryBuilder).not.toHaveBeenCalled();
+  });
+
   test("new dates and the outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 

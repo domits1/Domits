@@ -543,6 +543,51 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(result.alreadyCancelled).toBe(true);
   });
 
+  test("guest cancellation of a paid booking writes an outbox change that reopens its nights", async () => {
+    const booking = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      guestid: "guest-1",
+      // Postgres returns bigint columns as text.
+      arrivaldate: String(Date.parse("2026-06-01T00:00:00.000Z")),
+      departuredate: String(Date.parse("2026-06-03T00:00:00.000Z")),
+      cancellation_policy: "flexible",
+      total_price: 0,
+      status: "Paid",
+    };
+    const reservationRepository = {
+      getBookingById: jest.fn().mockResolvedValue({ response: booking }),
+      cancelBookingByGuest: jest.fn().mockResolvedValue({ response: { ...booking, status: "Cancelled" } }),
+      recordGuestRefund: jest.fn().mockResolvedValue({ response: { ...booking, status: "Cancelled" }, statusCode: 200 }),
+    };
+    const controller = new ReservationController({
+      bookingService: {
+        authManager: { authenticateUser: jest.fn().mockResolvedValue({ sub: "guest-1" }) },
+        reservationRepository,
+        priceLabsBookingNotifier: { notifyBookingChange: jest.fn().mockResolvedValue({}) },
+      },
+      paymentService: {},
+    });
+    controller.stripe = null;
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer guest-token" },
+      body: JSON.stringify({ action: "cancel-booking", bookingId: "booking-1" }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(reservationRepository.cancelBookingByGuest).toHaveBeenCalledWith("booking-1", "guest-1", [
+      {
+        domitsPropertyId: "domits-property-1",
+        changeTypes: ["availability"],
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-02",
+        source: "BOOKING",
+      },
+    ]);
+  });
+
   test("cancel-booking PATCH action validates bookingId", async () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const cancelBooking = jest.fn();
