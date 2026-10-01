@@ -84,25 +84,33 @@ describe("ReservationRepository Channex outbox rows", () => {
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });
 
-  test("accepting an inquiry writes the outbox row inside its own transaction", async () => {
+  // The dates passed in were read before the lock; the locked row holds the real ones.
+  test("accepting an inquiry writes the outbox row from the locked booking's dates", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
     const locked = {};
     ["setLock", "where", "andWhere"].forEach((method) => (locked[method] = jest.fn(() => locked)));
-    locked.getMany = jest.fn().mockResolvedValue([{ id: "booking-1", status: "Inquiry" }]);
+    locked.getMany = jest.fn().mockResolvedValue([
+      {
+        id: "booking-1",
+        status: "Inquiry",
+        // Postgres returns bigint columns as text.
+        arrivaldate: String(Date.parse("2026-11-10")),
+        departuredate: String(Date.parse("2026-11-13")),
+      },
+    ]);
     manager.getRepository = jest.fn(() => ({ createQueryBuilder: () => locked }));
 
     await repository.acceptInquiryWithOverlapDecline({
       bookingId: "booking-1",
       propertyId: "property-1",
-      // Postgres returns bigint columns as text.
-      arrivalDateMs: String(Date.parse("2026-11-01")),
-      departureDateMs: String(Date.parse("2026-11-04")),
+      arrivalDateMs: Date.parse("2026-11-01"),
+      departureDateMs: Date.parse("2026-11-04"),
     });
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, {
       ...change,
-      dateFrom: "2026-11-01",
-      dateTo: "2026-11-03",
+      dateFrom: "2026-11-10",
+      dateTo: "2026-11-12",
     });
   });
 });

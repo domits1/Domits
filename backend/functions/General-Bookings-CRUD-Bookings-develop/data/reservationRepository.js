@@ -541,10 +541,11 @@ class ReservationRepository {
 
       await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
 
-      // The accepted booking now blocks its nights, so Channex has to close them too.
+      // The accepted booking now blocks its nights, so Channex has to close them too. The
+      // locked row has the current dates; the ones passed in were read before the lock.
       const channexChange = bookingAvailabilityChange(propertyId, {
-        arrivalMs: Number(arrivalDateMs),
-        departureMs: Number(departureDateMs),
+        arrivalMs: Number(targetRow.arrivaldate),
+        departureMs: Number(targetRow.departuredate),
       });
       if (channexChange) await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
 
