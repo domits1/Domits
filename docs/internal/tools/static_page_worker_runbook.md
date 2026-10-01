@@ -6,10 +6,10 @@ Run it only after all of these are true, in this order: the migration from [dsql
 
 ## What this changes, and why it is shaped this way
 
-- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by about ten functions and carries `AmazonS3FullAccess` plus `s3:PutObject`/`s3:GetObject` on `*`. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants exactly what the shared role grants today **minus every S3 action**, and adds one policy for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. The bucket name in the policy is the same one the worker reads from `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`.
+- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by about ten functions and carries `AmazonS3FullAccess` plus `s3:PutObject`/`s3:GetObject` on `*`. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants the actions the function's code actually calls (DSQL connect, the SSM parameters, Cognito user reads, DynamoDB reads, invoking the two Lambdas it calls, logs), copies the three inline policies it uses from the shared role, and adds one policy for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. Dropped on purpose: every S3 grant on `*`, `dsql:*` (which includes deleting the cluster), DynamoDB writes and the two Lambda invoke variants the code never uses. The bucket name in the policy is the same one the worker reads from `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`.
 - **The schedule is created `DISABLED`** and enabled in the last step, with five pages per run (`limit: 5`) against the function's 30 second timeout, no retries and no stale events, every five minutes. A run that finds nothing costs one invocation and one indexed read.
 - **A failed run fails the invocation** (the trigger rejects when a page failed or was not finished). The function's asynchronous retries are set to 0 so a failure runs once per tick, not three times, and an alarm on the function's `Errors` metric makes it visible. The HTTP handler never raises a function error, so that metric belongs to the worker and to crashes only.
-- **Two runs cannot work on the same site.** The outbox claim is guarded by site, revision and status, and a row held by a run that died is retried only after its 15 minute lease. Overlap between ticks is not possible at 5 minutes with runs of seconds, and if a run ever hangs, the next one sees `notClaimed` and moves on.
+- **Two runs cannot work on the same site.** The outbox claim is guarded by site, revision and status, and a row held by a run that died or hit the 30 second timeout is retried only after its 15 minute lease, at most five times per revision. Ticks do not overlap at 5 minutes with runs of seconds, but Lambda may deliver an asynchronous event twice and someone may invoke the task by hand during a tick; in both cases the second run sees `notClaimed` and moves on. One case counts no attempt: a shell read that fails happens before the claim, so a broken shell makes every tick fail without using up the five attempts. That costs one invocation per tick, bounded by the rate, and the alarm fires on the first one.
 
 ## 0. Preconditions, read-only
 
@@ -34,10 +34,10 @@ aws s3api head-object --bucket domits-direct-booking-sites-acceptance --key inde
   --query '{etag:ETag,modified:LastModified}' > shell-before.json
 aws s3api list-objects-v2 --bucket domits-direct-booking-sites-acceptance --prefix sites/by-host/ --profile domits \
   --query 'KeyCount' > pages-before.txt
-cat env-before.json | python3 -c 'import json,sys; v=json.load(sys.stdin); print(sorted(v))'
+python3 -c 'import json; v=json.load(open("env-before.json")); print(sorted(v)); print("routing:", v.get("DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE"), "bucket:", v.get("DIRECT_BOOKING_WEBSITE_SITES_BUCKET"))'
 ```
 
-Expected: `DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE` is present with value `true` (the worker uses it to call a fallback domain active) and `DIRECT_BOOKING_WEBSITE_SITES_BUCKET` is absent; `pages-before.txt` reads `0`.
+Expected: `routing: true bucket: None` (the worker uses the routing flag to call a fallback domain active; the bucket variable is what step 4 adds) and `pages-before.txt` reads `0`.
 
 ## 1. The execution role, nothing uses it yet
 
@@ -51,14 +51,14 @@ aws iam put-role-policy --role-name domits-property-handler --policy-name static
   --policy-document file://static-page-writer-policy.json
 for p in DirectBookingQuoteTokenSecretRead DirectBookingWebsiteCustomDomains PropertyImagesAccess; do
   aws iam get-role-policy --role-name General-Lambda-Function --policy-name $p --profile domits \
-    --query PolicyDocument --output json > "copied-$p.json"
+    --query PolicyDocument --output json > ~/static-page-worker-rollout/copied-$p.json
   aws iam put-role-policy --role-name domits-property-handler --policy-name $p --profile domits \
-    --policy-document "file://copied-$p.json"
+    --policy-document file://$HOME/static-page-worker-rollout/copied-$p.json
 done
 aws iam list-role-policies --role-name domits-property-handler --profile domits
 ```
 
-Expected: six inline policies: `property-handler-base`, `static-page-writer`, and the three copied from the shared role (the quote token parameter, the CloudFront tenants and certificates for custom domains, the images bucket). Not copied on purpose: `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
+Expected: five inline policies: `property-handler-base`, `static-page-writer`, and the three copied from the shared role (the quote token parameter, the CloudFront tenants and certificates for custom domains, the images bucket). Not copied on purpose: `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
 
 Check with the policy simulator, read-only, before anything uses the role:
 
@@ -72,13 +72,20 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
                   $B/static/js/main.js $B/robots.txt arn:aws:s3:::accommodation/images/x.jpg arn:aws:s3:::any-other-bucket/x
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output table \
   --query 'EvaluationResults[].[EvalActionName,EvalDecision]' \
-  --action-names ssm:GetParameter dsql:DbConnectAdmin cognito-idp:GetUser cognito-idp:AdminGetUser lambda:InvokeFunction \
-                 cloudfront:GetDistributionTenant acm:DescribeCertificate logs:PutLogEvents dynamodb:GetItem
+  --action-names ssm:GetParameter dsql:DbConnect dsql:DbConnectAdmin cognito-idp:GetUser cognito-idp:AdminGetUser \
+                 lambda:InvokeFunction cloudfront:GetDistributionTenant acm:DescribeCertificate logs:PutLogEvents dynamodb:GetItem
 ```
 
 Expected per resource in the first call (with several resources the simulator reports under `perResource`, the top-level decision is a summary): `s3:GetObject` allowed on `index.html` and on the images key, implicitDeny elsewhere; `s3:PutObject` allowed on the `sites/by-host/` key and the images key, explicitDeny on `index.html`, `static/`, `robots.txt`, implicitDeny on the other bucket; `s3:DeleteObject` allowed only on the images key, explicitDeny on the shell and the assets. Second call: every action `allowed`. Any `implicitDeny` there means a permission the function uses was not copied: stop, do not continue to step 3.
 
-Rollback: `aws iam delete-role-policy` for each of the six names, then `aws iam delete-role --role-name domits-property-handler`. Harmless while nothing uses it.
+Rollback, harmless while nothing uses the role:
+
+```bash
+for p in property-handler-base static-page-writer DirectBookingQuoteTokenSecretRead DirectBookingWebsiteCustomDomains PropertyImagesAccess; do
+  aws iam delete-role-policy --role-name domits-property-handler --policy-name $p --profile domits
+done
+aws iam delete-role --role-name domits-property-handler --profile domits
+```
 
 ## 2. The scheduler role, nothing uses it yet
 
@@ -97,7 +104,7 @@ aws iam simulate-principal-policy --profile domits --output json \
 
 Expected: `allowed` for `PropertyHandler`, `implicitDeny` for `UnifiedMessaging`.
 
-Rollback: `delete-role-policy`, then `delete-role`.
+Rollback: `aws iam delete-role-policy --role-name domits-static-page-worker-scheduler --policy-name invoke-property-handler --profile domits`, then `aws iam delete-role --role-name domits-static-page-worker-scheduler --profile domits`.
 
 ## 3. Switch `PropertyHandler` to its own role [CHANGES THE LIVE API]
 
@@ -132,27 +139,32 @@ aws lambda update-function-configuration --function-name PropertyHandler --profi
 
 `update-function-configuration --environment` replaces the whole variable set, so merge rather than retype:
 
+`update-function-configuration --environment` replaces the whole variable set, so read the variables again right before the change (step 0's copy may be minutes old) and pass the `RevisionId` of that read, so a change made in between makes the update fail instead of being overwritten:
+
 ```bash
 cd ~/static-page-worker-rollout
-python3 -c 'import json; v=json.load(open("env-before.json")); v["DIRECT_BOOKING_WEBSITE_SITES_BUCKET"]="domits-direct-booking-sites-acceptance"; json.dump({"Variables": v}, open("env-after.json","w"))'
-python3 -c 'import json; a=json.load(open("env-before.json")); b=json.load(open("env-after.json"))["Variables"]; print("added:", sorted(set(b)-set(a)), "changed:", [k for k in a if a[k]!=b.get(k)])'
+aws lambda get-function-configuration --function-name PropertyHandler --profile domits --region eu-north-1 \
+  --query '{RevisionId:RevisionId,Variables:Environment.Variables}' > env-current.json
+python3 -c 'import json; c=json.load(open("env-current.json")); v=dict(c["Variables"]); v["DIRECT_BOOKING_WEBSITE_SITES_BUCKET"]="domits-direct-booking-sites-acceptance"; json.dump({"Variables": v}, open("env-after.json","w")); json.dump({"Variables": c["Variables"]}, open("env-restore.json","w")); print("revision", c["RevisionId"]); print("added:", sorted(set(v)-set(c["Variables"])), "changed:", [k for k in c["Variables"] if c["Variables"][k]!=v[k]])'
 aws lambda update-function-configuration --function-name PropertyHandler --profile domits --region eu-north-1 \
-  --environment file://env-after.json --query 'keys(Environment.Variables)' --output text | tr '\t' '\n' | sort > env-keys-now.txt
+  --revision-id "$(python3 -c 'import json; print(json.load(open("env-current.json"))["RevisionId"])')" \
+  --environment file://env-after.json --query 'Environment.Variables' > env-now.json
 aws lambda wait function-updated --function-name PropertyHandler --profile domits --region eu-north-1
-python3 -c 'import json; print(sorted(json.load(open("env-before.json"))+["DIRECT_BOOKING_WEBSITE_SITES_BUCKET"]))' | tr -d "[]'," | tr ' ' '\n' | sort | diff - env-keys-now.txt && echo "only the bucket variable was added"
+python3 -c 'import json; a=json.load(open("env-after.json"))["Variables"]; b=json.load(open("env-now.json")); print("exactly as planned" if a==b else "DIFFERENT: "+str(sorted(set(a.items())^set(b.items()))))'
 ```
 
-Expected: `added: ['DIRECT_BOOKING_WEBSITE_SITES_BUCKET'] changed: []`, then "only the bucket variable was added". Rollback: `--environment file://env-before.json` wrapped the same way, or `python3 -c 'import json; json.dump({"Variables": json.load(open("env-before.json"))}, open("env-restore.json","w"))'` first.
+Expected: `added: ['DIRECT_BOOKING_WEBSITE_SITES_BUCKET'] changed: []`, then "exactly as planned". A `PreconditionFailedException` means the configuration changed between the read and the update: start the step again. Rollback: the same `update-function-configuration` with `--environment file://env-restore.json`, after a fresh read for a new `--revision-id`.
 
 ## 5. No asynchronous retries [CHANGES HOW A FAILED TASK RUN BEHAVES]
 
 ```bash
+aws lambda get-function-event-invoke-config --function-name PropertyHandler --profile domits --region eu-north-1 2>&1 | tail -1
 aws lambda put-function-event-invoke-config --function-name PropertyHandler --profile domits --region eu-north-1 \
   --maximum-retry-attempts 0 --maximum-event-age-in-seconds 60 \
-  --query '{retries:MaximumRetryAttempts,age:MaximumEventAgeInSeconds}'
+  --query '{retries:MaximumRetryAttempts,age:MaximumEventAgeInSeconds,destinations:DestinationConfig}'
 ```
 
-Expected: `retries 0, age 60`. This applies to asynchronous invocations only; API Gateway invokes synchronously and is unaffected, and step 0 confirmed there is no other invoker. Rollback: `aws lambda delete-function-event-invoke-config --function-name PropertyHandler`, which restores the defaults of 2 retries and 6 hours.
+Expected: the first command answers `ResourceNotFoundException` (on 2026-10-01 the function has no asynchronous configuration, so the defaults of 2 retries and 6 hours apply and there are no destinations to preserve); if it answers with a configuration instead, save that output and carry its destinations into the `put`, because `put` replaces the whole configuration. The second answers `retries 0, age 60, destinations null`. This applies to asynchronous invocations only; API Gateway invokes synchronously and is unaffected. Step 0 showed API Gateway as the only resource-policy invoker; an IAM principal with `lambda:InvokeFunction` could still invoke asynchronously, and would from now on get no retries either, which is the intended behaviour for the task. Rollback: `aws lambda delete-function-event-invoke-config --function-name PropertyHandler --profile domits --region eu-north-1`, which restores the defaults recorded above.
 
 ## 6. One run by hand, one page [WRITES THE FIRST OBJECT TO S3]
 
@@ -176,11 +188,18 @@ aws s3api head-object --bucket domits-direct-booking-sites-acceptance --key "$K"
 aws s3 cp "s3://domits-direct-booking-sites-acceptance/$K" - --profile domits | grep -o '<title>[^<]*</title>\|<link rel="canonical"[^>]*>\|<meta name="robots"[^>]*>'
 ```
 
-Expected: `text/html; charset=utf-8`, `public, max-age=300`, metadata `site-id` and `revision`, the site's title, a canonical on its own hostname, `index, follow`. In the DSQL query editor, `SELECT site_id, revision, status, attempt_count, failure_reason FROM main.static_page_outbox ORDER BY updated_at DESC LIMIT 10;` shows that row `ACTIVE`.
+Expected: `text/html; charset=utf-8`, `public, max-age=300`, metadata `site-id` and `revision`, the site's title, a canonical on the site's **primary** domain (a site with a custom domain gets the same page under its fallback hostname, and that object carries the custom domain as canonical on purpose), `index, follow`. In the DSQL query editor, `SELECT site_id, revision, status, attempt_count, failure_reason FROM main.static_page_outbox ORDER BY updated_at DESC LIMIT 10;` shows that row `ACTIVE`.
 
-A `FunctionError` here is the trigger rejecting: the summary in `run-1.json` names the site and the reason (`RENDER_FAILED` means the bundle is missing from the package, `S3_PUT_FAILED` with `AccessDenied` means step 1 is wrong, `NO_ACTIVE_DOMAIN` means the fallback routing variable). Nothing is served from these objects before the edge change, so a wrong page costs nothing but the fix.
+A `FunctionError` here is the trigger rejecting. `run-1.json` then holds the counts; a page that was *not finished* (a status write that threw) is listed in `errors` with its site and message, while a page that *failed to build* is recorded on its outbox row, so read `failure_reason` from the query above: `RENDER_FAILED` means the bundle is missing from the package, `S3_PUT_FAILED` with `AccessDenied` means step 1 is wrong, `NO_ACTIVE_DOMAIN` means the fallback routing variable. Nothing is served from these objects before the edge change, so a wrong page costs nothing but the fix. Republishing a site from the dashboard to get a row to build does change that site: it rewrites its published snapshot from the current property data.
 
-Rollback: the objects are the only change. `aws s3 rm s3://domits-direct-booking-sites-acceptance/sites/by-host/ --recursive --profile domits` removes them (the bucket is versioned, so a delete marker is written; that is enough, nothing routes to the key).
+Rollback: the run changed two things, the objects and the outbox rows it marked `ACTIVE` (with their attempt count). Removing the objects alone would leave rows that say a page exists while none does, and the worker never looks at an `ACTIVE` row again until the next publish. So first the rows, in the query editor, with the site ids from the `list-objects-v2` output above (the `site-id` metadata on each object):
+
+```sql
+UPDATE main.static_page_outbox SET status = 'PENDING', attempt_count = 0, processed_at = NULL, updated_at = (EXTRACT(EPOCH FROM now()) * 1000)::bigint
+WHERE site_id IN ('<site id 1>', '<site id 2>') AND status = 'ACTIVE';
+```
+
+Then the objects: `aws s3 rm s3://domits-direct-booking-sites-acceptance/sites/by-host/ --recursive --profile domits` (the bucket is versioned, so delete markers are written; that is enough, nothing routes to the key). With the rows back on `PENDING`, the next run rebuilds them, so do the rows only if the pages were wrong and the objects only if the pages must disappear.
 
 ## 7. The schedule, disabled
 
@@ -191,7 +210,7 @@ aws scheduler get-schedule --name domits-static-page-worker-rate-5-minutes --pro
   --query '{state:State,expr:ScheduleExpression,input:Target.Input,retry:Target.RetryPolicy,role:Target.RoleArn}'
 ```
 
-Expected: `state DISABLED`, `rate(5 minutes)`, the task input with `limit 5`, `MaximumRetryAttempts 0`, the scheduler role from step 2. Nothing runs yet. Rollback: `aws scheduler delete-schedule --name domits-static-page-worker-rate-5-minutes`.
+Expected: `state DISABLED`, `rate(5 minutes)`, the task input with `limit 5`, `MaximumRetryAttempts 0`, the scheduler role from step 2. Nothing runs yet. Rollback: `aws scheduler delete-schedule --name domits-static-page-worker-rate-5-minutes --profile domits --region eu-north-1`.
 
 ## 8. The alarm
 
@@ -202,11 +221,18 @@ aws cloudwatch put-metric-alarm --profile domits --region eu-north-1 \
   --namespace AWS/Lambda --metric-name Errors --dimensions Name=FunctionName,Value=PropertyHandler \
   --statistic Sum --period 300 --evaluation-periods 1 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold \
   --treat-missing-data notBreaching --alarm-actions arn:aws:sns:eu-north-1:115462458880:Alerts
-aws cloudwatch describe-alarms --alarm-names PropertyHandler-static-page-run-failed --profile domits --region eu-north-1 \
-  --query 'MetricAlarms[0].[StateValue,Threshold,Period]' --output text
+aws cloudwatch put-metric-alarm --profile domits --region eu-north-1 \
+  --alarm-name static-page-worker-schedule-not-delivered \
+  --alarm-description "EventBridge Scheduler could not deliver or dropped a tick of the static page worker." \
+  --namespace AWS/Scheduler --metric-name TargetErrorCount --dimensions Name=ScheduleGroup,Value=default \
+  --statistic Sum --period 300 --evaluation-periods 1 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold \
+  --treat-missing-data notBreaching --alarm-actions arn:aws:sns:eu-north-1:115462458880:Alerts
+aws cloudwatch describe-alarms --profile domits --region eu-north-1 \
+  --alarm-names PropertyHandler-static-page-run-failed static-page-worker-schedule-not-delivered \
+  --query 'MetricAlarms[].[AlarmName,StateValue,Threshold,Period,AlarmActions[0]]' --output text
 ```
 
-Expected: `OK 1.0 300`. `Alerts` is the existing topic with an HTTPS subscriber; check with the team that someone receives it. Rollback: `aws cloudwatch delete-alarms --alarm-names PropertyHandler-static-page-run-failed`.
+Expected: both alarms with threshold `1.0`, period `300` and the `Alerts` topic as action; the state is `INSUFFICIENT_DATA` for the first minutes and `OK` after the first evaluation. The first alarm catches a run that rejected, crashed or timed out; the second catches a tick the scheduler could not deliver, which the first can never see. The `ScheduleGroup` dimension is shared with the other schedules in the `default` group, so a delivery failure of one of them raises it too; that is acceptable for an alarm that should be rare. `Alerts` is the existing topic with an HTTPS subscriber; check with the team that someone receives it. Rollback: `aws cloudwatch delete-alarms --alarm-names PropertyHandler-static-page-run-failed static-page-worker-schedule-not-delivered --profile domits --region eu-north-1`.
 
 ## 9. Enable the schedule, last [STARTS THE WORKER]
 
@@ -222,14 +248,27 @@ Expected: `ENABLED`. Within six minutes:
 ```bash
 aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Invocations --profile domits --region eu-north-1 \
   --dimensions Name=FunctionName,Value=PropertyHandler --statistics Sum --period 300 \
-  --start-time $(date -u -v-15M +%Y-%m-%dT%H:%M:%SZ) --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --query 'Datapoints[].[Timestamp,Sum]' --output text
+  --start-time $(python3 -c 'import datetime; print((datetime.datetime.utcnow()-datetime.timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M:%SZ"))') \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --query 'Datapoints[].[Timestamp,Sum]' --output text
+aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Errors --profile domits --region eu-north-1 \
+  --dimensions Name=FunctionName,Value=PropertyHandler --statistics Sum --period 300 \
+  --start-time $(python3 -c 'import datetime; print((datetime.datetime.utcnow()-datetime.timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M:%SZ"))') \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --query 'Datapoints[].[Timestamp,Sum]' --output text
 aws logs filter-log-events --log-group-name /aws/lambda/PropertyHandler --profile domits --region eu-north-1 \
-  --start-time $(( $(date +%s) * 1000 - 900000 )) --filter-pattern '"StaticPageWorker"' --query 'events[].message' --output text | tail -5
+  --start-time $(( $(date +%s) * 1000 - 900000 )) --filter-pattern '?"static page run" ?"StaticPageWorker"' --query 'events[].message' --output text | tail -5
 ```
 
-Expected: an invocation per tick and no `[StaticPageWorker]` error lines; the outbox query from step 6 shows no row stuck in `BUILDING` longer than a run.
+The invocation count includes the normal API traffic, so it only shows that the function was called; the signals that belong to the worker are the `Errors` sum (expected: no datapoint above 0), the log filter (expected: no line; a rejected run logs `The static page run left ...`, an unexpected error logs `[StaticPageWorker]`), and the outbox query from step 6 (expected: rows moving to `ACTIVE`, none `FAILED` with a reason, none `BUILDING` longer than a run).
 
-Rollback, in this order: `aws scheduler update-schedule ... --state DISABLED` (the file from step 7 does exactly that), which stops new runs within one tick; step 6's delete if the objects must go; steps 5, 4 and 3 in reverse only if the role or the configuration is the problem. Disabling the schedule is enough for every failure that is not an `AccessDenied` on the API.
+Rollback, in this order:
+
+```bash
+cd /path/to/Domits/backend/infrastructure/static-page-worker
+aws scheduler update-schedule --profile domits --region eu-north-1 --cli-input-json file://schedule.json --query ScheduleArn
+aws scheduler get-schedule --name domits-static-page-worker-rate-5-minutes --profile domits --region eu-north-1 --query State
+```
+
+`schedule.json` carries `State: DISABLED`, so this stops new ticks; expected `DISABLED`. A run that was already accepted finishes on its own within the 30 second timeout, so wait one minute and confirm with the outbox query that no row is `BUILDING` before touching anything else. Then step 6's rows and objects only if the pages must go, and steps 5, 4 and 3 in reverse only if the role or the configuration is the problem. Disabling the schedule is enough for every failure that is not an `AccessDenied` on the API.
 
 ## What it costs per month
 
@@ -239,10 +278,11 @@ Prices for eu-north-1, list, rounded up. The idle polling dominates; the pages t
 | --- | --- | --- |
 | EventBridge Scheduler, 8,640 ticks | $0.01 | $0.01 |
 | Lambda, 8,640 runs that find nothing, about 0.3 s at 1 GB | $0.05 | $0.05 |
-| DSQL, one indexed read per empty run | about $0.07 | about $0.07 |
-| Lambda plus DSQL plus S3 per built page, about 1 s and ten statements | under $0.01 for a few republishes | about $0.10 once for the backfill, then under $0.01 |
+| DSQL, one indexed read per empty run, assumed 1 DPU each at $8 per million | about $0.07 | about $0.07 |
+| Lambda plus DSQL plus S3 per built page, about 1 s and ten statements, assumed 10 DPU | under $0.01 for a few republishes | under $0.01 after the first fill |
 | S3 storage, about 9 KB per page | $0.00 | $0.00 |
-| CloudWatch alarm | $0.10 | $0.10 |
-| **Total** | **about $0.25** | **about $0.35, plus about $0.10 once** |
+| Two CloudWatch alarms | $0.20 | $0.20 |
+| **Every month** | **about $0.35** | **about $0.35** |
+| **Once, the first fill of 1000 pages** | | **about $0.10** |
 
-Halving the rate halves the first three lines. A thousand sites backfill in about 17 hours at five pages every five minutes; raise `limit` in the schedule input to 10 for a faster first fill, never above the number of pages that fit in the 30 second timeout (about one second each).
+The DPU figures are assumptions, not measurements; DSQL bills compute and bytes, and the first week of the schedule will show the real number on the cluster's billing page. Halving the rate halves the first three lines. A thousand queued sites take about 17 hours at five pages every five minutes; raise `limit` in the schedule input to 10 for a faster first fill, never above the number of pages that fit in the 30 second timeout (about one second each).
