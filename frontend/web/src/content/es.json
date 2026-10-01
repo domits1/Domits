@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Plantilla seleccionada",
+    "availabilityHint": "Ya puedes usar Essentials. Elite estará disponible próximamente.",
+    "selected": "Seleccionada",
+    "comingSoon": "Próximamente",
+    "title": "Elige una plantilla para tu sitio web",
+    "unsupportedPreview": "Aún no hay una vista previa disponible para esta plantilla.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Sitio web de una sola página, personalización básica y funciones esenciales"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Sitio web multifuncional, personalización avanzada y funciones exclusivas"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Dónde estarás",

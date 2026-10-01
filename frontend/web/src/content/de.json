@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Ausgewählte Vorlage",
+    "availabilityHint": "Essentials kannst du bereits jetzt nutzen. Elite ist demnächst verfügbar.",
+    "selected": "Ausgewählt",
+    "comingSoon": "Demnächst verfügbar",
+    "title": "Wähle eine Website-Vorlage",
+    "unsupportedPreview": "Für diese Vorlage ist noch keine Vorschau verfügbar.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Website mit einer Seite, grundlegenden Anpassungsmöglichkeiten und wesentlichen Funktionen"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Vielseitige Website mit erweiterten Anpassungsmöglichkeiten und exklusiven Funktionen"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Wo du sein wirst",
