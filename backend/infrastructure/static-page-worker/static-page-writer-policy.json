@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadTheAppShell",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::domits-direct-booking-sites-acceptance/index.html"
+    },
+    {
+      "Sid": "WritePagesUnderTheirHostname",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::domits-direct-booking-sites-acceptance/sites/by-host/*"
+    },
+    {
+      "Sid": "NeverTouchTheShellOrTheAssets",
+      "Effect": "Deny",
+      "Action": ["s3:PutObject", "s3:PutObjectAcl", "s3:DeleteObject", "s3:DeleteObjectVersion"],
+      "Resource": [
+        "arn:aws:s3:::domits-direct-booking-sites-acceptance/index.html",
+        "arn:aws:s3:::domits-direct-booking-sites-acceptance/static/*",
+        "arn:aws:s3:::domits-direct-booking-sites-acceptance/robots.txt",
+        "arn:aws:s3:::domits-direct-booking-sites-acceptance/sitemap.xml"
+      ]
+    }
+  ]
+}

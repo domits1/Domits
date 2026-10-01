@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SameAsTheSharedRoleWithoutS3",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:GetUser",
+        "dsql:*",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem",
+        "lambda:InvokeAsync",
+        "lambda:InvokeFunction",
+        "lambda:InvokeFunctionUrl",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "ssm:GetParameter"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
