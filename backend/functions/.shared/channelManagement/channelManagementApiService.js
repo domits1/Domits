@@ -87,6 +87,7 @@ export default class ChannelManagementApiService {
       roomTypes,
       channexCredentialStore,
       channexProviderClient,
+      propertyLookup: externalBookingImportRepository,
     });
     this.channexAriPayloadService = new ChannexAriPayloadService({
       channexMappingService: this.channexMappingService,
