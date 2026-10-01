@@ -19,7 +19,7 @@ export class AuthManager {
     constructor(dynamoDbClient, systemManagerRepository) {
         this.cognitoRepository = new CognitoRepository();
         this.propertyRepository = new PropertyRepository(dynamoDbClient, systemManagerRepository);
-        this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+        this.bookingRepository = new BookingRepository(systemManagerRepository);
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
         this.teamMemberRepository = new TeamMemberRepository();
     }
@@ -114,6 +114,9 @@ export class AuthManager {
             booking = await this.bookingRepository.getBookingById(bookingId)
         } catch (error) {
             throw new Forbidden("Booking not found.")
+        }
+        if (!booking) {
+            throw new NotFoundException("Booking not found.")
         }
         if (booking.guestId !== user.Username) {
             throw new Forbidden("You must be the guest of this booking to access it.")

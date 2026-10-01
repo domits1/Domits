@@ -29,6 +29,7 @@ const CATALOG_COLUMNS = [
   "guest_email",
   "public_booking_ref",
   "idempotency_key",
+  "special_request",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
