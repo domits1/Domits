@@ -6,12 +6,19 @@ Run it only after all of these are true, in this order: the migration from [dsql
 
 ## What this changes, and why it is shaped this way
 
-- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by about ten functions and carries `AmazonS3FullAccess` plus `s3:PutObject`/`s3:GetObject` on `*`. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants the actions the function's code actually calls (DSQL connect, the SSM parameters, Cognito user reads, DynamoDB reads, invoking the two Lambdas it calls, logs), copies the three inline policies it uses from the shared role, and adds one policy for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. Dropped on purpose: every S3 grant on `*`, `dsql:*` (which includes deleting the cluster), DynamoDB writes and the two Lambda invoke variants the code never uses. The bucket name in the policy is the same one the worker reads from `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`.
+- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by 37 functions (every backend function, the test functions and `PropertyHandler-Dev`) and carries `AmazonS3FullAccess`, `s3:PutObject`/`s3:GetObject` and `dsql:*` on `*`, and a developer policy. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants a short list of read actions (DSQL connect, SSM parameters, Cognito user reads, DynamoDB reads, invoking a Lambda, logs; three of them, `dynamodb:BatchGetItem`, `dynamodb:Query` and `dsql:DbConnect`, are not called today), copies the three inline policies the function uses from the shared role, and adds one policy for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. Dropped on purpose: every S3 grant on `*`, `dsql:*` (which includes deleting the cluster), DynamoDB writes, the developer policy and the two Lambda invoke variants the code never uses. The bucket name in the policy is the same one the worker reads from `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`, and the images policy names `accommodation`, so `S3_BUCKET` (which `propertyImageRepository.js` would use as an override) must stay unset on the function.
+- **Considered and rejected: keeping the shared role and only adding the deny.** It would be a smaller change with nothing to break, but it protects four names and nothing else: every other key in the sites bucket (`manifest.json`, `asset-manifest.json`, the icons, any root file a future build adds), every other bucket and the sites bucket's own lifecycle, versioning and policy would stay writable for all 37 functions, and the list of denied names would go stale with the next frontend file. The role switch is the only option that keeps the worker inside its two prefixes.
 - **The schedule is created `DISABLED`** and enabled in the last step, with five pages per run (`limit: 5`) against the function's 30 second timeout, no retries and no stale events, every five minutes. A run that finds nothing costs one invocation and one indexed read.
 - **A failed run fails the invocation** (the trigger rejects when a page failed or was not finished). The function's asynchronous retries are set to 0 so a failure runs once per tick, not three times, and an alarm on the function's `Errors` metric makes it visible. The HTTP handler never raises a function error, so that metric belongs to the worker and to crashes only.
 - **Two runs cannot work on the same site.** The outbox claim is guarded by site, revision and status, and a row held by a run that died or hit the 30 second timeout is retried only after its 15 minute lease, at most five times per revision. Ticks do not overlap at 5 minutes with runs of seconds, but Lambda may deliver an asynchronous event twice and someone may invoke the task by hand during a tick; in both cases the second run sees `notClaimed` and moves on. One case counts no attempt: a shell read that fails happens before the claim, so a broken shell makes every tick fail without using up the five attempts. That costs one invocation per tick, bounded by the rate, and the alarm fires on the first one.
 
+## For colleagues who change `PropertyHandler` later
+
+Once step 3 is done, `PropertyHandler` no longer runs on the shared role. Any new AWS call in `PropertyHandler` (a new SDK command, a new bucket or prefix, a new parameter, a new function to invoke, also through `backend/functions/.shared/` or the `database` package) needs its action and resource added to `backend/infrastructure/static-page-worker/property-handler-base-policy.json` (or a scoped policy next to it) **and** applied to the role with `aws iam put-role-policy --role-name domits-property-handler ...`, because no deploy applies IAM. Without that, the route that makes the call answers 500 with `AccessDenied` in the function's log; nothing else breaks. Check first with the simulator command in step 1, and keep the explicit deny: a new allow never overrides it.
+
 ## 0. Preconditions, read-only
+
+The person running this needs `iam:PassRole` on the new role (step 3 hands it to Lambda) besides the IAM, Lambda, Scheduler, CloudWatch, logs and S3 actions of the other steps. Checked read-only with `aws iam simulate-principal-policy` on 2026-10-01: the `AWSReservedSSO_Domits-Developer_...` role (the `domits` profile) has every one of them, so a developer can run the whole runbook alone. Repeat the check for another role with the same command and the actions named in each step.
 
 ```bash
 aws lambda get-function-configuration --function-name PropertyHandler --profile domits --region eu-north-1 \
@@ -37,7 +44,16 @@ aws s3api list-objects-v2 --bucket domits-direct-booking-sites-acceptance --pref
 python3 -c 'import json; v=json.load(open("env-before.json")); print(sorted(v)); print("routing:", v.get("DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE"), "bucket:", v.get("DIRECT_BOOKING_WEBSITE_SITES_BUCKET"))'
 ```
 
-Expected: `routing: true bucket: None` (the worker uses the routing flag to call a fallback domain active; the bucket variable is what step 4 adds) and `pages-before.txt` reads `0`.
+Expected: `routing: true bucket: None` (the worker uses the routing flag to call a fallback domain active; the bucket variable is what step 4 adds), `S3_BUCKET` absent from the key list (the role names `accommodation`; an override would point image uploads at a bucket the role cannot reach), and `pages-before.txt` reads `0`.
+
+One more read, in the DSQL query editor: image keys that do not start with `images/` would be refused by the new role on delete, because `PropertyImagesAccess` covers `accommodation/images/*` only.
+
+```sql
+SELECT count(*) FROM main.property_image WHERE key NOT LIKE 'images/%';
+SELECT count(*) FROM main.property_image_variant WHERE s3_key NOT LIKE 'images/%';
+```
+
+Expected: `0` and `0`. If not, note the keys; deleting those images fails until the policy names their prefix.
 
 ## 1. The execution role, nothing uses it yet
 
@@ -108,7 +124,7 @@ Rollback: `aws iam delete-role-policy --role-name domits-static-page-worker-sche
 
 ## 3. Switch `PropertyHandler` to its own role [CHANGES THE LIVE API]
 
-Wait at least 15 seconds after step 1 so the role has propagated. From this moment every property request runs with the new role; the blast radius is `PropertyHandler` alone.
+Wait at least 15 seconds after step 1 so the role has propagated. From this moment every property request runs with the new role; the blast radius is `PropertyHandler` alone. A missing permission does not show on the function's `Errors` metric, because the handlers turn it into an HTTP 500, so the check is the log filter below, run after every action.
 
 ```bash
 aws lambda update-function-configuration --function-name PropertyHandler --profile domits --region eu-north-1 \
@@ -119,20 +135,27 @@ aws lambda invoke --function-name PropertyHandler --profile domits --region eu-n
   | head -c 300; echo
 ```
 
-Expected: `statusCode` 200 with property cards. That request reads SSM and DSQL with the new role. Then watch the real traffic for ten minutes:
+Expected: `statusCode` 200 with property cards. That request reads SSM and DSQL with the new role. Then, logged in as a host on the acceptance web app, do each of these and run the log filter after each:
+
+1. open the host dashboard property list (`GET /property/hostDashboard/all`: DSQL, Cognito);
+2. upload a photo on one property and wait for it to appear (`POST /property/images/presign`, the browser's `PUT` to the presigned URL, `POST /property/images/confirm`: the images policy; a presign can succeed while the browser's `PUT` gets 403, so the photo must actually appear);
+3. open one published direct booking site and request a quote for two nights (`POST /property/website/public/quote`: the quote token parameter);
+4. block one date on that property's calendar and unblock it again (`PATCH /property/calendar/overrides`: this invokes the PriceLabs and the UnifiedMessaging functions; both swallow a failure into their own evidence, so the log filter is the only place an `AccessDenied` shows);
+5. open the custom domain page of the website settings (`GET /property/website/domains`: CloudFront tenants and ACM).
 
 ```bash
 aws logs filter-log-events --log-group-name /aws/lambda/PropertyHandler --profile domits --region eu-north-1 \
   --start-time $(( $(date +%s) * 1000 - 600000 )) --filter-pattern '"AccessDenied"' --query 'events[].message' --output text | head
 ```
 
-Expected: nothing. An `AccessDenied` here names the missing permission; roll back first, then add it to the role and repeat the simulator check.
+Expected: nothing, after each action and again after ten minutes of real traffic. An `AccessDenied` here names the missing permission; roll back first, then add it to the role and repeat the simulator check.
 
-Rollback, about ten seconds:
+Rollback, one command, then wait for the status; it usually takes seconds, allow a few minutes:
 
 ```bash
 aws lambda update-function-configuration --function-name PropertyHandler --profile domits --region eu-north-1 \
   --role arn:aws:iam::115462458880:role/General-Lambda-Function --query Role
+aws lambda wait function-updated --function-name PropertyHandler --profile domits --region eu-north-1
 ```
 
 ## 4. The bucket variable [CHANGES THE LIVE API CONFIGURATION]
