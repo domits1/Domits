@@ -146,8 +146,8 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         .map(clone);
     },
 
-    getPrimaryLiveDomainBySiteId: async (siteId) => {
-      calls.push(["getPrimaryLiveDomainBySiteId", siteId]);
+    getFallbackDomainBySiteId: async (siteId) => {
+      calls.push(["getFallbackDomainBySiteId", siteId]);
       const row = rowsForSite(siteId).find((entry) => entry.domainType === "FALLBACK");
       return row ? clone(row) : null;
     },

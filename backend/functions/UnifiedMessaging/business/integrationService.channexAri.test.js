@@ -242,6 +242,10 @@ const createService = (overrides = {}) => {
     resLinks: {},
     channexEvidence: {},
     channexBookingRevisions: {},
+    // These tests are about the mapping itself; ownership is covered in channexMappingService.ownership.test.js.
+    externalBookingImportRepository: {
+      getDomitsPropertyContext: jest.fn().mockResolvedValue({ propertyId: "property-1", hostId: "user-1" }),
+    },
     runner: {},
     credentialStore: {},
     holiduCredentialStore: {},

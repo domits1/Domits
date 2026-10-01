@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Ausgewählte Vorlage",
+    "availabilityHint": "Essentials kannst du bereits jetzt nutzen. Elite ist demnächst verfügbar.",
+    "selected": "Ausgewählt",
+    "comingSoon": "Demnächst verfügbar",
+    "title": "Wähle eine Website-Vorlage",
+    "unsupportedPreview": "Für diese Vorlage ist noch keine Vorschau verfügbar.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Website mit einer Seite, grundlegenden Anpassungsmöglichkeiten und wesentlichen Funktionen"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Vielseitige Website mit erweiterten Anpassungsmöglichkeiten und exklusiven Funktionen"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Wo du sein wirst",
@@ -1112,6 +1130,10 @@
           "title": "Kommunikationseinstellungen",
           "desc": "Wähle, wie du wichtige Updates und Benachrichtigungen von Domits erhältst."
         },
+        "privacySecurity": {
+          "title": "Datenschutz & Sicherheit",
+          "desc": "Verwalte deine Anmeldesicherheit, dein Passwort und die Zwei-Faktor-Authentifizierung."
+        },
         "company": {
           "title": "Unternehmen",
           "desc": "Verwalte deinen Unternehmensnamen und grundlegende Daten."
@@ -1283,6 +1305,7 @@
         "emailAddress": "E-Mail-Adresse",
         "verificationCode": "Bestätigungscode an deine E-Mail gesendet",
         "verify": "Verifizieren",
+        "emailUpdated": "E-Mail aktualisiert!",
         "phone": "Telefon",
         "phoneNumber": "Telefonnummer",
         "sex": "Geschlecht",
@@ -1327,8 +1350,31 @@
         "save": "Änderungen speichern",
         "saving": "Wird gespeichert...",
         "saved": "Gespeichert!",
+        "saveError": "Speichern fehlgeschlagen. Bitte versuche es erneut.",
         "cancel": "Abbrechen",
         "close": "Schließen"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Datenschutz & Sicherheit",
+      "title": "Datenschutz & Sicherheit",
+      "subtitle": "Verwalte deine Anmeldesicherheit, dein Passwort und die Zwei-Faktor-Authentifizierung.",
+      "authenticationSection": "Authentifizierung",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-Mail",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "unavailable": "Nicht verfügbar",
+        "verified": "Verifiziert",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-App",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "loading": "Dein Authentifizierungsstatus wird geladen...",
+        "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
+      },
+      "pin": {
+        "comingSoon": "Demnächst verfügbar."
       }
     },
     "communicationPreferences": {
@@ -1403,12 +1449,31 @@
       "subtitle": "Verifiziere deine Unterkunft und Hostidentität für lokale Registrierungen.",
       "section": "Compliance-Details",
       "fields": {
+        "property": "Unterkunft",
+        "untitledListing": "Unterkunft ohne Titel",
         "propertyRegistration": "Unterkunftsregistrierung",
         "placeholder": "Registrierungsnummer",
+        "noRegistrationYet": "Noch keine Registrierungsnummer hinzugefügt.",
         "hint": "Diese Nummer beweist, dass deine Unterkunft bei den lokalen Behörden registriert ist. Weitere Compliance-Methoden (ID-Verifizierung, Adressnachweis) sind bald verfügbar."
       },
+      "states": {
+        "loading": "Deine Unterkünfte werden geladen...",
+        "empty": "Du hast noch keine Unterkünfte.",
+        "createListing": "Erstelle deine erste Unterkunft"
+      },
+      "unsavedChangesConfirm": "Du hast ungespeicherte Änderungen. Die Unterkunft wechseln und die Änderungen verwerfen?",
+      "errors": {
+        "load": "Wir konnten deine Unterkünfte nicht laden. Bitte versuche es erneut.",
+        "duplicate": "Diese Registrierungsnummer wird bereits von einer anderen Unterkunft verwendet.",
+        "noAccess": "Du hast keinen Zugriff, um diese Unterkunft zu ändern.",
+        "validation": "Gib eine gültige Registrierungsnummer ein. Sie darf nicht leer sein, nicht mit AUTO- beginnen und nicht länger als 255 Zeichen sein.",
+        "generic": "Wir konnten deine Registrierungsnummer nicht speichern. Bitte versuche es erneut.",
+        "registrationUnavailable": "Wir konnten die Registrierungsnummer dieser Unterkunft nicht laden. Bitte lade die Seite neu oder kontaktiere den Support."
+      },
       "buttons": {
-        "comingSoon": "Demnächst verfügbar"
+        "save": "Speichern",
+        "saving": "Wird gespeichert...",
+        "saved": "Gespeichert"
       }
     },
     "ratePlans": {
@@ -1422,6 +1487,44 @@
         "title": "Host-exklusive Gebühr",
         "sub": "10% der Buchungen werden vom Host bezahlt",
         "note": "Ermöglicht Domits den 24/7-Betrieb der Plattform"
+      }
+,
+      "enterprise": {
+        "cardTitle": "Enterprise-Tarifplan",
+        "cardSubtitle": "Preis pro aktiver Unterkunft und Monat.",
+        "cardNote": "Skaliert automatisch mit der Anzahl deiner aktiven Unterkünfte.",
+        "breadcrumb": "Enterprise-Tarifplan",
+        "title": "Enterprise-Tarifplan",
+        "subtitle": "Einfache Preise, die mit deinem aktiven Unterkunftsportfolio wachsen.",
+        "loading": "Enterprise-Tarifplan wird geladen...",
+        "loadError": "Dein Enterprise-Tarifplan konnte gerade nicht geladen werden.",
+        "notActiveTitle": "Du hast keinen Enterprise-Tarifplan",
+        "notActiveDescription": "Für dieses Konto gibt es keinen aktiven Enterprise-Tarifplan.",
+        "currentPlan": "Aktueller Plan",
+        "currentRate": "Aktueller Tarif",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "aktive Unterkunft / Monat",
+        "active": "Aktiv",
+        "activeProperties": "Aktive Unterkünfte",
+        "billableProperties": "Abrechenbare Unterkünfte in deinem Portfolio",
+        "pricePerProperty": "Preis pro Unterkunft",
+        "estimatedMonthlyCost": "Geschätzte monatliche Kosten",
+        "basedOnPropertyCount": "Basierend auf deiner aktuellen Anzahl an Unterkünften",
+        "pricing": "Preise",
+        "pricingLabel": "Enterprise-Preis",
+        "monthlySubscription": "Monatliches Abonnement",
+        "nextInvoice": "Nächste Rechnung",
+        "nextInvoiceLabel": "Nächste Rechnung",
+        "billingFrequency": "Abrechnungsintervall",
+        "monthly": "Monatlich",
+        "billingUnit": "Abrechnungseinheit",
+        "activeProperty": "Aktive Unterkunft",
+        "billingHistory": "Rechnungshistorie",
+        "noInvoices": "Noch keine Rechnungen verfügbar",
+        "invoicesDescription": "Deine Enterprise-Rechnungen erscheinen hier, sobald eine Rechnungshistorie verfügbar ist.",
+        "billingContact": "Abrechnungskontakt",
+        "billingContactTitle": "Abrechnungskontakt",
+        "billingContactDescription": "Die Verwaltung des Abrechnungskontakts wird hier verfügbar sein."
       }
     },
     "team": {
