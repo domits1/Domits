@@ -92,6 +92,13 @@ describe("the marketplace robots.txt", () => {
     expect(disallowed).not.toContain("Disallow: /listingdetails");
   });
 
+  it("keeps blocking the website views until they carry a noindex of their own", () => {
+    const disallowed = robotsLines().filter((line) => line.startsWith("Disallow:"));
+
+    expect(disallowed).toContain("Disallow: /website-live");
+    expect(disallowed).toContain("Disallow: /website-preview/");
+  });
+
   it("points at the production sitemap", () => {
     expect(robotsLines()).toContain("Sitemap: https://www.domits.com/sitemap.xml");
   });
