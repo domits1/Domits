@@ -14,6 +14,13 @@ const MOCK_CHANNEX_CONNECTION_STATE = "NOT_CONNECTED";
 const MOCK_CHANNEX_SYNC_STATE = "NONE";
 // NONE | SUCCESS | FAILED
 
+// Flip this to preview the error handling in the browser: the status call then rejects with an
+// error carrying this HTTP status, like requestChannex in hostintegrations/channexApi.js does.
+// 403 = host outside the Channex allowlist (expected, shown as the normal empty state);
+// 401 / 5xx = real error with a Retry button.
+const MOCK_CHANNEX_ERROR_STATUS = null;
+// null | 401 | 403 | 500
+
 const MOCK_INTEGRATION_ACCOUNT_ID = "mock-integration-account-id";
 const MOCK_DOMITS_PROPERTY_ID = "mock-domits-property-id";
 
@@ -156,14 +163,30 @@ const MOCK_SYNC_EVIDENCE_BY_STATE = {
 // Real endpoint: GET /integrations/channex/status?userId=
 export const getChannexStatus = async ({ userId } = {}) => {
   void userId; // unused until this reads live data
+  if (MOCK_CHANNEX_ERROR_STATUS) {
+    const error = new Error(`GET /integrations/channex/status failed with status ${MOCK_CHANNEX_ERROR_STATUS}`);
+    error.status = MOCK_CHANNEX_ERROR_STATUS;
+    throw error;
+  }
   return MOCK_CHANNEX_STATUS_BY_STATE[MOCK_CHANNEX_CONNECTION_STATE];
 };
 
+// Open question for Enes: real contract is either a new Channex mapping-list endpoint, or
+// filtering hostDashboard/all by mapping -- mocked as a simple list for now. Entries use the
+// hostDashboard/all listing shape (listing.property.id), so the swap keeps the same consumers.
+const MOCK_MAPPED_LISTINGS = [
+  { property: { id: MOCK_DOMITS_PROPERTY_ID, title: "Mock canal house" } },
+  { property: { id: "mock-domits-property-id-2", title: "Mock beach apartment" } },
+];
+
+export const getMappedProperties = async ({ userId } = {}) => {
+  void userId; // unused until this reads live data
+  return MOCK_MAPPED_LISTINGS;
+};
+
 // Real endpoint: GET /integrations/channex/sync-evidence/latest?userId=&domitsPropertyId=
-// domitsPropertyId is required by the real endpoint (400 without it). Open question for Enes:
-// whether this tab should scope to one property or show the latest sync across all of a host's
-// mapped properties -- the mock ignores the argument's value either way for now.
+// domitsPropertyId is required by the real endpoint (400 without it), so the tab scopes the
+// latest sync to the property picked in the view. The mock echoes it back in the response.
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
-  void domitsPropertyId; // unused until this reads live data
-  return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
+  return { ...MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE], domitsPropertyId };
 };
