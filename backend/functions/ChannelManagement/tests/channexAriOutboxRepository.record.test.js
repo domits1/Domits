@@ -61,13 +61,13 @@ describe("recording the outcome of a push", () => {
     }
   });
 
-  test("skipping is not guarded, because unmapped rows are skipped before they are claimed", async () => {
+  test("skipping is guarded too, because the worker claims unmapped rows before it skips them", async () => {
     await repository.markSkipped(["row-1"], { now: NOW, failureReason: "NOT_MAPPED" });
 
     const [sql, params] = client.query.mock.calls[0];
     expect(params[0]).toBe("SKIPPED");
-    expect(sql).not.toContain("AND status =");
-    expect(params).toHaveLength(6);
+    expect(sql).toContain("AND status = $7");
+    expect(params[6]).toBe("PROCESSING");
   });
 
   test("does nothing and asks the database nothing when the id list is empty", async () => {

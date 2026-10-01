@@ -225,7 +225,12 @@ export default class ChannexAriOutboxRepository {
   }
 
   async markSkipped(ids, { now = Date.now(), failureReason = null } = {}) {
-    return this.#setStatus(ids, { status: CHANNEX_ARI_OUTBOX_STATUS.SKIPPED, now, failureReason });
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.SKIPPED,
+      now,
+      failureReason,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
   }
 
   async returnToPending(ids, { now = Date.now(), failureReason = null, nextAttemptAt = null } = {}) {
