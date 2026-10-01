@@ -11,10 +11,10 @@ import { PublicBookingRequestError } from "../util/exception/PublicBookingReques
 import { randomUUID } from "node:crypto";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
+import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 const responseHeaderJSON = responsejson;
 const REFUND_CURRENCY = "eur";
 const STRIPE_REFUND_REASON = "requested_by_customer";
-const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
 const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
 const PUBLIC_SITE_BOOKINGS_PATH_PATTERN = /\/public\/sites\/([^/]+)\/bookings\/?$/;
 const PUBLIC_BOOKING_INTERNAL_ERROR_MESSAGE = "Something went wrong while sending your booking request. Please try again.";
@@ -120,10 +120,7 @@ class ReservationController {
       return {
         statusCode: returnInfo.statusCode,
         headers: responseHeaderJSON,
-        response:
-          returnInfo.channexAvailabilitySync === undefined
-            ? paymentData
-            : { ...paymentData, channexAvailabilitySync: returnInfo.channexAvailabilitySync },
+        response: paymentData,
       };
     } catch (error) {
       console.error(error);
@@ -326,6 +323,16 @@ class ReservationController {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
+    // Cancel first: the cancellation and its Channex outbox row commit together before any
+    // money moves, so a failed cancellation never leaves a refund behind.
+    const channexChange = shouldSyncChannexCancellation(booking)
+      ? bookingAvailabilityChange(booking.property_id, {
+          arrivalMs: Number(booking.arrivaldate),
+          departureMs: Number(booking.departuredate),
+        })
+      : null;
+    await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, [channexChange]);
+
     let refundAmountCents = 0;
     let stripeRefundId = null;
     let refundError = null;
@@ -350,7 +357,7 @@ class ReservationController {
       refundError = error.message;
     }
 
-    const canceled = await this.bookingService.reservationRepository.cancelBookingByGuest(bookingId, user.sub, {
+    const canceled = await this.bookingService.reservationRepository.recordGuestRefund(bookingId, {
       refundedAmount: refundAmountCents,
       stripeRefundId,
       refundError,
@@ -358,23 +365,10 @@ class ReservationController {
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");
 
-    const channexAvailabilitySync = shouldSyncChannexCancellation(booking)
-      ? await this.bookingService.syncChannexBookingAvailabilityIfEnabled({
-          userId: booking.hostid,
-          bookingBefore: booking,
-          bookingAfter: canceled.response,
-          trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
-          includeDisabledEvidence: true,
-        })
-      : undefined;
-
     return {
       statusCode: canceled.statusCode || 200,
       headers: responseHeaderJSON,
-      response: toJsonSafeResponse({
-        ...canceled.response,
-        ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
-      }),
+      response: toJsonSafeResponse(canceled.response),
     };
   }
 

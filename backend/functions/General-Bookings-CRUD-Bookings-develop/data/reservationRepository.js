@@ -8,6 +8,9 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { withDsqlRetry } from "../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter from "../.shared/channelManagement/services/channexAriOutboxWriter.js";
+import { bookingAvailabilityChange } from "../util/channexBookingChange.js";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
@@ -22,6 +25,27 @@ const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((s
 export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
+  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+  }
+
+  // A booking change that opens or closes nights must reach Channex, so its outbox rows
+  // are saved in the same transaction (design D8). Without changes the write runs as before.
+  async #saveWithOutbox(channexChanges, work) {
+    const client = await Database.getInstance();
+    const changes = channexChanges.filter(Boolean);
+    if (!changes.length) return work(client);
+    return withDsqlRetry(() =>
+      client.transaction(async (manager) => {
+        const result = await work(manager);
+        for (const change of changes) {
+          await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, change);
+        }
+        return result;
+      })
+    );
+  }
+
   // ---------
   // Booking Create (auth)
   // ---------
@@ -31,36 +55,38 @@ class ReservationRepository {
     hostId,
     cancellationPolicy,
     status = "Awaiting Payment",
-    bookingType = "direct"
+    bookingType = "direct",
+    channexChanges = []
   ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
     const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
     const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
-    const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Booking)
-      .values({
-        id: id,
-        arrivaldate: arrivalDate,
-        createdat: date,
-        departuredate: departureDate,
-        guestid: userId,
-        hostid: hostId,
-        hostname: "WIP-Host",
-        guests: requestBody.general.guests.toString(),
-        guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
-        latepayment: false,
-        paymentid: "FAILED: ",
-        tempPaymentId,
-        property_id: requestBody.identifiers.property_Id,
-        status: status,
-        bookingtype: bookingType,
-      })
-      .execute();
+    await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager
+        .createQueryBuilder()
+        .insert()
+        .into(Booking)
+        .values({
+          id: id,
+          arrivaldate: arrivalDate,
+          createdat: date,
+          departuredate: departureDate,
+          guestid: userId,
+          hostid: hostId,
+          hostname: "WIP-Host",
+          guests: requestBody.general.guests.toString(),
+          guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
+          latepayment: false,
+          paymentid: "FAILED: ",
+          tempPaymentId,
+          property_id: requestBody.identifiers.property_Id,
+          status: status,
+          bookingtype: bookingType,
+        })
+        .execute()
+    );
     try {
       await this.getBookingById(id);
     } catch (error) {
@@ -416,14 +442,10 @@ class ReservationRepository {
     return booking || null;
   }
 
-  async updateBookingStatus(id, status) {
-    const client = await Database.getInstance();
-    const query = await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({ status: status })
-      .where("id = :id ", { id: id })
-      .execute();
+  async updateBookingStatus(id, status, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
+    );
 
     if (query.length < 1) {
       return {
@@ -519,6 +541,14 @@ class ReservationRepository {
 
       await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
 
+      // The accepted booking now blocks its nights, so Channex has to close them too. The
+      // locked row has the current dates; the ones passed in were read before the lock.
+      const channexChange = bookingAvailabilityChange(propertyId, {
+        arrivalMs: Number(targetRow.arrivaldate),
+        departureMs: Number(targetRow.departuredate),
+      });
+      if (channexChange) await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+
       const overlapping = lockedRows.filter((row) => row.id !== bookingId);
       for (const overlap of overlapping) {
         await manager.createQueryBuilder().update(Booking).set({ status: "Declined" }).where("id = :id", { id: overlap.id }).execute();
@@ -528,17 +558,18 @@ class ReservationRepository {
     });
   }
 
-  async updateBookingDates(id, arrivalDateMs, departureDateMs) {
-    const client = await Database.getInstance();
-    const query = await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({
-        arrivaldate: Number.parseFloat(arrivalDateMs),
-        departuredate: Number.parseFloat(departureDateMs),
-      })
-      .where("id = :id", { id })
-      .execute();
+  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager
+        .createQueryBuilder()
+        .update(Booking)
+        .set({
+          arrivaldate: Number.parseFloat(arrivalDateMs),
+          departuredate: Number.parseFloat(departureDateMs),
+        })
+        .where("id = :id", { id })
+        .execute()
+    );
 
     return {
       response: query,
@@ -546,7 +577,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
+  async cancelBookingByGuest(id, guestId, channexChanges = []) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -563,7 +594,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    const updateData = { status: "Cancelled" };
+    await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute()
+    );
+
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
+
+  // Runs after the cancellation has committed and the refund was attempted, so a failing
+  // cancellation never leaves money refunded on a booking that is still active.
+  async recordGuestRefund(id, refundInfo = {}) {
+    const client = await Database.getInstance();
+    const updateData = {};
     if (refundInfo.refundedAmount !== undefined) {
       updateData.refunded_amount = refundInfo.refundedAmount;
     }
@@ -573,19 +615,15 @@ class ReservationRepository {
     if (refundInfo.refundError) {
       updateData.refund_error = refundInfo.refundError;
     }
+    if (Object.keys(updateData).length) {
+      await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    }
 
-    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
 
-    const updated = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.id = :id", { id })
-      .getOne();
-
-    return {
-      response: updated,
-      statusCode: 200,
-    };
+  async #readBooking(client, id) {
+    return client.getRepository(Booking).createQueryBuilder("booking").where("booking.id = :id", { id }).getOne();
   }
 }
 
