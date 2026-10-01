@@ -9,8 +9,14 @@ const onWww = (pathname, search = "") =>
   resolveMarketplaceCanonicalUrl({ hostname: "www.domits.com", pathname, search });
 
 describe("which hosts get a marketplace canonical", () => {
-  it("covers the production, apex, acceptance and amplify hostnames", () => {
-    ["www.domits.com", "domits.com", "acceptance.domits.com", "main.d34jwd0sihmsus.amplifyapp.com"].forEach((host) => {
+  it("covers the production, apex and acceptance hostnames and the two branch hosts of our own Amplify app", () => {
+    [
+      "www.domits.com",
+      "domits.com",
+      "acceptance.domits.com",
+      "main.d34jwd0sihmsus.amplifyapp.com",
+      "acceptance.d34jwd0sihmsus.amplifyapp.com",
+    ].forEach((host) => {
       expect(isMarketplaceCanonicalHost(host)).toBe(true);
     });
   });
@@ -34,6 +40,9 @@ describe("which hosts get a marketplace canonical", () => {
       "127.0.0.1",
       "",
       "domits.com.evil.example",
+      "someone-else.amplifyapp.com",
+      "feature-x.d34jwd0sihmsus.amplifyapp.com",
+      "main.d34jwd0sihmsus.amplifyapp.com.evil.example",
     ].forEach((host) => {
       expect(isMarketplaceCanonicalHost(host)).toBe(false);
       expect(resolveMarketplaceCanonicalUrl({ hostname: host, pathname: "/about" })).toBe("");

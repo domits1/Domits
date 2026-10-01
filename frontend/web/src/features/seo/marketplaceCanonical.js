@@ -6,8 +6,9 @@ const MARKETPLACE_HOST_NAMES = Object.freeze([
   "domits.com",
   "www.domits.com",
   "acceptance.domits.com",
+  "main.d34jwd0sihmsus.amplifyapp.com",
+  "acceptance.d34jwd0sihmsus.amplifyapp.com",
 ]);
-const MARKETPLACE_HOST_SUFFIX = ".amplifyapp.com";
 
 const INDEXABLE_PATHS = Object.freeze([
   "/",
@@ -44,7 +45,7 @@ export const isMarketplaceCanonicalHost = (hostname) => {
     return false;
   }
 
-  return MARKETPLACE_HOST_NAMES.includes(normalizedHostName) || normalizedHostName.endsWith(MARKETPLACE_HOST_SUFFIX);
+  return MARKETPLACE_HOST_NAMES.includes(normalizedHostName);
 };
 
 export const resolveMarketplaceCanonicalPath = (pathname, search = "") => {
