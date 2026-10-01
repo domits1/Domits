@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
-    LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight
+    LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
@@ -16,9 +15,9 @@ import ConfirmDialog from './hosttasks/components/ConfirmDialog';
 import CreateTaskModal from './hosttasks/components/CreateTaskModal';
 import TaskDetailsModal from './hosttasks/components/TaskDetailsModal';
 import SettingsView from './hosttasks/components/SettingsView';
-import TaskFilterSelects from './hosttasks/components/TaskFilterSelects';
 import MyTasksView from './hosttasks/components/MyTasksView';
 import ReportsView from './hosttasks/components/ReportsView';
+import TableView from './hosttasks/components/TableView';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -452,9 +451,6 @@ const HostPropertyCare = () => {
     const handleClearFilters = () => {
         setFilters({ ...DEFAULT_FILTERS });
     };
-    const renderCommonFilters = () => (
-        <TaskFilterSelects filters={filters} filterPropertyOptions={filterPropertyOptions} onFilterChange={handleFilterChange} />
-    );
 
     const getFilteredTasks = () => {
         return tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -552,8 +548,25 @@ const HostPropertyCare = () => {
 
         switch (activeTab) {
             case 'Overview':
-            case 'All Tasks': 
-                return renderTableView();
+            case 'All Tasks':
+                return (
+                    <TableView
+                        filters={filters}
+                        filterPropertyOptions={filterPropertyOptions}
+                        sortConfig={sortConfig}
+                        paginatedTasks={paginatedTasks}
+                        totalResultsCount={displayedTasks.length}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        getPropertyLabel={getPropertyLabel}
+                        onFilterChange={handleFilterChange}
+                        onClearFilters={handleClearFilters}
+                        onSort={handleSort}
+                        onTaskClick={openTaskDetails}
+                        onPrevPage={handlePrevPage}
+                        onNextPage={handleNextPage}
+                    />
+                );
             case 'My Tasks':
                 return (
                     <MyTasksView
@@ -586,123 +599,6 @@ const HostPropertyCare = () => {
                 return null;
         }
     };
-    const getSortIcon = (columnKey, defaultIcon = '') => {
-        if (sortConfig.key !== columnKey) return defaultIcon;
-        return sortConfig.direction === 'asc' ? '▴' : '▾';
-    };
-
-    const renderPagination = () => (
-        <div className="pagination">
-            <button onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
-        </div>
-    );
-
-    const renderTableView = () => (
-        <div className="overview-container">
-            <div className="filters-bar">
-                <div className="filters-dropdowns">
-                    {renderCommonFilters()}
-                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-                        <option value="Any priority">Any priority</option>
-                        <option value="Urgent">Urgent</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
-                    <div className="search-box small-search">
-                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                        <LuSearch aria-hidden="true" />
-                    </div>
-                </div>
-
-                <div className="active-filters-row">
-                    <div className="status-tags">
-                        <span className="status-tag"><span className="dot dot-pending"></span> Pending</span>
-                        <span className="status-tag"><span className="dot dot-inprogress"></span> In progress</span>
-                        <span className="status-tag"><span className="dot dot-completed"></span> Completed</span>
-                        <span className="status-tag"><span className="dot dot-overdue"></span> Overdue</span>
-                        <span className="status-tag"><span className="dot dot-cancelled"></span> Cancelled</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="table-container">
-                <table className="tasks-table">
-                    <thead>
-                        <tr>
-                            <th onClick={() => handleSort('title')} className="sortable-header">
-                                Task {getSortIcon('title', '')}
-                            </th>
-                            <th onClick={() => handleSort('property')} className="sortable-header">
-                                Property {getSortIcon('property', '▾')}
-                            </th>
-                            <th onClick={() => handleSort('type')} className="sortable-header">
-                                Type {getSortIcon('type', '')}
-                            </th>
-                            <th onClick={() => handleSort('assignee')} className="sortable-header">
-                                Assignee {getSortIcon('assignee', '')}
-                            </th>
-                            <th onClick={() => handleSort('dueDate')} className="sortable-header">
-                                Due Date {getSortIcon('dueDate', '▾')}
-                            </th>
-                            <th onClick={() => handleSort('priority')} className="sortable-header">
-                                Priority {getSortIcon('priority', '▾')}
-                            </th>
-                            <th onClick={() => handleSort('status')} className="sortable-header">
-                                Status {getSortIcon('status', '▾')}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {displayedTasks.length === 0 ? (
-                            <tr>
-                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#495057'}}>
-                                    No tasks match your filters (or all are completed/deleted).
-                                </td>
-                            </tr>
-                        ) : (
-                            paginatedTasks.map(task => {
-                                const isOverdue = task.status === 'Overdue' || isTaskOverdue(task, getTodayString());
-                                const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
-                                const displayStatus = isOverdue ? 'Overdue' : task.status;
-
-                                return (
-                                <tr key={task.id} className={`clickable-row row-${displayStatus.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
-                                    <td>
-                                        <div className="task-title-cell" title={task.title}>
-                                            <LuChevronRight className="task-arrow" />
-                                            <div className="truncate-text">
-                                                <strong>{task.title}</strong>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{getPropertyLabel(task)}</td>
-                                    <td>{task.type}</td>
-                                    <td>{task.assignee}</td>
-                                    <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
-                                    <td>
-                                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
-                                            {displayPriority}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
-                                            ● {displayStatus}
-                                        </span>
-                                    </td>
-                                </tr>
-                            )})
-                        )}
-                    </tbody>
-                </table>
-                {renderPagination()}
-            </div>
-        </div>
-    );
-
     return (
         <main className="task-dashboard-v2">
             <div className="top-header">
