@@ -29,7 +29,8 @@ export class Controller {
   // Reservation ownership can then be checked against a trusted caller.
   async createReview(event) {
     try {
-      const authenticatedUser = await this.authManager.getUser(event.headers?.Authorization);
+      const token = event.headers?.Authorization || event.headers?.authorization;
+      const authenticatedUser = await this.authManager.getUser(token);
       const reviewData = parseBody(event.body);
       const result = await this.service.createReview(authenticatedUser.userId, reviewData);
 
