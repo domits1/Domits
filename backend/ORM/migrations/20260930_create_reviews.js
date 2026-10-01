@@ -1,4 +1,3 @@
-// Domits/backend/ORM/migrations/20260930_create_reviews.js
 
 export class CreateReviews20260930 {
     async up(queryRunner) {
@@ -20,7 +19,7 @@ export class CreateReviews20260930 {
         `);
 
         await queryRunner.query(
-            `CREATE INDEX ASYNC review_reservation_idx ON main.review (reservation_id);`
+            `CREATE UNIQUE INDEX ASYNC review_reservation_unique_idx ON main.review (reservation_id);`
         );
         await queryRunner.query(
             `CREATE INDEX ASYNC review_property_idx ON main.review (property_id);`

@@ -9,18 +9,20 @@ export const handler = async (event) => {
             controller = new Controller();
         }
 
-        if (event.httpMethod === "OPTIONS") {
+        const method = event.httpMethod;
+
+        if (method === "OPTIONS") {
             return { statusCode: 200, headers: responseHeaders };
         }
 
-        if (event.httpMethod === "POST") {
+        if (method === "POST") {
             return await controller.createReview(event);
         }
 
         return {
             statusCode: 405,
             headers: responseHeaders,
-            body: JSON.stringify({ message: `Method ${event.httpMethod} not supported.` }),
+            body: JSON.stringify({ message: `Method ${method} not supported.` }),
         };
     } catch (error) {
         return {
