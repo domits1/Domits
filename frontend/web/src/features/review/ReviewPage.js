@@ -89,7 +89,7 @@ const ReviewPage = () => {
       }
     };
 
-    checkEligibility();
+    void checkEligibility();
 
     return () => {
       active = false;
@@ -142,8 +142,8 @@ const ReviewPage = () => {
         onChange={updateField("rating")}
         disabled={isSubmitting}
       />
-      {Array.from({ length: value }).map((_, index) => (
-        <span key={index} className={styles.icon}>
+      {[1, 2, 3, 4, 5].slice(0, value).map((star) => (
+        <span key={star} className={styles.icon}>
           ★
         </span>
       ))}
