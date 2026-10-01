@@ -5,10 +5,13 @@ import { join } from "node:path";
 const DIRECTORY = join(process.cwd(), "infrastructure", "static-page-worker");
 const BUCKET = "arn:aws:s3:::domits-direct-booking-sites-acceptance";
 const PROPERTY_HANDLER = "arn:aws:lambda:eu-north-1:115462458880:function:PropertyHandler";
+const SCHEDULER_ROLE = "arn:aws:iam::115462458880:role/domits-static-page-worker-scheduler";
 
 const load = (name) => JSON.parse(readFileSync(join(DIRECTORY, name), "utf8"));
 const asList = (value) => (Array.isArray(value) ? value : [value]);
 const statementsWith = (policy, effect) => policy.Statement.filter((statement) => statement.Effect === effect);
+const actionsOf = (statements) => statements.flatMap((statement) => asList(statement.Action));
+const resourcesOf = (statements) => statements.flatMap((statement) => asList(statement.Resource));
 
 describe("the page writer policy", () => {
   const policy = load("static-page-writer-policy.json");
@@ -23,35 +26,50 @@ describe("the page writer policy", () => {
   });
 
   it("never grants a wildcard, a bucket-wide write, a delete or a version delete", () => {
-    const granted = allows.flatMap((statement) => asList(statement.Action));
-    expect(granted).not.toContain("s3:*");
-    expect(granted.some((action) => action.startsWith("s3:Delete"))).toBe(false);
-    expect(allows.flatMap((statement) => asList(statement.Resource))).not.toContain(`${BUCKET}/*`);
-    expect(allows.flatMap((statement) => asList(statement.Resource))).not.toContain("*");
+    expect(actionsOf(allows)).not.toContain("s3:*");
+    expect(actionsOf(allows).some((action) => action.startsWith("s3:Delete"))).toBe(false);
+    expect(resourcesOf(allows)).not.toContain(`${BUCKET}/*`);
+    expect(resourcesOf(allows)).not.toContain("*");
   });
 
-  it("denies every write to the shell and the deployed assets, so no later allow can reach them", () => {
-    const [deny] = denies;
+  it("denies every write to the shell, the assets and the crawl files, unconditionally", () => {
     expect(denies).toHaveLength(1);
+    const [deny] = denies;
     expect(asList(deny.Action)).toEqual([
       "s3:PutObject",
       "s3:PutObjectAcl",
       "s3:DeleteObject",
       "s3:DeleteObjectVersion",
     ]);
-    expect(asList(deny.Resource)).toEqual(expect.arrayContaining([`${BUCKET}/index.html`, `${BUCKET}/static/*`]));
+    expect(asList(deny.Resource).sort()).toEqual(
+      [`${BUCKET}/index.html`, `${BUCKET}/static/*`, `${BUCKET}/robots.txt`, `${BUCKET}/sitemap.xml`].sort()
+    );
+    expect(deny).not.toHaveProperty("Condition");
   });
 });
 
 describe("the execution role", () => {
-  it("keeps what the shared role grants today, without any S3 action", () => {
-    const [statement] = load("property-handler-base-policy.json").Statement;
-    expect(asList(statement.Action).some((action) => action.startsWith("s3:"))).toBe(false);
-    expect(asList(statement.Action)).toEqual(
+  const policy = load("property-handler-base-policy.json");
+
+  it("grants only what the function's code calls, with no S3, no wildcard action and no cluster administration", () => {
+    expect(statementsWith(policy, "Deny")).toHaveLength(0);
+    const actions = actionsOf(policy.Statement);
+    expect(actions.some((action) => action.startsWith("s3:"))).toBe(false);
+    expect(actions.some((action) => action === "*" || action.endsWith(":*"))).toBe(false);
+    expect(actions.filter((action) => action.startsWith("dsql:")).sort()).toEqual([
+      "dsql:DbConnect",
+      "dsql:DbConnectAdmin",
+    ]);
+    expect(
+      actions
+        .filter((action) => action.startsWith("dynamodb:"))
+        .some((action) => /Put|Update|Delete|Write/.test(action))
+    ).toBe(false);
+    expect(actions).toEqual(
       expect.arrayContaining([
-        "dsql:*",
         "ssm:GetParameter",
         "cognito-idp:GetUser",
+        "cognito-idp:AdminGetUser",
         "lambda:InvokeFunction",
         "logs:PutLogEvents",
       ])
@@ -72,12 +90,11 @@ describe("the schedule", () => {
     expect(schedule.State).toBe("DISABLED");
   });
 
-  it("sends the task with a page budget that fits the thirty second timeout", () => {
+  it("sends the task with a page budget of at most ten, the budget the runbook sizes against the timeout", () => {
     const input = JSON.parse(schedule.Target.Input);
     expect(input).toEqual({ task: "build-static-pages", limit: expect.any(Number) });
     expect(input.limit).toBeGreaterThan(0);
     expect(input.limit).toBeLessThanOrEqual(10);
-    expect(input).not.toHaveProperty("httpMethod");
   });
 
   it("never retries a failed run and never queues a stale one, so a failure costs one invocation", () => {
@@ -85,11 +102,14 @@ describe("the schedule", () => {
     expect(schedule.FlexibleTimeWindow).toEqual({ Mode: "OFF" });
   });
 
-  it("targets the PropertyHandler through a role that can invoke nothing else", () => {
-    const [statement] = load("scheduler-invoke-policy.json").Statement;
+  it("targets the PropertyHandler through a role whose every statement can invoke nothing else", () => {
+    const policy = load("scheduler-invoke-policy.json");
     const [trust] = load("scheduler-role-trust.json").Statement;
     expect(schedule.Target.Arn).toBe(PROPERTY_HANDLER);
-    expect(statement).toMatchObject({ Effect: "Allow", Action: "lambda:InvokeFunction", Resource: PROPERTY_HANDLER });
+    expect(schedule.Target.RoleArn).toBe(SCHEDULER_ROLE);
+    expect(
+      policy.Statement.map((statement) => [statement.Effect, asList(statement.Action), asList(statement.Resource)])
+    ).toEqual([["Allow", ["lambda:InvokeFunction"], [PROPERTY_HANDLER]]]);
     expect(trust.Principal).toEqual({ Service: "scheduler.amazonaws.com" });
     expect(trust.Condition).toEqual({ StringEquals: { "aws:SourceAccount": "115462458880" } });
   });
