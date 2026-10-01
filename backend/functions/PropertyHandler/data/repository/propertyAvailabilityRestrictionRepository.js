@@ -1,8 +1,23 @@
 import { AvailabilityRestrictionMapping } from "../../util/mapping/availabilityRestriction.js";
 import Database from "database";
-import {Property_Availability_Restriction} from "database/models/Property_Availability_Restriction";
+import {
+    Property_Availability_Restriction,
+    PROPERTY_AVAILABILITY_RESTRICTION_TABLE_NAMES
+} from "database/models/Property_Availability_Restriction";
 import {Availability_Restrictions} from "database/models/Availability_Restrictions";
 import { randomUUID } from "node:crypto";
+
+const PROPERTY_AVAILABILITY_RESTRICTION_TABLE = PROPERTY_AVAILABILITY_RESTRICTION_TABLE_NAMES.current;
+const PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS = Object.freeze({
+    id: "id",
+    propertyId: "property_id",
+    restriction: "restriction",
+    value: "value"
+});
+const AVAILABILITY_RESTRICTIONS_TABLE = "availability_restrictions";
+const AVAILABILITY_RESTRICTIONS_COLUMNS = Object.freeze({
+    restriction: "restriction"
+});
 
 const RESTRICTION_NAME_FALLBACKS = Object.freeze({
     MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
@@ -20,8 +35,8 @@ export class PropertyAvailabilityRestrictionRepository {
         const client = await Database.getInstance();
         const result = await client
             .getRepository(Availability_Restrictions)
-            .createQueryBuilder("availability_restrictions")
-            .where("restriction = :id", { id: id })
+            .createQueryBuilder(AVAILABILITY_RESTRICTIONS_TABLE)
+            .where(`${AVAILABILITY_RESTRICTIONS_COLUMNS.restriction} = :id`, { id: id })
             .getOne()
         return result ? result : null;
     }
@@ -30,8 +45,8 @@ export class PropertyAvailabilityRestrictionRepository {
         const client = await Database.getInstance();
         const result = await client
             .getRepository(Property_Availability_Restriction)
-            .createQueryBuilder("property_availabilityrestriction")
-            .where("id = :id", { id: id })
+            .createQueryBuilder(PROPERTY_AVAILABILITY_RESTRICTION_TABLE)
+            .where(`${PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.id} = :id`, { id: id })
             .getOne()
         return result ? result : null;
     }
@@ -40,8 +55,8 @@ export class PropertyAvailabilityRestrictionRepository {
         const client = await Database.getInstance();
         const result = await client
             .getRepository(Property_Availability_Restriction)
-            .createQueryBuilder("property_availabilityrestriction")
-            .where("property_id = :id", { id: id })
+            .createQueryBuilder(PROPERTY_AVAILABILITY_RESTRICTION_TABLE)
+            .where(`${PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.propertyId} = :id`, { id: id })
             .getMany()
         return result.length > 0 ? result.map(item => AvailabilityRestrictionMapping.mapDatabaseEntryToAvailabilityRestriction(item)) : null;
     }
@@ -53,10 +68,10 @@ export class PropertyAvailabilityRestrictionRepository {
             .insert()
             .into(Property_Availability_Restriction)
             .values({
-                id: availabilityRestriction.id,
-                property_id: availabilityRestriction.property_id,
-                restriction: availabilityRestriction.restriction,
-                value: availabilityRestriction.value
+                [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.id]: availabilityRestriction.id,
+                [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.propertyId]: availabilityRestriction.property_id,
+                [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.restriction]: availabilityRestriction.restriction,
+                [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.value]: availabilityRestriction.value
             })
             .execute();
         const result = await this.getPropertyAvailabilityRestrictionById(availabilityRestriction.id);
@@ -96,9 +111,9 @@ export class PropertyAvailabilityRestrictionRepository {
                 );
                 const existingRestrictionMappings = await transactionManager
                     .getRepository(Availability_Restrictions)
-                    .createQueryBuilder("availability_restrictions")
-                    .select(["availability_restrictions.restriction"])
-                    .where("availability_restrictions.restriction IN (:...restrictionNames)", {
+                    .createQueryBuilder(AVAILABILITY_RESTRICTIONS_TABLE)
+                    .select([`${AVAILABILITY_RESTRICTIONS_TABLE}.${AVAILABILITY_RESTRICTIONS_COLUMNS.restriction}`])
+                    .where(`${AVAILABILITY_RESTRICTIONS_TABLE}.${AVAILABILITY_RESTRICTIONS_COLUMNS.restriction} IN (:...restrictionNames)`, {
                         restrictionNames: restrictionLookupNames,
                     })
                     .getMany();
@@ -149,8 +164,8 @@ export class PropertyAvailabilityRestrictionRepository {
                     .createQueryBuilder()
                     .delete()
                     .from(Property_Availability_Restriction)
-                    .where("property_id = :propertyId", { propertyId })
-                    .andWhere("restriction IN (:...restrictionNames)", {
+                    .where(`${PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.propertyId} = :propertyId`, { propertyId })
+                    .andWhere(`${PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.restriction} IN (:...restrictionNames)`, {
                         restrictionNames: deduplicatedRestrictionNames,
                     })
                     .execute();
@@ -161,10 +176,10 @@ export class PropertyAvailabilityRestrictionRepository {
                     .into(Property_Availability_Restriction)
                     .values(
                         deduplicatedRestrictions.map((restriction) => ({
-                            id: randomUUID(),
-                            property_id: propertyId,
-                            restriction: restriction.restriction,
-                            value: restriction.value,
+                            [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.id]: randomUUID(),
+                            [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.propertyId]: propertyId,
+                            [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.restriction]: restriction.restriction,
+                            [PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.value]: restriction.value,
                         }))
                     )
                     .execute();
@@ -172,8 +187,8 @@ export class PropertyAvailabilityRestrictionRepository {
 
             const updatedRestrictions = await transactionManager
                 .getRepository(Property_Availability_Restriction)
-                .createQueryBuilder("property_availabilityrestriction")
-                .where("property_id = :id", { id: propertyId })
+                .createQueryBuilder(PROPERTY_AVAILABILITY_RESTRICTION_TABLE)
+                .where(`${PROPERTY_AVAILABILITY_RESTRICTION_COLUMNS.propertyId} = :id`, { id: propertyId })
                 .getMany();
             return updatedRestrictions.length > 0
                 ? updatedRestrictions.map((item) => AvailabilityRestrictionMapping.mapDatabaseEntryToAvailabilityRestriction(item))
