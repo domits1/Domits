@@ -213,7 +213,7 @@ export class PropertyCalendarOverrideRepository {
     };
   }
 
-  async upsertOverridesByPropertyId(propertyId, overrides, range = {}, channexChange = null) {
+  async upsertOverridesByPropertyId(propertyId, overrides, range = {}, channexChanges = []) {
     const normalizedOverrides = Array.from(
       new Map(
         (Array.isArray(overrides) ? overrides : [])
@@ -324,7 +324,7 @@ export class PropertyCalendarOverrideRepository {
               ]
             );
           }
-          if (channexChange) {
+          for (const channexChange of channexChanges) {
             await this.channexAriOutboxWriter.enqueueChannexAriChange(transactionManager, channexChange);
           }
         })

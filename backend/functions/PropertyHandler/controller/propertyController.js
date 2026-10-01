@@ -93,6 +93,18 @@ const trimRepeatedCharacterEdges = (value, character) => {
     return value.slice(startIndex, endIndex);
 };
 const compareAsString = (left, right) => String(left).localeCompare(String(right));
+const DAY_MS = 24 * 60 * 60 * 1000;
+const calendarDateToMs = (date) => Date.UTC(Math.floor(date / 10000), Math.floor((date % 10000) / 100) - 1, date % 100);
+// Splits YYYYMMDD calendar dates into runs of consecutive days, as [first, last] pairs.
+const toConsecutiveRuns = (dates) => {
+    const runs = [];
+    for (const date of [...new Set(dates)].sort((left, right) => left - right)) {
+        const run = runs.at(-1);
+        if (run && calendarDateToMs(date) - calendarDateToMs(run[1]) === DAY_MS) run[1] = date;
+        else runs.push([date, date]);
+    }
+    return runs;
+};
 const slugifyWebsiteDomainLabel = (value) => {
     const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
     let sanitizedValue = "";
@@ -666,13 +678,13 @@ export class PropertyController {
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
             const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
-            const channexChange = this.buildChannexCalendarChange(propertyId, previousOverrides, normalizedOverrides);
+            const channexChanges = this.buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
                 normalizedOverrides,
                 normalizedRange,
-                channexChange
+                channexChanges
             );
 
             await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
@@ -723,31 +735,6 @@ export class PropertyController {
         return previousValue !== nextValue;
     }
 
-    collectCalendarOverrideChangeTypes(previousOverrides, normalizedOverrides) {
-        const previousByDate = this.buildCalendarOverrideMap(previousOverrides);
-        const changeTypes = new Set();
-        const changedDates = [];
-
-        for (const override of normalizedOverrides) {
-            const previousOverride = previousByDate.get(override.calendarDate) || {};
-            const dateChangeTypes = Object.entries(CALENDAR_CHANGE_FIELD_GROUPS)
-                .filter(([, fields]) =>
-                    fields.some((field) => this.compareCalendarOverrideField(previousOverride, override, field))
-                )
-                .map(([changeType]) => changeType);
-
-            if (dateChangeTypes.length) {
-                changedDates.push(this.calendarDateIntToIsoDate(override.calendarDate));
-                dateChangeTypes.forEach((changeType) => changeTypes.add(changeType));
-            }
-        }
-
-        return {
-            changedDates: changedDates.filter(Boolean).sort(compareAsString),
-            changeTypes: Array.from(changeTypes).sort(compareAsString),
-        };
-    }
-
     async getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides) {
         const dates = normalizedOverrides.map((override) => Number(override.calendarDate)).filter(Number.isInteger);
         if (!dates.length) return [];
@@ -758,22 +745,29 @@ export class PropertyController {
         });
     }
 
-    // One row per save, from the first to the last changed date. The worker sends the
-    // current values, so unchanged dates in between are sent unchanged, which is harmless.
-    buildChannexCalendarChange(propertyId, previousOverrides, normalizedOverrides) {
-        const { changedDates, changeTypes } = this.collectCalendarOverrideChangeTypes(
-            previousOverrides,
-            normalizedOverrides
-        );
-        if (!changedDates.length || !changeTypes.length) return null;
+    // Design D9: one change per change type and run of consecutive days, so a row never
+    // covers a date its type did not change.
+    buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides) {
+        const previousByDate = this.buildCalendarOverrideMap(previousOverrides);
+        const datesByType = new Map();
+        for (const override of normalizedOverrides) {
+            const previousOverride = previousByDate.get(override.calendarDate) || {};
+            for (const [changeType, fields] of Object.entries(CALENDAR_CHANGE_FIELD_GROUPS)) {
+                if (fields.some((field) => this.compareCalendarOverrideField(previousOverride, override, field))) {
+                    datesByType.set(changeType, [...(datesByType.get(changeType) || []), override.calendarDate]);
+                }
+            }
+        }
 
-        return {
-            domitsPropertyId: propertyId,
-            changeTypes,
-            dateFrom: changedDates[0],
-            dateTo: changedDates[changedDates.length - 1],
-            source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
-        };
+        return [...datesByType.keys()].sort(compareAsString).flatMap((changeType) =>
+            toConsecutiveRuns(datesByType.get(changeType)).map(([first, last]) => ({
+                domitsPropertyId: propertyId,
+                changeTypes: [changeType],
+                dateFrom: this.calendarDateIntToIsoDate(first),
+                dateTo: this.calendarDateIntToIsoDate(last),
+                source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
+            }))
+        );
     }
 
     getForwardCalendarSyncRange() {

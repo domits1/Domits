@@ -182,7 +182,7 @@ describe("Property calendar override authorization", () => {
         }),
       ],
       {},
-      null
+      []
     );
     expect(JSON.parse(patchResponse.body)).toEqual({
       propertyId: "property-1",
@@ -210,13 +210,15 @@ describe("Property calendar override authorization", () => {
       "property-1",
       expect.any(Array),
       {},
-      {
-        domitsPropertyId: "property-1",
-        changeTypes: ["availability"],
-        dateFrom: "2026-06-10",
-        dateTo: "2026-06-10",
-        source: "CALENDAR",
-      }
+      [
+        {
+          domitsPropertyId: "property-1",
+          changeTypes: ["availability"],
+          dateFrom: "2026-06-10",
+          dateTo: "2026-06-10",
+          source: "CALENDAR",
+        },
+      ]
     );
   });
 
@@ -272,20 +274,19 @@ describe("Property calendar override authorization", () => {
       "property-1",
       expect.any(Array),
       {},
-      {
-        domitsPropertyId: "property-1",
-        changeTypes: ["rates", "restrictions"],
-        dateFrom: "2026-06-10",
-        dateTo: "2026-06-10",
-        source: "CALENDAR",
-      }
+      [
+        expect.objectContaining({ changeTypes: ["rates"], dateFrom: "2026-06-10", dateTo: "2026-06-10" }),
+        expect.objectContaining({ changeTypes: ["restrictions"], dateFrom: "2026-06-10", dateTo: "2026-06-10" }),
+      ]
     );
   });
 
-  it("covers the first to the last changed date with one outbox change", async () => {
+  // Design D9: a row never covers a date its change type did not change.
+  it("writes one outbox change per run of consecutive changed dates", async () => {
     const controller = buildCalendarController({
       previousOverrides: [
         { date: 20260610, isAvailable: false },
+        { date: 20260611, isAvailable: false },
         { date: 20260620, isAvailable: false },
       ],
     });
@@ -297,6 +298,7 @@ describe("Property calendar override authorization", () => {
         overrides: [
           { date: 20260620, isAvailable: true },
           { date: 20260610, isAvailable: true },
+          { date: 20260611, isAvailable: true },
         ],
       }),
     });
@@ -305,7 +307,37 @@ describe("Property calendar override authorization", () => {
       "property-1",
       expect.any(Array),
       {},
-      expect.objectContaining({ dateFrom: "2026-06-10", dateTo: "2026-06-20" })
+      [
+        expect.objectContaining({ changeTypes: ["availability"], dateFrom: "2026-06-10", dateTo: "2026-06-11" }),
+        expect.objectContaining({ changeTypes: ["availability"], dateFrom: "2026-06-20", dateTo: "2026-06-20" }),
+      ]
+    );
+  });
+
+  it("keeps a run going across a month boundary", async () => {
+    const controller = buildCalendarController({
+      previousOverrides: [
+        { date: 20260630, isAvailable: false },
+        { date: 20260701, isAvailable: false },
+      ],
+    });
+
+    await controller.updatePropertyCalendarOverrides({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({
+        propertyId: "property-1",
+        overrides: [
+          { date: 20260630, isAvailable: true },
+          { date: 20260701, isAvailable: true },
+        ],
+      }),
+    });
+
+    expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
+      "property-1",
+      expect.any(Array),
+      {},
+      [expect.objectContaining({ dateFrom: "2026-06-30", dateTo: "2026-07-01" })]
     );
   });
 
