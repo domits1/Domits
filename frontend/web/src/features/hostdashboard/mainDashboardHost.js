@@ -12,6 +12,7 @@ import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
+import MissedRevenueDashboardPage from "./hostinsights/missedrevenue/MissedRevenueDashboardPage";
 import HostTeam from "./HostTeam";
 import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
 import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
@@ -47,6 +48,7 @@ import PropertyAvailabilityView from "../hostonboarding/views/11_PropertyAvailab
 import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
 import HostReservationDetails from "./HostReservationDetails";
+import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -130,6 +132,7 @@ function MainDashboardHost() {
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
           <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
+          <Route path="hostinsights/missed-revenue" element={<MissedRevenueDashboardPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettingsHub />} />
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
@@ -137,6 +140,7 @@ function MainDashboardHost() {
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
+          <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
