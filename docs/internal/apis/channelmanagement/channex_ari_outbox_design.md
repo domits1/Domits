@@ -111,8 +111,8 @@ Each decision lists what was chosen, why, and what was rejected.
 **D1. An outbox row is a marker ("this changed"), not a snapshot of the value.**
 The worker reads the current value from the database when it sends. Sending the latest value makes duplicates and out-of-order processing harmless, because pushes send state per date, not a difference (idempotent, at-least-once delivery is acceptable). Rejected: storing the value in the row, because an older row processed after a newer one would push a stale value to Channex.
 
-**D2. One row per save.**
-A row holds a property, a date range and the change types. Rejected: one row per date (a 500-day change becomes 500 rows) and one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13).
+**D2. One row per change type per save.**
+A row holds a property, a date range and one change type, so a save that changes prices and minimum stay writes two rows. Change types can go out in different calls, and a row with several types could end with a retry for one and a rejection for another, which no single status can record (review of #3347). The worker still merges rows into as few calls as before. Rejected: one row per date (a 500-day change becomes 500 rows), one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13), and one row with several types (see above).
 
 **D3. Send after 60 seconds of quiet per property, at most 5 minutes after the oldest pending row. Bookings skip the quiet period.**
 A host saving December to April month by month (the calendar selects within one month, `hostcalen/hooks/useCalendarSelection.js:739-741`) produces several rows; waiting for quiet merges them into one call, which scenarios 3 and 8 need. The 5-minute cap prevents starvation for a host who keeps saving. Rejected: sending whatever is pending every minute (scenario 8 would split over several runs) and relying only on multi-month calendar selection (scenario 3 still needs batching).
@@ -202,9 +202,11 @@ enqueueChannexAriChange(transactionManager, { domitsPropertyId, kind, changeType
 | Booking | Only for "mark as paid" and "accept inquiry" | Add transactions to the other paths (create, cancel) |
 | Channex import | No | Add a transaction around create, update and cancel |
 
-*Code:* calendar `PropertyHandler/data/repository/propertyCalendarOverrideRepository.js:256`; global settings `propertyService.updatePropertyOverview` with `updatePricing` and `updateAvailabilityRestrictions`, 500 days from `CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS` (`propertyController.js:70`); booking `markBookingPaidWithOutbox` (`reservationRepository.js:442`) and `acceptInquiryWithOverlapDecline` (`:496`); import `channexExternalBookingImportRepository.js:91, 151, 177`.
+*Code:* calendar `PropertyHandler/data/repository/propertyCalendarOverrideRepository.js:256`; global settings `propertyService.updatePropertyOverview` with `updatePricing` and `updateAvailabilityRestrictions`, 500 days from `buildForwardSyncRange` (`.shared/channelManagement/services/channexAriOutboxWriter.js`); booking `markBookingPaidWithOutbox` (`reservationRepository.js:442`) and `acceptInquiryWithOverlapDecline` (`:496`); import `channexExternalBookingImportRepository.js:91, 151, 177`.
 
 The inline calls (`notifyChannexCalendarOverrideChange`, `notifyChannexOverviewCalendarChange`, `syncChannexBookingAvailabilityIfEnabled`, `syncChannexImportedBookingAvailability`) are removed in rollout step 3.
+
+*Status:* the calendar save and global settings (pricing, restrictions) write their rows from their own repository transactions through `ChannexAriOutboxWriter`, and their inline calls are removed. The booking lifecycle and the Channex import follow in the bookings pull request.
 
 **The table must exist before any write site uses the writer.** The writer runs inside the transactions of PropertyHandler, General-Bookings, UnifiedMessaging and ChannelManagement (the Channex booking poll imports bookings there, `channelManagementHandler.js:104-106`). If the table is missing, those transactions fail, and with them host saves and bookings. The migration is therefore applied in rollout step 1 (D11), and step 3 is not merged until it is confirmed on the `main` schema.
 

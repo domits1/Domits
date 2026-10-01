@@ -49,15 +49,21 @@ export default class ChannexAriOutboxWriter {
     // Only mapped properties get rows (design D10); the go-live full sync covers the rest.
     if (!(await this.isMappedToChannex(manager, domitsPropertyId))) return false;
 
-    await this.outbox.insert(manager, {
-      domitsPropertyId,
-      kind: CHANNEX_ARI_OUTBOX_KIND.CHANGE,
-      changeTypes: types,
-      dateFrom: Math.max(isoToDateInt(dateFrom), today),
-      dateTo: to,
-      source,
-      now,
-    });
+    // One row per change type (design D2): the types can go out in different calls, and
+    // a row that carried several could end with a retry for one and a rejection for
+    // another, which no single status can record.
+    const from = Math.max(isoToDateInt(dateFrom), today);
+    for (const type of new Set(types)) {
+      await this.outbox.insert(manager, {
+        domitsPropertyId,
+        kind: CHANNEX_ARI_OUTBOX_KIND.CHANGE,
+        changeTypes: [type],
+        dateFrom: from,
+        dateTo: to,
+        source,
+        now,
+      });
+    }
     return true;
   }
 }

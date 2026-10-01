@@ -51,6 +51,18 @@ describe("ChannexAriOutboxWriter.enqueueChannexAriChange", () => {
     });
   });
 
+  test("writes one row per change type, so each row has one outcome at Channex", async () => {
+    const manager = buildManager();
+    const { outbox, writer } = buildWriter();
+
+    await writer.enqueueChannexAriChange(manager, change({ changeTypes: ["rates", "restrictions"] }));
+
+    expect(outbox.insert).toHaveBeenCalledTimes(2);
+    expect(outbox.insert).toHaveBeenCalledWith(manager, expect.objectContaining({ changeTypes: ["rates"] }));
+    expect(outbox.insert).toHaveBeenCalledWith(manager, expect.objectContaining({ changeTypes: ["restrictions"] }));
+    expect(manager.builder.getCount).toHaveBeenCalledTimes(1);
+  });
+
   test("writes nothing for a property that is not mapped to Channex", async () => {
     const { outbox, writer } = buildWriter();
 
