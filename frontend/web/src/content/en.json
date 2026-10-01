@@ -1111,6 +1111,10 @@
           "title": "Communication Preferences",
           "desc": "Choose how you receive important updates and notifications from Domits."
         },
+        "privacySecurity": {
+          "title": "Privacy & Security",
+          "desc": "Manage your login security, password and two-factor authentication."
+        },
         "company": {
           "title": "Company",
           "desc": "Manage your company name and basic details."
@@ -1330,6 +1334,28 @@
         "saveError": "Failed to save. Please try again.",
         "cancel": "Cancel",
         "close": "Close"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & Security",
+      "title": "Privacy & Security",
+      "subtitle": "Manage your login security, password and two-factor authentication.",
+      "authenticationSection": "Authentication",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Email",
+        "active": "Active",
+        "inactive": "Inactive",
+        "unavailable": "Unavailable",
+        "verified": "Verified",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator app",
+        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "loading": "Loading your authentication status...",
+        "error": "We couldn't load your authentication status. Please refresh the page."
+      },
+      "pin": {
+        "comingSoon": "Coming soon."
       }
     },
     "communicationPreferences": {

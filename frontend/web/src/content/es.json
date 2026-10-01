@@ -1112,6 +1112,10 @@
           "title": "Preferencias de comunicación",
           "desc": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits."
         },
+        "privacySecurity": {
+          "title": "Privacidad y seguridad",
+          "desc": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos."
+        },
         "company": {
           "title": "Empresa",
           "desc": "Gestiona el nombre y los datos básicos de tu empresa."
@@ -1331,6 +1335,28 @@
         "saveError": "Error al guardar. Inténtalo de nuevo.",
         "cancel": "Cancelar",
         "close": "Cerrar"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacidad y seguridad",
+      "title": "Privacidad y seguridad",
+      "subtitle": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos.",
+      "authenticationSection": "Autenticación",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Correo electrónico",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "unavailable": "No disponible",
+        "verified": "Verificado",
+        "sms": "SMS",
+        "authenticatorApp": "Aplicación de autenticación",
+        "comingSoon": "Próximamente: inicio de sesión por SMS y aplicación de autenticación.",
+        "loading": "Cargando tu estado de autenticación...",
+        "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
+      },
+      "pin": {
+        "comingSoon": "Próximamente."
       }
     },
     "communicationPreferences": {

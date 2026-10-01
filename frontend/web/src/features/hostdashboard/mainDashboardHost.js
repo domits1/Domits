@@ -20,6 +20,7 @@ import HostCommunicationPreferences from "./hostsettings/pages/HostCommunication
 import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
+import HostSettingsPrivacySecurity from "./hostsettings/pages/HostSettingsPrivacySecurity";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
 import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
@@ -140,6 +141,7 @@ function MainDashboardHost() {
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
+          <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />
