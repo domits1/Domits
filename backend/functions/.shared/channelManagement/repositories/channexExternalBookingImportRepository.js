@@ -52,13 +52,16 @@ class ChannexExternalBookingImportRepository {
   }
 
   // An imported booking change that opens or closes nights must reach Channex, so its
-  // outbox row is saved in the same transaction (design D8). Without a change the write runs as before.
-  async #saveWithOutbox(client, channexChange, work) {
-    if (!channexChange) return work(client);
+  // outbox rows are saved in the same transaction (design D8). Without a change the write runs as before.
+  async #saveWithOutbox(client, channexChanges, work) {
+    const changes = channexChanges.filter(Boolean);
+    if (!changes.length) return work(client);
     return withDsqlRetry(() =>
       client.transaction(async (manager) => {
         const result = await work(manager);
-        await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+        for (const change of changes) {
+          await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, change);
+        }
         return result;
       })
     );
@@ -115,7 +118,7 @@ class ChannexExternalBookingImportRepository {
     guestName,
     arrivalDateMs,
     departureDateMs,
-    channexChange = null,
+    channexChanges = [],
   }) {
     const client = await Database.getInstance();
     const now = Date.now();
@@ -138,7 +141,7 @@ class ChannexExternalBookingImportRepository {
       bookingtype: BOOKING_TYPE_CHANNEX,
     };
 
-    await this.#saveWithOutbox(client, channexChange, (db) =>
+    await this.#saveWithOutbox(client, channexChanges, (db) =>
       db.query(
         `
           INSERT INTO ${qualifyTableName(client, "booking")}
@@ -170,12 +173,12 @@ class ChannexExternalBookingImportRepository {
     return this.getBookingById(row.id);
   }
 
-  async updateImportedBooking({ bookingId, guestName, arrivalDateMs, departureDateMs, channexChange = null }) {
+  async updateImportedBooking({ bookingId, guestName, arrivalDateMs, departureDateMs, channexChanges = [] }) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
     const client = await Database.getInstance();
-    await this.#saveWithOutbox(client, channexChange, (db) =>
+    await this.#saveWithOutbox(client, channexChanges, (db) =>
       db.query(
         `
           UPDATE ${qualifyTableName(client, "booking")}
@@ -198,12 +201,12 @@ class ChannexExternalBookingImportRepository {
     return this.getBookingById(normalizedBookingId);
   }
 
-  async cancelImportedBooking(bookingId, channexChange = null) {
+  async cancelImportedBooking(bookingId, channexChanges = []) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
     const client = await Database.getInstance();
-    await this.#saveWithOutbox(client, channexChange, (db) =>
+    await this.#saveWithOutbox(client, channexChanges, (db) =>
       db.query(
         `
           UPDATE ${qualifyTableName(client, "booking")}

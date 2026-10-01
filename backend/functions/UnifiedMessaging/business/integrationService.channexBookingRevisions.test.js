@@ -352,13 +352,15 @@ describe("IntegrationService Channex booking pull import", () => {
         guestName: "External Guest",
         arrivalDateMs: utcDateMs("2026-06-01"),
         departureDateMs: utcDateMs("2026-06-03"),
-        channexChange: {
-          domitsPropertyId: "domits-property-1",
-          changeTypes: ["availability"],
-          dateFrom: "2026-06-01",
-          dateTo: "2026-06-02",
-          source: "CHANNEX_IMPORT",
-            },
+        channexChanges: [
+          {
+            domitsPropertyId: "domits-property-1",
+            changeTypes: ["availability"],
+            dateFrom: "2026-06-01",
+            dateTo: "2026-06-02",
+            source: "CHANNEX_IMPORT",
+          },
+        ],
       })
     );
     expect(resLinks.upsert).toHaveBeenCalledWith(
@@ -616,14 +618,23 @@ describe("IntegrationService Channex booking pull import", () => {
       guestName: "Modified Guest",
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
-      // The old nights (1-2 June) reopen and the new ones (2-3 June) close.
-      channexChange: {
-      domitsPropertyId: "domits-property-1",
-      changeTypes: ["availability"],
-      dateFrom: "2026-06-01",
-      dateTo: "2026-06-03",
-      source: "CHANNEX_IMPORT",
-    },
+      // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
+      channexChanges: [
+        {
+          domitsPropertyId: "domits-property-1",
+          changeTypes: ["availability"],
+          dateFrom: "2026-06-01",
+          dateTo: "2026-06-02",
+          source: "CHANNEX_IMPORT",
+        },
+        {
+          domitsPropertyId: "domits-property-1",
+          changeTypes: ["availability"],
+          dateFrom: "2026-06-02",
+          dateTo: "2026-06-03",
+          source: "CHANNEX_IMPORT",
+        },
+      ],
     });
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -674,13 +685,15 @@ describe("IntegrationService Channex booking pull import", () => {
       overallSuccess: true,
     });
     expect(externalBookingImportRepository.createExternalBooking).not.toHaveBeenCalled();
-    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("domits-booking-1", {
-      domitsPropertyId: "domits-property-1",
-      changeTypes: ["availability"],
-      dateFrom: "2026-06-01",
-      dateTo: "2026-06-02",
-      source: "CHANNEX_IMPORT",
-    });
+    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("domits-booking-1", [
+      {
+        domitsPropertyId: "domits-property-1",
+        changeTypes: ["availability"],
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-02",
+        source: "CHANNEX_IMPORT",
+      },
+    ]);
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         externalReservationId: "booking-ota-1",

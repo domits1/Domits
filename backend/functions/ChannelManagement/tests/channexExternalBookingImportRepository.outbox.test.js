@@ -50,7 +50,7 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
   test("an imported booking and its outbox row are saved in one transaction", async () => {
     const { repository, manager, client, channexAriOutboxWriter } = setup();
 
-    await repository.createExternalBooking({ ...booking, channexChange: change });
+    await repository.createExternalBooking({ ...booking, channexChanges: [change] });
 
     expect(client.transaction).toHaveBeenCalledTimes(1);
     expect(manager.query).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO"), expect.any(Array));
@@ -71,16 +71,27 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
   test("an imported date change and its outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 
-    await repository.updateImportedBooking({ ...booking, channexChange: change });
+    await repository.updateImportedBooking({ ...booking, channexChanges: [change] });
 
     expect(manager.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE"), expect.any(Array));
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });
 
+  test("a date change writes one outbox row per stay in the same transaction", async () => {
+    const { repository, manager, client, channexAriOutboxWriter } = setup();
+    const newStay = { ...change, dateFrom: "2026-11-20", dateTo: "2026-11-21" };
+
+    await repository.updateImportedBooking({ ...booking, channexChanges: [change, newStay] });
+
+    expect(client.transaction).toHaveBeenCalledTimes(1);
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
+    expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, newStay);
+  });
+
   test("an imported cancellation and its outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 
-    await repository.cancelImportedBooking("booking-1", change);
+    await repository.cancelImportedBooking("booking-1", [change]);
 
     expect(manager.query).toHaveBeenCalledWith(expect.stringContaining("UPDATE"), expect.any(Array));
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);

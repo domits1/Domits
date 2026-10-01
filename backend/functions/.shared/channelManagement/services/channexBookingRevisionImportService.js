@@ -294,8 +294,8 @@ const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domit
 });
 // A booking imported from Channex changes the nights on the other channels too, so its
 // change goes to the outbox with the booking write (design D8).
-const importedBookingChange = (propertyId, ...stays) =>
-  bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT, ...stays);
+const importedBookingChange = (propertyId, stay) =>
+  bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT, stay);
 const buildChannexBookingRevisionPersistencePayload = ({ revision, propertyMapping }) => ({
   provider: "CHANNEX",
   channel: CHANNEL_CHANNEX,
@@ -992,10 +992,12 @@ export default class ChannexBookingRevisionImportService {
         guestName: requireStr(revision?.guestName) || "Channex guest",
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
-        channexChange: importedBookingChange(propertyContext.propertyId, {
-          arrivalMs: Number(dates.arrivalDateMs),
-          departureMs: Number(dates.departureDateMs),
-        }),
+        channexChanges: [
+          importedBookingChange(propertyContext.propertyId, {
+            arrivalMs: Number(dates.arrivalDateMs),
+            departureMs: Number(dates.departureDateMs),
+          }),
+        ],
       });
     } catch (error) {
       const recoveredBooking = await this.externalBookingImportRepository.getBookingById(deterministicBookingId);
@@ -1166,12 +1168,18 @@ export default class ChannexBookingRevisionImportService {
       guestName: requireStr(revision?.guestName) || "Channex guest",
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
-      // The old nights reopen and the new ones close, so the change covers both stays.
-      channexChange: importedBookingChange(
-        bookingBefore.propertyId,
-        { arrivalMs: bookingBefore.arrivalDateMs, departureMs: bookingBefore.departureDateMs },
-        { arrivalMs: Number(dates.arrivalDateMs), departureMs: Number(dates.departureDateMs) }
-      ),
+      // The old nights reopen and the new ones close: one change per stay, so the nights
+      // between them are not resent (design D9).
+      channexChanges: [
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: bookingBefore.arrivalDateMs,
+          departureMs: bookingBefore.departureDateMs,
+        }),
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: Number(dates.arrivalDateMs),
+          departureMs: Number(dates.departureDateMs),
+        }),
+      ],
     });
     if (!updatedBooking) {
       return {
@@ -1248,10 +1256,12 @@ export default class ChannexBookingRevisionImportService {
 
     const cancelledBooking = await this.externalBookingImportRepository.cancelImportedBooking(
       domitsBookingId,
-      importedBookingChange(bookingBefore.propertyId, {
-        arrivalMs: bookingBefore.arrivalDateMs,
-        departureMs: bookingBefore.departureDateMs,
-      })
+      [
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: bookingBefore.arrivalDateMs,
+          departureMs: bookingBefore.departureDateMs,
+        }),
+      ]
     );
     if (!cancelledBooking) {
       return {
