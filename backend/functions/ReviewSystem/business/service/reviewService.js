@@ -1,6 +1,6 @@
-
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
@@ -9,65 +9,107 @@ const CANCELLED_STATUSES = new Set(["cancelled", "canceled"]);
 
 const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
 
+const isDuplicateReservationReviewError = (error) =>
+  error?.code === "23505" &&
+  String(error?.constraint || error?.message || "").includes("review_reservation_unique_idx");
+
 export class ReviewService {
-    constructor({ repository = new ReviewRepository(), now = () => Date.now() } = {}) {
-        this.repository = repository;
-        this.now = now;
+  constructor({ repository = new ReviewRepository(), now = () => Date.now() } = {}) {
+    this.repository = repository;
+    this.now = now;
+  }
+
+  // Derive review ownership and property details from the booking to prevent client spoofing.
+  // Restrict reviews to completed, caller-owned reservations to protect review integrity.
+  async createReview(callerUserId, reviewData) {
+    this.validateReviewPayload(reviewData);
+
+    const reservationId = reviewData.reservation_id.trim();
+    const booking = await this.repository.findBookingById(reservationId);
+
+    if (!booking) {
+      throw new NotFoundException("Reservation not found.");
     }
 
-    // Validates the payload and confirms the caller can review the reservation.
-    // Creates the review with reservation-derived IDs and verified draft status.
-    async createReview(callerUserId, reviewData) {
-        this.validateReviewPayload(reviewData);
-
-        const reservationId = String(reviewData.reservation_id).trim();
-        const booking = await this.repository.findBookingById(reservationId);
-
-        if (!booking) {
-            throw new NotFoundException("Reservation not found.");
-        }
-
-        if (String(booking.guestid) !== String(callerUserId)) {
-            throw new ForbiddenException("You can only review your own reservation.");
-        }
-
-        if (CANCELLED_STATUSES.has(String(booking.status || "").toLowerCase())) {
-            throw new BadRequestException("Cancelled reservations cannot be reviewed.");
-        }
-
-        if (Number(booking.departuredate) > this.now()) {
-            throw new BadRequestException("You can only review a reservation after checkout.");
-        }
-
-        const now = this.now();
-
-        return await this.repository.create({
-            reservation_id: reservationId,
-            property_id: booking.property_id,
-            host_id: booking.hostid,
-            guest_id: booking.guestid,
-            overall_rating: Number(reviewData.overall_rating),
-            public_review: reviewData.public_review ? String(reviewData.public_review).trim() : null,
-            private_feedback: reviewData.private_feedback ? String(reviewData.private_feedback).trim() : null,
-            verification_status: "verified",
-            publication_status: "draft",
-            created_at: now,
-            updated_at: now,
-        });
+    if (String(booking.guestid) !== String(callerUserId)) {
+      throw new ForbiddenException("You can only review your own reservation.");
     }
 
-    // Ensures required review fields are present and non-blank.
-    // Rejects ratings outside the supported range of 1 through 5.
-    validateReviewPayload(reviewData) {
-        for (const field of REQUIRED_FIELDS) {
-            if (isBlank(reviewData[field])) {
-                throw new BadRequestException(`${field} is required`);
-            }
-        }
-
-        const rating = Number(reviewData.overall_rating);
-        if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-            throw new BadRequestException("overall_rating must be a number between 1 and 5");
-        }
+    if (CANCELLED_STATUSES.has(String(booking.status || "").toLowerCase())) {
+      throw new BadRequestException("Cancelled reservations cannot be reviewed.");
     }
+
+    if (Number(booking.departuredate) > this.now()) {
+      throw new BadRequestException("You can only review a reservation after checkout.");
+    }
+
+    const now = this.now();
+
+    try {
+      return await this.repository.create({
+        reservation_id: reservationId,
+        property_id: booking.property_id,
+        host_id: booking.hostid,
+        guest_id: booking.guestid,
+        overall_rating: reviewData.overall_rating,
+        public_review: this.normalizeOptionalText(reviewData.public_review),
+        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+        verification_status: "verified",
+        publication_status: "draft",
+        created_at: now,
+        updated_at: now,
+      });
+    } catch (error) {
+      if (isDuplicateReservationReviewError(error)) {
+        throw new ConflictException("This reservation already has a review.");
+      }
+
+      throw error;
+    }
+  }
+
+  // Reject malformed input before reservation checks or persistence are attempted.
+  // Validate types and rating bounds so invalid review data cannot enter the system.
+  validateReviewPayload(reviewData) {
+    for (const field of REQUIRED_FIELDS) {
+      if (isBlank(reviewData[field])) {
+        throw new BadRequestException(`${field} is required`);
+      }
+    }
+
+    if (typeof reviewData.reservation_id !== "string") {
+      throw new BadRequestException("reservation_id must be a string");
+    }
+
+    if (typeof reviewData.overall_rating !== "number") {
+      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    }
+
+    if (!Number.isFinite(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    }
+
+    if (
+      reviewData.public_review !== undefined &&
+      reviewData.public_review !== null &&
+      typeof reviewData.public_review !== "string"
+    ) {
+      throw new BadRequestException("public_review must be a string");
+    }
+
+    if (
+      reviewData.private_feedback !== undefined &&
+      reviewData.private_feedback !== null &&
+      typeof reviewData.private_feedback !== "string"
+    ) {
+      throw new BadRequestException("private_feedback must be a string");
+    }
+  }
+
+  normalizeOptionalText(value) {
+    if (!value) return null;
+
+    const text = value.trim();
+    return text || null;
+  }
 }

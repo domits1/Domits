@@ -10,8 +10,8 @@ const normalizeAccessToken = (accessToken) => {
 };
 
 export class AuthManager {
-    // Verifies the access token with Cognito and extracts the user's identity.
-    // Rejects missing or invalid tokens with an unauthorized exception.
+    // Reject untrusted credentials before they reach review business logic.
+    // Ownership checks rely on the user ID being verified by Cognito.
     async getUser(accessToken) {
         const normalizedToken = normalizeAccessToken(accessToken);
 

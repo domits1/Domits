@@ -1,7 +1,6 @@
-
 export class CreateReviews20260930 {
-    async up(queryRunner) {
-        await queryRunner.query(`
+  async up(queryRunner) {
+    await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS main.review (
                 id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
                 reservation_id VARCHAR NOT NULL,
@@ -18,21 +17,13 @@ export class CreateReviews20260930 {
             );
         `);
 
-        await queryRunner.query(
-            `CREATE UNIQUE INDEX ASYNC review_reservation_unique_idx ON main.review (reservation_id);`
-        );
-        await queryRunner.query(
-            `CREATE INDEX ASYNC review_property_idx ON main.review (property_id);`
-        );
-        await queryRunner.query(
-            `CREATE INDEX ASYNC review_host_idx ON main.review (host_id);`
-        );
-        await queryRunner.query(
-            `CREATE INDEX ASYNC review_guest_idx ON main.review (guest_id);`
-        );
-    }
+    await queryRunner.query(`CREATE UNIQUE INDEX ASYNC review_reservation_unique_idx ON main.review (reservation_id);`);
+    await queryRunner.query(`CREATE INDEX ASYNC review_property_idx ON main.review (property_id);`);
+    await queryRunner.query(`CREATE INDEX ASYNC review_host_idx ON main.review (host_id);`);
+    await queryRunner.query(`CREATE INDEX ASYNC review_guest_idx ON main.review (guest_id);`);
+  }
 
-    async down(queryRunner) {
-        await queryRunner.query(`DROP TABLE IF EXISTS main.review;`);
-    }
+  async down(queryRunner) {
+    await queryRunner.query(`DROP TABLE IF EXISTS main.review;`);
+  }
 }
