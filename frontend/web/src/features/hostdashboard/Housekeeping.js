@@ -3,7 +3,7 @@ import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight, LuX, LuCheck, LuPartyPopper
+    LuSearch, LuChevronRight, LuCheck, LuPartyPopper
 } from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
@@ -18,9 +18,10 @@ import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } fr
 import { sortTasks } from './hosttasks/utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBuckets';
 import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
-import AttachmentThumb from './hosttasks/components/AttachmentThumb';
 import ConfirmDialog from './hosttasks/components/ConfirmDialog';
 import TeamInviteModal from './hosttasks/components/TeamInviteModal';
+import CreateTaskModal from './hosttasks/components/CreateTaskModal';
+import TaskDetailsModal from './hosttasks/components/TaskDetailsModal';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -62,7 +63,6 @@ const HostPropertyCare = () => {
     });
 
     const [currentUser, setCurrentUser] = useState({ name: '', email: '', group: '' });
-    const [openDropdown, setOpenDropdown] = useState(null);
     const [teamMembers, setTeamMembers] = useState([]);
     const [teamMemberships, setTeamMemberships] = useState([]);
     const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
@@ -86,43 +86,11 @@ const HostPropertyCare = () => {
     }, []);
 
     useEffect(() => {
-        if (!openDropdown) return;
-        const handler = () => setOpenDropdown(null);
-        document.addEventListener('click', handler);
-        return () => document.removeEventListener('click', handler);
-    }, [openDropdown]);
-
-    useEffect(() => {
         if (!isModalOpen) return;
         const handler = (e) => { if (e.key === 'Escape') handleCancelModal(); };
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [isModalOpen]);
-
-    const STATUS_OPTIONS = [
-        { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
-        { value: 'In progress', label: '● In progress', cls: 'status-in-progress' },
-        { value: 'Completed',   label: '● Completed',   cls: 'status-completed' },
-        { value: 'Overdue',     label: '● Overdue',     cls: 'status-overdue' },
-        { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
-    ];
-    const PRIORITY_OPTIONS = [
-        { value: 'Low',    label: 'Low',    cls: 'priority-low' },
-        { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
-        { value: 'High',   label: 'High',   cls: 'priority-high' },
-        { value: 'Urgent', label: 'Urgent', cls: 'priority-urgent' },
-    ];
-    const TASK_TYPE_OPTIONS = [
-        'Cleaning',
-        'Maintenance',
-        'Inspection',
-        'Mid-stay',
-        'Sanitation',
-        'Check-in',
-        'Inventory',
-        'Administration',
-        'Issue',
-    ];
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
@@ -1330,260 +1298,31 @@ const HostPropertyCare = () => {
                 {renderContent()}
             </div>
             
-            {isModalOpen && (
-                <>
-                <button className="modal-backdrop" onClick={handleCancelModal} aria-label="Close modal" />
-                <div className="modal-overlay">
-                    <div className="modal-content-large">
-                        <div className="modal-header">
-                            <h3>Create Task</h3>
-                            <button className="close-btn" onClick={handleCancelModal}><LuX /></button>
-                        </div>
-                        <form onSubmit={handleCreateTask}>
-                            <div className="form-group">
-                                <label htmlFor='task-title'>Title</label>
-                                <input type="text" id='task-title' name="title" value={newTask.title} onChange={handleInputChange} placeholder="Repair broken patio light" required />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-description'>Description</label>
-                                <textarea id='task-description' name="description" value={newTask.description} onChange={handleInputChange} placeholder="Description here..." rows="3" required />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-property'>Property</label>
-                                <select id='task-property' name="property" value={newTask.property_id} onChange={handlePropertyChange} required>
-                                    <option value="" disabled hidden>Select Property</option>
-                                    {createPropertyOptions.map(o => (
-                                        <option key={o.id} value={o.id}>{o.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference</label>
-                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-type'>Type</label>
-                                <select id='task-type' name="type" value={newTask.type} onChange={handleInputChange} required>
-                                    {TASK_TYPE_OPTIONS.map(option => (
-                                        <option key={option} value={option}>{option}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-assignee'>Assignee</label>
-                                <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
-                                    <option value="" disabled hidden>Select Assignee</option>
-                                    {currentUser.name && <option value={currentUser.name}>{currentUser.name}{currentUser.email ? ` (${currentUser.email})` : ''}</option>}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-due-date'>Due Date</label>
-                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-priority'>Priority</label>
-                                <select id='task-priority' name="priority" value={newTask.priority} onChange={handleInputChange} required>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Urgent">Urgent</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor='task-attachments'>Attachments (optional)</label>
-                                <div className="custom-file-upload">
-                                    <input type="file" id="file-upload" name="attachments" multiple accept="image/*,application/pdf" onChange={handleFileChange} />
-                                    <label htmlFor="file-upload">
-                                        <span className="upload-text">{newTask.attachments?.length > 0 ? `${newTask.attachments.length} file(s) selected` : 'Upload file...'}</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                                <button type="button" className="btn-text" onClick={handleCancelModal}>Cancel</button>
-                                <button type="submit" className="btn-create-green">Create Task</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                </>
-            )}
+            <CreateTaskModal
+                isOpen={isModalOpen}
+                newTask={newTask}
+                propertyOptions={createPropertyOptions}
+                currentUser={currentUser}
+                onInputChange={handleInputChange}
+                onPropertyChange={handlePropertyChange}
+                onFileChange={handleFileChange}
+                onSubmit={handleCreateTask}
+                onCancel={handleCancelModal}
+            />
 
-            {viewingTask && editedTask && (
-                <>
-                <button className="modal-backdrop" onClick={closeTaskDetails} aria-label="Close modal" />
-                <div className="modal-overlay">
-                    <div className="modal-content-large task-details-modal">
-                        <div className="modal-header details-header">
-                            <input
-                                className="details-title-input"
-                                name="title"
-                                value={editedTask.title}
-                                onChange={handleEditChange}
-                                placeholder="Task title"
-                            />
-                            <button className="close-btn" onClick={closeTaskDetails}><LuX /></button>
-                        </div>
-                        
-                        <div className="details-badges-row">
-                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
-                                <button
-                                    type="button"
-                                    className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}
-                                    onClick={() => setOpenDropdown(openDropdown === 'status' ? null : 'status')}
-                                >
-                                    ● {editedTask.status}
-                                </button>
-                                {openDropdown === 'status' && (
-                                    <div className="custom-badge-options">
-                                        {STATUS_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt.value}
-                                                type="button"
-                                                className={`custom-badge-option ${opt.cls}`}
-                                                onClick={() => {
-                                                    handleEditChange({ target: { name: 'status', value: opt.value } });
-                                                    setOpenDropdown(null);
-                                                }}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="custom-badge-select-wrapper" role="none" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
-                                <button
-                                    type="button"
-                                    className={`badge-select priority-${editedTask.priority.toLowerCase()}`}
-                                    onClick={() => setOpenDropdown(openDropdown === 'priority' ? null : 'priority')}
-                                >
-                                    {editedTask.priority}
-                                </button>
-                                {openDropdown === 'priority' && (
-                                    <div className="custom-badge-options">
-                                        {PRIORITY_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt.value}
-                                                type="button"
-                                                className={`custom-badge-option ${opt.cls}`}
-                                                onClick={() => {
-                                                    handleEditChange({ target: { name: 'priority', value: opt.value } });
-                                                    setOpenDropdown(null);
-                                                }}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
-                                {editPropertyOptions.map((o) => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="details-body">
-                            <div className="form-group">
-                                <label htmlFor='task-description'>Description</label>
-                                <textarea id='task-description' name="description" value={editedTask.description || ''} onChange={handleEditChange} rows="3" placeholder="Enter description..." />
-                            </div>
-
-                            <div className="form-row-grid">
-                                <div className="form-group">
-                                    <label htmlFor='task-assignee'>Assignee</label>
-                                    <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
-                                        {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor='task-type'>Type</label>
-                                    <select id='task-type' name="type" value={editedTask.type} onChange={handleEditChange}>
-                                        {TASK_TYPE_OPTIONS.map(option => (
-                                            <option key={option} value={option}>{option}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor='task-booking-ref'>Booking Reference</label>
-                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Coming soon" disabled />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor='task-due-date'>Due Date</label>
-                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
-                                </div>
-                            </div>
-
-                            <div className="form-group attachments-section">
-                                <div className="attachments-header">
-                                    <label htmlFor='task-attachments-edit'>Attachments (optional)</label>
-                                    <span className="attachments-count">{(editedTask.attachments?.length || 0)} Attachments</span>
-                                </div>
-                                <div className="attachments-box">
-                                    {(!editedTask.attachments || editedTask.attachments.length === 0) ? (
-                                        <p className="no-attachments-text">No attachments yet.</p>
-                                    ) : (
-                                        <div className="attachments-grid">
-                                            {editedTask.attachments.map((f, index) => (
-                                                <AttachmentThumb
-                                                    key={f instanceof File ? f.name : f}
-                                                    attachment={f}
-                                                    onRemove={() => handleRemoveAttachment(index)}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="custom-file-upload" style={{ marginTop: '8px' }}>
-                                    <input type="file" id="task-attachments-edit" name="attachments" multiple accept="image/*,application/pdf" onChange={handleEditFileChange} />
-                                    <label htmlFor="task-attachments-edit">
-                                        <span className="upload-text">Upload file...</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="activity-section">
-                                <div className="activity-header">
-                                    <h4>Activity</h4>
-                                    {editedTask.activities && editedTask.activities.length > 0 && (
-                                        <span className="created-info">
-                                            Created by {editedTask.activities[0].user} on {editedTask.activities[0].timestamp}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="activity-list">
-                                    {(!editedTask.activities || editedTask.activities.length === 0) ? (
-                                        <p className="no-attachments-text">No activity recorded yet.</p>
-                                    ) : (
-                                        [...editedTask.activities].reverse().map(activity => (
-                                            <div className="activity-item" key={activity.id} style={{ alignItems: 'flex-start' }}>
-                                                <div className="activity-avatar">U</div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                    <p><strong>{activity.user}</strong> {activity.action}</p>
-                                                    <span style={{ fontSize: '11px', color: '#adb5bd' }}>{activity.timestamp}</span>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-footer details-footer">
-                            <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
-                            
-                            {JSON.stringify(viewingTask) === JSON.stringify(editedTask) ? (
-                                <button className="btn-danger" onClick={handleDeleteSingleTask}>Delete</button>
-                            ) : (
-                                <button className="btn-create-green" onClick={handleSaveChanges}>Save Changes</button>
-                            )}
-
-                        </div>
-                    </div>
-                </div>
-                </>
-            )}
+            <TaskDetailsModal
+                viewingTask={viewingTask}
+                editedTask={editedTask}
+                editPropertyOptions={editPropertyOptions}
+                currentUser={currentUser}
+                onEditChange={handleEditChange}
+                onPropertyChange={handleEditPropertyChange}
+                onFileChange={handleEditFileChange}
+                onRemoveAttachment={handleRemoveAttachment}
+                onSave={handleSaveChanges}
+                onDelete={handleDeleteSingleTask}
+                onClose={closeTaskDetails}
+            />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />
         </main>
