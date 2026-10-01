@@ -47,4 +47,13 @@ export const CHANNEX_ARI_OUTBOX_DEFAULTS = Object.freeze({
   // Without a timeout a hanging Channex call outlives the Lambda and leaves the
   // lock and the claimed rows stuck until stale recovery.
   PROVIDER_REQUEST_TIMEOUT_MS: 8_000,
+  // Retry delay doubles from one minute and is capped at an hour (#3280); after
+  // MAX_ATTEMPTS the rows become FAILED so a change that keeps failing is visible.
+  RETRY_BASE_MS: 60_000,
+  RETRY_CAP_MS: 60 * 60 * 1000,
+  RETRY_JITTER: 0.1,
+  MAX_ATTEMPTS: 8,
+  // Channex allows 10 availability and 10 price/restriction calls per property per
+  // minute, and the worker runs once a minute; calls above this wait for the next run.
+  MAX_CALLS_PER_BUCKET_PER_RUN: 10,
 });

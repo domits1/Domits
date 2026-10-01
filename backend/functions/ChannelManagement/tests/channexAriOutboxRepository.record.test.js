@@ -61,6 +61,15 @@ describe("recording the outcome of a push", () => {
     }
   });
 
+  test("releases deferred rows to PENDING for the next minute, and takes back the attempt the claim counted", async () => {
+    await repository.release(["row-1"], { now: NOW, nextAttemptAt: NOW + 60_000 });
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toContain("attemptcount = GREATEST(attemptcount - 1, 0)");
+    expect(sql).toContain("AND status = $7");
+    expect(params).toEqual(["PENDING", NOW, null, null, NOW + 60_000, ["row-1"], "PROCESSING"]);
+  });
+
   test("skipping is guarded too, because the worker claims unmapped rows before it skips them", async () => {
     await repository.markSkipped(["row-1"], { now: NOW, failureReason: "NOT_MAPPED" });
 

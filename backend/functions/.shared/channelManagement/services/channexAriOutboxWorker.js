@@ -1,16 +1,24 @@
 import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "../utils/channexAriOutboxConstants.js";
 import {
   OUTCOME,
+  callTypeOf,
   classifySyncResponse,
   groupChangesForSend,
+  nextRetryDelayMs,
   worstOutcome,
 } from "../utils/channexAriOutboxPlanning.js";
 
 const SERIALIZATION_FAILURE = "40001";
+// Channex counts its call limit per minute.
+const CALL_LIMIT_WINDOW_MS = 60_000;
+// The Channex rate-limit buckets (availability, restrictions) a set of change types hits.
+const bucketsOf = (changeTypes) => [...new Set(changeTypes.map(callTypeOf))].sort();
 const lockName = (domitsPropertyId) => `channex_ari:${domitsPropertyId}`;
+// Rows store YYYYMMDD integers; calls carry ISO dates, which compare correctly as text.
+const toIsoDate = (value) => String(value).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3");
 
 export default class ChannexAriOutboxWorker {
-  constructor({ outbox, props, accounts, sync, schemaGuard, syncCalendarChange, now = Date.now, log = console }) {
+  constructor({ outbox, props, accounts, sync, schemaGuard, syncCalendarChange, now = Date.now, random = Math.random, log = console }) {
     this.outbox = outbox;
     this.props = props;
     this.accounts = accounts;
@@ -18,6 +26,7 @@ export default class ChannexAriOutboxWorker {
     this.schemaGuard = schemaGuard;
     this.syncCalendarChange = syncCalendarChange;
     this.now = now;
+    this.random = random;
     this.log = log;
   }
 
@@ -60,36 +69,170 @@ export default class ChannexAriOutboxWorker {
   }
 
   async sendAndRecord(account, domitsPropertyId, rows) {
-    const results = [];
+    // Every group ends up in `sends`, also the ones not sent, so every date of every row
+    // has an outcome and a date that never went out can't be recorded as sent.
+    const sends = [];
+    const pausedBuckets = new Map();
+    const callsPerBucket = new Map();
     for (const group of groupChangesForSend(rows)) {
+      const buckets = bucketsOf(group.changeTypes);
+
+      // After a rate limit or outage, the rest of that call type waits; the other call
+      // type has its own Channex limit and still goes out.
+      const pausedBucket = buckets.find((bucket) => pausedBuckets.has(bucket));
+      if (pausedBucket) {
+        const reason = pausedBuckets.get(pausedBucket);
+        sends.push({ group, sent: false, result: { outcome: OUTCOME.RETRY, reason, taskIds: [] } });
+        continue;
+      }
+
+      // A call with several types hits each of their Channex endpoints, so it counts
+      // against every bucket it touches. Above the limit the group waits for the next run.
+      const limitReached = buckets.some(
+        (bucket) => (callsPerBucket.get(bucket) || 0) >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_CALLS_PER_BUCKET_PER_RUN
+      );
+      if (limitReached) {
+        sends.push({ group, sent: false, result: { outcome: OUTCOME.DEFERRED, reason: null, taskIds: [] } });
+        continue;
+      }
+      for (const bucket of buckets) callsPerBucket.set(bucket, (callsPerBucket.get(bucket) || 0) + 1);
+
       const answer = await this.syncCalendarChange(
         { userId: account.userId, domitsPropertyId, source: "CHANNEX_ARI_OUTBOX", ...group },
         { providerRequestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
       );
-      const classified = classifySyncResponse(answer);
-      results.push(classified);
-      // A group that did not go through (RETRY/FAILED/SKIPPED) already decides the
-      // outcome for every row (see worstOutcome below), so further groups would only
-      // send more Channex calls without changing what gets recorded.
-      if (classified.outcome !== OUTCOME.PROCESSED) break;
+      const result = classifySyncResponse(answer);
+      sends.push({ group, sent: true, result });
+      // Only a rate limit or an outage says more calls of this type would fail too; a
+      // rejected call (4xx) is about its own values.
+      if (result.outcome === OUTCOME.RETRY) {
+        for (const bucket of buckets) pausedBuckets.set(bucket, result.reason);
+      }
     }
 
-    const outcome = worstOutcome(results.map((result) => result.outcome));
-    const reason = results.find((result) => result.outcome === outcome)?.reason ?? null;
-    const ids = rows.map((row) => row.id);
+    // Each row gets the worst outcome of the calls that carried its change types on its
+    // dates, and the reason of that call; one type can go out in several calls when its
+    // dates lie far apart.
+    const rowsByResult = new Map();
+    const partlySent = new Set();
+    for (const row of rows) {
+      const [rowFrom, rowTo] = [row.dateFrom, row.dateTo].map(toIsoDate);
+      const carriers = sends.filter(
+        ({ group }) =>
+          group.changeTypes.some((type) => row.changeTypes.includes(type)) &&
+          group.changedDates[0] <= rowTo &&
+          group.changedDates.at(-1) >= rowFrom
+      );
+      if (carriers.some(({ sent }) => sent)) partlySent.add(row.id);
+      const outcome = carriers.length ? worstOutcome(carriers.map(({ result }) => result.outcome)) : OUTCOME.RETRY;
+      const reason = carriers.find(({ result }) => result.outcome === outcome)?.result.reason ?? null;
+      const key = `${outcome}|${reason}`;
+      if (!rowsByResult.has(key)) rowsByResult.set(key, { outcome, reason, rows: [] });
+      rowsByResult.get(key).rows.push(row);
+    }
+
     const now = this.now();
-
-    if (outcome === OUTCOME.PROCESSED) {
-      const taskIds = results.flatMap((result) => result.taskIds);
-      await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: results.length } });
-    } else if (outcome === OUTCOME.SKIPPED) {
-      await this.outbox.markSkipped(ids, { now, failureReason: reason });
-    } else if (outcome === OUTCOME.FAILED) {
-      await this.outbox.markFailed(ids, { now, failureReason: reason });
-    } else {
-      await this.outbox.returnToPending(ids, { now, failureReason: reason });
+    const recorded = [];
+    for (const { outcome, reason, rows: outcomeRows } of rowsByResult.values()) {
+      const ids = outcomeRows.map((row) => row.id);
+      if (outcome === OUTCOME.PROCESSED) {
+        const sentCalls = sends.filter(({ sent }) => sent);
+        const taskIds = sentCalls.flatMap(({ result }) => result.taskIds);
+        await this.outbox.markProcessed(ids, { now, sentSummary: { taskIds, calls: sentCalls.length } });
+        recorded.push(outcome);
+      } else if (outcome === OUTCOME.DEFERRED) {
+        recorded.push(...(await this.deferRows(outcomeRows, { now, partlySent })));
+      } else if (outcome === OUTCOME.SKIPPED) {
+        await this.outbox.markSkipped(ids, { now, failureReason: reason });
+        recorded.push(outcome);
+      } else if (outcome === OUTCOME.FAILED) {
+        await this.outbox.markFailed(ids, { now, failureReason: reason });
+        recorded.push(outcome);
+      } else {
+        recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason, partlySent })));
+      }
     }
-    return outcome;
+    return worstOutcome(recorded);
+  }
+
+
+  // Rows the call limit held back wait one minute: while they wait, the claim holds
+  // back their call type, so a property never gets two batches of calls within one
+  // Channex rate-limit minute, even when two runs handle it seconds apart. A row that
+  // was not sent at all gets its attempt back. A row that was partly sent keeps it, so
+  // a row too wide to ever fit in one run ends as FAILED instead of sending the
+  // maximum number of calls every minute forever.
+  async deferRows(rows, { now, partlySent }) {
+    const untouched = rows.filter((row) => !partlySent.has(row.id));
+    const partial = rows.filter((row) => partlySent.has(row.id));
+    const exhausted = partial.filter((row) => (row.attemptCount || 1) >= CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS);
+    const waiting = partial.filter((row) => (row.attemptCount || 1) < CHANNEX_ARI_OUTBOX_DEFAULTS.MAX_ATTEMPTS);
+
+    const nextAttemptAt = now + CALL_LIMIT_WINDOW_MS;
+    const recorded = [];
+    if (untouched.length) {
+      await this.outbox.release(untouched.map((row) => row.id), { now, nextAttemptAt });
+      recorded.push(OUTCOME.DEFERRED);
+    }
+    if (waiting.length) {
+      await this.outbox.returnToPending(waiting.map((row) => row.id), {
+        now,
+        failureReason: "CHANNEX_CALL_LIMIT",
+        nextAttemptAt,
+      });
+      recorded.push(OUTCOME.DEFERRED);
+    }
+    if (exhausted.length) {
+      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      recorded.push(OUTCOME.FAILED);
+    }
+    return recorded;
+  }
+
+  // Exhaustion is decided per row, so a change on its eighth attempt cannot drag a
+  // fresh booking into FAILED with it. Each call type gets its own delay, so a
+  // Retry-After on rates does not hold back availability. A row that was never sent
+  // (its call type was paused) waits just as long but gets its attempt back.
+  async scheduleRetry(rows, sends, { now, reason, partlySent }) {
+    const { MAX_ATTEMPTS, RETRY_CAP_MS } = CHANNEX_ARI_OUTBOX_DEFAULTS;
+    const recorded = [];
+    const exhausted = rows.filter((row) => partlySent.has(row.id) && (row.attemptCount || 1) >= MAX_ATTEMPTS);
+    if (exhausted.length) {
+      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      recorded.push(OUTCOME.FAILED);
+    }
+
+    const waitingByBuckets = new Map();
+    for (const row of rows.filter((candidate) => !exhausted.includes(candidate))) {
+      const key = bucketsOf(row.changeTypes).join(",");
+      waitingByBuckets.set(key, [...(waitingByBuckets.get(key) || []), row]);
+    }
+
+    for (const [key, waiting] of waitingByBuckets) {
+      const buckets = key.split(",");
+      // Channex's Retry-After for these call types wins when it asks for a wait: the
+      // longest one, capped at an hour.
+      const retryAfterMs = Math.max(
+        0,
+        ...sends
+          .filter(({ group }) => bucketsOf(group.changeTypes).some((bucket) => buckets.includes(bucket)))
+          .map(({ result }) => result.retryAfterMs || 0)
+      );
+      const attempts = Math.max(...waiting.map((row) => row.attemptCount || 1));
+      const delayMs = retryAfterMs > 0 ? Math.min(retryAfterMs, RETRY_CAP_MS) : nextRetryDelayMs(attempts, this.random);
+      const nextAttemptAt = now + delayMs;
+
+      const tried = waiting.filter((row) => partlySent.has(row.id));
+      const untried = waiting.filter((row) => !partlySent.has(row.id));
+      if (tried.length) {
+        await this.outbox.returnToPending(tried.map((row) => row.id), { now, failureReason: reason, nextAttemptAt });
+      }
+      if (untried.length) {
+        await this.outbox.release(untried.map((row) => row.id), { now, nextAttemptAt });
+      }
+      recorded.push(OUTCOME.RETRY);
+    }
+    return recorded;
   }
 
   async tryLock(accountId, domitsPropertyId) {

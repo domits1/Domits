@@ -90,11 +90,16 @@ describe("worstOutcome", () => {
     expect(worstOutcome([OUTCOME.PROCESSED, OUTCOME.RETRY])).toBe(OUTCOME.RETRY);
   });
 
-  test("a hard failure outweighs a retry", () => {
-    expect(worstOutcome([OUTCOME.RETRY, OUTCOME.FAILED])).toBe(OUTCOME.FAILED);
+  // A row can go out in several calls; while one of them still has to be retried, the
+  // row must stay alive, or the unsent part is lost. Exhaustion still ends it (#3280).
+  test.each([
+    [OUTCOME.FAILED, [OUTCOME.RETRY, OUTCOME.FAILED]],
+    [OUTCOME.SKIPPED, [OUTCOME.SKIPPED, OUTCOME.RETRY]],
+  ])("a retry outweighs %s, so the unsent part is not dropped", (_, outcomes) => {
+    expect(worstOutcome(outcomes)).toBe(OUTCOME.RETRY);
   });
 
-  test("an unmapped property outweighs everything", () => {
+  test("an unmapped property outweighs a hard failure", () => {
     expect(worstOutcome([OUTCOME.FAILED, OUTCOME.SKIPPED])).toBe(OUTCOME.SKIPPED);
   });
 

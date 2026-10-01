@@ -1,4 +1,4 @@
-import { CHANNEX_ARI_CHANGE_TYPE } from "./channexAriOutboxConstants.js";
+import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_DEFAULTS } from "./channexAriOutboxConstants.js";
 
 const TYPE_ORDER = [
   CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY,
@@ -63,9 +63,13 @@ export const OUTCOME = Object.freeze({
   SKIPPED: "SKIPPED",
   FAILED: "FAILED",
   RETRY: "RETRY",
+  // Not sent because this run reached the Channex call limit; goes out in the next run.
+  DEFERRED: "DEFERRED",
 });
 
-const OUTCOME_SEVERITY = [OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.RETRY, OUTCOME.PROCESSED];
+// RETRY comes first: a row can go out in several calls, and while one of them still has
+// to be retried, ending the row would drop that part. Exhaustion still ends it (#3280).
+const OUTCOME_SEVERITY = [OUTCOME.RETRY, OUTCOME.DEFERRED, OUTCOME.SKIPPED, OUTCOME.FAILED, OUTCOME.PROCESSED];
 
 const isTemporary = (httpStatus) =>
   httpStatus === null || httpStatus === undefined || httpStatus === 429 || httpStatus >= 500;
@@ -95,8 +99,18 @@ export const classifySyncResponse = (result) => {
     const auth = failed.find((item) => item.httpStatus === 401 || item.httpStatus === 403);
     if (auth) return { outcome: OUTCOME.FAILED, reason: auth.errorCode || "CHANNEX_UNAUTHORIZED", taskIds: [] };
 
-    const temporary = failed.find((item) => isTemporary(item.httpStatus));
-    if (temporary) return { outcome: OUTCOME.RETRY, reason: temporary.errorCode || "CHANNEX_TEMPORARY", taskIds: [] };
+    const temporary = failed.filter((item) => isTemporary(item.httpStatus));
+    if (temporary.length) {
+      // One answer can hold several refused calls; waiting for the longest Retry-After
+      // respects every one of them.
+      const retryAfterMs = Math.max(0, ...temporary.map((item) => item.retryAfterMs || 0));
+      return {
+        outcome: OUTCOME.RETRY,
+        reason: temporary[0].errorCode || "CHANNEX_TEMPORARY",
+        taskIds: [],
+        retryAfterMs: retryAfterMs || null,
+      };
+    }
 
     return { outcome: OUTCOME.FAILED, reason: failed[0].errorCode || "CHANNEX_REJECTED", taskIds: [] };
   }
@@ -134,3 +148,15 @@ export const outboxTimeBudgetMs = (remainingTimeMs) => {
   if (!Number.isFinite(remainingTimeMs)) return maxBudgetMs;
   return Math.max(0, Math.min(maxBudgetMs, remainingTimeMs - reserveMs));
 };
+
+// 1, 2, 4, 8, 16, 32 minutes, then capped at an hour, plus up to 10% jitter so
+// many properties hit by the same Channex outage do not all retry together.
+export const nextRetryDelayMs = (attempt, random = Math.random) => {
+  const { RETRY_BASE_MS, RETRY_CAP_MS, RETRY_JITTER } = CHANNEX_ARI_OUTBOX_DEFAULTS;
+  const delay = Math.min(RETRY_CAP_MS, RETRY_BASE_MS * 2 ** (Math.max(1, attempt) - 1));
+  return Math.round(delay * (1 + RETRY_JITTER * random()));
+};
+
+// The Channex endpoint a change type goes to; each has its own rate limit.
+export const callTypeOf = (changeType) =>
+  changeType === CHANNEX_ARI_CHANGE_TYPE.AVAILABILITY ? "availability" : "restrictions";

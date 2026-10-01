@@ -3,7 +3,10 @@ jest.mock("../../.shared/integrations/ORM/index.js", () => ({
   default: { getInstance: jest.fn() },
 }));
 
-import ChannexAriOutboxRepository from "../../.shared/channelManagement/repositories/channexAriOutboxRepository.js";
+import ChannexAriOutboxRepository, {
+  claimableRowSql,
+} from "../../.shared/channelManagement/repositories/channexAriOutboxRepository.js";
+import { CHANNEX_ARI_CHANGE_TYPE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 import { NOW, mockClient } from "./support/outboxTestSupport.js";
 
 const RUN_STARTED_AT = NOW - 1_000;
@@ -47,10 +50,21 @@ describe("ChannexAriOutboxRepository.claim", () => {
     const [sql, params] = client.query.mock.calls[0];
     expect(sql).toContain("UPDATE main.channex_ari_outbox");
     expect(sql).toContain("attemptcount = attemptcount + 1");
-    expect(sql).toContain("createdat <= $5");
-    expect(sql).toContain("(nextattemptat IS NULL OR nextattemptat <= $2)");
+    expect(sql).toContain("target.createdat <= $5");
     expect(sql).toContain("RETURNING");
+    expect(sql).toContain(claimableRowSql("main.channex_ari_outbox", { pending: "$4", now: "$2" }));
     expect(params).toEqual(["PROCESSING", NOW, "property-1", "PENDING", RUN_STARTED_AT]);
+  });
+
+  test("a waiting row only holds back rows of the same call type, matched on whole type names", () => {
+    const sql = claimableRowSql("main.channex_ari_outbox", { pending: "$4", now: "$2" });
+
+    expect(sql).toContain("waiting.nextattemptat > $2");
+    expect(sql).toContain("',' || target.changetypes || ',' LIKE '%,availability,%'");
+    expect(sql).not.toMatch(/LIKE '%availability%'/);
+    for (const type of Object.values(CHANNEX_ARI_CHANGE_TYPE)) {
+      expect(sql).toContain(`',' || waiting.changetypes || ',' LIKE '%,${type},%'`);
+    }
   });
 
   test("returns an empty list when another run claimed the rows first", async () => {
