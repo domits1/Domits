@@ -8,7 +8,7 @@ import "../styles/hostSettings.css";
 
 const HostSettingsRatePlans = () => {
   const { t, hub } = useSettingsTrans("ratePlans");
-  const { hostOnlyFee, enterprise } = t;
+  const { hostOnlyFee, directBooking, enterprise } = t;
 
   return (
     <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={t.breadcrumb} title={t.title} subtitle={t.subtitle}>
@@ -32,21 +32,40 @@ const HostSettingsRatePlans = () => {
       <section className="personal-data-section">
         <h2 className="personal-data-section-title">{t.additionalSection}</h2>
         <p className="personal-data-subtitle">{t.additionalSubtitle}</p>
-        <div className="personal-data-card enterprise-rate-plan-card">
-          <Link
-            to="/hostdashboard/settings/rate-plans/enterprise"
-            className="rate-plan-item rate-plan-enterprise-link"
-          >
-            <div className="host-settings-card-icon">
-              <PercentOutlinedIcon />
-            </div>
-            <div className="rate-plan-item-body">
-              <span className="rate-plan-item-title">{enterprise.cardTitle}</span>
-              <span className="rate-plan-item-sub">{enterprise.cardSubtitle}</span>
-              <span className="rate-plan-item-note">{enterprise.cardNote}</span>
-            </div>
-            <ChevronRightIcon className="host-settings-card-chevron" />
-          </Link>
+        <div className="host-settings-cards-grid rate-plan-cards-grid">
+          <div className="personal-data-card enterprise-rate-plan-card">
+            <Link
+              to="/hostdashboard/settings/rate-plans/direct-booking"
+              className="rate-plan-item rate-plan-direct-booking-link"
+            >
+              <div className="host-settings-card-icon">
+                <PercentOutlinedIcon />
+              </div>
+              <div className="rate-plan-item-body">
+                <span className="rate-plan-item-title">{directBooking.cardTitle}</span>
+                <span className="rate-plan-item-sub">{directBooking.cardSubtitle}</span>
+                <span className="rate-plan-item-note">{directBooking.cardNote}</span>
+              </div>
+              <ChevronRightIcon className="host-settings-card-chevron" />
+            </Link>
+          </div>
+
+          <div className="personal-data-card enterprise-rate-plan-card">
+            <Link
+              to="/hostdashboard/settings/rate-plans/enterprise"
+              className="rate-plan-item rate-plan-enterprise-link"
+            >
+              <div className="host-settings-card-icon">
+                <PercentOutlinedIcon />
+              </div>
+              <div className="rate-plan-item-body">
+                <span className="rate-plan-item-title">{enterprise.cardTitle}</span>
+                <span className="rate-plan-item-sub">{enterprise.cardSubtitle}</span>
+                <span className="rate-plan-item-note">{enterprise.cardNote}</span>
+              </div>
+              <ChevronRightIcon className="host-settings-card-chevron" />
+            </Link>
+          </div>
         </div>
       </section>
     </SettingsSubPage>
