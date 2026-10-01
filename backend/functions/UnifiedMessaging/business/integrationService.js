@@ -257,6 +257,7 @@ export default class IntegrationService {
         roomTypes,
         channexCredentialStore,
         channexProviderClient,
+        propertyLookup: externalBookingImportRepository,
       });
     this.channexAriPayloadService =
       channexAriPayloadService ||
@@ -909,27 +910,6 @@ export default class IntegrationService {
 
     const logs = await this.sync.listLogs(id, Math.max(1, Math.min(limit, 200)));
     return ok(logs);
-  }
-
-  async upsertIntegrationProperty(integrationId, body) {
-    const accountId = requireStr(integrationId);
-    if (!accountId) return bad(400, { error: "Missing integration id in path" });
-
-    const domitsPropertyId = requireStr(body.domitsPropertyId);
-    const externalPropertyId = requireStr(body.externalPropertyId);
-
-    if (!domitsPropertyId) return bad(400, { error: "Missing required field: domitsPropertyId" });
-    if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
-
-    const mapping = await this.props.upsert({
-      integrationAccountId: accountId,
-      domitsPropertyId,
-      externalPropertyId,
-      externalPropertyName: body.externalPropertyName ?? null,
-      status: body.status ?? "ACTIVE",
-    });
-
-    return ok(mapping);
   }
 
   async listIntegrationProperties(integrationId) {

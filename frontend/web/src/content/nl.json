@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Gekozen sjabloon",
+    "availabilityHint": "Je kunt nu aan de slag met Essentials. Elite is binnenkort beschikbaar.",
+    "selected": "Geselecteerd",
+    "comingSoon": "Binnenkort beschikbaar",
+    "title": "Kies een websitesjabloon",
+    "unsupportedPreview": "Er is nog geen voorbeeld beschikbaar voor dit sjabloon.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Website met één pagina, basisaanpassingen en essentiële functies"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Veelzijdige website, uitgebreide aanpassingsmogelijkheden en exclusieve functies"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Waar je verblijft",
@@ -1112,6 +1130,10 @@
           "title": "Communicatievoorkeuren",
           "desc": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt."
         },
+        "privacySecurity": {
+          "title": "Privacy & beveiliging",
+          "desc": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie."
+        },
         "company": {
           "title": "Bedrijf",
           "desc": "Beheer je bedrijfsnaam en basisgegevens."
@@ -1331,6 +1353,28 @@
         "saveError": "Opslaan mislukt. Probeer het opnieuw.",
         "cancel": "Annuleren",
         "close": "Sluiten"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & beveiliging",
+      "title": "Privacy & beveiliging",
+      "subtitle": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie.",
+      "authenticationSection": "Authenticatie",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-mail",
+        "active": "Actief",
+        "inactive": "Inactief",
+        "unavailable": "Niet beschikbaar",
+        "verified": "Geverifieerd",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-app",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "loading": "Je authenticatiestatus wordt geladen...",
+        "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
+      },
+      "pin": {
+        "comingSoon": "Binnenkort beschikbaar."
       }
     },
     "communicationPreferences": {

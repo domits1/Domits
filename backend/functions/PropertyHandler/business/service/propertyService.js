@@ -724,8 +724,8 @@ export class PropertyService {
     return await this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId, range);
   }
 
-  async updatePropertyCalendarOverrides(propertyId, overrides, range = {}) {
-    return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range);
+  async updatePropertyCalendarOverrides(propertyId, overrides, range = {}, channexChanges = []) {
+    return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range, channexChanges);
   }
 
   async createRules(rules) {

@@ -3,6 +3,9 @@ import Database from "database";
 import {Property_Availability_Restriction} from "database/models/Property_Availability_Restriction";
 import {Availability_Restrictions} from "database/models/Availability_Restrictions";
 import { randomUUID } from "node:crypto";
+import { withDsqlRetry } from "../../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter, { buildForwardSyncRange } from "../../.shared/channelManagement/services/channexAriOutboxWriter.js";
+import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_SOURCE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 const RESTRICTION_NAME_FALLBACKS = Object.freeze({
     MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
@@ -12,8 +15,9 @@ const RESTRICTION_NAME_FALLBACKS = Object.freeze({
 
 export class PropertyAvailabilityRestrictionRepository {
 
-    constructor(systemManager) {
+    constructor(systemManager, { channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
         this.systemManager = systemManager
+        this.channexAriOutboxWriter = channexAriOutboxWriter;
     }
 
     async getAvailabilityRestrictionById(id) {
@@ -83,102 +87,111 @@ export class PropertyAvailabilityRestrictionRepository {
             ).values()
         );
 
-        return await client.transaction(async (transactionManager) => {
-            if (normalizedRestrictions.length > 0) {
-                const restrictionNames = normalizedRestrictions.map((restriction) => restriction.restriction);
-                const restrictionLookupNames = Array.from(
-                    new Set(
-                        restrictionNames.flatMap((restrictionName) => [
-                            restrictionName,
-                            ...(RESTRICTION_NAME_FALLBACKS[restrictionName] || []),
-                        ])
-                    )
-                );
-                const existingRestrictionMappings = await transactionManager
-                    .getRepository(Availability_Restrictions)
-                    .createQueryBuilder("availability_restrictions")
-                    .select(["availability_restrictions.restriction"])
-                    .where("availability_restrictions.restriction IN (:...restrictionNames)", {
-                        restrictionNames: restrictionLookupNames,
-                    })
-                    .getMany();
-                const existingRestrictionNameSet = new Set(
-                    existingRestrictionMappings.map((restriction) => String(restriction.restriction))
-                );
-
-                const remappedRestrictions = normalizedRestrictions.map((restriction) => {
-                    if (existingRestrictionNameSet.has(restriction.restriction)) {
-                        return restriction;
-                    }
-
-                    const fallbackNames = RESTRICTION_NAME_FALLBACKS[restriction.restriction] || [];
-                    const fallbackRestrictionName = fallbackNames.find((fallbackName) =>
-                        existingRestrictionNameSet.has(fallbackName)
+        return await withDsqlRetry(() =>
+            client.transaction(async (transactionManager) => {
+                if (normalizedRestrictions.length > 0) {
+                    const restrictionNames = normalizedRestrictions.map((restriction) => restriction.restriction);
+                    const restrictionLookupNames = Array.from(
+                        new Set(
+                            restrictionNames.flatMap((restrictionName) => [
+                                restrictionName,
+                                ...(RESTRICTION_NAME_FALLBACKS[restrictionName] || []),
+                            ])
+                        )
+                    );
+                    const existingRestrictionMappings = await transactionManager
+                        .getRepository(Availability_Restrictions)
+                        .createQueryBuilder("availability_restrictions")
+                        .select(["availability_restrictions.restriction"])
+                        .where("availability_restrictions.restriction IN (:...restrictionNames)", {
+                            restrictionNames: restrictionLookupNames,
+                        })
+                        .getMany();
+                    const existingRestrictionNameSet = new Set(
+                        existingRestrictionMappings.map((restriction) => String(restriction.restriction))
                     );
 
-                    if (!fallbackRestrictionName) {
-                        return restriction;
+                    const remappedRestrictions = normalizedRestrictions.map((restriction) => {
+                        if (existingRestrictionNameSet.has(restriction.restriction)) {
+                            return restriction;
+                        }
+
+                        const fallbackNames = RESTRICTION_NAME_FALLBACKS[restriction.restriction] || [];
+                        const fallbackRestrictionName = fallbackNames.find((fallbackName) =>
+                            existingRestrictionNameSet.has(fallbackName)
+                        );
+
+                        if (!fallbackRestrictionName) {
+                            return restriction;
+                        }
+
+                        return {
+                            ...restriction,
+                            restriction: fallbackRestrictionName,
+                        };
+                    });
+
+                    const deduplicatedRestrictions = Array.from(
+                        new Map(
+                            remappedRestrictions.map((restriction) => [
+                                restriction.restriction,
+                                restriction,
+                            ])
+                        ).values()
+                    );
+
+                    const deduplicatedRestrictionNames = deduplicatedRestrictions.map(
+                        (restriction) => restriction.restriction
+                    );
+                    const invalidRestrictionNames = deduplicatedRestrictionNames.filter(
+                        (restrictionName) => !existingRestrictionNameSet.has(restrictionName)
+                    );
+                    if (invalidRestrictionNames.length > 0) {
+                        throw new Error(`Unknown availability restrictions: ${invalidRestrictionNames.join(", ")}`);
                     }
 
-                    return {
-                        ...restriction,
-                        restriction: fallbackRestrictionName,
-                    };
-                });
+                    await transactionManager
+                        .createQueryBuilder()
+                        .delete()
+                        .from(Property_Availability_Restriction)
+                        .where("property_id = :propertyId", { propertyId })
+                        .andWhere("restriction IN (:...restrictionNames)", {
+                            restrictionNames: deduplicatedRestrictionNames,
+                        })
+                        .execute();
 
-                const deduplicatedRestrictions = Array.from(
-                    new Map(
-                        remappedRestrictions.map((restriction) => [
-                            restriction.restriction,
-                            restriction,
-                        ])
-                    ).values()
-                );
-
-                const deduplicatedRestrictionNames = deduplicatedRestrictions.map(
-                    (restriction) => restriction.restriction
-                );
-                const invalidRestrictionNames = deduplicatedRestrictionNames.filter(
-                    (restrictionName) => !existingRestrictionNameSet.has(restrictionName)
-                );
-                if (invalidRestrictionNames.length > 0) {
-                    throw new Error(`Unknown availability restrictions: ${invalidRestrictionNames.join(", ")}`);
+                    await transactionManager
+                        .createQueryBuilder()
+                        .insert()
+                        .into(Property_Availability_Restriction)
+                        .values(
+                            deduplicatedRestrictions.map((restriction) => ({
+                                id: randomUUID(),
+                                property_id: propertyId,
+                                restriction: restriction.restriction,
+                                value: restriction.value,
+                            }))
+                        )
+                        .execute();
                 }
 
-                await transactionManager
-                    .createQueryBuilder()
-                    .delete()
-                    .from(Property_Availability_Restriction)
-                    .where("property_id = :propertyId", { propertyId })
-                    .andWhere("restriction IN (:...restrictionNames)", {
-                        restrictionNames: deduplicatedRestrictionNames,
-                    })
-                    .execute();
+                await this.channexAriOutboxWriter.enqueueChannexAriChange(transactionManager, {
+                    domitsPropertyId: propertyId,
+                    changeTypes: [CHANNEX_ARI_CHANGE_TYPE.RESTRICTIONS],
+                    ...buildForwardSyncRange(),
+                    source: CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS,
+                });
 
-                await transactionManager
-                    .createQueryBuilder()
-                    .insert()
-                    .into(Property_Availability_Restriction)
-                    .values(
-                        deduplicatedRestrictions.map((restriction) => ({
-                            id: randomUUID(),
-                            property_id: propertyId,
-                            restriction: restriction.restriction,
-                            value: restriction.value,
-                        }))
-                    )
-                    .execute();
-            }
-
-            const updatedRestrictions = await transactionManager
-                .getRepository(Property_Availability_Restriction)
-                .createQueryBuilder("property_availabilityrestriction")
-                .where("property_id = :id", { id: propertyId })
-                .getMany();
-            return updatedRestrictions.length > 0
-                ? updatedRestrictions.map((item) => AvailabilityRestrictionMapping.mapDatabaseEntryToAvailabilityRestriction(item))
-                : null;
-        });
+                const updatedRestrictions = await transactionManager
+                    .getRepository(Property_Availability_Restriction)
+                    .createQueryBuilder("property_availabilityrestriction")
+                    .where("property_id = :id", { id: propertyId })
+                    .getMany();
+                return updatedRestrictions.length > 0
+                    ? updatedRestrictions.map((item) => AvailabilityRestrictionMapping.mapDatabaseEntryToAvailabilityRestriction(item))
+                    : null;
+            })
+        );
     }
 
 }
