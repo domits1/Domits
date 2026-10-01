@@ -1053,7 +1053,9 @@
       },
       "manage": {
         "title": "Wie erstelle und verwalte ich mein Gastgeberkonto?",
-        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button 'Gastgeber werden' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
+        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button '",
+        "becomeHost": "Gastgeber werden",
+        "description2": "' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
       },
       "payout": {
         "title": "Wie Auszahlungen und Steuern funktionieren",
@@ -1061,7 +1063,15 @@
       },
       "calendar": {
         "title": "Wie Sie Ihren Kalender und Ihre Buchungen verwalten",
-        "description": "Eine kommende Funktion wird es Ihnen ermöglichen, Ihre Buchungen direkt über das Dashboard noch effizienter zu verwalten. Bleiben Sie gespannt auf Updates."
+        "description": "Sie können alles über das Host-Dashboard verwalten – Buchungen annehmen oder ablehnen und Ihre Verfügbarkeit und Preise pro Datum festlegen."
+      },
+      "cost": {
+        "title": "Was kostet es?",
+        "description": "Domits ist kostenlos nutzbar – keine Kosten für unser Buchungssystem, das Dashboard oder die Direktbuchungs-Website. Wir berechnen lediglich eine 10 %-Host-Gebühr pro Buchung über Domits.com, die den 24/7-Betrieb der Plattform ermöglicht. Brauchen Sie mehr? Kontaktieren Sie uns für Add-ons und individuelle Unternehmenspreise."
+      },
+      "markets": {
+        "title": "In welchen Märkten ist Domits tätig?",
+        "description": "Domits ist weltweit für Hosts und Gäste verfügbar – Sie können Ihre Unterkunft unabhängig vom Standort inserieren."
       }
     },
     "advice": {

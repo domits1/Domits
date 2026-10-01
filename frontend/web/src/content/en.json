@@ -1052,7 +1052,9 @@
       },
       "manage": {
         "title": "How do I create and manage my host account?",
-        "description": "Creating a Host account is easy. Click the 'Become a Host' button at the top right and follow the instructions. Once your account is set up, switch to the Host Dashboard from the menu. Here, you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified. Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. You can manage everything—availability, pricing, and details—directly from the Host Dashboard."
+        "description": "Creating a Host account is easy. Click the '",
+        "becomeHost": "Become a Host",
+        "description2": "' button at the top right and follow the instructions. Once your account is set up, switch to the Host Dashboard from the menu. Here, you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified. Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. You can manage everything—availability, pricing, and details—directly from the Host Dashboard."
       },
       "payout": {
         "title": "How payouts and taxes work",
@@ -1060,7 +1062,15 @@
       },
       "calendar": {
         "title": "How to manage your calendar and bookings",
-        "description": "An upcoming feature will allow you to manage your bookings more efficiently directly through the dashboard. Stay tuned for updates."
+        "description": "You can manage everything from the Host Dashboard — accept or decline bookings, and set your availability and pricing per date."
+      },
+      "cost": {
+        "title": "What does it cost?",
+        "description": "Domits is free to use — no cost for our booking system, dashboard, or direct booking website. We only charge a 10% host fee per booking made through Domits.com, which keeps the platform running 24/7. Need more? Contact us for add-ons and enterprise pricing."
+      },
+      "markets": {
+        "title": "Which markets do you operate in?",
+        "description": "Domits is available to hosts and guests worldwide — you can list your property no matter where it's located."
       }
     },
     "advice": {
