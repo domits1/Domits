@@ -161,8 +161,7 @@ const MOCK_SYNC_EVIDENCE_BY_STATE = {
 };
 
 // Real endpoint: GET /integrations/channex/status?userId=
-export const getChannexStatus = async ({ userId } = {}) => {
-  void userId; // unused until this reads live data
+export const getChannexStatus = async () => {
   if (MOCK_CHANNEX_ERROR_STATUS) {
     const error = new Error(`GET /integrations/channex/status failed with status ${MOCK_CHANNEX_ERROR_STATUS}`);
     error.status = MOCK_CHANNEX_ERROR_STATUS;
@@ -179,8 +178,8 @@ const MOCK_MAPPED_LISTINGS = [
   { property: { id: "mock-domits-property-id-2", title: "Mock beach apartment" } },
 ];
 
-export const getMappedProperties = async ({ userId } = {}) => {
-  void userId; // unused until this reads live data
+// Real endpoint (not built yet): GET <mapped listings>?userId=, returning hostDashboard/all-shaped listings
+export const getMappedProperties = async () => {
   return MOCK_MAPPED_LISTINGS;
 };
 
