@@ -72,8 +72,6 @@ export default function useUserProfile() {
     phoneVerified: false,
     preferredMFA: "NOMFA",
   });
-  // authStatusError covers the whole profile fetch failing (email/phone verification also unknown).
-  // mfaStatusError covers only Auth.getPreferredMFA failing, with email/phone verification still valid.
   const [authStatusLoading, setAuthStatusLoading] = useState(true);
   const [authStatusError, setAuthStatusError] = useState(false);
   const [mfaStatusError, setMfaStatusError] = useState(false);

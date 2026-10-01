@@ -2,9 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { authStatusShape } from "./propTypes";
 
-// Renders the Email/SMS/Authenticator-app status rows for the Privacy & Security page.
-// SMS and Authenticator app are status-only here: the Cognito pool has MFA off and login
-// cannot handle an MFA challenge yet, so there is no Enable/Manage action to wire up.
 const AuthenticationStatusSection = ({
     authStatus,
     authStatusLoading,
