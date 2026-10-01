@@ -357,7 +357,7 @@ class ReservationController {
       bookingId,
       user.sub,
       { refundedAmount: refundAmountCents, stripeRefundId, refundError },
-      channexChange
+      [channexChange]
     );
 
     await this.bookingService.priceLabsBookingNotifier.notifyBookingChange(booking.hostid, "booking_cancelled");

@@ -41,7 +41,7 @@ describe("ReservationRepository Channex outbox rows", () => {
   test("a new booking and its outbox row are saved in one transaction", async () => {
     const { repository, manager, client, channexAriOutboxWriter } = setup();
 
-    await repository.addBookingToTable(requestBody, "guest-1", "host-1", "strict", "Awaiting Payment", "direct", change);
+    await repository.addBookingToTable(requestBody, "guest-1", "host-1", "strict", "Awaiting Payment", "direct", [change]);
 
     expect(client.transaction).toHaveBeenCalledTimes(1);
     expect(manager.createQueryBuilder).toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe("ReservationRepository Channex outbox rows", () => {
   test("without a change the write runs as before, with no transaction and no row", async () => {
     const { repository, client, channexAriOutboxWriter } = setup();
 
-    await repository.addBookingToTable(requestBody, "guest-1", "host-1", "strict", "Inquiry", "inquiry", null);
+    await repository.addBookingToTable(requestBody, "guest-1", "host-1", "strict", "Inquiry", "inquiry", []);
 
     expect(client.transaction).not.toHaveBeenCalled();
     expect(client.createQueryBuilder).toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe("ReservationRepository Channex outbox rows", () => {
   test("new dates and the outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 
-    await repository.updateBookingDates("booking-1", Date.parse("2026-11-10"), Date.parse("2026-11-12"), change);
+    await repository.updateBookingDates("booking-1", Date.parse("2026-11-10"), Date.parse("2026-11-12"), [change]);
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });
@@ -69,7 +69,7 @@ describe("ReservationRepository Channex outbox rows", () => {
   test("a status change and its outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 
-    await repository.updateBookingStatus("booking-1", "Cancelled", change);
+    await repository.updateBookingStatus("booking-1", "Cancelled", [change]);
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });
@@ -79,7 +79,7 @@ describe("ReservationRepository Channex outbox rows", () => {
     const read = { where: jest.fn(() => read), getOne: jest.fn().mockResolvedValue({ id: "booking-1", guestid: "guest-1" }) };
     client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
 
-    await repository.cancelBookingByGuest("booking-1", "guest-1", {}, change);
+    await repository.cancelBookingByGuest("booking-1", "guest-1", {}, [change]);
 
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, change);
   });

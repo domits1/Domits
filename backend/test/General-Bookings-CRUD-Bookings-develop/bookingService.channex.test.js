@@ -119,13 +119,15 @@ describe("BookingService Channex booking availability hooks", () => {
       "strict",
       "Awaiting Payment",
       "direct",
-      {
-        domitsPropertyId: "domits-property-1",
-        changeTypes: ["availability"],
-        dateFrom: "2026-06-01",
-        dateTo: "2026-06-02",
-        source: "BOOKING",
-      }
+      [
+        {
+          domitsPropertyId: "domits-property-1",
+          changeTypes: ["availability"],
+          dateFrom: "2026-06-01",
+          dateTo: "2026-06-02",
+          source: "BOOKING",
+        },
+      ]
     );
     expect(storedRequest.general.arrivalDate).toBe(Date.parse("2026-06-01T00:00:00.000Z"));
     expect(storedRequest.general.departureDate).toBe(Date.parse("2026-06-03T00:00:00.000Z"));
@@ -252,7 +254,7 @@ describe("BookingService Channex booking availability hooks", () => {
       "strict",
       "Inquiry",
       "inquiry",
-      null
+      []
     );
   });
 
@@ -277,13 +279,15 @@ describe("BookingService Channex booking availability hooks", () => {
 
     await service.failPayment("pi_1");
 
-    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Failed", {
-      domitsPropertyId: "domits-property-1",
-      changeTypes: ["availability"],
-      dateFrom: "2026-06-01",
-      dateTo: "2026-06-02",
-      source: "BOOKING",
-    });
+    expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith("booking-1", "Failed", [
+      {
+        domitsPropertyId: "domits-property-1",
+        changeTypes: ["availability"],
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-02",
+        source: "BOOKING",
+      },
+    ]);
   });
 
   test("getPayment read returns the stored client secret for the booking guest", async () => {
@@ -360,12 +364,16 @@ describe("BookingService Channex booking availability hooks", () => {
       departureDateMs: Date.parse("2026-06-06T00:00:00.000Z"),
       excludeBookingId: "booking-1",
     });
-    // The old nights reopen and the new ones close, so the row spans both.
+    // The old nights reopen and the new ones close: one change per stay, so no row covers
+    // a night that did not change (design D9).
     expect(dependencies.reservationRepository.updateBookingDates).toHaveBeenCalledWith(
       "booking-1",
       Date.parse("2026-06-04T00:00:00.000Z"),
       Date.parse("2026-06-06T00:00:00.000Z"),
-      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-05", source: "BOOKING" })
+      [
+        expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02" }),
+        expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-04", dateTo: "2026-06-05" }),
+      ]
     );
     expect(result.bookingBefore).toEqual(bookingBefore);
     expect(result.bookingAfter).toEqual(bookingAfter);
@@ -471,7 +479,7 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith(
       "booking-1",
       "Cancelled",
-      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })
+      [expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })]
     );
     expect(result.booking.status).toBe("Cancelled");
     expect(result.reason).toBe("Demo cancel");
@@ -507,7 +515,7 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(dependencies.reservationRepository.updateBookingStatus).toHaveBeenCalledWith(
       "booking-1",
       "Cancelled",
-      expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })
+      [expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02", source: "BOOKING" })]
     );
     expect(result.booking.status).toBe("Cancelled");
   });

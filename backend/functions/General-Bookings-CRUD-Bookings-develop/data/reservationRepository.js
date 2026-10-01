@@ -29,15 +29,18 @@ class ReservationRepository {
     this.channexAriOutboxWriter = channexAriOutboxWriter;
   }
 
-  // A booking change that opens or closes nights must reach Channex, so its outbox row
-  // is saved in the same transaction (design D8). Without a change the write runs as before.
-  async #saveWithOutbox(channexChange, work) {
+  // A booking change that opens or closes nights must reach Channex, so its outbox rows
+  // are saved in the same transaction (design D8). Without changes the write runs as before.
+  async #saveWithOutbox(channexChanges, work) {
     const client = await Database.getInstance();
-    if (!channexChange) return work(client);
+    const changes = channexChanges.filter(Boolean);
+    if (!changes.length) return work(client);
     return withDsqlRetry(() =>
       client.transaction(async (manager) => {
         const result = await work(manager);
-        await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+        for (const change of changes) {
+          await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, change);
+        }
         return result;
       })
     );
@@ -53,14 +56,14 @@ class ReservationRepository {
     cancellationPolicy,
     status = "Awaiting Payment",
     bookingType = "direct",
-    channexChange = null
+    channexChanges = []
   ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
     const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
     const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
-    await this.#saveWithOutbox(channexChange, (manager) =>
+    await this.#saveWithOutbox(channexChanges, (manager) =>
       manager
         .createQueryBuilder()
         .insert()
@@ -439,8 +442,8 @@ class ReservationRepository {
     return booking || null;
   }
 
-  async updateBookingStatus(id, status, channexChange = null) {
-    const query = await this.#saveWithOutbox(channexChange, (manager) =>
+  async updateBookingStatus(id, status, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
       manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
     );
 
@@ -554,8 +557,8 @@ class ReservationRepository {
     });
   }
 
-  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChange = null) {
-    const query = await this.#saveWithOutbox(channexChange, (manager) =>
+  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
       manager
         .createQueryBuilder()
         .update(Booking)
@@ -573,7 +576,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId, refundInfo = {}, channexChange = null) {
+  async cancelBookingByGuest(id, guestId, refundInfo = {}, channexChanges = []) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -601,7 +604,7 @@ class ReservationRepository {
       updateData.refund_error = refundInfo.refundError;
     }
 
-    await this.#saveWithOutbox(channexChange, (manager) =>
+    await this.#saveWithOutbox(channexChanges, (manager) =>
       manager.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute()
     );
 

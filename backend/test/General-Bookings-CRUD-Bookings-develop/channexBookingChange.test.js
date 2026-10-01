@@ -19,15 +19,6 @@ describe("bookingAvailabilityChange", () => {
     expect([change.dateFrom, change.dateTo]).toEqual(["2026-11-01", "2026-11-01"]);
   });
 
-  it("covers the old and the new nights when dates move", () => {
-    const change = bookingAvailabilityChange(
-      "property-1",
-      { arrivalMs: day("2026-11-10"), departureMs: day("2026-11-12") },
-      { arrivalMs: day("2026-11-01"), departureMs: day("2026-11-03") }
-    );
-    expect([change.dateFrom, change.dateTo]).toEqual(["2026-11-01", "2026-11-11"]);
-  });
-
   it.each([
     ["departure before arrival", { arrivalMs: day("2026-11-03"), departureMs: day("2026-11-01") }],
     ["same day", { arrivalMs: day("2026-11-01"), departureMs: day("2026-11-01") }],

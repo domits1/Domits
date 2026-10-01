@@ -121,10 +121,10 @@ class BookingService {
     };
 
     // An inquiry does not block nights yet; it reaches Channex when the host accepts it.
-    const channexChange =
+    const channexChanges =
       bookingStatus === BOOKING_STATUS_AWAITING_PAYMENT
-        ? bookingAvailabilityChange(propertyId, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })
-        : null;
+        ? [bookingAvailabilityChange(propertyId, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })]
+        : [];
     const result = await this.reservationRepository.addBookingToTable(
       eventWithParsedDates,
       authenticatedUser.sub,
@@ -132,7 +132,7 @@ class BookingService {
       cancellationPolicy,
       bookingStatus,
       fetchedProperty.bookingType,
-      channexChange
+      channexChanges
     );
 
     if (bookingStatus !== BOOKING_STATUS_AWAITING_PAYMENT) {
@@ -174,7 +174,7 @@ class BookingService {
         arrivalMs: Number(booking.arrivaldate),
         departureMs: Number(booking.departuredate),
       });
-      await this.reservationRepository.updateBookingStatus(booking.id, "Failed", channexChange);
+      await this.reservationRepository.updateBookingStatus(booking.id, "Failed", [channexChange]);
       return true;
     }
   }
@@ -339,15 +339,18 @@ class BookingService {
       excludeBookingId: normalizedBookingId,
     });
 
-    // The old nights reopen and the new ones close, so the change covers both stays.
-    const channexChange = isActiveBookingStatus(bookingBefore.status)
-      ? bookingAvailabilityChange(
-          propertyId,
-          { arrivalMs: Number(bookingBefore.arrivaldate), departureMs: Number(bookingBefore.departuredate) },
-          { arrivalMs: arrivalDateMs, departureMs: departureDateMs }
-        )
-      : null;
-    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChange);
+    // The old nights reopen and the new ones close: one change per stay, so no row covers a
+    // night that did not change (design D9).
+    const channexChanges = isActiveBookingStatus(bookingBefore.status)
+      ? [
+          bookingAvailabilityChange(propertyId, {
+            arrivalMs: Number(bookingBefore.arrivaldate),
+            departureMs: Number(bookingBefore.departuredate),
+          }),
+          bookingAvailabilityChange(propertyId, { arrivalMs: arrivalDateMs, departureMs: departureDateMs }),
+        ]
+      : [];
+    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChanges);
 
     const updatedBookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
     const bookingAfter = updatedBookingResult?.response || {
@@ -394,7 +397,7 @@ class BookingService {
             departureMs: Number(bookingBefore.departuredate),
           })
         : null;
-      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED, channexChange);
+      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED, [channexChange]);
     }
 
     const updatedBookingResult = alreadyCancelled
