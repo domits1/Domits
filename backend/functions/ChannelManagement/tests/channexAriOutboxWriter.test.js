@@ -58,15 +58,17 @@ describe("ChannexAriOutboxWriter.enqueueChannexAriChange", () => {
     expect(outbox.insert).not.toHaveBeenCalled();
   });
 
-  test("only counts active mappings on a Channex account", async () => {
+  // Neighbouring code upper-cases status and channel before comparing; a lowercase row must
+  // not silently drop the change.
+  test("only counts active mappings on a Channex account, whatever the case of status and channel", async () => {
     const manager = buildManager();
     const { writer } = buildWriter();
 
     await writer.enqueueChannexAriChange(manager, change());
 
     expect(manager.builder.where).toHaveBeenCalledWith("p.domitsPropertyId = :d", { d: "property-1" });
-    expect(manager.builder.andWhere).toHaveBeenCalledWith("p.status = :s", { s: "ACTIVE" });
-    expect(manager.builder.andWhere).toHaveBeenCalledWith("a.channel = :c", { c: "CHANNEX" });
+    expect(manager.builder.andWhere).toHaveBeenCalledWith("UPPER(p.status) = :s", { s: "ACTIVE" });
+    expect(manager.builder.andWhere).toHaveBeenCalledWith("UPPER(a.channel) = :c", { c: "CHANNEX" });
   });
 
   test("moves a start date in the past up to today, because Channex refuses past dates", async () => {

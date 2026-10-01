@@ -31,8 +31,8 @@ export default class ChannexAriOutboxWriter {
       .createQueryBuilder("p")
       .innerJoin(ChannelIntegrationAccount, "a", "a.id = p.integrationAccountId")
       .where("p.domitsPropertyId = :d", { d: domitsPropertyId })
-      .andWhere("p.status = :s", { s: "ACTIVE" })
-      .andWhere("a.channel = :c", { c: "CHANNEX" })
+      .andWhere("UPPER(p.status) = :s", { s: "ACTIVE" })
+      .andWhere("UPPER(a.channel) = :c", { c: "CHANNEX" })
       .getCount();
     return count > 0;
   }
