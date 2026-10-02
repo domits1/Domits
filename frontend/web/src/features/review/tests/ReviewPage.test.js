@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Auth } from "aws-amplify";
+import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 import { createReview } from "../services/reviewAPI";
@@ -21,6 +22,7 @@ jest.mock("../../guestdashboard/services/bookingAPI", () => ({
 jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
 }));
+jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
 
 const booking = {
   id: "reservation-1",
@@ -108,4 +110,79 @@ it.each([
   await submitReview();
   await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(message));
   expect(screen.queryByRole("heading", { name: "Review submitted" })).toBeNull();
+  expect(screen.getAllByRole("radio")[4].checked).toBe(true);
+});
+
+it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selection during editing", async (rating) => {
+  render(<ReviewPage />);
+  const text = await screen.findByLabelText("Please justify your rating*");
+  const radio = screen.getByRole("radio", { name: new RegExp(`^${rating} star`) });
+  fireEvent.click(radio);
+  fireEvent.change(text, { target: { value: "Great stay." } });
+  fireEvent.change(screen.getByLabelText(/Do you have any feedback/), { target: { value: "Thanks!" } });
+  expect(radio.checked).toBe(true);
+  expect(screen.getByText(new RegExp(`^${rating} out of 5 stars`))).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  await waitFor(() => expect(createReview).toHaveBeenCalledWith({
+    reservationId: booking.id, rating, publicReview: "Great stay.", privateFeedback: "Thanks!",
+  }));
+});
+
+it("shows a required rating error, focuses the input, and clears it after selection", async () => {
+  render(<ReviewPage />);
+  await screen.findByLabelText("Please justify your rating*");
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  const radio = screen.getAllByRole("radio")[0];
+  expect(screen.getByRole("alert").textContent).toContain("Please select an overall experience");
+  expect(radio).toHaveAccessibleDescription(expect.stringContaining("Please select an overall experience"));
+  expect(radio).toHaveFocus();
+  expect(createReview).not.toHaveBeenCalled();
+  fireEvent.click(radio);
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it.each(["0", "6", "2.5", "invalid"])("prevents tampered rating %s from submission", async (value) => {
+  render(<ReviewPage />);
+  const text = await screen.findByLabelText("Please justify your rating*");
+  const radio = screen.getAllByRole("radio")[0];
+  radio.value = value;
+  fireEvent.click(radio);
+  fireEvent.change(text, { target: { value: "Great stay." } });
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  expect(screen.getByRole("alert").textContent).toContain("Please select an overall experience");
+  expect(createReview).not.toHaveBeenCalled();
+});
+
+it("supports keyboard selection and arrow navigation with native radios", async () => {
+  const user = userEvent.setup();
+  render(<ReviewPage />);
+  await screen.findByRole("group", { name: "Overall experience (required)" });
+  await user.tab();
+  await user.keyboard(" ");
+  expect(screen.getAllByRole("radio")[0].checked).toBe(true);
+  await user.keyboard("{ArrowRight}");
+  expect(screen.getAllByRole("radio")[1].checked).toBe(true);
+  await user.keyboard("{ArrowLeft}");
+  expect(screen.getAllByRole("radio")[0].checked).toBe(true);
+});
+
+it("maps the selected rating to overall_rating in the authenticated HTTP request", async () => {
+  const api = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true, text: async () => JSON.stringify({ id: "review-1", overall_rating: 4 }),
+  });
+  try {
+    const saved = await api.createReview({ reservationId: booking.id, rating: 4, publicReview: "Great stay.", privateFeedback: "" });
+    const [url, request] = global.fetch.mock.calls[0];
+    expect(url).toBe(api.API_REVIEW_BASE);
+    expect(request.method).toBe("POST");
+    expect(request.headers.Authorization).toBe("access-token");
+    expect(JSON.parse(request.body)).toEqual({
+      reservation_id: booking.id, overall_rating: 4, public_review: "Great stay.", private_feedback: "",
+    });
+    expect(saved.overall_rating).toBe(4);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

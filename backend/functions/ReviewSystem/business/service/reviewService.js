@@ -7,7 +7,7 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 const REQUIRED_FIELDS = ["reservation_id", "overall_rating"];
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
-const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
+const isBlank = (value) => value === undefined || value === null || (typeof value === "string" && value.trim() === "");
 
 const isDuplicateReservationReviewError = (error) =>
   error?.code === "23505" &&
@@ -75,9 +75,14 @@ export class ReviewService {
   // Reject malformed input before reservation checks or persistence are attempted.
   // Validate types and rating bounds so invalid review data cannot enter the system.
   validateReviewPayload(reviewData) {
+    if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
+      throw new BadRequestException("Request body must be a review object.");
+    }
     for (const field of REQUIRED_FIELDS) {
       if (isBlank(reviewData[field])) {
-        throw new BadRequestException(`${field} is required`);
+        throw new BadRequestException(field === "overall_rating"
+          ? "Please select an overall experience rating from 1 to 5 stars."
+          : `${field} is required`);
       }
     }
 
@@ -85,12 +90,8 @@ export class ReviewService {
       throw new BadRequestException("reservation_id must be a string");
     }
 
-    if (typeof reviewData.overall_rating !== "number") {
-      throw new BadRequestException("overall_rating must be a number between 1 and 5");
-    }
-
-    if (!Number.isFinite(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
-      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+      throw new BadRequestException("Overall experience must be a whole number from 1 to 5.");
     }
 
     if (

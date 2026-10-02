@@ -38,6 +38,7 @@ const ReviewPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [checkedReservationId, setCheckedReservationId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
+  const [ratingError, setRatingError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -47,6 +48,7 @@ const ReviewPage = () => {
     setIsSubmitted(false);
     setSubmitError("");
     setForm(INITIAL_FORM);
+    setRatingError("");
 
     const checkEligibility = async () => {
       try {
@@ -97,7 +99,12 @@ const ReviewPage = () => {
   }, [navigate, reservationId]);
 
   const updateField = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }));
+    const value = event.target.value;
+    if (field === "rating") {
+      if (!/^[1-5]$/.test(value)) return;
+      setRatingError("");
+    }
+    setForm((current) => ({ ...current, [field]: value }));
   };
 
   const handleSubmit = async (event) => {
@@ -108,8 +115,14 @@ const ReviewPage = () => {
       return;
     }
 
-    if (!form.rating || !form.publicReview.trim()) {
-      setSubmitError("Please select a rating and write a public review.");
+    if (!/^[1-5]$/.test(form.rating)) {
+      setRatingError("Please select an overall experience rating from 1 to 5 stars.");
+      event.currentTarget.querySelector('input[name="stars"]')?.focus();
+      return;
+    }
+
+    if (!form.publicReview.trim()) {
+      setSubmitError("Please write a public review.");
       return;
     }
 
@@ -141,12 +154,13 @@ const ReviewPage = () => {
         checked={form.rating === String(value)}
         onChange={updateField("rating")}
         disabled={isSubmitting}
+        required
+        aria-label={`${value} ${value === 1 ? "star" : "stars"}: ${RATING_LABELS[value]}`}
+        aria-describedby={`rating-description${ratingError ? " rating-error" : ""}`}
       />
-      {[1, 2, 3, 4, 5].slice(0, value).map((star) => (
-        <span key={star} className={styles.icon}>
-          ★
-        </span>
-      ))}
+      <span className={styles.icon} aria-hidden="true">
+        {value <= Number(form.rating) ? "★" : "☆"}
+      </span>
     </label>
   );
 
@@ -187,10 +201,15 @@ const ReviewPage = () => {
   return (
     <main className={styles.main}>
       <h1>Review {propertyTitle}</h1>
-      <form className={styles.rating}>{[1, 2, 3, 4, 5].map(renderRatingInput)}</form>
-      <h3 className={styles.comment}>{RATING_LABELS[form.rating] || "Select a rating"}</h3>
-
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
+        <fieldset className={styles.rating} disabled={isSubmitting}>
+          <legend>Overall experience (required)</legend>
+          <div>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
+          <p id="rating-description" aria-live="polite">
+            {form.rating ? `${form.rating} out of 5 stars — ${RATING_LABELS[form.rating]}` : "Select a rating"}
+          </p>
+          {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
+        </fieldset>
         <section className={styles.content}>
           <label htmlFor="publicReview">Please justify your rating*</label>
           <textarea

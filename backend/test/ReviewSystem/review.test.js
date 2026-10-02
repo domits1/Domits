@@ -117,3 +117,42 @@ it.each(["{", "null", "[]"])("rejects malformed review bodies: %s", async (body)
   expect(result.statusCode).toBe(400);
   expect(repository.create).not.toHaveBeenCalled();
 });
+
+it.each([undefined, null, "", "5", 0, 6, -1, 2.5, NaN, Infinity, true, {}, [], { toString: null }])(
+  "rejects invalid overall rating before accessing storage: %p", async (overall_rating) => {
+    await expect(service.createReview(booking.guestid, { ...payload, overall_rating }))
+      .rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.findBookingById).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
+  }
+);
+
+it.each([undefined, null, ""])("returns a useful message for missing rating: %p", async (overall_rating) => {
+  const result = await controller.createReview({
+    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+  });
+  expect(result.statusCode).toBe(400);
+  expect(JSON.parse(result.body).message).toBe("Please select an overall experience rating from 1 to 5 stars.");
+});
+
+it.each([0, 6, 2.5, "5"])("rejects an invalid rating through HTTP: %p", async (overall_rating) => {
+  const result = await controller.createReview({
+    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+  });
+  expect(result.statusCode).toBe(400);
+  expect(repository.create).not.toHaveBeenCalled();
+});
+
+it.each([1, 2, 3, 4, 5])("saves and returns %s stars for the correct review", async (overall_rating) => {
+  repository.create.mockImplementation(async (record) => ({ id: "review-1", ...record }));
+  const result = await controller.createReview({
+    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+  });
+  expect(result.statusCode).toBe(201);
+  expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
+    reservation_id: booking.id, guest_id: booking.guestid, overall_rating,
+  }));
+  expect(JSON.parse(result.body)).toEqual(expect.objectContaining({
+    id: "review-1", reservation_id: booking.id, overall_rating,
+  }));
+});
