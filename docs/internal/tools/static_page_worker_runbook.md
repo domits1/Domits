@@ -6,7 +6,7 @@ Run it only after all of these are true, in this order: the migration from [dsql
 
 ## What this changes, and why it is shaped this way
 
-- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by 37 functions (every backend function, the test functions and `PropertyHandler-Dev`) and carries `AmazonS3FullAccess`, `s3:PutObject`/`s3:GetObject` and `dsql:*` on `*`, and a developer policy. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants what the function's code calls, each on the resource the code names: `dsql:DbConnectAdmin` on the one cluster, `ssm:GetParameter` on the five parameters the code reads (the four `/aurora/dsql/*` names in the `database` package and the quote token secret), `lambda:InvokeFunction` on the two functions it invokes (`PriceLabs-Integration`, and `UnifiedMessaging` until the inline Channex calendar sync leaves this function, which has already happened on `acceptance`), plus Cognito user reads, DynamoDB reads and logs on `*` (two of them, `dynamodb:BatchGetItem` and `dynamodb:Query`, are not called today). `dsql:DbConnect` is not granted: the `database` package signs its token with `getDbConnectAdminAuthToken()` for the `admin` user (`backend/ORM/index.js`), so the function cannot use `DbConnect` until a database role of its own exists, which is a change to every function that uses the package, not to this one. The role copies the two inline policies the function uses from the shared role, and adds one policy for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. Dropped on purpose: every S3 grant on `*`, `dsql:*` (which includes deleting the cluster), DynamoDB writes, the developer policy and the two Lambda invoke variants the code never uses. The bucket is not written in the policy: `static-page-writer-policy.json` carries the placeholder `__SITES_BUCKET__`, step 1 renders it from `SITES_BUCKET`, the one place in this runbook that names the bucket, and step 4 puts the same name into `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`. The images policy names `accommodation`, so `S3_BUCKET` (which `propertyImageRepository.js` would use as an override) must stay unset on the function.
+- **`PropertyHandler` gets its own execution role.** Today it runs on `General-Lambda-Function`, which is shared by 37 functions (every backend function, the test functions and `PropertyHandler-Dev`) and carries `AmazonS3FullAccess`, `s3:PutObject`/`s3:GetObject` and `dsql:*` on `*`, and a developer policy. With that role the worker could overwrite the app shell `index.html` or anything else in any bucket. The new role grants what the function's code calls, each on the resource the code names: `dsql:DbConnectAdmin` on the one cluster, `ssm:GetParameter` on the five parameters the code reads (the four `/aurora/dsql/*` names in the `database` package and the quote token secret), `lambda:InvokeFunction` on the two functions it invokes (`PriceLabs-Integration`, and `UnifiedMessaging` until the inline Channex calendar sync leaves this function, which has already happened on `acceptance`), plus Cognito user reads, the one DynamoDB read and logs on `*`. `dsql:DbConnect` is not granted: the `database` package signs its token with `getDbConnectAdminAuthToken()` for the `admin` user (`backend/ORM/index.js`), so the function cannot use `DbConnect` until a database role of its own exists, which is a change to every function that uses the package, not to this one. The two inline policies the function still needs from the shared role are pinned as files next to it (`custom-domains-policy.json`, `property-images-policy.json`, copied from the role on 2026-10-02 and checked by the test), so the whole role is reproducible from the repository, and one policy is added for the pages: read `index.html`, write under `sites/by-host/`, and an explicit deny on the shell and the deployed assets that no later allow can override. Dropped on purpose: every S3 grant on `*`, `dsql:*` (which includes deleting the cluster), DynamoDB writes, the developer policy and the two Lambda invoke variants the code never uses. The bucket is not written in the policy: `static-page-writer-policy.json` carries the placeholder `__SITES_BUCKET__`, step 1 renders it from `SITES_BUCKET`, the one place in this runbook that names the bucket, and step 4 puts the same name into `DIRECT_BOOKING_WEBSITE_SITES_BUCKET`. The images policy names `accommodation`, so `S3_BUCKET` (which `propertyImageRepository.js` would use as an override) must stay unset on the function.
 - **Considered and rejected: keeping the shared role and only adding the deny.** It would be a smaller change with nothing to break, but it protects four names and nothing else: every other key in the sites bucket (`manifest.json`, `asset-manifest.json`, the icons, any root file a future build adds), every other bucket and the sites bucket's own lifecycle, versioning and policy would stay writable for all 37 functions, and the list of denied names would go stale with the next frontend file. The role switch is the only option that keeps the worker inside its two prefixes.
 - **One function and one bucket serve acceptance and production.** `deploy.yml` deploys the same function names from `acceptance` and from `main`, so the `PropertyHandler` behind `acceptance.domits.com` and the one behind `www.domits.com` are the same Lambda, with one role and one environment. The direct booking sites have one CloudFront distribution (`E18TUBOKUXD9TW`), whose only origin is `domits-direct-booking-sites-acceptance`, and its tenants carry hosts' real custom domains and the `*.direct.domits.com` wildcard. The `acceptance` in that bucket name is history, not an environment: there is no production bucket, and this runbook does not create one. If production ever gets its own function and bucket, run steps 1 and 4 again with the other name in `SITES_BUCKET`; nothing else in the policy files changes.
 - **The schedule is created `DISABLED`** and enabled in the last step, with five pages per run (`limit: 5`) against the function's 30 second timeout, no retries and no stale events, every five minutes. A run that finds nothing costs one invocation and one indexed read.
@@ -46,6 +46,15 @@ aws s3api list-objects-v2 --bucket $SITES_BUCKET --prefix sites/by-host/ --profi
 python3 -c 'import json; v=json.load(open("env-before.json")); print(sorted(v)); print("routing:", v.get("DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE"), "bucket:", v.get("DIRECT_BOOKING_WEBSITE_SITES_BUCKET"))'
 ```
 
+Then the values the scoped role depends on. The policy names the default function names and the default parameter name, and the cluster the host parameter points at:
+
+```bash
+python3 -c 'import json; v=json.load(open("env-before.json")); print({k: v.get(k) for k in ("PRICELABS_LAMBDA_NAME", "UNIFIED_MESSAGING_FUNCTION_NAME", "DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER", "S3_BUCKET")})'
+aws ssm get-parameter --name /aurora/dsql/host --profile domits --region eu-north-1 --query Parameter.Value --output text
+```
+
+Expected: `PRICELABS_LAMBDA_NAME`, `DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER` and `S3_BUCKET` `None`, `UNIFIED_MESSAGING_FUNCTION_NAME` `UnifiedMessaging` (on 2026-10-02 that is the value set on the function), and the host `6qabud3emiqhbfkh2h4ttwz35i.dsql.eu-west-2.on.aws`, the cluster the base policy names. Any other value means the role would deny a call the code makes: stop and change the policy first.
+
 `SITES_BUCKET` is the one place that names the bucket; every later block uses it, so set it again from here in any new shell. Expected: `routing: true bucket: None` (the worker uses the routing flag to call a fallback domain active; the bucket variable is what step 4 adds), `S3_BUCKET` absent from the key list (the role names `accommodation`; an override would point image uploads at a bucket the role cannot reach), and `pages-before.txt` reads `0`.
 
 One more read, in the DSQL query editor: image keys that do not start with `images/` would be refused by the new role on delete, because `PropertyImagesAccess` covers `accommodation/images/*` only.
@@ -68,17 +77,18 @@ aws iam put-role-policy --role-name domits-property-handler --policy-name proper
 sed "s/__SITES_BUCKET__/$SITES_BUCKET/g" static-page-writer-policy.json > ~/static-page-worker-rollout/static-page-writer-policy.json
 grep -c "$SITES_BUCKET" ~/static-page-worker-rollout/static-page-writer-policy.json
 aws iam put-role-policy --role-name domits-property-handler --policy-name static-page-writer --profile domits \
-  --policy-document file://$HOME/static-page-worker-rollout/static-page-writer-policy.json
+  --policy-document "file://$HOME/static-page-worker-rollout/static-page-writer-policy.json"
+aws iam put-role-policy --role-name domits-property-handler --policy-name custom-domains --profile domits \
+  --policy-document file://custom-domains-policy.json
+aws iam put-role-policy --role-name domits-property-handler --policy-name property-images --profile domits \
+  --policy-document file://property-images-policy.json
 for p in DirectBookingWebsiteCustomDomains PropertyImagesAccess; do
-  aws iam get-role-policy --role-name General-Lambda-Function --policy-name $p --profile domits \
-    --query PolicyDocument --output json > ~/static-page-worker-rollout/copied-$p.json
-  aws iam put-role-policy --role-name domits-property-handler --policy-name $p --profile domits \
-    --policy-document file://$HOME/static-page-worker-rollout/copied-$p.json
+  aws iam get-role-policy --role-name General-Lambda-Function --policy-name $p --profile domits --query PolicyDocument --output json
 done
 aws iam list-role-policies --role-name domits-property-handler --profile domits
 ```
 
-Expected: `6` from the `grep` (the six places the rendered writer policy names the bucket), then four inline policies: `property-handler-base`, `static-page-writer`, and the two copied from the shared role (the CloudFront tenants and certificates for custom domains, the images bucket). Not copied on purpose: `DirectBookingQuoteTokenSecretRead`, whose one parameter is in the base policy now, `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
+Expected: `6` from the `grep` (the six places the rendered writer policy names the bucket), then four inline policies: `property-handler-base`, `static-page-writer`, `custom-domains` and `property-images`. The loop prints the two shared-role policies these files were copied from; they must still read the same as the files (same actions, same resource), otherwise the shared role changed since 2026-10-02 and the files need the same change first. Not copied on purpose: `DirectBookingQuoteTokenSecretRead`, whose one parameter is in the base policy now, `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
 
 Check with the policy simulator, read-only, before anything uses the role:
 
@@ -94,7 +104,8 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
                   $B/static/js/main.js $B/robots.txt arn:aws:s3:::accommodation/images/x.jpg arn:aws:s3:::any-other-bucket/x
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output json --query "$Q" \
   --action-names ssm:GetParameter \
-  --resource-arns $A/aurora/dsql/host $A/aurora/dsql/schema $A/direct-booking-website/quote-token-secret $A/pricelabs/integration_token
+  --resource-arns $A/aurora/dsql/region $A/aurora/dsql/host $A/aurora/dsql/dbName $A/aurora/dsql/schema \
+                  $A/direct-booking-website/quote-token-secret $A/pricelabs/integration_token
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output json --query "$Q" \
   --action-names lambda:InvokeFunction \
   --resource-arns ${L}:PriceLabs-Integration ${L}:UnifiedMessaging ${L}:ChannelManagement ${L}:PropertyHandler
@@ -103,16 +114,16 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
   --resource-arns arn:aws:dsql:eu-west-2:115462458880:cluster/6qabud3emiqhbfkh2h4ttwz35i
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output table \
   --query 'EvaluationResults[].[EvalActionName,EvalDecision]' \
-  --action-names cognito-idp:GetUser cognito-idp:AdminGetUser cloudfront:GetDistributionTenant acm:DescribeCertificate \
-                 logs:PutLogEvents dynamodb:GetItem
+  --action-names cognito-idp:GetUser cognito-idp:AdminGetUser cloudfront:GetDistributionTenant cloudfront:CreateDistributionTenant \
+                 cloudfront:VerifyDnsConfiguration acm:DescribeCertificate acm:RequestCertificate logs:PutLogEvents dynamodb:GetItem
 ```
 
-Expected per resource in the first call (with several resources the simulator reports under `perResource`, the top-level decision is a summary): `s3:GetObject` allowed on `index.html` and on the images key, implicitDeny elsewhere; `s3:PutObject` allowed on the `sites/by-host/` key and the images key, explicitDeny on `index.html`, `static/`, `robots.txt`, implicitDeny on the other bucket; `s3:DeleteObject` allowed only on the images key, explicitDeny on the shell and the assets. Second call: `ssm:GetParameter` allowed on the three named parameters and implicitDeny on `/pricelabs/integration_token`, which another function reads. Third call: `lambda:InvokeFunction` allowed on `PriceLabs-Integration` and `UnifiedMessaging`, implicitDeny on `ChannelManagement` and on `PropertyHandler` itself. Fourth call: `dsql:DbConnectAdmin` allowed on the cluster, `dsql:DbConnect` and `dsql:DeleteCluster` implicitDeny. Fifth call: every action `allowed`. Any other decision means a permission the function uses was not granted or not copied: stop, do not continue to step 3.
+Expected per resource in the first call (with several resources the simulator reports under `perResource`, the top-level decision is a summary): `s3:GetObject` allowed on `index.html` and on the images key, implicitDeny elsewhere; `s3:PutObject` allowed on the `sites/by-host/` key and the images key, explicitDeny on `index.html`, `static/`, `robots.txt`, implicitDeny on the other bucket; `s3:DeleteObject` allowed only on the images key, explicitDeny on the shell and the assets. Second call: `ssm:GetParameter` allowed on the five named parameters and implicitDeny on `/pricelabs/integration_token`, which another function reads. Third call: `lambda:InvokeFunction` allowed on `PriceLabs-Integration` and `UnifiedMessaging`, implicitDeny on `ChannelManagement` and on `PropertyHandler` itself. Fourth call: `dsql:DbConnectAdmin` allowed on the cluster, `dsql:DbConnect` and `dsql:DeleteCluster` implicitDeny. Fifth call: every action `allowed`. Any other decision means a permission the function uses was not granted or not copied: stop, do not continue to step 3.
 
 Rollback, harmless while nothing uses the role:
 
 ```bash
-for p in property-handler-base static-page-writer DirectBookingWebsiteCustomDomains PropertyImagesAccess; do
+for p in property-handler-base static-page-writer custom-domains property-images; do
   aws iam delete-role-policy --role-name domits-property-handler --policy-name $p --profile domits
 done
 aws iam delete-role --role-name domits-property-handler --profile domits
@@ -226,7 +237,7 @@ aws s3api head-object --bucket $SITES_BUCKET --key "$K" --profile domits \
 aws s3 cp "s3://$SITES_BUCKET/$K" - --profile domits | grep -o '<title>[^<]*</title>\|<link rel="canonical"[^>]*>\|<meta name="robots"[^>]*>'
 ```
 
-Expected: `text/html; charset=utf-8`, `public, max-age=300`, metadata `site-id` and `revision`, the site's title, a canonical on the site's **primary** domain (a site with a custom domain gets the same page under its fallback hostname, and that object carries the custom domain as canonical on purpose), `index, follow`. In the DSQL query editor, `SELECT site_id, revision, status, attempt_count, failure_reason FROM main.static_page_outbox ORDER BY updated_at DESC LIMIT 10;` shows that row `ACTIVE`.
+Expected: `text/html; charset=utf-8`, `public, max-age=300`, metadata `site-id` and `revision`, the site's title, a canonical on the site's **main address**, chosen with the rule of the public page (the flagged custom domain when it is live, otherwise the fallback; a site with a live flagged custom domain gets the same page under its fallback hostname, and that object carries the custom domain as canonical on purpose), `index, follow`. In the DSQL query editor, `SELECT site_id, revision, status, attempt_count, failure_reason FROM main.static_page_outbox ORDER BY updated_at DESC LIMIT 10;` shows that row `ACTIVE`.
 
 A `FunctionError` here is the trigger rejecting. `run-1.json` then holds the counts; a page that was *not finished* (a status write that threw) is listed in `errors` with its site and message, while a page that *failed to build* is recorded on its outbox row, so read `failure_reason` from the query above: `RENDER_FAILED` means the bundle is missing from the package, `S3_PUT_FAILED` with `AccessDenied` means step 1 is wrong, `NO_ACTIVE_DOMAIN` means the fallback routing variable. Nothing is served from these objects before the edge change, so a wrong page costs nothing but the fix. Republishing a site from the dashboard to get a row to build does change that site: it rewrites its published snapshot from the current property data.
 

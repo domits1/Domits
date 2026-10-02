@@ -101,9 +101,38 @@ describe("the execution role", () => {
     ).toBe(false);
     const onEveryResource = actionsOf(policy.Statement.filter((statement) => asList(statement.Resource).includes("*")));
     expect(onEveryResource.some((action) => /^(dsql|ssm|lambda):/.test(action))).toBe(false);
-    expect(onEveryResource).toEqual(
-      expect.arrayContaining(["cognito-idp:GetUser", "cognito-idp:AdminGetUser", "logs:PutLogEvents"])
+    expect(onEveryResource.sort()).toEqual([
+      "cognito-idp:AdminGetUser",
+      "cognito-idp:GetUser",
+      "dynamodb:GetItem",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]);
+  });
+
+  it("carries the two policies the function needs from the shared role, pinned as files with the same grants", () => {
+    const [customDomains] = load("custom-domains-policy.json").Statement;
+    const [images] = load("property-images-policy.json").Statement;
+    expect(asList(customDomains.Action).sort()).toEqual(
+      [
+        "cloudfront:CreateDistributionTenant",
+        "cloudfront:GetDistributionTenant",
+        "cloudfront:GetDistributionTenantByDomain",
+        "cloudfront:GetManagedCertificateDetails",
+        "cloudfront:UpdateDistributionTenant",
+        "cloudfront:DeleteDistributionTenant",
+        "cloudfront:VerifyDnsConfiguration",
+        "acm:RequestCertificate",
+        "acm:AddTagsToCertificate",
+        "acm:DescribeCertificate",
+        "acm:DeleteCertificate",
+      ].sort()
     );
+    expect([images.Action, images.Resource]).toEqual([
+      ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+      "arn:aws:s3:::accommodation/images/*",
+    ]);
   });
 
   it("can be assumed by Lambda from this account only", () => {

@@ -34,9 +34,7 @@
       "Action": [
         "cognito-idp:AdminGetUser",
         "cognito-idp:GetUser",
-        "dynamodb:BatchGetItem",
         "dynamodb:GetItem",
-        "dynamodb:Query",
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
         "logs:PutLogEvents"
