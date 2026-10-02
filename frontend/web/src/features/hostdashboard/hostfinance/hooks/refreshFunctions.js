@@ -9,12 +9,14 @@ import {
   setPayoutSchedule,
   getFaqs,
 } from "../services/stripeAccountService";
+import { FINANCE_DEMO_DATA, isFinanceDemoMode } from "../mocks/financeDemoData";
 
 // Finance data does not need second-by-second polling. Focus refreshes still run,
 // and a slower background interval reduces dashboard churn while keeping data fresh.
 const REFRESH_INTERVAL_MS = 30000;
 
 export function RefreshFunctions() {
+  const demoMode = isFinanceDemoMode();
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
   const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
@@ -53,6 +55,34 @@ export function RefreshFunctions() {
   useEffect(() => {
     isMountedRef.current = true;
 
+    if (demoMode) {
+      const demoAccount = FINANCE_DEMO_DATA.account;
+      setAccountId(demoAccount.accountId);
+      setOnboardingComplete(demoAccount.onboardingComplete);
+      setChargesEnabled(demoAccount.chargesEnabled);
+      setPayoutsEnabled(demoAccount.payoutsEnabled);
+      setCharges(FINANCE_DEMO_DATA.charges);
+      setPayouts(FINANCE_DEMO_DATA.payouts);
+      setHostBalance(FINANCE_DEMO_DATA.balance);
+      setPayoutInterval(FINANCE_DEMO_DATA.schedule.interval);
+      setWeeklyAnchor(FINANCE_DEMO_DATA.schedule.weekly_anchor);
+      setMonthlyAnchor(FINANCE_DEMO_DATA.schedule.monthly_anchor);
+      setFaqs(FINANCE_DEMO_DATA.faqs);
+      setLoadingStates({
+        account: false,
+        charges: false,
+        payouts: false,
+        hostBalance: false,
+        getPayoutSchedule: false,
+        faqs: false,
+      });
+
+      return () => {
+        isMountedRef.current = false;
+        clearTimeout(toastTimeoutRef.current);
+      };
+    }
+
     (async () => {
       try {
         updateLoadingState("account", true);
@@ -70,6 +100,7 @@ export function RefreshFunctions() {
     })();
 
     (async () => {
+      if (demoMode) return;
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
@@ -82,6 +113,7 @@ export function RefreshFunctions() {
     })();
 
     (async () => {
+      if (demoMode) return;
       try {
         updateLoadingState("hostBalance", true);
         const details = await getHostBalance();
@@ -94,6 +126,7 @@ export function RefreshFunctions() {
     })();
 
     (async () => {
+      if (demoMode) return;
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
@@ -106,6 +139,7 @@ export function RefreshFunctions() {
     })();
 
     (async () => {
+      if (demoMode) return;
       try {
         updateLoadingState("getPayoutSchedule", true);
         const details = await getPayoutSchedule();
@@ -135,9 +169,10 @@ export function RefreshFunctions() {
       isMountedRef.current = false;
       clearTimeout(toastTimeoutRef.current);
     };
-  }, []);
+  }, [demoMode]);
 
   async function refreshAccountSilent() {
+    if (demoMode) return;
     try {
       const details = await getStripeAccountDetails();
       if (!isMountedRef.current) return;
@@ -150,6 +185,7 @@ export function RefreshFunctions() {
     }
   }
   async function refreshChargesSilent() {
+    if (demoMode) return;
     try {
       const details = await getCharges();
       if (!isMountedRef.current) return;
@@ -159,6 +195,7 @@ export function RefreshFunctions() {
     }
   }
   async function refreshPayoutsSilent() {
+    if (demoMode) return;
     try {
       const details = await getPayouts();
       if (!isMountedRef.current) return;
@@ -168,6 +205,7 @@ export function RefreshFunctions() {
     }
   }
   async function refreshHostBalanceSilent() {
+    if (demoMode) return;
     try {
       const details = await getHostBalance();
       if (!isMountedRef.current) return;
@@ -177,6 +215,7 @@ export function RefreshFunctions() {
     }
   }
   async function refreshScheduleSilent() {
+    if (demoMode) return;
     try {
       const details = await getPayoutSchedule();
       if (!isMountedRef.current) return;
@@ -189,6 +228,11 @@ export function RefreshFunctions() {
   }
 
   async function handlePayoutSchedule() {
+    if (demoMode) {
+      showToast("Demo mode: payout schedule changes are not saved to Stripe.");
+      return;
+    }
+
     try {
       const period = String(payoutInterval || "").toLowerCase();
       const payload = { interval: period };
@@ -218,6 +262,7 @@ export function RefreshFunctions() {
   }
 
   useEffect(() => {
+    if (demoMode) return undefined;
     const onFocus = () => {
       refreshAccountSilent();
       refreshChargesSilent();
@@ -234,9 +279,10 @@ export function RefreshFunctions() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [demoMode]);
 
   useEffect(() => {
+    if (demoMode) return undefined;
     const id = setInterval(() => {
       if (document.hidden) return;
       refreshAccountSilent();
@@ -245,7 +291,7 @@ export function RefreshFunctions() {
       refreshHostBalanceSilent();
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [demoMode]);
 
   const balanceView = useMemo(() => {
     if (!hostBalance || !hostBalance.available || !hostBalance.pending) {
@@ -260,6 +306,11 @@ export function RefreshFunctions() {
   }, [hostBalance]);
 
   async function handleStripeAction() {
+    if (demoMode) {
+      showToast("Demo mode: Stripe actions are disabled.");
+      return;
+    }
+
     try {
       if (isProcessing) return;
       setIsProcessing(true);

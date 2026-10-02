@@ -120,7 +120,10 @@ export class Repository {
    * Returns pricelabs_price rows for every property owned by the host within
    * [from, to] (calendar_date as YYYYMMDD integers), for the missed-revenue KPI.
    * Includes the availability/status flags the business layer needs to decide
-   * whether a night is actually sellable.
+   * whether a night is actually sellable, plus min_stay/closed_to_arrival/
+   * closed_to_departure for root-cause categorization (min_stay's arrival-vs-
+   * stay-through scope is ambiguous in this codebase - see the comment on
+   * hasRestrictionSignal in missedRevenueService.js).
    */
   async getCalendarPriceDataForHost(hostId, from, to) {
     const ds = await this._ds();
@@ -136,6 +139,9 @@ export class Repository {
       .addSelect("cal.stop_sell", "stop_sell")
       .addSelect("cal.pricelabs_ignored", "pricelabs_ignored")
       .addSelect("prop.status", "property_status")
+      .addSelect("cal.min_stay", "min_stay")
+      .addSelect("cal.closed_to_arrival", "closed_to_arrival")
+      .addSelect("cal.closed_to_departure", "closed_to_departure")
       .getRawMany();
   }
 

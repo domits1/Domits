@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
+import { HostKpiAllService } from "../hostdashboard/services/HostKpiAllService.js";
 import ClipLoader from "react-spinners/ClipLoader";
+import { FaMoneyBillWave, FaBed, FaRegClock, FaBuilding, FaExclamationTriangle } from "react-icons/fa";
 
 import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
-import OccupancyRateCard from "./HostRevenueCards/OccupancyRate.jsx";
-import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
-import ADRCard from "./HostRevenueCards/ADRCard.jsx";
-import BookedNights from "./HostRevenueCards/BookedNights.jsx";
-import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
 import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
 
 import "./HostRevenueStyle.scss";
@@ -22,8 +19,8 @@ const HostRevenues = () => {
   const [availableNights, setAvailableNights] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
-
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [adr, setAdr] = useState(null);
+  const [monthlyKpiAll, setMonthlyKpiAll] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,6 +32,7 @@ const HostRevenues = () => {
     nights: null,
     available: null,
     properties: null,
+    adr: null,
   });
 
   useEffect(() => {
@@ -70,11 +68,12 @@ const HostRevenues = () => {
       try {
         await Auth.currentSession();
 
-        const [revenue, nights, available, properties] = await Promise.all([
+        const [revenue, nights, available, properties, kpiAll] = await Promise.all([
           HostRevenueService.getRevenue(cognitoUserId),
           HostRevenueService.getBookedNights(cognitoUserId),
           HostRevenueService.getAvailableNights(cognitoUserId),
           HostRevenueService.getPropertyCount(cognitoUserId),
+          HostKpiAllService.fetchAll(cognitoUserId, "monthly"),
         ]);
 
         if (!isMountedRef.current) return;
@@ -83,12 +82,14 @@ const HostRevenues = () => {
         const nextNights = nights ?? 0;
         const nextAvailable = available ?? 0;
         const nextProperties = properties ?? 0;
+        // kpiAll is null when the ADR fetch itself failed (distinct from a
+        // legitimate 0 rate) - keep that distinction so Gross Missed Revenue
+        // can show "unavailable" instead of implying nothing was missed.
+        const nextAdr = kpiAll == null ? null : Number(kpiAll?.averageDailyRate ?? 0);
 
-        const changed =
-          lastRef.current.revenue !== nextRevenue ||
-          lastRef.current.nights !== nextNights ||
-          lastRef.current.available !== nextAvailable ||
-          lastRef.current.properties !== nextProperties;
+        // Passed whole to MonthlyComparison so it doesn't need its own
+        // redundant metric=all fetch for the same current-month data.
+        setMonthlyKpiAll(kpiAll ?? null);
 
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);
@@ -106,8 +107,10 @@ const HostRevenues = () => {
           setPropertyCount(nextProperties);
           lastRef.current.properties = nextProperties;
         }
-
-        if (changed) setRefreshKey((k) => k + 1);
+        if (lastRef.current.adr !== nextAdr) {
+          setAdr(nextAdr);
+          lastRef.current.adr = nextAdr;
+        }
       } catch (err) {
         if (isMountedRef.current && !silent) {
           setError("Failed to fetch revenue data");
@@ -150,6 +153,42 @@ const HostRevenues = () => {
   }, [fetchAllData]);
 
   const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+  const unbookedNights = Math.max(availableNights - bookedNights, 0);
+  const grossMissedRevenue = adr == null ? null : adr * unbookedNights;
+  const grossMissedRevenueDisplay =
+    grossMissedRevenue == null
+      ? "–"
+      : `€${grossMissedRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  const handleDownloadReport = () => {
+    const now = new Date();
+    // These figures are the current calendar month (HostRevenueService/HostKpiAllService
+    // both default to filterType="monthly"), not the calendar year - label accordingly.
+    const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+    const monthSlug = now.toLocaleString("en-US", { month: "long" }).toLowerCase();
+    const rows = [
+      ["Metric", "Value"],
+      ["Month", monthLabel],
+      ["Total Revenue (EUR)", totalRevenue],
+      ["Booked Nights", bookedNights],
+      ["Available Nights", availableNights],
+      ["Total Properties", propertyCount],
+      ["Occupancy Rate (%)", occupancyRate.toFixed(2)],
+      ["Gross Missed Revenue (EUR)", grossMissedRevenue == null ? "N/A" : grossMissedRevenue.toFixed(2)],
+    ];
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `monthly-revenue-report-${monthSlug}-${now.getFullYear()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -165,32 +204,58 @@ const HostRevenues = () => {
 
   return (
     <main className="hr-page-body hr-container">
-      <h2>Yearly Report</h2>
+      <h2>Monthly Revenue</h2>
+      <p className="hr-subtitle">
+        Track this month's earnings and key performance indicators for your vacation rentals.
+      </p>
 
       <section className="hr-host-revenues">
         <div className="hr-content">
-          <div className="hr-revenue-overview">
-            <RevenueOverview title="Total Revenue" value={`€${totalRevenue.toLocaleString()}`} />
-            <RevenueOverview title="Booked Nights" value={bookedNights.toLocaleString()} />
-            <RevenueOverview title="Available Nights" value={availableNights.toLocaleString()} />
-            <RevenueOverview title="Total Properties" value={propertyCount.toLocaleString()} />
+          <div className="hr-hero-revenue">
+            <RevenueOverview
+              variant="hero"
+              icon={<FaMoneyBillWave />}
+              title="Total Revenue"
+              value={`€${totalRevenue.toLocaleString()}`}
+            />
+          </div>
+
+          <div className="hr-performance-overview">
+            <h3 className="hr-section-title">Performance Overview</h3>
+            <div className="hr-performance-cards">
+              <RevenueOverview icon={<FaBed />} title="Booked Nights" value={bookedNights.toLocaleString()} />
+              <RevenueOverview icon={<FaRegClock />} title="Available Nights" value={availableNights.toLocaleString()} />
+              <RevenueOverview icon={<FaBuilding />} title="Total Properties" value={propertyCount.toLocaleString()} />
+              <RevenueOverview
+                icon={<FaExclamationTriangle />}
+                tone="warning"
+                title="Gross Missed Revenue"
+                value={grossMissedRevenueDisplay}
+              />
+            </div>
+            {availableNights > 0 && (
+              <p className="hr-occupancy-summary">
+                {bookedNights.toLocaleString()} of {availableNights.toLocaleString()} nights booked (
+                {occupancyRate.toFixed(0)}% occupancy)
+              </p>
+            )}
           </div>
 
           <div className="hr-monthly-comparison">
-            <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey} />
+            <MonthlyComparison
+              hostId={cognitoUserId}
+              kpiAll={monthlyKpiAll}
+              totalRevenue={totalRevenue}
+              bookedNights={bookedNights}
+              availableNights={availableNights}
+            />
           </div>
 
-          <div className="hr-cards">
-            <OccupancyRateCard
-              occupancyRate={occupancyRate.toFixed(2)}
-              numberOfProperties={propertyCount}
-              refreshKey={refreshKey}
-            />
-
-            <ADRCard refreshKey={refreshKey} />
-            <RevPARCard refreshKey={refreshKey} />
-            <BookedNights refreshKey={refreshKey} />
-            <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
+          <div className="hr-report-card">
+            <p className="hr-report-text">Export a CSV summary of this month's revenue and performance data.</p>
+            <button type="button" className="hr-download-btn" onClick={handleDownloadReport}>
+              Download Report
+            </button>
           </div>
         </div>
       </section>

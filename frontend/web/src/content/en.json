@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Current template pick",
+    "availabilityHint": "Essentials is the template you can use now. Elite is coming soon.",
+    "selected": "Selected",
+    "comingSoon": "Coming soon",
+    "title": "Choose a website template",
+    "unsupportedPreview": "Preview not available for this template yet.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Single-page website, basic customization and essential features"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Multi-everything website, advanced customization and elite features"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Where you'll be",
@@ -1111,6 +1129,10 @@
           "title": "Communication Preferences",
           "desc": "Choose how you receive important updates and notifications from Domits."
         },
+        "privacySecurity": {
+          "title": "Privacy & Security",
+          "desc": "Manage your login security, password and two-factor authentication."
+        },
         "company": {
           "title": "Company",
           "desc": "Manage your company name and basic details."
@@ -1137,6 +1159,11 @@
       "breadcrumb": "Onboarding",
       "title": "Onboarding",
       "subtitle": "Track your progress for each listing, from creating it to going live.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding mode"
+      },
       "propertyPicker": {
         "label": "Listing",
         "loading": "Loading your listings...",
@@ -1176,7 +1203,57 @@
       },
       "statusComplete": "Complete",
       "statusIncomplete": "Not started",
-      "statusUnknown": "Could not check status"
+      "statusUnknown": "Could not check status",
+      "channelsComingSoon": "Coming soon",
+      "enterprise": {
+        "breadcrumb": "Enterprise Onboarding",
+        "title": "Enterprise Onboarding",
+        "subtitle": "Track your progress across your whole portfolio, from company setup to going live.",
+        "goLiveSection": {
+          "title": "Go Live",
+          "desc": "Readiness across your required steps.",
+          "readyLabel": "Ready to go live",
+          "notReadyLabel": "Not ready yet"
+        },
+        "steps": {
+          "company": {
+            "title": "Set Up Company",
+            "desc": "Add your company details so guests and partners can find you."
+          },
+          "team": {
+            "title": "Team Members",
+            "desc": "Invite your team and assign roles across your portfolio."
+          },
+          "listProperties": {
+            "title": "List Your Properties",
+            "desc": "Manage and add listings across your portfolio."
+          },
+          "website": {
+            "title": "Build Direct Booking Websites",
+            "desc": "Create branded booking websites for your properties."
+          },
+          "channels": {
+            "title": "Connect Channels",
+            "desc": "Sync your properties with Airbnb, Booking.com, Vrbo and more."
+          },
+          "payments": {
+            "title": "Set Up Payments",
+            "desc": "Connect Stripe to receive payouts across your portfolio."
+          },
+          "pricing": {
+            "title": "Set Up Dynamic Pricing",
+            "desc": "Connect PriceLabs to automate pricing across your portfolio."
+          },
+          "tasks": {
+            "title": "Set Up Task Management",
+            "desc": "Organize operational tasks across your properties."
+          },
+          "marketplace": {
+            "title": "Utilize Marketplace",
+            "desc": "Discover integrations to grow your business."
+          }
+        }
+      }
     },
     "goLive": {
       "breadcrumb": "Go Live",
@@ -1227,6 +1304,7 @@
         "emailAddress": "Email address",
         "verificationCode": "Verification code sent to your email",
         "verify": "Verify",
+        "emailUpdated": "Email updated!",
         "phone": "Phone",
         "phoneNumber": "Phone number",
         "sex": "Sex",
@@ -1271,8 +1349,31 @@
         "save": "Save changes",
         "saving": "Saving...",
         "saved": "Saved!",
+        "saveError": "Failed to save. Please try again.",
         "cancel": "Cancel",
         "close": "Close"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & Security",
+      "title": "Privacy & Security",
+      "subtitle": "Manage your login security, password and two-factor authentication.",
+      "authenticationSection": "Authentication",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Email",
+        "active": "Active",
+        "inactive": "Inactive",
+        "unavailable": "Unavailable",
+        "verified": "Verified",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator app",
+        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "loading": "Loading your authentication status...",
+        "error": "We couldn't load your authentication status. Please refresh the page."
+      },
+      "pin": {
+        "comingSoon": "Coming soon."
       }
     },
     "communicationPreferences": {
@@ -1347,12 +1448,31 @@
       "subtitle": "Verify your property and host identity to meet local registrations.",
       "section": "Compliance Details",
       "fields": {
+        "property": "Listing",
+        "untitledListing": "Untitled listing",
         "propertyRegistration": "Property registration",
         "placeholder": "Registration number",
+        "noRegistrationYet": "No registration number added yet.",
         "hint": "This number proves your property is registered with local authorities. Additional compliance methods (ID verification, address proof) will be available soon."
       },
+      "states": {
+        "loading": "Loading your listings...",
+        "empty": "You don't have any listings yet.",
+        "createListing": "Create your first listing"
+      },
+      "unsavedChangesConfirm": "You have unsaved changes. Switch listing and discard them?",
+      "errors": {
+        "load": "We could not load your listings. Please try again.",
+        "duplicate": "This registration number is already used by another listing.",
+        "noAccess": "You do not have access to change this listing.",
+        "validation": "Enter a valid registration number. It cannot be empty, start with AUTO- or be longer than 255 characters.",
+        "generic": "We could not save your registration number. Please try again.",
+        "registrationUnavailable": "We could not load the registration number for this listing. Please refresh the page or contact support."
+      },
       "buttons": {
-        "comingSoon": "Coming soon"
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Saved"
       }
     },
     "ratePlans": {
@@ -1366,6 +1486,44 @@
         "title": "Host Only Fee",
         "sub": "10% of bookings paid by host",
         "note": "Allows Domits to run the platform 24/7"
+      }
+,
+      "enterprise": {
+        "cardTitle": "Enterprise Rate Plan",
+        "cardSubtitle": "Pricing per active property per month.",
+        "cardNote": "Scales automatically with your active property count.",
+        "breadcrumb": "Enterprise Rate Plan",
+        "title": "Enterprise Rate Plan",
+        "subtitle": "Simple pricing that scales with your active property portfolio.",
+        "loading": "Loading enterprise rate plan...",
+        "loadError": "We couldn't load your enterprise rate plan right now.",
+        "notActiveTitle": "You are not on an Enterprise plan",
+        "notActiveDescription": "This account does not have an active Enterprise rate plan.",
+        "currentPlan": "Current Plan",
+        "currentRate": "Current Rate",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "active property / month",
+        "active": "Active",
+        "activeProperties": "Active Properties",
+        "billableProperties": "Billable properties in your portfolio",
+        "pricePerProperty": "Price per Property",
+        "estimatedMonthlyCost": "Estimated Monthly Cost",
+        "basedOnPropertyCount": "Based on your current property count",
+        "pricing": "Pricing",
+        "pricingLabel": "Enterprise pricing",
+        "monthlySubscription": "Monthly Subscription",
+        "nextInvoice": "Next Invoice",
+        "nextInvoiceLabel": "Next invoice",
+        "billingFrequency": "Billing frequency",
+        "monthly": "Monthly",
+        "billingUnit": "Billing unit",
+        "activeProperty": "Active Property",
+        "billingHistory": "Billing History",
+        "noInvoices": "No invoices available yet",
+        "invoicesDescription": "Your enterprise invoices will appear here once billing history is available.",
+        "billingContact": "Billing Contact",
+        "billingContactTitle": "Billing contact",
+        "billingContactDescription": "Billing contact management will be available here."
       }
     },
     "team": {

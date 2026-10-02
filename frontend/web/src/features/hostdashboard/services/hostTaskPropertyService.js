@@ -63,7 +63,7 @@ const normalizePropertySelectOptions = (listings) => {
     );
 };
 
-const fetchListingsFromHostDashboard = async (token) => {
+export const fetchListingsFromHostDashboard = async (token) => {
     const response = await fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
         method: "GET",
         headers: {
@@ -105,7 +105,7 @@ const fetchListingsByHostId = async ({ hostId, token }) => {
     return Array.isArray(data) ? data : [];
 };
 
-const fetchHostOwnedListings = async (effectiveHostId) => {
+export const fetchHostOwnedListings = async (effectiveHostId) => {
     const token = getAccessToken();
     if (!token) {
         throw new Error("You must be signed in to load your listings.");

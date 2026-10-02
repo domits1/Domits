@@ -57,18 +57,14 @@ ORDER BY id ASC;
 
 ROLLBACK;
 
-INSERT INTO main.standalone_site_domain AS existing (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+INSERT INTO main.standalone_site_domain (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
 VALUES ('race-custom-a', 'race-site', 'www.race-a.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000)
-ON CONFLICT (domain)
-DO UPDATE SET domain_type = EXCLUDED.domain_type, status = EXCLUDED.status, is_primary = EXCLUDED.is_primary, verification_details_json = EXCLUDED.verification_details_json, last_checked_at = EXCLUDED.last_checked_at, updated_at = EXCLUDED.updated_at
-WHERE existing.site_id = EXCLUDED.site_id
+ON CONFLICT (domain) DO NOTHING
 RETURNING id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at;
 
-INSERT INTO main.standalone_site_domain AS existing (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+INSERT INTO main.standalone_site_domain (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
 VALUES ('race-custom-b', 'race-site', 'www.race-b.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000)
-ON CONFLICT (domain)
-DO UPDATE SET domain_type = EXCLUDED.domain_type, status = EXCLUDED.status, is_primary = EXCLUDED.is_primary, verification_details_json = EXCLUDED.verification_details_json, last_checked_at = EXCLUDED.last_checked_at, updated_at = EXCLUDED.updated_at
-WHERE existing.site_id = EXCLUDED.site_id
+ON CONFLICT (domain) DO NOTHING
 RETURNING id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at;
 
 DELETE FROM main.standalone_site_domain
@@ -76,20 +72,16 @@ WHERE site_id = 'race-site';
 
 BEGIN;
 
-INSERT INTO main.standalone_site_domain AS existing (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+INSERT INTO main.standalone_site_domain (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
 VALUES ('race-custom-c', 'race-site', 'www.race-c.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000)
-ON CONFLICT (domain)
-DO UPDATE SET domain_type = EXCLUDED.domain_type, status = EXCLUDED.status, is_primary = EXCLUDED.is_primary, verification_details_json = EXCLUDED.verification_details_json, last_checked_at = EXCLUDED.last_checked_at, updated_at = EXCLUDED.updated_at
-WHERE existing.site_id = EXCLUDED.site_id
+ON CONFLICT (domain) DO NOTHING
 RETURNING id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at;
 
 BEGIN;
 
-INSERT INTO main.standalone_site_domain AS existing (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
+INSERT INTO main.standalone_site_domain (id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at)
 VALUES ('race-custom-d', 'race-site', 'www.race-d.example', 'CUSTOM', 'PENDING', FALSE, '{}', 1789000000000, 1789000000000, 1789000000000)
-ON CONFLICT (domain)
-DO UPDATE SET domain_type = EXCLUDED.domain_type, status = EXCLUDED.status, is_primary = EXCLUDED.is_primary, verification_details_json = EXCLUDED.verification_details_json, last_checked_at = EXCLUDED.last_checked_at, updated_at = EXCLUDED.updated_at
-WHERE existing.site_id = EXCLUDED.site_id
+ON CONFLICT (domain) DO NOTHING
 RETURNING id, site_id, domain, domain_type, status, is_primary, verification_details_json, last_checked_at, created_at, updated_at;
 
 COMMIT;

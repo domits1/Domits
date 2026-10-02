@@ -142,6 +142,11 @@ const routeDefinitions = [
   },
   {
     matches: (method, path) =>
+      method === "POST" && /\/threads\/[^/]+\/close$/.test(String(path || "")),
+    handle: (event) => messageController.closeThread(event),
+  },
+  {
+    matches: (method, path) =>
       method === "POST" &&
       String(path || "").includes("/integrations/") &&
       String(path || "").endsWith("/ingest/messages"),
@@ -173,14 +178,6 @@ const routeDefinitions = [
       String(path || "").includes("/integrations/") &&
       String(path || "").endsWith("/logs"),
     handle: (event) => integrationController.getIntegrationLogs(event),
-  },
-  {
-    matches: (method, path) =>
-      method === "POST" &&
-      String(path || "").includes("/integrations/") &&
-      String(path || "").endsWith("/properties"),
-    handle: (event) =>
-      integrationController.upsertIntegrationProperty(event),
   },
   {
     matches: (method, path) =>

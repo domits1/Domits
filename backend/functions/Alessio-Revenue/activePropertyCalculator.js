@@ -2,8 +2,21 @@ import Database from "database";
 import { Property } from "database/models/Property";
 import { EnterpriseRatePlan } from "database/models/EnterpriseRatePlan";
 
-const DEFAULT_PRICE_PER_PROPERTY_CENTS = 4900;
 const DEFAULT_CURRENCY = "EUR";
+
+async function getEnterpriseIdForHost(hostId) {
+  const client = await Database.getInstance();
+  const propertyRepository = client.getRepository(Property);
+
+  const property = await propertyRepository
+    .createQueryBuilder("property")
+    .select("property.enterpriseid", "enterpriseId")
+    .where("property.hostid = :hostId", { hostId })
+    .andWhere("property.enterpriseid IS NOT NULL")
+    .getRawOne();
+
+  return property?.enterpriseId ?? null;
+}
 
 async function getActivePropertyCount(enterpriseId) {
   const client = await Database.getInstance();
@@ -51,29 +64,42 @@ async function authorizeEnterpriseAccess(enterpriseId, hostId) {
 }
 
 async function getEnterpriseBillingDetails(enterpriseId, hostId) {
-  await authorizeEnterpriseAccess(enterpriseId, hostId);
+  const resolvedEnterpriseId =
+    enterpriseId === hostId
+      ? await getEnterpriseIdForHost(hostId)
+      : enterpriseId;
 
-  const [activeProperties, ratePlan] = await Promise.all([
-    getActivePropertyCount(enterpriseId),
-    getEnterpriseRatePlan(enterpriseId),
-  ]);
+  if (!resolvedEnterpriseId) {
+    const error = new Error("No active enterprise rate plan was found.");
+    error.statusCode = 404;
+    throw error;
+  }
 
-  const pricePerPropertyCents =
-    ratePlan?.price_per_property_cents ?? DEFAULT_PRICE_PER_PROPERTY_CENTS;
+  await authorizeEnterpriseAccess(resolvedEnterpriseId, hostId);
 
-  const estimatedMonthlyCostCents =
-    activeProperties * pricePerPropertyCents;
+  const ratePlan = await getEnterpriseRatePlan(resolvedEnterpriseId);
+
+  if (!ratePlan) {
+    const error = new Error("No active enterprise rate plan was found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const activeProperties = await getActivePropertyCount(resolvedEnterpriseId);
 
   return {
+    enterpriseId: resolvedEnterpriseId,
     activeProperties,
-    pricePerProperty: pricePerPropertyCents / 100,
-    currency: ratePlan?.currency ?? DEFAULT_CURRENCY,
-    estimatedMonthlyCost: estimatedMonthlyCostCents / 100,
+    pricePerProperty: ratePlan.price_per_property_cents / 100,
+    currency: ratePlan.currency || DEFAULT_CURRENCY,
+    estimatedMonthlyCost:
+      (activeProperties * ratePlan.price_per_property_cents) / 100,
   };
 }
 
 export {
   authorizeEnterpriseAccess,
+  getEnterpriseIdForHost,
   getActivePropertyCount,
   getEnterpriseBillingDetails,
 };

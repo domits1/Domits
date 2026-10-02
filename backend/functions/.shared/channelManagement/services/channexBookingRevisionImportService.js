@@ -8,13 +8,9 @@ import {
   CHANNEX_BOOKING_POLL_SYNC_TYPE,
   CHANNEX_BOOKING_PULL_PROVIDER_ENDPOINT,
 } from "../utils/channexBookingPollUtils.js";
-import {
-  CHANNEX_BOOKING_CANCELLED_TRIGGER,
-  CHANNEX_BOOKING_CREATED_TRIGGER,
-  CHANNEX_BOOKING_MODIFIED_TRIGGER,
-  buildChannexPullIssue,
-  toBookingAvailabilityBridgeBooking,
-} from "../utils/channexBookingRevisionUtils.js";
+import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
+import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
@@ -296,8 +292,10 @@ const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domit
   importedBy: CHANNEX_BOOKING_IMPORT_SOURCE,
   action,
 });
-const withChannexAvailabilitySync = (itemPatch, channexAvailabilitySync) =>
-  channexAvailabilitySync === undefined ? itemPatch : { ...itemPatch, channexAvailabilitySync };
+// A booking imported from Channex changes the nights on the other channels too, so its
+// change goes to the outbox with the booking write (design D8).
+const importedBookingChange = (propertyId, stay) =>
+  bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT, stay);
 const buildChannexBookingRevisionPersistencePayload = ({ revision, propertyMapping }) => ({
   provider: "CHANNEX",
   channel: CHANNEL_CHANNEX,
@@ -342,7 +340,6 @@ export default class ChannexBookingRevisionImportService {
     resLinks,
     channexBookingRevisions,
     externalBookingImportRepository,
-    channexBookingAvailabilityBridge,
     channexCredentialStore,
     channexProviderClient,
     finalizeChannexSyncResult,
@@ -354,7 +351,6 @@ export default class ChannexBookingRevisionImportService {
     this.resLinks = resLinks;
     this.channexBookingRevisions = channexBookingRevisions;
     this.externalBookingImportRepository = externalBookingImportRepository;
-    this.channexBookingAvailabilityBridge = channexBookingAvailabilityBridge;
     this.channexCredentialStore = channexCredentialStore;
     this.channexProviderClient = channexProviderClient;
     this.finalizeChannexSyncResult = finalizeChannexSyncResult;
@@ -996,6 +992,12 @@ export default class ChannexBookingRevisionImportService {
         guestName: requireStr(revision?.guestName) || "Channex guest",
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
+        channexChanges: [
+          importedBookingChange(propertyContext.propertyId, {
+            arrivalMs: Number(dates.arrivalDateMs),
+            departureMs: Number(dates.departureDateMs),
+          }),
+        ],
       });
     } catch (error) {
       const recoveredBooking = await this.externalBookingImportRepository.getBookingById(deterministicBookingId);
@@ -1014,16 +1016,6 @@ export default class ChannexBookingRevisionImportService {
       created: true,
       domitsBookingId: deterministicBookingId,
     };
-  }
-
-  async syncChannexImportedBookingAvailability({ bookingBefore = null, bookingAfter = null, trigger }) {
-    const referenceBooking = bookingAfter || bookingBefore || {};
-    return await this.channexBookingAvailabilityBridge.syncAvailabilityForBookingChange({
-      userId: referenceBooking.hostId,
-      bookingBefore: toBookingAvailabilityBridgeBooking(bookingBefore),
-      bookingAfter: toBookingAvailabilityBridgeBooking(bookingAfter),
-      trigger,
-    });
   }
 
   async finalizeChannexBookingImportItem({
@@ -1113,13 +1105,6 @@ export default class ChannexBookingRevisionImportService {
       };
     }
 
-    const channexAvailabilitySync = bookingResult.created
-      ? await this.syncChannexImportedBookingAvailability({
-          bookingAfter: bookingResult.booking,
-          trigger: CHANNEX_BOOKING_CREATED_TRIGGER,
-        })
-      : undefined;
-
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -1134,7 +1119,7 @@ export default class ChannexBookingRevisionImportService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => buildImportedNewBookingResult({ ackOk, created: bookingResult.created }),
-      itemPatch: withChannexAvailabilitySync({ createdBooking: bookingResult.created }, channexAvailabilitySync),
+      itemPatch: { createdBooking: bookingResult.created },
     });
   }
 
@@ -1183,6 +1168,18 @@ export default class ChannexBookingRevisionImportService {
       guestName: requireStr(revision?.guestName) || "Channex guest",
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
+      // The old nights reopen and the new ones close: one change per stay, so the nights
+      // between them are not resent (design D9).
+      channexChanges: [
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: bookingBefore.arrivalDateMs,
+          departureMs: bookingBefore.departureDateMs,
+        }),
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: Number(dates.arrivalDateMs),
+          departureMs: Number(dates.departureDateMs),
+        }),
+      ],
     });
     if (!updatedBooking) {
       return {
@@ -1199,12 +1196,6 @@ export default class ChannexBookingRevisionImportService {
       };
     }
 
-    const channexAvailabilitySync = await this.syncChannexImportedBookingAvailability({
-      bookingBefore,
-      bookingAfter: updatedBooking,
-      trigger: CHANNEX_BOOKING_MODIFIED_TRIGGER,
-    });
-
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -1219,7 +1210,7 @@ export default class ChannexBookingRevisionImportService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => (ackOk ? "updated-and-acked" : "updated-but-ack-failed"),
-      itemPatch: withChannexAvailabilitySync({ updatedBooking: true }, channexAvailabilitySync),
+      itemPatch: { updatedBooking: true },
     });
   }
 
@@ -1263,7 +1254,15 @@ export default class ChannexBookingRevisionImportService {
       };
     }
 
-    const cancelledBooking = await this.externalBookingImportRepository.cancelImportedBooking(domitsBookingId);
+    const cancelledBooking = await this.externalBookingImportRepository.cancelImportedBooking(
+      domitsBookingId,
+      [
+        importedBookingChange(bookingBefore.propertyId, {
+          arrivalMs: bookingBefore.arrivalDateMs,
+          departureMs: bookingBefore.departureDateMs,
+        }),
+      ]
+    );
     if (!cancelledBooking) {
       return {
         ...baseItem,
@@ -1279,12 +1278,6 @@ export default class ChannexBookingRevisionImportService {
       };
     }
 
-    const channexAvailabilitySync = await this.syncChannexImportedBookingAvailability({
-      bookingBefore,
-      bookingAfter: cancelledBooking,
-      trigger: CHANNEX_BOOKING_CANCELLED_TRIGGER,
-    });
-
     return await this.finalizeChannexBookingImportItem({
       baseItem,
       integration,
@@ -1299,7 +1292,7 @@ export default class ChannexBookingRevisionImportService {
       normalizedDomitsPropertyId,
       propertyMapping,
       resultForAck: (ackOk) => (ackOk ? "cancelled-and-acked" : "cancelled-but-ack-failed"),
-      itemPatch: withChannexAvailabilitySync({ cancelledBooking: true }, channexAvailabilitySync),
+      itemPatch: { cancelledBooking: true },
     });
   }
 
