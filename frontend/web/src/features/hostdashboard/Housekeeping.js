@@ -3,13 +3,11 @@ import { Auth } from 'aws-amplify';
 import useEffectiveHostId from '../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck,
-    LuSearch, LuChevronRight, LuCheck, LuPartyPopper
+    LuSearch, LuChevronRight
 } from 'react-icons/lu';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
-import { fetchSettings, saveSettings } from './services/settingsService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
-import { fetchTeamMembers, fetchMemberships } from './services/teamService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -19,9 +17,11 @@ import { sortTasks } from './hosttasks/utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBuckets';
 import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
 import ConfirmDialog from './hosttasks/components/ConfirmDialog';
-import TeamInviteModal from './hosttasks/components/TeamInviteModal';
 import CreateTaskModal from './hosttasks/components/CreateTaskModal';
 import TaskDetailsModal from './hosttasks/components/TaskDetailsModal';
+import SettingsView from './hosttasks/components/SettingsView';
+import TaskFilterSelects from './hosttasks/components/TaskFilterSelects';
+import MyTasksView from './hosttasks/components/MyTasksView';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -63,9 +63,6 @@ const HostPropertyCare = () => {
     });
 
     const [currentUser, setCurrentUser] = useState({ name: '', email: '', group: '' });
-    const [teamMembers, setTeamMembers] = useState([]);
-    const [teamMemberships, setTeamMemberships] = useState([]);
-    const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
 
     useEffect(() => {
         Auth.currentAuthenticatedUser()
@@ -81,11 +78,6 @@ const HostPropertyCare = () => {
     }, []);
 
     useEffect(() => {
-        fetchTeamMembers().then(setTeamMembers).catch(() => {});
-        fetchMemberships().then(setTeamMemberships).catch(() => {});
-    }, []);
-
-    useEffect(() => {
         if (!isModalOpen) return;
         const handler = (e) => { if (e.key === 'Escape') handleCancelModal(); };
         document.addEventListener('keydown', handler);
@@ -94,78 +86,6 @@ const HostPropertyCare = () => {
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
-
-    const DEFAULT_SETTINGS = {
-        notifEmailAssigned: true,
-        notifEmailOverdue: true,
-        notifEmailCompleted: true,
-        notifSmsUrgent: false,
-        notifInappEnabled: true,
-        defaultPriority: 'Medium',
-        defaultAssignee: 'Anyone',
-        autoAssignCleaning: false,
-        requirePhotoProof: false,
-    };
-    const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
-    const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
-    const [settingsSaved, setSettingsSaved] = useState(false);
-
-    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsDraft);
-
-    const handleSettingChange = (key, value) => {
-        setSettingsDraft(prev => ({ ...prev, [key]: value }));
-    };
-
-    useEffect(() => {
-        fetchSettings()
-            .then(data => {
-                setSettings(data);
-                setSettingsDraft(data);
-            })
-            .catch(() => {});
-    }, []);
-
-    const handleSaveSettings = async () => {
-        try {
-            await saveSettings(settingsDraft);
-            setSettings({ ...settingsDraft });
-            setSettingsSaved(true);
-            setTimeout(() => setSettingsSaved(false), 3000);
-        } catch {
-            setSettingsSaved(false);
-        }
-    };
-
-    const handleCancelSettings = () => {
-        setSettingsDraft({ ...settings });
-    };
-
-    const TEAM_MEMBERS = useMemo(() => {
-        const rows = [];
-        if (taskContext === 'managed' && managedHostId) {
-            const membership = teamMemberships.find(m => m.host_id === managedHostId);
-            const hostName = membership?.host_name || membership?.host_email || managedHostId;
-            const hostEmail = membership?.host_email || managedHostId;
-            rows.push({ name: hostName, role: 'Host', email: hostEmail, properties: 'All', status: 'Active' });
-            if (currentUser.name) {
-                rows.push({ name: currentUser.name, role: 'Property Operations Manager', email: currentUser.email, properties: 'All', status: 'Active' });
-            }
-        } else {
-            if (currentUser.name) {
-                rows.push({ name: currentUser.name, role: 'Host', email: currentUser.email, properties: 'All', status: 'Active' });
-            }
-            teamMembers
-                .filter(m => m.status === 'active' && m.member_email !== currentUser.email)
-                .forEach(m => rows.push({ name: m.member_name || m.member_email, role: m.role, email: m.member_email, properties: 'All', status: 'Active' }));
-        }
-        return rows;
-    }, [currentUser, teamMembers, teamMemberships, taskContext, managedHostId]);
-
-    const INTEGRATIONS = [
-        { name: 'Airbnb', logo: '🏠', connected: false },
-        { name: 'Booking.com', logo: '🔵', connected: false },
-        { name: 'Vrbo', logo: '🏡', connected: false },
-    ];
 
     const reportData = useMemo(() => {
         const filtered = tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -536,22 +456,7 @@ const HostPropertyCare = () => {
         setFilters({ ...DEFAULT_FILTERS });
     };
     const renderCommonFilters = () => (
-        <>
-            <select name="property" value={filters.property} onChange={handleFilterChange}>
-                <option value="All properties">All properties</option>
-                {filterPropertyOptions.map(label => (
-                    <option key={label} value={label}>{label}</option>
-                ))}
-            </select>
-
-            <select name="status" value={filters.status} onChange={handleFilterChange}>
-                <option value="All statuses">All statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="In progress">In progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Overdue">Overdue</option>
-            </select>
-        </>
+        <TaskFilterSelects filters={filters} filterPropertyOptions={filterPropertyOptions} onFilterChange={handleFilterChange} />
     );
 
     const getFilteredTasks = () => {
@@ -644,140 +549,6 @@ const HostPropertyCare = () => {
         a.click();
         URL.revokeObjectURL(url);
     };
-
-    const renderSettingsToggle = (key, label, disabled = false) => (
-        <div key={key} className="settings-toggle-row">
-            <span className="settings-toggle-label">{label}</span>
-            <button
-                className={`settings-toggle ${!disabled && settingsDraft[key] ? 'on' : ''} ${disabled ? 'disabled' : ''}`}
-                onClick={() => !disabled && handleSettingChange(key, !settingsDraft[key])}
-                aria-label={label}
-                aria-disabled={disabled}
-            >
-                <span className="settings-toggle-knob" />
-            </button>
-        </div>
-    );
-
-    const renderSettingsView = () => (
-        <div className="settings-container">
-            <div className="settings-main-grid">
-                <div className="settings-left-col">
-                    <div className="settings-card settings-team-card">
-                        <div className="settings-card-header">
-                            <h3 className="settings-card-title">Team Members</h3>
-                            {taskContext !== 'managed' && (
-                                <button className="btn-primary-green" onClick={() => setShowTeamInviteModal(true)}>+ Invite Member</button>
-                            )}
-                        </div>
-                        <table className="settings-team-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Email</th>
-                                    <th>Properties</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {TEAM_MEMBERS.map(member => (
-                                    <tr key={member.email}>
-                                        <td><LuChevronRight className="settings-row-arrow" />{member.name}</td>
-                                        <td>{member.role}</td>
-                                        <td>{member.email}</td>
-                                        <td>{member.properties}</td>
-                                        <td>
-                                            <span className={`settings-status-badge ${member.status === 'Active' ? 'active' : 'suspended'}`}>
-                                                {member.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="settings-card">
-                        <div className="settings-card-header">
-                            <h3 className="settings-card-title">Integrations</h3>
-                            <span className="settings-coming-soon">Coming soon</span>
-                        </div>
-                        <div className="settings-integrations-grid">
-                            {INTEGRATIONS.map(integration => (
-                                <div key={integration.name} className="settings-integration-card">
-                                    <div className="settings-integration-top">
-                                        <span className="settings-integration-logo">{integration.logo}</span>
-                                        <span className="settings-integration-name">{integration.name}</span>
-                                    </div>
-                                    {integration.connected ? (
-                                        <button className="settings-integration-btn disconnect">
-                                            ✓ Disconnect
-                                        </button>
-                                    ) : (
-                                        <span className="settings-integration-status disconnected">Not Connected</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="settings-right-col">
-                    <div className="settings-card">
-                        <div className="settings-card-header">
-                            <h3 className="settings-card-title">Notifications</h3>
-                            <span className="settings-coming-soon">Coming soon</span>
-                        </div>
-                        <p className="settings-card-subtitle">Customize your app preferences.</p>
-                        <p className="settings-group-label">Email notifications</p>
-                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me', true)}
-                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue', true)}
-                        {renderSettingsToggle('notifEmailCompleted', 'Task completed', true)}
-                        <p className="settings-group-label">SMS notifications</p>
-                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
-                        <p className="settings-group-label">In-App notifications</p>
-                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
-                    </div>
-
-                    <div className="settings-card">
-                        <h3 className="settings-card-title">Default Property Settings</h3>
-                        <p className="settings-card-subtitle">Manage property-level preferences.</p>
-                        <div className="settings-field" style={{ marginBottom: '14px' }}>
-                            <label htmlFor="setting-default-priority">Default task priority</label>
-                            <select id="setting-default-priority" value={settingsDraft.defaultPriority} onChange={e => handleSettingChange('defaultPriority', e.target.value)}>
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
-                                <option>Urgent</option>
-                            </select>
-                        </div>
-                        <div className="settings-field" style={{ marginBottom: '16px' }}>
-                            <label htmlFor="setting-default-assignee">Default assignee</label>
-                            <select id="setting-default-assignee" value={settingsDraft.defaultAssignee} onChange={e => handleSettingChange('defaultAssignee', e.target.value)}>
-                                <option>Anyone</option>
-                                {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
-                            </select>
-                        </div>
-                        {renderSettingsToggle('autoAssignCleaning', 'Auto-assign cleaning after checkout')}
-                        {renderSettingsToggle('requirePhotoProof', 'Require photo proof for completed tasks')}
-                    </div>
-                </div>
-            </div>
-
-            <div className="settings-footer">
-                {settingsSaved && <span className="settings-saved-msg"><LuCheck /> Settings saved successfully.</span>}
-                <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
-                <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
-            </div>
-
-            <TeamInviteModal
-                isOpen={showTeamInviteModal}
-                onClose={() => setShowTeamInviteModal(false)}
-                onInvited={(created) => setTeamMembers(prev => [...prev, created])}
-            />
-        </div>
-    );
 
     const renderReportsView = () => {
         return (
@@ -960,141 +731,25 @@ const HostPropertyCare = () => {
             case 'All Tasks': 
                 return renderTableView();
             case 'My Tasks':
-                return renderMyTasksView();
+                return (
+                    <MyTasksView
+                        tasks={tasks}
+                        currentUser={currentUser}
+                        filters={filters}
+                        filterPropertyOptions={filterPropertyOptions}
+                        getPropertyLabel={getPropertyLabel}
+                        onFilterChange={handleFilterChange}
+                        onTaskClick={openTaskDetails}
+                        onToggleComplete={handleToggleComplete}
+                    />
+                );
             case 'Reports':
                 return renderReportsView();
             case 'Settings':
-                return renderSettingsView();
+                return <SettingsView currentUser={currentUser} taskContext={taskContext} managedHostId={managedHostId} />;
             default:
                 return null;
         }
-    };
-    const renderMyTasksView = () => {
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        let myTasks = tasks.filter(t => t.assignee === currentUser.name && !t.isLegacy);
-
-        myTasks = myTasks.filter(task => {
-            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
-            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
-            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
-            const searchLower = filters.search.toLowerCase();
-            const matchSearch = filters.search === '' || (task.title?.toLowerCase().includes(searchLower));
-            return matchProperty && matchStatus && matchPriority && matchSearch;
-        });
-
-        const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue');
-        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
-        
-        const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr)
-            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-            .map(t => ({ ...t, priority: t.priority || 'Low', status: t.status || 'Pending' }));
-
-        const renderTaskRow = (task, isOverdueSection = false) => {
-            const displayPriority = isOverdueSection ? 'Urgent' : (task.priority || 'Low');
-            const displayStatus = isOverdueSection ? 'Overdue' : task.status;
-            
-            const isCompleted = task.status === 'Completed';
-            let displayTime = `Due ${task.dueDate}`;
-            if (isOverdueSection) {
-                displayTime = 'Overdue';
-            } else if (task.dueDate === todayStr) {
-                displayTime = 'Today';
-            }
-            return (
-                <button 
-                    type="button"
-                    key={task.id} 
-                    className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} 
-                    onClick={() => openTaskDetails(task)}
-                    style={{ opacity: isCompleted ? 0.6 : 1 }}
-                >
-                    <div className="my-task-left">
-                        <div className="my-task-icon"><LuClipboardList /></div>
-                        <div className="my-task-info">
-                            <h4>{task.title}</h4>
-                            <span>{getPropertyLabel(task)}</span>
-                        </div>
-                    </div>
-                    
-                    <div className="my-task-middle">
-                        <span className="my-task-time">
-                            {displayTime}
-                        </span>
-                    </div>
-
-                    <div className="my-task-right">
-                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
-                            ● {displayStatus}
-                        </span>
-                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
-                            {displayPriority}
-                        </span>
-                        
-                        {isOverdueSection ? (
-                            <div className="overdue-action-text">⍉ Overdue</div>
-                        ) : (
-                            <input 
-                                type="checkbox" 
-                                className="my-task-checkbox" 
-                                checked={task.status === 'Completed'}
-                                onClick={(e) => e.stopPropagation()} 
-                                onChange={() => handleToggleComplete(task)}
-                            />
-                        )}
-                    </div>
-                </button>
-            );
-        };
-
-        return (
-            <div className="my-tasks-container">
-                <div className="my-tasks-section">
-                    <div className="section-header-row">
-                        <div className="section-title">
-                            <h3>Today's Tasks</h3>
-                            <span className="task-count">{todayTasks.length} Tasks</span>
-                        </div>
-                        <div className="my-tasks-filters">
-                            {renderCommonFilters()}
-                            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-                                <option value="Any priority">Any priority</option>
-                                <option value="Urgent">Urgent</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
-                            <div className="search-box small-search">
-                                <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                                <LuSearch aria-hidden="true" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="my-task-list">
-                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! <LuPartyPopper aria-hidden="true" /></p>}
-                    </div>
-                </div>
-
-                <div className="my-tasks-section">
-                    <div className="section-title">
-                        <h3>Overdue</h3>
-                        <span className="task-count">{overdueTasks.length} Task(s)</span>
-                    </div>
-                    <div className="my-task-list">
-                        {overdueTasks.length > 0 ? overdueTasks.map(t => renderTaskRow(t, true)) : null}
-                    </div>
-                </div>
-
-                <div className="my-tasks-section">
-                    <div className="section-title">
-                        <h3>Upcoming</h3>
-                        <span className="task-count">{upcomingTasks.length} Task(s)</span>
-                    </div>
-                    <div className="my-task-list">
-                        {upcomingTasks.length > 0 ? upcomingTasks.map(t => renderTaskRow(t)) : null}
-                    </div>
-                </div>
-            </div>
-        );
     };
     const getSortIcon = (columnKey, defaultIcon = '') => {
         if (sortConfig.key !== columnKey) return defaultIcon;
