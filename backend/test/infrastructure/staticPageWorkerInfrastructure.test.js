@@ -3,20 +3,45 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const DIRECTORY = join(process.cwd(), "infrastructure", "static-page-worker");
-const BUCKET = "arn:aws:s3:::domits-direct-booking-sites-acceptance";
-const PROPERTY_HANDLER = "arn:aws:lambda:eu-north-1:115462458880:function:PropertyHandler";
-const SCHEDULER_ROLE = "arn:aws:iam::115462458880:role/domits-static-page-worker-scheduler";
+const SITES_BUCKET_PLACEHOLDER = "__SITES_BUCKET__";
+const SITES_BUCKET = "example-sites-bucket";
+const BUCKET = `arn:aws:s3:::${SITES_BUCKET}`;
+const ACCOUNT = "115462458880";
+const PROPERTY_HANDLER = `arn:aws:lambda:eu-north-1:${ACCOUNT}:function:PropertyHandler`;
+const SCHEDULER_ROLE = `arn:aws:iam::${ACCOUNT}:role/domits-static-page-worker-scheduler`;
+const DSQL_CLUSTER = `arn:aws:dsql:eu-west-2:${ACCOUNT}:cluster/6qabud3emiqhbfkh2h4ttwz35i`;
+const PARAMETERS_THE_CODE_READS = [
+  "/aurora/dsql/region",
+  "/aurora/dsql/host",
+  "/aurora/dsql/dbName",
+  "/aurora/dsql/schema",
+  "/direct-booking-website/quote-token-secret",
+].map((name) => `arn:aws:ssm:eu-north-1:${ACCOUNT}:parameter${name}`);
+const FUNCTIONS_THE_CODE_INVOKES = ["PriceLabs-Integration", "UnifiedMessaging"].map(
+  (name) => `arn:aws:lambda:eu-north-1:${ACCOUNT}:function:${name}`
+);
 
-const load = (name) => JSON.parse(readFileSync(join(DIRECTORY, name), "utf8"));
+const readPolicyText = (name) => readFileSync(join(DIRECTORY, name), "utf8");
+const load = (name) => JSON.parse(readPolicyText(name));
+const renderSitesBucket = (text) => text.replaceAll(SITES_BUCKET_PLACEHOLDER, SITES_BUCKET);
 const asList = (value) => (Array.isArray(value) ? value : [value]);
 const statementsWith = (policy, effect) => policy.Statement.filter((statement) => statement.Effect === effect);
 const actionsOf = (statements) => statements.flatMap((statement) => asList(statement.Action));
 const resourcesOf = (statements) => statements.flatMap((statement) => asList(statement.Resource));
+const resourcesForAction = (policy, action) =>
+  resourcesOf(statementsWith(policy, "Allow").filter((statement) => asList(statement.Action).includes(action)));
 
 describe("the page writer policy", () => {
-  const policy = load("static-page-writer-policy.json");
+  const text = readPolicyText("static-page-writer-policy.json");
+  const policy = JSON.parse(renderSitesBucket(text));
   const allows = statementsWith(policy, "Allow");
   const denies = statementsWith(policy, "Deny");
+
+  it("names the sites bucket through one placeholder only, never a literal bucket name", () => {
+    expect(text).toContain(SITES_BUCKET_PLACEHOLDER);
+    expect(text).not.toMatch(/arn:aws:s3:::(?!__SITES_BUCKET__)/);
+    expect(renderSitesBucket(text)).not.toContain(SITES_BUCKET_PLACEHOLDER);
+  });
 
   it("allows exactly a read of the app shell and writes under the hostname prefix", () => {
     expect(allows.map((statement) => [asList(statement.Action), asList(statement.Resource)])).toEqual([
@@ -50,36 +75,41 @@ describe("the page writer policy", () => {
 
 describe("the execution role", () => {
   const policy = load("property-handler-base-policy.json");
+  const actions = actionsOf(policy.Statement);
 
-  it("grants only what the function's code calls, with no S3, no wildcard action and no cluster administration", () => {
+  it("connects to the one cluster as admin, the user the database package signs its token for, and nothing else on DSQL", () => {
+    expect(actions.filter((action) => action.startsWith("dsql:"))).toEqual(["dsql:DbConnectAdmin"]);
+    expect(resourcesForAction(policy, "dsql:DbConnectAdmin")).toEqual([DSQL_CLUSTER]);
+  });
+
+  it("reads exactly the parameters the code names", () => {
+    expect(resourcesForAction(policy, "ssm:GetParameter").sort()).toEqual([...PARAMETERS_THE_CODE_READS].sort());
+  });
+
+  it("invokes exactly the functions the code names", () => {
+    expect(resourcesForAction(policy, "lambda:InvokeFunction").sort()).toEqual([...FUNCTIONS_THE_CODE_INVOKES].sort());
+  });
+
+  it("grants no S3, no wildcard action, no DynamoDB write, and no scoped action on every resource", () => {
     expect(statementsWith(policy, "Deny")).toHaveLength(0);
-    const actions = actionsOf(policy.Statement);
     expect(actions.some((action) => action.startsWith("s3:"))).toBe(false);
     expect(actions.some((action) => action === "*" || action.endsWith(":*"))).toBe(false);
-    expect(actions.filter((action) => action.startsWith("dsql:")).sort()).toEqual([
-      "dsql:DbConnect",
-      "dsql:DbConnectAdmin",
-    ]);
     expect(
       actions
         .filter((action) => action.startsWith("dynamodb:"))
         .some((action) => /Put|Update|Delete|Write/.test(action))
     ).toBe(false);
-    expect(actions).toEqual(
-      expect.arrayContaining([
-        "ssm:GetParameter",
-        "cognito-idp:GetUser",
-        "cognito-idp:AdminGetUser",
-        "lambda:InvokeFunction",
-        "logs:PutLogEvents",
-      ])
+    const onEveryResource = actionsOf(policy.Statement.filter((statement) => asList(statement.Resource).includes("*")));
+    expect(onEveryResource.some((action) => /^(dsql|ssm|lambda):/.test(action))).toBe(false);
+    expect(onEveryResource).toEqual(
+      expect.arrayContaining(["cognito-idp:GetUser", "cognito-idp:AdminGetUser", "logs:PutLogEvents"])
     );
   });
 
   it("can be assumed by Lambda from this account only", () => {
     const [statement] = load("property-handler-role-trust.json").Statement;
     expect(statement.Principal).toEqual({ Service: "lambda.amazonaws.com" });
-    expect(statement.Condition).toEqual({ StringEquals: { "aws:SourceAccount": "115462458880" } });
+    expect(statement.Condition).toEqual({ StringEquals: { "aws:SourceAccount": ACCOUNT } });
   });
 });
 
@@ -111,6 +141,6 @@ describe("the schedule", () => {
       policy.Statement.map((statement) => [statement.Effect, asList(statement.Action), asList(statement.Resource)])
     ).toEqual([["Allow", ["lambda:InvokeFunction"], [PROPERTY_HANDLER]]]);
     expect(trust.Principal).toEqual({ Service: "scheduler.amazonaws.com" });
-    expect(trust.Condition).toEqual({ StringEquals: { "aws:SourceAccount": "115462458880" } });
+    expect(trust.Condition).toEqual({ StringEquals: { "aws:SourceAccount": ACCOUNT } });
   });
 });
