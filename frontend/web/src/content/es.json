@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Plantilla seleccionada",
+    "availabilityHint": "Ya puedes usar Essentials. Elite estará disponible próximamente.",
+    "selected": "Seleccionada",
+    "comingSoon": "Próximamente",
+    "title": "Elige una plantilla para tu sitio web",
+    "unsupportedPreview": "Aún no hay una vista previa disponible para esta plantilla.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Sitio web de una sola página, personalización básica y funciones esenciales"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Sitio web multifuncional, personalización avanzada y funciones exclusivas"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Dónde estarás",
@@ -1112,6 +1130,10 @@
           "title": "Preferencias de comunicación",
           "desc": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits."
         },
+        "privacySecurity": {
+          "title": "Privacidad y seguridad",
+          "desc": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos."
+        },
         "company": {
           "title": "Empresa",
           "desc": "Gestiona el nombre y los datos básicos de tu empresa."
@@ -1283,6 +1305,7 @@
         "emailAddress": "Dirección de correo electrónico",
         "verificationCode": "Código de verificación enviado a tu correo electrónico",
         "verify": "Verificar",
+        "emailUpdated": "¡Correo electrónico actualizado!",
         "phone": "Teléfono",
         "phoneNumber": "Número de teléfono",
         "sex": "Sexo",
@@ -1327,8 +1350,31 @@
         "save": "Guardar cambios",
         "saving": "Guardando...",
         "saved": "¡Guardado!",
+        "saveError": "Error al guardar. Inténtalo de nuevo.",
         "cancel": "Cancelar",
         "close": "Cerrar"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacidad y seguridad",
+      "title": "Privacidad y seguridad",
+      "subtitle": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos.",
+      "authenticationSection": "Autenticación",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Correo electrónico",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "unavailable": "No disponible",
+        "verified": "Verificado",
+        "sms": "SMS",
+        "authenticatorApp": "Aplicación de autenticación",
+        "comingSoon": "Próximamente: inicio de sesión por SMS y aplicación de autenticación.",
+        "loading": "Cargando tu estado de autenticación...",
+        "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
+      },
+      "pin": {
+        "comingSoon": "Próximamente."
       }
     },
     "communicationPreferences": {
@@ -1403,12 +1449,31 @@
       "subtitle": "Verifica tu propiedad e identidad como anfitrión para cumplir con los registros locales.",
       "section": "Detalles de cumplimiento",
       "fields": {
+        "property": "Alojamiento",
+        "untitledListing": "Alojamiento sin título",
         "propertyRegistration": "Registro de propiedad",
         "placeholder": "Número de registro",
+        "noRegistrationYet": "Todavía no se ha añadido ningún número de registro.",
         "hint": "Este número demuestra que tu propiedad está registrada con las autoridades locales. Pronto estarán disponibles métodos de cumplimiento adicionales (verificación de identidad, comprobante de domicilio)."
       },
+      "states": {
+        "loading": "Cargando tus alojamientos...",
+        "empty": "Todavía no tienes alojamientos.",
+        "createListing": "Crea tu primer alojamiento"
+      },
+      "unsavedChangesConfirm": "Tienes cambios sin guardar. ¿Cambiar de alojamiento y descartarlos?",
+      "errors": {
+        "load": "No pudimos cargar tus alojamientos. Inténtalo de nuevo.",
+        "duplicate": "Este número de registro ya lo usa otro alojamiento.",
+        "noAccess": "No tienes acceso para modificar este alojamiento.",
+        "validation": "Introduce un número de registro válido. No puede estar vacío, empezar por AUTO- ni superar los 255 caracteres.",
+        "generic": "No pudimos guardar tu número de registro. Inténtalo de nuevo.",
+        "registrationUnavailable": "No pudimos cargar el número de registro de este alojamiento. Actualiza la página o contacta con soporte."
+      },
       "buttons": {
-        "comingSoon": "Próximamente"
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Guardado"
       }
     },
     "ratePlans": {
@@ -1422,6 +1487,44 @@
         "title": "Tarifa exclusiva para host",
         "sub": "10% de las reservas pagadas por el host",
         "note": "Permite a Domits operar la plataforma 24/7"
+      }
+,
+      "enterprise": {
+        "cardTitle": "Plan de tarifas Enterprise",
+        "cardSubtitle": "Precio por alojamiento activo al mes.",
+        "cardNote": "Se ajusta automáticamente a tu número de alojamientos activos.",
+        "breadcrumb": "Plan de tarifas Enterprise",
+        "title": "Plan de tarifas Enterprise",
+        "subtitle": "Precios sencillos que se ajustan a tu cartera de alojamientos activos.",
+        "loading": "Cargando el plan de tarifas Enterprise...",
+        "loadError": "No se pudo cargar tu plan de tarifas Enterprise.",
+        "notActiveTitle": "No tienes un plan Enterprise",
+        "notActiveDescription": "Esta cuenta no tiene un plan de tarifas Enterprise activo.",
+        "currentPlan": "Plan actual",
+        "currentRate": "Tarifa actual",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "alojamiento activo / mes",
+        "active": "Activo",
+        "activeProperties": "Alojamientos activos",
+        "billableProperties": "Alojamientos facturables de tu cartera",
+        "pricePerProperty": "Precio por alojamiento",
+        "estimatedMonthlyCost": "Coste mensual estimado",
+        "basedOnPropertyCount": "Según tu número actual de alojamientos",
+        "pricing": "Precios",
+        "pricingLabel": "Precio Enterprise",
+        "monthlySubscription": "Suscripción mensual",
+        "nextInvoice": "Próxima factura",
+        "nextInvoiceLabel": "Próxima factura",
+        "billingFrequency": "Frecuencia de facturación",
+        "monthly": "Mensual",
+        "billingUnit": "Unidad de facturación",
+        "activeProperty": "Alojamiento activo",
+        "billingHistory": "Historial de facturas",
+        "noInvoices": "Todavía no hay facturas disponibles",
+        "invoicesDescription": "Tus facturas Enterprise aparecerán aquí cuando el historial de facturación esté disponible.",
+        "billingContact": "Contacto de facturación",
+        "billingContactTitle": "Contacto de facturación",
+        "billingContactDescription": "La gestión del contacto de facturación estará disponible aquí."
       }
     },
     "team": {
