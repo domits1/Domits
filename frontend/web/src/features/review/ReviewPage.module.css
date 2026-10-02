@@ -9,71 +9,50 @@
         align-self: center;
     }
     .rating {
-        display: inline-block;
-        position: relative;
-        height: 10vh;
-        line-height: 100px;
-        font-size: 2rem;
-        align-self: center;
+        border: 0;
+        margin: 0;
+        padding: 1rem 0;
+        text-align: center;
     }
-
+    .rating legend {
+        margin: 0 auto;
+        font-weight: 600;
+    }
+    .rating > div {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+    }
     .rating label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
+        position: relative;
+        display: inline-flex;
         cursor: pointer;
     }
-
-    .rating label:last-child {
-        position: static;
-    }
-
-    .rating label:nth-child(1) {
-        z-index: 5;
-    }
-
-    .rating label:nth-child(2) {
-        z-index: 4;
-    }
-
-    .rating label:nth-child(3) {
-        z-index: 3;
-    }
-
-    .rating label:nth-child(4) {
-        z-index: 2;
-    }
-
-    .rating label:nth-child(5) {
-        z-index: 1;
-    }
-
     .rating label input {
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
         opacity: 0;
+        cursor: pointer;
     }
-
-    .rating label .icon {
-        float: left;
-        color: transparent;
-        font-size: 4rem;
+    .rating .icon {
+        min-width: 44px;
+        min-height: 44px;
+        color: #0A760F;
+        font-size: 3rem;
+        border-radius: 0.25rem;
     }
-
-    .rating label:last-child .icon {
-        color: gray;
+    .rating input:focus-visible + .icon {
+        outline: 3px solid #0A760F;
+        outline-offset: 3px;
     }
-
-    .rating:not(:hover) label input:checked ~ .icon,
-    .rating:hover label:hover input ~ .icon {
-        color: gold;
+    .rating input:checked + .icon {
+        background: #eaf5eb;
     }
-
-    .rating label input:focus:not(:checked) ~ .icon:last-child {
-        color: gray;
-        text-shadow: 0 0 5px gold;
+    .rating input:disabled + .icon {
+        opacity: 0.6;
     }
     .comment {
         text-align: center;
