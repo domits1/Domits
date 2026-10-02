@@ -1,13 +1,13 @@
 {
   "reviews": [
     {
-      "reviewId": "1",
+      "id": "1",
       "title": "Great service",
       "content": "I had a great experience!",
       "date": "2023-12-01"
     },
     {
-      "reviewId": "2",
+      "id": "2",
       "title": "Good experience",
       "content": "The service was good.",
       "date": "2023-12-02"
@@ -15,7 +15,7 @@
   ],
   "receivedReviews": [
     {
-      "reviewId": "3",
+      "id": "3",
       "title": "Awesome customer",
       "content": "The customer was very polite.",
       "date": "2023-12-03"

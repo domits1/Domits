@@ -111,6 +111,23 @@ export class ReviewService {
     }
   }
 
+  async getReviews(callerUserId, scope = "written") {
+    if (!["written", "received"].includes(scope)) throw new BadRequestException("Invalid review scope.");
+    const where = scope === "written" ? { guest_id: callerUserId }
+      : { host_id: callerUserId, publication_status: "published" };
+    const reviews = await this.repository.findReviews(where);
+    return reviews.map((review) => ({ ...review, rating: review.overall_rating,
+      title: `Overall experience: ${review.overall_rating}/5`, content: review.public_review, date: review.created_at }));
+  }
+
+  async deleteReview(callerUserId, reviewId) {
+    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const result = await this.repository.deleteOwnReview(reviewId, callerUserId);
+    if (!result.affected) throw new NotFoundException("Review not found or you are not its author.");
+  }
+
   normalizeOptionalText(value) {
     if (!value) return null;
 

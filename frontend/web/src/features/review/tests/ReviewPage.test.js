@@ -186,3 +186,15 @@ it("maps the selected rating to overall_rating in the authenticated HTTP request
     global.fetch = originalFetch;
   }
 });
+
+it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", async (method) => {
+  const web = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  try {
+    const query = method === "GET" ? { scope: "received" } : { reviewId: "review-1" };
+    await web.requestReview(method, query);
+    expect(global.fetch.mock.calls[0]).toEqual([`${web.API_REVIEW_BASE}?${new URLSearchParams(query)}`,
+      { method, headers: { Authorization: "access-token" } }]);
+  } finally { global.fetch = originalFetch; }
+});

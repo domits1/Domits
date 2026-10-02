@@ -28,6 +28,8 @@ beforeEach(() => {
   repository = {
     findBookingById: jest.fn().mockResolvedValue({ ...booking }),
     create: jest.fn().mockImplementation(async (record) => record),
+    findReviews: jest.fn().mockResolvedValue([]),
+    deleteOwnReview: jest.fn().mockResolvedValue({ affected: 1 }),
   };
   service = new ReviewService({ repository, now: () => now });
   authManager = {
@@ -155,4 +157,39 @@ it.each([1, 2, 3, 4, 5])("saves and returns %s stars for the correct review", as
   expect(JSON.parse(result.body)).toEqual(expect.objectContaining({
     id: "review-1", reservation_id: booking.id, overall_rating,
   }));
+});
+
+it.each(["written", "received"])("scopes %s reviews to the authenticated caller", async (scope) => {
+  repository.findReviews.mockResolvedValue([{ id: "review-1", overall_rating: 4, public_review: "Great stay.", created_at: now }]);
+  const result = await controller.manageReviews({ httpMethod: "GET", headers: { Authorization: "token" },
+    queryStringParameters: { scope, guest_id: "spoof", host_id: "spoof" } });
+  expect(result.statusCode).toBe(200);
+  expect(repository.findReviews).toHaveBeenCalledWith(scope === "written" ? { guest_id: booking.guestid }
+    : { host_id: booking.guestid, publication_status: "published" });
+  expect(JSON.parse(result.body)[0]).toMatchObject({ id: "review-1", rating: 4, content: "Great stay.", date: now });
+});
+
+it.each(["GET", "DELETE"])("requires authentication for %s", async (httpMethod) => {
+  expect((await controller.manageReviews({ httpMethod, headers: {} })).statusCode).toBe(401);
+  expect(repository.findReviews).not.toHaveBeenCalled();
+  expect(repository.deleteOwnReview).not.toHaveBeenCalled();
+});
+
+it("rejects unsupported scopes", async () => {
+  await expect(service.getReviews(booking.guestid, "all")).rejects.toMatchObject({ statusCode: 400 });
+  expect(repository.findReviews).not.toHaveBeenCalled();
+});
+
+it("deletes only an authored review and returns 404 when ownership does not match", async () => {
+  const reviewId = "12345678-1234-1234-1234-123456789abc";
+  const event = { httpMethod: "DELETE", headers: { Authorization: "token" }, queryStringParameters: { reviewId } };
+  expect((await controller.manageReviews(event)).statusCode).toBe(204);
+  expect(repository.deleteOwnReview).toHaveBeenCalledWith(reviewId, booking.guestid);
+  repository.deleteOwnReview.mockResolvedValue({ affected: 0 });
+  expect((await controller.manageReviews(event)).statusCode).toBe(404);
+});
+
+it.each([undefined, "", "invalid"])("rejects invalid deletion ID: %p", async (id) => {
+  await expect(service.deleteReview(booking.guestid, id)).rejects.toMatchObject({ statusCode: 400 });
+  expect(repository.deleteOwnReview).not.toHaveBeenCalled();
 });

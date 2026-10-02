@@ -18,6 +18,7 @@ export const handler = async (event) => {
     if (method === "POST") {
       return await controller.createReview(event);
     }
+    if (method === "GET" || method === "DELETE") return await controller.manageReviews(event);
 
     return {
       statusCode: 405,

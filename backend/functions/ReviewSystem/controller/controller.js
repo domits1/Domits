@@ -40,6 +40,21 @@ export class Controller {
     }
   }
 
+  async manageReviews(event) {
+    try {
+      const user = await this.authManager.getUser(event.headers?.Authorization || event.headers?.authorization);
+      const query = event.queryStringParameters || {};
+      if (event.httpMethod === "DELETE") {
+        await this.service.deleteReview(user.userId, query.reviewId);
+        return { statusCode: 204, headers: responseHeaders, body: "" };
+      }
+      const reviews = await this.service.getReviews(user.userId, query.scope);
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(reviews) };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   // Hide unexpected failure details because they may expose internal implementation data.
   // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
