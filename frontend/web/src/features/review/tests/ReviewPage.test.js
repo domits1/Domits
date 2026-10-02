@@ -4,7 +4,7 @@ import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-import { createReview, requestReview } from "../services/reviewAPI";
+import { createReview, requestReview, getEditableReview, updateReview } from "../services/reviewAPI";
 import GuestReviews from "../../guestdashboard/GuestReviews";
 
 const mockNavigate = jest.fn();
@@ -23,6 +23,8 @@ jest.mock("../../guestdashboard/services/bookingAPI", () => ({
 jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
   requestReview: jest.fn(),
+  getEditableReview: jest.fn(),
+  updateReview: jest.fn(),
 }));
 jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
 
@@ -32,6 +34,36 @@ const booking = {
   status: "Paid",
   departuredate: Date.now() - 60000,
 };
+
+it.each([false, true])("prefills editing and preserves changes on failure: %s", async (fails) => {
+  mockSearch = "?reviewId=review-1";
+  getEditableReview.mockResolvedValue({ id: "review-1", overall_rating: 4,
+    public_review: "Original\nreview", updated_at: 123 });
+  updateReview.mockImplementation(async () => { if (fails) throw new Error("Editing period ended."); });
+  render(<ReviewPage />);
+  const textarea = await screen.findByLabelText("Written review (required)");
+  expect(textarea).toHaveValue("Original\nreview");
+  expect(screen.getAllByRole("radio")[3]).toBeChecked();
+  expect(getGuestBookings).not.toHaveBeenCalled();
+  fireEvent.change(textarea, { target: { value: "Updated review" } });
+  fireEvent.click(screen.getAllByRole("radio")[4]);
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+  await waitFor(() => expect(updateReview).toHaveBeenCalledWith({ reviewId: "review-1",
+    rating: 5, publicReview: "Updated review", updatedAt: 123 }));
+  if (fails) {
+    await screen.findByText("Editing period ended.");
+  } else await screen.findByRole("heading", { name: "Review updated" });
+  expect(screen.queryByLabelText("Written review (required)")?.value).toBe(fails ? "Updated review" : undefined);
+  expect(createReview).not.toHaveBeenCalled();
+});
+
+it("shows the server's edit eligibility error", async () => {
+  mockSearch = "?reviewId=review-1";
+  getEditableReview.mockRejectedValue(new Error("You can only edit your own reviews."));
+  render(<ReviewPage />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("You can only edit your own reviews.");
+  expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
+});
 
 it.each(["", " \n\t ", "x".repeat(501), "Stay\u0000"])(
   "shows a field error for invalid written content: %p", async (value) => {
@@ -75,15 +107,17 @@ it("preserves written content when rating validation or submission fails", async
   expect(textarea).toHaveValue(value);
 });
 
-it("renders submitted markup as literal text in the guest review page", async () => {
+it.each([true, false])("renders plain text and gates the edit action: %s", async (can_edit) => {
   const content = "<img src=x alt=unsafe onerror=alert(1)>";
   requestReview.mockImplementation(async (_method, query) => ({
     ok: true, json: async () => query.scope === "written"
-      ? [{ id: "review-1", title: "Overall experience: 4/5", content, date: Date.now() }] : [],
+      ? [{ id: "review-1", title: "Overall experience: 4/5", content, date: Date.now(),
+        can_edit, edit_expires_at: Date.now() + 60000 }] : [],
   }));
   render(<GuestReviews />);
   expect(await screen.findByText(content)).toBeTruthy();
   expect(screen.queryByRole("img", { name: "unsafe" })).toBeNull();
+  expect(Boolean(screen.queryByRole("button", { name: "Edit review" }))).toBe(can_edit);
 });
 
 beforeEach(() => {

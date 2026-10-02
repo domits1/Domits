@@ -24,6 +24,66 @@ let service;
 let controller;
 let authManager;
 
+describe("review editing", () => {
+  const id = "12345678-1234-1234-1234-123456789abc";
+  let existing;
+  const changes = () => ({ overall_rating: 4, public_review: " Updated\r\nreview ", updated_at: now - 500 });
+  beforeEach(() => {
+    existing = { id, guest_id: booking.guestid, reservation_id: booking.id,
+      property_id: booking.property_id, host_id: booking.hostid, created_at: now - 500,
+      updated_at: now - 500, overall_rating: 5, public_review: "Original review" };
+    repository.findReviewById = jest.fn(async () => existing);
+    repository.updateEditableReview = jest.fn(async ({ overallRating, publicReview }) => {
+      Object.assign(existing, { overall_rating: overallRating, public_review: publicReview, updated_at: now });
+      return { affected: 1, updated_at: now };
+    });
+    service.editWindowMs = 1000;
+  });
+  test("loads existing fields and persists an authenticated PATCH without changing relationships", async () => {
+    await expect(service.getEditableReview(booking.guestid, id)).resolves.toMatchObject({
+      overall_rating: 5, public_review: "Original review", updated_at: now - 500,
+    });
+    const response = await controller.manageReviews({ httpMethod: "PATCH", headers: { Authorization: "token" },
+      queryStringParameters: { reviewId: id }, body: JSON.stringify(changes()) });
+    expect(response.statusCode).toBe(200);
+    expect(existing).toMatchObject({ overall_rating: 4, public_review: "Updated\nreview", updated_at: now,
+      guest_id: booking.guestid, reservation_id: booking.id, property_id: booking.property_id,
+      host_id: booking.hostid, created_at: now - 500 });
+    expect(repository.updateEditableReview).toHaveBeenCalledWith({ id, guestId: booking.guestid,
+      previousUpdatedAt: now - 500, editWindowMs: 1000, now: expect.any(Function),
+      overallRating: 4, publicReview: "Updated\nreview" });
+  });
+  test.each(["other guest", "expired", "disabled", "future"])("rejects editing: %s", async (reason) => {
+    if (reason === "expired") existing.created_at = now - 1000;
+    if (reason === "future") existing.created_at = now + 1;
+    if (reason === "disabled") service.editWindowMs = 0;
+    await expect(service.updateReview(reason === "other guest" ? "guest-2" : booking.guestid, id, changes()))
+      .rejects.toMatchObject({ statusCode: 403 });
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+  test.each([{ overall_rating: 0 }, { overall_rating: 6 }, { overall_rating: 1.5 },
+    { public_review: "" }, { public_review: "x".repeat(501) }, { public_review: "\u0000" },
+    { guest_id: "guest-2" }, { reservation_id: "other" }, { updated_at: "invalid" }])("rejects invalid edits: %j", async (invalid) => {
+    await expect(service.updateReview(booking.guestid, id, { ...changes(), ...invalid }))
+      .rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+  test("rejects stale versions and writes losing the atomic check", async () => {
+    existing.updated_at++;
+    await expect(service.updateReview(booking.guestid, id, changes())).rejects.toMatchObject({ statusCode: 409 });
+    existing.updated_at--;
+    repository.updateEditableReview.mockResolvedValue({ affected: 0 });
+    await expect(service.updateReview(booking.guestid, id, changes())).rejects.toMatchObject({ statusCode: 409 });
+  });
+  test("marks only eligible written reviews editable", async () => {
+    repository.findReviews.mockResolvedValue([existing]);
+    expect((await service.getReviews(booking.guestid))[0].can_edit).toBe(true);
+    expect((await service.getReviews(booking.guestid, "received"))[0].can_edit).toBe(false);
+    existing.created_at = now - 1000;
+    expect((await service.getReviews(booking.guestid))[0].can_edit).toBe(false);
+  });
+});
+
 it.each([undefined, null, "", " \n\t ", 42, true, {}, [], "x".repeat(501), "Stay\u0000"])(
   "rejects invalid written content before persistence: %p", async (public_review) => {
     const response = await controller.createReview({
@@ -197,7 +257,7 @@ it.each(["written", "received"])("scopes %s reviews to the authenticated caller"
   expect(JSON.parse(result.body)[0]).toMatchObject({ id: "review-1", rating: 4, content: "Great stay.", date: now });
 });
 
-it.each(["GET", "DELETE"])("requires authentication for %s", async (httpMethod) => {
+it.each(["GET", "DELETE", "PATCH"])("requires authentication for %s", async (httpMethod) => {
   expect((await controller.manageReviews({ httpMethod, headers: {} })).statusCode).toBe(401);
   expect(repository.findReviews).not.toHaveBeenCalled();
   expect(repository.deleteOwnReview).not.toHaveBeenCalled();

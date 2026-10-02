@@ -48,7 +48,11 @@ export class Controller {
         await this.service.deleteReview(user.userId, query.reviewId);
         return { statusCode: 204, headers: responseHeaders, body: "" };
       }
-      const reviews = await this.service.getReviews(user.userId, query.scope);
+      const reviews = event.httpMethod === "PATCH"
+        ? await this.service.updateReview(user.userId, query.reviewId, parseBody(event.body))
+        : query.reviewId !== undefined
+          ? await this.service.getEditableReview(user.userId, query.reviewId)
+          : await this.service.getReviews(user.userId, query.scope);
       return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(reviews) };
     } catch (error) {
       return this.handleError(error);
