@@ -86,7 +86,8 @@ describe("StaticPageWorker", () => {
     expect(renderer.render).toHaveBeenCalledWith({
       template: SHELL,
       site: expect.objectContaining(buildSite()),
-      domain: CUSTOM,
+      mainAddress: CUSTOM,
+      destination: FALLBACK,
     });
     expect(pageStore.putPage.mock.calls.map(([call]) => call)).toEqual([
       { hostname: FALLBACK.domain, html: PAGE, siteId: "site-1", revision: 4 },
@@ -111,7 +112,7 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ built: 1, errors: [{ siteId: "site-2", revision: 4, message: "NoSuchKey" }] });
   });
 
-  it("leaves a page that another worker claimed first, without touching the site or the bucket", async () => {
+  it("leaves a page that another worker claimed first, without loading the site or uploading", async () => {
     const { worker, outbox, siteRepository, pageStore } = buildWorker();
     outbox.listPagesToBuild.mockResolvedValueOnce([buildJob()]);
     outbox.table.get("site-1").status = "BUILDING";
@@ -204,7 +205,7 @@ describe("StaticPageWorker", () => {
       await worker.run();
 
       delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
-      expect(renderer.render.mock.calls[0][0].domain).toEqual({ ...fallback, status: "ACTIVE" });
+      expect(renderer.render.mock.calls[0][0].mainAddress).toEqual({ ...fallback, status: "ACTIVE" });
       expect(pageStore.putPage).toHaveBeenCalledTimes(1);
     }
   );
@@ -241,18 +242,19 @@ describe("StaticPageWorker", () => {
 
       await worker.run();
 
-      expect(renderer.render.mock.calls[0][0].domain.domain).toBe(expected);
+      expect(renderer.render.mock.calls[0][0].mainAddress.domain).toBe(expected);
     }
   );
 
-  it("fails the page instead of guessing when no row answers the public page's rule for the main address", async () => {
-    const { worker, outbox, renderer } = buildWorker({ domains: [{ ...CUSTOM, isPrimary: false }] });
+  it("renders without a main address, like the public page, when no row answers its rule", async () => {
+    const unflaggedCustom = { ...CUSTOM, isPrimary: false };
+    const { worker, outbox, renderer } = buildWorker({ domains: [unflaggedCustom] });
 
     const summary = await worker.run();
 
-    expect(renderer.render).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: "NO_MAIN_ADDRESS" });
-    expect(summary).toMatchObject({ failed: 1 });
+    expect(renderer.render.mock.calls[0][0]).toMatchObject({ mainAddress: null, destination: unflaggedCustom });
+    expect(outbox.table.get("site-1").status).toBe("ACTIVE");
+    expect(summary).toMatchObject({ built: 1 });
   });
 
   it("records an upload failure, never marks the page active, and the retry writes the same keys again", async () => {

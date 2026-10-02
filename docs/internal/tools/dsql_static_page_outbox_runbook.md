@@ -12,6 +12,8 @@ Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_
 
 `main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. Every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
 
+Only `main` has the standalone tables; the `test` schema has none, so there is no `test` variant.
+
 ## How the worker moves a row
 
 `PropertyHandler` invoked with `{"task": "build-static-pages"}` takes the rows oldest first, one site at a time. It reads the shell `index.html` from the sites bucket before every page and claims nothing for a page whose shell it cannot read.
@@ -40,7 +42,7 @@ The new column is invisible to the current code paths until the deploy that carr
 9. Catalog verification: the index exists with `indisvalid = t` and `key_columns = status,updated_at`. The primary key on `site_id` appears as a second, unique row.
 10. Count of sites without a revision. Informational: on 2026-09-30 every existing site returns here, which is expected and harmless.
 11. Smoke test (`BEGIN ... ROLLBACK`): two inserts for `smoke-site`, the second with `ON CONFLICT (site_id) DO UPDATE`. The `SELECT` must show **one** row with `revision = 2`. That is the one-row-per-site rule. `ROLLBACK` leaves nothing behind.
-12. Count that must read zero, proving the smoke test left no row.
+12. Count of `smoke-site` rows, which must read zero, proving the smoke test left no row. It counts only that site, so it also holds when hosts have already published.
 
 ## Rollback
 
