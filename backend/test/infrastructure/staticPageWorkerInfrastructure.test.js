@@ -112,27 +112,40 @@ describe("the execution role", () => {
   });
 
   it("carries the two policies the function needs from the shared role, pinned as files with the same grants", () => {
-    const [customDomains] = load("custom-domains-policy.json").Statement;
-    const [images] = load("property-images-policy.json").Statement;
-    expect(asList(customDomains.Action).sort()).toEqual(
-      [
-        "cloudfront:CreateDistributionTenant",
-        "cloudfront:GetDistributionTenant",
-        "cloudfront:GetDistributionTenantByDomain",
-        "cloudfront:GetManagedCertificateDetails",
-        "cloudfront:UpdateDistributionTenant",
-        "cloudfront:DeleteDistributionTenant",
-        "cloudfront:VerifyDnsConfiguration",
-        "acm:RequestCertificate",
-        "acm:AddTagsToCertificate",
-        "acm:DescribeCertificate",
-        "acm:DeleteCertificate",
-      ].sort()
-    );
-    expect([images.Action, images.Resource]).toEqual([
-      ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
-      "arn:aws:s3:::accommodation/images/*",
-    ]);
+    expect(load("custom-domains-policy.json")).toEqual({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Sid: "ManageTenantsAndCertificatesForCustomDomains",
+          Effect: "Allow",
+          Action: [
+            "cloudfront:CreateDistributionTenant",
+            "cloudfront:GetDistributionTenant",
+            "cloudfront:GetDistributionTenantByDomain",
+            "cloudfront:GetManagedCertificateDetails",
+            "cloudfront:UpdateDistributionTenant",
+            "cloudfront:DeleteDistributionTenant",
+            "cloudfront:VerifyDnsConfiguration",
+            "acm:RequestCertificate",
+            "acm:AddTagsToCertificate",
+            "acm:DescribeCertificate",
+            "acm:DeleteCertificate",
+          ],
+          Resource: "*",
+        },
+      ],
+    });
+    expect(load("property-images-policy.json")).toEqual({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Sid: "PropertyImagesAccess",
+          Effect: "Allow",
+          Action: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+          Resource: "arn:aws:s3:::accommodation/images/*",
+        },
+      ],
+    });
   });
 
   it("can be assumed by Lambda from this account only", () => {
