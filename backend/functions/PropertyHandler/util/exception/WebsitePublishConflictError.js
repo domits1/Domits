@@ -3,7 +3,7 @@ export const WEBSITE_PUBLISH_CONFLICT_ERROR_CODE = "publish_conflict";
 export class WebsitePublishConflictError extends Error {
   constructor({ cause } = {}) {
     super(
-      "Another publish of this website is still being saved. Wait a moment and publish again.",
+      "Saving this website clashed with another change that was being saved at the same time. Wait a moment and publish again.",
       cause ? { cause } : undefined
     );
     this.name = "WebsitePublishConflictError";

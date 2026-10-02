@@ -140,6 +140,22 @@ describe("publishing a site writes its page outbox row in the same transaction",
     expect(client.committed).toBe(true);
   });
 
+  it("runs both writes again when the conflict surfaces at commit, after the transaction body already ran", async () => {
+    const client = buildClient();
+    const runInTransaction = client.transaction.getMockImplementation();
+    client.transaction.mockImplementationOnce(async (work) => {
+      await runInTransaction(work);
+      throw serializationConflict();
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const site = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT);
+
+    expect(site.id).toBe("site-1");
+    expect(client.statements.filter(({ statement }) => /static_page_outbox/.test(statement))).toHaveLength(2);
+    expect(client.statements).toHaveLength(4);
+  });
+
   it("stops after three conflicts with an error the host can act on, not a raw database failure", async () => {
     const client = buildClient();
     client.transaction.mockRejectedValue(serializationConflict());
