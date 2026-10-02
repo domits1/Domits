@@ -15,6 +15,9 @@ const stripLiveAndPrivateDetails = (snapshot) => {
   return publicSnapshot;
 };
 
+const buildRenderDomain = ({ mainAddress, destination }) =>
+  mainAddress ? { ...mainAddress, isPrimary: true } : { ...destination, isPrimary: false };
+
 const buildRenderPayload = ({ site, domain }) => ({
   resolution: {
     siteId: site.id,
@@ -42,9 +45,9 @@ export class StaticPageRenderer {
     this.generator = null;
   }
 
-  async render({ template, site, domain }) {
+  async render({ template, site, mainAddress, destination }) {
     const generator = await this.#generator();
-    const renderPayload = buildRenderPayload({ site, domain });
+    const renderPayload = buildRenderPayload({ site, domain: buildRenderDomain({ mainAddress, destination }) });
     if (!generator.canBuildStaticSiteDocument(renderPayload)) {
       throw new Error(`The generator has no static page for template "${site.templateKey}".`);
     }

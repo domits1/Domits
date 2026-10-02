@@ -38,7 +38,8 @@ describe("StaticPageRenderer", () => {
     const html = await buildRenderer(generator).render({
       template: APP_SHELL,
       site: { ...SITE, publishedPropertySnapshot: snapshot },
-      domain: DOMAIN,
+      mainAddress: DOMAIN,
+      destination: DOMAIN,
     });
 
     const [{ propertyDetails }] = generator.buildWebsiteTemplateModel.mock.calls[0];
@@ -51,8 +52,8 @@ describe("StaticPageRenderer", () => {
     expect(renderPayload).toMatchObject({
       renderSource: "published_site",
       site: { id: SITE.id, templateKey: "panorama-landing", status: "PUBLISHED" },
-      domain: DOMAIN,
-      resolution: { siteId: SITE.id, domain: DOMAIN, isReachable: true },
+      domain: { ...DOMAIN, isPrimary: true },
+      resolution: { siteId: SITE.id, domain: { ...DOMAIN, isPrimary: true }, isReachable: true },
       propertySnapshot: propertyDetails,
     });
     expect(html).toBe("<html>page</html>");
@@ -61,7 +62,7 @@ describe("StaticPageRenderer", () => {
   it("applies the theme overrides before the content overrides, with the site's template key", async () => {
     const generator = buildGenerator();
 
-    await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN });
+    await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, mainAddress: DOMAIN, destination: DOMAIN });
 
     expect(generator.applyWebsiteDraftThemeOverrides).toHaveBeenCalledWith(
       { step: "base" },
@@ -78,9 +79,29 @@ describe("StaticPageRenderer", () => {
   it("refuses a template the generator cannot build instead of uploading the bare shell", async () => {
     const generator = buildGenerator({ canBuildStaticSiteDocument: jest.fn(() => false) });
 
-    await expect(buildRenderer(generator).render({ template: APP_SHELL, site: SITE, domain: DOMAIN })).rejects.toThrow(
-      'The generator has no static page for template "panorama-landing".'
-    );
+    await expect(
+      buildRenderer(generator).render({ template: APP_SHELL, site: SITE, mainAddress: DOMAIN, destination: DOMAIN })
+    ).rejects.toThrow('The generator has no static page for template "panorama-landing".');
     expect(generator.buildStaticSiteDocument).not.toHaveBeenCalled();
+  });
+
+  it("flags the main address as the primary domain of the payload, because that is where the generator reads the canonical", async () => {
+    const generator = buildGenerator();
+    const fallback = { ...DOMAIN, domain: "villa-site-1.direct.domits.com", domainType: "FALLBACK", isPrimary: false };
+
+    await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, mainAddress: fallback, destination: DOMAIN });
+
+    const { renderPayload } = generator.buildStaticSiteDocument.mock.calls[0][0];
+    expect(renderPayload.domain).toEqual({ ...fallback, isPrimary: true });
+    expect(renderPayload.resolution).toMatchObject({ domain: { ...fallback, isPrimary: true }, isReachable: true });
+  });
+
+  it("passes the destination unflagged when there is no main address, so the page gets no canonical and no index", async () => {
+    const generator = buildGenerator();
+
+    await buildRenderer(generator).render({ template: APP_SHELL, site: SITE, mainAddress: null, destination: DOMAIN });
+
+    const { renderPayload } = generator.buildStaticSiteDocument.mock.calls[0][0];
+    expect(renderPayload.domain).toEqual({ ...DOMAIN, isPrimary: false });
   });
 });

@@ -73,11 +73,14 @@ export class StaticPageWorker {
     try {
       const domains = await this.#loadDomains(site);
       const activeDomains = this.#activeDomains(domains);
-      const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
-      if (!mainAddress) {
-        throw new PageBuildFailure("NO_MAIN_ADDRESS");
-      }
-      const html = await this.renderer.render({ template, site, domain: mainAddress }).catch(failWith("RENDER_FAILED"));
+      const html = await this.renderer
+        .render({
+          template,
+          site,
+          mainAddress: selectDirectBookingWebsiteMainAddress(site, domains),
+          destination: activeDomains[0],
+        })
+        .catch(failWith("RENDER_FAILED"));
       await this.#upload(site, job.revision, activeDomains, html);
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
