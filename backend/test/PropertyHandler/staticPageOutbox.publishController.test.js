@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { WebsitePublishConflictError } from "../../functions/PropertyHandler/util/exception/WebsitePublishConflictError.js";
 
 const SITE = {
   id: "site-1",
@@ -100,5 +101,27 @@ describe("publishing a website site queues its static page", () => {
 
     expect(siteRepository.upsertSiteWithStaticPageOutbox).toHaveBeenCalledTimes(1);
     expect(controller.recordStandaloneWebsiteEventSafely).not.toHaveBeenCalled();
+  });
+
+  it("answers 409 with a message the host can act on when the publish keeps losing to another publish", async () => {
+    const { controller, siteRepository } = buildController();
+    siteRepository.upsertSiteWithStaticPageOutbox.mockRejectedValue(new WebsitePublishConflictError());
+    controller.authManager = {
+      authorizeGroupRequest: jest.fn(async () => "host-1"),
+      authorizeOwnerRequest: jest.fn(async () => undefined),
+    };
+    controller.directBookingWebsiteDraftRepository = { getDraftByPropertyIdAndHostId: jest.fn(async () => DRAFT) };
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await controller.publishWebsiteSite({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({ propertyId: "property-1" }),
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(JSON.parse(response.body)).toEqual({
+      code: "publish_conflict",
+      message: expect.stringContaining("publish again"),
+    });
   });
 });
