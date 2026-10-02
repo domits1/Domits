@@ -54,6 +54,16 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const completeSignIn = () => {
+    globalThis.dispatchEvent(new Event("authChanged"));
+
+    if (redirect) {
+      window.location.href = redirect;
+    } else {
+      globalThis.location.reload();
+    }
+  };
+
   const handleSignIn = async () => {
     if (isSigningIn) {
       return;
@@ -63,13 +73,7 @@ const Login = () => {
     setIsSigningIn(true);
     try {
       await Auth.signIn(formData.email, formData.password);
-      globalThis.dispatchEvent(new Event("authChanged"));
-
-      if (redirect) {
-        window.location.href = redirect;
-      } else {
-        globalThis.location.reload();
-      }
+      completeSignIn();
     } catch {
       setErrorMessage("Invalid email or password");
       setIsSigningIn(false);
