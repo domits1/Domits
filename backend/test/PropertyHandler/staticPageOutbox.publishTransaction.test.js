@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import Database from "database";
 import { DirectBookingWebsiteSiteRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js";
+import { WebsitePublishConflictError } from "../../functions/PropertyHandler/util/exception/WebsitePublishConflictError.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -79,6 +80,9 @@ const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "si
 
 const statementFor = (client, pattern) => client.statements.find(({ statement }) => pattern.test(statement));
 
+const serializationConflict = () =>
+  Object.assign(new Error("OC000: change conflicts with another transaction"), { code: "40001" });
+
 describe("publishing a site writes its page outbox row in the same transaction", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -121,6 +125,32 @@ describe("publishing a site writes its page outbox row in the same transaction",
     await expect(repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT)).rejects.toThrow("site unavailable");
     expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
     expect(client.rolledBack).toBe(true);
+    expect(client.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("publishes again after losing a serialization conflict, so two publishes of one site both land", async () => {
+    const client = buildClient();
+    client.transaction.mockRejectedValueOnce(serializationConflict());
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const site = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT);
+
+    expect(site.id).toBe("site-1");
+    expect(client.transaction).toHaveBeenCalledTimes(2);
+    expect(client.committed).toBe(true);
+  });
+
+  it("stops after three conflicts with an error the host can act on, not a raw database failure", async () => {
+    const client = buildClient();
+    client.transaction.mockRejectedValue(serializationConflict());
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const failure = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT).catch((error) => error);
+
+    expect(failure).toBeInstanceOf(WebsitePublishConflictError);
+    expect(failure.statusCode).toBe(409);
+    expect(failure.cause.code).toBe("40001");
+    expect(client.transaction).toHaveBeenCalledTimes(3);
   });
 
   it("fails the publish when the site upsert returns no row instead of queueing work for an unknown site", async () => {
