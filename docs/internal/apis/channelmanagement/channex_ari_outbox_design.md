@@ -72,12 +72,12 @@ If a call fails, the error is labelled and nothing tries again.
 
 **Goals**
 - A save stores the change and its outbox row in one transaction and returns without calling Channex.
-- A worker sends pending changes, merged per property, at most one availability and one restrictions call per property per run.
+- A worker sends pending changes, merged per property, at most one call per group of change types (usually one, at most three) per property per run.
 - Pre-flight questions 1 and 2 can be answered "yes" with a file path; scenarios 3, 4, 7 and 8 produce one call each.
 - Every push is auditable afterwards (what was sent, when, which Channex task).
 
 **Non-goals (separate issues, but the design leaves room for them)**
-- Retry timing, back-off and `Retry-After` handling: #3280. This design adds the `nextAttemptAt` column and the error classification hook.
+- Retry timing, back-off and `Retry-After` handling are built in #3280: see section 8.3.
 - Full sync triggers (go-live, recovery, nightly): #3282. This design adds the `FULL_SYNC` kind.
 - The booking webhook: #3281.
 
@@ -111,16 +111,16 @@ Each decision lists what was chosen, why, and what was rejected.
 **D1. An outbox row is a marker ("this changed"), not a snapshot of the value.**
 The worker reads the current value from the database when it sends. Sending the latest value makes duplicates and out-of-order processing harmless, because pushes send state per date, not a difference (idempotent, at-least-once delivery is acceptable). Rejected: storing the value in the row, because an older row processed after a newer one would push a stale value to Channex.
 
-**D2. One row per save.**
-A row holds a property, a date range and the change types. Rejected: one row per date (a 500-day change becomes 500 rows) and one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13).
+**D2. One row per change type per save.**
+A row holds a property, a date range and one change type, so a save that changes prices and minimum stay writes two rows. Change types can go out in different calls, and a row with several types could end with a retry for one and a rejection for another, which no single status can record (review of #3347). The worker still merges rows into as few calls as before. Rejected: one row per date (a 500-day change becomes 500 rows), one row per property (the worker would have to send everything on every change, which is a full sync on every save and violates scenario 13), and one row with several types (see above).
 
 **D3. Send after 60 seconds of quiet per property, at most 5 minutes after the oldest pending row. Bookings skip the quiet period.**
 A host saving December to April month by month (the calendar selects within one month, `hostcalen/hooks/useCalendarSelection.js:739-741`) produces several rows; waiting for quiet merges them into one call, which scenarios 3 and 8 need. The 5-minute cap prevents starvation for a host who keeps saving. Rejected: sending whatever is pending every minute (scenario 8 would split over several runs) and relying only on multi-month calendar selection (scenario 3 still needs batching).
 
 Rows with source `BOOKING` or `CHANNEX_IMPORT` are ready on the next run, without the quiet period. A booking closes dates, and every minute those dates stay open on the other channels is a double-booking risk, which is exactly what D8 is for. Waiting up to 5 minutes would make that risk larger than it is today, where the call happens during the request. Accepted consequence: a booking is now pushed up to about 60 seconds later instead of immediately, because the worker runs once a minute. Rejected: invoking the worker directly from the booking transaction (that restores the coupling the outbox removes) and giving bookings their own shorter quiet period (added complexity for a case where merging has no value, since a booking covers one contiguous stay).
 
-**D4. The rate limit is guaranteed by construction, not by counting.**
-A run sends at most one availability call and one restrictions call per property, and runs once a minute, so a property receives at most one call of each type per minute from the worker. Rejected: a counter table (extra writes and DSQL conflicts) and an in-memory counter (a Lambda keeps no memory between runs and concurrent runs cannot see each other).
+**D4. The rate limit is guaranteed by construction, not by counting a shared total.**
+Channex allows 10 availability and 10 price/restriction calls per property per minute. A run sends one call per group of change types per property, usually one or two. A group whose dates lie more than 500 days apart goes out as one call per 500 days, because the sync pipeline refuses longer calls. On top of that, the worker counts its own calls per bucket while it handles a property and stops at 10; a call with several types counts against every bucket it touches. The rest waits one minute (`nextAttemptAt`), and while it waits the claim holds back that call type, so a property never gets two batches within one Channex minute, even when two runs handle it seconds apart. Rows that were not sent at all get their attempt back; rows that were partly sent keep it, so a row too wide to ever fit in one run ends as `FAILED` instead of sending 10 calls every minute. Rejected: a counter table (extra writes and DSQL conflicts) and an in-memory counter (a Lambda keeps no memory between runs and concurrent runs cannot see each other); the per-run count needs neither.
 
 **D5. The worker runs in the `ChannelManagement` Lambda.**
 Background calls to Channex, including back-off, must not share capacity, timeouts or logs with the guest and host inbox in `UnifiedMessaging`. `ChannelManagement` already exists, uses the same shared code (`.shared/channelManagement`) and its role already has what the worker needs (section 9). Rejected: `UnifiedMessaging` (couples Channex batch work to real-time messaging) and a new Lambda (`ChannelManagement` already exists).
@@ -202,9 +202,11 @@ enqueueChannexAriChange(transactionManager, { domitsPropertyId, kind, changeType
 | Booking | Only for "mark as paid" and "accept inquiry" | Add transactions to the other paths (create, cancel) |
 | Channex import | No | Add a transaction around create, update and cancel |
 
-*Code:* calendar `PropertyHandler/data/repository/propertyCalendarOverrideRepository.js:256`; global settings `propertyService.updatePropertyOverview` with `updatePricing` and `updateAvailabilityRestrictions`, 500 days from `CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS` (`propertyController.js:70`); booking `markBookingPaidWithOutbox` (`reservationRepository.js:442`) and `acceptInquiryWithOverlapDecline` (`:496`); import `channexExternalBookingImportRepository.js:91, 151, 177`.
+*Code:* calendar `PropertyHandler/data/repository/propertyCalendarOverrideRepository.js:256`; global settings `propertyService.updatePropertyOverview` with `updatePricing` and `updateAvailabilityRestrictions`, 500 days from `buildForwardSyncRange` (`.shared/channelManagement/services/channexAriOutboxWriter.js`); booking `markBookingPaidWithOutbox` (`reservationRepository.js:442`) and `acceptInquiryWithOverlapDecline` (`:496`); import `channexExternalBookingImportRepository.js:91, 151, 177`.
 
 The inline calls (`notifyChannexCalendarOverrideChange`, `notifyChannexOverviewCalendarChange`, `syncChannexBookingAvailabilityIfEnabled`, `syncChannexImportedBookingAvailability`) are removed in rollout step 3.
+
+*Status: all write sites are done.* The calendar save and global settings (pricing, restrictions) write their rows from their own repository transactions through `ChannexAriOutboxWriter`, and their inline calls are removed. Direct bookings write one `availability` row with source `BOOKING` from `ReservationRepository` in the same transaction as the booking change: creating a booking awaiting payment, changing its dates (old and new nights), a host or guest cancelling an active booking, accepting an inquiry, and a failed payment. Their direct call and the `CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED` flag are removed. The Channex import writes one `availability` row with source `CHANNEX_IMPORT` from `ChannexExternalBookingImportRepository` when an imported booking is created (only a new one), changed (old and new nights) or cancelled; the outbox table is registered in the shared ORM for this. The booking-availability bridge and its UnifiedMessaging route remain only for the certification test code and leave with #3284.
 
 **The table must exist before any write site uses the writer.** The writer runs inside the transactions of PropertyHandler, General-Bookings, UnifiedMessaging and ChannelManagement (the Channex booking poll imports bookings there, `channelManagementHandler.js:104-106`). If the table is missing, those transactions fail, and with them host saves and bookings. The migration is therefore applied in rollout step 1 (D11), and step 3 is not merged until it is confirmed on the `main` schema.
 
@@ -230,7 +232,7 @@ Every minute:
    b. CLAIM    take its waiting rows
    c. MERGE    combine dates that touch
    d. READ     get the current values from the database
-   e. SEND     at most one availability call and one restrictions call
+   e. SEND     one call per group of change types, at most 10 per bucket
    f. RECORD   mark each row with the result
    g. UNLOCK   always, even after an error
 3. STOP      starting new properties after about 45 seconds
@@ -243,13 +245,13 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 
 | Step | What happens | Why |
 |---|---|---|
-| **1. Find** | Properties with `PENDING` rows where the newest is older than 60 seconds (the host has stopped saving) or the oldest is older than 5 minutes. A row from a booking or a Channex import makes the property ready straight away. A property with any row still waiting for `nextAttemptAt` is skipped entirely until that time has passed. `PROCESSING` rows untouched for 5 minutes are from a crashed run and go back to `PENDING` | D3 |
+| **1. Find** | Properties with `PENDING` rows where the newest is older than 60 seconds (the host has stopped saving) or the oldest is older than 5 minutes. A row from a booking or a Channex import makes the property ready straight away. A row waiting for `nextAttemptAt` holds back only rows of the same call type (availability, or prices and restrictions), because Channex limits the two separately; the property stays ready while any row can go. `PROCESSING` rows untouched for 5 minutes are from a crashed run and go back to `PENDING` | D3 |
 | **2a. Lock** | Find the Channex account and lock `channex_ari:<propertyId>`. Already locked, or a `40001`, means another run has it, so skip this property. No longer linked to Channex means the rows become `SKIPPED` with reason `NOT_MAPPED` | D7, edge case a |
 | **2b. Claim** | The property's `PENDING` rows created before this run started, and whose `nextAttemptAt` is empty or passed, become `PROCESSING`, with attempts + 1. Rows that arrive during the run wait for the next run | |
-| **2c. Merge** | Per change type, ranges that touch or overlap become one. A `FULL_SYNC` row replaces everything: 500 days, all types | D9, #3282 |
-| **2d. Read** | Build the payloads from the current values in the database, once per change type with only that type's dates | D1 |
-| **2e. Send** | At most one availability call and one restrictions call, each with an 8 second timeout | D4 |
-| **2f. Record** | Mark the claimed rows with the result | See 8.3 |
+| **2c. Merge** | Each claimed row is expanded to its exact dates per change type. Change types that changed on exactly the same set of dates are grouped together; change types on different dates form separate groups. A `FULL_SYNC` row replaces everything: 500 days, all types | D9, #3282 |
+| **2d. Read** | Each group becomes one call to the existing `syncChannexCalendarChange` pipeline, which reads the current values from the database for that group's change types and dates | D1 |
+| **2e. Send** | One call per group, each with an 8 second timeout, at most 10 per bucket (availability, or prices and restrictions). After a rate limit or outage (`RETRY`) the rest of that bucket is not sent in this run; a rejected call (4xx) does not pause anything | D4 |
+| **2f. Record** | Mark each claimed row with the outcome of the calls that carried its types on its dates | See 8.3 |
 | **2g. Unlock** | Always release the lock, also after an error. A failing unlock is logged, not thrown | |
 | **3. Stop** | Start no new property after about 45 of the 60 seconds. Because the oldest goes first, a property left over waits one run longer | |
 | **4. Clean up** | Delete at most 1,000 rows per run: `PROCESSED` and `SKIPPED` older than 30 days, `FAILED` older than 90 days | Edge case c; 1,000 is well under the DSQL limit of 3,000 rows per transaction |
@@ -258,20 +260,23 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 
 | Result from Channex | The claimed rows become | And |
 |---|---|---|
-| Success (2xx) | `PROCESSED` | What was sent is stored in `sentsummary` |
-| API key rejected (401, 403) | `FAILED` | The worker stops for this account in this run (edge case b) |
+| Success (2xx), including a push Channex accepted with warnings | `PROCESSED` | What was sent is stored in `sentsummary` |
+| API key rejected (401, 403) | `FAILED` | The worker does **not** yet stop for the whole account in this run; only this property's claimed rows become `FAILED` (edge case b tracks the account-wide stop as future work) |
 | Other client error (4xx) | `FAILED` | The reason is stored in `failurereason` |
-| Too many requests (429), server error (5xx), timeout | `PENDING` | With a `nextAttemptAt`, so they are tried again later (#3280) |
-| One call succeeds, the other fails | Handled as the failure | The next run sends both calls again |
-| An unexpected error in our own code | `PENDING` | With a `failurereason` and a `nextAttemptAt` (#3280) |
+| Too many requests (429), server error (5xx), timeout, or a local error before any provider call (for example a secret that could not be read) | `PENDING` | With a `nextAttemptAt`: the wait doubles from 1 minute (1, 2, 4, 8, 16, 32, capped at 60) plus up to 10% jitter, or follows Channex's `Retry-After` when it sends one, capped at 60 minutes. Each bucket gets its own wait, so a `Retry-After` on prices does not delay availability. After 8 attempts a row becomes `FAILED` with `MAX_ATTEMPTS_EXCEEDED`; exhaustion is decided per row. While a row waits, only rows of the same call type are held back (section 8.2, step 1), as #3280 asks after a 429 |
+| The bucket was paused in this run, so a row's call was never sent | `PENDING` | Same wait as the paused bucket, but the attempt the claim counted is given back: the row was never tried |
+| The bucket reached 10 calls in this run | `PENDING` | Waits one minute. Not sent at all: the attempt is given back. Partly sent: the attempt counts, so a row that can never fit ends as `FAILED` |
+| One row's calls end differently (for example a 429 on one span, a 400 on another) | `PENDING` if any part must be retried or waits for the call limit | A part that still has to go out wins, so it is not dropped; the 8 attempts still end the row |
+| The pipeline sent nothing (no values were generated for the change) | `FAILED` | With reason `CHANNEX_NOTHING_SENT`, so the change is visible instead of recorded as sent |
+| An unexpected error in our own code | `PENDING` | With a `failurereason` and no wait: stale-or-crash cases are tried again on the next run |
 
 ### 8.4 Why it works this way
 
-**One change type per build.** The existing restriction builder applies one set of change types to every date it receives (`channexAvailabilitySyncService.js:122-130`). Passing the union of the claimed rows' types would send, for example, a price for dates where only the minimum stay changed, which breaks D9 and scenario 13. The worker therefore calls the builder once per change type with that type's dates, and combines the results with `combineChannexRestrictionSyncPayloadsForProvider` (`utils/channexAriPayloadUtils.js:1057`), which already merges several groups into one request, so D4 still holds.
+**One call per group of change types, not one per type.** The existing pipeline applies one set of change types to every date it receives (`channexAvailabilitySyncService.js:122-130`). Passing the union of the claimed rows' types would send, for example, a price for dates where only the minimum stay changed, which breaks D9 and scenario 13. The worker therefore expands each row to its exact dates per change type, then groups change types that changed on exactly the same dates into one call; types on different dates get their own call. There is no separate payload-combining step (`combineChannexRestrictionSyncPayloadsForProvider` is not used here) — each group is sent as one call to the existing `syncChannexCalendarChange` pipeline, which does its own payload building per call.
 
 **Lock conflicts on DSQL.** The lock is a conditional UPDATE (`integrationSyncRepository.js:61-74`). On Aurora DSQL two runs that update the same lock row at the same time both see success, and the second fails at commit with SQLSTATE `40001` instead of returning zero affected rows. That error means another run holds the lock, so it is handled as "not acquired". The existing booking poll takes its lock before its `try` (`channexBookingPollingService.js:129`, `try` at `:156`), so an error there would end the whole run; the worker does not copy that part. One failing property never stops the others.
 
-**Partial success.** A row can carry several change types, so the availability call can succeed while the restrictions call fails. The claimed rows then follow the failure (for example back to `PENDING` on a 429), and the next run sends both calls again. Resending availability is harmless because the worker reads the current value (D1). Rejected: one row per change type (more rows and harder merging for a rare case) and marking the rows `PROCESSED` (the failed change would be lost).
+**Each row is recorded by its own calls.** One run can send several calls, and a row's outcome comes only from the calls that carried its change types on its dates, not from the other rows' calls. When a row's calls end differently, the part that still has to go out wins (`RETRY` before `DEFERRED` before `SKIPPED` before `FAILED` before `PROCESSED`), so an unsent part is never dropped; the 8 attempts still end the row. Resending a part that already succeeded is harmless because the worker reads the current value (D1).
 
 **A full sync supersedes the changes claimed with it.** When the claimed rows include a `FULL_SYNC` row and the full sync succeeds, every claimed row, including the `CHANGE` rows, is marked `PROCESSED`. The `CHANGE` rows get a `sentsummary` that points to the full sync (`supersededBy: <id of the FULL_SYNC row>`), so they do not run again in the next cycle.
 
@@ -280,6 +285,8 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 **Every push has a timeout.** `postChannexPushRequest` only applies a timeout when the caller passes one (`providerClient.js:189-197`), and today only the full sync does, with 8 seconds (`CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS`, `channexAriPayloadUtils.js:19`). The calendar path passes `options?.providerRequestTimeoutMs`, which its callers leave undefined, so a hanging Channex call has nothing to stop it. The worker always passes the same 8 seconds. Without it, one slow call can outlast the 60 second Lambda timeout, and the lock plus the claimed rows stay stuck until the 5 minute stale recovery.
 
 **Cleanup batch size.** Aurora DSQL allows a transaction to change at most 3,000 rows and 10 MiB of data, and to run for at most 5 minutes. None of these is adjustable ([AWS: cluster quotas and database limits](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html), checked 23 September 2026). Over the limit, the transaction fails with `ERROR: transaction row limit exceeded`. The cleanup therefore deletes at most 1,000 rows per run, well under the limit, and the rest follows in the next runs.
+
+**The worker reuses the existing pipeline.** The worker calls `syncChannexCalendarChange` (`channexAvailabilitySyncService.js:620`), which already checks the mapping, loads credentials, reads current values, sends and writes sync evidence; the worker only decides what to send and records the outcome. Change types that changed on exactly the same dates share a call; types on different dates get separate calls, because the pipeline applies one set of types to every date. Rejected: building and combining the payloads in the worker (3-4x the code for a case certification does not test).
 
 ## 9. Infrastructure prerequisites
 
@@ -301,7 +308,7 @@ Checked read-only on 21 September 2026:
 | What happens | What the design does |
 |---|---|
 | a. The property is unlinked from Channex after a row was written | The rows become `SKIPPED` with reason `NOT_MAPPED`; nothing is sent |
-| b. Channex rejects the API key (401, 403) | The rows become `FAILED`; the worker stops for that account in this run |
+| b. Channex rejects the API key (401, 403) | The rows for that property become `FAILED`. The worker does not yet stop for the whole account in this run; that is future work |
 | c. Old rows pile up | Sent and skipped rows are deleted after 30 days, failed rows after 90 days, a small batch at the end of every run (section 8, step 4) |
 | d. Someone needs to see what failed | Failed rows per property feed the monitoring dashboard (#2869) |
 | e. The worker crashes after sending but before marking the row | The row is sent again. That is harmless: it sends the same current values (D1) |
@@ -309,7 +316,7 @@ Checked read-only on 21 September 2026:
 
 ## 11. Testing
 
-**Unit (test-first, every commit):** change detection per save; range merging (D9) including `FULL_SYNC`; rates on one range and restrictions on another produce one restrictions request that sends each field only for its own dates; properties processed oldest pending row first; readiness (D3) including the 5-minute cap, a booking row making a property ready straight away, and a property with a row in back-off being skipped as a whole; the claim skipping rows whose `nextAttemptAt` has not passed; every push carrying the 8 second timeout; one call succeeding and the other failing returns the claimed rows as a failure; at most one call per type per property per run (D4); result classification including `SKIPPED` and the 401/403 stop; lock taken → skip, stale lock → take over, `40001` on the lock → skip, an error on one property still processes the next; a successful `FULL_SYNC` marks the `CHANGE` rows claimed with it as `PROCESSED`; an unexpected error returns the claimed rows to `PENDING` and still releases the lock; cleanup deletes only rows past their retention and no more than one batch per run.
+**Unit (test-first, every commit):** change detection per save; range merging (D9) including `FULL_SYNC`; rates on one range and restrictions on another produce one restrictions request that sends each field only for its own dates; properties processed oldest pending row first; readiness (D3) including the 5-minute cap, a booking row making a property ready straight away, and a row in back-off holding back only its own call type; the claim skipping rows whose `nextAttemptAt` has not passed; every push carrying the 8 second timeout; each row recorded by the calls that carried its dates, with a part that still has to go out winning over a failure; only a rate limit or outage pauses a bucket, and a 4xx on rates does not stop restrictions; `Retry-After` per bucket; a paused, unsent row keeps its attempt; at most 10 calls per bucket per property per run, the rest waiting one minute, and a row too wide to ever fit ending as `FAILED` (D4); result classification including `SKIPPED` and the 401/403 stop; lock taken → skip, stale lock → take over, `40001` on the lock → skip, an error on one property still processes the next; a successful `FULL_SYNC` marks the `CHANGE` rows claimed with it as `PROCESSED`; an unexpected error returns the claimed rows to `PENDING` and still releases the lock; cleanup deletes only rows past their retention and no more than one batch per run.
 
 **Transaction tests per write site:** the domain write and the row commit together; a failure writing the row rolls back the domain write (D8); an unmapped property writes no row (D10); a `40001` at commit is retried by the shared helper and succeeds on the second attempt; a booking row covers the nights of the stay, with `dateTo` as the last night and not the checkout date.
 
@@ -323,7 +330,7 @@ Checked read-only on 21 September 2026:
 |---|---|
 | Pre-flight 1: change observed by the integration | yes: the outbox row, written in the save transaction |
 | Pre-flight 2: outbox instead of a direct call | yes |
-| Pre-flight 3: back-off on 429 | with #3280 |
+| Pre-flight 3: back-off on 429 | yes: `nextRetryDelayMs` and `Retry-After` in the worker (#3280) |
 | Scenarios 3, 4, 7, 8: one call | yes, through D3 and D9 |
 | Scenario 12: queue or limiter | yes, D4 |
 | Scenario 13: only changes | yes, D1, D2 and D9; full sync limited by #3282 |

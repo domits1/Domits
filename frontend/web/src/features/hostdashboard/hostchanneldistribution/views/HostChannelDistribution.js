@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
 import { MOCK_CONNECT_FLOW_ENABLED } from "../services/channexDistributionService";
@@ -15,13 +15,27 @@ const COMING_SOON_CARDS = [
   { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
 
+const FORBIDDEN_STATUS = 403;
+const LOAD_ERROR_MESSAGE = "Something went wrong loading your Channex connection.";
+
 function HostChannelDistribution() {
   const userId = useFetchUser();
-  const { status, syncEvidence, loading, refresh } = useChannexDistribution({ userId });
+  const { status, syncEvidence, loading, error, errorStatus, refresh } = useChannexDistribution({ userId });
   const [activeModal, setActiveModal] = useState(null);
 
+  // 403 means the host is outside the Channex allowlist: expected, so it gets the empty state.
+  const isOutsideAllowlist = errorStatus === FORBIDDEN_STATUS;
+  const hasBlockingError = Boolean(error) && !isOutsideAllowlist;
   const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
+  const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
+
+  // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
+  useEffect(() => {
+    if (hasBlockingError) {
+      console.error("Failed to load the Distribution tab:", error);
+    }
+  }, [hasBlockingError, error]);
 
   const closeModal = () => setActiveModal(null);
 
@@ -53,7 +67,16 @@ function HostChannelDistribution() {
         </button>
       </div>
 
-      {!loading && !isConnectedOrNeedsAttention && (
+      {hasBlockingError && (
+        <div className="host-chdist__error" role="alert">
+          <p className="host-chdist__error-text">{LOAD_ERROR_MESSAGE}</p>
+          <button className="chdist-btn chdist-btn--primary" onClick={refresh}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {showEmptyState && (
         <div className="host-chdist__empty">
           <p className="host-chdist__empty-text">No channel connected yet</p>
         </div>

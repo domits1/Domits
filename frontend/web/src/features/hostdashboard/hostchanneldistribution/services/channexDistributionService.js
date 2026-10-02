@@ -21,6 +21,13 @@ const MOCK_CHANNEX_CONNECTION_STATE = "NOT_CONNECTED";
 const MOCK_CHANNEX_SYNC_STATE = "NONE";
 // NONE | SUCCESS | FAILED
 
+// Flip this to preview the status error handling in the browser: getChannexStatus then rejects
+// with an error carrying this HTTP status, like requestChannex in hostintegrations/channexApi.js.
+// 403 = host outside the Channex allowlist (expected, shown as the normal empty state);
+// 401 / 5xx = real error with a Retry button.
+const MOCK_CHANNEX_ERROR_STATUS = null;
+// null | 401 | 403 | 500
+
 // Flip these to preview each connect/disconnect modal outcome in the browser (only reachable
 // once MOCK_CONNECT_FLOW_ENABLED is true).
 const MOCK_CONNECT_OUTCOME = "SUCCESS"; // SUCCESS | REJECTED | ERROR
@@ -197,6 +204,14 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
 // eslint-disable-next-line no-unused-vars
 export const getChannexStatus = async ({ userId } = {}) => {
   // userId is unused until this reads live data
+  if (MOCK_CHANNEX_ERROR_STATUS) {
+    throw buildMockChannexRequestError({
+      method: "GET",
+      endpoint: "/integrations/channex/status",
+      status: MOCK_CHANNEX_ERROR_STATUS,
+      error: "Mock status error",
+    });
+  }
   return MOCK_CHANNEX_STATUS_BY_STATE[currentConnectionState];
 };
 
