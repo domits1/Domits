@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
+import { useMappedProperties } from "../hooks/useMappedProperties";
 import { MOCK_CONNECT_FLOW_ENABLED } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
@@ -10,7 +11,7 @@ import DisconnectChannexModal from "../components/DisconnectChannexModal";
 import "../styles/HostChannelDistribution.css";
 
 const COMING_SOON_CARDS = [
-  { title: "Listing import", description: "Pull your existing channel listings into Domits." },
+  { title: "Room & rate mapping", description: "Map your Domits rooms and rates to each channel's rooms and rates." },
   { title: "Per-channel toggles", description: "Turn distribution on or off for each channel individually." },
   { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
@@ -20,7 +21,17 @@ const LOAD_ERROR_MESSAGE = "Something went wrong loading your Channex connection
 
 function HostChannelDistribution() {
   const userId = useFetchUser();
-  const { status, syncEvidence, loading, error, errorStatus, refresh } = useChannexDistribution({ userId });
+  const propertyOptions = useMappedProperties({ userId });
+  const [pickedPropertyId, setPickedPropertyId] = useState("");
+
+  // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
+  const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
+  const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
+
+  const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution({
+    userId,
+    domitsPropertyId: selectedPropertyId,
+  });
   const [activeModal, setActiveModal] = useState(null);
 
   // 403 means the host is outside the Channex allowlist: expected, so it gets the empty state.
@@ -29,6 +40,9 @@ function HostChannelDistribution() {
   const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
   const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
+  const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
+  // Without a property nothing was queried, so "No sync yet" would claim something we never checked.
+  const showLastSync = isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
 
   // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
   useEffect(() => {
@@ -41,12 +55,12 @@ function HostChannelDistribution() {
 
   const handleConnected = () => {
     closeModal();
-    refresh();
+    reload();
   };
 
   const handleDisconnected = () => {
     closeModal();
-    refresh();
+    reload();
   };
 
   return (
@@ -70,7 +84,7 @@ function HostChannelDistribution() {
       {hasBlockingError && (
         <div className="host-chdist__error" role="alert">
           <p className="host-chdist__error-text">{LOAD_ERROR_MESSAGE}</p>
-          <button className="chdist-btn chdist-btn--primary" onClick={refresh}>
+          <button className="chdist-btn chdist-btn--primary" onClick={reload}>
             Retry
           </button>
         </div>
@@ -90,7 +104,22 @@ function HostChannelDistribution() {
             onDisconnectClick={() => setActiveModal("disconnect")}
             manageEnabled={MOCK_CONNECT_FLOW_ENABLED}
           />
-          <LastSyncCard syncEvidence={syncEvidence} />
+          {showPropertyPicker && (
+            <label className="host-chdist__picker">
+              <span className="host-chdist__picker-label">Property</span>
+              <select
+                className="host-chdist__picker-select"
+                value={selectedPropertyId}
+                onChange={(event) => setPickedPropertyId(event.target.value)}>
+                {propertyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {showLastSync && <LastSyncCard syncEvidence={syncEvidence} />}
         </div>
       )}
 

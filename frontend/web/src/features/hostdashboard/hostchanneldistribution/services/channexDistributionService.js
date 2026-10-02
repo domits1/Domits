@@ -21,8 +21,8 @@ const MOCK_CHANNEX_CONNECTION_STATE = "NOT_CONNECTED";
 const MOCK_CHANNEX_SYNC_STATE = "NONE";
 // NONE | SUCCESS | FAILED
 
-// Flip this to preview the status error handling in the browser: getChannexStatus then rejects
-// with an error carrying this HTTP status, like requestChannex in hostintegrations/channexApi.js.
+// Flip this to preview the error handling in the browser: the status call then rejects with an
+// error carrying this HTTP status, like requestChannex in hostintegrations/channexApi.js does.
 // 403 = host outside the Channex allowlist (expected, shown as the normal empty state);
 // 401 / 5xx = real error with a Retry button.
 const MOCK_CHANNEX_ERROR_STATUS = null;
@@ -201,9 +201,7 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
 };
 
 // Real endpoint: GET /integrations/channex/status?userId=
-// eslint-disable-next-line no-unused-vars
-export const getChannexStatus = async ({ userId } = {}) => {
-  // userId is unused until this reads live data
+export const getChannexStatus = async () => {
   if (MOCK_CHANNEX_ERROR_STATUS) {
     throw buildMockChannexRequestError({
       method: "GET",
@@ -212,17 +210,28 @@ export const getChannexStatus = async ({ userId } = {}) => {
       error: "Mock status error",
     });
   }
+  // Reads the mutable state so a mock connect/disconnect is reflected by the next status fetch.
   return MOCK_CHANNEX_STATUS_BY_STATE[currentConnectionState];
 };
 
+// Open question for Enes: real contract is either a new Channex mapping-list endpoint, or
+// filtering hostDashboard/all by mapping -- mocked as a simple list for now. Entries use the
+// hostDashboard/all listing shape (listing.property.id), so the swap keeps the same consumers.
+const MOCK_MAPPED_LISTINGS = [
+  { property: { id: MOCK_DOMITS_PROPERTY_ID, title: "Mock canal house" } },
+  { property: { id: "mock-domits-property-id-2", title: "Mock beach apartment" } },
+];
+
+// Real endpoint (not built yet): GET <mapped listings>?userId=, returning hostDashboard/all-shaped listings
+export const getMappedProperties = async () => {
+  return MOCK_MAPPED_LISTINGS;
+};
+
 // Real endpoint: GET /integrations/channex/sync-evidence/latest?userId=&domitsPropertyId=
-// domitsPropertyId is required by the real endpoint (400 without it). Open question for Enes:
-// whether this tab should scope to one property or show the latest sync across all of a host's
-// mapped properties -- the mock ignores the argument's value either way for now.
-// eslint-disable-next-line no-unused-vars
+// domitsPropertyId is required by the real endpoint (400 without it), so the tab scopes the
+// latest sync to the property picked in the view. The mock echoes it back in the response.
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
-  // domitsPropertyId is unused until this reads live data
-  return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
+  return { ...MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE], domitsPropertyId };
 };
 
 // Real endpoint: POST /integrations/channex/connect ({ credentials: { apiKey }, displayName? }).
@@ -279,8 +288,7 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
 // The real backend leaves the integration row's status as DISCONNECTED (it clears
 // credentialsRef/externalAccountId but never deletes the row), and GET /status keeps reporting
 // that same status afterwards -- so the mock advances here to DISCONNECTED, not NOT_CONNECTED.
-// eslint-disable-next-line no-unused-vars
-export const disconnectChannex = async ({ userId } = {}) => {
+export const disconnectChannex = async () => {
   await mockDelay();
 
   if (MOCK_DISCONNECT_OUTCOME === "ERROR") {

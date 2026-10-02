@@ -43,8 +43,9 @@ describe("ConnectChannexModal", () => {
     expect(screen.getByLabelText("Channex API key")).toHaveValue("wrong-key");
   });
 
-  test("a thrown request error shows the error message and does not close the modal", async () => {
+  test("a thrown request error shows a friendly message, logs the detail, and does not close the modal", async () => {
     const user = userEvent.setup();
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     connectChannex.mockRejectedValue(new Error("Failed to store Channex credentials in Secrets Manager."));
     const onConnected = jest.fn();
     const onClose = jest.fn();
@@ -54,10 +55,16 @@ describe("ConnectChannexModal", () => {
     await user.type(screen.getByLabelText("Channex API key"), "some-key");
     await user.click(screen.getByRole("button", { name: "Connect" }));
 
-    expect(screen.getByText("Failed to store Channex credentials in Secrets Manager.")).toBeInTheDocument();
+    expect(screen.getByText("Failed to connect to Channex.")).toBeInTheDocument();
+    expect(screen.queryByText(/Secrets Manager/)).not.toBeInTheDocument();
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.any(String),
+      "Failed to store Channex credentials in Secrets Manager."
+    );
     expect(onConnected).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Channex API key")).toHaveValue("some-key");
+    consoleError.mockRestore();
   });
 
   test("shows the reconnect note only for the reconnect variant", () => {

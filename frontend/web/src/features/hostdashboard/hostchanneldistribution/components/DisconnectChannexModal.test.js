@@ -39,8 +39,9 @@ describe("DisconnectChannexModal", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test("a thrown error shows the error message and does not close the modal", async () => {
+  test("a thrown error shows a friendly message, logs the detail, and does not close the modal", async () => {
     const user = userEvent.setup();
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     disconnectChannex.mockRejectedValue(new Error("Failed to persist Channex disconnect state in Domits."));
     const onDisconnected = jest.fn();
     const onClose = jest.fn();
@@ -49,8 +50,14 @@ describe("DisconnectChannexModal", () => {
 
     await user.click(screen.getByRole("button", { name: "Disconnect" }));
 
-    expect(screen.getByText("Failed to persist Channex disconnect state in Domits.")).toBeInTheDocument();
+    expect(screen.getByText("Failed to disconnect Channex.")).toBeInTheDocument();
+    expect(screen.queryByText(/persist/)).not.toBeInTheDocument();
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.any(String),
+      "Failed to persist Channex disconnect state in Domits."
+    );
     expect(onDisconnected).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });
