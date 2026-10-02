@@ -209,6 +209,52 @@ describe("StaticPageWorker", () => {
     }
   );
 
+  it.each([
+    [
+      "the fallback carries the flag",
+      [
+        { ...FALLBACK, isPrimary: true },
+        { ...CUSTOM, isPrimary: false },
+      ],
+      FALLBACK.domain,
+    ],
+    ["a live custom domain carries the flag", [FALLBACK, CUSTOM], CUSTOM.domain],
+    ["no row carries the flag", [FALLBACK, { ...CUSTOM, isPrimary: false }], FALLBACK.domain],
+    ["both carry the flag and the custom domain is live", [{ ...FALLBACK, isPrimary: true }, CUSTOM], CUSTOM.domain],
+    [
+      "both carry the flag and the custom domain is not live",
+      [
+        { ...FALLBACK, isPrimary: true },
+        { ...CUSTOM, status: "VERIFIED" },
+      ],
+      FALLBACK.domain,
+    ],
+    ...["PENDING", "VERIFIED", "FAILED", "DISABLED", "REMOVING"].map((status) => [
+      `the flagged custom domain is ${status}`,
+      [FALLBACK, { ...CUSTOM, status }],
+      FALLBACK.domain,
+    ]),
+  ])(
+    "renders with the main address the public page names when %s, so both carry the same canonical",
+    async (_label, domains, expected) => {
+      const { worker, renderer } = buildWorker({ domains });
+
+      await worker.run();
+
+      expect(renderer.render.mock.calls[0][0].domain.domain).toBe(expected);
+    }
+  );
+
+  it("fails the page instead of guessing when no row answers the public page's rule for the main address", async () => {
+    const { worker, outbox, renderer } = buildWorker({ domains: [{ ...CUSTOM, isPrimary: false }] });
+
+    const summary = await worker.run();
+
+    expect(renderer.render).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: "NO_MAIN_ADDRESS" });
+    expect(summary).toMatchObject({ failed: 1 });
+  });
+
   it("records an upload failure, never marks the page active, and the retry writes the same keys again", async () => {
     const { worker, outbox, pageStore } = buildWorker();
     pageStore.putPage.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("AccessDenied"));

@@ -80,3 +80,18 @@ export const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry
 
   return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
 };
+
+export const isDirectBookingWebsiteCustomDomain = (domainEntry = {}) =>
+  normalizeDomainType(domainEntry?.domainType ?? domainEntry?.domain_type) === "CUSTOM";
+
+export const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
+  const liveFlaggedCustomDomain = domains.find(
+    (domainEntry) =>
+      domainEntry?.isPrimary === true &&
+      isDirectBookingWebsiteCustomDomain(domainEntry) &&
+      resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry) === "ACTIVE"
+  );
+  const mainAddress =
+    liveFlaggedCustomDomain || domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry));
+  return mainAddress?.domain ? mainAddress : null;
+};
