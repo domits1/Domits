@@ -1,5 +1,8 @@
 import { buildStaticPageKey } from "../../data/repository/staticPageStore.js";
-import { resolveDirectBookingWebsiteRuntimeDomainStatus } from "../../util/directBookingWebsiteRouting.js";
+import {
+  resolveDirectBookingWebsiteRuntimeDomainStatus,
+  selectDirectBookingWebsiteMainAddress,
+} from "../../util/directBookingWebsiteRouting.js";
 
 const DEFAULT_RUN_LIMIT = 20;
 
@@ -18,8 +21,6 @@ const withEffectiveStatus = (site) => (domain) => ({
   ...domain,
   status: resolveDirectBookingWebsiteRuntimeDomainStatus(site, domain),
 });
-
-const pickPrimaryDomain = (domains) => domains.find((domain) => domain.isPrimary) || domains[0];
 
 export class StaticPageWorker {
   constructor({ outboxRepository, siteRepository, domainRepository, pageStore, renderer }) {
@@ -70,11 +71,14 @@ export class StaticPageWorker {
     }
 
     try {
-      const domains = await this.#activeDomains(site);
-      const html = await this.renderer
-        .render({ template, site, domain: pickPrimaryDomain(domains) })
-        .catch(failWith("RENDER_FAILED"));
-      await this.#upload(site, job.revision, domains, html);
+      const domains = await this.#loadDomains(site);
+      const activeDomains = this.#activeDomains(domains);
+      const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
+      if (!mainAddress) {
+        throw new PageBuildFailure("NO_MAIN_ADDRESS");
+      }
+      const html = await this.renderer.render({ template, site, domain: mainAddress }).catch(failWith("RENDER_FAILED"));
+      await this.#upload(site, job.revision, activeDomains, html);
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
         throw error;
@@ -96,10 +100,12 @@ export class StaticPageWorker {
     return "superseded";
   }
 
-  async #activeDomains(site) {
-    const domains = (await this.domainRepository.listDomainsBySiteId(site.id))
-      .map(withEffectiveStatus(site))
-      .filter((domain) => domain.status === "ACTIVE");
+  async #loadDomains(site) {
+    return (await this.domainRepository.listDomainsBySiteId(site.id)).map(withEffectiveStatus(site));
+  }
+
+  #activeDomains(allDomains) {
+    const domains = allDomains.filter((domain) => domain.status === "ACTIVE");
     if (domains.length === 0) {
       throw new PageBuildFailure("NO_ACTIVE_DOMAIN");
     }
