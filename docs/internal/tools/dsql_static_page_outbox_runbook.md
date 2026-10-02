@@ -1,8 +1,8 @@
 # Static page outbox: revision column and outbox table (2026-09-30)
 
-Runbook for the hand-applied migration `backend/ORM/migrations/20260930_static_page_outbox.{js,sql}`.
+Runbook for the hand-applied migration `backend/ORM/migrations/20260930_static_page_outbox.{js,sql}` and its rollback `20260930_static_page_outbox_rollback.sql`.
 
-The `.js` file is the migration record; nothing in this repository executes it. The `.sql` file holds the statements to run, kept free of comments by convention, so the run order and the expected outcomes live here.
+The `.js` file is the migration record; nothing in this repository executes it. The `.sql` file holds the statements to run, kept free of comments by convention, so the run order and the expected outcomes live here. The rollback lives in its own file, so pasting the migration file from top to bottom can never undo it.
 
 Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_domain_index_runbook.md) (console → Aurora DSQL → cluster → Connect → Open in CloudShell). The DSQL rules from that runbook apply unchanged: one DDL statement per transaction in autocommit, never DDL inside `BEGIN`, and every index activation bumps the catalog version, so warm Lambdas fail one statement with SQLSTATE `40001` / `OC001` and succeed on retry.
 
@@ -41,10 +41,9 @@ The new column is invisible to the current code paths until the deploy that carr
 10. Count of sites without a revision. Informational: on 2026-09-30 every existing site returns here, which is expected and harmless.
 11. Smoke test (`BEGIN ... ROLLBACK`): two inserts for `smoke-site`, the second with `ON CONFLICT (site_id) DO UPDATE`. The `SELECT` must show **one** row with `revision = 2`. That is the one-row-per-site rule. `ROLLBACK` leaves nothing behind.
 12. Count that must read zero, proving the smoke test left no row.
-13. Rollback: drop the index, drop the table, drop the column. Last in the file; do not paste the file top to bottom.
 
 ## Rollback
 
-Block 13 reverses the migration completely. Dropping the column loses the revision counters, so a later re-apply starts every site at revision 1 again. That is harmless: the worker compares the revision it read with the revision on the row, and both come from the same table, so restarting the count cannot make a stale render look current.
+`20260930_static_page_outbox_rollback.sql` reverses the migration completely: drop the index, drop the table, drop the column, one statement per transaction in autocommit like the DDL above. Dropping the column loses the revision counters, so a later re-apply starts every site at revision 1 again. That is harmless: the worker compares the revision it read with the revision on the row, and both come from the same table, so restarting the count cannot make a stale render look current.
 
 Roll back only when the deploy that uses the column is also rolled back. With the new code live and the column gone, every publish fails.
