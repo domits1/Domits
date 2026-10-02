@@ -21,7 +21,12 @@ const generateStaticPage = async () => {
     publishedThemeOverrides: renderPayload.themeOverrides,
   };
 
-  return new StaticPageRenderer().render({ template, site, domain: renderPayload.domain });
+  return new StaticPageRenderer().render({
+    template,
+    site,
+    mainAddress: renderPayload.domain,
+    destination: renderPayload.domain,
+  });
 };
 
 const page = await generateStaticPage();

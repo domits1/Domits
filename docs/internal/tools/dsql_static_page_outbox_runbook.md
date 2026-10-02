@@ -12,6 +12,8 @@ Connect the same way as for [dsql_custom_domain_index_runbook.md](./dsql_custom_
 
 `main.static_page_outbox` holds the work for the page worker, **one row per site**: `site_id` is the primary key. A publish upserts that row, so two publishes of the same site can never queue two pieces of work, and the table cannot grow beyond the number of sites. Every status write is conditional on the `revision` it was queued with, so a worker that finishes an old render cannot overwrite a newer publish.
 
+Only `main` has the standalone tables; the `test` schema has none, so there is no `test` variant.
+
 ## How the worker moves a row
 
 `PropertyHandler` invoked with `{"task": "build-static-pages"}` takes the rows oldest first, one site at a time. It reads the shell `index.html` from the sites bucket before every page and claims nothing for a page whose shell it cannot read.
