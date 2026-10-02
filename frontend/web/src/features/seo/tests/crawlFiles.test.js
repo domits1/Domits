@@ -89,13 +89,13 @@ describe("the marketplace robots.txt", () => {
   it("does not block a page whose exclusion relies on a noindex tag", () => {
     const disallowed = robotsLines().filter((line) => line.startsWith("Disallow:"));
 
+    expect(disallowed).not.toContain("Disallow: /website-live");
     expect(disallowed).not.toContain("Disallow: /listingdetails");
   });
 
-  it("keeps blocking the website views until they carry a noindex of their own", () => {
+  it("keeps blocking the website previews, which have no noindex", () => {
     const disallowed = robotsLines().filter((line) => line.startsWith("Disallow:"));
 
-    expect(disallowed).toContain("Disallow: /website-live");
     expect(disallowed).toContain("Disallow: /website-preview/");
   });
 
