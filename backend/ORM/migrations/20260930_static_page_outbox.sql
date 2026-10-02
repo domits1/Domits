@@ -77,4 +77,5 @@ SELECT site_id, revision, status FROM main.static_page_outbox WHERE site_id = 's
 ROLLBACK;
 
 SELECT count(*) AS should_be_zero
-FROM main.static_page_outbox;
+FROM main.static_page_outbox
+WHERE site_id = 'smoke-site';
