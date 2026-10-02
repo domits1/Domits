@@ -33,7 +33,7 @@ The new column is invisible to the current code paths until the deploy that carr
 9. Catalog verification: the index exists with `indisvalid = t` and `key_columns = status,updated_at`. The primary key on `site_id` appears as a second, unique row.
 10. Count of sites without a revision. Informational: on 2026-09-30 every existing site returns here, which is expected and harmless.
 11. Smoke test (`BEGIN ... ROLLBACK`): two inserts for `smoke-site`, the second with `ON CONFLICT (site_id) DO UPDATE`. The `SELECT` must show **one** row with `revision = 2`. That is the one-row-per-site rule. `ROLLBACK` leaves nothing behind.
-12. Count that must read zero, proving the smoke test left no row.
+12. Count of `smoke-site` rows, which must read zero, proving the smoke test left no row. It counts only that site, so it also holds when hosts have already published.
 
 ## Rollback
 
