@@ -5,12 +5,16 @@ import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
+import { requestReview } from "../review/services/reviewAPI";
+import reviewStyles from "../review/ReviewPage.module.css";
+
 function GuestReviews() {
   const [reviews, setReviews] = useState([]);
   const [receivedReviews, setReceivedReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoading2, setIsLoading2] = useState(true);
   const [userId, setUserId] = useState(null);
+  const [reviewError, setReviewError] = useState("");
   const navigate = useNavigate();
 
   // Get user once & redirect if not logged in
@@ -35,14 +39,12 @@ function GuestReviews() {
     const retrieveReviews = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(
-          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews",  
-        );
+        const res = await requestReview("GET", { scope: "written" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("FetchReviews error:", e);
+        setReviewError("Could not load your reviews. Please try again.");
         setReviews([]);
       } finally {
         setIsLoading(false);
@@ -59,14 +61,12 @@ function GuestReviews() {
     const retrieveReceivedReviews = async () => {
       setIsLoading2(true);
       try {
-        const res = await fetch(
-          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews",
-        );
+        const res = await requestReview("GET", { scope: "received" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setReceivedReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("FetchReceivedReviews error:", e);
+        setReviewError("Could not load received reviews. Please try again.");
         setReceivedReviews([]);
       } finally {
         setIsLoading2(false);
@@ -81,23 +81,22 @@ function GuestReviews() {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
     
-    const reviewId = review["reviewId "];
+    const reviewId = review.id;
 
     try {
-      const res = await fetch(
-        "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview",
-      );
+      const res = await requestReview("DELETE", { reviewId });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      setReviews((prev) => prev.filter((r) => r["reviewId "] !== reviewId));
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
     } catch (e) {
-      console.error("DeleteReview error:", e);
+      setReviewError("Could not delete your review. Please try again.");
     }
   };
 
   return (
     <main className="page-body">
       <h2>Reviews</h2>
+      {reviewError && <p role="alert">{reviewError}</p>}
 
       <div className="reviewGrid">
         <div className="contentContainer">
@@ -115,7 +114,12 @@ function GuestReviews() {
                 reviews.map((review, index) => (
                   <div key={index} className="reviewTab">
                     <h2 className="reviewHeader">{review.title}</h2>
-                    <p className="reviewContent">{review.content}</p>
+                    {review.can_edit && Date.now() < review.edit_expires_at && (
+                      <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
+                        Edit review
+                      </button>
+                    )}
+                    <p className={`reviewContent ${reviewStyles.reviewText}`}>{review.content}</p>
                     <p className="reviewDate">
                       Written on: {DateFormatterDD_MM_YYYY(review.date)}
                     </p>
@@ -151,7 +155,7 @@ function GuestReviews() {
                 receivedReviews.map((receivedReview, index) => (
                   <div key={index} className="reviewTab">
                     <h2 className="reviewHeader">{receivedReview.title}</h2>
-                    <p className="reviewContent">{receivedReview.content}</p>
+                    <p className={`reviewContent ${reviewStyles.reviewText}`}>{receivedReview.content}</p>
                     <p className="reviewDate">
                       Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}
                     </p>

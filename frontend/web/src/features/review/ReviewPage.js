@@ -1,248 +1,304 @@
-import React, { useEffect, useState } from 'react';
-import styles from "./ReviewPage.module.css";
+import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
-import spinner from "../../images/spinnner.gif";
-import happy from "../../images/icons/face-happy.png";
+import styles from "./ReviewPage.module.css";
+import { createReview, getEditableReview, updateReview } from "./services/reviewAPI";
+import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
+import {
+  canLeaveReview,
+  getBookingId,
+  normalizeGuestBookingsResponse,
+} from "../guestdashboard/utils/guestDashboardUtils";
+
+const RATING_LABELS = {
+  1: "Horrible",
+  2: "Could be better",
+  3: "It was okay",
+  4: "Decent",
+  5: "Amazing",
+};
+
+const INITIAL_FORM = {
+  rating: "",
+  publicReview: "",
+  privateFeedback: "",
+};
+
+// Retain the existing nonblank requirement and 500-character limit.
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 const ReviewPage = () => {
-    const [loading, setLoading] = useState(false);
-    const [userId, setUserId] = useState(null);
-    const [username, setUsername] = useState('');
-    const [page, setPage] = useState(0);
-    const [rating, setRating] = useState(null);
-    const navigate = useNavigate();
-    const { search } = useLocation();
-    const searchParams = new URLSearchParams(search);
-    const recipientID = searchParams.get('ID');
-    const type = searchParams.get('TYPE');
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [feedBack, setFeedBack] = useState('');
-    const [comment, setComment] = useState('');
-    const [isCompleted, setIsCompleted] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const reservationId = searchParams.get("reservationId") || "";
+  const reviewId = searchParams.get("reviewId") || "";
+  const targetId = reviewId || reservationId;
+  const [editingReview, setEditingReview] = useState(null);
+  const propertyTitle = location.state?.propertyTitle || "your stay";
 
-    useEffect(() => {
-        renderRating();
-    }, [rating]);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [checkedReservationId, setCheckedReservationId] = useState("");
+  const [eligibilityError, setEligibilityError] = useState("");
+  const [ratingError, setRatingError] = useState("");
+  const [reviewError, setReviewError] = useState("");
 
-    useEffect(() => {
-        if (rating && title && content) {
-            setIsCompleted(true);
-        } else {
-            setIsCompleted(false);
+  useEffect(() => {
+    let active = true;
+
+    setIsCheckingSession(true);
+    setEligibilityError("");
+    setIsSubmitted(false);
+    setSubmitError("");
+    setForm(INITIAL_FORM);
+    setEditingReview(null);
+    setRatingError("");
+    setReviewError("");
+
+    const checkEligibility = async () => {
+      try {
+        const user = await Auth.currentUserInfo().catch(() => null);
+        if (!active) return;
+
+        const guestId = user?.attributes?.sub;
+        if (!guestId) {
+          setEligibilityError("Please log in before leaving a review.");
+          navigate("/login");
+          return;
         }
-    }, [rating, title, content]);
 
-    const renderRating = () => {
-        if (rating) {
-            switch (parseInt(rating)) {
-                case 1:
-                    setComment('Horrible');
-                    break;
-                case 2:
-                    setComment('Could be better');
-                    break;
-                case 3:
-                    setComment('It was okay');
-                    break;
-                case 4:
-                    setComment('Decent');
-                    break;
-                case 5:
-                    setComment('Amazing');
-                    break;
-                default:
-                    setComment('');
-                    break;
-            }
-        } else {
-            setComment('');
+        if (reviewId) {
+          const review = await getEditableReview(reviewId);
+          if (!active) return;
+          setEditingReview(review);
+          setForm({ rating: String(review.overall_rating), publicReview: review.public_review || "", privateFeedback: "" });
+          return;
         }
+        if (!reservationId) {
+          setEligibilityError("Open a completed reservation first to leave a review.");
+          return;
+        }
+
+        const response = await getGuestBookings(guestId);
+        if (!active) return;
+
+        const booking = normalizeGuestBookingsResponse(response).find(
+          (item) =>
+            String(getBookingId(item)) === reservationId &&
+            String(item.guestid ?? item.guestId) === String(guestId)
+        );
+
+        if (!booking || !canLeaveReview(booking)) {
+          setEligibilityError("You can only review your own completed reservations.");
+        }
+      } catch (error) {
+        if (active) {
+          setEligibilityError(reviewId ? error.message : "Could not verify this reservation. Please try again later.");
+        }
+      } finally {
+        if (active) {
+          setCheckedReservationId(targetId);
+          setIsCheckingSession(false);
+        }
+      }
     };
 
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            let r = Math.random() * 16 | 0,
-                v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
+    void checkEligibility();
+
+    return () => {
+      active = false;
+    };
+  }, [navigate, reservationId, reviewId, targetId]);
+
+  const updateField = (field) => (event) => {
+    const value = event.target.value;
+    if (field === "rating") {
+      if (!/^[1-5]$/.test(value)) return;
+      setRatingError("");
+    }
+    setForm((current) => ({ ...current, [field]: value }));
+    if (field === "publicReview") setReviewError("");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!targetId || checkedReservationId !== targetId || eligibilityError || (reviewId && !editingReview)) {
+      setSubmitError("This review is unavailable.");
+      return;
+    }
+
+    if (!/^[1-5]$/.test(form.rating)) {
+      setRatingError("Please select an overall experience rating from 1 to 5 stars.");
+      event.currentTarget.querySelector('input[name="stars"]')?.focus();
+      return;
+    }
+
+    const publicReview = form.publicReview.replace(/\r\n?/g, "\n").trim();
+    let validationMessage = "";
+    if (publicReview.length < REVIEW_MIN_LENGTH) {
+      validationMessage = "Please describe your stay before submitting your review.";
+    } else if (publicReview.length > REVIEW_MAX_LENGTH) {
+      validationMessage = `Your written review must be ${REVIEW_MAX_LENGTH} characters or fewer.`;
+    } else if (INVALID_TEXT_CONTROLS.test(form.publicReview)) {
+      validationMessage = "Please remove unsupported control characters from your review.";
+    }
+    if (validationMessage) {
+      setReviewError(validationMessage);
+      event.currentTarget.querySelector("#publicReview")?.focus();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      if (reviewId) {
+        await updateReview({ reviewId, rating: Number(form.rating), publicReview, updatedAt: editingReview.updated_at });
+      } else {
+        await createReview({
+          reservationId,
+          rating: Number(form.rating),
+          publicReview,
+          privateFeedback: form.privateFeedback.trim(),
         });
+      }
+      setForm(INITIAL_FORM);
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    const asyncCreateReview = async () => {
-        if (isCompleted) {
-            setLoading(true);
-            setPage(page + 1);
-            const body = {
-                reviewId: generateUUID(),
-                accoId: type === 'GuestToHost' ? searchParams.get('ACCOID') : '',
-                content: content,
-                title: title,
-                itemIdTo: recipientID,
-                userIdFrom: userId,
-                usernameFrom: username,
-                feedBack: feedBack,
-                rating: rating
-            }
-            try {
-                const response = await fetch(`https://slixu87at0.execute-api.eu-north-1.amazonaws.com/default/CreateReview`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    },
-                    body: JSON.stringify(body),
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    console.error('Error saving review');
-                }
-            } catch (error) {
-                window.alert('Something went wrong, please try again later...');
-            } finally {
-                setLoading(false);
-            }
-        }
-    }
-    const pageUpdater = (pageNumber) => {
-        setPage(pageNumber);
-    };
+  const renderRatingInput = (value) => (
+    <label key={value}>
+      <input
+        type="radio"
+        name="stars"
+        value={value}
+        checked={form.rating === String(value)}
+        onChange={updateField("rating")}
+        disabled={isSubmitting}
+        required
+        aria-label={`${value} ${value === 1 ? "star" : "stars"}: ${RATING_LABELS[value]}`}
+        aria-describedby={`rating-description${ratingError ? " rating-error" : ""}`}
+      />
+      <span className={styles.icon} aria-hidden="true">
+        {value <= Number(form.rating) ? "★" : "☆"}
+      </span>
+    </label>
+  );
 
-    const handleRatingChange = (value) => {
-        setRating(value);
-    };
-
-    const renderPageContent = (page) => {
-        switch (page) {
-            case 0:
-                return (
-                    <main className={styles.main}>
-                        <h1>{type === 'HostToGuest' ? 'How did the guest(s) behave?' : 'How was the experience?'}</h1>
-                        <form className={styles.rating}>
-                            <label>
-                                <input type="radio" name="stars" value="1" checked={rating === '1'} onChange={() => handleRatingChange('1')} />
-                                <span className={styles.icon}>★</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="stars" value="2" checked={rating === '2'} onChange={() => handleRatingChange('2')} />
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="stars" value="3" checked={rating === '3'} onChange={() => handleRatingChange('3')} />
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="stars" value="4" checked={rating === '4'} onChange={() => handleRatingChange('4')} />
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="stars" value="5" checked={rating === '5'} onChange={() => handleRatingChange('5')} />
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                            </label>
-                        </form>
-                        <div>
-                            <h3 className={styles.comment}>{comment}</h3>
-                        </div>
-                        <div className={styles.buttonBox}>
-                            <button onClick={() => navigate('/')}>Cancel</button>
-                            <button onClick={() => pageUpdater(page + 1)}>Proceed</button>
-                        </div>
-                    </main>
-                );
-            case 1:
-                return (
-                    <main className={styles.main}>
-                        <h1>Start writing your review</h1>
-                        <section className={styles.title}>
-                            <label htmlFor="title">Title*</label>
-                            <input
-                                name="Title"
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Type here..."
-                                required={true}
-                                maxLength={64}
-                            />
-                            <p>{title.length}/64</p>
-                        </section>
-                        <section className={styles.content}>
-                            <label htmlFor="content">Please justify your rating*</label>
-                            <textarea
-                                className={styles.textarea}
-                                name="Content"
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Type here..."
-                                required={true}
-                                maxLength={500}
-                            />
-                            <p>{content.length}/500</p>
-                        </section>
-                        <section className={styles.content}>
-                            <label htmlFor="content">Do you have any feedbacks? (not required)</label>
-                            <textarea
-                                className={styles.textarea}
-                                name="Content"
-                                onChange={(e) => setFeedBack(e.target.value)}
-                                placeholder="Type here..."
-                                maxLength={500}
-                            />
-                            <p>{feedBack.length}/500</p>
-                        </section>
-                        <div className={styles.buttonBox}>
-                            <button onClick={() => pageUpdater(page - 1)}>Go back</button>
-                            <button className={!isCompleted ? styles.disabled : ''} onClick={() => asyncCreateReview()}>Confirm and publish</button>
-                        </div>
-                    </main>
-                );
-            case 2:
-                return (
-                        loading ?
-                            <main className={styles.main}>
-                                <div className={styles.spinnerDiv}>
-                                    <img src={spinner} alt='spinner'/>
-                                </div>
-                            </main> :
-
-                            <main className={styles.main}>
-                                <h1>Congratulations! Your review has been published.</h1>
-                                <div className={styles.imageDiv}>
-                                    <img className={styles.happy} src={happy} alt='happy'/>
-                                </div>
-                                <button
-                                    style={{width: '15%', alignSelf: 'center', margin: '5% 0'}}
-                                    onClick={() => navigate('/')}>Back to home</button>
-                            </main>
-                );
-            default:
-                return null;
-        }
-    }
-
-    useEffect(() => {
-        Auth.currentUserInfo().then(user => {
-            if (user) {
-                setUsername(user.attributes['given_name']);
-                setUserId(user.attributes.sub);
-            } else {
-                navigate('/login');
-            }
-        }).catch(error => {
-            console.error("Error setting user id:", error);
-            navigate('/login');
-        });
-    }, [navigate]);
-
+  if (isCheckingSession || checkedReservationId !== targetId) {
     return (
-        renderPageContent(page)
+      <main className={styles.main}>
+        <h1>Loading review form...</h1>
+      </main>
     );
-}
+  }
+
+  if (eligibilityError || !targetId) {
+    return (
+      <main className={styles.main}>
+        <h1>Review unavailable</h1>
+        <p role="alert">{eligibilityError}</p>
+        <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
+          Back to reservations
+        </button>
+      </main>
+    );
+  }
+
+  if (isSubmitted) {
+    return (
+      <main className={styles.main}>
+        <h1>{reviewId ? "Review updated" : "Review submitted"}</h1>
+        <p className={styles.comment}>
+          {reviewId ? "Your changes have been saved."
+            : "Thank you for sharing your experience. Your review was saved as a draft."}
+        </p>
+        <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
+          Back to reservations
+        </button>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.main}>
+      <h1>{reviewId ? "Edit review" : `Review ${propertyTitle}`}</h1>
+      <form onSubmit={handleSubmit} noValidate>
+        <fieldset className={styles.rating} disabled={isSubmitting}>
+          <legend>Overall experience (required)</legend>
+          <div>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
+          <p id="rating-description" aria-live="polite">
+            {form.rating ? `${form.rating} out of 5 stars — ${RATING_LABELS[form.rating]}` : "Select a rating"}
+          </p>
+          {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
+        </fieldset>
+        <section className={styles.content}>
+          <label htmlFor="publicReview">Written review (required)</label>
+          <p id="publicReview-help">
+            Describe your stay in your own words, including anything you liked or disliked.
+            Use up to {REVIEW_MAX_LENGTH} characters.
+          </p>
+          <textarea
+            id="publicReview"
+            className={styles.textarea}
+            value={form.publicReview}
+            onChange={updateField("publicReview")}
+            placeholder="What would you like future guests to know about your stay?"
+            required
+            minLength={REVIEW_MIN_LENGTH}
+            maxLength={REVIEW_MAX_LENGTH}
+            rows={6}
+            aria-invalid={Boolean(reviewError)}
+            aria-describedby={`publicReview-help publicReview-count${reviewError ? " publicReview-error" : ""}`}
+            disabled={isSubmitting}
+          />
+          <p id="publicReview-count">{form.publicReview.length}/{REVIEW_MAX_LENGTH} characters</p>
+          {reviewError && <p id="publicReview-error" role="alert">{reviewError}</p>}
+        </section>
+
+        {!reviewId && <section className={styles.content}>
+          <label htmlFor="privateFeedback">Do you have any feedback? (not required)</label>
+          <textarea
+            id="privateFeedback"
+            className={styles.textarea}
+            value={form.privateFeedback}
+            onChange={updateField("privateFeedback")}
+            placeholder="Optional feedback for the host..."
+            maxLength={500}
+            disabled={isSubmitting}
+          />
+          <p>{form.privateFeedback.length}/500</p>
+        </section>}
+
+        {submitError && <p role="alert">{submitError}</p>}
+
+        <div className={styles.buttonBox}>
+          <button type="button" onClick={() => navigate(-1)} disabled={isSubmitting}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className={!form.rating || !form.publicReview.trim() ? styles.disabled : ""}
+            disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : reviewId ? "Save changes" : "Submit review"}
+          </button>
+        </div>
+      </form>
+    </main>
+  );
+};
 
 export default ReviewPage;
