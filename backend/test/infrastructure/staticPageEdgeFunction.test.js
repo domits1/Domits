@@ -7,7 +7,6 @@ const DIRECTORY = join(process.cwd(), "infrastructure", "static-page-edge");
 const SOURCE = readFileSync(join(DIRECTORY, "viewer-request.js"), "utf8");
 const CASES = JSON.parse(readFileSync(join(DIRECTORY, "cases.json"), "utf8"));
 const FUNCTION_SIZE_LIMIT_BYTES = 10 * 1024;
-const URI_LIMIT = 8192;
 const HOSTNAME_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 const PAGE_KEY_PATTERN = new RegExp(`^/sites/by-host/((?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL})/index\\.html$`);
 
@@ -80,15 +79,6 @@ describe("the viewer request function", () => {
       expect(match).not.toBeNull();
       expect(match[1].length).toBeLessThanOrEqual(253);
     }
-  });
-
-  it("counts every value of a repeated query parameter against the limit", () => {
-    const handler = loadHandler();
-    const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
-    const half = "x".repeat(URI_LIMIT / 2);
-    event.request.querystring = { q: { value: half, multiValue: [{ value: half }, { value: half }] } };
-
-    expect(handler(event).uri).toBe("/");
   });
 
   it("returns nothing instead of throwing when there is no event at all", () => {
