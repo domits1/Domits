@@ -47,10 +47,20 @@ function queryStringLength(querystring) {
   return length;
 }
 
+function isPageKeyRequest(uri) {
+  var decoded = uri;
+  try {
+    decoded = decodeURIComponent(uri);
+  } catch (error) {
+    decoded = uri;
+  }
+  return decoded.indexOf(PAGE_KEY_PREFIX) === 0;
+}
+
 function handler(event) {
   try {
     var request = event.request;
-    if (request.uri.indexOf(PAGE_KEY_PREFIX) === 0) {
+    if (isPageKeyRequest(request.uri)) {
       return { statusCode: 404, statusDescription: "Not Found" };
     }
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -68,12 +78,12 @@ function handler(event) {
       return request;
     }
     var pageUri = PAGE_KEY_PREFIX + host + "/index.html";
-    if (pageUri.length + queryStringLength(request.querystring) > MAX_URI_LENGTH) {
+    if (pageUri.length + queryStringLength(request.querystring) >= MAX_URI_LENGTH) {
       return request;
     }
     request.uri = pageUri;
     return request;
   } catch (error) {
-    return event.request;
+    return event && event.request;
   }
 }

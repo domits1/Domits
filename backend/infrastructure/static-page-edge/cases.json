@@ -202,6 +202,28 @@
     "expectedUri": "/"
   },
   {
+    "name": "one host value in a multi value header",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl",
+    "multiValue": ["www.villasensual.nl"],
+    "expectedUri": "/sites/by-host/www.villasensual.nl/index.html"
+  },
+  {
+    "name": "host with a six digit port",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl:123456",
+    "expectedUri": "/"
+  },
+  {
+    "name": "host with an empty port",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl:",
+    "expectedUri": "/"
+  },
+  {
     "name": "host with a port that is not a number",
     "method": "GET",
     "uri": "/",
@@ -305,5 +327,33 @@
     "uri": "/sites/by-host/",
     "host": "www.villasensual.nl",
     "expectedStatus": 404
+  },
+  {
+    "name": "percent encoded request to a page key",
+    "method": "GET",
+    "uri": "/%73ites/by-host/www.villasensual.nl/index.html",
+    "host": "villa-loiki-8cf98e11.direct.domits.com",
+    "expectedStatus": 404
+  },
+  {
+    "name": "fully encoded request to the page namespace",
+    "method": "GET",
+    "uri": "/%73%69%74%65%73/%62%79-%68%6f%73%74/x",
+    "host": "www.villasensual.nl",
+    "expectedStatus": 404
+  },
+  {
+    "name": "page key with a broken percent escape",
+    "method": "GET",
+    "uri": "/sites/by-host/www.villasensual.nl/%zz",
+    "host": "www.villasensual.nl",
+    "expectedStatus": 404
+  },
+  {
+    "name": "double encoded namespace stays an ordinary path",
+    "method": "GET",
+    "uri": "/%2573ites/by-host/www.villasensual.nl/index.html",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/%2573ites/by-host/www.villasensual.nl/index.html"
   }
 ]

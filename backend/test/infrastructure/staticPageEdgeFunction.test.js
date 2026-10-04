@@ -82,15 +82,19 @@ describe("the viewer request function", () => {
     }
   });
 
-  it("leaves the request alone when the rewritten uri plus the query string would pass the runtime limit", () => {
+  it("rewrites up to one character under the runtime limit for uri plus query string, and not at it", () => {
     const handler = loadHandler();
-    const fits = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
-    fits.request.querystring = { q: { value: "x".repeat(URI_LIMIT - 60) } };
-    const tooLong = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
-    tooLong.request.querystring = { q: { value: "x".repeat(URI_LIMIT - 40) } };
+    const pageUri = "/sites/by-host/www.villasensual.nl/index.html";
+    const queryOverhead = "?q=".length;
+    const build = (total) => {
+      const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
+      event.request.querystring = { q: { value: "x".repeat(total - pageUri.length - queryOverhead) } };
+      return event;
+    };
 
-    expect(handler(fits).uri).toBe("/sites/by-host/www.villasensual.nl/index.html");
-    expect(handler(tooLong).uri).toBe("/");
+    expect(handler(build(URI_LIMIT - 1)).uri).toBe(pageUri);
+    expect(handler(build(URI_LIMIT)).uri).toBe("/");
+    expect(handler(build(URI_LIMIT + 1)).uri).toBe("/");
   });
 
   it("counts every value of a repeated query parameter against the limit", () => {
@@ -100,6 +104,10 @@ describe("the viewer request function", () => {
     event.request.querystring = { q: { value: half, multiValue: [{ value: half }, { value: half }] } };
 
     expect(handler(event).uri).toBe("/");
+  });
+
+  it("returns nothing instead of throwing when there is no event at all", () => {
+    expect(loadHandler()(null)).toBeFalsy();
   });
 
   it("leaves the request alone when the headers are not an object, instead of failing the request", () => {
