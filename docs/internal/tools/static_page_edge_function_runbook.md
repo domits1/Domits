@@ -10,7 +10,7 @@ Run it only after the worker has written at least one page under `sites/by-host/
 - **The hostname comes from the request, so it is normalised and checked before it becomes a key.** Lower case, surrounding spaces and a trailing dot stripped, and a port accepted only when it is one to five digits. Then the same rule the store applies when it writes a page: at least two labels, each `[a-z0-9]` with hyphens inside, at most 63 characters, the whole name at most 253. A host header that fails that rule (missing, empty, two values, a port that is not a number, two colons, a comma, a slash, two dots in a row, a single label, an IPv6 literal, a non-ASCII letter, an underscore, a percent escape) leaves the request untouched, so no key can ever contain a path separator or anything the store would not have written. A rewrite whose URI plus query string would reach the runtime's limit of 8192 characters is skipped too, so a request with an enormous query string gets the shell instead of a validation error.
 - **A site without a page keeps today's behaviour, without code.** The rewritten key does not exist, S3 answers 403 through the origin access control, and the distribution's existing custom error responses (403 and 404 to `/index.html` with status 200) serve the app shell. The edge caches that miss for `ErrorCachingMinTTL`, 10 seconds on this distribution, so an edge that served the shell asks S3 again at most 10 seconds after the worker wrote the page. A page that was served is cached by the edge and by the browser for its own `Cache-Control: public, max-age=300`; an invalidation clears the edge, never a browser that already holds the page.
 - **The cache cannot hand one site another site's page.** The cache key is the URI after the function ran, and the hostname is part of that URI. The cache policy stays the managed `CachingOptimized`; it does not need the `Host` header in the key, because the path already carries it. Paths that are not rewritten stay shared across hosts, which is right: the assets are the same for every site. The 404 on direct `/sites/by-host/` requests closes the other road to another site's page: the key namespace is reachable only through the rewrite.
-- **A bug in the function would hit every site at once, so the function must not throw.** Everything after the event is read sits in one `try`, and the `catch` returns the request unchanged; a thrown error would otherwise cost the viewer a 503, and a returned request CloudFront cannot validate a 502. The source is under 10 KB, uses no module syntax, network or timers (the test pins the source for those words; only the replay in step 2 proves the runtime accepts it), compiles in Node, and the 50 cases in `cases.json` are run in the unit test and again with `test-function` on the real runtime, including the inputs that must leave the request alone and the ones that must be refused. What that cannot prove: the compute limit under real load, which is why step 5 reads the function's own CloudWatch metrics, including its compute utilization.
+- **A bug in the function would hit every site at once, so the function must not throw.** Everything after the event is read sits in one `try`, and the `catch` returns the request unchanged; a thrown error would otherwise cost the viewer a 503, and a returned request CloudFront cannot validate a 502. The source is under 10 KB, uses no module syntax, network or timers (the test pins the source for those words; only the replay in step 2 proves the runtime accepts it), compiles in Node, and the 55 cases in `cases.json` are run in the unit test and again with `test-function` on the real runtime, including the inputs that must leave the request alone, the ones that must be refused and the two on either side of the 8192 limit. What that cannot prove: the compute limit under real load, which is why step 5 reads the function's own CloudWatch metrics, including its compute utilization.
 - **`www.domits.com` and `acceptance.domits.com` are not on this distribution.** They are served by Amplify through another CloudFront distribution; this function is attached to `E18TUBOKUXD9TW` only. The one hand-made tenant on it, `developers-test` (`developers.domits.com`), also gets the rewrite, has no page object, and so keeps getting the shell exactly as today.
 - **Considered and rejected: a KeyValueStore or a per-tenant parameter.** The design document (`SEO phase 2`, point 3) settles on keys by hostname: no lookup, no second source of truth, and a moved domain is owned by whoever wrote the key last. The wildcard tenant holds many sites with one parameter set, so a tenant parameter could not tell them apart.
 
@@ -181,7 +181,7 @@ aws cloudfront update-distribution --id "$DIST_ID" --if-match "$(jq -r .ETag reh
   && curl -s "https://$DIST_DOMAIN/" | grep -c "You need to enable JavaScript"
 ```
 
-Expected: the rehearsal `<title>` first (the page is back and served through the function), then `0`, `detached` and `1`: with the association gone, `/` serves the shell again even though the page object is still there, which is exactly what the real rollback must do. The last `curl` can still answer the page for up to 300 seconds if that edge served it just before; run it again after a minute if so.
+Expected: the rehearsal `<title>` first (the page is back and served through the function), then `0`, `detached` and `1`: with the association gone, `/` serves the shell again even though the page object is still there, which is exactly what the real rollback must do. The last `curl` cannot answer the page any more: without the function the cache key for `/` is `/`, which has never held a page (the page was only ever cached under its rewritten key). A page here means the detachment did not take; wait for `distribution-deployed` once more and run the `curl` again, and if it still answers the page, step 5 does not start until that is understood.
 
 Cleanup, always, even when a check failed (nothing here touches the real distribution or bucket):
 
@@ -227,7 +227,9 @@ WITH=<fallback hostname with a page>; WITH2=<another fallback hostname with a pa
 curl -s "https://$WITH/" | grep -o '<link rel="canonical"[^>]*>\|<title>[^<]*</title>'
 curl -s "https://$WITH2/" | grep -o '<link rel="canonical"[^>]*>\|<title>[^<]*</title>'
 curl -s "https://$WITH/" | grep -o '<title>[^<]*</title>'
+curl -s "https://$WITH2/" | grep -o '<title>[^<]*</title>'
 curl -sI "https://$WITH/" | grep -i "^HTTP\|^cache-control\|^x-cache"
+curl -sI "https://$WITH2/" | grep -i "^HTTP\|^cache-control\|^x-cache"
 curl -s "https://$WITHOUT/" | grep -c "You need to enable JavaScript"
 curl -s "https://$CUSTOM/" | grep -o '<link rel="canonical"[^>]*>\|<title>[^<]*</title>\|You need to enable JavaScript'
 curl -s "https://developers.domits.com/" | grep -c "You need to enable JavaScript"
@@ -239,9 +241,9 @@ curl -s "https://www.domits.com/about" | grep -o '<link rel="canonical"[^>]*>'
 curl -s "https://www.domits.com/" | grep -c "You need to enable JavaScript"
 ```
 
-Expected: the first site's own `<title>` and canonical, then the second site's own title and canonical (different from the first: two sites, one tenant, two pages), then the first site's title again on a warm cache (the second request did not replace the first); `HTTP/2 200` with `cache-control: public, max-age=300`; `1` for the fallback site without a page (shell, as today); for the custom domain its own title and canonical, and nothing else; `1` for `developers.domits.com`; the host site's own `robots.txt`; a non-empty `asset:` line followed by `HTTP/2 200` with `content-type: application/javascript` (a shell in its place would say `text/html`); `404` for the direct request to a page key; and `www.domits.com` exactly as before this step (its canonical, and its shell count `1`, come from Amplify, which this function never touches).
+Expected: the first site's own `<title>` and canonical, then the second site's own title and canonical (different from the first: two sites, one tenant, two pages), then both titles again, each still its own (the second site did not replace the first); for both, `HTTP/2 200` with `cache-control: public, max-age=300` and `x-cache: Hit from cloudfront` (the first requests warmed the edge you are talking to; a `Miss` on either means that request went to another edge, run the two `curl -sI` lines once more); `1` for the fallback site without a page (shell, as today); for the custom domain its own title and canonical, and nothing else; `1` for `developers.domits.com`; the host site's own `robots.txt`; a non-empty `asset:` line followed by `HTTP/2 200` with `content-type: application/javascript` (a shell in its place would say `text/html`); `404` for the direct request to a page key; and `www.domits.com` exactly as before this step (its canonical, and its shell count `1`, come from Amplify, which this function never touches).
 
-Then one tenant invalidation, to prove that the key the later PRs will invalidate is the key the tenant caches the page under:
+Then one tenant invalidation, to prove that the key the later PRs will invalidate is the key the tenant caches the page under. Run it straight after the checks above, while `$WITH` is still a `Hit` on this edge (the page is cached 300 seconds, so an invalidation that takes longer than that proves nothing; start again with a `curl -sI` that answers `Hit` if it did):
 
 ```bash
 TENANT_ID=$(aws cloudfront list-distribution-tenants --profile domits --region us-east-1 --association-filter DistributionId=E18TUBOKUXD9TW \
@@ -249,11 +251,11 @@ TENANT_ID=$(aws cloudfront list-distribution-tenants --profile domits --region u
 INV_ID=$(aws cloudfront create-invalidation-for-distribution-tenant --id "$TENANT_ID" --profile domits --region us-east-1 --output json \
   --invalidation-batch "{\"Paths\":{\"Quantity\":1,\"Items\":[\"/sites/by-host/$WITH/index.html\"]},\"CallerReference\":\"edge-runbook-$(date +%s)\"}" \
   --query Invalidation.Id --output text); echo "$INV_ID"
-aws cloudfront get-invalidation-for-distribution-tenant --id "$TENANT_ID" --invalidation-id "$INV_ID" --profile domits --region us-east-1 --query Invalidation.Status --output text
+aws cloudfront get-invalidation-for-distribution-tenant --distribution-tenant-id "$TENANT_ID" --id "$INV_ID" --profile domits --region us-east-1 --query Invalidation.Status --output text
 curl -sI "https://$WITH/" | grep -i "^HTTP\|^x-cache"
 ```
 
-Expected: the wildcard tenant's id, an invalidation id, a status that reaches `Completed` within a few minutes (repeat the `get` until it does), and then `HTTP/2 200` with `x-cache: Miss from cloudfront` on the first request after it: the tenant invalidation reached the rewritten key. If the status never completes or the request keeps answering `Hit`, the invalidation path for the later PRs is wrong; write down what was observed.
+Expected: the wildcard tenant's id, an invalidation id, a status that reaches `Completed` within a few minutes (repeat the `get` until it does), and then `HTTP/2 200` with `x-cache: Miss from cloudfront` on the first request after it: the page that was a `Hit` a moment ago is fetched again, so the tenant invalidation reached the rewritten key. If the status never completes, or the request still answers `Hit` within 300 seconds of the warm check, the invalidation path for the later PRs is wrong: roll back (below), then write down what was observed; the function does not stay attached on a failed check.
 
 Then watch for ten minutes, reading the function's own metrics; the three dimensions are all required, a query with fewer dimensions answers nothing and would look like success:
 
@@ -268,12 +270,12 @@ for metric in FunctionInvocations FunctionValidationErrors FunctionExecutionErro
 done
 aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name FunctionComputeUtilization --profile domits --region us-east-1 \
   --dimensions Name=DistributionId,Value=E18TUBOKUXD9TW Name=FunctionName,Value=domits-static-page-by-host Name=Region,Value=Global \
-  --statistics Average Maximum --period 300 \
+  --statistics Average --period 300 \
   --start-time "$(date -u -v-15M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%SZ)" --end-time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  --query 'Datapoints[].[Average,Maximum]' --output text
+  --query 'Datapoints[].Average' --output text
 ```
 
-Expected: `FunctionInvocations` with a number above zero (the checks above alone are a dozen requests; without a number here the query is wrong and the next three lines prove nothing), the three error metrics with no datapoint or only `0.0`, and a compute utilization far below 100 (the replay showed single digits). Run it again after ten minutes. Any error count above zero is a request the function failed or returned something invalid for: roll back first, then look at `cases.json` for the input that is missing.
+Expected: `FunctionInvocations` with a number above zero (the checks above alone are a dozen requests; without a number here the query is wrong and the next three lines prove nothing), the three error metrics with no datapoint or only `0.0`, and a compute utilization far below 100 (`Average` is the only statistic CloudFront publishes for it; the `test-function` replays answered 5 to 11). Run it again after ten minutes. Any error count above zero is a request the function failed or returned something invalid for: roll back first, then look at `cases.json` for the input that is missing.
 
 Rollback, one read and one update, then the wait:
 
