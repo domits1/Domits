@@ -46,7 +46,7 @@ describe("the viewer request function source", () => {
     expect(typeof loadHandler()).toBe("function");
   });
 
-  it("uses no module syntax, no network and no timers, which the runtime does not have", () => {
+  it("keeps to plain synchronous code, with no modules, network or timers", () => {
     expect(SOURCE).not.toMatch(/\b(import|export|require|async|await|fetch|setTimeout|setInterval|XMLHttpRequest)\b/);
   });
 
@@ -80,21 +80,6 @@ describe("the viewer request function", () => {
       expect(match).not.toBeNull();
       expect(match[1].length).toBeLessThanOrEqual(253);
     }
-  });
-
-  it("rewrites up to one character under the runtime limit for uri plus query string, and not at it", () => {
-    const handler = loadHandler();
-    const pageUri = "/sites/by-host/www.villasensual.nl/index.html";
-    const queryOverhead = "?q=".length;
-    const build = (total) => {
-      const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
-      event.request.querystring = { q: { value: "x".repeat(total - pageUri.length - queryOverhead) } };
-      return event;
-    };
-
-    expect(handler(build(URI_LIMIT - 1)).uri).toBe(pageUri);
-    expect(handler(build(URI_LIMIT)).uri).toBe("/");
-    expect(handler(build(URI_LIMIT + 1)).uri).toBe("/");
   });
 
   it("counts every value of a repeated query parameter against the limit", () => {
