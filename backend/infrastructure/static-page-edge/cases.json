@@ -46,11 +46,62 @@
     "method": "GET",
     "uri": "/",
     "host": "www.villasensual.nl",
-    "querystring": { "utm_source": { "value": "mail" } },
+    "querystring": {
+      "utm_source": {
+        "value": "mail"
+      }
+    },
     "expectedUri": "/sites/by-host/www.villasensual.nl/index.html"
   },
-  { "name": "post to the root", "method": "POST", "uri": "/", "host": "www.villasensual.nl", "expectedUri": "/" },
-  { "name": "options to the root", "method": "OPTIONS", "uri": "/", "host": "www.villasensual.nl", "expectedUri": "/" },
+  {
+    "name": "one character labels",
+    "method": "GET",
+    "uri": "/",
+    "host": "a.b.c",
+    "expectedUri": "/sites/by-host/a.b.c/index.html"
+  },
+  {
+    "name": "label of sixty three characters",
+    "method": "GET",
+    "uri": "/",
+    "host": "a23456789012345678901234567890123456789012345678901234567890123.direct.domits.com",
+    "expectedUri": "/sites/by-host/a23456789012345678901234567890123456789012345678901234567890123.direct.domits.com/index.html"
+  },
+  {
+    "name": "punycode label",
+    "method": "GET",
+    "uri": "/",
+    "host": "xn--villa-ande-direct.domits.com",
+    "expectedUri": "/sites/by-host/xn--villa-ande-direct.domits.com/index.html"
+  },
+  {
+    "name": "host of two hundred and fifty three characters",
+    "method": "GET",
+    "uri": "/",
+    "host": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "expectedUri": "/sites/by-host/abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/index.html"
+  },
+  {
+    "name": "host of two hundred and fifty four characters",
+    "method": "GET",
+    "uri": "/",
+    "host": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc.dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "expectedUri": "/"
+  },
+  {
+    "name": "post to the root",
+    "method": "POST",
+    "uri": "/",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/"
+  },
+  {
+    "name": "options to the root",
+    "method": "OPTIONS",
+    "uri": "/",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/"
+  },
   {
     "name": "hashed asset",
     "method": "GET",
@@ -101,14 +152,76 @@
     "expectedUri": "/index.html/"
   },
   {
+    "name": "index.htm",
+    "method": "GET",
+    "uri": "/index.htm",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/index.htm"
+  },
+  {
+    "name": "double slash",
+    "method": "GET",
+    "uri": "//",
+    "host": "www.villasensual.nl",
+    "expectedUri": "//"
+  },
+  {
+    "name": "dot segment",
+    "method": "GET",
+    "uri": "/./",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/./"
+  },
+  {
     "name": "upper case index.html",
     "method": "GET",
     "uri": "/INDEX.HTML",
     "host": "www.villasensual.nl",
     "expectedUri": "/INDEX.HTML"
   },
-  { "name": "no host header", "method": "GET", "uri": "/", "host": null, "expectedUri": "/" },
-  { "name": "empty host header", "method": "GET", "uri": "/", "host": "", "expectedUri": "/" },
+  {
+    "name": "no host header",
+    "method": "GET",
+    "uri": "/",
+    "host": null,
+    "expectedUri": "/"
+  },
+  {
+    "name": "empty host header",
+    "method": "GET",
+    "uri": "/",
+    "host": "",
+    "expectedUri": "/"
+  },
+  {
+    "name": "two host values",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl",
+    "multiValue": ["www.villasensual.nl", "www.other.nl"],
+    "expectedUri": "/"
+  },
+  {
+    "name": "host with a port that is not a number",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl:garbage",
+    "expectedUri": "/"
+  },
+  {
+    "name": "host with two colons",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl:443:80",
+    "expectedUri": "/"
+  },
+  {
+    "name": "host with a comma",
+    "method": "GET",
+    "uri": "/",
+    "host": "www.villasensual.nl:443,www.other.nl",
+    "expectedUri": "/"
+  },
   {
     "name": "host with a path separator",
     "method": "GET",
@@ -123,7 +236,13 @@
     "host": "www..villasensual.nl",
     "expectedUri": "/"
   },
-  { "name": "single label host", "method": "GET", "uri": "/", "host": "localhost", "expectedUri": "/" },
+  {
+    "name": "single label host",
+    "method": "GET",
+    "uri": "/",
+    "host": "localhost",
+    "expectedUri": "/"
+  },
   {
     "name": "label of sixty four characters",
     "method": "GET",
@@ -138,12 +257,25 @@
     "host": "-villa.direct.domits.com",
     "expectedUri": "/"
   },
-  { "name": "ipv6 literal with a port", "method": "GET", "uri": "/", "host": "[2001:db8::1]:443", "expectedUri": "/" },
+  {
+    "name": "label ending with a hyphen",
+    "method": "GET",
+    "uri": "/",
+    "host": "villa-.direct.domits.com",
+    "expectedUri": "/"
+  },
+  {
+    "name": "ipv6 literal with a port",
+    "method": "GET",
+    "uri": "/",
+    "host": "[2001:db8::1]:443",
+    "expectedUri": "/"
+  },
   {
     "name": "host with a non ascii letter",
     "method": "GET",
     "uri": "/",
-    "host": "villa-ñandú.direct.domits.com",
+    "host": "villa-\u00f1and\u00fa.direct.domits.com",
     "expectedUri": "/"
   },
   {
@@ -159,5 +291,19 @@
     "uri": "/",
     "host": "www.villasensual.nl%2F",
     "expectedUri": "/"
+  },
+  {
+    "name": "direct request to a page key",
+    "method": "GET",
+    "uri": "/sites/by-host/www.villasensual.nl/index.html",
+    "host": "villa-loiki-8cf98e11.direct.domits.com",
+    "expectedStatus": 404
+  },
+  {
+    "name": "direct request to the page namespace with another method",
+    "method": "POST",
+    "uri": "/sites/by-host/",
+    "host": "www.villasensual.nl",
+    "expectedStatus": 404
   }
 ]
