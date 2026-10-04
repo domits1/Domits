@@ -60,11 +60,11 @@ cd /path/to/Domits/backend/infrastructure/static-page-edge
 ETAG=$(aws cloudfront describe-function --name domits-static-page-by-host --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text)
 failures=0
 for i in $(seq 0 $(( $(jq length cases.json) - 1 ))); do
-  jq -c ".[$i] | {version:\"1.0\",context:{eventType:\"viewer-request\"},viewer:{ip:\"203.0.113.1\"},request:{method:.method,uri:.uri,querystring:(.querystring // {}),headers:(if .host == null then {} else {host:{value:.host}} end),cookies:{}}}" cases.json > /tmp/edge-event.json
-  expected=$(jq -r ".[$i].expectedUri" cases.json)
+  jq -c ".[$i] | {version:\"1.0\",context:{eventType:\"viewer-request\"},viewer:{ip:\"203.0.113.1\"},request:{method:.method,uri:.uri,querystring:(.querystring // {}),headers:(if .host == null then {} else {host:({value:.host} + (if .multiValue then {multiValue:(.multiValue | map({value:.}))} else {} end))} end),cookies:{}}}" cases.json > /tmp/edge-event.json
+  expected=$(jq -r ".[$i] | if .expectedStatus then \"status \\(.expectedStatus)\" else .expectedUri end" cases.json)
   result=$(aws cloudfront test-function --name domits-static-page-by-host --stage DEVELOPMENT --if-match "$ETAG" --profile domits --region us-east-1 \
-    --event-object fileb:///tmp/edge-event.json --query 'TestResult.{uri:FunctionOutput,error:FunctionErrorMessage,cpu:ComputeUtilization}' --output json)
-  actual=$(echo "$result" | jq -r '.uri | fromjson | .request.uri')
+    --event-object fileb:///tmp/edge-event.json --query 'TestResult.{output:FunctionOutput,error:FunctionErrorMessage,cpu:ComputeUtilization}' --output json)
+  actual=$(echo "$result" | jq -r '.output | fromjson | if .response then "status \(.response.statusCode)" else .request.uri end')
   error=$(echo "$result" | jq -r '.error // empty')
   cpu=$(echo "$result" | jq -r '.cpu')
   if [ "$actual" != "$expected" ] || [ -n "$error" ]; then failures=$((failures + 1)); echo "FAIL $(jq -r ".[$i].name" cases.json): got '$actual' expected '$expected' error '$error'"; fi
@@ -73,7 +73,7 @@ done
 echo "failures: $failures"
 ```
 
-Expected: `failures: 0`, no `FunctionErrorMessage` on any case, and a compute utilization well under 100 (a one or two digit number; the limit that matters is the runtime's one millisecond, which this function does not come near). Any failure means the runtime behaves differently from Node for that input: stop, fix the function, `update-function` with the new code and the current ETag, and run this step again. What this step does not exercise: the `catch`, because the replay feeds the function well-formed events only.
+Expected: `failures: 0` (a case that expects a refusal prints `status 404` instead of a URI), no `FunctionErrorMessage` on any case, and a compute utilization well under 100 (a one or two digit number; the limit that matters is the runtime's one millisecond, which this function does not come near). Any failure means the runtime behaves differently from Node for that input: stop, fix the function, `update-function` with the new code and the current ETag, and run this step again. What this step does not exercise: the `catch`, because the replay feeds the function well-formed events only.
 
 Rollback: none needed, nothing changed.
 
