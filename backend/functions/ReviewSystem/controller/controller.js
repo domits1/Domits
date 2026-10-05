@@ -3,6 +3,8 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
+// Parse the raw request payload into a validated review object.
+// This prevents malformed JSON or array payloads from reaching the business layer.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -20,6 +22,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Attach the controller to the service and auth dependencies used by every request.
+  // This keeps the controller flexible and ensures all handlers use the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -39,22 +43,32 @@ export class Controller {
     }
   }
 
+  // Route incoming review requests by HTTP method.
+  // This centralizes request handling and avoids allowing unsupported operations.
   async manageReviews(event) {
     try {
-      const { userId } = this.authManager.getUser(event);
+      const user = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
-      if (event.httpMethod === "GET") {
-        const result = await this.service.getReviews(userId, query.scope);
-        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-      }
-      if (event.httpMethod === "DELETE") {
-        await this.service.deleteReview(userId, query.reviewId);
-        return { statusCode: 204, headers: responseHeaders, body: "" };
-      }
+      if (event.httpMethod === "GET") return await this.getReviews(user, query);
+      if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
       return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
     } catch (error) {
       return this.handleError(error);
     }
+  }
+
+  // Fetch the user's review list with the requested scope.
+  // This keeps reads consistent and delegates authorization and data access to the service layer.
+  async getReviews(user, query) {
+    const result = await this.service.getReviews(user.userId, query.scope);
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Remove a review only for the authenticated owner.
+  // This blocks one user from deleting another user's review by accident or malice.
+  async deleteReview(user, query) {
+    await this.service.deleteReview(user.userId, query.reviewId);
+    return { statusCode: 204, headers: responseHeaders, body: "" };
   }
 
   // Hide unexpected failure details because they may expose internal implementation data.
