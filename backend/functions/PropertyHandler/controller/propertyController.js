@@ -1666,12 +1666,12 @@ export class PropertyController {
                 status: resolvedStatus,
             };
         });
-        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
-        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
+        const selectedDomainRow = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
+        const isReachable = site.status === "PUBLISHED" && selectedDomainRow?.status === "ACTIVE";
 
         return {
             site,
-            primaryDomain,
+            primaryDomain: selectedDomainRow,
             domains: normalizedDomains,
             isReachable,
         };
@@ -1808,13 +1808,13 @@ export class PropertyController {
         }
 
         const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-        const primaryDomain =
+        const selectedDomainRow =
             domains.find((domainEntry) => domainEntry?.isPrimary) ||
             domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
             null;
         const healedPrimaryDomain =
-            primaryDomain || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
-        const storedSiteDomains = primaryDomain ? domains : null;
+            selectedDomainRow || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
+        const storedSiteDomains = selectedDomainRow ? domains : null;
 
         return {
             site,
