@@ -26,6 +26,7 @@ it.each([undefined, null, "", " \n\t ", 42, true, {}, [], "x".repeat(501), "Stay
   "rejects invalid written content before persistence: %p", async (public_review) => {
     const response = await controller.createReview({
       headers: { Authorization: "token" }, body: JSON.stringify({ ...payload, public_review }),
+      requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     });
     expect(response.statusCode).toBe(400);
     expect(JSON.parse(response.body).message).toBeTruthy();
