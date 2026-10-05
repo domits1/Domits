@@ -1,5 +1,6 @@
 import { PropertyTask as TaskEntity } from "database/models/Property_Task";
 import { Property_Task_Activity as TaskActivityEntity } from "database/models/Property_Task_Activity";
+import { Property_Task_Checklist_Item as ChecklistItemEntity } from "database/models/Property_Task_Checklist_Item";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const repository = dataSource.getRepository(TaskEntity);
@@ -81,4 +82,29 @@ export const getTaskById = async (dataSource, taskId, hostId) => {
 export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.update(taskId, updateData);
+};
+
+export const getChecklistItemsForTask = async (dataSource, taskId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.find({ where: { task_id: taskId }, order: { position: "ASC" } });
+};
+
+export const getChecklistItemById = async (dataSource, itemId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.findOne({ where: { id: itemId } });
+};
+
+export const saveChecklistItemToDb = async (dataSource, itemData) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.save(itemData);
+};
+
+export const updateChecklistItemInDb = async (dataSource, itemId, updateData) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.update(itemId, updateData);
+};
+
+export const deleteChecklistItemFromDb = async (dataSource, itemId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.delete(itemId);
 };
