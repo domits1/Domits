@@ -1,11 +1,9 @@
 jest.mock("../../functions/ReviewSystem/data/reviewRepository.js", () => ({
   ReviewRepository: jest.fn(),
 }));
-jest.mock("../../functions/ReviewSystem/auth/authManager.js", () => ({
-  AuthManager: jest.fn(),
-}));
 
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
+import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
 const now = Date.parse("2026-10-01T12:00:00Z");
@@ -120,14 +118,8 @@ beforeEach(() => {
     deleteOwnReview: jest.fn().mockResolvedValue({ affected: 1 }),
   };
   service = new ReviewService({ repository, now: () => now });
-  authManager = {
-    getUser: jest.fn(async (token) => {
-      if (!token) {
-        throw Object.assign(new Error("Missing token"), { statusCode: 401 });
-      }
-      return { userId: booking.guestid };
-    }),
-  };
+  authManager = new AuthManager();
+  jest.spyOn(authManager, "getUser");
   controller = new Controller({ service, authManager });
 });
 
@@ -187,21 +179,33 @@ it("returns a conflict when the database rejects a duplicate reservation", async
 it.each(["Authorization", "authorization"])("accepts the %s header", async (header) => {
   const result = await controller.createReview({
     headers: { [header]: "access-token" },
+    requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     body: JSON.stringify(payload),
   });
   expect(result.statusCode).toBe(201);
-  expect(authManager.getUser).toHaveBeenCalledWith("access-token");
+  expect(authManager.getUser).toHaveBeenCalledWith(expect.objectContaining({
+    requestContext: { authorizer: { claims: { sub: booking.guestid } } },
+  }));
 });
 
-it("rejects a missing authorization token", async () => {
+it("rejects missing verified authorizer claims", async () => {
   const result = await controller.createReview({ headers: {}, body: JSON.stringify(payload) });
   expect(result.statusCode).toBe(401);
   expect(repository.create).not.toHaveBeenCalled();
 });
 
+it("rejects an authorization header without verified authorizer claims", async () => {
+  const result = await controller.createReview({
+    headers: { Authorization: "unverified-token" }, body: JSON.stringify(payload),
+  });
+  expect(result.statusCode).toBe(401);
+  expect(repository.findBookingById).not.toHaveBeenCalled();
+  expect(repository.create).not.toHaveBeenCalled();
+});
+
 it.each(["{", "null", "[]"])("rejects malformed review bodies: %s", async (body) => {
   const result = await controller.createReview({
-    headers: { Authorization: "access-token" },
+    headers: { Authorization: "access-token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     body,
   });
   expect(result.statusCode).toBe(400);
@@ -219,7 +223,7 @@ it.each([undefined, null, "", "5", 0, 6, -1, 2.5, NaN, Infinity, true, {}, [], {
 
 it.each([undefined, null, ""])("returns a useful message for missing rating: %p", async (overall_rating) => {
   const result = await controller.createReview({
-    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+    headers: { Authorization: "access-token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } }, body: JSON.stringify({ ...payload, overall_rating }),
   });
   expect(result.statusCode).toBe(400);
   expect(JSON.parse(result.body).message).toBe("Please select an overall experience rating from 1 to 5 stars.");
@@ -227,7 +231,7 @@ it.each([undefined, null, ""])("returns a useful message for missing rating: %p"
 
 it.each([0, 6, 2.5, "5"])("rejects an invalid rating through HTTP: %p", async (overall_rating) => {
   const result = await controller.createReview({
-    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+    headers: { Authorization: "access-token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } }, body: JSON.stringify({ ...payload, overall_rating }),
   });
   expect(result.statusCode).toBe(400);
   expect(repository.create).not.toHaveBeenCalled();
@@ -236,7 +240,7 @@ it.each([0, 6, 2.5, "5"])("rejects an invalid rating through HTTP: %p", async (o
 it.each([1, 2, 3, 4, 5])("saves and returns %s stars for the correct review", async (overall_rating) => {
   repository.create.mockImplementation(async (record) => ({ id: "review-1", ...record }));
   const result = await controller.createReview({
-    headers: { Authorization: "access-token" }, body: JSON.stringify({ ...payload, overall_rating }),
+    headers: { Authorization: "access-token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } }, body: JSON.stringify({ ...payload, overall_rating }),
   });
   expect(result.statusCode).toBe(201);
   expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -249,7 +253,7 @@ it.each([1, 2, 3, 4, 5])("saves and returns %s stars for the correct review", as
 
 it.each(["written", "received"])("scopes %s reviews to the authenticated caller", async (scope) => {
   repository.findReviews.mockResolvedValue([{ id: "review-1", overall_rating: 4, public_review: "Great stay.", created_at: now }]);
-  const result = await controller.manageReviews({ httpMethod: "GET", headers: { Authorization: "token" },
+  const result = await controller.manageReviews({ httpMethod: "GET", headers: { Authorization: "token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     queryStringParameters: { scope, guest_id: "spoof", host_id: "spoof" } });
   expect(result.statusCode).toBe(200);
   expect(repository.findReviews).toHaveBeenCalledWith(scope === "written" ? { guest_id: booking.guestid }
@@ -270,7 +274,7 @@ it("rejects unsupported scopes", async () => {
 
 it("deletes only an authored review and returns 404 when ownership does not match", async () => {
   const reviewId = "12345678-1234-1234-1234-123456789abc";
-  const event = { httpMethod: "DELETE", headers: { Authorization: "token" }, queryStringParameters: { reviewId } };
+  const event = { httpMethod: "DELETE", headers: { Authorization: "token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } }, queryStringParameters: { reviewId } };
   expect((await controller.manageReviews(event)).statusCode).toBe(204);
   expect(repository.deleteOwnReview).toHaveBeenCalledWith(reviewId, booking.guestid);
   repository.deleteOwnReview.mockResolvedValue({ affected: 0 });
