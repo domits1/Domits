@@ -24,6 +24,22 @@ export class StaticPageWithdrawal {
     return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
+  async removePages(hostnames) {
+    const removed = [];
+    const failures = [];
+    for (const hostname of [...new Set(hostnames)]) {
+      try {
+        buildStaticPageKey(hostname);
+        await this.pageStore.deletePage({ hostname });
+        removed.push(hostname);
+      } catch (error) {
+        failures.push({ hostname, message: error.message });
+      }
+    }
+
+    return { removed, failures, invalidationErrors: await this.#invalidate(removed) };
+  }
+
   async withdraw({ siteId, domains }) {
     const hostnames = [...new Set(domains.map((domain) => domain?.domain).filter(Boolean))];
     hostnames.forEach((hostname) => buildStaticPageKey(hostname));

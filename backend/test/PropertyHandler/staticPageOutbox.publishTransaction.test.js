@@ -301,7 +301,10 @@ describe("queueing the page of a published site from the reconciler", () => {
     const update = statementFor(client, new RegExp(`UPDATE ${SCHEMA}\\.standalone_site`));
     expect(update.statement).toContain("AND status = 'PUBLISHED'");
     expect(update.statement).toContain("static_page_revision = COALESCE(static_page_revision, 0) + 1");
-    expect(update.parameters).toEqual(["site-1", expect.any(Number)]);
+    expect(update.statement).toContain("AND NOT EXISTS (");
+    expect(update.statement).toContain("AND outbox.attempt_count < $3");
+    expect(update.statement).toContain("AND outbox.status IN ('PENDING', 'BUILDING', 'FAILED')");
+    expect(update.parameters).toEqual(["site-1", expect.any(Number), 5]);
     expect(statementFor(client, /INSERT INTO \S*static_page_outbox/).parameters).toEqual([
       "site-1",
       "property-1",
@@ -311,6 +314,15 @@ describe("queueing the page of a published site from the reconciler", () => {
     ]);
     expect(client.committed).toBe(true);
     expect(queued).toBe(true);
+  });
+
+  it("queues nothing when the outbox row is still at work, so two reconcilers cannot bump the revision twice", async () => {
+    const client = buildClient({ siteRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    expect(await repository.queueStaticPage("site-1")).toBe(false);
+    expect(statementFor(client, /static_page_outbox AS outbox/)).toBeDefined();
+    expect(client.statements.filter(({ statement }) => /INSERT INTO/.test(statement))).toHaveLength(0);
   });
 
   it("queues nothing for a site that is not published any more and answers false", async () => {

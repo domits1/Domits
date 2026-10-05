@@ -14,20 +14,29 @@ const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
 const PAGE_KEY_PREFIX = "sites/by-host/";
 const PAGE_KEY_SUFFIX = "/index.html";
-const MAX_LISTED_PAGES = 5000;
+const MAX_SCANNED_KEYS = 20000;
 
-export const buildStaticPageKey = (hostname) => {
+export const isStaticPageHostname = (hostname) => {
   const labels = typeof hostname === "string" ? hostname.split(".") : [];
-  const isHostname =
+  return (
     labels.length >= 2 &&
     hostname.length <= MAX_HOSTNAME_LENGTH &&
-    labels.every((label) => HOSTNAME_LABEL_PATTERN.test(label));
-  if (!isHostname) {
+    labels.every((label) => HOSTNAME_LABEL_PATTERN.test(label))
+  );
+};
+
+export const buildStaticPageKey = (hostname) => {
+  if (!isStaticPageHostname(hostname)) {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
   return `${PAGE_KEY_PREFIX}${hostname}${PAGE_KEY_SUFFIX}`;
 };
+
+const hostnameOfPageKey = (key) =>
+  key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(PAGE_KEY_SUFFIX)
+    ? key.slice(PAGE_KEY_PREFIX.length, -PAGE_KEY_SUFFIX.length)
+    : "";
 
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
@@ -63,6 +72,8 @@ export class StaticPageStore {
 
   async listPageHostnames() {
     const hostnames = [];
+    const rejected = [];
+    let scanned = 0;
     let continuationToken;
     do {
       const response = await this.client.send(
@@ -74,17 +85,21 @@ export class StaticPageStore {
       );
       for (const object of response?.Contents || []) {
         const key = String(object?.Key || "");
-        if (key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(PAGE_KEY_SUFFIX)) {
-          hostnames.push(key.slice(PAGE_KEY_PREFIX.length, -PAGE_KEY_SUFFIX.length));
+        const hostname = hostnameOfPageKey(key);
+        if (isStaticPageHostname(hostname)) {
+          hostnames.push(hostname);
+        } else {
+          rejected.push(key);
         }
       }
-      if (hostnames.length > MAX_LISTED_PAGES) {
-        throw new Error(`More than ${MAX_LISTED_PAGES} pages under ${PAGE_KEY_PREFIX}; refusing to reconcile blindly.`);
+      scanned += (response?.Contents || []).length;
+      if (scanned > MAX_SCANNED_KEYS) {
+        throw new Error(`More than ${MAX_SCANNED_KEYS} keys under ${PAGE_KEY_PREFIX}; refusing to reconcile blindly.`);
       }
       continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
     } while (continuationToken);
 
-    return hostnames.filter((hostname) => hostname && !hostname.includes("/"));
+    return { hostnames, rejected };
   }
 
   async deletePage({ hostname }) {

@@ -139,4 +139,27 @@ describe("StaticPageWithdrawal", () => {
     expect(pageStore.deletePage).toHaveBeenCalledTimes(1);
     expect(tenantRepository.createInvalidation).toHaveBeenCalledTimes(1);
   });
+
+  it("removes a batch of pages, carrying on past a key that fails, and invalidates the removed ones once per tenant", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+    const other = "other-site-2.direct.domits.com";
+    pageStore.deletePage.mockImplementation(async ({ hostname }) => {
+      if (hostname === other) {
+        throw new Error("SlowDown");
+      }
+    });
+
+    const result = await withdrawal.removePages([FALLBACK.domain, other, CUSTOM.domain, "Bad Host"]);
+
+    expect(result.removed).toEqual([FALLBACK.domain, CUSTOM.domain]);
+    expect(result.failures).toEqual([
+      { hostname: other, message: "SlowDown" },
+      { hostname: "Bad Host", message: "A static page key needs a lowercase hostname." },
+    ]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => call.tenantId)).toEqual([
+      "dt_wildcard",
+      "dt_custom",
+    ]);
+    expect(result.invalidationErrors).toEqual([]);
+  });
 });

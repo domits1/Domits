@@ -52,4 +52,21 @@ describe("DirectBookingWebsiteDomainRepository.listDomainsWithSites", () => {
       expect.objectContaining({ id: "domain-2", site: { id: "site-1", status: "PUBLISHED", staticPageRevision: 4 } }),
     ]);
   });
+
+  it("looks one domain up with its site, lower-cased, and answers null for an unknown one", async () => {
+    const client = { options: { schema: "main" }, query: jest.fn(async () => [ROW]) };
+    Database.getInstance.mockResolvedValue(client);
+    const repository = new DirectBookingWebsiteDomainRepository();
+
+    const entry = await repository.getDomainWithSiteByName(" WWW.Example.com ");
+
+    const [statement, parameters] = client.query.mock.calls[0];
+    expect(statement).toContain("WHERE domain_entry.domain = $1");
+    expect(statement).toContain("LIMIT 1");
+    expect(parameters).toEqual(["www.example.com"]);
+    expect(entry).toMatchObject({ domain: "www.example.com", site: { status: "PUBLISHED" } });
+
+    client.query.mockResolvedValueOnce([]);
+    expect(await repository.getDomainWithSiteByName("nobody.example")).toBeNull();
+  });
 });
