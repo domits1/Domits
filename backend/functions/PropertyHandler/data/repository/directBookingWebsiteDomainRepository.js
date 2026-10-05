@@ -201,6 +201,39 @@ const runInTransaction = async (client, work) => {
   throw lastError;
 };
 
+const buildDomainWithSiteQuery = (schemaName, whereClause, suffix) =>
+  `SELECT
+        domain_entry.id,
+        domain_entry.site_id,
+        domain_entry.domain,
+        domain_entry.domain_type,
+        domain_entry.status,
+        domain_entry.is_primary,
+        domain_entry.verification_details_json,
+        domain_entry.last_checked_at,
+        domain_entry.created_at,
+        domain_entry.updated_at,
+        site.status AS site_status,
+        site.static_page_revision AS site_static_page_revision
+      FROM ${siteDomainTableName(schemaName)} AS domain_entry
+      JOIN ${schemaName}.standalone_site AS site ON site.id = domain_entry.site_id
+      ${whereClause}
+      ${suffix}`.trim();
+
+const mapDomainWithSiteRow = (row) => {
+  const domainEntry = mapSiteDomainRow(row);
+  return domainEntry
+    ? {
+        ...domainEntry,
+        site: {
+          id: domainEntry.siteId,
+          status: String(row.site_status),
+          staticPageRevision: row.site_static_page_revision === null ? 0 : Number(row.site_static_page_revision),
+        },
+      }
+    : null;
+};
+
 const mapSiteDomainRow = (row) => {
   if (!row) {
     return null;
@@ -318,42 +351,29 @@ export class DirectBookingWebsiteDomainRepository {
   async listDomainsWithSites() {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
-    const tableName = siteDomainTableName(schemaName);
 
     const rows = await client.query(
-      `SELECT
-        domain_entry.id,
-        domain_entry.site_id,
-        domain_entry.domain,
-        domain_entry.domain_type,
-        domain_entry.status,
-        domain_entry.is_primary,
-        domain_entry.verification_details_json,
-        domain_entry.last_checked_at,
-        domain_entry.created_at,
-        domain_entry.updated_at,
-        site.status AS site_status,
-        site.static_page_revision AS site_static_page_revision
-      FROM ${tableName} AS domain_entry
-      JOIN ${schemaName}.standalone_site AS site ON site.id = domain_entry.site_id
-      ORDER BY domain_entry.site_id ASC, domain_entry.is_primary DESC, domain_entry.created_at ASC`
+      buildDomainWithSiteQuery(
+        schemaName,
+        "",
+        "ORDER BY domain_entry.site_id ASC, domain_entry.is_primary DESC, domain_entry.created_at ASC"
+      )
     );
 
-    return (Array.isArray(rows) ? rows : [])
-      .map((row) => {
-        const domainEntry = mapSiteDomainRow(row);
-        return domainEntry
-          ? {
-              ...domainEntry,
-              site: {
-                id: domainEntry.siteId,
-                status: String(row.site_status),
-                staticPageRevision: row.site_static_page_revision === null ? 0 : Number(row.site_static_page_revision),
-              },
-            }
-          : null;
-      })
-      .filter(Boolean);
+    return (Array.isArray(rows) ? rows : []).map(mapDomainWithSiteRow).filter(Boolean);
+  }
+
+  async getDomainWithSiteByName(domain) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+
+    const rows = await client.query(buildDomainWithSiteQuery(schemaName, "WHERE domain_entry.domain = $1", "LIMIT 1"), [
+      String(domain || "")
+        .trim()
+        .toLowerCase(),
+    ]);
+
+    return mapDomainWithSiteRow(rows?.[0] || null);
   }
 
   async getFallbackDomainBySiteId(siteId) {

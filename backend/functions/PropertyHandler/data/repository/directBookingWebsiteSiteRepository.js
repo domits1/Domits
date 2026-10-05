@@ -1,5 +1,6 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const DEFAULT_SITE_LOCALE = "en";
@@ -315,7 +316,7 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
-  async queueStaticPage(siteId) {
+  async queueStaticPage(siteId, { attemptLimit = STATIC_PAGE_ATTEMPT_LIMIT } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
@@ -330,9 +331,16 @@ export class DirectBookingWebsiteSiteRepository {
         updated_at = $2
       WHERE id = $1
         AND status = 'PUBLISHED'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM ${outboxTableName} AS outbox
+          WHERE outbox.site_id = $1
+            AND outbox.attempt_count < $3
+            AND outbox.status IN ('PENDING', 'BUILDING', 'FAILED')
+        )
       RETURNING
         ${SITE_SELECT_COLUMNS}`,
-        [siteId, now],
+        [siteId, now, attemptLimit],
         true
       );
 

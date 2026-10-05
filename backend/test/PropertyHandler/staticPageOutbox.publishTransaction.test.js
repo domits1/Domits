@@ -45,7 +45,7 @@ const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "si
   const transactionRunner = {
     query: jest.fn(async (statement, parameters, useStructuredResult) => {
       statements.push({ statement, parameters, useStructuredResult });
-      const records = /static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
+      const records = /INSERT INTO \S*static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
       return useStructuredResult ? { records, affected: records.length } : records;
     }),
     release: jest.fn().mockResolvedValue(undefined),
@@ -301,8 +301,11 @@ describe("queueing the page of a published site from the reconciler", () => {
     const update = statementFor(client, new RegExp(`UPDATE ${SCHEMA}\\.standalone_site`));
     expect(update.statement).toContain("AND status = 'PUBLISHED'");
     expect(update.statement).toContain("static_page_revision = COALESCE(static_page_revision, 0) + 1");
-    expect(update.parameters).toEqual(["site-1", expect.any(Number)]);
-    expect(statementFor(client, /static_page_outbox/).parameters).toEqual([
+    expect(update.statement).toContain("AND NOT EXISTS (");
+    expect(update.statement).toContain("AND outbox.attempt_count < $3");
+    expect(update.statement).toContain("AND outbox.status IN ('PENDING', 'BUILDING', 'FAILED')");
+    expect(update.parameters).toEqual(["site-1", expect.any(Number), 5]);
+    expect(statementFor(client, /INSERT INTO \S*static_page_outbox/).parameters).toEqual([
       "site-1",
       "property-1",
       "host-1",
@@ -313,11 +316,20 @@ describe("queueing the page of a published site from the reconciler", () => {
     expect(queued).toBe(true);
   });
 
+  it("queues nothing when the outbox row is still at work, so two reconcilers cannot bump the revision twice", async () => {
+    const client = buildClient({ siteRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    expect(await repository.queueStaticPage("site-1")).toBe(false);
+    expect(statementFor(client, /static_page_outbox AS outbox/)).toBeDefined();
+    expect(client.statements.filter(({ statement }) => /INSERT INTO/.test(statement))).toHaveLength(0);
+  });
+
   it("queues nothing for a site that is not published any more and answers false", async () => {
     const client = buildClient({ siteRecords: [] });
     const repository = new DirectBookingWebsiteSiteRepository();
 
     expect(await repository.queueStaticPage("site-1")).toBe(false);
-    expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
+    expect(statementFor(client, /INSERT INTO \S*static_page_outbox/)).toBeUndefined();
   });
 });

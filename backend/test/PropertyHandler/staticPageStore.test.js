@@ -103,13 +103,14 @@ describe("StaticPageStore", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("lists the hostnames that have a page, across pages of the listing, and ignores keys that are not page keys", async () => {
+  it("lists the hostnames that have a page across pages of the listing, and reports keys that are not page keys", async () => {
     const pages = [
       {
         Contents: [
           { Key: "sites/by-host/a.direct.domits.com/index.html" },
           { Key: "sites/by-host/a.direct.domits.com/old.html" },
           { Key: "sites/by-host/index.html" },
+          { Key: "sites/by-host/UPPER.example/index.html" },
         ],
         IsTruncated: true,
         NextContinuationToken: "t2",
@@ -118,7 +119,7 @@ describe("StaticPageStore", () => {
     ];
     const send = jest.fn(async () => pages.shift());
 
-    const hostnames = await buildStore(send).listPageHostnames();
+    const listed = await buildStore(send).listPageHostnames();
 
     expect(send.mock.calls.map(([command]) => command)).toEqual([
       expect.any(ListObjectsV2Command),
@@ -130,16 +131,30 @@ describe("StaticPageStore", () => {
       ContinuationToken: undefined,
     });
     expect(send.mock.calls[1][0].input.ContinuationToken).toBe("t2");
-    expect(hostnames).toEqual(["a.direct.domits.com", "www.b.nl"]);
+    expect(listed).toEqual({
+      hostnames: ["a.direct.domits.com", "www.b.nl"],
+      rejected: [
+        "sites/by-host/a.direct.domits.com/old.html",
+        "sites/by-host/index.html",
+        "sites/by-host/UPPER.example/index.html",
+      ],
+    });
   });
 
-  it("refuses to reconcile a prefix with more pages than it is willing to list", async () => {
-    const contents = Array.from({ length: 1000 }, (_, index) => ({
-      Key: `sites/by-host/s${index}.direct.domits.com/index.html`,
-    }));
-    const send = jest.fn(async () => ({ Contents: contents, IsTruncated: true, NextContinuationToken: "more" }));
+  it("refuses to reconcile a prefix with more keys than it is willing to scan, whatever they are", async () => {
+    let page = 0;
+    const send = jest.fn(async () => {
+      page += 1;
+      return {
+        Contents: Array.from({ length: 1000 }, (_, index) => ({
+          Key: `sites/by-host/s${page}-${index}.direct.domits.com/stray`,
+        })),
+        IsTruncated: true,
+        NextContinuationToken: `t${page}`,
+      };
+    });
 
-    await expect(buildStore(send).listPageHostnames()).rejects.toThrow("More than 5000 pages");
-    expect(send).toHaveBeenCalledTimes(6);
+    await expect(buildStore(send).listPageHostnames()).rejects.toThrow("More than 20000 keys");
+    expect(send).toHaveBeenCalledTimes(21);
   });
 });
