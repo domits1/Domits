@@ -31,6 +31,8 @@ export class Controller {
 
   // Use verified identity instead of client-supplied IDs to prevent impersonation.
   // Reservation ownership can then be checked against a trusted caller.
+  // Create a review for the authenticated user and validated request body.
+  // This prevents impersonation by trusting the server-verified caller instead of client-supplied data.
   async createReview(event) {
     try {
       const authenticatedUser = this.authManager.getUser(event);
