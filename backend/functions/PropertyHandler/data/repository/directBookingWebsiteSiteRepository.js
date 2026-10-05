@@ -118,9 +118,7 @@ const normalizeJsonObject = (value) => {
 };
 
 const normalizeSiteStatus = (status) => {
-  const normalizedStatus = String(status || "DRAFT")
-    .trim()
-    .toUpperCase();
+  const normalizedStatus = String(status || "DRAFT").trim().toUpperCase();
   if (!SITE_ALLOWED_STATUSES.has(normalizedStatus)) {
     throw new TypeError("website site status must be DRAFT, PREVIEW, PUBLISHED, or SUSPENDED.");
   }
@@ -129,9 +127,7 @@ const normalizeSiteStatus = (status) => {
 };
 
 const normalizeLocale = (locale) => {
-  const normalizedLocale = String(locale || "")
-    .trim()
-    .toLowerCase();
+  const normalizedLocale = String(locale || "").trim().toLowerCase();
   return normalizedLocale || DEFAULT_SITE_LOCALE;
 };
 
