@@ -3,8 +3,40 @@ import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Property } from "database/models/Property";
+import { ReviewCategory } from "database/models/ReviewCategory";
+import { ReviewCategoryRating } from "database/models/ReviewCategoryRating";
 
 export class ReviewRepository {
+  async getPropertyCategoryRatings(propertyId, hostId) {
+    const database = await Database.getInstance();
+    const rows = await database.getRepository(ReviewCategory).createQueryBuilder("category")
+      .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
+      .leftJoin((query) => query
+        .select("rating.category_key", "category_key")
+        .addSelect("AVG(rating.rating)", "average_rating")
+        .addSelect("COUNT(*)", "rating_count")
+        .from(ReviewCategoryRating, "rating")
+        .innerJoin(Review, "review", "review.id = rating.review_id")
+        .where("review.property_id = :propertyId")
+        .andWhere("review.verification_status = :verified")
+        .andWhere("review.publication_status = :published")
+        .andWhere("rating.rating BETWEEN :minimum AND :maximum")
+        .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
+        .groupBy("rating.category_key"),
+      "aggregate", "aggregate.category_key = category.key")
+      .select("category.key", "category_key")
+      .addSelect("category.label", "label")
+      .addSelect("aggregate.average_rating", "average_rating")
+      .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
+      .where("category.active = :active")
+      .setParameters({ propertyId, hostId, verified: "verified", published: "published",
+        minimum: 1, maximum: 5, active: true })
+      .orderBy("category.key", "ASC").getRawMany();
+    return rows.map((row) => ({ category_key: row.category_key, label: row.label,
+      average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
+      rating_count: Number(row.rating_count) }));
+  }
+
   async findManagedProperty(propertyId, hostId) {
     const dataSource = await Database.getInstance();
     return dataSource.getRepository(Property).findOne({

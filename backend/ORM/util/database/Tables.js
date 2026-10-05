@@ -61,6 +61,8 @@ import { Team_Member } from "../../models/Team_Member.js";
 import { Invoice } from "../../models/Invoice.js";
 
 import { Review } from "../../models/Review.js";
+import { ReviewCategory } from "../../models/ReviewCategory.js";
+import { ReviewCategoryRating } from "../../models/ReviewCategoryRating.js";
 
 export const Tables = [
   Amenities,
@@ -125,4 +127,6 @@ export const Tables = [
   Invoice,
   EnterpriseRatePlan,
   Review,
+  ReviewCategory,
+  ReviewCategoryRating,
 ];

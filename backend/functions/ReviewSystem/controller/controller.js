@@ -25,8 +25,8 @@ export class Controller {
     this.authManager = authManager;
   }
 
-  // Use verified identity instead of client-supplied IDs to prevent impersonation.
-  // Reservation ownership can then be checked against a trusted caller.
+  // Create a review from the authenticated user and validated request body.
+  // This prevents impersonation by trusting the server-authenticated caller instead of the client.
   async createReview(event) {
     try {
       const authenticatedUser = this.authManager.getUser(event);
@@ -39,39 +39,57 @@ export class Controller {
     }
   }
 
+  // Route review actions to the correct handler based on the HTTP method.
+  // This keeps the API surface simple while enforcing one entry point for read/update/delete operations.
   async manageReviews(event) {
     try {
-      const { userId, username } = this.authManager.getUser(event);
+      const user = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
-      if (event.httpMethod === "GET") {
-        if (query.scope === "property-score") {
-          if (query.reviewId !== undefined) {
-            throw new BadRequestException("Property score and individual review requests cannot be combined.");
-          }
-          const result = await this.service.getPropertyOverallScore(username, query.propertyId);
-          return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-        }
-        const result = query.reviewId !== undefined
-          ? await this.service.getEditableReview(userId, query.reviewId)
-          : await this.service.getReviews(userId, query.scope);
-        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-      }
-      if (event.httpMethod === "PATCH") {
-        const result = await this.service.updateReview(userId, query.reviewId, parseBody(event.body));
-        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-      }
-      if (event.httpMethod === "DELETE") {
-        await this.service.deleteReview(userId, query.reviewId);
-        return { statusCode: 204, headers: responseHeaders, body: "" };
-      }
+      if (event.httpMethod === "GET") return await this.getReviews(user, query);
+      if (event.httpMethod === "PATCH") return await this.patchReview(user, query, event.body);
+      if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
       return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
     } catch (error) {
       return this.handleError(error);
     }
   }
 
-  // Hide unexpected failure details because they may expose internal implementation data.
-  // Preserve actionable client errors so callers can correct invalid requests.
+  // Fetch review data for the caller while guarding invalid query combinations.
+  // This ensures the response matches the requested scope without exposing unauthorized or inconsistent data.
+  async getReviews(user, query) {
+    const propertyScope = ["property-score", "property-categories"].includes(query.scope);
+    if (propertyScope && query.reviewId !== undefined) {
+      throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
+    }
+    let result;
+    if (query.scope === "property-score") {
+      result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+    } else if (query.scope === "property-categories") {
+      result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+    } else if (query.reviewId !== undefined) {
+      result = await this.service.getEditableReview(user.userId, query.reviewId);
+    } else {
+      result = await this.service.getReviews(user.userId, query.scope);
+    }
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Update an existing review only if the caller is allowed to edit it.
+  // This prevents abandoned, stale, or unauthorized edits from changing a guest's review data.
+  async patchReview(user, query, body) {
+    const result = await this.service.updateReview(user.userId, query.reviewId, parseBody(body));
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Remove a review after confirming the caller owns it.
+  // This enforces deletion safety and avoids allowing arbitrary users to delete another person's review.
+  async deleteReview(user, query) {
+    await this.service.deleteReview(user.userId, query.reviewId);
+    return { statusCode: 204, headers: responseHeaders, body: "" };
+  }
+
+  // Convert exceptions into safe HTTP responses for the client.
+  // This hides internal implementation details while preserving validation and authorization feedback.
   handleError(error) {
     const statusCode = error.statusCode || 500;
     const message = statusCode >= 500 ? "Something went wrong, please contact support." : error.message;
