@@ -39,6 +39,24 @@ export class Controller {
     }
   }
 
+  async manageReviews(event) {
+    try {
+      const { userId } = this.authManager.getUser(event);
+      const query = event.queryStringParameters || {};
+      if (event.httpMethod === "GET") {
+        const result = await this.service.getReviews(userId, query.scope);
+        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+      }
+      if (event.httpMethod === "DELETE") {
+        await this.service.deleteReview(userId, query.reviewId);
+        return { statusCode: 204, headers: responseHeaders, body: "" };
+      }
+      return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   // Hide unexpected failure details because they may expose internal implementation data.
   // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
