@@ -59,9 +59,14 @@ const buildOutbox = (rows) => {
   };
 };
 
-const buildWorker = ({ rows = [buildJob()], sites = [buildSite()], domains = [FALLBACK, CUSTOM] } = {}) => {
+const buildWorker = ({
+  rows = [buildJob()],
+  sites = [buildSite()],
+  domains = [FALLBACK, CUSTOM],
+  outbox = null,
+} = {}) => {
   const deps = {
-    outboxRepository: buildOutbox(rows),
+    outboxRepository: outbox || buildOutbox(rows),
     siteRepository: { getSiteById: jest.fn(async (siteId) => sites.find((site) => site.id === siteId) || null) },
     domainRepository: { listDomainsBySiteId: jest.fn(async () => domains) },
     pageStore: { readAppShell: jest.fn(async () => SHELL), putPage: jest.fn(async () => undefined) },
@@ -284,18 +289,21 @@ describe("StaticPageWorker", () => {
 
   it("lets unpublish, publish and unpublish pass during one withdrawal, and only the last revision ends withdrawn", async () => {
     const { worker, outbox, siteRepository, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const second = buildWorker({ outbox, sites: [] });
+    let secondSummary = null;
     withdrawal.withdraw.mockImplementationOnce(async ({ siteId }) => {
-      Object.assign(outbox.table.get("site-1"), { revision: 5 });
       Object.assign(outbox.table.get("site-1"), { revision: 6 });
       siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PREVIEW", staticPageRevision: 6 }));
-      const second = buildWorker({ rows: [{ ...outbox.table.get("site-1") }], sites: [] });
-      second.outbox.table = outbox.table;
-      expect(await second.worker.run()).toMatchObject({ notClaimed: 1, withdrawn: 0 });
+      outbox.listPagesToBuild.mockResolvedValueOnce([buildJob({ revision: 6 })]);
+      secondSummary = await second.worker.run();
       return { siteId, hostnames: [], invalidationErrors: [] };
     });
 
     const first = await worker.run();
-    expect(first).toMatchObject({ superseded: 1, withdrawn: 0 });
+
+    expect(secondSummary).toMatchObject({ listed: 1, notClaimed: 1, withdrawn: 0 });
+    expect(second.withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(first).toMatchObject({ superseded: 1, withdrawn: 0, failed: 0 });
     expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "PENDING" });
 
     const next = await worker.run();

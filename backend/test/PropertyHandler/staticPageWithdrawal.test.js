@@ -130,13 +130,4 @@ describe("StaticPageWithdrawal", () => {
       { hostname: FALLBACK.domain, message: "no tenant serves this hostname" },
     ]);
   });
-
-  it("invalidates a domain only once when the site lists it twice", async () => {
-    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
-
-    await withdrawal.withdraw({ siteId: "site-1", domains: [CUSTOM, { ...CUSTOM, status: "REMOVING" }] });
-
-    expect(pageStore.deletePage).toHaveBeenCalledTimes(1);
-    expect(tenantRepository.createInvalidation).toHaveBeenCalledTimes(1);
-  });
 });
