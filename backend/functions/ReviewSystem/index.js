@@ -1,30 +1,24 @@
 import { Controller } from "./controller/controller.js";
 import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
 
-let controller = null;
+let controller;
 
 export const handler = async (event) => {
-  try {
-    if (!controller) {
-      controller = new Controller();
-    }
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: responseHeaders };
+  }
 
-    const method = event.httpMethod;
-
-    if (method === "OPTIONS") {
-      return { statusCode: 200, headers: responseHeaders };
-    }
-
-    if (method === "POST") {
-      return await controller.createReview(event);
-    }
-    if (method === "GET" || method === "DELETE") return await controller.manageReviews(event);
-
+  if (!["POST", "GET", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
     return {
       statusCode: 405,
       headers: responseHeaders,
-      body: JSON.stringify({ message: `Method ${method} not supported.` }),
+      body: JSON.stringify({ message: "Method or resource not supported." }),
     };
+  }
+
+  try {
+    controller ??= new Controller();
+    return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
   } catch {
     return {
       statusCode: 500,
