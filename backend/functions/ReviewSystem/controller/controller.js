@@ -3,6 +3,8 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
+// Parse the raw request payload into a validated review object.
+// This prevents malformed JSON or array payloads from reaching the business layer.
 const parseBody = (body) => {
   let parsedBody;
 
