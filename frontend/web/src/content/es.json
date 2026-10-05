@@ -1369,12 +1369,33 @@
         "verified": "Verificado",
         "sms": "SMS",
         "authenticatorApp": "Aplicación de autenticación",
-        "comingSoon": "Próximamente: inicio de sesión por SMS y aplicación de autenticación.",
+        "comingSoon": "Próximamente: inicio de sesión por SMS.",
         "loading": "Cargando tu estado de autenticación...",
         "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
       },
       "pin": {
         "comingSoon": "Próximamente."
+      },
+      "authenticator": {
+        "setUp": "Configurar",
+        "setupTitle": "Configura tu aplicación de autenticación",
+        "scanInstruction": "Escanea este código QR con una aplicación de autenticación, como Google Authenticator o Microsoft Authenticator.",
+        "qrAlt": "Código QR para añadir Domits a tu aplicación de autenticación",
+        "manualKeyLabel": "¿No puedes escanearlo? Introduce esta clave manualmente:",
+        "codeLabel": "Código de 6 dígitos",
+        "verify": "Verificar",
+        "verifying": "Verificando...",
+        "cancel": "Cancelar",
+        "tryAgain": "Intentar de nuevo",
+        "close": "Cerrar",
+        "success": "Tu aplicación de autenticación está activada. Te pediremos un código cuando inicies sesión en un dispositivo nuevo.",
+        "errors": {
+          "invalidCode": "Este código no es válido. Introduce el código actual de 6 dígitos de tu aplicación.",
+          "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión y empieza la configuración de nuevo.",
+          "tooManyAttempts": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+          "enableFailed": "Tu código se aceptó, pero no pudimos activar la aplicación de autenticación. Inténtalo de nuevo.",
+          "generic": "Algo ha salido mal. Inténtalo de nuevo."
+        }
       }
     },
     "communicationPreferences": {
