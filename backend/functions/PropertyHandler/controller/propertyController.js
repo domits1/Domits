@@ -23,7 +23,7 @@ import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
 } from "../util/exception/WebsiteCustomDomainError.js";
-import { toHostWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -1672,7 +1672,7 @@ export class PropertyController {
             siteStatus: siteSummary.site.status,
             publishedAt: siteSummary.site.publishedAt,
             isReachable: siteSummary.isReachable,
-            domain: siteSummary.primaryDomain,
+            domain: toPublicWebsiteDomainView(siteSummary.primaryDomain),
         };
     }
 
@@ -1694,7 +1694,7 @@ export class PropertyController {
                 templateKey: site.templateKey,
                 publishedAt: site.publishedAt,
             },
-            domain,
+            domain: resolution.domain,
             propertySnapshot:
                 propertySnapshot && typeof propertySnapshot === "object"
                     ? propertySnapshot
