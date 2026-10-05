@@ -5,7 +5,7 @@ import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
 const REQUIRED_FIELDS = ["reservation_id", "overall_rating"];
-const CANCELLED_STATUSES = new Set(["cancelled", "canceled"]);
+const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
 const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
 
@@ -35,15 +35,17 @@ export class ReviewService {
       throw new ForbiddenException("You can only review your own reservation.");
     }
 
-    if (CANCELLED_STATUSES.has(String(booking.status || "").toLowerCase())) {
-      throw new BadRequestException("Cancelled reservations cannot be reviewed.");
+    const status = String(booking.status || "").trim().toLowerCase();
+    const checkoutAt = Number(booking.departuredate);
+    const now = this.now();
+
+    if (!REVIEWABLE_STATUSES.has(status)) {
+      throw new BadRequestException("Only paid or confirmed reservations can be reviewed.");
     }
 
-    if (Number(booking.departuredate) > this.now()) {
+    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > now) {
       throw new BadRequestException("You can only review a reservation after checkout.");
     }
-
-    const now = this.now();
 
     try {
       return await this.repository.create({
