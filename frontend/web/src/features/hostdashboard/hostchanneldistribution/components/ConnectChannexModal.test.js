@@ -75,42 +75,19 @@ describe("ConnectChannexModal", () => {
     ).toBeInTheDocument();
   });
 
-  test("Cancel clears the api key and closes without calling connectChannex", async () => {
+  // Every way of dismissing the modal must behave the same: clear the typed key, close, never submit.
+  test.each([
+    ["Cancel", (user) => user.click(screen.getByRole("button", { name: "Cancel" }))],
+    ["Escape", (user) => user.keyboard("{Escape}")],
+    ["clicking the backdrop", (user) => user.click(screen.getByRole("button", { name: "Close backdrop" }))],
+  ])("%s clears the api key and closes without calling connectChannex", async (_label, dismiss) => {
     const user = userEvent.setup();
     const onClose = jest.fn();
 
     render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
 
     await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
-
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
-
-  test("Escape clears the api key and closes without calling connectChannex", async () => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
-
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
-
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.keyboard("{Escape}");
-
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
-
-  test("clicking the backdrop clears the api key and closes without calling connectChannex", async () => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
-
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
-
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.click(screen.getByRole("button", { name: "Close backdrop" }));
+    await dismiss(user);
 
     expect(connectChannex).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
