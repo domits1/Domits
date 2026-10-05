@@ -12,6 +12,7 @@ Run it only after all of these are true, in this order: the migration from [dsql
 - **The schedule is created `DISABLED`** and enabled in the last step, with five pages per run (`limit: 5`) against the function's 30 second timeout, no retries and no stale events, every five minutes. A run that finds nothing costs one invocation and one indexed read.
 - **A failed run fails the invocation** (the trigger rejects when a page failed or was not finished). The function's asynchronous retries are set to 0 so a failure runs once per tick, not three times, and an alarm on the function's `Errors` metric makes it visible. The HTTP handler never raises a function error, so that metric belongs to the worker and to crashes only.
 - **A withdrawn page is removed by the same worker.** When a host unpublishes, the site row moves to `PREVIEW` and its outbox row is queued in the same transaction, like a publish; the worker finds the site no longer published, deletes the page object of every domain the site has (also the disabled ones), and invalidates the page path on the tenant that serves each hostname (the custom domain's own tenant, or the wildcard tenant for a fallback domain). Deleting a website removes the objects first, before the domain rows go, because afterwards nobody knows the hostnames; if that removal fails the delete still goes through and the reconciler removes the page later. That is why the writer policy carries `s3:DeleteObject` on the hostname prefix and the custom-domains policy carries `cloudfront:ListDistributionTenants` and `cloudfront:CreateInvalidationForDistributionTenant`. A delete on this versioned bucket writes a delete marker; `s3:DeleteObjectVersion` stays denied.
+- **A reconciler runs every hour for the two paths that bypass the controller.** A property deletion and a suspension by direct SQL remove or stop a site without writing an outbox row, and a build that was in flight while a website was deleted can re-create its page. The reconciler lists the bucket under `sites/by-host/` (that is the `s3:ListBucket` statement, limited to that prefix), reads every domain with its site from SQL, removes the page of any hostname that no published site serves on an active domain, and queues a page for any published site that has none. It leaves alone a site whose row is still pending, building or retrying on its own, and it reports instead of requeueing a site whose five attempts are used up, so a page that cannot be built does not cost a render every hour. It lists the bucket before it reads SQL, so a page written during the run is never taken for an orphan. Two reconcilers at once do the same idempotent work twice. It also backfills the existing sites on its first run.
 - **Two runs cannot work on the same site.** The outbox claim is guarded by site, revision and status, and a row held by a run that died or hit the 30 second timeout is retried only after its 15 minute lease, at most five times per revision. Ticks do not overlap at 5 minutes with runs of seconds, but Lambda may deliver an asynchronous event twice and someone may invoke the task by hand during a tick; in both cases the second run sees `notClaimed` and moves on. One case counts no attempt: a shell read that fails happens before the claim, so a broken shell makes every tick fail without using up the five attempts. That costs one invocation per tick, bounded by the rate, and the alarm fires on the first one.
 
 ## For colleagues who change `PropertyHandler` later
@@ -89,7 +90,7 @@ done
 aws iam list-role-policies --role-name domits-property-handler --profile domits
 ```
 
-Expected: `6` from the `grep` (the six places the rendered writer policy names the bucket), then four inline policies: `property-handler-base`, `static-page-writer`, `custom-domains` and `property-images`. The loop prints the two shared-role policies these files were copied from; the first statement of each file must still read the same as the shared policy (same actions, same resource), otherwise the shared role changed since 2026-10-02 and the files need the same change first. `custom-domains-policy.json` carries one more statement on purpose, the tenant listing and invalidation the page withdrawal needs; that one has no counterpart on the shared role. Not copied on purpose: `DirectBookingQuoteTokenSecretRead`, whose one parameter is in the base policy now, `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
+Expected: `7` from the `grep` (the seven places the rendered writer policy names the bucket), then four inline policies: `property-handler-base`, `static-page-writer`, `custom-domains` and `property-images`. The loop prints the two shared-role policies these files were copied from; the first statement of each file must still read the same as the shared policy (same actions, same resource), otherwise the shared role changed since 2026-10-02 and the files need the same change first. `custom-domains-policy.json` carries one more statement on purpose, the tenant listing and invalidation the page withdrawal needs; that one has no counterpart on the shared role. Not copied on purpose: `DirectBookingQuoteTokenSecretRead`, whose one parameter is in the base policy now, `ical-storage`, `host-team-cognito-update-role` and `UnifiedMessagingSecretsManagerAccess` belong to other functions, and `BasicDevPolicy` and `AmazonS3FullAccess` are the broad grants this role exists to drop.
 
 Check with the policy simulator, read-only, before anything uses the role:
 
@@ -103,6 +104,12 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
   --action-names s3:GetObject s3:PutObject s3:DeleteObject \
   --resource-arns $B/index.html $B/sites/by-host/example.direct.domits.com/index.html \
                   $B/static/js/main.js $B/robots.txt arn:aws:s3:::accommodation/images/x.jpg arn:aws:s3:::any-other-bucket/x
+aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output table \
+  --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --action-names s3:ListBucket --resource-arns $B \
+  --context-entries "ContextKeyName=s3:prefix,ContextKeyValues=sites/by-host/example.direct.domits.com/,ContextKeyType=string"
+aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output table \
+  --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --action-names s3:ListBucket --resource-arns $B \
+  --context-entries "ContextKeyName=s3:prefix,ContextKeyValues=static/,ContextKeyType=string"
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output json --query "$Q" \
   --action-names ssm:GetParameter \
   --resource-arns $A/aurora/dsql/region $A/aurora/dsql/host $A/aurora/dsql/dbName $A/aurora/dsql/schema \
@@ -120,7 +127,7 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
                  acm:DescribeCertificate acm:RequestCertificate logs:PutLogEvents dynamodb:GetItem
 ```
 
-Expected per resource in the first call (with several resources the simulator reports under `perResource`, the top-level decision is a summary): `s3:GetObject` allowed on `index.html` and on the images key, implicitDeny elsewhere; `s3:PutObject` allowed on the `sites/by-host/` key and the images key, explicitDeny on `index.html`, `static/`, `robots.txt`, implicitDeny on the other bucket; `s3:DeleteObject` allowed on the `sites/by-host/` key (a withdrawn page is removed by its hostname key) and on the images key, explicitDeny on the shell and the assets. Second call: `ssm:GetParameter` allowed on the five named parameters and implicitDeny on `/pricelabs/integration_token`, which another function reads. Third call: `lambda:InvokeFunction` allowed on `PriceLabs-Integration` and `UnifiedMessaging`, implicitDeny on `ChannelManagement` and on `PropertyHandler` itself. Fourth call: `dsql:DbConnectAdmin` allowed on the cluster, `dsql:DbConnect` and `dsql:DeleteCluster` implicitDeny. Fifth call: every action `allowed`. Any other decision means a permission the function uses was not granted or not copied: stop, do not continue to step 3.
+Expected per resource in the first call (with several resources the simulator reports under `perResource`, the top-level decision is a summary): `s3:GetObject` allowed on `index.html` and on the images key, implicitDeny elsewhere; `s3:PutObject` allowed on the `sites/by-host/` key and the images key, explicitDeny on `index.html`, `static/`, `robots.txt`, implicitDeny on the other bucket; `s3:DeleteObject` allowed on the `sites/by-host/` key (a withdrawn page is removed by its hostname key) and on the images key, explicitDeny on the shell and the assets. The two `s3:ListBucket` calls: `allowed` with the `sites/by-host/` prefix, `implicitDeny` with the `static/` prefix (the reconciler may list its own pages and nothing else). Then `ssm:GetParameter` allowed on the five named parameters and implicitDeny on `/pricelabs/integration_token`, which another function reads. Third call: `lambda:InvokeFunction` allowed on `PriceLabs-Integration` and `UnifiedMessaging`, implicitDeny on `ChannelManagement` and on `PropertyHandler` itself. Fourth call: `dsql:DbConnectAdmin` allowed on the cluster, `dsql:DbConnect` and `dsql:DeleteCluster` implicitDeny. Fifth call: every action `allowed`. Any other decision means a permission the function uses was not granted or not copied: stop, do not continue to step 3.
 
 Rollback, harmless while nothing uses the role:
 
@@ -262,6 +269,32 @@ aws scheduler get-schedule --name domits-static-page-worker-rate-5-minutes --pro
 ```
 
 Expected: `state DISABLED`, `rate(5 minutes)`, the task input with `limit 5`, `MaximumRetryAttempts 0`, the scheduler role from step 2. Nothing runs yet. Rollback: `aws scheduler delete-schedule --name domits-static-page-worker-rate-5-minutes --profile domits --region eu-north-1`.
+
+## 7b. The reconciler: one run by hand, then its schedule, disabled
+
+Run this after step 6 proved one page, and before step 9. The first run is the backfill: every published site without a page is queued (the worker builds them over the next runs, five per tick), and any page under `sites/by-host/` that no published site owns is removed.
+
+```bash
+cd ~/static-page-worker-rollout
+aws s3api list-objects-v2 --bucket $SITES_BUCKET --prefix sites/by-host/ --profile domits --query 'Contents[].Key' --output text > pages-before.txt; wc -l pages-before.txt
+aws lambda invoke --function-name PropertyHandler --profile domits --region eu-north-1 --cli-binary-format raw-in-base64-out \
+  --payload '{"task":"reconcile-static-pages","limit":50}' reconcile-1.json --query '{status:StatusCode,error:FunctionError}'
+cat reconcile-1.json; echo
+aws s3api list-objects-v2 --bucket $SITES_BUCKET --prefix sites/by-host/ --profile domits --query 'Contents[].Key' --output text | diff pages-before.txt - ; echo "exit $?"
+```
+
+Expected: `status 200`, no `FunctionError`, a body with `stored` (the pages that existed), `expected` (the hostnames that should have one), `removed` (pages no published site owns), `queued` (sites without a page, now queued), `stuck: []` and `errors: []`. The `diff` shows exactly the removed keys as `<` lines and nothing else; the queued sites get their pages from the worker's next runs, not from this command. In the query editor, `SELECT site_id, revision, status FROM main.static_page_outbox WHERE status = 'PENDING';` lists the queued sites. A `FunctionError` is the trigger rejecting: `errors` names the hostname or site and the reason (an `AccessDenied` on the listing means the `ListBucket` statement of step 1 is missing), `stuck` names a site whose five builds all failed; fix the cause named in its `failure_reason`, then reset that row with the `UPDATE` of step 6 so the worker tries again.
+
+Rollback: a removed page comes back by queueing its site, which the next reconciler run does on its own once the site is published on an active domain (that is the only case in which it was wrongly removed); nothing else to undo. Then the schedule, disabled like the worker's:
+
+```bash
+cd /path/to/Domits/backend/infrastructure/static-page-worker
+aws scheduler create-schedule --profile domits --region eu-north-1 --cli-input-json file://reconcile-schedule.json --query ScheduleArn
+aws scheduler get-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1 \
+  --query '{state:State,expr:ScheduleExpression,input:Target.Input,retry:Target.RetryPolicy,role:Target.RoleArn}'
+```
+
+Expected: `state DISABLED`, `rate(1 hour)`, the reconcile task with `limit 50`, no retries, the scheduler role from step 2 (it may invoke the same function, so no new role). Enable it in step 9 together with the worker's schedule: `aws scheduler update-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1 --cli-input-json file://reconcile-schedule.json --state ENABLED`. Rollback: `aws scheduler delete-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1`. The alarm of step 8 covers it: a failed reconciliation is a failed invocation of the same function.
 
 ## 8. The alarm
 
