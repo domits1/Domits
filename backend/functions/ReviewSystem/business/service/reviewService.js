@@ -7,7 +7,7 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 const REQUIRED_FIELDS = ["reservation_id", "overall_rating"];
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
-const isBlank = (value) => value === undefined || value === null || (typeof value === "string" && value.trim() === "");
+const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
 
 const isDuplicateReservationReviewError = (error) =>
   error?.code === "23505" &&
@@ -37,17 +37,15 @@ export class ReviewService {
 
     const status = String(booking.status || "").trim().toLowerCase();
     const checkoutAt = Number(booking.departuredate);
+    const now = this.now();
 
-    // An expired inquiry or unpaid booking is not evidence of a completed stay.
     if (!REVIEWABLE_STATUSES.has(status)) {
-      throw new BadRequestException("Only confirmed reservations can be reviewed.");
+      throw new BadRequestException("Only paid or confirmed reservations can be reviewed.");
     }
 
-    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > this.now()) {
+    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > now) {
       throw new BadRequestException("You can only review a reservation after checkout.");
     }
-
-    const now = this.now();
 
     try {
       return await this.repository.create({
@@ -75,14 +73,9 @@ export class ReviewService {
   // Reject malformed input before reservation checks or persistence are attempted.
   // Validate types and rating bounds so invalid review data cannot enter the system.
   validateReviewPayload(reviewData) {
-    if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
-      throw new BadRequestException("Request body must be a review object.");
-    }
     for (const field of REQUIRED_FIELDS) {
       if (isBlank(reviewData[field])) {
-        throw new BadRequestException(field === "overall_rating"
-          ? "Please select an overall experience rating from 1 to 5 stars."
-          : `${field} is required`);
+        throw new BadRequestException(`${field} is required`);
       }
     }
 
@@ -90,8 +83,12 @@ export class ReviewService {
       throw new BadRequestException("reservation_id must be a string");
     }
 
-    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
-      throw new BadRequestException("Overall experience must be a whole number from 1 to 5.");
+    if (typeof reviewData.overall_rating !== "number") {
+      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    }
+
+    if (!Number.isFinite(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+      throw new BadRequestException("overall_rating must be a number between 1 and 5");
     }
 
     if (
@@ -109,23 +106,6 @@ export class ReviewService {
     ) {
       throw new BadRequestException("private_feedback must be a string");
     }
-  }
-
-  async getReviews(callerUserId, scope = "written") {
-    if (!["written", "received"].includes(scope)) throw new BadRequestException("Invalid review scope.");
-    const where = scope === "written" ? { guest_id: callerUserId }
-      : { host_id: callerUserId, publication_status: "published" };
-    const reviews = await this.repository.findReviews(where);
-    return reviews.map((review) => ({ ...review, rating: review.overall_rating,
-      title: `Overall experience: ${review.overall_rating}/5`, content: review.public_review, date: review.created_at }));
-  }
-
-  async deleteReview(callerUserId, reviewId) {
-    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
-      throw new BadRequestException("A valid review ID is required.");
-    }
-    const result = await this.repository.deleteOwnReview(reviewId, callerUserId);
-    if (!result.affected) throw new NotFoundException("Review not found or you are not its author.");
   }
 
   normalizeOptionalText(value) {
