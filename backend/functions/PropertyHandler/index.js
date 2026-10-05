@@ -2,6 +2,7 @@ import { PropertyController } from "./controller/propertyController.js";
 
 const STATIC_PAGE_TASK = "build-static-pages";
 const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
+const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
 
 let controller = new PropertyController();
 
@@ -189,6 +190,10 @@ export const handler = async (event) => {
 
   if (event?.task === STATIC_PAGE_RECONCILE_TASK && !event.httpMethod) {
     return controller.reconcileStaticPages(event);
+  }
+
+  if (event?.task === STATIC_PAGE_QUEUE_ALL_TASK && !event.httpMethod) {
+    return controller.queueAllStaticPages(event);
   }
 
   try {

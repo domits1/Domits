@@ -232,6 +232,17 @@ describe("Routing unit tests", () => {
     expect(reconcileStaticPages).toHaveBeenCalledWith({ task: "reconcile-static-pages", limit: 50 });
   });
 
+  it("should route the queue-all task to the controller", async () => {
+    const queueAllStaticPages = jest
+      .spyOn(PropertyController.prototype, "queueAllStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "queue-all-static-pages" });
+
+    expect(response.statusCode).toBe(200);
+    expect(queueAllStaticPages).toHaveBeenCalledWith({ task: "queue-all-static-pages" });
+  });
+
   it("should route an HTTP request that also carries the task name as an HTTP request", async () => {
     const buildStaticPages = jest.spyOn(PropertyController.prototype, "buildStaticPages");
     jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });

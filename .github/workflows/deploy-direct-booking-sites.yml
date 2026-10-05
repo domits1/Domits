@@ -138,3 +138,21 @@ jobs:
       - name: Skip invalidation
         if: vars.DIRECT_BOOKING_SITES_DISTRIBUTION_ID == ''
         run: echo "::notice::DIRECT_BOOKING_SITES_DISTRIBUTION_ID is not set; no CloudFront invalidation was issued."
+
+      - name: Queue every static page for the new shell
+        if: vars.STATIC_PAGE_REGENERATE_ON_DEPLOY == 'true'
+        env:
+          AWS_MAX_ATTEMPTS: "1"
+        run: |
+          aws lambda invoke --function-name PropertyHandler --cli-binary-format raw-in-base64-out \
+            --payload '{"task":"queue-all-static-pages"}' queue-all.json \
+            --query '{status:StatusCode,error:FunctionError}' --output json > queue-all.meta
+          cat queue-all.json; echo
+          if grep -q '"error": "' queue-all.meta; then
+            echo "::error::PropertyHandler rejected the queue-all task; the pages keep the previous shell until the next deploy."
+            exit 1
+          fi
+
+      - name: Skip static page regeneration
+        if: vars.STATIC_PAGE_REGENERATE_ON_DEPLOY != 'true'
+        run: echo "::notice::STATIC_PAGE_REGENERATE_ON_DEPLOY is not 'true'; the static pages keep the previous shell until their next publish."

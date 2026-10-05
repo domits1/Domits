@@ -45,7 +45,7 @@ const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "si
   const transactionRunner = {
     query: jest.fn(async (statement, parameters, useStructuredResult) => {
       statements.push({ statement, parameters, useStructuredResult });
-      const records = /static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
+      const records = /INSERT INTO \S*static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
       return useStructuredResult ? { records, affected: records.length } : records;
     }),
     release: jest.fn().mockResolvedValue(undefined),
@@ -302,7 +302,7 @@ describe("queueing the page of a published site from the reconciler", () => {
     expect(update.statement).toContain("AND status = 'PUBLISHED'");
     expect(update.statement).toContain("static_page_revision = COALESCE(static_page_revision, 0) + 1");
     expect(update.parameters).toEqual(["site-1", expect.any(Number)]);
-    expect(statementFor(client, /static_page_outbox/).parameters).toEqual([
+    expect(statementFor(client, /INSERT INTO \S*static_page_outbox/).parameters).toEqual([
       "site-1",
       "property-1",
       "host-1",
@@ -318,6 +318,87 @@ describe("queueing the page of a published site from the reconciler", () => {
     const repository = new DirectBookingWebsiteSiteRepository();
 
     expect(await repository.queueStaticPage("site-1")).toBe(false);
-    expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
+    expect(statementFor(client, /INSERT INTO \S*static_page_outbox/)).toBeUndefined();
+  });
+});
+
+describe("queueing every published site after a frontend deploy", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const SECOND = { ...SITE_ROW, id: "site-2", property_id: "property-2", static_page_revision: 1 };
+
+  it("raises the revision of every published site and queues each row, one transaction per batch, walking the ids", async () => {
+    const client = buildClient({ siteRecords: [{ ...SITE_ROW, static_page_revision: 5 }, SECOND] });
+    client.transactionRunner.query.mockImplementation(async (statement, parameters, useStructuredResult) => {
+      client.statements.push({ statement, parameters, useStructuredResult });
+      if (/INSERT INTO \S*static_page_outbox/.test(statement)) {
+        return { records: [], affected: 1 };
+      }
+      const records = parameters[0] === "" ? [{ ...SITE_ROW, static_page_revision: 5 }, SECOND] : [];
+      return { records, affected: records.length };
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const result = await repository.queueStaticPagesForPublishedSites({ batchSize: 2 });
+
+    const updates = client.statements.filter(({ statement }) => /^UPDATE/.test(statement));
+    expect(updates[0].statement).toContain("WHERE status = 'PUBLISHED'");
+    expect(updates[0].statement).toContain("AND id > $1");
+    expect(updates[0].statement).toContain("ORDER BY id ASC");
+    expect(updates[0].statement).toContain("LIMIT $2");
+    expect(updates.map(({ parameters }) => parameters.slice(0, 2))).toEqual([
+      ["", 2],
+      ["site-2", 2],
+    ]);
+    const outboxWrites = client.statements.filter(({ statement }) =>
+      /INSERT INTO \S*static_page_outbox/.test(statement)
+    );
+    expect(outboxWrites.map(({ parameters }) => parameters.slice(0, 4))).toEqual([
+      ["site-1", "property-1", "host-1", 5],
+      ["site-2", "property-2", "host-1", 1],
+    ]);
+    expect(client.transaction).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ siteIds: ["site-1", "site-2"], complete: true });
+  });
+
+  it("stops after the batch cap and says the run is not complete, instead of looping", async () => {
+    const client = buildClient({ siteRecords: [SITE_ROW] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const result = await repository.queueStaticPagesForPublishedSites({ batchSize: 1, maxBatches: 3 });
+
+    expect(client.transaction).toHaveBeenCalledTimes(3);
+    expect(result).toEqual({ siteIds: ["site-1", "site-1", "site-1"], complete: false });
+  });
+
+  it("caps a batch at 500 sites whatever the caller asks, and treats a bad size as the cap", async () => {
+    const client = buildClient({ siteRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await repository.queueStaticPagesForPublishedSites({ batchSize: 9999 });
+    await repository.queueStaticPagesForPublishedSites({ batchSize: "many" });
+
+    expect(client.statements.map(({ parameters }) => parameters[1])).toEqual([500, 500]);
+  });
+
+  it("rolls a batch back as a whole when one outbox row cannot be written", async () => {
+    const client = buildClient({ siteRecords: [SITE_ROW, SECOND] });
+    let outboxWrites = 0;
+    client.transactionRunner.query.mockImplementation(async (statement) => {
+      if (/INSERT INTO \S*static_page_outbox/.test(statement)) {
+        outboxWrites += 1;
+        if (outboxWrites === 2) {
+          throw new Error("outbox unavailable");
+        }
+        return { records: [], affected: 1 };
+      }
+      return { records: [SITE_ROW, SECOND], affected: 2 };
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await expect(repository.queueStaticPagesForPublishedSites()).rejects.toThrow("outbox unavailable");
+    expect(client.rolledBack).toBe(true);
   });
 });

@@ -347,6 +347,56 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
+  async queueStaticPagesForPublishedSites({ batchSize = 500, maxBatches = 10 } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const normalizedBatchSize =
+      Number.isSafeInteger(Number(batchSize)) && Number(batchSize) > 0 ? Math.min(Number(batchSize), 500) : 500;
+    const siteIds = [];
+    let cursor = "";
+
+    for (let batch = 0; batch < maxBatches; batch += 1) {
+      const now = Date.now();
+      const queued = await client.transaction(async (manager) => {
+        const siteResult = await manager.queryRunner.query(
+          `UPDATE ${tableName}
+      SET
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $3
+      WHERE id IN (
+        SELECT id
+        FROM ${tableName}
+        WHERE status = 'PUBLISHED'
+          AND id > $1
+        ORDER BY id ASC
+        LIMIT $2
+      )
+      RETURNING
+        ${SITE_SELECT_COLUMNS}`,
+          [cursor, normalizedBatchSize, now],
+          true
+        );
+
+        const sites = (siteResult?.records || []).map(mapSiteRow).filter(Boolean);
+        for (const site of sites) {
+          await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+        }
+
+        return sites.map((site) => site.id).sort();
+      });
+
+      siteIds.push(...queued);
+      if (queued.length < normalizedBatchSize) {
+        return { siteIds, complete: true };
+      }
+      cursor = queued.at(-1);
+    }
+
+    return { siteIds, complete: false };
+  }
+
   async getSiteByPropertyIdAndHostId(propertyId, hostId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);

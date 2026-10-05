@@ -1869,6 +1869,18 @@ export class PropertyController {
         };
     }
 
+    async queueAllStaticPages() {
+        const { siteIds, complete } = await this.directBookingWebsiteSiteRepository.queueStaticPagesForPublishedSites();
+        if (!complete) {
+            throw new Error(`Queued ${siteIds.length} sites and stopped; more published sites remain than one run may queue.`);
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ queued: siteIds.length, siteIds }),
+        };
+    }
+
     async withdrawStaticPageSafely(site) {
         try {
             const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
