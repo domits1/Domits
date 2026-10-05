@@ -146,17 +146,6 @@ export default class ChannelManagementApiService {
     this.channexCertificationService = new ChannexCertificationService({
       externalBookingImportRepository,
       channexBookingAvailabilityBridge,
-      channexProviderClient,
-      finalizeChannexSyncResult: (...args) => this.finalizeChannexSyncResult(...args),
-      getChannexAriTargets: (...args) => this.getChannexAriTargets(...args),
-      buildChannexAriTargetsFailureEvidencePatch: (...args) =>
-        this.buildChannexAriTargetsFailureEvidencePatch(...args),
-      buildChannexMultiStepMappingSnapshot: (...args) =>
-        this.buildChannexMultiStepMappingSnapshot(...args),
-      buildBlockedChannexMultiStepSyncResult: (...args) =>
-        this.buildBlockedChannexMultiStepSyncResult(...args),
-      resolveChannexSyncCredentialContext: (...args) =>
-        this.resolveChannexSyncCredentialContext(...args),
     });
     this.channexBookingRevisionImportService =
       new ChannexBookingRevisionImportService({
@@ -404,7 +393,4 @@ export default class ChannelManagementApiService {
     return this.channexFullSyncService.syncChannexFull(...args);
   }
 
-  async syncChannexCertificationTestCase(...args) {
-    return this.channexCertificationService.syncChannexCertificationTestCase(...args);
-  }
 }

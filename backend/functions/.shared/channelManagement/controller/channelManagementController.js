@@ -369,14 +369,6 @@ export default class ChannelManagementController {
     }
   }
 
-  async syncChannexCertificationTestCase(event) {
-    return this.channelManagementApiService.syncChannexCertificationTestCase(
-      event.queryStringParameters?.userId || null,
-      event.queryStringParameters?.domitsPropertyId || null,
-      safeJson(event.body) || {}
-    );
-  }
-
   async saveChannexSetupMapping(event) {
     return this.channelManagementApiService.saveChannexSetupMapping(
       event.queryStringParameters?.userId || null,

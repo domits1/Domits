@@ -48,6 +48,15 @@ describe("HostChannelDistribution", () => {
     expect(getChannexStatus).toHaveBeenCalledTimes(2);
   });
 
+  test("shows the same error block on a 401", async () => {
+    getChannexStatus.mockRejectedValue(Object.assign(new Error("unauthorized"), { status: 401 }));
+
+    render(<HostChannelDistribution />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong loading your Channex connection.");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
   test("defaults the property picker to the first listing and scopes the sync to the picked one", async () => {
     getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
 

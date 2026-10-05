@@ -124,12 +124,12 @@ const expectNoPrivateMarker = (text) => {
   }
 };
 
-const expectPublicRenderResponse = (response, domain) => {
+const expectPublicRenderResponse = (response, domain, requestedDomain = domain) => {
   expect(response.statusCode).toBe(200);
   const body = parseBody(response);
   expect(body.site).toEqual(PUBLIC_SITE);
   expect(body.resolution).toEqual(buildPublicResolution(domain));
-  expect(body.domain).toEqual(domain);
+  expect(body.domain).toEqual(requestedDomain);
   expect(body.renderSource).toBe("published_site");
   expect(body.propertySnapshot).toEqual({ ...SITE.publishedPropertySnapshot, calendarAvailability: [] });
   expectNoPrivateMarker(JSON.stringify({ ...body, propertySnapshot: undefined }));
@@ -164,7 +164,7 @@ describe("the public website render response", () => {
     expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
   });
 
-  it("sends the runtime status of a fallback domain, not the stored one, in both places", async () => {
+  it("sends the runtime status of a fallback domain in the resolution and the stored one in the requested row", async () => {
     const previousRoutingFlag = process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
     process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
     try {
@@ -172,7 +172,7 @@ describe("the public website render response", () => {
 
       const response = await controller.getPublicWebsiteRenderModel(buildEvent({ domain: STORED_FALLBACK_DOMAIN.domain }));
 
-      expectPublicRenderResponse(response, PUBLIC_FALLBACK_DOMAIN);
+      expectPublicRenderResponse(response, PUBLIC_FALLBACK_DOMAIN, { ...PUBLIC_FALLBACK_DOMAIN, status: "PENDING" });
     } finally {
       if (previousRoutingFlag === undefined) {
         delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
