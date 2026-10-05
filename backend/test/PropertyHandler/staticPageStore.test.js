@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
   StaticPageStore,
   buildStaticPageKey,
@@ -101,5 +101,45 @@ describe("StaticPageStore", () => {
 
     await expect(buildStore(send).deletePage({ hostname: "../index.html" })).rejects.toThrow(TypeError);
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("lists the hostnames that have a page, across pages of the listing, and ignores keys that are not page keys", async () => {
+    const pages = [
+      {
+        Contents: [
+          { Key: "sites/by-host/a.direct.domits.com/index.html" },
+          { Key: "sites/by-host/a.direct.domits.com/old.html" },
+          { Key: "sites/by-host/index.html" },
+        ],
+        IsTruncated: true,
+        NextContinuationToken: "t2",
+      },
+      { Contents: [{ Key: "sites/by-host/www.b.nl/index.html" }], IsTruncated: false },
+    ];
+    const send = jest.fn(async () => pages.shift());
+
+    const hostnames = await buildStore(send).listPageHostnames();
+
+    expect(send.mock.calls.map(([command]) => command)).toEqual([
+      expect.any(ListObjectsV2Command),
+      expect.any(ListObjectsV2Command),
+    ]);
+    expect(send.mock.calls[0][0].input).toEqual({
+      Bucket: BUCKET,
+      Prefix: "sites/by-host/",
+      ContinuationToken: undefined,
+    });
+    expect(send.mock.calls[1][0].input.ContinuationToken).toBe("t2");
+    expect(hostnames).toEqual(["a.direct.domits.com", "www.b.nl"]);
+  });
+
+  it("refuses to reconcile a prefix with more pages than it is willing to list", async () => {
+    const contents = Array.from({ length: 1000 }, (_, index) => ({
+      Key: `sites/by-host/s${index}.direct.domits.com/index.html`,
+    }));
+    const send = jest.fn(async () => ({ Contents: contents, IsTruncated: true, NextContinuationToken: "more" }));
+
+    await expect(buildStore(send).listPageHostnames()).rejects.toThrow("More than 5000 pages");
+    expect(send).toHaveBeenCalledTimes(6);
   });
 });

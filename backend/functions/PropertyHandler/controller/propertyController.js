@@ -17,6 +17,7 @@ import { StaticPageStore } from "../data/repository/staticPageStore.js";
 import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
+import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import ChannexCalendarChangeSyncClient, {
@@ -1840,6 +1841,32 @@ export class PropertyController {
             renderer: new StaticPageRenderer(),
             withdrawal: this.createStaticPageWithdrawal(pageStore),
         });
+    }
+
+    createStaticPageReconciler() {
+        const pageStore = new StaticPageStore();
+        return new StaticPageReconciler({
+            pageStore,
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            outboxRepository: new StaticPageOutboxRepository(),
+            withdrawal: this.createStaticPageWithdrawal(pageStore),
+        });
+    }
+
+    async reconcileStaticPages(event) {
+        const summary = await this.createStaticPageReconciler().run({ limit: event?.limit });
+        if (summary.errors.length > 0 || summary.stuck.length > 0) {
+            throw new Error(
+                `The static page reconciliation left ${summary.errors.length} failures and ${summary.stuck.length} stuck sites: ` +
+                    JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
+        };
     }
 
     async withdrawStaticPageSafely(site) {

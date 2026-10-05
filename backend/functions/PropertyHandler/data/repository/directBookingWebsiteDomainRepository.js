@@ -75,7 +75,9 @@ const safeParseJson = (rawValue, fallbackValue = {}) => {
 };
 
 const normalizeDomainType = (domainType) => {
-  const normalizedDomainType = String(domainType || "").trim().toUpperCase();
+  const normalizedDomainType = String(domainType || "")
+    .trim()
+    .toUpperCase();
   if (!DOMAIN_ALLOWED_TYPES.has(normalizedDomainType)) {
     throw new TypeError("website domain type must be FALLBACK or CUSTOM.");
   }
@@ -84,7 +86,9 @@ const normalizeDomainType = (domainType) => {
 };
 
 const normalizeDomainStatus = (status) => {
-  const normalizedStatus = String(status || "").trim().toUpperCase();
+  const normalizedStatus = String(status || "")
+    .trim()
+    .toUpperCase();
   if (!DOMAIN_ALLOWED_STATUSES.has(normalizedStatus)) {
     throw new TypeError("website domain status must be PENDING, VERIFIED, ACTIVE, FAILED, DISABLED, or REMOVING.");
   }
@@ -311,6 +315,47 @@ export class DirectBookingWebsiteDomainRepository {
     return (Array.isArray(rows) ? rows : []).map(mapSiteDomainRow).filter(Boolean);
   }
 
+  async listDomainsWithSites() {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteDomainTableName(schemaName);
+
+    const rows = await client.query(
+      `SELECT
+        domain_entry.id,
+        domain_entry.site_id,
+        domain_entry.domain,
+        domain_entry.domain_type,
+        domain_entry.status,
+        domain_entry.is_primary,
+        domain_entry.verification_details_json,
+        domain_entry.last_checked_at,
+        domain_entry.created_at,
+        domain_entry.updated_at,
+        site.status AS site_status,
+        site.static_page_revision AS site_static_page_revision
+      FROM ${tableName} AS domain_entry
+      JOIN ${schemaName}.standalone_site AS site ON site.id = domain_entry.site_id
+      ORDER BY domain_entry.site_id ASC, domain_entry.is_primary DESC, domain_entry.created_at ASC`
+    );
+
+    return (Array.isArray(rows) ? rows : [])
+      .map((row) => {
+        const domainEntry = mapSiteDomainRow(row);
+        return domainEntry
+          ? {
+              ...domainEntry,
+              site: {
+                id: domainEntry.siteId,
+                status: String(row.site_status),
+                staticPageRevision: row.site_static_page_revision === null ? 0 : Number(row.site_static_page_revision),
+              },
+            }
+          : null;
+      })
+      .filter(Boolean);
+  }
+
   async getFallbackDomainBySiteId(siteId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -342,10 +387,11 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    const rows = await client.query(
-      buildSiteDomainSelectQuery(tableName, "WHERE domain = $1", "LIMIT 1"),
-      [String(domain || "").trim().toLowerCase()]
-    );
+    const rows = await client.query(buildSiteDomainSelectQuery(tableName, "WHERE domain = $1", "LIMIT 1"), [
+      String(domain || "")
+        .trim()
+        .toLowerCase(),
+    ]);
 
     return mapSiteDomainRow(rows?.[0] || null);
   }
@@ -355,7 +401,9 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
     const normalizedStatus = normalizeDomainStatus(status);
-    const normalizedDomain = String(domain || "").trim().toLowerCase();
+    const normalizedDomain = String(domain || "")
+      .trim()
+      .toLowerCase();
     const normalizedDetails = normalizeJsonObject(verificationDetails);
     const checkedAt = normalizeTimestamp(lastCheckedAt);
 
@@ -422,7 +470,9 @@ export class DirectBookingWebsiteDomainRepository {
     const now = Date.now();
     const normalizedDomainType = normalizeDomainType(domainType);
     const normalizedStatus = normalizeDomainStatus(status);
-    const normalizedDomain = String(domain || "").trim().toLowerCase();
+    const normalizedDomain = String(domain || "")
+      .trim()
+      .toLowerCase();
 
     const rows = await client.query(
       `INSERT INTO ${tableName} AS existing (
@@ -575,11 +625,13 @@ export class DirectBookingWebsiteDomainRepository {
     const normalizedStatus = normalizeDomainStatus(status);
     const now = Date.now();
 
-    const { records } = await runStatement(
-      client,
-      buildUpdateDomainStatusStatement(tableName),
-      [domainId, siteId, normalizedStatus, normalizeJsonObject(verificationDetails), now]
-    );
+    const { records } = await runStatement(client, buildUpdateDomainStatusStatement(tableName), [
+      domainId,
+      siteId,
+      normalizedStatus,
+      normalizeJsonObject(verificationDetails),
+      now,
+    ]);
 
     return mapSiteDomainRow(records[0] || null);
   }

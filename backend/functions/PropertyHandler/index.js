@@ -1,6 +1,7 @@
 import { PropertyController } from "./controller/propertyController.js";
 
 const STATIC_PAGE_TASK = "build-static-pages";
+const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
 
 let controller = new PropertyController();
 
@@ -138,9 +139,7 @@ const handleGet = async (event) => {
   );
   if (hostDashboardSubResource) {
     const handler = hostDashboardHandlers[hostDashboardSubResource];
-    return handler
-      ? handler(event)
-      : notFound("Sub-resource for '/property/hostDashboard' not found.");
+    return handler ? handler(event) : notFound("Sub-resource for '/property/hostDashboard' not found.");
   }
 
   const bookingEngineSubResource = getSubResource(
@@ -150,9 +149,7 @@ const handleGet = async (event) => {
   );
   if (bookingEngineSubResource) {
     const handler = bookingEngineHandlers[bookingEngineSubResource];
-    return handler
-      ? handler(event)
-      : notFound("Sub-resource for '/property/bookingEngine' not found.");
+    return handler ? handler(event) : notFound("Sub-resource for '/property/bookingEngine' not found.");
   }
 
   return notFound("Path not found.");
@@ -188,6 +185,10 @@ export const handler = async (event) => {
 
   if (event?.task === STATIC_PAGE_TASK && !event.httpMethod) {
     return controller.buildStaticPages(event);
+  }
+
+  if (event?.task === STATIC_PAGE_RECONCILE_TASK && !event.httpMethod) {
+    return controller.reconcileStaticPages(event);
   }
 
   try {

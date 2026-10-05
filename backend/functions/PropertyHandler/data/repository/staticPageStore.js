@@ -1,4 +1,10 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 const BUCKET_ENV_NAME = "DIRECT_BOOKING_WEBSITE_SITES_BUCKET";
 const APP_SHELL_KEY = "index.html";
@@ -6,6 +12,9 @@ const PAGE_CONTENT_TYPE = "text/html; charset=utf-8";
 const PAGE_CACHE_CONTROL = "public, max-age=300";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
+const PAGE_KEY_PREFIX = "sites/by-host/";
+const PAGE_KEY_SUFFIX = "/index.html";
+const MAX_LISTED_PAGES = 5000;
 
 export const buildStaticPageKey = (hostname) => {
   const labels = typeof hostname === "string" ? hostname.split(".") : [];
@@ -17,7 +26,7 @@ export const buildStaticPageKey = (hostname) => {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
-  return `sites/by-host/${hostname}/index.html`;
+  return `${PAGE_KEY_PREFIX}${hostname}${PAGE_KEY_SUFFIX}`;
 };
 
 export class StaticPageStore {
@@ -50,6 +59,32 @@ export class StaticPageStore {
         Metadata: { "site-id": String(siteId), revision: String(revision) },
       })
     );
+  }
+
+  async listPageHostnames() {
+    const hostnames = [];
+    let continuationToken;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: PAGE_KEY_PREFIX,
+          ContinuationToken: continuationToken,
+        })
+      );
+      for (const object of response?.Contents || []) {
+        const key = String(object?.Key || "");
+        if (key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(PAGE_KEY_SUFFIX)) {
+          hostnames.push(key.slice(PAGE_KEY_PREFIX.length, -PAGE_KEY_SUFFIX.length));
+        }
+      }
+      if (hostnames.length > MAX_LISTED_PAGES) {
+        throw new Error(`More than ${MAX_LISTED_PAGES} pages under ${PAGE_KEY_PREFIX}; refusing to reconcile blindly.`);
+      }
+      continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    return hostnames.filter((hostname) => hostname && !hostname.includes("/"));
   }
 
   async deletePage({ hostname }) {

@@ -262,4 +262,18 @@ describe("StaticPageOutboxRepository", () => {
 
     expect(await new StaticPageOutboxRepository().markPageWithdrawn("site-1", 4)).toBe(false);
   });
+
+  it("reads the rows of the given sites in one query, and asks nothing for no sites", async () => {
+    const client = buildClient([OUTBOX_ROW]);
+    const repository = new StaticPageOutboxRepository();
+
+    expect(await repository.listPagesBySiteIds([])).toEqual([]);
+    expect(client.query).not.toHaveBeenCalled();
+
+    const rows = await repository.listPagesBySiteIds(["site-1", "site-1", "site-2"]);
+
+    expect(client.query.mock.calls[0][0]).toContain("WHERE site_id = ANY($1)");
+    expect(client.query.mock.calls[0][1]).toEqual([["site-1", "site-2"]]);
+    expect(rows).toEqual([expect.objectContaining({ siteId: "site-1", status: "PENDING", attemptCount: 2 })]);
+  });
 });

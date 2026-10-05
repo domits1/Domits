@@ -315,6 +315,38 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
+  async queueStaticPage(siteId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const now = Date.now();
+
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `UPDATE ${tableName}
+      SET
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $2
+      WHERE id = $1
+        AND status = 'PUBLISHED'
+      RETURNING
+        ${SITE_SELECT_COLUMNS}`,
+        [siteId, now],
+        true
+      );
+
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return false;
+      }
+
+      await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+
+      return true;
+    });
+  }
+
   async getSiteByPropertyIdAndHostId(propertyId, hostId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);

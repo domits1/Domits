@@ -286,3 +286,38 @@ describe("unpublishing a site queues its withdrawal in the same transaction", ()
     expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
   });
 });
+
+describe("queueing the page of a published site from the reconciler", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("raises the revision of a published site and queues its row in one transaction", async () => {
+    const client = buildClient({ siteRecords: [{ ...SITE_ROW, static_page_revision: 5 }] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const queued = await repository.queueStaticPage("site-1");
+
+    const update = statementFor(client, new RegExp(`UPDATE ${SCHEMA}\\.standalone_site`));
+    expect(update.statement).toContain("AND status = 'PUBLISHED'");
+    expect(update.statement).toContain("static_page_revision = COALESCE(static_page_revision, 0) + 1");
+    expect(update.parameters).toEqual(["site-1", expect.any(Number)]);
+    expect(statementFor(client, /static_page_outbox/).parameters).toEqual([
+      "site-1",
+      "property-1",
+      "host-1",
+      5,
+      expect.any(Number),
+    ]);
+    expect(client.committed).toBe(true);
+    expect(queued).toBe(true);
+  });
+
+  it("queues nothing for a site that is not published any more and answers false", async () => {
+    const client = buildClient({ siteRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    expect(await repository.queueStaticPage("site-1")).toBe(false);
+    expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
+  });
+});
