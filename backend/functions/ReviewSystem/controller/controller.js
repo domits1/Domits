@@ -20,12 +20,11 @@ const parseBody = (body) => {
 };
 
 export class Controller {
-  // Fetch public review details for a property so guests can read feedback without needing an authenticated session.
-  // This keeps the public review feed accessible while delegating validation and data retrieval to the service layer.
   async getPublicReviews(event) {
     try {
-      const query = event.queryStringParameters || {};
-      const result = await this.service.getPublicReviews(query.propertyId, query.offset);
+      const result = await this.service.getPublicReviews(
+        event.pathParameters?.propertyId, event.queryStringParameters?.offset,
+      );
       return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
     } catch (error) {
       return this.handleError(error);
@@ -56,7 +55,16 @@ export class Controller {
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
-      const query = event.queryStringParameters || {};
+      const query = { ...(event.queryStringParameters || {}) };
+      if (event.resource === "/reviews/{id}") {
+        if (typeof event.pathParameters?.id !== "string" || !event.pathParameters.id.trim()) {
+          throw new BadRequestException("A review ID is required.");
+        }
+        query.reviewId = event.pathParameters.id;
+        delete query.scope;
+      } else if (query.reviewId !== undefined) {
+        throw new BadRequestException("Use /reviews/{id} for an individual review.");
+      }
       if (event.httpMethod === "GET") return await this.getReviews(user, query);
       if (event.httpMethod === "PATCH") return await this.patchReview(user, query, event.body);
       if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);

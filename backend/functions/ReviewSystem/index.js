@@ -8,9 +8,10 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
-  const publicRequest = event.httpMethod === "GET" && event.resource === "/reviews/public";
-  if (!publicRequest && (!["POST", "GET", "PATCH", "DELETE"].includes(event.httpMethod)
-    || event.resource !== "/reviews")) {
+  const publicRequest = event.httpMethod === "GET" && event.resource === "/properties/{propertyId}/reviews";
+  const collectionRequest = event.resource === "/reviews" && ["GET", "POST"].includes(event.httpMethod);
+  const individualRequest = event.resource === "/reviews/{id}" && ["GET", "PATCH"].includes(event.httpMethod);
+  if (!publicRequest && !collectionRequest && !individualRequest) {
     return {
       statusCode: 405,
       headers: responseHeaders,

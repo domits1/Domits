@@ -264,7 +264,7 @@ it("maps the selected rating to overall_rating in the authenticated HTTP request
   try {
     const saved = await api.createReview({ reservationId: booking.id, rating: 4, publicReview: "Great stay.", privateFeedback: "" });
     const [url, request] = global.fetch.mock.calls[0];
-    expect(url).toBe(api.API_REVIEW_BASE);
+    expect(url).toBe(`${api.API_REVIEW_BASE}/reviews`);
     expect(request.method).toBe("POST");
     expect(request.headers.Authorization).toBe("access-token");
     expect(JSON.parse(request.body)).toEqual({
@@ -283,7 +283,8 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
   try {
     const query = method === "GET" ? { scope: "received" } : { reviewId: "review-1" };
     await web.requestReview(method, query);
-    expect(global.fetch.mock.calls[0]).toEqual([`${web.API_REVIEW_BASE}?${new URLSearchParams(query)}`,
+    const path = method === "GET" ? "/reviews?scope=received" : "/reviews/review-1";
+    expect(global.fetch.mock.calls[0]).toEqual([`${web.API_REVIEW_BASE}${path}`,
       { method, headers: { Authorization: "access-token" } }]);
   } finally { global.fetch = originalFetch; }
 });

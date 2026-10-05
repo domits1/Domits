@@ -43,7 +43,7 @@ describe("review editing", () => {
     });
     const response = await controller.manageReviews({ httpMethod: "PATCH", headers: { Authorization: "token" },
       requestContext: { authorizer: { claims: { sub: booking.guestid } } },
-      queryStringParameters: { reviewId: id }, body: JSON.stringify(changes()) });
+      resource: "/reviews/{id}", pathParameters: { id }, queryStringParameters: { reviewId: "spoofed" }, body: JSON.stringify(changes()) });
     expect(response.statusCode).toBe(200);
     expect(existing).toMatchObject({ overall_rating: 4, public_review: "Updated\nreview", updated_at: now,
       guest_id: booking.guestid, reservation_id: booking.id, property_id: booking.property_id,
@@ -54,7 +54,8 @@ describe("review editing", () => {
   });
   test("loads an editable review through authenticated GET", async () => {
     const response = await controller.manageReviews({
-      httpMethod: "GET", queryStringParameters: { reviewId: id },
+      httpMethod: "GET", resource: "/reviews/{id}", pathParameters: { id },
+      queryStringParameters: { reviewId: "spoofed", scope: "property-score" },
       requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     });
     expect(response.statusCode).toBe(200);
@@ -291,7 +292,8 @@ it("rejects unsupported scopes", async () => {
 
 it("deletes only an authored review and returns 404 when ownership does not match", async () => {
   const reviewId = "12345678-1234-1234-1234-123456789abc";
-  const event = { httpMethod: "DELETE", headers: { Authorization: "token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } }, queryStringParameters: { reviewId } };
+  const event = { httpMethod: "DELETE", resource: "/reviews/{id}", pathParameters: { id: reviewId },
+    requestContext: { authorizer: { claims: { sub: booking.guestid } } } };
   expect((await controller.manageReviews(event)).statusCode).toBe(204);
   expect(repository.deleteOwnReview).toHaveBeenCalledWith(reviewId, booking.guestid);
   repository.deleteOwnReview.mockResolvedValue({ affected: 0 });
