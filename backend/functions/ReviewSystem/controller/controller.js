@@ -3,6 +3,8 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
+// Parse the raw request payload into a validated review object.
+// This prevents malformed JSON or array payloads from reaching business logic.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -39,8 +41,8 @@ export class Controller {
     }
   }
 
-  // Route review actions to the correct handler based on the HTTP method.
-  // This keeps the API surface simple while enforcing one entry point for read/update/delete operations.
+  // Route each request to the correct review action based on the HTTP method.
+  // This keeps review API handling centralized and prevents unhandled request types.
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
@@ -54,18 +56,15 @@ export class Controller {
     }
   }
 
-  // Fetch review data for the caller while guarding invalid query combinations.
-  // This ensures the response matches the requested scope without exposing unauthorized or inconsistent data.
+  // Fetch review data in the requested scope while enforcing valid combinations.
+  // This prevents ambiguous or unauthorized queries from being processed.
   async getReviews(user, query) {
-    const propertyScope = ["property-score", "property-categories"].includes(query.scope);
-    if (propertyScope && query.reviewId !== undefined) {
-      throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
+    if (query.scope === "property-score" && query.reviewId !== undefined) {
+      throw new BadRequestException("Property score and individual review requests cannot be combined.");
     }
     let result;
     if (query.scope === "property-score") {
       result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
-    } else if (query.scope === "property-categories") {
-      result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
     } else if (query.reviewId !== undefined) {
       result = await this.service.getEditableReview(user.userId, query.reviewId);
     } else {
@@ -74,22 +73,22 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-  // Update an existing review only if the caller is allowed to edit it.
-  // This prevents abandoned, stale, or unauthorized edits from changing a guest's review data.
+  // Update an existing review after authenticating the caller and validating the payload.
+  // This keeps edits limited to the intended review and protects against stale or malformed updates.
   async patchReview(user, query, body) {
     const result = await this.service.updateReview(user.userId, query.reviewId, parseBody(body));
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-  // Remove a review after confirming the caller owns it.
-  // This enforces deletion safety and avoids allowing arbitrary users to delete another person's review.
+  // Delete a review only for the authenticated owner.
+  // This avoids allowing one user to remove another user's review.
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
   }
 
-  // Convert exceptions into safe HTTP responses for the client.
-  // This hides internal implementation details while preserving validation and authorization feedback.
+  // Hide unexpected failure details because they may expose internal implementation data.
+  // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
     const statusCode = error.statusCode || 500;
     const message = statusCode >= 500 ? "Something went wrong, please contact support." : error.message;
