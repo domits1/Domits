@@ -8,10 +8,20 @@ const parentOf = (hostname) => hostname.split(".").slice(1).join(".");
 const pathsFor = (hostname) => ["/" + buildStaticPageKey(hostname), "/", "/index.html"];
 
 export class StaticPageWithdrawal {
-  constructor({ pageStore, tenantRepository, distributionId = process.env[DISTRIBUTION_ENV_NAME] }) {
+  constructor({
+    pageStore,
+    tenantRepository,
+    domainRepository = null,
+    distributionId = process.env[DISTRIBUTION_ENV_NAME],
+  }) {
     this.pageStore = pageStore;
     this.tenantRepository = tenantRepository;
+    this.domainRepository = domainRepository;
     this.distributionId = String(distributionId || "").trim();
+  }
+
+  async withdrawSite(siteId) {
+    return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
   async withdraw({ siteId, domains }) {
@@ -27,10 +37,9 @@ export class StaticPageWithdrawal {
   async #invalidate(hostnames) {
     const errors = [];
     const pathsByTenant = new Map();
-    let wildcardTenants = null;
+    const wildcardTenants = this.#wildcardTenantsOnce();
     for (const hostname of hostnames) {
       try {
-        wildcardTenants ??= await this.#wildcardTenants();
         const tenantId = await this.#tenantIdFor(hostname, wildcardTenants);
         if (!tenantId) {
           errors.push({ hostname, message: "no tenant serves this hostname" });
@@ -57,7 +66,15 @@ export class StaticPageWithdrawal {
     return errors;
   }
 
-  async #wildcardTenants() {
+  #wildcardTenantsOnce() {
+    let listing = null;
+    return () => {
+      listing ??= this.#listWildcardTenants();
+      return listing;
+    };
+  }
+
+  async #listWildcardTenants() {
     if (!this.distributionId) {
       return [];
     }
@@ -75,7 +92,7 @@ export class StaticPageWithdrawal {
       return exact.id;
     }
 
-    return wildcardTenants.find((tenant) => tenant.parent === parentOf(hostname))?.id || "";
+    return (await wildcardTenants()).find((tenant) => tenant.parent === parentOf(hostname))?.id || "";
   }
 }
 

@@ -1823,7 +1823,11 @@ export class PropertyController {
     }
 
     createStaticPageWithdrawal(pageStore = new StaticPageStore()) {
-        return new StaticPageWithdrawal({ pageStore, tenantRepository: new CloudFrontTenantRepository() });
+        return new StaticPageWithdrawal({
+            pageStore,
+            tenantRepository: new CloudFrontTenantRepository(),
+            domainRepository: this.directBookingWebsiteDomainRepository,
+        });
     }
 
     createStaticPageWorker() {
@@ -1840,8 +1844,7 @@ export class PropertyController {
 
     async withdrawStaticPageSafely(site) {
         try {
-            const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdraw({ siteId: site.id, domains });
+            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
             invalidationErrors.forEach((failure) => {
                 console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
             });

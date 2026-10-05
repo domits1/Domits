@@ -46,7 +46,7 @@ const buildController = ({ customDomain = null, service = null, serviceFactory =
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
   controller.createStaticPageWithdrawal = jest.fn(() => ({
-    withdraw: jest.fn().mockResolvedValue({ siteId: SITE.id, hostnames: [], invalidationErrors: [] }),
+    withdrawSite: jest.fn().mockResolvedValue({ siteId: SITE.id, hostnames: [], invalidationErrors: [] }),
   }));
   if (serviceFactory) {
     controller.getWebsiteCustomDomainService = serviceFactory;
@@ -142,13 +142,14 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     }
   });
 
-  it("withdraws the page of every domain before the domain rows are deleted", async () => {
+  it("withdraws the page before the domain rows are deleted", async () => {
     const controller = buildController({ customDomain: CUSTOM_WITH_TENANT });
     const order = [];
     controller.createStaticPageWithdrawal = jest.fn(() => ({
-      withdraw: jest.fn(
-        async (input) => (order.push(["withdraw", input]), { siteId: SITE.id, hostnames: [], invalidationErrors: [] })
-      ),
+      withdrawSite: jest.fn(async (siteId) => {
+        order.push(["withdraw", siteId]);
+        return { siteId, hostnames: [], invalidationErrors: [] };
+      }),
     }));
     controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId.mockImplementation(async () => {
       order.push(["deleteDomains"]);
@@ -157,14 +158,14 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     const response = await controller.deleteWebsiteDraft(buildEvent());
 
     expect(response.statusCode).toBe(204);
-    expect(order).toEqual([["withdraw", { siteId: SITE.id, domains: [CUSTOM_WITH_TENANT] }], ["deleteDomains"]]);
+    expect(order).toEqual([["withdraw", SITE.id], ["deleteDomains"]]);
   });
 
   it("still deletes the website when the withdrawal fails, and leaves the page to the reconciler", async () => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
     const controller = buildController({ customDomain: CUSTOM_WITH_TENANT });
     controller.createStaticPageWithdrawal = jest.fn(() => ({
-      withdraw: jest.fn().mockRejectedValue(new Error("AccessDenied")),
+      withdrawSite: jest.fn().mockRejectedValue(new Error("AccessDenied")),
     }));
 
     const response = await controller.deleteWebsiteDraft(buildEvent());

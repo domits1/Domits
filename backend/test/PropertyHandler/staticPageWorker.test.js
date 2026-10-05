@@ -116,6 +116,32 @@ describe("StaticPageWorker", () => {
     expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, built: 1 });
   });
 
+  it("withdraws a page even when the shell cannot be read, because a withdrawal needs no shell", async () => {
+    const { worker, outbox, pageStore, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    pageStore.readAppShell.mockRejectedValue(new Error("NoSuchKey"));
+
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).toHaveBeenCalledTimes(1);
+    expect(outbox.table.get("site-1").status).toBe("WITHDRAWN");
+    expect(summary).toMatchObject({ withdrawn: 1, errors: [] });
+  });
+
+  it("fails a build whose site was published between the look and the claim and whose shell then cannot be read", async () => {
+    const { worker, outbox, siteRepository, pageStore } = buildWorker();
+    siteRepository.getSiteById.mockResolvedValueOnce(buildSite({ status: "PREVIEW" }));
+    pageStore.readAppShell.mockRejectedValueOnce(new Error("NoSuchKey"));
+
+    const summary = await worker.run();
+
+    expect(pageStore.putPage).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({
+      status: "FAILED",
+      failureReason: "SHELL_UNREADABLE: NoSuchKey",
+    });
+    expect(summary).toMatchObject({ failed: 1 });
+  });
+
   it("reads the shell again for every page, and claims nothing for a page whose shell cannot be read", async () => {
     const { worker, outbox, pageStore, renderer } = buildWorker({
       rows: [buildJob(), buildJob({ siteId: "site-2" })],
@@ -131,14 +157,15 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ built: 1, errors: [{ siteId: "site-2", revision: 4, message: "NoSuchKey" }] });
   });
 
-  it("leaves a page that another worker claimed first, without loading the site or uploading", async () => {
-    const { worker, outbox, siteRepository, pageStore } = buildWorker();
+  it("leaves a page that another worker claimed first, without rendering, uploading or withdrawing", async () => {
+    const { worker, outbox, renderer, pageStore, withdrawal } = buildWorker();
     outbox.listPagesToBuild.mockResolvedValueOnce([buildJob()]);
     outbox.table.get("site-1").status = "BUILDING";
 
     const summary = await worker.run();
 
-    expect(siteRepository.getSiteById).not.toHaveBeenCalled();
+    expect(renderer.render).not.toHaveBeenCalled();
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
     expect(pageStore.putPage).not.toHaveBeenCalled();
     expect(summary).toMatchObject({ notClaimed: 1, built: 0 });
   });
@@ -232,9 +259,13 @@ describe("StaticPageWorker", () => {
   });
 
   it("never marks a withdrawal done when the host publishes again during it; the newer row is queued and rebuilt", async () => {
-    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const republished = buildSite({ status: "PUBLISHED", staticPageRevision: 5 });
+    const { worker, outbox, siteRepository, pageStore, withdrawal } = buildWorker({
+      sites: [buildSite({ status: "PREVIEW" })],
+    });
     withdrawal.withdraw.mockImplementationOnce(async ({ siteId }) => {
       publishAgainWhileBuilding(outbox);
+      siteRepository.getSiteById.mockResolvedValue(republished);
       return { siteId, hostnames: [], invalidationErrors: [] };
     });
 
@@ -243,6 +274,28 @@ describe("StaticPageWorker", () => {
     expect(outbox.requeueNewerRevision).toHaveBeenCalledWith("site-1", 4);
     expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
     expect(summary).toMatchObject({ superseded: 1, withdrawn: 0 });
+
+    const nextSummary = await worker.run();
+
+    expect(pageStore.putPage).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
+    expect(nextSummary).toMatchObject({ built: 1 });
+  });
+
+  it("hands an unpublish that was outrun by a newer unpublish to the next run without withdrawing twice", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({
+      sites: [buildSite({ status: "PREVIEW", staticPageRevision: 5 })],
+    });
+    outbox.claimPage.mockImplementationOnce(async () => {
+      Object.assign(publishAgainWhileBuilding(outbox), { status: "BUILDING" });
+      return true;
+    });
+
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+    expect(summary).toMatchObject({ superseded: 1 });
   });
 
   it("stops before rendering when the site carries a newer revision, and hands the row to the next run", async () => {

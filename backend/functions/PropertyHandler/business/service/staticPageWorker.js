@@ -60,7 +60,8 @@ export class StaticPageWorker {
   }
 
   async #buildPage(job) {
-    const template = await this.pageStore.readAppShell();
+    const queuedSite = await this.siteRepository.getSiteById(job.siteId);
+    let template = queuedSite?.status === "PUBLISHED" ? await this.pageStore.readAppShell() : "";
     const claimed = await this.outboxRepository.claimPage(job.siteId, job.revision);
     if (!claimed) {
       return { outcome: "notClaimed" };
@@ -80,6 +81,7 @@ export class StaticPageWorker {
     }
 
     try {
+      template ||= await this.pageStore.readAppShell().catch(failWith("SHELL_UNREADABLE"));
       const domains = await this.#loadDomains(site);
       const activeDomains = this.#activeDomains(domains);
       const html = await this.renderer
@@ -106,9 +108,8 @@ export class StaticPageWorker {
   async #withdrawPage(job, site) {
     let result;
     try {
-      result = await this.withdrawal
-        .withdraw({ siteId: site.id, domains: await this.domainRepository.listDomainsBySiteId(site.id) })
-        .catch(failWith("S3_DELETE_FAILED"));
+      const domains = await this.domainRepository.listDomainsBySiteId(site.id);
+      result = await this.withdrawal.withdraw({ siteId: site.id, domains }).catch(failWith("S3_DELETE_FAILED"));
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
         throw error;

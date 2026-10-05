@@ -8,6 +8,8 @@ const WILDCARD_TENANT = { id: "dt_wildcard", domains: ["*.direct.domits.com", "d
 const buildWithdrawal = ({
   tenants = [WILDCARD_TENANT],
   tenantByDomain = { [CUSTOM.domain]: { id: "dt_custom" } },
+  domains = [FALLBACK, CUSTOM],
+  distributionId = "E18DIST",
 } = {}) => {
   const pageStore = { deletePage: jest.fn(async () => undefined) };
   const tenantRepository = {
@@ -15,8 +17,9 @@ const buildWithdrawal = ({
     getTenantByDomain: jest.fn(async (domain) => tenantByDomain[domain] || null),
     createInvalidation: jest.fn(async () => "I1"),
   };
-  const withdrawal = new StaticPageWithdrawal({ pageStore, tenantRepository, distributionId: "E18DIST" });
-  return { withdrawal, pageStore, tenantRepository };
+  const domainRepository = { listDomainsBySiteId: jest.fn(async () => domains) };
+  const withdrawal = new StaticPageWithdrawal({ pageStore, tenantRepository, domainRepository, distributionId });
+  return { withdrawal, pageStore, tenantRepository, domainRepository };
 };
 
 describe("StaticPageWithdrawal", () => {
@@ -32,6 +35,16 @@ describe("StaticPageWithdrawal", () => {
       ["dt_custom", [`/sites/by-host/${CUSTOM.domain}/index.html`, "/", "/index.html"]],
     ]);
     expect(result).toEqual({ siteId: "site-1", hostnames: [FALLBACK.domain, CUSTOM.domain], invalidationErrors: [] });
+  });
+
+  it("withdraws a site by its stored domains, read from the domain repository", async () => {
+    const { withdrawal, pageStore, domainRepository } = buildWithdrawal();
+
+    const result = await withdrawal.withdrawSite("site-1");
+
+    expect(domainRepository.listDomainsBySiteId).toHaveBeenCalledWith("site-1");
+    expect(pageStore.deletePage).toHaveBeenCalledTimes(2);
+    expect(result.hostnames).toEqual([FALLBACK.domain, CUSTOM.domain]);
   });
 
   it("refuses a hostname that cannot be a page key before touching the bucket", async () => {
@@ -55,11 +68,47 @@ describe("StaticPageWithdrawal", () => {
     expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
   });
 
+  it("deletes the second key on the retry after the first succeeded and the second failed", async () => {
+    const { withdrawal, pageStore } = buildWithdrawal();
+    pageStore.deletePage.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("SlowDown"));
+
+    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] })).rejects.toThrow("SlowDown");
+    await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] });
+
+    expect(pageStore.deletePage.mock.calls.map(([call]) => call.hostname)).toEqual([
+      FALLBACK.domain,
+      CUSTOM.domain,
+      FALLBACK.domain,
+      CUSTOM.domain,
+    ]);
+  });
+
+  it("never lists the tenants when every hostname has its own tenant", async () => {
+    const { withdrawal, tenantRepository } = buildWithdrawal();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [CUSTOM] });
+
+    expect(tenantRepository.listTenantsForDistribution).not.toHaveBeenCalled();
+    expect(tenantRepository.createInvalidation).toHaveBeenCalledTimes(1);
+  });
+
+  it("still invalidates the custom domain when the tenant listing fails, lists once, and reports each fallback", async () => {
+    const { withdrawal, tenantRepository } = buildWithdrawal();
+    tenantRepository.listTenantsForDistribution.mockRejectedValue(new Error("Throttling"));
+    const secondFallback = { ...FALLBACK, domain: "other-site-2.direct.domits.com" };
+
+    const result = await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, secondFallback, CUSTOM] });
+
+    expect(tenantRepository.listTenantsForDistribution).toHaveBeenCalledTimes(1);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => call.tenantId)).toEqual(["dt_custom"]);
+    expect(result.invalidationErrors).toEqual([
+      { hostname: FALLBACK.domain, message: "Throttling" },
+      { hostname: secondFallback.domain, message: "Throttling" },
+    ]);
+  });
+
   it("reports a hostname no tenant serves and a failed invalidation instead of failing the withdrawal", async () => {
-    const { withdrawal, tenantRepository } = buildWithdrawal({
-      tenants: [],
-      tenantByDomain: { [CUSTOM.domain]: { id: "dt_custom" } },
-    });
+    const { withdrawal, tenantRepository } = buildWithdrawal({ tenants: [] });
     tenantRepository.createInvalidation.mockRejectedValueOnce(new Error("TooManyInvalidationsInProgress"));
 
     const result = await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] });
@@ -71,14 +120,8 @@ describe("StaticPageWithdrawal", () => {
     ]);
   });
 
-  it("skips the tenant lookup when no distribution is configured, and says so per hostname", async () => {
-    const pageStore = { deletePage: jest.fn(async () => undefined) };
-    const tenantRepository = {
-      listTenantsForDistribution: jest.fn(),
-      getTenantByDomain: jest.fn(async () => null),
-      createInvalidation: jest.fn(),
-    };
-    const withdrawal = new StaticPageWithdrawal({ pageStore, tenantRepository, distributionId: "" });
+  it("skips the tenant listing when no distribution is configured, and says so per hostname", async () => {
+    const { withdrawal, tenantRepository } = buildWithdrawal({ distributionId: "", tenantByDomain: {} });
 
     const result = await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK] });
 

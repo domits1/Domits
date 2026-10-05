@@ -248,6 +248,8 @@ describe("StaticPageOutboxRepository", () => {
     const done = await new StaticPageOutboxRepository().markPageWithdrawn("site-1", 4, { now: NOW });
 
     const [statement, parameters] = client.queryRunner.query.mock.calls[0];
+    expect(statement).toContain("WHERE site_id = $1");
+    expect(statement).toContain("AND revision = $2");
     expect(statement).toContain("AND status = 'BUILDING'");
     expect(statement).toContain("AND NOT EXISTS (");
     expect(statement).toContain("AND (site.status = 'PUBLISHED' OR site.static_page_revision <> $2)");

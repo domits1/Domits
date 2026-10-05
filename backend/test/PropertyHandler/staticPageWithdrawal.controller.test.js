@@ -64,5 +64,6 @@ describe("unpublishing a website site queues the withdrawal of its page", () => 
     delete process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET;
     expect(worker.withdrawal).toBeInstanceOf(StaticPageWithdrawal);
     expect(worker.withdrawal.pageStore).toBe(worker.pageStore);
+    expect(worker.withdrawal.domainRepository).toBe(controller.directBookingWebsiteDomainRepository);
   });
 });
