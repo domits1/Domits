@@ -120,6 +120,21 @@ describe("StaticPageReconciler", () => {
     expect(summary).toMatchObject({ removed: 1 });
   });
 
+  it("queues a site again in the same run when a republish slipped between the last look and the delete", async () => {
+    const republished = entry("b.direct.domits.com", { ...UNPUBLISHED, status: "PUBLISHED", staticPageRevision: 3 });
+    const { reconciler, domainRepository, siteRepository } = buildReconciler({
+      stored: ["b.direct.domits.com"],
+      entries: [entry("b.direct.domits.com", UNPUBLISHED)],
+      rows: [row("site-2", "ACTIVE")],
+    });
+    domainRepository.getDomainWithSiteByName.mockResolvedValueOnce(null).mockResolvedValueOnce(republished);
+
+    const summary = await reconciler.run();
+
+    expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-2");
+    expect(summary).toMatchObject({ removed: 1, queued: 1 });
+  });
+
   it("queues a published site whose page is missing once however many domains it has, also when its row says active or withdrawn", async () => {
     const { reconciler, siteRepository } = buildReconciler({
       rejected: ["sites/by-host/UPPER.example/index.html"],

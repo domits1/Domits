@@ -59,6 +59,7 @@ export class StaticPageReconciler {
     };
 
     const orphans = [...storedHostnames].filter((hostname) => !expectedHostnames.has(hostname)).slice(0, budget);
+    const repairs = new Set();
     if (orphans.length > 0) {
       const removal = await this.withdrawal.removePages(orphans, {
         keep: async (hostname) =>
@@ -66,10 +67,19 @@ export class StaticPageReconciler {
       });
       summary.removed = removal.removed.length;
       summary.errors.push(...removal.failures, ...removal.invalidationErrors);
+      for (const hostname of removal.removed) {
+        const owner = await this.domainRepository.getDomainWithSiteByName(hostname);
+        if (isPublishedOnActiveDomain(owner)) {
+          repairs.add(owner.siteId);
+        }
+      }
     }
 
     const siteIdsMissingAPage = [
-      ...new Set(expected.filter((entry) => !storedHostnames.has(entry.domain)).map((entry) => entry.siteId)),
+      ...new Set([
+        ...repairs,
+        ...expected.filter((entry) => !storedHostnames.has(entry.domain)).map((entry) => entry.siteId),
+      ]),
     ];
     const rows = await this.outboxRepository.listPagesBySiteIds(siteIdsMissingAPage);
     const rowBySiteId = new Map(rows.map((row) => [row.siteId, row]));
