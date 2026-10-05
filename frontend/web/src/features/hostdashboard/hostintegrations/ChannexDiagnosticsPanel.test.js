@@ -14,7 +14,6 @@ import {
   modifyBookingDates,
   pullLatestChannexBookings,
   saveChannexSetupMapping,
-  syncChannexCertificationTestCase,
   syncChannexFull,
   syncChannexRestrictions,
 } from "./channexApi";
@@ -38,7 +37,6 @@ jest.mock("./channexApi", () => ({
   receiveChannexBookingRevisions: jest.fn(),
   syncChannexAri: jest.fn(),
   syncChannexAvailability: jest.fn(),
-  syncChannexCertificationTestCase: jest.fn(),
   syncChannexFull: jest.fn(),
   syncChannexRestrictions: jest.fn(),
 }));
@@ -149,7 +147,6 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       expect(screen.queryByRole("button", { name: `Run #${testCaseId}` })).toBeNull();
     }
     expect(screen.queryByRole("button", { name: "Receive booking revisions" })).toBeNull();
-    expect(syncChannexCertificationTestCase).not.toHaveBeenCalled();
   });
 
   test("saves a single-unit Channex setup mapping from the setup tab", async () => {
