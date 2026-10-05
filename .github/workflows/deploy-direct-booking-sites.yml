@@ -149,7 +149,7 @@ jobs:
             --query '{status:StatusCode,error:FunctionError}' --output json > queue-all.meta
           cat queue-all.json; echo
           if grep -q '"error": "' queue-all.meta; then
-            echo "::error::PropertyHandler rejected the queue-all task; the pages keep the previous shell until the next deploy."
+            echo "::error::PropertyHandler rejected the queue-all task; some pages may have been queued, the rest keep the previous shell until the next deploy."
             exit 1
           fi
 

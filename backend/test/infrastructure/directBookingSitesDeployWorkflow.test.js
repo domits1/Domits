@@ -42,7 +42,8 @@ describe("the direct booking sites deploy", () => {
     expect(body).toContain(`--payload '{"task":"queue-all-static-pages"}'`);
     expect(body).not.toContain("build-static-pages");
     expect(body).toContain('AWS_MAX_ATTEMPTS: "1"');
-    expect(body).toContain("--query '{status:StatusCode,error:FunctionError}'");
+    expect(body.match(/aws lambda invoke/g)).toHaveLength(1);
+    expect(body).toContain("--query '{status:StatusCode,error:FunctionError}' --output json > queue-all.meta");
     expect(body).toMatch(/if grep -q '"error": "' queue-all\.meta; then[\s\S]*exit 1/);
   });
 });

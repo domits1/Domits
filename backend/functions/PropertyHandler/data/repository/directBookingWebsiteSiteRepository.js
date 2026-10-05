@@ -39,9 +39,18 @@ const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 
 const staticPageOutboxTableName = (schemaName) => `${schemaName}.static_page_outbox`;
 
-const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
-  queryRunner.query(
-    `INSERT INTO ${outboxTableName} (
+const OUTBOX_UPSERT_CLAUSE = `ON CONFLICT (site_id)
+      DO UPDATE SET
+        property_id = EXCLUDED.property_id,
+        host_id = EXCLUDED.host_id,
+        revision = EXCLUDED.revision,
+        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
+        attempt_count = 0,
+        failure_reason = NULL,
+        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
+        processed_at = NULL`;
+
+const OUTBOX_INSERT_COLUMNS = `(
         site_id,
         property_id,
         host_id,
@@ -52,19 +61,25 @@ const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
         created_at,
         updated_at,
         processed_at
-      )
+      )`;
+
+const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
+  queryRunner.query(
+    `INSERT INTO ${outboxTableName} ${OUTBOX_INSERT_COLUMNS}
       VALUES ($1, $2, $3, $4, 'PENDING', 0, NULL, $5, $5, NULL)
-      ON CONFLICT (site_id)
-      DO UPDATE SET
-        property_id = EXCLUDED.property_id,
-        host_id = EXCLUDED.host_id,
-        revision = EXCLUDED.revision,
-        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
-        attempt_count = 0,
-        failure_reason = NULL,
-        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
-        processed_at = NULL`,
+      ${OUTBOX_UPSERT_CLAUSE}`,
     [site.id, site.propertyId, site.hostId, site.staticPageRevision, now],
+    true
+  );
+
+const queueStaticPages = (queryRunner, outboxTableName, siteTableName, siteIds, now) =>
+  queryRunner.query(
+    `INSERT INTO ${outboxTableName} ${OUTBOX_INSERT_COLUMNS}
+      SELECT id, property_id, host_id, static_page_revision, 'PENDING', 0, NULL, $2, $2, NULL
+      FROM ${siteTableName}
+      WHERE id = ANY($1)
+      ${OUTBOX_UPSERT_CLAUSE}`,
+    [siteIds, now],
     true
   );
 
@@ -381,18 +396,17 @@ export class DirectBookingWebsiteSiteRepository {
         ORDER BY id ASC
         LIMIT $2
       )
-      RETURNING
-        ${SITE_SELECT_COLUMNS}`,
+      RETURNING id`,
           [cursor, normalizedBatchSize, now],
           true
         );
 
-        const sites = (siteResult?.records || []).map(mapSiteRow).filter(Boolean);
-        for (const site of sites) {
-          await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+        const ids = (siteResult?.records || []).map((record) => String(record.id)).sort();
+        if (ids.length > 0) {
+          await queueStaticPages(manager.queryRunner, outboxTableName, tableName, ids, now);
         }
 
-        return sites.map((site) => site.id).sort();
+        return ids;
       });
 
       siteIds.push(...queued);
@@ -402,7 +416,16 @@ export class DirectBookingWebsiteSiteRepository {
       cursor = queued.at(-1);
     }
 
-    return { siteIds, complete: false };
+    const remaining = await client.query(
+      `SELECT id
+      FROM ${tableName}
+      WHERE status = 'PUBLISHED'
+        AND id > $1
+      LIMIT 1`,
+      [cursor]
+    );
+
+    return { siteIds, complete: !(Array.isArray(remaining) && remaining.length > 0) };
   }
 
   async getSiteByPropertyIdAndHostId(propertyId, hostId) {
