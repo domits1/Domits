@@ -370,13 +370,13 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
-  async queueStaticPagesForPublishedSites({ batchSize = 500, maxBatches = 10 } = {}) {
+  async queueStaticPagesForPublishedSites({ batchSize = 100, maxBatches = 50 } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
     const outboxTableName = staticPageOutboxTableName(schemaName);
     const normalizedBatchSize =
-      Number.isSafeInteger(Number(batchSize)) && Number(batchSize) > 0 ? Math.min(Number(batchSize), 500) : 500;
+      Number.isSafeInteger(Number(batchSize)) && Number(batchSize) > 0 ? Math.min(Number(batchSize), 100) : 100;
     const siteIds = [];
     let cursor = "";
 
