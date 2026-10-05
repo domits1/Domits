@@ -151,6 +151,10 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
         return { siteId, hostnames: [], invalidationErrors: [] };
       }),
     }));
+    controller.websiteCustomDomainService.releaseTenantForSite.mockImplementation(async () => {
+      order.push(["releaseTenant"]);
+      return null;
+    });
     controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId.mockImplementation(async () => {
       order.push(["deleteDomains"]);
     });
@@ -158,7 +162,7 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     const response = await controller.deleteWebsiteDraft(buildEvent());
 
     expect(response.statusCode).toBe(204);
-    expect(order).toEqual([["withdraw", SITE.id], ["deleteDomains"]]);
+    expect(order).toEqual([["withdraw", SITE.id], ["releaseTenant"], ["deleteDomains"]]);
   });
 
   it("still deletes the website when the withdrawal fails, and leaves the page to the reconciler", async () => {

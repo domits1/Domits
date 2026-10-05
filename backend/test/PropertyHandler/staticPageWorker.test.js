@@ -282,6 +282,29 @@ describe("StaticPageWorker", () => {
     expect(nextSummary).toMatchObject({ built: 1 });
   });
 
+  it("converges on the last word of the host through unpublish, publish and unpublish again", async () => {
+    const { worker, outbox, siteRepository, pageStore, withdrawal } = buildWorker({
+      sites: [buildSite({ status: "PREVIEW" })],
+    });
+
+    await worker.run();
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 4, status: "WITHDRAWN" });
+
+    Object.assign(outbox.table.get("site-1"), { revision: 5, status: "PENDING", attemptCount: 0 });
+    siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PUBLISHED", staticPageRevision: 5 }));
+    await worker.run();
+    expect(pageStore.putPage).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
+
+    Object.assign(outbox.table.get("site-1"), { revision: 6, status: "PENDING", attemptCount: 0 });
+    siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PREVIEW", staticPageRevision: 6 }));
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "WITHDRAWN" });
+    expect(summary).toMatchObject({ withdrawn: 1 });
+  });
+
   it("hands an unpublish that was outrun by a newer unpublish to the next run without withdrawing twice", async () => {
     const { worker, outbox, withdrawal } = buildWorker({
       sites: [buildSite({ status: "PREVIEW", staticPageRevision: 5 })],
