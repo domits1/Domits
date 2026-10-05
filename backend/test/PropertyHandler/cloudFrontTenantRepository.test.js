@@ -160,4 +160,42 @@ describe("CloudFrontTenantRepository", () => {
       new CloudFrontTenantRepository({ client: goneClient }).deleteTenant({ tenantId: "dt_1", etag: "E3TAG" })
     ).resolves.toBeNull();
   });
+
+  it("lists every tenant of a distribution across pages, with the domains each one serves", async () => {
+    const pages = [
+      { DistributionTenantList: [{ Id: "dt_1", Domains: [{ Domain: "*.direct.domits.com" }] }], NextMarker: "m2" },
+      { DistributionTenantList: [{ Id: "dt_2", Domains: [{ Domain: "www.example.com" }] }, { Domains: [] }] },
+    ];
+    const client = buildClient({ ListDistributionTenantsCommand: () => pages.shift() });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    const tenants = await repository.listTenantsForDistribution("E18DIST");
+
+    expect(sentInput(client, 0)).toEqual({ AssociationFilter: { DistributionId: "E18DIST" }, Marker: undefined });
+    expect(sentInput(client, 1)).toEqual({ AssociationFilter: { DistributionId: "E18DIST" }, Marker: "m2" });
+    expect(tenants).toEqual([
+      { id: "dt_1", domains: ["*.direct.domits.com"] },
+      { id: "dt_2", domains: ["www.example.com"] },
+    ]);
+  });
+
+  it("invalidates the given paths on one tenant and answers the invalidation id", async () => {
+    const client = buildClient({ CreateInvalidationForDistributionTenantCommand: { Invalidation: { Id: "I1" } } });
+    const repository = new CloudFrontTenantRepository({ client });
+
+    const id = await repository.createInvalidation({
+      tenantId: "dt_1",
+      paths: ["/sites/by-host/www.example.com/index.html", "/"],
+      callerReference: "withdraw-1",
+    });
+
+    expect(sentInput(client)).toEqual({
+      Id: "dt_1",
+      InvalidationBatch: {
+        Paths: { Quantity: 2, Items: ["/sites/by-host/www.example.com/index.html", "/"] },
+        CallerReference: "withdraw-1",
+      },
+    });
+    expect(id).toBe("I1");
+  });
 });

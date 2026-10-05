@@ -174,7 +174,9 @@ describe("publishing a site writes its page outbox row in the same transaction",
     expect(outbox.statement).toContain("revision = EXCLUDED.revision");
     expect(outbox.statement).toContain("ELSE 'PENDING' END");
     expect(outbox.statement).toContain("attempt_count = 0");
-    expect(outbox.statement).toContain("status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END");
+    expect(outbox.statement).toContain(
+      "status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END"
+    );
     expect(outbox.statement).toContain("THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END");
     expect(outbox.statement).toContain("failure_reason = NULL");
     expect(outbox.statement).toContain("processed_at = NULL");
@@ -236,5 +238,51 @@ describe("every site query reports the static page revision", () => {
     await expect(new DirectBookingWebsiteSiteRepository().getSiteById("site-1")).resolves.toMatchObject({
       staticPageRevision: 0,
     });
+  });
+});
+
+describe("unpublishing a site queues its withdrawal in the same transaction", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("moves the site, raises its revision in the database and queues the row through one transaction", async () => {
+    const client = buildClient({ siteRecords: [{ ...SITE_ROW, status: "PREVIEW", static_page_revision: 5 }] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const site = await repository.updateSiteStatusWithStaticPageOutbox("site-1", "PREVIEW");
+
+    expect(client.transaction).toHaveBeenCalledTimes(1);
+    const update = statementFor(client, new RegExp(`UPDATE ${SCHEMA}\\.standalone_site`));
+    expect(update.statement).toContain("static_page_revision = COALESCE(static_page_revision, 0) + 1");
+    expect(update.parameters).toEqual(["site-1", "PREVIEW", null, expect.any(Number)]);
+    const outbox = statementFor(client, /static_page_outbox/);
+    expect(outbox.parameters).toEqual(["site-1", "property-1", "host-1", 5, expect.any(Number)]);
+    expect(client.committed).toBe(true);
+    expect(site).toMatchObject({ id: "site-1", status: "PREVIEW", staticPageRevision: 5 });
+  });
+
+  it("rolls the status change back when the withdrawal cannot be queued", async () => {
+    const client = buildClient();
+    client.transactionRunner.query.mockImplementation(async (statement) => {
+      if (/static_page_outbox/.test(statement)) {
+        throw new Error("outbox unavailable");
+      }
+      return { records: [SITE_ROW], affected: 1 };
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await expect(repository.updateSiteStatusWithStaticPageOutbox("site-1", "PREVIEW")).rejects.toThrow(
+      "outbox unavailable"
+    );
+    expect(client.rolledBack).toBe(true);
+  });
+
+  it("queues nothing and answers null for a site that does not exist", async () => {
+    const client = buildClient({ siteRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    expect(await repository.updateSiteStatusWithStaticPageOutbox("missing", "PREVIEW")).toBeNull();
+    expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
   });
 });

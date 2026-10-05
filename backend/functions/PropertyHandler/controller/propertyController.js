@@ -16,6 +16,7 @@ import { StaticPageOutboxRepository } from "../data/repository/staticPageOutboxR
 import { StaticPageStore } from "../data/repository/staticPageStore.js";
 import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
+import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import ChannexCalendarChangeSyncClient, {
@@ -1821,14 +1822,32 @@ export class PropertyController {
         };
     }
 
+    createStaticPageWithdrawal(pageStore = new StaticPageStore()) {
+        return new StaticPageWithdrawal({ pageStore, tenantRepository: new CloudFrontTenantRepository() });
+    }
+
     createStaticPageWorker() {
+        const pageStore = new StaticPageStore();
         return new StaticPageWorker({
             outboxRepository: new StaticPageOutboxRepository(),
             siteRepository: this.directBookingWebsiteSiteRepository,
             domainRepository: this.directBookingWebsiteDomainRepository,
-            pageStore: new StaticPageStore(),
+            pageStore,
             renderer: new StaticPageRenderer(),
+            withdrawal: this.createStaticPageWithdrawal(pageStore),
         });
+    }
+
+    async withdrawStaticPageSafely(site) {
+        try {
+            const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdraw({ siteId: site.id, domains });
+            invalidationErrors.forEach((failure) => {
+                console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+            });
+        } catch (error) {
+            console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the reconciler will remove it.`, error);
+        }
     }
 
     async buildStaticPages(event) {
@@ -2004,7 +2023,7 @@ export class PropertyController {
     }
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatusWithStaticPageOutbox(site.id, "PREVIEW");
         const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
             site.id,
             "DISABLED",
@@ -3364,6 +3383,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.withdrawStaticPageSafely(existingSite);
                 await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);

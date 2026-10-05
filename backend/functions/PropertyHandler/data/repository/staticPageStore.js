@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const BUCKET_ENV_NAME = "DIRECT_BOOKING_WEBSITE_SITES_BUCKET";
 const APP_SHELL_KEY = "index.html";
@@ -50,6 +50,10 @@ export class StaticPageStore {
         Metadata: { "site-id": String(siteId), revision: String(revision) },
       })
     );
+  }
+
+  async deletePage({ hostname }) {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: buildStaticPageKey(hostname) }));
   }
 }
 
