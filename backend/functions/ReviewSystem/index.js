@@ -8,7 +8,9 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
-  if (!["POST", "GET", "PATCH", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
+  const publicRequest = event.httpMethod === "GET" && event.resource === "/reviews/public";
+  if (!publicRequest && (!["POST", "GET", "PATCH", "DELETE"].includes(event.httpMethod)
+    || event.resource !== "/reviews")) {
     return {
       statusCode: 405,
       headers: responseHeaders,
@@ -18,6 +20,7 @@ export const handler = async (event) => {
 
   try {
     controller ??= new Controller();
+    if (publicRequest) return await controller.getPublicReviews(event);
     return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
   } catch {
     return {

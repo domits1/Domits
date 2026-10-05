@@ -2,6 +2,14 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/ReviewSystem";
 
+export const getPublicReviews = async (propertyId, offset, signal) => {
+  const url = process.env.REACT_APP_PUBLIC_REVIEW_API_URL || `${API_REVIEW_BASE}/public`;
+  const query = new URLSearchParams({ propertyId, offset: String(offset) });
+  const response = await fetch(`${url}?${query}`, { signal });
+  if (!response.ok) throw new Error("Could not load reviews. Please try again.");
+  return response.json();
+};
+
 const readEditResponse = async (response) => {
   const payload = await parseResponse(response);
   if (!response.ok) throw new Error(payload?.message || "Could not access or update this review. Please try again.");

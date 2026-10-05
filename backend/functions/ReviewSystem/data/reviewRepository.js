@@ -7,6 +7,48 @@ import { ReviewCategory } from "database/models/ReviewCategory";
 import { ReviewCategoryRating } from "database/models/ReviewCategoryRating";
 
 export class ReviewRepository {
+  eligibleReviewQuery(database, propertyId) {
+    return database.getRepository(Review).createQueryBuilder("review")
+      .where("review.property_id = :propertyId", { propertyId })
+      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "verified" })
+      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "published" })
+      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
+      .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
+  }
+
+  async getPublicReviewPage(propertyId, offset) {
+    const database = await Database.getInstance();
+    const property = await database.getRepository(Property).findOne({
+      where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
+    });
+    if (!property) return null;
+    const eligible = () => this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :status",
+        { status: "ACTIVE" });
+    const summary = await eligible().select("AVG(review.overall_rating)", "score")
+      .addSelect("COUNT(*)", "count").getRawOne();
+    const reviews = await eligible()
+      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"])
+      .orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
+      .offset(offset).limit(10).getMany();
+    const ids = reviews.map((review) => review.id);
+    const ratings = ids.length ? await database.getRepository(ReviewCategoryRating).createQueryBuilder("rating")
+      .innerJoin(ReviewCategory, "category", "category.key = rating.category_key AND category.active = :active",
+        { active: true })
+      .select("rating.review_id", "review_id").addSelect("category.key", "key")
+      .addSelect("category.label", "label").addSelect("rating.rating", "rating")
+      .where("rating.review_id IN (:...ids)", { ids })
+      .andWhere("rating.rating BETWEEN 1 AND 5")
+      .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
+    const count = Number(summary.count);
+    return { property_id: propertyId, overall_score: count ? Number(summary.score) : null,
+      review_count: count, next_offset: offset + 10 < count ? offset + 10 : null,
+      reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
+        text: review.public_review, date: Number(review.created_at), verified: true,
+        categories: ratings.filter((rating) => rating.review_id === review.id)
+          .map(({ key, label, rating }) => ({ key, label, rating: Number(rating) })) })) };
+  }
+
   async getPropertyCategoryRatings(propertyId, hostId) {
     const database = await Database.getInstance();
     const rows = await database.getRepository(ReviewCategory).createQueryBuilder("category")
@@ -47,16 +89,11 @@ export class ReviewRepository {
   async getPropertyReviewScore(propertyId, hostId) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
-    const result = await dataSource.getRepository(Review).createQueryBuilder("review")
+    const result = await this.eligibleReviewQuery(dataSource, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count")
-      .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "verified" })
-      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "published" })
-      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
       .getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,

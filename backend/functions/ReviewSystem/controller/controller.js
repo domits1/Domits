@@ -20,6 +20,18 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Fetch public review details for a property so guests can read feedback without needing an authenticated session.
+  // This keeps the public review feed accessible while delegating validation and data retrieval to the service layer.
+  async getPublicReviews(event) {
+    try {
+      const query = event.queryStringParameters || {};
+      const result = await this.service.getPublicReviews(query.propertyId, query.offset);
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;

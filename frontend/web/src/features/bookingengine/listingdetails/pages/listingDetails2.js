@@ -350,6 +350,7 @@ const ListingDetails2 = () => {
     { id: "photos", label: "Photos", targetId: "listing-photos" },
     ...(propertyLoading || hasAmenities ? [{ id: "amenities", label: "Amenities", targetId: "listing-amenities" }] : []),
     { id: "host", label: "Host", targetId: "listing-host" },
+    { id: "reviews", label: "Reviews", targetId: "listing-reviews" },
     ...(hasLocation ? [{ id: "location", label: "Location", targetId: "listing-location" }] : []),
     { id: "policies", label: "Policies", targetId: "listing-policies" },
   ];

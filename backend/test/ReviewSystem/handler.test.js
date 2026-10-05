@@ -1,12 +1,19 @@
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
   Controller: jest.fn(() => ({
     createReview: jest.fn(async () => ({ statusCode: 201 })),
+    getPublicReviews: jest.fn(async () => ({ statusCode: 200 })),
     manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "DELETE" ? 204 : 200 })),
   })),
 }));
 
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
+
+it("routes anonymous public listing reviews separately", async () => {
+  const event = { httpMethod: "GET", resource: "/reviews/public" };
+  expect((await handler(event)).statusCode).toBe(200);
+  expect(Controller.mock.results[0].value.getPublicReviews).toHaveBeenCalledWith(event);
+});
 
 it.each([["POST", 201], ["GET", 200], ["PATCH", 200], ["DELETE", 204]])(
   "routes %s reviews to the controller", async (httpMethod, statusCode) => {
