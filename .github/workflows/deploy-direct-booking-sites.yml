@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-direct-booking-sites-${{ github.ref }}
+  group: deploy-direct-booking-sites
   cancel-in-progress: false
 
 permissions:
@@ -149,7 +149,7 @@ jobs:
             --query '{status:StatusCode,error:FunctionError}' --output json > queue-all.meta
           cat queue-all.json; echo
           if grep -q '"error": "' queue-all.meta; then
-            echo "::error::PropertyHandler rejected the queue-all task; some pages may have been queued, the rest keep the previous shell until the next deploy."
+            echo "::error::PropertyHandler rejected the queue-all task; some pages may have been queued, the rest keep the previous shell until their next publish. See the worker runbook for the batch cap."
             exit 1
           fi
 

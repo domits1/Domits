@@ -30,6 +30,10 @@ describe("the direct booking sites deploy", () => {
     expect(queue).toBeGreaterThan(invalidate);
   });
 
+  it("serialises every deploy of the one bucket and function, whatever ref dispatched it", () => {
+    expect(WORKFLOW).toMatch(/concurrency:\n  group: deploy-direct-booking-sites\n  cancel-in-progress: false/);
+  });
+
   it("is opt-in through one variable, and says so when it is off", () => {
     expect(stepBody("Queue every static page for the new shell")).toContain(
       "if: vars.STATIC_PAGE_REGENERATE_ON_DEPLOY == 'true'"
