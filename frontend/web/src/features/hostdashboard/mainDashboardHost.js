@@ -28,6 +28,7 @@ import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
+import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -49,6 +50,7 @@ import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
 import HostReservationDetails from "./HostReservationDetails";
 import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
+import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -126,6 +128,7 @@ function MainDashboardHost() {
 
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="pricelabs" element={<HostPriceLabs />} />
+          <Route path="distribution" element={<HostChannelDistribution />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
@@ -140,6 +143,10 @@ function MainDashboardHost() {
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
+          <Route
+            path="settings/rate-plans/direct-booking"
+            element={<HostSettingsDirectBookingRatePlan />}
+          />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />

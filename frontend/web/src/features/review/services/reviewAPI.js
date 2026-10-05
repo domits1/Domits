@@ -22,6 +22,12 @@ const getReviewErrorMessage = (status, payload) => {
   return "Could not submit your review. Please try again.";
 };
 
+export const requestReview = async (method = "GET", query = {}) => {
+  return fetch(`${API_REVIEW_BASE}?${new URLSearchParams(query)}`, {
+    method, headers: { Authorization: getAccessToken() },
+  });
+};
+
 export const createReview = async ({ reservationId, rating, publicReview, privateFeedback }) => {
   const response = await fetch(API_REVIEW_BASE, {
     method: "POST",

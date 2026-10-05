@@ -37,17 +37,15 @@ export class ReviewService {
 
     const status = String(booking.status || "").trim().toLowerCase();
     const checkoutAt = Number(booking.departuredate);
+    const now = this.now();
 
-    // An expired inquiry or unpaid booking is not evidence of a completed stay.
     if (!REVIEWABLE_STATUSES.has(status)) {
-      throw new BadRequestException("Only confirmed reservations can be reviewed.");
+      throw new BadRequestException("Only paid or confirmed reservations can be reviewed.");
     }
 
-    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > this.now()) {
+    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > now) {
       throw new BadRequestException("You can only review a reservation after checkout.");
     }
-
-    const now = this.now();
 
     try {
       return await this.repository.create({
