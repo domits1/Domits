@@ -26,6 +26,14 @@ const buildResolution = (site, domain) => ({
   domain,
 });
 
+const toPublicSite = ({ id, siteName, primaryLocale, status, templateKey }) => ({
+  id,
+  siteName,
+  primaryLocale,
+  status,
+  templateKey,
+});
+
 export const buildPublishedSiteRenderPayload = ({
   propertySnapshot: propertySnapshotOverrides,
   contentOverrides: contentOverridesOverrides,
@@ -37,7 +45,7 @@ export const buildPublishedSiteRenderPayload = ({
     { ...DEFAULT_SITE, ...siteOverrides },
     { ...DEFAULT_DOMAIN, ...domainOverrides }
   ),
-  site: { ...DEFAULT_SITE, ...siteOverrides },
+  site: toPublicSite({ ...DEFAULT_SITE, ...siteOverrides }),
   domain: { ...DEFAULT_DOMAIN, ...domainOverrides },
   propertySnapshot: {
     property: {

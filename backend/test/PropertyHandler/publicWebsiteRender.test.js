@@ -9,10 +9,15 @@ const SITE = {
   primaryLocale: "nl",
   status: "PUBLISHED",
   templateKey: "panorama-landing",
-  publishedAt: 1757600000000,
-  publishedPropertySnapshot: { property: { id: "property-1", title: "Villa Sensual" } },
+  publishedPropertySnapshot: { property: { id: "property-1", hostId: "host-secret-1", title: "Villa Sensual" } },
   publishedContentOverrides: {},
   publishedThemeOverrides: {},
+  previewTokenHash: "preview-secret",
+  publishedAt: 1757600000000,
+  suspendedAt: null,
+  createdAt: 1757500000000,
+  updatedAt: 1757600000000,
+  futureSiteColumn: "must never reach a visitor",
 };
 
 const STORED_DOMAIN = {
@@ -40,11 +45,45 @@ const STORED_DOMAIN = {
   futureColumn: "must never reach a visitor",
 };
 
-const PUBLIC_DOMAIN = { domain: "www.villasensual.nl", status: "ACTIVE", isPrimary: true };
+const STORED_FALLBACK_DOMAIN = {
+  ...STORED_DOMAIN,
+  id: "domain-0",
+  domain: "villa-sensual-site1.direct.domits.com",
+  domainType: "FALLBACK",
+  status: "PENDING",
+  verificationDetails: { activationMode: "internal", domainKind: "live", routingConfigured: false },
+};
+
+const PUBLIC_DOMAIN = { domain: STORED_DOMAIN.domain, status: "ACTIVE", isPrimary: true };
+const PUBLIC_FALLBACK_DOMAIN = { domain: STORED_FALLBACK_DOMAIN.domain, status: "ACTIVE", isPrimary: true };
+
+const PUBLIC_SITE = {
+  id: SITE.id,
+  siteName: SITE.siteName,
+  primaryLocale: SITE.primaryLocale,
+  status: SITE.status,
+  templateKey: SITE.templateKey,
+};
+
+const buildPublicResolution = (domain) => ({
+  siteId: SITE.id,
+  propertyId: SITE.propertyId,
+  templateKey: SITE.templateKey,
+  primaryLocale: SITE.primaryLocale,
+  siteName: SITE.siteName,
+  siteStatus: SITE.status,
+  publishedAt: SITE.publishedAt,
+  isReachable: true,
+  domain,
+});
 
 const PRIVATE_MARKERS = [
   "hostId",
   SITE.hostId,
+  "previewTokenHash",
+  SITE.previewTokenHash,
+  "suspendedAt",
+  "futureSiteColumn",
   "verificationDetails",
   "dt_secret",
   "cg_secret",
@@ -55,16 +94,8 @@ const PRIVATE_MARKERS = [
   "createdAt",
   "updatedAt",
   "domain-1",
+  "domain-0",
 ];
-
-const STORED_FALLBACK_DOMAIN = {
-  ...STORED_DOMAIN,
-  id: "domain-0",
-  domain: "villa-sensual-site1.direct.domits.com",
-  domainType: "FALLBACK",
-  status: "PENDING",
-  verificationDetails: { activationMode: "internal", domainKind: "live", routingConfigured: false },
-};
 
 const buildController = ({ site = SITE, domain = STORED_DOMAIN, domains = [domain] } = {}) => {
   const controller = new PropertyController();
@@ -87,33 +118,50 @@ const buildEvent = (query) => ({
 
 const parseBody = (response) => JSON.parse(response.body);
 
-const expectOnlyPublicDomainFields = (response) => {
-  expect(response.statusCode).toBe(200);
-  const body = parseBody(response);
-  expect(body.domain).toEqual(PUBLIC_DOMAIN);
-  expect(body.resolution.domain).toEqual(PUBLIC_DOMAIN);
+const expectNoPrivateMarker = (text) => {
   for (const marker of PRIVATE_MARKERS) {
-    expect(response.body).not.toContain(marker);
+    expect(text).not.toContain(marker);
   }
 };
 
+const expectPublicRenderResponse = (response, domain) => {
+  expect(response.statusCode).toBe(200);
+  const body = parseBody(response);
+  expect(body.site).toEqual(PUBLIC_SITE);
+  expect(body.resolution).toEqual(buildPublicResolution(domain));
+  expect(body.domain).toEqual(domain);
+  expect(body.renderSource).toBe("published_site");
+  expect(body.propertySnapshot.property.hostId).toBe(SITE.hostId);
+  expectNoPrivateMarker(JSON.stringify({ ...body, propertySnapshot: undefined }));
+};
+
 describe("the public website render response", () => {
-  it("carries only the public domain fields when rendered by domain", async () => {
+  it("carries only the public site and domain fields when rendered by domain", async () => {
     const controller = buildController();
 
     const response = await controller.getPublicWebsiteRenderModel(buildEvent({ domain: STORED_DOMAIN.domain }));
 
-    expectOnlyPublicDomainFields(response);
+    expectPublicRenderResponse(response, PUBLIC_DOMAIN);
     expect(controller.directBookingWebsiteDomainRepository.getDomainByName).toHaveBeenCalledWith(STORED_DOMAIN.domain);
   });
 
-  it("carries only the public domain fields when rendered by site id", async () => {
+  it("carries only the public site and domain fields when rendered by site id", async () => {
     const controller = buildController();
 
     const response = await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id }));
 
-    expectOnlyPublicDomainFields(response);
+    expectPublicRenderResponse(response, PUBLIC_DOMAIN);
     expect(controller.directBookingWebsiteDomainRepository.listDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
+  });
+
+  it("carries only the public site and domain fields when the by-id path has to heal the primary domain", async () => {
+    const controller = buildController({ domains: [] });
+    controller.resolveOrCreatePrimaryLiveDomain = jest.fn().mockResolvedValue(STORED_DOMAIN);
+
+    const response = await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id }));
+
+    expectPublicRenderResponse(response, PUBLIC_DOMAIN);
+    expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
   });
 
   it("sends the runtime status of a fallback domain, not the stored one, in both places", async () => {
@@ -124,12 +172,7 @@ describe("the public website render response", () => {
 
       const response = await controller.getPublicWebsiteRenderModel(buildEvent({ domain: STORED_FALLBACK_DOMAIN.domain }));
 
-      expect(response.statusCode).toBe(200);
-      const body = parseBody(response);
-      const expectedDomain = { domain: STORED_FALLBACK_DOMAIN.domain, status: "ACTIVE", isPrimary: true };
-      expect(body.domain).toEqual(expectedDomain);
-      expect(body.resolution.domain).toEqual(expectedDomain);
-      expect(response.body).not.toContain("verificationDetails");
+      expectPublicRenderResponse(response, PUBLIC_FALLBACK_DOMAIN);
     } finally {
       if (previousRoutingFlag === undefined) {
         delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
@@ -138,56 +181,16 @@ describe("the public website render response", () => {
       }
     }
   });
-
-  it("carries only the public domain fields when the by-id path has to heal the primary domain", async () => {
-    const controller = buildController({ domains: [] });
-    controller.resolveOrCreatePrimaryLiveDomain = jest.fn().mockResolvedValue(STORED_DOMAIN);
-
-    const response = await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id }));
-
-    expectOnlyPublicDomainFields(response);
-    expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
-  });
-
-  it("keeps the site fields the public page reads, and nothing else", async () => {
-    const controller = buildController();
-
-    const body = parseBody(await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id })));
-
-    expect(body.site).toEqual({
-      id: SITE.id,
-      siteName: SITE.siteName,
-      primaryLocale: SITE.primaryLocale,
-      status: SITE.status,
-      templateKey: SITE.templateKey,
-    });
-    expect(body.resolution).toEqual({
-      siteId: SITE.id,
-      propertyId: SITE.propertyId,
-      templateKey: SITE.templateKey,
-      primaryLocale: SITE.primaryLocale,
-      siteName: SITE.siteName,
-      siteStatus: SITE.status,
-      publishedAt: SITE.publishedAt,
-      isReachable: true,
-      domain: PUBLIC_DOMAIN,
-    });
-    expect(body.renderSource).toBe("published_site");
-  });
 });
 
 describe("the public website resolve response", () => {
-  it("carries only the public domain fields", async () => {
+  it("carries only the public site and domain fields", async () => {
     const controller = buildController();
 
     const response = await controller.resolvePublicWebsiteSite(buildEvent({ domain: STORED_DOMAIN.domain }));
 
     expect(response.statusCode).toBe(200);
-    const body = parseBody(response);
-    expect(body.domain).toEqual(PUBLIC_DOMAIN);
-    expect(body.isReachable).toBe(true);
-    for (const marker of PRIVATE_MARKERS) {
-      expect(response.body).not.toContain(marker);
-    }
+    expect(parseBody(response)).toEqual(buildPublicResolution(PUBLIC_DOMAIN));
+    expectNoPrivateMarker(response.body);
   });
 });
