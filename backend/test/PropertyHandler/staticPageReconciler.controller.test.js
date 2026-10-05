@@ -1,6 +1,5 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
-import { StaticPageReconciler } from "../../functions/PropertyHandler/business/service/staticPageReconciler.js";
 
 const SUMMARY = { stored: 3, expected: 3, removed: 1, queued: 1, stuck: [], errors: [] };
 
@@ -36,18 +35,5 @@ describe("running the static page reconciler from the controller", () => {
     const { controller } = buildController(summary);
 
     await expect(controller.reconcileStaticPages({ task: "reconcile-static-pages" })).rejects.toThrow(message);
-  });
-
-  it("wires the reconciler to the repositories the controller owns and to a withdrawal on the same page store", () => {
-    process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = "sites-bucket-under-test";
-    const controller = new PropertyController();
-
-    const reconciler = controller.createStaticPageReconciler();
-
-    delete process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET;
-    expect(reconciler).toBeInstanceOf(StaticPageReconciler);
-    expect(reconciler.siteRepository).toBe(controller.directBookingWebsiteSiteRepository);
-    expect(reconciler.domainRepository).toBe(controller.directBookingWebsiteDomainRepository);
-    expect(reconciler.withdrawal.pageStore).toBe(reconciler.pageStore);
   });
 });

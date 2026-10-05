@@ -1,8 +1,6 @@
 {
   "Name": "domits-static-page-reconciler-rate-1-hour",
-  "Description": "Removes static pages no published direct booking website owns and queues the pages that are missing.",
   "ScheduleExpression": "rate(1 hour)",
-  "ScheduleExpressionTimezone": "Europe/Amsterdam",
   "State": "DISABLED",
   "FlexibleTimeWindow": {
     "Mode": "OFF"

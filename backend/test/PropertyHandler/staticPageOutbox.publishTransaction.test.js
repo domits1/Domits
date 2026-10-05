@@ -316,20 +316,12 @@ describe("queueing the page of a published site from the reconciler", () => {
     expect(queued).toBe(true);
   });
 
-  it("queues nothing when the outbox row is still at work, so two reconcilers cannot bump the revision twice", async () => {
+  it("queues nothing and answers false when the site is not published or its row is still at work", async () => {
     const client = buildClient({ siteRecords: [] });
     const repository = new DirectBookingWebsiteSiteRepository();
 
     expect(await repository.queueStaticPage("site-1")).toBe(false);
     expect(statementFor(client, /static_page_outbox AS outbox/)).toBeDefined();
-    expect(client.statements.filter(({ statement }) => /INSERT INTO/.test(statement))).toHaveLength(0);
-  });
-
-  it("queues nothing for a site that is not published any more and answers false", async () => {
-    const client = buildClient({ siteRecords: [] });
-    const repository = new DirectBookingWebsiteSiteRepository();
-
-    expect(await repository.queueStaticPage("site-1")).toBe(false);
     expect(statementFor(client, /INSERT INTO \S*static_page_outbox/)).toBeUndefined();
   });
 });

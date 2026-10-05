@@ -270,39 +270,6 @@ aws scheduler get-schedule --name domits-static-page-worker-rate-5-minutes --pro
 
 Expected: `state DISABLED`, `rate(5 minutes)`, the task input with `limit 5`, `MaximumRetryAttempts 0`, the scheduler role from step 2. Nothing runs yet. Rollback: `aws scheduler delete-schedule --name domits-static-page-worker-rate-5-minutes --profile domits --region eu-north-1`.
 
-## 7b. The reconciler: one run by hand, then its schedule, disabled
-
-Run this after step 6 proved one page, and before step 9. The first run is the backfill: every published site without a page is queued (the worker builds them over the next runs, five per tick), and any page under `sites/by-host/` that no published site owns is removed.
-
-```bash
-cd ~/static-page-worker-rollout
-aws s3api list-objects-v2 --bucket $SITES_BUCKET --prefix sites/by-host/ --profile domits --query 'Contents[].Key' --output json | jq -r '.[]?' | sort > pages-before.txt; wc -l < pages-before.txt
-aws lambda invoke --function-name PropertyHandler --profile domits --region eu-north-1 --cli-binary-format raw-in-base64-out \
-  --payload '{"task":"reconcile-static-pages","limit":50}' reconcile-1.json --query '{status:StatusCode,error:FunctionError}'
-cat reconcile-1.json; echo
-aws s3api list-objects-v2 --bucket $SITES_BUCKET --prefix sites/by-host/ --profile domits --query 'Contents[].Key' --output json | jq -r '.[]?' | sort | diff pages-before.txt - ; echo "exit $?"
-```
-
-Expected: `status 200`, no `FunctionError`, a body with `stored` (the pages that existed), `expected` (the hostnames that should have one), `removed` (pages no published site owns), `queued` (sites without a page, now queued), `stuck: []` and `errors: []`. The `diff` shows exactly the removed keys as `<` lines and nothing else; the queued sites get their pages from the worker's next runs, not from this command. One run queues and removes at most 50 each; run it again until a run answers `removed: 0` and `queued: 0`, that is the backfill done. A site counted as `queued` whose row is still being worked on is left alone on the next run (the queue is refused in SQL while the row is pending, building or retrying). In the query editor, `SELECT site_id, revision, status FROM main.static_page_outbox WHERE status = 'PENDING';` lists the queued sites. A `FunctionError` is the trigger rejecting: `errors` names the hostname or site and the reason (an `AccessDenied` on the listing means the `ListBucket` statement of step 1 is missing, a `not a page key` names a stray object under the prefix that a person has to look at), `stuck` names a site whose five attempts are used up, failed or died while building; fix the cause named in its `failure_reason`, then give that site its attempts back in the query editor so the worker tries again:
-
-```sql
-UPDATE main.static_page_outbox SET status = 'PENDING', attempt_count = 0, failure_reason = NULL, updated_at = (EXTRACT(EPOCH FROM now()) * 1000)::bigint
-WHERE site_id = '<site id>' AND attempt_count >= 5;
-```
-
-Expected: `UPDATE 1`. The next worker run builds it; the next reconciler run no longer lists it as stuck.
-
-Rollback: a removed page comes back by queueing its site, which the next reconciler run does on its own once the site is published on an active domain (that is the only case in which it was wrongly removed); nothing else to undo. Then the schedule, disabled like the worker's:
-
-```bash
-cd /path/to/Domits/backend/infrastructure/static-page-worker
-aws scheduler create-schedule --profile domits --region eu-north-1 --cli-input-json file://reconcile-schedule.json --query ScheduleArn
-aws scheduler get-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1 \
-  --query '{state:State,expr:ScheduleExpression,input:Target.Input,retry:Target.RetryPolicy,role:Target.RoleArn}'
-```
-
-Expected: `state DISABLED`, `rate(1 hour)`, the reconcile task with `limit 50`, no retries, the scheduler role from step 2 (it may invoke the same function, so no new role). Enable it in step 9 together with the worker's schedule: `aws scheduler update-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1 --cli-input-json file://reconcile-schedule.json --state ENABLED`. Rollback: `aws scheduler delete-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1`. The alarm of step 8 covers it: a failed reconciliation is a failed invocation of the same function. **Whenever step 9's rollback disables the worker's schedule, disable this one in the same breath** (`aws scheduler update-schedule --name domits-static-page-reconciler-rate-1-hour --profile domits --region eu-north-1 --cli-input-json file://reconcile-schedule.json --state DISABLED`), otherwise the reconciler keeps removing and queueing while the rest is being undone.
-
 ## 8. The alarm
 
 ```bash
