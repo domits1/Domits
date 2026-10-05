@@ -8,7 +8,7 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
-  if (event.httpMethod !== "POST" || event.resource !== "/reviews") {
+  if (!["POST", "GET", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
     return {
       statusCode: 405,
       headers: responseHeaders,
@@ -18,7 +18,7 @@ export const handler = async (event) => {
 
   try {
     controller ??= new Controller();
-    return await controller.createReview(event);
+    return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
   } catch {
     return {
       statusCode: 500,

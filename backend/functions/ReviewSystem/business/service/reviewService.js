@@ -4,10 +4,7 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
-const REQUIRED_FIELDS = ["reservation_id", "overall_rating"];
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
-
-const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
 
 const isDuplicateReservationReviewError = (error) =>
   error?.code === "23505" &&
@@ -73,22 +70,20 @@ export class ReviewService {
   // Reject malformed input before reservation checks or persistence are attempted.
   // Validate types and rating bounds so invalid review data cannot enter the system.
   validateReviewPayload(reviewData) {
-    for (const field of REQUIRED_FIELDS) {
-      if (isBlank(reviewData[field])) {
-        throw new BadRequestException(`${field} is required`);
-      }
+    if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
+      throw new BadRequestException("Request body must be a review object");
     }
 
     if (typeof reviewData.reservation_id !== "string") {
       throw new BadRequestException("reservation_id must be a string");
     }
 
-    if (typeof reviewData.overall_rating !== "number") {
-      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    if (!reviewData.reservation_id.trim()) {
+      throw new BadRequestException("reservation_id is required");
     }
 
-    if (!Number.isFinite(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
-      throw new BadRequestException("overall_rating must be a number between 1 and 5");
+    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+      throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
     if (
@@ -113,5 +108,27 @@ export class ReviewService {
 
     const text = value.trim();
     return text || null;
+  }
+
+  async getReviews(callerUserId, scope) {
+    if (scope !== "written" && scope !== "received") {
+      throw new BadRequestException("Review scope must be written or received.");
+    }
+    const reviews = await this.repository.findReviews(scope === "written"
+      ? { guest_id: callerUserId }
+      : { host_id: callerUserId, publication_status: "published" });
+    return reviews.map((review) => ({
+      ...review, rating: review.overall_rating, content: review.public_review, date: review.created_at,
+    }));
+  }
+
+  async deleteReview(callerUserId, id) {
+    if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const result = await this.repository.deleteOwnReview(id, callerUserId);
+    if (!result.affected) {
+      throw new NotFoundException("Review not found.");
+    }
   }
 }
