@@ -43,16 +43,17 @@ describe("the page writer policy", () => {
     expect(renderSitesBucket(text)).not.toContain(SITES_BUCKET_PLACEHOLDER);
   });
 
-  it("allows exactly a read of the app shell and writes under the hostname prefix", () => {
+  it("allows exactly a read of the app shell and writes and withdrawals under the hostname prefix", () => {
     expect(allows.map((statement) => [asList(statement.Action), asList(statement.Resource)])).toEqual([
       [["s3:GetObject"], [`${BUCKET}/index.html`]],
-      [["s3:PutObject"], [`${BUCKET}/sites/by-host/*`]],
+      [["s3:PutObject", "s3:DeleteObject"], [`${BUCKET}/sites/by-host/*`]],
     ]);
   });
 
-  it("never grants a wildcard, a bucket-wide write, a delete or a version delete", () => {
+  it("never grants a wildcard, a bucket-wide write, a version delete or a delete outside the hostname prefix", () => {
     expect(actionsOf(allows)).not.toContain("s3:*");
-    expect(actionsOf(allows).some((action) => action.startsWith("s3:Delete"))).toBe(false);
+    expect(actionsOf(allows)).not.toContain("s3:DeleteObjectVersion");
+    expect(resourcesForAction(policy, "s3:DeleteObject")).toEqual([`${BUCKET}/sites/by-host/*`]);
     expect(resourcesOf(allows)).not.toContain(`${BUCKET}/*`);
     expect(resourcesOf(allows)).not.toContain("*");
   });
@@ -131,6 +132,12 @@ describe("the execution role", () => {
             "acm:DescribeCertificate",
             "acm:DeleteCertificate",
           ],
+          Resource: "*",
+        },
+        {
+          Sid: "InvalidateWithdrawnPagesOnTheirTenant",
+          Effect: "Allow",
+          Action: ["cloudfront:ListDistributionTenants", "cloudfront:CreateInvalidationForDistributionTenant"],
           Resource: "*",
         },
       ],

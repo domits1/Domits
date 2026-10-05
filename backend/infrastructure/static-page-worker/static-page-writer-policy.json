@@ -8,9 +8,9 @@
       "Resource": "arn:aws:s3:::__SITES_BUCKET__/index.html"
     },
     {
-      "Sid": "WritePagesUnderTheirHostname",
+      "Sid": "WriteAndWithdrawPagesUnderTheirHostname",
       "Effect": "Allow",
-      "Action": "s3:PutObject",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::__SITES_BUCKET__/sites/by-host/*"
     },
     {
