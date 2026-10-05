@@ -1,4 +1,4 @@
-const clone = (row) => ({ ...row, verificationDetails: { ...(row.verificationDetails || {}) } });
+const clone = (row) => ({ ...row, verificationDetails: { ...row.verificationDetails } });
 
 const createGate = () => {
   let releaseGate;
@@ -176,7 +176,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         Object.assign(existing, {
           domainType,
           status,
-          verificationDetails: { ...(verificationDetails || {}) },
+          verificationDetails: { ...verificationDetails },
           lastCheckedAt: lastCheckedAt ?? now,
           updatedAt: now,
         });
@@ -190,7 +190,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         domainType,
         status,
         isPrimary: Boolean(isPrimary),
-        verificationDetails: { ...(verificationDetails || {}) },
+        verificationDetails: { ...verificationDetails },
         lastCheckedAt: lastCheckedAt ?? now,
         createdAt: now,
         updatedAt: now,
@@ -234,7 +234,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         domainType: "CUSTOM",
         status,
         isPrimary: false,
-        verificationDetails: { ...(verificationDetails || {}) },
+        verificationDetails: { ...verificationDetails },
         lastCheckedAt: lastCheckedAt ?? now,
         createdAt: now,
         updatedAt: now,
@@ -250,7 +250,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         return null;
       }
       row.status = status;
-      row.verificationDetails = { ...(verificationDetails || {}) };
+      row.verificationDetails = { ...verificationDetails };
       row.lastCheckedAt = clock();
       row.updatedAt = clock();
       return clone(row);
@@ -262,7 +262,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
       if (!row || row.siteId !== siteId) {
         return null;
       }
-      row.verificationDetails = { ...(verificationDetails || {}) };
+      row.verificationDetails = { ...verificationDetails };
       row.updatedAt = clock();
       return clone(row);
     },
@@ -279,7 +279,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
 
         const now = clock();
         row.status = status;
-        row.verificationDetails = { ...(verificationDetails || {}) };
+        row.verificationDetails = { ...verificationDetails };
         row.lastCheckedAt = now;
         row.updatedAt = now;
         const record = clone(row);
