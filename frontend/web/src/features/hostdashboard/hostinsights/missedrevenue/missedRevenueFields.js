@@ -12,6 +12,8 @@ export const MISSED_REVENUE_PERCENTAGE_FIELD_KEYS = Object.freeze(["priceDataCov
 
 export const ROOT_CAUSE_KEYS = Object.freeze(["restriction", "pricing", "occupancy"]);
 
+export const formatMissedRevenueCurrency = (value, currency) => `${currency} ${value.toFixed(2)}`;
+
 const buildEmptyRootCause = () =>
   Object.fromEntries(ROOT_CAUSE_KEYS.map((causeKey) => [causeKey, { missedRevenue: 0, nights: 0 }]));
 

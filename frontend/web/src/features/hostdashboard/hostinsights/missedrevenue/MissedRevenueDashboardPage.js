@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { fetchMissedRevenue } from "./services/missedRevenueService";
 import { buildMissedRevenueMetricCards } from "./missedRevenueConfig";
 import { MissedRevenueCards } from "./MissedRevenueCards";
+import { MissedRevenueRootCause } from "./MissedRevenueRootCause";
+import { MissedRevenueByDate } from "./MissedRevenueByDate";
 import styles from "./styles/MissedRevenueDashboardPage.module.scss";
+import tableStyles from "./styles/MissedRevenueTable.module.scss";
 
 const toIsoDate = (date) => date.toISOString().slice(0, 10);
 
@@ -94,8 +97,18 @@ export default function MissedRevenueDashboardPage() {
       ))}
 
       <section className={styles.periodSection}>
+        <h2>Missed revenue by root cause (current month)</h2>
+        <MissedRevenueRootCause rootCause={currentMonthData.rootCause} currency={currentMonthData.currency} />
+      </section>
+
+      <section className={styles.periodSection}>
+        <h2>Missed revenue by date (current month)</h2>
+        <MissedRevenueByDate byDate={currentMonthData.byDate} currency={currentMonthData.currency} />
+      </section>
+
+      <section className={styles.periodSection}>
         <h2>By property (current month)</h2>
-        <table className={styles.propertyTable}>
+        <table className={tableStyles.table}>
           <thead>
             <tr>
               <th>Property</th>
