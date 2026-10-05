@@ -38,7 +38,7 @@ function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, ini
       if (focusable.length === 0) return;
 
       const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const last = focusable.at(-1);
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
@@ -53,12 +53,35 @@ function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, ini
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose, closeDisabled]);
 
-  const handleBackdropMouseDown = () => {
-    if (!closeDisabled) onClose();
-  };
-
   return (
-    <div className="chdist-modal-backdrop" onMouseDown={handleBackdropMouseDown}>
+    <div className="chdist-modal-backdrop">
+      {/*
+        A real <button>, not a div with a mouse handler: native keyboard support comes for free
+        from the element type, which is what actually satisfies "non-interactive element without
+        keyboard support" rather than just relocating the problem. Taken out of the tab order
+        since it's redundant with Escape and the explicit close button below -- it exists purely
+        so a mouse/touch user can dismiss by clicking outside the card. Deliberately NOT
+        aria-hidden: that combined with a focusable element (tabIndex={-1} is still
+        programmatically focusable, just not Tab-reachable) is its own accessibility anti-pattern.
+        Sibling of .chdist-modal, not its parent, so a click on the card never needs to stop
+        propagation through an element that carries role="dialog".
+      */}
+      <button
+        type="button"
+        className="chdist-modal-backdrop__overlay"
+        aria-label="Close backdrop"
+        tabIndex={-1}
+        disabled={closeDisabled}
+        onClick={onClose}
+      />
+      {/*
+        A native <dialog> (with showModal()/close()) is the better primitive here, but this
+        project's test toolchain (react-scripts 5.0.1 -> jest-environment-jsdom -> pinned
+        jsdom@^16.6.0, installed 16.7.0) implements HTMLDialogElement as a bare HTMLElement
+        passthrough -- no showModal, close, open-state handling, ::backdrop, or cancel/close
+        events. Calling showModal() here would throw in every test that mounts a modal. Revisit
+        once the jsdom version this project's jest environment resolves supports it.
+      */}
       <div
         className="chdist-modal"
         role="dialog"
@@ -66,8 +89,7 @@ function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, ini
         aria-labelledby={titleId}
         ref={dialogRef}
         tabIndex={-1}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+      >{/* NOSONAR: role="dialog" kept intentionally -- see the jsdom explanation just above. */}
         <div className="chdist-modal__header">
           <h3 className="chdist-modal__title" id={titleId}>
             {title}

@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Current template pick",
+    "availabilityHint": "Essentials is the template you can use now. Elite is coming soon.",
+    "selected": "Selected",
+    "comingSoon": "Coming soon",
+    "title": "Choose a website template",
+    "unsupportedPreview": "Preview not available for this template yet.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Single-page website, basic customization and essential features"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Multi-everything website, advanced customization and elite features"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Where you'll be",
@@ -1111,6 +1129,10 @@
           "title": "Communication Preferences",
           "desc": "Choose how you receive important updates and notifications from Domits."
         },
+        "privacySecurity": {
+          "title": "Privacy & Security",
+          "desc": "Manage your login security, password and two-factor authentication."
+        },
         "company": {
           "title": "Company",
           "desc": "Manage your company name and basic details."
@@ -1121,7 +1143,7 @@
         },
         "ratePlans": {
           "title": "Rate Plans",
-          "desc": "View your 10% host-only and future pricing options."
+          "desc": "View your 10% host-only and Direct Booking pricing options."
         },
         "compliance": {
           "title": "Compliance",
@@ -1282,6 +1304,7 @@
         "emailAddress": "Email address",
         "verificationCode": "Verification code sent to your email",
         "verify": "Verify",
+        "emailUpdated": "Email updated!",
         "phone": "Phone",
         "phoneNumber": "Phone number",
         "sex": "Sex",
@@ -1326,8 +1349,31 @@
         "save": "Save changes",
         "saving": "Saving...",
         "saved": "Saved!",
+        "saveError": "Failed to save. Please try again.",
         "cancel": "Cancel",
         "close": "Close"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & Security",
+      "title": "Privacy & Security",
+      "subtitle": "Manage your login security, password and two-factor authentication.",
+      "authenticationSection": "Authentication",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Email",
+        "active": "Active",
+        "inactive": "Inactive",
+        "unavailable": "Unavailable",
+        "verified": "Verified",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator app",
+        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "loading": "Loading your authentication status...",
+        "error": "We couldn't load your authentication status. Please refresh the page."
+      },
+      "pin": {
+        "comingSoon": "Coming soon."
       }
     },
     "communicationPreferences": {
@@ -1402,12 +1448,31 @@
       "subtitle": "Verify your property and host identity to meet local registrations.",
       "section": "Compliance Details",
       "fields": {
+        "property": "Listing",
+        "untitledListing": "Untitled listing",
         "propertyRegistration": "Property registration",
         "placeholder": "Registration number",
+        "noRegistrationYet": "No registration number added yet.",
         "hint": "This number proves your property is registered with local authorities. Additional compliance methods (ID verification, address proof) will be available soon."
       },
+      "states": {
+        "loading": "Loading your listings...",
+        "empty": "You don't have any listings yet.",
+        "createListing": "Create your first listing"
+      },
+      "unsavedChangesConfirm": "You have unsaved changes. Switch listing and discard them?",
+      "errors": {
+        "load": "We could not load your listings. Please try again.",
+        "duplicate": "This registration number is already used by another listing.",
+        "noAccess": "You do not have access to change this listing.",
+        "validation": "Enter a valid registration number. It cannot be empty, start with AUTO- or be longer than 255 characters.",
+        "generic": "We could not save your registration number. Please try again.",
+        "registrationUnavailable": "We could not load the registration number for this listing. Please refresh the page or contact support."
+      },
       "buttons": {
-        "comingSoon": "Coming soon"
+        "save": "Save",
+        "saving": "Saving...",
+        "saved": "Saved"
       }
     },
     "ratePlans": {
@@ -1416,11 +1481,84 @@
       "subtitle": "Manage your rate plans.",
       "standardSection": "Standard Rate Plan",
       "additionalSection": "Additional Plans",
-      "additionalSubtitle": "Additional rate plans for direct bookings will be available soon.",
+      "additionalSubtitle": "Additional pricing options for direct bookings.",
       "hostOnlyFee": {
         "title": "Host Only Fee",
         "sub": "10% of bookings paid by host",
         "note": "Allows Domits to run the platform 24/7"
+      },
+      "directBooking": {
+        "cardTitle": "Direct Booking Rate Plan",
+        "cardSubtitle": "4.9% per reservation paid by host",
+        "cardNote": "No monthly or per-property fee; guests pay €0 Domits fee.",
+        "breadcrumb": "Direct Booking Rate Plan",
+        "title": "Direct Booking Rate Plan",
+        "subtitle": "Performance-based pricing for reservations made through your Direct Booking website.",
+        "planName": "Direct Booking",
+        "perReservation": "per reservation",
+        "commission": "Commission",
+        "commissionRate": "Host commission",
+        "commissionFormula": "Commissionable accommodation revenue × 4.9%",
+        "commissionDescription": "The commission is paid by the Host. The Guest pays €0 Domits booking fee.",
+        "commissionableBase": "The commissionable amount excludes cleaning, VAT, taxes, government fees, security or refundable deposits, and other pass-through charges.",
+        "monthlySubscription": "Monthly Subscription",
+        "propertyFee": "Property Fee",
+        "guestDomitsFee": "Guest Domits Fee",
+        "noFixedFee": "No fixed fee",
+        "paidBy": "Paid by",
+        "host": "HOST",
+        "reservationRevenue": "Reservation Revenue",
+        "reservationRevenueDescription": "The fee is calculated from the accommodation portion of each eligible direct reservation.",
+        "reservationValue": "Reservation value",
+        "domitsHostFee": "Domits Host Fee",
+        "volumePricing": "Volume Pricing",
+        "volumePricingDescription": "Default growth tiers from the Direct Booking pricing plan.",
+        "annualRevenue": "Annual direct booking revenue",
+        "domitsFee": "Domits fee",
+        "enterprise": "Custom Enterprise",
+        "billing": "Billing",
+        "billingDescription": "Commission records can be linked to eligible reservations for reconciliation and billing.",
+        "billingHistory": "Billing History",
+        "billingHistoryEmpty": "No billing records are available yet.",
+        "billingContact": "Billing Contact",
+        "billingContactEmpty": "Billing contact management will appear here when billing is enabled."
+      },
+      "enterprise": {
+        "cardTitle": "Enterprise Rate Plan",
+        "cardSubtitle": "Pricing per active property per month.",
+        "cardNote": "Scales automatically with your active property count.",
+        "breadcrumb": "Enterprise Rate Plan",
+        "title": "Enterprise Rate Plan",
+        "subtitle": "Simple pricing that scales with your active property portfolio.",
+        "loading": "Loading enterprise rate plan...",
+        "loadError": "We couldn't load your enterprise rate plan right now.",
+        "notActiveTitle": "You are not on an Enterprise plan",
+        "notActiveDescription": "This account does not have an active Enterprise rate plan.",
+        "currentPlan": "Current Plan",
+        "currentRate": "Current Rate",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "active property / month",
+        "active": "Active",
+        "activeProperties": "Active Properties",
+        "billableProperties": "Billable properties in your portfolio",
+        "pricePerProperty": "Price per Property",
+        "estimatedMonthlyCost": "Estimated Monthly Cost",
+        "basedOnPropertyCount": "Based on your current property count",
+        "pricing": "Pricing",
+        "pricingLabel": "Enterprise pricing",
+        "monthlySubscription": "Monthly Subscription",
+        "nextInvoice": "Next Invoice",
+        "nextInvoiceLabel": "Next invoice",
+        "billingFrequency": "Billing frequency",
+        "monthly": "Monthly",
+        "billingUnit": "Billing unit",
+        "activeProperty": "Active Property",
+        "billingHistory": "Billing History",
+        "noInvoices": "No invoices available yet",
+        "invoicesDescription": "Your enterprise invoices will appear here once billing history is available.",
+        "billingContact": "Billing Contact",
+        "billingContactTitle": "Billing contact",
+        "billingContactDescription": "Billing contact management will be available here."
       }
     },
     "team": {

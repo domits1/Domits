@@ -23,6 +23,8 @@ const COPY = {
   },
 };
 
+const CONNECT_ERROR_MESSAGE = "Failed to connect to Channex.";
+
 function ConnectChannexModal({ variant, userId, onClose, onConnected }) {
   const [apiKey, setApiKey] = useState("");
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -58,7 +60,9 @@ function ConnectChannexModal({ variant, userId, onClose, onConnected }) {
         setErrorMessage("Channex rejected this API key. Check the key and try again.");
       }
     } catch (error) {
-      setErrorMessage(error?.message || "Failed to connect Channex.");
+      // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
+      console.error("Failed to connect Channex:", error?.message || error);
+      setErrorMessage(CONNECT_ERROR_MESSAGE);
     } finally {
       setSubmitting(false);
     }

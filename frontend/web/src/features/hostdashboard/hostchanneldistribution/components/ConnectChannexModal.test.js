@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ConnectChannexModal from "./ConnectChannexModal";
 import { connectChannex } from "../services/channexDistributionService";
@@ -43,8 +43,9 @@ describe("ConnectChannexModal", () => {
     expect(screen.getByLabelText("Channex API key")).toHaveValue("wrong-key");
   });
 
-  test("a thrown request error shows the error message and does not close the modal", async () => {
+  test("a thrown request error shows a friendly message, logs the detail, and does not close the modal", async () => {
     const user = userEvent.setup();
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     connectChannex.mockRejectedValue(new Error("Failed to store Channex credentials in Secrets Manager."));
     const onConnected = jest.fn();
     const onClose = jest.fn();
@@ -54,10 +55,16 @@ describe("ConnectChannexModal", () => {
     await user.type(screen.getByLabelText("Channex API key"), "some-key");
     await user.click(screen.getByRole("button", { name: "Connect" }));
 
-    expect(screen.getByText("Failed to store Channex credentials in Secrets Manager.")).toBeInTheDocument();
+    expect(screen.getByText("Failed to connect to Channex.")).toBeInTheDocument();
+    expect(screen.queryByText(/Secrets Manager/)).not.toBeInTheDocument();
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.any(String),
+      "Failed to store Channex credentials in Secrets Manager."
+    );
     expect(onConnected).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Channex API key")).toHaveValue("some-key");
+    consoleError.mockRestore();
   });
 
   test("shows the reconnect note only for the reconnect variant", () => {
@@ -68,31 +75,52 @@ describe("ConnectChannexModal", () => {
     ).toBeInTheDocument();
   });
 
-  test("Cancel clears the api key and closes without calling connectChannex", async () => {
+  // Every way of dismissing the modal must behave the same: clear the typed key, close, never submit.
+  test.each([
+    ["Cancel", (user) => user.click(screen.getByRole("button", { name: "Cancel" }))],
+    ["Escape", (user) => user.keyboard("{Escape}")],
+    ["clicking the backdrop", (user) => user.click(screen.getByRole("button", { name: "Close backdrop" }))],
+  ])("%s clears the api key and closes without calling connectChannex", async (_label, dismiss) => {
     const user = userEvent.setup();
     const onClose = jest.fn();
 
     render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
 
     await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await dismiss(user);
 
     expect(connectChannex).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("Channex API key")).toHaveValue("");
   });
 
-  test("Escape clears the api key and closes without calling connectChannex", async () => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
+  // A host must not be able to dismiss the modal mid-request, or they lose sight of the outcome.
+  test.each([
+    ["Cancel", (user) => user.click(screen.getByRole("button", { name: "Cancel" }))],
+    ["Close", (user) => user.click(screen.getByRole("button", { name: "Close" }))],
+    ["Escape", (user) => user.keyboard("{Escape}")],
+    ["clicking the backdrop", (user) => user.click(screen.getByRole("button", { name: "Close backdrop" }))],
+  ])(
+    "%s does not close the modal while the request is in flight, and works again once it settles",
+    async (_label, dismiss) => {
+      const user = userEvent.setup();
+      let settleRequest;
+      connectChannex.mockImplementation(() => new Promise((resolve) => (settleRequest = resolve)));
+      const onClose = jest.fn();
 
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
+      render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
 
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.keyboard("{Escape}");
+      await user.type(screen.getByLabelText("Channex API key"), "some-key");
+      await user.click(screen.getByRole("button", { name: "Connect" }));
+      await dismiss(user);
 
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
+      expect(onClose).not.toHaveBeenCalled();
+
+      await act(async () => settleRequest({ connected: false }));
+      await waitFor(() => expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled());
+      await dismiss(user);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    }
+  );
 });

@@ -10,13 +10,15 @@ describe("channexDistributionService getChannexStatus", () => {
     jest.clearAllMocks();
   });
 
-  test("passes userId through to the real channexApi helper and returns its result", async () => {
+  test("calls the real channexApi helper without a userId and returns its result", async () => {
     const response = { channel: "CHANNEX", status: "CONNECTED" };
     fetchRealChannexStatus.mockResolvedValue(response);
 
-    const result = await getChannexStatus({ userId: "user-1" });
+    const result = await getChannexStatus();
 
-    expect(fetchRealChannexStatus).toHaveBeenCalledWith({ userId: "user-1" });
+    // The backend takes the user from the token. The empty object matters: channexApi
+    // destructures its argument, so undefined would throw.
+    expect(fetchRealChannexStatus).toHaveBeenCalledWith({});
     expect(result).toBe(response);
   });
 
@@ -25,6 +27,6 @@ describe("channexDistributionService getChannexStatus", () => {
     error.status = 403;
     fetchRealChannexStatus.mockRejectedValue(error);
 
-    await expect(getChannexStatus({ userId: "user-1" })).rejects.toBe(error);
+    await expect(getChannexStatus()).rejects.toBe(error);
   });
 });

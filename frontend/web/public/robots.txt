@@ -1,5 +1,25 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
+Disallow: /admin/
+Disallow: /bookingconfirmationoverview
+Disallow: /bookingoverview
+Disallow: /bookingsend
+Disallow: /channelmanager
+Disallow: /confirm-email
+Disallow: /employeechat
+Disallow: /guestdashboard/
+Disallow: /hostdashboard/
+Disallow: /hostonboarding/
+Disallow: /landing
+Disallow: /login
+Disallow: /register
+Disallow: /review
+Disallow: /stripe/
+Disallow: /team/accept
+Disallow: /validatepayment
+Disallow: /verify
+Disallow: /website-live
+Disallow: /website-preview/
+
 Sitemap: https://www.domits.com/sitemap.xml
