@@ -41,9 +41,16 @@ export class Controller {
 
   async manageReviews(event) {
     try {
-      const { userId } = this.authManager.getUser(event);
+      const { userId, username } = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
       if (event.httpMethod === "GET") {
+        if (query.scope === "property-score") {
+          if (query.reviewId !== undefined) {
+            throw new BadRequestException("Property score and individual review requests cannot be combined.");
+          }
+          const result = await this.service.getPropertyOverallScore(username, query.propertyId);
+          return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        }
         const result = query.reviewId !== undefined
           ? await this.service.getEditableReview(userId, query.reviewId)
           : await this.service.getReviews(userId, query.scope);

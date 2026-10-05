@@ -1,5 +1,5 @@
 jest.mock("../../functions/ReviewSystem/data/reviewRepository.js", () => ({ ReviewRepository: jest.fn() }));
-jest.mock("../../functions/ReviewSystem/auth/authManager.js", () => ({ AuthManager: jest.fn() }));
+import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 
@@ -7,6 +7,7 @@ describe("property overall score controller/service integration", () => {
   let repository, authManager, controller;
   const event = (query = {}, headers = { Authorization: "token" }) => ({
     httpMethod: "GET", headers,
+    requestContext: { authorizer: { claims: { sub: "cognito-sub", "cognito:username": "host-1" } } },
     queryStringParameters: { scope: "property-score", propertyId: "property-1", ...query },
   });
   beforeEach(() => {
@@ -16,10 +17,7 @@ describe("property overall score controller/service integration", () => {
         property_id: "property-1", overall_score: 4.5, review_count: 2,
       }),
     };
-    authManager = { getUser: jest.fn(async (token) => {
-      if (!token || token === "expired") throw Object.assign(new Error("Invalid token"), { statusCode: 401 });
-      return { userId: "cognito-sub", username: "host-1" };
-    }) };
+    authManager = new AuthManager();
     controller = new Controller({ service: new ReviewService({ repository }), authManager });
   });
   test("returns score/count and ignores spoofed owner identities", async () => {
@@ -33,12 +31,15 @@ describe("property overall score controller/service integration", () => {
     expect((await controller.manageReviews(event({}, { [header]: "token" }))).statusCode).toBe(200);
   });
   test.each([{}, { Authorization: "expired" }])("rejects invalid authentication: %j", async (headers) => {
-    expect((await controller.manageReviews(event({}, headers))).statusCode).toBe(401);
+    const request = event({}, headers);
+    delete request.requestContext;
+    expect((await controller.manageReviews(request)).statusCode).toBe(401);
     expect(repository.findManagedProperty).not.toHaveBeenCalled();
   });
   test("fails closed without a verified owner identity", async () => {
-    authManager.getUser.mockResolvedValue({ userId: "cognito-sub" });
-    expect((await controller.manageReviews(event())).statusCode).toBe(401);
+    const request = event();
+    delete request.requestContext.authorizer.claims["cognito:username"];
+    expect((await controller.manageReviews(request)).statusCode).toBe(401);
     expect(repository.findManagedProperty).not.toHaveBeenCalled();
   });
   test.each([undefined, null, "", " \n ", 42, [], {}])("rejects invalid property ID: %j", async (propertyId) => {
