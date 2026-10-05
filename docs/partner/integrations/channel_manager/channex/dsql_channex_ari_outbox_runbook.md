@@ -6,11 +6,11 @@ Runbook for the hand-applied migration under `backend/ORM/migrations/`:
 
 The `.js` file is the migration record (nothing in this repo executes it). The `.sql` file holds the statements to run, kept free of comments by convention, so the run order, the Aurora DSQL rules and the findings live here instead.
 
-Connect using the documented path in [dsql_transitioning_docs.md](./dsql_transitioning_docs.md) (console → Aurora DSQL → cluster → Connect → Open in CloudShell). Confirm the cluster from the runtime's own configuration first: SSM parameters `/aurora/dsql/host` and `/aurora/dsql/region` in eu-north-1 (`backend/ORM/index.js:82-85`).
+Connect using the documented path in [dsql_transitioning_docs.md](../../../../internal/tools/dsql_transitioning_docs.md) (console → Aurora DSQL → cluster → Connect → Open in CloudShell). Confirm the cluster from the runtime's own configuration first: SSM parameters `/aurora/dsql/host` and `/aurora/dsql/region` in eu-north-1 (`backend/ORM/index.js:82-85`).
 
 ## What the table is for
 
-One row per ARI change ("this property changed, these dates, these types"), written in the same transaction as the domain change and drained by a worker in the `ChannelManagement` Lambda. The design is in [channex_ari_outbox_design.md](../apis/channelmanagement/channex_ari_outbox_design.md) (#3278).
+One row per ARI change ("this property changed, these dates, these types"), written in the same transaction as the domain change and drained by a worker in the `ChannelManagement` Lambda. The design is in [channex_ari_outbox_design.md](./channex_ari_outbox_design.md) (#3278).
 
 ## Aurora DSQL rules that shape this runbook
 
@@ -41,4 +41,4 @@ One row per ARI change ("this property changed, these dates, these types"), writ
 
 ## Status
 
-Not applied yet. Update this section with the date and the person who applied it, as `dsql_booking_columns_runbook.md` does.
+Applied to `main` on 1 October 2026 by Enes Veli Yigit: the table and both indexes, verified with block 6 (15 columns; `idx_channex_ari_outbox_ready` and `idx_channex_ari_outbox_stale` valid). Not applied to `test`.
