@@ -44,7 +44,13 @@ export class Controller {
       const { userId } = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
       if (event.httpMethod === "GET") {
-        const result = await this.service.getReviews(userId, query.scope);
+        const result = query.reviewId !== undefined
+          ? await this.service.getEditableReview(userId, query.reviewId)
+          : await this.service.getReviews(userId, query.scope);
+        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+      }
+      if (event.httpMethod === "PATCH") {
+        const result = await this.service.updateReview(userId, query.reviewId, parseBody(event.body));
         return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
       }
       if (event.httpMethod === "DELETE") {
