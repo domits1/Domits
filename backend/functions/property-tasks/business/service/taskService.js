@@ -82,6 +82,11 @@ export const updateTask = async (hostId, taskId, updateData) => {
     }
 
     if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
+        const checklistItems = await taskRepository.getChecklistItemsForTask(dataSource, taskId);
+        const hasIncompleteRequiredItems = checklistItems.some(item => item.is_required && !item.is_checked);
+        if (hasIncompleteRequiredItems) {
+            throw new BadRequestException("Cannot complete task: required checklist items are not all checked");
+        }
         fieldsToUpdate.completed_date = Date.now();
     }
 
