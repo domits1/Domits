@@ -6,7 +6,6 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
-
 const isDuplicateReservationReviewError = (error) =>
   error?.code === "23505" &&
   String(error?.constraint || error?.message || "").includes("review_reservation_unique_idx");
@@ -78,6 +77,7 @@ export class ReviewService {
     if (typeof reviewData.reservation_id !== "string") {
       throw new BadRequestException("reservation_id must be a string");
     }
+
     if (!reviewData.reservation_id.trim()) {
       throw new BadRequestException("reservation_id is required");
     }
