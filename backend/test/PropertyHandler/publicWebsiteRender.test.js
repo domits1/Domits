@@ -131,7 +131,7 @@ const expectPublicRenderResponse = (response, domain) => {
   expect(body.resolution).toEqual(buildPublicResolution(domain));
   expect(body.domain).toEqual(domain);
   expect(body.renderSource).toBe("published_site");
-  expect(body.propertySnapshot.property.hostId).toBe(SITE.hostId);
+  expect(body.propertySnapshot).toEqual({ ...SITE.publishedPropertySnapshot, calendarAvailability: [] });
   expectNoPrivateMarker(JSON.stringify({ ...body, propertySnapshot: undefined }));
 };
 
