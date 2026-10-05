@@ -20,6 +20,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Wire the controller to the review service and auth layer for all request handling.
+  // This keeps dependency injection flexible while standardizing access to business logic and identity checks.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -39,28 +41,42 @@ export class Controller {
     }
   }
 
+  // Route each request to the correct review action based on the HTTP method.
+  // This keeps review API handling centralized and prevents unhandled request types.
   async manageReviews(event) {
     try {
-      const { userId } = this.authManager.getUser(event);
+      const user = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
-      if (event.httpMethod === "GET") {
-        const result = query.reviewId !== undefined
-          ? await this.service.getEditableReview(userId, query.reviewId)
-          : await this.service.getReviews(userId, query.scope);
-        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-      }
-      if (event.httpMethod === "PATCH") {
-        const result = await this.service.updateReview(userId, query.reviewId, parseBody(event.body));
-        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-      }
-      if (event.httpMethod === "DELETE") {
-        await this.service.deleteReview(userId, query.reviewId);
-        return { statusCode: 204, headers: responseHeaders, body: "" };
-      }
+      if (event.httpMethod === "GET") return await this.getReviews(user, query);
+      if (event.httpMethod === "PATCH") return await this.patchReview(user, query, event.body);
+      if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
       return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
     } catch (error) {
       return this.handleError(error);
     }
+  }
+
+  // Fetch review data in the requested scope while enforcing valid combinations.
+  // This prevents ambiguous or unauthorized queries from being processed.
+  async getReviews(user, query) {
+    const result = query.reviewId !== undefined
+      ? await this.service.getEditableReview(user.userId, query.reviewId)
+      : await this.service.getReviews(user.userId, query.scope);
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Update an existing review after authenticating the caller and validating the payload.
+  // This keeps edits limited to the intended review and protects against stale or malformed updates.
+  async patchReview(user, query, body) {
+    const result = await this.service.updateReview(user.userId, query.reviewId, parseBody(body));
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Delete a review only for the authenticated owner.
+  // This avoids allowing one user to remove another user's review.
+  async deleteReview(user, query) {
+    await this.service.deleteReview(user.userId, query.reviewId);
+    return { statusCode: 204, headers: responseHeaders, body: "" };
   }
 
   // Hide unexpected failure details because they may expose internal implementation data.
