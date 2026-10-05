@@ -72,10 +72,6 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   {
     methods: ["POST"],
-    pattern: /\/integrations\/channex\/certification\/test-case$/,
-  },
-  {
-    methods: ["POST"],
     pattern: /\/integrations\/channex\/certification\/cancel-booking$/,
   },
   {
@@ -256,11 +252,6 @@ const routeDefinitions = [
   ],
   ["POST", "/integrations/channex/sync/ari", "syncChannexAri"],
   ["POST", "/integrations/channex/sync/full", "syncChannexFull"],
-  [
-    "POST",
-    "/integrations/channex/certification/test-case",
-    "syncChannexCertificationTestCase",
-  ],
   [
     "POST",
     "/integrations/channex/certification/cancel-booking",
