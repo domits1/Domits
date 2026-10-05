@@ -17,7 +17,6 @@ const ROW = {
   status: "ACTIVE",
   is_primary: true,
   verification_details_json: '{"tenantId":"dt_1"}',
-  last_checked_at: "1",
   created_at: "1",
   updated_at: "2",
   site_status: "PUBLISHED",
