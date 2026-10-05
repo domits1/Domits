@@ -282,27 +282,27 @@ describe("StaticPageWorker", () => {
     expect(nextSummary).toMatchObject({ built: 1 });
   });
 
-  it("converges on the last word of the host through unpublish, publish and unpublish again", async () => {
-    const { worker, outbox, siteRepository, pageStore, withdrawal } = buildWorker({
-      sites: [buildSite({ status: "PREVIEW" })],
+  it("lets unpublish, publish and unpublish pass during one withdrawal, and only the last revision ends withdrawn", async () => {
+    const { worker, outbox, siteRepository, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    withdrawal.withdraw.mockImplementationOnce(async ({ siteId }) => {
+      Object.assign(outbox.table.get("site-1"), { revision: 5 });
+      Object.assign(outbox.table.get("site-1"), { revision: 6 });
+      siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PREVIEW", staticPageRevision: 6 }));
+      const second = buildWorker({ rows: [{ ...outbox.table.get("site-1") }], sites: [] });
+      second.outbox.table = outbox.table;
+      expect(await second.worker.run()).toMatchObject({ notClaimed: 1, withdrawn: 0 });
+      return { siteId, hostnames: [], invalidationErrors: [] };
     });
 
-    await worker.run();
-    expect(outbox.table.get("site-1")).toMatchObject({ revision: 4, status: "WITHDRAWN" });
+    const first = await worker.run();
+    expect(first).toMatchObject({ superseded: 1, withdrawn: 0 });
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "PENDING" });
 
-    Object.assign(outbox.table.get("site-1"), { revision: 5, status: "PENDING", attemptCount: 0 });
-    siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PUBLISHED", staticPageRevision: 5 }));
-    await worker.run();
-    expect(pageStore.putPage).toHaveBeenCalledTimes(2);
-    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
-
-    Object.assign(outbox.table.get("site-1"), { revision: 6, status: "PENDING", attemptCount: 0 });
-    siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PREVIEW", staticPageRevision: 6 }));
-    const summary = await worker.run();
+    const next = await worker.run();
 
     expect(withdrawal.withdraw).toHaveBeenCalledTimes(2);
     expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "WITHDRAWN" });
-    expect(summary).toMatchObject({ withdrawn: 1 });
+    expect(next).toMatchObject({ withdrawn: 1 });
   });
 
   it("hands an unpublish that was outrun by a newer unpublish to the next run without withdrawing twice", async () => {
