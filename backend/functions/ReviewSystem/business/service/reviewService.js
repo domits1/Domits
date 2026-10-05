@@ -3,6 +3,7 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 
 const REQUIRED_FIELDS = ["reservation_id", "overall_rating"];
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
@@ -33,6 +34,22 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
+  async getPropertyOverallScore(callerUsername, propertyId) {
+    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+      throw new UnauthorizedException("A verified user identity is required.");
+    }
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    const normalizedPropertyId = propertyId.trim();
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
+    // Avoid disclosing whether another manager's property exists.
+    if (!property) throw new NotFoundException("Property not found or access is denied.");
+    return this.repository.getPropertyReviewScore(normalizedPropertyId, callerUsername);
+  }
+
+  // Validate the review ID.
+  // Ensure the guest can still edit the review within the allowed window.
   async getEditableReview(callerUserId, reviewId) {
     if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
       throw new BadRequestException("A valid review ID is required.");
@@ -50,6 +67,7 @@ export class ReviewService {
       public_review: review.public_review, updated_at: Number(review.updated_at) };
   }
 
+  // Validate the editable review payload and reject stale updates.
   async updateReview(callerUserId, reviewId, data) {
     const review = await this.getEditableReview(callerUserId, reviewId);
     const allowed = ["overall_rating", "public_review", "updated_at"];

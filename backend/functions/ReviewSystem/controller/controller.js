@@ -44,6 +44,13 @@ export class Controller {
     try {
       const user = await this.authManager.getUser(event.headers?.Authorization || event.headers?.authorization);
       const query = event.queryStringParameters || {};
+      if (event.httpMethod === "GET" && query.scope === "property-score") {
+        if (query.reviewId !== undefined) {
+          throw new BadRequestException("reviewId cannot be combined with the property-score scope.");
+        }
+        const score = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(score) };
+      }
       if (event.httpMethod === "DELETE") {
         await this.service.deleteReview(user.userId, query.reviewId);
         return { statusCode: 204, headers: responseHeaders, body: "" };
