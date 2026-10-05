@@ -199,15 +199,19 @@ export class ReviewService {
     return text || null;
   }
 
-  async getReviews(callerUserId, scope) {
+  async getReviews(callerUserId, scope = "written") {
     if (scope !== "written" && scope !== "received") {
       throw new BadRequestException("Review scope must be written or received.");
     }
     const reviews = await this.repository.findReviews(scope === "written"
       ? { guest_id: callerUserId }
       : { host_id: callerUserId, publication_status: "published" });
+    const timestamp = this.now();
     return reviews.map((review) => ({
       ...review, rating: review.overall_rating, content: review.public_review, date: review.created_at,
+      can_edit: scope === "written" && timestamp >= Number(review.created_at)
+        && timestamp < this.editDeadline(review),
+      edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
     }));
   }
 

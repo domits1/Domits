@@ -1,14 +1,14 @@
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
   Controller: jest.fn(() => ({
     createReview: jest.fn(async () => ({ statusCode: 201 })),
-    manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "GET" ? 200 : 204 })),
+    manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "DELETE" ? 204 : 200 })),
   })),
 }));
 
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
-it.each([["POST", 201], ["GET", 200], ["DELETE", 204]])(
+it.each([["POST", 201], ["GET", 200], ["PATCH", 200], ["DELETE", 204]])(
   "routes %s reviews to the controller", async (httpMethod, statusCode) => {
     const event = { httpMethod, resource: "/reviews" };
     expect((await handler(event)).statusCode).toBe(statusCode);

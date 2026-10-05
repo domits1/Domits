@@ -42,6 +42,7 @@ describe("review editing", () => {
       overall_rating: 5, public_review: "Original review", updated_at: now - 500,
     });
     const response = await controller.manageReviews({ httpMethod: "PATCH", headers: { Authorization: "token" },
+      requestContext: { authorizer: { claims: { sub: booking.guestid } } },
       queryStringParameters: { reviewId: id }, body: JSON.stringify(changes()) });
     expect(response.statusCode).toBe(200);
     expect(existing).toMatchObject({ overall_rating: 4, public_review: "Updated\nreview", updated_at: now,
@@ -50,6 +51,16 @@ describe("review editing", () => {
     expect(repository.updateEditableReview).toHaveBeenCalledWith({ id, guestId: booking.guestid,
       previousUpdatedAt: now - 500, editWindowMs: 1000, now: expect.any(Function),
       overallRating: 4, publicReview: "Updated\nreview" });
+  });
+  test("loads an editable review through authenticated GET", async () => {
+    const response = await controller.manageReviews({
+      httpMethod: "GET", queryStringParameters: { reviewId: id },
+      requestContext: { authorizer: { claims: { sub: booking.guestid } } },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toMatchObject({ id, overall_rating: 5, updated_at: now - 500 });
+    expect(repository.findReviewById).toHaveBeenCalledWith(id);
+    expect(repository.findReviews).not.toHaveBeenCalled();
   });
   test.each(["other guest", "expired", "disabled", "future"])("rejects editing: %s", async (reason) => {
     if (reason === "expired") existing.created_at = now - 1000;
@@ -79,6 +90,11 @@ describe("review editing", () => {
     expect((await service.getReviews(booking.guestid, "received"))[0].can_edit).toBe(false);
     existing.created_at = now - 1000;
     expect((await service.getReviews(booking.guestid))[0].can_edit).toBe(false);
+    existing.created_at = now + 1;
+    expect((await service.getReviews(booking.guestid))[0].can_edit).toBe(false);
+    existing.created_at = now - 500;
+    service.editWindowMs = 0;
+    expect((await service.getReviews(booking.guestid))[0].can_edit).toBe(false);
   });
 });
 
@@ -86,6 +102,7 @@ it.each([undefined, null, "", " \n\t ", 42, true, {}, [], "x".repeat(501), "Stay
   "rejects invalid written content before persistence: %p", async (public_review) => {
     const response = await controller.createReview({
       headers: { Authorization: "token" }, body: JSON.stringify({ ...payload, public_review }),
+      requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     });
     expect(response.statusCode).toBe(400);
     expect(JSON.parse(response.body).message).toBeTruthy();

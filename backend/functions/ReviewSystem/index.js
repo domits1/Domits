@@ -8,7 +8,7 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
-  if (!["POST", "GET", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
+  if (!["POST", "GET", "PATCH", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
     return {
       statusCode: 405,
       headers: responseHeaders,
