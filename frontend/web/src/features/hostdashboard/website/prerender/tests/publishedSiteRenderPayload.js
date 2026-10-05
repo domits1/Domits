@@ -11,7 +11,6 @@ const DEFAULT_SITE = Object.freeze({
 
 const DEFAULT_DOMAIN = Object.freeze({
   domain: "wellness-villa-bisous-bf378265.direct.domits.com",
-  domainType: "FALLBACK",
   status: "ACTIVE",
   isPrimary: true,
 });

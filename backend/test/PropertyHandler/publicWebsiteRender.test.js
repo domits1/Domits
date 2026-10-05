@@ -55,12 +55,21 @@ const PRIVATE_MARKERS = [
   "domain-1",
 ];
 
-const buildController = ({ site = SITE, domain = STORED_DOMAIN } = {}) => {
+const STORED_FALLBACK_DOMAIN = {
+  ...STORED_DOMAIN,
+  id: "domain-0",
+  domain: "villa-sensual-site1.direct.domits.com",
+  domainType: "FALLBACK",
+  status: "PENDING",
+  verificationDetails: { activationMode: "internal", domainKind: "live", routingConfigured: false },
+};
+
+const buildController = ({ site = SITE, domain = STORED_DOMAIN, domains = [domain] } = {}) => {
   const controller = new PropertyController();
   controller.directBookingWebsiteSiteRepository = { getSiteById: jest.fn().mockResolvedValue(site) };
   controller.directBookingWebsiteDomainRepository = {
     getDomainByName: jest.fn().mockResolvedValue(domain),
-    listDomainsBySiteId: jest.fn().mockResolvedValue([domain]),
+    listDomainsBySiteId: jest.fn().mockResolvedValue(domains),
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
   controller.propertyService = { getPublicCalendarAvailability: jest.fn().mockResolvedValue([]) };
@@ -103,6 +112,34 @@ describe("the public website render response", () => {
 
     expectOnlyPublicDomainFields(response);
     expect(controller.directBookingWebsiteDomainRepository.listDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
+  });
+
+  it("sends the runtime status of a fallback domain, not the stored one, in both places", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
+    try {
+      const controller = buildController({ domain: STORED_FALLBACK_DOMAIN });
+
+      const response = await controller.getPublicWebsiteRenderModel(buildEvent({ domain: STORED_FALLBACK_DOMAIN.domain }));
+
+      expect(response.statusCode).toBe(200);
+      const body = parseBody(response);
+      const expectedDomain = { domain: STORED_FALLBACK_DOMAIN.domain, status: "ACTIVE", isPrimary: true };
+      expect(body.domain).toEqual(expectedDomain);
+      expect(body.resolution.domain).toEqual(expectedDomain);
+      expect(response.body).not.toContain("verificationDetails");
+    } finally {
+      delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+    }
+  });
+
+  it("carries only the public domain fields when the by-id path has to heal the primary domain", async () => {
+    const controller = buildController({ domains: [] });
+    controller.resolveOrCreatePrimaryLiveDomain = jest.fn().mockResolvedValue(STORED_DOMAIN);
+
+    const response = await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id }));
+
+    expectOnlyPublicDomainFields(response);
+    expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
   });
 
   it("keeps the site fields the public page reads", async () => {
