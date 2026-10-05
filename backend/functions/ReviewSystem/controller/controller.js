@@ -29,8 +29,7 @@ export class Controller {
   // Reservation ownership can then be checked against a trusted caller.
   async createReview(event) {
     try {
-      const token = event.headers?.Authorization || event.headers?.authorization;
-      const authenticatedUser = await this.authManager.getUser(token);
+      const authenticatedUser = this.authManager.getUser(event);
       const reviewData = parseBody(event.body);
       const result = await this.service.createReview(authenticatedUser.userId, reviewData);
 
@@ -42,18 +41,17 @@ export class Controller {
 
   async manageReviews(event) {
     try {
-      const user = await this.authManager.getUser(event.headers?.Authorization || event.headers?.authorization);
+      const { userId } = this.authManager.getUser(event);
       const query = event.queryStringParameters || {};
+      if (event.httpMethod === "GET") {
+        const result = await this.service.getReviews(userId, query.scope);
+        return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+      }
       if (event.httpMethod === "DELETE") {
-        await this.service.deleteReview(user.userId, query.reviewId);
+        await this.service.deleteReview(userId, query.reviewId);
         return { statusCode: 204, headers: responseHeaders, body: "" };
       }
-      const reviews = event.httpMethod === "PATCH"
-        ? await this.service.updateReview(user.userId, query.reviewId, parseBody(event.body))
-        : query.reviewId !== undefined
-          ? await this.service.getEditableReview(user.userId, query.reviewId)
-          : await this.service.getReviews(user.userId, query.scope);
-      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(reviews) };
+      return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
     } catch (error) {
       return this.handleError(error);
     }
