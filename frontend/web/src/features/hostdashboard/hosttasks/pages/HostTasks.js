@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
-import useEffectiveHostId from '../../../hooks/useEffectiveHostId';
+import useEffectiveHostId from '../../../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
@@ -176,7 +176,7 @@ const HostTasks = () => {
     };
 
     useEffect(() => {
-        loadData();
+        void loadData();
     }, [asHostId]);
 
     useEffect(() => {
