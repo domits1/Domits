@@ -4,7 +4,7 @@ import { PropertyController } from "../../functions/PropertyHandler/controller/p
 const SITE = {
   id: "site-1",
   propertyId: "property-1",
-  hostId: "host-1",
+  hostId: "host-secret-1",
   siteName: "Villa Sensual",
   primaryLocale: "nl",
   status: "PUBLISHED",
@@ -43,6 +43,8 @@ const STORED_DOMAIN = {
 const PUBLIC_DOMAIN = { domain: "www.villasensual.nl", status: "ACTIVE", isPrimary: true };
 
 const PRIVATE_MARKERS = [
+  "hostId",
+  SITE.hostId,
   "verificationDetails",
   "dt_secret",
   "cg_secret",
@@ -147,22 +149,29 @@ describe("the public website render response", () => {
     expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
   });
 
-  it("keeps the site fields the public page reads", async () => {
+  it("keeps the site fields the public page reads, and nothing else", async () => {
     const controller = buildController();
 
     const body = parseBody(await controller.getPublicWebsiteRenderModel(buildEvent({ site: SITE.id })));
 
     expect(body.site).toEqual({
       id: SITE.id,
-      propertyId: SITE.propertyId,
-      hostId: SITE.hostId,
       siteName: SITE.siteName,
       primaryLocale: SITE.primaryLocale,
       status: SITE.status,
       templateKey: SITE.templateKey,
-      publishedAt: SITE.publishedAt,
     });
-    expect(body.resolution.isReachable).toBe(true);
+    expect(body.resolution).toEqual({
+      siteId: SITE.id,
+      propertyId: SITE.propertyId,
+      templateKey: SITE.templateKey,
+      primaryLocale: SITE.primaryLocale,
+      siteName: SITE.siteName,
+      siteStatus: SITE.status,
+      publishedAt: SITE.publishedAt,
+      isReachable: true,
+      domain: PUBLIC_DOMAIN,
+    });
     expect(body.renderSource).toBe("published_site");
   });
 });
