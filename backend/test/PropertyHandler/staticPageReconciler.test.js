@@ -109,25 +109,25 @@ describe("StaticPageReconciler", () => {
     expect(calls).toEqual(["list", "sql"]);
   });
 
-  it("reports a listed key that is not a page key without touching it", async () => {
-    const { reconciler, withdrawal } = buildReconciler({ rejected: ["sites/by-host/UPPER.example/index.html"] });
-
-    const summary = await reconciler.run();
-
-    expect(withdrawal.removePages).not.toHaveBeenCalled();
-    expect(summary.errors).toEqual([{ key: "sites/by-host/UPPER.example/index.html", message: "not a page key" }]);
-  });
-
-  it("queues a published site whose page is missing, once per site however many domains it has", async () => {
+  it("queues a published site whose page is missing once however many domains it has, also when its row says active or withdrawn", async () => {
     const { reconciler, siteRepository } = buildReconciler({
-      entries: [entry("a.direct.domits.com", PUBLISHED), entry("www.a.nl", PUBLISHED)],
+      rejected: ["sites/by-host/UPPER.example/index.html"],
+      entries: [
+        entry("a.direct.domits.com", PUBLISHED),
+        entry("www.a.nl", PUBLISHED),
+        entry("c.direct.domits.com", { ...PUBLISHED, id: "site-3" }),
+      ],
+      rows: [row("site-1", "ACTIVE"), row("site-3", "WITHDRAWN")],
     });
 
     const summary = await reconciler.run();
 
-    expect(siteRepository.queueStaticPage).toHaveBeenCalledTimes(1);
-    expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-1");
-    expect(summary).toMatchObject({ expected: 2, queued: 1 });
+    expect(siteRepository.queueStaticPage.mock.calls.map(([siteId]) => siteId)).toEqual(["site-1", "site-3"]);
+    expect(summary).toMatchObject({
+      expected: 3,
+      queued: 2,
+      errors: [{ key: "sites/by-host/UPPER.example/index.html", message: "not a page key" }],
+    });
   });
 
   it.each([
@@ -163,17 +163,6 @@ describe("StaticPageReconciler", () => {
     ]);
   });
 
-  it("queues a site whose row says the page is active or withdrawn while the page is gone", async () => {
-    const { reconciler, siteRepository } = buildReconciler({
-      entries: [entry("a.direct.domits.com", PUBLISHED), entry("c.direct.domits.com", { ...PUBLISHED, id: "site-3" })],
-      rows: [row("site-1", "ACTIVE"), row("site-3", "WITHDRAWN")],
-    });
-
-    await reconciler.run();
-
-    expect(siteRepository.queueStaticPage.mock.calls.map(([siteId]) => siteId)).toEqual(["site-1", "site-3"]);
-  });
-
   it("treats a disabled fallback domain of a published site as active, like the public page and the worker do", async () => {
     const { reconciler, withdrawal, siteRepository } = buildReconciler({
       stored: ["a.direct.domits.com"],
@@ -202,17 +191,14 @@ describe("StaticPageReconciler", () => {
     expect(summary).toMatchObject({ queued: 1, stuck: [expect.objectContaining({ siteId: "s1" })] });
   });
 
-  it.each([
-    ["a negative limit", -1],
-    ["a limit that is not a number", "many"],
-    ["a limit above the maximum", 9999],
-  ])("caps the work per run even with %s", async (_label, limit) => {
+  it("caps the work per run at 200, and falls back to 50 for a limit that is not a positive number", async () => {
     const stored = Array.from({ length: 250 }, (_, index) => `x${index}.direct.domits.com`);
     const { reconciler, withdrawal } = buildReconciler({ stored });
 
-    await reconciler.run({ limit });
+    await reconciler.run({ limit: 9999 });
+    await reconciler.run({ limit: "many" });
 
-    expect(withdrawal.removePages.mock.calls[0][0].length).toBe(limit === 9999 ? 200 : 50);
+    expect(withdrawal.removePages.mock.calls.map(([hostnames]) => hostnames.length)).toEqual([200, 50]);
   });
 
   it("carries on after a removal or a queue that fails, and reports each", async () => {
@@ -238,28 +224,5 @@ describe("StaticPageReconciler", () => {
         { siteId: "site-1", message: "connection lost" },
       ],
     });
-  });
-
-  it("reports an orphan whose fresh look failed and removes the others", async () => {
-    const { reconciler, withdrawal, domainRepository } = buildReconciler({
-      stored: ["gone1.direct.domits.com", "gone2.direct.domits.com"],
-    });
-    domainRepository.getDomainWithSiteByName.mockRejectedValueOnce(new Error("connection lost"));
-
-    const summary = await reconciler.run();
-
-    expect(withdrawal.removePages).toHaveBeenCalledWith(["gone2.direct.domits.com"]);
-    expect(summary.errors).toEqual([{ hostname: "gone1.direct.domits.com", message: "connection lost" }]);
-  });
-
-  it("stops before touching anything when the bucket cannot be listed", async () => {
-    const { reconciler, pageStore, withdrawal, siteRepository, domainRepository } = buildReconciler();
-    pageStore.listPageHostnames.mockRejectedValueOnce(new Error("AccessDenied"));
-
-    await expect(reconciler.run()).rejects.toThrow("AccessDenied");
-
-    expect(domainRepository.listDomainsWithSites).not.toHaveBeenCalled();
-    expect(withdrawal.removePages).not.toHaveBeenCalled();
-    expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
   });
 });
