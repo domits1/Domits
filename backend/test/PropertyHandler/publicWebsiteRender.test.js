@@ -115,6 +115,7 @@ describe("the public website render response", () => {
   });
 
   it("sends the runtime status of a fallback domain, not the stored one, in both places", async () => {
+    const previousRoutingFlag = process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
     process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
     try {
       const controller = buildController({ domain: STORED_FALLBACK_DOMAIN });
@@ -128,7 +129,11 @@ describe("the public website render response", () => {
       expect(body.resolution.domain).toEqual(expectedDomain);
       expect(response.body).not.toContain("verificationDetails");
     } finally {
-      delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+      if (previousRoutingFlag === undefined) {
+        delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+      } else {
+        process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = previousRoutingFlag;
+      }
     }
   });
 
