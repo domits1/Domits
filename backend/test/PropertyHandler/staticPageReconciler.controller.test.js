@@ -18,5 +18,12 @@ describe("running the static page reconciler from the controller", () => {
     await expect(controller.reconcileStaticPages({ task: "reconcile-static-pages" })).rejects.toThrow(
       "0 failures and 1 stuck"
     );
+    reconciler.run.mockResolvedValueOnce({
+      ...SUMMARY,
+      errors: [{ hostname: "x.direct.domits.com", message: "AccessDenied" }],
+    });
+    await expect(controller.reconcileStaticPages({ task: "reconcile-static-pages" })).rejects.toThrow(
+      "1 failures and 0 stuck"
+    );
   });
 });
