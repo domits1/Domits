@@ -115,7 +115,7 @@ aws iam simulate-principal-policy --policy-source-arn $R --profile domits --outp
 S=arn:aws:secretsmanager:eu-north-1:115462458880:secret
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output json --query "$Q" \
   --action-names secretsmanager:GetSecretValue secretsmanager:PutSecretValue \
-  --resource-arns $S:domits/whatsapp/example-host/example-account-AbCdEf $S:domits/channex/example-AbCdEf $S:domits/whatsapp-connect/example-AbCdEf
+  --resource-arns ${S}:domits/whatsapp/example-host/example-account-AbCdEf ${S}:domits/channex/example-AbCdEf ${S}:domits/whatsapp-connect/example-AbCdEf
 aws iam simulate-principal-policy --policy-source-arn $R --profile domits --output table \
   --query 'EvaluationResults[].[EvalActionName,EvalDecision]' \
   --action-names cognito-idp:GetUser cognito-idp:AdminGetUser cloudfront:GetDistributionTenant cloudfront:CreateDistributionTenant \
