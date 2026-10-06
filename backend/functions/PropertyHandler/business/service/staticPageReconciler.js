@@ -101,7 +101,7 @@ export class StaticPageReconciler {
           summary.queued += 1;
         }
       } catch (error) {
-        if (!isTransientConflict(error)) {
+        if (!isTransientConflict(error) || repairs.has(siteId)) {
           summary.errors.push({ siteId, message: error.message });
         }
       }

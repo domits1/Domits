@@ -108,6 +108,15 @@ describe("StaticPageStore", () => {
     expect(await store.deletePage({ hostname: "www.villasensual.nl", etag: '"e1"' })).toBe(false);
   });
 
+  it.each([
+    ["another conditional delete is in flight", 409, '"e1"', false],
+    ["another delete already won", 404, '"e1"', true],
+  ])("answers quietly when %s", async (_label, httpStatusCode, etag, expected) => {
+    const send = jest.fn().mockRejectedValueOnce(Object.assign(new Error("s3"), { $metadata: { httpStatusCode } }));
+
+    expect(await buildStore(send).deletePage({ hostname: "www.villasensual.nl", etag })).toBe(expected);
+  });
+
   it("refuses to delete under a key that is not a hostname key", async () => {
     const send = jest.fn();
 
