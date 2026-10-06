@@ -8,7 +8,10 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
-  if (!["POST", "GET", "DELETE"].includes(event.httpMethod) || event.resource !== "/reviews") {
+  const publicPropertyRead = event.httpMethod === "GET" && event.resource === "/properties/{propertyId}/reviews";
+  const authenticatedOperation = (event.resource === "/reviews" && ["POST", "GET", "DELETE"].includes(event.httpMethod)) ||
+    (event.resource === "/reviews/{id}" && event.httpMethod === "DELETE");
+  if (!publicPropertyRead && !authenticatedOperation) {
     return {
       statusCode: 405,
       headers: responseHeaders,
@@ -18,6 +21,7 @@ export const handler = async (event) => {
 
   try {
     controller ??= new Controller();
+    if (publicPropertyRead) return await controller.getPublicPropertyReviews(event);
     return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
   } catch {
     return {
