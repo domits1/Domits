@@ -1699,7 +1699,13 @@ export class PropertyController {
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined, primaryDomain = null, host = null) {
+    buildPublicDirectBookingWebsiteRenderPayload(
+        site,
+        domain,
+        propertySnapshot = undefined,
+        primaryDomain = null,
+        host = null
+    ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;

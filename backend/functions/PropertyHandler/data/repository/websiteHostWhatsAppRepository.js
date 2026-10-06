@@ -40,7 +40,8 @@ export class WebsiteHostWhatsAppRepository {
       order: { updatedAt: "DESC" },
     });
 
-    return accounts.find(isConnectedAccount) || null;
+    const newest = accounts[0] || null;
+    return isConnectedAccount(newest) ? newest : null;
   }
 
   async readPhoneNumber(account) {

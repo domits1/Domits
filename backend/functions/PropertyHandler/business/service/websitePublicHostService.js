@@ -32,6 +32,12 @@ const readAttribute = (attributes, names) => {
   return "";
 };
 
+const withoutHostIdentifier = (imageUrl, hostId, username) => {
+  const normalizedUrl = imageUrl.toLowerCase();
+  const identifiers = [hostId, username].map((value) => cleanText(value).toLowerCase()).filter(Boolean);
+  return identifiers.some((identifier) => normalizedUrl.includes(identifier)) ? "" : imageUrl;
+};
+
 export class WebsitePublicHostService {
   constructor({
     cognitoRepository = new CognitoRepository(),
@@ -43,58 +49,45 @@ export class WebsitePublicHostService {
 
   async loadPublicHost(hostId) {
     const normalizedHostId = cleanText(hostId);
-    const host = buildEmptyPublicWebsiteHost();
     if (!normalizedHostId) {
-      return host;
+      return buildEmptyPublicWebsiteHost();
     }
 
-    const [profile, whatsapp] = await Promise.all([
-      this.#loadProfile(normalizedHostId),
-      this.#loadWhatsApp(normalizedHostId),
-    ]);
-
-    return { ...host, ...profile, whatsapp };
+    try {
+      const [profile, whatsapp] = await Promise.all([
+        this.#loadProfile(normalizedHostId),
+        this.#loadWhatsApp(normalizedHostId),
+      ]);
+      return { ...profile, whatsapp };
+    } catch (error) {
+      console.error(`[WebsitePublicHost] the host block could not be built for host ${normalizedHostId}.`, error);
+      return buildEmptyPublicWebsiteHost();
+    }
   }
 
   async #loadProfile(hostId) {
-    try {
-      const user = await this.cognitoRepository.getUserById(hostId);
-      const attributes = new Map((user?.UserAttributes || []).map((attribute) => [attribute?.Name, attribute?.Value]));
-      return {
-        displayName: readAttribute(attributes, ["given_name", "name"]),
-        profileImage: readAttribute(attributes, PROFILE_IMAGE_ATTRIBUTES),
-      };
-    } catch (error) {
-      console.error(
-        `[WebsitePublicHost] the host profile could not be read for the public site of host ${hostId}.`,
-        error
-      );
-      return { displayName: "", profileImage: "" };
-    }
+    const user = await this.cognitoRepository.getUserById(hostId);
+    const attributes = new Map((user?.UserAttributes || []).map((attribute) => [attribute?.Name, attribute?.Value]));
+    return {
+      displayName: readAttribute(attributes, ["given_name", "name"]),
+      profileImage: withoutHostIdentifier(readAttribute(attributes, PROFILE_IMAGE_ATTRIBUTES), hostId, user?.Username),
+    };
   }
 
   async #loadWhatsApp(hostId) {
     const empty = buildEmptyPublicWebsiteHost().whatsapp;
-    try {
-      const account = await this.whatsAppRepository.findConnectedAccountByUserId(hostId);
-      if (!account) {
-        return empty;
-      }
-
-      const phoneNumber = cleanText(await this.whatsAppRepository.readPhoneNumber(account));
-      const phoneNumberDigits = toPhoneDigits(phoneNumber);
-      if (!phoneNumberDigits) {
-        return empty;
-      }
-
-      return { isAvailable: true, phoneNumber, phoneNumberDigits };
-    } catch (error) {
-      console.error(
-        `[WebsitePublicHost] the WhatsApp number could not be read for the public site of host ${hostId}.`,
-        error
-      );
+    const account = await this.whatsAppRepository.findConnectedAccountByUserId(hostId);
+    if (!account) {
       return empty;
     }
+
+    const phoneNumber = cleanText(await this.whatsAppRepository.readPhoneNumber(account));
+    const phoneNumberDigits = toPhoneDigits(phoneNumber);
+    if (!phoneNumberDigits) {
+      return empty;
+    }
+
+    return { isAvailable: true, phoneNumber, phoneNumberDigits };
   }
 }
 

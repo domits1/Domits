@@ -56,8 +56,8 @@ describe("the public WhatsApp lookup of a host", () => {
     jest.clearAllMocks();
   });
 
-  it("reads only the host's WhatsApp accounts, newest first, and skips disconnected rows and rows without a number id", async () => {
-    const { repository, find } = buildRepository({ accounts: [WITHOUT_NUMBER_ID, DISCONNECTED, CONNECTED] });
+  it("reads only the host's WhatsApp accounts, newest first, and answers the newest one when it is connected", async () => {
+    const { repository, find } = buildRepository({ accounts: [CONNECTED, DISCONNECTED] });
 
     const account = await repository.findConnectedAccountByUserId(" host-1 ");
 
@@ -66,6 +66,14 @@ describe("the public WhatsApp lookup of a host", () => {
       where: { userId: "host-1", channel: "WHATSAPP" },
       order: { updatedAt: "DESC" },
     });
+  });
+
+  it("answers null when the newest account is disconnected or has no number id, even when an older row is connected", async () => {
+    const disconnectedFirst = buildRepository({ accounts: [DISCONNECTED, CONNECTED] });
+    const withoutNumberIdFirst = buildRepository({ accounts: [WITHOUT_NUMBER_ID, CONNECTED] });
+
+    expect(await disconnectedFirst.repository.findConnectedAccountByUserId("host-1")).toBeNull();
+    expect(await withoutNumberIdFirst.repository.findConnectedAccountByUserId("host-1")).toBeNull();
   });
 
   it("answers null without touching the database when the host id is empty", async () => {

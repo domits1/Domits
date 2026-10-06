@@ -31,7 +31,15 @@ const STORED_SNAPSHOT = {
   propertyType: { property_type: "Villa" },
   technicalDetails: null,
   propertyTestStatus: { status: "LIVE" },
-  calendarAvailability: [{ date: "2026-10-10" }],
+  calendarAvailability: {
+    externalBlockedDates: ["2026-10-10"],
+    availableDateKeys: [],
+    unavailableDateKeys: ["2026-10-11"],
+    hasExternalCalendarSync: true,
+    syncedSourceCount: 1,
+    lastSyncAt: 1791000000000,
+    syncSources: [{ name: "Airbnb", calendarUrl: "https://ical.example/hosts/host-secret-1/property-1.ics" }],
+  },
   hostProfile: { userId: "host-secret-1", givenName: "Karim" },
   futureSection: { hostId: "host-secret-1" },
 };
@@ -45,11 +53,15 @@ describe("the public property snapshot view", () => {
       title: "Villa Sensual",
       subtitle: "Sea view",
       description: "A villa.",
-      registrationNumber: "REG-1",
       status: "ACTIVE",
-      bookingType: "direct",
-      createdAt: 1,
-      updatedAt: 2,
+    });
+    expect(view.calendarAvailability).toEqual({
+      externalBlockedDates: ["2026-10-10"],
+      availableDateKeys: [],
+      unavailableDateKeys: ["2026-10-11"],
+      hasExternalCalendarSync: true,
+      syncedSourceCount: 1,
+      lastSyncAt: 1791000000000,
     });
     expect(Object.keys(view).sort()).toEqual(
       [
@@ -76,6 +88,8 @@ describe("the public property snapshot view", () => {
     expect(JSON.stringify(view)).not.toContain("host-secret-1");
     expect(JSON.stringify(view)).not.toContain("hostId");
     expect(JSON.stringify(view)).not.toContain("host_id");
+    expect(JSON.stringify(view)).not.toContain("calendarUrl");
+    expect(JSON.stringify(view)).not.toContain("REG-1");
   });
 
   it("answers an empty object for a missing or malformed snapshot", () => {
@@ -84,7 +98,9 @@ describe("the public property snapshot view", () => {
     expect(toPublicWebsitePropertySnapshotView([{ property: {} }])).toEqual({});
   });
 
-  it("leaves out the property section when it is not an object", () => {
-    expect(toPublicWebsitePropertySnapshotView({ property: "property-1", images: [] })).toEqual({ images: [] });
+  it("leaves out the property and calendar sections when they are not objects", () => {
+    expect(
+      toPublicWebsitePropertySnapshotView({ property: "property-1", calendarAvailability: [], images: [] })
+    ).toEqual({ images: [] });
   });
 });

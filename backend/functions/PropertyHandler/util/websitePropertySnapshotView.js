@@ -1,14 +1,4 @@
-const PUBLIC_PROPERTY_FIELDS = [
-  "id",
-  "title",
-  "subtitle",
-  "description",
-  "registrationNumber",
-  "status",
-  "bookingType",
-  "createdAt",
-  "updatedAt",
-];
+const PUBLIC_PROPERTY_FIELDS = ["id", "title", "subtitle", "description", "status"];
 
 const PUBLIC_SNAPSHOT_SECTIONS = [
   "amenities",
@@ -27,7 +17,15 @@ const PUBLIC_SNAPSHOT_SECTIONS = [
   "propertyType",
   "technicalDetails",
   "propertyTestStatus",
-  "calendarAvailability",
+];
+
+const PUBLIC_CALENDAR_FIELDS = [
+  "externalBlockedDates",
+  "availableDateKeys",
+  "unavailableDateKeys",
+  "hasExternalCalendarSync",
+  "syncedSourceCount",
+  "lastSyncAt",
 ];
 
 const isObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -50,6 +48,9 @@ export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   const view = pickFields(snapshot, PUBLIC_SNAPSHOT_SECTIONS);
   if (isObject(snapshot.property)) {
     view.property = pickFields(snapshot.property, PUBLIC_PROPERTY_FIELDS);
+  }
+  if (isObject(snapshot.calendarAvailability)) {
+    view.calendarAvailability = pickFields(snapshot.calendarAvailability, PUBLIC_CALENDAR_FIELDS);
   }
 
   return view;

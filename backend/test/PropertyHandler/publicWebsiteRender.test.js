@@ -9,7 +9,15 @@ const SITE = {
   primaryLocale: "nl",
   status: "PUBLISHED",
   templateKey: "panorama-landing",
-  publishedPropertySnapshot: { property: { id: "property-1", hostId: "host-secret-1", title: "Villa Sensual" } },
+  publishedPropertySnapshot: {
+    property: {
+      id: "property-1",
+      hostId: "host-secret-1",
+      title: "Villa Sensual",
+      createdAt: 1757400000000,
+      updatedAt: 1757500000000,
+    },
+  },
   publishedContentOverrides: {},
   publishedThemeOverrides: {},
   previewTokenHash: "preview-secret",
@@ -95,6 +103,8 @@ const PRIVATE_MARKERS = [
   "updatedAt",
   "domain-1",
   "domain-0",
+  "calendarUrl",
+  "ical.example",
 ];
 
 const buildController = ({ site = SITE, domain = STORED_DOMAIN, domains = [domain] } = {}) => {
@@ -105,9 +115,19 @@ const buildController = ({ site = SITE, domain = STORED_DOMAIN, domains = [domai
     listDomainsBySiteId: jest.fn().mockResolvedValue(domains),
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
-  controller.propertyService = { getPublicCalendarAvailability: jest.fn().mockResolvedValue([]) };
+  controller.propertyService = { getPublicCalendarAvailability: jest.fn().mockResolvedValue(CALENDAR_AVAILABILITY) };
   controller.websitePublicHostService = { loadPublicHost: jest.fn().mockResolvedValue(PUBLIC_HOST) };
   return controller;
+};
+
+const CALENDAR_AVAILABILITY = {
+  externalBlockedDates: ["2026-10-10"],
+  availableDateKeys: [],
+  unavailableDateKeys: [],
+  hasExternalCalendarSync: true,
+  syncedSourceCount: 1,
+  lastSyncAt: 1791000000000,
+  syncSources: [{ name: "Airbnb", calendarUrl: "https://ical.example/hosts/host-secret-1/property-1.ics" }],
 };
 
 const PUBLIC_HOST = {
@@ -145,9 +165,10 @@ const expectPublicRenderResponse = (response, domain, requestedDomain = domain) 
   expect(body.domain).toEqual(requestedDomain);
   expect(body.renderSource).toBe("published_site");
   expect(body.host).toEqual(PUBLIC_HOST);
+  const { syncSources, ...publicCalendarAvailability } = CALENDAR_AVAILABILITY;
   expect(body.propertySnapshot).toEqual({
     property: { id: SITE.propertyId, title: SITE.publishedPropertySnapshot.property.title },
-    calendarAvailability: [],
+    calendarAvailability: publicCalendarAvailability,
   });
   expectNoPrivateMarker(JSON.stringify(body));
 };
@@ -185,11 +206,12 @@ describe("the public website render response", () => {
     const controller = buildController();
 
     await controller.getPublicWebsiteRenderModel(
-      buildEvent({ domain: STORED_DOMAIN.domain, hostId: "host-from-request" })
+      buildEvent({ domain: STORED_DOMAIN.domain, hostId: "host-from-request", propertyId: "property-from-request" })
     );
 
     expect(controller.websitePublicHostService.loadPublicHost).toHaveBeenCalledTimes(1);
     expect(controller.websitePublicHostService.loadPublicHost).toHaveBeenCalledWith(SITE.hostId);
+    expect(controller.propertyService.getPublicCalendarAvailability).toHaveBeenCalledWith(SITE.propertyId);
   });
 
   it("still renders, with an empty host block, when the host lookup throws", async () => {
