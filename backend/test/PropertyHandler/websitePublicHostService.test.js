@@ -90,13 +90,18 @@ describe("the public host block of a direct booking website", () => {
         UserAttributes: [{ Name: "picture", Value: "https://photos.example/images/profile/Karim-Host/a1b2.jpg" }],
       },
     });
+    const unrelated = buildService({
+      user: { Username: "ann", UserAttributes: [{ Name: "picture", Value: "https://photos.example/banner.jpg" }] },
+    });
 
     const hostById = await byId.service.loadPublicHost(HOST_ID);
     const hostByUsername = await byUsername.service.loadPublicHost(HOST_ID);
+    const hostUnrelated = await unrelated.service.loadPublicHost(HOST_ID);
 
     expect(hostById.displayName).toBe("Karim");
     expect(hostById.profileImage).toBe("");
     expect(hostByUsername.profileImage).toBe("");
+    expect(hostUnrelated.profileImage).toBe("https://photos.example/banner.jpg");
     expect(JSON.stringify(hostById)).not.toContain(HOST_ID);
   });
 

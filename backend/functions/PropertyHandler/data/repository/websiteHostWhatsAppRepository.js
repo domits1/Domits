@@ -51,14 +51,7 @@ export class WebsiteHostWhatsAppRepository {
     }
 
     const result = await this.secretsClient.send(new GetSecretValueCommand({ SecretId: credentialsRef }));
-    let secret = null;
-    try {
-      secret = JSON.parse(result?.SecretString || "null");
-    } catch {
-      secret = null;
-    }
-
-    return resolvePhoneNumber(secret, account);
+    return resolvePhoneNumber(JSON.parse(result?.SecretString || "null"), account);
   }
 }
 

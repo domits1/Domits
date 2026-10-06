@@ -33,9 +33,9 @@ const readAttribute = (attributes, names) => {
 };
 
 const withoutHostIdentifier = (imageUrl, hostId, username) => {
-  const normalizedUrl = imageUrl.toLowerCase();
+  const segments = imageUrl.toLowerCase().split(/[/?#&=]/);
   const identifiers = [hostId, username].map((value) => cleanText(value).toLowerCase()).filter(Boolean);
-  return identifiers.some((identifier) => normalizedUrl.includes(identifier)) ? "" : imageUrl;
+  return identifiers.some((identifier) => segments.includes(identifier)) ? "" : imageUrl;
 };
 
 export class WebsitePublicHostService {

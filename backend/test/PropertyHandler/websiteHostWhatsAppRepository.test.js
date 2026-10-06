@@ -14,26 +14,11 @@ const CONNECTED = {
   status: "HEALTHY",
   externalAccountId: "pn-2",
   credentialsRef: "domits/whatsapp/host-1/acc-2",
-  updatedAt: 2,
+  updatedAt: 5,
 };
-const DISCONNECTED = {
-  id: "acc-3",
-  userId: "host-1",
-  channel: "WHATSAPP",
-  status: "DISCONNECTED",
-  externalAccountId: "pn-3",
-  credentialsRef: "domits/whatsapp/host-1/acc-3",
-  updatedAt: 3,
-};
-const WITHOUT_NUMBER_ID = {
-  id: "acc-4",
-  userId: "host-1",
-  channel: "WHATSAPP",
-  status: "HEALTHY",
-  externalAccountId: "",
-  credentialsRef: "domits/whatsapp/host-1/acc-4",
-  updatedAt: 4,
-};
+const WITHOUT_NUMBER_ID = { ...CONNECTED, id: "acc-4", externalAccountId: "", updatedAt: 4 };
+const DISCONNECTED = { ...CONNECTED, id: "acc-3", status: "DISCONNECTED", updatedAt: 3 };
+const OLDER_CONNECTED = { ...CONNECTED, id: "acc-1", updatedAt: 1 };
 
 const buildRepository = ({
   accounts = [DISCONNECTED, CONNECTED],
@@ -57,7 +42,7 @@ describe("the public WhatsApp lookup of a host", () => {
   });
 
   it("reads only the host's WhatsApp accounts, newest first, and answers the newest one when it is connected", async () => {
-    const { repository, find } = buildRepository({ accounts: [CONNECTED, DISCONNECTED] });
+    const { repository, find } = buildRepository({ accounts: [CONNECTED, DISCONNECTED, OLDER_CONNECTED] });
 
     const account = await repository.findConnectedAccountByUserId(" host-1 ");
 
@@ -68,12 +53,16 @@ describe("the public WhatsApp lookup of a host", () => {
     });
   });
 
-  it("answers null when the newest account is disconnected or has no number id, even when an older row is connected", async () => {
-    const disconnectedFirst = buildRepository({ accounts: [DISCONNECTED, CONNECTED] });
-    const withoutNumberIdFirst = buildRepository({ accounts: [WITHOUT_NUMBER_ID, CONNECTED] });
+  it("answers null when the newest account is disconnected, even when an older row is connected", async () => {
+    const { repository } = buildRepository({ accounts: [DISCONNECTED, OLDER_CONNECTED] });
 
-    expect(await disconnectedFirst.repository.findConnectedAccountByUserId("host-1")).toBeNull();
-    expect(await withoutNumberIdFirst.repository.findConnectedAccountByUserId("host-1")).toBeNull();
+    expect(await repository.findConnectedAccountByUserId("host-1")).toBeNull();
+  });
+
+  it("answers null when the newest account has no number id, even when an older row is connected", async () => {
+    const { repository } = buildRepository({ accounts: [WITHOUT_NUMBER_ID, OLDER_CONNECTED] });
+
+    expect(await repository.findConnectedAccountByUserId("host-1")).toBeNull();
   });
 
   it("answers null without touching the database when the host id is empty", async () => {
@@ -100,14 +89,14 @@ describe("the public WhatsApp lookup of a host", () => {
     expect(selected.secretsClient.send.mock.calls[0][0].input).toEqual({ SecretId: CONNECTED.credentialsRef });
   });
 
-  it("answers an empty number for a secret without a usable number or with broken JSON", async () => {
+  it("answers an empty number for a secret without a usable number, and fails on a secret that is not JSON", async () => {
     const unusable = buildRepository({
       secretString: JSON.stringify({ selectableNumbers: [{ phoneNumberId: "other", phoneNumber: "+1" }] }),
     });
-    const broken = buildRepository({ secretString: "{not json" });
-
     expect(await unusable.repository.readPhoneNumber(CONNECTED)).toBe("");
-    expect(await broken.repository.readPhoneNumber(CONNECTED)).toBe("");
+
+    const broken = buildRepository({ secretString: "{not json" });
+    await expect(broken.repository.readPhoneNumber(CONNECTED)).rejects.toThrow(SyntaxError);
   });
 
   it("does not call Secrets Manager for an account without a credentials reference, and lets a read error reach the caller", async () => {
