@@ -1,6 +1,7 @@
 import { DestinationPageRepository } from "../../data/repository/destinationPageRepository.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 import { buildDestinationPage } from "./destinationPageBuilder.js";
+import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 
 const byPath = (left, right) => left.path.localeCompare(right.path);
 
@@ -49,6 +50,10 @@ export class DestinationTreeService {
   async listEligibleDestinations() {
     const destinations = await this.destinationPageRepository.listDestinationsWithActiveListings();
     return buildDestinationTree(destinations, this.settings).filter((destination) => destination.eligible);
+  }
+
+  async renderDestinationSitemap({ siteOrigin, lastModified = new Date() } = {}) {
+    return buildDestinationSitemap(await this.listEligibleDestinations(), { siteOrigin, lastModified });
   }
 
   async renderDestinationPage(path, { siteOrigin } = {}) {

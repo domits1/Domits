@@ -81,6 +81,20 @@ describe("the destination tree", () => {
     ]);
   });
 
+  it("renders the sitemap from the same eligibility as the pages", async () => {
+    const { service } = buildService();
+    const xml = await service.renderDestinationSitemap({
+      siteOrigin: "https://www.domits.com",
+      lastModified: "2026-10-07",
+    });
+    expect(xml.match(/<loc>/g)).toHaveLength(4);
+    expect(xml).toContain(
+      "<loc>https://www.domits.com/destinations/europe/spain/malaga</loc><lastmod>2026-10-07</lastmod>"
+    );
+    expect(xml).not.toContain("ronda");
+    expect(xml).not.toContain("portugal");
+  });
+
   it("renders a page with its parents and eligible children, and answers null for a destination without a page", async () => {
     const { service, repository } = buildService();
 
