@@ -34,6 +34,25 @@ describe("classifyWebhookPullResult", () => {
     });
   });
 
+  // The feed returns one page; acknowledged revisions leave the feed, so a retry reads the next batch.
+  describe("feed pages", () => {
+    test("more revisions waiting than this pull fetched answers 503 MORE_PAGES", () => {
+      expect(
+        classifyWebhookPullResult(pulled({ fetchedCount: 100, ackedCount: 100, feedMeta: { total: 150, limit: 100 } }))
+      ).toEqual({ statusCode: 503, outcome: "MORE_PAGES" });
+    });
+
+    test("a pull that fetched every waiting revision answers 200", () => {
+      expect(
+        classifyWebhookPullResult(pulled({ fetchedCount: 3, ackedCount: 3, feedMeta: { total: 3, limit: 100 } }))
+      ).toEqual({ statusCode: 200, outcome: "PROCESSED" });
+    });
+
+    test("a pull without feed meta answers as before", () => {
+      expect(classifyWebhookPullResult(pulled({ feedMeta: null }))).toEqual({ statusCode: 200, outcome: "PROCESSED" });
+    });
+  });
+
   describe("feed failures", () => {
     it.each([
       { description: "rate limited", httpStatus: 429 },

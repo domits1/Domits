@@ -221,14 +221,15 @@ describe("ChannexProviderClient booking revisions", () => {
       expect(result.meta).toBeNull();
     });
 
-    test("requests the feed filtered by property and ordered by insertion time", async () => {
+    // Channex list endpoints return 10 items unless asked for more; 100 is the maximum it accepts.
+    test("requests the largest feed page, filtered by property and ordered by insertion time", async () => {
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
 
       await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
 
       const [url, init] = global.fetch.mock.calls[0];
       expect(url.toString()).toBe(
-        "https://staging.channex.io/api/v1/booking_revisions/feed?filter%5Bproperty_id%5D=ext-property-1&order%5Binserted_at%5D=asc"
+        "https://staging.channex.io/api/v1/booking_revisions/feed?filter%5Bproperty_id%5D=ext-property-1&order%5Binserted_at%5D=asc&pagination%5Blimit%5D=100"
       );
       expect(init.method).toBe("GET");
       expect(init.headers).toMatchObject({

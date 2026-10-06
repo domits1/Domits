@@ -774,6 +774,8 @@ export default class ChannexProviderClient {
       const url = new URL("/api/v1/booking_revisions/feed", CHANNEX_BASE_URL);
       url.searchParams.set("filter[property_id]", propertyId);
       url.searchParams.set("order[inserted_at]", "asc");
+      // Channex returns 10 items per page unless asked for more; 100 is its maximum.
+      url.searchParams.set("pagination[limit]", "100");
 
       const response = await fetch(url, {
         method: "GET",

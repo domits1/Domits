@@ -34,6 +34,8 @@ export const classifyWebhookPullResult = (pullResult) => {
 
   const errors = Array.isArray(response.errors) ? response.errors : [];
   if (errors.some(isTemporaryRevisionIssue)) return { statusCode: 503, outcome: "REVISION_TEMPORARY_FAILURE" };
+  // Acknowledged revisions leave the feed, so Channex's retry reads the next page.
+  if (Number(response.feedMeta?.total) > Number(response.fetchedCount)) return { statusCode: 503, outcome: "MORE_PAGES" };
   if (response.unackedCount > 0) return { statusCode: 200, outcome: "REVISIONS_UNACKED" };
   return { statusCode: 200, outcome: "PROCESSED" };
 };
