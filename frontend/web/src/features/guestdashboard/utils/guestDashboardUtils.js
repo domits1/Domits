@@ -112,6 +112,10 @@ export const canLeaveReview = (booking) => {
   );
 };
 
+// Review and booking persistence must never use a payment ID as Booking.id.
+export const getCanonicalBookingId = (booking) =>
+  booking?.id ?? booking?.ID ?? booking?.bookingId ?? null;
+
 export const getBookingId = (booking) =>
   booking?.id ??
   booking?.ID ??

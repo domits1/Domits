@@ -6,7 +6,7 @@ import { createReview } from "./services/reviewAPI";
 import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
 import {
   canLeaveReview,
-  getBookingId,
+  getCanonicalBookingId,
   normalizeGuestBookingsResponse,
 } from "../guestdashboard/utils/guestDashboardUtils";
 
@@ -20,6 +20,7 @@ const RATING_LABELS = {
 
 const INITIAL_FORM = {
   rating: "",
+  title: "",
   publicReview: "",
   privateFeedback: "",
 };
@@ -28,7 +29,8 @@ const ReviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const reservationId = searchParams.get("reservationId") || "";
+  // Keep existing emailed/bookmarked reservation links working during the URL transition.
+  const bookingId = searchParams.get("bookingId") ?? searchParams.get("reservationId") ?? "";
   const propertyTitle = location.state?.propertyTitle || "your stay";
 
   const [form, setForm] = useState(INITIAL_FORM);
@@ -36,7 +38,7 @@ const ReviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [checkedReservationId, setCheckedReservationId] = useState("");
+  const [checkedBookingId, setCheckedBookingId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
   const [ratingError, setRatingError] = useState("");
 
@@ -62,7 +64,7 @@ const ReviewPage = () => {
           return;
         }
 
-        if (!reservationId) {
+        if (!bookingId) {
           setEligibilityError("Open a completed reservation first to leave a review.");
           return;
         }
@@ -72,7 +74,7 @@ const ReviewPage = () => {
 
         const booking = normalizeGuestBookingsResponse(response).find(
           (item) =>
-            String(getBookingId(item)) === reservationId &&
+            String(getCanonicalBookingId(item)) === bookingId &&
             String(item.guestid ?? item.guestId) === String(guestId)
         );
 
@@ -85,7 +87,7 @@ const ReviewPage = () => {
         }
       } finally {
         if (active) {
-          setCheckedReservationId(reservationId);
+          setCheckedBookingId(bookingId);
           setIsCheckingSession(false);
         }
       }
@@ -96,7 +98,7 @@ const ReviewPage = () => {
     return () => {
       active = false;
     };
-  }, [navigate, reservationId]);
+  }, [navigate, bookingId]);
 
   const updateField = (field) => (event) => {
     const value = event.target.value;
@@ -110,7 +112,7 @@ const ReviewPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!reservationId || checkedReservationId !== reservationId || eligibilityError) {
+    if (!bookingId || checkedBookingId !== bookingId || eligibilityError) {
       setSubmitError("This reservation is not eligible for a review.");
       return;
     }
@@ -118,6 +120,11 @@ const ReviewPage = () => {
     if (!/^[1-5]$/.test(form.rating)) {
       setRatingError("Please select an overall experience rating from 1 to 5 stars.");
       event.currentTarget.querySelector('input[name="stars"]')?.focus();
+      return;
+    }
+
+    if (!form.title.trim() || form.title.trim().length > 120) {
+      setSubmitError("Please add a review title of up to 120 characters.");
       return;
     }
 
@@ -131,8 +138,9 @@ const ReviewPage = () => {
 
     try {
       await createReview({
-        reservationId,
+        bookingId,
         rating: Number(form.rating),
+        title: form.title.trim(),
         publicReview: form.publicReview.trim(),
         privateFeedback: form.privateFeedback.trim(),
       });
@@ -164,7 +172,7 @@ const ReviewPage = () => {
     </label>
   );
 
-  if (isCheckingSession || checkedReservationId !== reservationId) {
+  if (isCheckingSession || checkedBookingId !== bookingId) {
     return (
       <main className={styles.main}>
         <h1>Loading review form...</h1>
@@ -172,7 +180,7 @@ const ReviewPage = () => {
     );
   }
 
-  if (eligibilityError || !reservationId) {
+  if (eligibilityError || !bookingId) {
     return (
       <main className={styles.main}>
         <h1>Review unavailable</h1>
@@ -211,6 +219,11 @@ const ReviewPage = () => {
           {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
         </fieldset>
         <section className={styles.content}>
+          <label htmlFor="title">Review title (required)</label>
+          <input id="title" value={form.title} onChange={updateField("title")}
+            maxLength={120} disabled={isSubmitting} required />
+        </section>
+        <section className={styles.content}>
           <label htmlFor="publicReview">Please justify your rating*</label>
           <textarea
             id="publicReview"
@@ -246,7 +259,7 @@ const ReviewPage = () => {
           </button>
           <button
             type="submit"
-            className={!form.rating || !form.publicReview.trim() ? styles.disabled : ""}
+            className={!form.rating || !form.title.trim() || !form.publicReview.trim() ? styles.disabled : ""}
             disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit review"}
           </button>
