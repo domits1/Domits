@@ -637,6 +637,7 @@ export default class ChannexBookingRevisionImportService {
       error: "Failed to fetch Channex booking revision feed.",
       errorCode: providerResult?.errorCode ?? "CHANNEX_BOOKING_FEED_FAILED",
       providerStatus: providerResult?.providerStatus ?? null,
+      httpStatus: providerResult?.httpStatus ?? null,
       details: providerResult?.errorMessage ?? null,
     });
 
@@ -902,7 +903,7 @@ export default class ChannexBookingRevisionImportService {
         error: buildChannexPullIssue(
           acknowledgement.failure.errorCode || "CHANNEX_BOOKING_ACK_FAILED",
           acknowledgement.failure.errorMessage || "Failed to acknowledge Channex booking revision.",
-          { stage: acknowledgement.failure.stage ?? "ack" }
+          { stage: acknowledgement.failure.stage ?? "ack", httpStatus: acknowledgement.failure.httpStatus ?? null }
         ),
       };
     }
@@ -1509,6 +1510,7 @@ export default class ChannexBookingRevisionImportService {
       errorCode: ackResult?.errorCode ?? "CHANNEX_BOOKING_ACK_FAILED",
       errorMessage: ackResult?.errorMessage ?? "Failed to acknowledge Channex booking revision.",
       providerStatus: ackResult?.providerStatus ?? null,
+      httpStatus: ackResult?.httpStatus ?? null,
     };
   }
 
