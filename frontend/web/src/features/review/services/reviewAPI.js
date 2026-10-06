@@ -1,6 +1,6 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
-export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/ReviewSystem";
+export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
 const readEditResponse = async (response) => {
   const payload = await parseResponse(response);
@@ -12,7 +12,7 @@ export const getEditableReview = async (reviewId) =>
   readEditResponse(await requestReview("GET", { reviewId }));
 
 export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }) =>
-  readEditResponse(await fetch(`${API_REVIEW_BASE}?${new URLSearchParams({ reviewId })}`, {
+  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
     method: "PATCH",
     headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview, updated_at: updatedAt }),
@@ -39,21 +39,25 @@ const getReviewErrorMessage = (status, payload) => {
 };
 
 export const requestReview = async (method = "GET", query = {}) => {
-  return fetch(`${API_REVIEW_BASE}?${new URLSearchParams(query)}`, {
+  const { reviewId, ...parameters } = query;
+  const path = reviewId === undefined ? "/reviews" : `/reviews/${encodeURIComponent(reviewId)}`;
+  const search = new URLSearchParams(parameters).toString();
+  return fetch(`${API_REVIEW_BASE}${path}${search ? `?${search}` : ""}`, {
     method, headers: { Authorization: getAccessToken() },
   });
 };
 
-export const createReview = async ({ reservationId, rating, publicReview, privateFeedback }) => {
-  const response = await fetch(API_REVIEW_BASE, {
+export const createReview = async ({ bookingId, rating, title, publicReview, privateFeedback }) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews`, {
     method: "POST",
     headers: {
       Authorization: getAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      reservation_id: reservationId,
+      booking_id: bookingId,
       overall_rating: Number(rating),
+      title,
       public_review: publicReview,
       private_feedback: privateFeedback,
     }),

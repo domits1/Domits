@@ -46,7 +46,8 @@ export class Controller {
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
-      const query = event.queryStringParameters || {};
+      const query = { ...event.queryStringParameters,
+        reviewId: event.pathParameters?.id ?? event.pathParameters?.reviewId ?? event.queryStringParameters?.reviewId };
       if (event.httpMethod === "GET") return await this.getReviews(user, query);
       if (event.httpMethod === "PATCH") return await this.patchReview(user, query, event.body);
       if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
@@ -65,6 +66,7 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
+
   // Update an existing review after authenticating the caller and validating the payload.
   // This keeps edits limited to the intended review and protects against stale or malformed updates.
   async patchReview(user, query, body) {
@@ -74,6 +76,20 @@ export class Controller {
 
   // Delete a review only for the authenticated owner.
   // This avoids allowing one user to remove another user's review.
+
+  // Public property reads use the service's filtered, privacy-safe response.
+  async getPublicPropertyReviews(event) {
+    try {
+      const result = await this.service.getPublicPropertyReviews(event.pathParameters?.propertyId, event.queryStringParameters || {});
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  // Remove a review only for the authenticated owner.
+  // This blocks one user from deleting another user's review by accident or malice.
+
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
