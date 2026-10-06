@@ -205,6 +205,7 @@ describe("every site query reports the static page revision", () => {
     Database.getInstance.mockResolvedValue({
       options: { schema: "main" },
       createQueryRunner: jest.fn(() => queryRunner),
+      transaction: jest.fn(async (runInTransaction) => runInTransaction({ queryRunner })),
       query: jest.fn(async () => records),
     });
     const repository = new DirectBookingWebsiteSiteRepository();
@@ -215,7 +216,9 @@ describe("every site query reports the static page revision", () => {
     });
     await expect(repository.getSiteById("site-1")).resolves.toMatchObject({ staticPageRevision: 7 });
 
-    for (const call of queryRunner.query.mock.calls) {
+    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) => statement.includes("standalone_site"));
+    expect(siteStatements).toHaveLength(2);
+    for (const call of siteStatements) {
       expect(call[0]).toContain("static_page_revision");
     }
   });

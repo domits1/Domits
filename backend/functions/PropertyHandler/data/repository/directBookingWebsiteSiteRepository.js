@@ -145,17 +145,32 @@ export class DirectBookingWebsiteSiteRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
 
-    const { records } = await runStatement(
-      client,
-      `DELETE FROM ${tableName}
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2
       RETURNING
         ${SITE_SELECT_COLUMNS}`,
-      [propertyId, hostId]
-    );
+        [propertyId, hostId],
+        true
+      );
 
-    return mapSiteRow(records[0] || null);
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return null;
+      }
+
+      await manager.queryRunner.query(
+        `DELETE FROM ${outboxTableName}
+      WHERE site_id = $1`,
+        [site.id],
+        true
+      );
+
+      return site;
+    });
   }
 
   async upsertSiteWithStaticPageOutbox({
