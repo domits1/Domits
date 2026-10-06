@@ -72,6 +72,7 @@ export class StaticPageStore {
 
   async listPageHostnames() {
     const hostnames = [];
+    const etags = {};
     const rejected = [];
     let scanned = 0;
     let continuationToken;
@@ -88,6 +89,7 @@ export class StaticPageStore {
         const hostname = hostnameOfPageKey(key);
         if (isStaticPageHostname(hostname)) {
           hostnames.push(hostname);
+          etags[hostname] = String(object?.ETag || "");
         } else {
           rejected.push(key);
         }
@@ -99,11 +101,25 @@ export class StaticPageStore {
       continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
     } while (continuationToken);
 
-    return { hostnames, rejected };
+    return { hostnames, etags, rejected };
   }
 
-  async deletePage({ hostname }) {
-    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: buildStaticPageKey(hostname) }));
+  async deletePage({ hostname, etag = "" }) {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: buildStaticPageKey(hostname),
+          ...(etag ? { IfMatch: etag } : {}),
+        })
+      );
+      return true;
+    } catch (error) {
+      if (etag && error?.$metadata?.httpStatusCode === 412) {
+        return false;
+      }
+      throw error;
+    }
   }
 }
 

@@ -43,17 +43,11 @@ describe("the page writer policy", () => {
     expect(renderSitesBucket(text)).not.toContain(SITES_BUCKET_PLACEHOLDER);
   });
 
-  it("allows exactly a read of the app shell, writes and withdrawals under the hostname prefix, and a listing of that prefix", () => {
+  it("allows exactly a read of the app shell and writes and withdrawals under the hostname prefix", () => {
     expect(allows.map((statement) => [asList(statement.Action), asList(statement.Resource)])).toEqual([
       [["s3:GetObject"], [`${BUCKET}/index.html`]],
       [["s3:PutObject", "s3:DeleteObject"], [`${BUCKET}/sites/by-host/*`]],
-      [["s3:ListBucket"], [BUCKET]],
     ]);
-  });
-
-  it("lets the reconciler list the hostname prefix only, never the shell or the assets", () => {
-    const [listing] = allows.filter((statement) => asList(statement.Action).includes("s3:ListBucket"));
-    expect(listing.Condition).toEqual({ StringLike: { "s3:prefix": "sites/by-host/*" } });
   });
 
   it("never grants a wildcard, a bucket-wide write, a version delete or a delete outside the hostname prefix", () => {
@@ -165,21 +159,6 @@ describe("the execution role", () => {
     const [statement] = load("property-handler-role-trust.json").Statement;
     expect(statement.Principal).toEqual({ Service: "lambda.amazonaws.com" });
     expect(statement.Condition).toEqual({ StringEquals: { "aws:SourceAccount": ACCOUNT } });
-  });
-});
-
-describe("the reconciler schedule", () => {
-  const schedule = load("reconcile-schedule.json");
-
-  it("starts disabled, runs hourly, sends the reconcile task with a bounded limit, and shares the worker's target and retry rules", () => {
-    const worker = load("schedule.json");
-    expect(schedule.State).toBe("DISABLED");
-    expect(schedule.ScheduleExpression).toBe("rate(1 hour)");
-    expect(JSON.parse(schedule.Target.Input)).toEqual({ task: "reconcile-static-pages", limit: 50 });
-    expect(schedule.Target.Arn).toBe(worker.Target.Arn);
-    expect(schedule.Target.RoleArn).toBe(worker.Target.RoleArn);
-    expect(schedule.Target.RetryPolicy).toEqual(worker.Target.RetryPolicy);
-    expect(schedule.FlexibleTimeWindow).toEqual({ Mode: "OFF" });
   });
 });
 

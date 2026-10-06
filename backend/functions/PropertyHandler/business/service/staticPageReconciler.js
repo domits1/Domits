@@ -62,6 +62,7 @@ export class StaticPageReconciler {
     const repairs = new Set();
     if (orphans.length > 0) {
       const removal = await this.withdrawal.removePages(orphans, {
+        etags: listed.etags,
         keep: async (hostname) =>
           isPublishedOnActiveDomain(await this.domainRepository.getDomainWithSiteByName(hostname)),
       });
@@ -86,7 +87,9 @@ export class StaticPageReconciler {
     const toQueue = [];
     for (const siteId of siteIdsMissingAPage) {
       const row = rowBySiteId.get(siteId);
-      if (isStuck(row, now)) {
+      if (repairs.has(siteId)) {
+        toQueue.push(siteId);
+      } else if (isStuck(row, now)) {
         summary.stuck.push({ siteId, status: row.status, failureReason: row.failureReason });
       } else if (!isWorkingOnItsOwn(row, now)) {
         toQueue.push(siteId);
@@ -94,7 +97,7 @@ export class StaticPageReconciler {
     }
     for (const siteId of toQueue.slice(0, budget)) {
       try {
-        if (await this.siteRepository.queueStaticPage(siteId)) {
+        if (await this.siteRepository.queueStaticPage(siteId, { evenWhileBusy: repairs.has(siteId) })) {
           summary.queued += 1;
         }
       } catch (error) {
