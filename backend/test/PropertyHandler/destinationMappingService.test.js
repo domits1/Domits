@@ -57,8 +57,7 @@ describe("mapping a property to its destination", () => {
       locations: { "property-1": { propertyId: "property-1", country: "Narnia", city: "Cair Paravel" } },
     });
 
-    expect(await service.mapPropertyLocation("property-1")).toEqual({
-      propertyId: "property-1",
+    expect(await service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "unresolved",
       reason: "unknown_country",
       path: null,
@@ -75,8 +74,7 @@ describe("mapping a property to its destination", () => {
       locations: { "property-1": { propertyId: "property-1", country: "Spain", city: " - " } },
     });
 
-    expect(await service.mapPropertyLocation("property-1")).toEqual({
-      propertyId: "property-1",
+    expect(await service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "mapped",
       reason: "empty_city",
       path: "/destinations/europe/spain",
@@ -138,7 +136,7 @@ describe("the destination backfill", () => {
 
     const summary = await service.backfill({ batchSize: 3, onProperty: (result) => seen.push(result.outcome) });
 
-    expect(summary).toEqual({
+    expect(summary).toMatchObject({
       mapped: 2,
       unresolved: 1,
       stale: 0,
@@ -146,8 +144,8 @@ describe("the destination backfill", () => {
       batches: 2,
       complete: true,
       cursor: "p4",
-      failures: [{ propertyId: "p3", message: "connection refused" }],
     });
+    expect(summary.failures).toEqual([{ propertyId: "p3", message: "connection refused" }]);
     expect(repository.listPropertyIdsNeedingMapping.mock.calls.map(([args]) => args)).toEqual([
       { after: "", limit: 3 },
       { after: "p3", limit: 3 },

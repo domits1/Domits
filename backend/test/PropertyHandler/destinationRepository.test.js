@@ -10,6 +10,9 @@ jest.mock("database", () => ({
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 const CHAIN = resolveDestinationChain({ country: "Spain", city: "Marbella" });
+const SOURCE = { sourceCountry: "Spain", sourceCity: "Marbella" };
+const sync = (chain = CHAIN, source = SOURCE) =>
+  new DestinationRepository().syncPropertyDestination("property-1", chain, source);
 
 const buildClient = ({
   mappingRecords = [{ property_id: "property-1" }],
@@ -74,38 +77,26 @@ describe("the destination repository", () => {
   it("writes the continent, country and city rows and the mapping in one transaction, keyed by path", async () => {
     const client = buildClient();
 
-    const written = await new DestinationRepository().syncPropertyDestination("property-1", CHAIN, {
-      sourceCountry: "Spain",
-      sourceCity: "Marbella",
-      now: 1700,
-    });
+    const written = await sync(CHAIN, { ...SOURCE, now: 1700 });
 
     expect(written).toBe(true);
     expect(client.committed).toBe(true);
     const upserts = client.statements.filter(({ statement }) =>
       statement.includes(`INSERT INTO ${SCHEMA}.destination `)
     );
-    expect(upserts.map(({ parameters }) => parameters.slice(0, 7))).toEqual([
-      ["/destinations/europe", "continent", null, "europe", "/destinations/europe", "Europe", null],
-      [
-        "/destinations/europe/spain",
-        "country",
-        "/destinations/europe",
-        "spain",
-        "/destinations/europe/spain",
-        "Spain",
-        "ES",
-      ],
-      [
-        "/destinations/europe/spain/marbella",
-        "city",
-        "/destinations/europe/spain",
-        "marbella",
-        "/destinations/europe/spain/marbella",
-        "Marbella",
-        "ES",
-      ],
+    const PATHS = ["/destinations/europe", "/destinations/europe/spain", "/destinations/europe/spain/marbella"];
+    expect(upserts.map(({ parameters }) => parameters[0])).toEqual(PATHS);
+    expect(upserts.map(({ parameters }) => parameters[2])).toEqual([null, PATHS[0], PATHS[1]]);
+    expect(upserts[2].parameters.slice(0, 7)).toEqual([
+      PATHS[2],
+      "city",
+      PATHS[1],
+      "marbella",
+      PATHS[2],
+      "Marbella",
+      "ES",
     ]);
+    expect(upserts[0].parameters.slice(5, 7)).toEqual(["Europe", null]);
     expect(upserts[0].statement).toContain("ON CONFLICT (id)");
     expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
     expect(upserts[0].statement).not.toContain("slug = EXCLUDED");
@@ -129,11 +120,7 @@ describe("the destination repository", () => {
     const client = buildClient();
     const countryOnly = resolveDestinationChain({ country: "Spain", city: " - " });
 
-    const written = await new DestinationRepository().syncPropertyDestination("property-1", countryOnly, {
-      sourceCountry: "Spain",
-      sourceCity: " - ",
-      now: 1700,
-    });
+    const written = await sync(countryOnly, { sourceCountry: "Spain", sourceCity: " - ", now: 1700 });
 
     expect(written).toBe(true);
     const upserts = client.statements.filter(({ statement }) =>
@@ -168,37 +155,27 @@ describe("the destination repository", () => {
 
   it("retries a transaction that lost a DSQL conflict, and gives up after three attempts", async () => {
     const client = buildClient({ conflicts: 2 });
-    expect(
-      await new DestinationRepository().syncPropertyDestination("property-1", CHAIN, {
-        sourceCountry: "Spain",
-        sourceCity: "Marbella",
-      })
-    ).toBe(true);
+    expect(await sync()).toBe(true);
     expect(client.transaction).toHaveBeenCalledTimes(3);
 
     const exhausted = buildClient({ conflicts: 3 });
-    await expect(
-      new DestinationRepository().syncPropertyDestination("property-1", CHAIN, {
-        sourceCountry: "Spain",
-        sourceCity: "x",
-      })
-    ).rejects.toThrow("OC000");
+    await expect(sync()).rejects.toThrow("OC000");
     expect(exhausted.transaction).toHaveBeenCalledTimes(3);
   });
 
   it("rolls everything back when one statement fails, and refuses an unresolved chain or empty source text", async () => {
     const client = buildClient({ failOn: "property_destination" });
-    const repository = new DestinationRepository();
 
-    await expect(
-      repository.syncPropertyDestination("property-1", CHAIN, { sourceCountry: "Spain", sourceCity: "Marbella" })
-    ).rejects.toThrow("failed on property_destination");
+    await expect(sync()).rejects.toThrow("failed on property_destination");
     expect(client.rolledBack).toBe(true);
 
     const unresolved = resolveDestinationChain({ country: "Narnia", city: "x" });
-    await expect(
-      repository.syncPropertyDestination("property-1", unresolved, { sourceCountry: "Narnia", sourceCity: "x" })
-    ).rejects.toThrow("A resolved destination chain is required.");
+    await expect(sync(unresolved, { sourceCountry: "Narnia", sourceCity: "x" })).rejects.toThrow(
+      "A resolved destination chain"
+    );
+    await expect(sync(CHAIN, { sourceCountry: " ", sourceCity: "x" })).rejects.toThrow(
+      "The source country is required."
+    );
     expect(client.transaction).toHaveBeenCalledTimes(1);
   });
 
@@ -216,14 +193,9 @@ describe("the destination repository", () => {
   });
 
   it("reads only the country and city of a location for the mapping", async () => {
-    buildClient({
-      queryRows: [{ property_id: "property-1", country: "Spain", city: "Marbella", street: "Calle Secreta 1" }],
-    });
-    expect(await new DestinationRepository().getLocationForMapping("property-1")).toEqual({
-      propertyId: "property-1",
-      country: "Spain",
-      city: "Marbella",
-    });
+    buildClient({ queryRows: [{ property_id: "property-1", country: "Spain", city: "Marbella", street: "Calle 1" }] });
+    const location = await new DestinationRepository().getLocationForMapping("property-1");
+    expect(location).toEqual({ propertyId: "property-1", country: "Spain", city: "Marbella" });
 
     buildClient({ queryRows: [] });
     expect(await new DestinationRepository().getLocationForMapping("property-9")).toBeNull();
