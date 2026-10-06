@@ -29,7 +29,6 @@ function HostChannelDistribution() {
   const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
 
   const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution({
-    userId,
     domitsPropertyId: selectedPropertyId,
   });
   const [activeModal, setActiveModal] = useState(null);

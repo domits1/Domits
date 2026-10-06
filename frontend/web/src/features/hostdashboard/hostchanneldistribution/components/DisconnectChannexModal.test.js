@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DisconnectChannexModal from "./DisconnectChannexModal";
+import { DISMISS_ACTIONS, expectDismissalBlockedWhileInFlight } from "./modalTestHelpers";
 import { disconnectChannex } from "../services/channexDistributionService";
 
 jest.mock("../services/channexDistributionService", () => ({
@@ -60,4 +61,17 @@ describe("DisconnectChannexModal", () => {
     expect(onClose).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
+  test.each(DISMISS_ACTIONS)(
+    "%s does not close the modal while the request is in flight, and works again once it settles",
+    (_label, dismiss) =>
+      expectDismissalBlockedWhileInFlight({
+        dismiss,
+        mockedRequest: disconnectChannex,
+        submitButtonName: "Disconnect",
+        settledValue: { disconnected: true },
+        renderModal: (onClose) =>
+          render(<DisconnectChannexModal userId="user-1" onClose={onClose} onDisconnected={jest.fn()} />),
+      })
+  );
 });

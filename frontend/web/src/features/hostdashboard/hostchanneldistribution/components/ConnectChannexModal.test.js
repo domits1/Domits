@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ConnectChannexModal from "./ConnectChannexModal";
+import { DISMISS_ACTIONS, expectDismissalBlockedWhileInFlight } from "./modalTestHelpers";
 import { connectChannex } from "../services/channexDistributionService";
 
 jest.mock("../services/channexDistributionService", () => ({
@@ -76,21 +77,34 @@ describe("ConnectChannexModal", () => {
   });
 
   // Every way of dismissing the modal must behave the same: clear the typed key, close, never submit.
-  test.each([
-    ["Cancel", (user) => user.click(screen.getByRole("button", { name: "Cancel" }))],
-    ["Escape", (user) => user.keyboard("{Escape}")],
-    ["clicking the backdrop", (user) => user.click(screen.getByRole("button", { name: "Close backdrop" }))],
-  ])("%s clears the api key and closes without calling connectChannex", async (_label, dismiss) => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
+  test.each(DISMISS_ACTIONS.filter(([label]) => label !== "Close"))(
+    "%s clears the api key and closes without calling connectChannex",
+    async (_label, dismiss) => {
+      const user = userEvent.setup();
+      const onClose = jest.fn();
 
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
+      render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
 
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await dismiss(user);
+      await user.type(screen.getByLabelText("Channex API key"), "typed-key");
+      await dismiss(user);
 
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
+      expect(connectChannex).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText("Channex API key")).toHaveValue("");
+    }
+  );
+
+  test.each(DISMISS_ACTIONS)(
+    "%s does not close the modal while the request is in flight, and works again once it settles",
+    (_label, dismiss) =>
+      expectDismissalBlockedWhileInFlight({
+        dismiss,
+        mockedRequest: connectChannex,
+        submitButtonName: "Connect",
+        settledValue: { connected: false },
+        renderModal: (onClose) =>
+          render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />),
+        beforeSubmit: (user) => user.type(screen.getByLabelText("Channex API key"), "some-key"),
+      })
+  );
 });

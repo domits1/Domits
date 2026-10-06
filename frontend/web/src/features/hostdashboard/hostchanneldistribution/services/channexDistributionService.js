@@ -1,9 +1,9 @@
-// Mock data layer for the Distribution tab. Every function here mirrors the signature and
-// response shape of the matching real endpoint in hostintegrations/channexApi.js. When the
-// backend contract is ready, only this file changes: each function's body becomes a
-// requestChannex(...) call (Authorization: Bearer <Cognito ID token>, same as channexApi.js),
-// and the mock-only constants and helpers below are deleted along with the switch logic that
-// reads them.
+// Data layer for the Distribution tab. getChannexStatus below calls the real backend, via the
+// existing hostintegrations/channexApi.js helper (which already sends Authorization: Bearer
+// <Cognito ID token> -- no new fetch code here, and the token is never logged). Every other
+// function stays a mock, mirroring the response shape of its matching real endpoint in
+// hostintegrations/channexApi.js, until each is wired the same way.
+import { getChannexStatus as fetchRealChannexStatus } from "../../hostintegrations/channexApi";
 
 // While false, the Distribution tab's "+ Add channel" button stays disabled even when the
 // status is NOT_CONNECTED, so a real host can never trigger this mock connect flow. Flip to
@@ -11,22 +11,9 @@
 // entirely once connectChannex/disconnectChannex below call the real endpoints.
 export const MOCK_CONNECT_FLOW_ENABLED = false;
 
-// Flip this to preview each connection state in the browser. Must be one of the CHANNEX_STATUS
-// values from backend/functions/.shared/channelManagement/channelManagementConstants.js.
-// Defaults to NOT_CONNECTED so the tab never shows a fake connection if this ships as-is.
-const MOCK_CHANNEX_CONNECTION_STATE = "NOT_CONNECTED";
-// NOT_CONNECTED | CONNECTED | RECONNECT_REQUIRED | VALIDATION_FAILED | DISCONNECTED | PENDING_PROVIDER_VALIDATION
-
 // Flip this to preview each "last sync" state in the browser.
 const MOCK_CHANNEX_SYNC_STATE = "NONE";
 // NONE | SUCCESS | FAILED
-
-// Flip this to preview the error handling in the browser: the status call then rejects with an
-// error carrying this HTTP status, like requestChannex in hostintegrations/channexApi.js does.
-// 403 = host outside the Channex allowlist (expected, shown as the normal empty state);
-// 401 / 5xx = real error with a Retry button.
-const MOCK_CHANNEX_ERROR_STATUS = null;
-// null | 401 | 403 | 500
 
 // Flip these to preview each connect/disconnect modal outcome in the browser (only reachable
 // once MOCK_CONNECT_FLOW_ENABLED is true).
@@ -37,95 +24,6 @@ const MOCK_REQUEST_DELAY_MS = 500;
 
 const MOCK_INTEGRATION_ACCOUNT_ID = "mock-integration-account-id";
 const MOCK_DOMITS_PROPERTY_ID = "mock-domits-property-id";
-
-// Mutable, seeded from MOCK_CHANNEX_CONNECTION_STATE. A successful mock connect/disconnect
-// advances this so the tab reflects the change within the same browser session; reloading the
-// page resets it back to the constant above.
-let currentConnectionState = MOCK_CHANNEX_CONNECTION_STATE;
-
-// Shaped like GET /integrations/channex/status, one entry per CHANNEX_STATUS value.
-// See backend/functions/.shared/channelManagement/channelManagementService.js,
-// checkCredentialIntegrationStatus / buildCredentialStatusResponse.
-const MOCK_CHANNEX_STATUS_BY_STATE = {
-  NOT_CONNECTED: {
-    channel: "CHANNEX",
-    integrationAccountId: null,
-    status: "NOT_CONNECTED",
-    validationMode: "LOCAL_AND_PROVIDER_STATE",
-    validationState: "NOT_CONNECTED",
-    reason: "No Channex integration row exists for this user.",
-    displayName: null,
-    externalAccountId: null,
-    credentialsRefPresent: false,
-    secretPresent: false,
-    requiredFieldsPresent: false,
-  },
-  CONNECTED: {
-    channel: "CHANNEX",
-    integrationAccountId: MOCK_INTEGRATION_ACCOUNT_ID,
-    status: "CONNECTED",
-    validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-    validationState: "CONNECTED",
-    reason: "Stored Channex credentials are locally valid and provider validation has explicitly succeeded.",
-    displayName: "Channex",
-    externalAccountId: "mock-external-account-id",
-    credentialsRefPresent: true,
-    secretPresent: true,
-    requiredFieldsPresent: true,
-  },
-  RECONNECT_REQUIRED: {
-    channel: "CHANNEX",
-    integrationAccountId: MOCK_INTEGRATION_ACCOUNT_ID,
-    status: "RECONNECT_REQUIRED",
-    validationMode: "LOCAL_SECRET_VALIDATION",
-    validationState: "RECONNECT_REQUIRED",
-    reason: "Integration row exists but credentialsRef is missing.",
-    displayName: "Channex",
-    externalAccountId: null,
-    credentialsRefPresent: false,
-    secretPresent: false,
-    requiredFieldsPresent: false,
-  },
-  VALIDATION_FAILED: {
-    channel: "CHANNEX",
-    integrationAccountId: MOCK_INTEGRATION_ACCOUNT_ID,
-    status: "VALIDATION_FAILED",
-    validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-    validationState: "VALIDATION_FAILED",
-    reason: "Channex provider validation failed.",
-    displayName: "Channex",
-    externalAccountId: null,
-    credentialsRefPresent: true,
-    secretPresent: true,
-    requiredFieldsPresent: true,
-  },
-  DISCONNECTED: {
-    channel: "CHANNEX",
-    integrationAccountId: MOCK_INTEGRATION_ACCOUNT_ID,
-    status: "DISCONNECTED",
-    validationMode: "LOCAL_AND_PROVIDER_STATE",
-    validationState: "DISCONNECTED",
-    reason: "Channex integration is disconnected in Domits and is not locally usable.",
-    displayName: "Channex",
-    externalAccountId: null,
-    credentialsRefPresent: false,
-    secretPresent: false,
-    requiredFieldsPresent: false,
-  },
-  PENDING_PROVIDER_VALIDATION: {
-    channel: "CHANNEX",
-    integrationAccountId: MOCK_INTEGRATION_ACCOUNT_ID,
-    status: "PENDING_PROVIDER_VALIDATION",
-    validationMode: "LOCAL_SECRET_AND_PROVIDER_VALIDATION",
-    validationState: "PENDING_PROVIDER_VALIDATION",
-    reason: "Stored Channex credentials are locally valid, but provider validation has not explicitly succeeded.",
-    displayName: "Channex",
-    externalAccountId: null,
-    credentialsRefPresent: true,
-    secretPresent: true,
-    requiredFieldsPresent: true,
-  },
-};
 
 // Shaped like GET /integrations/channex/sync-evidence/latest.
 // See backend/functions/.shared/channelManagement/services/channexDiagnosticsService.js,
@@ -200,19 +98,12 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
   return requestError;
 };
 
-// Real endpoint: GET /integrations/channex/status?userId=
-export const getChannexStatus = async () => {
-  if (MOCK_CHANNEX_ERROR_STATUS) {
-    throw buildMockChannexRequestError({
-      method: "GET",
-      endpoint: "/integrations/channex/status",
-      status: MOCK_CHANNEX_ERROR_STATUS,
-      error: "Mock status error",
-    });
-  }
-  // Reads the mutable state so a mock connect/disconnect is reflected by the next status fetch.
-  return MOCK_CHANNEX_STATUS_BY_STATE[currentConnectionState];
-};
+// Real endpoint: GET /integrations/channex/status. Enes has allowlisted read access for staging
+// certification, so this calls through for real; connect/disconnect/sync stay mock (see
+// MOCK_CONNECT_FLOW_ENABLED and getLatestSyncEvidence below). No userId: the backend takes the
+// user from the Cognito ID token, and sending one would make callers wait for useFetchUser to
+// resolve and re-fire the request. channexApi destructures its argument, hence the empty object.
+export const getChannexStatus = async () => fetchRealChannexStatus({});
 
 // Open question for Enes: real contract is either a new Channex mapping-list endpoint, or
 // filtering hostDashboard/all by mapping -- mocked as a simple list for now. Entries use the
@@ -229,13 +120,17 @@ export const getMappedProperties = async () => {
 
 // Real endpoint: GET /integrations/channex/sync-evidence/latest?userId=&domitsPropertyId=
 // domitsPropertyId is required by the real endpoint (400 without it), so the tab scopes the
-// latest sync to the property picked in the view. The mock echoes it back in the response.
+// latest sync to the property picked in the view. Stays mock: the mock echoes it back in the response.
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
   return { ...MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE], domitsPropertyId };
 };
 
 // Real endpoint: POST /integrations/channex/connect ({ credentials: { apiKey }, displayName? }).
-// apiKey is only ever read here to build a masked preview; it is never stored or logged.
+// Stays mock: nothing here may call the real connect endpoint. apiKey is only ever read here to
+// build a masked preview; it is never stored or logged. Gated unreachable by
+// MOCK_CONNECT_FLOW_ENABLED = false above. Since getChannexStatus is now real, this mock no
+// longer has any in-memory connection state to advance -- a mock "successful" connect closes the
+// modal but the status card, now reading the real backend, simply won't reflect it.
 export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
   await mockDelay();
 
@@ -252,8 +147,6 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
   const connected = MOCK_CONNECT_OUTCOME === "SUCCESS";
   const status = connected ? "CONNECTED" : "VALIDATION_FAILED";
   const now = Date.now();
-
-  if (connected) currentConnectionState = "CONNECTED";
 
   return {
     connected,
@@ -284,10 +177,11 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
   };
 };
 
-// Real endpoint: POST /integrations/channex/disconnect ({ userId }).
-// The real backend leaves the integration row's status as DISCONNECTED (it clears
-// credentialsRef/externalAccountId but never deletes the row), and GET /status keeps reporting
-// that same status afterwards -- so the mock advances here to DISCONNECTED, not NOT_CONNECTED.
+// Real endpoint: POST /integrations/channex/disconnect ({ userId }). Stays mock: nothing here
+// may call the real disconnect endpoint. Gated unreachable by MOCK_CONNECT_FLOW_ENABLED = false
+// above. Same note as connectChannex: no in-memory connection state left to advance now that
+// getChannexStatus is real. The real backend leaves the row's status as DISCONNECTED rather than
+// deleting it, which is what the response below mirrors.
 export const disconnectChannex = async () => {
   await mockDelay();
 
@@ -300,8 +194,6 @@ export const disconnectChannex = async () => {
       errorCode: "CHANNEX_DISCONNECT_PERSIST_FAILED",
     });
   }
-
-  currentConnectionState = "DISCONNECTED";
 
   return {
     disconnected: true,
