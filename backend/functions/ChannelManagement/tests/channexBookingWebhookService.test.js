@@ -165,4 +165,10 @@ describe("ChannexBookingWebhookService", () => {
 
     await expect(receive(service)).resolves.toMatchObject({ fetchedCount: 3, ackedCount: 2, unackedCount: 1 });
   });
+
+  test("returns the feed meta for the log line", async () => {
+    const { service } = buildService({ pull: pullResult({ feedMeta: { page: 1, total: 12 } }) });
+
+    await expect(receive(service)).resolves.toMatchObject({ feedMeta: { page: 1, total: 12 } });
+  });
 });

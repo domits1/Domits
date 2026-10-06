@@ -97,6 +97,8 @@ export default class ChannelManagementController {
         fetchedCount: result.fetchedCount ?? 0,
         ackedCount: result.ackedCount ?? 0,
         unackedCount: result.unackedCount ?? 0,
+        // Shows whether the Channex feed is paginated (the documentation does not say).
+        feedMeta: result.feedMeta ?? null,
         outcome: result.outcome,
         statusCode: result.statusCode,
       })

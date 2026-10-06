@@ -131,7 +131,15 @@ describe("ChannelManagementController.receiveChannexBookingWebhook", () => {
 
   test("writes one log line per processed webhook without the secret", async () => {
     const { controller } = buildController({
-      serviceResult: { statusCode: 200, outcome: "PROCESSED", domitsPropertyId: "property-1", fetchedCount: 2, ackedCount: 2, unackedCount: 0 },
+      serviceResult: {
+        statusCode: 200,
+        outcome: "PROCESSED",
+        domitsPropertyId: "property-1",
+        fetchedCount: 2,
+        ackedCount: 2,
+        unackedCount: 0,
+        feedMeta: { page: 1, total: 2 },
+      },
     });
 
     await controller.receiveChannexBookingWebhook(webhookEvent());
@@ -146,6 +154,7 @@ describe("ChannelManagementController.receiveChannexBookingWebhook", () => {
       fetchedCount: 2,
       ackedCount: 2,
       unackedCount: 0,
+      feedMeta: { page: 1, total: 2 },
       outcome: "PROCESSED",
       statusCode: 200,
     });

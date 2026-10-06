@@ -76,6 +76,7 @@ export default class ChannexBookingWebhookService {
         fetchedCount: counts.fetchedCount ?? 0,
         ackedCount: counts.ackedCount ?? 0,
         unackedCount: counts.unackedCount ?? 0,
+        feedMeta: counts.feedMeta ?? null,
       };
       if (result.outcome === "FEED_UNAUTHORIZED") {
         await this.accounts.touchSyncFailure(

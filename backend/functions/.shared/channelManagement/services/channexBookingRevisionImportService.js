@@ -1847,7 +1847,7 @@ export default class ChannexBookingRevisionImportService {
       overallSuccess,
       notes,
       ...(isPoll ? { trigger } : {}),
-      ...(deadlineMs === null ? {} : { stoppedAtDeadline }),
+      ...(deadlineMs === null ? {} : { stoppedAtDeadline, feedMeta: providerResult.meta ?? null }),
     });
 
     return await finalize(response, {

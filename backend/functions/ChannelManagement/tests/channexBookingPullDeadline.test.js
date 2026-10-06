@@ -9,7 +9,12 @@ const buildService = () => {
     ratePlans: { listByAccountId: jest.fn(async () => []) },
     externalBookingImportRepository: { getDomitsPropertyContext: jest.fn(async () => ({})) },
     channexProviderClient: {
-      listBookingRevisionFeed: jest.fn(async () => ({ success: true, revisions: REVISIONS, providerStatus: "ACTIVE" })),
+      listBookingRevisionFeed: jest.fn(async () => ({
+        success: true,
+        revisions: REVISIONS,
+        meta: { page: 1, total: 3 },
+        providerStatus: "ACTIVE",
+      })),
     },
     finalizeChannexSyncResult: async (result) => result,
   });
@@ -100,6 +105,17 @@ describe("Channex booking pull deadline", () => {
     const result = await pull(service, undefined);
 
     expect(result.response).not.toHaveProperty("stoppedAtDeadline");
+    expect(result.response).not.toHaveProperty("feedMeta");
     expect(result.response.overallSuccess).toBe(true);
+  });
+
+  // The Channex documentation does not say whether the feed is paginated; the webhook logs the meta to find out.
+  test("passes the feed meta on when a deadline is given", async () => {
+    const service = buildService();
+    processTakingTenSeconds(service);
+
+    const result = await pull(service, START_MS + 60_000);
+
+    expect(result.response.feedMeta).toEqual({ page: 1, total: 3 });
   });
 });
