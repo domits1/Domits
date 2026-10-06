@@ -57,9 +57,8 @@ describe("the destination tree", () => {
     expect(byPath["/destinations/europe/portugal"].eligible).toBe(false);
     expect(byPath["/destinations/europe/portugal/sintra"].eligible).toBe(false);
     expect(byPath["/destinations/asia"].eligible).toBe(false);
-    expect(tree.map((destination) => destination.path)).toEqual(
-      [...tree.map((destination) => destination.path)].sort()
-    );
+    const paths = tree.map((destination) => destination.path);
+    expect(paths).toEqual([...paths].sort((left, right) => left.localeCompare(right)));
   });
 
   it("applies a higher minimum per destination while a country keeps counting all its stays", () => {
@@ -86,6 +85,22 @@ describe("the destination tree", () => {
     expect(byPath["/destinations/europe/spain"].eligible).toBe(false);
     expect(byPath["/destinations/europe/portugal"].eligible).toBe(true);
     expect(byPath["/destinations/europe"].eligible).toBe(false);
+  });
+
+  it("leaves an ancestor without a page out of the breadcrumbs", async () => {
+    const settings = readDestinationSettings({
+      DESTINATION_MIN_ACTIVE_LISTINGS: "2",
+      DESTINATION_PARENT_FROM_ANY_CHILD: "false",
+    });
+    const { service } = buildService({ settings });
+
+    const page = await service.renderDestinationPage("/destinations/europe/spain/marbella");
+
+    expect(page.html).toContain('<a href="/destinations">Destinations</a>');
+    expect(page.html).not.toContain('href="/destinations/europe"');
+    expect(page.html).not.toContain('href="/destinations/europe/spain"');
+    expect(page.html).toContain('<li aria-current="page">Marbella</li>');
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
   });
 
   it("refuses a tree with a cycle instead of running out of stack", () => {
