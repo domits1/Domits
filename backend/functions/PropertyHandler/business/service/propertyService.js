@@ -43,8 +43,9 @@ import {
 } from "../../util/calendarAvailability.js";
 
 
-// Terminal booking statuses: the booking never happened or is over, so there is nothing left to view.
-const DEAD_BOOKING_STATUSES = new Set(["cancelled", "canceled", "declined", "failed"]);
+// Booking statuses whose guest may load the full property details. An allowlist on purpose: a
+// status added later (or one we do not know, like "Refunded") stays blocked until it is added here.
+const FULL_PROPERTY_ACCESS_BOOKING_STATUSES = new Set(["paid", "inquiry", "awaiting payment"]);
 const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
 const DRAFT_NUMERIC_FIELDS = ["capacity", "bedrooms", "bathrooms"];
 
@@ -408,8 +409,8 @@ export class PropertyService {
 
   async getFullPropertyByBookingId(bookingId) {
     const booking = await this.bookingRepository.getBookingById(bookingId);
-    if (DEAD_BOOKING_STATUSES.has(normalizeBookingStatus(booking.status))) {
-      throw new Forbidden("This booking is no longer active.");
+    if (!FULL_PROPERTY_ACCESS_BOOKING_STATUSES.has(normalizeBookingStatus(booking.status))) {
+      throw new Forbidden("Full property details are not available for this booking.");
     }
     const basePropertyInfo = await this.getBasePropertyInfo(booking.property_id);
     if (!basePropertyInfo) {

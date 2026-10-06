@@ -1,5 +1,4 @@
 import Database from "database";
-import { TypeORMError } from "typeorm";
 import { randomUUID } from "node:crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
@@ -581,34 +580,19 @@ class ReservationRepository {
 
   async updateBookingSpecialRequest(id, specialRequest) {
     const client = await Database.getInstance();
-    try {
-      const query = await client
-        .createQueryBuilder()
-        .update(Booking)
-        .set({
-          special_request: specialRequest,
-        })
-        .where("id = :id", { id })
-        .execute();
+    const query = await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        special_request: specialRequest,
+      })
+      .where("id = :id", { id })
+      .execute();
 
-      return {
-        response: query,
-        statusCode: 200,
-        persisted: true,
-      };
-    } catch (error) {
-      // TODO: remove this fallback after the special_request migration lands
-      // The special_request column does not exist yet (no migration, not on Booking model)
-      if (error.code === "42703") {
-        console.warn(
-          `Could not update special_request for booking ${id} (column does not exist - Postgres error 42703):`,
-          error.message
-        );
-        const fallback = await this.getBookingById(id);
-        return { ...fallback, persisted: false };
-      }
-      throw error;
-    }
+    return {
+      response: query,
+      statusCode: 200,
+    };
   }
 
   async cancelBookingByGuest(id, guestId, channexChanges = []) {

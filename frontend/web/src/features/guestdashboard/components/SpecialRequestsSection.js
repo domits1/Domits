@@ -18,15 +18,11 @@ function SpecialRequestsSection({ bookingId, specialRequest, onUpdated }) {
     setIsSubmitting(true);
 
     try {
-      const result = await updateBookingSpecialRequest(bookingId, value);
-      if (result?.persisted === false) {
-        toast.error("Special requests aren't available yet — try again later.");
-      } else {
-        toast.success("Special request updated.");
-        setSavedValue(value);
-        if (onUpdated) {
-          onUpdated(value);
-        }
+      await updateBookingSpecialRequest(bookingId, value);
+      toast.success("Special request updated.");
+      setSavedValue(value);
+      if (onUpdated) {
+        onUpdated(value);
       }
     } catch (error) {
       console.error("Failed to update special request:", error);

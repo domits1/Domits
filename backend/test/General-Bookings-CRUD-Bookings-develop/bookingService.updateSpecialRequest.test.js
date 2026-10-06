@@ -55,7 +55,7 @@ describe("BookingService.updateSpecialRequest validation and authorization", () 
     );
   });
 
-  test("valid request succeeds with persisted:true", async () => {
+  test("valid request succeeds", async () => {
     const specialRequest = "Late check-in around 9pm, please";
     const reservationRepository = {
       getBookingById: jest.fn(async () => ({
@@ -64,7 +64,6 @@ describe("BookingService.updateSpecialRequest validation and authorization", () 
       updateBookingSpecialRequest: jest.fn(async () => ({
         response: { id: bookingId, special_request: specialRequest },
         statusCode: 200,
-        persisted: true,
       })),
     };
     const authManager = {
@@ -74,7 +73,6 @@ describe("BookingService.updateSpecialRequest validation and authorization", () 
 
     const result = await service.updateSpecialRequest(bookingId, specialRequest, authToken);
 
-    expect(result.persisted).toBe(true);
     expect(result.statusCode).toBe(200);
     expect(reservationRepository.updateBookingSpecialRequest).toHaveBeenCalledWith(bookingId, specialRequest);
   });
@@ -109,7 +107,6 @@ describe("BookingService.updateSpecialRequest validation and authorization", () 
       updateBookingSpecialRequest: jest.fn(async () => ({
         response: { id: bookingId, special_request: textAt500 },
         statusCode: 200,
-        persisted: true,
       })),
     };
     const authManager = {
@@ -119,7 +116,7 @@ describe("BookingService.updateSpecialRequest validation and authorization", () 
 
     const result = await service.updateSpecialRequest(bookingId, textAt500, authToken);
 
-    expect(result.persisted).toBe(true);
+    expect(result.statusCode).toBe(200);
     expect(reservationRepository.updateBookingSpecialRequest).toHaveBeenCalledWith(bookingId, textAt500);
   });
 });

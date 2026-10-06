@@ -25,7 +25,18 @@ describe("PropertyService.getFullPropertyByBookingId booking status gate", () =>
     }
   );
 
-  it.each(["Cancelled", "Canceled", "Declined", "Failed", "cancelled", "DECLINED"])(
+  it.each(["paid", "  PAID  ", "INQUIRY", " awaiting payment "])(
+    "matches the allowed status %j case-insensitively and ignoring surrounding spaces",
+    async (status) => {
+      const service = buildService(status);
+
+      await expect(service.getFullPropertyByBookingId("booking-1")).resolves.toEqual({
+        property: { id: "property-1" },
+      });
+    }
+  );
+
+  it.each(["Cancelled", "Declined", "Failed", "Refunded"])(
     "blocks a %s booking with Forbidden",
     async (status) => {
       const service = buildService(status);
@@ -34,4 +45,11 @@ describe("PropertyService.getFullPropertyByBookingId booking status gate", () =>
       expect(service.getFullPropertyAttributesWithFullLocation).not.toHaveBeenCalled();
     }
   );
+
+  it.each([undefined, null, "", "   "])("blocks a booking whose status is missing (%j)", async (status) => {
+    const service = buildService(status);
+
+    await expect(service.getFullPropertyByBookingId("booking-1")).rejects.toBeInstanceOf(Forbidden);
+    expect(service.getFullPropertyAttributesWithFullLocation).not.toHaveBeenCalled();
+  });
 });

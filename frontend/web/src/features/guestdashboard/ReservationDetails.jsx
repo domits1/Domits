@@ -14,6 +14,7 @@ import BookingDetails from "./components/BookingDetails";
 import PulseBarsLoader from "../../components/loaders/PulseBarsLoader";
 import useDashboardIdentity from "../../hooks/useDashboardIdentity";
 import { cancelGuestBooking, getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
+import { buildCheckInInstructions } from "./utils/checkInInstructions";
 import {
   formatFamilyLabel,
   getArrivalDate,
@@ -518,9 +519,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     cancellationPolicy: resolveReservationCancellationPolicy({ booking, propertyDetails }),
     rules: buildRuleLabels(propertyDetails),
-    instructions: propertyDetails?.checkIn?.checkIn?.from
-      ? [`Check-in: ${propertyDetails.checkIn.checkIn.from}–${propertyDetails.checkIn.checkIn.till}`]
-      : [],
+    instructions: buildCheckInInstructions(propertyDetails?.checkIn?.checkIn),
     amenities: Array.isArray(propertyDetails?.amenities) ? propertyDetails.amenities : [],
     specialInstructions: Array.isArray(propertyDetails?.customRules) ? propertyDetails.customRules : [],
     specialRequest: String(booking?.specialRequest || booking?.special_request || ""),
