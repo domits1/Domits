@@ -32,8 +32,10 @@ describe("property score repository", () => {
       "property.id = review.property_id AND property.hostid = :hostId", { hostId: "host-1" });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "property-1" });
     expect(query.andWhere.mock.calls).toEqual([
-      ["review.verification_status = :verificationStatus", { verificationStatus: "verified" }],
-      ["review.publication_status = :publicationStatus", { publicationStatus: "published" }],
+      ["review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }],
+      ["review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" }],
+      ["review.status = :status", { status: "PUBLISHED" }],
+      ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
       ["review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 }],
       ["review.overall_rating = FLOOR(review.overall_rating)"],
     ]);
