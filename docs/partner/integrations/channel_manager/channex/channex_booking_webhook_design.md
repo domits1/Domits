@@ -142,7 +142,7 @@ Each webhook writes one structured log line: request id, Channex property id, Do
 
 All done by hand; none of it is in the repository.
 
-1. Secrets Manager: create `domits/channex/webhook/bookings` with a long random value. The `ChannelManagement` role can already read it (`ManageChannelSecrets` covers it).
+1. Secrets Manager: create `domits/channex/webhook/bookings` as JSON, `{"webhookSecret": "<long random value>"}`, the same JSON format as the other integration secrets. A plain-text value or a missing key counts as not configured and makes the webhook answer 503. The `ChannelManagement` role can already read it (`ManageChannelSecrets` covers it).
 2. API Gateway `54s3llwby8`: resource `/webhooks/channex/bookings`, method `POST` without an authorizer, Lambda proxy integration to `ChannelManagement`, then deploy stage `default`. `/webhooks` and `/webhooks/channex` may already exist for #3447.
 3. Lambda permission: allow `apigateway.amazonaws.com` to invoke `ChannelManagement`, with the source ARN limited to `54s3llwby8/*/POST/webhooks/channex/bookings`. The function today only allows the ARI outbox EventBridge rule.
 4. Channex staging: create a property webhook for the mapped staging property with the callback URL, event `booking`, and the header `X-Channex-Webhook-Secret`. Deactivate the two unused booking webhooks on that property (Mews and Apaleo staging URLs; no deliveries, not referenced anywhere in the repository).
