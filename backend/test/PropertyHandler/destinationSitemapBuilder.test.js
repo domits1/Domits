@@ -66,22 +66,26 @@ describe("the destination sitemap", () => {
     }
   });
 
-  it("refuses a date that does not exist, keeps a zoned timestamp on its UTC day, and takes a Date", () => {
+  it("takes a day, a zoned timestamp on its UTC day or a Date, and refuses anything else", () => {
     const build = (lastModified) => buildDestinationSitemap([{ path: "/destinations/europe" }], { lastModified });
-    expect(() => build("yesterday")).toThrow("valid last modification date");
-    expect(() => build("2026-02-30")).toThrow("valid last modification date");
+    for (const value of ["yesterday", "2026-02-30", "2026-02-30T00:00:00Z", "2026-10-08T00:30:00", 0, Number.NaN, {}]) {
+      expect(() => build(value)).toThrow("valid last modification date");
+    }
+    expect(build(null)).not.toContain("lastmod");
     expect(build("2026-10-07T23:30:00+02:00")).toContain("<lastmod>2026-10-07</lastmod>");
     expect(build("2026-10-08T00:30:00+02:00")).toContain("<lastmod>2026-10-07</lastmod>");
     expect(build(new Date("2026-10-07T01:02:03Z"))).toContain("<lastmod>2026-10-07</lastmod>");
   });
 
-  it("refuses more entries than one sitemap may hold, and more bytes", () => {
+  it("refuses more entries than one sitemap or index may hold, and more bytes", () => {
     const tooMany = Array.from({ length: SITEMAP_ENTRY_LIMIT + 1 }, (_, index) => ({
       path: `/destinations/d${index}`,
     }));
     expect(() => buildDestinationSitemap(tooMany)).toThrow("at most 50000 entries");
     const long = Array.from({ length: 30000 }, (_, index) => ({ path: `/destinations/${"a".repeat(1900)}${index}` }));
     expect(() => buildDestinationSitemap(long)).toThrow("at most 52428800 bytes");
+    const index = Array.from({ length: SITEMAP_ENTRY_LIMIT + 1 }, (_, i) => ({ path: `/sitemap-${i}.xml` }));
+    expect(() => buildSitemapIndex(index)).toThrow("at most 50000 entries");
   });
 
   it("builds the index that points at the pages sitemap and the destinations sitemap", () => {

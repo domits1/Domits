@@ -22,14 +22,17 @@ const requireOrigin = (siteOrigin) => {
   return url.origin;
 };
 
+const DATE_TEXT = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
 const toIsoDate = (value) => {
-  const text = value instanceof Date ? value.toISOString() : String(value);
-  const date = new Date(text);
-  const dayOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
-  if (Number.isNaN(date.getTime()) || (dayOnly && date.toISOString().slice(0, 10) !== text)) {
-    throw new Error(`${text} is not a valid last modification date.`);
+  const text = value instanceof Date ? value.toISOString() : value;
+  const match = typeof text === "string" ? DATE_TEXT.exec(text) : null;
+  const day = match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : null;
+  const instant = match ? new Date(text) : null;
+  if (!match || Number.isNaN(instant.getTime()) || day.toISOString().slice(0, 10) !== text.slice(0, 10)) {
+    throw new Error(`${String(text)} is not a valid last modification date.`);
   }
-  return date.toISOString().slice(0, 10);
+  return instant.toISOString().slice(0, 10);
 };
 
 const renderLastModified = (lastModified) =>
