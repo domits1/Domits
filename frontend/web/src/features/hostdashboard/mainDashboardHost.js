@@ -6,12 +6,13 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
-import HostPropertyCare from "./Housekeeping";
+import HostTasks from "./hosttasks/pages/HostTasks";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import WebsiteEditorPage from "./website/WebsiteEditorPage";
 import WebsiteKpiDashboardPage from "./website/kpis/WebsiteKpiDashboardPage";
+import MissedRevenueDashboardPage from "./hostinsights/missedrevenue/MissedRevenueDashboardPage";
 import HostTeam from "./HostTeam";
 import HostSettingsHub from "./hostsettings/pages/HostSettingsHub";
 import HostSettingsPersonalData from "./hostsettings/pages/HostSettingsPersonalData";
@@ -19,6 +20,7 @@ import HostCommunicationPreferences from "./hostsettings/pages/HostCommunication
 import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
+import HostSettingsPrivacySecurity from "./hostsettings/pages/HostSettingsPrivacySecurity";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
 import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
@@ -26,6 +28,7 @@ import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
+import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -46,6 +49,8 @@ import PropertyAvailabilityView from "../hostonboarding/views/11_PropertyAvailab
 import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
 import HostReservationDetails from "./HostReservationDetails";
+import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
+import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -118,16 +123,18 @@ function MainDashboardHost() {
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
 
-          <Route path="tasks" element={<HostPropertyCare />} />
+          <Route path="tasks" element={<HostTasks />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="pricelabs" element={<HostPriceLabs />} />
+          <Route path="distribution" element={<HostChannelDistribution />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />
           <Route path="website-kpis" element={<Navigate to="../website/kpis" replace />} />
+          <Route path="hostinsights/missed-revenue" element={<MissedRevenueDashboardPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettingsHub />} />
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
@@ -135,7 +142,13 @@ function MainDashboardHost() {
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
+          <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
+          <Route
+            path="settings/rate-plans/direct-booking"
+            element={<HostSettingsDirectBookingRatePlan />}
+          />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
+          <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />

@@ -1,0 +1,42 @@
+name: CI - Static page generator
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/web/src/features/hostdashboard/website/**'
+      - 'frontend/web/src/store/amenities.js'
+      - 'frontend/web/src/store/iconWrapper.js'
+      - 'frontend/web/src/utils/accommodationImage.js'
+      - 'frontend/web/src/features/hostdashboard/hostproperty/constants.js'
+      - 'backend/functions/PropertyHandler/**'
+      - 'backend/prerender/**'
+      - '.github/workflows/static-page-bundle.yml'
+  push:
+    branches:
+      - acceptance
+      - main
+    paths:
+      - 'frontend/web/src/features/hostdashboard/website/**'
+      - 'frontend/web/src/store/amenities.js'
+      - 'frontend/web/src/store/iconWrapper.js'
+      - 'frontend/web/src/utils/accommodationImage.js'
+      - 'frontend/web/src/features/hostdashboard/hostproperty/constants.js'
+      - 'backend/functions/PropertyHandler/**'
+      - 'backend/prerender/**'
+
+jobs:
+  golden-page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bundle the generator and compare against the golden page
+        run: |
+          set -euo pipefail
+          npm install --silent --no-save --prefix "$RUNNER_TEMP/esbuild" esbuild@0.25.10
+          ESBUILD_MODULE="$RUNNER_TEMP/esbuild/node_modules/esbuild/lib/main.js" \
+            node backend/prerender/checkStaticPageGolden.mjs

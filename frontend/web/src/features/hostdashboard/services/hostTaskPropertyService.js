@@ -63,7 +63,7 @@ const normalizePropertySelectOptions = (listings) => {
     );
 };
 
-const fetchListingsFromHostDashboard = async (token) => {
+export const fetchListingsFromHostDashboard = async (token) => {
     const response = await fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
         method: "GET",
         headers: {

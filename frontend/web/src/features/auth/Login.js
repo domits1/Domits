@@ -3,9 +3,14 @@ import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
+import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
+import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
 
 import "../../styles/sass/features/auth/auth.scss";
 import "../../styles/sass/features/auth/register.scss";
+
+const SESSION_EXPIRED_MESSAGE = "Your sign-in session expired. Please sign in again.";
+const UNSUPPORTED_CHALLENGE_MESSAGE = "This sign-in method is not supported yet. Please contact support.";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -54,6 +59,38 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const completeSignIn = () => {
+    globalThis.dispatchEvent(new Event("authChanged"));
+
+    if (redirect) {
+      window.location.href = redirect;
+    } else {
+      globalThis.location.reload();
+    }
+  };
+
+  const returnToPasswordForm = (message) => {
+    setFormData((currentFormData) => ({ ...currentFormData, password: "" }));
+    setErrorMessage(message);
+  };
+
+  const {
+    pendingUser,
+    startChallenge,
+    verifyCode,
+    cancelChallenge,
+    isVerifying,
+    errorMessage: mfaErrorMessage,
+  } = useMfaChallenge({
+    onSuccess: completeSignIn,
+    onSessionExpired: () => returnToPasswordForm(SESSION_EXPIRED_MESSAGE),
+  });
+
+  const handleCancelChallenge = () => {
+    cancelChallenge();
+    returnToPasswordForm("");
+  };
+
   const handleSignIn = async () => {
     if (isSigningIn) {
       return;
@@ -62,14 +99,21 @@ const Login = () => {
     setErrorMessage("");
     setIsSigningIn(true);
     try {
-      await Auth.signIn(formData.email, formData.password);
-      globalThis.dispatchEvent(new Event("authChanged"));
+      const user = await Auth.signIn(formData.email, formData.password);
 
-      if (redirect) {
-        window.location.href = redirect;
-      } else {
-        globalThis.location.reload();
+      if (user?.challengeName === SOFTWARE_TOKEN_MFA) {
+        startChallenge(user);
+        setIsSigningIn(false);
+        return;
       }
+
+      if (user?.challengeName) {
+        setErrorMessage(UNSUPPORTED_CHALLENGE_MESSAGE);
+        setIsSigningIn(false);
+        return;
+      }
+
+      completeSignIn();
     } catch {
       setErrorMessage("Invalid email or password");
       setIsSigningIn(false);
@@ -130,6 +174,21 @@ const Login = () => {
       setErrorMessage(err.message);
     }
   };
+
+  if (pendingUser) {
+    return (
+      <div className="authPage">
+        <div className="authCard">
+          <MfaChallengeStep
+            onVerify={verifyCode}
+            onCancel={handleCancelChallenge}
+            isVerifying={isVerifying}
+            errorMessage={mfaErrorMessage}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="authPage">

@@ -196,3 +196,67 @@ describe("PersonalDataForm password management", () => {
     expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
   });
 });
+
+describe("PersonalDataForm name and phone errors", () => {
+  test("shows nameError as an alert linked to the first and last name fields", () => {
+    renderForm({ nameError: "Please provide a valid first name." });
+
+    const message = screen.getByText("Please provide a valid first name.");
+    expect(message).toHaveAttribute("role", "alert");
+    expect(message).toHaveAttribute("id", "pd-name-error");
+    expect(screen.getByLabelText("First name")).toHaveAttribute("aria-describedby", "pd-name-error");
+    expect(screen.getByLabelText("Last name")).toHaveAttribute("aria-describedby", "pd-name-error");
+  });
+
+  test("shows phoneError as an alert linked to the phone field", () => {
+    renderForm({ phoneError: "Please enter a phone number." });
+
+    const message = screen.getByText("Please enter a phone number.");
+    expect(message).toHaveAttribute("role", "alert");
+    expect(message).toHaveAttribute("id", "pd-phone-error");
+    expect(screen.getByLabelText("Phone")).toHaveAttribute("aria-describedby", "pd-phone-error");
+  });
+
+  test("shows no name or phone error message when neither is present", () => {
+    renderForm({ nameError: "", phoneError: "" });
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("PersonalDataForm photo feedback", () => {
+  test("shows an uploaded confirmation as a status message when photoSuccess is 'uploaded'", () => {
+    renderForm({ photoSuccess: "uploaded" });
+
+    const message = screen.getByText("Photo uploaded!");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "status");
+    expect(message).toHaveClass("pd-photo-success");
+  });
+
+  test("shows a removed confirmation as a status message when photoSuccess is 'removed'", () => {
+    renderForm({ photoSuccess: "removed" });
+
+    const message = screen.getByText("Photo removed!");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "status");
+    expect(message).toHaveClass("pd-photo-success");
+  });
+
+  test("shows a photo error as an alert with the dedicated photo-error style, not the generic field style", () => {
+    renderForm({ photoError: "Photo must be smaller than 5MB." });
+
+    const message = screen.getByText("Photo must be smaller than 5MB.");
+    expect(message).toBeInTheDocument();
+    expect(message).toHaveAttribute("role", "alert");
+    expect(message).toHaveClass("pd-photo-error");
+    expect(message).not.toHaveClass("pd-field-error");
+  });
+
+  test("shows no photo feedback message when there is neither an error nor a success state", () => {
+    renderForm({ photoError: "", photoSuccess: "" });
+
+    expect(screen.queryByText("Photo uploaded!")).not.toBeInTheDocument();
+    expect(screen.queryByText("Photo removed!")).not.toBeInTheDocument();
+  });
+});
