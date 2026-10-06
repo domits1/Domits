@@ -133,6 +133,10 @@ describe("the destination tree", () => {
     );
     expect(xml).not.toContain("ronda");
     expect(xml).not.toContain("portugal");
+    expect(await service.renderDestinationSitemap()).not.toContain("lastmod");
+
+    const empty = buildService({ rows: [] });
+    expect(await empty.service.renderDestinationSitemap()).toBeNull();
   });
 
   it("renders a page with its parents and eligible children, and answers null for a destination without a page", async () => {

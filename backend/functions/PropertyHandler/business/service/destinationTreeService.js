@@ -57,7 +57,7 @@ export class DestinationTreeService {
     return buildDestinationTree(destinations, this.settings).filter((destination) => destination.eligible);
   }
 
-  async renderDestinationSitemap({ siteOrigin, lastModified = new Date() } = {}) {
+  async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
     return buildDestinationSitemap(await this.listEligibleDestinations(), { siteOrigin, lastModified });
   }
 

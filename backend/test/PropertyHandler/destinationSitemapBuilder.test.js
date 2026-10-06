@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   buildDestinationSitemap,
   buildSitemapIndex,
-  SITEMAP_URL_LIMIT,
+  SITEMAP_ENTRY_LIMIT,
 } from "../../functions/PropertyHandler/business/service/destinationSitemapBuilder.js";
 
 const DESTINATIONS = [
@@ -30,25 +30,58 @@ describe("the destination sitemap", () => {
         "",
       ].join("\n")
     );
-  });
-
-  it("renders an empty url set when no destination has a page, so the index stays valid", () => {
-    expect(buildDestinationSitemap([])).toBe(
-      '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>\n'
-    );
     expect(buildDestinationSitemap([{ path: "/destinations/asia" }])).not.toContain("lastmod");
   });
 
-  it("refuses a path that is not clean, an invalid date, and more urls than one sitemap may hold", () => {
-    expect(() => buildDestinationSitemap([{ path: "/destinations/Europe" }])).toThrow("is not a clean site path");
-    expect(() => buildDestinationSitemap([{ path: "/destinations/europe/" }])).toThrow("is not a clean site path");
-    expect(() => buildDestinationSitemap([{ path: "destinations/europe" }])).toThrow("is not a clean site path");
-    expect(() => buildDestinationSitemap([{ path: "/destinations/europe?x=<1>" }])).toThrow("is not a clean site path");
-    expect(() => buildDestinationSitemap([{ path: "/destinations/europe" }], { lastModified: "yesterday" })).toThrow(
-      "valid last modification date"
-    );
-    const tooMany = Array.from({ length: SITEMAP_URL_LIMIT + 1 }, (_, index) => ({ path: `/destinations/d${index}` }));
-    expect(() => buildDestinationSitemap(tooMany)).toThrow("at most 50000 urls");
+  it("answers null when no destination has a page, so the publisher leaves the sitemap out of the index", () => {
+    expect(buildDestinationSitemap([])).toBeNull();
+    expect(buildDestinationSitemap(undefined)).toBeNull();
+  });
+
+  it("refuses a path that is not clean", () => {
+    for (const path of [
+      "/destinations/Europe",
+      "/destinations/europe/",
+      "destinations/europe",
+      "/destinations/europe?x=<1>",
+      "/.",
+      "/destinations/../asia",
+      "/destinations//europe",
+      "/destinations/./europe",
+      "",
+    ]) {
+      expect(() => buildDestinationSitemap([{ path }])).toThrow("is not a clean site path");
+    }
+  });
+
+  it("refuses an origin that is not a bare http origin", () => {
+    for (const siteOrigin of [
+      "domits.com",
+      "https://www.domits.com?x=1",
+      "https://www.domits.com/destinations",
+      "ftp://domits.com",
+      "https://www.domits.com/#top",
+    ]) {
+      expect(() => buildDestinationSitemap(DESTINATIONS, { siteOrigin })).toThrow("is not a site origin");
+    }
+  });
+
+  it("refuses a date that does not exist, keeps a zoned timestamp on its UTC day, and takes a Date", () => {
+    const build = (lastModified) => buildDestinationSitemap([{ path: "/destinations/europe" }], { lastModified });
+    expect(() => build("yesterday")).toThrow("valid last modification date");
+    expect(() => build("2026-02-30")).toThrow("valid last modification date");
+    expect(build("2026-10-07T23:30:00+02:00")).toContain("<lastmod>2026-10-07</lastmod>");
+    expect(build("2026-10-08T00:30:00+02:00")).toContain("<lastmod>2026-10-07</lastmod>");
+    expect(build(new Date("2026-10-07T01:02:03Z"))).toContain("<lastmod>2026-10-07</lastmod>");
+  });
+
+  it("refuses more entries than one sitemap may hold, and more bytes", () => {
+    const tooMany = Array.from({ length: SITEMAP_ENTRY_LIMIT + 1 }, (_, index) => ({
+      path: `/destinations/d${index}`,
+    }));
+    expect(() => buildDestinationSitemap(tooMany)).toThrow("at most 50000 entries");
+    const long = Array.from({ length: 30000 }, (_, index) => ({ path: `/destinations/${"a".repeat(1900)}${index}` }));
+    expect(() => buildDestinationSitemap(long)).toThrow("at most 52428800 bytes");
   });
 
   it("builds the index that points at the pages sitemap and the destinations sitemap", () => {
@@ -71,5 +104,8 @@ describe("the destination sitemap", () => {
       ].join("\n")
     );
     expect(() => buildSitemapIndex([])).toThrow("at least one sitemap");
+    expect(() => buildSitemapIndex([{ path: "/sitemap-pages.xml" }], { siteOrigin: "domits.com" })).toThrow(
+      "is not a site origin"
+    );
   });
 });

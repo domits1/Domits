@@ -3,57 +3,81 @@ import { escapeHtml } from "./destinationPageBuilder.js";
 export const SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9";
 export const DESTINATION_SITEMAP_PATH = "/sitemap-destinations.xml";
 export const PAGES_SITEMAP_PATH = "/sitemap-pages.xml";
-export const SITEMAP_URL_LIMIT = 50000;
+export const SITEMAP_ENTRY_LIMIT = 50000;
+export const SITEMAP_BYTE_LIMIT = 52428800;
 const DEFAULT_SITE_ORIGIN = "https://www.domits.com";
+const SEGMENT = /^[a-z0-9]+(?:[-.][a-z0-9]+)*$/;
 
-const cleanOrigin = (siteOrigin) =>
-  String(siteOrigin ?? "")
-    .trim()
-    .replace(/\/+$/, "") || DEFAULT_SITE_ORIGIN;
+const requireOrigin = (siteOrigin) => {
+  const text = String(siteOrigin ?? DEFAULT_SITE_ORIGIN).trim();
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    throw new Error(`${text || "an empty origin"} is not a site origin.`);
+  }
+  if (!["http:", "https:"].includes(url.protocol) || url.pathname !== "/" || url.search || url.hash) {
+    throw new Error(`${text} is not a site origin.`);
+  }
+  return url.origin;
+};
 
 const toIsoDate = (value) => {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error("A valid last modification date is required.");
+  const text = value instanceof Date ? value.toISOString() : String(value);
+  const date = new Date(text);
+  const dayOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
+  if (Number.isNaN(date.getTime()) || (dayOnly && date.toISOString().slice(0, 10) !== text)) {
+    throw new Error(`${text} is not a valid last modification date.`);
   }
   return date.toISOString().slice(0, 10);
 };
 
+const renderLastModified = (lastModified) =>
+  lastModified === undefined || lastModified === null ? "" : `<lastmod>${toIsoDate(lastModified)}</lastmod>`;
+
 const requirePath = (path) => {
   const text = String(path ?? "");
-  if (!/^\/[a-z0-9\-/.]*$/.test(text) || (text.endsWith("/") && text !== "/")) {
+  const segments = text.split("/");
+  if (segments.length < 2 || segments[0] !== "" || !segments.slice(1).every((segment) => SEGMENT.test(segment))) {
     throw new Error(`${text || "an empty path"} is not a clean site path.`);
   }
   return text;
 };
 
-const renderUrl = (origin, path, lastModified) => {
-  const lastmod = lastModified ? `<lastmod>${toIsoDate(lastModified)}</lastmod>` : "";
-  return `<url><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${lastmod}</url>`;
+const requireSize = (xml, entries) => {
+  if (entries > SITEMAP_ENTRY_LIMIT) {
+    throw new Error(`A sitemap holds at most ${SITEMAP_ENTRY_LIMIT} entries, ${entries} were given.`);
+  }
+  if (Buffer.byteLength(xml, "utf8") > SITEMAP_BYTE_LIMIT) {
+    throw new Error(`A sitemap holds at most ${SITEMAP_BYTE_LIMIT} bytes.`);
+  }
+  return xml;
 };
 
+const renderDocument = (element, entries) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<${element} xmlns="${SITEMAP_NAMESPACE}">\n${entries.join("\n")}\n</${element}>\n`;
+
 export const buildDestinationSitemap = (destinations, { siteOrigin, lastModified } = {}) => {
-  const origin = cleanOrigin(siteOrigin);
-  const paths = [
-    ...new Set((Array.isArray(destinations) ? destinations : []).map((destination) => destination.path)),
-  ].sort();
-  if (paths.length > SITEMAP_URL_LIMIT) {
-    throw new Error(`A sitemap holds at most ${SITEMAP_URL_LIMIT} urls, ${paths.length} were given.`);
+  const origin = requireOrigin(siteOrigin);
+  const paths = [...new Set((Array.isArray(destinations) ? destinations : []).map((destination) => destination.path))];
+  if (paths.length === 0) {
+    return null;
   }
-  const urls = paths.map((path) => renderUrl(origin, path, lastModified)).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="${SITEMAP_NAMESPACE}">\n${urls}${urls ? "\n" : ""}</urlset>\n`;
+  const lastmod = renderLastModified(lastModified);
+  const urls = paths
+    .sort()
+    .map((path) => `<url><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${lastmod}</url>`);
+  return requireSize(renderDocument("urlset", urls), urls.length);
 };
 
 export const buildSitemapIndex = (sitemaps, { siteOrigin } = {}) => {
-  const origin = cleanOrigin(siteOrigin);
+  const origin = requireOrigin(siteOrigin);
   if (!Array.isArray(sitemaps) || sitemaps.length === 0) {
     throw new Error("A sitemap index needs at least one sitemap.");
   }
-  const entries = sitemaps
-    .map(({ path, lastModified }) => {
-      const lastmod = lastModified ? `<lastmod>${toIsoDate(lastModified)}</lastmod>` : "";
-      return `<sitemap><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${lastmod}</sitemap>`;
-    })
-    .join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="${SITEMAP_NAMESPACE}">\n${entries}\n</sitemapindex>\n`;
+  const entries = sitemaps.map(
+    ({ path, lastModified }) =>
+      `<sitemap><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${renderLastModified(lastModified)}</sitemap>`
+  );
+  return requireSize(renderDocument("sitemapindex", entries), entries.length);
 };
