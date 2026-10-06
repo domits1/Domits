@@ -50,7 +50,16 @@ describe("the destination chain of a property location", () => {
     const countries = listCountries();
     const continents = new Set(countries.map(({ continent }) => continent));
     expect(countries).toHaveLength(249);
-    expect(continents.size).toBe(8);
+    expect([...continents].sort()).toEqual([
+      "africa",
+      "antarctica",
+      "asia",
+      "caribbean",
+      "europe",
+      "north-america",
+      "oceania",
+      "south-america",
+    ]);
     for (const country of countries) {
       expect(continents.has(country.continent)).toBe(true);
       expect(findCountryByName(country.name)).toEqual(country);
