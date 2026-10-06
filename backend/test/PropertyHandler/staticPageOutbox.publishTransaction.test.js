@@ -388,14 +388,14 @@ describe("queueing every published site after a frontend deploy", () => {
     expect(more).toEqual({ siteIds: ["site-1", "site-1"], complete: false });
   });
 
-  it("caps a batch at 100 sites whatever the caller asks, and treats a bad size as the cap", async () => {
+  it("caps a batch at 25 sites whatever the caller asks, and treats a bad size as the cap", async () => {
     const client = buildClient({ siteRecords: [] });
     const repository = new DirectBookingWebsiteSiteRepository();
 
     await repository.queueStaticPagesForPublishedSites({ batchSize: 9999 });
     await repository.queueStaticPagesForPublishedSites({ batchSize: "many" });
 
-    expect(client.statements.map(({ parameters }) => parameters[1])).toEqual([100, 100]);
+    expect(client.statements.map(({ parameters }) => parameters[1])).toEqual([25, 25]);
   });
 
   it("rolls a batch back as a whole when its outbox rows cannot be written", async () => {
