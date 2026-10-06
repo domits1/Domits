@@ -10,14 +10,27 @@ jest.mock("database", () => ({
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 const CHAIN = resolveDestinationChain({ country: "Spain", city: "Marbella" });
+const SOURCE = { sourceCountry: "Spain", sourceCity: "Marbella" };
+const sync = (chain = CHAIN, source = SOURCE) =>
+  new DestinationRepository().syncPropertyDestination("property-1", chain, source);
 
-const buildClient = ({ mappingRecords = [{ property_id: "property-1" }], queryRows = [], failOn = null } = {}) => {
+const buildClient = ({
+  mappingRecords = [{ property_id: "property-1" }],
+  queryRows = [],
+  failOn = null,
+  conflicts = 0,
+} = {}) => {
   const statements = [];
+  let remainingConflicts = conflicts;
   const transactionRunner = {
     query: jest.fn(async (statement, parameters) => {
       statements.push({ statement, parameters });
       if (failOn && statement.includes(failOn)) {
         throw new Error(`failed on ${failOn}`);
+      }
+      if (remainingConflicts > 0 && statement.includes("property_destination")) {
+        remainingConflicts -= 1;
+        throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
       }
       return statement.includes("property_destination")
         ? { records: mappingRecords, affected: mappingRecords.length }
@@ -64,39 +77,28 @@ describe("the destination repository", () => {
   it("writes the continent, country and city rows and the mapping in one transaction, keyed by path", async () => {
     const client = buildClient();
 
-    const written = await new DestinationRepository().syncPropertyDestination("property-1", CHAIN, {
-      sourceCountry: "Spain",
-      sourceCity: "Marbella",
-      now: 1700,
-    });
+    const written = await sync(CHAIN, { ...SOURCE, now: 1700 });
 
     expect(written).toBe(true);
     expect(client.committed).toBe(true);
     const upserts = client.statements.filter(({ statement }) =>
       statement.includes(`INSERT INTO ${SCHEMA}.destination `)
     );
-    expect(upserts.map(({ parameters }) => parameters.slice(0, 7))).toEqual([
-      ["/destinations/europe", "continent", null, "europe", "/destinations/europe", "Europe", null],
-      [
-        "/destinations/europe/spain",
-        "country",
-        "/destinations/europe",
-        "spain",
-        "/destinations/europe/spain",
-        "Spain",
-        "ES",
-      ],
-      [
-        "/destinations/europe/spain/marbella",
-        "city",
-        "/destinations/europe/spain",
-        "marbella",
-        "/destinations/europe/spain/marbella",
-        "Marbella",
-        "ES",
-      ],
+    const PATHS = ["/destinations/europe", "/destinations/europe/spain", "/destinations/europe/spain/marbella"];
+    expect(upserts.map(({ parameters }) => parameters[0])).toEqual(PATHS);
+    expect(upserts.map(({ parameters }) => parameters[2])).toEqual([null, PATHS[0], PATHS[1]]);
+    expect(upserts[2].parameters.slice(0, 7)).toEqual([
+      PATHS[2],
+      "city",
+      PATHS[1],
+      "marbella",
+      PATHS[2],
+      "Marbella",
+      "ES",
     ]);
+    expect(upserts[0].parameters.slice(5, 7)).toEqual(["Europe", null]);
     expect(upserts[0].statement).toContain("ON CONFLICT (id)");
+    expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
     expect(upserts[0].statement).not.toContain("slug = EXCLUDED");
     const mapping = client.statements.find(({ statement }) =>
       statement.includes(`INSERT INTO ${SCHEMA}.property_destination`)
@@ -118,11 +120,7 @@ describe("the destination repository", () => {
     const client = buildClient();
     const countryOnly = resolveDestinationChain({ country: "Spain", city: " - " });
 
-    const written = await new DestinationRepository().syncPropertyDestination("property-1", countryOnly, {
-      sourceCountry: "Spain",
-      sourceCity: " - ",
-      now: 1700,
-    });
+    const written = await sync(countryOnly, { sourceCountry: "Spain", sourceCity: " - ", now: 1700 });
 
     expect(written).toBe(true);
     const upserts = client.statements.filter(({ statement }) =>
@@ -138,53 +136,66 @@ describe("the destination repository", () => {
     expect(mapping.parameters).toEqual(["property-1", "/destinations/europe/spain", 1700, "Spain", " - "]);
   });
 
-  it("answers false, without failing, when the location changed between the read and the write", async () => {
+  it("binds the exact stored address into the write, and answers false when no location row matches it any more", async () => {
     const client = buildClient({ mappingRecords: [] });
 
     const written = await new DestinationRepository().syncPropertyDestination("property-1", CHAIN, {
-      sourceCountry: "Spain",
+      sourceCountry: " Spain ",
       sourceCity: "Marbella",
     });
 
     expect(written).toBe(false);
     expect(client.committed).toBe(true);
+    const mapping = client.statements.find(({ statement }) => statement.includes("property_destination"));
+    expect(mapping.statement).toContain(
+      "WHERE l.property_id = $1\n        AND l.country = $4\n        AND l.city = $5"
+    );
+    expect(mapping.parameters.slice(3)).toEqual([" Spain ", "Marbella"]);
+  });
+
+  it("retries a transaction that lost a DSQL conflict, and gives up after three attempts", async () => {
+    const client = buildClient({ conflicts: 2 });
+    expect(await sync()).toBe(true);
+    expect(client.transaction).toHaveBeenCalledTimes(3);
+
+    const exhausted = buildClient({ conflicts: 3 });
+    await expect(sync()).rejects.toThrow("OC000");
+    expect(exhausted.transaction).toHaveBeenCalledTimes(3);
   });
 
   it("rolls everything back when one statement fails, and refuses an unresolved chain or empty source text", async () => {
     const client = buildClient({ failOn: "property_destination" });
-    const repository = new DestinationRepository();
 
-    await expect(
-      repository.syncPropertyDestination("property-1", CHAIN, { sourceCountry: "Spain", sourceCity: "Marbella" })
-    ).rejects.toThrow("failed on property_destination");
+    await expect(sync()).rejects.toThrow("failed on property_destination");
     expect(client.rolledBack).toBe(true);
 
     const unresolved = resolveDestinationChain({ country: "Narnia", city: "x" });
-    await expect(
-      repository.syncPropertyDestination("property-1", unresolved, { sourceCountry: "Narnia", sourceCity: "x" })
-    ).rejects.toThrow("A resolved destination chain is required.");
+    await expect(sync(unresolved, { sourceCountry: "Narnia", sourceCity: "x" })).rejects.toThrow(
+      "A resolved destination chain"
+    );
+    await expect(sync(CHAIN, { sourceCountry: " ", sourceCity: "x" })).rejects.toThrow(
+      "The source country is required."
+    );
     expect(client.transaction).toHaveBeenCalledTimes(1);
   });
 
-  it("removes a mapping and says whether one was there", async () => {
+  it("removes a mapping only while the location still carries the address it was judged on", async () => {
     const client = buildClient({ queryRows: [{ property_id: "property-1" }] });
-    expect(await new DestinationRepository().removePropertyDestination("property-1")).toBe(true);
-    expect(client.statements[0].statement).toContain(`DELETE FROM ${SCHEMA}.property_destination`);
-    expect(client.statements[0].parameters).toEqual(["property-1"]);
+    const source = { sourceCountry: "Narnia", sourceCity: "Cair Paravel" };
+    expect(await new DestinationRepository().removePropertyDestination("property-1", source)).toBe(true);
+    expect(client.statements[0].statement).toContain(`DELETE FROM ${SCHEMA}.property_destination m`);
+    expect(client.statements[0].statement).toContain(`FROM ${SCHEMA}.property_location l`);
+    expect(client.statements[0].statement).toContain("AND l.country = $2\n            AND l.city = $3");
+    expect(client.statements[0].parameters).toEqual(["property-1", "Narnia", "Cair Paravel"]);
 
     buildClient({ queryRows: [] });
-    expect(await new DestinationRepository().removePropertyDestination("property-9")).toBe(false);
+    expect(await new DestinationRepository().removePropertyDestination("property-9", source)).toBe(false);
   });
 
   it("reads only the country and city of a location for the mapping", async () => {
-    buildClient({
-      queryRows: [{ property_id: "property-1", country: "Spain", city: "Marbella", street: "Calle Secreta 1" }],
-    });
-    expect(await new DestinationRepository().getLocationForMapping("property-1")).toEqual({
-      propertyId: "property-1",
-      country: "Spain",
-      city: "Marbella",
-    });
+    buildClient({ queryRows: [{ property_id: "property-1", country: "Spain", city: "Marbella", street: "Calle 1" }] });
+    const location = await new DestinationRepository().getLocationForMapping("property-1");
+    expect(location).toEqual({ propertyId: "property-1", country: "Spain", city: "Marbella" });
 
     buildClient({ queryRows: [] });
     expect(await new DestinationRepository().getLocationForMapping("property-9")).toBeNull();

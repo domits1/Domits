@@ -80,12 +80,17 @@ describe("the destination report", () => {
     expect([report.summary.eligibleCities, report.summary.eligibleCountries]).toEqual([1, 2]);
   });
 
-  it("does not let a country exist through its children when that setting is off", () => {
-    const report = buildDestinationReport(
-      [{ country: "Spain", city: "Marbella", active_count: 1 }],
-      readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "2", DESTINATION_PARENT_FROM_ANY_CHILD: "false" })
-    );
-    expect(report.countries[0].eligible).toBe(false);
+  it("lets a country exist only through its own unresolved listings when the parent setting is off", () => {
+    const settings = readDestinationSettings({
+      DESTINATION_MIN_ACTIVE_LISTINGS: "2",
+      DESTINATION_PARENT_FROM_ANY_CHILD: "false",
+    });
+    const throughCity = buildDestinationReport([{ country: "Spain", city: "Marbella", active_count: 3 }], settings);
+    const throughOwn = buildDestinationReport([{ country: "Spain", city: " ", active_count: 2 }], settings);
+
+    expect(throughCity.countries[0].cities[0].eligible).toBe(true);
+    expect(throughCity.countries[0].eligible).toBe(false);
+    expect(throughOwn.countries[0].eligible).toBe(true);
   });
 
   it("merges equal spellings across country variants, ignores a count that is not finite, and renders a table with the unresolved rows at the end", () => {

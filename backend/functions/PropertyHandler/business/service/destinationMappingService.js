@@ -1,4 +1,4 @@
-import { DestinationRepository } from "../../data/repository/destinationRepository.js";
+import { DestinationRepository, MAX_BATCH_SIZE } from "../../data/repository/destinationRepository.js";
 import { resolveDestinationChain } from "./destinationResolver.js";
 
 const DEFAULT_BATCH_SIZE = 100;
@@ -6,29 +6,33 @@ const MAX_BATCHES = 200;
 
 const cleanText = (value) => String(value || "").trim();
 
+export const clampBatchSize = (batchSize) =>
+  Math.min(Math.max(Math.trunc(Number(batchSize)) || DEFAULT_BATCH_SIZE, 1), MAX_BATCH_SIZE);
+
 export class DestinationMappingService {
   constructor({ destinationRepository = new DestinationRepository() } = {}) {
     this.destinationRepository = destinationRepository;
   }
 
-  async mapPropertyLocation(propertyId, location) {
+  async mapPropertyLocation(propertyId) {
     const normalizedPropertyId = cleanText(propertyId);
     if (!normalizedPropertyId) {
       throw new Error("A property id is required to map a destination.");
     }
 
-    const sourceCountry = cleanText(location?.country);
-    const sourceCity = cleanText(location?.city);
-    const chain = resolveDestinationChain({ country: sourceCountry, city: sourceCity });
+    const location = await this.destinationRepository.getLocationForMapping(normalizedPropertyId);
+    if (!location) {
+      return { propertyId: normalizedPropertyId, outcome: "unresolved", reason: "no_location", path: null };
+    }
+
+    const source = { sourceCountry: location.country, sourceCity: location.city };
+    const chain = resolveDestinationChain({ country: cleanText(location.country), city: cleanText(location.city) });
     if (!chain.country) {
-      await this.destinationRepository.removePropertyDestination(normalizedPropertyId);
+      await this.destinationRepository.removePropertyDestination(normalizedPropertyId, source);
       return { propertyId: normalizedPropertyId, outcome: "unresolved", reason: chain.unresolved, path: null };
     }
 
-    const written = await this.destinationRepository.syncPropertyDestination(normalizedPropertyId, chain, {
-      sourceCountry: String(location.country),
-      sourceCity: String(location.city ?? ""),
-    });
+    const written = await this.destinationRepository.syncPropertyDestination(normalizedPropertyId, chain, source);
     const target = chain.city || chain.country;
     return {
       propertyId: normalizedPropertyId,
@@ -38,21 +42,33 @@ export class DestinationMappingService {
     };
   }
 
-  async mapPropertyLocationSafely(propertyId, location) {
+  async mapPropertyLocationSafely(propertyId) {
     try {
-      return await this.mapPropertyLocation(propertyId, location);
+      return await this.mapPropertyLocation(propertyId);
     } catch (error) {
       console.error(`[Destinations] the destination of property ${propertyId} was not updated.`, error);
       return { propertyId: cleanText(propertyId), outcome: "failed", reason: error.message, path: null };
     }
   }
 
-  async backfill({ batchSize = DEFAULT_BATCH_SIZE, maxBatches = MAX_BATCHES, onProperty = () => {} } = {}) {
-    const summary = { mapped: 0, unresolved: 0, stale: 0, failed: 0, batches: 0, complete: false, failures: [] };
-    let after = "";
+  async backfill({ batchSize = DEFAULT_BATCH_SIZE, maxBatches = MAX_BATCHES, after = "", onProperty = () => {} } = {}) {
+    const limit = clampBatchSize(batchSize);
+    const summary = {
+      mapped: 0,
+      unresolved: 0,
+      stale: 0,
+      failed: 0,
+      batches: 0,
+      complete: false,
+      cursor: String(after || ""),
+      failures: [],
+    };
 
     while (summary.batches < maxBatches) {
-      const propertyIds = await this.destinationRepository.listPropertyIdsNeedingMapping({ after, limit: batchSize });
+      const propertyIds = await this.destinationRepository.listPropertyIdsNeedingMapping({
+        after: summary.cursor,
+        limit,
+      });
       if (propertyIds.length === 0) {
         summary.complete = true;
         break;
@@ -60,19 +76,7 @@ export class DestinationMappingService {
       summary.batches += 1;
 
       for (const propertyId of propertyIds) {
-        const location = await this.destinationRepository.getLocationForMapping(propertyId).catch((error) => {
-          summary.failures.push({ propertyId, message: error.message });
-          return undefined;
-        });
-        if (location === undefined) {
-          summary.failed += 1;
-          continue;
-        }
-        if (location === null) {
-          summary.unresolved += 1;
-          continue;
-        }
-        const result = await this.mapPropertyLocationSafely(propertyId, location);
+        const result = await this.mapPropertyLocationSafely(propertyId);
         summary[result.outcome] += 1;
         if (result.outcome === "failed") {
           summary.failures.push({ propertyId, message: result.reason });
@@ -80,8 +84,8 @@ export class DestinationMappingService {
         onProperty(result);
       }
 
-      after = propertyIds[propertyIds.length - 1];
-      if (propertyIds.length < batchSize) {
+      summary.cursor = propertyIds[propertyIds.length - 1];
+      if (propertyIds.length < limit) {
         summary.complete = true;
         break;
       }

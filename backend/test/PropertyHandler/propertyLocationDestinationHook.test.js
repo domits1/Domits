@@ -28,16 +28,16 @@ describe("the destination mapping follows every location write", () => {
 
     await service.createLocation(LOCATION);
 
-    expect(service.destinationMappingService.mapPropertyLocationSafely).toHaveBeenCalledWith("property-1", LOCATION);
+    expect(service.destinationMappingService.mapPropertyLocationSafely).toHaveBeenCalledWith("property-1");
   });
 
-  it("maps the destination from the stored row right after a location is updated", async () => {
-    const stored = { ...LOCATION, country: "Spain", city: "Malaga" };
-    const service = buildService({ updated: stored });
+  it("maps the destination by property id right after a location is updated, not from the returned model", async () => {
+    const service = buildService({ updated: { ...LOCATION, country: "Spain", city: "Malaga" } });
 
-    await service.updateLocation("property-1", { ...LOCATION, city: "malaga" });
+    await service.updateLocation("property-1", { ...LOCATION, country: "spain", city: "malaga" });
 
-    expect(service.destinationMappingService.mapPropertyLocationSafely).toHaveBeenCalledWith("property-1", stored);
+    expect(service.destinationMappingService.mapPropertyLocationSafely).toHaveBeenCalledWith("property-1");
+    expect(service.destinationMappingService.mapPropertyLocationSafely).toHaveBeenCalledTimes(1);
   });
 
   it("does not map anything when the location write itself failed", async () => {
