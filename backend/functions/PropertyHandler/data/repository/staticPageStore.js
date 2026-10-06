@@ -115,8 +115,12 @@ export class StaticPageStore {
       );
       return true;
     } catch (error) {
-      if (etag && error?.$metadata?.httpStatusCode === 412) {
+      const status = error?.$metadata?.httpStatusCode;
+      if (etag && (status === 412 || status === 409)) {
         return false;
+      }
+      if (status === 404) {
+        return true;
       }
       throw error;
     }
