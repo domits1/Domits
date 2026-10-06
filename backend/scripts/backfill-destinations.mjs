@@ -40,7 +40,8 @@ const main = async () => {
   );
   for (const failure of summary.failures) console.log(`failed ${failure.propertyId}: ${failure.message}`);
   if (!commit) console.log("Nothing was written. Run again with --commit to write.");
-  if (!summary.complete) console.log(`Not complete. Continue with --after ${summary.cursor}`);
+  if (!summary.complete)
+    console.log(`Not complete. Continue with ${commit ? "--commit " : ""}--after ${summary.cursor}`);
   if (!summary.complete || summary.failed > 0) process.exitCode = 1;
 };
 

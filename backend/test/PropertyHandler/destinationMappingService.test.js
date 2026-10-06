@@ -19,7 +19,7 @@ const buildService = ({
       if (failures.sync) throw new Error(failures.sync);
       return written;
     }),
-    removePropertyDestination: jest.fn(async () => ({ removed: true, current })),
+    removePropertyDestination: jest.fn(async () => ({ removed: current, current })),
     getLocationForMapping: jest.fn(async (propertyId) => {
       if (failures.location === propertyId) throw new Error("connection refused");
       return locations[propertyId] === undefined ? null : locations[propertyId];
