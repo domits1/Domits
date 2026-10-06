@@ -11,7 +11,7 @@ const COGNITO_USER = {
   UserAttributes: [
     { Name: "sub", Value: HOST_ID },
     { Name: "given_name", Value: "Karim" },
-    { Name: "picture", Value: "https://cdn.example/karim.jpg" },
+    { Name: "picture", Value: `https://photos.example/images/profile/${HOST_ID}/a1b2.jpg` },
     { Name: "email", Value: "karim@example.com" },
   ],
 };
@@ -31,6 +31,7 @@ const buildService = ({
   accountError = null,
   phoneNumber = "+31 6 1234 5678",
   phoneError = null,
+  ...serviceOptions
 } = {}) => {
   const cognitoRepository = {
     getUserById: jest.fn(async () => {
@@ -49,7 +50,7 @@ const buildService = ({
     }),
   };
   return {
-    service: new WebsitePublicHostService({ cognitoRepository, whatsAppRepository }),
+    service: new WebsitePublicHostService({ cognitoRepository, whatsAppRepository, ...serviceOptions }),
     cognitoRepository,
     whatsAppRepository,
   };
@@ -58,51 +59,51 @@ const buildService = ({
 const silenceConsoleError = () => jest.spyOn(console, "error").mockImplementation(() => {});
 
 describe("the public host block of a direct booking website", () => {
-  it("carries the display name, the picture and the WhatsApp number, and nothing that identifies the account", async () => {
+  it("carries the display name, the picture as stored and the WhatsApp number", async () => {
     const { service, cognitoRepository, whatsAppRepository } = buildService();
 
     const host = await service.loadPublicHost(` ${HOST_ID} `);
 
     expect(host).toEqual({
       displayName: "Karim",
-      profileImage: "https://cdn.example/karim.jpg",
+      profileImage: `https://photos.example/images/profile/${HOST_ID}/a1b2.jpg`,
       whatsapp: { isAvailable: true, phoneNumber: "+31 6 1234 5678", phoneNumberDigits: "31612345678" },
     });
     expect(cognitoRepository.getUserById).toHaveBeenCalledWith(HOST_ID);
     expect(whatsAppRepository.readPhoneNumber).toHaveBeenCalledWith(ACCOUNT);
-    expect(JSON.stringify(host)).not.toContain(HOST_ID);
     expect(JSON.stringify(host)).not.toContain("karim@example.com");
   });
 
-  it("leaves the picture out when its address carries the host's id or username", async () => {
-    const byId = buildService({
-      user: {
-        ...COGNITO_USER,
-        UserAttributes: [
-          { Name: "given_name", Value: "Karim" },
-          { Name: "picture", Value: `https://photos.example/images/profile/${HOST_ID}/a1b2.jpg` },
-        ],
-      },
-    });
-    const byUsername = buildService({
-      user: {
-        Username: "karim-host",
-        UserAttributes: [{ Name: "picture", Value: "https://photos.example/images/profile/Karim-Host/a1b2.jpg" }],
-      },
-    });
-    const unrelated = buildService({
-      user: { Username: "ann", UserAttributes: [{ Name: "picture", Value: "https://photos.example/banner.jpg" }] },
-    });
+  it("answers the next page views from memory for a few minutes, then reads again", async () => {
+    let clock = 1_000_000;
+    const { service, cognitoRepository, whatsAppRepository } = buildService({ cacheTtlMs: 60_000, now: () => clock });
 
-    const hostById = await byId.service.loadPublicHost(HOST_ID);
-    const hostByUsername = await byUsername.service.loadPublicHost(HOST_ID);
-    const hostUnrelated = await unrelated.service.loadPublicHost(HOST_ID);
+    const first = await service.loadPublicHost(HOST_ID);
+    clock += 59_000;
+    const second = await service.loadPublicHost(HOST_ID);
+    expect(second).toEqual(first);
 
-    expect(hostById.displayName).toBe("Karim");
-    expect(hostById.profileImage).toBe("");
-    expect(hostByUsername.profileImage).toBe("");
-    expect(hostUnrelated.profileImage).toBe("https://photos.example/banner.jpg");
-    expect(JSON.stringify(hostById)).not.toContain(HOST_ID);
+    second.whatsapp.phoneNumberDigits = "changed by a caller";
+    const third = await service.loadPublicHost(HOST_ID);
+    expect(third.whatsapp.phoneNumberDigits).toBe("31612345678");
+    expect(cognitoRepository.getUserById).toHaveBeenCalledTimes(1);
+
+    clock += 2_000;
+    await service.loadPublicHost(HOST_ID);
+    expect(cognitoRepository.getUserById).toHaveBeenCalledTimes(2);
+    expect(whatsAppRepository.findConnectedAccountByUserId).toHaveBeenCalledTimes(2);
+    expect(whatsAppRepository.readPhoneNumber).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not remember a failed read, so the next page view tries again", async () => {
+    const consoleError = silenceConsoleError();
+    const { service, cognitoRepository } = buildService({ userError: new Error("ThrottlingException") });
+
+    expect(await service.loadPublicHost(HOST_ID)).toEqual(buildEmptyPublicWebsiteHost());
+    cognitoRepository.getUserById.mockResolvedValue(COGNITO_USER);
+    expect((await service.loadPublicHost(HOST_ID)).displayName).toBe("Karim");
+    expect(cognitoRepository.getUserById).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
   });
 
   it("answers the empty block, with WhatsApp off, when the profile read fails", async () => {

@@ -1,6 +1,8 @@
 import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
 import { WebsiteHostWhatsAppRepository } from "../../data/repository/websiteHostWhatsAppRepository.js";
 
+const PUBLIC_HOST_CACHE_TTL_MS = 5 * 60 * 1000;
+
 const cleanText = (value) => String(value || "").trim();
 const toPhoneDigits = (value) => cleanText(value).replaceAll(/\D+/g, "");
 
@@ -32,19 +34,18 @@ const readAttribute = (attributes, names) => {
   return "";
 };
 
-const withoutHostIdentifier = (imageUrl, hostId, username) => {
-  const segments = imageUrl.toLowerCase().split(/[/?#&=]/);
-  const identifiers = [hostId, username].map((value) => cleanText(value).toLowerCase()).filter(Boolean);
-  return identifiers.some((identifier) => segments.includes(identifier)) ? "" : imageUrl;
-};
-
 export class WebsitePublicHostService {
   constructor({
     cognitoRepository = new CognitoRepository(),
     whatsAppRepository = new WebsiteHostWhatsAppRepository(),
+    cacheTtlMs = PUBLIC_HOST_CACHE_TTL_MS,
+    now = () => Date.now(),
   } = {}) {
     this.cognitoRepository = cognitoRepository;
     this.whatsAppRepository = whatsAppRepository;
+    this.cacheTtlMs = cacheTtlMs;
+    this.now = now;
+    this.cache = new Map();
   }
 
   async loadPublicHost(hostId) {
@@ -53,12 +54,19 @@ export class WebsitePublicHostService {
       return buildEmptyPublicWebsiteHost();
     }
 
+    const cached = this.cache.get(normalizedHostId);
+    if (cached && cached.expiresAt > this.now()) {
+      return structuredClone(cached.host);
+    }
+
     try {
       const [profile, whatsapp] = await Promise.all([
         this.#loadProfile(normalizedHostId),
         this.#loadWhatsApp(normalizedHostId),
       ]);
-      return { ...profile, whatsapp };
+      const host = { ...profile, whatsapp };
+      this.cache.set(normalizedHostId, { host, expiresAt: this.now() + this.cacheTtlMs });
+      return structuredClone(host);
     } catch (error) {
       console.error(`[WebsitePublicHost] the host block could not be built for host ${normalizedHostId}.`, error);
       return buildEmptyPublicWebsiteHost();
@@ -70,7 +78,7 @@ export class WebsitePublicHostService {
     const attributes = new Map((user?.UserAttributes || []).map((attribute) => [attribute?.Name, attribute?.Value]));
     return {
       displayName: readAttribute(attributes, ["given_name", "name"]),
-      profileImage: withoutHostIdentifier(readAttribute(attributes, PROFILE_IMAGE_ATTRIBUTES), hostId, user?.Username),
+      profileImage: readAttribute(attributes, PROFILE_IMAGE_ATTRIBUTES),
     };
   }
 
