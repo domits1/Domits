@@ -73,7 +73,9 @@ export class DestinationTreeService {
       if (!parent) {
         break;
       }
-      parents.unshift({ name: parent.name, path: parent.path });
+      if (parent.eligible) {
+        parents.unshift({ name: parent.name, path: parent.path });
+      }
       parentId = parent.parentId;
     }
 
