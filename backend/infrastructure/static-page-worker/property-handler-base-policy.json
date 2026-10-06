@@ -29,6 +29,12 @@
       ]
     },
     {
+      "Sid": "ReadTheWhatsAppNumberSecrets",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:eu-north-1:115462458880:secret:domits/whatsapp/*"
+    },
+    {
       "Sid": "ReadUsersAndTablesAndWriteLogs",
       "Effect": "Allow",
       "Action": [
