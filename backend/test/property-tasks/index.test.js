@@ -8,6 +8,7 @@ const mockGetChecklistItems = jest.fn();
 const mockCreateChecklistItem = jest.fn();
 const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
+const mockEscalateTask = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -21,6 +22,7 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         createChecklistItem: mockCreateChecklistItem,
         updateChecklistItem: mockUpdateChecklistItem,
         deleteChecklistItem: mockDeleteChecklistItem,
+        escalateTask: mockEscalateTask,
     })),
 }));
 
@@ -36,7 +38,8 @@ describe("property-tasks handler routing", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
-            mockGetChecklistItems, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem]
+            mockGetChecklistItems, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
+            mockEscalateTask]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
     });
 
@@ -69,6 +72,12 @@ describe("property-tasks handler routing", () => {
     it("POST with action=checklist routes to createChecklistItem", async () => {
         await handler({ httpMethod: "POST", queryStringParameters: { action: "checklist" } });
         expect(mockCreateChecklistItem).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("POST with action=escalate routes to escalateTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "escalate" } });
+        expect(mockEscalateTask).toHaveBeenCalledTimes(1);
         expect(mockCreateTask).not.toHaveBeenCalled();
     });
 

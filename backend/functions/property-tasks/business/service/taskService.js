@@ -1,6 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
-import { computeSlaStatus } from "../model/slaStatus.js";
+import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
+import { getHostEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -145,6 +146,24 @@ export const updateTask = async (hostId, taskId, updateData) => {
     });
 
     return { message: "Task updated successfully" };
+};
+
+export const escalateTask = async (hostId, taskId) => {
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    if (!task) throw new Error("Task not found or access denied");
+
+    if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
+        throw new BadRequestException("Task is not breaching its SLA");
+    }
+
+    const hostEmail = await getHostEmailById(hostId);
+    await sendTaskEscalationEmail(hostEmail, task);
+
+    const escalated_at = Date.now();
+    await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at });
+
+    return { message: "Task escalated successfully" };
 };
 
 export const deleteTask = async (hostId, taskId) => {

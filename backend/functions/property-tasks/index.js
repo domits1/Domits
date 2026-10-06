@@ -26,6 +26,9 @@ export const handler = async (event) => {
                 if (event.queryStringParameters?.action === 'checklist') {
                     return await controller.createChecklistItem(event);
                 }
+                if (event.queryStringParameters?.action === 'escalate') {
+                    return await controller.escalateTask(event);
+                }
                 return await controller.createTask(event);
 
             case "PATCH":
