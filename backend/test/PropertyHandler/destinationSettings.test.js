@@ -22,13 +22,10 @@ describe("the destination settings", () => {
       minActiveListings: 1,
       parentFromAnyChild: true,
     });
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "many" }).minActiveListings).toBe(1);
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "3garbage" }).minActiveListings).toBe(1);
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "2.9" }).minActiveListings).toBe(1);
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "99999999999999999999" }).minActiveListings).toBe(
-      1
+    const minimums = ["many", "3garbage", "2.9", "99999999999999999999", " 4 "].map(
+      (value) => readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: value }).minActiveListings
     );
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: " 4 " }).minActiveListings).toBe(4);
+    expect(minimums).toEqual([1, 1, 1, 1, 4]);
   });
 
   it("decides eligibility from the listings, or from the children when the setting allows it", () => {

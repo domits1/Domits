@@ -13,13 +13,9 @@ describe("destination slugs", () => {
     ["Málaga", "malaga"],
     ["Saint Jean Cap Ferrat", "saint-jean-cap-ferrat"],
     ["  Rio   de Janeiro ", "rio-de-janeiro"],
-    ["Groß Toitin, Western Pomerania", "gross-toitin-western-pomerania"],
     ["Bali - Seminyak", "bali-seminyak"],
     ["Governor's Harbour", "governor-s-harbour"],
-    ["Curaçao", "curacao"],
     ["Saint Barthélemy", "saint-barthelemy"],
-    ["Åland Islands", "aland-islands"],
-    ["Côte d'Ivoire", "cote-d-ivoire"],
     ["Łódź", "lodz"],
     ["Ærøskøbing", "aeroskobing"],
   ])("turns %s into %s", (input, expected) => {

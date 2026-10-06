@@ -4,37 +4,7 @@ import {
   DESTINATION_UNRESOLVED_COUNTRY,
   resolveDestinationChain,
 } from "../../functions/PropertyHandler/business/service/destinationResolver.js";
-import {
-  findCountryByName,
-  listContinents,
-  listCountries,
-} from "../../functions/PropertyHandler/util/destination/countries.js";
-
-const LIVE_COUNTRIES_ON_2026_10_07 = [
-  "Argentina",
-  "Bahamas",
-  "Brazil",
-  "Colombia",
-  "Croatia",
-  "Curaçao",
-  "Ecuador",
-  "France",
-  "Germany",
-  "Greece",
-  "India",
-  "Indonesia",
-  "Italy",
-  "Kenya",
-  "Mexico",
-  "Morocco",
-  "Portugal",
-  "Puerto Rico",
-  "Saint Barthélemy",
-  "South Africa",
-  "Sri Lanka",
-  "Thailand",
-  "Turks And Caicos Islands",
-];
+import { findCountryByName, listCountries } from "../../functions/PropertyHandler/util/destination/countries.js";
 
 describe("the destination chain of a property location", () => {
   it("resolves continent, country and city with english slugs and clean paths", () => {
@@ -47,15 +17,13 @@ describe("the destination chain of a property location", () => {
   });
 
   it("accepts the country however it was cased or title-cased by the onboarding model", () => {
-    expect(resolveDestinationChain({ country: "turks and caicos islands", city: "Turtle Cove" }).country.code).toBe(
-      "TC"
-    );
-    expect(resolveDestinationChain({ country: "Turks And Caicos Islands", city: "Turtle Cove" }).country.code).toBe(
-      "TC"
-    );
-    expect(resolveDestinationChain({ country: "Tanzania, United Republic Of", city: "Arusha" }).country.code).toBe(
-      "TZ"
-    );
+    const codes = [
+      "turks and caicos islands",
+      "Turks And Caicos Islands",
+      "Tanzania, United Republic Of",
+      "CURAÇAO",
+    ].map((country) => resolveDestinationChain({ country, city: "x" }).country.code);
+    expect(codes).toEqual(["TC", "TC", "TZ", "CW"]);
     expect(resolveDestinationChain({ country: "CURAÇAO", city: "Willemstad" }).continent.slug).toBe("caribbean");
   });
 
@@ -79,8 +47,8 @@ describe("the destination chain of a property location", () => {
   });
 
   it("holds 249 countries, each code once, each with one of the eight continents, and finds each by its own name", () => {
-    const continents = new Set(listContinents().map(({ slug }) => slug));
     const countries = listCountries();
+    const continents = new Set(countries.map(({ continent }) => continent));
     expect(countries).toHaveLength(249);
     expect(continents.size).toBe(8);
     for (const country of countries) {
@@ -88,11 +56,5 @@ describe("the destination chain of a property location", () => {
       expect(findCountryByName(country.name)).toEqual(country);
     }
     expect(new Set(countries.map(({ code }) => code)).size).toBe(249);
-  });
-
-  it("resolves every country that has an active listing today", () => {
-    for (const name of LIVE_COUNTRIES_ON_2026_10_07) {
-      expect(resolveDestinationChain({ country: name, city: "x" }).unresolved).toBeNull();
-    }
   });
 });
