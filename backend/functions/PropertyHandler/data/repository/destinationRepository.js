@@ -19,16 +19,12 @@ const resolveSchemaName = (client) => {
 const destinationTableName = (schemaName) => `${schemaName}.destination`;
 const mappingTableName = (schemaName) => `${schemaName}.property_destination`;
 const locationTableName = (schemaName) => `${schemaName}.property_location`;
-const propertyTableName = (schemaName) => `${schemaName}.property`;
 
 const runStatement = async (client, statement, parameters) => {
   const queryRunner = client.createQueryRunner();
   try {
     const result = await queryRunner.query(statement, parameters, true);
-    return {
-      records: Array.isArray(result?.records) ? result.records : [],
-      affected: Number(result?.affected) || 0,
-    };
+    return { records: Array.isArray(result?.records) ? result.records : [] };
   } finally {
     await queryRunner.release();
   }
@@ -177,7 +173,7 @@ export class DestinationRepository {
 
     const rows = await client.query(
       `SELECT p.id
-      FROM ${propertyTableName(schemaName)} p
+      FROM ${schemaName}.property p
       JOIN ${locationTableName(schemaName)} l ON l.property_id = p.id
       LEFT JOIN ${mappingTableName(schemaName)} d ON d.property_id = p.id
       WHERE p.id > $1
