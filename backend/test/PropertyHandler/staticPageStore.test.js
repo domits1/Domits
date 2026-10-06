@@ -89,11 +89,23 @@ describe("StaticPageStore", () => {
   it("withdraws a page by deleting exactly its hostname key, a delete marker on this versioned bucket", async () => {
     const send = jest.fn(async () => ({}));
 
-    await buildStore(send).deletePage({ hostname: "www.villasensual.nl" });
+    expect(await buildStore(send).deletePage({ hostname: "www.villasensual.nl" })).toBe(true);
 
     const [command] = send.mock.calls[0];
     expect(command).toBeInstanceOf(DeleteObjectCommand);
     expect(command.input).toEqual({ Bucket: BUCKET, Key: "sites/by-host/www.villasensual.nl/index.html" });
+  });
+
+  it("deletes only the listed version of a page when given its etag, and answers false when the page changed", async () => {
+    const send = jest
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(Object.assign(new Error("PreconditionFailed"), { $metadata: { httpStatusCode: 412 } }));
+    const store = buildStore(send);
+
+    expect(await store.deletePage({ hostname: "www.villasensual.nl", etag: '"e1"' })).toBe(true);
+    expect(send.mock.calls[0][0].input.IfMatch).toBe('"e1"');
+    expect(await store.deletePage({ hostname: "www.villasensual.nl", etag: '"e1"' })).toBe(false);
   });
 
   it("refuses to delete under a key that is not a hostname key", async () => {
@@ -107,7 +119,7 @@ describe("StaticPageStore", () => {
     const pages = [
       {
         Contents: [
-          { Key: "sites/by-host/a.direct.domits.com/index.html" },
+          { Key: "sites/by-host/a.direct.domits.com/index.html", ETag: '"e1"' },
           { Key: "sites/by-host/a.direct.domits.com/old.html" },
           { Key: "sites/by-host/index.html" },
           { Key: "sites/by-host/UPPER.example/index.html" },
@@ -133,6 +145,7 @@ describe("StaticPageStore", () => {
     expect(send.mock.calls[1][0].input.ContinuationToken).toBe("t2");
     expect(listed).toEqual({
       hostnames: ["a.direct.domits.com", "www.b.nl"],
+      etags: { "a.direct.domits.com": '"e1"', "www.b.nl": "" },
       rejected: [
         "sites/by-host/a.direct.domits.com/old.html",
         "sites/by-host/index.html",

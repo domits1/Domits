@@ -24,20 +24,24 @@ export class StaticPageWithdrawal {
     return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
-  async removePages(hostnames) {
+  async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
     const removed = [];
+    const kept = [];
     const failures = [];
     for (const hostname of [...new Set(hostnames)]) {
       try {
         buildStaticPageKey(hostname);
-        await this.pageStore.deletePage({ hostname });
-        removed.push(hostname);
+        if (await keep(hostname)) {
+          kept.push(hostname);
+          continue;
+        }
+        ((await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" })) ? removed : kept).push(hostname);
       } catch (error) {
         failures.push({ hostname, message: error.message });
       }
     }
 
-    return { removed, failures, invalidationErrors: await this.#invalidate(removed) };
+    return { removed, kept, failures, invalidationErrors: await this.#invalidate(removed) };
   }
 
   async withdraw({ siteId, domains }) {
