@@ -23,7 +23,8 @@ import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
 } from "../util/exception/WebsiteCustomDomainError.js";
-import { toHostWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -1686,14 +1687,13 @@ export class PropertyController {
         return {
             siteId: siteSummary.site.id,
             propertyId: siteSummary.site.propertyId,
-            hostId: siteSummary.site.hostId,
             templateKey: siteSummary.site.templateKey,
             primaryLocale: siteSummary.site.primaryLocale,
             siteName: siteSummary.site.siteName,
             siteStatus: siteSummary.site.status,
             publishedAt: siteSummary.site.publishedAt,
             isReachable: siteSummary.isReachable,
-            domain: siteSummary.primaryDomain,
+            domain: toPublicWebsiteDomainView(siteSummary.primaryDomain),
         };
     }
 
@@ -1705,17 +1705,8 @@ export class PropertyController {
 
         return {
             resolution,
-            site: {
-                id: site.id,
-                propertyId: site.propertyId,
-                hostId: site.hostId,
-                siteName: site.siteName,
-                primaryLocale: site.primaryLocale,
-                status: site.status,
-                templateKey: site.templateKey,
-                publishedAt: site.publishedAt,
-            },
-            domain,
+            site: toPublicWebsiteSiteView(site),
+            domain: toPublicWebsiteDomainView(domain),
             primaryDomain,
             propertySnapshot:
                 propertySnapshot && typeof propertySnapshot === "object"

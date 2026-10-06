@@ -38,7 +38,6 @@ const normalizePublicWebsiteResolution = (payload) => {
   return {
     siteId: String(payload.siteId || "").trim(),
     propertyId: String(payload.propertyId || "").trim(),
-    hostId: String(payload.hostId || "").trim(),
     templateKey: String(payload.templateKey || "").trim(),
     primaryLocale: String(payload.primaryLocale || "").trim(),
     siteName: String(payload.siteName || "").trim(),
