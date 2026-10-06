@@ -790,6 +790,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisions: [],
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_FEED_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -806,6 +807,7 @@ export default class ChannexProviderClient {
       return {
         success: true,
         revisions: rows.map((row) => normalizeChannexBookingRevision(row)).filter((row) => row.revisionId),
+        meta: parsed?.meta ?? null,
         providerStatus: "ACTIVE",
         errorCode: null,
         errorMessage: null,
@@ -814,6 +816,7 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisions: [],
+        httpStatus: null,
         providerStatus: "BOOKING_FEED_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_FEED_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision feed request failed.",
@@ -945,6 +948,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisionId: normalizedRevisionId,
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_REVISION_ACK_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -968,6 +972,7 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisionId: normalizedRevisionId,
+        httpStatus: null,
         providerStatus: "BOOKING_REVISION_ACK_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_ACK_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision acknowledge request failed.",

@@ -173,7 +173,54 @@ describe("ChannexProviderClient booking revisions", () => {
     );
   });
 
+  // The booking webhook retries only temporary failures (429, 5xx, network), so the HTTP status must
+  // survive even when Channex sends its own error code, which replaces the status-based fallback code.
+  describe("feed and acknowledge failures report the HTTP status", () => {
+    const FEED_AND_ACK = REVISION_METHODS.filter(({ method }) => method !== "getBookingRevision");
+
+    it.each(FEED_AND_ACK)("$method reports httpStatus 429 when rate limited", async ({ call }) => {
+      global.fetch.mockResolvedValue(jsonResponse(429, {}));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ success: false, httpStatus: 429 });
+    });
+
+    it.each(FEED_AND_ACK)("$method keeps httpStatus when Channex sends its own error code", async ({ call }) => {
+      global.fetch.mockResolvedValue(jsonResponse(422, { errors: { code: "SOME_CHANNEX_CODE", title: "Rejected." } }));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ errorCode: "SOME_CHANNEX_CODE", httpStatus: 422 });
+    });
+
+    it.each(FEED_AND_ACK)("$method reports a null httpStatus when the request never got a response", async ({ call }) => {
+      global.fetch.mockRejectedValue(new Error("socket hang up"));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ success: false, httpStatus: null });
+    });
+  });
+
   describe("listBookingRevisionFeed", () => {
+    // The Channex documentation does not say whether the feed is paginated; meta is logged to find out.
+    test("returns the response meta next to the revisions", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [], meta: { page: 1, total: 12 } }));
+
+      const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+      expect(result.meta).toEqual({ page: 1, total: 12 });
+    });
+
+    test("returns a null meta when the response has none", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
+
+      const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+      expect(result.meta).toBeNull();
+    });
+
     test("requests the feed filtered by property and ordered by insertion time", async () => {
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
 
