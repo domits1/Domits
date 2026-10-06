@@ -2,8 +2,12 @@ const DEFAULT_MIN_ACTIVE_LISTINGS = 1;
 const DEFAULT_PARENT_FROM_ANY_CHILD = true;
 
 const readPositiveInteger = (value, fallback) => {
-  const parsed = Number.parseInt(String(value ?? ""), 10);
-  return Number.isInteger(parsed) && parsed >= 1 ? parsed : fallback;
+  const text = String(value ?? "").trim();
+  if (!/^\d+$/.test(text)) {
+    return fallback;
+  }
+  const parsed = Number(text);
+  return Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : fallback;
 };
 
 const readBoolean = (value, fallback) => {
@@ -25,11 +29,11 @@ export const readDestinationSettings = (env = process.env) => ({
 });
 
 export const isDestinationEligible = (
-  { activeListings = 0, eligibleChildren = 0 } = {},
+  { activeListings = 0, directListings = activeListings, eligibleChildren = 0 } = {},
   settings = readDestinationSettings()
 ) => {
-  if (Number(activeListings) >= settings.minActiveListings) {
-    return true;
+  if (!settings.parentFromAnyChild) {
+    return Number(directListings) >= settings.minActiveListings;
   }
-  return settings.parentFromAnyChild && Number(eligibleChildren) > 0;
+  return Number(activeListings) >= settings.minActiveListings || Number(eligibleChildren) > 0;
 };

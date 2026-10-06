@@ -19,11 +19,11 @@ export class DestinationReportRepository {
     const schemaName = resolveSchemaName(client);
 
     const rows = await client.query(
-      `SELECT l.country, l.city, count(*) AS active_count
+      `SELECT l.country, l.city, (l.property_id IS NOT NULL) AS has_location, count(*) AS active_count
       FROM ${schemaName}.property p
-      JOIN ${schemaName}.property_location l ON l.property_id = p.id
+      LEFT JOIN ${schemaName}.property_location l ON l.property_id = p.id
       WHERE p.status = $1
-      GROUP BY l.country, l.city
+      GROUP BY l.country, l.city, (l.property_id IS NOT NULL)
       ORDER BY l.country ASC, l.city ASC`,
       ["ACTIVE"]
     );
@@ -31,6 +31,7 @@ export class DestinationReportRepository {
     return (Array.isArray(rows) ? rows : []).map((row) => ({
       country: String(row.country ?? ""),
       city: String(row.city ?? ""),
+      has_location: row.has_location !== false && row.has_location !== "false" && row.has_location !== 0,
       active_count: Number(row.active_count) || 0,
     }));
   }

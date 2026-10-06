@@ -1,3 +1,5 @@
+import { toDestinationSlug } from "./destinationSlug.js";
+
 const CONTINENTS = Object.freeze({
   africa: "Africa",
   antarctica: "Antarctica",
@@ -261,25 +263,12 @@ const COUNTRIES = Object.freeze([
   ["ZW", "Zimbabwe", "africa"],
 ]);
 
-const normalizeKey = (value) =>
-  String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-
-const COUNTRY_BY_KEY = new Map(
-  COUNTRIES.map(([code, name, continent]) => [normalizeKey(name), { code, name, continent }])
+const COUNTRY_BY_SLUG = new Map(
+  COUNTRIES.map(([code, name, continent]) => [toDestinationSlug(name), { code, name, continent }])
 );
-const COUNTRY_BY_CODE = new Map(COUNTRIES.map(([code, name, continent]) => [code, { code, name, continent }]));
 
 export const continentName = (continentSlug) => CONTINENTS[continentSlug] || "";
 
-export const listContinents = () => Object.entries(CONTINENTS).map(([slug, name]) => ({ slug, name }));
-
-export const findCountryByName = (name) => COUNTRY_BY_KEY.get(normalizeKey(name)) || null;
-
-export const findCountryByCode = (code) => COUNTRY_BY_CODE.get(String(code || "").toUpperCase()) || null;
+export const findCountryByName = (name) => COUNTRY_BY_SLUG.get(toDestinationSlug(name)) || null;
 
 export const listCountries = () => COUNTRIES.map(([code, name, continent]) => ({ code, name, continent }));
