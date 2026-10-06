@@ -90,7 +90,7 @@ describe("deleting a website site removes its static page outbox row in the same
     expect(client.rolledBack).toBe(false);
   });
 
-  it("rolls the site delete back when the outbox delete fails, so both rows stay", async () => {
+  it("rejects and leaves the transaction to roll back when the outbox delete fails, so the site row is never deleted on its own", async () => {
     const failure = new Error("change conflicts with another transaction (OC000)");
     const client = buildClient({ outboxFailure: failure });
 
