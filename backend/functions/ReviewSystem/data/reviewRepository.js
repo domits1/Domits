@@ -74,6 +74,28 @@ export class ReviewRepository {
           .map(({ key, label, rating }) => ({ key, label, rating: Number(rating) })) })) };
   }
 
+  async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
+    // Fixed expressions keep the requested interval out of SQL interpolation.
+    const expressions = {
+      week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+      month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+      year: "DATE_TRUNC('year', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+    };
+    if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
+    const period = expressions[interval];
+    const database = await Database.getInstance();
+    // Recheck property ownership during aggregation, using the shared eligibility filters.
+    return this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property",
+        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .andWhere("review.created_at >= :start", { start })
+      .andWhere("review.created_at < :endExclusive", { endExclusive })
+      .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
+      .addSelect("AVG(review.overall_rating)", "average_score")
+      .addSelect("COUNT(*)", "review_count")
+      .groupBy(period).orderBy(period, "ASC").getRawMany();
+  }
+
   async getPropertyCategoryRatings(propertyId, hostId) {
     const database = await Database.getInstance();
     const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
