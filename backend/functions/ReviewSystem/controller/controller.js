@@ -48,7 +48,8 @@ export class Controller {
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
-      const query = event.queryStringParameters || {};
+      const query = { ...event.queryStringParameters,
+        reviewId: event.pathParameters?.id ?? event.pathParameters?.reviewId ?? event.queryStringParameters?.reviewId };
       if (event.httpMethod === "GET") return await this.getReviews(user, query);
       if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
       return { statusCode: 405, headers: responseHeaders, body: JSON.stringify({ message: "Method not supported." }) };
@@ -62,6 +63,16 @@ export class Controller {
   async getReviews(user, query) {
     const result = await this.service.getReviews(user.userId, query.scope);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+  }
+
+  // Public property reads use the service's filtered, privacy-safe response.
+  async getPublicPropertyReviews(event) {
+    try {
+      const result = await this.service.getPublicPropertyReviews(event.pathParameters?.propertyId, event.queryStringParameters || {});
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+    } catch (error) {
+      return this.handleError(error);
+    }
   }
 
   // Delete a review after confirming the caller owns it.
