@@ -14,7 +14,7 @@ Only `main` has the property tables; there is no `test` variant.
 
 ## Why this is safe to run while hosts are working
 
-Every statement is additive: two new tables and three async indexes on empty tables. No existing row is read or written, so nothing can hit the DSQL limit of changed rows, and no code reads the tables until the mapping pull request is deployed.
+Every statement is additive: two new tables and three async indexes on empty tables. No existing row is read or written, so nothing can hit the DSQL limit of changed rows. Apply it before the pull request that writes the mapping is deployed: with that code live and the tables missing, every location write still succeeds but logs a failed destination mapping, and the backfill script fails at its first query. After the deploy, run `node scripts/backfill-destinations.mjs` from `backend/` with the profile the Lambdas use (dry run first, then `--commit`); it maps every existing property, can be run again at any time and then only touches properties whose mapping is missing or no longer matches their address.
 
 ## Blocks in the `.sql` file, in order
 
