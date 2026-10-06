@@ -1,0 +1,165 @@
+import Database from "database";
+
+const resolveSchemaName = (client) => {
+  if (process.env.TEST === "true") {
+    return "test";
+  }
+
+  const configuredSchema = client?.options?.schema;
+  if (typeof configuredSchema === "string" && configuredSchema.trim()) {
+    return configuredSchema.trim();
+  }
+
+  return "main";
+};
+
+const destinationTableName = (schemaName) => `${schemaName}.destination`;
+const mappingTableName = (schemaName) => `${schemaName}.property_destination`;
+const locationTableName = (schemaName) => `${schemaName}.property_location`;
+const propertyTableName = (schemaName) => `${schemaName}.property`;
+
+const runStatement = async (client, statement, parameters) => {
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      affected: Number(result?.affected) || 0,
+    };
+  } finally {
+    await queryRunner.release();
+  }
+};
+
+const requireText = (value, label) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    throw new Error(`${label} is required.`);
+  }
+  return normalized;
+};
+
+const upsertDestinationStatement = (tableName) => `INSERT INTO ${tableName} (
+        id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+      ON CONFLICT (id)
+      DO UPDATE SET
+        display_name = EXCLUDED.display_name,
+        updated_at = EXCLUDED.updated_at`;
+
+export class DestinationRepository {
+  async syncPropertyDestination(propertyId, chain, { sourceCountry, sourceCity, now = Date.now() } = {}) {
+    const normalizedPropertyId = requireText(propertyId, "A property id");
+    const country = requireText(sourceCountry, "The source country");
+    const city = requireText(sourceCity, "The source city");
+    if (!chain?.continent || !chain?.country || !chain?.city) {
+      throw new Error("A resolved destination chain is required.");
+    }
+
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const destinations = destinationTableName(schemaName);
+    const mappings = mappingTableName(schemaName);
+    const locations = locationTableName(schemaName);
+
+    return client.transaction(async (manager) => {
+      const rows = [
+        [chain.continent, null, null],
+        [chain.country, chain.continent.path, chain.country.code],
+        [chain.city, chain.country.path, chain.country.code],
+      ];
+      for (const [destination, parentId, countryCode] of rows) {
+        await manager.queryRunner.query(
+          upsertDestinationStatement(destinations),
+          [
+            destination.path,
+            destination.type,
+            parentId,
+            destination.slug,
+            destination.path,
+            destination.name,
+            countryCode,
+            now,
+          ],
+          true
+        );
+      }
+
+      const result = await manager.queryRunner.query(
+        `INSERT INTO ${mappings} (property_id, destination_id, source_country, source_city, created_at, updated_at)
+      SELECT l.property_id, $2, l.country, l.city, $3, $3
+      FROM ${locations} l
+      WHERE l.property_id = $1
+        AND l.country = $4
+        AND l.city = $5
+      ON CONFLICT (property_id)
+      DO UPDATE SET
+        destination_id = EXCLUDED.destination_id,
+        source_country = EXCLUDED.source_country,
+        source_city = EXCLUDED.source_city,
+        updated_at = EXCLUDED.updated_at
+      RETURNING property_id`,
+        [normalizedPropertyId, chain.city.path, now, country, city],
+        true
+      );
+
+      return (Array.isArray(result?.records) ? result.records : []).length > 0;
+    });
+  }
+
+  async removePropertyDestination(propertyId) {
+    const normalizedPropertyId = requireText(propertyId, "A property id");
+    const client = await Database.getInstance();
+    const mappings = mappingTableName(resolveSchemaName(client));
+
+    const { records } = await runStatement(
+      client,
+      `DELETE FROM ${mappings}
+      WHERE property_id = $1
+      RETURNING property_id`,
+      [normalizedPropertyId]
+    );
+
+    return records.length > 0;
+  }
+
+  async getLocationForMapping(propertyId) {
+    const normalizedPropertyId = requireText(propertyId, "A property id");
+    const client = await Database.getInstance();
+    const locations = locationTableName(resolveSchemaName(client));
+
+    const rows = await client.query(
+      `SELECT property_id, country, city
+      FROM ${locations}
+      WHERE property_id = $1`,
+      [normalizedPropertyId]
+    );
+    const row = Array.isArray(rows) ? rows[0] : null;
+    return row
+      ? { propertyId: String(row.property_id), country: String(row.country ?? ""), city: String(row.city ?? "") }
+      : null;
+  }
+
+  async listPropertyIdsNeedingMapping({ after = "", limit = 100 } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const normalizedLimit = Math.min(Math.max(Math.trunc(Number(limit) || 0), 1), 500);
+
+    const rows = await client.query(
+      `SELECT p.id
+      FROM ${propertyTableName(schemaName)} p
+      JOIN ${locationTableName(schemaName)} l ON l.property_id = p.id
+      LEFT JOIN ${mappingTableName(schemaName)} d ON d.property_id = p.id
+      WHERE p.id > $1
+        AND (d.property_id IS NULL OR d.source_country <> l.country OR d.source_city <> l.city)
+      ORDER BY p.id ASC
+      LIMIT $2`,
+      [String(after || ""), normalizedLimit]
+    );
+
+    return (Array.isArray(rows) ? rows : []).map((row) => String(row.id));
+  }
+}
+
+export default DestinationRepository;
