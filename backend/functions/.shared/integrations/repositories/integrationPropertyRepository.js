@@ -61,6 +61,15 @@ class IntegrationPropertyRepository {
       .orderBy("p.updatedAt", "DESC")
       .getMany();
   }
+
+  async findByExternalPropertyId(externalPropertyId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.externalPropertyId = :e", { e: externalPropertyId })
+      .getOne();
+  }
 }
 
 export default IntegrationPropertyRepository;

@@ -3,12 +3,14 @@ import IngestionController from "./controller/ingestionController.js";
 import IntegrationController from "./controller/integrationController.js";
 import MessageController from "./controller/messageController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
+import ChannexWebhookController from "./controller/channexWebhookController.js";
 import AutomatedMessageController from "./controller/automatedMessageController.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
 const whatsAppWebhookController = new WhatsAppWebhookController();
+const channexWebhookController = new ChannexWebhookController();
 const automatedMessageController = new AutomatedMessageController();
 const notFound = { statusCode: 404, response: "Not Found" };
 const internalError = { statusCode: 500, response: "Internal Server Error" };
@@ -66,6 +68,12 @@ const routeDefinitions = [
       pathIncludesOrEndsWith(path, "/webhooks/whatsapp"),
     handle: (event) =>
       whatsAppWebhookController.handleWebhookEvent(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" &&
+      pathIncludesOrEndsWith(path, "/webhooks/channex"),
+    handle: (event) => channexWebhookController.handleWebhookEvent(event),
   },
   {
     matches: (method, path) =>

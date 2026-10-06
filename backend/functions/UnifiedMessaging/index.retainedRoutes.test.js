@@ -22,6 +22,9 @@ const mockWhatsAppWebhookControllerMethods = {
   verifyWebhook: jest.fn(),
   handleWebhookEvent: jest.fn(),
 };
+const mockChannexWebhookControllerMethods = {
+  handleWebhookEvent: jest.fn(),
+};
 
 jest.mock("./controller/messageController.js", () => ({
   __esModule: true,
@@ -43,6 +46,11 @@ jest.mock("./controller/whatsappWebhookController.js", () => ({
   default: jest.fn().mockImplementation(() => mockWhatsAppWebhookControllerMethods),
 }));
 
+jest.mock("./controller/channexWebhookController.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockChannexWebhookControllerMethods),
+}));
+
 jest.mock("../.shared/channelManagement/handler/channelManagementHandler.js", () => ({
   __esModule: true,
   handleChannelManagementEvent: jest.fn().mockResolvedValue(null),
@@ -55,6 +63,7 @@ const allControllerMethods = [
   ...Object.values(mockIntegrationControllerMethods),
   ...Object.values(mockIngestionControllerMethods),
   ...Object.values(mockWhatsAppWebhookControllerMethods),
+  ...Object.values(mockChannexWebhookControllerMethods),
 ];
 
 const buildEvent = ({ method = "GET", path, query = {}, body = null, headers = {} }) => ({
@@ -96,6 +105,12 @@ describe("UnifiedMessaging retained route contracts", () => {
       "/default/webhooks/whatsapp",
       mockWhatsAppWebhookControllerMethods.handleWebhookEvent,
       "webhook-event",
+    ],
+    [
+      "POST",
+      "/default/webhooks/channex",
+      mockChannexWebhookControllerMethods.handleWebhookEvent,
+      "channex-webhook-event",
     ],
   ])("%s %s keeps its controller contract", async (method, path, controllerMethod, route) => {
     controllerMethod.mockResolvedValue(buildControllerResponse(route));
