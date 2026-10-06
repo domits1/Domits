@@ -14,6 +14,17 @@
       "Resource": "arn:aws:s3:::__SITES_BUCKET__/sites/by-host/*"
     },
     {
+      "Sid": "ListPagesUnderTheHostnamePrefixOnly",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::__SITES_BUCKET__",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": "sites/by-host/*"
+        }
+      }
+    },
+    {
       "Sid": "NeverTouchTheShellOrTheAssets",
       "Effect": "Deny",
       "Action": ["s3:PutObject", "s3:PutObjectAcl", "s3:DeleteObject", "s3:DeleteObjectVersion"],
