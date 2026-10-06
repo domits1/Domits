@@ -14,6 +14,7 @@ const ROWS = [
   { country: "Indonesia", city: "Bali", active_count: 1 },
   { country: "Narnia", city: "Cair Paravel", active_count: 1 },
   { country: "Portugal", city: " ", active_count: 1 },
+  { country: "", city: "", has_location: false, active_count: 1 },
 ];
 
 describe("the destination report", () => {
@@ -49,16 +50,19 @@ describe("the destination report", () => {
     expect(report.unresolved).toEqual([
       { country: "Narnia", city: "Cair Paravel", activeListings: 1, reason: "unknown_country" },
       { country: "Portugal", city: " ", activeListings: 1, reason: "empty_city" },
+      { country: "", city: "", activeListings: 1, reason: "no_location" },
     ]);
-    expect(report.countries.find((country) => country.code === "PT").cities).toEqual([]);
+    const portugal = report.countries.find((country) => country.code === "PT");
+    expect(portugal.cities).toEqual([]);
+    expect(portugal.directListings).toBe(1);
     expect(report.summary).toEqual({
-      activeListings: 9,
+      activeListings: 10,
       countries: 4,
       eligibleCountries: 4,
       cities: 5,
       eligibleCities: 5,
       flaggedCities: 3,
-      unresolved: 2,
+      unresolved: 3,
     });
   });
 
@@ -94,7 +98,23 @@ describe("the destination report", () => {
       "| Spain | /destinations/europe/spain/marbella | 3 | Marbella | Marbella (2), MARBELLA (1) | several_spellings |"
     );
     expect(markdown).toContain("- Narnia / Cair Paravel (1): unknown_country");
-    expect(markdown.split("\n")[0]).toContain("cities 5 (5 with a page, 3 flagged), unresolved rows 2");
+    expect(markdown).toContain("-  /  (1): no_location");
+    expect(markdown.split("\n")[0]).toContain("cities 5 (5 with a page, 3 flagged), unresolved rows 3");
+  });
+
+  it("merges the same raw spelling across country spellings, keeps a pipe out of the table, and ignores a count that is not finite", () => {
+    const report = buildDestinationReport([
+      { country: "Spain", city: "Marbella", active_count: 2 },
+      { country: "SPAIN", city: "Marbella", active_count: 1 },
+      { country: "Spain", city: "Puerto | Banús", active_count: "Infinity" },
+    ]);
+    const spain = report.countries.find((country) => country.code === "ES");
+
+    expect(spain.cities.find((city) => city.slug === "marbella").variants).toEqual([{ raw: "Marbella", count: 3 }]);
+    expect(spain.cities.find((city) => city.slug === "marbella").flags).toEqual([]);
+    expect(spain.cities.find((city) => city.slug === "puerto-banus").activeListings).toBe(0);
+    expect(report.summary.activeListings).toBe(3);
+    expect(renderDestinationReportMarkdown(report)).toContain("Puerto \\| Banús");
   });
 
   it("survives empty and malformed input", () => {

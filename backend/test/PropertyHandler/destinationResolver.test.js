@@ -78,7 +78,7 @@ describe("the destination chain of a property location", () => {
     expect(noCity.unresolved).toBe(DESTINATION_UNRESOLVED_CITY);
   });
 
-  it("knows every country the onboarding list offers, each with one of the eight continents", () => {
+  it("holds 249 countries, each code once, each with one of the eight continents, and finds each by its own name", () => {
     const continents = new Set(listContinents().map(({ slug }) => slug));
     const countries = listCountries();
     expect(countries).toHaveLength(249);
