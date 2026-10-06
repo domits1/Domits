@@ -11,6 +11,13 @@ import { getChannexStatus as fetchRealChannexStatus } from "../../hostintegratio
 // entirely once connectChannex/disconnectChannex below call the real endpoints.
 export const MOCK_CONNECT_FLOW_ENABLED = false;
 
+// While false, the Distribution tab shows none of the sections that still run on mock data: the
+// Property mapping table, the property picker and the Last sync card. None of their mock functions
+// (getPropertyMappingRows, getMappedProperties, getLatestSyncEvidence) are called either, so a
+// real host never sees invented properties next to their real Channex status. Flip to true only
+// for local preview. Remove this flag entirely once those three read real endpoints.
+export const MOCK_PREVIEW_SECTIONS_ENABLED = false;
+
 // Flip this to preview each "last sync" state in the browser.
 const MOCK_CHANNEX_SYNC_STATE = "NONE";
 // NONE | SUCCESS | FAILED

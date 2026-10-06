@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
 import { useMappedProperties } from "../hooks/useMappedProperties";
-import { MOCK_CONNECT_FLOW_ENABLED, getPropertyMappingRows } from "../services/channexDistributionService";
+import {
+  MOCK_CONNECT_FLOW_ENABLED,
+  MOCK_PREVIEW_SECTIONS_ENABLED,
+  getPropertyMappingRows,
+} from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
 import ComingSoonCard from "../components/ComingSoonCard";
@@ -26,15 +30,16 @@ const RECONNECT_BUCKET_STATUSES = new Set(["RECONNECT_REQUIRED", "VALIDATION_FAI
 
 function HostChannelDistribution() {
   const userId = useFetchUser();
-  const propertyOptions = useMappedProperties({ userId });
+  const propertyOptions = useMappedProperties({ userId, enabled: MOCK_PREVIEW_SECTIONS_ENABLED });
   const [pickedPropertyId, setPickedPropertyId] = useState("");
 
   // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
   const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
   const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
 
+  // Explicitly empty while the preview sections are off, so getLatestSyncEvidence cannot run.
   const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution({
-    domitsPropertyId: selectedPropertyId,
+    domitsPropertyId: MOCK_PREVIEW_SECTIONS_ENABLED ? selectedPropertyId : "",
   });
   const [activeModal, setActiveModal] = useState(null);
   const [propertyMappings, setPropertyMappings] = useState([]);
@@ -45,13 +50,16 @@ function HostChannelDistribution() {
   const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
   const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
-  const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
+  const showPropertyPicker = MOCK_PREVIEW_SECTIONS_ENABLED && isConnectedOrNeedsAttention && propertyOptions.length > 1;
   // Without a property nothing was queried, so "No sync yet" would claim something we never checked.
-  const showLastSync = isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
+  const showLastSync = MOCK_PREVIEW_SECTIONS_ENABLED && isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
   // Narrower than isConnectedOrNeedsAttention: excludes PENDING_PROVIDER_VALIDATION, since
   // there's nothing confirmed to map against mid-validation.
   const showPropertyMapping =
-    !loading && !error && (status?.status === "CONNECTED" || RECONNECT_BUCKET_STATUSES.has(status?.status));
+    MOCK_PREVIEW_SECTIONS_ENABLED &&
+    !loading &&
+    !error &&
+    (status?.status === "CONNECTED" || RECONNECT_BUCKET_STATUSES.has(status?.status));
 
   // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
   useEffect(() => {

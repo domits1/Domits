@@ -21,14 +21,23 @@ const LISTINGS = [
   { property: { id: "property-2", title: "Beach apartment" } },
 ];
 
+// The view reads these flags from the service module at render time, so tests flip them on the
+// mocked module. Both default to off, as in production.
+const service = jest.requireMock("../services/channexDistributionService");
+
 describe("HostChannelDistribution", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     mockUserId = "user-1";
+    service.MOCK_PREVIEW_SECTIONS_ENABLED = false;
     jest.spyOn(console, "error").mockImplementation(() => {});
     getMappedProperties.mockResolvedValue(LISTINGS);
     getLatestSyncEvidence.mockResolvedValue({ item: null });
     getPropertyMappingRows.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    service.MOCK_PREVIEW_SECTIONS_ENABLED = false;
   });
 
   test("treats a 403 as the normal not-connected state, not as an error", async () => {
@@ -70,6 +79,7 @@ describe("HostChannelDistribution", () => {
   });
 
   test("defaults the property picker to the first listing and scopes the sync to the picked one", async () => {
+    service.MOCK_PREVIEW_SECTIONS_ENABLED = true;
     getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
 
     render(<HostChannelDistribution />);
@@ -84,6 +94,7 @@ describe("HostChannelDistribution", () => {
   });
 
   test("shows no picker and no sync card when no listing is mapped, instead of a false No sync yet", async () => {
+    service.MOCK_PREVIEW_SECTIONS_ENABLED = true;
     getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
     getMappedProperties.mockResolvedValue([]);
 
@@ -111,7 +122,28 @@ describe("HostChannelDistribution", () => {
     expect(getChannexStatus).toHaveBeenCalledWith();
   });
 
+  // The three sections that still run on mock data stay out of the tab, and their mock functions
+  // are never called, unless MOCK_PREVIEW_SECTIONS_ENABLED is on.
+  test("with the preview flag off, renders no picker, Last sync or Property mapping and calls none of their mocks", async () => {
+    getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+
+    render(<HostChannelDistribution />);
+
+    await screen.findByText("Channex");
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
+    expect(screen.queryByText("No sync yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Property mapping")).not.toBeInTheDocument();
+    expect(getMappedProperties).not.toHaveBeenCalled();
+    expect(getLatestSyncEvidence).not.toHaveBeenCalled();
+    expect(getPropertyMappingRows).not.toHaveBeenCalled();
+  });
+
   describe("Property mapping section", () => {
+    beforeEach(() => {
+      service.MOCK_PREVIEW_SECTIONS_ENABLED = true;
+    });
+
     test.each(["CONNECTED", "RECONNECT_REQUIRED", "VALIDATION_FAILED", "DISCONNECTED"])(
       "is shown and loads its rows for %s",
       async (status) => {
@@ -152,8 +184,6 @@ describe("HostChannelDistribution", () => {
   // The modals only open while MOCK_CONNECT_FLOW_ENABLED is true, so these flip it on the mocked
   // service module. The view reads the export at render time, so the assignment takes effect.
   describe("refetches the status after a modal succeeds", () => {
-    const service = jest.requireMock("../services/channexDistributionService");
-
     beforeEach(() => {
       service.MOCK_CONNECT_FLOW_ENABLED = true;
     });
