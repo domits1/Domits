@@ -22,7 +22,10 @@ describe("the destination settings", () => {
       minActiveListings: 1,
       parentFromAnyChild: true,
     });
-    expect(readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "many" }).minActiveListings).toBe(1);
+    const minimums = ["many", "3garbage", "2.9", "99999999999999999999", " 4 "].map(
+      (value) => readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: value }).minActiveListings
+    );
+    expect(minimums).toEqual([1, 1, 1, 1, 4]);
   });
 
   it("decides eligibility from the listings, or from the children when the setting allows it", () => {
@@ -38,5 +41,8 @@ describe("the destination settings", () => {
     expect(isDestinationEligible({ activeListings: 1 }, strict)).toBe(false);
     expect(isDestinationEligible({ activeListings: 2 }, strict)).toBe(true);
     expect(isDestinationEligible({ activeListings: 0, eligibleChildren: 5 }, strict)).toBe(false);
+    expect(isDestinationEligible({ activeListings: 5, directListings: 1, eligibleChildren: 3 }, strict)).toBe(false);
+    expect(isDestinationEligible({ activeListings: 5, directListings: 2 }, strict)).toBe(true);
+    expect(isDestinationEligible({ activeListings: 5, directListings: 0, eligibleChildren: 3 }, defaults)).toBe(true);
   });
 });

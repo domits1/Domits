@@ -52,10 +52,11 @@ export class DestinationRepository {
   async syncPropertyDestination(propertyId, chain, { sourceCountry, sourceCity, now = Date.now() } = {}) {
     const normalizedPropertyId = requireText(propertyId, "A property id");
     const country = requireText(sourceCountry, "The source country");
-    const city = requireText(sourceCity, "The source city");
-    if (!chain?.continent || !chain?.country || !chain?.city) {
+    const city = String(sourceCity ?? "");
+    if (!chain?.continent || !chain?.country) {
       throw new Error("A resolved destination chain is required.");
     }
+    const target = chain.city || chain.country;
 
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -67,7 +68,7 @@ export class DestinationRepository {
       const rows = [
         [chain.continent, null, null],
         [chain.country, chain.continent.path, chain.country.code],
-        [chain.city, chain.country.path, chain.country.code],
+        ...(chain.city ? [[chain.city, chain.country.path, chain.country.code]] : []),
       ];
       for (const [destination, parentId, countryCode] of rows) {
         await manager.queryRunner.query(
@@ -100,7 +101,7 @@ export class DestinationRepository {
         source_city = EXCLUDED.source_city,
         updated_at = EXCLUDED.updated_at
       RETURNING property_id`,
-        [normalizedPropertyId, chain.city.path, now, country, city],
+        [normalizedPropertyId, target.path, now, country, city],
         true
       );
 

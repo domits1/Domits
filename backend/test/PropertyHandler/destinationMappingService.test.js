@@ -39,7 +39,7 @@ describe("mapping a property to its destination", () => {
     expect(repository.removePropertyDestination).not.toHaveBeenCalled();
   });
 
-  it("removes the mapping instead of guessing when the country is unknown or the city is empty", async () => {
+  it("removes the mapping instead of guessing when the country is unknown", async () => {
     const { service, repository } = buildService();
 
     expect(await service.mapPropertyLocation("property-1", { country: "Narnia", city: "Cair Paravel" })).toEqual({
@@ -48,12 +48,25 @@ describe("mapping a property to its destination", () => {
       reason: "unknown_country",
       path: null,
     });
-    expect(await service.mapPropertyLocation("property-1", { country: "Spain", city: "  " })).toMatchObject({
-      outcome: "unresolved",
-      reason: "empty_city",
-    });
-    expect(repository.removePropertyDestination).toHaveBeenCalledTimes(2);
+    expect(repository.removePropertyDestination).toHaveBeenCalledTimes(1);
     expect(repository.syncPropertyDestination).not.toHaveBeenCalled();
+  });
+
+  it("maps a property whose city cannot be resolved to its country, and says so", async () => {
+    const { service, repository } = buildService();
+
+    const result = await service.mapPropertyLocation("property-1", { country: "Spain", city: " - " });
+
+    expect(result).toEqual({
+      propertyId: "property-1",
+      outcome: "mapped",
+      reason: "empty_city",
+      path: "/destinations/europe/spain",
+    });
+    const [, chain, options] = repository.syncPropertyDestination.mock.calls[0];
+    expect(chain.city).toBeNull();
+    expect(options).toEqual({ sourceCountry: "Spain", sourceCity: " - " });
+    expect(repository.removePropertyDestination).not.toHaveBeenCalled();
   });
 
   it("reports a write that lost against a newer address as stale, and a thrown error as failed without throwing", async () => {

@@ -14,16 +14,23 @@ describe("the destination report repository", () => {
     jest.clearAllMocks();
   });
 
-  it("counts only active properties, grouped by the raw country and city text", async () => {
-    const query = jest.fn(async () => [{ country: "Spain", city: "Marbella", active_count: "2" }]);
+  it("counts only active properties, grouped by the raw country and city text, and keeps those without a location", async () => {
+    const query = jest.fn(async () => [
+      { country: "Spain", city: "Marbella", has_location: true, active_count: "2" },
+      { country: null, city: null, has_location: false, active_count: "1" },
+    ]);
     Database.getInstance.mockResolvedValue({ options: { schema: "main" }, query });
 
     const rows = await new DestinationReportRepository().listActiveLocationCounts();
 
-    expect(rows).toEqual([{ country: "Spain", city: "Marbella", active_count: 2 }]);
+    expect(rows).toEqual([
+      { country: "Spain", city: "Marbella", has_location: true, active_count: 2 },
+      { country: "", city: "", has_location: false, active_count: 1 },
+    ]);
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`FROM ${SCHEMA}.property p`);
-    expect(statement).toContain(`JOIN ${SCHEMA}.property_location l ON l.property_id = p.id`);
+    expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property_location l ON l.property_id = p.id`);
+    expect(statement).toContain("(l.property_id IS NOT NULL) AS has_location");
     expect(statement).toContain("WHERE p.status = $1");
     expect(statement).toContain("GROUP BY l.country, l.city");
     expect(statement).not.toMatch(/street|postal|house|latitude|longitude|hostid/i);

@@ -5,7 +5,16 @@ import { isDestinationEligible, readDestinationSettings } from "../../util/desti
 const COMPOSITE_PATTERN = /[,/]|\s-\s/;
 const SHORT_CITY_LENGTH = 3;
 
-const toCount = (value) => Math.max(0, Math.trunc(Number(value) || 0));
+const toCount = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;
+};
+
+const escapeMarkdownCell = (value) =>
+  String(value ?? "")
+    .replace(/\|/g, "\\|")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const sortByCountDesc = (left, right) =>
   right.activeListings - left.activeListings || left.slug.localeCompare(right.slug);
@@ -38,6 +47,10 @@ export const buildDestinationReport = (rows, settings = readDestinationSettings(
   for (const row of Array.isArray(rows) ? rows : []) {
     const activeListings = toCount(row.active_count ?? row.activeListings);
     totalActiveListings += activeListings;
+    if (row.has_location === false) {
+      unresolved.push({ country: "", city: "", activeListings, reason: "no_location" });
+      continue;
+    }
     const chain = resolveDestinationChain({ country: row.country, city: row.city });
     if (!chain.country) {
       unresolved.push({
@@ -57,12 +70,14 @@ export const buildDestinationReport = (rows, settings = readDestinationSettings(
       path: chain.country.path,
       continent: chain.continent.slug,
       activeListings: 0,
+      directListings: 0,
       cities: new Map(),
     };
     country.activeListings += activeListings;
     countries.set(countryKey, country);
 
     if (!chain.city) {
+      country.directListings += activeListings;
       unresolved.push({
         country: chain.country.name,
         city: String(row.city || ""),
@@ -80,7 +95,12 @@ export const buildDestinationReport = (rows, settings = readDestinationSettings(
       variants: [],
     };
     city.activeListings += activeListings;
-    city.variants.push({ raw: String(row.city), count: activeListings });
+    const variant = city.variants.find((candidate) => candidate.raw === String(row.city));
+    if (variant) {
+      variant.count += activeListings;
+    } else {
+      city.variants.push({ raw: String(row.city), count: activeListings });
+    }
     country.cities.set(chain.city.slug, city);
   }
 
@@ -100,7 +120,10 @@ export const buildDestinationReport = (rows, settings = readDestinationSettings(
       return {
         ...country,
         cities,
-        eligible: isDestinationEligible({ activeListings: country.activeListings, eligibleChildren }, settings),
+        eligible: isDestinationEligible(
+          { activeListings: country.activeListings, directListings: country.directListings, eligibleChildren },
+          settings
+        ),
         eligibleCities: eligibleChildren,
         flaggedCities: cities.filter((city) => city.flags.length > 0).length,
       };
@@ -135,7 +158,7 @@ export const renderDestinationReportMarkdown = (report) => {
     for (const city of country.cities) {
       const variants = city.variants.map(({ raw, count }) => `${raw} (${count})`).join(", ");
       lines.push(
-        `| ${country.name} | ${city.path} | ${city.activeListings} | ${city.displayName} | ${variants} | ${city.flags.join(" ") || ""} |`
+        `| ${escapeMarkdownCell(country.name)} | ${city.path} | ${city.activeListings} | ${escapeMarkdownCell(city.displayName)} | ${escapeMarkdownCell(variants)} | ${city.flags.join(" ") || ""} |`
       );
     }
   }
@@ -143,7 +166,10 @@ export const renderDestinationReportMarkdown = (report) => {
     lines.push(
       "",
       "Unresolved:",
-      ...report.unresolved.map((row) => `- ${row.country} / ${row.city} (${row.activeListings}): ${row.reason}`)
+      ...report.unresolved.map(
+        (row) =>
+          `- ${escapeMarkdownCell(row.country)} / ${escapeMarkdownCell(row.city)} (${row.activeListings}): ${row.reason}`
+      )
     );
   }
   return lines.join("\n");

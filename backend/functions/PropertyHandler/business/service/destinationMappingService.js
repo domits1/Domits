@@ -20,20 +20,21 @@ export class DestinationMappingService {
     const sourceCountry = cleanText(location?.country);
     const sourceCity = cleanText(location?.city);
     const chain = resolveDestinationChain({ country: sourceCountry, city: sourceCity });
-    if (chain.unresolved) {
+    if (!chain.country) {
       await this.destinationRepository.removePropertyDestination(normalizedPropertyId);
       return { propertyId: normalizedPropertyId, outcome: "unresolved", reason: chain.unresolved, path: null };
     }
 
     const written = await this.destinationRepository.syncPropertyDestination(normalizedPropertyId, chain, {
       sourceCountry: String(location.country),
-      sourceCity: String(location.city),
+      sourceCity: String(location.city ?? ""),
     });
+    const target = chain.city || chain.country;
     return {
       propertyId: normalizedPropertyId,
       outcome: written ? "mapped" : "stale",
-      reason: written ? null : "location_changed",
-      path: chain.city.path,
+      reason: written ? chain.unresolved : "location_changed",
+      path: target.path,
     };
   }
 

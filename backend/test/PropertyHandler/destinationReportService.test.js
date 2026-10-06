@@ -14,6 +14,7 @@ const ROWS = [
   { country: "Indonesia", city: "Bali", active_count: 1 },
   { country: "Narnia", city: "Cair Paravel", active_count: 1 },
   { country: "Portugal", city: " ", active_count: 1 },
+  { country: "", city: "", has_location: false, active_count: 1 },
 ];
 
 describe("the destination report", () => {
@@ -49,16 +50,19 @@ describe("the destination report", () => {
     expect(report.unresolved).toEqual([
       { country: "Narnia", city: "Cair Paravel", activeListings: 1, reason: "unknown_country" },
       { country: "Portugal", city: " ", activeListings: 1, reason: "empty_city" },
+      { country: "", city: "", activeListings: 1, reason: "no_location" },
     ]);
-    expect(report.countries.find((country) => country.code === "PT").cities).toEqual([]);
+    const portugal = report.countries.find((country) => country.code === "PT");
+    expect(portugal.cities).toEqual([]);
+    expect(portugal.directListings).toBe(1);
     expect(report.summary).toEqual({
-      activeListings: 9,
+      activeListings: 10,
       countries: 4,
       eligibleCountries: 4,
       cities: 5,
       eligibleCities: 5,
       flaggedCities: 3,
-      unresolved: 2,
+      unresolved: 3,
     });
   });
 
@@ -72,11 +76,8 @@ describe("the destination report", () => {
       ["marbella", true],
       ["malaga", false],
     ]);
-    expect(spain.eligible).toBe(true);
-    expect(kenya.eligible).toBe(false);
-    expect(portugal.eligible).toBe(false);
-    expect(report.summary.eligibleCities).toBe(1);
-    expect(report.summary.eligibleCountries).toBe(2);
+    expect([spain.eligible, kenya.eligible, portugal.eligible]).toEqual([true, false, false]);
+    expect([report.summary.eligibleCities, report.summary.eligibleCountries]).toEqual([1, 2]);
   });
 
   it("does not let a country exist through its children when that setting is off", () => {
@@ -87,14 +88,27 @@ describe("the destination report", () => {
     expect(report.countries[0].eligible).toBe(false);
   });
 
-  it("renders a readable table with one line per city and the unresolved rows at the end", () => {
-    const markdown = renderDestinationReportMarkdown(buildDestinationReport(ROWS, readDestinationSettings({})));
+  it("merges equal spellings across country variants, ignores a count that is not finite, and renders a table with the unresolved rows at the end", () => {
+    const report = buildDestinationReport([
+      { country: "Spain", city: "Marbella", active_count: 2 },
+      { country: "SPAIN", city: "Marbella", active_count: 1 },
+      { country: "Spain", city: "Puerto | Banús", active_count: "Infinity" },
+    ]);
+    const spain = report.countries.find((country) => country.code === "ES");
 
+    expect(spain.cities.find((city) => city.slug === "marbella").variants).toEqual([{ raw: "Marbella", count: 3 }]);
+    expect(spain.cities.find((city) => city.slug === "marbella").flags).toEqual([]);
+    expect(spain.cities.find((city) => city.slug === "puerto-banus").activeListings).toBe(0);
+    expect(report.summary.activeListings).toBe(3);
+    expect(renderDestinationReportMarkdown(report)).toContain("Puerto \\| Banús");
+
+    const markdown = renderDestinationReportMarkdown(buildDestinationReport(ROWS, readDestinationSettings({})));
     expect(markdown).toContain(
       "| Spain | /destinations/europe/spain/marbella | 3 | Marbella | Marbella (2), MARBELLA (1) | several_spellings |"
     );
     expect(markdown).toContain("- Narnia / Cair Paravel (1): unknown_country");
-    expect(markdown.split("\n")[0]).toContain("cities 5 (5 with a page, 3 flagged), unresolved rows 2");
+    expect(markdown).toContain("-  /  (1): no_location");
+    expect(markdown.split("\n")[0]).toContain("cities 5 (5 with a page, 3 flagged), unresolved rows 3");
   });
 
   it("survives empty and malformed input", () => {

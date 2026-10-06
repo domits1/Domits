@@ -8,7 +8,7 @@ Connect the same way as for [dsql_static_page_outbox_runbook.md](./dsql_static_p
 
 `main.destination` holds one row per destination page: `type` is `continent`, `country` or `city`; `parent_id` points at the row above it; `slug` is the last segment of the URL and `path` the whole path (`/destinations/europe/spain/marbella`), unique; `display_name` is what the page shows; `country_code` is the ISO code for country and city rows. Rows are derived from property locations by the code in `backend/functions/PropertyHandler/util/destination/` and `business/service/destinationResolver.js`; nobody writes them by hand.
 
-`main.property_destination` maps one property to one city destination and remembers the `source_country` and `source_city` text it was derived from, so a later address change or a backfill can tell whether a mapping is current. Whether a destination has a page is not stored: it is computed from the mapped properties whose status is `ACTIVE`, with the thresholds of `util/destination/destinationSettings.js`.
+`main.property_destination` maps one property to the deepest destination its address resolves to, the city, or the country when the city text cannot be turned into a slug, and remembers the `source_country` and `source_city` text it was derived from, so a later address change or a backfill can tell whether a mapping is current. Whether a destination has a page is not stored: it is computed from the mapped properties whose status is `ACTIVE`, with the thresholds of `util/destination/destinationSettings.js`.
 
 Only `main` has the property tables; there is no `test` variant.
 
