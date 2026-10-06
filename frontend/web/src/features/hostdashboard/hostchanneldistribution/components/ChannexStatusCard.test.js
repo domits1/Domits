@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ChannexStatusCard from "./ChannexStatusCard";
 
+// The backend's engineer-facing reason is part of the response but must never reach the screen.
 const baseStatus = {
   status: "CONNECTED",
   displayName: "Channex",
@@ -12,7 +13,7 @@ const baseStatus = {
 const noop = () => {};
 
 describe("ChannexStatusCard", () => {
-  test("renders a green Connected badge and hides the reason text", () => {
+  test("renders a green Connected badge with a plain sentence", () => {
     render(
       <ChannexStatusCard
         status={{ ...baseStatus, status: "CONNECTED" }}
@@ -22,27 +23,21 @@ describe("ChannexStatusCard", () => {
     );
 
     expect(screen.getByText("Connected")).toBeInTheDocument();
-    expect(screen.queryByText(baseStatus.reason)).not.toBeInTheDocument();
+    expect(screen.getByText("Your Channex account is connected.")).toBeInTheDocument();
   });
 
-  test.each(["RECONNECT_REQUIRED", "VALIDATION_FAILED", "DISCONNECTED"])(
-    "renders a red Reconnect needed badge and shows the reason text for %s",
-    (status) => {
-      const reason = `${status} reason text`;
-      render(
-        <ChannexStatusCard
-          status={{ ...baseStatus, status, reason }}
-          onReconnectClick={noop}
-          onDisconnectClick={noop}
-        />
-      );
+  test.each([
+    ["RECONNECT_REQUIRED", "Your Channex connection needs to be set up again."],
+    ["VALIDATION_FAILED", "Channex could not verify your account. Check your API key and reconnect."],
+    ["DISCONNECTED", "Your Channex account is disconnected."],
+  ])("renders a red Reconnect needed badge with a plain sentence for %s", (status, sentence) => {
+    render(<ChannexStatusCard status={{ ...baseStatus, status }} onReconnectClick={noop} onDisconnectClick={noop} />);
 
-      expect(screen.getByText("Reconnect needed")).toBeInTheDocument();
-      expect(screen.getByText(reason)).toBeInTheDocument();
-    }
-  );
+    expect(screen.getByText("Reconnect needed")).toBeInTheDocument();
+    expect(screen.getByText(sentence)).toBeInTheDocument();
+  });
 
-  test("renders a neutral Validating badge and hides the reason text for PENDING_PROVIDER_VALIDATION", () => {
+  test("renders a neutral Validating badge with a plain sentence for PENDING_PROVIDER_VALIDATION", () => {
     render(
       <ChannexStatusCard
         status={{ ...baseStatus, status: "PENDING_PROVIDER_VALIDATION" }}
@@ -52,7 +47,48 @@ describe("ChannexStatusCard", () => {
     );
 
     expect(screen.getByText("Validating…")).toBeInTheDocument();
+    expect(screen.getByText("Channex is still verifying your account.")).toBeInTheDocument();
+  });
+
+  test("describes NOT_CONNECTED in plain words too", () => {
+    render(
+      <ChannexStatusCard
+        status={{ ...baseStatus, status: "NOT_CONNECTED" }}
+        onReconnectClick={noop}
+        onDisconnectClick={noop}
+      />
+    );
+
+    expect(screen.getByText("No Channex account is connected yet.")).toBeInTheDocument();
+  });
+
+  test("shows no sentence for a status it has no description for, rather than the backend reason", () => {
+    render(
+      <ChannexStatusCard
+        status={{ ...baseStatus, status: "SOMETHING_NEW" }}
+        onReconnectClick={noop}
+        onDisconnectClick={noop}
+      />
+    );
+
+    expect(screen.getByText("Channex")).toBeInTheDocument();
     expect(screen.queryByText(baseStatus.reason)).not.toBeInTheDocument();
+  });
+
+  test.each([
+    "CONNECTED",
+    "RECONNECT_REQUIRED",
+    "VALIDATION_FAILED",
+    "DISCONNECTED",
+    "PENDING_PROVIDER_VALIDATION",
+    "NOT_CONNECTED",
+  ])("does not render the backend reason for %s", (status) => {
+    const { container } = render(
+      <ChannexStatusCard status={{ ...baseStatus, status }} onReconnectClick={noop} onDisconnectClick={noop} />
+    );
+
+    expect(container).not.toHaveTextContent("credentials");
+    expect(container).not.toHaveTextContent("provider validation");
   });
 
   test("keeps Manage disabled for PENDING_PROVIDER_VALIDATION", () => {
