@@ -7,6 +7,7 @@ import { Booking } from "../../models/Booking.js";
 import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
 import { EnterpriseRatePlan } from "../../models/EnterpriseRatePlan.js";
+import { DirectBookingWebsiteRatePlan } from "../../models/DirectBookingWebsiteRatePlan.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
@@ -124,4 +125,5 @@ export const Tables = [
   Team_Member,
   Invoice,
   EnterpriseRatePlan,
+  DirectBookingWebsiteRatePlan,
 ];
