@@ -1936,7 +1936,7 @@ export class PropertyController {
             propertyDetails,
         });
 
-        const site = await this.directBookingWebsiteSiteRepository.upsertSite({
+        const site = await this.directBookingWebsiteSiteRepository.upsertSiteWithStaticPageOutbox({
             propertyId,
             hostId,
             siteName,
