@@ -1473,6 +1473,7 @@ export default class ChannexBookingRevisionImportService {
     normalizedDomitsPropertyId,
     propertyMapping,
     secret,
+    deadlineMs = null,
   }) {
     const [roomTypeMappings, ratePlanMappings, propertyContext] = await Promise.all([
       this.roomTypes.listByAccountId(integration.id),
@@ -1482,6 +1483,8 @@ export default class ChannexBookingRevisionImportService {
     const items = [];
 
     for (const revision of Array.isArray(providerResult.revisions) ? providerResult.revisions : []) {
+      // A webhook must answer before API Gateway gives up; unprocessed revisions stay in the feed.
+      if (deadlineMs !== null && nowMs() >= deadlineMs) break;
       items.push(
         await this.processPulledChannexBookingRevision({
           revision,
@@ -1762,6 +1765,7 @@ export default class ChannexBookingRevisionImportService {
     syncType = CHANNEX_BOOKING_PULL_SYNC_TYPE,
     action = CHANNEX_BOOKING_PULL_ACTION,
     trigger = "MANUAL_PULL",
+    deadlineMs = null,
     options = {},
   }) {
     const finalize = async (result, evidencePatch = {}) =>
@@ -1809,10 +1813,12 @@ export default class ChannexBookingRevisionImportService {
       normalizedDomitsPropertyId,
       propertyMapping,
       secret,
+      deadlineMs,
     });
     const summary = summarizeChannexPullItems(items);
     const fetchedCount = Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0;
-    const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0;
+    const stoppedAtDeadline = items.length < fetchedCount;
+    const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0 && !stoppedAtDeadline;
     const status = getChannexBookingPullEvidenceStatus({
       overallSuccess,
       ackedCount: summary.ackedCount,
@@ -1839,6 +1845,7 @@ export default class ChannexBookingRevisionImportService {
       overallSuccess,
       notes,
       ...(isPoll ? { trigger } : {}),
+      ...(deadlineMs === null ? {} : { stoppedAtDeadline }),
     });
 
     return await finalize(response, {
