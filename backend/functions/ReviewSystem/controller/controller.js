@@ -22,6 +22,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Wire the controller to the review service and auth layer for all request handling.
+  // This keeps dependency injection flexible while standardizing access to business logic and identity checks.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
