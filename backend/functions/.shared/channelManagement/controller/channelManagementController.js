@@ -198,6 +198,12 @@ export default class ChannelManagementController {
     );
   }
 
+  async processChannexAriOutbox(event, context) {
+    return this.channelManagementApiService.processChannexAriOutbox({
+      remainingTimeMs: context?.getRemainingTimeInMillis?.(),
+    });
+  }
+
   async acknowledgeChannexBookingRevisions(event) {
     return this.channelManagementApiService.acknowledgeChannexBookingRevisions(
       event.queryStringParameters?.userId || null,
@@ -361,14 +367,6 @@ export default class ChannelManagementController {
         },
       };
     }
-  }
-
-  async syncChannexCertificationTestCase(event) {
-    return this.channelManagementApiService.syncChannexCertificationTestCase(
-      event.queryStringParameters?.userId || null,
-      event.queryStringParameters?.domitsPropertyId || null,
-      safeJson(event.body) || {}
-    );
   }
 
   async saveChannexSetupMapping(event) {

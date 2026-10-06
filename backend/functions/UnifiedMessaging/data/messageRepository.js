@@ -2,6 +2,19 @@ import Database from "../.shared/integrations/ORM/index.js";
 import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { randomUUID } from "node:crypto";
 
+export const PLATFORM_MESSAGE_UNIQUE_INDEX = "idx_unified_message_platform_message_unique";
+
+export const isPlatformMessageUniqueError = (error) => {
+  const code = error?.code || error?.driverError?.code;
+  if (code !== "23505") return false;
+
+  const constraint = String(error?.constraint || error?.driverError?.constraint || "");
+  if (constraint) return constraint === PLATFORM_MESSAGE_UNIQUE_INDEX;
+
+  const detail = String(error?.detail || error?.driverError?.detail || error?.message || "");
+  return detail.includes(PLATFORM_MESSAGE_UNIQUE_INDEX);
+};
+
 class MessageRepository {
   async createMessage(data) {
     const client = await Database.getInstance();
@@ -61,7 +74,13 @@ class MessageRepository {
       if (exists) return false;
     }
 
-    await this.createMessage(data);
+    try {
+      await this.createMessage(data);
+    } catch (error) {
+      if (isPlatformMessageUniqueError(error)) return false;
+      throw error;
+    }
+
     return true;
   }
 

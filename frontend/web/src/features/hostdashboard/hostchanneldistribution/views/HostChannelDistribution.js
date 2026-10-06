@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
+import { useMappedProperties } from "../hooks/useMappedProperties";
 import { MOCK_CONNECT_FLOW_ENABLED, getPropertyMappingRows } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
@@ -10,36 +12,56 @@ import PropertyMappingTable from "../components/PropertyMappingTable";
 import "../styles/HostChannelDistribution.css";
 
 const COMING_SOON_CARDS = [
-  { title: "Listing import", description: "Pull your existing channel listings into Domits." },
+  { title: "Room & rate mapping", description: "Map your Domits rooms and rates to each channel's rooms and rates." },
   { title: "Per-channel toggles", description: "Turn distribution on or off for each channel individually." },
   { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
+
+const FORBIDDEN_STATUS = 403;
+const LOAD_ERROR_MESSAGE = "Something went wrong loading your Channex connection.";
 
 // Mirrors the set in components/ChannexStatusCard.js -- kept as a separate local copy rather
 // than a shared export so this feature doesn't gain a cross-file refactor as a side effect.
 const RECONNECT_BUCKET_STATUSES = new Set(["RECONNECT_REQUIRED", "VALIDATION_FAILED", "DISCONNECTED"]);
 
 function HostChannelDistribution() {
-  // No userId here: the backend takes the user from the Cognito ID token on every request
-  // (hostintegrations/channexApi.js), not from a client-supplied value.
-  const { status, syncEvidence, loading, error, refresh } = useChannexDistribution();
+  const userId = useFetchUser();
+  const propertyOptions = useMappedProperties({ userId });
+  const [pickedPropertyId, setPickedPropertyId] = useState("");
+
+  // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
+  const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
+  const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
+
+  const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution({
+    domitsPropertyId: selectedPropertyId,
+  });
   const [activeModal, setActiveModal] = useState(null);
   const [propertyMappings, setPropertyMappings] = useState([]);
 
-  const isForbidden = !loading && error?.status === 403;
-  const isOtherError = !loading && !!error && !isForbidden;
-  const isConnectedOrNeedsAttention = !loading && !error && status && status.status !== "NOT_CONNECTED";
-  const isEmpty = !loading && !error && status && status.status === "NOT_CONNECTED";
-  const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && !error && status?.status === "NOT_CONNECTED";
+  // 403 means the host is outside the Channex allowlist: expected, so it gets the empty state.
+  const isOutsideAllowlist = errorStatus === FORBIDDEN_STATUS;
+  const hasBlockingError = Boolean(error) && !isOutsideAllowlist;
+  const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
+  const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
+  const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
+  const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
+  // Without a property nothing was queried, so "No sync yet" would claim something we never checked.
+  const showLastSync = isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
   // Narrower than isConnectedOrNeedsAttention: excludes PENDING_PROVIDER_VALIDATION, since
   // there's nothing confirmed to map against mid-validation.
   const showPropertyMapping =
-    !loading &&
-    !error &&
-    (status?.status === "CONNECTED" || RECONNECT_BUCKET_STATUSES.has(status?.status));
+    !loading && !error && (status?.status === "CONNECTED" || RECONNECT_BUCKET_STATUSES.has(status?.status));
+
+  // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
+  useEffect(() => {
+    if (hasBlockingError) {
+      console.error("Failed to load the Distribution tab:", error);
+    }
+  }, [hasBlockingError, error]);
 
   useEffect(() => {
-    if (!showPropertyMapping) return;
+    if (!showPropertyMapping) return undefined;
     let mounted = true;
 
     getPropertyMappingRows().then((rows) => {
@@ -55,12 +77,12 @@ function HostChannelDistribution() {
 
   const handleConnected = () => {
     closeModal();
-    refresh();
+    reload();
   };
 
   const handleDisconnected = () => {
     closeModal();
-    refresh();
+    reload();
   };
 
   return (
@@ -81,22 +103,16 @@ function HostChannelDistribution() {
         </button>
       </div>
 
-      {isForbidden && (
-        <div className="host-chdist__notice">
-          <p className="host-chdist__notice-text">Channel distribution isn't available for your account yet.</p>
-        </div>
-      )}
-
-      {isOtherError && (
-        <div className="host-chdist__notice">
-          <p className="host-chdist__notice-text">Something went wrong loading your Channex connection.</p>
-          <button type="button" className="chdist-btn chdist-btn--secondary" onClick={refresh}>
+      {hasBlockingError && (
+        <div className="host-chdist__error" role="alert">
+          <p className="host-chdist__error-text">{LOAD_ERROR_MESSAGE}</p>
+          <button className="chdist-btn chdist-btn--primary" onClick={reload}>
             Retry
           </button>
         </div>
       )}
 
-      {isEmpty && (
+      {showEmptyState && (
         <div className="host-chdist__empty">
           <p className="host-chdist__empty-text">No channel connected yet</p>
         </div>
@@ -110,7 +126,22 @@ function HostChannelDistribution() {
             onDisconnectClick={() => setActiveModal("disconnect")}
             manageEnabled={MOCK_CONNECT_FLOW_ENABLED}
           />
-          <LastSyncCard syncEvidence={syncEvidence} />
+          {showPropertyPicker && (
+            <label className="host-chdist__picker">
+              <span className="host-chdist__picker-label">Property</span>
+              <select
+                className="host-chdist__picker-select"
+                value={selectedPropertyId}
+                onChange={(event) => setPickedPropertyId(event.target.value)}>
+                {propertyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {showLastSync && <LastSyncCard syncEvidence={syncEvidence} />}
         </div>
       )}
 
@@ -128,11 +159,16 @@ function HostChannelDistribution() {
       )}
 
       {(activeModal === "add" || activeModal === "reconnect") && (
-        <ConnectChannexModal variant={activeModal} onClose={closeModal} onConnected={handleConnected} />
+        <ConnectChannexModal
+          variant={activeModal}
+          userId={userId}
+          onClose={closeModal}
+          onConnected={handleConnected}
+        />
       )}
 
       {activeModal === "disconnect" && (
-        <DisconnectChannexModal onClose={closeModal} onDisconnected={handleDisconnected} />
+        <DisconnectChannexModal userId={userId} onClose={closeModal} onDisconnected={handleDisconnected} />
       )}
     </div>
   );

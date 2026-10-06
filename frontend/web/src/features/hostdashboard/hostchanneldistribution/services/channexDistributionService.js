@@ -161,18 +161,31 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
   return requestError;
 };
 
-// Real endpoint: GET /integrations/channex/status?userId=. Enes has allowlisted read access
-// for staging certification, so this calls through for real; connect/disconnect/sync stay mock
-// (see MOCK_CONNECT_FLOW_ENABLED and getLatestSyncEvidence below).
-export const getChannexStatus = async ({ userId } = {}) => fetchRealChannexStatus({ userId });
+// Real endpoint: GET /integrations/channex/status. Enes has allowlisted read access for staging
+// certification, so this calls through for real; connect/disconnect/sync stay mock (see
+// MOCK_CONNECT_FLOW_ENABLED and getLatestSyncEvidence below). No userId: the backend takes the
+// user from the Cognito ID token, and sending one would make callers wait for useFetchUser to
+// resolve and re-fire the request. channexApi destructures its argument, hence the empty object.
+export const getChannexStatus = async () => fetchRealChannexStatus({});
+
+// Open question for Enes: real contract is either a new Channex mapping-list endpoint, or
+// filtering hostDashboard/all by mapping -- mocked as a simple list for now. Entries use the
+// hostDashboard/all listing shape (listing.property.id), so the swap keeps the same consumers.
+const MOCK_MAPPED_LISTINGS = [
+  { property: { id: MOCK_DOMITS_PROPERTY_ID, title: "Mock canal house" } },
+  { property: { id: "mock-domits-property-id-2", title: "Mock beach apartment" } },
+];
+
+// Real endpoint (not built yet): GET <mapped listings>?userId=, returning hostDashboard/all-shaped listings
+export const getMappedProperties = async () => {
+  return MOCK_MAPPED_LISTINGS;
+};
 
 // Real endpoint: GET /integrations/channex/sync-evidence/latest?userId=&domitsPropertyId=
-// domitsPropertyId is required by the real endpoint (400 without it). Stays mock: open question
-// for Enes on whether this tab should scope to one property or show the latest sync across all
-// of a host's mapped properties -- the mock ignores the argument's value either way for now.
+// domitsPropertyId is required by the real endpoint (400 without it), so the tab scopes the
+// latest sync to the property picked in the view. Stays mock: the mock echoes it back in the response.
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) => {
-  void domitsPropertyId; // unused until this reads live data
-  return MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE];
+  return { ...MOCK_SYNC_EVIDENCE_BY_STATE[MOCK_CHANNEX_SYNC_STATE], domitsPropertyId };
 };
 
 // Not a single real endpoint yet -- see the comment on MOCK_PROPERTY_MAPPING_ROWS above.
@@ -185,7 +198,6 @@ export const getPropertyMappingRows = async () => MOCK_PROPERTY_MAPPING_ROWS;
 // longer has any in-memory connection state to advance -- a mock "successful" connect closes the
 // modal but the status card, now reading the real backend, simply won't reflect it.
 export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
-  void userId;
   await mockDelay();
 
   if (MOCK_CONNECT_OUTCOME === "ERROR") {
@@ -234,9 +246,9 @@ export const connectChannex = async ({ userId, apiKey, displayName } = {}) => {
 // Real endpoint: POST /integrations/channex/disconnect ({ userId }). Stays mock: nothing here
 // may call the real disconnect endpoint. Gated unreachable by MOCK_CONNECT_FLOW_ENABLED = false
 // above. Same note as connectChannex: no in-memory connection state left to advance now that
-// getChannexStatus is real.
-export const disconnectChannex = async ({ userId } = {}) => {
-  void userId;
+// getChannexStatus is real. The real backend leaves the row's status as DISCONNECTED rather than
+// deleting it, which is what the response below mirrors.
+export const disconnectChannex = async () => {
   await mockDelay();
 
   if (MOCK_DISCONNECT_OUTCOME === "ERROR") {

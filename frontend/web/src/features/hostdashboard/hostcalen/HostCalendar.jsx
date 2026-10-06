@@ -716,6 +716,7 @@ export default function HostCalendar() {
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     reloadOverrides,
+    calendarSaveError,
   } = useCalendarSelection({
     cursor,
     monthGrid,
@@ -825,7 +826,7 @@ export default function HostCalendar() {
     handleDateSelect(dateContext);
   };
 
-  const activeErrorMessage = listingsError || detailsError;
+  const activeErrorMessage = listingsError || detailsError || calendarSaveError;
   const isCalendarLoading =
     isLoadingListings ||
     isLoadingDetails ||

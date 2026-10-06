@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ConnectChannexModal from "./ConnectChannexModal";
+import { DISMISS_ACTIONS, expectDismissalBlockedWhileInFlight } from "./modalTestHelpers";
 import { connectChannex } from "../services/channexDistributionService";
 
 jest.mock("../services/channexDistributionService", () => ({
@@ -43,8 +44,9 @@ describe("ConnectChannexModal", () => {
     expect(screen.getByLabelText("Channex API key")).toHaveValue("wrong-key");
   });
 
-  test("a thrown request error shows the error message and does not close the modal", async () => {
+  test("a thrown request error shows a friendly message, logs the detail, and does not close the modal", async () => {
     const user = userEvent.setup();
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     connectChannex.mockRejectedValue(new Error("Failed to store Channex credentials in Secrets Manager."));
     const onConnected = jest.fn();
     const onClose = jest.fn();
@@ -54,10 +56,16 @@ describe("ConnectChannexModal", () => {
     await user.type(screen.getByLabelText("Channex API key"), "some-key");
     await user.click(screen.getByRole("button", { name: "Connect" }));
 
-    expect(screen.getByText("Failed to store Channex credentials in Secrets Manager.")).toBeInTheDocument();
+    expect(screen.getByText("Failed to connect to Channex.")).toBeInTheDocument();
+    expect(screen.queryByText(/Secrets Manager/)).not.toBeInTheDocument();
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.any(String),
+      "Failed to store Channex credentials in Secrets Manager."
+    );
     expect(onConnected).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Channex API key")).toHaveValue("some-key");
+    consoleError.mockRestore();
   });
 
   test("shows the reconnect note only for the reconnect variant", () => {
@@ -68,31 +76,35 @@ describe("ConnectChannexModal", () => {
     ).toBeInTheDocument();
   });
 
-  test("Cancel clears the api key and closes without calling connectChannex", async () => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
+  // Every way of dismissing the modal must behave the same: clear the typed key, close, never submit.
+  test.each(DISMISS_ACTIONS.filter(([label]) => label !== "Close"))(
+    "%s clears the api key and closes without calling connectChannex",
+    async (_label, dismiss) => {
+      const user = userEvent.setup();
+      const onClose = jest.fn();
 
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
+      render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
 
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+      await user.type(screen.getByLabelText("Channex API key"), "typed-key");
+      await dismiss(user);
 
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
+      expect(connectChannex).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText("Channex API key")).toHaveValue("");
+    }
+  );
 
-  test("Escape clears the api key and closes without calling connectChannex", async () => {
-    const user = userEvent.setup();
-    const onClose = jest.fn();
-
-    render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />);
-
-    await user.type(screen.getByLabelText("Channex API key"), "typed-key");
-    await user.keyboard("{Escape}");
-
-    expect(connectChannex).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText("Channex API key")).toHaveValue("");
-  });
+  test.each(DISMISS_ACTIONS)(
+    "%s does not close the modal while the request is in flight, and works again once it settles",
+    (_label, dismiss) =>
+      expectDismissalBlockedWhileInFlight({
+        dismiss,
+        mockedRequest: connectChannex,
+        submitButtonName: "Connect",
+        settledValue: { connected: false },
+        renderModal: (onClose) =>
+          render(<ConnectChannexModal variant="add" userId="user-1" onClose={onClose} onConnected={jest.fn()} />),
+        beforeSubmit: (user) => user.type(screen.getByLabelText("Channex API key"), "some-key"),
+      })
+  );
 });

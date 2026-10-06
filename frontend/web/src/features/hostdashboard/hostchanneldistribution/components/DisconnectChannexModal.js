@@ -9,6 +9,8 @@ import { disconnectChannex } from "../services/channexDistributionService";
 // type/rate plan mapping tables, which are keyed by that same, unchanged integrationAccountId.
 const DISCONNECT_NOTE = "Disconnecting stops Domits from using your Channex account. Your existing property mappings are kept.";
 
+const DISCONNECT_ERROR_MESSAGE = "Failed to disconnect Channex.";
+
 function DisconnectChannexModal({ userId, onClose, onDisconnected }) {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -21,7 +23,9 @@ function DisconnectChannexModal({ userId, onClose, onDisconnected }) {
       const data = await disconnectChannex({ userId });
       onDisconnected(data);
     } catch (error) {
-      setErrorMessage(error?.message || "Failed to disconnect Channex.");
+      // The host sees a fixed message; the real detail (method, endpoint, backend message) goes to the console.
+      console.error("Failed to disconnect Channex:", error?.message || error);
+      setErrorMessage(DISCONNECT_ERROR_MESSAGE);
     } finally {
       setSubmitting(false);
     }

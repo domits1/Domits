@@ -15,9 +15,22 @@ function getMappingBadge(mapping) {
   return { tone: "error", label: "Issue" };
 }
 
+const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
+
 const pluralize = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+// Only the parts that are actually known: a missing count is left out rather than rendered as
+// "undefined guests".
+const buildMetaLine = ({ guests, bedrooms, bathrooms }) =>
+  [
+    isFiniteNumber(guests) && pluralize(guests, "guest"),
+    isFiniteNumber(bedrooms) && pluralize(bedrooms, "bedroom"),
+    isFiniteNumber(bathrooms) && pluralize(bathrooms, "bathroom"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+const formatEuroAmount = (amount) => `EUR ${amount.toLocaleString("en-US")}`;
 
 // A separate component (not inline in the row map) so the per-row "did this URL fail to load"
 // state is its own hook, not one hook shared across every row.
@@ -39,10 +52,16 @@ PropertyThumbnail.propTypes = {
 };
 
 function PropertyMappingTable({ properties }) {
+  if (properties.length === 0) {
+    return <p className="host-chdist__empty-text">No properties to show yet.</p>;
+  }
+
   return (
     <div className="chdist-property-table">
       {properties.map((property) => {
         const badge = getMappingBadge(property.mapping);
+        const metaLine = buildMetaLine(property);
+        const hasNights = isFiniteNumber(property.availableNights) && isFiniteNumber(property.totalNights);
 
         return (
           <div className="chdist-property-row" key={property.id}>
@@ -50,19 +69,20 @@ function PropertyMappingTable({ properties }) {
 
             <div className="chdist-property-row__info">
               <p className="chdist-property-row__title">{property.title}</p>
-              <p className="chdist-property-row__meta">
-                {pluralize(property.guests, "guest")} · {pluralize(property.bedrooms, "bedroom")} ·{" "}
-                {pluralize(property.bathrooms, "bathroom")}
-              </p>
+              {metaLine && <p className="chdist-property-row__meta">{metaLine}</p>}
               <p className="chdist-property-row__location">{property.location}</p>
             </div>
 
             <div className="chdist-property-row__side">
               <span className={`chdist-badge chdist-badge--${badge.tone}`}>{badge.label}</span>
-              <span className="chdist-property-row__availability">
-                {property.availableNights}/{property.totalNights} nights free
-              </span>
-              <span className="chdist-property-row__price">{formatEuroAmount(property.nightlyRate)}</span>
+              {hasNights && (
+                <span className="chdist-property-row__availability">
+                  {property.availableNights}/{property.totalNights} nights free
+                </span>
+              )}
+              {isFiniteNumber(property.nightlyRate) && (
+                <span className="chdist-property-row__price">{formatEuroAmount(property.nightlyRate)}</span>
+              )}
             </div>
           </div>
         );

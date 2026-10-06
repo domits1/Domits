@@ -5,6 +5,12 @@ export const VALID_TASK_TYPES = [
     'Sanitation', 'Check-in', 'Inventory', 'Administration', 'Issue'
 ];
 
+export const VALID_TASK_STATUSES = ['Pending', 'In progress', 'Completed', 'Cancelled'];
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const isValidUuid = (value) => typeof value === 'string' && UUID_PATTERN.test(value);
+
 export const isPastDueDate = (dueDate) => {
     if (!dueDate) return false;
     const startOfTodayUtc = new Date(new Date().toISOString().split('T')[0]).getTime();
@@ -32,6 +38,14 @@ export const validateTaskPayload = (data) => {
 
     if (data.due_date && isPastDueDate(data.due_date)) {
         errors.push("due_date cannot be in the past");
+    }
+
+    if (data.assignee_team_member_id && !isValidUuid(data.assignee_team_member_id)) {
+        errors.push("assignee_team_member_id must be a valid UUID");
+    }
+
+    if (data.parent_task_id && !isValidUuid(data.parent_task_id)) {
+        errors.push("parent_task_id must be a valid UUID");
     }
 
     if (errors.length > 0) {

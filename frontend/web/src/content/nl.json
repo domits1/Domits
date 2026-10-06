@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Gekozen sjabloon",
+    "availabilityHint": "Je kunt nu aan de slag met Essentials. Elite is binnenkort beschikbaar.",
+    "selected": "Geselecteerd",
+    "comingSoon": "Binnenkort beschikbaar",
+    "title": "Kies een websitesjabloon",
+    "unsupportedPreview": "Er is nog geen voorbeeld beschikbaar voor dit sjabloon.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Website met één pagina, basisaanpassingen en essentiële functies"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Veelzijdige website, uitgebreide aanpassingsmogelijkheden en exclusieve functies"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Waar je verblijft",
@@ -1053,7 +1071,9 @@
       },
       "manage": {
         "title": "Hoe maak en beheer ik mijn host-account?",
-        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop 'Word host' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
+        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop '",
+        "becomeHost": "Word host",
+        "description2": "' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
       },
       "payout": {
         "title": "Hoe uitbetalingen en belastingen werken",
@@ -1061,7 +1081,15 @@
       },
       "calendar": {
         "title": "Hoe beheert u uw agenda en boekingen",
-        "description": "Een komende functie stelt u in staat uw boekingen efficiënter te beheren, rechtstreeks via het dashboard. Houd de updates in de gaten."
+        "description": "U kunt alles beheren vanaf het Host Dashboard: boekingen accepteren of afwijzen, en uw beschikbaarheid en prijzen per datum instellen."
+      },
+      "cost": {
+        "title": "Wat kost het?",
+        "description": "Domits is gratis te gebruiken — geen kosten voor ons boekingssysteem, dashboard of directe boekingswebsite. Wij rekenen alleen een 10% hostvergoeding per boeking via Domits.com, waarmee het platform 24/7 blijft draaien. Meer nodig? Neem contact met ons op voor add-ons en zakelijke tarieven."
+      },
+      "markets": {
+        "title": "In welke markten is Domits actief?",
+        "description": "Domits is wereldwijd beschikbaar voor hosts en gasten — u kunt uw accommodatie aanbieden, ongeacht waar deze zich bevindt."
       }
     },
     "advice": {
@@ -1112,6 +1140,10 @@
           "title": "Communicatievoorkeuren",
           "desc": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt."
         },
+        "privacySecurity": {
+          "title": "Privacy & beveiliging",
+          "desc": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie."
+        },
         "company": {
           "title": "Bedrijf",
           "desc": "Beheer je bedrijfsnaam en basisgegevens."
@@ -1122,7 +1154,7 @@
         },
         "ratePlans": {
           "title": "Tariefplannen",
-          "desc": "Bekijk je 10% host-exclusieve en toekomstige prijsopties."
+          "desc": "Bekijk je 10% host-exclusieve en Direct Booking-prijsopties."
         },
         "compliance": {
           "title": "Compliance",
@@ -1283,6 +1315,7 @@
         "emailAddress": "E-mailadres",
         "verificationCode": "Verificatiecode verzonden naar je e-mail",
         "verify": "Verifiëren",
+        "emailUpdated": "E-mail bijgewerkt!",
         "phone": "Telefoon",
         "phoneNumber": "Telefoonnummer",
         "sex": "Geslacht",
@@ -1327,8 +1360,31 @@
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
         "saved": "Opgeslagen!",
+        "saveError": "Opslaan mislukt. Probeer het opnieuw.",
         "cancel": "Annuleren",
         "close": "Sluiten"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & beveiliging",
+      "title": "Privacy & beveiliging",
+      "subtitle": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie.",
+      "authenticationSection": "Authenticatie",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-mail",
+        "active": "Actief",
+        "inactive": "Inactief",
+        "unavailable": "Niet beschikbaar",
+        "verified": "Geverifieerd",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-app",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "loading": "Je authenticatiestatus wordt geladen...",
+        "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
+      },
+      "pin": {
+        "comingSoon": "Binnenkort beschikbaar."
       }
     },
     "communicationPreferences": {
@@ -1403,12 +1459,31 @@
       "subtitle": "Verifieer je accommodatie en hostidentiteit voor lokale registraties.",
       "section": "Compliancegegevens",
       "fields": {
+        "property": "Accommodatie",
+        "untitledListing": "Accommodatie zonder titel",
         "propertyRegistration": "Accommodatieregistratie",
         "placeholder": "Registratienummer",
+        "noRegistrationYet": "Er is nog geen registratienummer toegevoegd.",
         "hint": "Dit nummer bewijst dat je accommodatie is geregistreerd bij de lokale autoriteiten. Aanvullende compliancemethoden (ID-verificatie, adresbewijs) zijn binnenkort beschikbaar."
       },
+      "states": {
+        "loading": "Je accommodaties worden geladen...",
+        "empty": "Je hebt nog geen accommodaties.",
+        "createListing": "Maak je eerste accommodatie aan"
+      },
+      "unsavedChangesConfirm": "Je hebt niet-opgeslagen wijzigingen. Van accommodatie wisselen en de wijzigingen negeren?",
+      "errors": {
+        "load": "We konden je accommodaties niet laden. Probeer het opnieuw.",
+        "duplicate": "Dit registratienummer wordt al gebruikt door een andere accommodatie.",
+        "noAccess": "Je hebt geen toegang om deze accommodatie te wijzigen.",
+        "validation": "Voer een geldig registratienummer in. Het mag niet leeg zijn, niet beginnen met AUTO- en niet langer zijn dan 255 tekens.",
+        "generic": "We konden je registratienummer niet opslaan. Probeer het opnieuw.",
+        "registrationUnavailable": "We konden het registratienummer van deze accommodatie niet laden. Vernieuw de pagina of neem contact op met support."
+      },
       "buttons": {
-        "comingSoon": "Binnenkort beschikbaar"
+        "save": "Opslaan",
+        "saving": "Opslaan...",
+        "saved": "Opgeslagen"
       }
     },
     "ratePlans": {
@@ -1417,11 +1492,84 @@
       "subtitle": "Beheer je tariefplannen.",
       "standardSection": "Standaard tariefplan",
       "additionalSection": "Aanvullende plannen",
-      "additionalSubtitle": "Aanvullende tariefplannen voor directe boekingen zijn binnenkort beschikbaar.",
+      "additionalSubtitle": "Aanvullende prijsopties voor directe boekingen.",
       "hostOnlyFee": {
         "title": "Host-exclusieve vergoeding",
         "sub": "10% van boekingen betaald door de host",
         "note": "Stelt Domits in staat het platform 24/7 te laten draaien"
+      },
+      "directBooking": {
+        "cardTitle": "Direct Booking-tariefplan",
+        "cardSubtitle": "4,9% per reservering betaald door de host",
+        "cardNote": "Geen maand- of woningkosten; gasten betalen €0 Domits-kosten.",
+        "breadcrumb": "Direct Booking-tariefplan",
+        "title": "Direct Booking-tariefplan",
+        "subtitle": "Prestatiegerichte prijzen voor reserveringen via je Direct Booking-website.",
+        "planName": "Direct Booking",
+        "perReservation": "per reservering",
+        "commission": "Commissie",
+        "commissionRate": "Hostcommissie",
+        "commissionFormula": "Commissieerbare accommodatie-omzet × 4,9%",
+        "commissionDescription": "De commissie wordt door de host betaald. De gast betaalt €0 Domits-boekingskosten.",
+        "commissionableBase": "De commissiegrondslag sluit schoonmaak, btw, belastingen, overheidskosten, borg en andere doorbelaste kosten uit.",
+        "monthlySubscription": "Maandabonnement",
+        "propertyFee": "Woningkosten",
+        "guestDomitsFee": "Domits-kosten voor gast",
+        "noFixedFee": "Geen vaste kosten",
+        "paidBy": "Betaald door",
+        "host": "HOST",
+        "reservationRevenue": "Reserveringsomzet",
+        "reservationRevenueDescription": "De vergoeding wordt berekend over het accommodatiegedeelte van elke in aanmerking komende directe reservering.",
+        "reservationValue": "Reserveringswaarde",
+        "domitsHostFee": "Domits-hostvergoeding",
+        "volumePricing": "Volumetarieven",
+        "volumePricingDescription": "Standaard groeitarieven uit het Direct Booking-tariefplan.",
+        "annualRevenue": "Jaarlijkse omzet uit directe boekingen",
+        "domitsFee": "Domits-kosten",
+        "enterprise": "Aangepast Enterprise",
+        "billing": "Facturering",
+        "billingDescription": "Commissieregels kunnen aan in aanmerking komende reserveringen worden gekoppeld voor controle en facturering.",
+        "billingHistory": "Factuurgeschiedenis",
+        "billingHistoryEmpty": "Er zijn nog geen factuurgegevens beschikbaar.",
+        "billingContact": "Factureringscontact",
+        "billingContactEmpty": "Beheer van het factureringscontact verschijnt hier zodra facturering is ingeschakeld."
+      },
+      "enterprise": {
+        "cardTitle": "Enterprise-tariefplan",
+        "cardSubtitle": "Prijs per actieve woning per maand.",
+        "cardNote": "Schaalt automatisch mee met je aantal actieve woningen.",
+        "breadcrumb": "Enterprise-tariefplan",
+        "title": "Enterprise-tariefplan",
+        "subtitle": "Eenvoudige prijzen die meegroeien met je actieve woningportefeuille.",
+        "loading": "Enterprise-tariefplan laden...",
+        "loadError": "We konden je Enterprise-tariefplan op dit moment niet laden.",
+        "notActiveTitle": "Je hebt geen Enterprise-tariefplan",
+        "notActiveDescription": "Dit account heeft geen actief Enterprise-tariefplan.",
+        "currentPlan": "Huidig plan",
+        "currentRate": "Huidig tarief",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "actieve woning / maand",
+        "active": "Actief",
+        "activeProperties": "Actieve woningen",
+        "billableProperties": "Factureerbare woningen in je portefeuille",
+        "pricePerProperty": "Prijs per woning",
+        "estimatedMonthlyCost": "Geschatte maandkosten",
+        "basedOnPropertyCount": "Op basis van je huidige aantal woningen",
+        "pricing": "Prijs",
+        "pricingLabel": "Enterprise-prijs",
+        "monthlySubscription": "Maandabonnement",
+        "nextInvoice": "Volgende factuur",
+        "nextInvoiceLabel": "Volgende factuur",
+        "billingFrequency": "Factureringsfrequentie",
+        "monthly": "Maandelijks",
+        "billingUnit": "Factureringseenheid",
+        "activeProperty": "Actieve woning",
+        "billingHistory": "Factuurgeschiedenis",
+        "noInvoices": "Nog geen facturen beschikbaar",
+        "invoicesDescription": "Je Enterprise-facturen verschijnen hier zodra de factuurgeschiedenis beschikbaar is.",
+        "billingContact": "Factureringscontact",
+        "billingContactTitle": "Factureringscontact",
+        "billingContactDescription": "Beheer van het factureringscontact komt hier beschikbaar."
       }
     },
     "team": {
