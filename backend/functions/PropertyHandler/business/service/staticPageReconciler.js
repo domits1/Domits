@@ -59,24 +59,37 @@ export class StaticPageReconciler {
     };
 
     const orphans = [...storedHostnames].filter((hostname) => !expectedHostnames.has(hostname)).slice(0, budget);
+    const repairs = new Set();
     if (orphans.length > 0) {
       const removal = await this.withdrawal.removePages(orphans, {
+        etags: listed.etags,
         keep: async (hostname) =>
           isPublishedOnActiveDomain(await this.domainRepository.getDomainWithSiteByName(hostname)),
       });
       summary.removed = removal.removed.length;
       summary.errors.push(...removal.failures, ...removal.invalidationErrors);
+      for (const hostname of removal.removed) {
+        const owner = await this.domainRepository.getDomainWithSiteByName(hostname);
+        if (isPublishedOnActiveDomain(owner)) {
+          repairs.add(owner.siteId);
+        }
+      }
     }
 
     const siteIdsMissingAPage = [
-      ...new Set(expected.filter((entry) => !storedHostnames.has(entry.domain)).map((entry) => entry.siteId)),
+      ...new Set([
+        ...repairs,
+        ...expected.filter((entry) => !storedHostnames.has(entry.domain)).map((entry) => entry.siteId),
+      ]),
     ];
     const rows = await this.outboxRepository.listPagesBySiteIds(siteIdsMissingAPage);
     const rowBySiteId = new Map(rows.map((row) => [row.siteId, row]));
     const toQueue = [];
     for (const siteId of siteIdsMissingAPage) {
       const row = rowBySiteId.get(siteId);
-      if (isStuck(row, now)) {
+      if (repairs.has(siteId)) {
+        toQueue.push(siteId);
+      } else if (isStuck(row, now)) {
         summary.stuck.push({ siteId, status: row.status, failureReason: row.failureReason });
       } else if (!isWorkingOnItsOwn(row, now)) {
         toQueue.push(siteId);
@@ -84,7 +97,7 @@ export class StaticPageReconciler {
     }
     for (const siteId of toQueue.slice(0, budget)) {
       try {
-        if (await this.siteRepository.queueStaticPage(siteId)) {
+        if (await this.siteRepository.queueStaticPage(siteId, { evenWhileBusy: repairs.has(siteId) })) {
           summary.queued += 1;
         }
       } catch (error) {

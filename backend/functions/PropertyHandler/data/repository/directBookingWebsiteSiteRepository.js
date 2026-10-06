@@ -316,7 +316,7 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
-  async queueStaticPage(siteId, { attemptLimit = STATIC_PAGE_ATTEMPT_LIMIT } = {}) {
+  async queueStaticPage(siteId, { attemptLimit = STATIC_PAGE_ATTEMPT_LIMIT, evenWhileBusy = false } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
@@ -331,16 +331,16 @@ export class DirectBookingWebsiteSiteRepository {
         updated_at = $2
       WHERE id = $1
         AND status = 'PUBLISHED'
-        AND NOT EXISTS (
+        AND ($4 OR NOT EXISTS (
           SELECT 1
           FROM ${outboxTableName} AS outbox
           WHERE outbox.site_id = $1
-            AND outbox.attempt_count < $3
-            AND outbox.status IN ('PENDING', 'BUILDING', 'FAILED')
-        )
+            AND (outbox.status IN ('PENDING', 'BUILDING')
+              OR (outbox.status = 'FAILED' AND outbox.attempt_count < $3))
+        ))
       RETURNING
         ${SITE_SELECT_COLUMNS}`,
-        [siteId, now, attemptLimit],
+        [siteId, now, attemptLimit, Boolean(evenWhileBusy)],
         true
       );
 

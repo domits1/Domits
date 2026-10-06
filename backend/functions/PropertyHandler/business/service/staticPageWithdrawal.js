@@ -24,7 +24,7 @@ export class StaticPageWithdrawal {
     return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
-  async removePages(hostnames, { keep = async () => false } = {}) {
+  async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
     const removed = [];
     const kept = [];
     const failures = [];
@@ -35,8 +35,7 @@ export class StaticPageWithdrawal {
           kept.push(hostname);
           continue;
         }
-        await this.pageStore.deletePage({ hostname });
-        removed.push(hostname);
+        ((await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" })) ? removed : kept).push(hostname);
       } catch (error) {
         failures.push({ hostname, message: error.message });
       }

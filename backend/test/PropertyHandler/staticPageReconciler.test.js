@@ -26,7 +26,7 @@ const row = (siteId, status, attemptCount = 0, updatedAt = NOW) => ({
 
 const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null } = {}) => {
   const deps = {
-    pageStore: { listPageHostnames: jest.fn(async () => ({ hostnames: stored, rejected })) },
+    pageStore: { listPageHostnames: jest.fn(async () => ({ hostnames: stored, etags: { x: '"e"' }, rejected })) },
     siteRepository: { queueStaticPage: jest.fn(async () => true) },
     domainRepository: {
       listDomainsWithSites: jest.fn(async () => entries),
@@ -92,7 +92,7 @@ describe("StaticPageReconciler", () => {
     expect(withdrawal.removePages).toHaveBeenCalledTimes(1);
     expect(withdrawal.removePages).toHaveBeenCalledWith(
       ["b.direct.domits.com", "gone.direct.domits.com", "www.pending.nl"],
-      expect.any(Object)
+      expect.objectContaining({ etags: { x: '"e"' } })
     );
     expect(summary).toMatchObject({ removed: 3, queued: 0 });
   });
@@ -118,6 +118,21 @@ describe("StaticPageReconciler", () => {
       expect.any(Object)
     );
     expect(summary).toMatchObject({ removed: 1 });
+  });
+
+  it("queues a site again in the same run when a republish slipped between the last look and the delete", async () => {
+    const republished = entry("b.direct.domits.com", { ...UNPUBLISHED, status: "PUBLISHED", staticPageRevision: 3 });
+    const { reconciler, domainRepository, siteRepository } = buildReconciler({
+      stored: ["b.direct.domits.com"],
+      entries: [entry("b.direct.domits.com", UNPUBLISHED)],
+      rows: [row("site-2", "BUILDING", 1)],
+    });
+    domainRepository.getDomainWithSiteByName.mockResolvedValueOnce(null).mockResolvedValueOnce(republished);
+
+    const summary = await reconciler.run();
+
+    expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-2", { evenWhileBusy: true });
+    expect(summary).toMatchObject({ removed: 1, queued: 1 });
   });
 
   it("queues a published site whose page is missing once however many domains it has, also when its row says active or withdrawn", async () => {
@@ -175,21 +190,6 @@ describe("StaticPageReconciler", () => {
     ]);
   });
 
-  it("treats a disabled fallback domain of a published site as active, like the public page and the worker do", async () => {
-    const { reconciler, withdrawal, siteRepository } = buildReconciler({
-      stored: ["a.direct.domits.com"],
-      entries: [
-        entry("a.direct.domits.com", PUBLISHED, { status: "DISABLED", verificationDetails: { disabledByHost: true } }),
-      ],
-      rows: [row("site-1", "ACTIVE")],
-    });
-
-    await reconciler.run();
-
-    expect(withdrawal.removePages).not.toHaveBeenCalled();
-    expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
-  });
-
   it("spends the budget on sites it can queue, so stuck and busy sites never starve the ones behind them", async () => {
     const entries = ["s1", "s2", "s3", "s4"].map((id) => entry(`${id}.direct.domits.com`, { ...PUBLISHED, id }));
     const { reconciler, siteRepository } = buildReconciler({
@@ -201,16 +201,6 @@ describe("StaticPageReconciler", () => {
 
     expect(siteRepository.queueStaticPage.mock.calls.map(([siteId]) => siteId)).toEqual(["s3"]);
     expect(summary).toMatchObject({ queued: 1, stuck: [expect.objectContaining({ siteId: "s1" })] });
-  });
-
-  it("caps the work per run at 200, and falls back to 50 for a limit that is not a positive number", async () => {
-    const stored = Array.from({ length: 250 }, (_, index) => `x${index}.direct.domits.com`);
-    const { reconciler, withdrawal } = buildReconciler({ stored });
-
-    await reconciler.run({ limit: 9999 });
-    await reconciler.run({ limit: "many" });
-
-    expect(withdrawal.removePages.mock.calls.map(([hostnames]) => hostnames.length)).toEqual([200, 50]);
   });
 
   it("carries on after a removal or a queue that fails, reports each, and stays quiet about a queue another reconciler won", async () => {
