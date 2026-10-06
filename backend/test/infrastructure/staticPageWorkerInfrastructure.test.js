@@ -43,10 +43,10 @@ describe("the page writer policy", () => {
     expect(renderSitesBucket(text)).not.toContain(SITES_BUCKET_PLACEHOLDER);
   });
 
-  it("allows exactly a read of the app shell, writes and withdrawals under the hostname prefix, and a listing of that prefix", () => {
+  it("allows exactly a read of the app shell, reads, writes and withdrawals under the hostname prefix, and a listing of that prefix", () => {
     expect(allows.map((statement) => [asList(statement.Action), asList(statement.Resource)])).toEqual([
       [["s3:GetObject"], [`${BUCKET}/index.html`]],
-      [["s3:PutObject", "s3:DeleteObject"], [`${BUCKET}/sites/by-host/*`]],
+      [["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], [`${BUCKET}/sites/by-host/*`]],
       [["s3:ListBucket"], [BUCKET]],
     ]);
   });
