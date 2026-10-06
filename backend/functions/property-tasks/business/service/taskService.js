@@ -1,5 +1,6 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
+import { computeSlaStatus } from "../model/slaStatus.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -10,7 +11,9 @@ const BUCKET_NAME = "domits-task-attachments";
 
 export const getTasks = async (hostId, filters) => {
     const dataSource = await Database.getInstance();
-    return await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const tasks = await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const now = Date.now();
+    return tasks.map(task => ({ ...task, sla_status: computeSlaStatus(task, now) }));
 };
 
 export const createTask = async (hostId, taskData) => {

@@ -56,7 +56,7 @@ export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const tasks = await query.getMany();
 
     const withOverdue = tasks.map(task => {
-        if (task.due_date && task.due_date < now && task.status !== 'Completed') {
+        if (task.due_date && task.due_date < now && !['Completed', 'Cancelled'].includes(task.status)) {
             return { ...task, status: 'Overdue', priority: 'Urgent' };
         }
         return task;
