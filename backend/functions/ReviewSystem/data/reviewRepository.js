@@ -1,17 +1,42 @@
 
+import { randomUUID } from "node:crypto";
+import { In, IsNull, Not } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Property } from "database/models/Property";
-import { ReviewCategory } from "database/models/ReviewCategory";
-import { ReviewCategoryRating } from "database/models/ReviewCategoryRating";
+import { Review_Rating } from "database/models/Review_Rating";
+import { Review_Category } from "database/models/Review_Category";
+import { Review_Request } from "database/models/Review_Request";
+import { Review_Response } from "database/models/Review_Response";
+
+const REVIEW_FIELDS = ["id", "booking_id", "property_id", "title", "overall_rating", "public_review",
+  "created_at", "updated_at", "status", "verification_status", "publication_status"];
+
+const average = (values) => {
+  const numbers = values.map(Number).filter(Number.isFinite);
+  return numbers.length ? Math.round(numbers.reduce((sum, n) => sum + n, 0) / numbers.length * 10) / 10 : null;
+};
+
+// Allowlist public fields independently of repository projections to prevent private-data leaks.
+const toPublicReview = (review) => ({
+  id: review.id, overallRating: Number(review.overall_rating), title: review.title,
+  publicReview: review.public_review, verificationStatus: review.verification_status,
+  status: review.status, createdAt: review.created_at, categoryRatings: review.categoryRatings || {},
+  response: review.response?.status === "published" && review.response.deletedAt == null
+    ? { id: review.response.id, authorRole: review.response.authorRole,
+      message: review.response.message, publishedAt: review.response.publishedAt }
+    : null,
+});
 
 export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
       .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "verified" })
-      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "published" })
+      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
+      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
+      .andWhere("review.status = :status", { status: "PUBLISHED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
       .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
   }
@@ -23,8 +48,8 @@ export class ReviewRepository {
     });
     if (!property) return null;
     const eligible = () => this.eligibleReviewQuery(database, propertyId)
-      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :status",
-        { status: "ACTIVE" });
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
+        { propertyStatus: "ACTIVE" });
     const summary = await eligible().select("AVG(review.overall_rating)", "score")
       .addSelect("COUNT(*)", "count").getRawOne();
     const reviews = await eligible()
@@ -32,12 +57,12 @@ export class ReviewRepository {
       .orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
       .offset(offset).limit(10).getMany();
     const ids = reviews.map((review) => review.id);
-    const ratings = ids.length ? await database.getRepository(ReviewCategoryRating).createQueryBuilder("rating")
-      .innerJoin(ReviewCategory, "category", "category.key = rating.category_key AND category.active = :active",
-        { active: true })
-      .select("rating.review_id", "review_id").addSelect("category.key", "key")
+    const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
+      .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",
+        { active: true, reviewType: "GUEST_TO_PROPERTY" })
+      .select("rating.reviewId", "review_id").addSelect("category.key", "key")
       .addSelect("category.label", "label").addSelect("rating.rating", "rating")
-      .where("rating.review_id IN (:...ids)", { ids })
+      .where("rating.reviewId IN (:...ids)", { ids })
       .andWhere("rating.rating BETWEEN 1 AND 5")
       .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
     const count = Number(summary.count);
@@ -51,27 +76,30 @@ export class ReviewRepository {
 
   async getPropertyCategoryRatings(propertyId, hostId) {
     const database = await Database.getInstance();
-    const rows = await database.getRepository(ReviewCategory).createQueryBuilder("category")
+    const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
       .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
       .leftJoin((query) => query
-        .select("rating.category_key", "category_key")
+        .select("rating.category", "category_key")
         .addSelect("AVG(rating.rating)", "average_rating")
         .addSelect("COUNT(*)", "rating_count")
-        .from(ReviewCategoryRating, "rating")
-        .innerJoin(Review, "review", "review.id = rating.review_id")
+        .from(Review_Rating, "rating")
+        .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
         .andWhere("review.verification_status = :verified")
         .andWhere("review.publication_status = :published")
+        .andWhere("review.status = :published")
+        .andWhere("review.review_type = :reviewType")
         .andWhere("rating.rating BETWEEN :minimum AND :maximum")
         .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
-        .groupBy("rating.category_key"),
+        .groupBy("rating.category"),
       "aggregate", "aggregate.category_key = category.key")
       .select("category.key", "category_key")
       .addSelect("category.label", "label")
       .addSelect("aggregate.average_rating", "average_rating")
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
-      .where("category.active = :active")
-      .setParameters({ propertyId, hostId, verified: "verified", published: "published",
+      .where("category.isActive = :active")
+      .andWhere("category.reviewType = :reviewType")
+      .setParameters({ propertyId, hostId, verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
       .orderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
@@ -114,7 +142,7 @@ export class ReviewRepository {
     const result = await dataSource.getRepository(Review).createQueryBuilder()
       .update(Review)
       .set({ overall_rating: overallRating, public_review: publicReview, updated_at: updatedAt })
-      .where("id = :id AND guest_id = :guestId", { id, guestId })
+      .where("id = :id AND reviewer_user_id = :guestId", { id, guestId })
       .andWhere("updated_at = :previousUpdatedAt", { previousUpdatedAt })
       .andWhere("created_at <= :timestamp AND created_at > :cutoff", {
         timestamp, cutoff: timestamp - editWindowMs,
@@ -123,30 +151,102 @@ export class ReviewRepository {
     return { affected: result.affected, updated_at: updatedAt };
   }
 
-  async findBookingById(reservationId) {
+  async findBookingById(bookingId) {
+
     const dataSource = await Database.getInstance();
 
     return await dataSource
       .getRepository(Booking)
-      .findOne({ where: { id: reservationId } });
+      .findOne({ where: { id: bookingId } });
+  }
+
+  async findReviewByBookingTypeAndReviewer(key) {
+    const dataSource = await Database.getInstance();
+    return dataSource.getRepository(Review).findOne({ where: key, select: ["id"] });
+  }
+
+  async findActiveCategoryKeys(reviewType) {
+    const dataSource = await Database.getInstance();
+    const categories = await dataSource.getRepository(Review_Category).find({
+      where: { reviewType, isActive: true }, select: ["key"],
+    });
+    return new Set(categories.map((category) => category.key));
   }
 
   async findReviews(where) {
     const dataSource = await Database.getInstance();
-    return dataSource.getRepository(Review).find({ where, order: { created_at: "DESC", id: "DESC" },
-      select: ["id", "reservation_id", "property_id", "overall_rating", "public_review", "created_at", "publication_status"] });
+    const visibleWhere = (Array.isArray(where) ? where : [where]).map((filter) => ({
+      ...filter, status: filter.status ?? Not("REJECTED"),
+    }));
+    const reviews = await dataSource.getRepository(Review).find({
+      where: Array.isArray(where) ? visibleWhere : visibleWhere[0], order: { created_at: "DESC", id: "DESC" },
+      select: REVIEW_FIELDS });
+    return this.attachPublicDetails(dataSource, reviews);
   }
 
-  async deleteOwnReview(id, guest_id) {
+  async deleteOwnReview(id, reviewerUserId, now) {
     const dataSource = await Database.getInstance();
-    return dataSource.getRepository(Review).delete({ id, guest_id });
+    // Preserve ratings, responses, feedback and audit records, as in the established workflow.
+    return dataSource.getRepository(Review).update({ id, reviewer_user_id: reviewerUserId }, {
+      status: "REJECTED", publication_status: "REJECTED", updated_at: now,
+    });
   }
 
-  async create(record) {
+  async create(record, categoryRatings = {}) {
     const dataSource = await Database.getInstance();
+    return dataSource.transaction(async (manager) => {
+      const review = await manager.getRepository(Review).save(record);
+      const ratings = Object.entries(categoryRatings).map(([category, rating]) => ({
+        id: randomUUID(), reviewId: record.id, category, rating, createdAt: record.created_at,
+      }));
+      if (ratings.length) await manager.getRepository(Review_Rating).save(ratings);
+      // Drafts leave their review request open and do not claim verified-stay evidence.
+      await manager.getRepository(Review_Request).createQueryBuilder().insert().values({
+        id: randomUUID(), bookingId: record.booking_id, propertyId: record.property_id,
+        hostId: record.host_id, guestId: record.reviewer_user_id, reviewType: record.review_type,
+        status: "OPEN", requestedAt: record.created_at,
+        expiresAt: record.created_at + 30 * 24 * 60 * 60 * 1000,
+        completedAt: null, createdAt: record.created_at, updatedAt: record.updated_at,
+      }).orIgnore().execute();
+      return review;
+    });
+  }
 
-    return await dataSource
-      .getRepository(Review)
-      .save(record);
+  async attachPublicDetails(dataSource, reviews) {
+    if (!reviews.length) return reviews;
+    const reviewIds = reviews.map((review) => review.id);
+    const [ratings, responses] = await Promise.all([
+      dataSource.getRepository(Review_Rating).find({ where: { reviewId: In(reviewIds) } }),
+      dataSource.getRepository(Review_Response).find({
+        where: { reviewId: In(reviewIds), status: "published", deletedAt: IsNull() },
+      }),
+    ]);
+    return reviews.map((review) => ({ ...review,
+      categoryRatings: Object.fromEntries(ratings.filter((rating) => rating.reviewId === review.id)
+        .map((rating) => [rating.category, Number(rating.rating)])),
+      response: responses.find((response) => response.reviewId === review.id) || null,
+    }));
+  }
+
+  async findPublicPropertyReviews(propertyId, { sort = "recent", verifiedOnly = false, category = null } = {}) {
+    const reviews = await this.findReviews({ property_id: propertyId, review_type: "GUEST_TO_PROPERTY",
+      status: "PUBLISHED", publication_status: "PUBLISHED" });
+    const filtered = reviews.filter((review) => (!verifiedOnly || review.verification_status === "VERIFIED_STAY") &&
+      (!category || review.categoryRatings?.[category] !== undefined));
+    filtered.sort((a, b) => {
+      const ratingOrder = sort === "highest" ? Number(b.overall_rating) - Number(a.overall_rating)
+        : sort === "lowest" ? Number(a.overall_rating) - Number(b.overall_rating) : 0;
+      return ratingOrder || Number(b.created_at) - Number(a.created_at) || b.id.localeCompare(a.id);
+    });
+    const categories = {};
+    for (const review of filtered) {
+      for (const [key, rating] of Object.entries(review.categoryRatings || {})) {
+        (categories[key] ||= []).push(rating);
+      }
+    }
+    return { reviews: filtered.map(toPublicReview), totalReviews: filtered.length,
+      overallRating: average(filtered.map((review) => review.overall_rating)),
+      categoryRatings: Object.fromEntries(Object.entries(categories).map(([key, ratings]) => [key, average(ratings)])),
+    };
   }
 }

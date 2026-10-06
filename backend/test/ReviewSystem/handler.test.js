@@ -1,5 +1,6 @@
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
   Controller: jest.fn(() => ({
+    getPublicPropertyReviews: jest.fn(async () => ({ statusCode: 200 })),
     createReview: jest.fn(async () => ({ statusCode: 201 })),
     getPublicReviews: jest.fn(async () => ({ statusCode: 200 })),
     manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "DELETE" ? 204 : 200 })),

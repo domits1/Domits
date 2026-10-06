@@ -25,7 +25,7 @@ describe("category aggregation repository", () => {
   test("builds property-scoped eligible category aggregation with owner authorization", async () => {
     await new ReviewRepository().getPropertyCategoryRatings("p1", "host-1");
     const [sql, parameters] = query.getQueryAndParameters();
-    expect(sql).toContain('"main"."review_category_rating"');
+    expect(sql).toContain('"main"."review_rating"');
     expect(sql).toContain('"review"."id" = "rating"."review_id"');
     expect(sql).toMatch(/"review"\."property_id" = \$\d+/);
     expect(sql).toMatch(/"property"\."hostid" = \$\d+/);
@@ -34,12 +34,16 @@ describe("category aggregation repository", () => {
     expect(sql).toMatch(/"review"\."publication_status" = \$\d+/);
     expect(sql).toMatch(/"rating"\."rating" BETWEEN \$\d+ AND \$\d+/);
     expect(sql).toContain('"rating"."rating" * 2 = FLOOR("rating"."rating" * 2)');
+    expect(sql).toMatch(/"review"\."status" = \$\d+/);
+    expect(sql).toMatch(/"review"\."review_type" = \$\d+/);
+    expect(sql).toMatch(/"category"\."review_type" = \$\d+/);
+    expect(sql).toMatch(/"category"\."is_active" = \$\d+/);
     expect(sql).toContain('AVG("rating"."rating")');
     expect(sql).toContain('COUNT(*)');
-    expect(sql).toContain('GROUP BY "rating"."category_key"');
+    expect(sql).toContain('GROUP BY "rating"."category"');
     expect(query.getParameters()).toEqual({ propertyId: "p1", hostId: "host-1",
-      verified: "verified", published: "published", minimum: 1, maximum: 5, active: true });
-    expect(parameters).toEqual(expect.arrayContaining(["p1", "host-1", "verified", "published", 1, 5, true]));
+      verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", minimum: 1, maximum: 5, active: true });
+    expect(parameters).toEqual(expect.arrayContaining(["p1", "host-1", "VERIFIED", "PUBLISHED", "GUEST_TO_PROPERTY", 1, 5, true]));
   });
   test("preserves missing categories and converts aggregate numeric strings", async () => {
     const result = await new ReviewRepository().getPropertyCategoryRatings("p1", "host-1");

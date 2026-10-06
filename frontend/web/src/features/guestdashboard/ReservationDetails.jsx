@@ -20,6 +20,7 @@ import {
   getArrivalDate,
   getBookingCreatedAt,
   getBookingId,
+  getCanonicalBookingId,
   getBookingTotal,
   getDepartureDate,
   normalizeGuestBookingsResponse,
@@ -503,6 +504,7 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     stay: {
       bookingId,
+      reviewBookingId: getCanonicalBookingId(booking),
       bookingType: String(booking?.bookingtype ?? booking?.bookingType ?? "direct"),
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
@@ -729,14 +731,14 @@ function ReservationDetails() {
   };
 
   const handleOpenReview = () => {
-    const bookingId = reservation?.stay?.bookingId;
+    const bookingId = reservation?.stay?.reviewBookingId;
 
     if (!bookingId) {
       toast.error("This reservation is missing a booking id.");
       return;
     }
 
-    navigate(`/review?reservationId=${encodeURIComponent(bookingId)}`, {
+    navigate(`/review?bookingId=${encodeURIComponent(bookingId)}`, {
       state: {
         propertyTitle: reservation.property.title,
       },

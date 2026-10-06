@@ -1,3 +1,5 @@
+import { DataSource } from "typeorm";
+import { Review } from "database/models/Review";
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
 import { Property } from "database/models/Property";
@@ -12,7 +14,7 @@ describe("public review retrieval", () => {
     property = { id: "p1" };
     summary = { score: "4", count: "11" };
     reviews = [{ id: "r1", overall_rating: 4, public_review: "Good stay", created_at: 1000,
-      private_feedback: "secret", guest_id: "private" }];
+      private_feedback: "secret", reviewer_user_id: "private" }];
     query = { getRawOne: jest.fn(async () => summary), getMany: jest.fn(async () => reviews),
       getRawMany: jest.fn(async () => [{ review_id: "r1", key: "comfort", label: "Comfort", rating: "4.5" }]) };
     for (const method of ["where", "andWhere", "innerJoin", "select", "addSelect", "orderBy", "addOrderBy", "offset", "limit"]) {
@@ -29,11 +31,13 @@ describe("public review retrieval", () => {
       next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true,
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
-    expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "published" });
-    expect(query.andWhere).toHaveBeenCalledWith("review.verification_status = :verificationStatus", { verificationStatus: "verified" });
+    expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" });
+    expect(query.andWhere).toHaveBeenCalledWith("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" });
     expect(query.select).toHaveBeenCalledWith(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
     expect(query.orderBy).toHaveBeenCalledWith("review.created_at", "DESC");
     expect(query.limit).toHaveBeenCalledWith(10);
+    expect(query.andWhere).toHaveBeenCalledWith("review.status = :status", { status: "PUBLISHED" });
+    expect(query.andWhere).toHaveBeenCalledWith("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
   });
   test.each(["-1", "1.5", "", "100001", [], {}])("rejects invalid offset %j", async (offset) => {
     expect((await controller.getPublicReviews(request({ offset }))).statusCode).toBe(400);
@@ -54,4 +58,20 @@ describe("public review retrieval", () => {
     expect((await controller.getPublicReviews(request())).statusCode).toBe(404);
     expect(query.getMany).not.toHaveBeenCalled();
   });
+});
+
+
+test("keeps review publication and property visibility parameters independent in generated SQL", async () => {
+  const database = new DataSource({ type: "postgres", schema: "main", entities: [Property, Review] });
+  await database.buildMetadatas();
+  const query = database.getRepository(Review).createQueryBuilder("review");
+  jest.spyOn(query, "getRawOne").mockResolvedValue({ score: null, count: "0" });
+  jest.spyOn(query, "getMany").mockResolvedValue([]);
+  jest.spyOn(database, "getRepository").mockImplementation((entity) => entity === Property
+    ? { findOne: async () => ({ id: "p1" }) } : { createQueryBuilder: () => query });
+  Database.getInstance.mockResolvedValue(database);
+  await new ReviewRepository().getPublicReviewPage("p1", 0);
+  expect(query.getParameters()).toMatchObject({ status: "PUBLISHED", propertyStatus: "ACTIVE",
+    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+  expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));
 });

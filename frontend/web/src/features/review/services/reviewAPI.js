@@ -27,7 +27,6 @@ export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }
     body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview, updated_at: updatedAt }),
   }));
 
-
 const parseResponse = async (response) => {
   const text = await response.text().catch(() => "");
   if (!text) return null;
@@ -56,7 +55,7 @@ export const requestReview = async (method = "GET", query = {}) => {
   });
 };
 
-export const createReview = async ({ reservationId, rating, publicReview, privateFeedback }) => {
+export const createReview = async ({ bookingId, rating, title, publicReview, privateFeedback }) => {
   const response = await fetch(`${API_REVIEW_BASE}/reviews`, {
     method: "POST",
     headers: {
@@ -64,8 +63,9 @@ export const createReview = async ({ reservationId, rating, publicReview, privat
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      reservation_id: reservationId,
+      booking_id: bookingId,
       overall_rating: Number(rating),
+      title,
       public_review: publicReview,
       private_feedback: privateFeedback,
     }),
