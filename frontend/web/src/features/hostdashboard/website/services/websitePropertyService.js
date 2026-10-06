@@ -300,9 +300,36 @@ const mergeWebsiteCalendarAvailability = (
   };
 };
 
-export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null) => {
+const buildWebsiteHostProfileFromPublicHost = (host) => {
+  const phoneNumber = String(host?.whatsapp?.phoneNumber || "").trim();
+  const phoneNumberDigits =
+    String(host?.whatsapp?.phoneNumberDigits || "").trim() || phoneNumber.replaceAll(/\D+/g, "");
+  const isAvailable = host?.whatsapp?.isAvailable === true && Boolean(phoneNumberDigits);
+
+  return {
+    ...getEmptyUserProfile(null),
+    givenName: String(host?.displayName || "").trim() || null,
+    profileImage: String(host?.profileImage || "").trim() || null,
+    whatsapp: {
+      ...getEmptyWebsiteHostWhatsApp(),
+      connected: isAvailable,
+      phoneNumber: isAvailable ? phoneNumber : "",
+      phoneNumberDigits: isAvailable ? phoneNumberDigits : "",
+      isAvailable,
+    },
+  };
+};
+
+export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null, { host = null } = {}) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
+  if (host && typeof host === "object") {
+    return {
+      ...normalizedPropertyDetails,
+      hostProfile: buildWebsiteHostProfileFromPublicHost(host),
+    };
+  }
+
   const hostId = resolveWebsiteHostId(normalizedPropertyDetails, summaryProperty);
   const hostProfilePromise =
     normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object"
@@ -344,7 +371,7 @@ const fetchWebsiteCalendarOverrides = async (propertyId, accessToken) => {
     .catch(() => null);
 };
 
-export const enrichWebsitePropertyDetails = async (propertyDetails, summaryProperty = null) => {
+export const enrichWebsitePropertyDetails = async (propertyDetails, summaryProperty = null, { host = null } = {}) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
   const normalizedPropertyId = resolveWebsitePropertyId(normalizedPropertyDetails, summaryProperty);
@@ -366,7 +393,7 @@ export const enrichWebsitePropertyDetails = async (propertyDetails, summaryPrope
     );
   } catch {}
 
-  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty);
+  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { host });
 };
 
 export const fetchWebsitePropertyDetails = async (propertyId) => {
