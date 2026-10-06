@@ -26,12 +26,13 @@ const dryRun = async (repository, batchSize) => {
       const location = await repository.getLocationForMapping(propertyId);
       const chain = location ? resolveDestinationChain(location) : { unresolved: "no_location" };
       total += 1;
-      if (chain.unresolved) {
+      if (!chain.country) {
         unresolved += 1;
         console.log(`would leave unmapped ${propertyId}: ${chain.unresolved}`);
         continue;
       }
-      counts.set(chain.city.path, (counts.get(chain.city.path) || 0) + 1);
+      const path = (chain.city || chain.country).path;
+      counts.set(path, (counts.get(path) || 0) + 1);
     }
     after = ids[ids.length - 1];
     if (ids.length < batchSize) break;

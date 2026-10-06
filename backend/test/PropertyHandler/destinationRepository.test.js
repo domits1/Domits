@@ -114,6 +114,30 @@ describe("the destination repository", () => {
     ]);
   });
 
+  it("maps a property without a resolvable city to its country row and writes no city row", async () => {
+    const client = buildClient();
+    const countryOnly = resolveDestinationChain({ country: "Spain", city: " - " });
+
+    const written = await new DestinationRepository().syncPropertyDestination("property-1", countryOnly, {
+      sourceCountry: "Spain",
+      sourceCity: " - ",
+      now: 1700,
+    });
+
+    expect(written).toBe(true);
+    const upserts = client.statements.filter(({ statement }) =>
+      statement.includes(`INSERT INTO ${SCHEMA}.destination `)
+    );
+    expect(upserts.map(({ parameters }) => parameters[0])).toEqual([
+      "/destinations/europe",
+      "/destinations/europe/spain",
+    ]);
+    const mapping = client.statements.find(({ statement }) =>
+      statement.includes(`INSERT INTO ${SCHEMA}.property_destination`)
+    );
+    expect(mapping.parameters).toEqual(["property-1", "/destinations/europe/spain", 1700, "Spain", " - "]);
+  });
+
   it("answers false, without failing, when the location changed between the read and the write", async () => {
     const client = buildClient({ mappingRecords: [] });
 
@@ -139,9 +163,6 @@ describe("the destination repository", () => {
     await expect(
       repository.syncPropertyDestination("property-1", unresolved, { sourceCountry: "Narnia", sourceCity: "x" })
     ).rejects.toThrow("A resolved destination chain is required.");
-    await expect(
-      repository.syncPropertyDestination("property-1", CHAIN, { sourceCountry: "Spain", sourceCity: " " })
-    ).rejects.toThrow("The source city is required.");
     expect(client.transaction).toHaveBeenCalledTimes(1);
   });
 
