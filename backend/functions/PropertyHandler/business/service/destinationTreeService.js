@@ -14,22 +14,27 @@ export const buildDestinationTree = (destinations, settings = readDestinationSet
   }
 
   const eligible = new Map();
+  const deciding = new Set();
   const decide = (destination) => {
     if (eligible.has(destination.id)) {
       return eligible.get(destination.id);
     }
+    if (deciding.has(destination.id)) {
+      throw new Error(`The destination tree has a cycle at ${destination.path}.`);
+    }
+    deciding.add(destination.id);
     const eligibleChildren = destination.children.filter(decide).length;
-    const totalListings =
+    destination.totalListings =
       destination.children.reduce((sum, child) => sum + child.totalListings, 0) + destination.activeListings;
-    destination.totalListings = totalListings;
-    const decision = isDestinationEligible({ activeListings: totalListings, eligibleChildren }, settings);
+    const decision = isDestinationEligible(
+      { activeListings: destination.totalListings, directListings: destination.activeListings, eligibleChildren },
+      settings
+    );
     eligible.set(destination.id, decision);
+    deciding.delete(destination.id);
     return decision;
   };
   for (const destination of byId.values()) {
-    destination.totalListings = destination.activeListings;
-  }
-  for (const destination of [...byId.values()].sort((left, right) => right.path.length - left.path.length)) {
     decide(destination);
   }
 
@@ -86,6 +91,7 @@ export class DestinationTreeService {
         .map((child) => ({ name: child.name, path: child.path, activeListings: child.totalListings })),
       listings,
       activeListings: destination.totalListings,
+      directListings: destination.activeListings,
       siteOrigin,
       settings: this.settings,
     });

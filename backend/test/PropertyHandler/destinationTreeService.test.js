@@ -71,6 +71,31 @@ describe("the destination tree", () => {
     expect(byPath["/destinations/europe/spain"].eligible).toBe(true);
   });
 
+  it("lets a country exist only through the listings mapped to the country itself when the parent setting is off", () => {
+    const settings = readDestinationSettings({
+      DESTINATION_MIN_ACTIVE_LISTINGS: "2",
+      DESTINATION_PARENT_FROM_ANY_CHILD: "false",
+    });
+    const rows = ROWS.map((candidate) =>
+      candidate.path === "/destinations/europe/portugal" ? { ...candidate, activeListings: 2 } : candidate
+    );
+    const tree = buildDestinationTree(rows, settings);
+    const byPath = Object.fromEntries(tree.map((destination) => [destination.path, destination]));
+
+    expect(byPath["/destinations/europe/spain/marbella"].eligible).toBe(true);
+    expect(byPath["/destinations/europe/spain"].eligible).toBe(false);
+    expect(byPath["/destinations/europe/portugal"].eligible).toBe(true);
+    expect(byPath["/destinations/europe"].eligible).toBe(false);
+  });
+
+  it("refuses a tree with a cycle instead of running out of stack", () => {
+    const loop = [
+      row("/destinations/a", "continent", "/destinations/a/b", "A"),
+      row("/destinations/a/b", "country", "/destinations/a", "B", 1),
+    ];
+    expect(() => buildDestinationTree(loop, readDestinationSettings({}))).toThrow("has a cycle at");
+  });
+
   it("lists only the destinations that have a page", async () => {
     const { service } = buildService();
     expect((await service.listEligibleDestinations()).map((destination) => destination.path)).toEqual([

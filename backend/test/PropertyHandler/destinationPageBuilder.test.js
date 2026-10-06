@@ -29,7 +29,7 @@ describe("the destination page", () => {
     expect(page.title).toBe("Holiday rentals in Marbella | Domits");
     expect(page.canonical).toBe("https://www.domits.com/destinations/europe/spain/marbella");
     expect(page.description).toBe("Book 1 holiday rental in Marbella directly with the host on Domits.");
-    expect(page.cacheControl).toBe("public, max-age=300");
+    expect(page.cacheControl).toBe("public, max-age=60");
     expect(page.html).toContain(
       '<link rel="canonical" href="https://www.domits.com/destinations/europe/spain/marbella">'
     );
@@ -112,8 +112,9 @@ describe("the destination page", () => {
     expect(() =>
       buildDestinationPage({
         destination: { type: "country", name: "Spain", path: "/destinations/europe/spain" },
-        children: [{ name: "Marbella", path: "/destinations/europe/spain/marbella", activeListings: 1 }],
-        activeListings: 1,
+        children: [{ name: "Marbella", path: "/destinations/europe/spain/marbella", activeListings: 3 }],
+        activeListings: 3,
+        directListings: 0,
         settings: readDestinationSettings({
           DESTINATION_MIN_ACTIVE_LISTINGS: "2",
           DESTINATION_PARENT_FROM_ANY_CHILD: "false",

@@ -2,9 +2,9 @@ export class Destination20261007 {
   async up(queryRunner) {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS main.destination (
-        id VARCHAR(255) PRIMARY KEY,
+        id VARCHAR(1024) PRIMARY KEY,
         type VARCHAR(20) NOT NULL,
-        parent_id VARCHAR(255) NULL,
+        parent_id VARCHAR(1024) NULL,
         slug VARCHAR(255) NOT NULL,
         path VARCHAR(1024) NOT NULL,
         display_name VARCHAR(255) NOT NULL,
@@ -17,7 +17,7 @@ export class Destination20261007 {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS main.property_destination (
         property_id VARCHAR(255) PRIMARY KEY,
-        destination_id VARCHAR(255) NOT NULL,
+        destination_id VARCHAR(1024) NOT NULL,
         source_country VARCHAR(255) NOT NULL,
         source_city VARCHAR(255) NOT NULL,
         created_at BIGINT NOT NULL,
