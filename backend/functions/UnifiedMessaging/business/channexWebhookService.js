@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto";
+
 import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import IntegrationPropertyRepository from "../.shared/integrations/repositories/integrationPropertyRepository.js";
 import IngestionService from "./ingestionService.js";
@@ -37,13 +39,26 @@ export default class ChannexWebhookService {
 
   isSecretValid(event) {
     const expectedSecret = process.env.CHANNEX_WEBHOOK_SECRET || "";
-    const providedSecret = getSecretHeader(event);
-    return !!expectedSecret && providedSecret === expectedSecret;
+    const providedSecret = getSecretHeader(event) || "";
+
+    if (!expectedSecret || !providedSecret) {
+      return false;
+    }
+
+    const expectedBuffer = Buffer.from(expectedSecret);
+    const providedBuffer = Buffer.from(providedSecret);
+
+    if (expectedBuffer.length !== providedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(providedBuffer, expectedBuffer);
   }
 
   async resolveContext(payload) {
     const mappings = await this.properties.findByExternalPropertyId(payload?.property_id);
     if (!Array.isArray(mappings) || mappings.length === 0) {
+      console.warn("No ACTIVE Channex property mapping found", payload?.property_id);
       return null;
     }
 
@@ -80,7 +95,15 @@ export default class ChannexWebhookService {
       return forbidden();
     }
 
-    const webhookEvent = safeJson(event?.body) || {};
+    const webhookEvent = safeJson(event?.body);
+    if (!webhookEvent) {
+      return { statusCode: 400, response: { error: "Invalid JSON body" } };
+    }
+
+    if (webhookEvent?.event !== "message") {
+      return ok({ ok: true, ingested: false, reason: "EVENT_IGNORED" });
+    }
+
     const context = await this.resolveContext(webhookEvent?.payload);
     if (!context) {
       return ok({ ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" });

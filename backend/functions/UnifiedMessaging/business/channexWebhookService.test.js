@@ -31,14 +31,14 @@ const baseChannexWebhookEvent = (overrides = {}) => {
   };
 };
 
-const buildLambdaEvent = ({ secret = VALID_SECRET, body, headers = {} } = {}) => ({
+const buildLambdaEvent = ({ secret = VALID_SECRET, body, rawBody, headers = {} } = {}) => ({
   httpMethod: "POST",
   path: "/default/webhooks/channex",
   headers: {
     ...(secret !== null ? { [SECRET_HEADER]: secret } : {}),
     ...headers,
   },
-  body: JSON.stringify(body ?? baseChannexWebhookEvent()),
+  body: rawBody !== undefined ? rawBody : JSON.stringify(body ?? baseChannexWebhookEvent()),
 });
 
 const propertyMapping = {
@@ -152,6 +152,48 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
   });
 
+  test("wrong secret with the same length as the valid secret still returns 403 (exercises timingSafeEqual itself, not just the length guard)", async () => {
+    const { service, deps } = buildService();
+    const sameLengthWrongSecret = "x".repeat(VALID_SECRET.length);
+
+    const result = await service.handleWebhookEvent(buildLambdaEvent({ secret: sameLengthWrongSecret }));
+
+    expect(result).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
+    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
+    expect(deps.accounts.getById).not.toHaveBeenCalled();
+    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+  });
+
+  test("a body that is not valid JSON returns 400, matching the WhatsApp webhook's invalid-JSON handling", async () => {
+    const { service, deps } = buildService();
+
+    const result = await service.handleWebhookEvent(buildLambdaEvent({ rawBody: "{not valid json" }));
+
+    expect(result).toEqual({ statusCode: 400, response: { error: "Invalid JSON body" } });
+    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
+    expect(deps.accounts.getById).not.toHaveBeenCalled();
+    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+  });
+
+  test("a webhook event type other than \"message\" is ignored early, with no property/account lookup or ingestion", async () => {
+    const { service, deps } = buildService();
+
+    const result = await service.handleWebhookEvent(
+      buildLambdaEvent({ body: baseChannexWebhookEvent({ event: "ota_ping" }) })
+    );
+
+    expect(result).toEqual({
+      statusCode: 200,
+      response: { ok: true, ingested: false, reason: "EVENT_IGNORED" },
+    });
+    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
+    expect(deps.accounts.getById).not.toHaveBeenCalled();
+    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+  });
+
   test("sender property echo (normalizer returns null) returns 200 and does not ingest", async () => {
     const normalizeInboundMessage = jest.fn().mockReturnValue(null);
     const { service, deps } = buildService({ normalizeInboundMessage });
@@ -167,8 +209,9 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
   });
 
-  test("no ACTIVE mapping (findByExternalPropertyId returns an empty list) returns 200 and does not resolve the account or ingest", async () => {
+  test("no ACTIVE mapping (findByExternalPropertyId returns an empty list) returns 200, logs a warning with the property id, and does not resolve the account or ingest", async () => {
     const findByExternalPropertyId = jest.fn().mockResolvedValue([]);
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     const { service, deps } = buildService({ findByExternalPropertyId });
 
     const result = await service.handleWebhookEvent(buildLambdaEvent());
@@ -180,6 +223,10 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.accounts.getById).not.toHaveBeenCalled();
     expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
     expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
+
+    warnSpy.mockRestore();
   });
 
   test("several ACTIVE mappings: the newest (first in the ordered list) is used, and a warning is logged with the property id and count", async () => {
