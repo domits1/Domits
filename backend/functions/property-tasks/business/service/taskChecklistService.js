@@ -48,19 +48,43 @@ export const createChecklistItem = async (hostId, taskId, itemData) => {
     return await taskRepository.saveChecklistItemToDb(dataSource, record);
 };
 
+const EDITABLE_CHECKLIST_ITEM_FIELDS = ["title", "is_required", "requires_evidence", "owner_team_member_id", "is_checked"];
+
 export const updateChecklistItem = async (hostId, itemId, updateData) => {
     const dataSource = await Database.getInstance();
     const item = await getOwnedChecklistItemOrThrow(dataSource, hostId, itemId);
 
-    const fieldsToUpdate = Object.fromEntries(
-        Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
-    );
-
-    if (fieldsToUpdate.title !== undefined && fieldsToUpdate.title.trim().length === 0) {
-        throw new BadRequestException("title cannot be empty");
+    const fieldsToUpdate = {};
+    for (const field of EDITABLE_CHECKLIST_ITEM_FIELDS) {
+        if (updateData[field] !== undefined) fieldsToUpdate[field] = updateData[field];
     }
 
-    if (fieldsToUpdate.owner_team_member_id && !isValidUuid(fieldsToUpdate.owner_team_member_id)) {
+    if (fieldsToUpdate.title !== undefined) {
+        if (typeof fieldsToUpdate.title !== "string") {
+            throw new BadRequestException("title must be a string");
+        }
+        if (fieldsToUpdate.title.trim().length === 0) {
+            throw new BadRequestException("title cannot be empty");
+        }
+    }
+
+    if (fieldsToUpdate.is_required !== undefined && typeof fieldsToUpdate.is_required !== "boolean") {
+        throw new BadRequestException("is_required must be a boolean");
+    }
+
+    if (fieldsToUpdate.requires_evidence !== undefined && typeof fieldsToUpdate.requires_evidence !== "boolean") {
+        throw new BadRequestException("requires_evidence must be a boolean");
+    }
+
+    if (fieldsToUpdate.is_checked !== undefined && typeof fieldsToUpdate.is_checked !== "boolean") {
+        throw new BadRequestException("is_checked must be a boolean");
+    }
+
+    if (
+        fieldsToUpdate.owner_team_member_id !== undefined &&
+        fieldsToUpdate.owner_team_member_id !== null &&
+        !isValidUuid(fieldsToUpdate.owner_team_member_id)
+    ) {
         throw new BadRequestException("owner_team_member_id must be a valid UUID");
     }
 

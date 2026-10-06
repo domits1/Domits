@@ -151,6 +151,31 @@ describe("taskChecklistService", () => {
                 expect(fields).not.toHaveProperty("checked_at");
                 expect(fields).not.toHaveProperty("checked_by");
             });
+
+            it("drops fields that are not on the editable whitelist", async () => {
+                await updateChecklistItem("host-1", "item-1", {
+                    title: "Strip beds",
+                    task_id: "someone-elses-task",
+                    created_at: 1,
+                    checked_by: "attacker",
+                    checked_at: 1,
+                    id: "different-id",
+                });
+
+                const [, , fields] = mockUpdateChecklistItemInDb.mock.calls[0];
+                expect(fields).toEqual({ title: "Strip beds", updated_at: expect.any(Number) });
+            });
+
+            it("rejects a non-string title", async () => {
+                await expect(updateChecklistItem("host-1", "item-1", { title: 123 })).rejects.toThrow(/title must be a string/);
+            });
+
+            it.each(["is_required", "requires_evidence", "is_checked"])(
+                "rejects a non-boolean %s",
+                async (field) => {
+                    await expect(updateChecklistItem("host-1", "item-1", { [field]: "yes" })).rejects.toThrow(new RegExp(`${field} must be a boolean`));
+                }
+            );
         });
     });
 
