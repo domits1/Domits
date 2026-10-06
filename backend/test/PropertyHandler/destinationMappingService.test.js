@@ -8,6 +8,7 @@ const MARBELLA = { propertyId: "property-1", country: "Spain", city: "Marbella" 
 
 const buildService = ({
   written = true,
+  current = true,
   locations = { "property-1": MARBELLA },
   needing = [[]],
   failures = {},
@@ -18,7 +19,7 @@ const buildService = ({
       if (failures.sync) throw new Error(failures.sync);
       return written;
     }),
-    removePropertyDestination: jest.fn(async () => true),
+    removePropertyDestination: jest.fn(async () => ({ removed: true, current })),
     getLocationForMapping: jest.fn(async (propertyId) => {
       if (failures.location === propertyId) throw new Error("connection refused");
       return locations[propertyId] === undefined ? null : locations[propertyId];
@@ -67,6 +68,12 @@ describe("mapping a property to its destination", () => {
       sourceCity: "Cair Paravel",
     });
     expect(repository.syncPropertyDestination).not.toHaveBeenCalled();
+
+    const moved = buildService({ current: false, locations: { "property-1": { ...MARBELLA, country: "Narnia" } } });
+    expect(await moved.service.mapPropertyLocation("property-1")).toMatchObject({
+      outcome: "stale",
+      reason: "location_changed",
+    });
   });
 
   it("maps a property whose city cannot be resolved to its country, and says so", async () => {
@@ -166,7 +173,7 @@ describe("the destination backfill", () => {
     });
   });
 
-  it("clamps the batch size to what the repository returns at most, so a short batch really means the end", async () => {
+  it("clamps the batch size to what the repository returns at most, and asks nothing more when the first batch is empty", async () => {
     const { service, repository } = buildService({ needing: [["p1"]], locations: { p1: MARBELLA } });
 
     expect(await service.backfill({ batchSize: 1000 })).toMatchObject({ mapped: 1, complete: true });
@@ -174,6 +181,16 @@ describe("the destination backfill", () => {
     expect([clampBatchSize(0), clampBatchSize("x"), clampBatchSize(7), clampBatchSize(1000)]).toEqual([
       100, 100, 7, 500,
     ]);
+
+    const empty = buildService({ needing: [[]] });
+    expect(await empty.service.backfill()).toMatchObject({
+      mapped: 0,
+      batches: 0,
+      complete: true,
+      cursor: "",
+      failures: [],
+    });
+    expect(empty.repository.getLocationForMapping).not.toHaveBeenCalled();
   });
 
   it("stops at the batch limit, says the run is not complete, and hands out the cursor a rerun continues from", async () => {
@@ -191,21 +208,5 @@ describe("the destination backfill", () => {
     const rerun = buildService({ needing: [["p3"]], locations: { p3: location } });
     expect(await rerun.service.backfill({ batchSize: 1, after: "p2" })).toMatchObject({ mapped: 1, complete: true });
     expect(rerun.repository.listPropertyIdsNeedingMapping.mock.calls[0][0]).toEqual({ after: "p2", limit: 1 });
-  });
-
-  it("does nothing on a rerun when every mapping is current", async () => {
-    const { service, repository } = buildService({ needing: [[]] });
-
-    expect(await service.backfill()).toEqual({
-      mapped: 0,
-      unresolved: 0,
-      stale: 0,
-      failed: 0,
-      batches: 0,
-      complete: true,
-      cursor: "",
-      failures: [],
-    });
-    expect(repository.getLocationForMapping).not.toHaveBeenCalled();
   });
 });

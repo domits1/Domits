@@ -145,8 +145,19 @@ export class DestinationRepository {
       RETURNING property_id`,
       [normalizedPropertyId, String(sourceCountry ?? ""), String(sourceCity ?? "")]
     );
+    if (records.length > 0) {
+      return { removed: true, current: true };
+    }
 
-    return records.length > 0;
+    const rows = await client.query(
+      `SELECT 1
+      FROM ${locationTableName(schemaName)}
+      WHERE property_id = $1
+        AND country = $2
+        AND city = $3`,
+      [normalizedPropertyId, String(sourceCountry ?? ""), String(sourceCity ?? "")]
+    );
+    return { removed: false, current: Array.isArray(rows) && rows.length > 0 };
   }
 
   async getLocationForMapping(propertyId) {
