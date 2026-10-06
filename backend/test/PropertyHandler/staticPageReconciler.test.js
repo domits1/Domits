@@ -133,6 +133,10 @@ describe("StaticPageReconciler", () => {
 
     expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-2", { evenWhileBusy: true });
     expect(summary).toMatchObject({ removed: 1, queued: 1 });
+
+    domainRepository.getDomainWithSiteByName.mockResolvedValueOnce(null).mockResolvedValueOnce(republished);
+    siteRepository.queueStaticPage.mockRejectedValueOnce(Object.assign(new Error("conflict"), { code: "40001" }));
+    expect((await reconciler.run()).errors).toEqual([{ siteId: "site-2", message: "conflict" }]);
   });
 
   it("queues a published site whose page is missing once however many domains it has, also when its row says active or withdrawn", async () => {
