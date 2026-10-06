@@ -106,7 +106,20 @@ const buildController = ({ site = SITE, domain = STORED_DOMAIN, domains = [domai
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
   controller.propertyService = { getPublicCalendarAvailability: jest.fn().mockResolvedValue([]) };
+  controller.websitePublicHostService = { loadPublicHost: jest.fn().mockResolvedValue(PUBLIC_HOST) };
   return controller;
+};
+
+const PUBLIC_HOST = {
+  displayName: "Karim",
+  profileImage: "https://cdn.example/karim.jpg",
+  whatsapp: { isAvailable: true, phoneNumber: "+31 6 1234 5678", phoneNumberDigits: "31612345678" },
+};
+
+const EMPTY_PUBLIC_HOST = {
+  displayName: "",
+  profileImage: "",
+  whatsapp: { isAvailable: false, phoneNumber: "", phoneNumberDigits: "" },
 };
 
 const buildEvent = (query) => ({
@@ -131,8 +144,12 @@ const expectPublicRenderResponse = (response, domain, requestedDomain = domain) 
   expect(body.resolution).toEqual(buildPublicResolution(domain));
   expect(body.domain).toEqual(requestedDomain);
   expect(body.renderSource).toBe("published_site");
-  expect(body.propertySnapshot).toEqual({ ...SITE.publishedPropertySnapshot, calendarAvailability: [] });
-  expectNoPrivateMarker(JSON.stringify({ ...body, propertySnapshot: undefined }));
+  expect(body.host).toEqual(PUBLIC_HOST);
+  expect(body.propertySnapshot).toEqual({
+    property: { id: SITE.propertyId, title: SITE.publishedPropertySnapshot.property.title },
+    calendarAvailability: [],
+  });
+  expectNoPrivateMarker(JSON.stringify(body));
 };
 
 describe("the public website render response", () => {
@@ -162,6 +179,32 @@ describe("the public website render response", () => {
 
     expectPublicRenderResponse(response, PUBLIC_DOMAIN);
     expect(controller.resolveOrCreatePrimaryLiveDomain).toHaveBeenCalledWith(SITE);
+  });
+
+  it("asks the host block for the site's own host and never for an id from the request", async () => {
+    const controller = buildController();
+
+    await controller.getPublicWebsiteRenderModel(
+      buildEvent({ domain: STORED_DOMAIN.domain, hostId: "host-from-request" })
+    );
+
+    expect(controller.websitePublicHostService.loadPublicHost).toHaveBeenCalledTimes(1);
+    expect(controller.websitePublicHostService.loadPublicHost).toHaveBeenCalledWith(SITE.hostId);
+  });
+
+  it("still renders, with an empty host block, when the host lookup throws", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    const controller = buildController();
+    controller.websitePublicHostService.loadPublicHost.mockRejectedValue(new Error("Cognito is down"));
+
+    const response = await controller.getPublicWebsiteRenderModel(buildEvent({ domain: STORED_DOMAIN.domain }));
+
+    expect(response.statusCode).toBe(200);
+    const body = parseBody(response);
+    expect(body.host).toEqual(EMPTY_PUBLIC_HOST);
+    expect(body.site).toEqual(PUBLIC_SITE);
+    expectNoPrivateMarker(JSON.stringify(body));
+    consoleError.mockRestore();
   });
 
   it("sends the runtime status of a fallback domain in the resolution and the stored one in the requested row", async () => {

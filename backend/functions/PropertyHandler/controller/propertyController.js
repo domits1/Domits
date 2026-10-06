@@ -25,6 +25,8 @@ import {
 } from "../util/exception/WebsiteCustomDomainError.js";
 import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
+import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
+import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -1697,7 +1699,7 @@ export class PropertyController {
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined, primaryDomain = null) {
+    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined, primaryDomain = null, host = null) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
@@ -1708,10 +1710,12 @@ export class PropertyController {
             site: toPublicWebsiteSiteView(site),
             domain: toPublicWebsiteDomainView(domain),
             primaryDomain,
-            propertySnapshot:
+            host: host || buildEmptyPublicWebsiteHost(),
+            propertySnapshot: toPublicWebsitePropertySnapshotView(
                 propertySnapshot && typeof propertySnapshot === "object"
                     ? propertySnapshot
-                    : site.publishedPropertySnapshot || {},
+                    : site.publishedPropertySnapshot || {}
+            ),
             contentOverrides: site.publishedContentOverrides || {},
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
@@ -2947,9 +2951,10 @@ export class PropertyController {
                 },
             });
 
-            const [propertySnapshot, primaryDomain] = await Promise.all([
+            const [propertySnapshot, primaryDomain, host] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
                 this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
+                this.loadPublicWebsiteHostSafely(resolutionResult.site),
             ]);
 
             return {
@@ -2959,7 +2964,8 @@ export class PropertyController {
                     resolutionResult.site,
                     resolutionResult.domain,
                     propertySnapshot,
-                    primaryDomain
+                    primaryDomain,
+                    host
                 )),
             };
         } catch (error) {
@@ -3231,6 +3237,20 @@ export class PropertyController {
                 throw error;
             }
             console.error("Website custom domain refresh failed; returning the stored status.", error);
+        }
+    }
+
+    getWebsitePublicHostService() {
+        this.websitePublicHostService ??= new WebsitePublicHostService();
+        return this.websitePublicHostService;
+    }
+
+    async loadPublicWebsiteHostSafely(site) {
+        try {
+            return await this.getWebsitePublicHostService().loadPublicHost(site?.hostId);
+        } catch (error) {
+            console.error(`[WebsitePublicHost] the host block could not be built for site ${site?.id}.`, error);
+            return buildEmptyPublicWebsiteHost();
         }
     }
 
