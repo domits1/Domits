@@ -679,7 +679,7 @@ export class PropertyService {
     if (!result) {
       throw new DatabaseException(`Failed to register property location.`);
     }
-    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id, location);
+    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id);
   }
 
   async updateLocation(propertyId, location) {
@@ -687,7 +687,7 @@ export class PropertyService {
     if (!result) {
       throw new DatabaseException("Failed to update property location.");
     }
-    await this.destinationMappingService.mapPropertyLocationSafely(propertyId, result);
+    await this.destinationMappingService.mapPropertyLocationSafely(propertyId);
   }
 
   async getLocation(property) {
