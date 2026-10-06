@@ -179,17 +179,32 @@ describe("the destination repository", () => {
     expect(client.transaction).toHaveBeenCalledTimes(1);
   });
 
-  it("removes a mapping only while the location still carries the address it was judged on", async () => {
+  it("removes a mapping only while the location still carries the judged address, and says whether that address is still current", async () => {
     const client = buildClient({ queryRows: [{ property_id: "property-1" }] });
     const source = { sourceCountry: "Narnia", sourceCity: "Cair Paravel" };
-    expect(await new DestinationRepository().removePropertyDestination("property-1", source)).toBe(true);
+    expect(await new DestinationRepository().removePropertyDestination("property-1", source)).toEqual({
+      removed: true,
+      current: true,
+    });
     expect(client.statements[0].statement).toContain(`DELETE FROM ${SCHEMA}.property_destination m`);
     expect(client.statements[0].statement).toContain(`FROM ${SCHEMA}.property_location l`);
     expect(client.statements[0].statement).toContain("AND l.country = $2\n            AND l.city = $3");
     expect(client.statements[0].parameters).toEqual(["property-1", "Narnia", "Cair Paravel"]);
 
-    buildClient({ queryRows: [] });
-    expect(await new DestinationRepository().removePropertyDestination("property-9", source)).toBe(false);
+    const moved = buildClient({ queryRows: [] });
+    expect(await new DestinationRepository().removePropertyDestination("property-9", source)).toEqual({
+      removed: false,
+      current: false,
+    });
+    expect(moved.statements[1].statement).toContain(`FROM ${SCHEMA}.property_location`);
+    expect(moved.statements[1].parameters).toEqual(["property-9", "Narnia", "Cair Paravel"]);
+
+    const unmapped = buildClient({ queryRows: [] });
+    unmapped.query = jest.fn(async () => [{ "?column?": 1 }]);
+    expect(await new DestinationRepository().removePropertyDestination("property-9", source)).toEqual({
+      removed: false,
+      current: true,
+    });
   });
 
   it("reads only the country and city of a location for the mapping", async () => {
