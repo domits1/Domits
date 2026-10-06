@@ -4,6 +4,7 @@ import { LuX } from 'react-icons/lu';
 import { getTodayString } from '../utils/taskFilters';
 import { TASK_TYPE_OPTIONS } from '../utils/taskTypeOptions';
 import AttachmentThumb from './AttachmentThumb';
+import ChecklistSection from './ChecklistSection';
 
 const STATUS_OPTIONS = [
     { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
@@ -25,10 +26,14 @@ const TaskDetailsModal = ({
     editedTask,
     editPropertyOptions,
     currentUser,
+    checklistItems,
     onEditChange,
     onPropertyChange,
     onFileChange,
     onRemoveAttachment,
+    onAddChecklistItem,
+    onToggleChecklistItem,
+    onRemoveChecklistItem,
     onSave,
     onDelete,
     onClose,
@@ -181,6 +186,13 @@ const TaskDetailsModal = ({
                             </div>
                         </div>
 
+                        <ChecklistSection
+                            items={checklistItems}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                        />
+
                         <div className="activity-section">
                             <div className="activity-header">
                                 <h4>Activity</h4>
@@ -234,10 +246,19 @@ TaskDetailsModal.propTypes = {
         name: PropTypes.string,
         email: PropTypes.string,
     }).isRequired,
+    checklistItems: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        isRequired: PropTypes.bool,
+        isChecked: PropTypes.bool,
+    })).isRequired,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onRemoveAttachment: PropTypes.func.isRequired,
+    onAddChecklistItem: PropTypes.func.isRequired,
+    onToggleChecklistItem: PropTypes.func.isRequired,
+    onRemoveChecklistItem: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,

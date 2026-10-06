@@ -28,10 +28,14 @@ describe('TaskDetailsModal', () => {
         editedTask: baseTask,
         editPropertyOptions: [{ id: 'prop-1', label: 'Villa Sunshine' }],
         currentUser: { name: 'Alex Host', email: 'alex@example.com' },
+        checklistItems: [],
         onEditChange: jest.fn(),
         onPropertyChange: jest.fn(),
         onFileChange: jest.fn(),
         onRemoveAttachment: jest.fn(),
+        onAddChecklistItem: jest.fn(),
+        onToggleChecklistItem: jest.fn(),
+        onRemoveChecklistItem: jest.fn(),
         onSave: jest.fn(),
         onDelete: jest.fn(),
         onClose: jest.fn(),
@@ -99,5 +103,15 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(removeButton);
 
         expect(baseProps.onRemoveAttachment).toHaveBeenCalledWith(0);
+    });
+
+    test('renders checklist items and wires toggle/remove through to the parent', () => {
+        const item = { id: 'item-1', title: 'Strip beds', isRequired: true, isChecked: false };
+        render(<TaskDetailsModal {...baseProps} checklistItems={[item]} />);
+
+        expect(screen.getByText('Strip beds')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove Strip beds' }));
+        expect(baseProps.onRemoveChecklistItem).toHaveBeenCalledWith('item-1');
     });
 });
