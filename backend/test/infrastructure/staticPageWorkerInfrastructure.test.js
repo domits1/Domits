@@ -20,6 +20,7 @@ const PARAMETERS_THE_CODE_READS = [
 const FUNCTIONS_THE_CODE_INVOKES = ["PriceLabs-Integration", "UnifiedMessaging"].map(
   (name) => `arn:aws:lambda:eu-north-1:${ACCOUNT}:function:${name}`
 );
+const WHATSAPP_SECRETS = `arn:aws:secretsmanager:eu-north-1:${ACCOUNT}:secret:domits/whatsapp/*`;
 
 const readPolicyText = (name) => readFileSync(join(DIRECTORY, name), "utf8");
 const load = (name) => JSON.parse(readPolicyText(name));
@@ -90,6 +91,11 @@ describe("the execution role", () => {
     expect(resourcesForAction(policy, "lambda:InvokeFunction").sort()).toEqual([...FUNCTIONS_THE_CODE_INVOKES].sort());
   });
 
+  it("reads the WhatsApp number secrets and nothing else in Secrets Manager", () => {
+    expect(actions.filter((action) => action.startsWith("secretsmanager:"))).toEqual(["secretsmanager:GetSecretValue"]);
+    expect(resourcesForAction(policy, "secretsmanager:GetSecretValue")).toEqual([WHATSAPP_SECRETS]);
+  });
+
   it("grants no S3, no wildcard action, no DynamoDB write, and no scoped action on every resource", () => {
     expect(statementsWith(policy, "Deny")).toHaveLength(0);
     expect(actions.some((action) => action.startsWith("s3:"))).toBe(false);
@@ -100,7 +106,7 @@ describe("the execution role", () => {
         .some((action) => /Put|Update|Delete|Write/.test(action))
     ).toBe(false);
     const onEveryResource = actionsOf(policy.Statement.filter((statement) => asList(statement.Resource).includes("*")));
-    expect(onEveryResource.some((action) => /^(dsql|ssm|lambda):/.test(action))).toBe(false);
+    expect(onEveryResource.some((action) => /^(dsql|ssm|lambda|secretsmanager):/.test(action))).toBe(false);
     expect(onEveryResource.sort()).toEqual([
       "cognito-idp:AdminGetUser",
       "cognito-idp:GetUser",
