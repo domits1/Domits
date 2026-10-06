@@ -68,7 +68,9 @@ class IntegrationPropertyRepository {
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("p")
       .where("p.externalPropertyId = :e", { e: externalPropertyId })
-      .getOne();
+      .andWhere("p.status = :s", { s: "ACTIVE" })
+      .orderBy("p.updatedAt", "DESC")
+      .getMany();
   }
 
   async listActiveByDomitsPropertyId(domitsPropertyId) {

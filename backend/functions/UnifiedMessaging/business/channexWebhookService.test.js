@@ -45,12 +45,15 @@ const propertyMapping = {
   integrationAccountId: "integration-1",
   domitsPropertyId: "domits-property-1",
   externalPropertyId: "channex-property-1",
+  status: "ACTIVE",
+  updatedAt: 1000,
 };
 
 const integrationAccount = {
   id: "integration-1",
   userId: "host-1",
   channel: "CHANNEX",
+  status: "CONNECTED",
 };
 
 const normalizedPayload = {
@@ -71,7 +74,7 @@ const normalizedPayload = {
 };
 
 const buildService = ({
-  findByExternalPropertyId = jest.fn().mockResolvedValue(propertyMapping),
+  findByExternalPropertyId = jest.fn().mockResolvedValue([propertyMapping]),
   getById = jest.fn().mockResolvedValue(integrationAccount),
   ingestExternalThread = jest.fn().mockResolvedValue({
     statusCode: 200,
@@ -164,8 +167,8 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
   });
 
-  test("unmapped property (findByExternalPropertyId returns null) returns 200 and does not resolve the account or ingest", async () => {
-    const findByExternalPropertyId = jest.fn().mockResolvedValue(null);
+  test("no ACTIVE mapping (findByExternalPropertyId returns an empty list) returns 200 and does not resolve the account or ingest", async () => {
+    const findByExternalPropertyId = jest.fn().mockResolvedValue([]);
     const { service, deps } = buildService({ findByExternalPropertyId });
 
     const result = await service.handleWebhookEvent(buildLambdaEvent());
@@ -177,6 +180,82 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.accounts.getById).not.toHaveBeenCalled();
     expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
     expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+  });
+
+  test("several ACTIVE mappings: the newest (first in the ordered list) is used, and a warning is logged with the property id and count", async () => {
+    const newerMapping = { ...propertyMapping, integrationAccountId: "integration-1", updatedAt: 2000 };
+    const olderMapping = { ...propertyMapping, integrationAccountId: "integration-2", updatedAt: 1000 };
+    const findByExternalPropertyId = jest.fn().mockResolvedValue([newerMapping, olderMapping]);
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { service, deps } = buildService({ findByExternalPropertyId });
+    await service.handleWebhookEvent(buildLambdaEvent());
+
+    expect(deps.accounts.getById).toHaveBeenCalledWith("integration-1");
+    expect(warnSpy).toHaveBeenCalled();
+    const loggedText = warnSpy.mock.calls[0].join(" ");
+    expect(loggedText).toContain("channex-property-1");
+    expect(loggedText).toContain("2");
+
+    warnSpy.mockRestore();
+  });
+
+  test("a single ACTIVE mapping does not log a warning", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service } = buildService();
+
+    await service.handleWebhookEvent(buildLambdaEvent());
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  test("newest mapping's account has the wrong channel: PROPERTY_NOT_MAPPED, no ingestion", async () => {
+    const getById = jest.fn().mockResolvedValue({
+      id: "integration-1",
+      userId: "host-1",
+      channel: "WHATSAPP",
+      status: "CONNECTED",
+    });
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service, deps } = buildService({ getById });
+
+    const result = await service.handleWebhookEvent(buildLambdaEvent());
+
+    expect(result).toEqual({
+      statusCode: 200,
+      response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
+    });
+    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
+
+    warnSpy.mockRestore();
+  });
+
+  test("newest mapping's account is DISCONNECTED: PROPERTY_NOT_MAPPED, no ingestion", async () => {
+    const getById = jest.fn().mockResolvedValue({
+      id: "integration-1",
+      userId: "host-1",
+      channel: "CHANNEX",
+      status: "DISCONNECTED",
+    });
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service, deps } = buildService({ getById });
+
+    const result = await service.handleWebhookEvent(buildLambdaEvent());
+
+    expect(result).toEqual({
+      statusCode: 200,
+      response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
+    });
+    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
+
+    warnSpy.mockRestore();
   });
 
   test("malformed message payload propagates the normalizer's badRequest as a 400", async () => {

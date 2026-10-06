@@ -2,6 +2,7 @@ import IntegrationAccountRepository from "../.shared/integrations/repositories/i
 import IntegrationPropertyRepository from "../.shared/integrations/repositories/integrationPropertyRepository.js";
 import IngestionService from "./ingestionService.js";
 import { normalizeChannexInboundMessage } from "./channexMessageNormalizer.js";
+import { CHANNEX_STATUS } from "../.shared/channelManagement/channelManagementConstants.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const forbidden = () => ({
@@ -41,12 +42,30 @@ export default class ChannexWebhookService {
   }
 
   async resolveContext(payload) {
-    const mapping = await this.properties.findByExternalPropertyId(payload?.property_id);
-    if (!mapping) {
+    const mappings = await this.properties.findByExternalPropertyId(payload?.property_id);
+    if (!Array.isArray(mappings) || mappings.length === 0) {
       return null;
     }
 
+    if (mappings.length > 1) {
+      console.warn("Multiple ACTIVE Channex property mappings found", payload?.property_id, mappings.length);
+    }
+
+    const mapping = mappings[0];
     const integrationAccount = await this.accounts.getById(mapping?.integrationAccountId);
+
+    if (!integrationAccount) {
+      console.warn("Channex property mapping account invalid", payload?.property_id, "ACCOUNT_NOT_FOUND");
+      return null;
+    }
+    if (integrationAccount.channel !== "CHANNEX") {
+      console.warn("Channex property mapping account invalid", payload?.property_id, "ACCOUNT_WRONG_CHANNEL");
+      return null;
+    }
+    if (integrationAccount.status === CHANNEX_STATUS.DISCONNECTED) {
+      console.warn("Channex property mapping account invalid", payload?.property_id, "ACCOUNT_DISCONNECTED");
+      return null;
+    }
 
     return {
       integrationAccountId: mapping?.integrationAccountId,
