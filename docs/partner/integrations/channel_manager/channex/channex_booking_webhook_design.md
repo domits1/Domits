@@ -43,7 +43,7 @@ Non-goals:
 | Feed of unacknowledged revisions, oldest first | `providers/channex/providerClient.js:774-776` | Out-of-order webhooks do not matter: the feed has the order |
 | One booking per reservation | `channexBookingRevisionImportService.js:975-983` (deterministic booking id) | A retried or duplicated webhook reuses the stored booking |
 | Per-revision error isolation | `channexBookingRevisionImportService.js:1319-1334`, `:1455-1466` | A failing revision is returned as unacknowledged; the loop continues |
-| Per-property lock | `services/channexBookingPollingService.js:86-117` (`integration_sync_state`, key `channex_booking_poll:<domitsPropertyId>`) | Same key, so the webhook and polling never run at the same time for one property |
+| Per-property lock | `services/channexBookingPollingService.js:86-117` (`integration_sync_state`, key `booking_poll:<domitsPropertyId>`) | Same key, so the webhook and polling never run at the same time for one property |
 | Reading the account's Channex credentials | `services/channexBookingPollingService.js:228` | Same checks |
 | Routes that skip the Cognito check | `handler/channelManagementHandler.js:119-125` (internal-token routes) | Same pattern for the webhook route |
 | `lastErrorCode` on the integration account | `.shared/integrations/repositories/integrationAccountRepository.js:74` | Set when the Channex key stops working |
@@ -105,7 +105,7 @@ Controller
 Service
    │ 3. ACTIVE Channex mapping for property_id ── none ─▶ 200 PROPERTY_NOT_MAPPED
    │ 4. account's Channex credentials ── unreadable ─▶ 503
-   │ 5. lock channex_booking_poll:<domitsPropertyId> ── taken ─▶ 503
+   │ 5. lock booking_poll:<domitsPropertyId> ── taken ─▶ 503
    │ 6. existing pull, trigger WEBHOOK, deadline 20 s: feed ▶ store ▶ acknowledge, per revision
    │ 7. release the lock (finally)
    │ 8. classify the result (section 7)
@@ -122,7 +122,9 @@ Service
 | Body is not JSON, or has no `property_id` | 400 | permanent |
 | Event is not a booking event | 200, ignored | — |
 | No ACTIVE Channex mapping for the property | 200, `PROPERTY_NOT_MAPPED`, logged | permanent |
-| Account credentials unreadable or incomplete | 503 | temporary |
+| No account, or the account is disconnected | 200, `INTEGRATION_NOT_CONNECTED` | permanent |
+| Account credentials cannot be read | 503 | temporary |
+| Account credentials incomplete (no API key) | 200, `CREDENTIALS_INVALID` | permanent |
 | Lock taken | 503 | temporary |
 | Feed call: Channex 5xx, 429 or network error | 503 | temporary |
 | Feed call: Channex 401 | 200; `lastErrorCode = CHANNEX_BOOKING_FEED_UNAUTHORIZED` on the account; error log | permanent |

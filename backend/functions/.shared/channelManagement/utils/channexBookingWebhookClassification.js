@@ -17,8 +17,9 @@ const isTemporaryFeedFailure = ({ httpStatus, providerStatus }) =>
 const isTemporaryAckFailure = (issue) =>
   issue.stage === "ack" && (issue.httpStatus === null || isTemporaryHttpStatus(issue.httpStatus));
 
-const isTemporaryRevisionIssue = (issue) =>
-  isTemporaryAckFailure(issue) || isDsqlConflict(issue) || NETWORK_ERROR_CODES.has(issue.code);
+export const isTemporaryError = (error) => isDsqlConflict(error) || NETWORK_ERROR_CODES.has(error?.code);
+
+const isTemporaryRevisionIssue = (issue) => isTemporaryAckFailure(issue) || isTemporaryError(issue);
 
 const classifyFeedFailure = (response) => {
   if (isTemporaryFeedFailure(response)) return { statusCode: 503, outcome: "FEED_TEMPORARY_FAILURE" };
