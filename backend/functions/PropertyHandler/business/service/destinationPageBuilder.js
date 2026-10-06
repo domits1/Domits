@@ -1,7 +1,7 @@
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 
 export const DESTINATIONS_ROOT_PATH = "/destinations";
-export const DESTINATION_PAGE_CACHE_CONTROL = "public, max-age=300";
+export const DESTINATION_PAGE_CACHE_CONTROL = "public, max-age=60";
 const DEFAULT_SITE_ORIGIN = "https://www.domits.com";
 const DESTINATIONS_ROOT_NAME = "Destinations";
 
@@ -91,6 +91,7 @@ export const buildDestinationPage = ({
   children = [],
   listings = [],
   activeListings,
+  directListings,
   siteOrigin = DEFAULT_SITE_ORIGIN,
   settings = readDestinationSettings(),
 } = {}) => {
@@ -101,7 +102,13 @@ export const buildDestinationPage = ({
     isDestinationEligible({ activeListings: child.activeListings }, settings)
   );
   const listingCount = Number.isInteger(activeListings) ? activeListings : listings.length;
-  if (!isDestinationEligible({ activeListings: listingCount, eligibleChildren: eligibleChildren.length }, settings)) {
+  const ownListings = Number.isInteger(directListings) ? directListings : listingCount;
+  const eligibility = {
+    activeListings: listingCount,
+    directListings: ownListings,
+    eligibleChildren: eligibleChildren.length,
+  };
+  if (!isDestinationEligible(eligibility, settings)) {
     throw new Error(`${destination.path} has no active listings and no destinations below it, so it has no page.`);
   }
 

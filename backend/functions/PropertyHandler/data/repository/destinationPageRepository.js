@@ -67,7 +67,7 @@ export class DestinationPageRepository {
          FROM ${schemaName}.property_image_v2 i
          JOIN ${schemaName}.property_image_variant v ON v.image_id = i.id AND v.variant = 'web'
          WHERE i.property_id = p.id AND i.status = 'READY'
-         ORDER BY i.sort_order ASC
+         ORDER BY i.sort_order ASC, i.id ASC
          LIMIT 1) AS image_key
       FROM ${schemaName}.property_destination m
       JOIN ${schemaName}.destination d ON d.id = m.destination_id
@@ -76,7 +76,7 @@ export class DestinationPageRepository {
       LEFT JOIN ${schemaName}.property_pricing pr ON pr.property_id = p.id
       WHERE d.path = $2 OR d.path LIKE $3
       ORDER BY p.createdat DESC, p.id ASC`,
-      ["ACTIVE", normalizedPath, `${normalizedPath}/%`]
+      ["ACTIVE", normalizedPath, `${normalizedPath.replace(/[\\%_]/g, "\\$&")}/%`]
     );
 
     return toRows(rows).map((row) => ({

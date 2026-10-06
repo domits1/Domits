@@ -114,9 +114,16 @@ describe("the destination page repository", () => {
     expect(statement).toContain("p.status = $1");
     expect(statement).toContain("WHERE d.path = $2 OR d.path LIKE $3");
     expect(statement).toContain("v.variant = 'web'");
-    expect(statement).toContain("i.status = 'READY'");
+    expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
+    expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS image_key");
     expect(statement).not.toMatch(/street|postal|house|hostid|latitude/i);
     expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%"]);
+  });
+
+  it("escapes the like wildcards of a path so a sibling with an underscore in its name is not swept in", async () => {
+    const query = withRows([]);
+    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/x/y_z%");
+    expect(query.mock.calls[0][1]).toEqual(["ACTIVE", "/destinations/x/y_z%", "/destinations/x/y\\_z\\%/%"]);
   });
 
   it("answers an empty list for an empty path without asking the database", async () => {
