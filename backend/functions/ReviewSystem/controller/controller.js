@@ -22,6 +22,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Wire the controller to the review service and auth layer for all request handling.
+  // This keeps dependency injection flexible while standardizing access to business logic and identity checks.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -81,7 +83,6 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-<<<<<<< HEAD
   // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
@@ -94,10 +95,6 @@ export class Controller {
 
   // Remove a review only for the authenticated owner.
   // This blocks one user from deleting another user's review by accident or malice.
-=======
-  // Delete a review only for the authenticated owner.
-  // This avoids allowing one user to remove another user's review.
->>>>>>> 02aa07849a3d06f6616dc7465b18d19b80ac7b6b
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
