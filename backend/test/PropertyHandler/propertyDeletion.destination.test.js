@@ -7,30 +7,27 @@ jest.mock("database", () => ({
   default: { getInstance: jest.fn() },
 }));
 
-const buildClient = ({ failOn = null } = {}) => {
+const buildClient = ({ failOn = null, conflicts = 0 } = {}) => {
   const statements = [];
+  let remainingConflicts = conflicts;
   const transactionManager = {
     query: jest.fn(async (statement, parameters) => {
       statements.push({ statement, parameters });
-      if (failOn && statement.includes(failOn)) {
-        throw new Error(`failed on ${failOn}`);
+      if (failOn && statement.includes(failOn)) throw new Error(`failed on ${failOn}`);
+      if (remainingConflicts > 0 && statement.includes("property_destination")) {
+        remainingConflicts -= 1;
+        throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
       }
       return [];
     }),
   };
   const client = {
     statements,
-    committed: false,
-    rolledBack: false,
+    committed: 0,
     transaction: jest.fn(async (runInTransaction) => {
-      try {
-        const result = await runInTransaction(transactionManager);
-        client.committed = true;
-        return result;
-      } catch (error) {
-        client.rolledBack = true;
-        throw error;
-      }
+      const result = await runInTransaction(transactionManager);
+      client.committed += 1;
+      return result;
     }),
   };
   Database.getInstance.mockResolvedValue(client);
@@ -38,7 +35,7 @@ const buildClient = ({ failOn = null } = {}) => {
 };
 
 const deletes = (client) =>
-  client.statements.filter(({ statement }) => statement.startsWith("DELETE FROM")).map(({ statement }) => statement);
+  client.statements.map(({ statement }) => statement).filter((statement) => statement.startsWith("DELETE FROM"));
 
 describe("deleting a property removes its destination mapping in the same transaction", () => {
   beforeEach(() => {
@@ -51,23 +48,28 @@ describe("deleting a property removes its destination mapping in the same transa
     jest.spyOn(PropertyDeletionRepository.prototype, "getScopedIds").mockResolvedValue([]);
   });
 
-  it("deletes the mapping row with a mapped property, before the property row, then commits", async () => {
+  it("deletes the mapping row of a mapped property before the property row, in the one committed transaction", async () => {
     const client = buildClient();
 
     await new PropertyDeletionRepository().deletePropertyById("property-1");
 
-    const statements = deletes(client);
-    const mapping = statements.findIndex((statement) => /property_destination/.test(statement));
-    const property = statements.findIndex((statement) => /"property"\s+WHERE/.test(statement));
+    const mapping = deletes(client).findIndex((statement) => /property_destination/.test(statement));
+    const property = deletes(client).findIndex((statement) => /"property"\s+WHERE/.test(statement));
     expect(mapping).toBeGreaterThan(-1);
     expect(property).toBeGreaterThan(mapping);
     expect(client.statements.find(({ statement }) => /property_destination/.test(statement)).parameters).toEqual([
       "property-1",
     ]);
-    expect(client.committed).toBe(true);
+    expect(client.committed).toBe(1);
   });
 
-  it("rejects and rolls back when the mapping delete fails, so the property row and the mapping row both stay", async () => {
+  it("tries the whole deletion again when it lost a DSQL conflict against a mapping write", async () => {
+    const client = buildClient({ conflicts: 1 });
+    await new PropertyDeletionRepository().deletePropertyById("property-1");
+    expect([client.transaction.mock.calls.length, client.committed]).toEqual([2, 1]);
+  });
+
+  it("rejects when the mapping delete fails, so nothing is committed and the property row delete never runs", async () => {
     const client = buildClient({ failOn: "property_destination" });
 
     await expect(new PropertyDeletionRepository().deletePropertyById("property-1")).rejects.toThrow(
@@ -75,7 +77,6 @@ describe("deleting a property removes its destination mapping in the same transa
     );
 
     expect(deletes(client).some((statement) => /"property"\s+WHERE/.test(statement))).toBe(false);
-    expect(client.committed).toBe(false);
-    expect(client.rolledBack).toBe(true);
+    expect(client.committed).toBe(0);
   });
 });

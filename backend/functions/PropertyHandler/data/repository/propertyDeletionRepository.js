@@ -1,4 +1,5 @@
 import Database from "database";
+import { retryOnConflict } from "../../util/dsqlConflictRetry.js";
 import { Booking } from "database/models/Booking";
 
 export class PropertyDeletionRepository {
@@ -244,7 +245,7 @@ export class PropertyDeletionRepository {
 
   async deletePropertyById(propertyId) {
     const client = await Database.getInstance();
-    await client.transaction(async (transactionManager) => {
+    await retryOnConflict(() => client.transaction(async (transactionManager) => {
       const standaloneSiteIds = await this.getScopedIds(
         transactionManager,
         "standalone_site",
@@ -340,6 +341,6 @@ export class PropertyDeletionRepository {
       if (!propertyDeleted) {
         throw new Error("Property table could not be resolved for deletion.");
       }
-    });
+    }));
   }
 }
