@@ -746,7 +746,7 @@ export default class ChannexProviderClient {
     });
   }
 
-  async listBookingRevisionFeed(credentials, { externalPropertyId } = {}) {
+  async listBookingRevisionFeed(credentials, { externalPropertyId, page = null } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const propertyId = requireStr(externalPropertyId);
 
@@ -776,6 +776,9 @@ export default class ChannexProviderClient {
       url.searchParams.set("order[inserted_at]", "asc");
       // Channex returns 10 items per page unless asked for more; 100 is its maximum.
       url.searchParams.set("pagination[limit]", "100");
+      if (page !== null) {
+        url.searchParams.set("pagination[page]", String(page));
+      }
 
       const response = await fetch(url, {
         method: "GET",

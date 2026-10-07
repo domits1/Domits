@@ -238,6 +238,16 @@ describe("ChannexProviderClient booking revisions", () => {
       });
     });
 
+    test("asks for a specific feed page when one is given", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
+
+      await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID, page: 2 });
+
+      const [url] = global.fetch.mock.calls[0];
+      expect(url.searchParams.get("pagination[page]")).toBe("2");
+      expect(url.searchParams.get("pagination[limit]")).toBe("100");
+    });
+
     test("maps a revision row onto the normalized shape", async () => {
       const row = revisionRow();
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [row] }));

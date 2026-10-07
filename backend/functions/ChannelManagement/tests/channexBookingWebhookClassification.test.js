@@ -34,22 +34,23 @@ describe("classifyWebhookPullResult", () => {
     });
   });
 
-  // The feed returns one page; acknowledged revisions leave the feed, so a retry reads the next batch.
+  // The webhook pull reads every page it can; morePages means a later page could not be read.
+  // Acknowledged revisions have left the feed, so Channex's retry continues from there.
   describe("feed pages", () => {
-    test("more revisions waiting than this pull fetched answers 503 MORE_PAGES", () => {
-      expect(
-        classifyWebhookPullResult(pulled({ fetchedCount: 100, ackedCount: 100, feedMeta: { total: 150, limit: 100 } }))
-      ).toEqual({ statusCode: 503, outcome: "MORE_PAGES" });
+    test("a pull that could not read every page answers 503 MORE_PAGES", () => {
+      expect(classifyWebhookPullResult(pulled({ morePages: true, overallSuccess: false }))).toEqual({
+        statusCode: 503,
+        outcome: "MORE_PAGES",
+      });
     });
 
-    test("a pull that fetched every waiting revision answers 200", () => {
+    // Failing revisions stay in the feed and count in its total; that alone is not a reason to retry.
+    test("a feed total above the fetched count does not answer 503 on its own", () => {
       expect(
-        classifyWebhookPullResult(pulled({ fetchedCount: 3, ackedCount: 3, feedMeta: { total: 3, limit: 100 } }))
-      ).toEqual({ statusCode: 200, outcome: "PROCESSED" });
-    });
-
-    test("a pull without feed meta answers as before", () => {
-      expect(classifyWebhookPullResult(pulled({ feedMeta: null }))).toEqual({ statusCode: 200, outcome: "PROCESSED" });
+        classifyWebhookPullResult(
+          pulled({ fetchedCount: 100, ackedCount: 0, unackedCount: 100, feedMeta: { total: 150 }, morePages: false })
+        )
+      ).toEqual({ statusCode: 200, outcome: "REVISIONS_UNACKED" });
     });
   });
 

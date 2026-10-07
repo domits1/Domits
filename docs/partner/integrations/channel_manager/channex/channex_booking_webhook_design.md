@@ -87,7 +87,7 @@ The handler returns early for any path outside `/integrations/channex|holidu` (`
 Channex treats a 401 as delivered and does not retry. If the secret in Channex and in Secrets Manager do not match, every webhook is rejected and no booking arrives, with Channex's `non_acked_booking` email as the only other symptom. Each 401 is logged at error level with the request id and source IP, never the header value. The live test includes one call with a wrong header.
 
 **D13. The feed is read in pages of 100, and more pages answer 503.**
-The Channex API reference says most list endpoints return 10 items unless `pagination[limit]` is set (maximum 100). A call to the staging feed on 6 October confirmed it: `meta` was `{ total, limit: 10, page, order_by: inserted_at, order_direction: asc }`. The feed call now asks for 100. When `meta.total` is larger than the number fetched, the webhook answers 503 (`MORE_PAGES`); acknowledged revisions leave the feed, so Channex's retry reads the next batch. The webhook also logs `meta`, which holds only paging fields (booking details carry their own nested `meta`, which is not read). Accepted consequence: polling and the manual pull also read up to 100 revisions per call instead of 10, so a manual pull over a large backlog can take longer than API Gateway's 29 seconds; the work still completes in the Lambda.
+The Channex API reference says most list endpoints return 10 items unless `pagination[limit]` is set (maximum 100). A call to the staging feed on 6 October confirmed it: `meta` was `{ total, limit: 10, page, order_by: inserted_at, order_direction: asc }`. The feed call now asks for 100, and the webhook reads page after page within its time budget. Acknowledged revisions leave the feed and unacknowledged ones stay at its front (oldest first), so with N unacknowledged revisions the next unseen one is on page `floor(N / 100) + 1`; revisions already seen in this pull are skipped. This keeps the order and still reaches bookings behind a full page of revisions that keep failing (review of #3456). The loop ends when a page brings no unseen revision, so it cannot run forever. If a later page cannot be read, the webhook answers 503 (`MORE_PAGES`) and Channex's retry continues there. The webhook also logs `meta`, which holds only paging fields (booking details carry their own nested `meta`, which is not read). Accepted consequence: polling and the manual pull also read up to 100 revisions per call instead of 10, so a manual pull over a large backlog can take longer than API Gateway's 29 seconds; the work still completes in the Lambda.
 
 ## 6. Flow
 
@@ -167,7 +167,7 @@ Rollback: deactivate the webhook in Channex. Nothing else depends on the route.
 | i. The secret in Channex does not match | Every webhook answers 401 and is logged as an error (D12); found in the live test |
 | j. The secret is rotated | Warm instances accept the new secret within 5 minutes (D4) |
 | k. A Lambda is killed while holding the lock | Webhooks for that property answer 503 for up to 5 minutes; the bookings arrive through Channex's retries (D7) |
-| l. More than 100 revisions are waiting | The webhook processes the first 100 and answers 503; Channex's retry reads the next batch (D13) |
+| l. More than 100 revisions are waiting | The webhook reads the next pages within its budget; a full page of failing revisions does not hide the ones behind it (D13) |
 
 ## 10. Testing
 
