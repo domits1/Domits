@@ -39,6 +39,7 @@ const TaskDetailsModal = ({
     onSave,
     onDelete,
     onClose,
+    onEscalate,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -227,6 +228,10 @@ const TaskDetailsModal = ({
                     <div className="modal-footer details-footer">
                         <button className="btn-text" onClick={onClose}>Cancel</button>
 
+                        {viewingTask.slaStatus === 'BREACHED' && (
+                            <button className="btn-text btn-escalate" onClick={onEscalate}>Escalate</button>
+                        )}
+
                         {isUnchanged ? (
                             <button className="btn-danger" onClick={onDelete}>Delete</button>
                         ) : (
@@ -268,6 +273,7 @@ TaskDetailsModal.propTypes = {
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
+    onEscalate: PropTypes.func.isRequired,
 };
 
 export default TaskDetailsModal;

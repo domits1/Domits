@@ -41,6 +41,7 @@ describe('TaskDetailsModal', () => {
         onSave: jest.fn(),
         onDelete: jest.fn(),
         onClose: jest.fn(),
+        onEscalate: jest.fn(),
     };
 
     beforeEach(() => {
@@ -124,5 +125,18 @@ describe('TaskDetailsModal', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
         expect(baseProps.onRetryChecklistLoad).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not show an Escalate button when the task is not breaching its SLA', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
+        expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
+    });
+
+    test('shows an Escalate button for a breached task and calls onEscalate when clicked', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Escalate' }));
+
+        expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
     });
 });
