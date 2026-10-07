@@ -4,7 +4,22 @@ import { isDsqlConflict } from "../../dsqlRetry.js";
 // revision stays in the feed. A 503 for a failure that can never succeed would make every later webhook
 // for the property fail, so only temporary failures answer 503. Anything unclear answers 200: the
 // revision waits in the feed for the next pull, and Channex warns after 30 minutes.
-const NETWORK_ERROR_CODES = new Set(["ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN", "EPIPE"]);
+const NETWORK_ERROR_CODES = new Set([
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "EAI_AGAIN",
+  "EPIPE",
+  "ENOTFOUND",
+  "ECONNABORTED",
+  "TimeoutError",
+  // Postgres: the database server is shutting down.
+  "57P01",
+]);
+// Postgres SQLSTATE class 08: connection exceptions (08000, 08001, 08006, ...).
+const POSTGRES_CONNECTION_EXCEPTION = /^08[0-9A-Z]{3}$/;
+// pg raises this without a code, so only the message identifies it.
+const CONNECTION_TERMINATED_MESSAGE = /connection terminated unexpectedly/i;
 const NETWORK_FAILURE_PROVIDER_STATUSES = new Set(["BOOKING_FEED_FAILED"]);
 
 const isTemporaryHttpStatus = (httpStatus) => httpStatus === 429 || httpStatus >= 500;
@@ -17,7 +32,15 @@ const isTemporaryFeedFailure = ({ httpStatus, providerStatus }) =>
 const isTemporaryAckFailure = (issue) =>
   issue.stage === "ack" && (issue.httpStatus === null || isTemporaryHttpStatus(issue.httpStatus));
 
-const isTemporaryError = (error) => isDsqlConflict(error) || NETWORK_ERROR_CODES.has(error?.code);
+const isTemporaryError = (error) => {
+  const code = String(error?.code ?? "");
+  return (
+    isDsqlConflict(error) ||
+    NETWORK_ERROR_CODES.has(code) ||
+    POSTGRES_CONNECTION_EXCEPTION.test(code) ||
+    CONNECTION_TERMINATED_MESSAGE.test(String(error?.message ?? ""))
+  );
+};
 
 const isTemporaryRevisionIssue = (issue) => isTemporaryAckFailure(issue) || isTemporaryError(issue);
 

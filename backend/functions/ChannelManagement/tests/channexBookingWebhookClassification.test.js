@@ -94,6 +94,17 @@ describe("classifyWebhookPullResult", () => {
       { description: "a DSQL conflict while storing", error: { code: "40001" } },
       { description: "a DSQL OC001 conflict while storing", error: { code: "OC001" } },
       { description: "a dropped database connection", error: { code: "ECONNRESET" } },
+      { description: "a DNS lookup failure", error: { code: "ENOTFOUND" } },
+      { description: "an aborted connection", error: { code: "ECONNABORTED" } },
+      { description: "a Postgres connection exception (08006)", error: { code: "08006" } },
+      { description: "a Postgres connection that could not be established (08001)", error: { code: "08001" } },
+      { description: "a database server shutting down (57P01)", error: { code: "57P01" } },
+      { description: "an AWS SDK timeout", error: { code: "TimeoutError" } },
+      // pg raises this without a code; the import stores the error name, so only the message identifies it.
+      {
+        description: "a connection terminated without a code",
+        error: { code: "Error", message: "Connection terminated unexpectedly" },
+      },
     ])("$description is temporary: 503", ({ error }) => {
       expect(classifyWebhookPullResult(unackedWith(error))).toEqual({
         statusCode: 503,
