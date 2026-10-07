@@ -59,6 +59,7 @@ const HostTasks = () => {
     const [viewingTask, setViewingTask] = useState(null);
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
+    const [checklistLoadError, setChecklistLoadError] = useState(null);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -339,17 +340,32 @@ const HostTasks = () => {
         }
     };
 
+    const loadChecklistItems = (taskId) => {
+        const requestId = ++checklistRequestRef.current;
+        setChecklistLoadError(null);
+        fetchChecklistItems(taskId)
+            .then(items => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems(items);
+                    setChecklistLoadError(null);
+                }
+            })
+            .catch((error) => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems([]);
+                    setChecklistLoadError(error.message || "Failed to load checklist items");
+                }
+            });
+    };
+
     const openTaskDetails = (task) => {
         setViewingTask(task);
         setEditedTask({ ...task });
-        const requestId = ++checklistRequestRef.current;
-        fetchChecklistItems(task.id)
-            .then(items => {
-                if (requestId === checklistRequestRef.current) setChecklistItems(items);
-            })
-            .catch(() => {
-                if (requestId === checklistRequestRef.current) setChecklistItems([]);
-            });
+        loadChecklistItems(task.id);
+    };
+
+    const handleRetryChecklistLoad = () => {
+        loadChecklistItems(viewingTask.id);
     };
 
     const handleEditChange = (e) => {
@@ -371,6 +387,7 @@ const HostTasks = () => {
                     setViewingTask(null);
                     setEditedTask(null);
                     setChecklistItems([]);
+                    setChecklistLoadError(null);
                     closeConfirmDialog();
                 }
             });
@@ -378,6 +395,7 @@ const HostTasks = () => {
             setViewingTask(null);
             setEditedTask(null);
             setChecklistItems([]);
+            setChecklistLoadError(null);
         }
     };
 
@@ -760,9 +778,11 @@ const HostTasks = () => {
                 onDelete={handleDeleteSingleTask}
                 onClose={closeTaskDetails}
                 checklistItems={checklistItems}
+                checklistLoadError={checklistLoadError}
                 onAddChecklistItem={handleAddChecklistItem}
                 onToggleChecklistItem={handleToggleChecklistItem}
                 onRemoveChecklistItem={handleRemoveChecklistItem}
+                onRetryChecklistLoad={handleRetryChecklistLoad}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />
