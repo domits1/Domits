@@ -351,6 +351,23 @@ CREATE INDEX ASYNC fk_property_rule_property_idx ON main.property_rule (property
 CREATE INDEX ASYNC fk_property_rule_rules_idx ON main.property_rule (rule);
 
 -- -----------------------------------------------------
+-- Table main.property_custom_rules
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_custom_rules;
+
+CREATE TABLE IF NOT EXISTS main.property_custom_rules (
+  id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  category VARCHAR NOT NULL,
+  rule_text TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE INDEX ASYNC property_custom_rules_property_id_idx ON main.property_custom_rules (property_id);
+
+-- -----------------------------------------------------
 -- Table main.property_technicaldetails
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS main.property_technicaldetails;
@@ -516,3 +533,14 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS special_request TEXT;
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
+
+CREATE TABLE IF NOT EXISTS test.property_custom_rules (
+  id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  category VARCHAR NOT NULL,
+  rule_text TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC property_custom_rules_property_id_idx_test ON test.property_custom_rules (property_id);
