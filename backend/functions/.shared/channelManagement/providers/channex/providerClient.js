@@ -119,6 +119,15 @@ const buildMissingValuesPushResult = ({ group, requestBody, includeRatePlanId, e
   errorMessage,
 });
 
+// Channex may say how long to wait after a 429, either in seconds or as an HTTP date.
+export const parseRetryAfterMs = (value, now = Date.now()) => {
+  if (value === null || value === undefined || value === "") return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? null : Math.max(0, date - now);
+};
+
 const buildProviderPushFailureResult = ({
   group,
   requestBody,
@@ -135,6 +144,7 @@ const buildProviderPushFailureResult = ({
   requestBody,
   httpStatus: response.status,
   providerStatus: getFailedPushProviderStatus(response.status, fallbackStatus),
+  retryAfterMs: parseRetryAfterMs(response.headers?.get?.("retry-after")),
   success: false,
   taskId: taskIds[0] ?? null,
   warnings,
@@ -736,7 +746,7 @@ export default class ChannexProviderClient {
     });
   }
 
-  async listBookingRevisionFeed(credentials, { externalPropertyId } = {}) {
+  async listBookingRevisionFeed(credentials, { externalPropertyId, page = null } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const propertyId = requireStr(externalPropertyId);
 
@@ -764,6 +774,11 @@ export default class ChannexProviderClient {
       const url = new URL("/api/v1/booking_revisions/feed", CHANNEX_BASE_URL);
       url.searchParams.set("filter[property_id]", propertyId);
       url.searchParams.set("order[inserted_at]", "asc");
+      // Channex returns 10 items per page unless asked for more; 100 is its maximum.
+      url.searchParams.set("pagination[limit]", "100");
+      if (page !== null) {
+        url.searchParams.set("pagination[page]", String(page));
+      }
 
       const response = await fetch(url, {
         method: "GET",
@@ -780,6 +795,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisions: [],
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_FEED_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -796,6 +812,7 @@ export default class ChannexProviderClient {
       return {
         success: true,
         revisions: rows.map((row) => normalizeChannexBookingRevision(row)).filter((row) => row.revisionId),
+        meta: parsed?.meta ?? null,
         providerStatus: "ACTIVE",
         errorCode: null,
         errorMessage: null,
@@ -804,6 +821,7 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisions: [],
+        httpStatus: null,
         providerStatus: "BOOKING_FEED_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_FEED_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision feed request failed.",
@@ -935,6 +953,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisionId: normalizedRevisionId,
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_REVISION_ACK_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -958,6 +977,7 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisionId: normalizedRevisionId,
+        httpStatus: null,
         providerStatus: "BOOKING_REVISION_ACK_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_ACK_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision acknowledge request failed.",

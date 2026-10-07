@@ -33,4 +33,24 @@ describe("validateTaskPayload", () => {
         const { title, ...taskWithoutTitle } = baseValidTask;
         expect(() => validateTaskPayload(taskWithoutTitle)).toThrow(/Title is required/);
     });
+
+    it("passes when assignee_team_member_id is a valid UUID", () => {
+        const task = { ...baseValidTask, assignee_team_member_id: "550e8400-e29b-41d4-a716-446655440000" };
+        expect(validateTaskPayload(task)).toBe(true);
+    });
+
+    it("throws when assignee_team_member_id is not a valid UUID", () => {
+        const task = { ...baseValidTask, assignee_team_member_id: "not-a-uuid" };
+        expect(() => validateTaskPayload(task)).toThrow(/assignee_team_member_id must be a valid UUID/);
+    });
+
+    it("passes when parent_task_id is a valid UUID", () => {
+        const task = { ...baseValidTask, parent_task_id: "550e8400-e29b-41d4-a716-446655440000" };
+        expect(validateTaskPayload(task)).toBe(true);
+    });
+
+    it("throws when parent_task_id is not a valid UUID", () => {
+        const task = { ...baseValidTask, parent_task_id: "not-a-uuid" };
+        expect(() => validateTaskPayload(task)).toThrow(/parent_task_id must be a valid UUID/);
+    });
 });

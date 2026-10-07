@@ -6,16 +6,8 @@ import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import useSettingsTrans from "../hooks/useSettingsTrans";
 import SettingsSubPage from "../components/SettingsSubPage";
 import { getEnterpriseRatePlan } from "../services/enterpriseRatePlanService";
+import { formatCurrency, getLanguageLocale } from "../utils/formatters";
 import "../styles/hostSettings.css";
-
-const formatMoney = (amount, currency = "EUR") => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(amount || 0));
-};
 
 const StatCard = ({ icon, label, value, description }) => (
   <div className="enterprise-stat-card">
@@ -31,7 +23,7 @@ const StatCard = ({ icon, label, value, description }) => (
 );
 
 const HostSettingsEnterpriseRatePlan = () => {
-  const { hub, t } = useSettingsTrans("ratePlans");
+  const { hub, t, language } = useSettingsTrans("ratePlans");
   const enterprise = t.enterprise;
   const [ratePlan, setRatePlan] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -113,7 +105,7 @@ const HostSettingsEnterpriseRatePlan = () => {
                   </span>
                   <h2>{enterprise.planName}</h2>
                   <p>
-                    {formatMoney(pricePerProperty, currency)}
+                    {formatCurrency(pricePerProperty, currency, language)}
                     {" / "}
                     {enterprise.perActivePropertyMonth}
                   </p>
@@ -129,19 +121,25 @@ const HostSettingsEnterpriseRatePlan = () => {
                 <StatCard
                   icon={<BusinessOutlinedIcon />}
                   label={enterprise.activeProperties}
-                  value={activeProperties.toLocaleString("en-US")}
+                  value={activeProperties.toLocaleString(
+                    getLanguageLocale(language)
+                  )}
                   description={enterprise.billableProperties}
                 />
                 <StatCard
                   icon={<PaymentsOutlinedIcon />}
                   label={enterprise.pricePerProperty}
-                  value={formatMoney(pricePerProperty, currency)}
+                  value={formatCurrency(
+                    pricePerProperty,
+                    currency,
+                    language
+                  )}
                   description={enterprise.perActivePropertyMonth}
                 />
                 <StatCard
                   icon={<AccountBalanceWalletOutlinedIcon />}
                   label={enterprise.estimatedMonthlyCost}
-                  value={formatMoney(monthlyCost, currency)}
+                  value={formatCurrency(monthlyCost, currency, language)}
                   description={enterprise.basedOnPropertyCount}
                 />
               </div>
@@ -149,20 +147,26 @@ const HostSettingsEnterpriseRatePlan = () => {
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{enterprise.pricing}</h2>
+            <h2 className="personal-data-section-title">
+              {enterprise.pricing}
+            </h2>
             <div className="enterprise-pricing-card">
               <div>
                 <span className="enterprise-pricing-label">
                   {enterprise.pricingLabel}
                 </span>
-                <strong>{formatMoney(pricePerProperty, currency)}</strong>
+                <strong>
+                  {formatCurrency(pricePerProperty, currency, language)}
+                </strong>
                 <span>{enterprise.perActivePropertyMonth}</span>
               </div>
 
               <div className="enterprise-pricing-formula">
                 <span>{enterprise.activeProperties}</span>
                 <strong>×</strong>
-                <span>{formatMoney(pricePerProperty, currency)}</span>
+                <span>
+                  {formatCurrency(pricePerProperty, currency, language)}
+                </span>
                 <strong>=</strong>
                 <span>{enterprise.monthlySubscription}</span>
               </div>
@@ -170,7 +174,9 @@ const HostSettingsEnterpriseRatePlan = () => {
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{enterprise.nextInvoice}</h2>
+            <h2 className="personal-data-section-title">
+              {enterprise.nextInvoice}
+            </h2>
             <div className="personal-data-card enterprise-invoice-card">
               <div className="enterprise-invoice-row">
                 <div className="enterprise-invoice-icon">
@@ -178,7 +184,9 @@ const HostSettingsEnterpriseRatePlan = () => {
                 </div>
                 <div className="enterprise-invoice-content">
                   <span>{enterprise.nextInvoiceLabel}</span>
-                  <strong>{formatMoney(monthlyCost, currency)}</strong>
+                  <strong>
+                    {formatCurrency(monthlyCost, currency, language)}
+                  </strong>
                 </div>
               </div>
 
@@ -205,7 +213,9 @@ const HostSettingsEnterpriseRatePlan = () => {
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{enterprise.billingHistory}</h2>
+            <h2 className="personal-data-section-title">
+              {enterprise.billingHistory}
+            </h2>
             <div className="personal-data-card enterprise-empty-card">
               <strong>{enterprise.noInvoices}</strong>
               <span>{enterprise.invoicesDescription}</span>
@@ -213,7 +223,9 @@ const HostSettingsEnterpriseRatePlan = () => {
           </section>
 
           <section className="personal-data-section">
-            <h2 className="personal-data-section-title">{enterprise.billingContact}</h2>
+            <h2 className="personal-data-section-title">
+              {enterprise.billingContact}
+            </h2>
             <div className="personal-data-card enterprise-empty-card">
               <strong>{enterprise.billingContactTitle}</strong>
               <span>{enterprise.billingContactDescription}</span>
