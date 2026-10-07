@@ -48,6 +48,16 @@ const normalizedPayload = {
   ],
 };
 
+const existingThread = {
+  id: "thread-1",
+  integrationAccountId: "integration-1",
+  platform: "CHANNEX",
+  externalThreadId: "channex-thread-1",
+  hostId: "host-1",
+  guestId: "CHANNEX_GUEST_THREAD:channex-thread-1",
+  bookingId: null,
+};
+
 const assertNoSideEffects = (deps, { properties = true, accounts = true, normalize = true, ingest = true } = {}) => {
   if (properties) expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
   if (accounts) expect(deps.accounts.getById).not.toHaveBeenCalled();
@@ -63,12 +73,15 @@ const buildService = ({
     response: { ok: true, threadId: "thread-xyz", insertedMessages: 1 },
   }),
   normalizeInboundMessage = jest.fn().mockReturnValue(normalizedPayload),
+  findExternalThread = jest.fn().mockResolvedValue(existingThread),
+  updateThreadGuestId = jest.fn().mockResolvedValue({ ...existingThread, guestId: "CHANNEX_GUEST:channex-booking-1" }),
 } = {}) => {
   const deps = {
     properties: { findByExternalPropertyId },
     accounts: { getById },
     ingestionService: { ingestExternalThread },
     normalizeInboundMessage,
+    threads: { findExternalThread, updateThreadGuestId },
   };
   return { service: new ChannexWebhookService(deps), deps };
 };
@@ -98,6 +111,21 @@ const runMappingsScenario = async (mappings) => {
   await service.handleWebhookEvent(buildLambdaEvent());
 
   return { deps, warnSpy };
+};
+
+const baseBookingAssignedWebhookEvent = (overrides = {}) => {
+  const { payload: payloadOverrides = {}, ...topLevelOverrides } = overrides;
+
+  return {
+    event: "message_thread_booking_assigned",
+    property_id: "channex-property-1",
+    payload: {
+      booking_id: "channex-booking-1",
+      message_thread_id: "channex-thread-1",
+      ...payloadOverrides,
+    },
+    ...topLevelOverrides,
+  };
 };
 
 describe("ChannexWebhookService.handleWebhookEvent", () => {
@@ -281,6 +309,115 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(result).toEqual({
       statusCode: 500,
       response: { error: "DB_WRITE_FAILED" },
+    });
+  });
+
+  describe("message_thread_booking_assigned", () => {
+    test("valid event finds the thread, updates guestId, and returns 200 without touching messages", async () => {
+      const { service, deps } = buildService();
+
+      const result = await service.handleWebhookEvent(
+        buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() })
+      );
+
+      expect(deps.properties.findByExternalPropertyId).toHaveBeenCalledWith("channex-property-1");
+      expect(deps.accounts.getById).toHaveBeenCalledWith("integration-1");
+      expect(deps.threads.findExternalThread).toHaveBeenCalledWith({
+        integrationAccountId: "integration-1",
+        platform: "CHANNEX",
+        externalThreadId: "channex-thread-1",
+      });
+      expect(deps.threads.updateThreadGuestId).toHaveBeenCalledWith("thread-1", "CHANNEX_GUEST:channex-booking-1");
+      expect(result).toEqual({ statusCode: 200, response: { ok: true } });
+      expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+      expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    });
+
+    test("thread not found returns 200 THREAD_NOT_FOUND and does not update", async () => {
+      const findExternalThread = jest.fn().mockResolvedValue(null);
+      const { service, deps } = buildService({ findExternalThread });
+
+      const result = await service.handleWebhookEvent(
+        buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() })
+      );
+
+      expect(result).toEqual({
+        statusCode: 200,
+        response: { ok: true, ingested: false, reason: "THREAD_NOT_FOUND" },
+      });
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+
+    test("unmapped property returns 200 PROPERTY_NOT_MAPPED without looking up the thread", async () => {
+      const findByExternalPropertyId = jest.fn().mockResolvedValue([]);
+      const { service, deps } = buildService({ findByExternalPropertyId });
+
+      const result = await service.handleWebhookEvent(
+        buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() })
+      );
+
+      expect(result).toEqual({
+        statusCode: 200,
+        response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
+      });
+      expect(deps.threads.findExternalThread).not.toHaveBeenCalled();
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+
+    test("missing booking_id rejects with a 400 badRequest", async () => {
+      const { service, deps } = buildService();
+
+      await expect(
+        service.handleWebhookEvent(
+          buildLambdaEvent({ body: baseBookingAssignedWebhookEvent({ payload: { booking_id: null } }) })
+        )
+      ).rejects.toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
+
+      expect(deps.threads.findExternalThread).not.toHaveBeenCalled();
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+
+    test("missing message_thread_id rejects with a 400 badRequest", async () => {
+      const { service, deps } = buildService();
+
+      await expect(
+        service.handleWebhookEvent(
+          buildLambdaEvent({ body: baseBookingAssignedWebhookEvent({ payload: { message_thread_id: null } }) })
+        )
+      ).rejects.toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
+
+      expect(deps.threads.findExternalThread).not.toHaveBeenCalled();
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+
+    test("duplicate delivery (thread already has the target guestId) returns 200 and does not update again", async () => {
+      const alreadyAssignedThread = { ...existingThread, guestId: "CHANNEX_GUEST:channex-booking-1" };
+      const findExternalThread = jest.fn().mockResolvedValue(alreadyAssignedThread);
+      const { service, deps } = buildService({ findExternalThread });
+
+      const result = await service.handleWebhookEvent(
+        buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() })
+      );
+
+      expect(result).toEqual({ statusCode: 200, response: { ok: true } });
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+
+    test("wrong or missing secret still returns 403 for this event type", async () => {
+      const { service, deps } = buildService();
+
+      const missing = await service.handleWebhookEvent(
+        buildLambdaEvent({ secret: null, body: baseBookingAssignedWebhookEvent() })
+      );
+      const wrong = await service.handleWebhookEvent(
+        buildLambdaEvent({ secret: "not-the-right-secret", body: baseBookingAssignedWebhookEvent() })
+      );
+
+      expect(missing).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
+      expect(wrong).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
+      expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
+      expect(deps.threads.findExternalThread).not.toHaveBeenCalled();
+      expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
     });
   });
 });
