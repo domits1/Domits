@@ -27,6 +27,7 @@ const TaskDetailsModal = ({
     editPropertyOptions,
     currentUser,
     checklistItems,
+    checklistLoadError,
     onEditChange,
     onPropertyChange,
     onFileChange,
@@ -34,6 +35,7 @@ const TaskDetailsModal = ({
     onAddChecklistItem,
     onToggleChecklistItem,
     onRemoveChecklistItem,
+    onRetryChecklistLoad,
     onSave,
     onDelete,
     onClose,
@@ -188,9 +190,11 @@ const TaskDetailsModal = ({
 
                         <ChecklistSection
                             items={checklistItems}
+                            loadError={checklistLoadError}
                             onAddItem={onAddChecklistItem}
                             onToggleChecked={onToggleChecklistItem}
                             onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={onRetryChecklistLoad}
                         />
 
                         <div className="activity-section">
@@ -252,12 +256,14 @@ TaskDetailsModal.propTypes = {
         isRequired: PropTypes.bool,
         isChecked: PropTypes.bool,
     })).isRequired,
+    checklistLoadError: PropTypes.string,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onRemoveAttachment: PropTypes.func.isRequired,
     onAddChecklistItem: PropTypes.func.isRequired,
     onToggleChecklistItem: PropTypes.func.isRequired,
+    onRetryChecklistLoad: PropTypes.func.isRequired,
     onRemoveChecklistItem: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,

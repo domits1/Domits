@@ -29,6 +29,7 @@ describe('TaskDetailsModal', () => {
         editPropertyOptions: [{ id: 'prop-1', label: 'Villa Sunshine' }],
         currentUser: { name: 'Alex Host', email: 'alex@example.com' },
         checklistItems: [],
+        checklistLoadError: null,
         onEditChange: jest.fn(),
         onPropertyChange: jest.fn(),
         onFileChange: jest.fn(),
@@ -36,6 +37,7 @@ describe('TaskDetailsModal', () => {
         onAddChecklistItem: jest.fn(),
         onToggleChecklistItem: jest.fn(),
         onRemoveChecklistItem: jest.fn(),
+        onRetryChecklistLoad: jest.fn(),
         onSave: jest.fn(),
         onDelete: jest.fn(),
         onClose: jest.fn(),
@@ -113,5 +115,14 @@ describe('TaskDetailsModal', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Remove Strip beds' }));
         expect(baseProps.onRemoveChecklistItem).toHaveBeenCalledWith('item-1');
+    });
+
+    test('shows a checklist load error and wires retry through to the parent', () => {
+        render(<TaskDetailsModal {...baseProps} checklistLoadError="Failed to load checklist items" />);
+
+        expect(screen.getByText('Failed to load checklist items')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        expect(baseProps.onRetryChecklistLoad).toHaveBeenCalledTimes(1);
     });
 });
