@@ -1,9 +1,7 @@
 import { resolveDestinationChain } from "./destinationResolver.js";
 import { toDestinationSlug } from "../../util/destination/destinationSlug.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
-
-const COMPOSITE_PATTERN = /[,/]|\s-\s/;
-const SHORT_CITY_LENGTH = 3;
+import { flagDestinationCity } from "../../util/destination/destinationFlags.js";
 
 const toCount = (value) => {
   const parsed = Number(value);
@@ -18,26 +16,6 @@ const escapeMarkdownCell = (value) =>
 
 const sortByCountDesc = (left, right) =>
   right.activeListings - left.activeListings || left.slug.localeCompare(right.slug);
-
-const flagCity = (city, countrySlug) => {
-  const flags = [];
-  if (city.variants.length > 1) {
-    flags.push("several_spellings");
-  }
-  if (city.variants.every(({ raw }) => raw === raw.toLowerCase())) {
-    flags.push("lower_case_only");
-  }
-  if (city.slug === countrySlug) {
-    flags.push("same_as_country");
-  }
-  if (city.variants.some(({ raw }) => COMPOSITE_PATTERN.test(raw))) {
-    flags.push("composite");
-  }
-  if (city.slug.replace(/-/g, "").length < SHORT_CITY_LENGTH) {
-    flags.push("short");
-  }
-  return flags;
-};
 
 export const buildDestinationReport = (rows, settings = readDestinationSettings()) => {
   const countries = new Map();
@@ -107,14 +85,17 @@ export const buildDestinationReport = (rows, settings = readDestinationSettings(
   const reportCountries = [...countries.values()]
     .map((country) => {
       const cities = [...country.cities.values()]
-        .map((city) => ({
-          ...city,
-          variants: [...city.variants].sort(
-            (left, right) => right.count - left.count || left.raw.localeCompare(right.raw)
-          ),
-          eligible: isDestinationEligible({ activeListings: city.activeListings }, settings),
-          flags: flagCity(city, country.slug),
-        }))
+        .map((city) => {
+          const flags = flagDestinationCity({ slug: city.slug, countrySlug: country.slug, variants: city.variants });
+          return {
+            ...city,
+            variants: [...city.variants].sort(
+              (left, right) => right.count - left.count || left.raw.localeCompare(right.raw)
+            ),
+            eligible: flags.length === 0 && isDestinationEligible({ activeListings: city.activeListings }, settings),
+            flags,
+          };
+        })
         .sort(sortByCountDesc);
       const eligibleChildren = cities.filter((city) => city.eligible).length;
       return {
