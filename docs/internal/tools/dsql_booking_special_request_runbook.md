@@ -55,4 +55,4 @@ Rolling back the column (block 9) is only safe **after** this PR's code has been
 
 ## Status
 
-Not applied yet. Update this section with the date and the person who applied it, as `dsql_booking_columns_runbook.md` does.
+Applied by Rakib Sheikh on 2026-10-08 to the `test` schema first, then `main`, and verified.

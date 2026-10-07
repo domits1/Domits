@@ -74,7 +74,7 @@ describe.each([
     const suffix = schema === "test" ? "_test" : "";
     expect(loadSql()).toMatch(
       new RegExp(
-        `CREATE INDEX ASYNC (IF NOT EXISTS )?property_custom_rules_property_id_idx${suffix}\\s+ON ${schema}\\.property_custom_rules \\(property_id\\);`
+        String.raw`CREATE INDEX ASYNC (IF NOT EXISTS )?property_custom_rules_property_id_idx${suffix}\s+ON ${schema}\.property_custom_rules \(property_id\);`
       )
     );
   });

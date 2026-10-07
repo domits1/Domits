@@ -12,8 +12,8 @@ export const loadMigrationSql = (fileName) =>
 
 // Returns the block between "CREATE TABLE IF NOT EXISTS <table> (" and the closing ");".
 export const extractCreateTableBlock = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  const match = new RegExp(`CREATE TABLE IF NOT EXISTS ${escapedTable} \\(([\\s\\S]*?)\\n\\);`).exec(sql);
+  const escapedTable = qualifiedTable.replaceAll(".", String.raw`\.`);
+  const match = new RegExp(String.raw`CREATE TABLE IF NOT EXISTS ${escapedTable} \(([\s\S]*?)\n\);`).exec(sql);
   if (!match) {
     throw new Error(`No CREATE TABLE block found for ${qualifiedTable}`);
   }
@@ -28,8 +28,8 @@ export const extractCreateTableColumns = (sql, qualifiedTable) =>
     .map((line) => line.split(/\s+/)[0].toLowerCase());
 
 export const extractAddColumnNames = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  return [...sql.matchAll(new RegExp(`ALTER TABLE ${escapedTable} ADD COLUMN IF NOT EXISTS (\\w+)`, "g"))].map(
+  const escapedTable = qualifiedTable.replaceAll(".", String.raw`\.`);
+  return [...sql.matchAll(new RegExp(String.raw`ALTER TABLE ${escapedTable} ADD COLUMN IF NOT EXISTS (\w+)`, "g"))].map(
     (match) => match[1].toLowerCase()
   );
 };
