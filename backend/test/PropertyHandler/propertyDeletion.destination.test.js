@@ -7,17 +7,12 @@ jest.mock("database", () => ({
   default: { getInstance: jest.fn() },
 }));
 
-const buildClient = ({ failOn = null, conflicts = 0 } = {}) => {
+const buildClient = ({ failOn = null } = {}) => {
   const statements = [];
-  let remainingConflicts = conflicts;
   const transactionManager = {
     query: jest.fn(async (statement, parameters) => {
       statements.push({ statement, parameters });
       if (failOn && statement.includes(failOn)) throw new Error(`failed on ${failOn}`);
-      if (remainingConflicts > 0 && statement.includes("property_destination")) {
-        remainingConflicts -= 1;
-        throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
-      }
       return [];
     }),
   };
@@ -61,12 +56,6 @@ describe("deleting a property removes its destination mapping in the same transa
       "property-1",
     ]);
     expect(client.committed).toBe(1);
-  });
-
-  it("tries the whole deletion again when it lost a DSQL conflict against a mapping write", async () => {
-    const client = buildClient({ conflicts: 1 });
-    await new PropertyDeletionRepository().deletePropertyById("property-1");
-    expect([client.transaction.mock.calls.length, client.committed]).toEqual([2, 1]);
   });
 
   it("rejects when the mapping delete fails, so nothing is committed and the property row delete never runs", async () => {

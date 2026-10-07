@@ -23,6 +23,7 @@ const readOnly = (repository) => ({
   getLocationForMapping: (propertyId) => repository.getLocationForMapping(propertyId),
   syncPropertyDestination: async () => true,
   removePropertyDestination: async () => ({ removed: false, current: true }),
+  deleteMappingsWithoutProperty: () => repository.countMappingsWithoutProperty(),
 });
 
 const main = async () => {
@@ -36,7 +37,7 @@ const main = async () => {
     onProperty: (result) => console.log(`${result.outcome} ${result.propertyId} ${result.path || result.reason || ""}`),
   });
   console.log(
-    `Finished ${mode}. mapped=${summary.mapped} unresolved=${summary.unresolved} stale=${summary.stale} failed=${summary.failed} batches=${summary.batches} complete=${summary.complete}`
+    `Finished ${mode}. mapped=${summary.mapped} unresolved=${summary.unresolved} stale=${summary.stale} failed=${summary.failed} batches=${summary.batches} complete=${summary.complete} orphansRemoved=${summary.orphansRemoved}`
   );
   for (const failure of summary.failures) console.log(`failed ${failure.propertyId}: ${failure.message}`);
   if (!commit) console.log("Nothing was written. Run again with --commit to write.");
