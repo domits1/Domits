@@ -20,6 +20,13 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  async saveHostResponse(event) {
+    try {
+      const action = event.resource.endsWith("/publish") ? "publish" : event.httpMethod === "PATCH" ? "edit" : "draft";
+      const response = await this.service.saveHostResponse(this.authManager.getUser(event), event.pathParameters?.id, parseBody(event.body), action);
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ response }) };
+    } catch (error) { return this.handleError(error); }
+  }
   async getPublicReviews(event) {
     try {
       const result = await this.service.getPublicReviews(
@@ -82,7 +89,9 @@ export class Controller {
       throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
     }
     let result;
-    if (query.scope === "property-trends") {
+    if (query.scope === "respondable") {
+      result = await this.service.getResponseEligibleReviews(user.username);
+    } else if (query.scope === "property-trends") {
       result = await this.service.getPropertyRatingTrends(user.username, query);
     } else if (query.scope === "property-score") {
       result = await this.service.getPropertyOverallScore(user.username, query.propertyId);

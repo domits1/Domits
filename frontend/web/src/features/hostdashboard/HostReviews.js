@@ -9,6 +9,7 @@ import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
+import HostResponseForm from "../review/HostResponseForm";
 import ReviewPerformance from "./ReviewPerformance";
 import DecliningPropertyRatings from "../review/DecliningPropertyRatings";
 import reviewStyles from "../review/ReviewPage.module.css";
@@ -87,7 +88,7 @@ function HostReviews() {
             }
             setIsLoading2(true);
             try {
-                const response = await requestReview("GET", { scope: "received" });
+                const response = await requestReview("GET", { scope: "respondable" });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -170,6 +171,7 @@ function HostReviews() {
                                         <h2 className={styles.reviewHeader}>{receivedReview.title}</h2>
                                         <p className={`${styles.reviewContent} ${reviewStyles.reviewText}`}>{receivedReview.content}</p>
                                         <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}</p>
+                                        <HostResponseForm key={receivedReview.id} review={receivedReview} />
                                     </div>
                                 ))
                             ) : (

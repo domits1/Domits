@@ -27,3 +27,11 @@ test("shows all page cards, summary, categories, verified stay and pagination", 
   fireEvent.click(screen.getByText("Next reviews"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 10, expect.anything()));
 });
+test("distinguishes a public host response and renders its text safely", async () => {
+  getPublicReviews.mockResolvedValue({ ...empty, review_count: 1, reviews: [{ id: "r1", rating: 4,
+    text: "Guest review", date: 1000, response: { message: "<b>Host reply</b>" } }] });
+  render(<PublicReviews propertyId="p1" />);
+  const response = await screen.findByLabelText("Host response");
+  expect(response).toHaveTextContent("<b>Host reply</b>");
+  expect(response.querySelector("b")).toBeNull();
+});
