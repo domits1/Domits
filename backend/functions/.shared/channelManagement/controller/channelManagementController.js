@@ -87,7 +87,7 @@ export default class ChannelManagementController {
       return { statusCode: 200, response: { outcome: "IGNORED" } };
     }
 
-    const result = await this.channelManagementApiService.receiveChannexBookingWebhook({ externalPropertyId });
+    const result = await this.channelManagementApiService.receiveChannexBookingWebhook({ externalPropertyId, requestId });
     console.info(
       JSON.stringify({
         event: "CHANNEX_BOOKING_WEBHOOK",

@@ -124,6 +124,7 @@ describe("ChannelManagementController.receiveChannexBookingWebhook", () => {
 
       expect(channelManagementApiService.receiveChannexBookingWebhook).toHaveBeenCalledWith({
         externalPropertyId: "channex-1",
+        requestId: "request-1",
       });
       expect(result).toEqual({ statusCode: 503, response: { outcome: "LOCKED" } });
     }

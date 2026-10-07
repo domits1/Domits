@@ -25,9 +25,20 @@ const buildService = ({ mapping = MAPPING, integration = INTEGRATION, secret = C
   return { service, ...deps };
 };
 
-const receive = (service) => service.receiveBookingEvent({ externalPropertyId: "channex-1", receivedAtMs: RECEIVED_AT_MS });
+const receive = (service) =>
+  service.receiveBookingEvent({ externalPropertyId: "channex-1", requestId: "request-1", receivedAtMs: RECEIVED_AT_MS });
+
+let errorLog;
 
 describe("ChannexBookingWebhookService", () => {
+  beforeEach(() => {
+    errorLog = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test("pulls the mapped property's feed with the webhook trigger and a 20-second budget from arrival", async () => {
     const { service, pullLatestChannexBookingsForResolvedContext } = buildService();
 
@@ -109,35 +120,79 @@ describe("ChannexBookingWebhookService", () => {
     expect(sync.releaseLock).toHaveBeenCalledWith("account-1", "booking_poll:property-1", expect.objectContaining({ status: "SUCCESS" }));
   });
 
-  test("releases the lock and answers 503 when the pull throws a database conflict", async () => {
-    const { service, sync, pullLatestChannexBookingsForResolvedContext } = buildService();
-    pullLatestChannexBookingsForResolvedContext.mockRejectedValue(Object.assign(new Error("conflict"), { code: "40001" }));
+  // A failing revision is caught inside the pull and never throws, so a thrown error is infrastructure
+  // (database, AWS). Those deserve Channex's retry, even when the error carries no code at all.
+  it.each([
+    {
+      description: "the pull throws a database conflict",
+      arrange: ({ pullLatestChannexBookingsForResolvedContext }) =>
+        pullLatestChannexBookingsForResolvedContext.mockRejectedValue(Object.assign(new Error("conflict"), { code: "40001" })),
+    },
+    {
+      description: "the database connection cannot be opened (an error without a code)",
+      arrange: ({ pullLatestChannexBookingsForResolvedContext }) =>
+        pullLatestChannexBookingsForResolvedContext.mockRejectedValue(
+          new Error("Something went wrong while initializing database connection.")
+        ),
+    },
+    {
+      description: "taking the lock throws",
+      arrange: ({ sync }) => sync.tryAcquireLock.mockRejectedValue(Object.assign(new Error("conflict"), { code: "40001" })),
+    },
+    {
+      description: "the mapping lookup throws",
+      arrange: ({ props }) => props.findActiveChannexMappingByExternalPropertyId.mockRejectedValue(new Error("timeout")),
+    },
+  ])("answers 503 UNEXPECTED_ERROR when $description", async ({ arrange }) => {
+    const deps = buildService();
+    arrange(deps);
 
-    await expect(receive(service)).resolves.toMatchObject({ statusCode: 503, outcome: "UNEXPECTED_TEMPORARY_ERROR" });
+    await expect(receive(deps.service)).resolves.toMatchObject({ statusCode: 503, outcome: "UNEXPECTED_ERROR" });
+  });
+
+  test("releases the lock as FAILED when the pull throws", async () => {
+    const { service, sync, pullLatestChannexBookingsForResolvedContext } = buildService();
+    pullLatestChannexBookingsForResolvedContext.mockRejectedValue(new Error("boom"));
+
+    await receive(service);
+
     expect(sync.releaseLock).toHaveBeenCalledWith("account-1", "booking_poll:property-1", expect.objectContaining({ status: "FAILED" }));
   });
 
-  test("answers 200 when the pull throws an unknown error, so the revision waits in the feed", async () => {
+  // Channex retries quietly; without the cause in the logs nobody can tell why bookings stopped.
+  test("logs a thrown error with its name, message, code and the request id", async () => {
     const { service, pullLatestChannexBookingsForResolvedContext } = buildService();
-    pullLatestChannexBookingsForResolvedContext.mockRejectedValue(new Error("something unexpected"));
+    pullLatestChannexBookingsForResolvedContext.mockRejectedValue(
+      Object.assign(new Error("Connection terminated unexpectedly"), { code: "57P01" })
+    );
 
-    await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "UNEXPECTED_ERROR" });
+    await receive(service);
+
+    expect(errorLog).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(errorLog.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_BOOKING_WEBHOOK_UNEXPECTED_ERROR",
+      requestId: "request-1",
+      externalPropertyId: "channex-1",
+      errorName: "Error",
+      errorMessage: "Connection terminated unexpectedly",
+      errorCode: "57P01",
+    });
   });
 
-  // The service always answers with a status: a thrown error would reach the handler's generic 500,
-  // and Channex would retry even a failure that can never succeed.
-  test("answers 503 when taking the lock hits a database conflict", async () => {
-    const { service, sync } = buildService();
-    sync.tryAcquireLock.mockRejectedValue(Object.assign(new Error("conflict"), { code: "40001" }));
+  test("logs why the account's Channex credentials could not be read", async () => {
+    const { service, channexCredentialStore } = buildService();
+    channexCredentialStore.readSecretOrNull.mockRejectedValue(
+      Object.assign(new Error("Rate exceeded"), { name: "ThrottlingException" })
+    );
 
-    await expect(receive(service)).resolves.toMatchObject({ statusCode: 503, outcome: "UNEXPECTED_TEMPORARY_ERROR" });
-  });
+    await receive(service);
 
-  test("answers 200 when the mapping lookup throws an unknown error", async () => {
-    const { service, props } = buildService();
-    props.findActiveChannexMappingByExternalPropertyId.mockRejectedValue(new Error("something unexpected"));
-
-    await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "UNEXPECTED_ERROR" });
+    expect(JSON.parse(errorLog.mock.calls[0][0])).toMatchObject({
+      event: "CHANNEX_BOOKING_WEBHOOK_CREDENTIALS_UNREADABLE",
+      requestId: "request-1",
+      errorName: "ThrottlingException",
+      errorMessage: "Rate exceeded",
+    });
   });
 
   test("passes the classification of the pull through", async () => {

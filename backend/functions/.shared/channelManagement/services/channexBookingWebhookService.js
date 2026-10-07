@@ -1,13 +1,25 @@
 import { CHANNEX_STATUS } from "../channelManagementConstants.js";
 import { hasChannexRequiredCredentialFields } from "../providers/channex/credentialUtils.js";
 import { CHANNEX_BOOKING_POLL_SYNC_TYPE, buildChannexBookingPollConfig } from "../utils/channexBookingPollUtils.js";
-import { classifyWebhookPullResult, isTemporaryError } from "../utils/channexBookingWebhookClassification.js";
+import { classifyWebhookPullResult } from "../utils/channexBookingWebhookClassification.js";
 
 // API Gateway gives up after 29 seconds; the rest of the feed waits for Channex's retry.
 const WEBHOOK_TIME_BUDGET_MS = 20_000;
 const WEBHOOK_TRIGGER = "WEBHOOK";
 
 const answer = (statusCode, outcome, extra = {}) => ({ statusCode, outcome, ...extra });
+
+// Name, message and code only: no request body, header or credentials.
+const logError = (event, context, error) =>
+  console.error(
+    JSON.stringify({
+      event,
+      ...context,
+      errorName: error?.name ?? null,
+      errorMessage: error?.message ?? null,
+      errorCode: error?.code ?? null,
+    })
+  );
 
 const isConnected = (integration) =>
   Boolean(integration) && String(integration.status || "").toUpperCase() !== CHANNEX_STATUS.DISCONNECTED;
@@ -22,33 +34,37 @@ export default class ChannexBookingWebhookService {
     this.now = now;
   }
 
-  async readChannexSecret(integration) {
+  async readChannexSecret(integration, logContext) {
     try {
       const secret = await this.channexCredentialStore.readSecretOrNull(integration.credentialsRef);
       return hasChannexRequiredCredentialFields(secret) ? { secret } : { outcome: "CREDENTIALS_INVALID" };
-    } catch {
+    } catch (error) {
+      logError("CHANNEX_BOOKING_WEBHOOK_CREDENTIALS_UNREADABLE", logContext, error);
       return { outcome: "CREDENTIALS_UNREADABLE" };
     }
   }
 
-  // Always answers with a status: a thrown error would reach the handler's generic 500, and Channex
-  // would retry even a failure that can never succeed.
-  async receiveBookingEvent({ externalPropertyId, receivedAtMs = this.now() }) {
+  // A failing revision is caught inside the pull and never throws, so a thrown error is infrastructure
+  // (database, AWS) and deserves Channex's retry, even when it carries no code. Answering here also keeps
+  // it away from the handler's generic 500.
+  async receiveBookingEvent({ externalPropertyId, requestId = null, receivedAtMs = this.now() }) {
+    const logContext = { requestId, externalPropertyId };
     try {
-      return await this.processBookingEvent({ externalPropertyId, receivedAtMs });
+      return await this.processBookingEvent({ externalPropertyId, receivedAtMs, logContext });
     } catch (error) {
-      return isTemporaryError(error) ? answer(503, "UNEXPECTED_TEMPORARY_ERROR") : answer(200, "UNEXPECTED_ERROR");
+      logError("CHANNEX_BOOKING_WEBHOOK_UNEXPECTED_ERROR", logContext, error);
+      return answer(503, "UNEXPECTED_ERROR");
     }
   }
 
-  async processBookingEvent({ externalPropertyId, receivedAtMs }) {
+  async processBookingEvent({ externalPropertyId, receivedAtMs, logContext }) {
     const mapping = await this.props.findActiveChannexMappingByExternalPropertyId(externalPropertyId);
     if (!mapping) return answer(200, "PROPERTY_NOT_MAPPED");
 
     const integration = await this.accounts.getById(mapping.integrationAccountId);
     if (!isConnected(integration)) return answer(200, "INTEGRATION_NOT_CONNECTED");
 
-    const credentials = await this.readChannexSecret(integration);
+    const credentials = await this.readChannexSecret(integration, logContext);
     if (credentials.outcome === "CREDENTIALS_UNREADABLE") return answer(503, credentials.outcome);
     if (credentials.outcome) return answer(200, credentials.outcome);
 
