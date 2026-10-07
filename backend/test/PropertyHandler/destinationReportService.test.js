@@ -44,6 +44,27 @@ describe("the destination report", () => {
     expect(indonesia.cities.find((city) => city.slug === "bali").flags).toEqual([]);
   });
 
+  it("gives a flagged city no page until its address is fixed, keeps listing it, and lets its country keep the listing", () => {
+    const report = buildDestinationReport(ROWS, readDestinationSettings({}));
+    const kenya = report.countries.find((country) => country.code === "KE");
+    const indonesia = report.countries.find((country) => country.code === "ID");
+    const spain = report.countries.find((country) => country.code === "ES");
+
+    expect(kenya.cities[0].eligible).toBe(false);
+    expect(kenya.eligible).toBe(true);
+    expect(indonesia.cities.map((city) => [city.slug, city.eligible])).toEqual([
+      ["bali", true],
+      ["bali-seminyak", false],
+    ]);
+    expect(spain.cities.map((city) => [city.slug, city.eligible])).toEqual([
+      ["marbella", false],
+      ["malaga", true],
+    ]);
+    expect(renderDestinationReportMarkdown(report)).toContain(
+      "| Kenya | /destinations/africa/kenya/kenya | 1 | kenya | kenya (1) | lower_case_only same_as_country |"
+    );
+  });
+
   it("lists rows it cannot resolve instead of guessing, and counts their listings in the total", () => {
     const report = buildDestinationReport(ROWS, readDestinationSettings({}));
 
@@ -60,24 +81,30 @@ describe("the destination report", () => {
       countries: 4,
       eligibleCountries: 4,
       cities: 5,
-      eligibleCities: 5,
+      eligibleCities: 2,
       flaggedCities: 3,
       unresolved: 3,
     });
   });
 
   it("applies the thresholds: a higher minimum drops single listing cities, and a country can still exist through a child", () => {
-    const report = buildDestinationReport(ROWS, readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "2" }));
+    const rows = [
+      { country: "Spain", city: "Málaga", active_count: 2 },
+      { country: "Spain", city: "Ronda", active_count: 1 },
+      { country: "Kenya", city: "Nairobi", active_count: 1 },
+      { country: "Portugal", city: " ", active_count: 1 },
+    ];
+    const report = buildDestinationReport(rows, readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "2" }));
     const spain = report.countries.find((country) => country.code === "ES");
     const kenya = report.countries.find((country) => country.code === "KE");
     const portugal = report.countries.find((country) => country.code === "PT");
 
     expect(spain.cities.map((city) => [city.slug, city.eligible])).toEqual([
-      ["marbella", true],
-      ["malaga", false],
+      ["malaga", true],
+      ["ronda", false],
     ]);
     expect([spain.eligible, kenya.eligible, portugal.eligible]).toEqual([true, false, false]);
-    expect([report.summary.eligibleCities, report.summary.eligibleCountries]).toEqual([1, 2]);
+    expect([report.summary.eligibleCities, report.summary.eligibleCountries]).toEqual([1, 1]);
   });
 
   it("lets a country exist only through its own unresolved listings when the parent setting is off", () => {
@@ -113,7 +140,7 @@ describe("the destination report", () => {
     );
     expect(markdown).toContain("- Narnia / Cair Paravel (1): unknown_country");
     expect(markdown).toContain("-  /  (1): no_location");
-    expect(markdown.split("\n")[0]).toContain("cities 5 (5 with a page, 3 flagged), unresolved rows 3");
+    expect(markdown.split("\n")[0]).toContain("cities 5 (2 with a page, 3 flagged), unresolved rows 3");
   });
 
   it("survives empty and malformed input", () => {
