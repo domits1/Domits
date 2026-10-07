@@ -20,13 +20,14 @@ const NETWORK_ERROR_CODES = new Set([
 const POSTGRES_CONNECTION_EXCEPTION = /^08[0-9A-Z]{3}$/;
 // pg raises this without a code, so only the message identifies it.
 const CONNECTION_TERMINATED_MESSAGE = /connection terminated unexpectedly/i;
-const NETWORK_FAILURE_PROVIDER_STATUSES = new Set(["BOOKING_FEED_FAILED"]);
+// With a null httpStatus, the provider uses this status for a feed request that never got a response.
+const NO_RESPONSE_PROVIDER_STATUS = "BOOKING_FEED_FAILED";
 
 const isTemporaryHttpStatus = (httpStatus) => httpStatus === 429 || httpStatus >= 500;
 
 const isTemporaryFeedFailure = ({ httpStatus, providerStatus }) =>
   isTemporaryHttpStatus(httpStatus) ||
-  (httpStatus === null && NETWORK_FAILURE_PROVIDER_STATUSES.has(providerStatus));
+  (httpStatus === null && providerStatus === NO_RESPONSE_PROVIDER_STATUS);
 
 // An acknowledgement without an HTTP status never reached Channex, so it is a network failure.
 const isTemporaryAckFailure = (issue) =>
