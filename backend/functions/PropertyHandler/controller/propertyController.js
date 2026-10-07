@@ -12,6 +12,7 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
+import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -19,11 +20,13 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
 } from "../util/exception/WebsiteCustomDomainError.js";
-import { toHostWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -226,6 +229,7 @@ export class PropertyController {
         this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+        this.directBookingWebsiteRatePlanService = new DirectBookingWebsiteRatePlanService();
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
         this.websiteCustomDomainService = null;
@@ -1686,14 +1690,13 @@ export class PropertyController {
         return {
             siteId: siteSummary.site.id,
             propertyId: siteSummary.site.propertyId,
-            hostId: siteSummary.site.hostId,
             templateKey: siteSummary.site.templateKey,
             primaryLocale: siteSummary.site.primaryLocale,
             siteName: siteSummary.site.siteName,
             siteStatus: siteSummary.site.status,
             publishedAt: siteSummary.site.publishedAt,
             isReachable: siteSummary.isReachable,
-            domain: siteSummary.primaryDomain,
+            domain: toPublicWebsiteDomainView(siteSummary.primaryDomain),
         };
     }
 
@@ -1705,17 +1708,8 @@ export class PropertyController {
 
         return {
             resolution,
-            site: {
-                id: site.id,
-                propertyId: site.propertyId,
-                hostId: site.hostId,
-                siteName: site.siteName,
-                primaryLocale: site.primaryLocale,
-                status: site.status,
-                templateKey: site.templateKey,
-                publishedAt: site.publishedAt,
-            },
-            domain,
+            site: toPublicWebsiteSiteView(site),
+            domain: toPublicWebsiteDomainView(domain),
             primaryDomain,
             propertySnapshot:
                 propertySnapshot && typeof propertySnapshot === "object"
@@ -1945,7 +1939,7 @@ export class PropertyController {
             propertyDetails,
         });
 
-        const site = await this.directBookingWebsiteSiteRepository.upsertSite({
+        const site = await this.directBookingWebsiteSiteRepository.upsertSiteWithStaticPageOutbox({
             propertyId,
             hostId,
             siteName,
@@ -2814,6 +2808,13 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
+            if (error instanceof WebsitePublishConflictError) {
+                return {
+                    statusCode: error.statusCode,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ code: error.code, message: error.message }),
+                };
+            }
             return this.websiteServerError();
         }
     }
@@ -3531,6 +3532,103 @@ export class PropertyController {
     isDraftContentClientError(error) {
         return Boolean(error?.message?.startsWith("Draft "));
     }
+
+    async getWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const plan = await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(plan),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async changeWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const user = await this.authManager.getAuthorizedUser(accessToken);
+            const group = user.UserAttributes?.find((attribute) => attribute.Name === "custom:group")?.Value;
+            if (group !== "Host") {
+                const error = new Error("You must be a Host.");
+                error.statusCode = 403;
+                throw error;
+            }
+
+            let body;
+            try {
+                body = JSON.parse(event.body || "{}");
+            } catch {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be valid JSON.")
+                };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be a JSON object.")
+                };
+            }
+
+            const result = await this.directBookingWebsiteRatePlanService.changePlan({
+                accountId: user.Username,
+                targetPlan: body.plan,
+                customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+            });
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(result),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async handleWebsiteRatePlanWebhook(event) {
+        try {
+            const headers = event.headers || {};
+            const signature = headers["Stripe-Signature"] || headers["stripe-signature"] || "";
+            const rawBody = event.isBase64Encoded
+                ? Buffer.from(event.body || "", "base64").toString("utf8")
+                : String(event.body || "");
+
+            await this.directBookingWebsiteRatePlanService.handleStripeWebhook(rawBody, signature);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ received: true }),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 400,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message || "Unable to process Stripe webhook." }),
+            };
+        }
+    }
+
 
     // -------------------------
     // Helper method (internal only)
