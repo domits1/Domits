@@ -36,12 +36,6 @@ class IntegrationController {
     return await this.integrationService.getIntegrationLogs(integrationId, Number.isFinite(limit) ? limit : 50);
   }
 
-  async upsertIntegrationProperty(event) {
-    const integrationId = extractIntegrationId(event.path);
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.upsertIntegrationProperty(integrationId, body);
-  }
-
   async listIntegrationProperties(event) {
     const integrationId = extractIntegrationId(event.path);
     return await this.integrationService.listIntegrationProperties(integrationId);
@@ -176,10 +170,6 @@ class IntegrationController {
 
   async syncChannexFull(event) {
     return this.channelManagementController.syncChannexFull(event);
-  }
-
-  async syncChannexCertificationTestCase(event) {
-    return this.channelManagementController.syncChannexCertificationTestCase(event);
   }
 
   async saveChannexSetupMapping(event) {
