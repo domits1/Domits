@@ -1,5 +1,6 @@
 import { DestinationPageRepository } from "../../data/repository/destinationPageRepository.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
+import { flagDestinationCity } from "../../util/destination/destinationFlags.js";
 import { buildDestinationPage } from "./destinationPageBuilder.js";
 import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 
@@ -26,10 +27,20 @@ export const buildDestinationTree = (destinations, settings = readDestinationSet
     const eligibleChildren = destination.children.filter(decide).length;
     destination.totalListings =
       destination.children.reduce((sum, child) => sum + child.totalListings, 0) + destination.activeListings;
-    const decision = isDestinationEligible(
-      { activeListings: destination.totalListings, directListings: destination.activeListings, eligibleChildren },
-      settings
-    );
+    const flags =
+      destination.type === "city"
+        ? flagDestinationCity({
+            slug: destination.slug,
+            countrySlug: byId.get(destination.parentId)?.slug,
+            variants: [{ raw: destination.name }],
+          })
+        : [];
+    const decision =
+      flags.length === 0 &&
+      isDestinationEligible(
+        { activeListings: destination.totalListings, directListings: destination.activeListings, eligibleChildren },
+        settings
+      );
     eligible.set(destination.id, decision);
     deciding.delete(destination.id);
     return decision;

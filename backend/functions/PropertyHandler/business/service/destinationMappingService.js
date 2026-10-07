@@ -35,12 +35,11 @@ export class DestinationMappingService {
     }
 
     const written = await this.destinationRepository.syncPropertyDestination(normalizedPropertyId, chain, source);
-    const target = chain.city || chain.country;
     return {
       propertyId: normalizedPropertyId,
       outcome: written ? "mapped" : "stale",
       reason: written ? chain.unresolved : "location_changed",
-      path: target.path,
+      path: (chain.city || chain.country).path,
     };
   }
 
