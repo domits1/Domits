@@ -19,6 +19,7 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -2804,6 +2805,13 @@ export class PropertyController {
             console.error(error);
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
+            }
+            if (error instanceof WebsitePublishConflictError) {
+                return {
+                    statusCode: error.statusCode,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ code: error.code, message: error.message }),
+                };
             }
             return this.websiteServerError();
         }
