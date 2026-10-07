@@ -10,6 +10,7 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
 import ReviewPerformance from "./ReviewPerformance";
+import DecliningPropertyRatings from "../review/DecliningPropertyRatings";
 import reviewStyles from "../review/ReviewPage.module.css";
 
 function HostReviews() {
@@ -130,6 +131,7 @@ function HostReviews() {
                 <Pages />
                 <div className={styles.contentContainer}>
                     {userId && <ReviewPerformance userId={userId} />}
+                    {userId && <DecliningPropertyRatings userId={userId} />}
                     <div className={styles.reviewColumn}>
                         <div className={styles.reviewBox}>
                             <p className={styles.boxText}>My reviews ({reviews.length})</p>
