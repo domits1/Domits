@@ -73,6 +73,13 @@ const normalizedPayload = {
   ],
 };
 
+const assertNoSideEffects = (deps, { properties = true, accounts = true, normalize = true, ingest = true } = {}) => {
+  if (properties) expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
+  if (accounts) expect(deps.accounts.getById).not.toHaveBeenCalled();
+  if (normalize) expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
+  if (ingest) expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+};
+
 const buildService = ({
   findByExternalPropertyId = jest.fn().mockResolvedValue([propertyMapping]),
   getById = jest.fn().mockResolvedValue(integrationAccount),
@@ -128,70 +135,48 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     });
   });
 
-  test("missing shared secret returns 403 without touching repositories, normalizer, or ingestion", async () => {
+  test.each([
+    [
+      "missing shared secret returns 403 without touching repositories, normalizer, or ingestion",
+      { secret: null },
+      { statusCode: 403, response: { error: "FORBIDDEN" } },
+      false,
+    ],
+    [
+      "wrong shared secret returns 403 without touching repositories, normalizer, or ingestion",
+      { secret: "not-the-right-secret" },
+      { statusCode: 403, response: { error: "FORBIDDEN" } },
+      false,
+    ],
+    [
+      "wrong secret with the same length as the valid secret still returns 403 (exercises timingSafeEqual itself, not just the length guard)",
+      { secret: "x".repeat(VALID_SECRET.length) },
+      { statusCode: 403, response: { error: "FORBIDDEN" } },
+      false,
+    ],
+    [
+      "a body that is not valid JSON returns 400, matching the WhatsApp webhook's invalid-JSON handling",
+      { rawBody: "{not valid json" },
+      { statusCode: 400, response: { error: "Invalid JSON body" } },
+      true,
+    ],
+    [
+      'a webhook event type other than "message" is ignored early, with no property/account lookup or ingestion',
+      { body: baseChannexWebhookEvent({ event: "ota_ping" }) },
+      { statusCode: 200, response: { ok: true, ingested: false, reason: "EVENT_IGNORED" } },
+      true,
+    ],
+  ])("%s", async (_name, eventOverrides, expected, exact) => {
     const { service, deps } = buildService();
 
-    const result = await service.handleWebhookEvent(buildLambdaEvent({ secret: null }));
+    const result = await service.handleWebhookEvent(buildLambdaEvent(eventOverrides));
 
-    expect(result).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
-    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
-  });
-
-  test("wrong shared secret returns 403 without touching repositories, normalizer, or ingestion", async () => {
-    const { service, deps } = buildService();
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent({ secret: "not-the-right-secret" }));
-
-    expect(result).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
-    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
-  });
-
-  test("wrong secret with the same length as the valid secret still returns 403 (exercises timingSafeEqual itself, not just the length guard)", async () => {
-    const { service, deps } = buildService();
-    const sameLengthWrongSecret = "x".repeat(VALID_SECRET.length);
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent({ secret: sameLengthWrongSecret }));
-
-    expect(result).toMatchObject({ statusCode: 403, response: { error: "FORBIDDEN" } });
-    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
-  });
-
-  test("a body that is not valid JSON returns 400, matching the WhatsApp webhook's invalid-JSON handling", async () => {
-    const { service, deps } = buildService();
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent({ rawBody: "{not valid json" }));
-
-    expect(result).toEqual({ statusCode: 400, response: { error: "Invalid JSON body" } });
-    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
-  });
-
-  test("a webhook event type other than \"message\" is ignored early, with no property/account lookup or ingestion", async () => {
-    const { service, deps } = buildService();
-
-    const result = await service.handleWebhookEvent(
-      buildLambdaEvent({ body: baseChannexWebhookEvent({ event: "ota_ping" }) })
-    );
-
-    expect(result).toEqual({
-      statusCode: 200,
-      response: { ok: true, ingested: false, reason: "EVENT_IGNORED" },
-    });
-    expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    if (exact) {
+      expect(result).toEqual(expected);
+    } else {
+      expect(result).toMatchObject(expected);
+    }
+    assertNoSideEffects(deps);
   });
 
   test("sender property echo (normalizer returns null) returns 200 and does not ingest", async () => {
@@ -220,9 +205,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       statusCode: 200,
       response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
     });
-    expect(deps.accounts.getById).not.toHaveBeenCalled();
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    assertNoSideEffects(deps, { properties: false });
     expect(warnSpy).toHaveBeenCalled();
     expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
 
@@ -273,8 +256,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       statusCode: 200,
       response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
     });
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    assertNoSideEffects(deps, { properties: false, accounts: false });
     expect(warnSpy).toHaveBeenCalled();
     expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
 
@@ -297,8 +279,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       statusCode: 200,
       response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
     });
-    expect(deps.normalizeInboundMessage).not.toHaveBeenCalled();
-    expect(deps.ingestionService.ingestExternalThread).not.toHaveBeenCalled();
+    assertNoSideEffects(deps, { properties: false, accounts: false });
     expect(warnSpy).toHaveBeenCalled();
     expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
 
