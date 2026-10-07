@@ -44,6 +44,18 @@ const claimLocation = async (manager, schemaName, propertyId, country, city) => 
   return toRecords(result).length > 0;
 };
 
+const claimProperty = async (manager, schemaName, propertyId) => {
+  const result = await manager.queryRunner.query(
+    `UPDATE ${schemaName}.property
+      SET id = id
+      WHERE id = $1
+      RETURNING id`,
+    [propertyId],
+    true
+  );
+  return toRecords(result).length > 0;
+};
+
 const upsertDestinationStatement = (
   tableName
 ) => `INSERT INTO ${tableName} AS d (id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at)
@@ -69,7 +81,10 @@ export class DestinationRepository {
 
     return retryOnConflict(() =>
       client.transaction(async (manager) => {
-        if (!(await claimLocation(manager, schemaName, normalizedPropertyId, country, city))) {
+        if (
+          !(await claimLocation(manager, schemaName, normalizedPropertyId, country, city)) ||
+          !(await claimProperty(manager, schemaName, normalizedPropertyId))
+        ) {
           return false;
         }
 

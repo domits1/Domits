@@ -19,6 +19,7 @@ const remove = (source = { sourceCountry: "Narnia", sourceCity: "Cair Paravel" }
 
 const buildClient = ({
   claimRecords = [{ property_id: "property-1" }],
+  propertyRecords = [{ id: "property-1" }],
   mappingRecords = [{ property_id: "property-1" }],
   queryRows = [],
   failOn = null,
@@ -37,7 +38,7 @@ const buildClient = ({
         throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
       }
       if (statement.startsWith("UPDATE")) {
-        return { records: claimRecords };
+        return { records: statement.includes("property_location") ? claimRecords : propertyRecords };
       }
       return { records: statement.includes("property_destination") ? mappingRecords : [] };
     }),
@@ -76,7 +77,7 @@ describe("the destination repository", () => {
     jest.clearAllMocks();
   });
 
-  it("claims the location row with the judged address, then writes the chain rows and the mapping for an existing property, in one transaction", async () => {
+  it("claims the location row with the judged address and the property row, then writes the chain rows and the mapping, in one transaction", async () => {
     const client = buildClient();
 
     expect(await sync(CHAIN, { ...SOURCE, now: 1700 })).toBe(true);
@@ -84,12 +85,15 @@ describe("the destination repository", () => {
     expect(client.committed).toBe(true);
     expect(kinds(client)).toEqual([
       `UPDATE ${SCHEMA}.property_location SET`,
+      `UPDATE ${SCHEMA}.property SET`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
-    const [claim, ...rest] = client.statements;
+    const [claim, propertyClaim, ...rest] = client.statements;
+    expect(propertyClaim.statement).toContain("SET id = id\n      WHERE id = $1\n      RETURNING id");
+    expect(propertyClaim.parameters).toEqual(["property-1"]);
     expect(claim.statement).toContain(
       "SET city = city\n      WHERE property_id = $1\n        AND country = $2\n        AND city = $3"
     );
@@ -115,8 +119,9 @@ describe("the destination repository", () => {
     );
     expect(rest[3].parameters).toEqual(["property-1", PATHS[2], "Spain", "Marbella", 1700]);
 
-    const gone = buildClient({ mappingRecords: [] });
+    const gone = buildClient({ propertyRecords: [] });
     expect(await sync()).toBe(false);
+    expect(gone.statements).toHaveLength(2);
     expect(gone.committed).toBe(true);
   });
 
@@ -124,7 +129,7 @@ describe("the destination repository", () => {
     const client = buildClient();
     const chain = resolveDestinationChain({ country: "Spain", city: " - " });
     expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
-    expect(client.statements.map(({ parameters }) => parameters[0]).slice(1)).toEqual([
+    expect(client.statements.map(({ parameters }) => parameters[0]).slice(2)).toEqual([
       PATHS[0],
       PATHS[1],
       "property-1",
