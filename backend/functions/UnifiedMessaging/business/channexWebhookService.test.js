@@ -73,6 +73,33 @@ const buildService = ({
   return { service: new ChannexWebhookService(deps), deps };
 };
 
+const runUnmappedScenario = async (depsOverrides, noSideEffectOptions) => {
+  const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  const { service, deps } = buildService(depsOverrides);
+
+  const result = await service.handleWebhookEvent(buildLambdaEvent());
+
+  expect(result).toEqual({
+    statusCode: 200,
+    response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
+  });
+  assertNoSideEffects(deps, noSideEffectOptions);
+  expect(warnSpy).toHaveBeenCalled();
+  expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
+
+  warnSpy.mockRestore();
+};
+
+const runMappingsScenario = async (mappings) => {
+  const findByExternalPropertyId = jest.fn().mockResolvedValue(mappings);
+  const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  const { service, deps } = buildService({ findByExternalPropertyId });
+
+  await service.handleWebhookEvent(buildLambdaEvent());
+
+  return { deps, warnSpy };
+};
+
 describe("ChannexWebhookService.handleWebhookEvent", () => {
   const originalSecret = process.env.CHANNEX_WEBHOOK_SECRET;
 
@@ -171,30 +198,13 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
 
   test("no ACTIVE mapping (findByExternalPropertyId returns an empty list) returns 200, logs a warning with the property id, and does not resolve the account or ingest", async () => {
     const findByExternalPropertyId = jest.fn().mockResolvedValue([]);
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const { service, deps } = buildService({ findByExternalPropertyId });
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent());
-
-    expect(result).toEqual({
-      statusCode: 200,
-      response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
-    });
-    assertNoSideEffects(deps, { properties: false });
-    expect(warnSpy).toHaveBeenCalled();
-    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
-
-    warnSpy.mockRestore();
+    await runUnmappedScenario({ findByExternalPropertyId }, { properties: false });
   });
 
   test("several ACTIVE mappings: the newest (first in the ordered list) is used, and a warning is logged with the property id and count", async () => {
     const newerMapping = { ...propertyMapping, integrationAccountId: "integration-1", updatedAt: 2000 };
     const olderMapping = { ...propertyMapping, integrationAccountId: "integration-2", updatedAt: 1000 };
-    const findByExternalPropertyId = jest.fn().mockResolvedValue([newerMapping, olderMapping]);
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-
-    const { service, deps } = buildService({ findByExternalPropertyId });
-    await service.handleWebhookEvent(buildLambdaEvent());
+    const { deps, warnSpy } = await runMappingsScenario([newerMapping, olderMapping]);
 
     expect(deps.accounts.getById).toHaveBeenCalledWith("integration-1");
     expect(warnSpy).toHaveBeenCalled();
@@ -206,10 +216,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
   });
 
   test("a single ACTIVE mapping does not log a warning", async () => {
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const { service } = buildService();
-
-    await service.handleWebhookEvent(buildLambdaEvent());
+    const { warnSpy } = await runMappingsScenario([propertyMapping]);
 
     expect(warnSpy).not.toHaveBeenCalled();
     warnSpy.mockRestore();
@@ -222,20 +229,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       channel: "WHATSAPP",
       status: "CONNECTED",
     });
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const { service, deps } = buildService({ getById });
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent());
-
-    expect(result).toEqual({
-      statusCode: 200,
-      response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
-    });
-    assertNoSideEffects(deps, { properties: false, accounts: false });
-    expect(warnSpy).toHaveBeenCalled();
-    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
-
-    warnSpy.mockRestore();
+    await runUnmappedScenario({ getById }, { properties: false, accounts: false });
   });
 
   test("newest mapping's account is DISCONNECTED: PROPERTY_NOT_MAPPED, no ingestion", async () => {
@@ -245,20 +239,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       channel: "CHANNEX",
       status: "DISCONNECTED",
     });
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const { service, deps } = buildService({ getById });
-
-    const result = await service.handleWebhookEvent(buildLambdaEvent());
-
-    expect(result).toEqual({
-      statusCode: 200,
-      response: { ok: true, ingested: false, reason: "PROPERTY_NOT_MAPPED" },
-    });
-    assertNoSideEffects(deps, { properties: false, accounts: false });
-    expect(warnSpy).toHaveBeenCalled();
-    expect(warnSpy.mock.calls[0].join(" ")).toContain("channex-property-1");
-
-    warnSpy.mockRestore();
+    await runUnmappedScenario({ getById }, { properties: false, accounts: false });
   });
 
   test("malformed message payload propagates the normalizer's badRequest as a 400", async () => {
