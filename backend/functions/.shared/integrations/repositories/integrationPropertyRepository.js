@@ -62,26 +62,23 @@ class IntegrationPropertyRepository {
       .getMany();
   }
 
-  async findByExternalPropertyId(externalPropertyId) {
+  async queryActivePropertiesWhere(whereClause, whereParams) {
     const client = await Database.getInstance();
     return client
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("p")
-      .where("p.externalPropertyId = :e", { e: externalPropertyId })
+      .where(whereClause, whereParams)
       .andWhere("p.status = :s", { s: "ACTIVE" })
       .orderBy("p.updatedAt", "DESC")
       .getMany();
   }
 
+  async findByExternalPropertyId(externalPropertyId) {
+    return this.queryActivePropertiesWhere("p.externalPropertyId = :e", { e: externalPropertyId });
+  }
+
   async listActiveByDomitsPropertyId(domitsPropertyId) {
-    const client = await Database.getInstance();
-    return client
-      .getRepository(ChannelIntegrationProperty)
-      .createQueryBuilder("p")
-      .where("p.domitsPropertyId = :d", { d: domitsPropertyId })
-      .andWhere("p.status = :s", { s: "ACTIVE" })
-      .orderBy("p.updatedAt", "DESC")
-      .getMany();
+    return this.queryActivePropertiesWhere("p.domitsPropertyId = :d", { d: domitsPropertyId });
   }
 }
 
