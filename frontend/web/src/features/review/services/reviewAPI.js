@@ -2,6 +2,16 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+export const saveHostResponse = async (reviewId, message) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response/publish`, {
+    method: "POST", headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not save your response. Please try again.");
+  return payload.response;
+};
+
 export const getPropertyRatingTrends = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-trends" });
   const payload = await parseResponse(response);

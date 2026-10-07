@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import { Review } from "database/models/Review";
+import { Review_Response } from "database/models/Review_Response";
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
 import { Property } from "database/models/Property";
@@ -21,14 +22,15 @@ describe("public review retrieval", () => {
       query[method] = jest.fn(() => query);
     }
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => entity === Property
-      ? { findOne: async () => property } : { createQueryBuilder: () => query } });
+      ? { findOne: async () => property } : entity === Review_Response
+      ? { find: async () => [{ reviewId: "r1", message: "Thanks", publishedAt: 2000 }] } : { createQueryBuilder: () => query } });
     controller = new Controller({ service: new ReviewService({ repository: new ReviewRepository() }) });
   });
   test("anonymous response uses the path property and excludes private fields", async () => {
     const result = await controller.getPublicReviews(request({ propertyId: "spoofed" }));
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11,
-      next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true,
+      next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true, response: { message: "Thanks", publishedAt: 2000 },
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
     expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" });

@@ -1,6 +1,7 @@
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
   Controller: jest.fn(() => ({
     getPublicPropertyReviews: jest.fn(async () => ({ statusCode: 200 })),
+    saveHostResponse: jest.fn(async () => ({ statusCode: 200 })),
     createReview: jest.fn(async () => ({ statusCode: 201 })),
     getPublicReviews: jest.fn(async () => ({ statusCode: 200 })),
     manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "DELETE" ? 204 : 200 })),
@@ -45,4 +46,11 @@ it("routes individual review reads", async () => {
   const event = { httpMethod: "GET", resource: "/reviews/{id}", pathParameters: { id: "r1" } };
   expect((await handler(event)).statusCode).toBe(200);
   expect(Controller.mock.results[0].value.manageReviews).toHaveBeenCalledWith(event);
+});
+
+it.each([["POST", "/reviews/{id}/response"], ["PATCH", "/reviews/{id}/response"],
+  ["POST", "/reviews/{id}/response/publish"]])("routes %s %s responses", async (httpMethod, resource) => {
+  const event = { httpMethod, resource, pathParameters: { id: "r1" } };
+  expect((await handler(event)).statusCode).toBe(200);
+  expect(Controller.mock.results[0].value.saveHostResponse).toHaveBeenCalledWith(event);
 });

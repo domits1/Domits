@@ -24,6 +24,26 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
+  async saveHostResponse(user, reviewId, body, action) {
+    if (typeof user?.username !== "string" || !user.username.trim() || typeof user.userId !== "string" || !user.userId.trim()) throw new UnauthorizedException("A verified host identity is required.");
+    if (typeof reviewId !== "string" || !reviewId.trim() || reviewId.length > 255) throw new BadRequestException("A valid review ID is required.");
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some((key) => key !== "message")) {
+      throw new BadRequestException("Only response text may be submitted.");
+    }
+    if (!["draft", "edit", "publish"].includes(action) || typeof body.message !== "string" || INVALID_TEXT_CONTROLS.test(body.message)) {
+      throw new BadRequestException("Response must contain supported plain text.");
+    }
+    const message = body.message.replace(/\r\n?/g, "\n").trim();
+    if (!message || message.length > 500) throw new BadRequestException("Write a response between 1 and 500 characters.");
+    return this.repository.saveHostResponse(user, reviewId.trim(), message, action, this.now());
+  }
+
+  async getResponseEligibleReviews(username) {
+    if (typeof username !== "string" || !username.trim()) throw new UnauthorizedException("A verified host identity is required.");
+    const reviews = await this.repository.findResponseEligibleReviews(username);
+    return reviews.map((review) => ({ ...review, content: review.public_review, date: review.created_at }));
+  }
+
   async getPublicReviews(propertyId, offset = "0") {
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       throw new BadRequestException("A property ID is required.");

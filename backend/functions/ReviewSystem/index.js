@@ -11,7 +11,9 @@ export const handler = async (event) => {
   const publicRequest = event.httpMethod === "GET" && event.resource === "/properties/{propertyId}/reviews";
   const collectionRequest = event.resource === "/reviews" && ["GET", "POST"].includes(event.httpMethod);
   const individualRequest = event.resource === "/reviews/{id}" && ["GET", "PATCH"].includes(event.httpMethod);
-  if (!publicRequest && !collectionRequest && !individualRequest) {
+  const responseRequest = (event.resource === "/reviews/{id}/response" && ["POST", "PATCH"].includes(event.httpMethod)) ||
+    (event.resource === "/reviews/{id}/response/publish" && event.httpMethod === "POST");
+  if (!publicRequest && !collectionRequest && !individualRequest && !responseRequest) {
     return {
       statusCode: 405,
       headers: responseHeaders,
@@ -21,6 +23,7 @@ export const handler = async (event) => {
 
   try {
     controller ??= new Controller();
+    if (responseRequest) return await controller.saveHostResponse(event);
     if (publicRequest) return await controller.getPublicReviews(event);
     return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
   } catch {
