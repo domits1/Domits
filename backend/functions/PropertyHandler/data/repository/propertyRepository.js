@@ -4,6 +4,7 @@ import {REGISTRATION_NUMBER_TAKEN_MESSAGE} from "../../util/constant/registratio
 import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
 import Database from "database";
+import {retryOnConflict} from "../../util/dsqlConflictRetry.js";
 import {Property} from "database/models/Property";
 
 const UNIQUE_VIOLATION_CODE = "23505";
@@ -39,12 +40,14 @@ export class PropertyRepository {
 
     async activateProperty(propertyId) {
         const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: "ACTIVE" })
-            .where("id = :id", { id: propertyId })
-            .execute();
+        await retryOnConflict(() =>
+            client
+                .createQueryBuilder()
+                .update(Property)
+                .set({ status: "ACTIVE" })
+                .where("id = :id", { id: propertyId })
+                .execute()
+        );
     }
 
     async getArchiveMetadataColumns(client) {
@@ -92,15 +95,17 @@ export class PropertyRepository {
     async updatePropertyStatus(propertyId, status, metadata = {}) {
         const client = await Database.getInstance();
         const now = Date.now();
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({
-                status,
-                updatedat: now,
-            })
-            .where("id = :id", { id: propertyId })
-            .execute();
+        await retryOnConflict(() =>
+            client
+                .createQueryBuilder()
+                .update(Property)
+                .set({
+                    status,
+                    updatedat: now,
+                })
+                .where("id = :id", { id: propertyId })
+                .execute()
+        );
 
         const archiveColumns = await this.getArchiveMetadataColumns(client);
         if (archiveColumns.size === 0) {
@@ -122,9 +127,11 @@ export class PropertyRepository {
 
         metadataParams.push(propertyId);
 
-        await client.query(
-            `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
-            metadataParams
+        await retryOnConflict(() =>
+            client.query(
+                `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
+                metadataParams
+            )
         );
     }
 
@@ -139,12 +146,14 @@ export class PropertyRepository {
         if (bookingType !== undefined) {
             updateFields.bookingtype = bookingType;
         }
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set(updateFields)
-            .where("id = :id", { id: propertyId })
-            .execute();
+        await retryOnConflict(() =>
+            client
+                .createQueryBuilder()
+                .update(Property)
+                .set(updateFields)
+                .where("id = :id", { id: propertyId })
+                .execute()
+        );
 
         return await this.getPropertyById(propertyId);
     }
@@ -164,12 +173,14 @@ export class PropertyRepository {
     async updateRegistrationNumber(propertyId, registrationNumber) {
         const client = await Database.getInstance();
         try {
-            await client
-                .createQueryBuilder()
-                .update(Property)
-                .set({ registrationnumber: registrationNumber, updatedat: Date.now() })
-                .where("id = :id", { id: propertyId })
-                .execute();
+            await retryOnConflict(() =>
+                client
+                    .createQueryBuilder()
+                    .update(Property)
+                    .set({ registrationnumber: registrationNumber, updatedat: Date.now() })
+                    .where("id = :id", { id: propertyId })
+                    .execute()
+            );
         } catch (error) {
             // Backstop for the race between the service pre-check and this UPDATE. Only registrationnumber
             // is written here, so any unique violation is that column's index.
