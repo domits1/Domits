@@ -1,0 +1,110 @@
+import { EMPTY_MISSED_REVENUE, formatMissedRevenueCurrency } from "./missedRevenueFields";
+
+export { EMPTY_MISSED_REVENUE };
+
+const MISSED_REVENUE_EMPTY_VALUE = "No data yet";
+
+const createPercentageFormatter = () => (value) => `${value.toFixed(1)}%`;
+
+const formatters = Object.freeze({
+  percentage: createPercentageFormatter(),
+});
+
+// "eur" is a formatter key name, not a hardcoded currency: the amount is
+// formatted with whichever currency the response carries.
+const formatMetricValue = (value, formatterKey, currency) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSED_REVENUE_EMPTY_VALUE;
+  }
+
+  if (formatterKey === "eur") {
+    return formatMissedRevenueCurrency(value, currency);
+  }
+
+  return formatters[formatterKey](value);
+};
+
+const MISSED_REVENUE_NOT_APPLICABLE_VALUE = "–";
+
+const createMetricCardDefinition = (id, title, valueKey, meta, formatterKey, requiresPositiveKey) => ({
+  id,
+  title,
+  valueKey,
+  meta,
+  formatterKey,
+  requiresPositiveKey,
+});
+
+const COMPARISON_LABEL = "vs previous period";
+
+// percentChange is null when the previous period was 0: growth is undefined there, which is not the same as 0%.
+// Only the amount cards are compared; the backend sends no percent change for revenue efficiency.
+const formatChange = (missedRevenue, valueKey) => {
+  const percentChange = missedRevenue?.comparison?.percentChange;
+  if (!percentChange || !(valueKey in percentChange)) {
+    return null;
+  }
+
+  const value = percentChange[valueKey];
+  if (value === null) {
+    return "No previous-period baseline";
+  }
+
+  const rounded = Number(Math.abs(value).toFixed(1));
+  if (rounded === 0) {
+    return `No change ${COMPARISON_LABEL}`;
+  }
+
+  return `${value > 0 ? "+" : "-"}${rounded.toFixed(1)}% ${COMPARISON_LABEL}`;
+};
+
+// A ratio over a zero denominator is undefined, not 0%: without PriceLabs prices there is nothing to compare against.
+const isMetricApplicable = (missedRevenue, definition) =>
+  !definition.requiresPositiveKey || missedRevenue?.[definition.requiresPositiveKey] > 0;
+
+const MISSED_REVENUE_METRIC_CARD_DEFINITIONS = Object.freeze([
+  createMetricCardDefinition(
+    "actual-revenue",
+    "Actual revenue",
+    "actualRevenue",
+    "Revenue actually booked in this period, net of refunds.",
+    "eur"
+  ),
+  createMetricCardDefinition(
+    "potential-revenue",
+    "Potential revenue",
+    "potentialRevenue",
+    "What every sellable night could have earned at PriceLabs' suggested rate.",
+    "eur"
+  ),
+  createMetricCardDefinition(
+    "gross-missed-revenue",
+    "Gross missed revenue",
+    "grossMissedRevenue",
+    "Revenue left on the table from unbooked nights.",
+    "eur"
+  ),
+  createMetricCardDefinition(
+    "revenue-efficiency",
+    "Revenue efficiency",
+    "revenueEfficiencyPct",
+    "Actual revenue on nights with a PriceLabs price, as a share of potential revenue.",
+    "percentage",
+    "potentialRevenue"
+  ),
+]);
+
+export const buildMissedRevenueMetricCards = (missedRevenue) =>
+  MISSED_REVENUE_METRIC_CARD_DEFINITIONS.map((definition) => ({
+    id: definition.id,
+    title: definition.title,
+    value: isMetricApplicable(missedRevenue, definition)
+      ? formatMetricValue(
+          missedRevenue?.[definition.valueKey],
+          definition.formatterKey,
+          missedRevenue?.currency ?? EMPTY_MISSED_REVENUE.currency
+        )
+      : MISSED_REVENUE_NOT_APPLICABLE_VALUE,
+    meta: definition.meta,
+    change: formatChange(missedRevenue, definition.valueKey),
+  }));

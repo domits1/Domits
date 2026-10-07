@@ -1,7 +1,10 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const PUBLISH_ATTEMPT_LIMIT = 3;
+const SERIALIZATION_FAILURE_SQLSTATE = "40001";
 const DEFAULT_SITE_LOCALE = "en";
 const EMPTY_JSON_OBJECT = "{}";
 const SITE_SELECT_COLUMNS = `id,
@@ -173,7 +176,19 @@ export class DirectBookingWebsiteSiteRepository {
     });
   }
 
-  async upsertSiteWithStaticPageOutbox({
+  async upsertSiteWithStaticPageOutbox(input) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.upsertSiteWithStaticPageOutboxOnce(input);
+      } catch (error) {
+        const isConflict = String(error?.code || error?.driverError?.code || "") === SERIALIZATION_FAILURE_SQLSTATE;
+        if (!isConflict) throw error;
+        if (attempt >= PUBLISH_ATTEMPT_LIMIT) throw new WebsitePublishConflictError({ cause: error });
+      }
+    }
+  }
+
+  async upsertSiteWithStaticPageOutboxOnce({
     propertyId,
     hostId,
     siteName,

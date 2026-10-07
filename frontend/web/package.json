@@ -38,6 +38,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "postbuild": "node scripts/addNoindexToAcceptanceBuild.js",
     "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
     "build-sass": "sass src/styles/sass/app.scss src/index.css",

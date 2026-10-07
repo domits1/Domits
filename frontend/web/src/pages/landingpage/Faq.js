@@ -382,7 +382,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
         },
         {
           question: "How do payouts work?",
-          answer: "Payments for your bookings will be deposited into your linked Stripe account. From there, Stripe will transfer the funds to your bank account or connected wallet within a week.",
+          answer: "Payments for your bookings will be deposited into your linked Stripe account. From there, Stripe will transfer the funds to your bank account or connected wallet within a week. Payouts include all reservations with a checkout date before the payout date.",
           isOpen: false
         },
         {

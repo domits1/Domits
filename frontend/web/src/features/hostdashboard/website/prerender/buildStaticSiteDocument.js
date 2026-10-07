@@ -92,6 +92,10 @@ export const buildStaticSiteDocument = (input) => {
     throw new TypeError("Cannot prerender without an app shell containing a </head> tag.");
   }
 
+  if (!HTML_LANG_PATTERN.test(documentWithoutOwnedTags)) {
+    throw new TypeError("Cannot prerender without an app shell whose <html> tag carries a lang attribute.");
+  }
+
   const head = renderStaticSiteHead(metadata);
 
   return documentWithoutOwnedTags

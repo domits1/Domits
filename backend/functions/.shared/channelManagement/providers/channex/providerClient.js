@@ -119,6 +119,15 @@ const buildMissingValuesPushResult = ({ group, requestBody, includeRatePlanId, e
   errorMessage,
 });
 
+// Channex may say how long to wait after a 429, either in seconds or as an HTTP date.
+export const parseRetryAfterMs = (value, now = Date.now()) => {
+  if (value === null || value === undefined || value === "") return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? null : Math.max(0, date - now);
+};
+
 const buildProviderPushFailureResult = ({
   group,
   requestBody,
@@ -135,6 +144,7 @@ const buildProviderPushFailureResult = ({
   requestBody,
   httpStatus: response.status,
   providerStatus: getFailedPushProviderStatus(response.status, fallbackStatus),
+  retryAfterMs: parseRetryAfterMs(response.headers?.get?.("retry-after")),
   success: false,
   taskId: taskIds[0] ?? null,
   warnings,

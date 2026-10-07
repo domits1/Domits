@@ -25,6 +25,9 @@ function FaqSection({ faqs, toggleOpen, content }) {
               <FaqItem
                 question={faq.question}
                 answer={faq.answer}
+                answerLink={faq.answerLink}
+                answerAfterLink={faq.answerAfterLink}
+                answerLinkHostRoute={faq.answerLinkHostRoute}
                 isOpen={faq.isOpen}
                 toggleOpen={() => toggleOpen(index)}
               />

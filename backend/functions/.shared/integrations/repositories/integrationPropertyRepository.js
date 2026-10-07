@@ -61,6 +61,17 @@ class IntegrationPropertyRepository {
       .orderBy("p.updatedAt", "DESC")
       .getMany();
   }
+
+  async listActiveByDomitsPropertyId(domitsPropertyId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.domitsPropertyId = :d", { d: domitsPropertyId })
+      .andWhere("p.status = :s", { s: "ACTIVE" })
+      .orderBy("p.updatedAt", "DESC")
+      .getMany();
+  }
 }
 
 export default IntegrationPropertyRepository;
