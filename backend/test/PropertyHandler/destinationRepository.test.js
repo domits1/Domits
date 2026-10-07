@@ -92,7 +92,7 @@ describe("the destination repository", () => {
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
     const [claim, propertyClaim, ...rest] = client.statements;
-    expect(propertyClaim.statement).toContain("SET id = id\n      WHERE id = $1\n      RETURNING id");
+    expect(propertyClaim.statement).toContain("SET updatedat = updatedat\n      WHERE id = $1\n      RETURNING id");
     expect(propertyClaim.parameters).toEqual(["property-1"]);
     expect(claim.statement).toContain(
       "SET city = city\n      WHERE property_id = $1\n        AND country = $2\n        AND city = $3"
