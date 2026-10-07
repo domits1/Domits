@@ -14,12 +14,14 @@ One row per custom house rule of a property (for example category `Safety`, rule
 
 ## Until it is applied
 
-Two different states can exist in a schema before this migration runs, and they fail differently:
+There is **no fallback in the code** any more. `propertyService.getCustomRules` and `updateCustomRules` used to catch the missing-table error (SQLSTATE `42P01`), log a warning and return `[]`. That was removed once the table existed in both `test` and `main`, because from then on it could only hide real failures. Both methods now call the repository and let any database error propagate.
 
-- **The table is missing.** `propertyService.getCustomRules` and `updateCustomRules` catch the missing-table error (SQLSTATE `42P01`), log a warning and return `[]`. Reads come back empty and a host's saved custom rules are silently dropped while the request reports success.
-- **The table already exists with different column types.** This is what `main` looked like when the migration was applied: an empty `property_custom_rules` with `uuid` id columns, where the entity expects `varchar`. `CREATE TABLE IF NOT EXISTS` skips an existing table without a word, so running the file would have reported success and left the mismatch in place. Nothing about the table being present triggers the missing-table fallback either.
+So a schema this code runs against must have the table, in the right shape. Two different states can exist before this migration runs, and they fail differently:
 
-Apply the migration, with the pre-flight below, before relying on the feature, in every environment that serves the PropertyHandler Lambda. The missing-table fallback is still in the code; with the table in place in both schemas it should not trigger, and a `table not yet migrated` warning in a Lambda log (logged by both `getCustomRules` and `updateCustomRules`) means a schema is missing it.
+- **The table is missing.** `getCustomRules` runs inside the full-property read, so the whole read fails with `42P01` (the request returns an error, not a property without rules), and saving custom rules fails the same way. Nothing is silently dropped any more, but nothing works either.
+- **The table already exists with different column types.** This is what `main` looked like when the migration was applied: an empty `property_custom_rules` with `uuid` id columns, where the entity expects `varchar`. `CREATE TABLE IF NOT EXISTS` skips an existing table without a word, so running the file would have reported success and left the mismatch in place. Queries against a mismatched table are not guaranteed to fail either, so this has to be caught by the pre-flight below, not by the application.
+
+Apply the migration, with the pre-flight below, **before** deploying this code to any environment that serves the PropertyHandler Lambda. A `42P01` error mentioning `property_custom_rules` in a Lambda log means a schema is missing the table.
 
 ## Aurora DSQL rules that shape this runbook
 
