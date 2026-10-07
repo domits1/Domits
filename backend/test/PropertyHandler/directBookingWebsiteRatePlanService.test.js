@@ -145,6 +145,48 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     }));
   });
 
+  it("does not set an end date on a new Elite row when the subscription renews normally", async () => {
+    repository.findByStripeSubscriptionId.mockResolvedValue(null);
+    repository.activatePaidPlan.mockResolvedValue(plan({
+      plan: "elite",
+      price_cents: 4300,
+      stripe_subscription_id: "sub_renewing",
+    }));
+
+    await service.activateEliteFromSubscription("host-1", {
+      id: "sub_renewing",
+      customer: "cus_1",
+      status: "active",
+      cancel_at_period_end: false,
+      items: { data: [{ current_period_start: 1791283200, current_period_end: 1793961600 }] },
+    });
+
+    expect(repository.activatePaidPlan).toHaveBeenCalledWith(expect.objectContaining({
+      effectiveUntil: null,
+    }));
+  });
+
+  it("sets the Elite end date when Stripe has scheduled cancellation", async () => {
+    repository.findByStripeSubscriptionId.mockResolvedValue(null);
+    repository.activatePaidPlan.mockResolvedValue(plan({
+      plan: "elite",
+      price_cents: 4300,
+      stripe_subscription_id: "sub_canceling",
+    }));
+
+    await service.activateEliteFromSubscription("host-1", {
+      id: "sub_canceling",
+      customer: "cus_1",
+      status: "active",
+      cancel_at_period_end: true,
+      items: { data: [{ current_period_start: 1791283200, current_period_end: 1793961600 }] },
+    });
+
+    expect(repository.activatePaidPlan).toHaveBeenCalledWith(expect.objectContaining({
+      effectiveUntil: new Date(1793961600 * 1000),
+    }));
+  });
+
   it("handles repeated subscription events idempotently", async () => {
     const current = plan({
       plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1"

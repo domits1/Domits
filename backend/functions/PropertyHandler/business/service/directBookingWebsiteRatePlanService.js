@@ -280,7 +280,9 @@ export class DirectBookingWebsiteRatePlanService {
 
     const status = stripeStatus(subscription.status);
     const effectiveFrom = getSubscriptionPeriodStart(subscription) || new Date();
-    const effectiveUntil = getSubscriptionPeriodEnd(subscription);
+    const effectiveUntil = subscription.cancel_at_period_end
+      ? getSubscriptionPeriodEnd(subscription)
+      : null;
     const subscriptionId = String(subscription.id);
     const customerId = stripeCustomerId || (subscription.customer ? String(subscription.customer) : null);
 
