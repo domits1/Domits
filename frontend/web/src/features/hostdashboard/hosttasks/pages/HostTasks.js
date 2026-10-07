@@ -179,8 +179,9 @@ const HostTasks = () => {
 
         try {
             await updateTask(task.id, { status: newStatus });
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
+            alert(error.message || "Error updating task status");
         }
     };
 
