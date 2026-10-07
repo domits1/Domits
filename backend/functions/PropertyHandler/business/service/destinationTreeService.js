@@ -78,7 +78,7 @@ export class DestinationTreeService {
       this.settings
     );
     const destination = tree.find((candidate) => candidate.path === path);
-    if (!destination || !destination.eligible) {
+    if (!destination?.eligible) {
       return null;
     }
 
