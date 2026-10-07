@@ -62,8 +62,9 @@ export const classifyWebhookPullResult = (pullResult) => {
 
   const errors = Array.isArray(response.errors) ? response.errors : [];
   if (errors.some(isTemporaryRevisionIssue)) return { statusCode: 503, outcome: "REVISION_TEMPORARY_FAILURE" };
-  // A later page could not be read; acknowledged revisions left the feed, so Channex's retry continues there.
-  if (response.morePages) return { statusCode: 503, outcome: "MORE_PAGES" };
+  // A later page that could not be read is classified like the first page; acknowledged revisions have
+  // left the feed, so a retry continues there.
+  if (response.laterPageFailure) return classifyFeedFailure(response.laterPageFailure);
   if (response.unackedCount > 0) return { statusCode: 200, outcome: "REVISIONS_UNACKED" };
   return { statusCode: 200, outcome: "PROCESSED" };
 };

@@ -40,13 +40,16 @@ export const buildImportService = (channexProviderClient, { channexBookingRevisi
   });
 
 // A fake Channex feed: oldest first, pages of 100, and an acknowledged revision leaves the feed.
-export const buildFeed = ({ waiting, failingIds = new Set(), failingPages = new Set() }) => {
+// failingPages maps a page number to the HTTP status Channex answers it with.
+export const buildFeed = ({ waiting, failingIds = new Set(), failingPages = new Map() }) => {
   let remaining = [...waiting];
   const requestedPages = [];
   const listBookingRevisionFeed = jest.fn(async (_secret, { page } = {}) => {
     requestedPages.push(page ?? null);
     if (failingPages.has(page)) {
-      return { success: false, revisions: [], httpStatus: 503, providerStatus: "BOOKING_FEED_FAILED" };
+      const httpStatus = failingPages.get(page);
+      const providerStatus = httpStatus === 401 ? "UNAUTHORIZED" : "BOOKING_FEED_FAILED";
+      return { success: false, revisions: [], httpStatus, providerStatus };
     }
     const first = ((page ?? 1) - 1) * FEED_PAGE_SIZE;
     return {

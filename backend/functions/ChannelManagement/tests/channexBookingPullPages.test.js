@@ -35,7 +35,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
       ackedCount: 1,
       unackedCount: 100,
       stoppedAtDeadline: false,
-      morePages: false,
+      laterPageFailure: null,
     });
   });
 
@@ -48,7 +48,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
 
     expect(processed).toEqual(["r-1", "r-2", "r-3"]);
     expect(feed.listBookingRevisionFeed).toHaveBeenCalledTimes(2);
-    expect(result.response).toMatchObject({ fetchedCount: 3, morePages: false });
+    expect(result.response).toMatchObject({ fetchedCount: 3, laterPageFailure: null });
   });
 
   test("processes every revision once when all of them are acknowledged", async () => {
@@ -58,27 +58,33 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(processed).toEqual(["r-1", "r-2"]);
-    expect(result.response).toMatchObject({ fetchedCount: 2, ackedCount: 2, overallSuccess: true, morePages: false });
+    expect(result.response).toMatchObject({ fetchedCount: 2, ackedCount: 2, overallSuccess: true, laterPageFailure: null });
   });
 
-  // The acknowledged revisions are gone, so Channex's retry continues where this pull stopped.
-  test("reports more pages when a later page cannot be read", async () => {
+  // The webhook classifies a later page's failure like a first page's (a 401 is still the account's key),
+  // while the counts of what this pull already did are kept.
+  test("reports a later page's failure with its status and keeps the counts", async () => {
     const waiting = revisions(101);
     const feed = buildFeed({
       waiting,
       failingIds: new Set(waiting.slice(0, 100).map((r) => r.revisionId)),
-      failingPages: new Set([2]),
+      failingPages: new Map([[2, 401]]),
     });
     const { service } = buildService(feed);
 
     const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(result.statusCode).toBe(200);
-    expect(result.response).toMatchObject({ fetchedCount: 100, morePages: true, overallSuccess: false });
+    expect(result.response).toMatchObject({
+      fetchedCount: 100,
+      unackedCount: 100,
+      overallSuccess: false,
+      laterPageFailure: { httpStatus: 401, providerStatus: "UNAUTHORIZED" },
+    });
   });
 
   test("still answers with the feed failure when the first page cannot be read", async () => {
-    const feed = buildFeed({ waiting: revisions(1), failingPages: new Set([1]) });
+    const feed = buildFeed({ waiting: revisions(1), failingPages: new Map([[1, 503]]) });
     const { service } = buildService(feed);
 
     const result = await pullForProperty(service, WEBHOOK_DEADLINE);

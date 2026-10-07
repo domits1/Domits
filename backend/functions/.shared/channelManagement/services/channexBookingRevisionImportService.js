@@ -1787,7 +1787,7 @@ export default class ChannexBookingRevisionImportService {
       items,
       fetchedCount: Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0,
       stoppedAtDeadline: false,
-      morePages: false,
+      laterPageFailure: null,
       feedMeta: providerResult.meta ?? null,
       providerResult,
     };
@@ -1811,7 +1811,16 @@ export default class ChannexBookingRevisionImportService {
       });
       if (!providerResult?.success) {
         if (items.length === 0) return { firstPageFailure: providerResult };
-        return this.buildFeedPagesResult({ items, seenRevisionIds, providerResult, morePages: true });
+        return this.buildFeedPagesResult({
+          items,
+          seenRevisionIds,
+          providerResult,
+          laterPageFailure: {
+            httpStatus: providerResult?.httpStatus ?? null,
+            providerStatus: providerResult?.providerStatus ?? null,
+            errorCode: providerResult?.errorCode ?? null,
+          },
+        });
       }
 
       // Every round must bring at least one unseen revision, so the loop always ends.
@@ -1889,12 +1898,12 @@ export default class ChannexBookingRevisionImportService {
     );
   }
 
-  buildFeedPagesResult({ items, seenRevisionIds, providerResult, stoppedAtDeadline = false, morePages = false }) {
+  buildFeedPagesResult({ items, seenRevisionIds, providerResult, stoppedAtDeadline = false, laterPageFailure = null }) {
     return {
       items,
       fetchedCount: seenRevisionIds.size,
       stoppedAtDeadline,
-      morePages,
+      laterPageFailure,
       feedMeta: providerResult?.meta ?? null,
       providerResult,
     };
@@ -1950,10 +1959,10 @@ export default class ChannexBookingRevisionImportService {
       return await finalize(failure.response, failure.evidencePatch);
     }
 
-    const { items, fetchedCount, stoppedAtDeadline, morePages, feedMeta, providerResult } = pulled;
+    const { items, fetchedCount, stoppedAtDeadline, laterPageFailure, feedMeta, providerResult } = pulled;
     const summary = summarizeChannexPullItems(items);
     const overallSuccess =
-      summary.unackedCount === 0 && summary.errors.length === 0 && !stoppedAtDeadline && !morePages;
+      summary.unackedCount === 0 && summary.errors.length === 0 && !stoppedAtDeadline && !laterPageFailure;
     const status = getChannexBookingPullEvidenceStatus({
       overallSuccess,
       ackedCount: summary.ackedCount,
@@ -1980,7 +1989,7 @@ export default class ChannexBookingRevisionImportService {
       overallSuccess,
       notes,
       ...(isPoll || isWebhook ? { trigger } : {}),
-      ...(deadlineMs === null ? {} : { stoppedAtDeadline, morePages, feedMeta }),
+      ...(deadlineMs === null ? {} : { stoppedAtDeadline, laterPageFailure, feedMeta }),
     });
 
     return await finalize(response, {

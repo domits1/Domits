@@ -34,21 +34,24 @@ describe("classifyWebhookPullResult", () => {
     });
   });
 
-  // The webhook pull reads every page it can; morePages means a later page could not be read.
-  // Acknowledged revisions have left the feed, so Channex's retry continues from there.
-  describe("feed pages", () => {
-    test("a pull that could not read every page answers 503 MORE_PAGES", () => {
-      expect(classifyWebhookPullResult(pulled({ morePages: true, overallSuccess: false }))).toEqual({
-        statusCode: 503,
-        outcome: "MORE_PAGES",
-      });
+  // A later page that cannot be read is classified like the first page: acknowledged revisions have left
+  // the feed, so a retry continues there, and a 401 is still the account's key.
+  describe("later feed pages", () => {
+    it.each([
+      { httpStatus: 503, providerStatus: "BOOKING_FEED_FAILED", expected: { statusCode: 503, outcome: "FEED_TEMPORARY_FAILURE" } },
+      { httpStatus: 401, providerStatus: "UNAUTHORIZED", expected: { statusCode: 200, outcome: "FEED_UNAUTHORIZED" } },
+      { httpStatus: 404, providerStatus: "BOOKING_FEED_FAILED", expected: { statusCode: 200, outcome: "FEED_REJECTED" } },
+    ])("a later page answered $httpStatus gives $expected.outcome", ({ httpStatus, providerStatus, expected }) => {
+      const result = pulled({ ackedCount: 1, unackedCount: 0, laterPageFailure: { httpStatus, providerStatus } });
+
+      expect(classifyWebhookPullResult(result)).toEqual(expected);
     });
 
     // Failing revisions stay in the feed and count in its total; that alone is not a reason to retry.
     test("a feed total above the fetched count does not answer 503 on its own", () => {
       expect(
         classifyWebhookPullResult(
-          pulled({ fetchedCount: 100, ackedCount: 0, unackedCount: 100, feedMeta: { total: 150 }, morePages: false })
+          pulled({ fetchedCount: 100, ackedCount: 0, unackedCount: 100, feedMeta: { total: 150 }, laterPageFailure: null })
         )
       ).toEqual({ statusCode: 200, outcome: "REVISIONS_UNACKED" });
     });
