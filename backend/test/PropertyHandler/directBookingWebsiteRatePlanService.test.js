@@ -187,6 +187,20 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     }));
   });
 
+  it("does not create Elite for an incomplete first payment", async () => {
+    repository.findByStripeSubscriptionId.mockResolvedValue(null);
+
+    await expect(service.activateEliteFromSubscription("host-1", {
+      id: "sub_incomplete",
+      customer: "cus_1",
+      status: "incomplete",
+      cancel_at_period_end: false,
+      items: { data: [{ current_period_start: 1791283200, current_period_end: 1793961600 }] },
+    })).resolves.toBeNull();
+
+    expect(repository.activatePaidPlan).not.toHaveBeenCalled();
+  });
+
   it("handles repeated subscription events idempotently", async () => {
     const current = plan({
       plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1"

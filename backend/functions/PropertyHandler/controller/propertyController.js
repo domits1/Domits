@@ -3567,6 +3567,14 @@ export class PropertyController {
                 };
             }
 
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be a JSON object.")
+                };
+            }
+
             const result = await this.directBookingWebsiteRatePlanService.changePlan({
                 accountId: user.Username,
                 targetPlan: body.plan,

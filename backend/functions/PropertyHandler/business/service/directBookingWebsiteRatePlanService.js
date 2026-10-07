@@ -71,9 +71,9 @@ const stripeStatus = (value) => {
     case "active": return "ACTIVE";
     case "trialing": return "TRIALING";
     case "past_due":
-    case "unpaid":
+    case "unpaid": return "PAST_DUE";
     case "incomplete":
-    case "incomplete_expired": return "PAST_DUE";
+    case "incomplete_expired": return "INCOMPLETE";
     case "canceled": return "CANCELLED";
     default: return "PAST_DUE";
   }
@@ -310,6 +310,10 @@ export class DirectBookingWebsiteRatePlanService {
         effective_until: subscription.cancel_at_period_end ? effectiveUntil : null,
         stripe_customer_id: customerId,
       });
+    }
+
+    if (status === "INCOMPLETE") {
+      return null;
     }
 
     if (status === "CANCELLED") {
