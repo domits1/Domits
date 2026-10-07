@@ -22,14 +22,20 @@ const requireOrigin = (siteOrigin) => {
   return url.origin;
 };
 
-const DATE_TEXT = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+const DAY_TEXT = /^(\d{4})-(\d{2})-(\d{2})(T.*)?$/;
+const TIME_TEXT = /^T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+
+const isCalendarDay = (year, month, day) => {
+  const built = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  return built.toISOString().slice(0, 10) === `${year}-${month}-${day}`;
+};
 
 const toIsoDate = (value) => {
   const text = value instanceof Date ? value.toISOString() : value;
-  const match = typeof text === "string" ? DATE_TEXT.exec(text) : null;
-  const day = match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : null;
-  const instant = match ? new Date(text) : null;
-  if (!match || Number.isNaN(instant.getTime()) || day.toISOString().slice(0, 10) !== text.slice(0, 10)) {
+  const match = typeof text === "string" ? DAY_TEXT.exec(text) : null;
+  const timeIsValid = match !== null && (match[4] === undefined || TIME_TEXT.test(match[4]));
+  const instant = timeIsValid ? new Date(text) : new Date(Number.NaN);
+  if (!timeIsValid || Number.isNaN(instant.getTime()) || !isCalendarDay(match[1], match[2], match[3])) {
     throw new Error(`${String(text)} is not a valid last modification date.`);
   }
   return instant.toISOString().slice(0, 10);
@@ -57,6 +63,8 @@ const requireSize = (xml, entries) => {
   return xml;
 };
 
+const renderLocation = (origin, path) => escapeHtml(`${origin}${requirePath(path)}`);
+
 const renderDocument = (element, entries) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<${element} xmlns="${SITEMAP_NAMESPACE}">\n${entries.join("\n")}\n</${element}>\n`;
 
@@ -66,10 +74,9 @@ export const buildDestinationSitemap = (destinations, { siteOrigin, lastModified
   if (paths.length === 0) {
     return null;
   }
+  paths.sort((left, right) => left.localeCompare(right));
   const lastmod = renderLastModified(lastModified);
-  const urls = paths
-    .sort()
-    .map((path) => `<url><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${lastmod}</url>`);
+  const urls = paths.map((path) => `<url><loc>${renderLocation(origin, path)}</loc>${lastmod}</url>`);
   return requireSize(renderDocument("urlset", urls), urls.length);
 };
 
@@ -80,7 +87,7 @@ export const buildSitemapIndex = (sitemaps, { siteOrigin } = {}) => {
   }
   const entries = sitemaps.map(
     ({ path, lastModified }) =>
-      `<sitemap><loc>${escapeHtml(`${origin}${requirePath(path)}`)}</loc>${renderLastModified(lastModified)}</sitemap>`
+      `<sitemap><loc>${renderLocation(origin, path)}</loc>${renderLastModified(lastModified)}</sitemap>`
   );
   return requireSize(renderDocument("sitemapindex", entries), entries.length);
 };
