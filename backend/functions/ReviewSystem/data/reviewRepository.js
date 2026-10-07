@@ -87,21 +87,33 @@ export class ReviewRepository {
     }
   }
 
-  async getPublicReviewPage(propertyId, offset) {
+  filteredPublicReviewQuery(database, propertyId, filters = {}) {
+    const query = this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
+        { propertyStatus: "ACTIVE" })
+      .andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
+        filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
+      });
+    if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
+    if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
+    return query;
+  }
+
+  async getPublicReviewPage(propertyId, offset, filters = {}) {
     const database = await Database.getInstance();
     const property = await database.getRepository(Property).findOne({
       where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
     });
     if (!property) return null;
-    const eligible = () => this.eligibleReviewQuery(database, propertyId)
-      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
-        { propertyStatus: "ACTIVE" });
+    const eligible = () => this.filteredPublicReviewQuery(database, propertyId, filters);
     const summary = await eligible().select("AVG(review.overall_rating)", "score")
       .addSelect("COUNT(*)", "count").getRawOne();
-    const reviews = await eligible()
-      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"])
-      .orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
-      .offset(offset).limit(10).getMany();
+    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    if (filters.sort === "highest" || filters.sort === "lowest") {
+      page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
+        .addOrderBy("review.created_at", "DESC");
+    } else page.orderBy("review.created_at", "DESC");
+    const reviews = await page.addOrderBy("review.id", "DESC").offset(offset).limit(10).getMany();
     const ids = reviews.map((review) => review.id);
     const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
       .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",

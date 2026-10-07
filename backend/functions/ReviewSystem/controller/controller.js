@@ -29,8 +29,9 @@ export class Controller {
   }
   async getPublicReviews(event) {
     try {
+      const { offset, ...filters } = event.queryStringParameters || {};
       const result = await this.service.getPublicReviews(
-        event.pathParameters?.propertyId, event.queryStringParameters?.offset,
+        event.pathParameters?.propertyId, offset, filters,
       );
       return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
     } catch (error) {
