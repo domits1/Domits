@@ -1,5 +1,4 @@
 import { LocationMapping } from "../../util/mapping/location.js";
-import { retryOnConflict } from "../../util/dsqlConflictRetry.js";
 import { PaginatedPropertyMapping } from "../../util/mapping/paginatedProperty.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { geocodeAddress } from "../../util/geocoding.js";
@@ -74,14 +73,12 @@ export class PropertyLocationRepository {
             fields.latitude = coords.latitude;
             fields.longitude = coords.longitude;
         }
-        await retryOnConflict(() =>
-            client
-                .createQueryBuilder()
-                .update(Property_Location)
-                .set(fields)
-                .where("property_id = :propertyId", { propertyId })
-                .execute()
-        );
+        await client
+            .createQueryBuilder()
+            .update(Property_Location)
+            .set(fields)
+            .where("property_id = :propertyId", { propertyId })
+            .execute();
 
         return await this.getFullPropertyLocationById(propertyId);
     }

@@ -1,7 +1,7 @@
 import Database from "database";
-import { retryOnConflict } from "../../util/dsqlConflictRetry.js";
 
 export const MAX_BATCH_SIZE = 500;
+const CONFLICT_ATTEMPTS = 3;
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {
@@ -20,6 +20,16 @@ const destinationTableName = (schemaName) => `${schemaName}.destination`;
 const mappingTableName = (schemaName) => `${schemaName}.property_destination`;
 const locationTableName = (schemaName) => `${schemaName}.property_location`;
 
+const runStatement = async (client, statement, parameters) => {
+  const queryRunner = client.createQueryRunner();
+  try {
+    const result = await queryRunner.query(statement, parameters, true);
+    return Array.isArray(result?.records) ? result.records : [];
+  } finally {
+    await queryRunner.release();
+  }
+};
+
 const requireText = (value, label) => {
   const text = String(value ?? "");
   if (!text.trim()) {
@@ -28,32 +38,19 @@ const requireText = (value, label) => {
   return text;
 };
 
-const toRecords = (result) => (Array.isArray(result?.records) ? result.records : []);
+export const isConcurrencyConflict = (error) =>
+  [error?.code, error?.driverError?.code].includes("40001") || /\bOC00[01]\b/.test(String(error?.message ?? ""));
 
-const claimLocation = async (manager, schemaName, propertyId, country, city) => {
-  const result = await manager.queryRunner.query(
-    `UPDATE ${locationTableName(schemaName)}
-      SET city = city
-      WHERE property_id = $1
-        AND country = $2
-        AND city = $3
-      RETURNING property_id`,
-    [propertyId, country, city],
-    true
-  );
-  return toRecords(result).length > 0;
-};
-
-const claimProperty = async (manager, schemaName, propertyId) => {
-  const result = await manager.queryRunner.query(
-    `UPDATE ${schemaName}.property
-      SET updatedat = updatedat
-      WHERE id = $1
-      RETURNING id`,
-    [propertyId],
-    true
-  );
-  return toRecords(result).length > 0;
+const retryOnConflict = async (run) => {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt >= CONFLICT_ATTEMPTS || !isConcurrencyConflict(error)) {
+        throw error;
+      }
+    }
+  }
 };
 
 const upsertDestinationStatement = (
@@ -65,6 +62,12 @@ const upsertDestinationStatement = (
         display_name = EXCLUDED.display_name,
         updated_at = EXCLUDED.updated_at
       WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name`;
+
+const locationMatches = (schemaName) => `SELECT 1
+      FROM ${locationTableName(schemaName)} l
+      WHERE l.property_id = $1
+        AND l.country = $2
+        AND l.city = $3`;
 
 export class DestinationRepository {
   async syncPropertyDestination(propertyId, chain, { sourceCountry, sourceCity, now = Date.now() } = {}) {
@@ -81,13 +84,6 @@ export class DestinationRepository {
 
     return retryOnConflict(() =>
       client.transaction(async (manager) => {
-        if (
-          !(await claimLocation(manager, schemaName, normalizedPropertyId, country, city)) ||
-          !(await claimProperty(manager, schemaName, normalizedPropertyId))
-        ) {
-          return false;
-        }
-
         const rows = [
           [chain.continent, null, null],
           [chain.country, chain.continent.path, chain.country.code],
@@ -110,11 +106,14 @@ export class DestinationRepository {
           );
         }
 
-        const written = await manager.queryRunner.query(
+        const result = await manager.queryRunner.query(
           `INSERT INTO ${mappingTableName(schemaName)} (property_id, destination_id, source_country, source_city, created_at, updated_at)
-      SELECT p.id, $2, $3, $4, $5, $5
-      FROM ${schemaName}.property p
-      WHERE p.id = $1
+      SELECT l.property_id, $2, l.country, l.city, $3, $3
+      FROM ${locationTableName(schemaName)} l
+      JOIN ${schemaName}.property p ON p.id = l.property_id
+      WHERE l.property_id = $1
+        AND l.country = $4
+        AND l.city = $5
       ON CONFLICT (property_id)
       DO UPDATE SET
         destination_id = EXCLUDED.destination_id,
@@ -122,36 +121,58 @@ export class DestinationRepository {
         source_city = EXCLUDED.source_city,
         updated_at = EXCLUDED.updated_at
       RETURNING property_id`,
-          [normalizedPropertyId, target.path, country, city, now],
+          [normalizedPropertyId, target.path, now, country, city],
           true
         );
-        return toRecords(written).length > 0;
+        return (Array.isArray(result?.records) ? result.records : []).length > 0;
       })
     );
   }
 
   async removePropertyDestination(propertyId, { sourceCountry, sourceCity } = {}) {
     const normalizedPropertyId = requireText(propertyId, "A property id").trim();
-    const judged = [String(sourceCountry ?? ""), String(sourceCity ?? "")];
+    const judged = [normalizedPropertyId, String(sourceCountry ?? ""), String(sourceCity ?? "")];
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
 
-    return retryOnConflict(() =>
-      client.transaction(async (manager) => {
-        const current = await claimLocation(manager, schemaName, normalizedPropertyId, ...judged);
-        if (!current) {
-          return { removed: false, current: false };
-        }
-        const result = await manager.queryRunner.query(
-          `DELETE FROM ${mappingTableName(schemaName)}
-      WHERE property_id = $1
+    const removed = await runStatement(
+      client,
+      `DELETE FROM ${mappingTableName(schemaName)} m
+      WHERE m.property_id = $1
+        AND EXISTS (${locationMatches(schemaName)})
       RETURNING property_id`,
-          [normalizedPropertyId],
-          true
-        );
-        return { removed: toRecords(result).length > 0, current: true };
-      })
+      judged
     );
+    if (removed.length > 0) {
+      return { removed: true, current: true };
+    }
+    const rows = await client.query(locationMatches(schemaName), judged);
+    return { removed: false, current: Array.isArray(rows) && rows.length > 0 };
+  }
+
+  async deleteMappingsWithoutProperty() {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const removed = await runStatement(
+      client,
+      `DELETE FROM ${mappingTableName(schemaName)} m
+      WHERE NOT EXISTS (SELECT 1 FROM ${schemaName}.property p WHERE p.id = m.property_id)
+      RETURNING property_id`,
+      []
+    );
+    return removed.length;
+  }
+
+  async countMappingsWithoutProperty() {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const rows = await client.query(
+      `SELECT count(*) AS orphans
+      FROM ${mappingTableName(schemaName)} m
+      WHERE NOT EXISTS (SELECT 1 FROM ${schemaName}.property p WHERE p.id = m.property_id)`,
+      []
+    );
+    return Number(rows?.[0]?.orphans) || 0;
   }
 
   async getLocationForMapping(propertyId) {
