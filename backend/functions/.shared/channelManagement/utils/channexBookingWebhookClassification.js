@@ -45,6 +45,10 @@ const isTemporaryError = (error) => {
 
 const isTemporaryRevisionIssue = (issue) => isTemporaryAckFailure(issue) || isTemporaryError(issue);
 
+// An unacknowledged revision without a temporary error will fail the same way on the next delivery.
+export const isPermanentlyUnacknowledged = (item) =>
+  Boolean(item?.unacked) && !(Array.isArray(item.errors) ? item.errors : []).some(isTemporaryRevisionIssue);
+
 const classifyFeedFailure = (response) => {
   if (isTemporaryFeedFailure(response)) return { statusCode: 503, outcome: "FEED_TEMPORARY_FAILURE" };
   if (response.httpStatus === 401) return { statusCode: 200, outcome: "FEED_UNAUTHORIZED" };

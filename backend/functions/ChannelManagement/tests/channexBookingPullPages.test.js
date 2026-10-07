@@ -1,43 +1,18 @@
-import { START_MS, buildImportService, freezeNowAtStart, pullForProperty } from "./fixtures/channexBookingPullFixtures.js";
+import {
+  START_MS,
+  buildFeed,
+  buildImportService,
+  freezeNowAtStart,
+  pullForProperty,
+  revisions,
+  spyOnRevisionProcessing,
+} from "./fixtures/channexBookingPullFixtures.js";
 
-const PAGE_SIZE = 100;
 const WEBHOOK_DEADLINE = { deadlineMs: START_MS + 20_000 };
-const revisions = (count) => Array.from({ length: count }, (_, index) => ({ revisionId: `r-${index + 1}` }));
-
-// A fake Channex feed: oldest first, pages of 100, and an acknowledged revision leaves the feed.
-const buildFeed = ({ waiting, failingIds = new Set(), failingPages = new Set() }) => {
-  let remaining = [...waiting];
-  const requestedPages = [];
-  const listBookingRevisionFeed = jest.fn(async (_secret, { page } = {}) => {
-    requestedPages.push(page ?? null);
-    if (failingPages.has(page)) {
-      return { success: false, revisions: [], httpStatus: 503, providerStatus: "BOOKING_FEED_FAILED" };
-    }
-    const first = ((page ?? 1) - 1) * PAGE_SIZE;
-    return {
-      success: true,
-      revisions: remaining.slice(first, first + PAGE_SIZE),
-      meta: { page: page ?? 1, limit: PAGE_SIZE, total: remaining.length },
-      providerStatus: "ACTIVE",
-    };
-  });
-  const acknowledge = (revisionId) => {
-    remaining = remaining.filter((revision) => revision.revisionId !== revisionId);
-  };
-  return { listBookingRevisionFeed, acknowledge, requestedPages, failingIds };
-};
 
 const buildService = (feed) => {
   const service = buildImportService({ listBookingRevisionFeed: feed.listBookingRevisionFeed });
-  const processed = [];
-  jest.spyOn(service, "processPulledChannexBookingRevision").mockImplementation(async ({ revision }) => {
-    processed.push(revision.revisionId);
-    if (feed.failingIds.has(revision.revisionId)) {
-      return { revisionId: revision.revisionId, acked: false, unacked: true, result: "skipped-unacked" };
-    }
-    feed.acknowledge(revision.revisionId);
-    return { revisionId: revision.revisionId, acked: true, unacked: false };
-  });
+  const processed = spyOnRevisionProcessing(service, feed);
   return { service, processed };
 };
 
