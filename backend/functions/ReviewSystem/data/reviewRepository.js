@@ -136,15 +136,25 @@ export class ReviewRepository {
     });
   }
 
-  async getPropertyReviewScore(propertyId, hostId) {
+  async findManagedProperties(hostId, offset) {
+    const database = await Database.getInstance();
+    return database.getRepository(Property).find({ where: { hostid: hostId }, select: ["id"],
+      order: { id: "ASC" }, skip: offset, take: 26 });
+  }
+
+  async getPropertyReviewScore(propertyId, hostId, range) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
-    const result = await this.eligibleReviewQuery(dataSource, propertyId)
+    const query = this.eligibleReviewQuery(dataSource, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
-      .addSelect("COUNT(*)", "review_count")
-      .getRawOne();
+      .addSelect("COUNT(*)", "review_count");
+    if (range) {
+      query.andWhere("review.created_at >= :start", { start: range.start })
+        .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
+    }
+    const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
       overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
