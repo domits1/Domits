@@ -1,7 +1,7 @@
-import ChannexBookingRevisionImportService from "../../.shared/channelManagement/services/channexBookingRevisionImportService.js";
+import { START_MS, buildImportService, freezeNowAtStart, pullForProperty } from "./fixtures/channexBookingPullFixtures.js";
 
 const PAGE_SIZE = 100;
-const START_MS = 1_000_000;
+const WEBHOOK_DEADLINE = { deadlineMs: START_MS + 20_000 };
 const revisions = (count) => Array.from({ length: count }, (_, index) => ({ revisionId: `r-${index + 1}` }));
 
 // A fake Channex feed: oldest first, pages of 100, and an acknowledged revision leaves the feed.
@@ -28,13 +28,7 @@ const buildFeed = ({ waiting, failingIds = new Set(), failingPages = new Set() }
 };
 
 const buildService = (feed) => {
-  const service = new ChannexBookingRevisionImportService({
-    roomTypes: { listByAccountId: jest.fn(async () => []) },
-    ratePlans: { listByAccountId: jest.fn(async () => []) },
-    externalBookingImportRepository: { getDomitsPropertyContext: jest.fn(async () => ({})) },
-    channexProviderClient: { listBookingRevisionFeed: feed.listBookingRevisionFeed },
-    finalizeChannexSyncResult: async (result) => result,
-  });
+  const service = buildImportService({ listBookingRevisionFeed: feed.listBookingRevisionFeed });
   const processed = [];
   jest.spyOn(service, "processPulledChannexBookingRevision").mockImplementation(async ({ revision }) => {
     processed.push(revision.revisionId);
@@ -47,24 +41,8 @@ const buildService = (feed) => {
   return { service, processed };
 };
 
-const pull = (service, deadlineMs) =>
-  service.pullLatestChannexBookingsForResolvedContext({
-    normalizedUserId: "user-1",
-    normalizedDomitsPropertyId: "property-1",
-    integration: { id: "account-1" },
-    propertyMapping: { externalPropertyId: "channex-1" },
-    secret: {},
-    ...(deadlineMs === undefined ? {} : { deadlineMs }),
-  });
-
 describe("Channex booking pull across feed pages (webhook)", () => {
-  beforeEach(() => {
-    jest.spyOn(Date, "now").mockReturnValue(START_MS);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
+  freezeNowAtStart();
 
   // Unacknowledged revisions stay at the front of the feed. If a whole page keeps failing (a missing room
   // mapping, for example), re-reading page 1 would never reach the bookings behind it.
@@ -73,7 +51,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting, failingIds: new Set(waiting.slice(0, 100).map((r) => r.revisionId)) });
     const { service, processed } = buildService(feed);
 
-    const result = await pull(service, START_MS + 20_000);
+    const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(processed).toEqual(waiting.map((r) => r.revisionId));
     expect(feed.requestedPages).toEqual([1, 2, 2]);
@@ -91,7 +69,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting, failingIds: new Set(waiting.map((r) => r.revisionId)) });
     const { service, processed } = buildService(feed);
 
-    const result = await pull(service, START_MS + 20_000);
+    const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(processed).toEqual(["r-1", "r-2", "r-3"]);
     expect(feed.listBookingRevisionFeed).toHaveBeenCalledTimes(2);
@@ -102,7 +80,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting: revisions(2) });
     const { service, processed } = buildService(feed);
 
-    const result = await pull(service, START_MS + 20_000);
+    const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(processed).toEqual(["r-1", "r-2"]);
     expect(result.response).toMatchObject({ fetchedCount: 2, ackedCount: 2, overallSuccess: true, morePages: false });
@@ -118,7 +96,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     });
     const { service } = buildService(feed);
 
-    const result = await pull(service, START_MS + 20_000);
+    const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(result.statusCode).toBe(200);
     expect(result.response).toMatchObject({ fetchedCount: 100, morePages: true, overallSuccess: false });
@@ -128,7 +106,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting: revisions(1), failingPages: new Set([1]) });
     const { service } = buildService(feed);
 
-    const result = await pull(service, START_MS + 20_000);
+    const result = await pullForProperty(service, WEBHOOK_DEADLINE);
 
     expect(result.statusCode).toBe(502);
     expect(result.response).toMatchObject({ httpStatus: 503 });
@@ -139,15 +117,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting: revisions(1) });
     const { service } = buildService(feed);
 
-    const result = await service.pullLatestChannexBookingsForResolvedContext({
-      normalizedUserId: "user-1",
-      normalizedDomitsPropertyId: "property-1",
-      integration: { id: "account-1" },
-      propertyMapping: { externalPropertyId: "channex-1" },
-      secret: {},
-      trigger: "WEBHOOK",
-      deadlineMs: START_MS + 20_000,
-    });
+    const result = await pullForProperty(service, { ...WEBHOOK_DEADLINE, trigger: "WEBHOOK" });
 
     expect(result.response.trigger).toBe("WEBHOOK");
     expect(result.response.notes[0]).toMatch(/^Channex booking webhook\./);
@@ -159,7 +129,7 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     const feed = buildFeed({ waiting, failingIds: new Set(waiting.map((r) => r.revisionId)) });
     const { service } = buildService(feed);
 
-    await pull(service, undefined);
+    await pullForProperty(service);
 
     expect(feed.requestedPages).toEqual([null]);
   });

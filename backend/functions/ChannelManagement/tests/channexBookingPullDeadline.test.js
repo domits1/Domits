@@ -1,25 +1,22 @@
-import ChannexBookingRevisionImportService from "../../.shared/channelManagement/services/channexBookingRevisionImportService.js";
+import {
+  PULL_CONTEXT,
+  START_MS,
+  buildImportService,
+  freezeNowAtStart,
+  pullForProperty,
+} from "./fixtures/channexBookingPullFixtures.js";
 
-const START_MS = 1_000_000;
 const REVISIONS = [{ revisionId: "revision-1" }, { revisionId: "revision-2" }, { revisionId: "revision-3" }];
 
-const buildService = () => {
-  const service = new ChannexBookingRevisionImportService({
-    roomTypes: { listByAccountId: jest.fn(async () => []) },
-    ratePlans: { listByAccountId: jest.fn(async () => []) },
-    externalBookingImportRepository: { getDomitsPropertyContext: jest.fn(async () => ({})) },
-    channexProviderClient: {
-      listBookingRevisionFeed: jest.fn(async () => ({
-        success: true,
-        revisions: REVISIONS,
-        meta: { page: 1, total: 3 },
-        providerStatus: "ACTIVE",
-      })),
-    },
-    finalizeChannexSyncResult: async (result) => result,
+const buildService = () =>
+  buildImportService({
+    listBookingRevisionFeed: jest.fn(async () => ({
+      success: true,
+      revisions: REVISIONS,
+      meta: { page: 1, total: 3 },
+      providerStatus: "ACTIVE",
+    })),
   });
-  return service;
-};
 
 // Each processed revision takes 10 seconds of fake time.
 const processTakingTenSeconds = (service) =>
@@ -31,31 +28,15 @@ const processTakingTenSeconds = (service) =>
 const collect = (service, deadlineMs) =>
   service.collectPulledChannexBookingImports({
     providerResult: { revisions: REVISIONS },
-    integration: { id: "account-1" },
-    normalizedDomitsPropertyId: "property-1",
-    propertyMapping: { externalPropertyId: "channex-1" },
-    secret: {},
+    integration: PULL_CONTEXT.integration,
+    normalizedDomitsPropertyId: PULL_CONTEXT.normalizedDomitsPropertyId,
+    propertyMapping: PULL_CONTEXT.propertyMapping,
+    secret: PULL_CONTEXT.secret,
     deadlineMs,
   });
 
-const pull = (service, deadlineMs) =>
-  service.pullLatestChannexBookingsForResolvedContext({
-    normalizedUserId: "user-1",
-    normalizedDomitsPropertyId: "property-1",
-    integration: { id: "account-1" },
-    propertyMapping: { externalPropertyId: "channex-1" },
-    secret: {},
-    ...(deadlineMs === undefined ? {} : { deadlineMs }),
-  });
-
 describe("Channex booking pull deadline", () => {
-  beforeEach(() => {
-    jest.spyOn(Date, "now").mockReturnValue(START_MS);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
+  freezeNowAtStart();
 
   // API Gateway gives up after 29 seconds, so a webhook pull must stop in time and leave the rest
   // unacknowledged in the feed for Channex's retry.
@@ -83,7 +64,7 @@ describe("Channex booking pull deadline", () => {
     const service = buildService();
     processTakingTenSeconds(service);
 
-    const result = await pull(service, START_MS + 15_000);
+    const result = await pullForProperty(service, { deadlineMs: START_MS + 15_000 });
 
     expect(result.response).toMatchObject({ stoppedAtDeadline: true, overallSuccess: false, fetchedCount: 3 });
   });
@@ -92,7 +73,7 @@ describe("Channex booking pull deadline", () => {
     const service = buildService();
     processTakingTenSeconds(service);
 
-    const result = await pull(service, START_MS + 60_000);
+    const result = await pullForProperty(service, { deadlineMs: START_MS + 60_000 });
 
     expect(result.response).toMatchObject({ stoppedAtDeadline: false, overallSuccess: true });
   });
@@ -102,7 +83,7 @@ describe("Channex booking pull deadline", () => {
     const service = buildService();
     processTakingTenSeconds(service);
 
-    const result = await pull(service, undefined);
+    const result = await pullForProperty(service);
 
     expect(result.response).not.toHaveProperty("stoppedAtDeadline");
     expect(result.response).not.toHaveProperty("feedMeta");
@@ -114,7 +95,7 @@ describe("Channex booking pull deadline", () => {
     const service = buildService();
     processTakingTenSeconds(service);
 
-    const result = await pull(service, START_MS + 60_000);
+    const result = await pullForProperty(service, { deadlineMs: START_MS + 60_000 });
 
     expect(result.response.feedMeta).toEqual({ page: 1, total: 3 });
   });
