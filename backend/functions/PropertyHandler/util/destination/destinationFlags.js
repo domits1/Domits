@@ -10,7 +10,7 @@ export const flagDestinationCity = ({ slug, countrySlug, variants }) => {
   if (spellings.length > 0 && spellings.every((raw) => raw === raw.toLowerCase())) {
     flags.push("lower_case_only");
   }
-  if (slug === countrySlug) {
+  if (slug && slug === countrySlug) {
     flags.push("same_as_country");
   }
   if (spellings.some((raw) => COMPOSITE_PATTERN.test(raw))) {
