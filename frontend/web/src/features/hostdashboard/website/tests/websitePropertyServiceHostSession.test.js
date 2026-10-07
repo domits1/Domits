@@ -25,6 +25,7 @@ describe("enrichWebsitePropertyDetails and the host's WhatsApp lookup", () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     delete global.fetch;
   });
 
@@ -54,7 +55,6 @@ describe("enrichWebsitePropertyDetails and the host's WhatsApp lookup", () => {
 
     expect(fetchWebsiteHostWhatsApp).toHaveBeenCalledWith("host-1", { idToken: null });
     expect(details.hostProfile.whatsapp).toEqual({ connected: false, isAvailable: false });
-    jest.useRealTimers();
   });
 
   it("looks up without a token when nobody is signed in, instead of failing the page", async () => {

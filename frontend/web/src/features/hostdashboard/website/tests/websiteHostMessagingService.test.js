@@ -54,7 +54,7 @@ describe("fetchWebsiteHostWhatsApp", () => {
 
   it("keeps the answer with a token apart from the answer without one for the same host", async () => {
     global.fetch
-      .mockReturnValueOnce(respondWith(401, {}))
+      .mockReturnValueOnce(respondWith(200, []))
       .mockReturnValueOnce(respondWith(200, [WHATSAPP_INTEGRATION]));
 
     const anonymous = await fetchWebsiteHostWhatsApp("host-1");
@@ -71,12 +71,16 @@ describe("fetchWebsiteHostWhatsApp", () => {
     global.fetch
       .mockReturnValueOnce(respondWith(401, {}))
       .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockReturnValueOnce(
+        Promise.resolve({ ok: true, status: 200, json: () => Promise.reject(new TypeError("body lost")) })
+      )
       .mockReturnValueOnce(respondWith(200, [WHATSAPP_INTEGRATION]));
 
     expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "expired" })).isAvailable).toBe(false);
     expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "fresh" })).isAvailable).toBe(false);
+    expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "fresh" })).isAvailable).toBe(false);
     expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "fresh" })).isAvailable).toBe(true);
-    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(global.fetch).toHaveBeenCalledTimes(4);
   });
 
   it("answers the empty block without a request when the host id is missing, and on a network failure", async () => {

@@ -61,7 +61,7 @@ export const fetchWebsiteHostWhatsApp = async (hostId, { idToken = null } = {}) 
             return getEmptyWebsiteHostWhatsApp();
           }
 
-          const payload = await response.json().catch(() => []);
+          const payload = await response.json();
           const integrations = Array.isArray(payload) ? payload : [];
           const whatsappIntegration =
             integrations.find((integration) => cleanText(integration?.channel).toUpperCase() === "WHATSAPP") || null;
