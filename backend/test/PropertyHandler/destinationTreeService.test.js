@@ -103,6 +103,25 @@ describe("the destination tree", () => {
     expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
   });
 
+  it("gives a flagged city no page while its listings still count for the country", () => {
+    const rows = [
+      row("/destinations/africa", "continent", null, "Africa"),
+      row("/destinations/africa/kenya", "country", "/destinations/africa", "Kenya"),
+      row("/destinations/africa/kenya/kenya", "city", "/destinations/africa/kenya", "kenya", 1),
+      row("/destinations/europe", "continent", null, "Europe"),
+      row("/destinations/europe/italy", "country", "/destinations/europe", "Italy"),
+      row("/destinations/europe/italy/lucca", "city", "/destinations/europe/italy", "lucca", 1),
+      row("/destinations/europe/italy/modica", "city", "/destinations/europe/italy", "Modica", 1),
+    ];
+    const byPath = Object.fromEntries(buildDestinationTree(rows, readDestinationSettings({})).map((d) => [d.path, d]));
+
+    expect(byPath["/destinations/africa/kenya/kenya"].eligible).toBe(false);
+    expect(byPath["/destinations/europe/italy/lucca"].eligible).toBe(false);
+    expect(byPath["/destinations/europe/italy/modica"].eligible).toBe(true);
+    expect(byPath["/destinations/africa/kenya"].eligible).toBe(true);
+    expect(byPath["/destinations/africa/kenya"].totalListings).toBe(1);
+  });
+
   it("refuses a tree with a cycle instead of running out of stack", () => {
     const loop = [
       row("/destinations/a", "continent", "/destinations/a/b", "A"),
