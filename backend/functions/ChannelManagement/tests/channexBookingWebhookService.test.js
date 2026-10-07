@@ -215,6 +215,22 @@ describe("ChannexBookingWebhookService", () => {
     );
   });
 
+  // Marking the account is extra; failing to mark it must not turn a permanent 401 into a retried 503.
+  test("still answers 200 FEED_UNAUTHORIZED and logs when marking the account fails", async () => {
+    const { service, accounts, sync } = buildService({
+      pull: { statusCode: 502, response: { httpStatus: 401, providerStatus: "UNAUTHORIZED" } },
+    });
+    accounts.touchSyncFailure.mockRejectedValue(new Error("database unavailable"));
+
+    await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "FEED_UNAUTHORIZED" });
+    expect(sync.releaseLock).toHaveBeenCalled();
+    expect(JSON.parse(errorLog.mock.calls[0][0])).toMatchObject({
+      event: "CHANNEX_BOOKING_WEBHOOK_ACCOUNT_MARK_FAILED",
+      requestId: "request-1",
+      errorMessage: "database unavailable",
+    });
+  });
+
   test("returns the pull counts for the log line", async () => {
     const { service } = buildService({ pull: pullResult({ fetchedCount: 3, ackedCount: 2, unackedCount: 1 }) });
 

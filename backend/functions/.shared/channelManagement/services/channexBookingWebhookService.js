@@ -95,11 +95,14 @@ export default class ChannexBookingWebhookService {
         feedMeta: counts.feedMeta ?? null,
       };
       if (result.outcome === "FEED_UNAUTHORIZED") {
-        await this.accounts.touchSyncFailure(
-          integration.id,
-          "CHANNEX_BOOKING_FEED_UNAUTHORIZED",
-          "Channex rejected the account's API key on the booking feed."
-        );
+        // Marking the account is extra: failing to mark it must not turn a permanent 401 into a retried 503.
+        await this.accounts
+          .touchSyncFailure(
+            integration.id,
+            "CHANNEX_BOOKING_FEED_UNAUTHORIZED",
+            "Channex rejected the account's API key on the booking feed."
+          )
+          .catch((error) => logError("CHANNEX_BOOKING_WEBHOOK_ACCOUNT_MARK_FAILED", logContext, error));
       }
     } finally {
       await this.sync
