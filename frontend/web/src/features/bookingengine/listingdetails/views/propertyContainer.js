@@ -7,7 +7,7 @@ import Description from "../components/description";
 import RangeCalendar from "./RangeCalendar";
 import WhereYoullStay from "../components/WhereYoullStay";
 import HostSection from "../components/HostSection";
-import PublicReviews from "../components/PublicReviews";
+import PublicReviews from "../../../review/PublicReviews";
 import SkeletonBlock from "../components/SkeletonBlock";
 import LocationSection from "./locationSection";
 
