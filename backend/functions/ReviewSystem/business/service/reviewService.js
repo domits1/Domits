@@ -44,7 +44,7 @@ export class ReviewService {
     return reviews.map((review) => ({ ...review, content: review.public_review, date: review.created_at }));
   }
 
-  async getPublicReviews(propertyId, offset = "0") {
+  async getPublicReviews(propertyId, offset = "0", filters = {}) {
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       throw new BadRequestException("A property ID is required.");
     }
@@ -52,7 +52,41 @@ export class ReviewService {
       || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
       throw new BadRequestException("Invalid review page offset.");
     }
-    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset));
+    const allowed = ["minRating", "maxRating", "startDate", "endDate", "verified", "sort"];
+    if (Object.keys(filters).some((key) => !allowed.includes(key))) {
+      throw new BadRequestException("Unsupported review filter.");
+    }
+    const rating = (value, fallback) => {
+      if (value === undefined) return fallback;
+      if (typeof value !== "string" || !/^[1-5]$/.test(value)) {
+        throw new BadRequestException("Ratings must be whole numbers from 1 to 5.");
+      }
+      return Number(value);
+    };
+    const date = (value) => {
+      if (value === undefined) return undefined;
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        throw new BadRequestException("Dates must use YYYY-MM-DD.");
+      }
+      const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+      if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+        throw new BadRequestException("Invalid review date.");
+      }
+      return timestamp;
+    };
+    const minRating = rating(filters.minRating, 1), maxRating = rating(filters.maxRating, 5);
+    const start = date(filters.startDate), end = date(filters.endDate), sort = filters.sort ?? "recent";
+    if (minRating > maxRating || (start !== undefined && end !== undefined && start > end)) {
+      throw new BadRequestException("Invalid review filter range.");
+    }
+    if (filters.verified !== undefined && !["true", "false"].includes(filters.verified)) {
+      throw new BadRequestException("verified must be true or false.");
+    }
+    if (!["recent", "highest", "lowest"].includes(sort)) throw new BadRequestException("Unsupported review sort.");
+    // Verified preferences never relax the existing public eligibility rules.
+    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
+      minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort,
+    });
     if (!result) throw new NotFoundException("Property not found.");
     return result;
   }

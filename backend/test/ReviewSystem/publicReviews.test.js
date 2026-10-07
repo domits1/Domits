@@ -27,7 +27,7 @@ describe("public review retrieval", () => {
     controller = new Controller({ service: new ReviewService({ repository: new ReviewRepository() }) });
   });
   test("anonymous response uses the path property and excludes private fields", async () => {
-    const result = await controller.getPublicReviews(request({ propertyId: "spoofed" }));
+    const result = await controller.getPublicReviews(request());
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11,
       next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true, response: { message: "Thanks", publishedAt: 2000 },
@@ -48,10 +48,38 @@ describe("public review retrieval", () => {
   test("rejects a missing property ID", async () => {
     expect((await controller.getPublicReviews({})).statusCode).toBe(400);
   });
+  test.each([{ minRating: "0" }, { maxRating: "6" }, { minRating: "4.5" },
+    { minRating: "5", maxRating: "2" }, { verified: "yes" }, { sort: "unknown" },
+    { startDate: "2026-02-30" }, { startDate: "bad" }, { minRating: [] },
+    { startDate: "2026-02-01", endDate: "2026-01-01" }, { propertyId: "spoofed" }])(
+    "rejects invalid filters %j before querying", async (filters) => {
+      expect((await controller.getPublicReviews(request(filters))).statusCode).toBe(400);
+      expect(query.getMany).not.toHaveBeenCalled();
+    });
+  test.each([{ minRating: "4" }, { maxRating: "2" }, { verified: "true" },
+    { verified: "false" }, { startDate: "2026-01-01" }, { endDate: "2026-01-31" }, { sort: "lowest" }])(
+    "accepts individual filters %j", async (filters) => {
+      expect((await controller.getPublicReviews(request(filters))).statusCode).toBe(200);
+    });
+  test("combines filters for the summary and page with inclusive UTC dates", async () => {
+    const result = await controller.getPublicReviews(request({ minRating: "4", maxRating: "5", verified: "true",
+      startDate: "2026-01-01", endDate: "2026-01-31", sort: "highest", offset: "10" }));
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toMatchObject({ review_count: 11, next_offset: null });
+    expect(query.andWhere.mock.calls.filter(([sql]) => sql.includes(":filterMinimum"))).toHaveLength(2);
+    expect(query.andWhere).toHaveBeenCalledWith("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum",
+      { filterMinimum: 4, filterMaximum: 5 });
+    expect(query.andWhere).toHaveBeenCalledWith("review.created_at >= :filterStart",
+      { filterStart: Date.parse("2026-01-01T00:00:00.000Z") });
+    expect(query.andWhere).toHaveBeenCalledWith("review.created_at < :filterEnd",
+      { filterEnd: Date.parse("2026-02-01T00:00:00.000Z") });
+    expect(query.orderBy).toHaveBeenCalledWith("review.overall_rating", "DESC");
+    expect(query.offset).toHaveBeenCalledWith(10);
+  });
   test("handles an empty property and skips category queries", async () => {
     summary = { score: null, count: "0" };
     reviews = [];
-    const result = await new ReviewRepository().getPublicReviewPage("p1", 0);
+    const result = JSON.parse((await controller.getPublicReviews(request({ minRating: "5" }))).body);
     expect(result).toEqual({ property_id: "p1", overall_score: null, review_count: 0, next_offset: null, reviews: [] });
     expect(query.getRawMany).not.toHaveBeenCalled();
   });
@@ -72,8 +100,11 @@ test("keeps review publication and property visibility parameters independent in
   jest.spyOn(database, "getRepository").mockImplementation((entity) => entity === Property
     ? { findOne: async () => ({ id: "p1" }) } : { createQueryBuilder: () => query });
   Database.getInstance.mockResolvedValue(database);
-  await new ReviewRepository().getPublicReviewPage("p1", 0);
+  await new ReviewRepository().getPublicReviewPage("p1", 0, { minRating: 4, maxRating: 5, start: 1000, endExclusive: 2000 });
   expect(query.getParameters()).toMatchObject({ status: "PUBLISHED", propertyStatus: "ACTIVE",
-    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+    propertyId: "p1", filterMinimum: 4, filterMaximum: 5, filterStart: 1000, filterEnd: 2000 });
+  expect(query.getQuery()).toContain(">= :filterStart");
+  expect(query.getQuery()).toContain("< :filterEnd");
   expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));
 });
