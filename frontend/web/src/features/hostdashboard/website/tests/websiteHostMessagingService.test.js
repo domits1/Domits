@@ -67,6 +67,18 @@ describe("fetchWebsiteHostWhatsApp", () => {
     expect(hostAgain).toBe(host);
   });
 
+  it("forgets a refused or failed lookup, so a fresh session can try again without a reload", async () => {
+    global.fetch
+      .mockReturnValueOnce(respondWith(401, {}))
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockReturnValueOnce(respondWith(200, [WHATSAPP_INTEGRATION]));
+
+    expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "expired" })).isAvailable).toBe(false);
+    expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "fresh" })).isAvailable).toBe(false);
+    expect((await fetchWebsiteHostWhatsApp("host-1", { idToken: "fresh" })).isAvailable).toBe(true);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
   it("answers the empty block without a request when the host id is missing, and on a network failure", async () => {
     expect(await fetchWebsiteHostWhatsApp("", { idToken: "id-token-1" })).toEqual(getEmptyWebsiteHostWhatsApp());
     expect(global.fetch).not.toHaveBeenCalled();

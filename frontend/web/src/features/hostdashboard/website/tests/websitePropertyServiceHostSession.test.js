@@ -1,6 +1,7 @@
 import { enrichWebsitePropertyDetails } from "../services/websitePropertyService";
 import { fetchWebsiteHostWhatsApp } from "../services/websiteHostMessagingService";
 import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
+import { dbListIcalSources } from "../../../../utils/icalRetrieveHost";
 
 jest.mock("../../../../services/getAccessToken", () => ({ getAccessToken: jest.fn(), getIdToken: jest.fn() }));
 jest.mock("../../../../utils/icalRetrieveHost", () => ({ dbListIcalSources: jest.fn(async () => null) }));
@@ -19,6 +20,7 @@ describe("enrichWebsitePropertyDetails and the host's WhatsApp lookup", () => {
     getAccessToken.mockReturnValue(null);
     getIdToken.mockResolvedValue("id-token-1");
     fetchWebsiteHostWhatsApp.mockResolvedValue({ connected: false, isAvailable: false });
+    dbListIcalSources.mockResolvedValue(null);
     global.fetch = jest.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }));
   });
 
@@ -40,6 +42,19 @@ describe("enrichWebsitePropertyDetails and the host's WhatsApp lookup", () => {
 
     expect(getIdToken).not.toHaveBeenCalled();
     expect(fetchWebsiteHostWhatsApp).toHaveBeenCalledWith("host-1", { idToken: null });
+  });
+
+  it("gives up on the session after a few seconds and goes on without a token", async () => {
+    jest.useFakeTimers();
+    getIdToken.mockReturnValue(new Promise(() => {}));
+
+    const pending = enrichWebsitePropertyDetails(PROPERTY_DETAILS, null, { hostSession: true });
+    jest.advanceTimersByTime(5000);
+    const details = await pending;
+
+    expect(fetchWebsiteHostWhatsApp).toHaveBeenCalledWith("host-1", { idToken: null });
+    expect(details.hostProfile.whatsapp).toEqual({ connected: false, isAvailable: false });
+    jest.useRealTimers();
   });
 
   it("looks up without a token when nobody is signed in, instead of failing the page", async () => {

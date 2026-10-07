@@ -300,7 +300,18 @@ const mergeWebsiteCalendarAvailability = (
   };
 };
 
-const readHostIdToken = () => getIdToken().catch(() => null);
+const HOST_ID_TOKEN_WAIT_MS = 5000;
+
+const readHostIdToken = () =>
+  new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), HOST_ID_TOKEN_WAIT_MS);
+    getIdToken()
+      .then((token) => token || null, () => null)
+      .then((token) => {
+        clearTimeout(timer);
+        resolve(token);
+      });
+  });
 
 export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null, { idToken = null } = {}) => {
   const normalizedPropertyDetails =

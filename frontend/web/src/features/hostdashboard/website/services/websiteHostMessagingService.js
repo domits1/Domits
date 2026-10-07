@@ -57,6 +57,7 @@ export const fetchWebsiteHostWhatsApp = async (hostId, { idToken = null } = {}) 
       })
         .then(async (response) => {
           if (!response.ok) {
+            HOST_WHATSAPP_PROMISE_CACHE.delete(cacheKey);
             return getEmptyWebsiteHostWhatsApp();
           }
 
@@ -69,7 +70,10 @@ export const fetchWebsiteHostWhatsApp = async (hostId, { idToken = null } = {}) 
             ? normalizeWebsiteHostWhatsApp(whatsappIntegration)
             : getEmptyWebsiteHostWhatsApp();
         })
-        .catch(() => getEmptyWebsiteHostWhatsApp())
+        .catch(() => {
+          HOST_WHATSAPP_PROMISE_CACHE.delete(cacheKey);
+          return getEmptyWebsiteHostWhatsApp();
+        })
     );
   }
 
