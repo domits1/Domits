@@ -47,7 +47,7 @@ const claimLocation = async (manager, schemaName, propertyId, country, city) => 
 const claimProperty = async (manager, schemaName, propertyId) => {
   const result = await manager.queryRunner.query(
     `UPDATE ${schemaName}.property
-      SET id = id
+      SET updatedat = updatedat
       WHERE id = $1
       RETURNING id`,
     [propertyId],
