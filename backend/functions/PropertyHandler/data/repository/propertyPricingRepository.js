@@ -1,9 +1,13 @@
 import { PricingMapping } from "../../util/mapping/pricing.js";
 import Database from "database";
+import { withDsqlRetry } from "../../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter, { buildForwardSyncRange } from "../../.shared/channelManagement/services/channexAriOutboxWriter.js";
+import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_SOURCE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 export class PropertyPricingRepository {
-  constructor(systemManager) {
+  constructor(systemManager, { channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
     this.systemManager = systemManager;
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
     this.weekendRateColumnSupported = null;
   }
 
@@ -165,43 +169,54 @@ export class PropertyPricingRepository {
       existingPricing?.weekendRate ?? roomRateValue
     );
 
-    if (existingPricing) {
-      if (hasWeekendRateColumn) {
-        await client.query(
-          `
-            UPDATE ${pricingTable}
-            SET roomrate = $2, cleaning = $3, weekendrate = $4
-            WHERE property_id = $1
-          `,
-          [propertyId, roomRateValue, cleaningValue, weekendRateValue]
-        );
-      } else {
-        await client.query(
-          `
-            UPDATE ${pricingTable}
-            SET roomrate = $2, cleaning = $3
-            WHERE property_id = $1
-          `,
-          [propertyId, roomRateValue, cleaningValue]
-        );
-      }
-    } else if (hasWeekendRateColumn) {
-      await client.query(
-        `
-          INSERT INTO ${pricingTable} (property_id, roomrate, cleaning, weekendrate)
-          VALUES ($1, $2, $3, $4)
-        `,
-        [propertyId, roomRateValue, cleaningValue, weekendRateValue]
-      );
-    } else {
-      await client.query(
-        `
-          INSERT INTO ${pricingTable} (property_id, roomrate, cleaning)
-          VALUES ($1, $2, $3)
-        `,
-        [propertyId, roomRateValue, cleaningValue]
-      );
-    }
+    await withDsqlRetry(() =>
+      client.transaction(async (manager) => {
+        if (existingPricing) {
+          if (hasWeekendRateColumn) {
+            await manager.query(
+              `
+                UPDATE ${pricingTable}
+                SET roomrate = $2, cleaning = $3, weekendrate = $4
+                WHERE property_id = $1
+              `,
+              [propertyId, roomRateValue, cleaningValue, weekendRateValue]
+            );
+          } else {
+            await manager.query(
+              `
+                UPDATE ${pricingTable}
+                SET roomrate = $2, cleaning = $3
+                WHERE property_id = $1
+              `,
+              [propertyId, roomRateValue, cleaningValue]
+            );
+          }
+        } else if (hasWeekendRateColumn) {
+          await manager.query(
+            `
+              INSERT INTO ${pricingTable} (property_id, roomrate, cleaning, weekendrate)
+              VALUES ($1, $2, $3, $4)
+            `,
+            [propertyId, roomRateValue, cleaningValue, weekendRateValue]
+          );
+        } else {
+          await manager.query(
+            `
+              INSERT INTO ${pricingTable} (property_id, roomrate, cleaning)
+              VALUES ($1, $2, $3)
+            `,
+            [propertyId, roomRateValue, cleaningValue]
+          );
+        }
+
+        await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, {
+          domitsPropertyId: propertyId,
+          changeTypes: [CHANNEX_ARI_CHANGE_TYPE.RATES],
+          ...buildForwardSyncRange(),
+          source: CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS,
+        });
+      })
+    );
 
     return await this.getPricingById(propertyId);
   }

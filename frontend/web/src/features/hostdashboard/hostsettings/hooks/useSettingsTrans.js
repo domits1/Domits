@@ -8,11 +8,17 @@ import es from "../../../../content/es.json";
 const contentByLanguage = { en, nl, de, es };
 
 const useSettingsTrans = (section) => {
-    const { language } = useContext(LanguageContext);
-    return {
-        t:   contentByLanguage[language]?.settings?.[section] ?? contentByLanguage.en.settings[section],
-        hub: contentByLanguage[language]?.settings?.hub       ?? contentByLanguage.en.settings.hub,
-    };
+  const { language } = useContext(LanguageContext);
+
+  return {
+    t:
+      contentByLanguage[language]?.settings?.[section] ??
+      contentByLanguage.en.settings[section],
+    hub:
+      contentByLanguage[language]?.settings?.hub ??
+      contentByLanguage.en.settings.hub,
+    language,
+  };
 };
 
 export default useSettingsTrans;

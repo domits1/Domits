@@ -26,6 +26,7 @@ const directRouteSpecs = [
   ["DELETE request", "delete", "DELETE", undefined, 200, "Deleted"],
   ["DELETE property image request", "deletePropertyImage", "DELETE", "/property/images", 204],
   ["PATCH property overview request", "updatePropertyOverview", "PATCH", "/property/overview", 204],
+  ["PATCH property registration number request", "updateRegistrationNumber", "PATCH", "/property/registration", 200],
   ["PATCH property calendar overrides request", "updatePropertyCalendarOverrides", "PATCH", "/property/calendar/overrides", 200],
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 204],
   ["POST website analytics event request", "recordWebsiteAnalyticsEvent", "POST", "/property/website/event", 204],

@@ -1,8 +1,12 @@
 import {NotFoundException} from "../../util/exception/NotFoundException.js";
+import {ConflictException} from "../../util/exception/ConflictException.js";
+import {REGISTRATION_NUMBER_TAKEN_MESSAGE} from "../../util/constant/registrationNumber.js";
 import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
 import Database from "database";
 import {Property} from "database/models/Property";
+
+const UNIQUE_VIOLATION_CODE = "23505";
 
 export class PropertyRepository {
 
@@ -141,6 +145,39 @@ export class PropertyRepository {
             .set(updateFields)
             .where("id = :id", { id: propertyId })
             .execute();
+
+        return await this.getPropertyById(propertyId);
+    }
+
+    async isRegistrationNumberUsedByAnotherProperty(registrationNumber, propertyId) {
+        const client = await Database.getInstance();
+        const matchCount = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.registrationnumber = :registrationNumber", { registrationNumber })
+            .andWhere("property.id != :propertyId", { propertyId })
+            .getCount();
+
+        return matchCount > 0;
+    }
+
+    async updateRegistrationNumber(propertyId, registrationNumber) {
+        const client = await Database.getInstance();
+        try {
+            await client
+                .createQueryBuilder()
+                .update(Property)
+                .set({ registrationnumber: registrationNumber, updatedat: Date.now() })
+                .where("id = :id", { id: propertyId })
+                .execute();
+        } catch (error) {
+            // Backstop for the race between the service pre-check and this UPDATE. Only registrationnumber
+            // is written here, so any unique violation is that column's index.
+            if (error?.code === UNIQUE_VIOLATION_CODE || error?.driverError?.code === UNIQUE_VIOLATION_CODE) {
+                throw new ConflictException(REGISTRATION_NUMBER_TAKEN_MESSAGE);
+            }
+            throw error;
+        }
 
         return await this.getPropertyById(propertyId);
     }
