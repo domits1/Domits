@@ -4,6 +4,7 @@ import {
   renderDestinationReportMarkdown,
 } from "../../functions/PropertyHandler/business/service/destinationReportService.js";
 import { readDestinationSettings } from "../../functions/PropertyHandler/util/destination/destinationSettings.js";
+import { flagDestinationCity } from "../../functions/PropertyHandler/util/destination/destinationFlags.js";
 
 const ROWS = [
   { country: "Spain", city: "Marbella", active_count: 2 },
@@ -42,6 +43,7 @@ describe("the destination report", () => {
     expect(indonesia.cities.map((city) => city.slug)).toEqual(["bali", "bali-seminyak"]);
     expect(indonesia.cities.find((city) => city.slug === "bali-seminyak").flags).toEqual(["composite"]);
     expect(indonesia.cities.find((city) => city.slug === "bali").flags).toEqual([]);
+    expect(flagDestinationCity({ slug: "", countrySlug: undefined, variants: [] })).toEqual(["short"]);
   });
 
   it("gives a flagged city no page until its address is fixed, keeps listing it, and lets its country keep the listing", () => {
