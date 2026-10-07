@@ -1,0 +1,150 @@
+[
+  {
+    "property": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "hostId": "00000000-0000-4000-8000-000000000001",
+      "title": "Test Villa ",
+      "subtitle": "Algarve",
+      "description": "Short test description.",
+      "registrationNumber": "AUTO-11111111-1111-4111-8111-111111111111",
+      "status": "INACTIVE",
+      "createdAt": 1773316890605,
+      "updatedAt": 0,
+      "bookingType": "direct"
+    },
+    "amenities": [
+      { "id": "22222222-2222-4222-8222-222222222222", "property_id": "11111111-1111-4111-8111-111111111111", "amenityId": "1" }
+    ],
+    "availability": [],
+    "availabilityRestrictions": [
+      { "id": "33333333-3333-4333-8333-333333333333", "property_id": "11111111-1111-4111-8111-111111111111", "restriction": "MaximumNightsPerYear", "value": 30 }
+    ],
+    "checkIn": {
+      "property_id": "11111111-1111-4111-8111-111111111111",
+      "checkIn": { "from": "15:00:00", "till": "18:00:00" },
+      "checkOut": { "from": "07:00:00", "till": "11:00:00" }
+    },
+    "cancellationPolicy": null,
+    "lateCheckin": null,
+    "houseRules": {},
+    "customRules": [],
+    "generalDetails": [
+      { "id": "44444444-4444-4444-8444-444444444444", "property_id": "11111111-1111-4111-8111-111111111111", "detail": "Guests", "value": 8 }
+    ],
+    "images": [
+      {
+        "image_id": "55555555-5555-4555-8555-555555555555",
+        "sort_order": 0,
+        "status": "READY",
+        "key": "images/11111111-1111-4111-8111-111111111111/55555555-5555-4555-8555-555555555555/web.jpg",
+        "web_key": "images/11111111-1111-4111-8111-111111111111/55555555-5555-4555-8555-555555555555/web.jpg",
+        "web_width": 1024,
+        "web_height": 683,
+        "thumb_key": "images/11111111-1111-4111-8111-111111111111/55555555-5555-4555-8555-555555555555/thumb.jpg",
+        "thumb_width": 600,
+        "thumb_height": 400,
+        "original_key": "images/11111111-1111-4111-8111-111111111111/55555555-5555-4555-8555-555555555555/original.jpg",
+        "original_width": 1024,
+        "original_height": 683
+      }
+    ],
+    "location": { "property_id": "11111111-1111-4111-8111-111111111111", "country": "Portugal", "city": "Algarve" },
+    "pricing": { "property_id": "11111111-1111-4111-8111-111111111111", "roomRate": 950, "weekendRate": 950, "cleaning": 0 },
+    "rules": [],
+    "propertyType": { "property_id": "11111111-1111-4111-8111-111111111111", "property_type": "House", "spaceType": "Entire house" },
+    "technicalDetails": null,
+    "propertyTestStatus": { "property_id": "11111111-1111-4111-8111-111111111111", "isTest": false }
+  },
+  {
+    "property": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "hostId": "00000000-0000-4000-8000-000000000001",
+      "title": "Casa do Mar",
+      "subtitle": "Lagos",
+      "description": "Short test description.",
+      "registrationNumber": "PT-AL-2024-0042",
+      "status": "ACTIVE",
+      "createdAt": 1773316990605,
+      "updatedAt": 0,
+      "bookingType": "direct"
+    },
+    "amenities": [
+      { "id": "22222222-2222-4222-8222-222222222223", "property_id": "66666666-6666-4666-8666-666666666666", "amenityId": "1" }
+    ],
+    "availability": [],
+    "availabilityRestrictions": [
+      { "id": "33333333-3333-4333-8333-333333333334", "property_id": "66666666-6666-4666-8666-666666666666", "restriction": "MaximumNightsPerYear", "value": 30 }
+    ],
+    "checkIn": {
+      "property_id": "66666666-6666-4666-8666-666666666666",
+      "checkIn": { "from": "15:00:00", "till": "18:00:00" },
+      "checkOut": { "from": "07:00:00", "till": "11:00:00" }
+    },
+    "cancellationPolicy": null,
+    "lateCheckin": null,
+    "houseRules": {},
+    "customRules": [],
+    "generalDetails": [
+      { "id": "44444444-4444-4444-8444-444444444445", "property_id": "66666666-6666-4666-8666-666666666666", "detail": "Guests", "value": 4 }
+    ],
+    "images": [
+      {
+        "image_id": "55555555-5555-4555-8555-555555555556",
+        "sort_order": 0,
+        "status": "READY",
+        "key": "images/66666666-6666-4666-8666-666666666666/55555555-5555-4555-8555-555555555556/web.jpg",
+        "web_key": "images/66666666-6666-4666-8666-666666666666/55555555-5555-4555-8555-555555555556/web.jpg",
+        "web_width": 1024,
+        "web_height": 683,
+        "thumb_key": "images/66666666-6666-4666-8666-666666666666/55555555-5555-4555-8555-555555555556/thumb.jpg",
+        "thumb_width": 600,
+        "thumb_height": 400,
+        "original_key": "images/66666666-6666-4666-8666-666666666666/55555555-5555-4555-8555-555555555556/original.jpg",
+        "original_width": 1024,
+        "original_height": 683
+      }
+    ],
+    "location": { "property_id": "66666666-6666-4666-8666-666666666666", "country": "Portugal", "city": "Lagos" },
+    "pricing": { "property_id": "66666666-6666-4666-8666-666666666666", "roomRate": 450, "weekendRate": 450, "cleaning": 0 },
+    "rules": [],
+    "propertyType": { "property_id": "66666666-6666-4666-8666-666666666666", "property_type": "House", "spaceType": "Entire house" },
+    "technicalDetails": null,
+    "propertyTestStatus": { "property_id": "66666666-6666-4666-8666-666666666666", "isTest": false }
+  },
+  {
+    "property": {
+      "id": "77777777-7777-4777-8777-777777777777",
+      "hostId": "00000000-0000-4000-8000-000000000001",
+      "title": "Old Cottage",
+      "subtitle": "Tavira",
+      "description": "Short test description.",
+      "registrationNumber": "AUTO-77777777-7777-4777-8777-777777777777",
+      "status": "ARCHIVED",
+      "createdAt": 1773317090605,
+      "updatedAt": 0,
+      "bookingType": "direct"
+    },
+    "amenities": [],
+    "availability": [],
+    "availabilityRestrictions": [
+      { "id": "33333333-3333-4333-8333-333333333335", "property_id": "77777777-7777-4777-8777-777777777777", "restriction": "MaximumNightsPerYear", "value": 30 }
+    ],
+    "checkIn": {
+      "property_id": "77777777-7777-4777-8777-777777777777",
+      "checkIn": { "from": "15:00:00", "till": "18:00:00" },
+      "checkOut": { "from": "07:00:00", "till": "11:00:00" }
+    },
+    "cancellationPolicy": null,
+    "lateCheckin": null,
+    "houseRules": {},
+    "customRules": [],
+    "generalDetails": [],
+    "images": [],
+    "location": { "property_id": "77777777-7777-4777-8777-777777777777", "country": "Portugal", "city": "Tavira" },
+    "pricing": { "property_id": "77777777-7777-4777-8777-777777777777", "roomRate": 200, "weekendRate": 200, "cleaning": 0 },
+    "rules": [],
+    "propertyType": { "property_id": "77777777-7777-4777-8777-777777777777", "property_type": "House", "spaceType": "Entire house" },
+    "technicalDetails": null,
+    "propertyTestStatus": { "property_id": "77777777-7777-4777-8777-777777777777", "isTest": false }
+  }
+]

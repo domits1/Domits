@@ -9,6 +9,7 @@ import {
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 const CHANNEX_BOOKING_POLL_EVENT_SOURCE = "domits.channex.booking-poll";
 const CHANNEX_BOOKING_POLL_EVENT_ACTION = "CHANNEX_BOOKING_POLL";
+const CHANNEX_ARI_OUTBOX_EVENT_ACTION = "PROCESS_CHANNEX_ARI_OUTBOX";
 const controller = new ChannelManagementController();
 const notFound = { statusCode: 404, response: "Not Found" };
 const corsHeaders = {
@@ -71,10 +72,6 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   {
     methods: ["POST"],
-    pattern: /\/integrations\/channex\/certification\/test-case$/,
-  },
-  {
-    methods: ["POST"],
     pattern: /\/integrations\/channex\/certification\/cancel-booking$/,
   },
   {
@@ -98,12 +95,17 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/rate-plans$/ },
 ];
 
+// endsWith, not includes: the Channex message webhook at /webhooks/channex (#3447) is not ours.
+const CHANNEX_BOOKING_WEBHOOK_PATH = "/webhooks/channex/bookings";
+const isChannexBookingWebhookPath = (path) => String(path || "").endsWith(CHANNEX_BOOKING_WEBHOOK_PATH);
 const isChannelHttpPath = (path) =>
-  /\/integrations\/(?:channex|holidu)(?:\/|$)/.test(String(path || ""));
+  /\/integrations\/(?:channex|holidu)(?:\/|$)/.test(String(path || "")) || isChannexBookingWebhookPath(path);
 const isChannexBookingPollEvent = (event) =>
   event?.source === CHANNEX_BOOKING_POLL_EVENT_SOURCE ||
   event?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION ||
   event?.detail?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION;
+export const isChannexAriOutboxEvent = (event) =>
+  event?.action === CHANNEX_ARI_OUTBOX_EVENT_ACTION || event?.detail?.action === CHANNEX_ARI_OUTBOX_EVENT_ACTION;
 const isProtectedChannexCertificationAdminRoute = (method, path) =>
   protectedChannexCertificationAdminRoutes.some(
     (route) =>
@@ -124,6 +126,8 @@ const internalTokenRoutePaths = [
 const isInternalTokenRoute = (method, path) =>
   method === "POST" &&
   internalTokenRoutePaths.some((routePath) => String(path || "").endsWith(routePath));
+// Called by Channex and authorized by the X-Channex-Webhook-Secret header in the controller, never by a user token.
+const isChannexBookingWebhookRoute = (method, path) => method === "POST" && isChannexBookingWebhookPath(path);
 const shouldRejectChannexCertificationAdminRequest = (event, userId) =>
   isProtectedChannexCertificationAdminRoute(event?.httpMethod, event?.path) &&
   !isChannexCertificationUserAllowed(userId);
@@ -255,14 +259,10 @@ const routeDefinitions = [
   ["POST", "/integrations/channex/sync/full", "syncChannexFull"],
   [
     "POST",
-    "/integrations/channex/certification/test-case",
-    "syncChannexCertificationTestCase",
-  ],
-  [
-    "POST",
     "/integrations/channex/certification/cancel-booking",
     "cancelChannexCertificationBooking",
   ],
+  ["POST", CHANNEX_BOOKING_WEBHOOK_PATH, "receiveChannexBookingWebhook"],
   ["POST", "/integrations/channex/rate-plans", "linkChannexRatePlan"],
   ["POST", "/integrations/channex/room-types", "linkChannexRoomType"],
   ["POST", "/integrations/channex/properties", "linkChannexProperty"],
@@ -284,13 +284,21 @@ const findRouteHandler = (httpMethod, path) =>
   routeDefinitions.find((route) => route.matches(httpMethod, path))?.handle ||
   null;
 
-export const handleChannelManagementEvent = async (event) => {
-  if (!isChannexBookingPollEvent(event) && !isChannelHttpPath(event?.path)) {
+export const handleChannelManagementEvent = async (event, context) => {
+  if (
+    !isChannexAriOutboxEvent(event) &&
+    !isChannexBookingPollEvent(event) &&
+    !isChannelHttpPath(event?.path)
+  ) {
     return null;
   }
 
   const { httpMethod, path } = event;
   try {
+    if (isChannexAriOutboxEvent(event)) {
+      return createLambdaResponse(await controller.processChannexAriOutbox(event, context));
+    }
+
     if (isChannexBookingPollEvent(event)) {
       return createLambdaResponse(
         await controller.pollLatestChannexBookings(event)
@@ -366,7 +374,7 @@ export const handleChannelManagementEvent = async (event) => {
 
     const routeHandler = findRouteHandler(httpMethod, path);
     if (!routeHandler) return createLambdaResponse(notFound);
-    if (isInternalTokenRoute(httpMethod, path)) {
+    if (isInternalTokenRoute(httpMethod, path) || isChannexBookingWebhookRoute(httpMethod, path)) {
       return createLambdaResponse(await routeHandler(event));
     }
 
@@ -461,6 +469,6 @@ export const handleChannelManagementEvent = async (event) => {
   }
 };
 
-export const channelManagementHandler = async (event) =>
-  (await handleChannelManagementEvent(event)) ||
+export const channelManagementHandler = async (event, context) =>
+  (await handleChannelManagementEvent(event, context)) ||
   createLambdaResponse(notFound);

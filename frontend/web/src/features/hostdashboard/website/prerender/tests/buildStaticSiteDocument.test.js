@@ -135,6 +135,12 @@ describe("a complete static document for a published direct booking website", ()
     ).toThrow(TypeError);
   });
 
+  it("refuses an app shell whose <html> tag has no lang attribute, instead of shipping a page without one", () => {
+    expect(() => buildDocumentFor({ template: APP_SHELL_TEMPLATE.replace('<html lang="en">', "<html>") })).toThrow(
+      TypeError
+    );
+  });
+
   it("leaves a visible page for a crawler that never runs the script", () => {
     const html = buildDocumentFor();
     const bodyText = html

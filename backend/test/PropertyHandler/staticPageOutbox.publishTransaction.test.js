@@ -1,6 +1,8 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import Database from "database";
 import { DirectBookingWebsiteSiteRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js";
+import { WebsitePublishConflictError } from "../../functions/PropertyHandler/util/exception/WebsitePublishConflictError.js";
+import { SITE_ROW, buildTransactionClient } from "./support/staticPageOutboxTransactionClient.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -8,25 +10,6 @@ jest.mock("database", () => ({
 }));
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
-
-const SITE_ROW = {
-  id: "site-1",
-  property_id: "property-1",
-  host_id: "host-1",
-  site_name: "Cliff House",
-  primary_locale: "en",
-  status: "PUBLISHED",
-  template_key: "panorama-landing",
-  published_property_snapshot_json: "{}",
-  published_content_overrides_json: "{}",
-  published_theme_overrides_json: "{}",
-  preview_token_hash: null,
-  published_at: 1757000000000,
-  suspended_at: null,
-  static_page_revision: 4,
-  created_at: 1756000000000,
-  updated_at: 1757000000000,
-};
 
 const PUBLISH_INPUT = {
   propertyId: "property-1",
@@ -40,44 +23,19 @@ const PUBLISH_INPUT = {
   publishedAt: 1757000000000,
 };
 
-const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "site-1", revision: 4 }] } = {}) => {
-  const statements = [];
-  const transactionRunner = {
-    query: jest.fn(async (statement, parameters, useStructuredResult) => {
-      statements.push({ statement, parameters, useStructuredResult });
+const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "site-1", revision: 4 }] } = {}) =>
+  buildTransactionClient({
+    operation: "publish",
+    respond: (statement, parameters, useStructuredResult) => {
       const records = /INSERT INTO \S*static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
       return useStructuredResult ? { records, affected: records.length } : records;
-    }),
-    release: jest.fn().mockResolvedValue(undefined),
-  };
-  const client = {
-    options: { schema: "main" },
-    statements,
-    transactionRunner,
-    committed: false,
-    rolledBack: false,
-    transaction: jest.fn(async (runInTransaction) => {
-      try {
-        const result = await runInTransaction({ queryRunner: transactionRunner });
-        client.committed = true;
-        return result;
-      } catch (error) {
-        client.rolledBack = true;
-        throw error;
-      }
-    }),
-    createQueryRunner: jest.fn(() => {
-      throw new Error("the publish must run inside one transaction, not on a separate query runner");
-    }),
-    query: jest.fn(async () => {
-      throw new Error("the publish must run inside one transaction, not on the data source");
-    }),
-  };
-  Database.getInstance.mockResolvedValue(client);
-  return client;
-};
+    },
+  });
 
 const statementFor = (client, pattern) => client.statements.find(({ statement }) => pattern.test(statement));
+
+const serializationConflict = () =>
+  Object.assign(new Error("OC000: change conflicts with another transaction"), { code: "40001" });
 
 describe("publishing a site writes its page outbox row in the same transaction", () => {
   beforeEach(() => {
@@ -121,6 +79,48 @@ describe("publishing a site writes its page outbox row in the same transaction",
     await expect(repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT)).rejects.toThrow("site unavailable");
     expect(statementFor(client, /static_page_outbox/)).toBeUndefined();
     expect(client.rolledBack).toBe(true);
+    expect(client.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("publishes again after losing a serialization conflict, so two publishes of one site both land", async () => {
+    const client = buildClient();
+    client.transaction.mockRejectedValueOnce(serializationConflict());
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const site = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT);
+
+    expect(site.id).toBe("site-1");
+    expect(client.transaction).toHaveBeenCalledTimes(2);
+    expect(client.committed).toBe(true);
+  });
+
+  it("runs both writes again when the conflict surfaces at commit, after the transaction body already ran", async () => {
+    const client = buildClient();
+    const runInTransaction = client.transaction.getMockImplementation();
+    client.transaction.mockImplementationOnce(async (work) => {
+      await runInTransaction(work);
+      throw serializationConflict();
+    });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const site = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT);
+
+    expect(site.id).toBe("site-1");
+    expect(client.statements.filter(({ statement }) => /static_page_outbox/.test(statement))).toHaveLength(2);
+    expect(client.statements).toHaveLength(4);
+  });
+
+  it("stops after three conflicts with an error the host can act on, not a raw database failure", async () => {
+    const client = buildClient();
+    client.transaction.mockRejectedValue(serializationConflict());
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    const failure = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT).catch((error) => error);
+
+    expect(failure).toBeInstanceOf(WebsitePublishConflictError);
+    expect(failure.statusCode).toBe(409);
+    expect(failure.cause.code).toBe("40001");
+    expect(client.transaction).toHaveBeenCalledTimes(3);
   });
 
   it("fails the publish when the site upsert returns no row instead of queueing work for an unknown site", async () => {
@@ -209,6 +209,7 @@ describe("every site query reports the static page revision", () => {
     Database.getInstance.mockResolvedValue({
       options: { schema: "main" },
       createQueryRunner: jest.fn(() => queryRunner),
+      transaction: jest.fn(async (runInTransaction) => runInTransaction({ queryRunner })),
       query: jest.fn(async () => records),
     });
     const repository = new DirectBookingWebsiteSiteRepository();
@@ -219,7 +220,9 @@ describe("every site query reports the static page revision", () => {
     });
     await expect(repository.getSiteById("site-1")).resolves.toMatchObject({ staticPageRevision: 7 });
 
-    for (const call of queryRunner.query.mock.calls) {
+    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) => statement.includes("standalone_site"));
+    expect(siteStatements).toHaveLength(2);
+    for (const call of siteStatements) {
       expect(call[0]).toContain("static_page_revision");
     }
   });
