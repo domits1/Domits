@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { LuX } from 'react-icons/lu';
 
-const ChecklistSection = ({ items, onAddItem, onToggleChecked, onRemoveItem }) => {
+const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemoveItem, onRetryLoad }) => {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemRequired, setNewItemRequired] = useState(true);
 
@@ -22,12 +22,17 @@ const ChecklistSection = ({ items, onAddItem, onToggleChecked, onRemoveItem }) =
         <div className="form-group checklist-section">
             <div className="attachments-header">
                 <label>Checklist</label>
-                {requiredItems.length > 0 && (
+                {!loadError && requiredItems.length > 0 && (
                     <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required done</span>
                 )}
             </div>
 
-            {items.length === 0 ? (
+            {loadError ? (
+                <div className="checklist-load-error">
+                    <p className="checklist-error-text">{loadError}</p>
+                    <button type="button" className="btn-text" onClick={onRetryLoad}>Retry</button>
+                </div>
+            ) : items.length === 0 ? (
                 <p className="no-attachments-text">No checklist items yet.</p>
             ) : (
                 <ul className="checklist-item-list">
@@ -55,24 +60,26 @@ const ChecklistSection = ({ items, onAddItem, onToggleChecked, onRemoveItem }) =
                 </ul>
             )}
 
-            <form className="checklist-add-form" onSubmit={handleAdd}>
-                <input
-                    type="text"
-                    value={newItemTitle}
-                    onChange={(e) => setNewItemTitle(e.target.value)}
-                    placeholder="Add checklist item..."
-                    aria-label="New checklist item title"
-                />
-                <label className="checklist-required-toggle">
+            {!loadError && (
+                <form className="checklist-add-form" onSubmit={handleAdd}>
                     <input
-                        type="checkbox"
-                        checked={newItemRequired}
-                        onChange={(e) => setNewItemRequired(e.target.checked)}
+                        type="text"
+                        value={newItemTitle}
+                        onChange={(e) => setNewItemTitle(e.target.value)}
+                        placeholder="Add checklist item..."
+                        aria-label="New checklist item title"
                     />
-                    Required
-                </label>
-                <button type="submit" className="btn-text">Add</button>
-            </form>
+                    <label className="checklist-required-toggle">
+                        <input
+                            type="checkbox"
+                            checked={newItemRequired}
+                            onChange={(e) => setNewItemRequired(e.target.checked)}
+                        />
+                        Required
+                    </label>
+                    <button type="submit" className="btn-text">Add</button>
+                </form>
+            )}
         </div>
     );
 };
@@ -84,9 +91,11 @@ ChecklistSection.propTypes = {
         isRequired: PropTypes.bool,
         isChecked: PropTypes.bool,
     })).isRequired,
+    loadError: PropTypes.string,
     onAddItem: PropTypes.func.isRequired,
     onToggleChecked: PropTypes.func.isRequired,
     onRemoveItem: PropTypes.func.isRequired,
+    onRetryLoad: PropTypes.func.isRequired,
 };
 
 export default ChecklistSection;

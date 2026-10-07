@@ -5,9 +5,11 @@ import ChecklistSection from './ChecklistSection.js';
 describe('ChecklistSection', () => {
     const baseProps = {
         items: [],
+        loadError: null,
         onAddItem: jest.fn(),
         onToggleChecked: jest.fn(),
         onRemoveItem: jest.fn(),
+        onRetryLoad: jest.fn(),
     };
 
     beforeEach(() => {
@@ -65,5 +67,21 @@ describe('ChecklistSection', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
         expect(baseProps.onAddItem).not.toHaveBeenCalled();
+    });
+
+    test('shows a load error with a retry button instead of the items or add form', () => {
+        render(<ChecklistSection {...baseProps} loadError="Failed to load checklist items" />);
+
+        expect(screen.getByText('Failed to load checklist items')).toBeInTheDocument();
+        expect(screen.queryByText('No checklist items yet.')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('New checklist item title')).not.toBeInTheDocument();
+    });
+
+    test('calls onRetryLoad when Retry is clicked', () => {
+        render(<ChecklistSection {...baseProps} loadError="Failed to load checklist items" />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+        expect(baseProps.onRetryLoad).toHaveBeenCalledTimes(1);
     });
 });
