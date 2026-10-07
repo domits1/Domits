@@ -49,7 +49,10 @@ const ReviewCard = ({ review }) => (
     </div>
     <div className="reviews-section__card-sub">
       <StarRating value={review.rating} />
-      <span className="reviews-section__card-time">{review.timeAgo}</span>
+      {Number.isFinite(review.date) && Number.isFinite(new Date(review.date).getTime()) ?
+        <time className="reviews-section__card-time" dateTime={new Date(review.date).toISOString()}>
+          Reviewed on {new Date(review.date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+        </time> : <span className="reviews-section__card-time">{review.timeAgo}</span>}
       {review.verified && (
         <span className="reviews-section__card-verified">
           <CheckCircleIcon fontSize="inherit" /> Verified stay
@@ -144,6 +147,7 @@ ReviewCard.propTypes = {
     location: PropTypes.string,
     rating: PropTypes.number,
     timeAgo: PropTypes.string,
+    date: PropTypes.number,
     verified: PropTypes.bool,
     text: PropTypes.string,
     response: PropTypes.shape({ message: PropTypes.string }),
