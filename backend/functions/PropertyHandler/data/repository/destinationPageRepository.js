@@ -76,7 +76,7 @@ export class DestinationPageRepository {
       LEFT JOIN ${schemaName}.property_pricing pr ON pr.property_id = p.id
       WHERE d.path = $2 OR d.path LIKE $3
       ORDER BY p.createdat DESC, p.id ASC`,
-      ["ACTIVE", normalizedPath, `${normalizedPath.replace(/[\\%_]/g, "\\$&")}/%`]
+      ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`]
     );
 
     return toRows(rows).map((row) => ({

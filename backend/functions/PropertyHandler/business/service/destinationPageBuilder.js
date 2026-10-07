@@ -7,22 +7,21 @@ const DESTINATIONS_ROOT_NAME = "Destinations";
 
 const ESCAPES = Object.freeze({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" });
 
-export const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ESCAPES[character]);
+export const escapeHtml = (value) => String(value ?? "").replaceAll(/[&<>"']/g, (character) => ESCAPES[character]);
 
-const escapeJsonForScript = (value) => JSON.stringify(value).replace(/</g, "\\u003c");
+const escapeJsonForScript = (value) => JSON.stringify(value).replaceAll("<", String.raw`\u003c`);
 
 const cleanText = (value) =>
   String(value ?? "")
-    .replace(/\s+/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 
 const pluralListings = (count) => (count === 1 ? "1 holiday rental" : `${count} holiday rentals`);
 
 const describe = (destination, listingCount, children) => {
-  const where = destination.type === "continent" ? `in ${destination.name}` : `in ${destination.name}`;
-  const places =
-    children.length > 0 ? ` across ${children.length} ${children.length === 1 ? "destination" : "destinations"}` : "";
-  return `Book ${pluralListings(listingCount)} ${where}${places} directly with the host on Domits.`;
+  const placeWord = children.length === 1 ? "destination" : "destinations";
+  const places = children.length > 0 ? ` across ${children.length} ${placeWord}` : "";
+  return `Book ${pluralListings(listingCount)} in ${destination.name}${places} directly with the host on Domits.`;
 };
 
 const renderBreadcrumbs = (trail, origin) => {
@@ -112,7 +111,11 @@ export const buildDestinationPage = ({
     throw new Error(`${destination.path} has no active listings and no destinations below it, so it has no page.`);
   }
 
-  const origin = cleanText(siteOrigin).replace(/\/+$/, "") || DEFAULT_SITE_ORIGIN;
+  let origin = cleanText(siteOrigin);
+  while (origin.endsWith("/")) {
+    origin = origin.slice(0, -1);
+  }
+  origin ||= DEFAULT_SITE_ORIGIN;
   const trail = [{ name: DESTINATIONS_ROOT_NAME, path: DESTINATIONS_ROOT_PATH }, ...parents, destination];
   const breadcrumbs = renderBreadcrumbs(trail, origin);
   const title = `Holiday rentals in ${cleanText(destination.name)} | Domits`;
