@@ -91,12 +91,10 @@ describe("mapping a property to its destination", () => {
 
   it("reports a write that lost against a newer address as stale, and a thrown error as failed without throwing", async () => {
     const consoleError = silence();
-    const stale = buildService({ written: false });
-    expect(await stale.service.mapPropertyLocation("property-1")).toMatchObject({
+    expect(await buildService({ written: false }).service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "stale",
       reason: "location_changed",
     });
-
     const failing = buildService({ failures: { sync: "deadlock" } });
     await expect(failing.service.mapPropertyLocation("property-1")).rejects.toThrow("deadlock");
     expect(await failing.service.mapPropertyLocationSafely("property-1")).toEqual({
@@ -169,9 +167,12 @@ describe("the destination backfill", () => {
       locations: { p1: MARBELLA, p2: MARBELLA, p3: MARBELLA },
     });
 
-    const summary = await service.backfill({ batchSize: 1, maxBatches: 2 });
-
-    expect(summary).toMatchObject({ mapped: 2, batches: 2, complete: false, cursor: "p2" });
+    expect(await service.backfill({ batchSize: 1, maxBatches: 2 })).toMatchObject({
+      mapped: 2,
+      batches: 2,
+      complete: false,
+      cursor: "p2",
+    });
     expect(repository.listPropertyIdsNeedingMapping).toHaveBeenCalledTimes(2);
 
     const rerun = buildService({ needing: [["p3"]], locations: { p3: MARBELLA } });

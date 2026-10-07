@@ -1,7 +1,7 @@
 import Database from "database";
+import { retryOnConflict } from "../../util/dsqlConflictRetry.js";
 
 export const MAX_BATCH_SIZE = 500;
-const CONFLICT_ATTEMPTS = 3;
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {
@@ -29,21 +29,6 @@ const requireText = (value, label) => {
 };
 
 const toRecords = (result) => (Array.isArray(result?.records) ? result.records : []);
-
-export const isConcurrencyConflict = (error) =>
-  [error?.code, error?.driverError?.code].includes("40001") || /\bOC00[01]\b/.test(String(error?.message ?? ""));
-
-const retryOnConflict = async (run) => {
-  for (let attempt = 1; ; attempt += 1) {
-    try {
-      return await run();
-    } catch (error) {
-      if (attempt >= CONFLICT_ATTEMPTS || !isConcurrencyConflict(error)) {
-        throw error;
-      }
-    }
-  }
-};
 
 const claimLocation = async (manager, schemaName, propertyId, country, city) => {
   const result = await manager.queryRunner.query(
@@ -110,19 +95,22 @@ export class DestinationRepository {
           );
         }
 
-        await manager.queryRunner.query(
+        const written = await manager.queryRunner.query(
           `INSERT INTO ${mappingTableName(schemaName)} (property_id, destination_id, source_country, source_city, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $5)
+      SELECT p.id, $2, $3, $4, $5, $5
+      FROM ${schemaName}.property p
+      WHERE p.id = $1
       ON CONFLICT (property_id)
       DO UPDATE SET
         destination_id = EXCLUDED.destination_id,
         source_country = EXCLUDED.source_country,
         source_city = EXCLUDED.source_city,
-        updated_at = EXCLUDED.updated_at`,
+        updated_at = EXCLUDED.updated_at
+      RETURNING property_id`,
           [normalizedPropertyId, target.path, country, city, now],
           true
         );
-        return true;
+        return toRecords(written).length > 0;
       })
     );
   }
