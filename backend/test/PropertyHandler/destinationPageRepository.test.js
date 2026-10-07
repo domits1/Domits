@@ -23,7 +23,7 @@ describe("the destination page repository", () => {
     jest.clearAllMocks();
   });
 
-  it("lists every destination with the number of active properties mapped to it", async () => {
+  it("counts only mapping rows whose property exists and is active, and keeps a destination with none at zero", async () => {
     const query = withRows([
       {
         id: "/destinations/europe/spain/marbella",
@@ -63,10 +63,13 @@ describe("the destination page repository", () => {
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
     expect(statement).toContain("count(p.id) AS active_listings");
+    expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property_destination m ON m.destination_id = d.id`);
+    expect(statement).not.toContain("count(*)");
+    expect(statement).not.toContain("count(m.");
     expect(parameters).toEqual(["ACTIVE"]);
   });
 
-  it("lists the active listings under a path with their public fields and the first ready web image only", async () => {
+  it("lists only listings whose property exists and is active, with their public fields and the first ready web image only", async () => {
     const query = withRows([
       {
         id: "p1",
@@ -111,7 +114,8 @@ describe("the destination page repository", () => {
       },
     ]);
     const [statement, parameters] = query.mock.calls[0];
-    expect(statement).toContain("p.status = $1");
+    expect(statement).toContain(`JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
+    expect(statement).not.toContain(`LEFT JOIN ${SCHEMA}.property p`);
     expect(statement).toContain("WHERE d.path = $2 OR d.path LIKE $3");
     expect(statement).toContain("v.variant = 'web'");
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
