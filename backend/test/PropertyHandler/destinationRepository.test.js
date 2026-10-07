@@ -18,8 +18,6 @@ const remove = (source = { sourceCountry: "Narnia", sourceCity: "Cair Paravel" }
   new DestinationRepository().removePropertyDestination("property-1", source);
 
 const buildClient = ({
-  claimRecords = [{ property_id: "property-1" }],
-  propertyRecords = [{ id: "property-1" }],
   mappingRecords = [{ property_id: "property-1" }],
   queryRows = [],
   failOn = null,
@@ -27,21 +25,16 @@ const buildClient = ({
 } = {}) => {
   const statements = [];
   let remainingConflicts = conflicts;
-  const transactionRunner = {
-    query: jest.fn(async (statement, parameters) => {
-      statements.push({ statement, parameters });
-      if (failOn && statement.includes(failOn)) {
-        throw new Error(`failed on ${failOn}`);
-      }
-      if (remainingConflicts > 0 && statement.includes("property_destination")) {
-        remainingConflicts -= 1;
-        throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
-      }
-      if (statement.startsWith("UPDATE")) {
-        return { records: statement.includes("property_location") ? claimRecords : propertyRecords };
-      }
-      return { records: statement.includes("property_destination") ? mappingRecords : [] };
-    }),
+  const answer = async (statement, parameters) => {
+    statements.push({ statement, parameters });
+    if (failOn && statement.includes(failOn)) {
+      throw new Error(`failed on ${failOn}`);
+    }
+    if (remainingConflicts > 0 && statement.includes("property_destination")) {
+      remainingConflicts -= 1;
+      throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
+    }
+    return { records: statement.includes("property_destination") ? mappingRecords : [] };
   };
   const client = {
     options: { schema: "main" },
@@ -50,7 +43,7 @@ const buildClient = ({
     rolledBack: false,
     transaction: jest.fn(async (runInTransaction) => {
       try {
-        const result = await runInTransaction({ queryRunner: transactionRunner });
+        const result = await runInTransaction({ queryRunner: { query: jest.fn(answer) } });
         client.committed = true;
         return result;
       } catch (error) {
@@ -58,9 +51,7 @@ const buildClient = ({
         throw error;
       }
     }),
-    createQueryRunner: jest.fn(() => {
-      throw new Error("writes must run inside one transaction");
-    }),
+    createQueryRunner: jest.fn(() => ({ query: jest.fn(answer), release: jest.fn().mockResolvedValue(undefined) })),
     query: jest.fn(async (statement, parameters) => {
       statements.push({ statement, parameters });
       return queryRows;
@@ -77,28 +68,19 @@ describe("the destination repository", () => {
     jest.clearAllMocks();
   });
 
-  it("claims the location row with the judged address and the property row, then writes the chain rows and the mapping, in one transaction", async () => {
+  it("writes the chain rows and the mapping in one transaction, from the stored address of a property that exists", async () => {
     const client = buildClient();
 
     expect(await sync(CHAIN, { ...SOURCE, now: 1700 })).toBe(true);
 
     expect(client.committed).toBe(true);
     expect(kinds(client)).toEqual([
-      `UPDATE ${SCHEMA}.property_location SET`,
-      `UPDATE ${SCHEMA}.property SET`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
-    const [claim, propertyClaim, ...rest] = client.statements;
-    expect(propertyClaim.statement).toContain("SET updatedat = updatedat\n      WHERE id = $1\n      RETURNING id");
-    expect(propertyClaim.parameters).toEqual(["property-1"]);
-    expect(claim.statement).toContain(
-      "SET city = city\n      WHERE property_id = $1\n        AND country = $2\n        AND city = $3"
-    );
-    expect(claim.parameters).toEqual(["property-1", "Spain", "Marbella"]);
-    const upserts = rest.slice(0, 3);
+    const upserts = client.statements.slice(0, 3);
     expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
       [PATHS[0], null],
       [PATHS[1], PATHS[0]],
@@ -114,37 +96,29 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
-    expect(rest[3].statement).toContain(
-      `FROM ${SCHEMA}.property p\n      WHERE p.id = $1\n      ON CONFLICT (property_id)`
+    const mapping = client.statements[3];
+    expect(mapping.statement).toContain(
+      `JOIN ${SCHEMA}.property p ON p.id = l.property_id\n      WHERE l.property_id = $1\n        AND l.country = $4\n        AND l.city = $5`
     );
-    expect(rest[3].parameters).toEqual(["property-1", PATHS[2], "Spain", "Marbella", 1700]);
-
-    const gone = buildClient({ propertyRecords: [] });
-    expect(await sync()).toBe(false);
-    expect(gone.statements).toHaveLength(2);
-    expect(gone.committed).toBe(true);
+    expect(mapping.statement).toContain("ON CONFLICT (property_id)");
+    expect(mapping.parameters).toEqual(["property-1", PATHS[2], 1700, "Spain", "Marbella"]);
   });
 
   it("maps a property without a resolvable city to its country row and writes no city row", async () => {
     const client = buildClient();
     const chain = resolveDestinationChain({ country: "Spain", city: " - " });
     expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
-    expect(client.statements.map(({ parameters }) => parameters[0]).slice(2)).toEqual([
-      PATHS[0],
-      PATHS[1],
-      "property-1",
-    ]);
-    expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], "Spain", " - ", 1]);
+    expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([PATHS[0], PATHS[1], "property-1"]);
+    expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], 1, "Spain", " - "]);
   });
 
-  it("writes nothing and answers false when no location row carries the judged address any more", async () => {
-    const client = buildClient({ claimRecords: [] });
+  it("binds the exact stored address, and answers false when no location of an existing property carries it any more", async () => {
+    const client = buildClient({ mappingRecords: [] });
 
     expect(await sync(CHAIN, { sourceCountry: " Spain ", sourceCity: "Marbella" })).toBe(false);
 
-    expect(client.statements).toHaveLength(1);
-    expect(client.statements[0].parameters).toEqual(["property-1", " Spain ", "Marbella"]);
     expect(client.committed).toBe(true);
+    expect(client.statements.at(-1).parameters.slice(3)).toEqual([" Spain ", "Marbella"]);
   });
 
   it("retries a transaction that lost a DSQL conflict, and gives up after three attempts", async () => {
@@ -173,23 +147,35 @@ describe("the destination repository", () => {
     expect(client.transaction).toHaveBeenCalledTimes(1);
   });
 
-  it("removes a mapping only after claiming the location with the judged address, in one transaction, and says whether that address is still current", async () => {
+  it("removes a mapping only while the location still carries the judged address, and says whether that address is still current", async () => {
     const client = buildClient();
     expect(await remove()).toEqual({ removed: true, current: true });
-    expect(kinds(client)).toEqual([
-      `UPDATE ${SCHEMA}.property_location SET`,
-      `DELETE FROM ${SCHEMA}.property_destination`,
-    ]);
+    expect(client.statements[0].statement).toContain(`DELETE FROM ${SCHEMA}.property_destination m`);
+    expect(client.statements[0].statement).toContain("AND l.country = $2\n        AND l.city = $3");
     expect(client.statements[0].parameters).toEqual(["property-1", "Narnia", "Cair Paravel"]);
-    expect(client.statements[1].parameters).toEqual(["property-1"]);
-    expect(client.committed).toBe(true);
 
-    const moved = buildClient({ claimRecords: [] });
+    const moved = buildClient({ mappingRecords: [], queryRows: [] });
     expect(await remove()).toEqual({ removed: false, current: false });
-    expect(moved.statements).toHaveLength(1);
+    expect(moved.statements[1].statement).toContain(`FROM ${SCHEMA}.property_location l`);
 
-    buildClient({ mappingRecords: [] });
+    buildClient({ mappingRecords: [], queryRows: [{ "?column?": 1 }] });
     expect(await remove()).toEqual({ removed: false, current: true });
+  });
+
+  it("removes mapping rows whose property no longer exists, and can count them without removing", async () => {
+    const client = buildClient({
+      mappingRecords: [{ property_id: "gone-1" }, { property_id: "gone-2" }],
+      queryRows: [{ orphans: "2" }],
+    });
+    const repository = new DestinationRepository();
+
+    expect(await repository.deleteMappingsWithoutProperty()).toBe(2);
+    expect(client.statements[0].statement).toContain(
+      `DELETE FROM ${SCHEMA}.property_destination m\n      WHERE NOT EXISTS (SELECT 1 FROM ${SCHEMA}.property p WHERE p.id = m.property_id)`
+    );
+    expect(await repository.countMappingsWithoutProperty()).toBe(2);
+    expect(client.statements[1].statement).toContain("SELECT count(*) AS orphans");
+    expect(client.statements[1].statement).toContain("WHERE NOT EXISTS");
   });
 
   it("lists the properties whose mapping is missing or no longer matches their location, and reads only country and city", async () => {

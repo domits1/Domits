@@ -10,6 +10,7 @@ const at = (country, city) => ({ propertyId: "property-1", country, city });
 const buildService = ({
   written = true,
   current = true,
+  orphans = 0,
   locations = { "property-1": MARBELLA },
   needing = [[]],
   failures = {},
@@ -26,6 +27,7 @@ const buildService = ({
       return locations[propertyId] === undefined ? null : locations[propertyId];
     }),
     listPropertyIdsNeedingMapping: jest.fn(async () => batches.shift() || []),
+    deleteMappingsWithoutProperty: jest.fn(async () => orphans),
   };
   return { service: new DestinationMappingService({ destinationRepository: repository }), repository };
 };
@@ -109,7 +111,7 @@ describe("mapping a property to its destination", () => {
 });
 
 describe("the destination backfill", () => {
-  it("walks the properties that need a mapping in batches, by cursor, and counts every outcome including a missing location row", async () => {
+  it("removes the mapping rows without a property, then walks the properties that need a mapping in batches and counts every outcome", async () => {
     const consoleError = silence();
     const { service, repository } = buildService({
       needing: [
@@ -118,6 +120,7 @@ describe("the destination backfill", () => {
       ],
       locations: { p1: at("Spain", "Marbella"), p2: at("Narnia", "x"), p4: at("Italy", "Lucca") },
       failures: { location: "p3" },
+      orphans: 3,
     });
     const seen = [];
 
@@ -131,7 +134,9 @@ describe("the destination backfill", () => {
       batches: 2,
       complete: true,
       cursor: "p5",
+      orphansRemoved: 3,
     });
+    expect(repository.deleteMappingsWithoutProperty).toHaveBeenCalledTimes(1);
     expect(summary.failures).toEqual([{ propertyId: "p3", message: "connection refused" }]);
     expect(repository.listPropertyIdsNeedingMapping.mock.calls.map(([args]) => args)).toEqual([
       { after: "", limit: 3 },

@@ -64,6 +64,7 @@ export class DestinationMappingService {
       cursor: String(after || ""),
       failures: [],
     };
+    summary.orphansRemoved = await this.destinationRepository.deleteMappingsWithoutProperty();
 
     while (summary.batches < maxBatches) {
       const propertyIds = await this.destinationRepository.listPropertyIdsNeedingMapping({
