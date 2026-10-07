@@ -257,6 +257,7 @@ export default class IntegrationService {
         roomTypes,
         channexCredentialStore,
         channexProviderClient,
+        propertyLookup: externalBookingImportRepository,
       });
     this.channexAriPayloadService =
       channexAriPayloadService ||
@@ -326,17 +327,6 @@ export default class IntegrationService {
       new ChannexCertificationService({
         externalBookingImportRepository,
         channexBookingAvailabilityBridge,
-        channexProviderClient,
-        finalizeChannexSyncResult: (...args) => this.finalizeChannexSyncResult(...args),
-        getChannexAriTargets: (...args) => this.getChannexAriTargets(...args),
-        buildChannexAriTargetsFailureEvidencePatch: (...args) =>
-          this.buildChannexAriTargetsFailureEvidencePatch(...args),
-        buildChannexMultiStepMappingSnapshot: (...args) =>
-          this.buildChannexMultiStepMappingSnapshot(...args),
-        buildBlockedChannexMultiStepSyncResult: (...args) =>
-          this.buildBlockedChannexMultiStepSyncResult(...args),
-        resolveChannexSyncCredentialContext: (...args) =>
-          this.resolveChannexSyncCredentialContext(...args),
       });
     this.channexBookingRevisionImportService =
       channexBookingRevisionImportService ||
@@ -911,27 +901,6 @@ export default class IntegrationService {
     return ok(logs);
   }
 
-  async upsertIntegrationProperty(integrationId, body) {
-    const accountId = requireStr(integrationId);
-    if (!accountId) return bad(400, { error: "Missing integration id in path" });
-
-    const domitsPropertyId = requireStr(body.domitsPropertyId);
-    const externalPropertyId = requireStr(body.externalPropertyId);
-
-    if (!domitsPropertyId) return bad(400, { error: "Missing required field: domitsPropertyId" });
-    if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
-
-    const mapping = await this.props.upsert({
-      integrationAccountId: accountId,
-      domitsPropertyId,
-      externalPropertyId,
-      externalPropertyName: body.externalPropertyName ?? null,
-      status: body.status ?? "ACTIVE",
-    });
-
-    return ok(mapping);
-  }
-
   async listIntegrationProperties(integrationId) {
     const accountId = requireStr(integrationId);
     if (!accountId) return bad(400, { error: "Missing integration id in path" });
@@ -1212,14 +1181,6 @@ export default class IntegrationService {
 
   async buildChannexFullSyncRestrictionsPayloadContext(...args) {
     return this.channexAriPayloadService.buildChannexFullSyncRestrictionsPayloadContext(...args);
-  }
-
-  buildChannexCertificationTestCasePayload(...args) {
-    return this.channexCertificationService.buildChannexCertificationTestCasePayload(...args);
-  }
-
-  async syncChannexCertificationTestCase(...args) {
-    return this.channexCertificationService.syncChannexCertificationTestCase(...args);
   }
 
   buildChannexMultiStepMappingSnapshot(...args) {
