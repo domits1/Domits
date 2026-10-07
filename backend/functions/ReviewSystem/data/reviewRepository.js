@@ -109,11 +109,22 @@ export class ReviewRepository {
     const summary = await eligible().select("AVG(review.overall_rating)", "score")
       .addSelect("COUNT(*)", "count").getRawOne();
     const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    const recent = !filters.sort || filters.sort === "recent";
     if (filters.sort === "highest" || filters.sort === "lowest") {
       page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
         .addOrderBy("review.created_at", "DESC");
-    } else page.orderBy("review.created_at", "DESC");
-    const reviews = await page.addOrderBy("review.id", "DESC").offset(offset).limit(10).getMany();
+    } else {
+      page.orderBy("review.created_at", "DESC");
+      if (filters.cursor) page.andWhere(
+        "(review.created_at < :cursorDate OR (review.created_at = :cursorDate AND review.id < :cursorId))",
+        { cursorDate: filters.cursor.date, cursorId: filters.cursor.id });
+    }
+    // Fetch one extra row to detect another page without applying the cursor to the matching count.
+    const rows = await page.addOrderBy("review.id", "DESC").offset(offset).limit(recent ? 11 : 10).getMany();
+    const reviews = rows.slice(0, 10), last = reviews[reviews.length - 1];
+    const nextCursor = recent && rows.length > 10 ? Buffer.from(JSON.stringify({
+      propertyId, date: Number(last.created_at), id: last.id,
+    })).toString("base64url") : null;
     const ids = reviews.map((review) => review.id);
     const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
       .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",
@@ -129,7 +140,8 @@ export class ReviewRepository {
       select: ["reviewId", "message", "publishedAt"],
     }) : [];
     return { property_id: propertyId, overall_score: count ? Number(summary.score) : null,
-      review_count: count, next_offset: offset + 10 < count ? offset + 10 : null,
+      review_count: count, next_offset: !filters.cursor && offset + 10 < count ? offset + 10 : null,
+      next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: true,
         response: responses.filter((response) => response.reviewId === review.id)
