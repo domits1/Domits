@@ -215,6 +215,59 @@ export class DirectBookingWebsiteRatePlanService {
     return { action: "downgraded", plan: toView(essentials) };
   }
 
+  async handleCheckoutSessionCompleted(object) {
+    const paid = object?.payment_status === "paid" || object?.payment_status === "no_payment_required";
+    if (object?.mode !== "subscription" || !paid) return { handled: true };
+
+    const accountId = object?.metadata?.accountId;
+    const subscriptionId = String(object?.subscription || "");
+    const customerId = object?.customer ? String(object.customer) : null;
+    if (!accountId || !subscriptionId) {
+      throw serviceError("Stripe checkout session is missing account metadata.");
+    }
+
+    const subscription = await this.stripeRepository.getSubscription(subscriptionId);
+    await this.activateEliteFromSubscription(accountId, subscription, customerId);
+    return { handled: true };
+  }
+
+  async handleSubscriptionUpdated(object) {
+    const accountId = object?.metadata?.accountId;
+    if (!accountId) return { handled: true };
+
+    const existing = await this.repository.findByStripeSubscriptionId(object.id);
+    const effectiveUntil = getSubscriptionPeriodEnd(object);
+    if (existing) {
+      await this.repository.updatePlanById(existing.id, {
+        status: stripeStatus(object.status),
+        effective_until: object.cancel_at_period_end ? effectiveUntil : null,
+      });
+    } else {
+      await this.activateEliteFromSubscription(accountId, object);
+    }
+
+    return { handled: true };
+  }
+
+  async handleInvoicePaymentFailed(object) {
+    const subscriptionId = String(
+      object?.parent?.subscription_details?.subscription || ""
+    );
+    const existing = await this.repository.findByStripeSubscriptionId(subscriptionId);
+    if (existing) {
+      await this.repository.updatePlanById(existing.id, { status: "PAST_DUE" });
+    }
+    return { handled: true };
+  }
+
+  async handleSubscriptionDeleted(object) {
+    await this.repository.expireSubscriptionAndCreateEssentials(
+      String(object?.id || ""),
+      new Date()
+    );
+    return { handled: true };
+  }
+
   async handleStripeWebhook(rawBody, signature) {
     const event = await this.stripeRepository.constructWebhookEvent(
       rawBody,
@@ -224,52 +277,14 @@ export class DirectBookingWebsiteRatePlanService {
     const object = event?.data?.object;
 
     switch (event.type) {
-      case "checkout.session.completed": {
-        const paid = object?.payment_status === "paid" || object?.payment_status === "no_payment_required";
-        if (object?.mode !== "subscription" || !paid) return { handled: true };
-
-        const accountId = object?.metadata?.accountId;
-        const subscriptionId = String(object?.subscription || "");
-        const customerId = object?.customer ? String(object.customer) : null;
-        if (!accountId || !subscriptionId) {
-          throw serviceError("Stripe checkout session is missing account metadata.");
-        }
-
-        const subscription = await this.stripeRepository.getSubscription(subscriptionId);
-        await this.activateEliteFromSubscription(accountId, subscription, customerId);
-        return { handled: true };
-      }
-
-      case "customer.subscription.updated": {
-        const accountId = object?.metadata?.accountId;
-        if (accountId) {
-          const existing = await this.repository.findByStripeSubscriptionId(object.id);
-          const effectiveUntil = getSubscriptionPeriodEnd(object);
-          if (existing) {
-            await this.repository.updatePlanById(existing.id, {
-              status: stripeStatus(object.status),
-              effective_until: object.cancel_at_period_end ? effectiveUntil : null,
-            });
-          } else {
-            await this.activateEliteFromSubscription(accountId, object);
-          }
-        }
-        return { handled: true };
-      }
-
-      case "invoice.payment_failed": {
-        const subscriptionId = String(
-          object?.parent?.subscription_details?.subscription || ""
-        );
-        const existing = await this.repository.findByStripeSubscriptionId(subscriptionId);
-        if (existing) await this.repository.updatePlanById(existing.id, { status: "PAST_DUE" });
-        return { handled: true };
-      }
-
+      case "checkout.session.completed":
+        return this.handleCheckoutSessionCompleted(object);
+      case "customer.subscription.updated":
+        return this.handleSubscriptionUpdated(object);
+      case "invoice.payment_failed":
+        return this.handleInvoicePaymentFailed(object);
       case "customer.subscription.deleted":
-        await this.repository.expireSubscriptionAndCreateEssentials(String(object?.id || ""), new Date());
-        return { handled: true };
-
+        return this.handleSubscriptionDeleted(object);
       default:
         return { handled: false };
     }
