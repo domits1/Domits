@@ -153,14 +153,25 @@ export class DestinationRepository {
   async deleteMappingsWithoutProperty() {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
-    const removed = await runStatement(
-      client,
-      `DELETE FROM ${mappingTableName(schemaName)} m
-      WHERE NOT EXISTS (SELECT 1 FROM ${schemaName}.property p WHERE p.id = m.property_id)
+    let total = 0;
+    for (;;) {
+      const removed = await runStatement(
+        client,
+        `DELETE FROM ${mappingTableName(schemaName)}
+      WHERE property_id IN (
+        SELECT m.property_id
+        FROM ${mappingTableName(schemaName)} m
+        WHERE NOT EXISTS (SELECT 1 FROM ${schemaName}.property p WHERE p.id = m.property_id)
+        LIMIT $1
+      )
       RETURNING property_id`,
-      []
-    );
-    return removed.length;
+        [MAX_BATCH_SIZE]
+      );
+      total += removed.length;
+      if (removed.length < MAX_BATCH_SIZE) {
+        return total;
+      }
+    }
   }
 
   async countMappingsWithoutProperty() {
