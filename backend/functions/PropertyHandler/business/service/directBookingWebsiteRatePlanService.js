@@ -258,7 +258,9 @@ export class DirectBookingWebsiteRatePlanService {
       }
 
       case "invoice.payment_failed": {
-        const subscriptionId = object?.subscription ? String(object.subscription) : "";
+        const subscriptionId = String(
+          object?.parent?.subscription_details?.subscription || ""
+        );
         const existing = await this.repository.findByStripeSubscriptionId(subscriptionId);
         if (existing) await this.repository.updatePlanById(existing.id, { status: "PAST_DUE" });
         return { handled: true };

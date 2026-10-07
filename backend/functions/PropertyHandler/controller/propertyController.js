@@ -3525,9 +3525,6 @@ export class PropertyController {
         return Boolean(error?.message?.startsWith("Draft "));
     }
 
-    // -------------------------
-    // GET /property/website/rate-plan
-    // -------------------------
     async getWebsiteRatePlan(event) {
         try {
             const accessToken = event.headers?.Authorization || event.headers?.authorization;
@@ -3548,9 +3545,6 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // PATCH /property/website/rate-plan
-    // -------------------------
     async changeWebsiteRatePlan(event) {
         try {
             const accessToken = event.headers?.Authorization || event.headers?.authorization;
@@ -3594,9 +3588,6 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // POST /property/website/rate-plan/webhook
-    // -------------------------
     async handleWebsiteRatePlanWebhook(event) {
         try {
             const headers = event.headers || {};

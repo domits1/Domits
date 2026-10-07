@@ -244,7 +244,15 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     repository.findByStripeSubscriptionId.mockResolvedValue(current);
     stripeRepository.constructWebhookEvent.mockResolvedValue({
       type: "invoice.payment_failed",
-      data: { object: { subscription: "sub_1" } },
+      data: {
+        object: {
+          parent: {
+            subscription_details: {
+              subscription: "sub_1",
+            },
+          },
+        },
+      },
     });
 
     await expect(service.handleStripeWebhook("raw", "sig")).resolves.toEqual({ handled: true });
