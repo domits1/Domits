@@ -20,16 +20,6 @@ const destinationTableName = (schemaName) => `${schemaName}.destination`;
 const mappingTableName = (schemaName) => `${schemaName}.property_destination`;
 const locationTableName = (schemaName) => `${schemaName}.property_location`;
 
-const runStatement = async (client, statement, parameters) => {
-  const queryRunner = client.createQueryRunner();
-  try {
-    const result = await queryRunner.query(statement, parameters, true);
-    return { records: Array.isArray(result?.records) ? result.records : [] };
-  } finally {
-    await queryRunner.release();
-  }
-};
-
 const requireText = (value, label) => {
   const text = String(value ?? "");
   if (!text.trim()) {
@@ -37,6 +27,8 @@ const requireText = (value, label) => {
   }
   return text;
 };
+
+const toRecords = (result) => (Array.isArray(result?.records) ? result.records : []);
 
 export const isConcurrencyConflict = (error) =>
   [error?.code, error?.driverError?.code].includes("40001") || /\bOC00[01]\b/.test(String(error?.message ?? ""));
@@ -53,9 +45,23 @@ const retryOnConflict = async (run) => {
   }
 };
 
-const upsertDestinationStatement = (tableName) => `INSERT INTO ${tableName} AS d (
-        id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at
-      )
+const claimLocation = async (manager, schemaName, propertyId, country, city) => {
+  const result = await manager.queryRunner.query(
+    `UPDATE ${locationTableName(schemaName)}
+      SET city = city
+      WHERE property_id = $1
+        AND country = $2
+        AND city = $3
+      RETURNING property_id`,
+    [propertyId, country, city],
+    true
+  );
+  return toRecords(result).length > 0;
+};
+
+const upsertDestinationStatement = (
+  tableName
+) => `INSERT INTO ${tableName} AS d (id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
       ON CONFLICT (id)
       DO UPDATE SET
@@ -75,12 +81,13 @@ export class DestinationRepository {
 
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
-    const destinations = destinationTableName(schemaName);
-    const mappings = mappingTableName(schemaName);
-    const locations = locationTableName(schemaName);
 
     return retryOnConflict(() =>
       client.transaction(async (manager) => {
+        if (!(await claimLocation(manager, schemaName, normalizedPropertyId, country, city))) {
+          return false;
+        }
+
         const rows = [
           [chain.continent, null, null],
           [chain.country, chain.continent.path, chain.country.code],
@@ -88,7 +95,7 @@ export class DestinationRepository {
         ];
         for (const [destination, parentId, countryCode] of rows) {
           await manager.queryRunner.query(
-            upsertDestinationStatement(destinations),
+            upsertDestinationStatement(destinationTableName(schemaName)),
             [
               destination.path,
               destination.type,
@@ -103,61 +110,45 @@ export class DestinationRepository {
           );
         }
 
-        const result = await manager.queryRunner.query(
-          `INSERT INTO ${mappings} (property_id, destination_id, source_country, source_city, created_at, updated_at)
-      SELECT l.property_id, $2, l.country, l.city, $3, $3
-      FROM ${locations} l
-      WHERE l.property_id = $1
-        AND l.country = $4
-        AND l.city = $5
+        await manager.queryRunner.query(
+          `INSERT INTO ${mappingTableName(schemaName)} (property_id, destination_id, source_country, source_city, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $5)
       ON CONFLICT (property_id)
       DO UPDATE SET
         destination_id = EXCLUDED.destination_id,
         source_country = EXCLUDED.source_country,
         source_city = EXCLUDED.source_city,
-        updated_at = EXCLUDED.updated_at
-      RETURNING property_id`,
-          [normalizedPropertyId, target.path, now, country, city],
+        updated_at = EXCLUDED.updated_at`,
+          [normalizedPropertyId, target.path, country, city, now],
           true
         );
-
-        return (Array.isArray(result?.records) ? result.records : []).length > 0;
+        return true;
       })
     );
   }
 
   async removePropertyDestination(propertyId, { sourceCountry, sourceCity } = {}) {
     const normalizedPropertyId = requireText(propertyId, "A property id").trim();
+    const judged = [String(sourceCountry ?? ""), String(sourceCity ?? "")];
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
 
-    const { records } = await runStatement(
-      client,
-      `DELETE FROM ${mappingTableName(schemaName)} m
-      WHERE m.property_id = $1
-        AND EXISTS (
-          SELECT 1
-          FROM ${locationTableName(schemaName)} l
-          WHERE l.property_id = $1
-            AND l.country = $2
-            AND l.city = $3
-        )
-      RETURNING property_id`,
-      [normalizedPropertyId, String(sourceCountry ?? ""), String(sourceCity ?? "")]
-    );
-    if (records.length > 0) {
-      return { removed: true, current: true };
-    }
-
-    const rows = await client.query(
-      `SELECT 1
-      FROM ${locationTableName(schemaName)}
+    return retryOnConflict(() =>
+      client.transaction(async (manager) => {
+        const current = await claimLocation(manager, schemaName, normalizedPropertyId, ...judged);
+        if (!current) {
+          return { removed: false, current: false };
+        }
+        const result = await manager.queryRunner.query(
+          `DELETE FROM ${mappingTableName(schemaName)}
       WHERE property_id = $1
-        AND country = $2
-        AND city = $3`,
-      [normalizedPropertyId, String(sourceCountry ?? ""), String(sourceCity ?? "")]
+      RETURNING property_id`,
+          [normalizedPropertyId],
+          true
+        );
+        return { removed: toRecords(result).length > 0, current: true };
+      })
     );
-    return { removed: false, current: Array.isArray(rows) && rows.length > 0 };
   }
 
   async getLocationForMapping(propertyId) {

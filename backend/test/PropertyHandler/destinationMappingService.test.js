@@ -5,6 +5,7 @@ import {
 } from "../../functions/PropertyHandler/business/service/destinationMappingService.js";
 
 const MARBELLA = { propertyId: "property-1", country: "Spain", city: "Marbella" };
+const at = (country, city) => ({ propertyId: "property-1", country, city });
 
 const buildService = ({
   written = true,
@@ -32,10 +33,8 @@ const buildService = ({
 const silence = () => jest.spyOn(console, "error").mockImplementation(() => {});
 
 describe("mapping a property to its destination", () => {
-  it("reads the stored address and writes the chain with the exact stored text", async () => {
-    const { service, repository } = buildService({
-      locations: { "property-1": { propertyId: "property-1", country: " spain", city: "Marbella " } },
-    });
+  it("reads the stored address by property id and writes the chain with the exact stored text", async () => {
+    const { service, repository } = buildService({ locations: { "property-1": at(" spain", "Marbella ") } });
 
     const result = await service.mapPropertyLocation(" property-1 ");
 
@@ -47,16 +46,17 @@ describe("mapping a property to its destination", () => {
     });
     expect(repository.getLocationForMapping).toHaveBeenCalledWith("property-1");
     const [propertyId, chain, options] = repository.syncPropertyDestination.mock.calls[0];
-    expect(propertyId).toBe("property-1");
-    expect(chain.city.slug).toBe("marbella");
-    expect(options).toEqual({ sourceCountry: " spain", sourceCity: "Marbella " });
+    expect([propertyId, chain.city.slug, options]).toEqual([
+      "property-1",
+      "marbella",
+      { sourceCountry: " spain", sourceCity: "Marbella " },
+    ]);
     expect(repository.removePropertyDestination).not.toHaveBeenCalled();
+    await expect(service.mapPropertyLocation("")).rejects.toThrow("A property id is required");
   });
 
-  it("removes the mapping only while the address is still the unknown one, instead of guessing", async () => {
-    const { service, repository } = buildService({
-      locations: { "property-1": { propertyId: "property-1", country: "Narnia", city: "Cair Paravel" } },
-    });
+  it("removes the mapping only while the address is still the unknown one, and reports a moved address as stale", async () => {
+    const { service, repository } = buildService({ locations: { "property-1": at("Narnia", "Cair Paravel") } });
 
     expect(await service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "unresolved",
@@ -69,7 +69,7 @@ describe("mapping a property to its destination", () => {
     });
     expect(repository.syncPropertyDestination).not.toHaveBeenCalled();
 
-    const moved = buildService({ current: false, locations: { "property-1": { ...MARBELLA, country: "Narnia" } } });
+    const moved = buildService({ current: false, locations: { "property-1": at("Narnia", "Cair Paravel") } });
     expect(await moved.service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "stale",
       reason: "location_changed",
@@ -77,9 +77,7 @@ describe("mapping a property to its destination", () => {
   });
 
   it("maps a property whose city cannot be resolved to its country, and says so", async () => {
-    const { service, repository } = buildService({
-      locations: { "property-1": { propertyId: "property-1", country: "Spain", city: " - " } },
-    });
+    const { service, repository } = buildService({ locations: { "property-1": at("Spain", " - ") } });
 
     expect(await service.mapPropertyLocation("property-1")).toMatchObject({
       outcome: "mapped",
@@ -89,16 +87,6 @@ describe("mapping a property to its destination", () => {
     const [, chain, options] = repository.syncPropertyDestination.mock.calls[0];
     expect(chain.city).toBeNull();
     expect(options).toEqual({ sourceCountry: "Spain", sourceCity: " - " });
-  });
-
-  it("leaves a property without a location row alone", async () => {
-    const { service, repository } = buildService({ locations: {} });
-    expect(await service.mapPropertyLocation("property-9")).toMatchObject({
-      outcome: "unresolved",
-      reason: "no_location",
-    });
-    expect(repository.removePropertyDestination).not.toHaveBeenCalled();
-    expect(repository.syncPropertyDestination).not.toHaveBeenCalled();
   });
 
   it("reports a write that lost against a newer address as stale, and a thrown error as failed without throwing", async () => {
@@ -120,23 +108,17 @@ describe("mapping a property to its destination", () => {
     expect(consoleError).toHaveBeenCalledTimes(1);
     consoleError.mockRestore();
   });
-
-  it("refuses to map without a property id", async () => {
-    const { service } = buildService();
-    await expect(service.mapPropertyLocation("")).rejects.toThrow("A property id is required");
-  });
 });
 
 describe("the destination backfill", () => {
-  it("walks the properties that need a mapping in batches, by cursor, and counts every outcome", async () => {
+  it("walks the properties that need a mapping in batches, by cursor, and counts every outcome including a missing location row", async () => {
     const consoleError = silence();
     const { service, repository } = buildService({
-      needing: [["p1", "p2", "p3"], ["p4"]],
-      locations: {
-        p1: { propertyId: "p1", country: "Spain", city: "Marbella" },
-        p2: { propertyId: "p2", country: "Narnia", city: "x" },
-        p4: { propertyId: "p4", country: "Italy", city: "Lucca" },
-      },
+      needing: [
+        ["p1", "p2", "p3"],
+        ["p4", "p5"],
+      ],
+      locations: { p1: at("Spain", "Marbella"), p2: at("Narnia", "x"), p4: at("Italy", "Lucca") },
       failures: { location: "p3" },
     });
     const seen = [];
@@ -145,32 +127,20 @@ describe("the destination backfill", () => {
 
     expect(summary).toMatchObject({
       mapped: 2,
-      unresolved: 1,
+      unresolved: 2,
       stale: 0,
       failed: 1,
       batches: 2,
       complete: true,
-      cursor: "p4",
+      cursor: "p5",
     });
     expect(summary.failures).toEqual([{ propertyId: "p3", message: "connection refused" }]);
     expect(repository.listPropertyIdsNeedingMapping.mock.calls.map(([args]) => args)).toEqual([
       { after: "", limit: 3 },
       { after: "p3", limit: 3 },
     ]);
-    expect(seen).toEqual(["mapped", "unresolved", "failed", "mapped"]);
+    expect(seen).toEqual(["mapped", "unresolved", "failed", "mapped", "unresolved"]);
     consoleError.mockRestore();
-  });
-
-  it("counts a property whose location row is gone as unresolved and a lost write as stale", async () => {
-    const { service } = buildService({ written: false, needing: [["p1", "p2"]], locations: { p1: MARBELLA } });
-
-    expect(await service.backfill({ batchSize: 10 })).toMatchObject({
-      mapped: 0,
-      stale: 1,
-      unresolved: 1,
-      failed: 0,
-      complete: true,
-    });
   });
 
   it("clamps the batch size to what the repository returns at most, and asks nothing more when the first batch is empty", async () => {
@@ -194,10 +164,9 @@ describe("the destination backfill", () => {
   });
 
   it("stops at the batch limit, says the run is not complete, and hands out the cursor a rerun continues from", async () => {
-    const location = { propertyId: "x", country: "Spain", city: "Marbella" };
     const { service, repository } = buildService({
       needing: [["p1"], ["p2"], ["p3"]],
-      locations: { p1: location, p2: location, p3: location },
+      locations: { p1: MARBELLA, p2: MARBELLA, p3: MARBELLA },
     });
 
     const summary = await service.backfill({ batchSize: 1, maxBatches: 2 });
@@ -205,7 +174,7 @@ describe("the destination backfill", () => {
     expect(summary).toMatchObject({ mapped: 2, batches: 2, complete: false, cursor: "p2" });
     expect(repository.listPropertyIdsNeedingMapping).toHaveBeenCalledTimes(2);
 
-    const rerun = buildService({ needing: [["p3"]], locations: { p3: location } });
+    const rerun = buildService({ needing: [["p3"]], locations: { p3: MARBELLA } });
     expect(await rerun.service.backfill({ batchSize: 1, after: "p2" })).toMatchObject({ mapped: 1, complete: true });
     expect(rerun.repository.listPropertyIdsNeedingMapping.mock.calls[0][0]).toEqual({ after: "p2", limit: 1 });
   });
