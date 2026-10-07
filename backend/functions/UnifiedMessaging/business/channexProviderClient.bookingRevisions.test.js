@@ -204,7 +204,7 @@ describe("ChannexProviderClient booking revisions", () => {
   });
 
   describe("listBookingRevisionFeed", () => {
-    // The Channex documentation does not say whether the feed is paginated; meta is logged to find out.
+    // The feed is paginated; its meta (total, limit, page) is passed on for the webhook's page reading and log line.
     test("returns the response meta next to the revisions", async () => {
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [], meta: { page: 1, total: 12 } }));
 

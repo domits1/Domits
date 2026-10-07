@@ -5,7 +5,7 @@
 | Issue | #3281 (parent #2861, capability #440) |
 | Related | #3236 Channex inbox (message webhook, #3447), #3278 ARI outbox, #3282 full sync, #3284 certification cleanup |
 | Author | Enes Veli Yigit |
-| Status | Draft, waiting for review. No implementation before approval. |
+| Status | Implemented in #3456 (review changes included). Live test pending after deployment. |
 | Date | 6 October 2026 |
 
 ## 1. Summary
@@ -192,6 +192,7 @@ Live test on Channex staging after deployment: a new, a modified and a cancelled
 ## 12. Follow-ups
 
 - Take the polling lock in the manual pull as well (edge case d).
+- A revision already marked acknowledged in Domits is not acknowledged at Channex again. If the two ever disagree, it stays in the Channex feed and the webhook's page calculation (D13) starts one page early; it then stops when it sees nothing new, so it cannot loop, but later revisions wait for the next webhook.
 - Readiness counts inactive mappings (`channexMappingService.js:623-639`).
 - Polling as a low-frequency backup, after the review.
 - A global webhook instead of one per property, when more hosts connect.

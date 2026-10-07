@@ -109,7 +109,7 @@ describe("Channex booking pull deadline", () => {
     expect(result.response.overallSuccess).toBe(true);
   });
 
-  // The Channex documentation does not say whether the feed is paginated; the webhook logs the meta to find out.
+  // The webhook logs the feed's paging fields, so its log line shows how many revisions wait.
   test("passes the feed meta on when a deadline is given", async () => {
     const service = buildService();
     processTakingTenSeconds(service);
