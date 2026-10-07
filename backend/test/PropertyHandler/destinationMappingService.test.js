@@ -137,6 +137,9 @@ describe("the destination backfill", () => {
       orphansRemoved: 3,
     });
     expect(repository.deleteMappingsWithoutProperty).toHaveBeenCalledTimes(1);
+    expect(repository.deleteMappingsWithoutProperty.mock.invocationCallOrder[0]).toBeLessThan(
+      repository.listPropertyIdsNeedingMapping.mock.invocationCallOrder[0]
+    );
     expect(summary.failures).toEqual([{ propertyId: "p3", message: "connection refused" }]);
     expect(repository.listPropertyIdsNeedingMapping.mock.calls.map(([args]) => args)).toEqual([
       { after: "", limit: 3 },

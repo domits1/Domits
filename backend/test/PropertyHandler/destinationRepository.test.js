@@ -162,20 +162,27 @@ describe("the destination repository", () => {
     expect(await remove()).toEqual({ removed: false, current: true });
   });
 
-  it("removes mapping rows whose property no longer exists, and can count them without removing", async () => {
-    const client = buildClient({
-      mappingRecords: [{ property_id: "gone-1" }, { property_id: "gone-2" }],
-      queryRows: [{ orphans: "2" }],
-    });
+  it("removes mapping rows whose property no longer exists in bounded batches, and can count them without removing", async () => {
+    const full = Array.from({ length: 500 }, (_, index) => ({ property_id: `gone-${index}` }));
+    const batches = [full, [{ property_id: "gone-last" }]];
+    const client = buildClient({ queryRows: [{ orphans: "501" }] });
+    client.createQueryRunner = jest.fn(() => ({
+      query: jest.fn(async (statement, parameters) => {
+        client.statements.push({ statement, parameters });
+        return { records: batches.shift() };
+      }),
+      release: jest.fn().mockResolvedValue(undefined),
+    }));
     const repository = new DestinationRepository();
 
-    expect(await repository.deleteMappingsWithoutProperty()).toBe(2);
+    expect(await repository.deleteMappingsWithoutProperty()).toBe(501);
+    expect(client.statements).toHaveLength(2);
     expect(client.statements[0].statement).toContain(
-      `DELETE FROM ${SCHEMA}.property_destination m\n      WHERE NOT EXISTS (SELECT 1 FROM ${SCHEMA}.property p WHERE p.id = m.property_id)`
+      `WHERE NOT EXISTS (SELECT 1 FROM ${SCHEMA}.property p WHERE p.id = m.property_id)\n        LIMIT $1`
     );
-    expect(await repository.countMappingsWithoutProperty()).toBe(2);
-    expect(client.statements[1].statement).toContain("SELECT count(*) AS orphans");
-    expect(client.statements[1].statement).toContain("WHERE NOT EXISTS");
+    expect(client.statements[0].parameters).toEqual([500]);
+    expect(await repository.countMappingsWithoutProperty()).toBe(501);
+    expect(client.statements[2].statement).toContain("SELECT count(*) AS orphans");
   });
 
   it("lists the properties whose mapping is missing or no longer matches their location, and reads only country and city", async () => {
