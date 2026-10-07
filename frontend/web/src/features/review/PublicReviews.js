@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import ReviewsSection from "./ReviewsSection";
-import { getPublicReviews } from "../../../review/services/reviewAPI";
-import styles from "../../../review/PublicReviewFilters.module.css";
+import ReviewsSection from "../bookingengine/listingdetails/components/ReviewsSection";
+import { getPublicReviews } from "./services/reviewAPI";
+import styles from "./PublicReviewFilters.module.css";
 
 const defaults = { minRating: "", maxRating: "", startDate: "", endDate: "", verified: "", sort: "recent" };
 const PropertyReviews = ({ propertyId }) => {
