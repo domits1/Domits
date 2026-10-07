@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import Database from "database";
 import { DirectBookingWebsiteSiteRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js";
+import { SITE_ROW, buildTransactionClient } from "./support/staticPageOutboxTransactionClient.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -8,25 +9,6 @@ jest.mock("database", () => ({
 }));
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
-
-const SITE_ROW = {
-  id: "site-1",
-  property_id: "property-1",
-  host_id: "host-1",
-  site_name: "Cliff House",
-  primary_locale: "en",
-  status: "PUBLISHED",
-  template_key: "panorama-landing",
-  published_property_snapshot_json: "{}",
-  published_content_overrides_json: "{}",
-  published_theme_overrides_json: "{}",
-  preview_token_hash: null,
-  published_at: 1757000000000,
-  suspended_at: null,
-  static_page_revision: 4,
-  created_at: 1756000000000,
-  updated_at: 1757000000000,
-};
 
 const PUBLISH_INPUT = {
   propertyId: "property-1",
@@ -40,42 +22,14 @@ const PUBLISH_INPUT = {
   publishedAt: 1757000000000,
 };
 
-const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "site-1", revision: 4 }] } = {}) => {
-  const statements = [];
-  const transactionRunner = {
-    query: jest.fn(async (statement, parameters, useStructuredResult) => {
-      statements.push({ statement, parameters, useStructuredResult });
+const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "site-1", revision: 4 }] } = {}) =>
+  buildTransactionClient({
+    operation: "publish",
+    respond: (statement, parameters, useStructuredResult) => {
       const records = /static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
       return useStructuredResult ? { records, affected: records.length } : records;
-    }),
-    release: jest.fn().mockResolvedValue(undefined),
-  };
-  const client = {
-    options: { schema: "main" },
-    statements,
-    transactionRunner,
-    committed: false,
-    rolledBack: false,
-    transaction: jest.fn(async (runInTransaction) => {
-      try {
-        const result = await runInTransaction({ queryRunner: transactionRunner });
-        client.committed = true;
-        return result;
-      } catch (error) {
-        client.rolledBack = true;
-        throw error;
-      }
-    }),
-    createQueryRunner: jest.fn(() => {
-      throw new Error("the publish must run inside one transaction, not on a separate query runner");
-    }),
-    query: jest.fn(async () => {
-      throw new Error("the publish must run inside one transaction, not on the data source");
-    }),
-  };
-  Database.getInstance.mockResolvedValue(client);
-  return client;
-};
+    },
+  });
 
 const statementFor = (client, pattern) => client.statements.find(({ statement }) => pattern.test(statement));
 
