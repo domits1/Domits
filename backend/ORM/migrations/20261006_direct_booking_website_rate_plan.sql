@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans (
 );
 
 CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx
-ON main.direct_booking_website_rate_plans (account_id, effective_from DESC);
+ON main.direct_booking_website_rate_plans (account_id, effective_from);
 
 CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique
 ON main.direct_booking_website_rate_plans (account_id)

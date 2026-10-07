@@ -21,7 +21,7 @@ export class DirectBookingWebsiteRatePlan20261006 {
     `);
     await queryRunner.query(`
       CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx
-      ON main.direct_booking_website_rate_plans (account_id, effective_from DESC);
+      ON main.direct_booking_website_rate_plans (account_id, effective_from);
     `);
     await queryRunner.query(`
       CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique
