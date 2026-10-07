@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
 import { createStoringDomainRepository } from "./support/storingDomainRepository.js";
+import { toPublicWebsiteDomainView } from "../../functions/PropertyHandler/util/websiteDomainView.js";
 
 const SITE = {
   id: "site-1",
@@ -112,7 +113,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(storedRowNamed(domainRepository, requested));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, requested)));
     }
   );
 
@@ -127,7 +128,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(storedRowNamed(domainRepository, requested));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, requested)));
     }
   );
 
@@ -156,7 +157,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById("domain-fallback")));
       expect(body.domain.status).toBe("PENDING");
     });
   });
@@ -186,7 +187,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
     expect(statusCode).toBe(200);
     expect(body.primaryDomain).toBeNull();
-    expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+    expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById("domain-fallback")));
     expect(body.site.id).toBe(SITE.id);
     expect(consoleError).toHaveBeenCalledTimes(1);
   });
@@ -202,7 +203,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById("domain-fallback")));
     }
   );
 
@@ -217,7 +218,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(storedRowNamed(domainRepository, requested));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, requested)));
     }
   );
 
@@ -240,7 +241,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(storedRowNamed(domainRepository, requested));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, requested)));
     }
   );
 
@@ -261,7 +262,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(domainRepository.rowById("domain-fallback"));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById("domain-fallback")));
     }
   );
 
@@ -313,7 +314,7 @@ describe("public render primaryDomain, resolved by domain", () => {
 
         expect(statusCode).toBe(200);
         expect(domainRepository.snapshot().filter((row) => row.isPrimary)).toHaveLength(2);
-        expect(body.domain).toEqual(storedRowNamed(domainRepository, fallbackName));
+        expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, fallbackName)));
         expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
       });
     });
@@ -356,7 +357,7 @@ describe("public render primaryDomain, resolved by site id", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: expectedMainAddress, status: "ACTIVE" });
-      expect(body.domain).toEqual(domainRepository.rowById(expectedDomainRowId));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById(expectedDomainRowId)));
     }
   );
 
@@ -381,7 +382,7 @@ describe("public render primaryDomain, resolved by site id", () => {
 
     expect(statusCode).toBe(200);
     expect(body.primaryDomain).toBeNull();
-    expect(body.domain).toEqual(domainRepository.rowById("domain-custom"));
+    expect(body.domain).toEqual(toPublicWebsiteDomainView(domainRepository.rowById("domain-custom")));
   });
 
   it.each([
@@ -410,7 +411,7 @@ describe("public render primaryDomain, resolved by site id", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: fallbackName, status: "ACTIVE" });
-      expect(body.domain).toEqual(storedRowNamed(domainRepository, fallbackName));
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(storedRowNamed(domainRepository, fallbackName)));
     });
   });
 
@@ -457,7 +458,7 @@ describe("public render primaryDomain, concurrent domain changes", () => {
 
       expect(statusCode).toBe(200);
       expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
-      expect(body.domain).toEqual(requestedRowAsRead);
+      expect(body.domain).toEqual(toPublicWebsiteDomainView(requestedRowAsRead));
     }
   );
 
@@ -477,7 +478,7 @@ describe("public render primaryDomain, concurrent domain changes", () => {
     expect(statusCode).toBe(200);
     expect(domainRepository.rowById("domain-custom").isPrimary).toBe(true);
     expect(body.primaryDomain).toEqual({ domain: CUSTOM_NAME, status: "ACTIVE" });
-    expect(body.domain).toEqual(requestedRowAsRead);
+    expect(body.domain).toEqual(toPublicWebsiteDomainView(requestedRowAsRead));
   });
 
   it("answers domain and primaryDomain from the same read on the site id path when a promotion lands during the render", async () => {
@@ -494,7 +495,7 @@ describe("public render primaryDomain, concurrent domain changes", () => {
 
     expect(statusCode).toBe(200);
     expect(domainRepository.rowById("domain-custom").isPrimary).toBe(true);
-    expect(body.domain).toEqual(rowsBeforePromotion.find((row) => row.id === "domain-fallback"));
+    expect(body.domain).toEqual(toPublicWebsiteDomainView(rowsBeforePromotion.find((row) => row.id === "domain-fallback")));
     expect(body.primaryDomain).toEqual({ domain: FALLBACK_NAME, status: "ACTIVE" });
   });
 });

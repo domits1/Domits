@@ -1,6 +1,7 @@
 import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
+import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
 
 class IntegrationPropertyRepository {
@@ -62,24 +63,38 @@ class IntegrationPropertyRepository {
       .getMany();
   }
 
-  async findByExternalPropertyId(externalPropertyId) {
+  async queryActivePropertiesWhere(whereClause, whereParams) {
     const client = await Database.getInstance();
     return client
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("p")
-      .where("p.externalPropertyId = :e", { e: externalPropertyId })
-      .getOne();
-  }
-
-  async listActiveByDomitsPropertyId(domitsPropertyId) {
-    const client = await Database.getInstance();
-    return client
-      .getRepository(ChannelIntegrationProperty)
-      .createQueryBuilder("p")
-      .where("p.domitsPropertyId = :d", { d: domitsPropertyId })
+      .where(whereClause, whereParams)
       .andWhere("p.status = :s", { s: "ACTIVE" })
       .orderBy("p.updatedAt", "DESC")
       .getMany();
+  }
+
+  async findByExternalPropertyId(externalPropertyId) {
+    return this.queryActivePropertiesWhere("p.externalPropertyId = :e", { e: externalPropertyId });
+  }
+
+  async listActiveByDomitsPropertyId(domitsPropertyId) {
+    return this.queryActivePropertiesWhere("p.domitsPropertyId = :d", { d: domitsPropertyId });
+  }
+
+  // Same "mapped to Channex" rule as the ARI outbox (channexAriOutboxWriter.isMappedToChannex).
+  async findActiveChannexMappingByExternalPropertyId(externalPropertyId) {
+    const client = await Database.getInstance();
+    const row = await client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .innerJoin(ChannelIntegrationAccount, "a", "a.id = p.integrationAccountId")
+      .where("p.externalPropertyId = :e", { e: externalPropertyId })
+      .andWhere("UPPER(p.status) = :s", { s: "ACTIVE" })
+      .andWhere("UPPER(a.channel) = :c", { c: "CHANNEX" })
+      .orderBy("p.updatedAt", "DESC")
+      .getOne();
+    return row ?? null;
   }
 }
 

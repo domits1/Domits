@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
-import useEffectiveHostId from '../../hooks/useEffectiveHostId';
+import useEffectiveHostId from '../../../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
-import './Housekeeping.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from './services/taskService';
-import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
-import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from './hosttasks/utils/taskFilters';
-import { sortTasks } from './hosttasks/utils/taskSort';
-import { getIntervalKey, getSortTimestamp } from './hosttasks/utils/reportTimeBuckets';
-import { buildTasksCsvReport } from './hosttasks/utils/taskCsvExport';
-import ConfirmDialog from './hosttasks/components/ConfirmDialog';
-import CreateTaskModal from './hosttasks/components/CreateTaskModal';
-import TaskDetailsModal from './hosttasks/components/TaskDetailsModal';
-import SettingsView from './hosttasks/components/SettingsView';
-import MyTasksView from './hosttasks/components/MyTasksView';
-import ReportsView from './hosttasks/components/ReportsView';
-import TableView from './hosttasks/components/TableView';
+import '../styles/HostTasks.css';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
+import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
+import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from '../utils/taskFilters';
+import { sortTasks } from '../utils/taskSort';
+import { getIntervalKey, getSortTimestamp } from '../utils/reportTimeBuckets';
+import { buildTasksCsvReport } from '../utils/taskCsvExport';
+import ConfirmDialog from '../components/ConfirmDialog';
+import CreateTaskModal from '../components/CreateTaskModal';
+import TaskDetailsModal from '../components/TaskDetailsModal';
+import SettingsView from '../components/SettingsView';
+import MyTasksView from '../components/MyTasksView';
+import ReportsView from '../components/ReportsView';
+import TableView from '../components/TableView';
 
 const DEFAULT_NEW_TASK = {
     title: '',
@@ -32,7 +32,7 @@ const DEFAULT_NEW_TASK = {
     attachments: null,
 };
 
-const HostPropertyCare = () => {
+const HostTasks = () => {
     const { effectiveHostId, managedHostId, isPurelyPOM } = useEffectiveHostId();
 
     const [taskContext, setTaskContext] = useState('own');
@@ -176,7 +176,7 @@ const HostPropertyCare = () => {
     };
 
     useEffect(() => {
-        loadData();
+        void loadData();
     }, [asHostId]);
 
     useEffect(() => {
@@ -714,4 +714,4 @@ const HostPropertyCare = () => {
         </main>
     );
 };
-export default HostPropertyCare;
+export default HostTasks;
