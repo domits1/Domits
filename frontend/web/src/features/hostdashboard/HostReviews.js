@@ -166,16 +166,16 @@ function HostReviews() {
                                     </div>
                                 ) :
                                 receivedReviews.length > 0 ? (
-                                    receivedReviews.map((receivedReview, index) => (
-                                        <div key={index} className={styles.reviewTab}>
+                                    receivedReviews.map((receivedReview) => (
+                                        <div key={receivedReview.id} className={styles.reviewTab}>
                                         <h2 className={styles.reviewHeader}>{receivedReview.title}</h2>
                                         <p className={`${styles.reviewContent} ${reviewStyles.reviewText}`}>{receivedReview.content}</p>
                                         <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}</p>
-                                        <HostResponseForm key={receivedReview.id} review={receivedReview} />
+                                        <HostResponseForm review={receivedReview} />
                                     </div>
                                 ))
                             ) : (
-                                <p className={styles.reviewAlert}>It appears that you have not received any reviews yet...</p>
+                                <p className={styles.reviewAlert}>No public guest reviews are available for a response yet.</p>
                             )}
                         </div>
                     </div>
