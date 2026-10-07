@@ -5,7 +5,7 @@ import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import '../styles/HostTasks.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import {
     fetchChecklistItems,
@@ -502,6 +502,17 @@ const HostTasks = () => {
         }
     };
 
+    const handleEscalateTask = async () => {
+        const taskId = viewingTask.id;
+        try {
+            await escalateTask(taskId);
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at: Date.now() } : t));
+            alert("Task escalated. The host will receive an email shortly.");
+        } catch (error) {
+            alert(error.message || "Error escalating task");
+        }
+    };
+
     const handleDeleteSingleTask = () => {
         setConfirmDialog({
             isOpen: true,
@@ -784,6 +795,7 @@ const HostTasks = () => {
                 onToggleChecklistItem={handleToggleChecklistItem}
                 onRemoveChecklistItem={handleRemoveChecklistItem}
                 onRetryChecklistLoad={handleRetryChecklistLoad}
+                onEscalate={handleEscalateTask}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />
