@@ -76,7 +76,7 @@ describe("the destination repository", () => {
     jest.clearAllMocks();
   });
 
-  it("claims the location row with the judged address, then writes the chain rows and the mapping, in one transaction", async () => {
+  it("claims the location row with the judged address, then writes the chain rows and the mapping for an existing property, in one transaction", async () => {
     const client = buildClient();
 
     expect(await sync(CHAIN, { ...SOURCE, now: 1700 })).toBe(true);
@@ -95,8 +95,11 @@ describe("the destination repository", () => {
     );
     expect(claim.parameters).toEqual(["property-1", "Spain", "Marbella"]);
     const upserts = rest.slice(0, 3);
-    expect(upserts.map(({ parameters }) => parameters[0])).toEqual(PATHS);
-    expect(upserts.map(({ parameters }) => parameters[2])).toEqual([null, PATHS[0], PATHS[1]]);
+    expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
+      [PATHS[0], null],
+      [PATHS[1], PATHS[0]],
+      [PATHS[2], PATHS[1]],
+    ]);
     expect(upserts[2].parameters.slice(0, 7)).toEqual([
       PATHS[2],
       "city",
@@ -107,22 +110,26 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
-    expect(upserts[0].statement).not.toContain("slug = EXCLUDED");
-    expect(rest[3].statement).toContain("ON CONFLICT (property_id)");
+    expect(rest[3].statement).toContain(
+      `FROM ${SCHEMA}.property p\n      WHERE p.id = $1\n      ON CONFLICT (property_id)`
+    );
     expect(rest[3].parameters).toEqual(["property-1", PATHS[2], "Spain", "Marbella", 1700]);
+
+    const gone = buildClient({ mappingRecords: [] });
+    expect(await sync()).toBe(false);
+    expect(gone.committed).toBe(true);
   });
 
   it("maps a property without a resolvable city to its country row and writes no city row", async () => {
     const client = buildClient();
-    const countryOnly = resolveDestinationChain({ country: "Spain", city: " - " });
-
-    expect(await sync(countryOnly, { sourceCountry: "Spain", sourceCity: " - ", now: 1700 })).toBe(true);
-
-    const upserts = client.statements.filter(({ statement }) =>
-      statement.includes(`INSERT INTO ${SCHEMA}.destination `)
-    );
-    expect(upserts.map(({ parameters }) => parameters[0])).toEqual([PATHS[0], PATHS[1]]);
-    expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], "Spain", " - ", 1700]);
+    const chain = resolveDestinationChain({ country: "Spain", city: " - " });
+    expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
+    expect(client.statements.map(({ parameters }) => parameters[0]).slice(1)).toEqual([
+      PATHS[0],
+      PATHS[1],
+      "property-1",
+    ]);
+    expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], "Spain", " - ", 1]);
   });
 
   it("writes nothing and answers false when no location row carries the judged address any more", async () => {
@@ -145,7 +152,7 @@ describe("the destination repository", () => {
     expect(exhausted.transaction).toHaveBeenCalledTimes(3);
   });
 
-  it("rolls everything back when one statement fails, and refuses an unresolved chain or an empty source country", async () => {
+  it("rejects when one statement fails so the transaction is not committed, and refuses an unresolved chain or an empty source country", async () => {
     const client = buildClient({ failOn: "property_destination" });
 
     await expect(sync()).rejects.toThrow("failed on property_destination");
