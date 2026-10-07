@@ -24,7 +24,7 @@ describe("the direct booking sites deploy", () => {
   it("queues every static page only after the new shell is uploaded and the old one invalidated", () => {
     const queue = stepAt("Queue every static page for the new shell");
     const upload = stepAt("Upload index.html");
-    const invalidate = stepAt("Invalidate index.html on every CloudFront tenant");
+    const invalidate = stepAt("Invalidate the shared files on every CloudFront tenant");
     expect([queue, upload, invalidate].every((index) => index >= 0)).toBe(true);
     expect(queue).toBeGreaterThan(upload);
     expect(queue).toBeGreaterThan(invalidate);
