@@ -21,6 +21,13 @@ const logError = (event, context, error) =>
     })
   );
 
+// Same statuses as booking polling, so the sync state reads the same whoever pulled.
+const lockStatusFor = (result) => {
+  if (result.outcome === "PROCESSED") return "SUCCESS";
+  if (result.ackedCount > 0) return "PARTIAL";
+  return "FAILED";
+};
+
 const isConnected = (integration) =>
   Boolean(integration) && String(integration.status || "").toUpperCase() !== CHANNEX_STATUS.DISCONNECTED;
 
@@ -105,10 +112,12 @@ export default class ChannexBookingWebhookService {
           .catch((error) => logError("CHANNEX_BOOKING_WEBHOOK_ACCOUNT_MARK_FAILED", logContext, error));
       }
     } finally {
+      const acknowledgedAny = result.ackedCount > 0;
       await this.sync
         .releaseLock(integration.id, lockKey, {
-          status: result.outcome === "PROCESSED" ? "SUCCESS" : "FAILED",
+          status: lockStatusFor(result),
           lastSyncedAt: this.now(),
+          lastSuccessfulItemAt: acknowledgedAny ? this.now() : null,
         })
         // A lock that cannot be released expires after lockStaleMs; the answer to Channex stands.
         .catch(() => null);

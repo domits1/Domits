@@ -13,6 +13,12 @@ import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
+const CHANNEX_BOOKING_WEBHOOK_TRIGGER = "WEBHOOK";
+const describeBookingPull = ({ isPoll, isWebhook }) => {
+  if (isPoll) return "Automatic Channex booking poll";
+  if (isWebhook) return "Channex booking webhook";
+  return "Manual Channex booking pull";
+};
 // Matches pagination[limit] in the provider's feed request.
 const CHANNEX_BOOKING_FEED_PAGE_SIZE = 100;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
@@ -1866,15 +1872,11 @@ export default class ChannexBookingRevisionImportService {
       );
 
     const isPoll = syncType === CHANNEX_BOOKING_POLL_SYNC_TYPE;
-    const notes = isPoll
-      ? [
-          "Automatic Channex booking poll. New revisions create Domits booking records before acknowledgement.",
-          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
-        ]
-      : [
-          "Manual Channex booking pull. New revisions create Domits booking records before acknowledgement.",
-          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
-        ];
+    const isWebhook = trigger === CHANNEX_BOOKING_WEBHOOK_TRIGGER;
+    const notes = [
+      `${describeBookingPull({ isPoll, isWebhook })}. New revisions create Domits booking records before acknowledgement.`,
+      "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
+    ];
     const mappingSnapshot = this.buildChannexBookingMappingSnapshot(propertyMapping);
     const pageContext = { integration, normalizedDomitsPropertyId, propertyMapping, secret, deadlineMs };
     const pulled =
@@ -1920,7 +1922,7 @@ export default class ChannexBookingRevisionImportService {
       errors: summary.errors,
       overallSuccess,
       notes,
-      ...(isPoll ? { trigger } : {}),
+      ...(isPoll || isWebhook ? { trigger } : {}),
       ...(deadlineMs === null ? {} : { stoppedAtDeadline, morePages, feedMeta }),
     });
 

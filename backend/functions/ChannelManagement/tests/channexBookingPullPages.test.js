@@ -134,6 +134,25 @@ describe("Channex booking pull across feed pages (webhook)", () => {
     expect(result.response).toMatchObject({ httpStatus: 503 });
   });
 
+  // Evidence from a webhook pull must not read like someone pressed the manual pull button.
+  test("labels a webhook pull as such in the notes and the response", async () => {
+    const feed = buildFeed({ waiting: revisions(1) });
+    const { service } = buildService(feed);
+
+    const result = await service.pullLatestChannexBookingsForResolvedContext({
+      normalizedUserId: "user-1",
+      normalizedDomitsPropertyId: "property-1",
+      integration: { id: "account-1" },
+      propertyMapping: { externalPropertyId: "channex-1" },
+      secret: {},
+      trigger: "WEBHOOK",
+      deadlineMs: START_MS + 20_000,
+    });
+
+    expect(result.response.trigger).toBe("WEBHOOK");
+    expect(result.response.notes[0]).toMatch(/^Channex booking webhook\./);
+  });
+
   // Polling and the manual pull pass no deadline and keep reading a single page, as before.
   test("reads one page without asking for a page number when no deadline is given", async () => {
     const waiting = revisions(3);

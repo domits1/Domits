@@ -112,12 +112,32 @@ describe("ChannexBookingWebhookService", () => {
     expect(sync.releaseLock).not.toHaveBeenCalled();
   });
 
-  test("releases the lock after a successful pull", async () => {
-    const { service, sync } = buildService();
+  // Same lock statuses as booking polling, so the sync state reads the same whoever pulled.
+  it.each([
+    {
+      description: "SUCCESS with a last successful item when everything was acknowledged",
+      pull: pullResult({ ackedCount: 2, unackedCount: 0 }),
+      expected: { status: "SUCCESS", lastSuccessfulItemAt: RECEIVED_AT_MS },
+    },
+    {
+      description: "PARTIAL with a last successful item when some revisions were acknowledged",
+      pull: pullResult({ ackedCount: 1, unackedCount: 1, overallSuccess: false }),
+      expected: { status: "PARTIAL", lastSuccessfulItemAt: RECEIVED_AT_MS },
+    },
+    {
+      description: "FAILED without a last successful item when nothing was acknowledged",
+      pull: pullResult({ ackedCount: 0, unackedCount: 1, overallSuccess: false }),
+      expected: { status: "FAILED", lastSuccessfulItemAt: null },
+    },
+  ])("releases the lock as $description", async ({ pull, expected }) => {
+    const { service, sync } = buildService({ pull });
 
     await receive(service);
 
-    expect(sync.releaseLock).toHaveBeenCalledWith("account-1", "booking_poll:property-1", expect.objectContaining({ status: "SUCCESS" }));
+    expect(sync.releaseLock).toHaveBeenCalledWith("account-1", "booking_poll:property-1", {
+      ...expected,
+      lastSyncedAt: RECEIVED_AT_MS,
+    });
   });
 
   // A failing revision is caught inside the pull and never throws, so a thrown error is infrastructure
