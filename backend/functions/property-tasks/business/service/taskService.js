@@ -70,6 +70,8 @@ export const updateTask = async (hostId, taskId, updateData) => {
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
 
+    delete fieldsToUpdate.escalated_at;
+
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
     }
