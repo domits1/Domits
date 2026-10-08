@@ -24,6 +24,7 @@
   z-index: 1300;
   width: min(56rem, calc(100vw - 2.5rem));
   max-height: min(70vh, 36rem);
+  box-sizing: border-box;
   overflow: auto;
   padding: 1rem;
   background: #fff;
