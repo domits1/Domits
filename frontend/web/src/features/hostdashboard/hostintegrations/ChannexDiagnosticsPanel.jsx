@@ -31,15 +31,6 @@ const SECTION_TABS = [
 ];
 const PAYLOAD_PREVIEW_PAGE_SIZE_DAYS = 30;
 const CHANNEX_CERTIFICATION_MAX_SYNC_DAYS = 500;
-const MODIFY_BOOKING_DEMO_DEFAULTS = {
-  bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-  arrivalDate: "2026-06-04",
-  departureDate: "2026-06-06",
-};
-const CANCEL_BOOKING_DEMO_DEFAULTS = {
-  bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-  reason: "Channex certification demo cancellation",
-};
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
 
 const createRequestState = () => ({
@@ -1308,9 +1299,9 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [connectState, setConnectState] = useState(createRequestState);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [actionStates, setActionStates] = useState({});
-  const [modifyBookingForm, setModifyBookingForm] = useState(MODIFY_BOOKING_DEMO_DEFAULTS);
+  const [modifyBookingForm, setModifyBookingForm] = useState({ bookingId: "", arrivalDate: "", departureDate: "" });
   const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
-  const [cancelBookingForm, setCancelBookingForm] = useState(CANCEL_BOOKING_DEMO_DEFAULTS);
+  const [cancelBookingForm, setCancelBookingForm] = useState({ bookingId: "", reason: "" });
   const [cancelBookingState, setCancelBookingState] = useState(createRequestState);
 
   const hasProperty = Boolean(domitsPropertyId.trim());
@@ -2196,7 +2187,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               <input
                 value={modifyBookingForm.bookingId}
                 onChange={(event) => updateModifyBookingForm("bookingId", event.target.value)}
-                placeholder="7434e9b5-a4d1-4aab-9f8a-27a5a42299b0"
+                placeholder="Booking ID"
                 disabled={modifyBookingState.loading}
               />
             </label>
@@ -2255,7 +2246,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               <input
                 value={cancelBookingForm.bookingId}
                 onChange={(event) => updateCancelBookingForm("bookingId", event.target.value)}
-                placeholder="7434e9b5-a4d1-4aab-9f8a-27a5a42299b0"
+                placeholder="Booking ID"
                 disabled={cancelBookingState.loading}
               />
             </label>
@@ -2264,7 +2255,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               <input
                 value={cancelBookingForm.reason}
                 onChange={(event) => updateCancelBookingForm("reason", event.target.value)}
-                placeholder="Channex certification demo cancellation"
+                placeholder="Reason"
                 disabled={cancelBookingState.loading}
               />
             </label>
