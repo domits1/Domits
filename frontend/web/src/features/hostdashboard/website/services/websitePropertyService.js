@@ -313,9 +313,40 @@ const readHostIdToken = () =>
       });
   });
 
-export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null, { idToken = null } = {}) => {
+const buildWebsiteHostProfileFromPublicHost = (host) => {
+  const phoneNumber = String(host?.whatsapp?.phoneNumber || "").trim();
+  const phoneNumberDigits =
+    String(host?.whatsapp?.phoneNumberDigits || "").trim() || phoneNumber.replaceAll(/\D+/g, "");
+  const isAvailable = host?.whatsapp?.isAvailable === true && Boolean(phoneNumberDigits);
+
+  return {
+    ...getEmptyUserProfile(null),
+    givenName: String(host?.displayName || "").trim() || null,
+    profileImage: String(host?.profileImage || "").trim() || null,
+    whatsapp: {
+      ...getEmptyWebsiteHostWhatsApp(),
+      connected: isAvailable,
+      phoneNumber: isAvailable ? phoneNumber : "",
+      phoneNumberDigits: isAvailable ? phoneNumberDigits : "",
+      isAvailable,
+    },
+  };
+};
+
+export const attachWebsiteHostProfile = async (
+  propertyDetails,
+  summaryProperty = null,
+  { host = null, idToken = null } = {}
+) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
+  if (host && typeof host === "object") {
+    return {
+      ...normalizedPropertyDetails,
+      hostProfile: buildWebsiteHostProfileFromPublicHost(host),
+    };
+  }
+
   const hostId = resolveWebsiteHostId(normalizedPropertyDetails, summaryProperty);
   const hostProfilePromise =
     normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object"
@@ -360,7 +391,7 @@ const fetchWebsiteCalendarOverrides = async (propertyId, accessToken) => {
 export const enrichWebsitePropertyDetails = async (
   propertyDetails,
   summaryProperty = null,
-  { hostSession = false } = {}
+  { host = null, hostSession = false } = {}
 ) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
@@ -384,7 +415,7 @@ export const enrichWebsitePropertyDetails = async (
     );
   } catch {}
 
-  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { idToken });
+  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { host, idToken });
 };
 
 export const fetchWebsitePropertyDetails = async (propertyId) => {
