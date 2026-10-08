@@ -8,11 +8,25 @@ export const getHostEmailById = async (hostId) => {
         Payload: JSON.stringify({ UserId: hostId }),
     }));
 
-    const payloadString = new TextDecoder("utf-8").decode(response.Payload);
-    const result = JSON.parse(payloadString);
-    const resultBody = JSON.parse(result.body);
+    if (response?.FunctionError) {
+        throw new Error("Failed to fetch host email: GetUserInfo returned an error");
+    }
 
-    return resultBody[0].Attributes.find(attr => attr.Name === "email")?.Value;
+    let email;
+    try {
+        const payloadString = new TextDecoder("utf-8").decode(response.Payload);
+        const result = JSON.parse(payloadString);
+        const resultBody = JSON.parse(result.body);
+        email = resultBody[0]?.Attributes?.find(attr => attr.Name === "email")?.Value;
+    } catch {
+        throw new Error("Failed to fetch host email: malformed response from GetUserInfo");
+    }
+
+    if (!email) {
+        throw new Error("Failed to fetch host email: no email found for this host");
+    }
+
+    return email;
 };
 
 export const sendTaskEscalationEmail = async (hostEmail, task) => {
@@ -30,8 +44,12 @@ Please review it in your Domits dashboard.`,
         },
     };
 
-    await lambdaClient.send(new InvokeCommand({
+    const response = await lambdaClient.send(new InvokeCommand({
         FunctionName: "EmailNotificationService",
         Payload: JSON.stringify(payload),
     }));
+
+    if (response?.FunctionError) {
+        throw new Error("Failed to send escalation email");
+    }
 };
