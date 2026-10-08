@@ -30,7 +30,7 @@ const readSlugList = (value) => [
   ...new Set(
     String(value ?? "")
       .split(",")
-      .map(toDestinationSlug)
+      .map((entry) => toDestinationSlug(entry))
       .filter(Boolean)
   ),
 ];

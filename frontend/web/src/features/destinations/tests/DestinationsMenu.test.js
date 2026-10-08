@@ -37,7 +37,7 @@ const renderMenu = (language = "en") =>
     </LanguageContext.Provider>
   );
 
-const click = (name) => act(async () => fireEvent.click(screen.getByRole("button", { name })));
+const click = (name) => fireEvent.click(screen.getByRole("button", { name }));
 const openMenu = (name = "Destinations") => click(name);
 
 describe("the destinations menu", () => {
@@ -51,7 +51,7 @@ describe("the destinations menu", () => {
     renderMenu();
     expect(fetchDestinationMenu).not.toHaveBeenCalled();
 
-    await openMenu();
+    openMenu();
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status")).toHaveTextContent("Loading destinations…");
     await act(async () => answer(MENU));
@@ -66,13 +66,13 @@ describe("the destinations menu", () => {
     );
     expect(screen.queryByRole("link", { name: "Thailand" })).not.toBeInTheDocument();
 
-    await click("Asia 1");
+    click("Asia 1");
     expect(screen.getByRole("link", { name: "Thailand" })).toHaveAttribute("href", "/destinations/asia/thailand");
     expect(screen.queryByRole("link", { name: "Spain" })).not.toBeInTheDocument();
 
     fetchDestinationMenu.mockResolvedValue([MENU[0]]);
-    await openMenu();
-    await openMenu();
+    openMenu();
+    openMenu();
     await waitFor(() => expect(screen.queryByRole("button", { name: "Asia 1" })).not.toBeInTheDocument());
     expect(screen.getByRole("link", { name: "Spain" })).toBeInTheDocument();
     expect(fetchDestinationMenu).toHaveBeenCalledTimes(2);
@@ -82,17 +82,17 @@ describe("the destinations menu", () => {
     fetchDestinationMenu.mockRejectedValue(new Error("offline"));
     renderMenu("nl");
 
-    await openMenu("Bestemmingen");
+    openMenu("Bestemmingen");
     expect(await screen.findByRole("alert")).toHaveTextContent("Bestemmingen zijn nu niet beschikbaar.");
     expect(screen.getByRole("button", { name: "Bestemmingen" })).toHaveAttribute("aria-expanded", "true");
 
-    await click("Opnieuw proberen");
+    click("Opnieuw proberen");
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(fetchDestinationMenu).toHaveBeenCalledTimes(2);
 
     fetchDestinationMenu.mockResolvedValue(MENU);
-    await openMenu("Bestemmingen");
-    await openMenu("Bestemmingen");
+    openMenu("Bestemmingen");
+    openMenu("Bestemmingen");
     expect(await screen.findByRole("link", { name: "Spain" })).toBeInTheDocument();
     expect(fetchDestinationMenu).toHaveBeenCalledTimes(3);
   });
@@ -109,7 +109,7 @@ describe("the destinations menu", () => {
     fetchDestinationMenu.mockResolvedValue([]);
     renderMenu();
 
-    await openMenu();
+    openMenu();
     expect(await screen.findByText("No destinations yet.")).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
@@ -118,7 +118,7 @@ describe("the destinations menu", () => {
     fetchDestinationMenu.mockResolvedValue(MENU);
     renderMenu();
 
-    await openMenu();
+    openMenu();
     const europe = await screen.findByRole("button", { name: "Europe 3" });
     const asia = screen.getByRole("button", { name: "Asia 1" });
     expect(europe).toHaveAttribute("tabindex", "0");
@@ -140,7 +140,7 @@ describe("the destinations menu", () => {
     fetchDestinationMenu.mockResolvedValue(MENU);
     renderMenu();
 
-    await openMenu();
+    openMenu();
     await screen.findByRole("link", { name: "Spain" });
     fireEvent.mouseDown(document.body);
     await waitFor(() => expect(screen.queryByRole("link", { name: "Spain" })).not.toBeInTheDocument());

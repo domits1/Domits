@@ -42,7 +42,7 @@ const load = async () => {
   }
   const payload = await response.json();
   if (!Array.isArray(payload?.continents)) {
-    throw new Error("The destination menu answered an unexpected shape.");
+    throw new TypeError("The destination menu answered an unexpected shape.");
   }
   return normalizeDestinationMenu(payload);
 };

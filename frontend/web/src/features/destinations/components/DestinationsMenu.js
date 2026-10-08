@@ -96,11 +96,7 @@ function DestinationsMenu({ onOpen }) {
 
   const renderPanelContent = () => {
     if (status === "loading" || status === "idle") {
-      return (
-        <p className="destinations-menu__note" role="status">
-          {copy.loading}
-        </p>
-      );
+      return <output className="destinations-menu__note">{copy.loading}</output>;
     }
     if (status === "failed") {
       return (
