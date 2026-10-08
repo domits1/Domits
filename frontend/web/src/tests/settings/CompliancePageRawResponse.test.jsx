@@ -7,7 +7,6 @@ import HostSettingsCompliance from "../../features/hostdashboard/hostsettings/pa
 import { getAccessToken } from "../../services/getAccessToken";
 import hostDashboardAll from "./fixtures/hostDashboardAll.json";
 
-// Only the network boundary is mocked, so raw response -> normalized option -> rendered field is exercised end to end.
 jest.mock("../../services/getAccessToken", () => ({
     getAccessToken: jest.fn(),
     getCognitoUserId: jest.fn(),

@@ -1,11 +1,8 @@
 export const MAX_REGISTRATION_NUMBER_LENGTH = 255;
 
-// The backend generates "AUTO-<uuid>" when no number was given. Only that exact shape is a placeholder, so a real
-// number such as "Auto-1234" is displayed and saved. Keep identical to the backend util/constant/registrationNumber.js.
 const AUTO_REGISTRATION_NUMBER_PATTERN =
     /^AUTO-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// A missing key or a non-string means the response is broken; "" and the placeholder mean "no number yet".
 export const isRegistrationNumberMissing = (registrationNumber) => typeof registrationNumber !== "string";
 
 export const toDisplayRegistrationNumber = (registrationNumber) => {
