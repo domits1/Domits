@@ -33,6 +33,8 @@ it.each([
   { httpMethod: "GET", resource: "/reviews/public" },
   { httpMethod: "PATCH", resource: "/reviews" },
   { httpMethod: "DELETE", resource: "/reviews/{id}" },
+  { httpMethod: "GET", resource: "/ReviewSystem" },
+  { httpMethod: "GET", resource: "/ReviewSystem/public" },
 ])("rejects unsupported routes: %p", async (event) => {
   expect((await handler(event)).statusCode).toBe(405);
 });

@@ -128,6 +128,7 @@ export class ReviewRepository {
       overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
   }
 
+
   async findReviewById(id) {
     const dataSource = await Database.getInstance();
     return dataSource.getRepository(Review).findOne({ where: { id } });

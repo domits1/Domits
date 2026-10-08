@@ -8,6 +8,9 @@ import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 import { createReview, requestReview, getEditableReview, updateReview } from "../services/reviewAPI";
 
 import GuestReviews from "../../guestdashboard/GuestReviews";
+import { createReview, requestReview } from "../services/reviewAPI";
+
+
 
 
 const mockNavigate = jest.fn();

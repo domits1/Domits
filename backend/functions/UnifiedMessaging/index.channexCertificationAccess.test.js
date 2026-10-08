@@ -14,7 +14,6 @@ const mockIntegrationControllerMethods = {
   syncChannexFull: jest.fn(),
   syncChannexBookingAvailability: jest.fn(),
   syncChannexCalendarChange: jest.fn(),
-  syncChannexCertificationTestCase: jest.fn(),
   cancelChannexCertificationBooking: jest.fn(),
   saveChannexSetupMapping: jest.fn(),
   receiveChannexBookingRevisions: jest.fn(),
@@ -418,19 +417,20 @@ describe("UnifiedMessaging Channex certification admin route guard", () => {
     expect(mockIntegrationControllerMethods.syncChannexCalendarChange).toHaveBeenCalledTimes(1);
   });
 
-  test("certification test-case endpoint is protected before side effects run", async () => {
+  // Channex rejects hard-coded certification scenario values in production code, so even an
+  // allowed admin must not reach the route that sent them.
+  test("the removed certification test-case route no longer exists", async () => {
     const response = await handler(
       buildEvent({
         method: "POST",
         path: "/default/integrations/channex/certification/test-case",
-        sub: "not-allowed",
+        sub: "allowed-user",
         query: { domitsPropertyId: "property-1" },
         body: JSON.stringify({ testCaseId: "2" }),
       })
     );
 
-    expect(response.statusCode).toBe(403);
-    expect(mockIntegrationControllerMethods.syncChannexCertificationTestCase).not.toHaveBeenCalled();
+    expect(response.statusCode).toBe(404);
   });
 
   test("certification cancel booking endpoint is protected before side effects run", async () => {
