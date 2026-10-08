@@ -4,7 +4,8 @@ import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-import { createReview } from "../services/reviewAPI";
+import GuestReviews from "../../guestdashboard/GuestReviews";
+import { createReview, requestReview } from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
 let mockSearch;
@@ -21,6 +22,7 @@ jest.mock("../../guestdashboard/services/bookingAPI", () => ({
 }));
 jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
+  requestReview: jest.fn(),
 }));
 jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
 
@@ -30,6 +32,62 @@ const booking = {
   status: "Paid",
   departuredate: Date.now() - 60000,
 };
+
+it.each(["", " \n\t ", "x".repeat(501), "Stay\u0000"])(
+  "shows a field error for invalid written content: %p", async (value) => {
+    render(<ReviewPage />);
+    const textarea = await screen.findByLabelText("Written review (required)");
+  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+    fireEvent.click(screen.getAllByRole("radio")[4]);
+    fireEvent.change(textarea, { target: { value } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(textarea).toHaveAttribute("aria-invalid", "true");
+    expect(textarea).toHaveFocus();
+    expect(createReview).not.toHaveBeenCalled();
+  }
+);
+
+it.each(["x", "x".repeat(500), "Quiet room.\nBusy street.", "Café 😊 & O'Brien < 10"])(
+  "submits valid written content without losing special characters: %p", async (value) => {
+    render(<ReviewPage />);
+    const textarea = await screen.findByLabelText("Written review (required)");
+  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+    fireEvent.click(screen.getAllByRole("radio")[4]);
+    fireEvent.change(textarea, { target: { value } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+    await waitFor(() => expect(createReview).toHaveBeenCalledWith(expect.objectContaining({
+      bookingId: booking.id, publicReview: value,
+    })));
+  }
+);
+
+it("preserves written content when rating validation or submission fails", async () => {
+  createReview.mockRejectedValue(new Error("Please try again."));
+  render(<ReviewPage />);
+  const textarea = await screen.findByLabelText("Written review (required)");
+  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+  const value = "Quiet room.\nBusy street.";
+  fireEvent.change(textarea, { target: { value } });
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  expect(textarea).toHaveValue(value);
+  expect(createReview).not.toHaveBeenCalled();
+  fireEvent.click(screen.getAllByRole("radio")[4]);
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  await screen.findByText("Please try again.");
+  expect(textarea).toHaveValue(value);
+});
+
+it("renders submitted markup as literal text in the guest review page", async () => {
+  const content = "<img src=x alt=unsafe onerror=alert(1)>";
+  requestReview.mockImplementation(async (_method, query) => ({
+    ok: true, json: async () => query.scope === "written"
+      ? [{ id: "review-1", title: "Overall experience: 4/5", content, date: Date.now() }] : [],
+  }));
+  render(<GuestReviews />);
+  expect(await screen.findByText(content)).toBeTruthy();
+  expect(screen.queryByRole("img", { name: "unsafe" })).toBeNull();
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -85,7 +143,7 @@ it("fails closed when the reservation cannot be loaded", async () => {
 
 const submitReview = async () => {
   render(<ReviewPage />);
-  const textArea = await screen.findByLabelText("Please justify your rating*");
+  const textArea = await screen.findByLabelText("Written review (required)");
   fireEvent.click(screen.getAllByRole("radio")[4]);
   fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
   fireEvent.change(textArea, { target: { value: "Great stay." } });
@@ -117,7 +175,7 @@ it.each([
 
 it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selection during editing", async (rating) => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Please justify your rating*");
+  const text = await screen.findByLabelText("Written review (required)");
   const radio = screen.getByRole("radio", { name: new RegExp(`^${rating} star`) });
   fireEvent.click(radio);
   fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
@@ -133,7 +191,7 @@ it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selec
 
 it("shows a required rating error, focuses the input, and clears it after selection", async () => {
   render(<ReviewPage />);
-  await screen.findByLabelText("Please justify your rating*");
+  await screen.findByLabelText("Written review (required)");
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   const radio = screen.getAllByRole("radio")[0];
   expect(screen.getByRole("alert").textContent).toContain("Please select an overall experience");
@@ -146,7 +204,7 @@ it("shows a required rating error, focuses the input, and clears it after select
 
 it.each(["0", "6", "2.5", "invalid"])("prevents tampered rating %s from submission", async (value) => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Please justify your rating*");
+  const text = await screen.findByLabelText("Written review (required)");
   const radio = screen.getAllByRole("radio")[0];
   radio.value = value;
   fireEvent.click(radio);
@@ -206,7 +264,7 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
 
 it("requires a title before submission", async () => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Please justify your rating*");
+  const text = await screen.findByLabelText("Written review (required)");
   fireEvent.click(screen.getAllByRole("radio")[4]);
   fireEvent.change(text, { target: { value: "Great stay." } });
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));

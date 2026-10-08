@@ -25,6 +25,12 @@ const INITIAL_FORM = {
   privateFeedback: "",
 };
 
+// Retain the existing nonblank requirement and 500-character limit.
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
 const ReviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,6 +47,7 @@ const ReviewPage = () => {
   const [checkedBookingId, setCheckedBookingId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
   const [ratingError, setRatingError] = useState("");
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -51,6 +58,7 @@ const ReviewPage = () => {
     setSubmitError("");
     setForm(INITIAL_FORM);
     setRatingError("");
+    setReviewError("");
 
     const checkEligibility = async () => {
       try {
@@ -107,6 +115,7 @@ const ReviewPage = () => {
       setRatingError("");
     }
     setForm((current) => ({ ...current, [field]: value }));
+    if (field === "publicReview") setReviewError("");
   };
 
   const handleSubmit = async (event) => {
@@ -128,8 +137,18 @@ const ReviewPage = () => {
       return;
     }
 
-    if (!form.publicReview.trim()) {
-      setSubmitError("Please write a public review.");
+    const publicReview = form.publicReview.replace(/\r\n?/g, "\n").trim();
+    let validationMessage = "";
+    if (publicReview.length < REVIEW_MIN_LENGTH) {
+      validationMessage = "Please describe your stay before submitting your review.";
+    } else if (publicReview.length > REVIEW_MAX_LENGTH) {
+      validationMessage = `Your written review must be ${REVIEW_MAX_LENGTH} characters or fewer.`;
+    } else if (INVALID_TEXT_CONTROLS.test(form.publicReview)) {
+      validationMessage = "Please remove unsupported control characters from your review.";
+    }
+    if (validationMessage) {
+      setReviewError(validationMessage);
+      event.currentTarget.querySelector("#publicReview")?.focus();
       return;
     }
 
@@ -141,7 +160,7 @@ const ReviewPage = () => {
         bookingId,
         rating: Number(form.rating),
         title: form.title.trim(),
-        publicReview: form.publicReview.trim(),
+        publicReview,
         privateFeedback: form.privateFeedback.trim(),
       });
       setForm(INITIAL_FORM);
@@ -224,17 +243,27 @@ const ReviewPage = () => {
             maxLength={120} disabled={isSubmitting} required />
         </section>
         <section className={styles.content}>
-          <label htmlFor="publicReview">Please justify your rating*</label>
+          <label htmlFor="publicReview">Written review (required)</label>
+          <p id="publicReview-help">
+            Describe your stay in your own words, including anything you liked or disliked.
+            Use up to {REVIEW_MAX_LENGTH} characters.
+          </p>
           <textarea
             id="publicReview"
             className={styles.textarea}
             value={form.publicReview}
             onChange={updateField("publicReview")}
-            placeholder="Share what future guests should know..."
-            maxLength={500}
+            placeholder="What would you like future guests to know about your stay?"
+            required
+            minLength={REVIEW_MIN_LENGTH}
+            maxLength={REVIEW_MAX_LENGTH}
+            rows={6}
+            aria-invalid={Boolean(reviewError)}
+            aria-describedby={`publicReview-help publicReview-count${reviewError ? " publicReview-error" : ""}`}
             disabled={isSubmitting}
           />
-          <p>{form.publicReview.length}/500</p>
+          <p id="publicReview-count">{form.publicReview.length}/{REVIEW_MAX_LENGTH} characters</p>
+          {reviewError && <p id="publicReview-error" role="alert">{reviewError}</p>}
         </section>
 
         <section className={styles.content}>

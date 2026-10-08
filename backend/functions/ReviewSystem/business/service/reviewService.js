@@ -8,6 +8,11 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
 
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const isDuplicateBookingReviewError = (error) => {
   const databaseError = error?.driverError || error;
@@ -26,7 +31,7 @@ export class ReviewService {
   // Derive review ownership and property details from the booking to prevent client spoofing.
   // Restrict reviews to completed, caller-owned reservations to protect review integrity.
   async createReview(callerUserId, reviewData) {
-    this.validateReviewPayload(reviewData);
+    const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
     const booking = await this.repository.findBookingById(bookingId);
@@ -72,7 +77,7 @@ export class ReviewService {
         reviewee_user_id: booking.hostid,
         overall_rating: reviewData.overall_rating,
         title: reviewData.title.trim(),
-        public_review: reviewData.public_review.trim(),
+        public_review: publicReview,
         private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
         verification_status: "UNVERIFIED",
         publication_status: "UNPUBLISHED",
@@ -110,10 +115,6 @@ export class ReviewService {
     if (typeof reviewData.title !== "string" || !reviewData.title.trim() || reviewData.title.trim().length > 120) {
       throw new BadRequestException("A review title of up to 120 characters is required");
     }
-    if (typeof reviewData.public_review !== "string" || !reviewData.public_review.trim()) {
-      throw new BadRequestException("public_review is required and must be a string");
-    }
-
     const ratings = reviewData.category_ratings;
     if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
       Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
@@ -127,6 +128,26 @@ export class ReviewService {
     ) {
       throw new BadRequestException("private_feedback must be a string");
     }
+    return this.normalizePublicReview(reviewData.public_review);
+  }
+
+  normalizePublicReview(value) {
+    if (value === undefined || value === null) {
+      throw new BadRequestException("Please describe your stay before submitting your review.");
+    }
+    if (typeof value !== "string") throw new BadRequestException("Written review must be plain text.");
+    if (INVALID_TEXT_CONTROLS.test(value)) {
+      throw new BadRequestException("Please remove unsupported control characters from your review.");
+    }
+    const text = value.replace(/\r\n?/g, "\n").trim();
+    if (text.length < REVIEW_MIN_LENGTH) {
+      throw new BadRequestException("Please describe your stay before submitting your review.");
+    }
+    if (text.length > REVIEW_MAX_LENGTH) {
+      throw new BadRequestException(`Your written review must be ${REVIEW_MAX_LENGTH} characters or fewer.`);
+    }
+    // Store plain text; React text children escape HTML when displaying it.
+    return text;
   }
 
   normalizeOptionalText(value) {
