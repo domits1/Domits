@@ -17,6 +17,7 @@ import ExternalCalendarService from "./externalCalendarService.js";
 import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
+import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -46,6 +47,7 @@ class BookingService {
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
     priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
+    taskAutomationNotifier = new TaskAutomationNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
   } = {}) {
@@ -57,6 +59,7 @@ class BookingService {
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
     this.priceLabsBookingNotifier = priceLabsBookingNotifier;
+    this.taskAutomationNotifier = taskAutomationNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
   }
@@ -141,6 +144,14 @@ class BookingService {
     }
 
     await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
+
+    await this.taskAutomationNotifier.notifyTaskCreation(fetchedProperty.hostId, {
+      title: "Prepare for arrival",
+      type: "Check-in",
+      property_id: propertyId,
+      property_snapshot_label: fetchedProperty.title,
+      due_date: arrivalDateMs,
+    });
 
     return { ...result, isInquiry };
   }

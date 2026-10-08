@@ -83,6 +83,9 @@ const buildService = ({
     priceLabsBookingNotifier: {
       notifyBookingChange: jest.fn(),
     },
+    taskAutomationNotifier: {
+      notifyTaskCreation: jest.fn(),
+    },
     sendEmailFn: jest.fn(),
     getHostEmailByIdFn: jest.fn().mockResolvedValue("host@example.com"),
   };
@@ -133,6 +136,23 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(storedRequest.general.departureDate).toBe(Date.parse("2026-06-03T00:00:00.000Z"));
     expect(Number.isNaN(storedRequest.general.arrivalDate)).toBe(false);
     expect(Number.isNaN(storedRequest.general.departureDate)).toBe(false);
+  });
+
+  test("direct booking creation notifies task automation with a prepare-for-arrival task", async () => {
+    const { service, dependencies } = buildService();
+
+    await service.create(buildCreateEvent());
+
+    expect(dependencies.taskAutomationNotifier.notifyTaskCreation).toHaveBeenCalledWith(
+      "host-1",
+      expect.objectContaining({
+        title: "Prepare for arrival",
+        type: "Check-in",
+        property_id: "domits-property-1",
+        property_snapshot_label: "Demo Property",
+        due_date: Date.parse("2026-06-01T00:00:00.000Z"),
+      })
+    );
   });
 
   test("converts valid YYYY-MM-DD dates to millisecond timestamps before storing", async () => {
