@@ -103,6 +103,23 @@ describe("HostSettingsCompliance page", () => {
         expect(saveButton()).toBeDisabled();
     });
 
+    it("disables the registration number input while a save is in progress", async () => {
+        let resolveSave;
+        saveRegistrationNumber.mockReturnValue(new Promise((resolve) => (resolveSave = resolve)));
+        await renderLoaded();
+
+        typeRegistration("NL-3");
+        fireEvent.click(saveButton());
+
+        expect(await screen.findByRole("button", { name: "Saving..." })).toBeDisabled();
+        expect(registrationInput()).toBeDisabled();
+
+        resolveSave({ propertyId: "a", registrationNumber: "NL-3" });
+
+        expect(await screen.findByRole("button", { name: "Saved" })).toBeInTheDocument();
+        expect(registrationInput()).toBeEnabled();
+    });
+
     it.each([
         [409, "This registration number is already used by another listing."],
         [403, "You do not have access to change this listing."],
