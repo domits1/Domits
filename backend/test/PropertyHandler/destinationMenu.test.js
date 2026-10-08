@@ -1,7 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
-import { DestinationTreeService } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
-import { readDestinationSettings } from "../../functions/PropertyHandler/util/destination/destinationSettings.js";
 
 const MENU = {
   continents: [
@@ -13,17 +11,6 @@ const MENU = {
     },
   ],
 };
-
-const row = (path, type, parentId, name, activeListings = 0) => ({
-  id: path,
-  type,
-  parentId,
-  slug: path.split("/").pop(),
-  path,
-  name,
-  countryCode: null,
-  activeListings,
-});
 
 const buildController = (buildDestinationMenu) => {
   const controller = new PropertyController();
@@ -57,24 +44,5 @@ describe("GET /property/destinations/menu", () => {
     expect(JSON.parse(response.body)).toEqual({ message: "Destinations are not available right now." });
     expect(error).toHaveBeenCalled();
     error.mockRestore();
-  });
-
-  it("builds the menu from the same eligible destinations as the pages, and lets a repository failure through", async () => {
-    const repository = {
-      listDestinationsWithActiveListings: jest.fn(async () => [
-        row("/destinations/europe", "continent", null, "Europe"),
-        row("/destinations/europe/spain", "country", "/destinations/europe", "Spain", 1),
-        row("/destinations/asia", "continent", null, "Asia"),
-      ]),
-    };
-    const service = new DestinationTreeService({
-      destinationPageRepository: repository,
-      settings: readDestinationSettings({}),
-    });
-
-    expect(await service.buildDestinationMenu()).toEqual(MENU);
-
-    repository.listDestinationsWithActiveListings.mockRejectedValueOnce(new Error("timeout"));
-    await expect(service.buildDestinationMenu()).rejects.toThrow("timeout");
   });
 });

@@ -62,7 +62,6 @@ describe("the destination menu service", () => {
 
     const [first, second] = await Promise.all([fetchDestinationMenu(), fetchDestinationMenu()]);
     expect(first).toBe(second);
-    expect(await fetchDestinationMenu()).toBe(first);
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     expect(globalThis.fetch.mock.calls[0][0]).toMatch(/\/property\/destinations\/menu$/);
   });

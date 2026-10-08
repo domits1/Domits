@@ -6,15 +6,21 @@ import {
 
 describe("the destination settings", () => {
   it("defaults to one active listing per destination and a parent that exists through any child", () => {
-    expect(readDestinationSettings({})).toEqual({ minActiveListings: 1, parentFromAnyChild: true, featured: [] });
+    expect(readDestinationSettings({})).toEqual({
+      minActiveListings: 1,
+      parentFromAnyChild: true,
+      featured: [],
+      continentOrder: ["europe", "caribbean", "north-america", "south-america", "asia", "oceania", "africa"],
+    });
   });
 
-  it("reads the featured destinations as slugs, in the order given, without blanks or repeats", () => {
-    expect(readDestinationSettings({ DESTINATION_FEATURED: " Spain, Marbella ,,Málaga, spain, - " }).featured).toEqual([
-      "spain",
-      "marbella",
-      "malaga",
-    ]);
+  it("reads the featured destinations and the continent order as slugs, in the order given, without blanks or repeats", () => {
+    const settings = readDestinationSettings({
+      DESTINATION_FEATURED: " Spain, Marbella ,,Málaga, spain, - ",
+      DESTINATION_CONTINENT_ORDER: "Asia, North America,asia",
+    });
+    expect(settings.featured).toEqual(["spain", "marbella", "malaga"]);
+    expect(settings.continentOrder).toEqual(["asia", "north-america"]);
   });
 
   it("reads the two choices from the environment and falls back on nonsense", () => {
@@ -24,6 +30,7 @@ describe("the destination settings", () => {
       minActiveListings: 3,
       parentFromAnyChild: false,
       featured: [],
+      continentOrder: expect.any(Array),
     });
     expect(
       readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "0", DESTINATION_PARENT_FROM_ANY_CHILD: "maybe" })
@@ -31,6 +38,7 @@ describe("the destination settings", () => {
       minActiveListings: 1,
       parentFromAnyChild: true,
       featured: [],
+      continentOrder: expect.any(Array),
     });
     const minimums = ["many", "3garbage", "2.9", "99999999999999999999", " 4 "].map(
       (value) => readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: value }).minActiveListings

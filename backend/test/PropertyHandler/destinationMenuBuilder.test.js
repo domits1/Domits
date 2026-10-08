@@ -10,7 +10,6 @@ const row = (path, type, parentId, name, activeListings = 0) => ({
   slug: path.split("/").pop(),
   path,
   name,
-  countryCode: null,
   activeListings,
 });
 
@@ -26,6 +25,9 @@ const ROWS = [
   row("/destinations/asia", "continent", null, "Asia"),
   row("/destinations/asia/thailand", "country", "/destinations/asia", "Thailand"),
   row("/destinations/asia/thailand/koh-samui", "city", "/destinations/asia/thailand", "Koh Samui", 3),
+  row("/destinations/africa", "continent", null, "Africa"),
+  row("/destinations/africa/kenya", "country", "/destinations/africa", "Kenya"),
+  row("/destinations/africa/kenya/diani", "city", "/destinations/africa/kenya", "Diani", 40),
 ];
 
 const menuFor = (env, rows = ROWS) => {
@@ -36,10 +38,10 @@ const menuFor = (env, rows = ROWS) => {
 const names = (items) => items.map((item) => item.name);
 
 describe("the destination menu", () => {
-  it("lists only destinations with a page, most listings first, ties by name", () => {
+  it("lists only destinations with a page, continents in the fixed order, countries and cities by listings then name", () => {
     const menu = menuFor({});
 
-    expect(names(menu.continents)).toEqual(["Europe", "Asia"]);
+    expect(names(menu.continents)).toEqual(["Europe", "Asia", "Africa"]);
     const [europe] = menu.continents;
     expect(names(europe.countries)).toEqual(["Portugal", "Spain"]);
     expect(names(europe.countries[0].cities)).toEqual(["Lisbon", "Sintra"]);
@@ -51,6 +53,12 @@ describe("the destination menu", () => {
     });
     expect(europe).toMatchObject({ path: "/destinations/europe", activeListings: 11 });
     expect(Object.keys(europe)).toEqual(["name", "path", "activeListings", "countries"]);
+  });
+
+  it("orders the continents as configured, with the rest after them by listings, and ignores unknown slugs", () => {
+    const menu = menuFor({ DESTINATION_CONTINENT_ORDER: "atlantis, Asia" });
+
+    expect(names(menu.continents)).toEqual(["Asia", "Africa", "Europe"]);
   });
 
   it("puts the featured countries and cities first in the order given and ignores unknown slugs", () => {

@@ -1,10 +1,10 @@
 const byListingsThenName = (left, right) =>
   right.activeListings - left.activeListings || left.name.localeCompare(right.name);
 
-const orderWithFeatured = (destinations, featured) => {
+const orderBySlugList = (destinations, slugs) => {
   const rank = (destination) => {
-    const index = featured.indexOf(destination.slug);
-    return index === -1 ? featured.length : index;
+    const index = slugs.indexOf(destination.slug);
+    return index === -1 ? slugs.length : index;
   };
   return [...destinations].sort((left, right) => rank(left) - rank(right) || byListingsThenName(left, right));
 };
@@ -15,23 +15,23 @@ const toMenuItem = (destination) => ({
   activeListings: destination.activeListings,
 });
 
-export const buildDestinationMenu = (destinations, { featured = [] } = {}) => {
+export const buildDestinationMenu = (destinations, { featured = [], continentOrder = [] } = {}) => {
   const eligible = (Array.isArray(destinations) ? destinations : [])
     .filter((destination) => destination.eligible)
     .map((destination) => ({ ...destination, activeListings: Number(destination.totalListings) || 0 }));
   const childrenOf = (parent, type) =>
     eligible.filter((destination) => destination.parentId === parent.id && destination.type === type);
 
-  const continents = eligible
-    .filter((destination) => destination.type === "continent")
-    .sort(byListingsThenName)
-    .map((continent) => ({
-      ...toMenuItem(continent),
-      countries: orderWithFeatured(childrenOf(continent, "country"), featured).map((country) => ({
-        ...toMenuItem(country),
-        cities: orderWithFeatured(childrenOf(country, "city"), featured).map(toMenuItem),
-      })),
-    }));
+  const continents = orderBySlugList(
+    eligible.filter((destination) => destination.type === "continent"),
+    continentOrder
+  ).map((continent) => ({
+    ...toMenuItem(continent),
+    countries: orderBySlugList(childrenOf(continent, "country"), featured).map((country) => ({
+      ...toMenuItem(country),
+      cities: orderBySlugList(childrenOf(country, "city"), featured).map(toMenuItem),
+    })),
+  }));
 
   return { continents };
 };

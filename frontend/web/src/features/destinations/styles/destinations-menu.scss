@@ -139,9 +139,7 @@
 @media screen and (max-width: 1150px) {
   .destinations-menu__panel {
     position: fixed;
-    top: var(--app-header-h, 5.625rem);
-    right: 1rem;
-    left: 1rem;
+    inset: var(--app-header-h, 5.625rem) 1rem auto;
     width: auto;
   }
 }
@@ -163,7 +161,7 @@
   }
 
   .destinations-menu__panel {
-    top: var(--app-header-h, 7.5rem);
+    inset: var(--app-header-h, 7.5rem) 1rem auto;
     max-height: calc(100vh - var(--app-header-h, 7.5rem));
   }
 

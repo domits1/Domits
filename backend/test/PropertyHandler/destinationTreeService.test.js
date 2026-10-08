@@ -140,6 +140,15 @@ describe("the destination tree", () => {
     ]);
   });
 
+  it("builds the menu from the same eligibility as the pages, and lets a repository failure reach the caller", async () => {
+    const { service, repository } = buildService();
+    const menu = await service.buildDestinationMenu();
+    expect(menu.continents.map((continent) => continent.name)).toEqual(["Europe"]);
+    expect(menu.continents[0].countries.map((country) => country.name)).toEqual(["Spain"]);
+    repository.listDestinationsWithActiveListings.mockRejectedValueOnce(new Error("timeout"));
+    await expect(service.buildDestinationMenu()).rejects.toThrow("timeout");
+  });
+
   it("renders the sitemap from the same eligibility as the pages, so mapping rows without an active property put nothing in it", async () => {
     const { service } = buildService();
     const xml = await service.renderDestinationSitemap({
