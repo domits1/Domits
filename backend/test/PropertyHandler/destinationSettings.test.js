@@ -6,7 +6,15 @@ import {
 
 describe("the destination settings", () => {
   it("defaults to one active listing per destination and a parent that exists through any child", () => {
-    expect(readDestinationSettings({})).toEqual({ minActiveListings: 1, parentFromAnyChild: true });
+    expect(readDestinationSettings({})).toEqual({ minActiveListings: 1, parentFromAnyChild: true, featured: [] });
+  });
+
+  it("reads the featured destinations as slugs, in the order given, without blanks or repeats", () => {
+    expect(readDestinationSettings({ DESTINATION_FEATURED: " Spain, Marbella ,,Málaga, spain, - " }).featured).toEqual([
+      "spain",
+      "marbella",
+      "malaga",
+    ]);
   });
 
   it("reads the two choices from the environment and falls back on nonsense", () => {
@@ -15,12 +23,14 @@ describe("the destination settings", () => {
     ).toEqual({
       minActiveListings: 3,
       parentFromAnyChild: false,
+      featured: [],
     });
     expect(
       readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: "0", DESTINATION_PARENT_FROM_ANY_CHILD: "maybe" })
     ).toEqual({
       minActiveListings: 1,
       parentFromAnyChild: true,
+      featured: [],
     });
     const minimums = ["many", "3garbage", "2.9", "99999999999999999999", " 4 "].map(
       (value) => readDestinationSettings({ DESTINATION_MIN_ACTIVE_LISTINGS: value }).minActiveListings

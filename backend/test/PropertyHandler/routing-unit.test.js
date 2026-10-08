@@ -43,6 +43,7 @@ const directRouteSpecs = [
   ["GET pricing saving-config request", "getPricingSavingConfig", "GET", "/property/pricing/saving-config", 200],
   ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
   ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
+  ["GET destination menu request", "getDestinationMenu", "GET", "/property/destinations/menu", 200],
   ["GET public website preview request", "getWebsitePreviewByDraftId", "GET", "/property/website/preview", 200],
   ["GET website KPI summary request", "getWebsiteKpis", "GET", "/property/website/kpis", 200],
   ["GET website site by property request", "getWebsiteSiteByPropertyId", "GET", "/property/website/site", 200],

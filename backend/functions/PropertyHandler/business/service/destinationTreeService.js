@@ -1,6 +1,7 @@
 import { DestinationPageRepository } from "../../data/repository/destinationPageRepository.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 import { flagDestinationCity } from "../../util/destination/destinationFlags.js";
+import { buildDestinationMenu } from "./destinationMenuBuilder.js";
 import { buildDestinationPage } from "./destinationPageBuilder.js";
 import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 
@@ -66,6 +67,10 @@ export class DestinationTreeService {
   async listEligibleDestinations() {
     const destinations = await this.destinationPageRepository.listDestinationsWithActiveListings();
     return buildDestinationTree(destinations, this.settings).filter((destination) => destination.eligible);
+  }
+
+  async buildDestinationMenu() {
+    return buildDestinationMenu(await this.listEligibleDestinations(), this.settings);
   }
 
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {

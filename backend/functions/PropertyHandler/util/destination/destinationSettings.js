@@ -1,3 +1,5 @@
+import { toDestinationSlug } from "./destinationSlug.js";
+
 const DEFAULT_MIN_ACTIVE_LISTINGS = 1;
 const DEFAULT_PARENT_FROM_ANY_CHILD = true;
 
@@ -23,9 +25,19 @@ const readBoolean = (value, fallback) => {
   return fallback;
 };
 
+const readSlugList = (value) => [
+  ...new Set(
+    String(value ?? "")
+      .split(",")
+      .map((entry) => toDestinationSlug(entry))
+      .filter(Boolean)
+  ),
+];
+
 export const readDestinationSettings = (env = process.env) => ({
   minActiveListings: readPositiveInteger(env.DESTINATION_MIN_ACTIVE_LISTINGS, DEFAULT_MIN_ACTIVE_LISTINGS),
   parentFromAnyChild: readBoolean(env.DESTINATION_PARENT_FROM_ANY_CHILD, DEFAULT_PARENT_FROM_ANY_CHILD),
+  featured: readSlugList(env.DESTINATION_FEATURED),
 });
 
 export const isDestinationEligible = (
