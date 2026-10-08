@@ -444,6 +444,43 @@ export class ReviewService {
 
   // Return the caller's review list using the requested scope and editability rules.
   // This gives a clear view of written or received reviews while marking which entries can still be edited.
+  guestHistoryItem(review, timestamp) {
+    const deadline = this.editDeadline(review);
+    return { id: review.id, property_id: review.property_id, property_name: review.property_name,
+      title: review.title, overall_rating: Number(review.overall_rating), public_review: review.public_review,
+      created_at: Number(review.created_at), updated_at: Number(review.updated_at), status: review.status,
+      publication_status: review.publication_status, verification_status: review.verification_status,
+      category_ratings: review.categoryRatings || {},
+      response: review.response ? { message: review.response.message, published_at: review.response.publishedAt } : null,
+      can_edit: timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
+  }
+
+  async getGuestReviewHistory(callerUserId, query = {}) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
+    if (Object.keys(query).some((key) => !["scope", "offset"].includes(key))) {
+      throw new BadRequestException("Unsupported review history parameter.");
+    }
+    const offset = query.offset ?? "0";
+    if (typeof offset !== "string" || !/^(0|[1-9]\d*)$/.test(offset)
+      || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
+      throw new BadRequestException("Invalid review history offset.");
+    }
+    const rows = await this.repository.findGuestReviewHistory(callerUserId, { offset: Number(offset) });
+    const timestamp = this.now();
+    return { reviews: rows.slice(0, 10).map((review) => this.guestHistoryItem(review, timestamp)),
+      next_offset: rows.length > 10 ? Number(offset) + 10 : null };
+  }
+
+  async getGuestReviewDetail(callerUserId, reviewId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
+    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const reviews = await this.repository.findGuestReviewHistory(callerUserId, { id: reviewId });
+    if (!reviews.length) throw new NotFoundException("Review not found.");
+    return this.guestHistoryItem(reviews[0], this.now());
+  }
+
   async getReviews(callerUserId, scope = "written") {
     if (scope !== "written" && scope !== "received") {
       throw new BadRequestException("Review scope must be written or received.");

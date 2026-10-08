@@ -90,7 +90,14 @@ export class Controller {
       throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
     }
     let result;
-    if (query.scope === "respondable") {
+    if (query.reviewId !== undefined && query.view !== undefined) {
+      if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
+        throw new BadRequestException("Unsupported review detail parameter.");
+      }
+      result = await this.service.getGuestReviewDetail(user.userId, query.reviewId);
+    } else if (query.scope === "guest-history") {
+      result = await this.service.getGuestReviewHistory(user.userId, query);
+    } else if (query.scope === "respondable") {
       result = await this.service.getResponseEligibleReviews(user.username);
     } else if (query.scope === "property-trends") {
       result = await this.service.getPropertyRatingTrends(user.username, query);
