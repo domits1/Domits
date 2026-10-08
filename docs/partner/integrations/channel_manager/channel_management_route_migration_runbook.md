@@ -2,7 +2,8 @@
 Preserved from PR #3149 (branch refactor/channel-management, backend/docs/channel-management-migration-runbook.md),
 written by Majd Hammid on 1 July 2026. That PR was closed on 23 September 2026: its code had gone stale
 and its author had left, but this deployment plan is still the reference for moving the Channex and Holidu
-API Gateway routes to ChannelManagement. Content unchanged; not re-verified against AWS since July 2026.
+API Gateway routes to ChannelManagement. Content unchanged apart from removing the certification routes
+deleted since (test-case in #3436, cancel-booking in #3284); not re-verified against AWS since July 2026.
 -->
 
 # ChannelManagement Migration Deployment Runbook
@@ -99,8 +100,6 @@ POST /integrations/channex/sync/availability
 POST /integrations/channex/sync/restrictions
 POST /integrations/channex/sync/ari
 POST /integrations/channex/sync/full
-POST /integrations/channex/certification/test-case
-POST /integrations/channex/certification/cancel-booking
 POST /integrations/channex/disconnect
 ```
 

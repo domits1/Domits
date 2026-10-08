@@ -29,7 +29,6 @@ import ChannexAvailabilitySyncService from "./services/channexAvailabilitySyncSe
 import ChannexBookingPollingService from "./services/channexBookingPollingService.js";
 import ChannexBookingRevisionImportService from "./services/channexBookingRevisionImportService.js";
 import ChannexBookingWebhookService from "./services/channexBookingWebhookService.js";
-import ChannexCertificationService from "./services/channexCertificationService.js";
 import ChannexDiagnosticsService from "./services/channexDiagnosticsService.js";
 import ChannexFullSyncService from "./services/channexFullSyncService.js";
 import ChannexMappingService from "./services/channexMappingService.js";
@@ -152,10 +151,6 @@ export default class ChannelManagementApiService {
         this.resolveChannexSyncCredentialContext(...args),
       logChannexFullCertificationSync: (...args) =>
         this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
-    });
-    this.channexCertificationService = new ChannexCertificationService({
-      externalBookingImportRepository,
-      channexBookingAvailabilityBridge,
     });
     this.channexBookingRevisionImportService =
       new ChannexBookingRevisionImportService({
@@ -332,10 +327,6 @@ export default class ChannelManagementApiService {
 
   async listChannexBookingRevisions(...args) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(...args) {
