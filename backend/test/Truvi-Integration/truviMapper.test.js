@@ -1,4 +1,4 @@
-import { bookingToCreateRequest, mapCreateResponse } from "../../functions/Truvi-Integration/util/truviMapper.js";
+import { bookingToCreateRequest, mapCreateResponse, toCountryAlpha3 } from "../../functions/Truvi-Integration/util/truviMapper.js";
 
 const input = () => ({
   booking: {
@@ -9,8 +9,12 @@ const input = () => ({
     guestname: "John Van Doe",
     guest_email: "john@example.com",
   },
-  property: { id: "property-1", title: "Villa Zon", petsAllowed: false },
-  location: { street: "Kinderhuissingel", housenumber: 6, housenumberextension: "k", city: "Haarlem", countryIso: "NLD", postalcode: "2013AS" },
+  property: { id: "property-1", title: "Villa Zon" },
+  location: { street: "Kinderhuissingel", housenumber: 6, housenumberextension: "k", city: "Haarlem", country: "Netherlands", postalcode: "2013AS" },
+  rules: [
+    { property_id: "property-1", rule: "SmokingAllowed", value: false },
+    { property_id: "property-1", rule: "PetsAllowed", value: false },
+  ],
   host: { name: "Host BV", email: "host@example.com" },
   protection: { extendedAmount: 1000 },
   now: new Date("2026-10-06T09:00:00.000Z"),
@@ -38,6 +42,18 @@ describe("bookingToCreateRequest", () => {
     expect(req.protection).toEqual({ type: "Complete Protection", extendedAmount: 1000 });
   });
 
+  test("sets petsAllowed to true when the PetsAllowed rule is true", () => {
+    const data = input();
+    data.rules = [{ property_id: "property-1", rule: "PetsAllowed", value: true }];
+    expect(bookingToCreateRequest(data).listing.petsAllowed).toBe(true);
+  });
+
+  test("sets petsAllowed to false when the property has no PetsAllowed rule", () => {
+    const data = input();
+    data.rules = [];
+    expect(bookingToCreateRequest(data).listing.petsAllowed).toBe(false);
+  });
+
   test("rejects an extendedAmount Truvi does not accept", () => {
     const data = input();
     data.protection.extendedAmount = 123;
@@ -48,6 +64,27 @@ describe("bookingToCreateRequest", () => {
     const data = input();
     delete data.booking.guest_email;
     expect(() => bookingToCreateRequest(data)).toThrow("email or a phone");
+  });
+
+  test("rejects a country it cannot convert", () => {
+    const data = input();
+    data.location.country = "Atlantis";
+    expect(() => bookingToCreateRequest(data)).toThrow("Unsupported country for Truvi: Atlantis");
+  });
+});
+
+describe("toCountryAlpha3", () => {
+  test.each([
+    ["Netherlands", "NLD"],
+    ["Nederland", "NLD"],
+    ["  germany ", "DEU"],
+    ["United Kingdom", "GBR"],
+  ])("converts %p to %s", (country, code) => {
+    expect(toCountryAlpha3(country)).toBe(code);
+  });
+
+  test.each([[undefined], [""], ["Atlantis"]])("throws for %p", (country) => {
+    expect(() => toCountryAlpha3(country)).toThrow("Unsupported country");
   });
 });
 
