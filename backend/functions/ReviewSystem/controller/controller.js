@@ -3,6 +3,8 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
+// Parse the raw request payload into a plain object.
+// This blocks malformed JSON or array payloads from reaching the review flow.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -20,6 +22,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  // Connect the controller to the service and auth dependencies used by all handlers.
+  // This keeps dependency injection flexible and ensures each request uses the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -39,8 +43,8 @@ export class Controller {
     }
   }
 
-  // Route review requests by HTTP method to the correct controller action.
-  // This centralizes review handling and keeps unsupported methods from slipping through.
+  // Route the request to the correct review action for the incoming HTTP method.
+  // This centralizes review handling and prevents unsupported operations from being processed.
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
@@ -54,13 +58,14 @@ export class Controller {
     }
   }
 
-  // Read the user's review data for the requested scope.
-  // This keeps query handling simple while leaving access rules to the service layer.
+  // Fetch the caller's review list with the requested scope.
+  // This keeps read behavior simple while leaving access rules to the service layer.
   async getReviews(user, query) {
     const result = await this.service.getReviews(user.userId, query.scope);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
+  // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
       const result = await this.service.getPublicPropertyReviews(event.pathParameters?.propertyId, event.queryStringParameters || {});
@@ -70,8 +75,8 @@ export class Controller {
     }
   }
 
-  // Remove a review only if the authenticated user is the owner.
-  // This blocks unauthorized deletion and protects the integrity of review records.
+  // Remove a review only for the authenticated owner.
+  // This stops one user from deleting another user's review record.
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
