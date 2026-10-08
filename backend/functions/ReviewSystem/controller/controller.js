@@ -3,8 +3,8 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
-// Parse the raw request payload into a plain object.
-// This blocks malformed JSON or array payloads from reaching the review flow.
+// Parse a raw request body into a plain object.
+// This keeps malformed JSON and non-object payloads from reaching the review logic.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -22,8 +22,8 @@ const parseBody = (body) => {
 };
 
 export class Controller {
-  // Connect the controller to the service and auth dependencies used by all handlers.
-  // This keeps dependency injection flexible and ensures each request uses the same trusted logic.
+  // Connect the controller to the service and auth dependencies used across requests.
+  // This makes the controller easy to test and keeps all handlers on the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -43,8 +43,8 @@ export class Controller {
     }
   }
 
-  // Route the request to the correct review action for the incoming HTTP method.
-  // This centralizes review handling and prevents unsupported operations from being processed.
+  // Route a review request to the correct action for the incoming HTTP method.
+  // This keeps the review API centralized and prevents unsupported request types from being processed.
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
@@ -58,8 +58,8 @@ export class Controller {
     }
   }
 
-  // Fetch the caller's review list with the requested scope.
-  // This keeps read behavior simple while leaving access rules to the service layer.
+  // Fetch the caller's reviews using the requested scope.
+  // This keeps listing logic simple and leaves authorization and filtering to the service layer.
   async getReviews(user, query) {
     const result = await this.service.getReviews(user.userId, query.scope);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
