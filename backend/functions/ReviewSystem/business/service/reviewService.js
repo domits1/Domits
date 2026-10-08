@@ -136,4 +136,43 @@ export class ReviewService {
     return text || null;
   }
 
+  async getReviews(callerUserId, scope) {
+    if (scope !== "written" && scope !== "received") {
+      throw new BadRequestException("Review scope must be written or received.");
+    }
+    const reviews = await this.repository.findReviews(scope === "written"
+      ? { reviewer_user_id: callerUserId }
+      : [
+        { host_id: callerUserId, status: "PUBLISHED", publication_status: "PUBLISHED" },
+        { reviewee_user_id: callerUserId, status: "PUBLISHED", publication_status: "PUBLISHED" },
+      ]);
+    return reviews.map((review) => ({
+      ...review, rating: review.overall_rating, content: review.public_review, date: review.created_at,
+    }));
+  }
+
+  async deleteReview(callerUserId, id) {
+    if (typeof id !== "string" || !id.trim() || id.length > 255) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const result = await this.repository.deleteOwnReview(id, callerUserId, this.now());
+    if (!result.affected) {
+      throw new NotFoundException("Review not found.");
+    }
+  }
+
+  async getPublicPropertyReviews(propertyId, query = {}) {
+    if (typeof propertyId !== "string" || !propertyId.trim() || propertyId.length > 255) {
+      throw new BadRequestException("A valid property ID is required.");
+    }
+    if (query.sort && !["recent", "highest", "lowest"].includes(query.sort)) {
+      throw new BadRequestException("Unsupported review sort.");
+    }
+    if (query.verifiedOnly !== undefined && !["true", "false"].includes(query.verifiedOnly)) {
+      throw new BadRequestException("verifiedOnly must be true or false.");
+    }
+    return this.repository.findPublicPropertyReviews(propertyId, {
+      sort: query.sort || "recent", verifiedOnly: query.verifiedOnly === "true", category: query.category || null,
+    });
+  }
 }
