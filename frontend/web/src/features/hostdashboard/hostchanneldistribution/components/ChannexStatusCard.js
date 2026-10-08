@@ -1,10 +1,23 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 
 // Buckets the six CHANNEX_STATUS values from GET /integrations/channex/status into the three
 // visual states this card renders. VALIDATION_FAILED, DISCONNECTED and RECONNECT_REQUIRED all
 // read the same to a host ("something's wrong, reconnect"), so they share one look.
 const RECONNECT_BUCKET_STATUSES = new Set(["RECONNECT_REQUIRED", "VALIDATION_FAILED", "DISCONNECTED"]);
+
+// Which Manage menu items each status offers. A status with no entry here (only
+// PENDING_PROVIDER_VALIDATION today) keeps Manage disabled -- there's nothing meaningful to
+// reconnect or disconnect mid-validation. DISCONNECTED omits "disconnect": you can't disconnect
+// an already-disconnected account.
+const MANAGE_MENU_ITEMS_BY_STATUS = {
+  CONNECTED: ["reconnect", "disconnect"],
+  RECONNECT_REQUIRED: ["reconnect", "disconnect"],
+  VALIDATION_FAILED: ["reconnect", "disconnect"],
+  DISCONNECTED: ["reconnect"],
+};
+
+const MENU_ITEM_LABELS = { reconnect: "Reconnect", disconnect: "Disconnect" };
 
 function getStatusPresentation(status) {
   if (status === "CONNECTED") {
@@ -18,17 +31,69 @@ function getStatusPresentation(status) {
   return { tone: "pending", label: "Validating…", showReason: false };
 }
 
-function ChannexStatusCard({ status }) {
+function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manageEnabled = false }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const presentation = getStatusPresentation(status.status);
+  const menuItems = manageEnabled ? MANAGE_MENU_ITEMS_BY_STATUS[status.status] || null : null;
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  const handleItemClick = (item) => {
+    setMenuOpen(false);
+    if (item === "reconnect") onReconnectClick();
+    if (item === "disconnect") onDisconnectClick();
+  };
 
   return (
     <div className="chdist-card">
       <div className="chdist-card__row">
         <span className="chdist-card__name">{status.displayName || "Channex"}</span>
         <span className={`chdist-badge chdist-badge--${presentation.tone}`}>{presentation.label}</span>
-        <button className="chdist-btn chdist-btn--manage" disabled>
-          Manage
-        </button>
+
+        <div className="chdist-manage" ref={menuRef}>
+          <button
+            type="button"
+            className="chdist-btn chdist-btn--manage"
+            disabled={!menuItems}
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            Manage
+          </button>
+          {menuOpen && menuItems && (
+            <ul className="chdist-manage__menu">
+              {menuItems.map((item) => (
+                <li key={item}>
+                  <button
+                    type="button"
+                    className={`chdist-manage__item${item === "disconnect" ? " chdist-manage__item--danger" : ""}`}
+                    onClick={() => handleItemClick(item)}
+                  >
+                    {MENU_ITEM_LABELS[item]}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
       {presentation.showReason && status.reason && <p className="chdist-card__reason">{status.reason}</p>}
     </div>
@@ -41,6 +106,9 @@ ChannexStatusCard.propTypes = {
     displayName: PropTypes.string,
     reason: PropTypes.string,
   }).isRequired,
+  onReconnectClick: PropTypes.func.isRequired,
+  onDisconnectClick: PropTypes.func.isRequired,
+  manageEnabled: PropTypes.bool,
 };
 
 export default ChannexStatusCard;
