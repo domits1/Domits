@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { Auth } from "aws-amplify";
 import QRCode from "qrcode";
@@ -17,6 +17,7 @@ const MOCK_COGNITO_USER = {
 const SECRET = "JBSWY3DPEHPK3PXP";
 const QR_DATA_URL = "data:image/png;base64,QR";
 const VALID_CODE = "123456";
+const FRESH_USER = { username: "user-abc-123", attributes: { email: "host+mfa@example.com" }, session: "fresh" };
 
 const cognitoError = (code) => Object.assign(new Error(code), { code });
 
@@ -43,7 +44,7 @@ describe("useAuthenticatorSetup", () => {
     jest.clearAllMocks();
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     Auth.setupTOTP.mockResolvedValue(SECRET);
-    Auth.verifyTotpToken.mockResolvedValue({});
+    Auth.verifyTotpToken.mockResolvedValue({ Status: "SUCCESS" });
     Auth.setPreferredMFA.mockResolvedValue("SUCCESS");
     QRCode.toDataURL.mockResolvedValue(QR_DATA_URL);
   });
@@ -96,6 +97,17 @@ describe("useAuthenticatorSetup", () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
+  test("startSetup reports sessionExpired when Amplify says the user is not authenticated", async () => {
+    Auth.currentAuthenticatedUser.mockRejectedValue("The user is not authenticated");
+    const { result } = setup();
+
+    await startSetup(result);
+
+    expect(result.current.step).toBe("idle");
+    expect(result.current.errorKey).toBe("sessionExpired");
+    expect(Auth.setupTOTP).not.toHaveBeenCalled();
+  });
+
   test("verifySetup confirms the code, prefers TOTP, refreshes the status and clears the secret", async () => {
     const { result, onStatusChange } = setup();
     await startSetup(result);
@@ -127,6 +139,7 @@ describe("useAuthenticatorSetup", () => {
     ["EnableSoftwareTokenMFAException", "invalidCode"],
     ["NotAuthorizedException", "sessionExpired"],
     ["LimitExceededException", "tooManyAttempts"],
+    ["TooManyRequestsException", "tooManyAttempts"],
     ["SomethingUnexpected", "generic"],
   ])("verifySetup maps %s to %s and stays on the setup step", async (code, expectedKey) => {
     Auth.verifyTotpToken.mockRejectedValue(cognitoError(code));
@@ -210,7 +223,7 @@ describe("useAuthenticatorSetup", () => {
     expect(result.current.qrCodeUrl).toBe(QR_DATA_URL);
 
     await act(async () => {
-      resolveVerify({});
+      resolveVerify({ Status: "SUCCESS" });
       await pendingVerify;
     });
 
@@ -245,8 +258,9 @@ describe("useAuthenticatorSetup", () => {
       result.current.verifySetup(VALID_CODE);
     });
 
-    expect(Auth.verifyTotpToken).toHaveBeenCalledTimes(1);
+    expect(Auth.currentAuthenticatedUser).toHaveBeenCalledTimes(2);
     expect(result.current.isSubmitting).toBe(true);
+    await waitFor(() => expect(Auth.verifyTotpToken).toHaveBeenCalledTimes(1));
   });
 
   test("startSetup associates only once while a setup is in flight", async () => {
@@ -260,5 +274,94 @@ describe("useAuthenticatorSetup", () => {
 
     expect(Auth.currentAuthenticatedUser).toHaveBeenCalledTimes(1);
     expect(result.current.isSubmitting).toBe(true);
+  });
+
+  test("verifySetup loads a fresh user and uses it for both the verification and the preference", async () => {
+    const { result } = setup();
+    await startSetup(result);
+    Auth.currentAuthenticatedUser.mockResolvedValue(FRESH_USER);
+
+    await verifySetup(result);
+
+    expect(Auth.verifyTotpToken).toHaveBeenCalledWith(FRESH_USER, VALID_CODE);
+    expect(Auth.setPreferredMFA).toHaveBeenCalledWith(FRESH_USER, "TOTP");
+    expect(Auth.verifyTotpToken).not.toHaveBeenCalledWith(MOCK_COGNITO_USER, VALID_CODE);
+    expect(result.current.step).toBe("done");
+  });
+
+  test("retryEnable loads a fresh user for the preference", async () => {
+    Auth.setPreferredMFA.mockRejectedValueOnce(cognitoError("InternalErrorException"));
+    const { result } = setup();
+    await startSetup(result);
+    await verifySetup(result);
+    Auth.currentAuthenticatedUser.mockResolvedValue(FRESH_USER);
+
+    await act(async () => {
+      await result.current.retryEnable();
+    });
+
+    expect(Auth.setPreferredMFA).toHaveBeenLastCalledWith(FRESH_USER, "TOTP");
+    expect(result.current.step).toBe("done");
+  });
+
+  test.each([
+    ["a NotAuthorizedException", cognitoError("NotAuthorizedException")],
+    ["the Amplify not-authenticated rejection", "The user is not authenticated"],
+  ])("an expired session while loading the user for verification (%s) returns to idle", async (_label, rejection) => {
+    const { result, onStatusChange } = setup();
+    await startSetup(result);
+    Auth.currentAuthenticatedUser.mockRejectedValue(rejection);
+
+    await verifySetup(result);
+
+    expect(result.current.step).toBe("idle");
+    expect(result.current.errorKey).toBe("sessionExpired");
+    expect(result.current.secretKey).toBe("");
+    expect(result.current.qrCodeUrl).toBe("");
+    expect(Auth.verifyTotpToken).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  test("another failure while loading the user for verification keeps the setup open with a generic error", async () => {
+    const { result } = setup();
+    await startSetup(result);
+    Auth.currentAuthenticatedUser.mockRejectedValue(new Error("Network error"));
+
+    await verifySetup(result);
+
+    expect(result.current.step).toBe("setup");
+    expect(result.current.errorKey).toBe("generic");
+    expect(result.current.secretKey).toBe(SECRET);
+    expect(Auth.verifyTotpToken).not.toHaveBeenCalled();
+  });
+
+  test("an expired session while loading the user for retryEnable returns to idle", async () => {
+    Auth.setPreferredMFA.mockRejectedValueOnce(cognitoError("InternalErrorException"));
+    const { result } = setup();
+    await startSetup(result);
+    await verifySetup(result);
+    Auth.currentAuthenticatedUser.mockRejectedValue("The user is not authenticated");
+
+    await act(async () => {
+      await result.current.retryEnable();
+    });
+
+    expect(result.current.step).toBe("idle");
+    expect(result.current.errorKey).toBe("sessionExpired");
+    expect(Auth.setPreferredMFA).toHaveBeenCalledTimes(1);
+  });
+
+  test("a verification result other than SUCCESS counts as an invalid code and does not enable", async () => {
+    Auth.verifyTotpToken.mockResolvedValue({ Status: "ERROR" });
+    const { result, onStatusChange } = setup();
+    await startSetup(result);
+
+    await verifySetup(result);
+
+    expect(result.current.step).toBe("setup");
+    expect(result.current.errorKey).toBe("invalidCode");
+    expect(result.current.secretKey).toBe(SECRET);
+    expect(Auth.setPreferredMFA).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
   });
 });

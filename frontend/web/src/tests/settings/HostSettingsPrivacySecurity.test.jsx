@@ -116,7 +116,7 @@ describe("HostSettingsPrivacySecurity page", () => {
             let totpPreferred = false;
             Auth.getPreferredMFA.mockImplementation(async () => (totpPreferred ? "SOFTWARE_TOKEN_MFA" : "NOMFA"));
             Auth.setupTOTP.mockResolvedValue("JBSWY3DPEHPK3PXP");
-            Auth.verifyTotpToken.mockResolvedValue({});
+            Auth.verifyTotpToken.mockResolvedValue({ Status: "SUCCESS" });
             Auth.setPreferredMFA.mockImplementation(async () => {
                 totpPreferred = true;
                 return "SUCCESS";
