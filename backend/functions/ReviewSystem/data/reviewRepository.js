@@ -12,6 +12,7 @@ import { Review_Response } from "database/models/Review_Response";
 import { Team_Member } from "database/models/Team_Member";
 import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 
 const REVIEW_FIELDS = ["id", "booking_id", "property_id", "title", "overall_rating", "public_review",
   "created_at", "updated_at", "status", "verification_status", "publication_status", "review_type"];
@@ -91,9 +92,11 @@ export class ReviewRepository {
     const query = this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" })
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
       .andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
         filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
       });
+    applyCompletedStayConditions(query, filters.verificationNow ?? Date.now());
     if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
     if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
     return query;

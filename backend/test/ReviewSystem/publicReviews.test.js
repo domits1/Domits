@@ -4,6 +4,7 @@ import { Review_Response } from "database/models/Review_Response";
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
 import { Property } from "database/models/Property";
+import { Booking } from "database/models/Booking";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
@@ -24,7 +25,7 @@ describe("public review retrieval", () => {
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => entity === Property
       ? { findOne: async () => property } : entity === Review_Response
       ? { find: async () => [{ reviewId: "r1", message: "Thanks", publishedAt: 2000 }] } : { createQueryBuilder: () => query } });
-    controller = new Controller({ service: new ReviewService({ repository: new ReviewRepository() }) });
+    controller = new Controller({ service: new ReviewService({ repository: new ReviewRepository(), now: () => 2000 }) });
   });
   test("anonymous response uses the path property and excludes private fields", async () => {
     const result = await controller.getPublicReviews(request());
@@ -88,6 +89,21 @@ describe("public review retrieval", () => {
     expect((await controller.getPublicReviews(request())).statusCode).toBe(404);
     expect(query.getMany).not.toHaveBeenCalled();
   });
+  test("checks reservation evidence before counts and paging without exposing booking data", async () => {
+    const result = await controller.getPublicReviews(request({ minRating: "4", sort: "recent", verified: "true" }));
+    expect(result.statusCode).toBe(200);
+    expect(query.innerJoin).toHaveBeenCalledWith(Booking, "stay",
+      "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id");
+    expect(query.andWhere).toHaveBeenCalledWith("LOWER(TRIM(stay.status)) IN (:...stayStatuses)",
+      { stayStatuses: ["paid", "confirmed"] });
+    expect(query.andWhere.mock.calls.filter(([sql]) => sql.includes(":stayNow"))).toHaveLength(2);
+    expect(query.andWhere).toHaveBeenCalledWith("stay.departuredate > 0 AND stay.departuredate <= :stayNow", { stayNow: 2000 });
+    const review = JSON.parse(result.body).reviews[0];
+    expect(review.verified).toBe(true);
+    for (const key of ["booking_id", "reviewer_user_id", "private_feedback", "guestname", "paymentid"]) {
+      expect(review).not.toHaveProperty(key);
+    }
+  });
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
   test("returns ten newest reviews and the final visible date/ID as the cursor", async () => {
     reviews = Array.from({ length: 11 }, (_, index) => ({ id: `r${String(11 - index).padStart(2, "0")}`,
@@ -128,7 +144,7 @@ describe("public review retrieval", () => {
 
 
 test("keeps review publication and property visibility parameters independent in generated SQL", async () => {
-  const database = new DataSource({ type: "postgres", schema: "main", entities: [Property, Review] });
+  const database = new DataSource({ type: "postgres", schema: "main", entities: [Property, Review, Booking] });
   await database.buildMetadatas();
   const query = database.getRepository(Review).createQueryBuilder("review");
   jest.spyOn(query, "getRawOne").mockResolvedValue({ score: null, count: "0" });
