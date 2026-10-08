@@ -50,6 +50,8 @@ import { MessageAutomation } from "../../models/automation/MessageAutomation.js"
 import { MessageAutomationDelivery } from "../../models/automation/MessageAutomationDelivery.js";
 import { BookingAutomationOutbox } from "../../models/automation/BookingAutomationOutbox.js";
 import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbox.js";
+import { HomeAutomationDevice } from "../../models/homeAutomation/HomeAutomationDevice.js";
+import { AccessCredential } from "../../models/homeAutomation/AccessCredential.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
@@ -112,6 +114,8 @@ export const Tables = [
   MessageAutomationDelivery,
   BookingAutomationOutbox,
   ChannexAriOutbox,
+  HomeAutomationDevice,
+  AccessCredential,
 
   User_Table,
   PropertyTask,
