@@ -165,11 +165,19 @@ export const escalateTask = async (hostId, taskId) => {
         throw new BadRequestException("Task is not breaching its SLA");
     }
 
-    const hostEmail = await getHostEmailById(hostId);
-    await sendTaskEscalationEmail(hostEmail, task);
-
     const escalated_at = Date.now();
-    await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at });
+    const claimed = await taskRepository.escalateTaskInDb(dataSource, taskId, hostId, escalated_at);
+    if (!claimed) {
+        throw new BadRequestException("Task has already been escalated");
+    }
+
+    try {
+        const hostEmail = await getHostEmailById(hostId);
+        await sendTaskEscalationEmail(hostEmail, task);
+    } catch (emailError) {
+        await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
+        throw emailError;
+    }
 
     return { message: "Task escalated successfully" };
 };

@@ -89,6 +89,20 @@ export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     return await repository.update(taskId, updateData);
 };
 
+export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({ escalated_at: escalatedAt })
+        .where("id = :taskId", { taskId })
+        .andWhere("host_id = :hostId", { hostId })
+        .andWhere("escalated_at IS NULL")
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const getChecklistItemsForTask = async (dataSource, taskId) => {
     const repository = dataSource.getRepository(ChecklistItemEntity);
     return await repository.find({ where: { task_id: taskId }, order: { position: "ASC" } });

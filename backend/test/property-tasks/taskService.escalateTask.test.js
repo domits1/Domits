@@ -5,10 +5,12 @@ jest.mock("database", () => ({
 
 const mockGetTaskById = jest.fn();
 const mockUpdateTaskInDb = jest.fn();
+const mockEscalateTaskInDb = jest.fn();
 
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     getTaskById: (...args) => mockGetTaskById(...args),
     updateTaskInDb: (...args) => mockUpdateTaskInDb(...args),
+    escalateTaskInDb: (...args) => mockEscalateTaskInDb(...args),
 }));
 
 const mockGetHostEmailById = jest.fn();
@@ -27,6 +29,7 @@ describe("escalateTask", () => {
         mockGetHostEmailById.mockResolvedValue("host@example.com");
         mockSendTaskEscalationEmail.mockResolvedValue();
         mockUpdateTaskInDb.mockResolvedValue();
+        mockEscalateTaskInDb.mockResolvedValue(true);
     });
 
     it("rejects when taskId is missing", async () => {
@@ -57,27 +60,37 @@ describe("escalateTask", () => {
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
     });
 
-    it("emails the host and stamps escalated_at for a breached task", async () => {
+    it("claims escalated_at atomically before emailing the host", async () => {
         const past = Date.now() - 1000;
-        mockGetTaskById.mockResolvedValue({ id: "task-1", status: "Pending", due_date: past, title: "Fix AC" });
+        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: past, title: "Fix AC" });
 
         await escalateTask("host-1", "task-1");
 
-        expect(mockGetHostEmailById).toHaveBeenCalledWith("host-1");
-        expect(mockSendTaskEscalationEmail).toHaveBeenCalledWith("host@example.com", expect.objectContaining({ id: "task-1" }));
-        expect(mockUpdateTaskInDb).toHaveBeenCalledWith(
+        expect(mockEscalateTaskInDb).toHaveBeenCalledWith(
             expect.anything(),
             "task-1",
-            expect.objectContaining({ escalated_at: expect.any(Number) })
+            "host-1",
+            expect.any(Number)
         );
+        expect(mockGetHostEmailById).toHaveBeenCalledWith("host-1");
+        expect(mockSendTaskEscalationEmail).toHaveBeenCalledWith("host@example.com", expect.objectContaining({ id: "task-1" }));
     });
 
-    it("does not stamp escalated_at when sending the email fails", async () => {
+    it("rejects when a concurrent request already claimed the escalation", async () => {
         const past = Date.now() - 1000;
-        mockGetTaskById.mockResolvedValue({ id: "task-1", status: "Pending", due_date: past, title: "Fix AC" });
+        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: past, title: "Fix AC" });
+        mockEscalateTaskInDb.mockResolvedValue(false);
+
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/already been escalated/);
+        expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
+    });
+
+    it("releases the claim when sending the email fails", async () => {
+        const past = Date.now() - 1000;
+        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: past, title: "Fix AC" });
         mockSendTaskEscalationEmail.mockRejectedValue(new Error("Failed to send escalation email"));
 
         await expect(escalateTask("host-1", "task-1")).rejects.toThrow("Failed to send escalation email");
-        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).toHaveBeenCalledWith(expect.anything(), "task-1", { escalated_at: null });
     });
 });
