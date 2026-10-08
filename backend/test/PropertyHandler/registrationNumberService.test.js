@@ -7,7 +7,6 @@ import { TypeException } from "../../functions/PropertyHandler/util/exception/Ty
 const PROPERTY_ID = "property-1";
 const UUID = "11111111-1111-4111-8111-111111111111";
 
-// Keep these two tables identical to src/tests/settings/registrationNumberUtils.test.js in the web app.
 const PLACEHOLDER_CASES = [
   `AUTO-${UUID}`,
   `auto-${UUID}`,

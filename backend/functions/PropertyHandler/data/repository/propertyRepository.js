@@ -171,8 +171,6 @@ export class PropertyRepository {
                 .where("id = :id", { id: propertyId })
                 .execute();
         } catch (error) {
-            // Backstop for the race between the service pre-check and this UPDATE. Only registrationnumber
-            // is written here, so any unique violation is that column's index.
             if (error?.code === UNIQUE_VIOLATION_CODE || error?.driverError?.code === UNIQUE_VIOLATION_CODE) {
                 throw new ConflictException(REGISTRATION_NUMBER_TAKEN_MESSAGE);
             }

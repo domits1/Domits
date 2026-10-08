@@ -19,6 +19,7 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
@@ -596,12 +597,12 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // PATCH /property/registration
-    // -------------------------
     async updateRegistrationNumber(event) {
         try {
-            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            if (!accessToken) {
+                throw new Unauthorized("You must be logged in.");
+            }
 
             let rawBody;
             try {

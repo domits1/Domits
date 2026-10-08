@@ -46,10 +46,13 @@ Error responses have the body `{ "message": "String" }`. Clients should map on t
 | Status | Meaning |
 |--------|---------|
 | 400 | Missing `propertyId`, or the registration number failed validation |
+| 401 | The Authorization header is missing, or the token is invalid or expired |
 | 403 | The caller does not own the property |
 | 404 | The property does not exist |
 | 409 | The registration number is already used by another listing |
 | 500 | Unexpected error |
+
+The Compliance page shows the generic save error for `401` and `500`.
 
 ### Manual API Gateway steps
 
@@ -63,4 +66,4 @@ This repository has no infrastructure as code, so the route has to be created by
 5. Confirm the Lambda resource policy allows invocation from the new method (it normally covers the whole API already).
 
 > **Backend deploy + API Gateway route must be live before the frontend Compliance page is released.**
-> Until then the page can load listings but every save fails with a generic error.
+> Until then the page can load listings, but every save fails and the page shows the generic save error.

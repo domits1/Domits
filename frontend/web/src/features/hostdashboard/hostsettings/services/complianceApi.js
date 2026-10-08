@@ -47,7 +47,6 @@ const warnAboutMissingRegistrationNumbers = (options) => {
 export const fetchCompliancePropertyOptions = async () => {
     const { listings, status } = await fetchListingsFromHostDashboard(requireToken());
 
-    // The backend answers 404 ("No property found.") for a host without listings; that is an empty list, not a failure.
     if (status === HTTP_NOT_FOUND) {
         return [];
     }
@@ -79,7 +78,6 @@ export const saveRegistrationNumber = async (propertyId, registrationNumber) => 
     }
 
     const saved = await response.json();
-    // Without the stored value the page has no valid baseline, so a body without it counts as a failed save.
     if (isRegistrationNumberMissing(saved?.registrationNumber)) {
         throw new ComplianceApiError(HTTP_INTERNAL_SERVER_ERROR);
     }
