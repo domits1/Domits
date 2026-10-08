@@ -1,8 +1,16 @@
 const DESTINATION_MENU_URL =
   "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/destinations/menu";
 const DESTINATION_PATH_PREFIX = "/destinations/";
+const MENU_TTL_MS = 5 * 60 * 1000;
+const MENU_TIMEOUT_MS = 10 * 1000;
 
-let menuPromise = null;
+let menu = null;
+
+const withTimeout = (promise) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("The destination menu did not answer in time.")), MENU_TIMEOUT_MS);
+    promise.then(resolve, reject).finally(() => clearTimeout(timer));
+  });
 
 const toItem = (item) => ({
   name: String(item?.name || "").trim(),
@@ -27,23 +35,31 @@ export const normalizeDestinationMenu = (payload) =>
     }))
     .filter(hasPage);
 
-export const fetchDestinationMenu = () => {
-  if (!menuPromise) {
-    menuPromise = fetch(DESTINATION_MENU_URL, { method: "GET" })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`The destination menu answered ${response.status}.`);
-        }
-        return normalizeDestinationMenu(await response.json());
-      })
-      .catch((error) => {
-        menuPromise = null;
-        throw error;
-      });
+const load = async () => {
+  const response = await fetch(DESTINATION_MENU_URL, { method: "GET" });
+  if (!response.ok) {
+    throw new Error(`The destination menu answered ${response.status}.`);
   }
-  return menuPromise;
+  const payload = await response.json();
+  if (!Array.isArray(payload?.continents)) {
+    throw new Error("The destination menu answered an unexpected shape.");
+  }
+  return normalizeDestinationMenu(payload);
+};
+
+export const fetchDestinationMenu = () => {
+  if (!menu || menu.expiresAt <= Date.now()) {
+    const promise = withTimeout(load()).catch((error) => {
+      if (menu?.promise === promise) {
+        menu = null;
+      }
+      throw error;
+    });
+    menu = { promise, expiresAt: Date.now() + MENU_TTL_MS };
+  }
+  return menu.promise;
 };
 
 export const forgetDestinationMenu = () => {
-  menuPromise = null;
+  menu = null;
 };

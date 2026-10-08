@@ -28,10 +28,12 @@ const MENU = [
   },
 ];
 
+const onOpen = jest.fn();
+
 const renderMenu = (language = "en") =>
   render(
     <LanguageContext.Provider value={{ language }}>
-      <DestinationsMenu />
+      <DestinationsMenu onOpen={onOpen} />
     </LanguageContext.Provider>
   );
 
@@ -50,6 +52,7 @@ describe("the destinations menu", () => {
     expect(fetchDestinationMenu).not.toHaveBeenCalled();
 
     await openMenu();
+    expect(onOpen).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status")).toHaveTextContent("Loading destinations…");
     await act(async () => answer(MENU));
     expect(screen.getByRole("link", { name: "Spain" })).toHaveAttribute("href", "/destinations/europe/spain");
@@ -115,9 +118,14 @@ describe("the destinations menu", () => {
 
     await openMenu();
     const europe = await screen.findByRole("button", { name: "Europe 3" });
+    const asia = screen.getByRole("button", { name: "Asia 1" });
+    expect(europe).toHaveAttribute("tabindex", "0");
+    expect(asia).toHaveAttribute("tabindex", "-1");
     act(() => europe.focus());
     fireEvent.keyDown(europe, { key: "ArrowDown" });
-    expect(screen.getByRole("button", { name: "Asia 1" })).toHaveFocus();
+    expect(asia).toHaveFocus();
+    expect(asia).toHaveAttribute("tabindex", "0");
+    expect(europe).toHaveAttribute("tabindex", "-1");
     expect(screen.getByRole("link", { name: "Thailand" })).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -131,6 +139,7 @@ describe("the destinations menu", () => {
     renderMenu();
 
     await openMenu();
+    await screen.findByRole("link", { name: "Spain" });
     fireEvent.mouseDown(document.body);
     await waitFor(() => expect(screen.queryByRole("link", { name: "Spain" })).not.toBeInTheDocument());
   });

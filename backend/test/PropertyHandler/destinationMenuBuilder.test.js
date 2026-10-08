@@ -54,11 +54,12 @@ describe("the destination menu", () => {
   });
 
   it("puts the featured countries and cities first in the order given and ignores unknown slugs", () => {
-    const menu = menuFor({ DESTINATION_FEATURED: "atlantis, Spain, Málaga" });
+    const menu = menuFor({ DESTINATION_FEATURED: "atlantis, Spain, Málaga, Marbella, Portugal, Sintra" });
 
     const [europe] = menu.continents;
     expect(names(europe.countries)).toEqual(["Spain", "Portugal"]);
     expect(names(europe.countries[0].cities)).toEqual(["Málaga", "Marbella"]);
+    expect(names(europe.countries[1].cities)).toEqual(["Sintra", "Lisbon"]);
   });
 
   it("keeps a flagged city and a country below the minimum out of the menu", () => {

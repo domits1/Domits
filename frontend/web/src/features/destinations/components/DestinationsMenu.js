@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useId, useRef, useState } from "react";
+import PropTypes from "prop-types";
+import arrowDown from "../../../images/arrow-down-icon.svg";
 import { LanguageContext } from "../../../context/LanguageContext";
 import en from "../../../content/en.json";
 import nl from "../../../content/nl.json";
@@ -13,7 +15,7 @@ export const isDestinationsMenuEnabled = () => process.env.REACT_APP_DESTINATION
 
 const ARROW_STEPS = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 };
 
-function DestinationsMenu() {
+function DestinationsMenu({ onOpen }) {
   const { language } = useContext(LanguageContext);
   const copy = (contentByLanguage[language] || en).component.destinations;
   const panelId = useId();
@@ -104,7 +106,7 @@ function DestinationsMenu() {
       return (
         <div className="destinations-menu__note" role="alert">
           <span>{copy.unavailable}</span>
-          <button type="button" className="destinations-menu__retry" onClick={load}>
+          <button type="button" className="headerButtons destinations-menu__retry" onClick={load}>
             {copy.retry}
           </button>
         </div>
@@ -126,6 +128,7 @@ function DestinationsMenu() {
                     continentRefs.current[index] = element;
                   }}
                   className={`destinations-menu__continent${isSelected ? " is-selected" : ""}`}
+                  tabIndex={isSelected ? 0 : -1}
                   aria-current={isSelected ? "true" : undefined}
                   onMouseEnter={() => setSelectedPath(continent.path)}
                   onFocus={() => setSelectedPath(continent.path)}
@@ -173,9 +176,14 @@ function DestinationsMenu() {
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((wasOpen) => !wasOpen)}>
+        onClick={() => {
+          if (!open) {
+            onOpen?.();
+          }
+          setOpen(!open);
+        }}>
         {copy.title}
-        <span className="destinations-menu__chevron" aria-hidden="true" />
+        <img src={arrowDown} alt="" />
       </button>
       {open && (
         <div className="destinations-menu__panel" id={panelId}>
@@ -185,5 +193,9 @@ function DestinationsMenu() {
     </div>
   );
 }
+
+DestinationsMenu.propTypes = {
+  onOpen: PropTypes.func,
+};
 
 export default DestinationsMenu;

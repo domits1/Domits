@@ -2871,7 +2871,7 @@ export class PropertyController {
             console.error(error);
             return {
                 statusCode: 500,
-                headers: destinationMenuHeaders,
+                headers: { ...destinationMenuHeaders, "Cache-Control": "no-store" },
                 body: JSON.stringify({ message: "Destinations are not available right now." }),
             };
         }

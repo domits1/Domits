@@ -67,13 +67,32 @@ describe("the destination menu service", () => {
     expect(globalThis.fetch.mock.calls[0][0]).toMatch(/\/property\/destinations\/menu$/);
   });
 
-  it("forgets a failed load so the next call tries again", async () => {
+  it("forgets a failed, malformed or stalled load so the next call tries again", async () => {
+    jest.useFakeTimers();
     globalThis.fetch
       .mockResolvedValueOnce(jsonResponse({ message: "down" }, false))
+      .mockResolvedValueOnce(jsonResponse({ message: "unexpected" }))
+      .mockReturnValueOnce(new Promise(() => {}))
       .mockResolvedValueOnce(jsonResponse(PAYLOAD));
 
     await expect(fetchDestinationMenu()).rejects.toThrow("500");
+    await expect(fetchDestinationMenu()).rejects.toThrow("unexpected shape");
+    const stalled = fetchDestinationMenu();
+    jest.advanceTimersByTime(10_000);
+    await expect(stalled).rejects.toThrow("did not answer in time");
     expect((await fetchDestinationMenu())[0].name).toBe("Europe");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(4);
+    jest.useRealTimers();
+  });
+
+  it("asks again after five minutes so a destination that lost its page drops out", async () => {
+    jest.useFakeTimers();
+    globalThis.fetch.mockResolvedValue(jsonResponse(PAYLOAD));
+
+    await fetchDestinationMenu();
+    jest.advanceTimersByTime(5 * 60 * 1000);
+    await fetchDestinationMenu();
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
   });
 });

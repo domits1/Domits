@@ -387,7 +387,14 @@ function Header({ setSearchResults, setLoading }) {
             </a>
           </div>
 
-          {isDestinationsMenuEnabled() && <DestinationsMenu />}
+          {isDestinationsMenuEnabled() && (
+            <DestinationsMenu
+              onOpen={() => {
+                setAppsMenuOpen(false);
+                setDropdownVisible(false);
+              }}
+            />
+          )}
 
           {!hiddenSearchPaths.includes(location.pathname) && (
             <SearchBar

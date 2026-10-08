@@ -12,14 +12,6 @@
   }
 }
 
-.destinations-menu__chevron {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: translateY(-0.15rem) rotate(45deg);
-}
-
 .destinations-menu__panel {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -80,9 +72,14 @@
   margin: 0.25rem 0 0.75rem;
   font-weight: 700;
   color: var(--primary-color);
+}
+
+.destinations-menu__panel a {
   text-decoration: none;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
+    color: var(--primary-color);
     text-decoration: underline;
   }
 }
@@ -101,7 +98,6 @@
     a {
       color: #0d1a26;
       font-weight: 700;
-      text-decoration: none;
     }
   }
 
@@ -116,13 +112,6 @@
     padding: 0.2rem 0;
     color: #475467;
     font-size: 0.9rem;
-    text-decoration: none;
-  }
-
-  a:hover,
-  a:focus-visible {
-    color: var(--primary-color);
-    text-decoration: underline;
   }
 }
 
@@ -141,13 +130,19 @@
   color: #475467;
 }
 
-.destinations-menu__retry {
+.app-header .destinations-menu__retry {
   padding: 0.4rem 0.8rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 0.5rem;
-  background: #fff;
-  font: inherit;
-  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+@media screen and (max-width: 1150px) {
+  .destinations-menu__panel {
+    position: fixed;
+    top: var(--app-header-h, 5.625rem);
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -162,17 +157,10 @@
     position: static;
   }
 
-  .app-header .destinations-menu__trigger {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.95rem;
-  }
-
   .destinations-menu__panel {
-    position: fixed;
     top: var(--app-header-h, 7.5rem);
     right: 0;
     left: 0;
-    width: auto;
     max-height: calc(100vh - var(--app-header-h, 7.5rem));
     border-radius: 0;
   }

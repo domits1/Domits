@@ -35,5 +35,3 @@ export const buildDestinationMenu = (destinations, { featured = [] } = {}) => {
 
   return { continents };
 };
-
-export default buildDestinationMenu;

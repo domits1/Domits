@@ -14,6 +14,17 @@ const MENU = {
   ],
 };
 
+const row = (path, type, parentId, name, activeListings = 0) => ({
+  id: path,
+  type,
+  parentId,
+  slug: path.split("/").pop(),
+  path,
+  name,
+  countryCode: null,
+  activeListings,
+});
+
 const buildController = (buildDestinationMenu) => {
   const controller = new PropertyController();
   controller.destinationTreeService = { buildDestinationMenu };
@@ -42,6 +53,7 @@ describe("GET /property/destinations/menu", () => {
     ).getDestinationMenu({});
 
     expect(response.statusCode).toBe(500);
+    expect(response.headers["Cache-Control"]).toBe("no-store");
     expect(JSON.parse(response.body)).toEqual({ message: "Destinations are not available right now." });
     expect(response.body).not.toContain("connection refused");
     expect(error).toHaveBeenCalled();
@@ -51,33 +63,9 @@ describe("GET /property/destinations/menu", () => {
   it("builds the menu from the same eligible destinations as the pages, and lets a repository failure through", async () => {
     const repository = {
       listDestinationsWithActiveListings: jest.fn(async () => [
-        {
-          id: "/destinations/europe",
-          type: "continent",
-          parentId: null,
-          slug: "europe",
-          path: "/destinations/europe",
-          name: "Europe",
-          activeListings: 0,
-        },
-        {
-          id: "/destinations/europe/spain",
-          type: "country",
-          parentId: "/destinations/europe",
-          slug: "spain",
-          path: "/destinations/europe/spain",
-          name: "Spain",
-          activeListings: 1,
-        },
-        {
-          id: "/destinations/asia",
-          type: "continent",
-          parentId: null,
-          slug: "asia",
-          path: "/destinations/asia",
-          name: "Asia",
-          activeListings: 0,
-        },
+        row("/destinations/europe", "continent", null, "Europe"),
+        row("/destinations/europe/spain", "country", "/destinations/europe", "Spain", 1),
+        row("/destinations/asia", "continent", null, "Asia"),
       ]),
     };
     const service = new DestinationTreeService({
