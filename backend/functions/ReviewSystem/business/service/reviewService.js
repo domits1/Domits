@@ -75,8 +75,58 @@ export class ReviewService {
     return this.repository.getPropertyReviewScore(id, username);
   }
 
+  // Group current eligible scores by review creation period, rather than reconstructing past edits.
+  // UTC buckets and explicit empty periods make the response ready for a line chart.
+  async getPropertyReviewPerformance(username, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const interval = query.interval === undefined ? "month" : query.interval;
+    if (!["week", "month", "year"].includes(interval)) {
+      throw new BadRequestException("interval must be week, month, or year.");
+    }
+    const parseDate = (value, name) => {
+      if (typeof value !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
+        throw new BadRequestException(`${name} must be YYYY-MM-DD.`);
+      }
+      const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+      if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+        throw new BadRequestException(`${name} must be a valid date.`);
+      }
+      return timestamp;
+    };
+    const start = parseDate(query.startDate, "startDate");
+    const end = parseDate(query.endDate, "endDate");
+    if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
+    const cursor = new Date(start);
+    if (interval === "week") {
+      cursor.setUTCDate(cursor.getUTCDate() - (cursor.getUTCDay() + 6) % 7);
+    } else {
+      cursor.setUTCDate(1);
+      if (interval === "year") cursor.setUTCMonth(0);
+    }
+    const periodDates = [];
+    while (cursor.getTime() <= end) {
+      if (periodDates.length === 120) {
+        throw new BadRequestException("Select a range covering at most 120 periods.");
+      }
+      periodDates.push(cursor.toISOString().slice(0, 10));
+      if (interval === "week") cursor.setUTCDate(cursor.getUTCDate() + 7);
+      else if (interval === "month") cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+      else cursor.setUTCFullYear(cursor.getUTCFullYear() + 1);
+    }
+    // The exclusive bound includes the entire requested end date in UTC.
+    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, end + 86_400_000, interval);
+    const byPeriod = new Map(rows.map((row) => [row.period, row]));
+    const periods = [];
+    for (const period of periodDates) {
+      const row = byPeriod.get(period);
+      periods.push({ period, average_score: row ? Number(row.average_score) : null,
+        review_count: row ? Number(row.review_count) : 0 });
+    }
+    return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
+      end_date: query.endDate, periods };
+  }
+
   // Return category-level review metrics for a property the caller manages.
-  // This helps a host understand feedback by category without leaking other owners' data.
   async getPropertyCategoryRatings(username, propertyId) {
     const id = await this.authorizeManagedProperty(username, propertyId);
     const categories = await this.repository.getPropertyCategoryRatings(id, username);
