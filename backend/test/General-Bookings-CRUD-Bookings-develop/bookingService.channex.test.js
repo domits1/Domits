@@ -430,6 +430,38 @@ describe("BookingService Channex booking availability hooks", () => {
     );
   });
 
+  test("mark-checked-out is exposed as a PATCH action", async () => {
+    const markCheckedOut = jest.fn().mockResolvedValue({ bookingId: "booking-1" });
+    const controller = new ReservationController({
+      bookingService: { markCheckedOut },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({ action: "mark-checked-out", bookingId: "booking-1" }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(markCheckedOut).toHaveBeenCalledWith("booking-1", "Bearer host-token");
+  });
+
+  test("mark-checked-out requires a bookingId", async () => {
+    const markCheckedOut = jest.fn();
+    const controller = new ReservationController({
+      bookingService: { markCheckedOut },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({ action: "mark-checked-out" }),
+    });
+
+    expect(markCheckedOut).not.toHaveBeenCalled();
+    expect(response.response).toMatch(/Missing bookingId/);
+  });
+
   test("modify-booking-dates returns a JSON-safe response after successful side effects", async () => {
     const bookingBefore = {
       id: "booking-1",
