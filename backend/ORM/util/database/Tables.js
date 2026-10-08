@@ -136,6 +136,5 @@ export const Tables = [
   Review_Category,
   Review_Request,
   Review_Response,
-];
   DirectBookingWebsiteRatePlan,
 ];
