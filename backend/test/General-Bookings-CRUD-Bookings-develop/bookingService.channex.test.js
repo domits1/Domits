@@ -151,6 +151,7 @@ describe("BookingService Channex booking availability hooks", () => {
         property_id: "domits-property-1",
         property_snapshot_label: "Demo Property",
         due_date: Date.parse("2026-06-01T00:00:00.000Z"),
+        source: "automation",
       })
     );
   });

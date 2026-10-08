@@ -151,6 +151,7 @@ class BookingService {
       property_id: propertyId,
       property_snapshot_label: fetchedProperty.title,
       due_date: arrivalDateMs,
+      source: "automation",
     });
 
     return { ...result, isInquiry };
