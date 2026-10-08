@@ -149,9 +149,15 @@ export const updateTask = async (hostId, taskId, updateData) => {
 };
 
 export const escalateTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
+
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
     if (!task) throw new Error("Task not found or access denied");
+
+    if (task.escalated_at) {
+        throw new BadRequestException("Task has already been escalated");
+    }
 
     if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
         throw new BadRequestException("Task is not breaching its SLA");

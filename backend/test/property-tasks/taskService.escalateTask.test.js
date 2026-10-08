@@ -29,10 +29,23 @@ describe("escalateTask", () => {
         mockUpdateTaskInDb.mockResolvedValue();
     });
 
+    it("rejects when taskId is missing", async () => {
+        await expect(escalateTask("host-1", undefined)).rejects.toThrow(/id is required/);
+        expect(mockGetTaskById).not.toHaveBeenCalled();
+    });
+
     it("rejects when the task does not belong to this host", async () => {
         mockGetTaskById.mockResolvedValue(null);
 
         await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/Task not found/);
+        expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
+    });
+
+    it("rejects escalating a task that was already escalated", async () => {
+        const past = Date.now() - 1000;
+        mockGetTaskById.mockResolvedValue({ id: "task-1", status: "Pending", due_date: past, escalated_at: Date.now() - 500 });
+
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/already been escalated/);
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
     });
 
@@ -57,5 +70,14 @@ describe("escalateTask", () => {
             "task-1",
             expect.objectContaining({ escalated_at: expect.any(Number) })
         );
+    });
+
+    it("does not stamp escalated_at when sending the email fails", async () => {
+        const past = Date.now() - 1000;
+        mockGetTaskById.mockResolvedValue({ id: "task-1", status: "Pending", due_date: past, title: "Fix AC" });
+        mockSendTaskEscalationEmail.mockRejectedValue(new Error("Failed to send escalation email"));
+
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow("Failed to send escalation email");
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
     });
 });
