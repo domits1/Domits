@@ -29,8 +29,8 @@ export class Controller {
     this.authManager = authManager;
   }
 
-  // Use verified identity instead of client-supplied IDs to prevent impersonation.
-  // Reservation ownership can then be checked against a trusted caller.
+  // Create a review for the authenticated user and validated request body.
+  // This prevents impersonation by trusting the server-verified caller instead of client-supplied data.
   async createReview(event) {
     try {
       const authenticatedUser = this.authManager.getUser(event);
@@ -75,8 +75,8 @@ export class Controller {
     }
   }
 
-  // Delete a review after confirming the authenticated user owns it.
-  // This prevents one user from removing another user's review record.
+  // Remove a review only for the authenticated owner.
+  // This stops one user from deleting another user's review record.
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
