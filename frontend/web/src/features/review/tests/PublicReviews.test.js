@@ -21,7 +21,7 @@ test("shows all page cards, summary, categories, verified stay and pagination", 
     .mockResolvedValueOnce({ ...empty, review_count: 11 });
   render(<PublicReviews propertyId="p1" />);
   await screen.findByText("Stay 3");
-  expect(screen.getAllByText("Verified stay")).toHaveLength(3);
+  expect(screen.getAllByText("Verified Stay")).toHaveLength(3);
   expect(screen.getAllByText("Comfort: 4.5/5")).toHaveLength(3);
   expect(screen.getByText(/11 reviews/)).toBeTruthy();
   expect(screen.getAllByText(/^Reviewed on/)[0]).toHaveAttribute("dateTime", "1970-01-01T00:00:01.000Z");

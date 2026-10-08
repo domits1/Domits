@@ -6,7 +6,7 @@ import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 
-const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
+import { completedStayError } from "../../util/verifiedStay.js";
 
 
 const REVIEW_MIN_LENGTH = 1;
@@ -98,6 +98,7 @@ export class ReviewService {
     // Verified preferences never relax the existing public eligibility rules.
     const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
       minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort, cursor,
+      verificationNow: this.now(),
     });
     if (!result) throw new NotFoundException("Property not found.");
     return result;
@@ -332,17 +333,9 @@ export class ReviewService {
       throw new ForbiddenException("You can only review your own reservation.");
     }
 
-    const status = String(booking.status || "").trim().toLowerCase();
-    const checkoutAt = Number(booking.departuredate);
     const now = this.now();
-
-    if (!REVIEWABLE_STATUSES.has(status)) {
-      throw new BadRequestException("Only paid or confirmed reservations can be reviewed.");
-    }
-
-    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > now) {
-      throw new BadRequestException("You can only review a reservation after checkout.");
-    }
+    const stayError = completedStayError(booking, now);
+    if (stayError) throw new BadRequestException(stayError);
 
     const duplicateKey = { booking_id: bookingId, review_type: GUEST_REVIEW_TYPE, reviewer_user_id: callerUserId };
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {

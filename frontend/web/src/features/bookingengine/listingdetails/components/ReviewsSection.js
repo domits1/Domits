@@ -53,9 +53,9 @@ const ReviewCard = ({ review }) => (
         <time className="reviews-section__card-time" dateTime={new Date(review.date).toISOString()}>
           Reviewed on {new Date(review.date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
         </time> : <span className="reviews-section__card-time">{review.timeAgo}</span>}
-      {review.verified && (
-        <span className="reviews-section__card-verified">
-          <CheckCircleIcon fontSize="inherit" /> Verified stay
+      {review.verified === true && (
+        <span className="reviews-section__card-verified" title="Linked to a paid or confirmed reservation whose checkout has passed.">
+          <CheckCircleIcon fontSize="inherit" aria-hidden="true" /> Verified Stay
         </span>
       )}
     </div>
