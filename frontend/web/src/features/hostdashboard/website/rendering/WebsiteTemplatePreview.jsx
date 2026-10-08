@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { LanguageContext } from "../../../../context/LanguageContext";
 import PropTypes from "prop-types";
 import styles from "./WebsiteTemplatePreview.module.scss";
 import motionStyles from "./animations/WebsiteTemplateMotion.module.scss";
 import { useWebsiteScrollReveal } from "./animations/useWebsiteScrollReveal";
-import { getWebsiteTemplateById } from "../websiteTemplates";
+import { getWebsiteTemplateById, getWebsiteTemplateCopy } from "../websiteTemplates";
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
 import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
@@ -135,13 +136,11 @@ const usePreviewScaleMetrics = (viewportWidth, contentVersion) => {
 };
 
 function UnsupportedTemplatePreview({ templateName }) {
+  const { language } = useContext(LanguageContext);
   return (
     <div className={styles.previewUnsupported}>
-      <h3>Preview not implemented yet</h3>
-      <p>
-        {templateName} is still a silhouette-only option. Real preview rendering is currently available
-        for Panorama Landing, Trust Signals, and Experience Journey.
-      </p>
+      <h3>{templateName}</h3>
+      <p>{getWebsiteTemplateCopy(language).unsupportedPreview}</p>
     </div>
   );
 }
@@ -152,7 +151,6 @@ UnsupportedTemplatePreview.propTypes = {
 
 const websiteTemplatePreviewModelPropType = PropTypes.shape({
   source: PropTypes.shape({
-    hostId: PropTypes.string,
     propertyId: PropTypes.string,
   }),
   host: PropTypes.shape({

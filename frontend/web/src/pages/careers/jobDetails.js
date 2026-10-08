@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Jobs from "./jobs.json";
 import { useNavigate, useParams } from 'react-router-dom';
+import { useNoindexMeta } from "../../features/seo/ownedHeadTags";
 import office from '../../images/office.webp';
 import coWork from '../../images/co-work.jpg';
 
@@ -12,6 +13,8 @@ function JobDetails() {
     const { id } = useParams();
     // const job = Jobs.find((job, index) => index.toString() === id);
     const job = Jobs.find(job => job.id === parseInt(id, 10));
+
+    useNoindexMeta(!job, "job-not-found");
 
     if (!job) {
        return <div>Job not found</div>

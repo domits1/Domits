@@ -7,6 +7,7 @@ import { Booking } from "../../models/Booking.js";
 import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
 import { EnterpriseRatePlan } from "../../models/EnterpriseRatePlan.js";
+import { DirectBookingWebsiteRatePlan } from "../../models/DirectBookingWebsiteRatePlan.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
@@ -48,9 +49,11 @@ import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThr
 import { MessageAutomation } from "../../models/automation/MessageAutomation.js";
 import { MessageAutomationDelivery } from "../../models/automation/MessageAutomationDelivery.js";
 import { BookingAutomationOutbox } from "../../models/automation/BookingAutomationOutbox.js";
+import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbox.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
+import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checklist_Item.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
@@ -113,10 +116,12 @@ export const Tables = [
   MessageAutomation,
   MessageAutomationDelivery,
   BookingAutomationOutbox,
+  ChannexAriOutbox,
 
   User_Table,
   PropertyTask,
   Property_Task_Activity,
+  Property_Task_Checklist_Item,
   Host_Settings,
   Communication_Preferences,
   Company_Profile,
@@ -129,4 +134,5 @@ export const Tables = [
   Review_Rating,
   Review_Category,
   Review_Request,
+  DirectBookingWebsiteRatePlan,
 ];

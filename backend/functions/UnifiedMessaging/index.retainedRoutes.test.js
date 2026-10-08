@@ -14,12 +14,16 @@ const mockIntegrationControllerMethods = {
   checkWhatsAppTokenHealth: jest.fn(),
   refreshWhatsAppToken: jest.fn(),
   listIntegrations: jest.fn(),
+  upsertIntegrationProperty: jest.fn(),
 };
 const mockIngestionControllerMethods = {
   ingestMessages: jest.fn(),
 };
 const mockWhatsAppWebhookControllerMethods = {
   verifyWebhook: jest.fn(),
+  handleWebhookEvent: jest.fn(),
+};
+const mockChannexWebhookControllerMethods = {
   handleWebhookEvent: jest.fn(),
 };
 
@@ -43,6 +47,11 @@ jest.mock("./controller/whatsappWebhookController.js", () => ({
   default: jest.fn().mockImplementation(() => mockWhatsAppWebhookControllerMethods),
 }));
 
+jest.mock("./controller/channexWebhookController.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockChannexWebhookControllerMethods),
+}));
+
 jest.mock("../.shared/channelManagement/handler/channelManagementHandler.js", () => ({
   __esModule: true,
   handleChannelManagementEvent: jest.fn().mockResolvedValue(null),
@@ -55,6 +64,7 @@ const allControllerMethods = [
   ...Object.values(mockIntegrationControllerMethods),
   ...Object.values(mockIngestionControllerMethods),
   ...Object.values(mockWhatsAppWebhookControllerMethods),
+  ...Object.values(mockChannexWebhookControllerMethods),
 ];
 
 const buildEvent = ({ method = "GET", path, query = {}, body = null, headers = {} }) => ({
@@ -96,6 +106,12 @@ describe("UnifiedMessaging retained route contracts", () => {
       "/default/webhooks/whatsapp",
       mockWhatsAppWebhookControllerMethods.handleWebhookEvent,
       "webhook-event",
+    ],
+    [
+      "POST",
+      "/default/webhooks/channex",
+      mockChannexWebhookControllerMethods.handleWebhookEvent,
+      "channex-webhook-event",
     ],
   ])("%s %s keeps its controller contract", async (method, path, controllerMethod, route) => {
     controllerMethod.mockResolvedValue(buildControllerResponse(route));
@@ -145,6 +161,21 @@ describe("UnifiedMessaging retained route contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual([{ id: "integration-1", channel: "WHATSAPP" }]);
     expect(mockIntegrationControllerMethods.listIntegrations).toHaveBeenCalledWith(event);
+  });
+
+  // Saving a mapping without a user check let any caller pick the account a property's data
+  // goes through; mappings are saved through the Channex routes, which check the owner (#3365).
+  test("POST /integrations/{id}/properties is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/integration-1/properties",
+        body: JSON.stringify({ domitsPropertyId: "property-1", externalPropertyId: "external-property-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
   });
 
   test("OPTIONS keeps the existing CORS response without invoking a controller", async () => {

@@ -12,20 +12,23 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
+import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
-import ChannexCalendarChangeSyncClient, {
-    createCalendarChangeFallbackEvidence,
-} from "../business/service/channexCalendarChangeSyncClient.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
 } from "../util/exception/WebsiteCustomDomainError.js";
-import { toHostWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
+import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
+import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
+import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -67,7 +70,7 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
-const CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS = 500;
+const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
 const CALENDAR_CHANGE_FIELD_GROUPS = Object.freeze({
     availability: ["isAvailable"],
     rates: ["nightlyPrice"],
@@ -94,6 +97,18 @@ const trimRepeatedCharacterEdges = (value, character) => {
     return value.slice(startIndex, endIndex);
 };
 const compareAsString = (left, right) => String(left).localeCompare(String(right));
+const DAY_MS = 24 * 60 * 60 * 1000;
+const calendarDateToMs = (date) => Date.UTC(Math.floor(date / 10000), Math.floor((date % 10000) / 100) - 1, date % 100);
+// Splits YYYYMMDD calendar dates into runs of consecutive days, as [first, last] pairs.
+const toConsecutiveRuns = (dates) => {
+    const runs = [];
+    for (const date of [...new Set(dates)].sort((left, right) => left - right)) {
+        const run = runs.at(-1);
+        if (run && calendarDateToMs(date) - calendarDateToMs(run[1]) === DAY_MS) run[1] = date;
+        else runs.push([date, date]);
+    }
+    return runs;
+};
 const slugifyWebsiteDomainLabel = (value) => {
     const normalizedValue = cleanWebsiteText(value).normalize("NFKD").toLowerCase();
     let sanitizedValue = "";
@@ -178,6 +193,26 @@ const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) 
 
     return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
 };
+const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
+    String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
+const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
+    const liveFlaggedCustomDomain = domains.find(
+        (domainEntry) =>
+            domainEntry?.isPrimary === true &&
+            isDirectBookingWebsiteCustomDomain(domainEntry) &&
+            resolveDirectBookingWebsiteRuntimeDomainStatus(site, domainEntry) === "ACTIVE"
+    );
+    const mainAddress =
+        liveFlaggedCustomDomain || domains.find((domainEntry) => isDirectBookingWebsiteFallbackDomain(domainEntry));
+    if (!mainAddress?.domain) {
+        return null;
+    }
+
+    return {
+        domain: mainAddress.domain,
+        status: resolveDirectBookingWebsiteRuntimeDomainStatus(site, mainAddress),
+    };
+};
 
 export class PropertyController {
 
@@ -186,8 +221,7 @@ export class PropertyController {
 
     constructor(
         dynamoDbClient = new DynamoDBClient({}),
-        systemManagerRepository = new SystemManagerRepository(),
-        { channexCalendarChangeSyncClient = new ChannexCalendarChangeSyncClient() } = {}
+        systemManagerRepository = new SystemManagerRepository()
     ) {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
@@ -197,7 +231,7 @@ export class PropertyController {
         this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
-        this.channexCalendarChangeSyncClient = channexCalendarChangeSyncClient;
+        this.directBookingWebsiteRatePlanService = new DirectBookingWebsiteRatePlanService();
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
         this.websiteCustomDomainService = null;
@@ -544,11 +578,6 @@ export class PropertyController {
             );
 
             await new PriceLabsCalendarNotifier().notifyListingChange(hostId);
-            await this.notifyChannexOverviewCalendarChange({
-                hostId,
-                propertyId: normalizedOverviewPayload.propertyId,
-                normalizedOverviewPayload,
-            });
 
             return {
                 statusCode: 204,
@@ -667,20 +696,16 @@ export class PropertyController {
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
             const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
+            const channexChanges = this.buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides);
 
             const overrides = await this.propertyService.updatePropertyCalendarOverrides(
                 propertyId,
                 normalizedOverrides,
-                normalizedRange
+                normalizedRange,
+                channexChanges
             );
 
             await new PriceLabsCalendarNotifier().notifyCalendarChange(hostId);
-            const channexCalendarChangeSync = await this.notifyChannexCalendarOverrideChange({
-                hostId,
-                propertyId,
-                previousOverrides,
-                normalizedOverrides,
-            });
 
             return {
                 statusCode: 200,
@@ -688,7 +713,6 @@ export class PropertyController {
                 body: JSON.stringify({
                     propertyId,
                     overrides,
-                    channexCalendarChangeSync,
                 }),
             };
         } catch (error) {
@@ -729,31 +753,6 @@ export class PropertyController {
         return previousValue !== nextValue;
     }
 
-    collectCalendarOverrideChangeTypes(previousOverrides, normalizedOverrides) {
-        const previousByDate = this.buildCalendarOverrideMap(previousOverrides);
-        const changeTypes = new Set();
-        const changedDates = [];
-
-        for (const override of normalizedOverrides) {
-            const previousOverride = previousByDate.get(override.calendarDate) || {};
-            const dateChangeTypes = Object.entries(CALENDAR_CHANGE_FIELD_GROUPS)
-                .filter(([, fields]) =>
-                    fields.some((field) => this.compareCalendarOverrideField(previousOverride, override, field))
-                )
-                .map(([changeType]) => changeType);
-
-            if (dateChangeTypes.length) {
-                changedDates.push(this.calendarDateIntToIsoDate(override.calendarDate));
-                dateChangeTypes.forEach((changeType) => changeTypes.add(changeType));
-            }
-        }
-
-        return {
-            changedDates: changedDates.filter(Boolean).sort(compareAsString),
-            changeTypes: Array.from(changeTypes).sort(compareAsString),
-        };
-    }
-
     async getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides) {
         const dates = normalizedOverrides.map((override) => Number(override.calendarDate)).filter(Number.isInteger);
         if (!dates.length) return [];
@@ -764,70 +763,29 @@ export class PropertyController {
         });
     }
 
-    async notifyChannexCalendarOverrideChange({
-        hostId,
-        propertyId,
-        previousOverrides,
-        normalizedOverrides,
-    }) {
-        const { changedDates, changeTypes } = this.collectCalendarOverrideChangeTypes(
-            previousOverrides,
-            normalizedOverrides
+    // Design D9: one change per change type and run of consecutive days, so a row never
+    // covers a date its type did not change.
+    buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides) {
+        const previousByDate = this.buildCalendarOverrideMap(previousOverrides);
+        const datesByType = new Map();
+        for (const override of normalizedOverrides) {
+            const previousOverride = previousByDate.get(override.calendarDate) || {};
+            for (const [changeType, fields] of Object.entries(CALENDAR_CHANGE_FIELD_GROUPS)) {
+                if (fields.some((field) => this.compareCalendarOverrideField(previousOverride, override, field))) {
+                    datesByType.set(changeType, [...(datesByType.get(changeType) || []), override.calendarDate]);
+                }
+            }
+        }
+
+        return [...datesByType.keys()].sort(compareAsString).flatMap((changeType) =>
+            toConsecutiveRuns(datesByType.get(changeType)).map(([first, last]) => ({
+                domitsPropertyId: propertyId,
+                changeTypes: [changeType],
+                dateFrom: this.calendarDateIntToIsoDate(first),
+                dateTo: this.calendarDateIntToIsoDate(last),
+                source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
+            }))
         );
-        const payload = {
-            userId: hostId,
-            domitsPropertyId: propertyId,
-            changedDates,
-            changeTypes,
-            source: "HOST_CALENDAR_OVERRIDES_CHANGED",
-        };
-
-        if (!changedDates.length || !changeTypes.length) {
-            return createCalendarChangeFallbackEvidence({
-                payload,
-                skipped: true,
-                reason: "NO_CHANNEX_RELEVANT_CALENDAR_CHANGES",
-            });
-        }
-
-        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
-    }
-
-    getForwardCalendarSyncRange() {
-        const startDate = new Date();
-        const endDate = new Date(startDate);
-        endDate.setUTCDate(endDate.getUTCDate() + CHANNEX_GLOBAL_CALENDAR_CHANGE_SYNC_DAYS - 1);
-
-        return {
-            dateFrom: startDate.toISOString().slice(0, 10),
-            dateTo: endDate.toISOString().slice(0, 10),
-        };
-    }
-
-    getOverviewCalendarChangeTypes(normalizedOverviewPayload) {
-        const changeTypes = [];
-        if (normalizedOverviewPayload.pricing !== undefined) {
-            changeTypes.push("rates");
-        }
-        if (normalizedOverviewPayload.availabilityRestrictions !== undefined) {
-            changeTypes.push("restrictions");
-        }
-        return changeTypes;
-    }
-
-    async notifyChannexOverviewCalendarChange({ hostId, propertyId, normalizedOverviewPayload }) {
-        const changeTypes = this.getOverviewCalendarChangeTypes(normalizedOverviewPayload);
-        if (!changeTypes.length) return null;
-
-        const payload = {
-            userId: hostId,
-            domitsPropertyId: propertyId,
-            ...this.getForwardCalendarSyncRange(),
-            changeTypes,
-            source: "HOST_CALENDAR_GLOBAL_SETTINGS_CHANGED",
-        };
-
-        return await this.channexCalendarChangeSyncClient.syncCalendarChange(payload);
     }
 
     extractOverviewPayload(body) {
@@ -1714,12 +1672,12 @@ export class PropertyController {
                 status: resolvedStatus,
             };
         });
-        const primaryDomain = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
-        const isReachable = site.status === "PUBLISHED" && primaryDomain?.status === "ACTIVE";
+        const selectedDomainRow = normalizedDomains.find((domainEntry) => domainEntry?.isPrimary) || normalizedDomains[0] || null;
+        const isReachable = site.status === "PUBLISHED" && selectedDomainRow?.status === "ACTIVE";
 
         return {
             site,
-            primaryDomain,
+            primaryDomain: selectedDomainRow,
             domains: normalizedDomains,
             isReachable,
         };
@@ -1734,18 +1692,23 @@ export class PropertyController {
         return {
             siteId: siteSummary.site.id,
             propertyId: siteSummary.site.propertyId,
-            hostId: siteSummary.site.hostId,
             templateKey: siteSummary.site.templateKey,
             primaryLocale: siteSummary.site.primaryLocale,
             siteName: siteSummary.site.siteName,
             siteStatus: siteSummary.site.status,
             publishedAt: siteSummary.site.publishedAt,
             isReachable: siteSummary.isReachable,
-            domain: siteSummary.primaryDomain,
+            domain: toPublicWebsiteDomainView(siteSummary.primaryDomain),
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined) {
+    buildPublicDirectBookingWebsiteRenderPayload(
+        site,
+        domain,
+        propertySnapshot = undefined,
+        primaryDomain = null,
+        host = null
+    ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
@@ -1753,21 +1716,15 @@ export class PropertyController {
 
         return {
             resolution,
-            site: {
-                id: site.id,
-                propertyId: site.propertyId,
-                hostId: site.hostId,
-                siteName: site.siteName,
-                primaryLocale: site.primaryLocale,
-                status: site.status,
-                templateKey: site.templateKey,
-                publishedAt: site.publishedAt,
-            },
-            domain,
-            propertySnapshot:
+            site: toPublicWebsiteSiteView(site),
+            domain: toPublicWebsiteDomainView(domain),
+            primaryDomain,
+            host: host || buildEmptyPublicWebsiteHost(),
+            propertySnapshot: toPublicWebsitePropertySnapshotView(
                 propertySnapshot && typeof propertySnapshot === "object"
                     ? propertySnapshot
-                    : site.publishedPropertySnapshot || {},
+                    : site.publishedPropertySnapshot || {}
+            ),
             contentOverrides: site.publishedContentOverrides || {},
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
@@ -1855,17 +1812,33 @@ export class PropertyController {
         }
 
         const domains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-        const primaryDomain =
+        const selectedDomainRow =
             domains.find((domainEntry) => domainEntry?.isPrimary) ||
             domains.find((domainEntry) => Boolean(domainEntry?.domain)) ||
             null;
         const healedPrimaryDomain =
-            primaryDomain || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
+            selectedDomainRow || (site.status === "PUBLISHED" ? await this.resolveOrCreatePrimaryLiveDomain(site) : null);
+        const storedSiteDomains = selectedDomainRow ? domains : null;
 
         return {
             site,
             domain: healedPrimaryDomain,
+            siteDomains: storedSiteDomains,
         };
+    }
+
+    async loadPublicDirectBookingWebsiteMainAddress(site, loadedSiteDomains = null) {
+        if (Array.isArray(loadedSiteDomains)) {
+            return selectDirectBookingWebsiteMainAddress(site, loadedSiteDomains);
+        }
+
+        try {
+            const siteDomains = await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
+            return selectDirectBookingWebsiteMainAddress(site, siteDomains);
+        } catch (error) {
+            console.error("Failed to load the main address of a direct booking website.", error);
+            return null;
+        }
     }
 
     isPublicDirectBookingWebsiteReachable(site, domain) {
@@ -1976,7 +1949,7 @@ export class PropertyController {
             propertyDetails,
         });
 
-        const site = await this.directBookingWebsiteSiteRepository.upsertSite({
+        const site = await this.directBookingWebsiteSiteRepository.upsertSiteWithStaticPageOutbox({
             propertyId,
             hostId,
             siteName,
@@ -2845,6 +2818,13 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
+            if (error instanceof WebsitePublishConflictError) {
+                return {
+                    statusCode: error.statusCode,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ code: error.code, message: error.message }),
+                };
+            }
             return this.websiteServerError();
         }
     }
@@ -2987,9 +2967,11 @@ export class PropertyController {
                 },
             });
 
-            const propertySnapshot = await this.buildPublicPropertySnapshotForWebsiteRender(
-                resolutionResult.site
-            );
+            const [propertySnapshot, primaryDomain, host] = await Promise.all([
+                this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
+                this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
+                this.loadPublicWebsiteHostSafely(resolutionResult.site),
+            ]);
 
             return {
                 statusCode: 200,
@@ -2997,7 +2979,9 @@ export class PropertyController {
                 body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
                     resolutionResult.site,
                     resolutionResult.domain,
-                    propertySnapshot
+                    propertySnapshot,
+                    primaryDomain,
+                    host
                 )),
             };
         } catch (error) {
@@ -3269,6 +3253,20 @@ export class PropertyController {
                 throw error;
             }
             console.error("Website custom domain refresh failed; returning the stored status.", error);
+        }
+    }
+
+    getWebsitePublicHostService() {
+        this.websitePublicHostService ??= new WebsitePublicHostService();
+        return this.websitePublicHostService;
+    }
+
+    async loadPublicWebsiteHostSafely(site) {
+        try {
+            return await this.getWebsitePublicHostService().loadPublicHost(site?.hostId);
+        } catch (error) {
+            console.error(`[WebsitePublicHost] the host block could not be built for site ${site?.id}.`, error);
+            return buildEmptyPublicWebsiteHost();
         }
     }
 
@@ -3560,6 +3558,103 @@ export class PropertyController {
     isDraftContentClientError(error) {
         return Boolean(error?.message?.startsWith("Draft "));
     }
+
+    async getWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const plan = await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(plan),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async changeWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const user = await this.authManager.getAuthorizedUser(accessToken);
+            const group = user.UserAttributes?.find((attribute) => attribute.Name === "custom:group")?.Value;
+            if (group !== "Host") {
+                const error = new Error("You must be a Host.");
+                error.statusCode = 403;
+                throw error;
+            }
+
+            let body;
+            try {
+                body = JSON.parse(event.body || "{}");
+            } catch {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be valid JSON.")
+                };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be a JSON object.")
+                };
+            }
+
+            const result = await this.directBookingWebsiteRatePlanService.changePlan({
+                accountId: user.Username,
+                targetPlan: body.plan,
+                customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+            });
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(result),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async handleWebsiteRatePlanWebhook(event) {
+        try {
+            const headers = event.headers || {};
+            const signature = headers["Stripe-Signature"] || headers["stripe-signature"] || "";
+            const rawBody = event.isBase64Encoded
+                ? Buffer.from(event.body || "", "base64").toString("utf8")
+                : String(event.body || "");
+
+            await this.directBookingWebsiteRatePlanService.handleStripeWebhook(rawBody, signature);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ received: true }),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 400,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message || "Unable to process Stripe webhook." }),
+            };
+        }
+    }
+
 
     // -------------------------
     // Helper method (internal only)
