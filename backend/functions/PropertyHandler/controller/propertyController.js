@@ -35,6 +35,7 @@ import {
     isDirectBookingWebsiteFallbackRoutingActive,
     getDirectBookingWebsiteFallbackRoutingStatus,
     resolveDirectBookingWebsiteFallbackDomainStatus,
+    resolveDirectBookingWebsiteRuntimeDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
 
 const draftResponseHeaders = {
@@ -182,17 +183,6 @@ const getRequestHostHeaderValue = (headers = {}) =>
     headers.host ||
     headers.Host ||
     "";
-const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
-    const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
-    const shouldTreatPublishedFallbackDomainAsActive =
-        String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
-        isDirectBookingWebsiteFallbackRoutingActive() &&
-        isDirectBookingWebsiteFallbackDomain(domainEntry) &&
-        resolvedStatus === "DISABLED" &&
-        domainEntry?.verificationDetails?.disabledByHost === true;
-
-    return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
-};
 const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
     String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
 const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {

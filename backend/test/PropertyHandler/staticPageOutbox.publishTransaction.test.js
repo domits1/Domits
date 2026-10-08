@@ -172,8 +172,10 @@ describe("publishing a site writes its page outbox row in the same transaction",
     const outbox = statementFor(client, /static_page_outbox/);
     expect(outbox.statement).toContain("ON CONFLICT (site_id)");
     expect(outbox.statement).toContain("revision = EXCLUDED.revision");
-    expect(outbox.statement).toContain("status = 'PENDING'");
+    expect(outbox.statement).toContain("ELSE 'PENDING' END");
     expect(outbox.statement).toContain("attempt_count = 0");
+    expect(outbox.statement).toContain("status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END");
+    expect(outbox.statement).toContain("THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END");
     expect(outbox.statement).toContain("failure_reason = NULL");
     expect(outbox.statement).toContain("processed_at = NULL");
   });
