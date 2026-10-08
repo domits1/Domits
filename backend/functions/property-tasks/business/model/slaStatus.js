@@ -4,15 +4,12 @@ export const SLA_STATUS = {
     BREACHED: "BREACHED",
 };
 
-const RESOLVED_STATUSES = ["Completed", "Cancelled"];
-
-// Flat window for v1 - no priority-based targets yet, just a single
-// "approaching due date" warning band ahead of the deadline.
+const RESOLVED_STATUSES = new Set(["Completed", "Cancelled"]);
 const AT_RISK_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 export const computeSlaStatus = (task, now = Date.now()) => {
     if (!task.due_date) return null;
-    if (RESOLVED_STATUSES.includes(task.status)) return null;
+    if (RESOLVED_STATUSES.has(task.status)) return null;
 
     const dueDate = Number(task.due_date);
     if (dueDate < now) return SLA_STATUS.BREACHED;
