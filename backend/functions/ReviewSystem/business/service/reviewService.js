@@ -39,7 +39,9 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
-  async getPropertyOverallScore(callerUsername, propertyId) {
+  // Verify the manager owns or can access the property before exposing aggregate review data.
+  // This prevents unauthorized users from learning whether a property exists or has ratings.
+  async authorizeManagedProperty(callerUsername, propertyId) {
     if (typeof callerUsername !== "string" || !callerUsername.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
@@ -50,11 +52,26 @@ export class ReviewService {
     const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
     // Avoid disclosing whether another manager's property exists.
     if (!property) throw new NotFoundException("Property not found or access is denied.");
-    return this.repository.getPropertyReviewScore(normalizedPropertyId, callerUsername);
+    return normalizedPropertyId;
   }
 
-  // Validate the review ID.
-  // Ensure the guest can still edit the review within the allowed window.
+  // Return the trusted review score for a manager-owned property.
+  // This gives the host a safe summary without exposing unrelated property data.
+  async getPropertyOverallScore(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    return this.repository.getPropertyReviewScore(id, username);
+  }
+
+  // Return category-level review metrics for a property the caller manages.
+  // This helps a host understand feedback by category without leaking other owners' data.
+  async getPropertyCategoryRatings(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+    return { property_id: id, categories };
+  }
+
+  // Load a review only when it belongs to the caller and the edit window is still open.
+  // This prevents users from editing someone else's review or changing a review after the deadline.
   async getEditableReview(callerUserId, reviewId) {
     if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
       throw new BadRequestException("A valid review ID is required.");
@@ -72,7 +89,8 @@ export class ReviewService {
       public_review: review.public_review, updated_at: Number(review.updated_at) };
   }
 
-  // Validate the editable review payload and reject stale updates.
+  // Apply a safe, authorized review edit and reject stale client versions.
+  // This protects the integrity of the review by preventing unauthorized or out-of-date changes.
   async updateReview(callerUserId, reviewId, data) {
     const review = await this.getEditableReview(callerUserId, reviewId);
     const allowed = ["overall_rating", "public_review", "updated_at"];
@@ -101,8 +119,8 @@ export class ReviewService {
       public_review: publicReview, updated_at: result.updated_at };
   }
 
-  // Derive review ownership and property details from the booking to prevent client spoofing.
-  // Restrict reviews to completed, caller-owned reservations to protect review integrity.
+  // Create a verified review only from a completed, caller-owned reservation.
+  // This prevents spoofed or invalid submissions from creating fake review records.
   async createReview(callerUserId, reviewData) {
     const publicReview = this.validateReviewPayload(reviewData);
 
@@ -167,8 +185,8 @@ export class ReviewService {
     }
   }
 
-  // Reject malformed input before reservation checks or persistence are attempted.
-  // Validate types and rating bounds so invalid review data cannot enter the system.
+  // Validate review inputs before any business logic or database write runs.
+  // This keeps malformed payloads from reaching reservation checks or persistence.
   validateReviewPayload(reviewData) {
     if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
       throw new BadRequestException("Request body must be a review object");
@@ -204,6 +222,8 @@ export class ReviewService {
     return this.normalizePublicReview(reviewData.public_review);
   }
 
+  // Normalize and sanitize the written review text before saving it.
+  // This ensures reviews are plain text, within limits, and free of unsafe control characters.
   normalizePublicReview(value) {
     if (value === undefined || value === null) {
       throw new BadRequestException("Please describe your stay before submitting your review.");
@@ -223,6 +243,8 @@ export class ReviewService {
     return text;
   }
 
+  // Normalize optional private feedback without letting blanks become stored garbage.
+  // This keeps optional feedback consistent while avoiding empty values in the database.
   normalizeOptionalText(value) {
     if (!value) return null;
 
@@ -230,6 +252,8 @@ export class ReviewService {
     return text || null;
   }
 
+  // Return the caller's review list using the requested scope and editability rules.
+  // This gives a clear view of written or received reviews while marking which entries can still be edited.
   async getReviews(callerUserId, scope = "written") {
     if (scope !== "written" && scope !== "received") {
       throw new BadRequestException("Review scope must be written or received.");
@@ -250,6 +274,8 @@ export class ReviewService {
     }));
   }
 
+  // Delete a review only when the caller owns it.
+  // This prevents users from removing someone else's review or deleting an invalid record.
   async deleteReview(callerUserId, id) {
     if (typeof id !== "string" || !id.trim() || id.length > 255) {
       throw new BadRequestException("A valid review ID is required.");

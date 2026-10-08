@@ -30,6 +30,39 @@ const toPublicReview = (review) => ({
 });
 
 export class ReviewRepository {
+  async getPropertyCategoryRatings(propertyId, hostId) {
+    const database = await Database.getInstance();
+    const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
+      .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
+      .leftJoin((query) => query
+        .select("rating.category", "category_key")
+        .addSelect("AVG(rating.rating)", "average_rating")
+        .addSelect("COUNT(*)", "rating_count")
+        .from(Review_Rating, "rating")
+        .innerJoin(Review, "review", "review.id = rating.reviewId")
+        .where("review.property_id = :propertyId")
+        .andWhere("review.verification_status = :verified")
+        .andWhere("review.publication_status = :published")
+        .andWhere("review.status = :published")
+        .andWhere("review.review_type = :reviewType")
+        .andWhere("rating.rating BETWEEN :minimum AND :maximum")
+        .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
+        .groupBy("rating.category"),
+      "aggregate", "aggregate.category_key = category.key")
+      .select("category.key", "category_key")
+      .addSelect("category.label", "label")
+      .addSelect("aggregate.average_rating", "average_rating")
+      .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
+      .where("category.isActive = :active")
+      .andWhere("category.reviewType = :reviewType")
+      .setParameters({ propertyId, hostId, verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+        minimum: 1, maximum: 5, active: true })
+      .orderBy("category.key", "ASC").getRawMany();
+    return rows.map((row) => ({ category_key: row.category_key, label: row.label,
+      average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
+      rating_count: Number(row.rating_count) }));
+  }
+
   async findManagedProperty(propertyId, hostId) {
     const dataSource = await Database.getInstance();
     return dataSource.getRepository(Property).findOne({
