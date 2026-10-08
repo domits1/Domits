@@ -29,7 +29,32 @@ const toPublicReview = (review) => ({
 });
 
 export class ReviewRepository {
+
+  async findReviewById(id) {
+    const dataSource = await Database.getInstance();
+    return dataSource.getRepository(Review).findOne({ where: { id } });
+  }
+
+  async updateEditableReview({ id, guestId, previousUpdatedAt, editWindowMs,
+    now, overallRating, publicReview }) {
+    const dataSource = await Database.getInstance();
+    const timestamp = now();
+    const updatedAt = Math.max(timestamp, previousUpdatedAt + 1);
+    // Check ownership, the original deadline, and version in the same write.
+    const result = await dataSource.getRepository(Review).createQueryBuilder()
+      .update(Review)
+      .set({ overall_rating: overallRating, public_review: publicReview, updated_at: updatedAt })
+      .where("id = :id AND reviewer_user_id = :guestId", { id, guestId })
+      .andWhere("updated_at = :previousUpdatedAt", { previousUpdatedAt })
+      .andWhere("created_at <= :timestamp AND created_at > :cutoff", {
+        timestamp, cutoff: timestamp - editWindowMs,
+      })
+      .execute();
+    return { affected: result.affected, updated_at: updatedAt };
+  }
+
   async findBookingById(bookingId) {
+
     const dataSource = await Database.getInstance();
 
     return await dataSource

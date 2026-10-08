@@ -2,6 +2,22 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+const readEditResponse = async (response) => {
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not access or update this review. Please try again.");
+  return payload;
+};
+
+export const getEditableReview = async (reviewId) =>
+  readEditResponse(await requestReview("GET", { reviewId }));
+
+export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }) =>
+  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
+    method: "PATCH",
+    headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview, updated_at: updatedAt }),
+  }));
+
 
 const parseResponse = async (response) => {
   const text = await response.text().catch(() => "");

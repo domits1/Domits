@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./ReviewPage.module.css";
-import { createReview } from "./services/reviewAPI";
+import { createReview, getEditableReview, updateReview } from "./services/reviewAPI";
 import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
 import {
   canLeaveReview,
@@ -35,8 +35,12 @@ const ReviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  // Keep existing emailed/bookmarked reservation links working during the URL transition.
+
   const bookingId = searchParams.get("bookingId") ?? searchParams.get("reservationId") ?? "";
+  const reviewId = searchParams.get("reviewId") || "";
+  const targetId = reviewId || bookingId;
+  const [editingReview, setEditingReview] = useState(null);
+
   const propertyTitle = location.state?.propertyTitle || "your stay";
 
   const [form, setForm] = useState(INITIAL_FORM);
@@ -57,6 +61,7 @@ const ReviewPage = () => {
     setIsSubmitted(false);
     setSubmitError("");
     setForm(INITIAL_FORM);
+    setEditingReview(null);
     setRatingError("");
     setReviewError("");
 
@@ -72,7 +77,16 @@ const ReviewPage = () => {
           return;
         }
 
+
+        if (reviewId) {
+          const review = await getEditableReview(reviewId);
+          if (!active) return;
+          setEditingReview(review);
+          setForm({ title: "", rating: String(review.overall_rating), publicReview: review.public_review || "", privateFeedback: "" });
+          return;
+        }
         if (!bookingId) {
+
           setEligibilityError("Open a completed reservation first to leave a review.");
           return;
         }
@@ -89,13 +103,15 @@ const ReviewPage = () => {
         if (!booking || !canLeaveReview(booking)) {
           setEligibilityError("You can only review your own completed reservations.");
         }
-      } catch {
+      } catch (error) {
         if (active) {
-          setEligibilityError("Could not verify this reservation. Please try again later.");
+          setEligibilityError(reviewId ? error.message : "Could not verify this reservation. Please try again later.");
         }
       } finally {
         if (active) {
-          setCheckedBookingId(bookingId);
+
+          setCheckedBookingId(targetId);
+
           setIsCheckingSession(false);
         }
       }
@@ -106,7 +122,9 @@ const ReviewPage = () => {
     return () => {
       active = false;
     };
-  }, [navigate, bookingId]);
+
+  }, [navigate, bookingId, reviewId, targetId]);
+
 
   const updateField = (field) => (event) => {
     const value = event.target.value;
@@ -121,8 +139,10 @@ const ReviewPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!bookingId || checkedBookingId !== bookingId || eligibilityError) {
-      setSubmitError("This reservation is not eligible for a review.");
+
+    if (!targetId || checkedBookingId !== targetId || eligibilityError || (reviewId && !editingReview)) {
+      setSubmitError("This review is unavailable.");
+
       return;
     }
 
@@ -132,7 +152,7 @@ const ReviewPage = () => {
       return;
     }
 
-    if (!form.title.trim() || form.title.trim().length > 120) {
+    if (!reviewId && (!form.title.trim() || form.title.trim().length > 120)) {
       setSubmitError("Please add a review title of up to 120 characters.");
       return;
     }
@@ -156,13 +176,19 @@ const ReviewPage = () => {
     setSubmitError("");
 
     try {
-      await createReview({
-        bookingId,
-        rating: Number(form.rating),
-        title: form.title.trim(),
-        publicReview,
-        privateFeedback: form.privateFeedback.trim(),
-      });
+
+      if (reviewId) {
+        await updateReview({ reviewId, rating: Number(form.rating), publicReview, updatedAt: editingReview.updated_at });
+      } else {
+        await createReview({
+          bookingId,
+          title: form.title.trim(),
+          rating: Number(form.rating),
+          publicReview,
+          privateFeedback: form.privateFeedback.trim(),
+        });
+      }
+
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
     } catch (error) {
@@ -191,7 +217,9 @@ const ReviewPage = () => {
     </label>
   );
 
-  if (isCheckingSession || checkedBookingId !== bookingId) {
+
+  if (isCheckingSession || checkedBookingId !== targetId) {
+
     return (
       <main className={styles.main}>
         <h1>Loading review form...</h1>
@@ -199,7 +227,9 @@ const ReviewPage = () => {
     );
   }
 
-  if (eligibilityError || !bookingId) {
+
+  if (eligibilityError || !targetId) {
+
     return (
       <main className={styles.main}>
         <h1>Review unavailable</h1>
@@ -214,9 +244,10 @@ const ReviewPage = () => {
   if (isSubmitted) {
     return (
       <main className={styles.main}>
-        <h1>Review submitted</h1>
+        <h1>{reviewId ? "Review updated" : "Review submitted"}</h1>
         <p className={styles.comment}>
-          Thank you for sharing your experience. Your review was saved as a draft.
+          {reviewId ? "Your changes have been saved."
+            : "Thank you for sharing your experience. Your review was saved as a draft."}
         </p>
         <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
           Back to reservations
@@ -227,7 +258,7 @@ const ReviewPage = () => {
 
   return (
     <main className={styles.main}>
-      <h1>Review {propertyTitle}</h1>
+      <h1>{reviewId ? "Edit review" : `Review ${propertyTitle}`}</h1>
       <form onSubmit={handleSubmit} noValidate>
         <fieldset className={styles.rating} disabled={isSubmitting}>
           <legend>Overall experience (required)</legend>
@@ -237,6 +268,11 @@ const ReviewPage = () => {
           </p>
           {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
         </fieldset>
+        {!reviewId && <section className={styles.content}>
+          <label htmlFor="title">Review title (required)</label>
+          <input id="title" value={form.title} onChange={updateField("title")}
+            maxLength={120} disabled={isSubmitting} required />
+        </section>}
         <section className={styles.content}>
           <label htmlFor="title">Review title (required)</label>
           <input id="title" value={form.title} onChange={updateField("title")}
@@ -266,7 +302,7 @@ const ReviewPage = () => {
           {reviewError && <p id="publicReview-error" role="alert">{reviewError}</p>}
         </section>
 
-        <section className={styles.content}>
+        {!reviewId && <section className={styles.content}>
           <label htmlFor="privateFeedback">Do you have any feedback? (not required)</label>
           <textarea
             id="privateFeedback"
@@ -278,7 +314,7 @@ const ReviewPage = () => {
             disabled={isSubmitting}
           />
           <p>{form.privateFeedback.length}/500</p>
-        </section>
+        </section>}
 
         {submitError && <p role="alert">{submitError}</p>}
 
@@ -288,9 +324,9 @@ const ReviewPage = () => {
           </button>
           <button
             type="submit"
-            className={!form.rating || !form.title.trim() || !form.publicReview.trim() ? styles.disabled : ""}
+            className={!form.rating || (!reviewId && !form.title.trim()) || !form.publicReview.trim() ? styles.disabled : ""}
             disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit review"}
+            {isSubmitting ? "Saving..." : reviewId ? "Save changes" : "Submit review"}
           </button>
         </div>
       </form>

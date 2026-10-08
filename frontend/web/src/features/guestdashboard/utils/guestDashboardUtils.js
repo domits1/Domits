@@ -279,4 +279,3 @@ export const formatDate = (dateValue) => {
   if (!dateValue) return "-";
   return dateFormatterDD_MM_YYYY(dateValue);
 };
-

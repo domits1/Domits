@@ -8,10 +8,12 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: responseHeaders };
   }
 
+
   const publicPropertyRead = event.httpMethod === "GET" && event.resource === "/properties/{propertyId}/reviews";
-  const authenticatedOperation = (event.resource === "/reviews" && ["POST", "GET", "DELETE"].includes(event.httpMethod)) ||
+  const authenticatedOperation = (event.resource === "/reviews" && ["POST", "GET", "PATCH", "DELETE"].includes(event.httpMethod)) ||
     (event.resource === "/reviews/{id}" && event.httpMethod === "DELETE");
   if (!publicPropertyRead && !authenticatedOperation) {
+
     return {
       statusCode: 405,
       headers: responseHeaders,
