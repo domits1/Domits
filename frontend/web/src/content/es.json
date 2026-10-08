@@ -1071,7 +1071,9 @@
       },
       "manage": {
         "title": "¿Cómo creo y gestiono mi cuenta de anfitrión?",
-        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón 'Sé un anfitrión' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
+        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón '",
+        "becomeHost": "Sé un anfitrión",
+        "description2": "' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
       },
       "payout": {
         "title": "Cómo funcionan los pagos y los impuestos",
@@ -1079,7 +1081,15 @@
       },
       "calendar": {
         "title": "Cómo gestionar tu calendario y reservas",
-        "description": "Una próxima función te permitirá gestionar tus reservas de manera más eficiente directamente desde el panel. ¡Mantente atento a las novedades!"
+        "description": "Puedes gestionar todo desde el Panel de Anfitrión: aceptar o rechazar reservas, y establecer tu disponibilidad y precios por fecha."
+      },
+      "cost": {
+        "title": "¿Cuánto cuesta?",
+        "description": "Domits es gratis de usar: sin costo por nuestro sistema de reservas, el panel o el sitio web de reserva directa. Solo cobramos una tarifa del 10% para el anfitrión por cada reserva realizada a través de Domits.com, lo que permite mantener la plataforma funcionando 24/7. ¿Necesitas más? Contáctanos para conocer complementos y precios empresariales."
+      },
+      "markets": {
+        "title": "¿En qué mercados operan?",
+        "description": "Domits está disponible para anfitriones y huéspedes en todo el mundo — puedes publicar tu propiedad sin importar dónde se encuentre."
       }
     },
     "advice": {
@@ -1144,7 +1154,7 @@
         },
         "ratePlans": {
           "title": "Planes de tarifas",
-          "desc": "Consulta tus opciones de precios exclusivas para host (10%) y futuras."
+          "desc": "Consulta tu tarifa exclusiva para host del 10% y las opciones de Direct Booking."
         },
         "compliance": {
           "title": "Cumplimiento",
@@ -1482,13 +1492,48 @@
       "subtitle": "Gestiona tus planes de tarifas.",
       "standardSection": "Plan de tarifa estándar",
       "additionalSection": "Planes adicionales",
-      "additionalSubtitle": "Pronto estarán disponibles planes de tarifas adicionales para reservas directas.",
+      "additionalSubtitle": "Opciones de precio adicionales para reservas directas.",
       "hostOnlyFee": {
         "title": "Tarifa exclusiva para host",
         "sub": "10% de las reservas pagadas por el host",
         "note": "Permite a Domits operar la plataforma 24/7"
-      }
-,
+      },
+      "directBooking": {
+        "cardTitle": "Plan tarifario de Direct Booking",
+        "cardSubtitle": "4,9% por reserva pagado por el host",
+        "cardNote": "Sin cuota mensual ni por propiedad; los huéspedes pagan €0 de comisión Domits.",
+        "breadcrumb": "Plan tarifario de Direct Booking",
+        "title": "Plan tarifario de Direct Booking",
+        "subtitle": "Precios basados en el rendimiento para reservas realizadas mediante tu sitio de Direct Booking.",
+        "planName": "Direct Booking",
+        "perReservation": "por reserva",
+        "commission": "Comisión",
+        "commissionRate": "Comisión del host",
+        "commissionFormula": "Ingresos de alojamiento sujetos a comisión × 4,9%",
+        "commissionDescription": "La comisión la paga el host. El huésped paga €0 de comisión de reserva de Domits.",
+        "commissionableBase": "La base de comisión excluye limpieza, IVA, impuestos, tasas gubernamentales, depósitos y otros cargos repercutidos.",
+        "monthlySubscription": "Suscripción mensual",
+        "propertyFee": "Cuota por propiedad",
+        "guestDomitsFee": "Comisión Domits del huésped",
+        "noFixedFee": "Sin cuota fija",
+        "paidBy": "Pagado por",
+        "host": "HOST",
+        "reservationRevenue": "Ingresos por reservas",
+        "reservationRevenueDescription": "La comisión se calcula sobre la parte de alojamiento de cada reserva directa elegible.",
+        "reservationValue": "Valor de la reserva",
+        "domitsHostFee": "Comisión Domits del host",
+        "volumePricing": "Precios por volumen",
+        "volumePricingDescription": "Tramos de crecimiento predeterminados del plan Direct Booking.",
+        "annualRevenue": "Ingresos anuales por reservas directas",
+        "domitsFee": "Comisión Domits",
+        "enterprise": "Enterprise personalizado",
+        "billing": "Facturación",
+        "billingDescription": "Los registros de comisión pueden vincularse a reservas elegibles para conciliación y facturación.",
+        "billingHistory": "Historial de facturación",
+        "billingHistoryEmpty": "Todavía no hay registros de facturación disponibles.",
+        "billingContact": "Contacto de facturación",
+        "billingContactEmpty": "La gestión del contacto de facturación aparecerá aquí cuando la facturación esté habilitada."
+      },
       "enterprise": {
         "cardTitle": "Plan de tarifas Enterprise",
         "cardSubtitle": "Precio por alojamiento activo al mes.",

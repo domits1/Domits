@@ -121,6 +121,18 @@ related:
 - For acceptance fallback-domain incidents, compare the site summary response and the public render response before blaming frontend routing or preview logic.
 - Public-surface auth initialization errors like `GetUserInfo` / `No current user` are noise on anonymous direct-booking surfaces unless they block the actual website render request.
 
+## Public Render Main Address
+
+- `GET /property/website/public/render` returns `domain` and `primaryDomain` side by side. They answer different questions.
+- `domain` is unchanged: the row the request resolved to. That is the requested hostname's row for `?domain=`, and the flagged or oldest row for `?site=`. When a published site has no fallback row and storing one fails, it is a synthetic fallback row that exists only in the response. The frontend compares it with the hostname.
+- `primaryDomain` is the site's main address for canonical and `og:url`, as `{ domain, status }` only. It is the site's row flagged `is_primary` when that row is a `CUSTOM` domain whose status is `ACTIVE`; in every other case it is the site's `FALLBACK` row. If a site ever has two flagged rows, the live custom domain wins, whichever hostname was requested.
+- `status` is the runtime status, so a stored `PENDING` fallback reads `ACTIVE` while fallback routing is on.
+- `primaryDomain` is `null` when the site has no row that qualifies, or when the separate main address read fails. That separate read is the one `?domain=` always makes, and the one `?site=` makes only when the site had no stored rows and the fallback had to be stored first. The page still renders with `200`. `null` means unknown: set no canonical rather than guessing the fallback.
+- On `?site=` the main address comes from the same read that resolves the site. If that read fails, the whole render fails with `500`, as it did before `primaryDomain` existed.
+- It is always read by the resolved site id, never taken from the requested row or from the synthetic fallback row built when storing the fallback fails.
+- Cost: `?site=` reuses the rows it already read. `?domain=` makes one extra read by site id, in parallel with the calendar read.
+- Not the same as `primaryDomain` in `GET /property/website/site`, which is the whole flagged-or-first row without the fallback rule.
+
 ## LCP And Hero Rules
 
 - On Panorama Landing, the hero image is the most likely Largest Contentful Paint candidate, though the hero headline can also win depending on viewport and timing.

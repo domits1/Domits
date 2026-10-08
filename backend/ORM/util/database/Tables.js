@@ -7,6 +7,7 @@ import { Booking } from "../../models/Booking.js";
 import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
 import { EnterpriseRatePlan } from "../../models/EnterpriseRatePlan.js";
+import { DirectBookingWebsiteRatePlan } from "../../models/DirectBookingWebsiteRatePlan.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
@@ -52,6 +53,7 @@ import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbo
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
+import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checklist_Item.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
@@ -114,6 +116,7 @@ export const Tables = [
   User_Table,
   PropertyTask,
   Property_Task_Activity,
+  Property_Task_Checklist_Item,
   Host_Settings,
   Communication_Preferences,
   Company_Profile,
@@ -122,4 +125,5 @@ export const Tables = [
   Team_Member,
   Invoice,
   EnterpriseRatePlan,
+  DirectBookingWebsiteRatePlan,
 ];

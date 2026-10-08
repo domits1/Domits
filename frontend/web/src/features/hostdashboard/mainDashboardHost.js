@@ -6,7 +6,7 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
-import HostPropertyCare from "./Housekeeping";
+import HostTasks from "./hosttasks/pages/HostTasks";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
@@ -50,6 +50,7 @@ import SummaryViewAndSubmit from "../hostonboarding/views/12_SummarySubmitView";
 import RegistrationNumberView from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
 import HostReservationDetails from "./HostReservationDetails";
 import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
+import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -122,7 +123,7 @@ function MainDashboardHost() {
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
 
-          <Route path="tasks" element={<HostPropertyCare />} />
+          <Route path="tasks" element={<HostTasks />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
@@ -142,6 +143,10 @@ function MainDashboardHost() {
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
           <Route path="settings/rate-plans/enterprise" element={<HostSettingsEnterpriseRatePlan />} />
+          <Route
+            path="settings/rate-plans/direct-booking"
+            element={<HostSettingsDirectBookingRatePlan />}
+          />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />

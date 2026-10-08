@@ -242,13 +242,6 @@ export const syncChannexFull = ({ userId, domitsPropertyId, dateFrom, dateTo }) 
     query: { userId, domitsPropertyId, dateFrom, dateTo },
   });
 
-export const syncChannexCertificationTestCase = ({ userId, domitsPropertyId, testCaseId }) =>
-  requestChannex("/integrations/channex/certification/test-case", {
-    method: "POST",
-    query: { userId, domitsPropertyId },
-    body: { testCaseId },
-  });
-
 export const receiveChannexBookingRevisions = ({ userId, domitsPropertyId }) =>
   requestChannex("/integrations/channex/bookings/receive", {
     method: "POST",
@@ -291,15 +284,5 @@ export const modifyBookingDates = ({ bookingId, arrivalDate, departureDate }) =>
       bookingId,
       arrivalDate,
       departureDate,
-    },
-  });
-
-export const cancelBooking = ({ userId, domitsPropertyId, bookingId, reason }) =>
-  requestChannex("/integrations/channex/certification/cancel-booking", {
-    method: "POST",
-    query: { userId, domitsPropertyId },
-    body: {
-      bookingId,
-      reason,
     },
   });

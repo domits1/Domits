@@ -1071,7 +1071,9 @@
       },
       "manage": {
         "title": "Wie erstelle und verwalte ich mein Gastgeberkonto?",
-        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button 'Gastgeber werden' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
+        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button '",
+        "becomeHost": "Gastgeber werden",
+        "description2": "' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
       },
       "payout": {
         "title": "Wie Auszahlungen und Steuern funktionieren",
@@ -1079,7 +1081,15 @@
       },
       "calendar": {
         "title": "Wie Sie Ihren Kalender und Ihre Buchungen verwalten",
-        "description": "Eine kommende Funktion wird es Ihnen ermöglichen, Ihre Buchungen direkt über das Dashboard noch effizienter zu verwalten. Bleiben Sie gespannt auf Updates."
+        "description": "Sie können alles über das Host-Dashboard verwalten – Buchungen annehmen oder ablehnen und Ihre Verfügbarkeit und Preise pro Datum festlegen."
+      },
+      "cost": {
+        "title": "Was kostet es?",
+        "description": "Domits ist kostenlos nutzbar – keine Kosten für unser Buchungssystem, das Dashboard oder die Direktbuchungs-Website. Wir berechnen lediglich eine 10 %-Host-Gebühr pro Buchung über Domits.com, die den 24/7-Betrieb der Plattform ermöglicht. Brauchen Sie mehr? Kontaktieren Sie uns für Add-ons und individuelle Unternehmenspreise."
+      },
+      "markets": {
+        "title": "In welchen Märkten ist Domits tätig?",
+        "description": "Domits ist weltweit für Hosts und Gäste verfügbar – Sie können Ihre Unterkunft unabhängig vom Standort inserieren."
       }
     },
     "advice": {
@@ -1144,7 +1154,7 @@
         },
         "ratePlans": {
           "title": "Tarifpläne",
-          "desc": "Sieh dir deine 10% host-exklusiven und zukünftigen Preisoptionen an."
+          "desc": "Sieh dir deine 10% Host-Gebühr und Direct-Booking-Preisoptionen an."
         },
         "compliance": {
           "title": "Compliance",
@@ -1482,13 +1492,48 @@
       "subtitle": "Verwalte deine Tarifpläne.",
       "standardSection": "Standard-Tarifplan",
       "additionalSection": "Weitere Pläne",
-      "additionalSubtitle": "Weitere Tarifpläne für Direktbuchungen sind bald verfügbar.",
+      "additionalSubtitle": "Weitere Preisoptionen für Direktbuchungen.",
       "hostOnlyFee": {
         "title": "Host-exklusive Gebühr",
         "sub": "10% der Buchungen werden vom Host bezahlt",
         "note": "Ermöglicht Domits den 24/7-Betrieb der Plattform"
-      }
-,
+      },
+      "directBooking": {
+        "cardTitle": "Direct-Booking-Tarifplan",
+        "cardSubtitle": "4,9% pro Reservierung, vom Host bezahlt",
+        "cardNote": "Keine Monats- oder Gebühr pro Unterkunft; Gäste zahlen €0 Domits-Gebühr.",
+        "breadcrumb": "Direct-Booking-Tarifplan",
+        "title": "Direct-Booking-Tarifplan",
+        "subtitle": "Leistungsbasierte Preise für Reservierungen über deine Direct-Booking-Website.",
+        "planName": "Direct Booking",
+        "perReservation": "pro Reservierung",
+        "commission": "Provision",
+        "commissionRate": "Host-Provision",
+        "commissionFormula": "Provisionsfähiger Unterkunftsumsatz × 4,9%",
+        "commissionDescription": "Die Provision wird vom Host bezahlt. Gäste zahlen €0 Domits-Buchungsgebühr.",
+        "commissionableBase": "Die Provisionsgrundlage schließt Reinigung, MwSt., Steuern, staatliche Gebühren, Kautionen und durchlaufende Kosten aus.",
+        "monthlySubscription": "Monatliches Abonnement",
+        "propertyFee": "Gebühr pro Unterkunft",
+        "guestDomitsFee": "Domits-Gebühr für Gäste",
+        "noFixedFee": "Keine feste Gebühr",
+        "paidBy": "Bezahlt von",
+        "host": "HOST",
+        "reservationRevenue": "Reservierungsumsatz",
+        "reservationRevenueDescription": "Die Gebühr wird auf den Unterkunftsanteil jeder qualifizierten Direktbuchung berechnet.",
+        "reservationValue": "Reservierungswert",
+        "domitsHostFee": "Domits-Host-Gebühr",
+        "volumePricing": "Volumenpreise",
+        "volumePricingDescription": "Standard-Wachstumsstufen aus dem Direct-Booking-Tarifplan.",
+        "annualRevenue": "Jährlicher Umsatz aus Direktbuchungen",
+        "domitsFee": "Domits-Gebühr",
+        "enterprise": "Individuelles Enterprise",
+        "billing": "Abrechnung",
+        "billingDescription": "Provisionsdatensätze können für Abgleich und Abrechnung mit qualifizierten Reservierungen verknüpft werden.",
+        "billingHistory": "Abrechnungshistorie",
+        "billingHistoryEmpty": "Noch keine Abrechnungsdaten verfügbar.",
+        "billingContact": "Abrechnungskontakt",
+        "billingContactEmpty": "Die Verwaltung des Abrechnungskontakts wird hier verfügbar, sobald die Abrechnung aktiviert ist."
+      },
       "enterprise": {
         "cardTitle": "Enterprise-Tarifplan",
         "cardSubtitle": "Preis pro aktiver Unterkunft und Monat.",
