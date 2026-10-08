@@ -22,6 +22,17 @@ const parseBody = (body) => {
 };
 
 export class Controller {
+  async getPublicReviews(event) {
+    try {
+      const result = await this.service.getPublicReviews(
+        event.pathParameters?.propertyId, event.queryStringParameters?.offset,
+      );
+      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   // Wire the controller to the review service and auth layer for all request handling.
   // This keeps dependency injection flexible while standardizing access to business logic and identity checks.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
@@ -48,8 +59,16 @@ export class Controller {
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
-      const query = { ...event.queryStringParameters,
-        reviewId: event.pathParameters?.id ?? event.pathParameters?.reviewId ?? event.queryStringParameters?.reviewId };
+      const query = { ...(event.queryStringParameters || {}) };
+      if (event.resource === "/reviews/{id}") {
+        if (typeof event.pathParameters?.id !== "string" || !event.pathParameters.id.trim()) {
+          throw new BadRequestException("A review ID is required.");
+        }
+        query.reviewId = event.pathParameters.id;
+        delete query.scope;
+      } else if (query.reviewId !== undefined) {
+        throw new BadRequestException("Use /reviews/{id} for an individual review.");
+      }
       if (event.httpMethod === "GET") return await this.getReviews(user, query);
       if (event.httpMethod === "PATCH") return await this.patchReview(user, query, event.body);
       if (event.httpMethod === "DELETE") return await this.deleteReview(user, query);
@@ -84,8 +103,8 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-  // Delete a review only for the authenticated owner.
-  // This avoids allowing one user to remove another user's review.
+  // Remove a review after confirming the caller owns it.
+  // This enforces deletion safety and avoids allowing arbitrary users to delete another person's review.
   // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {

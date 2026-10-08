@@ -2,6 +2,15 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+export const getPublicReviews = async (propertyId, offset = 0, signal) => {
+  const query = new URLSearchParams({ offset: String(offset) });
+  const response = await fetch(
+    `${API_REVIEW_BASE}/properties/${encodeURIComponent(propertyId)}/reviews?${query}`, { signal },
+  );
+  if (!response.ok) throw new Error("Could not load reviews. Please try again.");
+  return response.json();
+};
+
 const readEditResponse = async (response) => {
   const payload = await parseResponse(response);
   if (!response.ok) throw new Error(payload?.message || "Could not access or update this review. Please try again.");
@@ -12,12 +21,11 @@ export const getEditableReview = async (reviewId) =>
   readEditResponse(await requestReview("GET", { reviewId }));
 
 export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }) =>
-  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
+  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}`, {
     method: "PATCH",
     headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview, updated_at: updatedAt }),
   }));
-
 
 const parseResponse = async (response) => {
   const text = await response.text().catch(() => "");

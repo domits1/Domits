@@ -1,3 +1,4 @@
+import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
@@ -186,5 +187,7 @@ it("keeps both directions of the retired migration inert", async () => {
   const runner = { query: jest.fn() };
   await new CreateReviews20260930().up(runner);
   await new CreateReviews20260930().down(runner);
+  await new CreateReviewCategories20261005().up(runner);
+  await new CreateReviewCategories20261005().down(runner);
   expect(runner.query).not.toHaveBeenCalled();
 });

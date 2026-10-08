@@ -24,6 +24,19 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
+  async getPublicReviews(propertyId, offset = "0") {
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    if (typeof offset !== "string" || !/^(0|[1-9]\d*)$/.test(offset)
+      || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
+      throw new BadRequestException("Invalid review page offset.");
+    }
+    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset));
+    if (!result) throw new NotFoundException("Property not found.");
+    return result;
+  }
+
   // Missing or invalid policy configuration disables editing.
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
     editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
