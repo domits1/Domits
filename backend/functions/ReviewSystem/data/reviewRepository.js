@@ -4,6 +4,7 @@ import { In, IsNull, Not } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
+import { Property } from "database/models/Property";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
@@ -29,6 +30,34 @@ const toPublicReview = (review) => ({
 });
 
 export class ReviewRepository {
+  async findManagedProperty(propertyId, hostId) {
+    const dataSource = await Database.getInstance();
+    return dataSource.getRepository(Property).findOne({
+      where: { id: propertyId, hostid: hostId }, select: ["id"],
+    });
+  }
+
+  async getPropertyReviewScore(propertyId, hostId) {
+    const dataSource = await Database.getInstance();
+    // Recheck ownership during aggregation in case the property changed owners.
+    const result = await dataSource.getRepository(Review).createQueryBuilder("review")
+      .innerJoin(Property, "property",
+        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .select("AVG(review.overall_rating)", "overall_score")
+      .addSelect("COUNT(*)", "review_count")
+      .where("review.property_id = :propertyId", { propertyId })
+      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
+      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
+      .andWhere("review.status = :status", { status: "PUBLISHED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
+      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
+      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
+      .getRawOne();
+    const reviewCount = Number(result.review_count);
+    return { property_id: propertyId,
+      overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
+  }
+
 
   async findReviewById(id) {
     const dataSource = await Database.getInstance();

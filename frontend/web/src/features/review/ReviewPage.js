@@ -274,11 +274,6 @@ const ReviewPage = () => {
             maxLength={120} disabled={isSubmitting} required />
         </section>}
         <section className={styles.content}>
-          <label htmlFor="title">Review title (required)</label>
-          <input id="title" value={form.title} onChange={updateField("title")}
-            maxLength={120} disabled={isSubmitting} required />
-        </section>
-        <section className={styles.content}>
           <label htmlFor="publicReview">Written review (required)</label>
           <p id="publicReview-help">
             Describe your stay in your own words, including anything you liked or disliked.

@@ -4,7 +4,7 @@ import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 // Parse the raw request payload into a validated review object.
-// This prevents malformed JSON or array payloads from reaching the business layer.
+// This prevents malformed JSON or array payloads from reaching business logic.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -62,9 +62,17 @@ export class Controller {
   // Fetch review data in the requested scope while enforcing valid combinations.
   // This prevents ambiguous or unauthorized queries from being processed.
   async getReviews(user, query) {
-    const result = query.reviewId !== undefined
-      ? await this.service.getEditableReview(user.userId, query.reviewId)
-      : await this.service.getReviews(user.userId, query.scope);
+    if (query.scope === "property-score" && query.reviewId !== undefined) {
+      throw new BadRequestException("Property score and individual review requests cannot be combined.");
+    }
+    let result;
+    if (query.scope === "property-score") {
+      result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+    } else if (query.reviewId !== undefined) {
+      result = await this.service.getEditableReview(user.userId, query.reviewId);
+    } else {
+      result = await this.service.getReviews(user.userId, query.scope);
+    }
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
@@ -78,7 +86,6 @@ export class Controller {
 
   // Delete a review only for the authenticated owner.
   // This avoids allowing one user to remove another user's review.
-
   // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
@@ -91,7 +98,6 @@ export class Controller {
 
   // Remove a review only for the authenticated owner.
   // This blocks one user from deleting another user's review by accident or malice.
-
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
