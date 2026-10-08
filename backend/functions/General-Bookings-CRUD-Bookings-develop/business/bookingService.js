@@ -309,6 +309,32 @@ class BookingService {
     return { bookingId, status: "Declined" };
   }
 
+  async markCheckedOut(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may mark this booking as checked out.");
+    if (booking.status !== BOOKING_STATUS_PAID) throw new BadRequestException("Only a paid booking can be marked as checked out.");
+    if (booking.checked_out_at) throw new BadRequestException("Booking has already been checked out.");
+
+    const property = await this.propertyRepository.getPropertyById(booking.property_id);
+
+    const updated = await this.reservationRepository.markBookingCheckedOut(bookingId);
+    if (!updated) throw new BadRequestException("Booking has already been checked out.");
+
+    await this.taskAutomationNotifier.notifyTaskCreation(booking.hostid, {
+      title: "Clean the property",
+      type: "Cleaning",
+      property_id: booking.property_id,
+      property_snapshot_label: property?.title,
+      due_date: Date.now(),
+      source: "automation",
+    });
+
+    return { bookingId };
+  }
+
   async modifyBookingDates(bookingId, arrivalDate, departureDate, authToken) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) {
