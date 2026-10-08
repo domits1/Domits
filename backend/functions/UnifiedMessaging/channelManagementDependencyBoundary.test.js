@@ -11,8 +11,6 @@ const ChannexAriExecutionService =
   require("../.shared/channelManagement/services/channexAriExecutionService.js").default;
 const ChannexFullSyncService =
   require("../.shared/channelManagement/services/channexFullSyncService.js").default;
-const ChannexCertificationService =
-  require("../.shared/channelManagement/services/channexCertificationService.js").default;
 const ChannexDiagnosticsService =
   require("../.shared/channelManagement/services/channexDiagnosticsService.js").default;
 const ChannelManagementApiService =
@@ -24,7 +22,6 @@ const importPattern = /(?:from\s+|import\s*\(\s*|require\(\s*)["']([^"']+)["']/g
 const sharedServiceConstructors = [
   ChannexAriExecutionService,
   ChannexFullSyncService,
-  ChannexCertificationService,
   ChannexDiagnosticsService,
 ];
 const requiredSharedFiles = [
@@ -36,7 +33,6 @@ const requiredSharedFiles = [
   "services/channexAriPayloadService.js",
   "services/channexAriExecutionService.js",
   "services/channexFullSyncService.js",
-  "services/channexCertificationService.js",
   "services/channexDiagnosticsService.js",
   "services/channexAriOrchestrationService.js",
   "channelManagementApiService.js",

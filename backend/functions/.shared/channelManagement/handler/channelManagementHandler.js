@@ -72,10 +72,6 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   {
     methods: ["POST"],
-    pattern: /\/integrations\/channex\/certification\/cancel-booking$/,
-  },
-  {
-    methods: ["POST"],
     pattern: /\/integrations\/channex\/bookings\/receive$/,
   },
   {
@@ -257,11 +253,6 @@ const routeDefinitions = [
   ],
   ["POST", "/integrations/channex/sync/ari", "syncChannexAri"],
   ["POST", "/integrations/channex/sync/full", "syncChannexFull"],
-  [
-    "POST",
-    "/integrations/channex/certification/cancel-booking",
-    "cancelChannexCertificationBooking",
-  ],
   ["POST", CHANNEX_BOOKING_WEBHOOK_PATH, "receiveChannexBookingWebhook"],
   ["POST", "/integrations/channex/rate-plans", "linkChannexRatePlan"],
   ["POST", "/integrations/channex/room-types", "linkChannexRoomType"],
