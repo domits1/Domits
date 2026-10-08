@@ -2,11 +2,22 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
+const INTERNAL_ROUTES = {
+    "/internal/create-task": "internalCreateTask",
+};
+
 export const handler = async (event) => {
 
     try {
         if (!controller) {
             controller = new Controller();
+        }
+
+        const path = event.path || "";
+        for (const [suffix, methodName] of Object.entries(INTERNAL_ROUTES)) {
+            if (path.endsWith(suffix)) {
+                return await controller[methodName](event);
+            }
         }
 
         switch (event.httpMethod) {
