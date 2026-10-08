@@ -109,6 +109,15 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     declined: "Request declined.",
     updateFailed: "Failed to update request status.",
   },
+  checkOutAction: {
+    title: "Check out guest",
+    subtitle: "Mark this booking as checked out once the guest has left. This creates a cleaning task.",
+    button: "Check out guest",
+    checkingOut: "Checking out...",
+    confirmMessage: "Mark this booking as checked out? This cannot be undone.",
+    success: "Booking marked as checked out.",
+    failed: "Failed to mark booking as checked out.",
+  },
   states: {
     failedToLoad: "Failed to load reservation details.",
     noReservationFound: "No reservation found.",
@@ -169,6 +178,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
   requestActions: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.requestActions,
     ...translation?.requestActions,
+  },
+  checkOutAction: {
+    ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.checkOutAction,
+    ...translation?.checkOutAction,
   },
   states: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.states,
