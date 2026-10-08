@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 import { dbListIcalSources } from "../../../../utils/icalRetrieveHost";
 import {
   fetchUserProfileById,
@@ -300,6 +300,19 @@ const mergeWebsiteCalendarAvailability = (
   };
 };
 
+const HOST_ID_TOKEN_WAIT_MS = 5000;
+
+const readHostIdToken = () =>
+  new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), HOST_ID_TOKEN_WAIT_MS);
+    getIdToken()
+      .then((token) => token || null, () => null)
+      .then((token) => {
+        clearTimeout(timer);
+        resolve(token);
+      });
+  });
+
 const buildWebsiteHostProfileFromPublicHost = (host) => {
   const phoneNumber = String(host?.whatsapp?.phoneNumber || "").trim();
   const phoneNumberDigits =
@@ -320,7 +333,11 @@ const buildWebsiteHostProfileFromPublicHost = (host) => {
   };
 };
 
-export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null, { host = null } = {}) => {
+export const attachWebsiteHostProfile = async (
+  propertyDetails,
+  summaryProperty = null,
+  { host = null, idToken = null } = {}
+) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
   if (host && typeof host === "object") {
@@ -338,7 +355,7 @@ export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty 
 
   const [hostProfile, whatsapp] = await Promise.all([
     hostProfilePromise,
-    fetchWebsiteHostWhatsApp(hostId),
+    fetchWebsiteHostWhatsApp(hostId, { idToken }),
   ]);
 
   return {
@@ -371,11 +388,16 @@ const fetchWebsiteCalendarOverrides = async (propertyId, accessToken) => {
     .catch(() => null);
 };
 
-export const enrichWebsitePropertyDetails = async (propertyDetails, summaryProperty = null, { host = null } = {}) => {
+export const enrichWebsitePropertyDetails = async (
+  propertyDetails,
+  summaryProperty = null,
+  { host = null, hostSession = false } = {}
+) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
   const normalizedPropertyId = resolveWebsitePropertyId(normalizedPropertyDetails, summaryProperty);
   const accessToken = getAccessToken();
+  const idToken = hostSession ? await readHostIdToken() : null;
   let nextPropertyDetails = normalizedPropertyDetails;
 
   try {
@@ -393,7 +415,7 @@ export const enrichWebsitePropertyDetails = async (propertyDetails, summaryPrope
     );
   } catch {}
 
-  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { host });
+  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { host, idToken });
 };
 
 export const fetchWebsitePropertyDetails = async (propertyId) => {
@@ -424,5 +446,5 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
   }
 
   const propertyDetails = await response.json();
-  return enrichWebsitePropertyDetails(propertyDetails);
+  return enrichWebsitePropertyDetails(propertyDetails, null, { hostSession: true });
 };
