@@ -327,17 +327,6 @@ export default class IntegrationService {
       new ChannexCertificationService({
         externalBookingImportRepository,
         channexBookingAvailabilityBridge,
-        channexProviderClient,
-        finalizeChannexSyncResult: (...args) => this.finalizeChannexSyncResult(...args),
-        getChannexAriTargets: (...args) => this.getChannexAriTargets(...args),
-        buildChannexAriTargetsFailureEvidencePatch: (...args) =>
-          this.buildChannexAriTargetsFailureEvidencePatch(...args),
-        buildChannexMultiStepMappingSnapshot: (...args) =>
-          this.buildChannexMultiStepMappingSnapshot(...args),
-        buildBlockedChannexMultiStepSyncResult: (...args) =>
-          this.buildBlockedChannexMultiStepSyncResult(...args),
-        resolveChannexSyncCredentialContext: (...args) =>
-          this.resolveChannexSyncCredentialContext(...args),
       });
     this.channexBookingRevisionImportService =
       channexBookingRevisionImportService ||
@@ -1192,14 +1181,6 @@ export default class IntegrationService {
 
   async buildChannexFullSyncRestrictionsPayloadContext(...args) {
     return this.channexAriPayloadService.buildChannexFullSyncRestrictionsPayloadContext(...args);
-  }
-
-  buildChannexCertificationTestCasePayload(...args) {
-    return this.channexCertificationService.buildChannexCertificationTestCasePayload(...args);
-  }
-
-  async syncChannexCertificationTestCase(...args) {
-    return this.channexCertificationService.syncChannexCertificationTestCase(...args);
   }
 
   buildChannexMultiStepMappingSnapshot(...args) {

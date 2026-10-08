@@ -19,7 +19,6 @@ Disallow: /stripe/
 Disallow: /team/accept
 Disallow: /validatepayment
 Disallow: /verify
-Disallow: /website-live
 Disallow: /website-preview/
 
 Sitemap: https://www.domits.com/sitemap.xml

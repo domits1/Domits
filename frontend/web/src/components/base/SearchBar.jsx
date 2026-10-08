@@ -182,7 +182,7 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
     }
   }, [location]);
 
-  const performSearch = async (accommodation, address, totalGuests) => {
+  const performSearch = async (propertyType, destinationAddress, guestCount) => {
     if (setLoading) {
       setLoading(true);
     }
@@ -190,16 +190,16 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
 
     const queryParams = new URLSearchParams();
 
-    if (accommodation) {
-      queryParams.append('type', accommodation);
+    if (propertyType) {
+      queryParams.append('type', propertyType);
     }
 
-    if (address) {
-      queryParams.append('country', address);
+    if (destinationAddress) {
+      queryParams.append('country', destinationAddress);
     }
 
-    if (totalGuests > 0) {
-      queryParams.append('guests', totalGuests);
+    if (guestCount > 0) {
+      queryParams.append('guests', guestCount);
     }
 
     const apiUrl = `https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction?${queryParams.toString()}`;
