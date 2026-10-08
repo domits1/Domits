@@ -25,6 +25,14 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Reiseziele",
+      "allIn": "Alle Reiseziele in",
+      "loading": "Reiseziele werden geladen…",
+      "unavailable": "Reiseziele sind gerade nicht verfügbar.",
+      "retry": "Erneut versuchen",
+      "empty": "Noch keine Reiseziele."
+    },
     "user": {
       "hello": "Hallo",
       "profile": "Profil",

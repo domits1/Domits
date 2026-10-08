@@ -20,6 +20,7 @@ import { createNavigationHandlers } from "./navigationHandlers";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
 import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
+import DestinationsMenu, { isDestinationsMenuEnabled } from "../../features/destinations/components/DestinationsMenu";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -378,13 +379,15 @@ function Header({ setSearchResults, setLoading }) {
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
             isActiveSearchBar ? "no-scroll" : ""
-          }`}
+          }${isDestinationsMenuEnabled() ? " has-destinations" : ""}`}
         >
           <div className="logo">
             <a href="/">
               <img src={logo} width={150} alt="Logo" />
             </a>
           </div>
+
+          {isDestinationsMenuEnabled() && <DestinationsMenu />}
 
           {!hiddenSearchPaths.includes(location.pathname) && (
             <SearchBar

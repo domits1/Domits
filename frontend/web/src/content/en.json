@@ -25,6 +25,14 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Destinations",
+      "allIn": "All destinations in",
+      "loading": "Loading destinations…",
+      "unavailable": "Destinations are not available right now.",
+      "retry": "Try again",
+      "empty": "No destinations yet."
+    },
     "user": {
       "hello": "Hello",
       "profile": "Profile",

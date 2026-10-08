@@ -25,6 +25,14 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Bestemmingen",
+      "allIn": "Alle bestemmingen in",
+      "loading": "Bestemmingen laden…",
+      "unavailable": "Bestemmingen zijn nu niet beschikbaar.",
+      "retry": "Opnieuw proberen",
+      "empty": "Nog geen bestemmingen."
+    },
     "user": {
       "hello": "Hallo",
       "profile": "Profiel",
