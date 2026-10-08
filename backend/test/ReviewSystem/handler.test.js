@@ -9,7 +9,6 @@ jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
-
 it.each([["POST", 201], ["GET", 200], ["PATCH", 200]])(
 
   "routes %s reviews to the controller", async (httpMethod, statusCode) => {

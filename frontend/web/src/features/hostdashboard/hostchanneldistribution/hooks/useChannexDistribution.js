@@ -6,7 +6,7 @@ const toFailure = (err, fallbackMessage) => ({
   status: err?.status ?? null,
 });
 
-export function useChannexDistribution({ userId, domitsPropertyId } = {}) {
+export function useChannexDistribution({ domitsPropertyId } = {}) {
   const [status, setStatus] = useState(null);
   const [syncEvidence, setSyncEvidence] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,12 +14,14 @@ export function useChannexDistribution({ userId, domitsPropertyId } = {}) {
   const [syncFailure, setSyncFailure] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Status is account-level, so switching property must not refetch it.
+  // Status is account-level, so switching property must not refetch it. It does not depend on a
+  // user id either: the backend identifies the user from the token, and a dependency on the id
+  // (which useFetchUser resolves late) would fire a second request once it arrives.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setStatusFailure(null);
-    getChannexStatus({ userId })
+    getChannexStatus()
       .then((result) => {
         if (!cancelled) setStatus(result);
       })
@@ -32,7 +34,7 @@ export function useChannexDistribution({ userId, domitsPropertyId } = {}) {
     return () => {
       cancelled = true;
     };
-  }, [userId, reloadKey]);
+  }, [reloadKey]);
 
   // The real endpoint answers 400 without a property, so nothing is fetched until one is selected.
   useEffect(() => {
