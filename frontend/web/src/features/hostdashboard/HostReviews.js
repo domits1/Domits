@@ -9,6 +9,7 @@ import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
+import ReviewPerformance from "./ReviewPerformance";
 import reviewStyles from "../review/ReviewPage.module.css";
 
 function HostReviews() {
@@ -128,6 +129,7 @@ function HostReviews() {
             <div className={styles.reviewGrid}>
                 <Pages />
                 <div className={styles.contentContainer}>
+                    {userId && <ReviewPerformance userId={userId} />}
                     <div className={styles.reviewColumn}>
                         <div className={styles.reviewBox}>
                             <p className={styles.boxText}>My reviews ({reviews.length})</p>
