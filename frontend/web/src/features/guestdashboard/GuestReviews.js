@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import spinner from "../../images/spinnner.gif";
-import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
 import reviewStyles from "../review/ReviewPage.module.css";
+import GuestReviewHistory from "../review/GuestReviewHistory";
 
 function GuestReviews() {
-  const [reviews, setReviews] = useState([]);
   const [receivedReviews, setReceivedReviews] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isLoading2, setIsLoading2] = useState(true);
   const [userId, setUserId] = useState(null);
   const [reviewError, setReviewError] = useState("");
@@ -36,28 +34,6 @@ function GuestReviews() {
   useEffect(() => {
     if (!userId) return;
 
-    const retrieveReviews = async () => {
-      setIsLoading(true);
-      try {
-        const res = await requestReview("GET", { scope: "written" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setReviews(Array.isArray(data) ? data : []);
-      } catch (e) {
-        setReviewError("Could not load your reviews. Please try again.");
-        setReviews([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    retrieveReviews();
-  }, [userId]);
-
-  
-  useEffect(() => {
-    if (!userId) return;
-
     const retrieveReceivedReviews = async () => {
       setIsLoading2(true);
       try {
@@ -77,22 +53,6 @@ function GuestReviews() {
   }, [userId]);
 
  
-  const asyncDeleteReview = async (review) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
-
-    
-    const reviewId = review.id;
-
-    try {
-      const res = await requestReview("DELETE", { reviewId });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-    } catch (e) {
-      setReviewError("Could not delete your review. Please try again.");
-    }
-  };
-
   return (
     <main className="page-body">
       <h2>Reviews</h2>
@@ -103,43 +63,7 @@ function GuestReviews() {
           
           <div className="reviewColumn">
             
-            <div className="reviewBox">
-              <p className="boxText">My reviews ({reviews.length})</p>
-
-              {isLoading ? (
-                <div>
-                  <img src={spinner} alt="Loading..." />
-                </div>
-              ) : reviews.length > 0 ? (
-                reviews.map((review, index) => (
-                  <div key={index} className="reviewTab">
-                    <h2 className="reviewHeader">{review.title}</h2>
-                    {review.can_edit && Date.now() < review.edit_expires_at && (
-                      <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
-                        Edit review
-                      </button>
-                    )}
-                    <p className={`reviewContent ${reviewStyles.reviewText}`}>{review.content}</p>
-                    <p className="reviewDate">
-                      Written on: {DateFormatterDD_MM_YYYY(review.date)}
-                    </p>
-                    <button
-                      onClick={() => asyncDeleteReview(review)}
-                      className="reviewDelete"
-                      type="button"
-                      aria-label="Delete review"
-                      title="Delete review"
-                    >
-                      <img src={deleteIcon} className="cross" alt="Delete" />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="reviewAlert">
-                  It appears that you have not written any reviews yet...
-                </p>
-              )}
-            </div>
+            {userId && <GuestReviewHistory key={userId} />}
 
             {/* Received reviews */}
             <div className="reviewBox">

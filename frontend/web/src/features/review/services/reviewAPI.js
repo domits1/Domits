@@ -74,14 +74,25 @@ const getReviewErrorMessage = (status, payload) => {
   return "Could not submit your review. Please try again.";
 };
 
-export const requestReview = async (method = "GET", query = {}) => {
+export const requestReview = async (method = "GET", query = {}, options = {}) => {
   const { reviewId, ...parameters } = query;
   const path = reviewId === undefined ? "/reviews" : `/reviews/${encodeURIComponent(reviewId)}`;
   const search = new URLSearchParams(parameters).toString();
   return fetch(`${API_REVIEW_BASE}${path}${search ? `?${search}` : ""}`, {
     method, headers: { Authorization: getAccessToken() },
+    ...(options.signal ? { signal: options.signal } : {}),
   });
 };
+
+const readHistoryResponse = async (response) => {
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not load your review history. Please try again.");
+  return payload;
+};
+export const getGuestReviewHistory = async (offset = 0, signal) =>
+  readHistoryResponse(await requestReview("GET", { scope: "guest-history", offset: String(offset) }, { signal }));
+export const getGuestReviewDetail = async (reviewId, signal) =>
+  readHistoryResponse(await requestReview("GET", { reviewId, view: "history" }, { signal }));
 
 export const createReview = async ({ bookingId, rating, title, publicReview, privateFeedback }) => {
   const response = await fetch(`${API_REVIEW_BASE}/reviews`, {

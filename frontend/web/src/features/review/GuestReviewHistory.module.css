@@ -1,0 +1,6 @@
+.history { min-width: 0; }
+.card { margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 0.5rem; overflow-wrap: anywhere; }
+.text { white-space: pre-wrap; }
+.categories, .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.categories dd { margin: 0; }
+.history button { padding: 0.5rem 1rem; border: 1px solid #0a760f; border-radius: 0.25rem; background: white; color: #0a760f; cursor: pointer; }

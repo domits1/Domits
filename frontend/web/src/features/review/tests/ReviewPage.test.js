@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 
-import { createReview, requestReview, getEditableReview, updateReview } from "../services/reviewAPI";
+import { createReview, requestReview, getEditableReview, updateReview, getGuestReviewHistory } from "../services/reviewAPI";
 
 import GuestReviews from "../../guestdashboard/GuestReviews";
 
@@ -28,6 +28,7 @@ jest.mock("../services/reviewAPI", () => ({
   requestReview: jest.fn(),
   getEditableReview: jest.fn(),
   updateReview: jest.fn(),
+  getGuestReviewHistory: jest.fn(),
 }));
 jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
 
@@ -116,10 +117,10 @@ it("preserves written content when rating validation or submission fails", async
 it.each([true, false])("renders plain text and gates the edit action: %s", async (can_edit) => {
   const content = "<img src=x alt=unsafe onerror=alert(1)>";
   requestReview.mockImplementation(async (_method, query) => ({
-    ok: true, json: async () => query.scope === "written"
-      ? [{ id: "review-1", title: "Overall experience: 4/5", content, date: Date.now(),
-        can_edit, edit_expires_at: Date.now() + 60000 }] : [],
+    ok: true, json: async () => [],
   }));
+  getGuestReviewHistory.mockResolvedValue({ reviews: [{ id: "review-1", title: "Overall experience: 4/5",
+    public_review: content, created_at: Date.now(), can_edit, edit_expires_at: Date.now() + 60000 }], next_offset: null });
   render(<GuestReviews />);
   expect(await screen.findByText(content)).toBeTruthy();
   expect(screen.queryByRole("img", { name: "unsafe" })).toBeNull();
@@ -132,6 +133,7 @@ beforeEach(() => {
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
   createReview.mockResolvedValue({ id: "review-1" });
+  getGuestReviewHistory.mockResolvedValue({ reviews: [], next_offset: null });
 });
 
 it("hides the form while eligibility is being checked", () => {
