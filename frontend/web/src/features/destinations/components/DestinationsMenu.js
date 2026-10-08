@@ -31,12 +31,12 @@ function DestinationsMenu({ onOpen }) {
 
   useEffect(() => {
     if (open) {
-      setStatus((current) => (current === "idle" || current === "failed" ? "loading" : current));
+      setStatus((current) => (current === "ready" ? "refreshing" : "loading"));
     }
   }, [open]);
 
   useEffect(() => {
-    if (status !== "loading") {
+    if (status !== "loading" && status !== "refreshing") {
       return undefined;
     }
     let current = true;
@@ -49,7 +49,7 @@ function DestinationsMenu({ onOpen }) {
       },
       () => {
         if (current) {
-          setStatus("failed");
+          setStatus(status === "refreshing" ? "ready" : "failed");
         }
       }
     );
@@ -106,7 +106,7 @@ function DestinationsMenu({ onOpen }) {
       return (
         <div className="destinations-menu__note" role="alert">
           <span>{copy.unavailable}</span>
-          <button type="button" className="headerButtons destinations-menu__retry" onClick={load}>
+          <button type="button" className="headerButtons" onClick={load}>
             {copy.retry}
           </button>
         </div>

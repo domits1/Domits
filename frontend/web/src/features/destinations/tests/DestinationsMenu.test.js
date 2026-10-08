@@ -45,7 +45,7 @@ describe("the destinations menu", () => {
     process.env.REACT_APP_DESTINATIONS_MENU = "true";
   });
 
-  it("loads the destinations only when it opens, once, and links every item to its page", async () => {
+  it("loads the destinations when it opens, links every item to its page, and asks again on the next open", async () => {
     let answer;
     fetchDestinationMenu.mockReturnValue(new Promise((resolve) => (answer = resolve)));
     renderMenu();
@@ -70,13 +70,15 @@ describe("the destinations menu", () => {
     expect(screen.getByRole("link", { name: "Thailand" })).toHaveAttribute("href", "/destinations/asia/thailand");
     expect(screen.queryByRole("link", { name: "Spain" })).not.toBeInTheDocument();
 
+    fetchDestinationMenu.mockResolvedValue([MENU[0]]);
     await openMenu();
     await openMenu();
-    expect(screen.getByRole("link", { name: "Thailand" })).toBeInTheDocument();
-    expect(fetchDestinationMenu).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Asia 1" })).not.toBeInTheDocument());
+    expect(screen.getByRole("link", { name: "Spain" })).toBeInTheDocument();
+    expect(fetchDestinationMenu).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps the header usable when the data fails, retries on request, and again on the next open", async () => {
+  it("shows one line with Try again when the data fails, retries on request, and again on the next open", async () => {
     fetchDestinationMenu.mockRejectedValue(new Error("offline"));
     renderMenu("nl");
 
@@ -95,7 +97,7 @@ describe("the destinations menu", () => {
     expect(fetchDestinationMenu).toHaveBeenCalledTimes(3);
   });
 
-  it("is only mounted by the header when the build flag says so", () => {
+  it("reads the build flag the header mounts it behind", () => {
     expect(isDestinationsMenuEnabled()).toBe(true);
     process.env.REACT_APP_DESTINATIONS_MENU = "TRUE";
     expect(isDestinationsMenuEnabled()).toBe(false);

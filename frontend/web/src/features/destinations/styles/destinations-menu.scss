@@ -10,6 +10,11 @@
   &[aria-expanded="true"] {
     background: #ececec;
   }
+
+  img {
+    height: 0.9rem;
+    filter: brightness(0);
+  }
 }
 
 .destinations-menu__panel {
@@ -130,11 +135,6 @@
   color: #475467;
 }
 
-.app-header .destinations-menu__retry {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.9rem;
-}
-
 @media screen and (max-width: 1150px) {
   .destinations-menu__panel {
     position: fixed;
@@ -157,12 +157,13 @@
     position: static;
   }
 
+  .app-header .destinations-menu__trigger {
+    padding: 0.45rem 0.75rem;
+  }
+
   .destinations-menu__panel {
     top: var(--app-header-h, 7.5rem);
-    right: 0;
-    left: 0;
     max-height: calc(100vh - var(--app-header-h, 7.5rem));
-    border-radius: 0;
   }
 
   .destinations-menu__layout {
@@ -171,15 +172,11 @@
 
   .destinations-menu__continents {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.4rem;
-    overflow-x: auto;
     padding: 0 0 0.5rem;
     border-right: 0;
     border-bottom: 1px solid #eaecf0;
-
-    li {
-      flex: 0 0 auto;
-    }
   }
 
   .destinations-menu__countries {

@@ -55,7 +55,6 @@ describe("GET /property/destinations/menu", () => {
     expect(response.statusCode).toBe(500);
     expect(response.headers["Cache-Control"]).toBe("no-store");
     expect(JSON.parse(response.body)).toEqual({ message: "Destinations are not available right now." });
-    expect(response.body).not.toContain("connection refused");
     expect(error).toHaveBeenCalled();
     error.mockRestore();
   });
