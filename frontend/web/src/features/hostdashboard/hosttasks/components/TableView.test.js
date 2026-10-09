@@ -47,6 +47,19 @@ describe('TableView', () => {
         expect(within(row).getByText('Urgent')).toBeInTheDocument();
     });
 
+    test('shows an at-risk indicator when the task is approaching its SLA deadline', () => {
+        const atRiskTask = { ...task, slaStatus: 'AT_RISK' };
+        render(<TableView {...baseProps} paginatedTasks={[atRiskTask]} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).getByText('At risk')).toBeInTheDocument();
+    });
+
+    test('does not show an at-risk indicator for a task that is on track', () => {
+        render(<TableView {...baseProps} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).queryByText('At risk')).not.toBeInTheDocument();
+    });
+
     test('calls onTaskClick when a row is clicked', () => {
         render(<TableView {...baseProps} />);
         fireEvent.click(screen.getByText('Clean the villa'));
