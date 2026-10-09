@@ -78,7 +78,7 @@ If a call fails, the error is labelled and nothing tries again.
 
 **Non-goals (separate issues, but the design leaves room for them)**
 - Retry timing, back-off and `Retry-After` handling are built in #3280: see section 8.3.
-- Full sync triggers (go-live, recovery, nightly): #3282. This design adds the `FULL_SYNC` kind.
+- Full sync triggers: built in #3282 for go-live and recovery (section 8.5). A nightly full sync is not built: Channex allows one only "if required".
 - The booking webhook: #3281.
 
 ## 4. What already exists and is reused
@@ -248,7 +248,7 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 | **1. Find** | Properties with `PENDING` rows where the newest is older than 60 seconds (the host has stopped saving) or the oldest is older than 5 minutes. A row from a booking or a Channex import makes the property ready straight away. A row waiting for `nextAttemptAt` holds back only rows of the same call type (availability, or prices and restrictions), because Channex limits the two separately; the property stays ready while any row can go. `PROCESSING` rows untouched for 5 minutes are from a crashed run and go back to `PENDING` | D3 |
 | **2a. Lock** | Find the Channex account and lock `channex_ari:<propertyId>`. Already locked, or a `40001`, means another run has it, so skip this property. No longer linked to Channex means the rows become `SKIPPED` with reason `NOT_MAPPED` | D7, edge case a |
 | **2b. Claim** | The property's `PENDING` rows created before this run started, and whose `nextAttemptAt` is empty or passed, become `PROCESSING`, with attempts + 1. Rows that arrive during the run wait for the next run | |
-| **2c. Merge** | Each claimed row is expanded to its exact dates per change type. Change types that changed on exactly the same set of dates are grouped together; change types on different dates form separate groups. A `FULL_SYNC` row replaces everything: 500 days, all types | D9, #3282 |
+| **2c. Merge** | Each claimed row is expanded to its exact dates per change type. Change types that changed on exactly the same set of dates are grouped together; change types on different dates form separate groups. A full sync is one row per type over the same 500 days, so it forms one group with all types, and pending changes inside those days join it | D9, #3282 |
 | **2d. Read** | Each group becomes one call to the existing `syncChannexCalendarChange` pipeline, which reads the current values from the database for that group's change types and dates | D1 |
 | **2e. Send** | One call per group, each with an 8 second timeout, at most 10 per bucket (availability, or prices and restrictions). After a rate limit or outage (`RETRY`) the rest of that bucket is not sent in this run; a rejected call (4xx) does not pause anything | D4 |
 | **2f. Record** | Mark each claimed row with the outcome of the calls that carried its types on its dates | See 8.3 |
@@ -278,7 +278,27 @@ Each property is handled in its own `try`, oldest pending row first, so an error
 
 **Each row is recorded by its own calls.** One run can send several calls, and a row's outcome comes only from the calls that carried its change types on its dates, not from the other rows' calls. When a row's calls end differently, the part that still has to go out wins (`RETRY` before `DEFERRED` before `SKIPPED` before `FAILED` before `PROCESSED`), so an unsent part is never dropped; the 8 attempts still end the row. Resending a part that already succeeded is harmless because the worker reads the current value (D1).
 
-**A full sync supersedes the changes claimed with it.** When the claimed rows include a `FULL_SYNC` row and the full sync succeeds, every claimed row, including the `CHANGE` rows, is marked `PROCESSED`. The `CHANGE` rows get a `sentsummary` that points to the full sync (`supersededBy: <id of the FULL_SYNC row>`), so they do not run again in the next cycle.
+**A full sync absorbs the changes claimed with it.** A pending `CHANGE` row inside the full sync's 500 days lands in the same group, so it goes out in the same 2 calls and gets the same outcome. No extra bookkeeping is needed: the worker reads the current value (D1), so the full sync already carries the newest state of those dates.
+
+### 8.5 Full sync on go-live and recovery (#3282)
+
+```
+host saves a Channex mapping
+        ▼
+readiness ready? ── no ──▶ nothing queued (fullSyncQueued: false)
+        │ yes
+        ▼
+one transaction: 3 FULL_SYNC rows (availability, rates, restrictions),
+today + 499 days, source GO_LIVE
+        ▼
+worker: same dates → one group → 2 calls (availability; rates and restrictions)
+```
+
+- **Go-live:** `saveChannexSetupMapping` queues the full sync when the saved mapping is ready (`channexMappingService.js`, `queueGoLiveFullSync`). The 3 rows commit together, so a full sync is never queued half.
+- **Recovery:** saving the mapping again queues a new full sync. It is a host action, not a timer, which is what scenario 13 forbids.
+- **Duplicates are harmless:** two full syncs pending for the same property merge into the same 2 calls.
+- **A failure to queue** is logged as `CHANNEX_GO_LIVE_FULL_SYNC_QUEUE_FAILED` and returns `fullSyncQueued: false`; the mapping save still answers 200, because the mapping is saved.
+- **Scenario 1:** save the mapping of the test property again, then read the 2 task ids from the outbox row's `sentsummary` or the sync evidence.
 
 **Why the `finally`.** Without it, an unexpected error (for example while building a payload) would leave the lock held until its 5-minute lease expires, and the property would get no updates in that time. Releasing the lock alone is not enough: the claimed rows would stay `PROCESSING` until stale recovery. The `catch` returns them to `PENDING` straight away.
 
@@ -333,7 +353,8 @@ Checked read-only on 21 September 2026:
 | Pre-flight 3: back-off on 429 | yes: `nextRetryDelayMs` and `Retry-After` in the worker (#3280) |
 | Scenarios 3, 4, 7, 8: one call | yes, through D3 and D9 |
 | Scenario 12: queue or limiter | yes, D4 |
-| Scenario 13: only changes | yes, D1, D2 and D9; full sync limited by #3282 |
+| Scenario 1: full sync as 2 calls | yes: queued on go-live and recovery, section 8.5 (#3282) |
+| Scenario 13: only changes | yes, D1, D2 and D9; a full sync only on go-live or recovery, never on a timer (#3282) |
 
 ## 13. Questions and their answers
 
