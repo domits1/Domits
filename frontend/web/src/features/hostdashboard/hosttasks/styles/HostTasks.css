@@ -448,6 +448,22 @@
     color: #333;
 }
 
+.btn-escalate {
+    background-color: #e8590c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-escalate:hover {
+    background-color: #c44f0c;
+}
+
 .custom-file-upload {
     position: relative;
     width: 100%;

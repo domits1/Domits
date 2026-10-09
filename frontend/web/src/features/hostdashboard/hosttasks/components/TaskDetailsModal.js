@@ -229,7 +229,7 @@ const TaskDetailsModal = ({
                         <button className="btn-text" onClick={onClose}>Cancel</button>
 
                         {viewingTask.slaStatus === 'BREACHED' && (
-                            <button className="btn-text btn-escalate" onClick={onEscalate}>Escalate</button>
+                            <button className="btn-escalate" onClick={onEscalate}>Escalate</button>
                         )}
 
                         {isUnchanged ? (
