@@ -12,9 +12,10 @@ describe("Channex ARI outbox constants", () => {
     expect(URGENT_SOURCES).toEqual([CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT]);
   });
 
-  test("a calendar or global settings change is not urgent, so it waits for the quiet period", () => {
+  test("a calendar, global settings or go-live change is not urgent, so it waits for the quiet period", () => {
     expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR);
     expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS);
+    expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.GO_LIVE);
   });
 
   test("the timing defaults match the design: 60 seconds quiet, 5 minute cap", () => {
@@ -54,6 +55,7 @@ describe("Channex ARI outbox constants", () => {
       "GLOBAL_SETTINGS",
       "BOOKING",
       "CHANNEX_IMPORT",
+      "GO_LIVE",
     ]);
     expect(Object.values(CHANNEX_ARI_CHANGE_TYPE)).toEqual(["availability", "rates", "restrictions"]);
   });
