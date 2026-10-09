@@ -1,8 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { DataSource } from "typeorm";
 import { Booking } from "database/models/Booking";
+import { extractAddColumnNames, extractCreateTableColumns, loadSchemaSql, sorted } from "./schemaSql";
 
 const CATALOG_COLUMNS = [
   "id",
@@ -29,6 +28,7 @@ const CATALOG_COLUMNS = [
   "guest_email",
   "public_booking_ref",
   "idempotency_key",
+  "special_request",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -49,8 +49,6 @@ const CATALOG_NOT_NULL_COLUMNS = [
 
 const DIRECT_BOOKING_WEBSITE_COLUMNS = ["booking_source", "site_id", "guest_email", "public_booking_ref", "idempotency_key"];
 
-const sorted = (values) => [...values].sort((left, right) => left.localeCompare(right));
-
 const loadBookingMetadata = async () => {
   const dataSource = new DataSource({
     type: "postgres",
@@ -62,28 +60,6 @@ const loadBookingMetadata = async () => {
   });
   await dataSource.buildMetadatas();
   return dataSource.getMetadata(Booking);
-};
-
-const loadSchemaSql = () => readFileSync(path.join(process.cwd(), "ORM", "schema.psql"), "utf8");
-
-const extractCreateTableColumns = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  const match = new RegExp(`CREATE TABLE IF NOT EXISTS ${escapedTable} \\(([\\s\\S]*?)\\n\\);`).exec(sql);
-  if (!match) {
-    throw new Error(`No CREATE TABLE block found for ${qualifiedTable} in schema.psql`);
-  }
-  return match[1]
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith("PRIMARY KEY"))
-    .map((line) => line.split(/\s+/)[0].toLowerCase());
-};
-
-const extractAddColumnNames = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  return [...sql.matchAll(new RegExp(`ALTER TABLE ${escapedTable} ADD COLUMN IF NOT EXISTS (\\w+)`, "g"))].map(
-    (match) => match[1].toLowerCase()
-  );
 };
 
 describe("Booking entity", () => {

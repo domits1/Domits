@@ -1,29 +1,33 @@
 import Database from "database";
 import { Booking } from "database/models/Booking";
-import { GetItemCommand } from "@aws-sdk/client-dynamodb";
-import { BookingMapping } from "../../util/mapping/booking.js";
 import { buildBlockedDateKeys } from "../../util/calendarAvailability.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 
 export class BookingRepository {
 
-  constructor(dynamoDbClient, systemManager) {
-    this.dynamoDbClient = dynamoDbClient;
+  constructor(systemManager) {
     this.systemManager = systemManager;
   }
 
   async getBookingById(id) {
-    const params = new GetItemCommand({
-      "TableName": "booking-develop",
-      "Key": {
-        "id": {
-          "S": id,
-        },
-      },
-    });
-    const result = await this.dynamoDbClient.send(params);
-    return result.Item ? BookingMapping.mapDatabaseEntryToBooking(result.Item) : null;
+    const client = await Database.getInstance();
+    const booking = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(["booking.guestid", "booking.status", "booking.property_id"])
+      .where("booking.id = :id", { id })
+      .getOne();
+
+    if (!booking) {
+      return null;
+    }
+
+    return {
+      guestId: booking.guestid,
+      status: booking.status,
+      property_id: booking.property_id,
+    };
   }
 
   async getBlockedDateKeysByPropertyId(propertyId) {

@@ -182,6 +182,15 @@ class ReservationController {
     return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
   }
 
+  async handleUpdateSpecialRequestAction(body, authToken) {
+    const result = await this.bookingService.updateSpecialRequest(
+      this.requirePatchField(body, "bookingId"),
+      body?.specialRequest ?? "",
+      authToken
+    );
+    return { statusCode: 200, headers: responseHeaderJSON, response: toJsonSafeResponse(result) };
+  }
+
   async handleCancelBookingAction(body, authToken) {
     if (!body?.bookingId) throw new BadRequestException("Missing bookingId.");
     return await this.cancelBooking(body.bookingId, { headers: { Authorization: authToken } });
@@ -205,6 +214,10 @@ class ReservationController {
 
     if (body?.action === "modify-booking-dates") {
       return await this.handleModifyBookingDatesAction(body, authToken);
+    }
+
+    if (body?.action === "update-special-request") {
+      return await this.handleUpdateSpecialRequestAction(body, authToken);
     }
 
     return null;

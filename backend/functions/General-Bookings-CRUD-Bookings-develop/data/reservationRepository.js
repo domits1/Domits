@@ -578,6 +578,23 @@ class ReservationRepository {
     };
   }
 
+  async updateBookingSpecialRequest(id, specialRequest) {
+    const client = await Database.getInstance();
+    const query = await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        special_request: specialRequest,
+      })
+      .where("id = :id", { id })
+      .execute();
+
+    return {
+      response: query,
+      statusCode: 200,
+    };
+  }
+
   async cancelBookingByGuest(id, guestId, channexChanges = []) {
     const client = await Database.getInstance();
 
