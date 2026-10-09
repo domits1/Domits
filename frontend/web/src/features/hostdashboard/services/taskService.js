@@ -1,8 +1,8 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
-const TASKS_API_URL = "https://mzubqhvg7j.execute-api.eu-north-1.amazonaws.com/default";
+export const TASKS_API_URL = "https://mzubqhvg7j.execute-api.eu-north-1.amazonaws.com/default";
 
-const getHeaders = () => ({
+export const getHeaders = () => ({
     "Content-Type": "application/json",
     Authorization: getAccessToken(),
 });
@@ -93,7 +93,8 @@ export const updateTask = async (taskId, updateData) => {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to update task: ${response.status}`);
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || `Failed to update task: ${response.status}`);
     }
 
     return await response.json();
