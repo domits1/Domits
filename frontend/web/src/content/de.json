@@ -1379,12 +1379,33 @@
         "verified": "Verifiziert",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-App",
-        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS.",
         "loading": "Dein Authentifizierungsstatus wird geladen...",
         "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
       },
       "pin": {
         "comingSoon": "Demnächst verfügbar."
+      },
+      "authenticator": {
+        "setUp": "Einrichten",
+        "setupTitle": "Authenticator-App einrichten",
+        "scanInstruction": "Scanne diesen QR-Code mit einer Authenticator-App, zum Beispiel Google Authenticator oder Microsoft Authenticator.",
+        "qrAlt": "QR-Code, um Domits zu deiner Authenticator-App hinzuzufügen",
+        "manualKeyLabel": "Scannen nicht möglich? Gib diesen Schlüssel manuell ein:",
+        "codeLabel": "6-stelliger Code",
+        "verify": "Bestätigen",
+        "verifying": "Wird bestätigt...",
+        "cancel": "Abbrechen",
+        "tryAgain": "Erneut versuchen",
+        "close": "Schließen",
+        "success": "Deine Authenticator-App ist aktiviert. Bei der Anmeldung auf einem neuen Gerät wirst du nach einem Code gefragt.",
+        "errors": {
+          "invalidCode": "Dieser Code ist ungültig. Gib den aktuellen 6-stelligen Code aus deiner App ein.",
+          "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an und starte die Einrichtung neu.",
+          "tooManyAttempts": "Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.",
+          "enableFailed": "Dein Code wurde akzeptiert, aber die Authenticator-App konnte nicht aktiviert werden. Bitte versuche es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+        }
       }
     },
     "communicationPreferences": {

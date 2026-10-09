@@ -45,13 +45,6 @@ const AuthenticationStatusSection = ({
                 </span>
             </div>
 
-            <div className="pd-auth-row">
-                <span className="pd-pref-label">{labels.authenticatorApp}</span>
-                <span className={`pd-status-pill ${!mfaUnavailable && authStatus.preferredMFA === "TOTP" ? "pd-status-pill--active" : "pd-status-pill--inactive"}`}>
-                    {mfaUnavailable ? labels.unavailable : (authStatus.preferredMFA === "TOTP" ? labels.active : labels.inactive)}
-                </span>
-            </div>
-
             <p className="pd-auth-subtext">{mfaUnavailable ? labels.error : labels.comingSoon}</p>
         </>
     );
@@ -69,7 +62,6 @@ AuthenticationStatusSection.propTypes = {
         unavailable: PropTypes.string.isRequired,
         verified: PropTypes.string.isRequired,
         sms: PropTypes.string.isRequired,
-        authenticatorApp: PropTypes.string.isRequired,
         comingSoon: PropTypes.string.isRequired,
         loading: PropTypes.string.isRequired,
         error: PropTypes.string.isRequired,

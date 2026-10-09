@@ -1378,12 +1378,33 @@
         "verified": "Verified",
         "sms": "SMS",
         "authenticatorApp": "Authenticator app",
-        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "comingSoon": "Coming soon: SMS sign-in.",
         "loading": "Loading your authentication status...",
         "error": "We couldn't load your authentication status. Please refresh the page."
       },
       "pin": {
         "comingSoon": "Coming soon."
+      },
+      "authenticator": {
+        "setUp": "Set up",
+        "setupTitle": "Set up your authenticator app",
+        "scanInstruction": "Scan this QR code with an authenticator app, such as Google Authenticator or Microsoft Authenticator.",
+        "qrAlt": "QR code for adding Domits to your authenticator app",
+        "manualKeyLabel": "Can't scan? Enter this key manually:",
+        "codeLabel": "6-digit code",
+        "verify": "Verify",
+        "verifying": "Verifying...",
+        "cancel": "Cancel",
+        "tryAgain": "Try again",
+        "close": "Close",
+        "success": "Your authenticator app is on. You will be asked for a code when you sign in on a new device.",
+        "errors": {
+          "invalidCode": "That code is not valid. Enter the current 6-digit code from your app.",
+          "sessionExpired": "Your session has expired. Please sign in again and restart the setup.",
+          "tooManyAttempts": "Too many attempts. Please wait a moment and try again.",
+          "enableFailed": "Your code was accepted, but we couldn't turn on the authenticator app. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        }
       }
     },
     "communicationPreferences": {

@@ -1379,12 +1379,33 @@
         "verified": "Geverifieerd",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-app",
-        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
         "loading": "Je authenticatiestatus wordt geladen...",
         "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
       },
       "pin": {
         "comingSoon": "Binnenkort beschikbaar."
+      },
+      "authenticator": {
+        "setUp": "Instellen",
+        "setupTitle": "Je authenticator-app instellen",
+        "scanInstruction": "Scan deze QR-code met een authenticator-app, zoals Google Authenticator of Microsoft Authenticator.",
+        "qrAlt": "QR-code om Domits aan je authenticator-app toe te voegen",
+        "manualKeyLabel": "Kun je niet scannen? Voer deze sleutel handmatig in:",
+        "codeLabel": "6-cijferige code",
+        "verify": "Verifiëren",
+        "verifying": "Verifiëren...",
+        "cancel": "Annuleren",
+        "tryAgain": "Opnieuw proberen",
+        "close": "Sluiten",
+        "success": "Je authenticator-app is ingeschakeld. Je wordt om een code gevraagd wanneer je op een nieuw apparaat inlogt.",
+        "errors": {
+          "invalidCode": "Deze code is niet geldig. Voer de huidige 6-cijferige code uit je app in.",
+          "sessionExpired": "Je sessie is verlopen. Log opnieuw in en start de instelling opnieuw.",
+          "tooManyAttempts": "Te veel pogingen. Wacht even en probeer het opnieuw.",
+          "enableFailed": "Je code is geaccepteerd, maar we konden de authenticator-app niet inschakelen. Probeer het opnieuw.",
+          "generic": "Er is iets misgegaan. Probeer het opnieuw."
+        }
       }
     },
     "communicationPreferences": {

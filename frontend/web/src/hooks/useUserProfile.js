@@ -495,6 +495,18 @@ export default function useUserProfile() {
     }
   };
 
+  const refreshMfaStatus = async () => {
+    try {
+      const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
+      const preferredMFA = normalizePreferredMfa(await Auth.getPreferredMFA(currentUser, { bypassCache: true }));
+      setAuthStatus((prev) => ({ ...prev, preferredMFA }));
+      setMfaStatusError(false);
+    } catch (error) {
+      console.warn("Unable to refresh preferred MFA:", error);
+      setMfaStatusError(true);
+    }
+  };
+
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -528,6 +540,7 @@ export default function useUserProfile() {
     authStatusLoading,
     authStatusError,
     mfaStatusError,
+    refreshMfaStatus,
     placeOfBirthOptions,
     countryCodes,
     titleOptions,
