@@ -7,6 +7,8 @@ import {
 import '../styles/HostTasks.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
+import { fetchTeamMembers } from '../../services/teamService';
+import { HOST_ASSIGNEE_ID, resolveAssigneeSelection } from '../utils/assigneeSelection';
 import {
     fetchChecklistItems,
     createChecklistItem,
@@ -33,6 +35,8 @@ const DEFAULT_NEW_TASK = {
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
+    assigneeSelection: '',
+    assignee_team_member_id: '',
     dueDate: '',
     priority: 'Medium',
     attachments: null,
@@ -90,6 +94,7 @@ const HostTasks = () => {
     }, [isModalOpen]);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
 
     const reportData = useMemo(() => {
@@ -157,6 +162,10 @@ const HostTasks = () => {
         const hostIdForOptions = asHostId ?? effectiveHostId;
         fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
     }, [asHostId, effectiveHostId]);
+
+    useEffect(() => {
+        fetchTeamMembers().then(setTeamMembers).catch(() => {});
+    }, []);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -316,6 +325,26 @@ const HostTasks = () => {
         }));
     };
 
+    const handleAssigneeChange = (e) => {
+        const selected = createAssigneeChoices.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || '',
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || ''),
+            assignee: selected?.name || '',
+        }));
+    };
+
+    const handleEditAssigneeChange = (e) => {
+        const selected = editAssigneeChoices.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || prev.assigneeSelection,
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || prev.assignee_team_member_id),
+            assignee: selected?.name || prev.assignee,
+        }));
+    };
+
     const resetForm = () => {
         setNewTask({ ...DEFAULT_NEW_TASK });
     };
@@ -360,8 +389,12 @@ const HostTasks = () => {
     };
 
     const openTaskDetails = (task) => {
-        setViewingTask(task);
-        setEditedTask({ ...task });
+        const taskWithAssigneeSelection = {
+            ...task,
+            assigneeSelection: resolveAssigneeSelection(task, currentUser),
+        };
+        setViewingTask(taskWithAssigneeSelection);
+        setEditedTask({ ...taskWithAssigneeSelection });
         loadChecklistItems(task.id);
     };
 
@@ -588,6 +621,28 @@ const HostTasks = () => {
         return propertyOptions;
     }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
 
+    const createAssigneeChoices = useMemo(() => {
+        const hostChoice = currentUser.name
+            ? [{ id: HOST_ASSIGNEE_ID, label: `${currentUser.name}${currentUser.group ? ` (${currentUser.group})` : ' (Host)'}`, name: currentUser.name }]
+            : [];
+        const memberChoices = teamMembers
+            .filter(m => m.status === 'active')
+            .map(m => {
+                const displayName = m.member_name || m.member_email;
+                return { id: m.id, label: `${displayName} (${m.role})`, name: displayName };
+            });
+        return [...hostChoice, ...memberChoices];
+    }, [currentUser, teamMembers]);
+
+    const editAssigneeChoices = useMemo(() => {
+        const currentId = editedTask?.assigneeSelection;
+        const currentLabel = String(editedTask?.assignee || "").trim();
+        if (currentId && currentLabel && !createAssigneeChoices.some(o => o.id === currentId)) {
+            return [...createAssigneeChoices, { id: currentId, label: currentLabel, name: currentLabel }];
+        }
+        return createAssigneeChoices;
+    }, [createAssigneeChoices, editedTask?.assigneeSelection, editedTask?.assignee]);
+
     const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
@@ -758,9 +813,10 @@ const HostTasks = () => {
                 isOpen={isModalOpen}
                 newTask={newTask}
                 propertyOptions={createPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={createAssigneeChoices}
                 onInputChange={handleInputChange}
                 onPropertyChange={handlePropertyChange}
+                onAssigneeChange={handleAssigneeChange}
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
@@ -770,9 +826,10 @@ const HostTasks = () => {
                 viewingTask={viewingTask}
                 editedTask={editedTask}
                 editPropertyOptions={editPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}
                 onPropertyChange={handleEditPropertyChange}
+                onAssigneeChange={handleEditAssigneeChange}
                 onFileChange={handleEditFileChange}
                 onRemoveAttachment={handleRemoveAttachment}
                 onSave={handleSaveChanges}
