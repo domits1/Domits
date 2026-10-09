@@ -1,5 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
+import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
+import { getHostEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -10,7 +12,9 @@ const BUCKET_NAME = "domits-task-attachments";
 
 export const getTasks = async (hostId, filters) => {
     const dataSource = await Database.getInstance();
-    return await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const tasks = await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const now = Date.now();
+    return tasks.map(task => ({ ...task, sla_status: computeSlaStatus(task, now) }));
 };
 
 export const createTask = async (hostId, taskData) => {
@@ -65,6 +69,8 @@ export const updateTask = async (hostId, taskId, updateData) => {
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
+
+    delete fieldsToUpdate.escalated_at;
 
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
@@ -142,6 +148,38 @@ export const updateTask = async (hostId, taskId, updateData) => {
     });
 
     return { message: "Task updated successfully" };
+};
+
+export const escalateTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    if (!task) throw new Error("Task not found or access denied");
+
+    if (task.escalated_at) {
+        throw new BadRequestException("Task has already been escalated");
+    }
+
+    if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
+        throw new BadRequestException("Task is not breaching its SLA");
+    }
+
+    const escalated_at = Date.now();
+    const claimed = await taskRepository.escalateTaskInDb(dataSource, taskId, hostId, escalated_at);
+    if (!claimed) {
+        throw new BadRequestException("Task has already been escalated");
+    }
+
+    try {
+        const hostEmail = await getHostEmailById(hostId);
+        await sendTaskEscalationEmail(hostEmail, task);
+    } catch (emailError) {
+        await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
+        throw emailError;
+    }
+
+    return { message: "Task escalated successfully" };
 };
 
 export const deleteTask = async (hostId, taskId) => {
