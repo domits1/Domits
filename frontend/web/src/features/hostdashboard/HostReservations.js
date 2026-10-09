@@ -12,7 +12,11 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { resolvePrimaryAccommodationImageUrl } from "../guestdashboard/utils/image";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
-import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import {
+  calculateTotalPayment,
+  isChannexBooking,
+  resolveChannexBookingTotal,
+} from "./utils/reservationCalculations.js";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -572,8 +576,11 @@ const HostReservations = () => {
                       </tr>
                     ) : (
                       paginatedItems.map((booking) => {
-                        const total = calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate);
-                        const commission = (total * 0.1).toFixed(2);
+                        const total =
+                          resolveChannexBookingTotal(booking) ??
+                          calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate);
+                        // Domits takes no commission on a booking made on another channel.
+                        const commission = isChannexBooking(booking) ? "–" : `€${(total * 0.1).toFixed(2)}`;
                         const isInquiryPending = inquiryLoading[booking.id] || false;
 
                         return (
@@ -612,7 +619,7 @@ const HostReservations = () => {
                               </span>
                             </td>
                             <td data-label="Total">€{total}</td>
-                            <td data-label="Commission">€{commission}</td>
+                            <td data-label="Commission">{commission}</td>
                             <td data-label="Policy">{renderPolicyDisplay(booking.cancellationType)}</td>
                             <td data-label="Reservation">{booking.id}</td>
                             <td data-label="Booked">{formatDate(booking.createdat)}</td>
