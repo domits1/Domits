@@ -56,6 +56,17 @@
     "At least 1 number": "At least 1 number",
     "At least 1 special character": "At least 1 special character",
     "Email can't be empty.": "Email can't be empty.",
-    "Does not follow the email format example@mail.com": "Does not follow the email format example@mail.com"
+    "Does not follow the email format example@mail.com": "Does not follow the email format example@mail.com",
+    "Two-factor authentication": "Two-factor authentication",
+    "Enter the 6-digit code from your authenticator app.": "Enter the 6-digit code from your authenticator app.",
+    "6-digit code": "6-digit code",
+    "Verify": "Verify",
+    "Verifying...": "Verifying...",
+    "Back to login": "Back to login",
+    "Invalid code. Please try again.": "Invalid code. Please try again.",
+    "Too many attempts. Please wait a moment and try again.": "Too many attempts. Please wait a moment and try again.",
+    "Something went wrong. Please try again.": "Something went wrong. Please try again.",
+    "Your sign-in session expired. Please sign in again.": "Your sign-in session expired. Please sign in again.",
+    "This sign-in method is not supported yet. Please contact support.": "This sign-in method is not supported yet. Please contact support."
   }
 }
