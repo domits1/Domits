@@ -3,32 +3,30 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildStaticPageBundle } from "./buildStaticPageBundle.mjs";
+import { StaticPageRenderer } from "../functions/PropertyHandler/business/service/staticPageRenderer.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "__fixtures__");
 const GOLDEN_FILE = join(FIXTURES, "staticPage.html");
 
 const generateStaticPage = async () => {
-  const bundleFile = join(HERE, "..", "functions", "PropertyHandler", "generated", "staticPageBundle.mjs");
-  await buildStaticPageBundle({ outfile: bundleFile });
+  await buildStaticPageBundle();
 
-  const bundle = await import(`${bundleFile}?t=${Date.now()}`);
   const renderPayload = JSON.parse(readFileSync(join(FIXTURES, "renderPayload.json"), "utf8"));
   const template = readFileSync(join(FIXTURES, "appShell.html"), "utf8");
+  const site = {
+    ...renderPayload.site,
+    publishedPropertySnapshot: renderPayload.propertySnapshot,
+    publishedContentOverrides: renderPayload.contentOverrides,
+    publishedThemeOverrides: renderPayload.themeOverrides,
+  };
 
-  if (!bundle.canBuildStaticSiteDocument(renderPayload)) {
-    throw new Error("The fixture payload should be renderable; the bundle says it is not.");
-  }
-
-  const baseModel = bundle.buildWebsiteTemplateModel({ propertyDetails: renderPayload.propertySnapshot });
-  const themedModel = bundle.applyWebsiteDraftThemeOverrides(baseModel, renderPayload.themeOverrides);
-  const model = bundle.applyWebsiteDraftContentOverrides(
-    themedModel,
-    renderPayload.contentOverrides,
-    renderPayload.site.templateKey
-  );
-
-  return bundle.buildStaticSiteDocument({ template, renderPayload, model });
+  return new StaticPageRenderer().render({
+    template,
+    site,
+    mainAddress: renderPayload.domain,
+    destination: renderPayload.domain,
+  });
 };
 
 const page = await generateStaticPage();

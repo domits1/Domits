@@ -4,6 +4,7 @@ import { LuX } from 'react-icons/lu';
 import { getTodayString } from '../utils/taskFilters';
 import { TASK_TYPE_OPTIONS } from '../utils/taskTypeOptions';
 import AttachmentThumb from './AttachmentThumb';
+import ChecklistSection from './ChecklistSection';
 
 const STATUS_OPTIONS = [
     { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
@@ -25,10 +26,16 @@ const TaskDetailsModal = ({
     editedTask,
     editPropertyOptions,
     currentUser,
+    checklistItems,
+    checklistLoadError,
     onEditChange,
     onPropertyChange,
     onFileChange,
     onRemoveAttachment,
+    onAddChecklistItem,
+    onToggleChecklistItem,
+    onRemoveChecklistItem,
+    onRetryChecklistLoad,
     onSave,
     onDelete,
     onClose,
@@ -181,6 +188,15 @@ const TaskDetailsModal = ({
                             </div>
                         </div>
 
+                        <ChecklistSection
+                            items={checklistItems}
+                            loadError={checklistLoadError}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={onRetryChecklistLoad}
+                        />
+
                         <div className="activity-section">
                             <div className="activity-header">
                                 <h4>Activity</h4>
@@ -234,10 +250,21 @@ TaskDetailsModal.propTypes = {
         name: PropTypes.string,
         email: PropTypes.string,
     }).isRequired,
+    checklistItems: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        isRequired: PropTypes.bool,
+        isChecked: PropTypes.bool,
+    })).isRequired,
+    checklistLoadError: PropTypes.string,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onRemoveAttachment: PropTypes.func.isRequired,
+    onAddChecklistItem: PropTypes.func.isRequired,
+    onToggleChecklistItem: PropTypes.func.isRequired,
+    onRetryChecklistLoad: PropTypes.func.isRequired,
+    onRemoveChecklistItem: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,

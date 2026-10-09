@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
 import {
-  cancelBooking,
   connectChannex,
   getChannexAriPayloadPreview,
   getChannexAriPreview,
@@ -336,16 +335,6 @@ const validateModifyBookingForm = (form) => {
   }
 
   return "";
-};
-
-const normalizeCancelBookingForm = (form) => ({
-  bookingId: String(form?.bookingId || "").trim(),
-  reason: String(form?.reason || "").trim(),
-});
-
-const validateCancelBookingForm = (form) => {
-  const payload = normalizeCancelBookingForm(form);
-  return payload.bookingId ? "" : "Enter the booking ID to cancel.";
 };
 
 const createSetupSelection = () => ({
@@ -1301,8 +1290,6 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [actionStates, setActionStates] = useState({});
   const [modifyBookingForm, setModifyBookingForm] = useState({ bookingId: "", arrivalDate: "", departureDate: "" });
   const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
-  const [cancelBookingForm, setCancelBookingForm] = useState({ bookingId: "", reason: "" });
-  const [cancelBookingState, setCancelBookingState] = useState(createRequestState);
 
   const hasProperty = Boolean(domitsPropertyId.trim());
   const hasDateRange = hasProperty && Boolean(dateFrom) && Boolean(dateTo);
@@ -1578,13 +1565,6 @@ function ChannexDiagnosticsPanel({ userId }) {
     }));
   };
 
-  const updateCancelBookingForm = (field, value) => {
-    setCancelBookingForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
   const handleModifyBookingDates = async (event) => {
     event.preventDefault();
     const validationMessage = validateModifyBookingForm(modifyBookingForm);
@@ -1610,39 +1590,6 @@ function ChannexDiagnosticsPanel({ userId }) {
     } catch (error) {
       const errorDetails = normalizeChannexError(error, "Booking date modification failed.");
       setModifyBookingState({
-        loading: false,
-        error: errorDetails.message,
-        errorDetails,
-        data: null,
-      });
-    }
-  };
-
-  const handleCancelBooking = async (event) => {
-    event.preventDefault();
-    const validationMessage = validateCancelBookingForm(cancelBookingForm);
-    if (validationMessage) {
-      setCancelBookingState({
-        loading: false,
-        error: validationMessage,
-        errorDetails: null,
-        data: null,
-      });
-      return;
-    }
-
-    const payload = normalizeCancelBookingForm(cancelBookingForm);
-    setCancelBookingState({ loading: true, error: "", errorDetails: null, data: null });
-
-    try {
-      const data = await cancelBooking({ ...payload, userId, domitsPropertyId });
-      setCancelBookingState({ loading: false, error: "", errorDetails: null, data });
-      if (userId && hasProperty) {
-        await loadLatestEvidence();
-      }
-    } catch (error) {
-      const errorDetails = normalizeChannexError(error, "Booking cancellation failed.");
-      setCancelBookingState({
         loading: false,
         error: errorDetails.message,
         errorDetails,
@@ -2228,56 +2175,6 @@ function ChannexDiagnosticsPanel({ userId }) {
             </>
           ) : null}
           {modifyBookingState.data ? <JsonBlock title="Modify booking response" value={modifyBookingState.data} /> : null}
-        </form>
-      </div>
-      <div className="channex-certification-test-section">
-        <div className="channex-diagnostics-card-header">
-          <div>
-            <h3>Cancel booking</h3>
-            <p className="host-integrations-muted">
-              Admin certification action for cancelling a Domits booking without processing refunds and showing the Channex availability restore evidence.
-            </p>
-          </div>
-        </div>
-        <form className="channex-diagnostics-action-card" onSubmit={handleCancelBooking}>
-          <div className="host-integrations-field-grid">
-            <label className="host-integrations-field">
-              <span>Cancel booking ID</span>
-              <input
-                value={cancelBookingForm.bookingId}
-                onChange={(event) => updateCancelBookingForm("bookingId", event.target.value)}
-                placeholder="Booking ID"
-                disabled={cancelBookingState.loading}
-              />
-            </label>
-            <label className="host-integrations-field">
-              <span>Reason</span>
-              <input
-                value={cancelBookingForm.reason}
-                onChange={(event) => updateCancelBookingForm("reason", event.target.value)}
-                placeholder="Reason"
-                disabled={cancelBookingState.loading}
-              />
-            </label>
-          </div>
-          <button type="submit" className="host-integrations-primary-btn" disabled={cancelBookingState.loading}>
-            {cancelBookingState.loading ? "Cancelling..." : "Cancel booking"}
-          </button>
-          {cancelBookingState.data ? <p className="host-integrations-success-banner">Booking cancelled.</p> : null}
-          {cancelBookingState.error ? (
-            <ErrorCallout error={cancelBookingState.error} details={cancelBookingState.errorDetails} />
-          ) : null}
-          <IdentifierList title="Channex task IDs" ids={cancelBookingState.data?.channexAvailabilitySync?.taskIds} />
-          {cancelBookingState.data?.channexAvailabilitySync ? (
-            <>
-              <BookingAvailabilitySyncSummary
-                title="Cancellation availability sync summary"
-                evidence={cancelBookingState.data.channexAvailabilitySync}
-              />
-              <JsonBlock title="Channex cancellation availability sync" value={cancelBookingState.data.channexAvailabilitySync} />
-            </>
-          ) : null}
-          {cancelBookingState.data ? <JsonBlock title="Cancel booking response" value={cancelBookingState.data} /> : null}
         </form>
       </div>
     </section>

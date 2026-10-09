@@ -173,10 +173,6 @@ class IntegrationController {
     return this.channelManagementController.pullLatestChannexBookings(event);
   }
 
-  async cancelChannexCertificationBooking(event) {
-    return this.channelManagementController.cancelChannexCertificationBooking(event);
-  }
-
   async pollLatestChannexBookings(event) {
     return this.channelManagementController.pollLatestChannexBookings(event);
   }

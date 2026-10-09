@@ -1,7 +1,10 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const PUBLISH_ATTEMPT_LIMIT = 3;
+const SERIALIZATION_FAILURE_SQLSTATE = "40001";
 const DEFAULT_SITE_LOCALE = "en";
 const EMPTY_JSON_OBJECT = "{}";
 const SITE_SELECT_COLUMNS = `id,
@@ -145,20 +148,47 @@ export class DirectBookingWebsiteSiteRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
 
-    const { records } = await runStatement(
-      client,
-      `DELETE FROM ${tableName}
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2
       RETURNING
         ${SITE_SELECT_COLUMNS}`,
-      [propertyId, hostId]
-    );
+        [propertyId, hostId],
+        true
+      );
 
-    return mapSiteRow(records[0] || null);
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return null;
+      }
+
+      await manager.queryRunner.query(
+        `DELETE FROM ${outboxTableName}
+      WHERE site_id = $1`,
+        [site.id],
+        true
+      );
+
+      return site;
+    });
   }
 
-  async upsertSiteWithStaticPageOutbox({
+  async upsertSiteWithStaticPageOutbox(input) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.upsertSiteWithStaticPageOutboxOnce(input);
+      } catch (error) {
+        const isConflict = String(error?.code || error?.driverError?.code || "") === SERIALIZATION_FAILURE_SQLSTATE;
+        if (!isConflict) throw error;
+        if (attempt >= PUBLISH_ATTEMPT_LIMIT) throw new WebsitePublishConflictError({ cause: error });
+      }
+    }
+  }
+
+  async upsertSiteWithStaticPageOutboxOnce({
     propertyId,
     hostId,
     siteName,
@@ -260,10 +290,10 @@ export class DirectBookingWebsiteSiteRepository {
         property_id = EXCLUDED.property_id,
         host_id = EXCLUDED.host_id,
         revision = EXCLUDED.revision,
-        status = 'PENDING',
+        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
         attempt_count = 0,
         failure_reason = NULL,
-        updated_at = EXCLUDED.updated_at,
+        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
         processed_at = NULL`,
         [site.id, site.propertyId, site.hostId, site.staticPageRevision, now],
         true
