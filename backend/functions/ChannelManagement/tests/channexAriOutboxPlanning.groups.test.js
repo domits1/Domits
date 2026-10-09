@@ -55,6 +55,22 @@ describe("groupChangesForSend", () => {
     expect(groups.map((group) => group.changeTypes)).toEqual([["availability"], ["restrictions"]]);
   });
 
+  // Channex scenario 1 wants a full sync as 2 calls. One group with all types is one
+  // availability call plus one rates-and-restrictions call (channexAvailabilitySyncService.js:444),
+  // also when an older change is pending inside the 500 days.
+  test("a full sync of 500 days with a pending change inside it becomes one group", () => {
+    const groups = groupChangesForSend([
+      row(["availability"], 20261001, 20280212),
+      row(["rates"], 20261001, 20280212),
+      row(["restrictions"], 20261001, 20280212),
+      row(["rates"], 20261105, 20261107),
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].changeTypes).toEqual(["availability", "rates", "restrictions"]);
+    expect(groups[0].changedDates).toHaveLength(500);
+  });
+
   test("no rows means no calls", () => {
     expect(groupChangesForSend([])).toEqual([]);
   });
