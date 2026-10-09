@@ -1163,8 +1163,35 @@
         "onboarding": {
           "title": "Incorporación",
           "desc": "Sigue tu progreso desde publicar tu alojamiento hasta ponerlo en marcha."
+        },
+        "homeAutomation": {
+          "title": "Domótica",
+          "desc": "Conecta cerraduras inteligentes para dar acceso a los huéspedes a tus alojamientos."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domótica",
+      "title": "Domótica",
+      "subtitle": "Conecta RemoteLock para gestionar las cerraduras inteligentes de tus huéspedes.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Última sincronización",
+        "never": "Aún no hay sincronización"
+      },
+      "statuses": {
+        "notConnected": "No conectado",
+        "connecting": "Conectando",
+        "connected": "Conectado",
+        "authenticationError": "Error de inicio de sesión",
+        "connectionError": "Problema de conexión",
+        "disconnected": "Desconectado",
+        "expiredCredentials": "Inicio de sesión caducado",
+        "unknown": "Estado desconocido"
+      },
+      "loading": "Cargando tu conexión con RemoteLock...",
+      "loadError": "No pudimos cargar tu conexión con RemoteLock.",
+      "retry": "Intentar de nuevo"
     },
     "onboardingHub": {
       "breadcrumb": "Incorporación",

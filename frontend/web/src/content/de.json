@@ -1163,8 +1163,35 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Verfolge deinen Fortschritt vom Eintragen deiner Unterkunft bis zur Veröffentlichung."
+        },
+        "homeAutomation": {
+          "title": "Hausautomation",
+          "desc": "Verbinde Smart Locks, damit Gäste Zugang zu deinen Unterkünften erhalten."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Hausautomation",
+      "title": "Hausautomation",
+      "subtitle": "Verbinde RemoteLock, um Smart Locks für deine Gäste zu verwalten.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Letzte Synchronisierung",
+        "never": "Noch nicht synchronisiert"
+      },
+      "statuses": {
+        "notConnected": "Nicht verbunden",
+        "connecting": "Verbindung wird hergestellt",
+        "connected": "Verbunden",
+        "authenticationError": "Anmeldung fehlgeschlagen",
+        "connectionError": "Verbindungsproblem",
+        "disconnected": "Getrennt",
+        "expiredCredentials": "Anmeldung abgelaufen",
+        "unknown": "Status unbekannt"
+      },
+      "loading": "Deine RemoteLock-Verbindung wird geladen...",
+      "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
+      "retry": "Erneut versuchen"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
