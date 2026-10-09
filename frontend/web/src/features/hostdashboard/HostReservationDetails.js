@@ -739,6 +739,8 @@ const buildReservationReceiptPayload = (reservation) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
+    // The OTA sends only its total; a Domits nightly rate next to it would not add up.
+    showPriceBreakdown: (reservation.channelTotal ?? null) === null,
     paymentStatusLabel: isPaidOnChannel
       ? CHANNEL_PAYMENT_STATUS_TEXT
       : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
