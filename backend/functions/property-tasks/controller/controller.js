@@ -56,6 +56,19 @@ export class Controller {
         }
     }
 
+    async internalCreateTask(event) {
+        try {
+            const { hostId, taskData } = JSON.parse(event.body || "{}");
+            if (!hostId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "hostId is required" }) };
+            }
+            const result = await createTask(hostId, taskData);
+            return { statusCode: 201, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
     async deleteTask(event) {
         try {
             const { effectiveHostId, isPOM } = await this.resolveHost(event);

@@ -207,6 +207,14 @@ class ReservationController {
       return await this.handleModifyBookingDatesAction(body, authToken);
     }
 
+    if (body?.action === "mark-checked-out") {
+      const result = await this.bookingService.markCheckedOut(
+        this.requirePatchField(body, "bookingId"),
+        authToken
+      );
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
+
     return null;
   }
 

@@ -24,6 +24,7 @@ status: { type: "varchar", default: "Pending" },
         parent_task_id: { type: "uuid", nullable: true },
         completed_date: { type: "bigint", nullable: true, transformer: bigintTransformer },
         attachments: { type: "text", nullable: true },
+        source: { type: "varchar", nullable: true },
         is_legacy: { type: "boolean", default: false },
         created_at: { type: "bigint", nullable: false, transformer: bigintTransformer },
         updated_at: { type: "bigint", nullable: false, transformer: bigintTransformer }

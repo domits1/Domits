@@ -40,6 +40,7 @@ export const createTask = async (hostId, taskData) => {
         assignee_team_member_id: taskData.assignee_team_member_id || null,
         parent_task_id: parentTaskId,
         attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
+        source: taskData.source || null,
         created_at: Date.now(),
         updated_at: Date.now()
     };
