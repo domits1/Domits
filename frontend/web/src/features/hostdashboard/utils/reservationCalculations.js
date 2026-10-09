@@ -18,6 +18,17 @@ export function calculateNights(arrival, departure) {
   }
 }
 
+export const isChannexBooking = (booking) => String(booking?.bookingtype || "").toLowerCase() === "channex";
+
+// A Channex booking stores what the guest paid on the OTA (#3483). Null when the booking
+// is not from Channex or has no usable amount, so the caller uses its own calculation.
+export const resolveChannexBookingTotal = (booking) => {
+  const stored = booking?.total_price;
+  if (!isChannexBooking(booking) || stored === null || stored === undefined || stored === "") return null;
+  const total = Number(stored);
+  return Number.isFinite(total) ? total : null;
+};
+
 export function calculateTotalPayment(rate, arrival, departure) {
   const nights = calculateNights(arrival, departure);
   const numericRate = Number(rate) || 0;

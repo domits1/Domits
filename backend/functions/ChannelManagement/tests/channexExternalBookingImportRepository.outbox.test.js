@@ -88,6 +88,28 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, newStay);
   });
 
+  test("an imported booking stores the OTA amount and the OTA as its source", async () => {
+    const { repository, client } = setup();
+
+    await repository.createExternalBooking({ ...booking, totalPrice: 300, bookingSource: "Booking.com" });
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toContain("total_price");
+    expect(sql).toContain("booking_source");
+    expect(params).toEqual(expect.arrayContaining([300, "Booking.com"]));
+  });
+
+  // A modification without an amount keeps the stored one instead of erasing it.
+  test("a date change updates the total price only when Channex sends one", async () => {
+    const { repository, manager } = setup();
+
+    await repository.updateImportedBooking({ ...booking, totalPrice: 350, channexChanges: [change] });
+
+    const [sql, params] = manager.query.mock.calls[0];
+    expect(sql).toContain("total_price = COALESCE(");
+    expect(params).toContain(350);
+  });
+
   test("an imported cancellation and its outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 

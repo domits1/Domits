@@ -42,6 +42,7 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     totalPaid: "Total paid",
     method: "Method",
     bookedVia: "Booked via",
+    collectedByChannel: "Collected by the channel",
   },
   loading: {
     status: "Loading status...",
