@@ -7,6 +7,12 @@ import {
 import '../styles/HostTasks.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
+import {
+    fetchChecklistItems,
+    createChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+} from '../services/taskChecklistService';
 import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from '../utils/taskFilters';
 import { sortTasks } from '../utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from '../utils/reportTimeBuckets';
@@ -38,6 +44,7 @@ const HostTasks = () => {
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
     const loadRequestRef = useRef(0);
+    const checklistRequestRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -50,7 +57,9 @@ const HostTasks = () => {
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
     const [viewingTask, setViewingTask] = useState(null);
-    const [editedTask, setEditedTask] = useState(null);  
+    const [editedTask, setEditedTask] = useState(null);
+    const [checklistItems, setChecklistItems] = useState([]);
+    const [checklistLoadError, setChecklistLoadError] = useState(null);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -170,8 +179,9 @@ const HostTasks = () => {
 
         try {
             await updateTask(task.id, { status: newStatus });
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
+            alert(error.message || "Error updating task status");
         }
     };
 
@@ -331,9 +341,32 @@ const HostTasks = () => {
         }
     };
 
+    const loadChecklistItems = (taskId) => {
+        const requestId = ++checklistRequestRef.current;
+        setChecklistLoadError(null);
+        fetchChecklistItems(taskId)
+            .then(items => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems(items);
+                    setChecklistLoadError(null);
+                }
+            })
+            .catch((error) => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems([]);
+                    setChecklistLoadError(error.message || "Failed to load checklist items");
+                }
+            });
+    };
+
     const openTaskDetails = (task) => {
         setViewingTask(task);
-        setEditedTask({ ...task }); 
+        setEditedTask({ ...task });
+        loadChecklistItems(task.id);
+    };
+
+    const handleRetryChecklistLoad = () => {
+        loadChecklistItems(viewingTask.id);
     };
 
     const handleEditChange = (e) => {
@@ -342,6 +375,7 @@ const HostTasks = () => {
     };
 
     const closeTaskDetails = () => {
+        checklistRequestRef.current++;
         const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
         if (isEdited) {
             setConfirmDialog({
@@ -353,12 +387,16 @@ const HostTasks = () => {
                 onConfirm: () => {
                     setViewingTask(null);
                     setEditedTask(null);
+                    setChecklistItems([]);
+                    setChecklistLoadError(null);
                     closeConfirmDialog();
                 }
             });
         } else {
             setViewingTask(null);
             setEditedTask(null);
+            setChecklistItems([]);
+            setChecklistLoadError(null);
         }
     };
 
@@ -410,8 +448,40 @@ const HostTasks = () => {
 
         try {
             await updateTask(finalTask.id, finalTask);
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+            alert(error.message || "Error saving changes");
+        }
+    };
+
+    const handleAddChecklistItem = async (itemData) => {
+        try {
+            const created = await createChecklistItem(viewingTask.id, itemData);
+            setChecklistItems(prev => [...prev, created]);
+        } catch (error) {
+            alert(error.message || "Error adding checklist item");
+        }
+    };
+
+    const handleToggleChecklistItem = async (item) => {
+        const nextChecked = !item.isChecked;
+        setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: nextChecked } : i));
+        try {
+            await updateChecklistItem(item.id, { isChecked: nextChecked });
+        } catch (error) {
+            setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: item.isChecked } : i));
+            alert(error.message || "Error updating checklist item");
+        }
+    };
+
+    const handleRemoveChecklistItem = async (itemId) => {
+        const previousItems = checklistItems;
+        setChecklistItems(prev => prev.filter(i => i.id !== itemId));
+        try {
+            await deleteChecklistItem(itemId);
+        } catch (error) {
+            setChecklistItems(previousItems);
+            alert(error.message || "Error removing checklist item");
         }
     };
 
@@ -708,6 +778,12 @@ const HostTasks = () => {
                 onSave={handleSaveChanges}
                 onDelete={handleDeleteSingleTask}
                 onClose={closeTaskDetails}
+                checklistItems={checklistItems}
+                checklistLoadError={checklistLoadError}
+                onAddChecklistItem={handleAddChecklistItem}
+                onToggleChecklistItem={handleToggleChecklistItem}
+                onRemoveChecklistItem={handleRemoveChecklistItem}
+                onRetryChecklistLoad={handleRetryChecklistLoad}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />

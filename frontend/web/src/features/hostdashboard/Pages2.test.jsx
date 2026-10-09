@@ -23,14 +23,14 @@ const renderPages = () =>
   );
 
 describe("Pages2 missed revenue navigation", () => {
-  test("links to the missed revenue dashboard route", async () => {
+  test("does not show a missed revenue nav link while the tab is hidden", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
 
     renderPages();
 
-    const link = await screen.findByRole("link", { name: /missed revenue/i });
-    expect(link.getAttribute("href")).toMatch(/hostinsights\/missed-revenue$/);
+    await screen.findByText("Dashboard");
+    expect(screen.queryByRole("link", { name: /missed revenue/i })).toBeNull();
   });
 });
 
