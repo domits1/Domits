@@ -46,6 +46,7 @@ const buildOutbox = (rows) => {
     }),
     markPageActive: jest.fn(async (siteId, revision) => finish(siteId, revision, "ACTIVE")),
     markPageFailed: jest.fn(async (siteId, revision, reason) => finish(siteId, revision, "FAILED", reason)),
+    markPageWithdrawn: jest.fn(async (siteId, revision) => finish(siteId, revision, "WITHDRAWN")),
     skipPage: jest.fn(async (siteId, revision, reason) => finish(siteId, revision, "SKIPPED", reason)),
     requeueNewerRevision: jest.fn(async (siteId, revision) => {
       const row = table.get(siteId);
@@ -58,15 +59,38 @@ const buildOutbox = (rows) => {
   };
 };
 
-const buildWorker = ({ rows = [buildJob()], sites = [buildSite()], domains = [FALLBACK, CUSTOM] } = {}) => {
+const buildWorker = ({
+  rows = [buildJob()],
+  sites = [buildSite()],
+  domains = [FALLBACK, CUSTOM],
+  outbox = null,
+} = {}) => {
   const deps = {
-    outboxRepository: buildOutbox(rows),
+    outboxRepository: outbox || buildOutbox(rows),
     siteRepository: { getSiteById: jest.fn(async (siteId) => sites.find((site) => site.id === siteId) || null) },
     domainRepository: { listDomainsBySiteId: jest.fn(async () => domains) },
     pageStore: { readAppShell: jest.fn(async () => SHELL), putPage: jest.fn(async () => undefined) },
     renderer: { render: jest.fn(async () => PAGE) },
+    withdrawal: {
+      withdraw: jest.fn(async ({ siteId, domains }) => ({
+        siteId,
+        hostnames: domains.map((domain) => domain.domain),
+        invalidationErrors: [],
+      })),
+    },
   };
   return { worker: new StaticPageWorker(deps), outbox: deps.outboxRepository, ...deps };
+};
+
+const EMPTY_SUMMARY = {
+  listed: 0,
+  built: 0,
+  withdrawn: 0,
+  skipped: 0,
+  superseded: 0,
+  notClaimed: 0,
+  failed: 0,
+  errors: [],
 };
 
 const publishAgainWhileBuilding = (outbox) =>
@@ -94,7 +118,33 @@ describe("StaticPageWorker", () => {
       { hostname: CUSTOM.domain, html: PAGE, siteId: "site-1", revision: 4 },
     ]);
     expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 1 });
-    expect(summary).toEqual({ listed: 1, built: 1, skipped: 0, superseded: 0, notClaimed: 0, failed: 0, errors: [] });
+    expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, built: 1 });
+  });
+
+  it("withdraws a page even when the shell cannot be read, because a withdrawal needs no shell", async () => {
+    const { worker, outbox, pageStore, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    pageStore.readAppShell.mockRejectedValue(new Error("NoSuchKey"));
+
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).toHaveBeenCalledTimes(1);
+    expect(outbox.table.get("site-1").status).toBe("WITHDRAWN");
+    expect(summary).toMatchObject({ withdrawn: 1, errors: [] });
+  });
+
+  it("fails a build whose site was published between the look and the claim and whose shell then cannot be read", async () => {
+    const { worker, outbox, siteRepository, pageStore } = buildWorker();
+    siteRepository.getSiteById.mockResolvedValueOnce(buildSite({ status: "PREVIEW" }));
+    pageStore.readAppShell.mockRejectedValueOnce(new Error("NoSuchKey"));
+
+    const summary = await worker.run();
+
+    expect(pageStore.putPage).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({
+      status: "FAILED",
+      failureReason: "SHELL_UNREADABLE: NoSuchKey",
+    });
+    expect(summary).toMatchObject({ failed: 1 });
   });
 
   it("reads the shell again for every page, and claims nothing for a page whose shell cannot be read", async () => {
@@ -112,29 +162,171 @@ describe("StaticPageWorker", () => {
     expect(summary).toMatchObject({ built: 1, errors: [{ siteId: "site-2", revision: 4, message: "NoSuchKey" }] });
   });
 
-  it("leaves a page that another worker claimed first, without loading the site or uploading", async () => {
-    const { worker, outbox, siteRepository, pageStore } = buildWorker();
+  it("leaves a page that another worker claimed first, without rendering, uploading or withdrawing", async () => {
+    const { worker, outbox, renderer, pageStore, withdrawal } = buildWorker();
     outbox.listPagesToBuild.mockResolvedValueOnce([buildJob()]);
     outbox.table.get("site-1").status = "BUILDING";
 
     const summary = await worker.run();
 
-    expect(siteRepository.getSiteById).not.toHaveBeenCalled();
+    expect(renderer.render).not.toHaveBeenCalled();
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
     expect(pageStore.putPage).not.toHaveBeenCalled();
     expect(summary).toMatchObject({ notClaimed: 1, built: 0 });
   });
 
-  it.each([
-    ["was deleted", [], "SITE_NOT_FOUND"],
-    ["was unpublished", [buildSite({ status: "PREVIEW" })], "SITE_NOT_PUBLISHED"],
-  ])("skips a site that %s after it was queued, and uploads nothing", async (_label, sites, reason) => {
-    const { worker, outbox, pageStore } = buildWorker({ sites });
+  it("skips a site that was deleted after it was queued, uploads nothing and withdraws nothing", async () => {
+    const { worker, outbox, pageStore, withdrawal } = buildWorker({ sites: [] });
 
     const summary = await worker.run();
 
     expect(pageStore.putPage).not.toHaveBeenCalled();
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "SKIPPED", failureReason: reason });
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "SKIPPED", failureReason: "SITE_NOT_FOUND" });
     expect(summary).toMatchObject({ skipped: 1 });
+  });
+
+  it.each([
+    ["unpublished", buildSite({ status: "PREVIEW" })],
+    ["suspended", buildSite({ status: "SUSPENDED" })],
+  ])(
+    "withdraws the page of a site that is %s, from every domain it has, and marks the row withdrawn",
+    async (_label, site) => {
+      const disabledFallback = { ...FALLBACK, status: "DISABLED" };
+      const { worker, outbox, pageStore, renderer, withdrawal } = buildWorker({
+        sites: [site],
+        domains: [disabledFallback, CUSTOM],
+      });
+
+      const summary = await worker.run();
+
+      expect(renderer.render).not.toHaveBeenCalled();
+      expect(pageStore.putPage).not.toHaveBeenCalled();
+      expect(withdrawal.withdraw).toHaveBeenCalledWith({ siteId: "site-1", domains: [disabledFallback, CUSTOM] });
+      expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN", attemptCount: 1 });
+      expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, withdrawn: 1 });
+    }
+  );
+
+  it("records a withdrawal whose delete failed, keeps the row for a retry, and the retry withdraws again", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    withdrawal.withdraw.mockRejectedValueOnce(new Error("AccessDenied"));
+
+    await worker.run();
+    expect(outbox.table.get("site-1")).toMatchObject({
+      status: "FAILED",
+      failureReason: "S3_DELETE_FAILED: AccessDenied",
+    });
+
+    await worker.run();
+
+    expect(withdrawal.withdraw).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN", attemptCount: 2 });
+  });
+
+  it("leaves a withdrawal whose domains cannot be read for the next run, like any other lost connection", async () => {
+    const { worker, outbox, domainRepository, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    domainRepository.listDomainsBySiteId.mockRejectedValueOnce(new Error("connection lost"));
+
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1").status).toBe("BUILDING");
+    expect(summary).toMatchObject({
+      failed: 0,
+      errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }],
+    });
+  });
+
+  it("reports an invalidation that failed after a withdrawal, so the run fails loudly, without retrying the withdrawal", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    withdrawal.withdraw.mockResolvedValueOnce({
+      siteId: "site-1",
+      hostnames: [FALLBACK.domain],
+      invalidationErrors: [{ hostname: FALLBACK.domain, message: "no tenant serves this hostname" }],
+    });
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN" });
+    expect(summary).toEqual({
+      ...EMPTY_SUMMARY,
+      listed: 1,
+      withdrawn: 1,
+      errors: [
+        {
+          siteId: "site-1",
+          revision: 4,
+          message: `INVALIDATION_FAILED: ${FALLBACK.domain}: no tenant serves this hostname`,
+        },
+      ],
+    });
+  });
+
+  it("never marks a withdrawal done when the host publishes again during it; the newer row is queued and rebuilt", async () => {
+    const republished = buildSite({ status: "PUBLISHED", staticPageRevision: 5 });
+    const { worker, outbox, siteRepository, pageStore, withdrawal } = buildWorker({
+      sites: [buildSite({ status: "PREVIEW" })],
+    });
+    withdrawal.withdraw.mockImplementationOnce(async ({ siteId }) => {
+      publishAgainWhileBuilding(outbox);
+      siteRepository.getSiteById.mockResolvedValue(republished);
+      return { siteId, hostnames: [], invalidationErrors: [] };
+    });
+
+    const summary = await worker.run();
+
+    expect(outbox.requeueNewerRevision).toHaveBeenCalledWith("site-1", 4);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+    expect(summary).toMatchObject({ superseded: 1, withdrawn: 0 });
+
+    const nextSummary = await worker.run();
+
+    expect(pageStore.putPage).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
+    expect(nextSummary).toMatchObject({ built: 1 });
+  });
+
+  it("lets unpublish, publish and unpublish pass during one withdrawal, and only the last revision ends withdrawn", async () => {
+    const { worker, outbox, siteRepository, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const second = buildWorker({ outbox, sites: [] });
+    let secondSummary = null;
+    withdrawal.withdraw.mockImplementationOnce(async ({ siteId }) => {
+      Object.assign(outbox.table.get("site-1"), { revision: 6 });
+      siteRepository.getSiteById.mockResolvedValue(buildSite({ status: "PREVIEW", staticPageRevision: 6 }));
+      outbox.listPagesToBuild.mockResolvedValueOnce([buildJob({ revision: 6 })]);
+      secondSummary = await second.worker.run();
+      return { siteId, hostnames: [], invalidationErrors: [] };
+    });
+
+    const first = await worker.run();
+
+    expect(secondSummary).toMatchObject({ listed: 1, notClaimed: 1, withdrawn: 0 });
+    expect(second.withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(first).toMatchObject({ superseded: 1, withdrawn: 0, failed: 0 });
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "PENDING" });
+
+    const next = await worker.run();
+
+    expect(withdrawal.withdraw).toHaveBeenCalledTimes(2);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 6, status: "WITHDRAWN" });
+    expect(next).toMatchObject({ withdrawn: 1 });
+  });
+
+  it("hands an unpublish that was outrun by a newer unpublish to the next run without withdrawing twice", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({
+      sites: [buildSite({ status: "PREVIEW", staticPageRevision: 5 })],
+    });
+    outbox.claimPage.mockImplementationOnce(async () => {
+      Object.assign(publishAgainWhileBuilding(outbox), { status: "BUILDING" });
+      return true;
+    });
+
+    const summary = await worker.run();
+
+    expect(withdrawal.withdraw).not.toHaveBeenCalled();
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+    expect(summary).toMatchObject({ superseded: 1 });
   });
 
   it("stops before rendering when the site carries a newer revision, and hands the row to the next run", async () => {

@@ -1,10 +1,12 @@
 import {
   CloudFrontClient,
   CreateDistributionTenantCommand,
+  CreateInvalidationForDistributionTenantCommand,
   DeleteDistributionTenantCommand,
   GetDistributionTenantByDomainCommand,
   GetDistributionTenantCommand,
   GetManagedCertificateDetailsCommand,
+  ListDistributionTenantsCommand,
   UpdateDistributionTenantCommand,
   VerifyDnsConfigurationCommand,
 } from "@aws-sdk/client-cloudfront";
@@ -125,6 +127,35 @@ export class CloudFrontTenantRepository {
       await this.client.send(new DeleteDistributionTenantCommand({ Id: tenantId, IfMatch: etag }));
       return true;
     });
+  }
+
+  async listTenantsForDistribution(distributionId) {
+    const tenants = [];
+    let marker;
+    do {
+      const response = await this.client.send(
+        new ListDistributionTenantsCommand({ AssociationFilter: { DistributionId: distributionId }, Marker: marker })
+      );
+      tenants.push(...(Array.isArray(response?.DistributionTenantList) ? response.DistributionTenantList : []));
+      marker = response?.NextMarker || undefined;
+    } while (marker);
+
+    return tenants
+      .filter((tenant) => tenant?.Id)
+      .map((tenant) => ({
+        id: tenant.Id,
+        domains: (Array.isArray(tenant.Domains) ? tenant.Domains : []).map((domainEntry) => domainEntry?.Domain || ""),
+      }));
+  }
+
+  async createInvalidation({ tenantId, paths, callerReference }) {
+    const response = await this.client.send(
+      new CreateInvalidationForDistributionTenantCommand({
+        Id: tenantId,
+        InvalidationBatch: { Paths: { Quantity: paths.length, Items: paths }, CallerReference: callerReference },
+      })
+    );
+    return response?.Invalidation?.Id || "";
   }
 
   async verifyDns({ tenantId, domain }) {
