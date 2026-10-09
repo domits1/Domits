@@ -51,6 +51,7 @@ import RegistrationNumberView from "../../features/verification/hostverification
 import HostReservationDetails from "./HostReservationDetails";
 import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
 import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
+import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -146,6 +147,10 @@ function MainDashboardHost() {
           <Route
             path="settings/rate-plans/direct-booking"
             element={<HostSettingsDirectBookingRatePlan />}
+          />
+          <Route
+            path="settings/rate-plans/direct-booking-website"
+            element={<HostSettingsDirectBookingWebsiteRatePlan />}
           />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />

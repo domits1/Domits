@@ -1308,7 +1308,8 @@
 }
 
 .rate-plan-direct-booking-link,
-.rate-plan-enterprise-link {
+.rate-plan-enterprise-link,
+.rate-plan-website-link {
     height: 100%;
     box-sizing: border-box;
 }
@@ -1567,5 +1568,179 @@
     .direct-booking-plan-grid,
     .direct-booking-examples {
         grid-template-columns: 1fr;
+    }
+}
+
+
+.website-rate-plan-section {
+    margin-top: 0.5rem;
+}
+
+.website-rate-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.875rem, 2.5vw, 1.25rem);
+}
+
+.website-rate-plan-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: clamp(1.125rem, 2.5vw, 1.5rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.website-rate-plan-card--featured {
+    border-color: #2563eb;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.website-rate-plan-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.website-rate-plan-card-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 1.2rem;
+}
+
+.website-rate-plan-badge {
+    flex-shrink: 0;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.website-rate-plan-badge--scheduled {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.website-rate-plan-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.125rem;
+}
+
+.website-rate-plan-price strong {
+    color: #111827;
+    font-size: clamp(1.65rem, 3vw, 2rem);
+    line-height: 1.2;
+}
+
+.website-rate-plan-price span {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.website-rate-plan-description {
+    min-height: 2.75rem;
+    margin: 0.625rem 0 1.25rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.website-rate-plan-feature-title {
+    margin: 0 0 0.625rem;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.website-rate-plan-features {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.website-rate-plan-features li {
+    position: relative;
+    padding-left: 1.375rem;
+    color: #4b5563;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.website-rate-plan-features li::before {
+    position: absolute;
+    left: 0;
+    color: #15803d;
+    content: "✓";
+    font-weight: 700;
+}
+
+.website-rate-plan-button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: auto;
+    padding: 0.7rem 1rem;
+    border: 1px solid #1d4ed8;
+    border-radius: 9px;
+    background: #1d4ed8;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: background 150ms ease, border-color 150ms ease;
+}
+
+.website-rate-plan-button:hover:not(:disabled) {
+    border-color: #1e40af;
+    background: #1e40af;
+}
+
+.website-rate-plan-button--secondary {
+    border-color: #d1d5db;
+    background: #fff;
+    color: #374151;
+}
+
+.website-rate-plan-button--secondary:hover:not(:disabled) {
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+.website-rate-plan-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.website-rate-plan-status {
+    margin: 0.875rem 0 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.website-rate-plan-feedback {
+    margin: 0.875rem 0 0;
+    color: #166534;
+    font-size: 0.9rem;
+}
+
+.website-rate-plan-feedback--error {
+    color: #b91c1c;
+}
+
+@media (max-width: 800px) {
+    .website-rate-plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .website-rate-plan-description {
+        min-height: auto;
     }
 }
