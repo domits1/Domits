@@ -46,6 +46,7 @@ const STATUS_CLASS = {
   AWAITING_PAYMENT: styles.statusAwaiting,
   FAILED: styles.statusFailed,
   DECLINED: styles.statusFailed,
+  CANCELLED: styles.statusFailed,
   INQUIRY: styles.statusAwaiting,
 };
 
@@ -54,6 +55,7 @@ const PAYMENT_BOX_CLASS = {
   AWAITING_PAYMENT: styles.paymentBoxAwaiting,
   FAILED: styles.paymentBoxFailed,
   DECLINED: styles.paymentBoxFailed,
+  CANCELLED: styles.paymentBoxFailed,
   INQUIRY: styles.paymentBoxAwaiting,
 };
 
@@ -62,6 +64,7 @@ const RECEIPT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
   DECLINED: "Declined",
+  CANCELLED: "Cancelled",
   INQUIRY: "Request",
 };
 
@@ -70,6 +73,7 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Payment failed",
   DECLINED: "Payment declined",
+  CANCELLED: "Reservation cancelled",
   INQUIRY: "Pending request",
 };
 
@@ -82,6 +86,7 @@ const getStatusConfig = (t) => ({
   AWAITING_PAYMENT: { label: t.status.AWAITING_PAYMENT, icon: <FiClock /> },
   FAILED: { label: t.status.FAILED, icon: <FiAlertCircle /> },
   DECLINED: { label: t.status.DECLINED, icon: <FiAlertCircle /> },
+  CANCELLED: { label: t.status.CANCELLED, icon: <FiAlertCircle /> },
   INQUIRY: { label: t.status.INQUIRY, icon: <FiClock /> },
 });
 
@@ -106,6 +111,11 @@ const getPaymentStatusConfig = (t) => ({
     text: t.paymentStatus.DECLINED.text,
     className: styles.failed,
   },
+  CANCELLED: {
+    label: t.paymentStatus.CANCELLED.label,
+    text: t.paymentStatus.CANCELLED.text,
+    className: styles.failed,
+  },
   INQUIRY: {
     label: t.paymentStatus.INQUIRY.label,
     text: t.paymentStatus.INQUIRY.text,
@@ -123,6 +133,7 @@ const normalizeStatus = (status) => {
   if (normalizedStatus.includes("paid")) return "PAID";
   if (normalizedStatus.includes("await")) return "AWAITING_PAYMENT";
   if (normalizedStatus.includes("fail")) return "FAILED";
+  if (normalizedStatus.startsWith("cancel")) return "CANCELLED";
 
   return String(status).toUpperCase();
 };

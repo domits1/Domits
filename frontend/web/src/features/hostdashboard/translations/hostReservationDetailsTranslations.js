@@ -67,6 +67,7 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     AWAITING_PAYMENT: "Awaiting payment",
     FAILED: "Failed",
     DECLINED: "Declined",
+    CANCELLED: "Cancelled",
     INQUIRY: "Request",
   },
   paymentStatus: {
@@ -85,6 +86,10 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     DECLINED: {
       label: "Declined",
       text: "Payment declined",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      text: "Reservation cancelled",
     },
     INQUIRY: {
       label: "Request",
@@ -160,6 +165,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
     DECLINED: {
       ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.DECLINED,
       ...translation?.paymentStatus?.DECLINED,
+    },
+    CANCELLED: {
+      ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.CANCELLED,
+      ...translation?.paymentStatus?.CANCELLED,
     },
     INQUIRY: {
       ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.INQUIRY,
