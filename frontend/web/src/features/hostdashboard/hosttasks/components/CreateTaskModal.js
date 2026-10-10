@@ -8,9 +8,10 @@ const CreateTaskModal = ({
     isOpen,
     newTask,
     propertyOptions,
-    currentUser,
+    assigneeOptions,
     onInputChange,
     onPropertyChange,
+    onAssigneeChange,
     onFileChange,
     onSubmit,
     onCancel,
@@ -58,9 +59,11 @@ const CreateTaskModal = ({
                         </div>
                         <div className="form-group">
                             <label htmlFor='task-assignee'>Assignee</label>
-                            <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={onInputChange} required>
+                            <select id='task-assignee' name="assignee" value={newTask.assigneeSelection} onChange={onAssigneeChange} required>
                                 <option value="" disabled hidden>Select Assignee</option>
-                                {currentUser.name && <option value={currentUser.name}>{currentUser.name}{currentUser.email ? ` (${currentUser.email})` : ''}</option>}
+                                {assigneeOptions.map(o => (
+                                    <option key={o.id} value={o.id}>{o.label}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="form-group">
@@ -105,6 +108,8 @@ CreateTaskModal.propTypes = {
         bookingRef: PropTypes.string,
         type: PropTypes.string,
         assignee: PropTypes.string,
+        assigneeSelection: PropTypes.string,
+        assignee_team_member_id: PropTypes.string,
         dueDate: PropTypes.string,
         priority: PropTypes.string,
         attachments: PropTypes.array,
@@ -113,12 +118,13 @@ CreateTaskModal.propTypes = {
         id: PropTypes.string,
         label: PropTypes.string,
     })).isRequired,
-    currentUser: PropTypes.shape({
-        name: PropTypes.string,
-        email: PropTypes.string,
-    }).isRequired,
+    assigneeOptions: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+    })).isRequired,
     onInputChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
+    onAssigneeChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,

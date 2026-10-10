@@ -42,6 +42,9 @@ const toBackendPayload = (taskData) => {
     if (taskData.assignee !== undefined || taskData.assignee_name !== undefined) {
         payload.assignee_name = taskData.assignee || taskData.assignee_name || null;
     }
+    if (taskData.assignee_team_member_id) {
+        payload.assignee_team_member_id = taskData.assignee_team_member_id;
+    }
     if (taskData.attachments !== undefined) {
         payload.attachments = taskData.attachments;
     }
