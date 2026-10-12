@@ -216,18 +216,17 @@ class ReservationController {
       return await this.handleModifyBookingDatesAction(body, authToken);
     }
 
-if (body?.action === "mark-checked-out") {
-  const result = await this.bookingService.markCheckedOut(
-    this.requirePatchField(body, "bookingId"),
-    authToken
-  );
-  return { statusCode: 200, headers: responseHeaderJSON, response: result };
-}
+    if (body?.action === "mark-checked-out") {
+      const result = await this.bookingService.markCheckedOut(
+        this.requirePatchField(body, "bookingId"),
+        authToken
+      );
+      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    }
 
-if (body?.action === "update-special-request") {
-  return await this.handleUpdateSpecialRequestAction(body, authToken);
-}
-
+    if (body?.action === "update-special-request") {
+      return await this.handleUpdateSpecialRequestAction(body, authToken);
+    }
 
     return null;
   }
