@@ -127,18 +127,19 @@ export const Booking = new EntitySchema({
       name: "idempotency_key",
       nullable: true,
     },
-checked_out_at: {
-  type: "bigint",
-  name: "checked_out_at",
-  transformer: {
-    from: (value) => value !== null && value !== undefined ? Number(value) : null,
-    to: (value) => value,
+    checked_out_at: {
+      type: "bigint",
+      name: "checked_out_at",
+      transformer: {
+        from: (value) => value !== null && value !== undefined ? Number(value) : null,
+        to: (value) => value,
+      },
+      nullable: true,
+    },
+    special_request: {
+      type: "text",
+      name: "special_request",
+      nullable: true,
+    },
   },
-  nullable: true,
-},
-special_request: {
-  type: "text",
-  name: "special_request",
-  nullable: true,
-},
 });
