@@ -237,6 +237,16 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
   });
 
+  test("keeps the Checkout success marker when the plan read fails", async () => {
+    window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+    getWebsiteRatePlan.mockRejectedValue(new Error("Request failed"));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load plan");
+    expect(window.location.search).toBe("?websiteCheckout=success");
+  });
+
   test("shows a cancellation notice when Stripe returns to the cancel URL", async () => {
     window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=cancelled");
     getWebsiteRatePlan.mockResolvedValue(essentialsPlan());
