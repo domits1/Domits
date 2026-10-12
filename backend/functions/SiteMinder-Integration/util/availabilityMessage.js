@@ -14,7 +14,7 @@ function validateItem(item, index) {
   }
 }
 
-// SiteMinder rejects overlapping date ranges for the same room type in one message.
+
 function assertNoOverlaps(items) {
   const byRoom = new Map();
   for (const item of items) {
@@ -29,8 +29,6 @@ function assertNoOverlaps(items) {
   }
 }
 
-// Builds OTA_HotelAvailNotifRQ: how many units of each room type are for sale per date range.
-// Dates are inclusive. One message covers one hotel (one Domits property mapped to SiteMinder).
 export function buildAvailabilityNotif({ hotelCode, requestorId, items, echoToken, now }) {
   if (!hotelCode) throw new Error("hotelCode is required");
   if (!requestorId) throw new Error("requestorId is required");

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 
-// XML namespace name, not a URL that gets called. It has to be exactly this http value.
 export const OTA_NAMESPACE = "http://www.opentravel.org/OTA/2003/05"; // NOSONAR
 
 const XML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
@@ -46,9 +45,6 @@ function readAttribute(tag, name) {
   return match ? unescapeXml(match[1]) : null;
 }
 
-// Reads a SiteMinder OTA response. Returns { success: true } for <Success/>,
-// otherwise { success: false, errors: [{ type, code, message }] }.
-// A SOAP Fault (for example bad credentials) becomes one error with type "SoapFault".
 export function parseOtaResponse(xml) {
   const text = String(xml ?? "");
 
