@@ -290,10 +290,10 @@ export class DirectBookingWebsiteSiteRepository {
         property_id = EXCLUDED.property_id,
         host_id = EXCLUDED.host_id,
         revision = EXCLUDED.revision,
-        status = 'PENDING',
+        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
         attempt_count = 0,
         failure_reason = NULL,
-        updated_at = EXCLUDED.updated_at,
+        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
         processed_at = NULL`,
         [site.id, site.propertyId, site.hostId, site.staticPageRevision, now],
         true

@@ -35,6 +35,7 @@ import {
     isDirectBookingWebsiteFallbackRoutingActive,
     getDirectBookingWebsiteFallbackRoutingStatus,
     resolveDirectBookingWebsiteFallbackDomainStatus,
+    resolveDirectBookingWebsiteRuntimeDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
 
 const draftResponseHeaders = {
@@ -182,17 +183,6 @@ const getRequestHostHeaderValue = (headers = {}) =>
     headers.host ||
     headers.Host ||
     "";
-const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
-    const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
-    const shouldTreatPublishedFallbackDomainAsActive =
-        String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
-        isDirectBookingWebsiteFallbackRoutingActive() &&
-        isDirectBookingWebsiteFallbackDomain(domainEntry) &&
-        resolvedStatus === "DISABLED" &&
-        domainEntry?.verificationDetails?.disabledByHost === true;
-
-    return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
-};
 const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
     String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
 const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
@@ -574,6 +564,7 @@ export class PropertyController {
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                     bookingType: normalizedOverviewPayload.bookingType,
+                    customRules: normalizedOverviewPayload.customRules,
                 }
             );
 
@@ -802,6 +793,7 @@ export class PropertyController {
             amenities: body.amenities,
             rules: body.rules,
             bookingType: body.bookingType,
+            customRules: body.customRules,
         };
     }
 
@@ -1018,6 +1010,20 @@ export class PropertyController {
                             }))
                             .filter((rule) => rule.rule)
                             .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined,
+            customRules: Array.isArray(payload.customRules)
+                ? Array.from(
+                    new Map(
+                        payload.customRules
+                            .map((rule) => ({
+                                category: String(rule?.category || "").trim(),
+                                rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                                enabled: rule?.enabled !== false,
+                            }))
+                            .filter((rule) => rule.category && rule.rule_text)
+                            .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])
                     ).values()
                 )
                 : undefined,

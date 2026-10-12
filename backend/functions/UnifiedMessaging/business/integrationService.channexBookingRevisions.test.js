@@ -14,8 +14,6 @@ jest.mock("../.shared/integrations/ORM/index.js", () => ({
 const channexBookingRevisionFixture = require("./integrationService.channexBookingRevisions.fixture.js");
 
 const buildBookingAvailabilityEvidence = channexBookingRevisionFixture.buildBookingAvailabilityEvidence;
-const buildCancellationAvailabilityEvidence =
-  channexBookingRevisionFixture.buildCancellationAvailabilityEvidence;
 const buildFeedRevision = channexBookingRevisionFixture.buildFeedRevision;
 const buildImportedBookingRow = channexBookingRevisionFixture.buildImportedBookingRow;
 const buildIntegrationAccount = channexBookingRevisionFixture.buildIntegrationAccount;
@@ -922,120 +920,6 @@ describe("IntegrationService Channex booking pull import", () => {
       })
     );
     expect(channexProviderClient.acknowledgeBookingRevision).not.toHaveBeenCalled();
-  });
-});
-
-describe("IntegrationService Channex certification admin cancellation", () => {
-  test("cancels a mapped Domits booking and triggers one Channex cancellation availability sync", async () => {
-    const bookingBefore = buildImportedBookingRow({
-      id: "booking-demo-1",
-      status: "Paid",
-    });
-    const evidence = buildCancellationAvailabilityEvidence();
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(evidence),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [bookingBefore],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-demo-1",
-      reason: "CEO demo",
-    });
-
-    expect(result.statusCode).toBe(200);
-    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("booking-demo-1");
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
-      userId: "host-1",
-      bookingBefore: expect.objectContaining({
-        id: "booking-demo-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: bookingBefore.arrivalDateMs,
-        departuredate: bookingBefore.departureDateMs,
-        status: "Paid",
-      }),
-      bookingAfter: expect.objectContaining({
-        id: "booking-demo-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        status: "Cancelled",
-      }),
-      trigger: "BOOKING_CANCELLED",
-    });
-    expect(result.response).toMatchObject({
-      channel: "CHANNEX",
-      action: "certification-cancel-booking",
-      mode: "admin-certification-no-refund",
-      bookingId: "booking-demo-1",
-      domitsPropertyId: "domits-property-1",
-      previousStatus: "Paid",
-      status: "Cancelled",
-      refundProcessed: false,
-      channexAvailabilitySync: evidence,
-    });
-  });
-
-  test("does not cancel or sync a booking from another Domits property", async () => {
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn(),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [
-        buildImportedBookingRow({
-          id: "booking-other-property",
-          propertyId: "domits-property-2",
-          status: "Paid",
-        }),
-      ],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-other-property",
-    });
-
-    expect(result.statusCode).toBe(403);
-    expect(result.response).toMatchObject({
-      error: "BOOKING_PROPERTY_MISMATCH",
-    });
-    expect(externalBookingImportRepository.cancelImportedBooking).not.toHaveBeenCalled();
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
-  });
-
-  test("already-cancelled admin cancellation remains idempotent and does not call Channex", async () => {
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn(),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [
-        buildImportedBookingRow({
-          id: "booking-cancelled-1",
-          status: "Cancelled",
-        }),
-      ],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-cancelled-1",
-    });
-
-    expect(result.statusCode).toBe(200);
-    expect(externalBookingImportRepository.cancelImportedBooking).not.toHaveBeenCalled();
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
-    expect(result.response).toMatchObject({
-      alreadyCancelled: true,
-      channexAvailabilitySync: expect.objectContaining({
-        trigger: "BOOKING_CANCELLED",
-        requestCount: 0,
-        skipped: true,
-        reason: "BOOKING_ALREADY_CANCELLED",
-      }),
-    });
   });
 });
 

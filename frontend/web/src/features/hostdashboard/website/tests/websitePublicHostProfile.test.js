@@ -125,7 +125,7 @@ describe("the public site host profile comes from the render response", () => {
     const details = await attachWebsiteHostProfile({ property: { id: "property-1", hostId: "host-1" } });
 
     expect(fetchUserProfileById).toHaveBeenCalledWith("host-1");
-    expect(fetchWebsiteHostWhatsApp).toHaveBeenCalledWith("host-1");
+    expect(fetchWebsiteHostWhatsApp).toHaveBeenCalledWith("host-1", { idToken: null });
     expect(details.hostProfile.givenName).toBe("Fetched");
   });
 });

@@ -250,14 +250,6 @@ export default class ChannelManagementController {
     );
   }
 
-  async cancelChannexCertificationBooking(event) {
-    return this.channelManagementApiService.cancelChannexCertificationBooking(
-      event.queryStringParameters?.userId || null,
-      event.queryStringParameters?.domitsPropertyId || null,
-      safeJson(event.body) || {}
-    );
-  }
-
   async pollLatestChannexBookings(event) {
     return this.channelManagementApiService.pollLatestChannexBookings(
       event?.detail || event || {}

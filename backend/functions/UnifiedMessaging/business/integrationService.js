@@ -26,7 +26,6 @@ import ChannexAriPayloadService from "../.shared/channelManagement/services/chan
 import ChannexAriExecutionService from "../.shared/channelManagement/services/channexAriExecutionService.js";
 import ChannexAriOrchestrationService from "../.shared/channelManagement/services/channexAriOrchestrationService.js";
 import ChannexFullSyncService from "../.shared/channelManagement/services/channexFullSyncService.js";
-import ChannexCertificationService from "../.shared/channelManagement/services/channexCertificationService.js";
 import ChannexDiagnosticsService from "../.shared/channelManagement/services/channexDiagnosticsService.js";
 import {
   summarizeChannexGroupedPayloads,
@@ -217,7 +216,6 @@ export default class IntegrationService {
     channexAriExecutionService = null,
     channexAriOrchestrationService = null,
     channexFullSyncService = null,
-    channexCertificationService = null,
     channexDiagnosticsService = null,
     channexBookingRevisionImportService = null,
     channexAvailabilitySyncService = null,
@@ -321,12 +319,6 @@ export default class IntegrationService {
           this.resolveChannexSyncCredentialContext(...args),
         logChannexFullCertificationSync: (...args) =>
           this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
-      });
-    this.channexCertificationService =
-      channexCertificationService ||
-      new ChannexCertificationService({
-        externalBookingImportRepository,
-        channexBookingAvailabilityBridge,
       });
     this.channexBookingRevisionImportService =
       channexBookingRevisionImportService ||
@@ -1090,14 +1082,6 @@ export default class IntegrationService {
 
   async listChannexBookingRevisions(userId, options = {}) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(userId, options);
-  }
-
-  buildChannexCertificationCancelSkippedEvidence(...args) {
-    return this.channexCertificationService.buildChannexCertificationCancelSkippedEvidence(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(userId, domitsPropertyId, options = {}) {
