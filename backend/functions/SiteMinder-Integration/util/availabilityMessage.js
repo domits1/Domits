@@ -36,7 +36,7 @@ export function buildAvailabilityNotif({ hotelCode, requestorId, items, echoToke
   if (!requestorId) throw new Error("requestorId is required");
   if (!Array.isArray(items) || items.length === 0) throw new Error("at least one availability item is required");
 
-  items.forEach(validateItem);
+  items.forEach((item, index) => validateItem(item, index));
   assertNoOverlaps(items);
 
   const messages = items

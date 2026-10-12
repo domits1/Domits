@@ -1,6 +1,7 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
-export const OTA_NAMESPACE = "http://www.opentravel.org/OTA/2003/05";
+// XML namespace name, not a URL that gets called. It has to be exactly this http value.
+export const OTA_NAMESPACE = "http://www.opentravel.org/OTA/2003/05"; // NOSONAR
 
 const XML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
 
@@ -33,15 +34,15 @@ export function wrapSoapEnvelope({ username, password, body }) {
 
 function unescapeXml(value) {
   return value
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, "&");
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&apos;", "'")
+    .replaceAll("&amp;", "&");
 }
 
 function readAttribute(tag, name) {
-  const match = new RegExp(`\\s${name}="([^"]*)"`).exec(tag);
+  const match = new RegExp(String.raw`\s${name}="([^"]*)"`).exec(tag);
   return match ? unescapeXml(match[1]) : null;
 }
 
