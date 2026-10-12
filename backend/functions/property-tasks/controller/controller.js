@@ -1,4 +1,4 @@
-import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl, escalateTask } from "../business/service/taskService.js";
 import {
     getChecklistItems,
     createChecklistItem,
@@ -131,6 +131,17 @@ export class Controller {
             const itemId = event.queryStringParameters?.id;
             const updateData = JSON.parse(event.body);
             const result = await updateChecklistItem(effectiveHostId, itemId, updateData);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async escalateTask(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const taskId = event.queryStringParameters?.id;
+            const result = await escalateTask(effectiveHostId, taskId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
