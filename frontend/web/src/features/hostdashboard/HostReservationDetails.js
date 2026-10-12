@@ -260,10 +260,14 @@ const buildChannelLabel = (booking) => {
   return rawChannel;
 };
 
+// Channex sends some OTA names as codes; the host knows them by their brand name.
+const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
+
 // A Channex booking was paid on the OTA, not by card through Domits (#3483).
 const buildPaymentMethod = (booking) => {
   if (isChannexBooking(booking)) {
-    return `Paid via ${normalizeStringValue(booking?.booking_source) || "the channel"}`;
+    const otaName = normalizeStringValue(booking?.booking_source);
+    return `Paid via ${OTA_DISPLAY_NAMES[otaName] || otaName || "the channel"}`;
   }
   return normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD;
 };

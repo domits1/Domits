@@ -49,7 +49,8 @@ describe("HostReservationDetails payment of a Channex booking (#3483)", () => {
     await screen.findAllByText("Test Apartment");
     expect(screen.getByText("€300.00")).toBeTruthy();
     expect(screen.queryByText("€30000.00")).toBeNull();
-    expect(screen.getByText("Paid via BookingCom")).toBeTruthy();
+    // Channex sends the OTA as "BookingCom"; the host knows it as Booking.com.
+    expect(screen.getByText("Paid via Booking.com")).toBeTruthy();
     expect(screen.getByText("Collected by the channel")).toBeTruthy();
     expect(screen.queryByText("Card")).toBeNull();
     expect(screen.queryByText("Payment received")).toBeNull();
@@ -68,7 +69,7 @@ describe("HostReservationDetails payment of a Channex booking (#3483)", () => {
           total: 300,
           showPriceBreakdown: false,
           paymentStatusLabel: "Collected by the channel",
-          paymentMethod: "Paid via BookingCom",
+          paymentMethod: "Paid via Booking.com",
         })
       )
     );
