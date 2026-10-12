@@ -48,7 +48,7 @@ describe("TruviScreeningService.screenBooking", () => {
 
   test("returns ERROR instead of throwing when Truvi answers with an error", async () => {
     const apiClient = fakeClient(async () => {
-      throw new TruviApiError(400, { detail: "Check in date is in the past" });
+    throw new TruviApiError(400, "Check in date is in the past");
     });
     const service = new TruviScreeningService({ apiClient });
 
