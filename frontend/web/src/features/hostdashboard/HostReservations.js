@@ -24,6 +24,7 @@ const normalizeStatus = (status) => {
   if (normalizedStatus.includes("paid")) return "PAID";
   if (normalizedStatus.includes("await")) return "AWAITING_PAYMENT";
   if (normalizedStatus.includes("fail")) return "FAILED";
+  if (normalizedStatus.startsWith("cancel")) return "CANCELLED";
 
   return status.toUpperCase();
 };
@@ -93,6 +94,7 @@ const labelMap = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
   DECLINED: "Declined",
+  CANCELLED: "Cancelled",
 };
 
 const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "-");
