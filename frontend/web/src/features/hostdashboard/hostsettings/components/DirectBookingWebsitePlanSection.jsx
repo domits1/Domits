@@ -82,7 +82,9 @@ const EssentialsPlanCard = ({
       className="website-rate-plan-button website-rate-plan-button--secondary"
       type="button"
       disabled={busy || essentialsIsCurrent || eliteDowngradeScheduled}
-      onClick={() => onPlanChange("essentials")}
+      onClick={() => {
+        void onPlanChange("essentials");
+      }}
     >
       {getEssentialsButtonLabel({
         changingPlan,
@@ -132,7 +134,9 @@ const ElitePlanCard = ({
       className="website-rate-plan-button"
       type="button"
       disabled={busy || eliteIsCurrent || !hasConfiguredElitePrice}
-      onClick={() => onPlanChange("elite")}
+      onClick={() => {
+        void onPlanChange("elite");
+      }}
     >
       {getEliteButtonLabel({
         changingPlan,
