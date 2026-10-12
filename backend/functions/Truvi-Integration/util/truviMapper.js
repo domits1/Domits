@@ -8,6 +8,34 @@ export const SCREENING_STATUS = {
 
 const ALLOWED_EXTENDED_AMOUNTS = [250, 500, 1000, 10000, 50000];
 
+const COUNTRY_TO_ALPHA3 = {
+  netherlands: "NLD", nederland: "NLD",
+  germany: "DEU", duitsland: "DEU", deutschland: "DEU",
+  belgium: "BEL", "belgië": "BEL", belgie: "BEL",
+  france: "FRA", frankrijk: "FRA",
+  spain: "ESP", spanje: "ESP",
+  italy: "ITA", "italië": "ITA", italie: "ITA",
+  "united kingdom": "GBR", "verenigd koninkrijk": "GBR",
+  austria: "AUT", oostenrijk: "AUT",
+  switzerland: "CHE", zwitserland: "CHE",
+  portugal: "PRT",
+  greece: "GRC", griekenland: "GRC",
+  turkey: "TUR", turkije: "TUR",
+  "united states": "USA", "verenigde staten": "USA",
+};
+
+export function toCountryAlpha3(country) {
+  const code = COUNTRY_TO_ALPHA3[String(country ?? "").trim().toLowerCase()];
+  if (!code) {
+    throw new Error(`Unsupported country for Truvi: ${country}`);
+  }
+  return code;
+}
+
+function petsAllowedFromRules(rules = []) {
+  return rules.some((r) => r?.rule === "PetsAllowed" && r?.value === true);
+}
+
 function toIsoDate(epochMs) {
   return new Date(Number(epochMs)).toISOString().slice(0, 10);
 }
@@ -22,7 +50,7 @@ function splitName(fullName = "") {
   return { firstName, lastName: parts.join(" ") };
 }
 
-export function bookingToCreateRequest({ booking, property, location, host, protection, now = new Date() }) {
+export function bookingToCreateRequest({ booking, property, location, rules = [], host, protection, now = new Date() }) {
   if (!ALLOWED_EXTENDED_AMOUNTS.includes(protection.extendedAmount)) {
     throw new Error(`extendedAmount must be one of ${ALLOWED_EXTENDED_AMOUNTS.join(", ")}`);
   }
@@ -38,7 +66,7 @@ export function bookingToCreateRequest({ booking, property, location, host, prot
   const address = {
     addressLine1: `${location.street} ${location.housenumber}${location.housenumberextension || ""}`,
     town: location.city,
-    countryIso: location.countryIso,
+    countryIso: toCountryAlpha3(location.country),
     postcode: location.postalcode,
   };
 
@@ -48,7 +76,7 @@ export function bookingToCreateRequest({ booking, property, location, host, prot
     listing: {
       listingId: property.id,
       listingName: property.title,
-      petsAllowed: Boolean(property.petsAllowed),
+      petsAllowed: petsAllowedFromRules(rules),
       address,
     },
     reservation: {
