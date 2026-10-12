@@ -1579,6 +1579,7 @@
         "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
         "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
         "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
+        "checkoutStillPending": "Wir haben noch keine Bestätigung erhalten. Deine Zahlung wird möglicherweise noch verarbeitet. Aktualisiere die Seite in einem Moment und starte keinen weiteren Checkout.",
         "cardTitle": "Direct-Booking-Website-Tarif",
         "cardSubtitle": "Essentials ist kostenlos; Elite bietet erweiterte Website-Funktionen.",
         "cardNote": "Wähle und verwalte das Abonnement deiner Website.",

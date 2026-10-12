@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import DirectBookingWebsitePlanSection from "./DirectBookingWebsitePlanSection";
 import {
   changeWebsiteRatePlan,
@@ -45,7 +45,8 @@ jest.mock("../hooks/useSettingsTrans", () => ({
         processing: "Processing...",
         changeError: "Could not change plan",
         checkoutError: "Could not start checkout",
-        checkoutPending: "Confirming Elite subscription...",
+        checkoutPending: "We\'re confirming your Elite subscription. This can take a few moments.",
+        checkoutStillPending: "We haven\'t received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don\'t start another checkout.",
         checkoutSuccess: "Your Elite subscription is active.",
         checkoutCancelled: "Checkout was cancelled. Your plan has not changed.",
         downgradeScheduled: "Downgrade scheduled",
@@ -235,6 +236,36 @@ describe("DirectBookingWebsitePlanSection", () => {
       screen.getByRole("button", { name: "Processing..." })
     ).toBeDisabled();
     expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
+  });
+
+  test("shows a follow-up notice when Elite activation is not confirmed after polling", async () => {
+    jest.useFakeTimers();
+    try {
+      window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+      getWebsiteRatePlan.mockResolvedValue(essentialsPlan());
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(
+        screen.getByText("We're confirming your Elite subscription. This can take a few moments.")
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(15_000);
+      });
+
+      expect(
+        screen.getByText("We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.")
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Processing..." })).toBeDisabled();
+      expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("keeps the Checkout success marker when the plan read fails", async () => {

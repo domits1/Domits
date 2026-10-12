@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useSettingsTrans from "../hooks/useSettingsTrans";
 import {
   changeWebsiteRatePlan,
@@ -221,6 +221,8 @@ const DirectBookingWebsitePlanSection = ({
 }) => {
   const { t, language } = useSettingsTrans("ratePlans");
   const copy = t.websitePlan;
+  const copyRef = useRef(copy);
+  copyRef.current = copy;
   const [ratePlan, setRatePlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -269,12 +271,18 @@ const DirectBookingWebsitePlanSection = ({
           if (refreshedPlan?.plan === "elite") {
             cleanCheckoutQuery();
             setCheckoutPending(false);
-            setNotice(copy.checkoutSuccess);
+            setNotice(copyRef.current.checkoutSuccess);
             return;
           }
         } catch {
           // Keep the checkout pending state and retry; never offer a second checkout.
         }
+      }
+
+      if (!cancelled) {
+        setNotice(
+          copyRef.current.checkoutStillPending || copyRef.current.checkoutPending
+        );
       }
     };
 
@@ -290,15 +298,15 @@ const DirectBookingWebsitePlanSection = ({
         if (checkoutState === "cancelled") {
           cleanCheckoutQuery();
           setCheckoutPending(false);
-          setNotice(copy.checkoutCancelled);
+          setNotice(copyRef.current.checkoutCancelled);
         } else if (checkoutState === "success") {
           if (result?.plan === "elite") {
             cleanCheckoutQuery();
             setCheckoutPending(false);
-            setNotice(copy.checkoutSuccess);
+            setNotice(copyRef.current.checkoutSuccess);
           } else {
             setCheckoutPending(true);
-            setNotice(copy.checkoutPending);
+            setNotice(copyRef.current.checkoutPending);
             void pollForEliteActivation();
           }
         }
@@ -318,14 +326,7 @@ const DirectBookingWebsitePlanSection = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    checkoutState,
-    copy.loading,
-    copy.loadError,
-    copy.checkoutPending,
-    copy.checkoutSuccess,
-    copy.checkoutCancelled,
-  ]);
+  }, [checkoutState]);
 
   const formatMoney = (amountCents, currency = "EUR") =>
     formatCurrency(Number(amountCents || 0) / 100, currency, language);

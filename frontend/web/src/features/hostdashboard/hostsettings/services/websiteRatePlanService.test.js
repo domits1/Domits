@@ -65,6 +65,25 @@ describe("websiteRatePlanService", () => {
     );
   });
 
+  test("surfaces failures from the rate-plan PATCH request", async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: jest.fn().mockResolvedValue({ message: "Checkout is not configured." }),
+    });
+
+    await expect(changeWebsiteRatePlan("elite")).rejects.toThrow(
+      "Checkout is not configured."
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ plan: "elite" }),
+      })
+    );
+  });
+
   test("rejects unsupported plans before making a request", async () => {
     await expect(changeWebsiteRatePlan("enterprise")).rejects.toThrow(
       "Unsupported website rate plan."

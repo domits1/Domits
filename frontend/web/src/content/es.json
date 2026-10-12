@@ -1579,6 +1579,7 @@
         "checkoutPending": "Estamos confirmando tu suscripción Elite. Puede tardar unos momentos.",
         "checkoutSuccess": "Tu suscripción Elite está activa.",
         "checkoutCancelled": "Se canceló el pago. Tu plan no ha cambiado.",
+        "checkoutStillPending": "Todavía no hemos recibido la confirmación. Es posible que el pago siga procesándose. Actualiza esta página dentro de un momento y no inicies otro proceso de pago.",
         "cardTitle": "Plan del sitio web de reserva directa",
         "cardSubtitle": "Essentials es gratis; Elite incluye herramientas avanzadas para tu sitio web.",
         "cardNote": "Elige y gestiona la suscripción de tu sitio web.",
