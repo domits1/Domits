@@ -267,6 +267,7 @@ const DirectBookingWebsitePlanSection = ({
 
           setRatePlan(refreshedPlan);
           if (refreshedPlan?.plan === "elite") {
+            cleanCheckoutQuery();
             setCheckoutPending(false);
             setNotice(copy.checkoutSuccess);
             return;
@@ -281,17 +282,18 @@ const DirectBookingWebsitePlanSection = ({
       try {
         setLoading(true);
         setLoadError(false);
-        cleanCheckoutQuery();
 
         const result = await getWebsiteRatePlan();
         if (cancelled) return;
 
         setRatePlan(result);
         if (checkoutState === "cancelled") {
+          cleanCheckoutQuery();
           setCheckoutPending(false);
           setNotice(copy.checkoutCancelled);
         } else if (checkoutState === "success") {
           if (result?.plan === "elite") {
+            cleanCheckoutQuery();
             setCheckoutPending(false);
             setNotice(copy.checkoutSuccess);
           } else {
@@ -303,7 +305,6 @@ const DirectBookingWebsitePlanSection = ({
       } catch {
         if (!cancelled) {
           setLoadError(true);
-          setCheckoutPending(false);
         }
       } finally {
         if (!cancelled) {
