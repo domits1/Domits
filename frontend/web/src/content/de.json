@@ -1189,6 +1189,33 @@
         "expiredCredentials": "Anmeldung abgelaufen",
         "unknown": "Status unbekannt"
       },
+      "actions": {
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Verbinden",
+          "confirming": "Verbinde..."
+        },
+        "reconnect": {
+          "title": "RemoteLock erneut verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Erneut verbinden",
+          "confirming": "Verbinde erneut..."
+        },
+        "disconnect": {
+          "title": "RemoteLock trennen",
+          "body": "Domits verwaltet die Türcodes deiner Gäste nicht mehr.",
+          "confirm": "Trennen",
+          "confirming": "Trenne..."
+        },
+        "cancel": "Abbrechen",
+        "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      },
       "loading": "Deine RemoteLock-Verbindung wird geladen...",
       "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
       "retry": "Erneut versuchen"

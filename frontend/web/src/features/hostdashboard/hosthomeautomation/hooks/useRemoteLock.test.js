@@ -57,4 +57,15 @@ describe("useRemoteLock", () => {
 
     expect(result.current).toMatchObject({ status: "CONNECTED", lastSyncAt: 2, loading: false });
   });
+
+  it("applyResult sets the status and last sync without a loading state", async () => {
+    getRemoteLockStatus.mockResolvedValue({ status: "NOT_CONNECTED", lastSyncAt: null });
+    const { result } = renderHook(() => useRemoteLock());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.applyResult({ status: "CONNECTED", lastSyncAt: 5 }));
+
+    expect(result.current).toMatchObject({ status: "CONNECTED", lastSyncAt: 5, loading: false, error: null });
+    expect(getRemoteLockStatus).toHaveBeenCalledTimes(1);
+  });
 });

@@ -30,4 +30,14 @@ describe("home automation content", () => {
     expect(keyPaths(settings.homeAutomation)).toEqual(keyPaths(en.settings.homeAutomation));
     expect(keyPaths(settings.hub.cards.homeAutomation)).toEqual(keyPaths(en.settings.hub.cards.homeAutomation));
   });
+
+  it.each(Object.keys(LANGUAGES))("%s has non-empty modal copy for every action a status can offer", (language) => {
+    const { actions, modal } = LANGUAGES[language].settings.homeAutomation;
+    const offered = new Set(Object.values(STATUS_PRESENTATION).flatMap((presentation) => presentation.actions));
+
+    offered.forEach((action) => {
+      expect(actions[action]?.trim()).toBeTruthy();
+      ["title", "body", "confirm", "confirming"].forEach((key) => expect(modal[action][key]?.trim()).toBeTruthy());
+    });
+  });
 });

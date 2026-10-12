@@ -1188,6 +1188,33 @@
         "expiredCredentials": "Sign-in expired",
         "unknown": "Status unknown"
       },
+      "actions": {
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect"
+      },
+      "modal": {
+        "connect": {
+          "title": "Connect RemoteLock",
+          "body": "You'll be sent to RemoteLock to sign in.",
+          "confirm": "Connect",
+          "confirming": "Connecting..."
+        },
+        "reconnect": {
+          "title": "Reconnect RemoteLock",
+          "body": "You'll be sent to RemoteLock to sign in.",
+          "confirm": "Reconnect",
+          "confirming": "Reconnecting..."
+        },
+        "disconnect": {
+          "title": "Disconnect RemoteLock",
+          "body": "Domits will no longer manage your guests' door codes.",
+          "confirm": "Disconnect",
+          "confirming": "Disconnecting..."
+        },
+        "cancel": "Cancel",
+        "error": "Something went wrong. Please try again."
+      },
       "loading": "Loading your RemoteLock connection...",
       "loadError": "We couldn't load your RemoteLock connection.",
       "retry": "Try again"
