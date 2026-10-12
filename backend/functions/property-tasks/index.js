@@ -1,3 +1,7 @@
+import { Controller } from "./controller/controller.js";
+
+let controller = null;
+
 const INTERNAL_ROUTES = {
     "/internal/create-task": "internalCreateTask",
 };
@@ -30,3 +34,49 @@ const DEFAULT_ROUTES = {
 const CORS_HEADERS = { "Access-Control-Allow-Origin": "*" };
 
 export const handler = async (event) => {
+    try {
+        if (!controller) {
+            controller = new Controller();
+        }
+
+        const path = event.path || "";
+        for (const [suffix, methodName] of Object.entries(INTERNAL_ROUTES)) {
+            if (path.endsWith(suffix)) {
+                return await controller[methodName](event);
+            }
+        }
+
+        if (event.httpMethod === "OPTIONS") {
+            return {
+                statusCode: 200,
+                headers: {
+                    ...CORS_HEADERS,
+                    "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization"
+                }
+            };
+        }
+
+        const methodRoutes = ACTION_ROUTES[event.httpMethod];
+        if (!methodRoutes) {
+            return {
+                statusCode: 404,
+                headers: CORS_HEADERS,
+                body: JSON.stringify({ message: `Method ${event.httpMethod} not supported.` })
+            };
+        }
+
+        const action = event.queryStringParameters?.action;
+        const methodName = methodRoutes[action] || DEFAULT_ROUTES[event.httpMethod];
+        return await controller[methodName](event);
+    } catch (error) {
+        return {
+            statusCode: 500,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({
+                message: "Internal Server Error",
+                error: error.message
+            })
+        };
+    }
+};
