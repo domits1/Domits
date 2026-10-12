@@ -131,6 +131,9 @@ const TableView = ({
                                         <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
                                             ● {displayStatus}
                                         </span>
+                                        {task.slaStatus === 'AT_RISK' && (
+                                            <span className="badge-sla-at-risk">At risk</span>
+                                        )}
                                     </td>
                                 </tr>
                             )})

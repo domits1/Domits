@@ -47,6 +47,19 @@ describe('TableView', () => {
         expect(within(row).getByText('Urgent')).toBeInTheDocument();
     });
 
+    test('shows an at-risk indicator when the task is approaching its SLA deadline', () => {
+        const atRiskTask = { ...task, slaStatus: 'AT_RISK' };
+        render(<TableView {...baseProps} paginatedTasks={[atRiskTask]} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).getByText('At risk')).toBeInTheDocument();
+    });
+
+    test('does not show an at-risk indicator for a task that is on track', () => {
+        render(<TableView {...baseProps} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).queryByText('At risk')).not.toBeInTheDocument();
+    });
+
     test('shows an Auto badge for a task created by automation', () => {
         const autoTask = { ...task, source: 'automation' };
         render(<TableView {...baseProps} paginatedTasks={[autoTask]} />);
