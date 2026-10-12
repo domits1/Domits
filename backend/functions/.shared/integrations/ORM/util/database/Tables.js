@@ -16,6 +16,7 @@ import { ChannexBookingRevision } from "database/models/unified/integrations/Cha
 import { IntegrationSyncState } from "database/models/unified/sync/IntegrationSyncState";
 import { IntegrationSyncLog } from "database/models/unified/sync/IntegrationSyncLog";
 import { ChannexSyncEvidence } from "database/models/unified/sync/ChannexSyncEvidence";
+import { ChannexAriOutbox } from "database/models/channelManagement/ChannexAriOutbox";
 
 export const Tables = [
 
@@ -37,4 +38,5 @@ export const Tables = [
   IntegrationSyncState,
   IntegrationSyncLog,
   ChannexSyncEvidence,
+  ChannexAriOutbox,
 ];

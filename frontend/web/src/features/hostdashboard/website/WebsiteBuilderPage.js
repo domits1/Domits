@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { LanguageContext } from "../../../context/LanguageContext";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import PropTypes from "prop-types";
@@ -14,6 +15,7 @@ import {
   DEFAULT_WEBSITE_TEMPLATE_ID,
   WEBSITE_TEMPLATE_OPTIONS,
   getWebsiteTemplateById,
+  getWebsiteTemplateCopy,
   isWebsiteTemplateBuilderEnabled,
 } from "./websiteTemplates";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
@@ -607,6 +609,8 @@ WebsiteDraftDeleteDialog.propTypes = {
 };
 
 function WebsiteBuilderPage() {
+  const { language } = useContext(LanguageContext);
+  const templateCopy = getWebsiteTemplateCopy(language);
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
@@ -833,7 +837,7 @@ function WebsiteBuilderPage() {
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
-  const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
+  const selectedTemplate = getWebsiteTemplateById(selectedTemplateId, language);
   const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const selectedTemplateIsBuilderEnabled = isWebsiteTemplateBuilderEnabled(selectedTemplateId);
   const selectedTemplateIsBuildable = selectedTemplateIsImplemented && selectedTemplateIsBuilderEnabled;
@@ -1632,7 +1636,8 @@ function WebsiteBuilderPage() {
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
-          {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {
+          {WEBSITE_TEMPLATE_OPTIONS.map(({ id }) => {
+            const templateOption = getWebsiteTemplateById(id, language);
             const isSelected = templateOption.id === selectedTemplateId;
             const isBuilderEnabled = isWebsiteTemplateBuilderEnabled(templateOption.id);
             const isComingSoon = !isBuilderEnabled;
@@ -1655,8 +1660,8 @@ function WebsiteBuilderPage() {
                 <span className={styles.templateRadio} aria-hidden="true">
                   <span className={styles.templateRadioDot} />
                 </span>
-                {isSelected ? <span className={styles.templateSelectedTag}>Selected</span> : null}
-                {isComingSoon ? <span className={styles.templateComingSoonTag}>Coming soon</span> : null}
+                {isSelected ? <span className={styles.templateSelectedTag}>{templateCopy.selected}</span> : null}
+                {isComingSoon ? <span className={styles.templateComingSoonTag}>{templateCopy.comingSoon}</span> : null}
                 <div className={styles.templatePreviewShell}>
                   <TemplateSilhouette layout={templateOption.layout} />
                 </div>
@@ -1674,7 +1679,7 @@ function WebsiteBuilderPage() {
         <div className={styles.templateSelectionState}>
           <div className={styles.templateSelectionHeader}>
             <div className={styles.templateSelectionCopy}>
-              <p className={styles.summaryLabel}>Current template pick</p>
+              <p className={styles.summaryLabel}>{templateCopy.currentPick}</p>
               <p className={styles.selectedTemplateName}>{selectedTemplate.name}</p>
             </div>
 
@@ -1691,8 +1696,7 @@ function WebsiteBuilderPage() {
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
           {showTemplateAvailabilityHint ? (
             <p className={styles.previewHelperText}>
-              Panorama Landing is currently the only selectable template. The other template directions
-              stay visible here as coming-soon options while we continue iterating on them.
+              {templateCopy.availabilityHint}
             </p>
           ) : null}
         </div>
@@ -1869,7 +1873,7 @@ function WebsiteBuilderPage() {
                     <section className={styles.builderStepSection}>
                       <div className={styles.stepHeader}>
                         <p className={styles.stepEyebrow}>Step 2</p>
-                        <h2>Choose a website template</h2>
+                        <h2>{templateCopy.title}</h2>
                         <p>
                           Select the layout direction you want to use for the listing website. You can keep
                           adjusting the listing choice above while you compare template options.

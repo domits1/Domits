@@ -107,6 +107,33 @@ describe("useUserProfile", () => {
     expect(result.current.user.email).toBe("");
   });
 
+  test("authStatusLoading is true before the fetch resolves and false after", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    expect(result.current.authStatusLoading).toBe(true);
+
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result: resolved } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(resolved.current.authStatusLoading).toBe(false));
+  });
+
+  test("authStatusError is true and mfaStatusError is false when the whole profile fetch fails", async () => {
+    Auth.currentAuthenticatedUser.mockRejectedValue(new Error("Not signed in"));
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    expect(result.current.authStatusError).toBe(true);
+    expect(result.current.mfaStatusError).toBe(false);
+  });
+
+  test("mfaStatusError is true and authStatusError is false when only getPreferredMFA fails", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    Auth.getPreferredMFA.mockRejectedValue(new Error("MFA lookup failed"));
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    expect(result.current.mfaStatusError).toBe(true);
+    expect(result.current.authStatusError).toBe(false);
+    expect(result.current.authStatus.emailVerified).toBe(true);
+  });
+
   // ─── Input handlers ───────────────────────────────────────────────────────
 
   test("onInputChange updates the matching tempUser field", () => {

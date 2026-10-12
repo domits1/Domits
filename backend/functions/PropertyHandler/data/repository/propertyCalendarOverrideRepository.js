@@ -1,5 +1,7 @@
 import Database from "database";
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
+import { withDsqlRetry } from "../../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter from "../../.shared/channelManagement/services/channexAriOutboxWriter.js";
 
 const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
 
@@ -133,8 +135,9 @@ const mapRowToOverride = (row) => ({
 });
 
 export class PropertyCalendarOverrideRepository {
-  constructor(systemManager) {
+  constructor(systemManager, { channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
     this.systemManager = systemManager;
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
   }
 
   async getOverridesByPropertyId(propertyId, range = {}) {
@@ -210,7 +213,7 @@ export class PropertyCalendarOverrideRepository {
     };
   }
 
-  async upsertOverridesByPropertyId(propertyId, overrides, range = {}) {
+  async upsertOverridesByPropertyId(propertyId, overrides, range = {}, channexChanges = []) {
     const normalizedOverrides = Array.from(
       new Map(
         (Array.isArray(overrides) ? overrides : [])
@@ -253,74 +256,79 @@ export class PropertyCalendarOverrideRepository {
     const updatedAt = Date.now();
 
     try {
-      await client.transaction(async (transactionManager) => {
-        for (const override of normalizedOverrides) {
-          if (
-            override.isAvailable === null &&
-            override.nightlyPrice === null &&
-            override.priceLabsIgnored === null &&
-            override.stopSell === null &&
-            override.closedToArrival === null &&
-            override.closedToDeparture === null &&
-            override.minStay === null &&
-            override.maxStay === null
-          ) {
+      await withDsqlRetry(() =>
+        client.transaction(async (transactionManager) => {
+          for (const override of normalizedOverrides) {
+            if (
+              override.isAvailable === null &&
+              override.nightlyPrice === null &&
+              override.priceLabsIgnored === null &&
+              override.stopSell === null &&
+              override.closedToArrival === null &&
+              override.closedToDeparture === null &&
+              override.minStay === null &&
+              override.maxStay === null
+            ) {
+              await transactionManager.query(
+                `
+                  DELETE FROM ${tableName}
+                  WHERE property_id = $1 AND calendar_date = $2
+                `,
+                [propertyId, override.calendarDate]
+              );
+              continue;
+            }
+
             await transactionManager.query(
               `
-                DELETE FROM ${tableName}
-                WHERE property_id = $1 AND calendar_date = $2
+                INSERT INTO ${tableName}
+                  (
+                    property_id,
+                    calendar_date,
+                    is_available,
+                    nightly_price,
+                    pricelabs_ignored,
+                    stop_sell,
+                    closed_to_arrival,
+                    closed_to_departure,
+                    min_stay,
+                    max_stay,
+                    updated_at
+                  )
+                VALUES
+                  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                ON CONFLICT (property_id, calendar_date)
+                DO UPDATE SET
+                  is_available = EXCLUDED.is_available,
+                  nightly_price = EXCLUDED.nightly_price,
+                  pricelabs_ignored = COALESCE(EXCLUDED.pricelabs_ignored, "property_calendar_override".pricelabs_ignored),
+                  stop_sell = EXCLUDED.stop_sell,
+                  closed_to_arrival = EXCLUDED.closed_to_arrival,
+                  closed_to_departure = EXCLUDED.closed_to_departure,
+                  min_stay = EXCLUDED.min_stay,
+                  max_stay = EXCLUDED.max_stay,
+                  updated_at = EXCLUDED.updated_at
               `,
-              [propertyId, override.calendarDate]
+              [
+                propertyId,
+                override.calendarDate,
+                override.isAvailable,
+                override.nightlyPrice,
+                override.priceLabsIgnored ?? null,
+                override.stopSell,
+                override.closedToArrival,
+                override.closedToDeparture,
+                override.minStay,
+                override.maxStay,
+                updatedAt,
+              ]
             );
-            continue;
           }
-
-          await transactionManager.query(
-            `
-              INSERT INTO ${tableName}
-                (
-                  property_id,
-                  calendar_date,
-                  is_available,
-                  nightly_price,
-                  pricelabs_ignored,
-                  stop_sell,
-                  closed_to_arrival,
-                  closed_to_departure,
-                  min_stay,
-                  max_stay,
-                  updated_at
-                )
-              VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-              ON CONFLICT (property_id, calendar_date)
-              DO UPDATE SET
-                is_available = EXCLUDED.is_available,
-                nightly_price = EXCLUDED.nightly_price,
-                pricelabs_ignored = COALESCE(EXCLUDED.pricelabs_ignored, "property_calendar_override".pricelabs_ignored),
-                stop_sell = EXCLUDED.stop_sell,
-                closed_to_arrival = EXCLUDED.closed_to_arrival,
-                closed_to_departure = EXCLUDED.closed_to_departure,
-                min_stay = EXCLUDED.min_stay,
-                max_stay = EXCLUDED.max_stay,
-                updated_at = EXCLUDED.updated_at
-            `,
-            [
-              propertyId,
-              override.calendarDate,
-              override.isAvailable,
-              override.nightlyPrice,
-              override.priceLabsIgnored ?? null,
-              override.stopSell,
-              override.closedToArrival,
-              override.closedToDeparture,
-              override.minStay,
-              override.maxStay,
-              updatedAt,
-            ]
-          );
-        }
-      });
+          for (const channexChange of channexChanges) {
+            await this.channexAriOutboxWriter.enqueueChannexAriChange(transactionManager, channexChange);
+          }
+        })
+      );
     } catch (error) {
       throw new DatabaseException(
         error?.message || "Could not update property calendar overrides."

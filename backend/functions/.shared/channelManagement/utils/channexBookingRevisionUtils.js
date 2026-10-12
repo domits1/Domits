@@ -4,8 +4,6 @@ export const buildChannexPullIssue = (code, message, extra = {}) => ({
   ...extra,
 });
 
-export const CHANNEX_BOOKING_CREATED_TRIGGER = "BOOKING_CREATED";
-export const CHANNEX_BOOKING_MODIFIED_TRIGGER = "BOOKING_MODIFIED";
 export const CHANNEX_BOOKING_CANCELLED_TRIGGER = "BOOKING_CANCELLED";
 
 const requireStr = (value) =>

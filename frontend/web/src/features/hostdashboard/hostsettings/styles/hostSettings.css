@@ -1298,3 +1298,274 @@
         flex-wrap: wrap;
     }
 }
+
+.rate-plan-cards-grid {
+    align-items: stretch;
+}
+
+.rate-plan-cards-grid .personal-data-card {
+    min-width: 0;
+}
+
+.rate-plan-direct-booking-link,
+.rate-plan-enterprise-link {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.direct-booking-plan-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.direct-booking-plan-header {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.direct-booking-plan-eyebrow {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.direct-booking-plan-header h2 {
+    margin: 0 0 0.375rem;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+.direct-booking-plan-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.direct-booking-plan-divider {
+    margin: clamp(1rem, 2.5vw, 1.5rem) 0;
+    border-top: 1px solid #f3f4f6;
+}
+
+.direct-booking-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.75rem, 2vw, 1rem);
+}
+
+.direct-booking-stat {
+    padding: clamp(1rem, 2.5vw, 1.125rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.direct-booking-stat-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.direct-booking-stat-value {
+    color: #111827;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.direct-booking-stat-description {
+    display: block;
+    margin-top: 0.25rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.direct-booking-formula-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(1rem, 3vw, 1.75rem);
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+.direct-booking-rate {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.direct-booking-rate-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.direct-booking-rate strong {
+    color: #111827;
+    font-size: 2rem;
+}
+
+.direct-booking-rate span:last-child {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.direct-booking-formula {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    border-radius: 12px;
+    background: #f9fafb;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.direct-booking-formula strong {
+    color: #15803d;
+}
+
+.direct-booking-note {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    margin-top: clamp(0.75rem, 2vw, 0.875rem);
+    border-left: 3px solid #15803d;
+    background: #f0fdf4;
+    color: #374151;
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.direct-booking-examples {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.75rem, 2vw, 1rem);
+}
+
+.direct-booking-example {
+    padding: clamp(1rem, 2.5vw, 1.125rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.direct-booking-example-label {
+    display: block;
+    margin-bottom: 0.3125rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.direct-booking-example-value {
+    display: block;
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.direct-booking-example-fee {
+    display: block;
+    margin-top: 0.25rem;
+    color: #15803d;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.direct-booking-tier-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.direct-booking-tier-table {
+    width: 100%;
+    min-width: 32rem;
+    border-collapse: collapse;
+}
+
+.direct-booking-tier-table th,
+.direct-booking-tier-table td {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.direct-booking-tier-table th {
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.direct-booking-tier-table td {
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.direct-booking-tier-table td:last-child {
+    color: #111827;
+    font-weight: 700;
+}
+
+.direct-booking-tier-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.direct-booking-empty {
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+.direct-booking-empty strong {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.direct-booking-empty span {
+    color: #6b7280;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .direct-booking-plan-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .direct-booking-formula-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .direct-booking-examples {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .rate-plan-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .direct-booking-plan-grid,
+    .direct-booking-examples {
+        grid-template-columns: 1fr;
+    }
+}

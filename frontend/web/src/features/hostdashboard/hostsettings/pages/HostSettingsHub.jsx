@@ -7,6 +7,7 @@ import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import { LanguageContext } from "../../../../context/LanguageContext";
@@ -25,6 +26,7 @@ const CARD_ICONS = {
   "rate-plans":    <PercentOutlinedIcon />,
   compliance:      <VerifiedUserOutlinedIcon />,
   "communication-preferences": <NotificationsNoneOutlinedIcon />,
+  "privacy-security": <LockOutlinedIcon />,
   onboarding:      <ChecklistOutlinedIcon />,
 };
 
@@ -49,11 +51,12 @@ SettingsCard.propTypes = {
 const HostSettingsHub = () => {
   const { language } = useContext(LanguageContext);
   const t = contentByLanguage[language]?.settings?.hub ?? contentByLanguage.en.settings.hub;
-  const { personalData, communicationPreferences, company, team, ratePlans, compliance, onboarding } = t.cards;
+  const { personalData, communicationPreferences, privacySecurity, company, team, ratePlans, compliance, onboarding } = t.cards;
 
   const personalCards = [
     { to: "personal-data", icon: CARD_ICONS["personal-data"], title: personalData.title, desc: personalData.desc },
     { to: "communication-preferences", icon: CARD_ICONS["communication-preferences"], title: communicationPreferences.title, desc: communicationPreferences.desc },
+    { to: "privacy-security", icon: CARD_ICONS["privacy-security"], title: privacySecurity.title, desc: privacySecurity.desc },
   ];
 
   const accountCards = [
