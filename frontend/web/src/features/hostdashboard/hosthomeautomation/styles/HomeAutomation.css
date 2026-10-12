@@ -112,3 +112,45 @@
 .host-homeauto__retry:hover {
   background: var(--homeauto-primary-hover);
 }
+
+.host-homeauto__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.host-homeauto__action {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.host-homeauto__action--primary {
+  background: var(--homeauto-primary);
+  color: #fff;
+}
+
+.host-homeauto__action--primary:hover {
+  background: var(--homeauto-primary-hover);
+}
+
+.host-homeauto__action--danger {
+  background: #fff;
+  color: var(--homeauto-error-text);
+  border-color: var(--homeauto-error-border);
+}
+
+.host-homeauto__action--danger:hover {
+  background: var(--homeauto-error-bg);
+}
+
+/* The modal sits inside .host-chdist only for its colour variables; drop that class's page padding and width cap. */
+.host-chdist.host-homeauto__modal-scope {
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  width: auto;
+}

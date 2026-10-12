@@ -1189,6 +1189,33 @@
         "expiredCredentials": "Inicio de sesión caducado",
         "unknown": "Estado desconocido"
       },
+      "actions": {
+        "connect": "Conectar",
+        "reconnect": "Volver a conectar",
+        "disconnect": "Desconectar"
+      },
+      "modal": {
+        "connect": {
+          "title": "Conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Conectar",
+          "confirming": "Conectando..."
+        },
+        "reconnect": {
+          "title": "Volver a conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Volver a conectar",
+          "confirming": "Reconectando..."
+        },
+        "disconnect": {
+          "title": "Desconectar RemoteLock",
+          "body": "Domits dejará de gestionar los códigos de acceso de tus huéspedes.",
+          "confirm": "Desconectar",
+          "confirming": "Desconectando..."
+        },
+        "cancel": "Cancelar",
+        "error": "Algo salió mal. Inténtalo de nuevo."
+      },
       "loading": "Cargando tu conexión con RemoteLock...",
       "loadError": "No pudimos cargar tu conexión con RemoteLock.",
       "retry": "Intentar de nuevo"

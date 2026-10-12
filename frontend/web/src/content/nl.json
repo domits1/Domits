@@ -1189,6 +1189,33 @@
         "expiredCredentials": "Inlog verlopen",
         "unknown": "Status onbekend"
       },
+      "actions": {
+        "connect": "Koppelen",
+        "reconnect": "Opnieuw koppelen",
+        "disconnect": "Ontkoppelen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Koppelen",
+          "confirming": "Koppelen..."
+        },
+        "reconnect": {
+          "title": "RemoteLock opnieuw koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Opnieuw koppelen",
+          "confirming": "Opnieuw koppelen..."
+        },
+        "disconnect": {
+          "title": "RemoteLock ontkoppelen",
+          "body": "Domits beheert de deurcodes van je gasten niet meer.",
+          "confirm": "Ontkoppelen",
+          "confirming": "Ontkoppelen..."
+        },
+        "cancel": "Annuleren",
+        "error": "Er ging iets mis. Probeer het opnieuw."
+      },
       "loading": "Je RemoteLock-koppeling wordt geladen...",
       "loadError": "We konden je RemoteLock-koppeling niet laden.",
       "retry": "Probeer opnieuw"

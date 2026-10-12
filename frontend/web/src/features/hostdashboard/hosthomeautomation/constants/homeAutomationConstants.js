@@ -8,7 +8,8 @@
 export const REMOTELOCK_UI_ENABLED = false;
 
 // Tone picks the badge colour, labelKey is the key under settings.homeAutomation.statuses in the content
-// files, and actions are what the host may do from that status (shown by the next PR, not this one).
+// files, and actions are what the host may do from that status (each is a button on the status card and a key
+// under settings.homeAutomation.actions).
 export const STATUS_PRESENTATION = Object.freeze({
   NOT_CONNECTED: { tone: "neutral", labelKey: "notConnected", actions: ["connect"] },
   CONNECTING: { tone: "pending", labelKey: "connecting", actions: [] },
