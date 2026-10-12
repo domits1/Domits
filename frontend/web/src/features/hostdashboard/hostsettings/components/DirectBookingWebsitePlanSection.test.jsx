@@ -79,7 +79,7 @@ describe("DirectBookingWebsitePlanSection", () => {
   });
 
   test("shows the current Essentials plan and the Elite price supplied by the API", async () => {
-    getWebsiteRatePlan.mockResolvedValue(essentialsPlan());
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({ elitePriceCents: 5200 }));
 
     render(<DirectBookingWebsitePlanSection />);
 
@@ -87,7 +87,7 @@ describe("DirectBookingWebsitePlanSection", () => {
       await screen.findByText("Direct Booking Website subscription")
     ).toBeInTheDocument();
     expect(await screen.findAllByText("Essentials")).toHaveLength(1);
-    expect(screen.getByText("€43.00")).toBeInTheDocument();
+    expect(screen.getByText("€52.00")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "Upgrade to Elite" })
@@ -220,6 +220,21 @@ describe("DirectBookingWebsitePlanSection", () => {
     render(<DirectBookingWebsitePlanSection />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load plan");
+  });
+
+  test("shows a pending state after successful checkout until the webhook activates Elite", async () => {
+    window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan());
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    expect(
+      await screen.findByText("We're confirming your Elite subscription. This can take a few moments.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Processing..." })
+    ).toBeDisabled();
+    expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
   });
 
   test("shows a cancellation notice when Stripe returns to the cancel URL", async () => {
