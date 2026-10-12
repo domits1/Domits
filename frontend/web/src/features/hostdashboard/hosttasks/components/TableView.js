@@ -113,6 +113,9 @@ const TableView = ({
                                             <div className="truncate-text">
                                                 <strong>{task.title}</strong>
                                             </div>
+                                            {task.source === 'automation' && (
+                                                <span className="badge-auto-created">Auto</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td>{getPropertyLabel(task)}</td>
