@@ -12,6 +12,10 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
+import { StaticPageOutboxRepository } from "../data/repository/staticPageOutboxRepository.js";
+import { StaticPageStore } from "../data/repository/staticPageStore.js";
+import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
+import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
@@ -564,6 +568,7 @@ export class PropertyController {
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                     bookingType: normalizedOverviewPayload.bookingType,
+                    customRules: normalizedOverviewPayload.customRules,
                 }
             );
 
@@ -792,6 +797,7 @@ export class PropertyController {
             amenities: body.amenities,
             rules: body.rules,
             bookingType: body.bookingType,
+            customRules: body.customRules,
         };
     }
 
@@ -1008,6 +1014,20 @@ export class PropertyController {
                             }))
                             .filter((rule) => rule.rule)
                             .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined,
+            customRules: Array.isArray(payload.customRules)
+                ? Array.from(
+                    new Map(
+                        payload.customRules
+                            .map((rule) => ({
+                                category: String(rule?.category || "").trim(),
+                                rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                                enabled: rule?.enabled !== false,
+                            }))
+                            .filter((rule) => rule.category && rule.rule_text)
+                            .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])
                     ).values()
                 )
                 : undefined,
@@ -1814,6 +1834,31 @@ export class PropertyController {
             site,
             domain: healedPrimaryDomain,
             siteDomains: storedSiteDomains,
+        };
+    }
+
+    createStaticPageWorker() {
+        return new StaticPageWorker({
+            outboxRepository: new StaticPageOutboxRepository(),
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            pageStore: new StaticPageStore(),
+            renderer: new StaticPageRenderer(),
+        });
+    }
+
+    async buildStaticPages(event) {
+        const summary = await this.createStaticPageWorker().run({ limit: event?.limit });
+        if (summary.failed > 0 || summary.errors.length > 0) {
+            throw new Error(
+                `The static page run left ${summary.failed} failed and ${summary.errors.length} unfinished pages: ` +
+                    JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
         };
     }
 

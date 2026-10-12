@@ -47,6 +47,7 @@ const STATUS_CLASS = {
   AWAITING_PAYMENT: styles.statusAwaiting,
   FAILED: styles.statusFailed,
   DECLINED: styles.statusFailed,
+  CANCELLED: styles.statusFailed,
   INQUIRY: styles.statusAwaiting,
 };
 
@@ -55,6 +56,7 @@ const PAYMENT_BOX_CLASS = {
   AWAITING_PAYMENT: styles.paymentBoxAwaiting,
   FAILED: styles.paymentBoxFailed,
   DECLINED: styles.paymentBoxFailed,
+  CANCELLED: styles.paymentBoxFailed,
   INQUIRY: styles.paymentBoxAwaiting,
 };
 
@@ -63,6 +65,7 @@ const RECEIPT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
   DECLINED: "Declined",
+  CANCELLED: "Cancelled",
   INQUIRY: "Request",
 };
 
@@ -71,6 +74,7 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Payment failed",
   DECLINED: "Payment declined",
+  CANCELLED: "Reservation cancelled",
   INQUIRY: "Pending request",
 };
 
@@ -84,6 +88,7 @@ const getStatusConfig = (t) => ({
   AWAITING_PAYMENT: { label: t.status.AWAITING_PAYMENT, icon: <FiClock /> },
   FAILED: { label: t.status.FAILED, icon: <FiAlertCircle /> },
   DECLINED: { label: t.status.DECLINED, icon: <FiAlertCircle /> },
+  CANCELLED: { label: t.status.CANCELLED, icon: <FiAlertCircle /> },
   INQUIRY: { label: t.status.INQUIRY, icon: <FiClock /> },
 });
 
@@ -108,6 +113,11 @@ const getPaymentStatusConfig = (t) => ({
     text: t.paymentStatus.DECLINED.text,
     className: styles.failed,
   },
+  CANCELLED: {
+    label: t.paymentStatus.CANCELLED.label,
+    text: t.paymentStatus.CANCELLED.text,
+    className: styles.failed,
+  },
   INQUIRY: {
     label: t.paymentStatus.INQUIRY.label,
     text: t.paymentStatus.INQUIRY.text,
@@ -125,6 +135,7 @@ const normalizeStatus = (status) => {
   if (normalizedStatus.includes("paid")) return "PAID";
   if (normalizedStatus.includes("await")) return "AWAITING_PAYMENT";
   if (normalizedStatus.includes("fail")) return "FAILED";
+  if (normalizedStatus.startsWith("cancel")) return "CANCELLED";
 
   return String(status).toUpperCase();
 };
@@ -828,6 +839,15 @@ const reservationTranslationShape = PropTypes.shape({
     updateFailed: PropTypes.string.isRequired,
     cancel: PropTypes.string.isRequired,
   }).isRequired,
+  checkOutAction: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
+    button: PropTypes.string.isRequired,
+    checkingOut: PropTypes.string.isRequired,
+    confirmMessage: PropTypes.string.isRequired,
+    success: PropTypes.string.isRequired,
+    failed: PropTypes.string.isRequired,
+  }).isRequired,
 });
 
 const reservationShape = PropTypes.shape({
@@ -845,6 +865,7 @@ const reservationShape = PropTypes.shape({
   status: PropTypes.string,
   reservationId: PropTypes.string,
   confirmationCode: PropTypes.string,
+  checked_out_at: PropTypes.number,
 });
 
 const viewModelShape = PropTypes.shape({
@@ -1382,6 +1403,31 @@ RequestActionsCard.propTypes = {
   t: reservationTranslationShape.isRequired,
 };
 
+const CheckOutActionCard = ({ isBusy, onCheckOut, t }) => (
+  <div className={`${styles.card} ${styles.requestActionsCard}`}>
+    <div className={styles.blockHeader}>
+      <span>{t.checkOutAction.title}</span>
+    </div>
+
+    <p className={styles.requestActionsSubtitle}>{t.checkOutAction.subtitle}</p>
+
+    <div className={styles.requestActionsGrid}>
+      <button
+        className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
+        onClick={onCheckOut}
+        disabled={isBusy}>
+        {isBusy ? t.checkOutAction.checkingOut : t.checkOutAction.button}
+      </button>
+    </div>
+  </div>
+);
+
+CheckOutActionCard.propTypes = {
+  isBusy: PropTypes.bool.isRequired,
+  onCheckOut: PropTypes.func.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
 const RequestConfirmationModal = ({ action, overlappingCount, onConfirm, onCancel, t }) => {
   const isDeclineAction = action === "decline-inquiry";
   const title = isDeclineAction ? t.requestActions.confirmDeclineTitle : t.requestActions.confirmAcceptTitle;
@@ -1513,6 +1559,7 @@ const HostReservationDetails = () => {
   const { reservationData, setReservationData, loading, error } = useReservationDetailsData(id, initialBooking);
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const [isUpdatingInquiry, setIsUpdatingInquiry] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
   if (error && !reservationData) {
@@ -1533,6 +1580,7 @@ const HostReservationDetails = () => {
     t,
   });
   const showRequestActions = reservation.status === "INQUIRY";
+  const showCheckOutAction = reservation.status === "PAID" && !reservation.checked_out_at;
 
   const handleViewInCalendar = () => {
     if (!hasReservationData) {
@@ -1674,6 +1722,46 @@ const HostReservationDetails = () => {
     });
   };
 
+  const handleCheckOutGuest = async () => {
+    if (!hasReservationData || isCheckingOut) {
+      return;
+    }
+
+    if (!window.confirm(t.checkOutAction.confirmMessage)) {
+      return;
+    }
+
+    const authToken = getAccessToken();
+    if (!authToken) {
+      toast.error(t.checkOutAction.failed);
+      return;
+    }
+
+    setIsCheckingOut(true);
+
+    try {
+      await updateInquiryStatus(getBookingId(reservationData), "mark-checked-out", authToken);
+
+      setReservationData((currentReservation) => {
+        if (!currentReservation) {
+          return currentReservation;
+        }
+
+        return {
+          ...currentReservation,
+          checked_out_at: Date.now(),
+        };
+      });
+
+      toast.success(t.checkOutAction.success);
+    } catch (checkOutError) {
+      console.error("Failed to mark booking checked out:", checkOutError);
+      toast.error(t.checkOutAction.failed);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   const handleDownloadReceipt = async () => {
     if (!hasReservationData || isDownloadingReceipt) {
       return;
@@ -1736,6 +1824,9 @@ const HostReservationDetails = () => {
               onDecline={handleDeclineRequest}
               t={t}
             />
+          ) : null}
+          {showCheckOutAction ? (
+            <CheckOutActionCard isBusy={isCheckingOut} onCheckOut={handleCheckOutGuest} t={t} />
           ) : null}
           <ReservationInfoCard reservation={reservation} loading={loading} t={t} />
           <ActionsCard

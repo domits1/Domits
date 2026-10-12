@@ -47,6 +47,19 @@ describe('TableView', () => {
         expect(within(row).getByText('Urgent')).toBeInTheDocument();
     });
 
+    test('shows an Auto badge for a task created by automation', () => {
+        const autoTask = { ...task, source: 'automation' };
+        render(<TableView {...baseProps} paginatedTasks={[autoTask]} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).getByText('Auto')).toBeInTheDocument();
+    });
+
+    test('does not show an Auto badge for a manually-created task', () => {
+        render(<TableView {...baseProps} />);
+        const row = screen.getByText('Clean the villa').closest('tr');
+        expect(within(row).queryByText('Auto')).not.toBeInTheDocument();
+    });
+
     test('calls onTaskClick when a row is clicked', () => {
         render(<TableView {...baseProps} />);
         fireEvent.click(screen.getByText('Clean the villa'));

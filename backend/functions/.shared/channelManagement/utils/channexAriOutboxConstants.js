@@ -16,6 +16,8 @@ export const CHANNEX_ARI_OUTBOX_SOURCE = Object.freeze({
   GLOBAL_SETTINGS: "GLOBAL_SETTINGS",
   BOOKING: "BOOKING",
   CHANNEX_IMPORT: "CHANNEX_IMPORT",
+  // A full sync after a mapping is saved and ready: the property goes live, or recovers (#3282).
+  GO_LIVE: "GO_LIVE",
 });
 
 // Lowercase, because these values go to Channex in the payload, not into our own column.
