@@ -79,6 +79,25 @@ const toAmountOrNull = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? amount : null;
 };
+// Every page shows the total in euros, so an amount in another currency is not stored;
+// the pages then fall back to their own price instead of showing a wrong currency.
+const toEuroAmountOrNull = (revision) => {
+  const amount = toAmountOrNull(revision?.amount);
+  if (amount === null) return null;
+
+  const currency = requireStr(revision?.currency)?.toUpperCase() ?? null;
+  if (currency !== "EUR") {
+    console.warn(
+      JSON.stringify({
+        event: "CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR",
+        revisionId: requireStr(revision?.revisionId),
+        currency,
+      })
+    );
+    return null;
+  }
+  return amount;
+};
 const parseIsoDateParam = (value) => {
   const normalized = requireStr(value);
   if (!normalized) return null;
@@ -1012,7 +1031,7 @@ export default class ChannexBookingRevisionImportService {
         guestName: requireStr(revision?.guestName) || "Channex guest",
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
-        totalPrice: toAmountOrNull(revision?.amount),
+        totalPrice: toEuroAmountOrNull(revision),
         bookingSource: requireStr(revision?.otaName),
         channexChanges: [
           importedBookingChange(propertyContext.propertyId, {
@@ -1190,7 +1209,7 @@ export default class ChannexBookingRevisionImportService {
       guestName: requireStr(revision?.guestName) || "Channex guest",
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
-      totalPrice: toAmountOrNull(revision?.amount),
+      totalPrice: toEuroAmountOrNull(revision),
       // The old nights reopen and the new ones close: one change per stay, so the nights
       // between them are not resent (design D9).
       channexChanges: [

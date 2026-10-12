@@ -110,6 +110,16 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(params).toContain(350);
   });
 
+  test("a date change without an amount keeps the stored total price", async () => {
+    const { repository, manager } = setup();
+
+    await repository.updateImportedBooking({ ...booking, channexChanges: [change] });
+
+    const [sql, params] = manager.query.mock.calls[0];
+    expect(sql).toContain("total_price = COALESCE($6, total_price)");
+    expect(params[5]).toBeNull();
+  });
+
   test("an imported cancellation and its outbox row are saved in one transaction", async () => {
     const { repository, manager, channexAriOutboxWriter } = setup();
 

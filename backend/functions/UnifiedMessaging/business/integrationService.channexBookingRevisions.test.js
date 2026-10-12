@@ -297,6 +297,36 @@ describe("IntegrationService Channex booking pull import", () => {
 
   // A missing or unreadable amount must not become 0, which the pages would show as a
   // free stay; null makes them fall back to their own calculation.
+  // Every page prints the total in euros, so an amount in another currency would be shown
+  // with the wrong symbol; without it the pages fall back to their own calculation.
+  test.each(["USD", "GBP", null])("stores no total price when the currency is %p instead of EUR", async (currency) => {
+    const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null, bookingSource: "Booking.com" })
+    );
+    expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR"));
+  });
+
+  test("accepts the currency code in any case", async () => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency: " eur" })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: 200 })
+    );
+  });
+
   test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
     const { service, externalBookingImportRepository } = createService({
       feedRevisions: [buildFeedRevision({ amount })],
