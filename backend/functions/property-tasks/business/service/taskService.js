@@ -174,7 +174,7 @@ export const escalateTask = async (hostId, taskId) => {
 
     try {
         const recipientEmail = task.assignee_team_member_id
-            ? await getAssigneeEmailById(task.assignee_team_member_id)
+            ? await getAssigneeEmailById(task.assignee_team_member_id, hostId)
             : await getHostEmailById(hostId);
         await sendTaskEscalationEmail(recipientEmail, task);
     } catch (emailError) {

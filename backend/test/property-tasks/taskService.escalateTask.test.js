@@ -86,7 +86,7 @@ describe("escalateTask", () => {
 
         await escalateTask("host-1", "task-1");
 
-        expect(mockGetAssigneeEmailById).toHaveBeenCalledWith("member-1");
+        expect(mockGetAssigneeEmailById).toHaveBeenCalledWith("member-1", "host-1");
         expect(mockGetHostEmailById).not.toHaveBeenCalled();
         expect(mockSendTaskEscalationEmail).toHaveBeenCalledWith("assignee@example.com", expect.objectContaining({ id: "task-1" }));
     });

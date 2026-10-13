@@ -30,10 +30,11 @@ export class Controller {
                 throw new UnauthorizedException("Invalid internal caller.");
             }
             const memberId = event.queryStringParameters?.id;
-            if (!memberId) {
-                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "id is required" }) };
+            const hostId = event.queryStringParameters?.hostId;
+            if (!memberId || !hostId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "id and hostId are required" }) };
             }
-            const member = await this.service.getTeamMemberById(memberId);
+            const member = await this.service.getTeamMemberById(memberId, hostId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ email: member.member_email }) };
         } catch (error) {
             return this.handleError(error);
