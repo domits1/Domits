@@ -91,12 +91,12 @@ describe("escalateTask", () => {
         expect(mockSendTaskEscalationEmail).toHaveBeenCalledWith("assignee@example.com", expect.objectContaining({ id: "task-1" }));
     });
 
-    it("releases the claim when resolving the assignee's email fails", async () => {
+    it("releases the claim and throws a client-safe message when resolving the assignee's email fails", async () => {
         const past = Date.now() - 1000;
         mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: past, title: "Fix AC", assignee_team_member_id: "member-1" });
         mockGetAssigneeEmailById.mockRejectedValue(new Error("Failed to fetch assignee email: no email found for this assignee"));
 
-        await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/no email found/);
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow("Failed to send the escalation email. Please try again or contact support.");
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
         expect(mockUpdateTaskInDb).toHaveBeenCalledWith(expect.anything(), "task-1", { escalated_at: null });
     });
@@ -110,12 +110,12 @@ describe("escalateTask", () => {
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
     });
 
-    it("releases the claim when sending the email fails", async () => {
+    it("releases the claim and throws a client-safe message when sending the email fails", async () => {
         const past = Date.now() - 1000;
         mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: past, title: "Fix AC" });
         mockSendTaskEscalationEmail.mockRejectedValue(new Error("Failed to send escalation email"));
 
-        await expect(escalateTask("host-1", "task-1")).rejects.toThrow("Failed to send escalation email");
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow("Failed to send the escalation email. Please try again or contact support.");
         expect(mockUpdateTaskInDb).toHaveBeenCalledWith(expect.anything(), "task-1", { escalated_at: null });
     });
 });
