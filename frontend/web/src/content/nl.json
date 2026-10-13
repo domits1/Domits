@@ -1216,6 +1216,35 @@
         "cancel": "Annuleren",
         "error": "Er ging iets mis. Probeer het opnieuw."
       },
+      "devices": {
+        "title": "Apparaten",
+        "notConnected": "Koppel om je apparaten te zien",
+        "empty": "Geen apparaten gevonden in je RemoteLock-account.",
+        "loading": "Je apparaten worden geladen...",
+        "loadError": "We konden je apparaten niet laden.",
+        "retry": "Probeer opnieuw",
+        "notSupported": "Nog niet ondersteund",
+        "columns": {
+          "name": "Naam",
+          "type": "Type",
+          "status": "Status",
+          "battery": "Batterij",
+          "lastSeen": "Laatst gezien"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Onbekend"
+        },
+        "types": {
+          "lock": "Slot",
+          "zwaveLock": "Z-Wave-slot",
+          "connectorLock": "Connector-slot",
+          "schlageHomeLock": "Schlage Home-slot",
+          "resortLock": "Resortslot",
+          "other": "Ander apparaat"
+        }
+      },
       "loading": "Je RemoteLock-koppeling wordt geladen...",
       "loadError": "We konden je RemoteLock-koppeling niet laden.",
       "retry": "Probeer opnieuw"

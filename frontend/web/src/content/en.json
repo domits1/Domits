@@ -1215,6 +1215,35 @@
         "cancel": "Cancel",
         "error": "Something went wrong. Please try again."
       },
+      "devices": {
+        "title": "Devices",
+        "notConnected": "Connect to see your devices",
+        "empty": "No devices found in your RemoteLock account.",
+        "loading": "Loading your devices...",
+        "loadError": "We couldn't load your devices.",
+        "retry": "Try again",
+        "notSupported": "Not supported yet",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "status": "Status",
+          "battery": "Battery",
+          "lastSeen": "Last seen"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Unknown"
+        },
+        "types": {
+          "lock": "Lock",
+          "zwaveLock": "Z-Wave lock",
+          "connectorLock": "Connector lock",
+          "schlageHomeLock": "Schlage Home lock",
+          "resortLock": "Resort lock",
+          "other": "Other device"
+        }
+      },
       "loading": "Loading your RemoteLock connection...",
       "loadError": "We couldn't load your RemoteLock connection.",
       "retry": "Try again"
