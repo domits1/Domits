@@ -26,16 +26,80 @@ beforeEach(() => {
   repository = {
     findBookingById: jest.fn().mockResolvedValue({ ...booking }),
     create: jest.fn().mockImplementation(async (record) => record),
+<<<<<<< HEAD
+    findReviewByBookingTypeAndReviewer: jest.fn().mockResolvedValue(null),
+    findActiveCategoryKeys: jest.fn().mockResolvedValue(new Set(["cleanliness"])),
+    findForUser: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue({ id: "review-1", reviewer_user_id: "guest-1", status: "DRAFT" }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
+    findPublicForProperty: jest.fn().mockResolvedValue([]),
+=======
     findReviews: jest.fn().mockResolvedValue([]),
     findReviewByBookingTypeAndReviewer: jest.fn().mockResolvedValue(null),
     findActiveCategoryKeys: jest.fn().mockResolvedValue(new Set(["cleanliness"])),
     findPublicPropertyReviews: jest.fn().mockResolvedValue({ reviews: [] }),
     deleteOwnReview: jest.fn().mockResolvedValue({ affected: 1 }),
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
   };
   service = new ReviewService({ repository, now: () => now });
   authManager = new AuthManager();
   jest.spyOn(authManager, "getUser");
   controller = new Controller({ service, authManager });
+});
+
+const reviewEvent = (method, scope, userId = "guest-1") => ({
+  httpMethod: method,
+  requestContext: { authorizer: { claims: { sub: userId } } },
+  queryStringParameters: { scope },
+  pathParameters: { id: "review-1" },
+});
+
+it.each(["written", "received"])("lists %s reviews for the verified caller", async (scope) => {
+  const response = await controller.manageReviews(reviewEvent("GET", scope));
+  expect(response.statusCode).toBe(200);
+  expect(repository.findForUser).toHaveBeenCalledWith("guest-1", scope);
+});
+
+it("rejects unsupported list scopes", async () => {
+  expect((await controller.manageReviews(reviewEvent("GET", "all"))).statusCode).toBe(400);
+  expect(repository.findForUser).not.toHaveBeenCalled();
+});
+
+it("rejects unauthenticated list requests", async () => {
+  expect((await controller.manageReviews({ httpMethod: "GET" })).statusCode).toBe(401);
+  expect(repository.findForUser).not.toHaveBeenCalled();
+});
+
+it("soft deletes the author's review", async () => {
+  expect((await controller.manageReviews(reviewEvent("DELETE"))).statusCode).toBe(204);
+  expect(repository.softDelete).toHaveBeenCalledWith("review-1", "guest-1", now);
+});
+
+it("rejects deletion by another caller", async () => {
+  expect((await controller.manageReviews(reviewEvent("DELETE", undefined, "other"))).statusCode).toBe(403);
+  expect(repository.softDelete).not.toHaveBeenCalled();
+});
+
+it.each([null, { status: "DELETED" }])("rejects missing or deleted reviews: %p", async (review) => {
+  repository.findById.mockResolvedValue(review);
+  expect((await controller.manageReviews(reviewEvent("DELETE"))).statusCode).toBe(404);
+  expect(repository.softDelete).not.toHaveBeenCalled();
+});
+
+it("rejects deletion without a review ID", async () => {
+  expect((await controller.manageReviews({ ...reviewEvent("DELETE"), pathParameters: {} })).statusCode).toBe(400);
+  expect(repository.findById).not.toHaveBeenCalled();
+});
+
+it("reads public reviews without authentication", async () => {
+  const response = await controller.getPublicPropertyReviews({ pathParameters: { propertyId: "property-1" } });
+  expect(response.statusCode).toBe(200);
+  expect(repository.findPublicForProperty).toHaveBeenCalledWith("property-1", { limit: 20, offset: 0 });
+});
+
+it.each([{ limit: "101" }, { offset: "-1" }, { limit: "1.5" }])("rejects invalid public pagination: %p", async (query) => {
+  await expect(service.getPublicPropertyReviews("property-1", query)).rejects.toMatchObject({ statusCode: 400 });
+  expect(repository.findPublicForProperty).not.toHaveBeenCalled();
 });
 
 it("uses booking identities instead of client-supplied identities", async () => {
@@ -79,6 +143,20 @@ it.each([
 it("rejects another guest", async () => {
   await expect(service.createReview("another-guest", payload))
     .rejects.toMatchObject({ statusCode: 403 });
+  expect(repository.create).not.toHaveBeenCalled();
+});
+
+it("rejects reviewing the caller's own property before persistence", async () => {
+  repository.findBookingById.mockResolvedValue({
+    ...booking,
+    hostid: booking.guestid,
+  });
+
+  await expect(service.createReview(booking.guestid, payload)).rejects.toMatchObject({
+    statusCode: 403,
+    message: "You cannot review your own property.",
+  });
+
   expect(repository.create).not.toHaveBeenCalled();
 });
 
@@ -172,6 +250,8 @@ it.each([1, 2, 3, 4, 5])("saves and returns %s stars for the correct review", as
   }));
 });
 
+<<<<<<< HEAD
+=======
 it.each(["written", "received"])("scopes %s reviews to the authenticated caller", async (scope) => {
   repository.findReviews.mockResolvedValue([{ id: "review-1", overall_rating: 4, public_review: "Great stay.", created_at: now }]);
   const result = await controller.manageReviews({ httpMethod: "GET", headers: { Authorization: "token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } },
@@ -210,6 +290,7 @@ it.each([undefined, "", " ", "x".repeat(256)])("rejects invalid deletion ID: %p"
   expect(repository.deleteOwnReview).not.toHaveBeenCalled();
 });
 
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 it("looks up the canonical booking ID and checks the full duplicate key", async () => {
   await service.createReview(booking.guestid, { ...payload, booking_id: ` ${booking.id} ` });
   expect(repository.findBookingById).toHaveBeenCalledWith(booking.id);
@@ -281,6 +362,8 @@ it.each([null, [], { cleanliness: 0 }, { cleanliness: 6 }, { cleanliness: "5" }]
   }
 );
 
+<<<<<<< HEAD
+=======
 it("accepts persisted varchar review IDs from path parameters", async () => {
   expect((await controller.manageReviews({ httpMethod: "DELETE", pathParameters: { id: "legacy-review-id" },
     queryStringParameters: { reviewId: "spoof" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } },
@@ -306,3 +389,4 @@ it("requires a property ID for public queries", async () => {
   expect((await controller.getPublicPropertyReviews({})).statusCode).toBe(400);
   expect(repository.findPublicPropertyReviews).not.toHaveBeenCalled();
 });
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
