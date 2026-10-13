@@ -1,7 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
-import { getHostEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
+import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -173,8 +173,10 @@ export const escalateTask = async (hostId, taskId) => {
     }
 
     try {
-        const hostEmail = await getHostEmailById(hostId);
-        await sendTaskEscalationEmail(hostEmail, task);
+        const recipientEmail = task.assignee_team_member_id
+            ? await getAssigneeEmailById(task.assignee_team_member_id)
+            : await getHostEmailById(hostId);
+        await sendTaskEscalationEmail(recipientEmail, task);
     } catch (emailError) {
         await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
         throw emailError;
