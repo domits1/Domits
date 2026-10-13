@@ -324,11 +324,11 @@ Expected: the one association from this runbook in the first `jq` (if there is a
 
 ## For the pull requests that come after this one
 
-- **Invalidating a page.** The cache key of a site's page is the rewritten URI, so the worker or the withdrawal step invalidates `/sites/by-host/<hostname>/index.html` on the tenant that owns the hostname, the way `deploy-direct-booking-sites.yml` already invalidates the shared files. The rehearsal and step 5 check that the rewritten key is the one the edge caches the page under; adding `/` and `/index.html` to the same batch covers the case those checks did not see, at the price of two more paths against the monthly allowance, so send all three, and with them `/sites/by-host/<hostname>/sitemap.xml` and `/sitemap.xml` when the sitemap changed too, as the withdrawal does:
+- **Invalidating a page.** The cache key of a site's page is the rewritten URI, so the worker or the withdrawal step invalidates `/sites/by-host/<hostname>/index.html` on the tenant that owns the hostname, the way `deploy-direct-booking-sites.yml` already invalidates the shared files. The rehearsal and step 5 check that the rewritten key is the one the edge caches the page under; adding `/` and `/index.html` to the same batch covers the case those checks did not see, at the price of two more paths against the monthly allowance, so send all three, and with them `/sites/by-host/<hostname>/sitemap.xml` and `/sitemap.xml`, because a build or a withdrawal rewrites the sitemap with the page:
 
   ```bash
   aws cloudfront create-invalidation-for-distribution-tenant --id <tenant id> --profile domits --region us-east-1 \
-    --invalidation-batch '{"Paths":{"Quantity":3,"Items":["/sites/by-host/<hostname>/index.html","/","/index.html"]},"CallerReference":"page-<site id>-<revision>-<hostname>-<time>"}'
+    --invalidation-batch '{"Paths":{"Quantity":5,"Items":["/sites/by-host/<hostname>/index.html","/","/index.html","/sites/by-host/<hostname>/sitemap.xml","/sitemap.xml"]},"CallerReference":"page-<site id>-<revision>-<hostname>-<time>"}'
   ```
 
   The `CallerReference` must be new for every invalidation that must really run: CloudFront answers a repeated reference with the earlier invalidation instead of a new one, so a hostname that moved between sites, or a retry after a change, needs a reference that includes the site, the revision, the hostname and the moment.
