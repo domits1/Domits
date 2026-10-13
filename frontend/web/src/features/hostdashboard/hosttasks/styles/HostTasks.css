@@ -458,6 +458,32 @@
     color: #333;
 }
 
+.checklist-section .checklist-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checklist-section .checklist-add-row input[type="text"] {
+    width: auto;
+    flex: 1;
+}
+
+.checklist-add-btn {
+    background-color: #1e7e34;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checklist-add-btn:hover {
+    background-color: #155724;
+    color: white;
+}
+
 .btn-escalate {
     background-color: #e8590c;
     color: white;

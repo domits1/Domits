@@ -62,13 +62,16 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
 
             {!loadError && (
                 <form className="checklist-add-form" onSubmit={handleAdd}>
-                    <input
-                        type="text"
-                        value={newItemTitle}
-                        onChange={(e) => setNewItemTitle(e.target.value)}
-                        placeholder="Add checklist item..."
-                        aria-label="New checklist item title"
-                    />
+                    <div className="checklist-add-row">
+                        <input
+                            type="text"
+                            value={newItemTitle}
+                            onChange={(e) => setNewItemTitle(e.target.value)}
+                            placeholder="Add checklist item..."
+                            aria-label="New checklist item title"
+                        />
+                        <button type="submit" className="checklist-add-btn">Add</button>
+                    </div>
                     <label className="checklist-required-toggle">
                         <input
                             type="checkbox"
@@ -77,7 +80,6 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                         />
                         Required
                     </label>
-                    <button type="submit" className="btn-text">Add</button>
                 </form>
             )}
         </div>
