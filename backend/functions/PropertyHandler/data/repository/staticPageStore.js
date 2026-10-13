@@ -7,7 +7,7 @@ const PAGE_CACHE_CONTROL = "public, max-age=300";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
 
-export const buildStaticPageKey = (hostname) => {
+const requireKeyHostname = (hostname) => {
   const labels = typeof hostname === "string" ? hostname.split(".") : [];
   const isHostname =
     labels.length >= 2 &&
@@ -17,8 +17,10 @@ export const buildStaticPageKey = (hostname) => {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
-  return `sites/by-host/${hostname}/index.html`;
+  return hostname;
 };
+
+export const buildStaticPageKey = (hostname) => `sites/by-host/${requireKeyHostname(hostname)}/index.html`;
 
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
