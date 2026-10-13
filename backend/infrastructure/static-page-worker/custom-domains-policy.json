@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ManageTenantsAndCertificatesForCustomDomains",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateDistributionTenant",
+        "cloudfront:GetDistributionTenant",
+        "cloudfront:GetDistributionTenantByDomain",
+        "cloudfront:GetManagedCertificateDetails",
+        "cloudfront:UpdateDistributionTenant",
+        "cloudfront:DeleteDistributionTenant",
+        "cloudfront:VerifyDnsConfiguration",
+        "acm:RequestCertificate",
+        "acm:AddTagsToCertificate",
+        "acm:DescribeCertificate",
+        "acm:DeleteCertificate"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
