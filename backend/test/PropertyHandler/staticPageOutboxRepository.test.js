@@ -241,4 +241,25 @@ describe("StaticPageOutboxRepository", () => {
     await expect(repository.markPageActive("", 4, { now: NOW })).rejects.toThrow("A site id is required.");
     expect(client.queryRunner.query).not.toHaveBeenCalled();
   });
+
+  it("marks a withdrawal done only for the claimed revision of a site that is not published any more, or that is gone", async () => {
+    const client = buildClient([{ site_id: "site-1" }]);
+
+    const done = await new StaticPageOutboxRepository().markPageWithdrawn("site-1", 4, { now: NOW });
+
+    const [statement, parameters] = client.queryRunner.query.mock.calls[0];
+    expect(statement).toContain("WHERE site_id = $1");
+    expect(statement).toContain("AND revision = $2");
+    expect(statement).toContain("AND status = 'BUILDING'");
+    expect(statement).toContain("AND NOT EXISTS (");
+    expect(statement).toContain("AND (site.status = 'PUBLISHED' OR site.static_page_revision <> $2)");
+    expect(parameters).toEqual(["site-1", 4, "WITHDRAWN", NOW, "site-1"]);
+    expect(done).toBe(true);
+  });
+
+  it("answers false for a withdrawal the site outran, so the worker queues the newer revision", async () => {
+    buildClient([]);
+
+    expect(await new StaticPageOutboxRepository().markPageWithdrawn("site-1", 4)).toBe(false);
+  });
 });

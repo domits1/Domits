@@ -12,6 +12,11 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
+import { StaticPageOutboxRepository } from "../data/repository/staticPageOutboxRepository.js";
+import { StaticPageStore } from "../data/repository/staticPageStore.js";
+import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
+import { StaticPageWorker } from "../business/service/staticPageWorker.js";
+import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
@@ -19,6 +24,7 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
@@ -587,12 +593,12 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // PATCH /property/registration
-    // -------------------------
     async updateRegistrationNumber(event) {
         try {
-            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            if (!accessToken) {
+                throw new Unauthorized("You must be logged in.");
+            }
 
             let rawBody;
             try {
@@ -1833,6 +1839,52 @@ export class PropertyController {
         };
     }
 
+    createStaticPageWithdrawal(pageStore = new StaticPageStore()) {
+        return new StaticPageWithdrawal({
+            pageStore,
+            tenantRepository: new CloudFrontTenantRepository(),
+            domainRepository: this.directBookingWebsiteDomainRepository,
+        });
+    }
+
+    createStaticPageWorker() {
+        const pageStore = new StaticPageStore();
+        return new StaticPageWorker({
+            outboxRepository: new StaticPageOutboxRepository(),
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            pageStore,
+            renderer: new StaticPageRenderer(),
+            withdrawal: this.createStaticPageWithdrawal(pageStore),
+        });
+    }
+
+    async withdrawStaticPageSafely(site) {
+        try {
+            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+            invalidationErrors.forEach((failure) => {
+                console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+            });
+        } catch (error) {
+            console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the reconciler will remove it.`, error);
+        }
+    }
+
+    async buildStaticPages(event) {
+        const summary = await this.createStaticPageWorker().run({ limit: event?.limit });
+        if (summary.failed > 0 || summary.errors.length > 0) {
+            throw new Error(
+                `The static page run left ${summary.failed} failed and ${summary.errors.length} unfinished pages: ` +
+                    JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
+        };
+    }
+
     async loadPublicDirectBookingWebsiteMainAddress(site, loadedSiteDomains = null) {
         if (Array.isArray(loadedSiteDomains)) {
             return selectDirectBookingWebsiteMainAddress(site, loadedSiteDomains);
@@ -2005,7 +2057,7 @@ export class PropertyController {
     }
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatusWithStaticPageOutbox(site.id, "PREVIEW");
         const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
             site.id,
             "DISABLED",
@@ -3390,6 +3442,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.withdrawStaticPageSafely(existingSite);
                 await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);

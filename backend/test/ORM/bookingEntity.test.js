@@ -28,6 +28,7 @@ const CATALOG_COLUMNS = [
   "guest_email",
   "public_booking_ref",
   "idempotency_key",
+  "checked_out_at",
   "special_request",
 ];
 

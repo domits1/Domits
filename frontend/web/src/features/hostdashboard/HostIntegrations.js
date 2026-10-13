@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
+import { getIdToken } from "../../services/getAccessToken";
 import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
@@ -265,9 +266,13 @@ function HostIntegrationsInner() {
     setError("");
 
     try {
+      const idToken = await getIdToken();
       const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
       });
 
       if (!res.ok) {
@@ -324,9 +329,13 @@ function HostIntegrationsInner() {
     setConnecting(true);
 
     try {
+      const idToken = await getIdToken();
       const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/connect/start`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           userId,
           callbackUrl: WHATSAPP_CALLBACK_URL,
@@ -370,9 +379,13 @@ function HostIntegrationsInner() {
     setDisconnecting(true);
 
     try {
+      const idToken = await getIdToken();
       const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/disconnect`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({ userId }),
       });
 

@@ -295,6 +295,51 @@ describe("IntegrationService Channex booking pull import", () => {
     jest.restoreAllMocks();
   });
 
+  // A missing or unreadable amount must not become 0, which the pages would show as a
+  // free stay; null makes them fall back to their own calculation.
+  // Every page prints the total in euros, so an amount in another currency would be shown
+  // with the wrong symbol; without it the pages fall back to their own calculation.
+  test.each(["USD", "GBP", null])("stores no total price when the currency is %p instead of EUR", async (currency) => {
+    const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null, bookingSource: "Booking.com" })
+    );
+    expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR"));
+  });
+
+  test("accepts the currency code in any case", async () => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency: " eur" })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: 200 })
+    );
+  });
+
+  test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ amount })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null })
+    );
+  });
+
   test("pulls feed revisions, persists raw data, creates a mapped Domits booking, syncs availability, links it, then acknowledges", async () => {
     const revision = buildFeedRevision();
     const {
@@ -350,6 +395,9 @@ describe("IntegrationService Channex booking pull import", () => {
         guestName: "External Guest",
         arrivalDateMs: utcDateMs("2026-06-01"),
         departureDateMs: utcDateMs("2026-06-03"),
+        // The amount the guest paid on the OTA, not the Domits listing price (#3483).
+        totalPrice: 200,
+        bookingSource: "Booking.com",
         channexChanges: [
           {
             domitsPropertyId: "domits-property-1",
@@ -616,6 +664,7 @@ describe("IntegrationService Channex booking pull import", () => {
       guestName: "Modified Guest",
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
+      totalPrice: 200,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
       channexChanges: [
         {

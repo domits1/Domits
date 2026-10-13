@@ -17,6 +17,7 @@ import ExternalCalendarService from "./externalCalendarService.js";
 import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
+import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -46,6 +47,7 @@ class BookingService {
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
     priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
+    taskAutomationNotifier = new TaskAutomationNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
   } = {}) {
@@ -57,6 +59,7 @@ class BookingService {
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
     this.priceLabsBookingNotifier = priceLabsBookingNotifier;
+    this.taskAutomationNotifier = taskAutomationNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
   }
@@ -141,6 +144,15 @@ class BookingService {
     }
 
     await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
+
+    await this.taskAutomationNotifier.notifyTaskCreation(fetchedProperty.hostId, {
+      title: "Prepare for arrival",
+      type: "Check-in",
+      property_id: propertyId,
+      property_snapshot_label: fetchedProperty.title,
+      due_date: arrivalDateMs,
+      source: "automation",
+    });
 
     return { ...result, isInquiry };
   }
@@ -295,6 +307,32 @@ class BookingService {
     if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
     await this.reservationRepository.updateBookingStatus(bookingId, "Declined");
     return { bookingId, status: "Declined" };
+  }
+
+  async markCheckedOut(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may mark this booking as checked out.");
+    if (booking.status !== BOOKING_STATUS_PAID) throw new BadRequestException("Only a paid booking can be marked as checked out.");
+    if (booking.checked_out_at) throw new BadRequestException("Booking has already been checked out.");
+
+    const property = await this.propertyRepository.getPropertyById(booking.property_id);
+
+    const updated = await this.reservationRepository.markBookingCheckedOut(bookingId);
+    if (!updated) throw new BadRequestException("Booking has already been checked out.");
+
+    await this.taskAutomationNotifier.notifyTaskCreation(booking.hostid, {
+      title: "Clean the property",
+      type: "Cleaning",
+      property_id: booking.property_id,
+      property_snapshot_label: property?.title,
+      due_date: Date.now(),
+      source: "automation",
+    });
+
+    return { bookingId };
   }
 
   async modifyBookingDates(bookingId, arrivalDate, departureDate, authToken) {

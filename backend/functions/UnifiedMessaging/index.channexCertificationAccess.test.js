@@ -40,11 +40,6 @@ jest.mock("../.shared/channelManagement/controller/channelManagementController.j
   default: jest.fn().mockImplementation(() => mockIntegrationControllerMethods),
 }));
 
-jest.mock("./controller/ingestionController.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({})),
-}));
-
 jest.mock("./controller/whatsappWebhookController.js", () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({})),

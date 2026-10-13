@@ -24,6 +24,7 @@ const normalizeTask = (task) => ({
     dueDate: toDateString(task.due_date),
     completedAt: toDateString(task.completed_date),
     isLegacy: task.is_legacy,
+    slaStatus: task.sla_status ?? null,
     attachments: (() => { try { return task.attachments ? JSON.parse(task.attachments) : []; } catch { return []; } })(),
 });
 
@@ -41,6 +42,9 @@ const toBackendPayload = (taskData) => {
     if (taskData.dueDate !== undefined) payload.due_date = toUnixTimestamp(taskData.dueDate);
     if (taskData.assignee !== undefined || taskData.assignee_name !== undefined) {
         payload.assignee_name = taskData.assignee || taskData.assignee_name || null;
+    }
+    if (taskData.assignee_team_member_id) {
+        payload.assignee_team_member_id = taskData.assignee_team_member_id;
     }
     if (taskData.attachments !== undefined) {
         payload.attachments = taskData.attachments;
@@ -137,6 +141,21 @@ export const getAttachmentViewUrl = async (key) => {
     if (!response.ok) throw new Error(`Failed to get view URL: ${response.status}`);
     const { viewUrl } = await response.json();
     return viewUrl;
+};
+
+export const escalateTask = async (taskId) => {
+    const params = new URLSearchParams({ action: 'escalate', id: taskId });
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
+        method: "POST",
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || `Failed to escalate task: ${response.status}`);
+    }
+
+    return await response.json();
 };
 
 export const deleteTask = async (taskId) => {
