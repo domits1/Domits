@@ -71,6 +71,9 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
+  // Delete a review only for the authenticated owner.
+  // This avoids allowing one user to remove another user's review.
+  // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
       const result = await this.service.getPublicPropertyReviews(event.pathParameters?.propertyId, event.queryStringParameters || {});
@@ -80,6 +83,8 @@ export class Controller {
     }
   }
 
+  // Remove a review only for the authenticated owner.
+  // This blocks one user from deleting another user's review by accident or malice.
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
