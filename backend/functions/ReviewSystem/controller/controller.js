@@ -24,6 +24,12 @@ export class Controller {
     this.service = service;
     this.authManager = authManager;
   }
+<<<<<<< HEAD
+=======
+
+  // Create a review for the authenticated user and validated request body.
+  // This prevents impersonation by trusting the server-verified caller instead of client-supplied data.
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
   async createReview(event) {
     try {
       const authenticatedUser = this.authManager.getUser(event);

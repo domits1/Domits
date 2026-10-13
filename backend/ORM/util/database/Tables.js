@@ -69,6 +69,10 @@ import { Review } from "../../models/Review.js";
 import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
+<<<<<<< HEAD
+=======
+import { Review_Response } from "../../models/Review_Response.js";
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 
 export const Tables = [
   Amenities,
@@ -140,5 +144,10 @@ export const Tables = [
   Review_Rating,
   Review_Category,
   Review_Request,
+<<<<<<< HEAD
+=======
+  Review_Response,
+];
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
   DirectBookingWebsiteRatePlan,
 ];

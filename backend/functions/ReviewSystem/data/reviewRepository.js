@@ -1,10 +1,20 @@
+<<<<<<< HEAD
 import { randomInt, randomUUID } from "node:crypto";
+=======
+
+import { randomUUID } from "node:crypto";
+import { In, IsNull, Not } from "typeorm";
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+<<<<<<< HEAD
+=======
+import { Review_Response } from "database/models/Review_Response";
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
 
@@ -22,6 +32,20 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
   }
 };
 
+<<<<<<< HEAD
+=======
+// Allowlist public fields independently of repository projections to prevent private-data leaks.
+const toPublicReview = (review) => ({
+  id: review.id, overallRating: Number(review.overall_rating), title: review.title,
+  publicReview: review.public_review, verificationStatus: review.verification_status,
+  status: review.status, createdAt: review.created_at, categoryRatings: review.categoryRatings || {},
+  response: review.response?.status === "published" && review.response.deletedAt == null
+    ? { id: review.response.id, authorRole: review.response.authorRole,
+      message: review.response.message, publishedAt: review.response.publishedAt }
+    : null,
+});
+
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 export class ReviewRepository {
   async findById(id) {
     const dataSource = await Database.getInstance();
@@ -87,6 +111,28 @@ export class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
+<<<<<<< HEAD
+=======
+  async findReviews(where) {
+    const dataSource = await Database.getInstance();
+    const visibleWhere = (Array.isArray(where) ? where : [where]).map((filter) => ({
+      ...filter, status: filter.status ?? Not("REJECTED"),
+    }));
+    const reviews = await dataSource.getRepository(Review).find({
+      where: Array.isArray(where) ? visibleWhere : visibleWhere[0], order: { created_at: "DESC", id: "DESC" },
+      select: REVIEW_FIELDS });
+    return this.attachPublicDetails(dataSource, reviews);
+  }
+
+  async deleteOwnReview(id, reviewerUserId, now) {
+    const dataSource = await Database.getInstance();
+    // Preserve ratings, responses, feedback and audit records, as in the established workflow.
+    return dataSource.getRepository(Review).update({ id, reviewer_user_id: reviewerUserId }, {
+      status: "REJECTED", publication_status: "REJECTED", updated_at: now,
+    });
+  }
+
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
   async create(record, categoryRatings = {}) {
     const dataSource = await Database.getInstance();
     return retryTransaction(dataSource, async (manager) => {
@@ -106,4 +152,44 @@ export class ReviewRepository {
     });
   }
 
+<<<<<<< HEAD
+=======
+  async attachPublicDetails(dataSource, reviews) {
+    if (!reviews.length) return reviews;
+    const reviewIds = reviews.map((review) => review.id);
+    const [ratings, responses] = await Promise.all([
+      dataSource.getRepository(Review_Rating).find({ where: { reviewId: In(reviewIds) } }),
+      dataSource.getRepository(Review_Response).find({
+        where: { reviewId: In(reviewIds), status: "published", deletedAt: IsNull() },
+      }),
+    ]);
+    return reviews.map((review) => ({ ...review,
+      categoryRatings: Object.fromEntries(ratings.filter((rating) => rating.reviewId === review.id)
+        .map((rating) => [rating.category, Number(rating.rating)])),
+      response: responses.find((response) => response.reviewId === review.id) || null,
+    }));
+  }
+
+  async findPublicPropertyReviews(propertyId, { sort = "recent", verifiedOnly = false, category = null } = {}) {
+    const reviews = await this.findReviews({ property_id: propertyId, review_type: "GUEST_TO_PROPERTY",
+      status: "PUBLISHED", publication_status: "PUBLISHED" });
+    const filtered = reviews.filter((review) => (!verifiedOnly || review.verification_status === "VERIFIED_STAY") &&
+      (!category || review.categoryRatings?.[category] !== undefined));
+    filtered.sort((a, b) => {
+      const ratingOrder = sort === "highest" ? Number(b.overall_rating) - Number(a.overall_rating)
+        : sort === "lowest" ? Number(a.overall_rating) - Number(b.overall_rating) : 0;
+      return ratingOrder || Number(b.created_at) - Number(a.created_at) || b.id.localeCompare(a.id);
+    });
+    const categories = {};
+    for (const review of filtered) {
+      for (const [key, rating] of Object.entries(review.categoryRatings || {})) {
+        (categories[key] ||= []).push(rating);
+      }
+    }
+    return { reviews: filtered.map(toPublicReview), totalReviews: filtered.length,
+      overallRating: average(filtered.map((review) => review.overall_rating)),
+      categoryRatings: Object.fromEntries(Object.entries(categories).map(([key, ratings]) => [key, average(ratings)])),
+    };
+  }
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 }
