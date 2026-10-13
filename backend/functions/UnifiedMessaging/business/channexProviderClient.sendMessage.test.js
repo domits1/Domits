@@ -1,24 +1,11 @@
-const ChannexProviderClient = require("../.shared/channelManagement/providers/channex/providerClient.js").default;
-
-const originalFetch = global.fetch;
-const CREDENTIALS = { apiKey: "test-api-key" };
-
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(body),
-});
+const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = require("./channexProviderClientTestUtils.js");
 
 describe("ChannexProviderClient.sendMessage", () => {
+  useMockedFetch();
   let client;
 
   beforeEach(() => {
     client = new ChannexProviderClient();
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
   });
 
   test("returns INVALID_CREDENTIALS without calling fetch when apiKey is missing", async () => {
