@@ -50,4 +50,4 @@ export const getDeviceTypeLabelKey = (type) => labelKeyOf(DEVICE_TYPE_LABEL_KEYS
 export const getDeviceStatusLabelKey = (status) => labelKeyOf(DEVICE_STATUS_LABEL_KEYS, status, "unknown");
 
 export const DEVICE_TYPE_LABEL_KEY_VALUES = [...Object.values(DEVICE_TYPE_LABEL_KEYS), "other"];
-export const DEVICE_STATUS_LABEL_KEY_VALUES = [...Object.values(DEVICE_STATUS_LABEL_KEYS)];
+export const DEVICE_STATUS_LABEL_KEY_VALUES = Object.values(DEVICE_STATUS_LABEL_KEYS);
