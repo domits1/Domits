@@ -23,8 +23,40 @@ export class ReviewService {
     this.now = now;
   }
 
-  // Derive review ownership and property details from the booking to prevent client spoofing.
-  // Restrict reviews to completed, caller-owned reservations to protect review integrity.
+  async getReviews(callerUserId, scope = "written") {
+    if (!["written", "received"].includes(scope)) {
+      throw new BadRequestException("scope must be written or received.");
+    }
+    return this.repository.findForUser(callerUserId, scope);
+  }
+
+  async deleteReview(callerUserId, reviewId) {
+    if (typeof reviewId !== "string" || !reviewId.trim()) {
+      throw new BadRequestException("A review ID is required.");
+    }
+    const review = await this.repository.findById(reviewId.trim());
+    if (!review || review.status === "DELETED") {
+      throw new NotFoundException("Review not found.");
+    }
+    if (String(review.reviewer_user_id) !== String(callerUserId)) {
+      throw new ForbiddenException("You can only delete your own review.");
+    }
+    await this.repository.softDelete(review.id, callerUserId, this.now());
+  }
+
+  async getPublicPropertyReviews(propertyId, query = {}) {
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    const limit = Number(query.limit ?? 20);
+    const offset = Number(query.offset ?? 0);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 ||
+        !Number.isSafeInteger(offset) || offset < 0) {
+      throw new BadRequestException("limit must be between 1 and 100; offset must be a non-negative integer.");
+    }
+    return this.repository.findPublicForProperty(propertyId.trim(), { limit, offset });
+  }
+
   async createReview(callerUserId, reviewData) {
     this.validateReviewPayload(reviewData);
 
@@ -37,6 +69,10 @@ export class ReviewService {
 
     if (String(booking.guestid) !== String(callerUserId)) {
       throw new ForbiddenException("You can only review your own reservation.");
+    }
+
+    if (String(booking.hostid) === String(callerUserId)) {
+      throw new ForbiddenException("You cannot review your own property.");
     }
 
     const status = String(booking.status || "").trim().toLowerCase();
@@ -89,8 +125,6 @@ export class ReviewService {
     }
   }
 
-  // Reject malformed input before reservation checks or persistence are attempted.
-  // Validate types and rating bounds so invalid review data cannot enter the system.
   validateReviewPayload(reviewData) {
     if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
       throw new BadRequestException("Request body must be a review object");
@@ -136,6 +170,8 @@ export class ReviewService {
     return text || null;
   }
 
+<<<<<<< HEAD
+=======
   async getReviews(callerUserId, scope) {
     if (scope !== "written" && scope !== "received") {
       throw new BadRequestException("Review scope must be written or received.");
@@ -175,4 +211,5 @@ export class ReviewService {
       sort: query.sort || "recent", verifiedOnly: query.verifiedOnly === "true", category: query.category || null,
     });
   }
+>>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 }

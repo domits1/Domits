@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
+import { toast } from 'react-toastify';
 import useEffectiveHostId from '../../../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import '../styles/HostTasks.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
+import { fetchTeamMembers } from '../../services/teamService';
+import { HOST_ASSIGNEE_ID, resolveAssigneeSelection } from '../utils/assigneeSelection';
+import {
+    fetchChecklistItems,
+    createChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+} from '../services/taskChecklistService';
 import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from '../utils/taskFilters';
 import { sortTasks } from '../utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from '../utils/reportTimeBuckets';
@@ -27,6 +36,8 @@ const DEFAULT_NEW_TASK = {
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
+    assigneeSelection: '',
+    assignee_team_member_id: '',
     dueDate: '',
     priority: 'Medium',
     attachments: null,
@@ -38,6 +49,7 @@ const HostTasks = () => {
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
     const loadRequestRef = useRef(0);
+    const checklistRequestRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -50,7 +62,9 @@ const HostTasks = () => {
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
     const [viewingTask, setViewingTask] = useState(null);
-    const [editedTask, setEditedTask] = useState(null);  
+    const [editedTask, setEditedTask] = useState(null);
+    const [checklistItems, setChecklistItems] = useState([]);
+    const [checklistLoadError, setChecklistLoadError] = useState(null);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -81,6 +95,7 @@ const HostTasks = () => {
     }, [isModalOpen]);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
 
     const reportData = useMemo(() => {
@@ -148,6 +163,10 @@ const HostTasks = () => {
         const hostIdForOptions = asHostId ?? effectiveHostId;
         fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
     }, [asHostId, effectiveHostId]);
+
+    useEffect(() => {
+        fetchTeamMembers().then(setTeamMembers).catch(() => {});
+    }, []);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -170,8 +189,9 @@ const HostTasks = () => {
 
         try {
             await updateTask(task.id, { status: newStatus });
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
+            alert(error.message || "Error updating task status");
         }
     };
 
@@ -306,6 +326,26 @@ const HostTasks = () => {
         }));
     };
 
+    const handleAssigneeChange = (e) => {
+        const selected = createAssigneeChoices.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || '',
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || ''),
+            assignee: selected?.name || '',
+        }));
+    };
+
+    const handleEditAssigneeChange = (e) => {
+        const selected = editAssigneeChoices.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || prev.assigneeSelection,
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || prev.assignee_team_member_id),
+            assignee: selected?.name || prev.assignee,
+        }));
+    };
+
     const resetForm = () => {
         setNewTask({ ...DEFAULT_NEW_TASK });
     };
@@ -331,9 +371,36 @@ const HostTasks = () => {
         }
     };
 
+    const loadChecklistItems = (taskId) => {
+        const requestId = ++checklistRequestRef.current;
+        setChecklistLoadError(null);
+        fetchChecklistItems(taskId)
+            .then(items => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems(items);
+                    setChecklistLoadError(null);
+                }
+            })
+            .catch((error) => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems([]);
+                    setChecklistLoadError(error.message || "Failed to load checklist items");
+                }
+            });
+    };
+
     const openTaskDetails = (task) => {
-        setViewingTask(task);
-        setEditedTask({ ...task }); 
+        const taskWithAssigneeSelection = {
+            ...task,
+            assigneeSelection: resolveAssigneeSelection(task, currentUser),
+        };
+        setViewingTask(taskWithAssigneeSelection);
+        setEditedTask({ ...taskWithAssigneeSelection });
+        loadChecklistItems(task.id);
+    };
+
+    const handleRetryChecklistLoad = () => {
+        loadChecklistItems(viewingTask.id);
     };
 
     const handleEditChange = (e) => {
@@ -342,6 +409,7 @@ const HostTasks = () => {
     };
 
     const closeTaskDetails = () => {
+        checklistRequestRef.current++;
         const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
         if (isEdited) {
             setConfirmDialog({
@@ -353,12 +421,16 @@ const HostTasks = () => {
                 onConfirm: () => {
                     setViewingTask(null);
                     setEditedTask(null);
+                    setChecklistItems([]);
+                    setChecklistLoadError(null);
                     closeConfirmDialog();
                 }
             });
         } else {
             setViewingTask(null);
             setEditedTask(null);
+            setChecklistItems([]);
+            setChecklistLoadError(null);
         }
     };
 
@@ -410,8 +482,40 @@ const HostTasks = () => {
 
         try {
             await updateTask(finalTask.id, finalTask);
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+            alert(error.message || "Error saving changes");
+        }
+    };
+
+    const handleAddChecklistItem = async (itemData) => {
+        try {
+            const created = await createChecklistItem(viewingTask.id, itemData);
+            setChecklistItems(prev => [...prev, created]);
+        } catch (error) {
+            alert(error.message || "Error adding checklist item");
+        }
+    };
+
+    const handleToggleChecklistItem = async (item) => {
+        const nextChecked = !item.isChecked;
+        setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: nextChecked } : i));
+        try {
+            await updateChecklistItem(item.id, { isChecked: nextChecked });
+        } catch (error) {
+            setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: item.isChecked } : i));
+            alert(error.message || "Error updating checklist item");
+        }
+    };
+
+    const handleRemoveChecklistItem = async (itemId) => {
+        const previousItems = checklistItems;
+        setChecklistItems(prev => prev.filter(i => i.id !== itemId));
+        try {
+            await deleteChecklistItem(itemId);
+        } catch (error) {
+            setChecklistItems(previousItems);
+            alert(error.message || "Error removing checklist item");
         }
     };
 
@@ -429,6 +533,17 @@ const HostTasks = () => {
             setTasks(prev => prev.map(t =>
                 t.id === taskId ? { ...t, isLegacy: false } : t
             ));
+        }
+    };
+
+    const handleEscalateTask = async () => {
+        const taskId = viewingTask.id;
+        try {
+            await escalateTask(taskId);
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at: Date.now() } : t));
+            toast.success("Task escalated. The assignee will receive an email shortly.");
+        } catch (error) {
+            toast.error(error.message || "Error escalating task");
         }
     };
 
@@ -517,6 +632,28 @@ const HostTasks = () => {
         }
         return propertyOptions;
     }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
+
+    const createAssigneeChoices = useMemo(() => {
+        const hostChoice = currentUser.name
+            ? [{ id: HOST_ASSIGNEE_ID, label: `${currentUser.name}${currentUser.group ? ` (${currentUser.group})` : ' (Host)'}`, name: currentUser.name }]
+            : [];
+        const memberChoices = teamMembers
+            .filter(m => m.status === 'active')
+            .map(m => {
+                const displayName = m.member_name || m.member_email;
+                return { id: m.id, label: `${displayName} (${m.role})`, name: displayName };
+            });
+        return [...hostChoice, ...memberChoices];
+    }, [currentUser, teamMembers]);
+
+    const editAssigneeChoices = useMemo(() => {
+        const currentId = editedTask?.assigneeSelection;
+        const currentLabel = String(editedTask?.assignee || "").trim();
+        if (currentId && currentLabel && !createAssigneeChoices.some(o => o.id === currentId)) {
+            return [...createAssigneeChoices, { id: currentId, label: currentLabel, name: currentLabel }];
+        }
+        return createAssigneeChoices;
+    }, [createAssigneeChoices, editedTask?.assigneeSelection, editedTask?.assignee]);
 
     const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
@@ -688,9 +825,10 @@ const HostTasks = () => {
                 isOpen={isModalOpen}
                 newTask={newTask}
                 propertyOptions={createPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={createAssigneeChoices}
                 onInputChange={handleInputChange}
                 onPropertyChange={handlePropertyChange}
+                onAssigneeChange={handleAssigneeChange}
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
@@ -700,14 +838,22 @@ const HostTasks = () => {
                 viewingTask={viewingTask}
                 editedTask={editedTask}
                 editPropertyOptions={editPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}
                 onPropertyChange={handleEditPropertyChange}
+                onAssigneeChange={handleEditAssigneeChange}
                 onFileChange={handleEditFileChange}
                 onRemoveAttachment={handleRemoveAttachment}
                 onSave={handleSaveChanges}
                 onDelete={handleDeleteSingleTask}
                 onClose={closeTaskDetails}
+                checklistItems={checklistItems}
+                checklistLoadError={checklistLoadError}
+                onAddChecklistItem={handleAddChecklistItem}
+                onToggleChecklistItem={handleToggleChecklistItem}
+                onRemoveChecklistItem={handleRemoveChecklistItem}
+                onRetryChecklistLoad={handleRetryChecklistLoad}
+                onEscalate={handleEscalateTask}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />

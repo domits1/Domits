@@ -81,9 +81,6 @@ export class Controller {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
   }
-
-  // Hide unexpected failure details because they may expose internal implementation data.
-  // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
     const statusCode = error.statusCode || 500;
     const message = statusCode >= 500 ? "Something went wrong, please contact support." : error.message;
