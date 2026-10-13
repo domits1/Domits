@@ -1162,8 +1162,35 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Track your progress from listing your property to going live."
+        },
+        "homeAutomation": {
+          "title": "Home automation",
+          "desc": "Connect smart locks to give guests access to your properties."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Home automation",
+      "title": "Home automation",
+      "subtitle": "Connect RemoteLock to manage smart locks for your guests.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Last sync",
+        "never": "No sync yet"
+      },
+      "statuses": {
+        "notConnected": "Not connected",
+        "connecting": "Connecting",
+        "connected": "Connected",
+        "authenticationError": "Sign-in failed",
+        "connectionError": "Connection problem",
+        "disconnected": "Disconnected",
+        "expiredCredentials": "Sign-in expired",
+        "unknown": "Status unknown"
+      },
+      "loading": "Loading your RemoteLock connection...",
+      "loadError": "We couldn't load your RemoteLock connection.",
+      "retry": "Try again"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",

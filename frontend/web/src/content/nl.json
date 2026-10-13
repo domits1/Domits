@@ -1163,8 +1163,35 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Volg je voortgang van het aanmelden van je woning tot livegang."
+        },
+        "homeAutomation": {
+          "title": "Domotica",
+          "desc": "Koppel slimme sloten zodat gasten toegang krijgen tot je woningen."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domotica",
+      "title": "Domotica",
+      "subtitle": "Koppel RemoteLock om slimme sloten voor je gasten te beheren.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Laatste synchronisatie",
+        "never": "Nog niet gesynchroniseerd"
+      },
+      "statuses": {
+        "notConnected": "Niet gekoppeld",
+        "connecting": "Koppelen",
+        "connected": "Gekoppeld",
+        "authenticationError": "Inloggen mislukt",
+        "connectionError": "Verbindingsprobleem",
+        "disconnected": "Ontkoppeld",
+        "expiredCredentials": "Inlog verlopen",
+        "unknown": "Status onbekend"
+      },
+      "loading": "Je RemoteLock-koppeling wordt geladen...",
+      "loadError": "We konden je RemoteLock-koppeling niet laden.",
+      "retry": "Probeer opnieuw"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
