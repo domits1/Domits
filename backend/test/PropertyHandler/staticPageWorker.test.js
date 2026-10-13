@@ -593,15 +593,15 @@ describe("the sitemap the worker writes per host", () => {
     expect(outbox.table.get("site-1").status).toBe("ACTIVE");
   });
 
-  it("writes each sitemap right after the page of the same host, so it never names a page that is not there yet", async () => {
+  it("empties the sitemaps first, writes the pages next and the listing last, so no sitemap names a page that says otherwise", async () => {
     const bucket = buildBucket({ "index.html": SHELL });
     const { worker } = buildWorkerOnBucket(bucket);
 
     await worker.run();
 
     expect(bucket.writes.map((write) => write.key)).toEqual([
-      pageKey(FALLBACK.domain),
       sitemapKey(FALLBACK.domain),
+      pageKey(FALLBACK.domain),
       pageKey(CUSTOM.domain),
       sitemapKey(CUSTOM.domain),
     ]);
@@ -635,9 +635,13 @@ describe("the sitemap the worker writes per host", () => {
     expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED" });
   });
 
-  it("leaves the old sitemap whole when its write fails, fails the build, and the retry writes it", async () => {
-    const oldSitemap = sitemapListing("https://www.cliffhouse.nl/");
-    const bucket = buildBucket({ "index.html": SHELL, [sitemapKey(CUSTOM.domain)]: oldSitemap });
+  it("changes nothing on any host when a sitemap that must go empty cannot be written, and the retry finishes the move", async () => {
+    const before = {
+      "index.html": SHELL,
+      [pageKey(CUSTOM.domain)]: "<html>custom was the main address</html>",
+      [sitemapKey(CUSTOM.domain)]: sitemapListing("https://www.cliffhouse.nl/"),
+    };
+    const bucket = buildBucket(before);
     bucket.failures.set(sitemapKey(CUSTOM.domain), new Error("SlowDown"));
     const { worker, outbox } = buildWorkerOnBucket(bucket, {
       domains: [FALLBACK, { ...CUSTOM, isPrimary: false }],
@@ -647,7 +651,8 @@ describe("the sitemap the worker writes per host", () => {
 
     expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED" });
     expect(outbox.table.get("site-1").failureReason).toContain("S3_PUT_FAILED");
-    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(oldSitemap);
+    expect(bucket.objects.get(pageKey(CUSTOM.domain))).toBe(before[pageKey(CUSTOM.domain)]);
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(before[sitemapKey(CUSTOM.domain)]);
 
     bucket.failures.clear();
     await worker.run();
@@ -655,6 +660,17 @@ describe("the sitemap the worker writes per host", () => {
     expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 2 });
     expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
     expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(sitemapListing(`https://${FALLBACK.domain}/`));
+  });
+
+  it("never lists a host whose page could not be written, so a failed page keeps an unlisted host unlisted", async () => {
+    const bucket = buildBucket({ "index.html": SHELL, [sitemapKey(CUSTOM.domain)]: EMPTY_SITEMAP });
+    bucket.failures.set(pageKey(CUSTOM.domain), new Error("SlowDown"));
+    const { worker, outbox } = buildWorkerOnBucket(bucket);
+
+    await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED" });
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
   });
 
   it("empties the sitemap of every host when the site is unpublished, so a withdrawn site lists no page", async () => {

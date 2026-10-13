@@ -158,10 +158,23 @@ export class StaticPageWorker {
   }
 
   async #upload({ site, revision, domains, html, mainAddress }) {
-    for (const { domain: hostname } of domains) {
+    const sitemaps = domains.map(({ domain: hostname }) => ({
+      hostname,
+      pageUrls: resolveSitemapPageUrls({ hostname, mainAddress }),
+    }));
+    const putSitemap = ({ hostname, pageUrls }) =>
+      this.pageStore
+        .putSitemap({ hostname, xml: buildStaticSiteSitemap(pageUrls), siteId: site.id, revision })
+        .catch(failWith("S3_PUT_FAILED"));
+
+    for (const sitemap of sitemaps.filter(({ pageUrls }) => pageUrls.length === 0)) {
+      await putSitemap(sitemap);
+    }
+    for (const { hostname } of sitemaps) {
       await this.pageStore.putPage({ hostname, html, siteId: site.id, revision }).catch(failWith("S3_PUT_FAILED"));
-      const xml = buildStaticSiteSitemap(resolveSitemapPageUrls({ hostname, mainAddress }));
-      await this.pageStore.putSitemap({ hostname, xml, siteId: site.id, revision }).catch(failWith("S3_PUT_FAILED"));
+    }
+    for (const sitemap of sitemaps.filter(({ pageUrls }) => pageUrls.length > 0)) {
+      await putSitemap(sitemap);
     }
   }
 }
