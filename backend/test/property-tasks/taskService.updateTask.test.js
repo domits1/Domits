@@ -6,11 +6,13 @@ jest.mock("database", () => ({
 const mockGetTaskById = jest.fn();
 const mockUpdateTaskInDb = jest.fn();
 const mockSaveActivityToDb = jest.fn();
+const mockGetChecklistItemsForTask = jest.fn();
 
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     getTaskById: (...args) => mockGetTaskById(...args),
     updateTaskInDb: (...args) => mockUpdateTaskInDb(...args),
     saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
+    getChecklistItemsForTask: (...args) => mockGetChecklistItemsForTask(...args),
 }));
 
 const { updateTask } = require("../../functions/property-tasks/business/service/taskService.js");
@@ -22,6 +24,7 @@ describe("updateTask due_date validation", () => {
         jest.clearAllMocks();
         mockUpdateTaskInDb.mockResolvedValue();
         mockSaveActivityToDb.mockResolvedValue();
+        mockGetChecklistItemsForTask.mockResolvedValue([]);
     });
 
     it("does not re-validate due_date when it is unchanged on an already-overdue task", async () => {

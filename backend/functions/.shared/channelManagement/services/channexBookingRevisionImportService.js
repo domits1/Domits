@@ -11,8 +11,20 @@ import {
 import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
 import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
+import { isPermanentlyUnacknowledged } from "../utils/channexBookingWebhookClassification.js";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
+const CHANNEX_BOOKING_WEBHOOK_TRIGGER = "WEBHOOK";
+const describeBookingPull = ({ isPoll, isWebhook }) => {
+  if (isPoll) return "Automatic Channex booking poll";
+  if (isWebhook) return "Channex booking webhook";
+  return "Manual Channex booking pull";
+};
+const CHANNEX_BOOKING_RECEIVED_STATE = "RECEIVED";
+const CHANNEX_BOOKING_IMPORT_FAILED_STATE = "IMPORT_FAILED";
+const CHANNEX_BOOKING_FAILED_RETRY_AFTER_MS = 10 * 60 * 1000;
+// Matches pagination[limit] in the provider's feed request.
+const CHANNEX_BOOKING_FEED_PAGE_SIZE = 100;
 const CHANNEX_BOOKING_REVISION_LIST_MAX_LIMIT = 100;
 const CHANNEX_BOOKING_PULL_ACTION = "pull-latest-bookings";
 const CHANNEX_BOOKING_PULL_SYNC_TYPE = "booking_pull";
@@ -637,6 +649,7 @@ export default class ChannexBookingRevisionImportService {
       error: "Failed to fetch Channex booking revision feed.",
       errorCode: providerResult?.errorCode ?? "CHANNEX_BOOKING_FEED_FAILED",
       providerStatus: providerResult?.providerStatus ?? null,
+      httpStatus: providerResult?.httpStatus ?? null,
       details: providerResult?.errorMessage ?? null,
     });
 
@@ -902,7 +915,7 @@ export default class ChannexBookingRevisionImportService {
         error: buildChannexPullIssue(
           acknowledgement.failure.errorCode || "CHANNEX_BOOKING_ACK_FAILED",
           acknowledgement.failure.errorMessage || "Failed to acknowledge Channex booking revision.",
-          { stage: acknowledgement.failure.stage ?? "ack" }
+          { stage: acknowledgement.failure.stage ?? "ack", httpStatus: acknowledgement.failure.httpStatus ?? null }
         ),
       };
     }
@@ -1473,6 +1486,7 @@ export default class ChannexBookingRevisionImportService {
     normalizedDomitsPropertyId,
     propertyMapping,
     secret,
+    deadlineMs = null,
   }) {
     const [roomTypeMappings, ratePlanMappings, propertyContext] = await Promise.all([
       this.roomTypes.listByAccountId(integration.id),
@@ -1482,6 +1496,8 @@ export default class ChannexBookingRevisionImportService {
     const items = [];
 
     for (const revision of Array.isArray(providerResult.revisions) ? providerResult.revisions : []) {
+      // A webhook must answer before API Gateway gives up; unprocessed revisions stay in the feed.
+      if (deadlineMs !== null && nowMs() >= deadlineMs) break;
       items.push(
         await this.processPulledChannexBookingRevision({
           revision,
@@ -1506,6 +1522,7 @@ export default class ChannexBookingRevisionImportService {
       errorCode: ackResult?.errorCode ?? "CHANNEX_BOOKING_ACK_FAILED",
       errorMessage: ackResult?.errorMessage ?? "Failed to acknowledge Channex booking revision.",
       providerStatus: ackResult?.providerStatus ?? null,
+      httpStatus: ackResult?.httpStatus ?? null,
     };
   }
 
@@ -1752,6 +1769,146 @@ export default class ChannexBookingRevisionImportService {
     }
   }
 
+  // Polling and the manual pull: one page, exactly as before the webhook.
+  async pullSingleFeedPage({ integration, normalizedDomitsPropertyId, propertyMapping, secret }) {
+    const providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
+      externalPropertyId: propertyMapping.externalPropertyId,
+    });
+    if (!providerResult?.success) return { firstPageFailure: providerResult };
+
+    const items = await this.collectPulledChannexBookingImports({
+      providerResult,
+      integration,
+      normalizedDomitsPropertyId,
+      propertyMapping,
+      secret,
+    });
+    return {
+      items,
+      fetchedCount: Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0,
+      stoppedAtDeadline: false,
+      laterPageFailure: null,
+      feedMeta: providerResult.meta ?? null,
+      providerResult,
+    };
+  }
+
+  // The webhook: read page after page until no new revision comes back or the time budget runs out.
+  // Acknowledged revisions leave the feed and unacknowledged ones stay at its front (oldest first), so
+  // with N unacknowledged revisions the next unseen one sits on page floor(N / pageSize) + 1. Without
+  // this, a full page of revisions that keep failing would hide every booking behind it.
+  async pullFeedPagesUntilDone({ integration, normalizedDomitsPropertyId, propertyMapping, secret, deadlineMs }) {
+    const seenRevisionIds = new Set();
+    const items = [];
+    let providerResult = null;
+
+    for (;;) {
+      const unackedCount = items.filter((item) => item.unacked).length;
+      const page = Math.floor(unackedCount / CHANNEX_BOOKING_FEED_PAGE_SIZE) + 1;
+      providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
+        externalPropertyId: propertyMapping.externalPropertyId,
+        page,
+      });
+      if (!providerResult?.success) {
+        if (items.length === 0) return { firstPageFailure: providerResult };
+        return this.buildFeedPagesResult({
+          items,
+          seenRevisionIds,
+          providerResult,
+          laterPageFailure: {
+            httpStatus: providerResult?.httpStatus ?? null,
+            providerStatus: providerResult?.providerStatus ?? null,
+            errorCode: providerResult?.errorCode ?? null,
+          },
+        });
+      }
+
+      // Every round must bring at least one unseen revision, so the loop always ends.
+      const unseen = (Array.isArray(providerResult.revisions) ? providerResult.revisions : []).filter(
+        (revision) => !seenRevisionIds.has(revision.revisionId)
+      );
+      if (unseen.length === 0) return this.buildFeedPagesResult({ items, seenRevisionIds, providerResult });
+      unseen.forEach((revision) => seenRevisionIds.add(revision.revisionId));
+
+      const { toProcess, skippedItems } = await this.skipRecentlyFailedRevisions(integration.id, unseen);
+      items.push(...skippedItems);
+      const pageItems = toProcess.length
+        ? await this.collectPulledChannexBookingImports({
+            providerResult: { revisions: toProcess },
+            integration,
+            normalizedDomitsPropertyId,
+            propertyMapping,
+            secret,
+            deadlineMs,
+          })
+        : [];
+      items.push(...pageItems);
+      await this.recordImportOutcomes(integration.id, pageItems);
+      if (pageItems.length < toProcess.length || nowMs() >= deadlineMs) {
+        return this.buildFeedPagesResult({ items, seenRevisionIds, providerResult, stoppedAtDeadline: true });
+      }
+    }
+  }
+
+  // Each webhook has 20 seconds. If every delivery re-tried the same failing revisions from the start of the
+  // feed, a booking behind enough of them would never be reached, so a revision that just failed for good
+  // is skipped for a while. It stays in the feed and counts as unacknowledged.
+  async skipRecentlyFailedRevisions(integrationAccountId, revisions) {
+    const storedRows = await this.channexBookingRevisions.listByRevisionIds(
+      integrationAccountId,
+      revisions.map((revision) => revision.revisionId)
+    );
+    const recentlyFailedIds = new Set(
+      storedRows
+        .filter(
+          (row) =>
+            row.acknowledgementState === CHANNEX_BOOKING_IMPORT_FAILED_STATE &&
+            nowMs() - Number(row.updatedAt) < CHANNEX_BOOKING_FAILED_RETRY_AFTER_MS
+        )
+        .map((row) => row.revisionId)
+    );
+    return {
+      toProcess: revisions.filter((revision) => !recentlyFailedIds.has(revision.revisionId)),
+      skippedItems: revisions
+        .filter((revision) => recentlyFailedIds.has(revision.revisionId))
+        .map((revision) =>
+          createSkippedChannexPullItem({
+            revision,
+            reasonCode: "CHANNEX_BOOKING_REVISION_RECENTLY_FAILED",
+            reasonMessage: "Revision failed permanently in the last 10 minutes; it is retried after that.",
+          })
+        ),
+    };
+  }
+
+  // A temporary failure goes back to RECEIVED, so Channex's next delivery retries it straight away.
+  async recordImportOutcomes(integrationAccountId, items) {
+    const unackedItems = items.filter((item) => item.unacked);
+    const permanentIds = unackedItems.filter(isPermanentlyUnacknowledged).map((item) => item.revisionId);
+    const temporaryIds = unackedItems.filter((item) => !isPermanentlyUnacknowledged(item)).map((item) => item.revisionId);
+    await this.channexBookingRevisions.setAcknowledgementState(
+      integrationAccountId,
+      permanentIds,
+      CHANNEX_BOOKING_IMPORT_FAILED_STATE
+    );
+    await this.channexBookingRevisions.setAcknowledgementState(
+      integrationAccountId,
+      temporaryIds,
+      CHANNEX_BOOKING_RECEIVED_STATE
+    );
+  }
+
+  buildFeedPagesResult({ items, seenRevisionIds, providerResult, stoppedAtDeadline = false, laterPageFailure = null }) {
+    return {
+      items,
+      fetchedCount: seenRevisionIds.size,
+      stoppedAtDeadline,
+      laterPageFailure,
+      feedMeta: providerResult?.meta ?? null,
+      providerResult,
+    };
+  }
+
   async pullLatestChannexBookingsForResolvedContext({
     normalizedUserId,
     normalizedDomitsPropertyId,
@@ -1762,6 +1919,7 @@ export default class ChannexBookingRevisionImportService {
     syncType = CHANNEX_BOOKING_PULL_SYNC_TYPE,
     action = CHANNEX_BOOKING_PULL_ACTION,
     trigger = "MANUAL_PULL",
+    deadlineMs = null,
     options = {},
   }) {
     const finalize = async (result, evidencePatch = {}) =>
@@ -1780,39 +1938,31 @@ export default class ChannexBookingRevisionImportService {
       );
 
     const isPoll = syncType === CHANNEX_BOOKING_POLL_SYNC_TYPE;
-    const notes = isPoll
-      ? [
-          "Automatic Channex booking poll. New revisions create Domits booking records before acknowledgement.",
-          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
-        ]
-      : [
-          "Manual Channex booking pull. New revisions create Domits booking records before acknowledgement.",
-          "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
-        ];
+    const isWebhook = trigger === CHANNEX_BOOKING_WEBHOOK_TRIGGER;
+    const notes = [
+      `${describeBookingPull({ isPoll, isWebhook })}. New revisions create Domits booking records before acknowledgement.`,
+      "Modified/cancelled revisions are acknowledged only when a prior imported Domits booking link is available.",
+    ];
     const mappingSnapshot = this.buildChannexBookingMappingSnapshot(propertyMapping);
-    const providerResult = await this.channexProviderClient.listBookingRevisionFeed(secret, {
-      externalPropertyId: propertyMapping.externalPropertyId,
-    });
-    if (!providerResult?.success) {
+    const pageContext = { integration, normalizedDomitsPropertyId, propertyMapping, secret, deadlineMs };
+    const pulled =
+      deadlineMs === null
+        ? await this.pullSingleFeedPage(pageContext)
+        : await this.pullFeedPagesUntilDone(pageContext);
+    if (pulled.firstPageFailure) {
       const failure = this.buildChannexBookingProviderFeedFailure({
         integration,
-        providerResult,
+        providerResult: pulled.firstPageFailure,
         mappingSnapshot,
         notes: [notes[0]],
       });
       return await finalize(failure.response, failure.evidencePatch);
     }
 
-    const items = await this.collectPulledChannexBookingImports({
-      providerResult,
-      integration,
-      normalizedDomitsPropertyId,
-      propertyMapping,
-      secret,
-    });
+    const { items, fetchedCount, stoppedAtDeadline, laterPageFailure, feedMeta, providerResult } = pulled;
     const summary = summarizeChannexPullItems(items);
-    const fetchedCount = Array.isArray(providerResult.revisions) ? providerResult.revisions.length : 0;
-    const overallSuccess = summary.unackedCount === 0 && summary.errors.length === 0;
+    const overallSuccess =
+      summary.unackedCount === 0 && summary.errors.length === 0 && !stoppedAtDeadline && !laterPageFailure;
     const status = getChannexBookingPullEvidenceStatus({
       overallSuccess,
       ackedCount: summary.ackedCount,
@@ -1838,7 +1988,8 @@ export default class ChannexBookingRevisionImportService {
       errors: summary.errors,
       overallSuccess,
       notes,
-      ...(isPoll ? { trigger } : {}),
+      ...(isPoll || isWebhook ? { trigger } : {}),
+      ...(deadlineMs === null ? {} : { stoppedAtDeadline, laterPageFailure, feedMeta }),
     });
 
     return await finalize(response, {

@@ -1,4 +1,4 @@
-const clone = (row) => ({ ...row, verificationDetails: { ...(row.verificationDetails || {}) } });
+const clone = (row) => ({ ...row, verificationDetails: { ...row.verificationDetails } });
 
 const createGate = () => {
   let releaseGate;
@@ -134,12 +134,69 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
 
     listDomainsBySiteId: async (siteId) => {
       calls.push(["listDomainsBySiteId", siteId]);
+      const failure = takeFailure("listDomainsBySiteId");
+      if (failure) {
+        throw failure;
+      }
       return rowsForSite(siteId)
         .sort(
           (left, right) =>
             Number(right.isPrimary) - Number(left.isPrimary) || Number(left.createdAt) - Number(right.createdAt)
         )
         .map(clone);
+    },
+
+    getFallbackDomainBySiteId: async (siteId) => {
+      calls.push(["getFallbackDomainBySiteId", siteId]);
+      const row = rowsForSite(siteId).find((entry) => entry.domainType === "FALLBACK");
+      return row ? clone(row) : null;
+    },
+
+    ensureDomain: async ({
+      siteId,
+      domain,
+      domainType,
+      status,
+      isPrimary = true,
+      verificationDetails,
+      lastCheckedAt,
+    }) => {
+      calls.push(["ensureDomain", siteId, domain]);
+      const failure = takeFailure("ensureDomain");
+      if (failure) {
+        throw failure;
+      }
+
+      const now = clock();
+      const existing = [...store.values()].find((entry) => entry.domain === domain);
+      if (existing) {
+        if (existing.siteId !== siteId) {
+          return null;
+        }
+        Object.assign(existing, {
+          domainType,
+          status,
+          verificationDetails: { ...verificationDetails },
+          lastCheckedAt: lastCheckedAt ?? now,
+          updatedAt: now,
+        });
+        return clone(existing);
+      }
+
+      const record = {
+        id: `ensured-${nextId++}`,
+        siteId,
+        domain,
+        domainType,
+        status,
+        isPrimary: Boolean(isPrimary),
+        verificationDetails: { ...verificationDetails },
+        lastCheckedAt: lastCheckedAt ?? now,
+        createdAt: now,
+        updatedAt: now,
+      };
+      store.set(record.id, record);
+      return clone(record);
     },
 
     countDomainsByTenantId: async (tenantId) =>
@@ -177,7 +234,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         domainType: "CUSTOM",
         status,
         isPrimary: false,
-        verificationDetails: { ...(verificationDetails || {}) },
+        verificationDetails: { ...verificationDetails },
         lastCheckedAt: lastCheckedAt ?? now,
         createdAt: now,
         updatedAt: now,
@@ -193,7 +250,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
         return null;
       }
       row.status = status;
-      row.verificationDetails = { ...(verificationDetails || {}) };
+      row.verificationDetails = { ...verificationDetails };
       row.lastCheckedAt = clock();
       row.updatedAt = clock();
       return clone(row);
@@ -205,7 +262,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
       if (!row || row.siteId !== siteId) {
         return null;
       }
-      row.verificationDetails = { ...(verificationDetails || {}) };
+      row.verificationDetails = { ...verificationDetails };
       row.updatedAt = clock();
       return clone(row);
     },
@@ -222,7 +279,7 @@ export const createStoringDomainRepository = ({ rows = [], clock = () => 1757000
 
         const now = clock();
         row.status = status;
-        row.verificationDetails = { ...(verificationDetails || {}) };
+        row.verificationDetails = { ...verificationDetails };
         row.lastCheckedAt = now;
         row.updatedAt = now;
         const record = clone(row);

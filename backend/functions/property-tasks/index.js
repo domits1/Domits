@@ -17,15 +17,27 @@ export const handler = async (event) => {
                 if (event.queryStringParameters?.action === 'view-url') {
                     return await controller.getViewUrl(event);
                 }
+                if (event.queryStringParameters?.action === 'checklist') {
+                    return await controller.getChecklistItems(event);
+                }
                 return await controller.getTasks(event);
-            
+
             case "POST":
+                if (event.queryStringParameters?.action === 'checklist') {
+                    return await controller.createChecklistItem(event);
+                }
                 return await controller.createTask(event);
 
             case "PATCH":
+                if (event.queryStringParameters?.action === 'checklist') {
+                    return await controller.updateChecklistItem(event);
+                }
                 return await controller.updateTask(event);
 
             case "DELETE":
+                if (event.queryStringParameters?.action === 'checklist') {
+                    return await controller.deleteChecklistItem(event);
+                }
                 return await controller.deleteTask(event);
 
             case "OPTIONS":

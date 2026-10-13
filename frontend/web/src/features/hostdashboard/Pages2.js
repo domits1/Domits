@@ -35,7 +35,7 @@ const NAV = [
   },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "MissedRevenue", label: "Missed revenue", icon: <TrendingDownIcon />, to: "hostinsights/missed-revenue" },
-  { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution" },
+  { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution", internalOnly: true },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },

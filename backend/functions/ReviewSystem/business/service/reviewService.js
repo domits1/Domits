@@ -217,7 +217,6 @@ export class ReviewService {
       throw new BadRequestException("Review scope must be written or received.");
     }
     const reviews = await this.repository.findReviews(scope === "written"
-
       ? { reviewer_user_id: callerUserId }
       : [
         { host_id: callerUserId, status: "PUBLISHED", publication_status: "PUBLISHED" },
