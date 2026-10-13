@@ -339,6 +339,7 @@ const buildEffectiveChannexRestrictionMapping = (
   // Channex, and Channex rejects a full sync that leaves out a declared restriction.
   if (options.includeSnapshotBooleanRestrictions && !Object.hasOwn(out.channexRestrictions, "max_stay")) {
     out.channexRestrictions.max_stay = 0;
+    out.omittedRestrictions = out.omittedRestrictions.filter((restriction) => restriction.channexField !== "max_stay");
     out.supportedRestrictions.push({
       domitsRestriction: "maxStay",
       channexField: "max_stay",
@@ -1140,7 +1141,10 @@ const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
   const values = Array.isArray(requestBody.values) ? requestBody.values : [];
   if (!values.length) return requestBody;
 
-  const dates = values.map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
+  const dates = values
+    .flatMap((value) => [value?.date, value?.date_from, value?.date_to].map(requireStr))
+    .filter(Boolean)
+    .sort(compareAlphabetically);
   const metadataPropertyIds = [
     metadata?.externalPropertyId,
     ...(Array.isArray(metadata?.externalPropertyIds) ? metadata.externalPropertyIds : []),
