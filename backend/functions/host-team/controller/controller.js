@@ -2,6 +2,7 @@ import { Service } from "../business/service/service.js";
 import { AuthManager } from "../auth/authManager.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
+import { isValidInternalSecret } from "../.shared/internalSecretAuth.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 const ROLE_MANAGER_GROUPS = ["Host", "Admin"];
@@ -25,7 +26,7 @@ export class Controller {
     async getTeamMemberInternal(event) {
         try {
             const providedSecret = event.headers?.["x-internal-secret"];
-            if (!providedSecret || providedSecret !== process.env.INTERNAL_TASK_SECRET) {
+            if (!isValidInternalSecret(providedSecret, process.env.INTERNAL_TASK_SECRET)) {
                 throw new UnauthorizedException("Invalid internal caller.");
             }
             const memberId = event.queryStringParameters?.id;
