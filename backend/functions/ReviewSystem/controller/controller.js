@@ -52,9 +52,17 @@ export class Controller {
   }
 
   async getReviews(user, query) {
-    const result = query.reviewId !== undefined
-      ? await this.service.getEditableReview(user.userId, query.reviewId)
-      : await this.service.getReviews(user.userId, query.scope);
+    if (query.scope === "property-score" && query.reviewId !== undefined) {
+      throw new BadRequestException("Property score and individual review requests cannot be combined.");
+    }
+    let result;
+    if (query.scope === "property-score") {
+      result = await this.service.getPropertyOverallScore(user.userId, query.propertyId);
+    } else if (query.reviewId !== undefined) {
+      result = await this.service.getEditableReview(user.userId, query.reviewId);
+    } else {
+      result = await this.service.getReviews(user.userId, query.scope);
+    }
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 

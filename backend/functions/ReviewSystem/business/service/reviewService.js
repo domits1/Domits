@@ -5,6 +5,8 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
+
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
 
@@ -36,6 +38,20 @@ export class ReviewService {
     const deadline = createdAt + this.editWindowMs;
     return this.editWindowMs && Number.isSafeInteger(createdAt) && createdAt > 0
       && Number.isSafeInteger(deadline) ? deadline : 0;
+  }
+
+  async getPropertyOverallScore(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("A verified user identity is required.");
+    }
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    const normalizedPropertyId = propertyId.trim();
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
+    // Avoid disclosing whether another manager's property exists.
+    if (!property) throw new NotFoundException("Property not found or access is denied.");
+    return this.repository.getPropertyReviewScore(normalizedPropertyId, callerUserId);
   }
 
   async getEditableReview(callerUserId, reviewId) {

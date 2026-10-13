@@ -9,7 +9,6 @@ export class AuthManager {
       throw new UnauthorizedException("Verified authorization context is required.");
     }
 
-    const username = event.requestContext.authorizer.claims["cognito:username"];
-    return { userId: sub, username };
+    return { userId: sub };
   }
 }
