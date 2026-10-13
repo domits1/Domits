@@ -5,6 +5,13 @@ import {
 } from "../utils/channexRestrictionsSyncVersion.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
+// Unmapped-room and unmapped-rate events are mapping alerts, not new revisions to import.
+const CHANNEX_BOOKING_WEBHOOK_EVENTS = new Set([
+  "booking",
+  "booking_new",
+  "booking_modification",
+  "booking_cancellation",
+]);
 const requireStr = (value) =>
   typeof value === "string" && value.trim() ? value.trim() : null;
 const safeJson = (value) => {
@@ -38,6 +45,65 @@ export default class ChannelManagementController {
     channelManagementApiService = new ChannelManagementApiService(),
   } = {}) {
     this.channelManagementApiService = channelManagementApiService;
+  }
+
+  // Called by Channex without a Cognito token; the X-Channex-Webhook-Secret header is the only
+  // authentication, so it is checked before the body is read.
+  async receiveChannexBookingWebhook(event) {
+    const requestId = event?.requestContext?.requestId ?? null;
+
+    let secretValid;
+    try {
+      secretValid = await this.channelManagementApiService.verifyChannexBookingWebhookSecret(event?.headers);
+    } catch (error) {
+      // Every webhook answers 503 until the secret is fixed; the reason must be in the logs.
+      console.error(
+        JSON.stringify({
+          event: "CHANNEX_BOOKING_WEBHOOK_SECRET_UNAVAILABLE",
+          requestId,
+          reason: error?.message ?? null,
+        })
+      );
+      return { statusCode: 503, response: { outcome: "WEBHOOK_SECRET_UNAVAILABLE" } };
+    }
+    if (!secretValid) {
+      // Channex treats a 401 as delivered and does not retry, so a mismatched secret must be visible.
+      console.error(
+        JSON.stringify({
+          event: "CHANNEX_BOOKING_WEBHOOK_SECRET_REJECTED",
+          requestId,
+          sourceIp: event?.requestContext?.identity?.sourceIp ?? null,
+        })
+      );
+      return { statusCode: 401, response: { outcome: "UNAUTHORIZED" } };
+    }
+
+    const body = safeJson(event?.body);
+    const externalPropertyId = requireStr(body?.property_id);
+    if (!externalPropertyId) {
+      return { statusCode: 400, response: { outcome: "INVALID_PAYLOAD" } };
+    }
+    if (!CHANNEX_BOOKING_WEBHOOK_EVENTS.has(body.event)) {
+      return { statusCode: 200, response: { outcome: "IGNORED" } };
+    }
+
+    const result = await this.channelManagementApiService.receiveChannexBookingWebhook({ externalPropertyId, requestId });
+    console.info(
+      JSON.stringify({
+        event: "CHANNEX_BOOKING_WEBHOOK",
+        requestId,
+        externalPropertyId,
+        domitsPropertyId: result.domitsPropertyId ?? null,
+        fetchedCount: result.fetchedCount ?? 0,
+        ackedCount: result.ackedCount ?? 0,
+        unackedCount: result.unackedCount ?? 0,
+        // Paging fields of the last feed page (total, limit, page), to follow how many revisions wait.
+        feedMeta: result.feedMeta ?? null,
+        outcome: result.outcome,
+        statusCode: result.statusCode,
+      })
+    );
+    return { statusCode: result.statusCode, response: { outcome: result.outcome } };
   }
 
   async connectHolidu(event) {
@@ -367,14 +433,6 @@ export default class ChannelManagementController {
         },
       };
     }
-  }
-
-  async syncChannexCertificationTestCase(event) {
-    return this.channelManagementApiService.syncChannexCertificationTestCase(
-      event.queryStringParameters?.userId || null,
-      event.queryStringParameters?.domitsPropertyId || null,
-      safeJson(event.body) || {}
-    );
   }
 
   async saveChannexSetupMapping(event) {

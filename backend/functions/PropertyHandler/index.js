@@ -50,6 +50,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/domains")) {
     return controller.createWebsiteDomain(event);
   }
+  if (isPath(event, "/property/website/rate-plan/webhook")) {
+    return controller.handleWebsiteRatePlanWebhook(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -73,6 +76,9 @@ const handlePatch = async (event) => {
   }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.updatePropertyCalendarOverrides(event);
+  }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.changeWebsiteRatePlan(event);
   }
   if (isPath(event, DRAFT_ID_RESOURCE)) {
     return controller.updateDraft(event);
@@ -119,6 +125,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
+  }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.getWebsiteRatePlan(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);

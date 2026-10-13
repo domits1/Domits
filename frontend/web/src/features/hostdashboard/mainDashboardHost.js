@@ -6,7 +6,7 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
-import HostPropertyCare from "./Housekeeping";
+import HostTasks from "./hosttasks/pages/HostTasks";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
@@ -123,7 +123,7 @@ function MainDashboardHost() {
           <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
           <Route path="revenues" element={<HostReports />} />
 
-          <Route path="tasks" element={<HostPropertyCare />} />
+          <Route path="tasks" element={<HostTasks />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />

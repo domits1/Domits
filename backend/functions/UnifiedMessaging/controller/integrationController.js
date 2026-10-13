@@ -172,10 +172,6 @@ class IntegrationController {
     return this.channelManagementController.syncChannexFull(event);
   }
 
-  async syncChannexCertificationTestCase(event) {
-    return this.channelManagementController.syncChannexCertificationTestCase(event);
-  }
-
   async saveChannexSetupMapping(event) {
     return this.channelManagementController.saveChannexSetupMapping(event);
   }

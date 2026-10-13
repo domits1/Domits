@@ -1,4 +1,10 @@
 import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl } from "../business/service/taskService.js";
+import {
+    getChecklistItems,
+    createChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+} from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
@@ -84,6 +90,58 @@ export class Controller {
                 return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "fileName and fileType are required" }) };
             }
             const result = await getUploadUrl(effectiveHostId, fileName, fileType);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async getChecklistItems(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const taskId = event.queryStringParameters?.taskId;
+            if (!taskId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "taskId is required" }) };
+            }
+            const items = await getChecklistItems(effectiveHostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(items) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async createChecklistItem(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const body = JSON.parse(event.body);
+            const { taskId, ...itemData } = body;
+            if (!taskId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "taskId is required" }) };
+            }
+            const result = await createChecklistItem(effectiveHostId, taskId, itemData);
+            return { statusCode: 201, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async updateChecklistItem(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const itemId = event.queryStringParameters?.id;
+            const updateData = JSON.parse(event.body);
+            const result = await updateChecklistItem(effectiveHostId, itemId, updateData);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async deleteChecklistItem(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const itemId = event.queryStringParameters?.id;
+            const result = await deleteChecklistItem(effectiveHostId, itemId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
