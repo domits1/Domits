@@ -28,11 +28,70 @@ beforeEach(() => {
     create: jest.fn().mockImplementation(async (record) => record),
     findReviewByBookingTypeAndReviewer: jest.fn().mockResolvedValue(null),
     findActiveCategoryKeys: jest.fn().mockResolvedValue(new Set(["cleanliness"])),
+    findForUser: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue({ id: "review-1", reviewer_user_id: "guest-1", status: "DRAFT" }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
+    findPublicForProperty: jest.fn().mockResolvedValue([]),
   };
   service = new ReviewService({ repository, now: () => now });
   authManager = new AuthManager();
   jest.spyOn(authManager, "getUser");
   controller = new Controller({ service, authManager });
+});
+
+const reviewEvent = (method, scope, userId = "guest-1") => ({
+  httpMethod: method,
+  requestContext: { authorizer: { claims: { sub: userId } } },
+  queryStringParameters: { scope },
+  pathParameters: { id: "review-1" },
+});
+
+it.each(["written", "received"])("lists %s reviews for the verified caller", async (scope) => {
+  const response = await controller.manageReviews(reviewEvent("GET", scope));
+  expect(response.statusCode).toBe(200);
+  expect(repository.findForUser).toHaveBeenCalledWith("guest-1", scope);
+});
+
+it("rejects unsupported list scopes", async () => {
+  expect((await controller.manageReviews(reviewEvent("GET", "all"))).statusCode).toBe(400);
+  expect(repository.findForUser).not.toHaveBeenCalled();
+});
+
+it("rejects unauthenticated list requests", async () => {
+  expect((await controller.manageReviews({ httpMethod: "GET" })).statusCode).toBe(401);
+  expect(repository.findForUser).not.toHaveBeenCalled();
+});
+
+it("soft deletes the author's review", async () => {
+  expect((await controller.manageReviews(reviewEvent("DELETE"))).statusCode).toBe(204);
+  expect(repository.softDelete).toHaveBeenCalledWith("review-1", "guest-1", now);
+});
+
+it("rejects deletion by another caller", async () => {
+  expect((await controller.manageReviews(reviewEvent("DELETE", undefined, "other"))).statusCode).toBe(403);
+  expect(repository.softDelete).not.toHaveBeenCalled();
+});
+
+it.each([null, { status: "DELETED" }])("rejects missing or deleted reviews: %p", async (review) => {
+  repository.findById.mockResolvedValue(review);
+  expect((await controller.manageReviews(reviewEvent("DELETE"))).statusCode).toBe(404);
+  expect(repository.softDelete).not.toHaveBeenCalled();
+});
+
+it("rejects deletion without a review ID", async () => {
+  expect((await controller.manageReviews({ ...reviewEvent("DELETE"), pathParameters: {} })).statusCode).toBe(400);
+  expect(repository.findById).not.toHaveBeenCalled();
+});
+
+it("reads public reviews without authentication", async () => {
+  const response = await controller.getPublicPropertyReviews({ pathParameters: { propertyId: "property-1" } });
+  expect(response.statusCode).toBe(200);
+  expect(repository.findPublicForProperty).toHaveBeenCalledWith("property-1", { limit: 20, offset: 0 });
+});
+
+it.each([{ limit: "101" }, { offset: "-1" }, { limit: "1.5" }])("rejects invalid public pagination: %p", async (query) => {
+  await expect(service.getPublicPropertyReviews("property-1", query)).rejects.toMatchObject({ statusCode: 400 });
+  expect(repository.findPublicForProperty).not.toHaveBeenCalled();
 });
 
 it("uses booking identities instead of client-supplied identities", async () => {
