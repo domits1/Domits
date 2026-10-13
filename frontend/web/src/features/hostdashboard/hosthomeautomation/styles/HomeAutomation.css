@@ -1,0 +1,114 @@
+.host-homeauto {
+  --homeauto-dark: #1a1a2e;
+  --homeauto-border: #e0e0e0;
+  --homeauto-primary: #3cb750;
+  --homeauto-primary-hover: #33a446;
+  --homeauto-success-bg: #f0fdf4;
+  --homeauto-success-border: #86efac;
+  --homeauto-success-text: #166534;
+  --homeauto-error-bg: #fff5f5;
+  --homeauto-error-border: #fca5a5;
+  --homeauto-error-text: #c0392b;
+  --homeauto-pending-bg: #fffbeb;
+  --homeauto-pending-border: #fde68a;
+  --homeauto-pending-text: #92400e;
+  --homeauto-neutral-bg: #f5f5f5;
+  --homeauto-neutral-border: #d4d4d4;
+  --homeauto-neutral-text: #444;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 860px;
+}
+
+.host-homeauto__card {
+  background: #fff;
+  border: 1px solid var(--homeauto-border);
+  border-radius: 12px;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.host-homeauto__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.host-homeauto__provider {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  font-weight: 600;
+  color: var(--homeauto-dark);
+}
+
+.host-homeauto__badge {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.host-homeauto__badge--success {
+  background: var(--homeauto-success-bg);
+  color: var(--homeauto-success-text);
+  border-color: var(--homeauto-success-border);
+}
+
+.host-homeauto__badge--error {
+  background: var(--homeauto-error-bg);
+  color: var(--homeauto-error-text);
+  border-color: var(--homeauto-error-border);
+}
+
+.host-homeauto__badge--pending {
+  background: var(--homeauto-pending-bg);
+  color: var(--homeauto-pending-text);
+  border-color: var(--homeauto-pending-border);
+}
+
+.host-homeauto__badge--neutral {
+  background: var(--homeauto-neutral-bg);
+  color: var(--homeauto-neutral-text);
+  border-color: var(--homeauto-neutral-border);
+}
+
+.host-homeauto__meta {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.host-homeauto__message {
+  margin: 0;
+  color: #666;
+}
+
+.host-homeauto__error {
+  background: var(--homeauto-error-bg);
+  border: 1px solid var(--homeauto-error-border);
+  border-radius: 12px;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.host-homeauto__error-text {
+  margin: 0 0 0.75rem;
+  color: var(--homeauto-error-text);
+}
+
+.host-homeauto__retry {
+  background: var(--homeauto-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.host-homeauto__retry:hover {
+  background: var(--homeauto-primary-hover);
+}
