@@ -3,6 +3,8 @@ var PORT_PATTERN = /^[0-9]{1,5}$/;
 var MAX_HOSTNAME_LENGTH = 253;
 var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
+var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
+var ROBOTS_URI = "/robots.txt";
 
 function normalizeHostName(value) {
   var parts = String(value || "")
@@ -57,6 +59,18 @@ function isPageKeyRequest(uri) {
   return decoded.indexOf(PAGE_KEY_PREFIX) === 0;
 }
 
+function robotsResponse(host) {
+  return {
+    statusCode: 200,
+    statusDescription: "OK",
+    headers: {
+      "content-type": { value: "text/plain; charset=utf-8" },
+      "cache-control": { value: "public, max-age=300" },
+    },
+    body: { encoding: "text", data: "User-agent: *\nAllow: /\nSitemap: https://" + host + "/sitemap.xml\n" },
+  };
+}
+
 function handler(event) {
   try {
     var request = event.request;
@@ -66,7 +80,8 @@ function handler(event) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return request;
     }
-    if (request.uri !== "/" && request.uri !== "/index.html") {
+    var isRobots = request.uri === ROBOTS_URI;
+    if (!isRobots && !Object.prototype.hasOwnProperty.call(HOST_FILES, request.uri)) {
       return request;
     }
     var hostHeader = request.headers.host;
@@ -77,7 +92,10 @@ function handler(event) {
     if (!isHostName(host)) {
       return request;
     }
-    var pageUri = PAGE_KEY_PREFIX + host + "/index.html";
+    if (isRobots) {
+      return robotsResponse(host);
+    }
+    var pageUri = PAGE_KEY_PREFIX + host + "/" + HOST_FILES[request.uri];
     if (pageUri.length + queryStringLength(request.querystring) >= MAX_URI_LENGTH) {
       return request;
     }
