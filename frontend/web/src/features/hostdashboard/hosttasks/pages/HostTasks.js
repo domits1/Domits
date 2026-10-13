@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
+import { toast } from 'react-toastify';
 import useEffectiveHostId from '../../../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
@@ -540,9 +541,9 @@ const HostTasks = () => {
         try {
             await escalateTask(taskId);
             setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at: Date.now() } : t));
-            alert("Task escalated. The host will receive an email shortly.");
+            toast.success("Task escalated. The assignee will receive an email shortly.");
         } catch (error) {
-            alert(error.message || "Error escalating task");
+            toast.error(error.message || "Error escalating task");
         }
     };
 
