@@ -855,7 +855,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     });
   });
 
-  test("host calendar restriction changes include explicit false values without rate", async () => {
+  test("host calendar restriction changes include explicit false values and no maximum without rate", async () => {
     const { result, pushAvailability, pushRestrictions, value } = await syncRestrictionsCalendarChangeForTest([
       "restrictions",
     ]);
@@ -869,6 +869,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
       closed_to_arrival: true,
       closed_to_departure: false,
       min_stay_through: 4,
+      max_stay: 0,
     });
     expect(value).not.toHaveProperty("rate");
   });
@@ -1407,7 +1408,7 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
         debugStage: "restrictionsPayloadOnly",
         calledProvider: false,
         requestCount: 0,
-        sentChannexRestrictionFields: ["closed_to_arrival", "closed_to_departure", "stop_sell"],
+        sentChannexRestrictionFields: ["closed_to_arrival", "closed_to_departure", "max_stay", "stop_sell"],
       })
     );
     expect(result.response.payloadSummaries.availability).toBeNull();

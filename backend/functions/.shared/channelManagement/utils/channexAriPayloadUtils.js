@@ -79,6 +79,11 @@ const setPositiveIntegerField = (target, field, value) => {
   if (!Number.isInteger(value) || value < 1) return;
   target[field] = value;
 };
+// Channex accepts max_stay 0 ("non-negative"); a snapshot uses it for "no maximum".
+const setNonNegativeIntegerField = (target, field, value) => {
+  if (!Number.isInteger(value) || value < 0) return;
+  target[field] = value;
+};
 const copySupportedChannexRestrictions = (source) => {
   if (source && typeof source === "object" && !Array.isArray(source)) {
     const stopSell = normalizeRestrictionBoolean(source.stop_sell);
@@ -91,7 +96,7 @@ const copySupportedChannexRestrictions = (source) => {
     if (closedToArrival !== null) out.closed_to_arrival = closedToArrival;
     if (closedToDeparture !== null) out.closed_to_departure = closedToDeparture;
     setPositiveIntegerField(out, "min_stay_through", minStayThrough);
-    setPositiveIntegerField(out, "max_stay", maxStay);
+    setNonNegativeIntegerField(out, "max_stay", maxStay);
     return out;
   }
 
@@ -327,6 +332,19 @@ const buildEffectiveChannexRestrictionMapping = (
       source: "calendar_override",
       reason:
         "Domits calendar override maxStay values less than or equal to 0 mean no maximum, so Channex max_stay is omitted.",
+    });
+  }
+
+  // A snapshot states every restriction: without it, a removed maximum stay would stay on
+  // Channex, and Channex rejects a full sync that leaves out a declared restriction.
+  if (options.includeSnapshotBooleanRestrictions && !Object.hasOwn(out.channexRestrictions, "max_stay")) {
+    out.channexRestrictions.max_stay = 0;
+    out.omittedRestrictions = out.omittedRestrictions.filter((restriction) => restriction.channexField !== "max_stay");
+    out.supportedRestrictions.push({
+      domitsRestriction: "maxStay",
+      channexField: "max_stay",
+      value: 0,
+      source: "full_sync_snapshot_default",
     });
   }
 
@@ -1123,7 +1141,10 @@ const summarizeChannexRequestBody = (requestBody, metadata = {}) => {
   const values = Array.isArray(requestBody.values) ? requestBody.values : [];
   if (!values.length) return requestBody;
 
-  const dates = values.map((value) => requireStr(value?.date)).filter(Boolean).sort(compareAlphabetically);
+  const dates = values
+    .flatMap((value) => [value?.date, value?.date_from, value?.date_to].map(requireStr))
+    .filter(Boolean)
+    .sort(compareAlphabetically);
   const metadataPropertyIds = [
     metadata?.externalPropertyId,
     ...(Array.isArray(metadata?.externalPropertyIds) ? metadata.externalPropertyIds : []),

@@ -72,6 +72,32 @@ const nowMs = () => Date.now();
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+// Channex sends the booking total as a string such as "300.00". A missing or unreadable
+// amount becomes null, not 0, so the pages fall back to their own price instead of "free".
+const toAmountOrNull = (value) => {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
+};
+// Every page shows the total in euros, so an amount in another currency is not stored;
+// the pages then fall back to their own price instead of showing a wrong currency.
+const toEuroAmountOrNull = (revision) => {
+  const amount = toAmountOrNull(revision?.amount);
+  if (amount === null) return null;
+
+  const currency = requireStr(revision?.currency)?.toUpperCase() ?? null;
+  if (currency !== "EUR") {
+    console.warn(
+      JSON.stringify({
+        event: "CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR",
+        revisionId: requireStr(revision?.revisionId),
+        currency,
+      })
+    );
+    return null;
+  }
+  return amount;
+};
 const parseIsoDateParam = (value) => {
   const normalized = requireStr(value);
   if (!normalized) return null;
@@ -1005,6 +1031,8 @@ export default class ChannexBookingRevisionImportService {
         guestName: requireStr(revision?.guestName) || "Channex guest",
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
+        totalPrice: toEuroAmountOrNull(revision),
+        bookingSource: requireStr(revision?.otaName),
         channexChanges: [
           importedBookingChange(propertyContext.propertyId, {
             arrivalMs: Number(dates.arrivalDateMs),
@@ -1181,6 +1209,7 @@ export default class ChannexBookingRevisionImportService {
       guestName: requireStr(revision?.guestName) || "Channex guest",
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
+      totalPrice: toEuroAmountOrNull(revision),
       // The old nights reopen and the new ones close: one change per stay, so the nights
       // between them are not resent (design D9).
       channexChanges: [
