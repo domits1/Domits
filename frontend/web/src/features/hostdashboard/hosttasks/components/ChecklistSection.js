@@ -23,7 +23,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
             <div className="attachments-header">
                 <label>Checklist</label>
                 {!loadError && requiredItems.length > 0 && (
-                    <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required done</span>
+                    <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required completed</span>
                 )}
             </div>
 

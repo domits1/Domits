@@ -30,7 +30,7 @@ describe('ChecklistSection', () => {
         const { container } = render(<ChecklistSection {...baseProps} items={items} />);
 
         expect(screen.getByText('Strip beds')).toBeInTheDocument();
-        expect(screen.getByText('1/2 required done')).toBeInTheDocument();
+        expect(screen.getByText('1/2 required completed')).toBeInTheDocument();
         const badges = container.querySelectorAll('.checklist-required-badge');
         expect(badges).toHaveLength(2);
         expect(badges[0]).toHaveTextContent('*');
