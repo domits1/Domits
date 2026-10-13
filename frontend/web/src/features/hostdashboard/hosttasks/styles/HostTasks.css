@@ -292,6 +292,16 @@
 .badge-status.overdue { background-color: #dc3545; color: white; }
 .badge-status.cancelled { background-color: #343a40; color: white; }
 
+.badge-auto-created {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+    background-color: #6f42c1;
+    color: white;
+}
+
 .modal-backdrop {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -446,6 +456,87 @@
 
 .btn-text:hover {
     color: #333;
+}
+
+.checklist-section .checklist-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checklist-section .checklist-add-row input[type="text"] {
+    width: auto;
+    flex: 1;
+}
+
+.checklist-add-btn {
+    background-color: #1e7e34;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checklist-add-btn:hover {
+    background-color: #155724;
+    color: white;
+}
+
+.checklist-section .checklist-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.checklist-section .checklist-item-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+
+.checklist-remove-btn {
+    background-color: #f1f3f5;
+    color: #6c757d;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.checklist-remove-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.checklist-required-badge {
+    color: #dc3545;
+    font-weight: 700;
+    margin-left: 4px;
+}
+
+.btn-escalate {
+    background-color: #e8590c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-escalate:hover {
+    background-color: #c44f0c;
 }
 
 .custom-file-upload {

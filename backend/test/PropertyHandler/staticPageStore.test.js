@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
   StaticPageStore,
   buildStaticPageKey,
@@ -84,5 +84,22 @@ describe("StaticPageStore", () => {
     const page = { hostname: "www.villasensual.nl", html: "<html>page</html>", siteId: "site-1", revision: 4 };
 
     await expect(buildStore(send).putPage(page)).rejects.toThrow("AccessDenied");
+  });
+
+  it("withdraws a page by deleting exactly its hostname key, a delete marker on this versioned bucket", async () => {
+    const send = jest.fn(async () => ({}));
+
+    await buildStore(send).deletePage({ hostname: "www.villasensual.nl" });
+
+    const [command] = send.mock.calls[0];
+    expect(command).toBeInstanceOf(DeleteObjectCommand);
+    expect(command.input).toEqual({ Bucket: BUCKET, Key: "sites/by-host/www.villasensual.nl/index.html" });
+  });
+
+  it("refuses to delete under a key that is not a hostname key", async () => {
+    const send = jest.fn();
+
+    await expect(buildStore(send).deletePage({ hostname: "../index.html" })).rejects.toThrow(TypeError);
+    expect(send).not.toHaveBeenCalled();
   });
 });

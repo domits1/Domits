@@ -16,6 +16,8 @@ describe('TaskDetailsModal', () => {
         priority: 'Medium',
         property_id: 'prop-1',
         assignee: 'Alex Host',
+        assigneeSelection: 'host',
+        assignee_team_member_id: '',
         type: 'Cleaning',
         bookingRef: '',
         dueDate: '2099-01-01',
@@ -27,14 +29,25 @@ describe('TaskDetailsModal', () => {
         viewingTask: baseTask,
         editedTask: baseTask,
         editPropertyOptions: [{ id: 'prop-1', label: 'Villa Sunshine' }],
-        currentUser: { name: 'Alex Host', email: 'alex@example.com' },
+        assigneeOptions: [
+            { id: 'host', label: 'Alex Host (Host)' },
+            { id: 'member-1', label: 'housekeeper@example.com (Property Operations Manager)' },
+        ],
+        checklistItems: [],
+        checklistLoadError: null,
         onEditChange: jest.fn(),
         onPropertyChange: jest.fn(),
+        onAssigneeChange: jest.fn(),
         onFileChange: jest.fn(),
         onRemoveAttachment: jest.fn(),
+        onAddChecklistItem: jest.fn(),
+        onToggleChecklistItem: jest.fn(),
+        onRemoveChecklistItem: jest.fn(),
+        onRetryChecklistLoad: jest.fn(),
         onSave: jest.fn(),
         onDelete: jest.fn(),
         onClose: jest.fn(),
+        onEscalate: jest.fn(),
     };
 
     beforeEach(() => {
@@ -76,6 +89,16 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onClose).toHaveBeenCalledTimes(2);
     });
 
+    test('renders every assignee option, host and team members, and calls onAssigneeChange', () => {
+        render(<TaskDetailsModal {...baseProps} />);
+
+        expect(screen.getByRole('option', { name: 'Alex Host (Host)' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'housekeeper@example.com (Property Operations Manager)' })).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Assignee'), { target: { value: 'member-1' } });
+        expect(baseProps.onAssigneeChange).toHaveBeenCalled();
+    });
+
     test('opens the status dropdown and calls onEditChange with the selected status', () => {
         render(<TaskDetailsModal {...baseProps} />);
         fireEvent.click(screen.getByRole('button', { name: '● Pending' }));
@@ -99,5 +122,37 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(removeButton);
 
         expect(baseProps.onRemoveAttachment).toHaveBeenCalledWith(0);
+    });
+
+    test('renders checklist items and wires toggle/remove through to the parent', () => {
+        const item = { id: 'item-1', title: 'Strip beds', isRequired: true, isChecked: false };
+        render(<TaskDetailsModal {...baseProps} checklistItems={[item]} />);
+
+        expect(screen.getByText('Strip beds')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove Strip beds' }));
+        expect(baseProps.onRemoveChecklistItem).toHaveBeenCalledWith('item-1');
+    });
+
+    test('shows a checklist load error and wires retry through to the parent', () => {
+        render(<TaskDetailsModal {...baseProps} checklistLoadError="Failed to load checklist items" />);
+
+        expect(screen.getByText('Failed to load checklist items')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        expect(baseProps.onRetryChecklistLoad).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not show an Escalate button when the task is not breaching its SLA', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
+        expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
+    });
+
+    test('shows an Escalate button for a breached task and calls onEscalate when clicked', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Escalate' }));
+
+        expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
     });
 });
