@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
@@ -8,20 +8,19 @@ import { Review_Request } from "database/models/Review_Request";
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
 
-const retryTransaction = async (dataSource, callback) => {
-  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt++) {
-    try {
-      return await dataSource.transaction(callback);
-    } catch (error) {
-      const databaseError = error?.driverError || error;
-      if (databaseError?.code !== "40001" || attempt === MAX_TRANSACTION_ATTEMPTS) {
-        throw error;
-      }
-
-      // Replay all writes in a new transaction after the failed attempt rolls back.
-      const delayMs = 25 * 2 ** (attempt - 1) + Math.floor(Math.random() * 25);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+const retryTransaction = async (dataSource, callback, attempt = 1) => {
+  try {
+    return await dataSource.transaction(callback);
+  } catch (error) {
+    const databaseError = error?.driverError || error;
+    if (databaseError?.code !== "40001" || attempt >= MAX_TRANSACTION_ATTEMPTS) {
+      throw error;
     }
+
+    // Replay all writes in a new transaction after the failed attempt rolls back.
+    const delayMs = 25 * 2 ** (attempt - 1) + randomInt(25);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return retryTransaction(dataSource, callback, attempt + 1);
   }
 };
 

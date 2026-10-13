@@ -141,8 +141,4 @@ export const Tables = [
   Review_Category,
   Review_Request,
   DirectBookingWebsiteRatePlan,
-<<<<<<< HEAD
 ];
-=======
-];
->>>>>>> caa4a96813d7fffff715f8de88df6cb430826a3f
