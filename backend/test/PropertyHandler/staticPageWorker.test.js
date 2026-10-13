@@ -1,5 +1,7 @@
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
+import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 
 const SHELL = '<html><head></head><body><div id="root"></div></body></html>';
 const PAGE = "<html>rendered</html>";
@@ -64,12 +66,17 @@ const buildWorker = ({
   sites = [buildSite()],
   domains = [FALLBACK, CUSTOM],
   outbox = null,
+  pageStore = null,
 } = {}) => {
   const deps = {
     outboxRepository: outbox || buildOutbox(rows),
     siteRepository: { getSiteById: jest.fn(async (siteId) => sites.find((site) => site.id === siteId) || null) },
     domainRepository: { listDomainsBySiteId: jest.fn(async () => domains) },
-    pageStore: { readAppShell: jest.fn(async () => SHELL), putPage: jest.fn(async () => undefined) },
+    pageStore: pageStore || {
+      readAppShell: jest.fn(async () => SHELL),
+      putPage: jest.fn(async () => undefined),
+      putSitemap: jest.fn(async () => undefined),
+    },
     renderer: { render: jest.fn(async () => PAGE) },
     withdrawal: {
       withdraw: jest.fn(async ({ siteId, domains }) => ({
@@ -516,5 +523,158 @@ describe("StaticPageWorker", () => {
     await worker.run();
 
     expect(order).toEqual(["claim site-1", "render site-1", "claim site-2", "render site-2"]);
+  });
+});
+
+const SITEMAP_BUCKET = "sites-bucket-under-test";
+const EMPTY_SITEMAP =
+  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>\n';
+const sitemapListing = (url) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${url}</loc></url>\n</urlset>\n`;
+const pageKey = (hostname) => `sites/by-host/${hostname}/index.html`;
+const sitemapKey = (hostname) => `sites/by-host/${hostname}/sitemap.xml`;
+
+const buildBucket = (objects = {}) => {
+  const bucket = { objects: new Map(Object.entries(objects)), writes: [], failures: new Map(), onWrite: null };
+  bucket.client = {
+    send: jest.fn(async (command) => {
+      const { Key, Body } = command.input;
+      if (bucket.failures.has(Key)) {
+        throw bucket.failures.get(Key);
+      }
+      if (command instanceof GetObjectCommand) {
+        if (!bucket.objects.has(Key)) {
+          throw Object.assign(new Error("NoSuchKey"), { name: "NoSuchKey" });
+        }
+        return { Body: { transformToString: async () => bucket.objects.get(Key) } };
+      }
+      if (command instanceof PutObjectCommand) {
+        bucket.objects.set(Key, Body);
+        bucket.writes.push({ key: Key, contentType: command.input.ContentType });
+        await bucket.onWrite?.(Key);
+        return {};
+      }
+      if (command instanceof DeleteObjectCommand) {
+        bucket.objects.delete(Key);
+        return {};
+      }
+      throw new Error(`unexpected ${command.constructor.name}`);
+    }),
+  };
+  return bucket;
+};
+
+const buildWorkerOnBucket = (bucket, options = {}) =>
+  buildWorker({ ...options, pageStore: new StaticPageStore({ client: bucket.client }) });
+
+describe("the sitemap the worker writes per host", () => {
+  beforeEach(() => {
+    process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = SITEMAP_BUCKET;
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    delete process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET;
+  });
+
+  it("lists the root on the main address and writes a valid empty sitemap on every other host", async () => {
+    const bucket = buildBucket({ "index.html": SHELL });
+    const { worker, outbox } = buildWorkerOnBucket(bucket);
+
+    await worker.run();
+
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(sitemapListing("https://www.cliffhouse.nl/"));
+    expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(EMPTY_SITEMAP);
+    expect(
+      bucket.writes.filter((write) => write.key.endsWith("sitemap.xml")).map((write) => write.contentType)
+    ).toEqual(["application/xml; charset=utf-8", "application/xml; charset=utf-8"]);
+    expect(outbox.table.get("site-1").status).toBe("ACTIVE");
+  });
+
+  it("writes each sitemap right after the page of the same host, so it never names a page that is not there yet", async () => {
+    const bucket = buildBucket({ "index.html": SHELL });
+    const { worker } = buildWorkerOnBucket(bucket);
+
+    await worker.run();
+
+    expect(bucket.writes.map((write) => write.key)).toEqual([
+      pageKey(FALLBACK.domain),
+      sitemapKey(FALLBACK.domain),
+      pageKey(CUSTOM.domain),
+      sitemapKey(CUSTOM.domain),
+    ]);
+  });
+
+  it("lists nothing anywhere while the main address is not active, like the noindex page it sits next to", async () => {
+    const bucket = buildBucket({ "index.html": SHELL });
+    const disabledFallback = { ...FALLBACK, status: "DISABLED" };
+    const secondaryCustom = { ...CUSTOM, isPrimary: false };
+    const { worker } = buildWorkerOnBucket(bucket, { domains: [disabledFallback, secondaryCustom] });
+
+    await worker.run();
+
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
+    expect(bucket.objects.has(sitemapKey(FALLBACK.domain))).toBe(false);
+  });
+
+  it("keeps the last good page and sitemap of every host when the render fails", async () => {
+    const before = {
+      "index.html": SHELL,
+      [pageKey(CUSTOM.domain)]: "<html>last good</html>",
+      [sitemapKey(CUSTOM.domain)]: sitemapListing("https://www.cliffhouse.nl/"),
+    };
+    const bucket = buildBucket(before);
+    const { worker, outbox, renderer } = buildWorkerOnBucket(bucket);
+    renderer.render.mockRejectedValue(new Error("template crashed"));
+
+    await worker.run();
+
+    expect(Object.fromEntries(bucket.objects)).toEqual(before);
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED" });
+  });
+
+  it("leaves the old sitemap whole when its write fails, fails the build, and the retry writes it", async () => {
+    const oldSitemap = sitemapListing("https://www.cliffhouse.nl/");
+    const bucket = buildBucket({ "index.html": SHELL, [sitemapKey(CUSTOM.domain)]: oldSitemap });
+    bucket.failures.set(sitemapKey(CUSTOM.domain), new Error("SlowDown"));
+    const { worker, outbox } = buildWorkerOnBucket(bucket, {
+      domains: [FALLBACK, { ...CUSTOM, isPrimary: false }],
+    });
+
+    await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED" });
+    expect(outbox.table.get("site-1").failureReason).toContain("S3_PUT_FAILED");
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(oldSitemap);
+
+    bucket.failures.clear();
+    await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 2 });
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
+    expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(sitemapListing(`https://${FALLBACK.domain}/`));
+  });
+
+  it("ends with the sitemaps of the newest revision when the host publishes again during a build", async () => {
+    const bucket = buildBucket({ "index.html": SHELL });
+    const sites = [buildSite()];
+    let domains = [FALLBACK, CUSTOM];
+    const { worker, outbox, domainRepository } = buildWorkerOnBucket(bucket, { sites });
+    domainRepository.listDomainsBySiteId.mockImplementation(async () => domains);
+    bucket.onWrite = async () => {
+      bucket.onWrite = null;
+      publishAgainWhileBuilding(outbox);
+      sites[0].staticPageRevision = 5;
+      domains = [FALLBACK, { ...CUSTOM, isPrimary: false }];
+    };
+
+    const firstRun = await worker.run();
+    const secondRun = await worker.run();
+
+    expect(firstRun.superseded).toBe(1);
+    expect(secondRun.built).toBe(1);
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
+    expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(sitemapListing(`https://${FALLBACK.domain}/`));
   });
 });
