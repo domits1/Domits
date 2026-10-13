@@ -45,7 +45,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                                     onChange={() => onToggleChecked(item)}
                                 />
                                 <span className={item.isChecked ? 'checklist-item-done' : ''}>{item.title}</span>
-                                {item.isRequired && <span className="checklist-required-badge">Required</span>}
+                                {item.isRequired && <span className="checklist-required-badge">*</span>}
                             </label>
                             <button
                                 type="button"

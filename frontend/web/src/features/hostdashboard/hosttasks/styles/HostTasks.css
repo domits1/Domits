@@ -517,6 +517,12 @@
     color: white;
 }
 
+.checklist-required-badge {
+    color: #dc3545;
+    font-weight: 700;
+    margin-left: 4px;
+}
+
 .btn-escalate {
     background-color: #e8590c;
     color: white;
