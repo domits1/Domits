@@ -460,6 +460,20 @@ class ReservationRepository {
     };
   }
 
+  async markBookingCheckedOut(id) {
+    const client = await Database.getInstance();
+    const result = await client
+      .getRepository(Booking)
+      .createQueryBuilder()
+      .update(Booking)
+      .set({ checked_out_at: Date.now() })
+      .where("id = :id", { id })
+      .andWhere("checked_out_at IS NULL")
+      .execute();
+
+    return Number(result?.affected || 0) === 1;
+  }
+
   async markBookingPaidWithOutbox(id) {
     const client = await Database.getInstance();
     return client.transaction(async (manager) => {
@@ -571,6 +585,23 @@ class ReservationRepository {
         .where("id = :id", { id })
         .execute()
     );
+
+    return {
+      response: query,
+      statusCode: 200,
+    };
+  }
+
+  async updateBookingSpecialRequest(id, specialRequest) {
+    const client = await Database.getInstance();
+    const query = await client
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        special_request: specialRequest,
+      })
+      .where("id = :id", { id })
+      .execute();
 
     return {
       response: query,

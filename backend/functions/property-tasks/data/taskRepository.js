@@ -56,7 +56,7 @@ export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const tasks = await query.getMany();
 
     const withOverdue = tasks.map(task => {
-        if (task.due_date && task.due_date < now && task.status !== 'Completed') {
+        if (task.due_date && task.due_date < now && !['Completed', 'Cancelled'].includes(task.status)) {
             return { ...task, status: 'Overdue', priority: 'Urgent' };
         }
         return task;
@@ -87,6 +87,20 @@ export const getTaskById = async (dataSource, taskId, hostId) => {
 export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.update(taskId, updateData);
+};
+
+export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({ escalated_at: escalatedAt })
+        .where("id = :taskId", { taskId })
+        .andWhere("host_id = :hostId", { hostId })
+        .andWhere("escalated_at IS NULL")
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
 };
 
 export const getChecklistItemsForTask = async (dataSource, taskId) => {
