@@ -79,6 +79,20 @@ it("rejects another guest", async () => {
   expect(repository.create).not.toHaveBeenCalled();
 });
 
+it("rejects reviewing the caller's own property before persistence", async () => {
+  repository.findBookingById.mockResolvedValue({
+    ...booking,
+    hostid: booking.guestid,
+  });
+
+  await expect(service.createReview(booking.guestid, payload)).rejects.toMatchObject({
+    statusCode: 403,
+    message: "You cannot review your own property.",
+  });
+
+  expect(repository.create).not.toHaveBeenCalled();
+});
+
 it("rejects a missing reservation", async () => {
   repository.findBookingById.mockResolvedValue(null);
   await expect(service.createReview(booking.guestid, payload))

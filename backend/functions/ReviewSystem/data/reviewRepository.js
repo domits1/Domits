@@ -6,6 +6,25 @@ import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
 
+const MAX_TRANSACTION_ATTEMPTS = 3;
+
+const retryTransaction = async (dataSource, callback) => {
+  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt++) {
+    try {
+      return await dataSource.transaction(callback);
+    } catch (error) {
+      const databaseError = error?.driverError || error;
+      if (databaseError?.code !== "40001" || attempt === MAX_TRANSACTION_ATTEMPTS) {
+        throw error;
+      }
+
+      // Replay all writes in a new transaction after the failed attempt rolls back.
+      const delayMs = 25 * 2 ** (attempt - 1) + Math.floor(Math.random() * 25);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
 export class ReviewRepository {
   async findBookingById(bookingId) {
     const dataSource = await Database.getInstance();
@@ -30,7 +49,7 @@ export class ReviewRepository {
 
   async create(record, categoryRatings = {}) {
     const dataSource = await Database.getInstance();
-    return dataSource.transaction(async (manager) => {
+    return retryTransaction(dataSource, async (manager) => {
       const review = await manager.getRepository(Review).save(record);
       const ratings = Object.entries(categoryRatings).map(([category, rating]) => ({
         id: randomUUID(), reviewId: record.id, category, rating, createdAt: record.created_at,

@@ -39,6 +39,10 @@ export class ReviewService {
       throw new ForbiddenException("You can only review your own reservation.");
     }
 
+    if (String(booking.hostid) === String(callerUserId)) {
+      throw new ForbiddenException("You cannot review your own property.");
+    }
+
     const status = String(booking.status || "").trim().toLowerCase();
     const checkoutAt = Number(booking.departuredate);
     const now = this.now();
