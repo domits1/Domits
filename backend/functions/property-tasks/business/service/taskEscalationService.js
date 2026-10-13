@@ -29,6 +29,47 @@ export const getHostEmailById = async (hostId) => {
     return email;
 };
 
+export const getAssigneeEmailById = async (assigneeTeamMemberId) => {
+    const response = await lambdaClient.send(new InvokeCommand({
+        FunctionName: "host-team",
+        Payload: JSON.stringify({
+            httpMethod: "GET",
+            path: "/internal/team-member",
+            headers: { "x-internal-secret": process.env.INTERNAL_TASK_SECRET },
+            queryStringParameters: { id: assigneeTeamMemberId },
+        }),
+    }));
+
+    if (response?.FunctionError) {
+        throw new Error("Failed to fetch assignee email: host-team returned an error");
+    }
+
+    let result;
+    try {
+        const payloadString = new TextDecoder("utf-8").decode(response.Payload);
+        result = JSON.parse(payloadString);
+    } catch {
+        throw new Error("Failed to fetch assignee email: malformed response from host-team");
+    }
+
+    if (result.statusCode !== 200) {
+        throw new Error(`Failed to fetch assignee email: host-team responded with status ${result.statusCode}`);
+    }
+
+    let email;
+    try {
+        email = JSON.parse(result.body).email;
+    } catch {
+        throw new Error("Failed to fetch assignee email: malformed response from host-team");
+    }
+
+    if (!email) {
+        throw new Error("Failed to fetch assignee email: no email found for this assignee");
+    }
+
+    return email;
+};
+
 export const sendTaskEscalationEmail = async (hostEmail, task) => {
     const dueDate = task.due_date ? new Date(task.due_date).toISOString() : "no due date set";
 
