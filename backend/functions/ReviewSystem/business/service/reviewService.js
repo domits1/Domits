@@ -75,9 +75,9 @@ export class ReviewService {
   // Validate the editable review payload and reject stale updates.
   async updateReview(callerUserId, reviewId, data) {
     const review = await this.getEditableReview(callerUserId, reviewId);
-    const allowed = ["overall_rating", "public_review", "updated_at"];
+    const allowed = new Set(["overall_rating", "public_review", "updated_at"]);
     if (!data || typeof data !== "object" || Array.isArray(data)
-      || Object.keys(data).some((key) => !allowed.includes(key))) {
+      || Object.keys(data).some((key) => !allowed.has(key))) {
       throw new BadRequestException("Only the rating, written review, and update version may be submitted.");
     }
     const publicReview = this.validateReviewPayload({
