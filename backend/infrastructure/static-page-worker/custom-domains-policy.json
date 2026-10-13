@@ -18,6 +18,12 @@
         "acm:DeleteCertificate"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "InvalidateWithdrawnPagesOnTheirTenant",
+      "Effect": "Allow",
+      "Action": ["cloudfront:ListDistributionTenants", "cloudfront:CreateInvalidationForDistributionTenant"],
+      "Resource": "*"
     }
   ]
 }
