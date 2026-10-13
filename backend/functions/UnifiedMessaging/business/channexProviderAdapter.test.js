@@ -1,0 +1,74 @@
+const ChannexProviderAdapter = require("./channexProviderAdapter.js").default;
+
+const INTEGRATION = { id: "integration-1", userId: "host-1", credentialsRef: "secret-ref-1" };
+const CREDENTIALS = { apiKey: "test-api-key" };
+
+const buildAdapter = ({ integration, credentials, providerClient } = {}) => {
+  const integrationAccounts = { getById: jest.fn().mockResolvedValue(integration ?? null) };
+  const credentialStore = { readSecretOrNull: jest.fn().mockResolvedValue(credentials ?? null) };
+  const client = providerClient || { sendMessage: jest.fn() };
+  const adapter = new ChannexProviderAdapter({ integrationAccounts, credentialStore, providerClient: client });
+  return { adapter, integrationAccounts, credentialStore, providerClient: client };
+};
+
+describe("ChannexProviderAdapter.sendMessage", () => {
+  test("throws an Error with a .code when the integration account cannot be found", async () => {
+    const { adapter } = buildAdapter({ integration: null });
+
+    await expect(
+      adapter.sendMessage({ integrationAccountId: "integration-1", externalThreadId: "thread-1", content: "hi" })
+    ).rejects.toThrow(expect.objectContaining({ code: expect.any(String) }));
+  });
+
+  test("throws an Error with a .code when Channex credentials are missing", async () => {
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: null });
+
+    await expect(
+      adapter.sendMessage({ integrationAccountId: "integration-1", externalThreadId: "thread-1", content: "hi" })
+    ).rejects.toThrow(expect.objectContaining({ code: expect.any(String) }));
+  });
+
+  test("throws an Error with a .code when externalThreadId is missing", async () => {
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: CREDENTIALS });
+
+    await expect(
+      adapter.sendMessage({ integrationAccountId: "integration-1", content: "hi" })
+    ).rejects.toThrow(expect.objectContaining({ code: expect.any(String) }));
+  });
+
+  test("calls the provider client with the api key and externalThreadId/text, returning an accepted CHANNEX result", async () => {
+    const providerClient = {
+      sendMessage: jest.fn().mockResolvedValue({ success: true, providerMessageId: "msg-1" }),
+    };
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: CREDENTIALS, providerClient });
+
+    const result = await adapter.sendMessage({
+      integrationAccountId: "integration-1",
+      externalThreadId: "thread-1",
+      content: "Hello guest",
+    });
+
+    expect(providerClient.sendMessage).toHaveBeenCalledWith(
+      { apiKey: "test-api-key" },
+      { externalThreadId: "thread-1", text: "Hello guest" }
+    );
+    expect(result).toEqual(
+      expect.objectContaining({ accepted: true, channel: "CHANNEX", providerMessageId: "msg-1" })
+    );
+  });
+
+  test("throws an Error carrying the client's errorCode on a client-reported failure", async () => {
+    const providerClient = {
+      sendMessage: jest.fn().mockResolvedValue({
+        success: false,
+        errorCode: "THREAD_NOT_FOUND",
+        errorMessage: "Thread not found.",
+      }),
+    };
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: CREDENTIALS, providerClient });
+
+    await expect(
+      adapter.sendMessage({ integrationAccountId: "integration-1", externalThreadId: "thread-1", content: "hi" })
+    ).rejects.toThrow(expect.objectContaining({ code: "THREAD_NOT_FOUND", message: "Thread not found." }));
+  });
+});

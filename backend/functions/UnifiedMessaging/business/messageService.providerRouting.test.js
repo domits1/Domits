@@ -221,6 +221,48 @@ describe("MessageService outbound provider routing", () => {
     });
   });
 
+  // The Channex outbound send needs the Channex message_thread_id, which lives on the
+  // thread as externalThreadId; it must reach the adapter alongside the args it gets today.
+  describe("forwards externalThreadId to the adapter for an existing external thread", () => {
+    test("includes externalThreadId when sending on an existing WhatsApp thread, alongside today's args", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "WHATSAPP", integrationAccountId: "integration-1", externalThreadId: "wa-1" })
+      );
+      mockWhatsAppAdapterInstance.sendMessage.mockResolvedValue({ providerMessageId: "wamid.123", accepted: true });
+
+      const service = new MessageService();
+      await service.sendMessage({ threadId: "thread-1", content: "hi" }, hostAuth);
+
+      expect(mockWhatsAppAdapterInstance.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          integrationAccountId: "integration-1",
+          recipientId: "guest-1",
+          content: "hi",
+          externalThreadId: "wa-1",
+        })
+      );
+    });
+
+    test("includes externalThreadId when sending on an existing registered non-WhatsApp thread", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
+      );
+      const testProviderAdapter = registeredTestProviderAdapter();
+
+      const service = new MessageService(withTestProvider(testProviderAdapter));
+      await service.sendMessage({ threadId: "thread-1", content: "hi" }, hostAuth);
+
+      expect(testProviderAdapter.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          integrationAccountId: "integration-9",
+          recipientId: "guest-1",
+          content: "hi",
+          externalThreadId: "ext-9",
+        })
+      );
+    });
+  });
+
   // Unsupported provider must fail explicitly, before any DOMITS-style delivery
   // or thread mutation.
   describe("unregistered provider: fails explicitly and without side effects", () => {

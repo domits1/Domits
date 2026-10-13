@@ -221,6 +221,7 @@ class MessageService {
         recipientId,
         content: payload.content,
         attachments: payload.attachments,
+        externalThreadId: payload.externalThreadId,
       });
 
       return {
