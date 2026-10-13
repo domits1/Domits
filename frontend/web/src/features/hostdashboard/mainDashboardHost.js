@@ -21,6 +21,7 @@ import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostSettingsPrivacySecurity from "./hostsettings/pages/HostSettingsPrivacySecurity";
+import HomeAutomationRoute from "./hosthomeautomation/views/HomeAutomationRoute";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
 import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
@@ -149,6 +150,7 @@ function MainDashboardHost() {
           />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
+          <Route path="settings/home-automation" element={<HomeAutomationRoute />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />

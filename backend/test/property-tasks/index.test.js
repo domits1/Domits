@@ -8,6 +8,8 @@ const mockGetChecklistItems = jest.fn();
 const mockCreateChecklistItem = jest.fn();
 const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
+const mockInternalCreateTask = jest.fn();
+const mockEscalateTask = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -21,6 +23,8 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         createChecklistItem: mockCreateChecklistItem,
         updateChecklistItem: mockUpdateChecklistItem,
         deleteChecklistItem: mockDeleteChecklistItem,
+        internalCreateTask: mockInternalCreateTask,
+        escalateTask: mockEscalateTask,
     })),
 }));
 
@@ -36,7 +40,8 @@ describe("property-tasks handler routing", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
-            mockGetChecklistItems, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem]
+            mockGetChecklistItems, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
+            mockInternalCreateTask, mockEscalateTask]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
     });
 
@@ -72,6 +77,12 @@ describe("property-tasks handler routing", () => {
         expect(mockCreateTask).not.toHaveBeenCalled();
     });
 
+    it("POST with action=escalate routes to escalateTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "escalate" } });
+        expect(mockEscalateTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
     it("PATCH with no action routes to updateTask", async () => {
         await handler({ httpMethod: "PATCH", queryStringParameters: null });
         expect(mockUpdateTask).toHaveBeenCalledTimes(1);
@@ -92,6 +103,19 @@ describe("property-tasks handler routing", () => {
         await handler({ httpMethod: "DELETE", queryStringParameters: { action: "checklist" } });
         expect(mockDeleteChecklistItem).toHaveBeenCalledTimes(1);
         expect(mockDeleteTask).not.toHaveBeenCalled();
+    });
+
+    it("POST to a path ending in /internal/create-task routes to internalCreateTask, regardless of action", async () => {
+        const res = await handler({ httpMethod: "POST", path: "/default/internal/create-task", queryStringParameters: null });
+        expect(mockInternalCreateTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+        expect(res).toEqual(fakeResponse);
+    });
+
+    it("POST to an unrelated path still routes to createTask", async () => {
+        await handler({ httpMethod: "POST", path: "/default", queryStringParameters: null });
+        expect(mockCreateTask).toHaveBeenCalledTimes(1);
+        expect(mockInternalCreateTask).not.toHaveBeenCalled();
     });
 
     it("OPTIONS returns 200 with CORS headers, without touching the controller", async () => {
