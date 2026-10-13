@@ -148,8 +148,6 @@ describe("UnifiedMessaging retained route contracts", () => {
     expect(mockIntegrationControllerMethods.listIntegrations).toHaveBeenCalledWith(event);
   });
 
-  // Ingesting messages by integration id had no owner check, so any caller could write
-  // threads/messages into any integration's inbox; the route has no caller and is removed (#3495).
   test("POST /integrations/{id}/ingest/messages is no longer routed", async () => {
     const response = await handler(
       buildEvent({
