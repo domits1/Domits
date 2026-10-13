@@ -28,5 +28,12 @@ export function useRemoteLock() {
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  return { status: data?.status ?? null, lastSyncAt: data?.lastSyncAt ?? null, loading, error, reload };
+  // Takes the status a connect or disconnect returned, so the page updates without the loading state that a
+  // reload would show (that would unmount the card while a modal is still open on top of it).
+  const applyResult = useCallback((result) => {
+    setData(result);
+    setError(null);
+  }, []);
+
+  return { status: data?.status ?? null, lastSyncAt: data?.lastSyncAt ?? null, loading, error, reload, applyResult };
 }

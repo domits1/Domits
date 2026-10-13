@@ -1,4 +1,11 @@
-import { MOCK_STATUS, getRemoteLockStatus, resetMockRemoteLock, setMockRemoteLockStatus } from "./remoteLockService";
+import {
+  MOCK_STATUS,
+  connectRemoteLock,
+  disconnectRemoteLock,
+  getRemoteLockStatus,
+  resetMockRemoteLock,
+  setMockRemoteLockStatus,
+} from "./remoteLockService";
 
 beforeEach(resetMockRemoteLock);
 
@@ -23,5 +30,22 @@ describe("remoteLockService (mock)", () => {
 
     resetMockRemoteLock();
     expect((await getRemoteLockStatus()).status).toBe("NOT_CONNECTED");
+  });
+
+  it("connects: resolves CONNECTED with a sync time, and the next status read agrees", async () => {
+    const result = await connectRemoteLock();
+
+    expect(result.status).toBe("CONNECTED");
+    expect(Number.isFinite(result.lastSyncAt)).toBe(true);
+    expect(await getRemoteLockStatus()).toEqual(result);
+  });
+
+  it("disconnects: resolves DISCONNECTED with no sync time, and the next status read agrees", async () => {
+    setMockRemoteLockStatus("CONNECTED");
+
+    const result = await disconnectRemoteLock();
+
+    expect(result).toEqual({ status: "DISCONNECTED", lastSyncAt: null });
+    expect(await getRemoteLockStatus()).toEqual(result);
   });
 });

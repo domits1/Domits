@@ -2,7 +2,9 @@
 // endpoint named above it, so replacing a mock with the real call later changes this file only.
 //
 // To preview a state: set REMOTELOCK_UI_ENABLED = true (homeAutomationConstants.js) and MOCK_STATUS below to
-// the state you want, look at Settings > Home automation, then revert both before committing.
+// the state you want, look at Settings > Home automation, then revert both before committing. Connect and
+// disconnect change the mocked status in memory, so you can click through NOT_CONNECTED > CONNECTED > DISCONNECTED;
+// a page reload starts again from MOCK_STATUS.
 
 export const MOCK_STATUS = "NOT_CONNECTED";
 const MOCK_LAST_SYNC_AT = Date.UTC(2026, 9, 8, 9, 30);
@@ -24,3 +26,18 @@ export const getRemoteLockStatus = async () => ({
   status: currentStatus,
   lastSyncAt: currentStatus === "CONNECTED" ? MOCK_LAST_SYNC_AT : null,
 });
+
+// Real endpoint (not built yet): POST /integrations/home-automation/remotelock/connect
+// The real one will hand back a RemoteLock sign-in URL to send the host to; the mock connects straight away.
+// Resolves with the new status, in the shape of getRemoteLockStatus.
+export const connectRemoteLock = async () => {
+  currentStatus = "CONNECTED";
+  return getRemoteLockStatus();
+};
+
+// Real endpoint (not built yet): POST /integrations/home-automation/remotelock/disconnect
+// Resolves with the new status, in the shape of getRemoteLockStatus.
+export const disconnectRemoteLock = async () => {
+  currentStatus = "DISCONNECTED";
+  return getRemoteLockStatus();
+};
