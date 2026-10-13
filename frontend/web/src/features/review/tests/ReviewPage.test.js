@@ -46,6 +46,7 @@ it.each([false, true])("prefills editing and preserves changes on failure: %s", 
   render(<ReviewPage />);
   const textarea = await screen.findByLabelText("Written review (required)");
   expect(textarea).toHaveValue("Original\nreview");
+  expect(screen.queryByLabelText("Review title (required)")).not.toBeInTheDocument();
   expect(screen.getAllByRole("radio")[3]).toBeChecked();
   expect(getGuestBookings).not.toHaveBeenCalled();
   fireEvent.change(textarea, { target: { value: "Updated review" } });
@@ -55,7 +56,10 @@ it.each([false, true])("prefills editing and preserves changes on failure: %s", 
     rating: 5, publicReview: "Updated review", updatedAt: 123 }));
   if (fails) {
     await screen.findByText("Editing period ended.");
-  } else await screen.findByRole("heading", { name: "Review updated" });
+  } else {
+    await screen.findByRole("heading", { name: "Review updated" });
+    expect(screen.getByText("Your changes have been saved as a draft for review.")).toBeInTheDocument();
+  }
   expect(screen.queryByLabelText("Written review (required)")?.value).toBe(fails ? "Updated review" : undefined);
   expect(createReview).not.toHaveBeenCalled();
 });
@@ -302,11 +306,29 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
 it("requires a title before submission", async () => {
   render(<ReviewPage />);
   const text = await screen.findByLabelText("Written review (required)");
+  expect(screen.getAllByLabelText("Review title (required)")).toHaveLength(1);
   fireEvent.click(screen.getAllByRole("radio")[4]);
   fireEvent.change(text, { target: { value: "Great stay." } });
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   expect(screen.getByRole("alert").textContent).toContain("review title");
   expect(createReview).not.toHaveBeenCalled();
+});
+
+it.each(["GET", "PATCH"])("uses the supported collection route for editing: %s", async (method) => {
+  const api = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  const review = { id: "review-1", overall_rating: 4, public_review: "Updated", updated_at: 123 };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify(review) });
+  try {
+    const result = method === "GET"
+      ? await api.getEditableReview("review-1")
+      : await api.updateReview({ reviewId: "review-1", rating: 4, publicReview: "Updated", updatedAt: 123 });
+    expect(result).toEqual(review);
+    const [url, request] = global.fetch.mock.calls[0];
+    expect(url).toBe(`${api.API_REVIEW_BASE}/reviews?reviewId=review-1`);
+    expect(request.method).toBe(method);
+    expect(request.headers.Authorization).toBe("access-token");
+  } finally { global.fetch = originalFetch; }
 });
 
 it("keeps legacy reservationId links compatible", async () => {

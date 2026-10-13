@@ -9,6 +9,12 @@ jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
+it.each(["GET", "PATCH"])("routes an edit %s with a review ID to the controller", async (httpMethod) => {
+  const event = { httpMethod, resource: "/reviews", queryStringParameters: { reviewId: "review-1" } };
+  expect((await handler(event)).statusCode).toBe(200);
+  expect(Controller.mock.results[0].value.manageReviews).toHaveBeenCalledWith(event);
+});
+
 
 it.each([["POST", 201], ["GET", 200], ["PATCH", 200]])(
 

@@ -3,8 +3,6 @@ import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
-// Parse the raw request payload into a validated review object.
-// This prevents malformed JSON or array payloads from reaching the business layer.
 const parseBody = (body) => {
   let parsedBody;
 
@@ -22,15 +20,11 @@ const parseBody = (body) => {
 };
 
 export class Controller {
-  // Wire the controller to the review service and auth layer for all request handling.
-  // This keeps dependency injection flexible while standardizing access to business logic and identity checks.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
   }
 
-  // Use verified identity instead of client-supplied IDs to prevent impersonation.
-  // Reservation ownership can then be checked against a trusted caller.
   async createReview(event) {
     try {
       const authenticatedUser = this.authManager.getUser(event);
@@ -43,8 +37,6 @@ export class Controller {
     }
   }
 
-  // Route each request to the correct review action based on the HTTP method.
-  // This keeps review API handling centralized and prevents unhandled request types.
   async manageReviews(event) {
     try {
       const user = this.authManager.getUser(event);
@@ -59,8 +51,6 @@ export class Controller {
     }
   }
 
-  // Fetch review data in the requested scope while enforcing valid combinations.
-  // This prevents ambiguous or unauthorized queries from being processed.
   async getReviews(user, query) {
     const result = query.reviewId !== undefined
       ? await this.service.getEditableReview(user.userId, query.reviewId)
@@ -68,18 +58,11 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-
-  // Update an existing review after authenticating the caller and validating the payload.
-  // This keeps edits limited to the intended review and protects against stale or malformed updates.
   async patchReview(user, query, body) {
     const result = await this.service.updateReview(user.userId, query.reviewId, parseBody(body));
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-  // Delete a review only for the authenticated owner.
-  // This avoids allowing one user to remove another user's review.
-
-  // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
       const result = await this.service.getPublicPropertyReviews(event.pathParameters?.propertyId, event.queryStringParameters || {});
@@ -89,16 +72,11 @@ export class Controller {
     }
   }
 
-  // Remove a review only for the authenticated owner.
-  // This blocks one user from deleting another user's review by accident or malice.
-
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
   }
 
-  // Hide unexpected failure details because they may expose internal implementation data.
-  // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
     const statusCode = error.statusCode || 500;
     const message = statusCode >= 500 ? "Something went wrong, please contact support." : error.message;
