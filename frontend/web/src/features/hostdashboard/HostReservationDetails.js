@@ -40,6 +40,7 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
+import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -79,6 +80,7 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
 
 const DEFAULT_CHANNEL = "Direct";
 const DEFAULT_PAYMENT_METHOD = "Card";
+const CHANNEL_PAYMENT_STATUS_TEXT = "Collected by the channel";
 const DEFAULT_LAST4 = "****";
 
 const getStatusConfig = (t) => ({
@@ -256,6 +258,18 @@ const buildChannelLabel = (booking) => {
   }
 
   return rawChannel;
+};
+
+// Channex sends some OTA names as codes; the host knows them by their brand name.
+const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
+
+// A Channex booking was paid on the OTA, not by card through Domits (#3483).
+const buildPaymentMethod = (booking) => {
+  if (isChannexBooking(booking)) {
+    const otaName = normalizeStringValue(booking?.booking_source);
+    return `Paid via ${OTA_DISPLAY_NAMES[otaName] || otaName || "the channel"}`;
+  }
+  return normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD;
 };
 
 const resolveReservationImage = ({ booking, propertyDetails }) => {
@@ -501,8 +515,9 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
         )
       ) || 0,
     cleaningFee: Number(firstDefined(booking?.cleaningFee, propertyDetails?.pricing?.cleaning, 0)) || 0,
-    paymentMethod:
-      normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD,
+    paymentMethod: buildPaymentMethod(booking),
+    isChannelBooking: isChannexBooking(booking),
+    channelTotal: resolveChannexBookingTotal(booking),
     last4: normalizeStringValue(firstDefined(booking?.last4, booking?.payment?.last4)) || DEFAULT_LAST4,
     reservationId,
     confirmationCode: reservationId ? reservationId.slice(0, 6) : "",
@@ -534,6 +549,8 @@ const EMPTY_RESERVATION_DETAILS = Object.freeze({
   pricePerNight: 0,
   cleaningFee: 0,
   paymentMethod: DEFAULT_PAYMENT_METHOD,
+  isChannelBooking: false,
+  channelTotal: null,
   last4: DEFAULT_LAST4,
   reservationId: "",
   confirmationCode: "",
@@ -626,16 +643,20 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
   const statusConfig = getStatusConfig(t);
   const paymentStatusConfig = getPaymentStatusConfig(t);
   const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
-  const total = reservation.pricePerNight * nights + reservation.cleaningFee;
+  const total = reservation.channelTotal ?? reservation.pricePerNight * nights + reservation.cleaningFee;
   const statusMeta = statusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.status : t.empty.reservation,
     icon: null,
   };
-  const paymentMeta = paymentStatusConfig[reservation.status] || {
+  const basePaymentMeta = paymentStatusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.payment : t.headings.payment,
     text: isShellLoading ? t.loading.paymentStatus : t.empty.paymentStatusUnavailable,
     className: "",
   };
+  const isPaidOnChannel = reservation.isChannelBooking && reservation.status === "PAID";
+  const paymentMeta = isPaidOnChannel
+    ? { ...basePaymentMeta, text: t.labels.collectedByChannel }
+    : basePaymentMeta;
   const title = hasDisplayValue(reservation.title) ? reservation.title : t.pageTitle;
   const guestName = hasDisplayValue(reservation.guestname) ? reservation.guestname : t.labels.guestFallbackName;
 
@@ -707,7 +728,9 @@ const buildMessageContext = (reservation) => ({
 
 const buildReservationReceiptPayload = (reservation) => {
   const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
-  const total = nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
+  const total =
+    reservation.channelTotal ?? nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
+  const isPaidOnChannel = reservation.isChannelBooking && reservation.status === "PAID";
 
   return {
     bookingId: getBookingId(reservation),
@@ -731,7 +754,11 @@ const buildReservationReceiptPayload = (reservation) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
-    paymentStatusLabel: RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
+    // The OTA sends only its total; a Domits nightly rate next to it would not add up.
+    showPriceBreakdown: (reservation.channelTotal ?? null) === null,
+    paymentStatusLabel: isPaidOnChannel
+      ? CHANNEL_PAYMENT_STATUS_TEXT
+      : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
     paymentDate: reservation.bookedOn,
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
     cancellationType: reservation.cancellationType || "Not specified",
@@ -761,6 +788,7 @@ const reservationTranslationShape = PropTypes.shape({
   }).isRequired,
   labels: PropTypes.shape({
     bookedVia: PropTypes.string.isRequired,
+    collectedByChannel: PropTypes.string.isRequired,
     checkIn: PropTypes.string.isRequired,
     bookedOn: PropTypes.string.isRequired,
     reservationId: PropTypes.string.isRequired,
@@ -1285,26 +1313,31 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
 
     <div className={styles.paymentWrapper}>
       <div className={styles.payment}>
-        <div className={styles.row}>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.pricePerNight)} x {viewModel.nightCountText}
-          </span>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.pricePerNight * viewModel.nights)}
-          </span>
-        </div>
+        {/* The OTA sends only its total; the Domits nightly price and cleaning fee would not add up to it. */}
+        {reservation.channelTotal === null ? (
+          <>
+            <div className={styles.row}>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.pricePerNight)} x {viewModel.nightCountText}
+              </span>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.pricePerNight * viewModel.nights)}
+              </span>
+            </div>
 
-        <div className={styles.row}>
-          <span>{t.labels.cleaningFee}</span>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.cleaningFee)}
-          </span>
-        </div>
+            <div className={styles.row}>
+              <span>{t.labels.cleaningFee}</span>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.cleaningFee)}
+              </span>
+            </div>
 
-        <div className={styles.divider}></div>
+            <div className={styles.divider}></div>
+          </>
+        ) : null}
 
         <div className={`${styles.row} ${styles.total}`}>
           <span>{t.labels.totalPaid}</span>
