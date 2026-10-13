@@ -19,16 +19,27 @@ const MANAGE_MENU_ITEMS_BY_STATUS = {
 
 const MENU_ITEM_LABELS = { reconnect: "Reconnect", disconnect: "Disconnect" };
 
+// One plain sentence per status. The backend's own `reason` is written for engineers (it names
+// credentialsRef, providers and validation modes), so it is never shown to a host.
+const STATUS_DESCRIPTIONS = {
+  CONNECTED: "Your Channex account is connected.",
+  RECONNECT_REQUIRED: "Your Channex connection needs to be set up again.",
+  VALIDATION_FAILED: "Channex could not verify your account. Check your API key and reconnect.",
+  DISCONNECTED: "Your Channex account is disconnected.",
+  PENDING_PROVIDER_VALIDATION: "Channex is still verifying your account.",
+  NOT_CONNECTED: "No Channex account is connected yet.",
+};
+
 function getStatusPresentation(status) {
   if (status === "CONNECTED") {
-    return { tone: "success", label: "Connected", showReason: false };
+    return { tone: "success", label: "Connected" };
   }
   if (RECONNECT_BUCKET_STATUSES.has(status)) {
-    return { tone: "error", label: "Reconnect needed", showReason: true };
+    return { tone: "error", label: "Reconnect needed" };
   }
   // PENDING_PROVIDER_VALIDATION: not reachable through the connect flow today, but the response
   // shape allows it, so it gets its own neutral state rather than being misread as an error.
-  return { tone: "pending", label: "Validating…", showReason: false };
+  return { tone: "pending", label: "Validating…" };
 }
 
 function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manageEnabled = false }) {
@@ -36,6 +47,7 @@ function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manage
   const menuRef = useRef(null);
   const presentation = getStatusPresentation(status.status);
   const menuItems = manageEnabled ? MANAGE_MENU_ITEMS_BY_STATUS[status.status] || null : null;
+  const description = STATUS_DESCRIPTIONS[status.status];
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -74,8 +86,7 @@ function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manage
             disabled={!menuItems}
             aria-haspopup="true"
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
+            onClick={() => setMenuOpen((open) => !open)}>
             Manage
           </button>
           {menuOpen && menuItems && (
@@ -85,8 +96,7 @@ function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manage
                   <button
                     type="button"
                     className={`chdist-manage__item${item === "disconnect" ? " chdist-manage__item--danger" : ""}`}
-                    onClick={() => handleItemClick(item)}
-                  >
+                    onClick={() => handleItemClick(item)}>
                     {MENU_ITEM_LABELS[item]}
                   </button>
                 </li>
@@ -95,7 +105,9 @@ function ChannexStatusCard({ status, onReconnectClick, onDisconnectClick, manage
           )}
         </div>
       </div>
-      {presentation.showReason && status.reason && <p className="chdist-card__reason">{status.reason}</p>}
+      {description && (
+        <p className={presentation.tone === "error" ? "chdist-card__reason" : "chdist-card__meta"}>{description}</p>
+      )}
     </div>
   );
 }
@@ -104,7 +116,6 @@ ChannexStatusCard.propTypes = {
   status: PropTypes.shape({
     status: PropTypes.string.isRequired,
     displayName: PropTypes.string,
-    reason: PropTypes.string,
   }).isRequired,
   onReconnectClick: PropTypes.func.isRequired,
   onDisconnectClick: PropTypes.func.isRequired,

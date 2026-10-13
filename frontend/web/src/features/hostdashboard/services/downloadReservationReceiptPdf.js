@@ -291,9 +291,12 @@ export async function downloadReservationReceiptPdf(receipt) {
   writeWrappedValue(doc, cursor, "Special request", receipt.specialRequest);
 
   writeSectionHeader(doc, cursor, "Payment");
-  writeWrappedValue(doc, cursor, "Rate per night", formatMoney(receipt.pricePerNight));
-  writeWrappedValue(doc, cursor, "Nights", String(receipt.nights));
-  writeWrappedValue(doc, cursor, "Cleaning fee", formatMoney(receipt.cleaningFee));
+  // A booking from another channel has only the total it was sold for (#3483).
+  if (receipt.showPriceBreakdown !== false) {
+    writeWrappedValue(doc, cursor, "Rate per night", formatMoney(receipt.pricePerNight));
+    writeWrappedValue(doc, cursor, "Nights", String(receipt.nights));
+    writeWrappedValue(doc, cursor, "Cleaning fee", formatMoney(receipt.cleaningFee));
+  }
   writeWrappedValue(doc, cursor, "Total", formatMoney(receipt.total));
   writeWrappedValue(doc, cursor, "Payment status", receipt.paymentStatusLabel);
   writeWrappedValue(doc, cursor, "Payment date", formatDate(receipt.paymentDate));
