@@ -1,11 +1,18 @@
 import { randomUUID } from "node:crypto";
-import { buildStaticPageKey } from "../../data/repository/staticPageStore.js";
+import { buildStaticPageKey, buildStaticSitemapKey } from "../../data/repository/staticPageStore.js";
+import { buildStaticSiteSitemap } from "../../util/staticSiteSitemap.js";
 
 const DISTRIBUTION_ENV_NAME = "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID";
 
 const parentOf = (hostname) => hostname.split(".").slice(1).join(".");
 
-const pathsFor = (hostname) => ["/" + buildStaticPageKey(hostname), "/", "/index.html"];
+const pathsFor = (hostname) => [
+  "/" + buildStaticPageKey(hostname),
+  "/",
+  "/index.html",
+  "/" + buildStaticSitemapKey(hostname),
+  "/sitemap.xml",
+];
 
 export class StaticPageWithdrawal {
   constructor({
@@ -29,6 +36,7 @@ export class StaticPageWithdrawal {
     hostnames.forEach((hostname) => buildStaticPageKey(hostname));
     for (const hostname of hostnames) {
       await this.pageStore.deletePage({ hostname });
+      await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId });
     }
 
     return { siteId, hostnames, invalidationErrors: await this.#invalidate(hostnames) };

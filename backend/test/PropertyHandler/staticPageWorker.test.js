@@ -2,6 +2,7 @@ import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
+import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
 
 const SHELL = '<html><head></head><body><div id="root"></div></body></html>';
 const PAGE = "<html>rendered</html>";
@@ -67,6 +68,7 @@ const buildWorker = ({
   domains = [FALLBACK, CUSTOM],
   outbox = null,
   pageStore = null,
+  withdrawal = null,
 } = {}) => {
   const deps = {
     outboxRepository: outbox || buildOutbox(rows),
@@ -78,7 +80,7 @@ const buildWorker = ({
       putSitemap: jest.fn(async () => undefined),
     },
     renderer: { render: jest.fn(async () => PAGE) },
-    withdrawal: {
+    withdrawal: withdrawal || {
       withdraw: jest.fn(async ({ siteId, domains }) => ({
         siteId,
         hostnames: domains.map((domain) => domain.domain),
@@ -653,6 +655,31 @@ describe("the sitemap the worker writes per host", () => {
     expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 2 });
     expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
     expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(sitemapListing(`https://${FALLBACK.domain}/`));
+  });
+
+  it("empties the sitemap of every host when the site is unpublished, so a withdrawn site lists no page", async () => {
+    const bucket = buildBucket({ "index.html": SHELL });
+    const sites = [buildSite()];
+    const pageStore = new StaticPageStore({ client: bucket.client });
+    const tenantRepository = {
+      listTenantsForDistribution: jest.fn(async () => [{ id: "dt_wildcard", domains: ["*.direct.domits.com"] }]),
+      getTenantByDomain: jest.fn(async (domain) => (domain === CUSTOM.domain ? { id: "dt_custom" } : null)),
+      createInvalidation: jest.fn(async () => "I1"),
+    };
+    const withdrawal = new StaticPageWithdrawal({ pageStore, tenantRepository, distributionId: "E18DIST" });
+    const { worker, outbox } = buildWorker({ sites, pageStore, withdrawal });
+    await worker.run();
+    Object.assign(sites[0], { status: "PREVIEW", staticPageRevision: 5 });
+    Object.assign(outbox.table.get("site-1"), { revision: 5, status: "PENDING", attemptCount: 0 });
+
+    const summary = await worker.run();
+
+    expect(summary.withdrawn).toBe(1);
+    expect(bucket.objects.has(pageKey(CUSTOM.domain))).toBe(false);
+    expect(bucket.objects.has(pageKey(FALLBACK.domain))).toBe(false);
+    expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
+    expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(EMPTY_SITEMAP);
+    expect(tenantRepository.createInvalidation.mock.calls.flatMap(([call]) => call.paths)).toContain("/sitemap.xml");
   });
 
   it("ends with the sitemaps of the newest revision when the host publishes again during a build", async () => {
