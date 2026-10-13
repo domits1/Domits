@@ -1,5 +1,7 @@
 import { PropertyController } from "./controller/propertyController.js";
 
+const STATIC_PAGE_TASK = "build-static-pages";
+
 let controller = new PropertyController();
 
 const notFound = (body) => ({
@@ -50,6 +52,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/domains")) {
     return controller.createWebsiteDomain(event);
   }
+  if (isPath(event, "/property/website/rate-plan/webhook")) {
+    return controller.handleWebsiteRatePlanWebhook(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -73,6 +78,9 @@ const handlePatch = async (event) => {
   }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.updatePropertyCalendarOverrides(event);
+  }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.changeWebsiteRatePlan(event);
   }
   if (isPath(event, DRAFT_ID_RESOURCE)) {
     return controller.updateDraft(event);
@@ -119,6 +127,9 @@ const handleGet = async (event) => {
   }
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
+  }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.getWebsiteRatePlan(event);
   }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);
@@ -185,6 +196,10 @@ const methodHandlers = {
 export const handler = async (event) => {
   if (!controller) {
     controller = new PropertyController();
+  }
+
+  if (event?.task === STATIC_PAGE_TASK && !event.httpMethod) {
+    return controller.buildStaticPages(event);
   }
 
   try {
