@@ -5,7 +5,7 @@ let controller;
 
 const routes = new Map([
   ["/reviews", new Map([["GET", "getReviews"], ["POST", "createReview"]])],
-  ["/reviews/{id}", new Map([["GET", "getReviewById"], ["PATCH", "updateReview"]])],
+  ["/reviews/{id}", new Map([["GET", "getReviewById"], ["PATCH", "updateReview"], ["DELETE", "deleteReview"]])],
   ["/properties/{propertyId}/reviews", new Map([["GET", "getPropertyReviews"]])],
   ["/reviews/{id}/domits-private-feedback", new Map([["GET", "getPrivateFeedback"]])],
   ["/reviews/{id}/response", new Map([
@@ -50,9 +50,7 @@ export const handler = async (event) => {
     }
 
     controller ??= new Controller();
-
-    // Guard against route/controller drift: fail loudly if a route is mapped
-    // to a controller action that has not been implemented yet.
+    
     if (typeof controller[action] !== "function") {
       console.error("ReviewSystem controller method is not implemented:", action);
       return jsonResponse(500, "Internal Server Error");
