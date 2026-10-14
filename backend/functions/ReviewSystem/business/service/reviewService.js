@@ -7,9 +7,12 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "../reviewRules.js";
 
-import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
-
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
+
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
@@ -38,11 +41,92 @@ const isDuplicateBookingReviewError = (error) => {
 
 export class ReviewService {
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
-    canReadPrivateFeedback = async () => false, canPublishReview = async () => false } = {}) {
+    canReadPrivateFeedback = async () => false, canPublishReview = async () => false,
+    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
+    this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
+  }
+
+  editDeadline(review) {
+    const createdAt = Number(review.created_at);
+    const deadline = createdAt + this.editWindowMs;
+    return this.editWindowMs && Number.isSafeInteger(createdAt) && createdAt > 0
+      && Number.isSafeInteger(deadline) ? deadline : 0;
+  }
+
+  async authorizeManagedProperty(callerUsername, propertyId) {
+    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+      throw new UnauthorizedException("A verified user identity is required.");
+    }
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    this.assertId(propertyId, "property ID");
+    const normalizedPropertyId = propertyId.trim();
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
+    // Avoid disclosing whether another manager's property exists.
+    if (!property) throw new NotFoundException("Property not found or access is denied.");
+    return normalizedPropertyId;
+  }
+
+  async getPropertyOverallScore(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    return this.repository.getPropertyReviewScore(id, username);
+  }
+
+  async getPropertyCategoryRatings(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+    return { property_id: id, categories };
+  }
+
+  async getEditableReview(callerUserId, reviewId) {
+    this.assertCaller(callerUserId);
+    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const review = await this.repository.findReviewById(reviewId);
+    if (!review || ["DELETED", "REJECTED"].includes(review.status)) throw new NotFoundException("Review not found.");
+    if (String(review.reviewer_user_id) !== String(callerUserId)) {
+      throw new ForbiddenException("You can only edit your own reviews.");
+    }
+    const timestamp = this.now();
+    if (timestamp < Number(review.created_at) || timestamp >= this.editDeadline(review)) {
+      throw new ForbiddenException("The review editing period has ended or editing is unavailable.");
+    }
+    return { id: review.id, overall_rating: review.overall_rating,
+      public_review: review.public_review, updated_at: Number(review.updated_at) };
+  }
+
+  async updateEditableReview(callerUserId, reviewId, data) {
+    const review = await this.getEditableReview(callerUserId, reviewId);
+    const allowed = new Set(["overall_rating", "public_review", "updated_at"]);
+    if (!data || typeof data !== "object" || Array.isArray(data)
+      || Object.keys(data).some((key) => !allowed.has(key))) {
+      throw new BadRequestException("Only the rating, written review, and update version may be submitted.");
+    }
+    const publicReview = this.validateReviewPayload({
+      booking_id: reviewId, title: "Existing review", overall_rating: data.overall_rating, public_review: data.public_review,
+    });
+    if (!Number.isSafeInteger(data.updated_at) || data.updated_at < 0 || data.updated_at >= Number.MAX_SAFE_INTEGER) {
+      throw new BadRequestException("A valid review update version is required.");
+    }
+    if (data.updated_at !== review.updated_at) {
+      throw new ConflictException("This review has changed. Reload it before editing.");
+    }
+    const result = await this.repository.updateEditableReview({
+      id: reviewId, guestId: callerUserId, previousUpdatedAt: data.updated_at,
+      editWindowMs: this.editWindowMs, now: this.now,
+      overallRating: data.overall_rating, publicReview,
+    });
+    if (!result.affected) {
+      throw new ConflictException("The review changed or its editing period ended. Reload the review.");
+    }
+    return { id: reviewId, overall_rating: data.overall_rating,
+      public_review: publicReview, updated_at: result.updated_at };
   }
 
   // Fetch the caller's reviews by scope.
@@ -57,6 +141,8 @@ export class ReviewService {
       ? String(review.reviewer_user_id) === callerUserId && !["DELETED", "REJECTED"].includes(review.status)
       : String(review.reviewee_user_id) === callerUserId && isPublished(review)).map((review) => ({
         ...toReviewView(review), rating: Number(review.overall_rating), content: review.public_review, date: review.created_at,
+        can_edit: scope === "written" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
+        edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
       }));
   }
 
@@ -126,7 +212,7 @@ export class ReviewService {
     if (review.status !== "DRAFT" || review.publication_status !== "UNPUBLISHED") {
       throw new ConflictException("Only unpublished draft reviews can be edited.");
     }
-    this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating), ...changes });
+    const publicReview = this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating), ...changes });
     if (changes.category_ratings !== undefined && Object.keys(changes.category_ratings).length) {
       const supported = await this.repository.findActiveCategoryKeys(review.review_type);
       if (Object.keys(changes.category_ratings).some((key) => !supported.has(key))) {
@@ -139,6 +225,7 @@ export class ReviewService {
       fields[key] = key === "private_feedback" ? this.normalizeOptionalText(changes[key])
         : typeof changes[key] === "string" ? changes[key].trim() : changes[key];
     }
+    if (Object.hasOwn(changes, "public_review")) fields.public_review = publicReview;
     const updated = await this.repository.updateDraft({ reviewId: review.id, reviewerUserId: userId,
       expectedUpdatedAt: review.updated_at, fields, categoryRatings: changes.category_ratings });
     if (!updated) throw new ConflictException("Review changed. Reload it before editing.");
@@ -256,7 +343,7 @@ export class ReviewService {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("An authenticated caller is required.");
     }
-    this.validateReviewPayload(reviewData);
+    const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
     const booking = await this.repository.findBookingById(bookingId);
@@ -309,7 +396,7 @@ export class ReviewService {
           reviewee_user_id: booking.hostid,
           overall_rating: reviewData.overall_rating,
           title: reviewData.title.trim(),
-          public_review: reviewData.public_review.trim(),
+          public_review: publicReview,
           private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
           verification_status: "UNVERIFIED",
           publication_status: "UNPUBLISHED",
@@ -372,6 +459,8 @@ export class ReviewService {
     return this.normalizePublicReview(reviewData.public_review);
   }
 
+  // Normalize and sanitize the written review text before saving it.
+  // This ensures reviews are plain text, within limits, and free of unsafe control characters.
   normalizePublicReview(value) {
     if (value === undefined || value === null) {
       throw new BadRequestException("Please describe your stay before submitting your review.");
@@ -391,6 +480,8 @@ export class ReviewService {
     return text;
   }
 
+  // Normalize optional private feedback without letting blanks become stored garbage.
+  // This keeps optional feedback consistent while avoiding empty values in the database.
   normalizeOptionalText(value) {
     if (!value) return null;
 

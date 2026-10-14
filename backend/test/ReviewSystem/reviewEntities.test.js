@@ -1,3 +1,4 @@
+import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
