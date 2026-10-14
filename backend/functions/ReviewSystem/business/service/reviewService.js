@@ -4,17 +4,19 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
-
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const isDuplicateBookingReviewError = (error) => {
   const databaseError = error?.driverError || error;
-  return databaseError?.code === "23505" &&
+  return (
+    databaseError?.code === "23505" &&
     /\breview_booking_type_reviewer_unique(?:_test)?\b/.test(
       `${databaseError.constraint || ""} ${databaseError.message || ""}`
-    );
+    )
+  );
 };
 
 export class ReviewService {
@@ -58,6 +60,9 @@ export class ReviewService {
   }
 
   async createReview(callerUserId, reviewData) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("An authenticated caller is required.");
+    }
     this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
@@ -75,7 +80,9 @@ export class ReviewService {
       throw new ForbiddenException("You cannot review your own property.");
     }
 
-    const status = String(booking.status || "").trim().toLowerCase();
+    const status = String(booking.status || "")
+      .trim()
+      .toLowerCase();
     const checkoutAt = Number(booking.departuredate);
     const now = this.now();
 
@@ -91,7 +98,7 @@ export class ReviewService {
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
-    const categoryRatings = reviewData.category_ratings || {};
+    const categoryRatings = reviewData.category_ratings ?? {};
     if (Object.keys(categoryRatings).length) {
       const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
@@ -100,22 +107,25 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create({
-        id: randomUUID(),
-        ...duplicateKey,
-        property_id: booking.property_id,
-        host_id: booking.hostid,
-        reviewee_user_id: booking.hostid,
-        overall_rating: reviewData.overall_rating,
-        title: reviewData.title.trim(),
-        public_review: reviewData.public_review.trim(),
-        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-        verification_status: "UNVERIFIED",
-        publication_status: "UNPUBLISHED",
-        status: "DRAFT",
-        created_at: now,
-        updated_at: now,
-      }, categoryRatings);
+      return await this.repository.create(
+        {
+          id: randomUUID(),
+          ...duplicateKey,
+          property_id: booking.property_id,
+          host_id: booking.hostid,
+          reviewee_user_id: booking.hostid,
+          overall_rating: reviewData.overall_rating,
+          title: reviewData.title.trim(),
+          public_review: reviewData.public_review.trim(),
+          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          verification_status: "UNVERIFIED",
+          publication_status: "UNPUBLISHED",
+          status: "DRAFT",
+          created_at: now,
+          updated_at: now,
+        },
+        categoryRatings
+      );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
         throw new ConflictException("This reservation already has a review.");
@@ -137,7 +147,11 @@ export class ReviewService {
       throw new BadRequestException("A booking_id of up to 255 characters is required");
     }
 
-    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+    if (
+      !Number.isInteger(reviewData.overall_rating) ||
+      reviewData.overall_rating < 1 ||
+      reviewData.overall_rating > 5
+    ) {
       throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
@@ -149,8 +163,13 @@ export class ReviewService {
     }
 
     const ratings = reviewData.category_ratings;
-    if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
-      Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
+    if (
+      ratings !== undefined &&
+      (!ratings ||
+        typeof ratings !== "object" ||
+        Array.isArray(ratings) ||
+        Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))
+    ) {
       throw new BadRequestException("category_ratings must contain ratings from 1 to 5");
     }
 
@@ -169,47 +188,4 @@ export class ReviewService {
     const text = value.trim();
     return text || null;
   }
-
-<<<<<<< HEAD
-=======
-  async getReviews(callerUserId, scope) {
-    if (scope !== "written" && scope !== "received") {
-      throw new BadRequestException("Review scope must be written or received.");
-    }
-    const reviews = await this.repository.findReviews(scope === "written"
-      ? { reviewer_user_id: callerUserId }
-      : [
-        { host_id: callerUserId, status: "PUBLISHED", publication_status: "PUBLISHED" },
-        { reviewee_user_id: callerUserId, status: "PUBLISHED", publication_status: "PUBLISHED" },
-      ]);
-    return reviews.map((review) => ({
-      ...review, rating: review.overall_rating, content: review.public_review, date: review.created_at,
-    }));
-  }
-
-  async deleteReview(callerUserId, id) {
-    if (typeof id !== "string" || !id.trim() || id.length > 255) {
-      throw new BadRequestException("A valid review ID is required.");
-    }
-    const result = await this.repository.deleteOwnReview(id, callerUserId, this.now());
-    if (!result.affected) {
-      throw new NotFoundException("Review not found.");
-    }
-  }
-
-  async getPublicPropertyReviews(propertyId, query = {}) {
-    if (typeof propertyId !== "string" || !propertyId.trim() || propertyId.length > 255) {
-      throw new BadRequestException("A valid property ID is required.");
-    }
-    if (query.sort && !["recent", "highest", "lowest"].includes(query.sort)) {
-      throw new BadRequestException("Unsupported review sort.");
-    }
-    if (query.verifiedOnly !== undefined && !["true", "false"].includes(query.verifiedOnly)) {
-      throw new BadRequestException("verifiedOnly must be true or false.");
-    }
-    return this.repository.findPublicPropertyReviews(propertyId, {
-      sort: query.sort || "recent", verifiedOnly: query.verifiedOnly === "true", category: query.category || null,
-    });
-  }
->>>>>>> 6b844362778b4f7f14a2467f70ffd7316b3deede
 }

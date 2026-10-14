@@ -845,7 +845,7 @@ export default class IntegrationService {
       externalAccountId: body.externalAccountId ?? null,
       displayName: body.displayName ?? null,
       status: body.status ?? "PENDING",
-      credentialsRef: body.credentialsRef ?? null,
+      credentialsRef: null,
       lastSuccessfulSyncAt: null,
       lastFailedSyncAt: null,
       lastErrorCode: null,
@@ -857,7 +857,7 @@ export default class IntegrationService {
     await this.sync.ensureStateRow(id, "MESSAGES");
     await this.sync.ensureStateRow(id, "RESERVATIONS");
 
-    return ok(created);
+    return ok(shapeCredentialIntegrationForResponse(created));
   }
 
   async listIntegrations(userId) {
@@ -876,13 +876,12 @@ export default class IntegrationService {
       externalAccountId: patch.externalAccountId,
       displayName: patch.displayName,
       status: patch.status,
-      credentialsRef: patch.credentialsRef,
       lastErrorCode: patch.lastErrorCode,
       lastErrorMessage: patch.lastErrorMessage,
     });
 
     if (!updated) return bad(404, { error: "Integration not found" });
-    return ok(updated);
+    return ok(shapeCredentialIntegrationForResponse(updated));
   }
 
   async getIntegrationLogs(integrationId, limit = 50) {

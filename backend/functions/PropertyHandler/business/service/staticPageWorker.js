@@ -3,6 +3,7 @@ import {
   resolveDirectBookingWebsiteRuntimeDomainStatus,
   selectDirectBookingWebsiteMainAddress,
 } from "../../util/directBookingWebsiteRouting.js";
+import { buildStaticSiteSitemap, resolveSitemapPageUrls } from "../../util/staticSiteSitemap.js";
 
 const DEFAULT_RUN_LIMIT = 20;
 
@@ -84,15 +85,11 @@ export class StaticPageWorker {
       template ||= await this.pageStore.readAppShell().catch(failWith("SHELL_UNREADABLE"));
       const domains = await this.#loadDomains(site);
       const activeDomains = this.#activeDomains(domains);
+      const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
       const html = await this.renderer
-        .render({
-          template,
-          site,
-          mainAddress: selectDirectBookingWebsiteMainAddress(site, domains),
-          destination: activeDomains[0],
-        })
+        .render({ template, site, mainAddress, destination: activeDomains[0] })
         .catch(failWith("RENDER_FAILED"));
-      await this.#upload(site, job.revision, activeDomains, html);
+      await this.#upload({ site, revision: job.revision, domains: activeDomains, html, mainAddress });
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
         throw error;
@@ -160,11 +157,24 @@ export class StaticPageWorker {
     return domains;
   }
 
-  async #upload(site, revision, domains, html) {
-    for (const domain of domains) {
-      await this.pageStore
-        .putPage({ hostname: domain.domain, html, siteId: site.id, revision })
+  async #upload({ site, revision, domains, html, mainAddress }) {
+    const sitemaps = domains.map(({ domain: hostname }) => ({
+      hostname,
+      pageUrls: resolveSitemapPageUrls({ hostname, mainAddress }),
+    }));
+    const putSitemap = ({ hostname, pageUrls }) =>
+      this.pageStore
+        .putSitemap({ hostname, xml: buildStaticSiteSitemap(pageUrls), siteId: site.id, revision })
         .catch(failWith("S3_PUT_FAILED"));
+
+    for (const sitemap of sitemaps.filter(({ pageUrls }) => pageUrls.length === 0)) {
+      await putSitemap(sitemap);
+    }
+    for (const { hostname } of sitemaps) {
+      await this.pageStore.putPage({ hostname, html, siteId: site.id, revision }).catch(failWith("S3_PUT_FAILED"));
+    }
+    for (const sitemap of sitemaps.filter(({ pageUrls }) => pageUrls.length > 0)) {
+      await putSitemap(sitemap);
     }
   }
 }

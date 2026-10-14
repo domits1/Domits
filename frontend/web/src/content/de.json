@@ -1433,7 +1433,7 @@
         "verified": "Verifiziert",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-App",
-        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS.",
         "loading": "Dein Authentifizierungsstatus wird geladen...",
         "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
       },
@@ -1654,6 +1654,7 @@
         "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
         "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
         "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
+        "checkoutStillPending": "Wir haben noch keine Bestätigung erhalten. Deine Zahlung wird möglicherweise noch verarbeitet. Aktualisiere die Seite in einem Moment und starte keinen weiteren Checkout.",
         "cardTitle": "Direct-Booking-Website-Tarif",
         "cardSubtitle": "Essentials ist kostenlos; Elite bietet erweiterte Website-Funktionen.",
         "cardNote": "Wähle und verwalte das Abonnement deiner Website.",
