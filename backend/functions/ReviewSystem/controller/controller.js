@@ -83,6 +83,8 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
+  // Delete a review only for the authenticated owner.
+  // This avoids allowing one user to remove another user's review.
   // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {

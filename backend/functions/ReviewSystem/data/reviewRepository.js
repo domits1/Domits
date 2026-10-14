@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { In, IsNull, Not } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
+import { Property } from "database/models/Property";
 import { Review } from "database/models/Review";
 import { Property } from "database/models/Property";
 import { Review_Rating } from "database/models/Review_Rating";
