@@ -1,40 +1,115 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
-const REFUNDABLE_POLICY_DEFINITIONS = [
-  { id: "flexible", name: "Flexible", refundUntilDays: 1 },
-  { id: "moderate", name: "Moderate", refundUntilDays: 5 },
-  { id: "limited", name: "Limited", refundUntilDays: 14 },
-  { id: "firm", name: "Firm", refundUntilDays: 30 },
-  { id: "semi_strict", name: "Semi-strict", refundUntilDays: 60 },
-  { id: "strict", name: "Strict", refundUntilDays: 90 },
-  { id: "super_strict", name: "Super-strict", refundUntilDays: 180 },
+// Mirrors REFUND_POLICIES in backend/functions/General-Bookings-CRUD-Bookings-develop/util/refundCalculator.js.
+// Guests are refunded by that calculator, so this text must describe the same tiers.
+// Tiers run from furthest before check-in down to check-in itself.
+const REFUND_POLICY_DEFINITIONS = [
+  {
+    id: "flexible",
+    name: "Flexible",
+    tiers: [
+      { minimumDaysBeforeArrival: 1, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
+  {
+    id: "moderate",
+    name: "Moderate",
+    tiers: [
+      { minimumDaysBeforeArrival: 5, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 50 },
+    ],
+  },
+  {
+    id: "limited",
+    name: "Limited",
+    tiers: [
+      { minimumDaysBeforeArrival: 14, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 7, refundPercentage: 50 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
+  {
+    id: "firm",
+    name: "Firm",
+    tiers: [
+      { minimumDaysBeforeArrival: 30, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 7, refundPercentage: 50 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
+  {
+    id: "semi_strict",
+    name: "Semi-strict",
+    tiers: [
+      { minimumDaysBeforeArrival: 60, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
+  {
+    id: "strict",
+    name: "Strict",
+    tiers: [
+      { minimumDaysBeforeArrival: 90, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
+  {
+    id: "super_strict",
+    name: "Super-strict",
+    tiers: [
+      { minimumDaysBeforeArrival: 180, refundPercentage: 100 },
+      { minimumDaysBeforeArrival: 0, refundPercentage: 0 },
+    ],
+  },
 ];
 
 const formatDayLabel = (days) => `${days} day${days === 1 ? "" : "s"}`;
 
-const buildRefundablePolicy = ({ id, name, refundUntilDays }) => {
-  const dayLabel = formatDayLabel(refundUntilDays);
-  return {
-    id,
-    name,
-    summary: `Full refund until ${dayLabel} before check-in`,
-    rules: [
-      `Guests receive a full refund when they cancel at least ${dayLabel} before check-in.`,
-      `Cancellations made less than ${dayLabel} before check-in are non-refundable.`,
-    ],
-    important:
-      `Your payout is processed once the booking becomes non-refundable (${dayLabel} before check-in). You should receive your payout within 3 days of processing.`,
-  };
+const formatRefundOutcome = (refundPercentage) => {
+  if (refundPercentage === 100) return "guests receive a full refund";
+  if (refundPercentage === 0) return "no refund";
+  return `guests receive a ${refundPercentage}% refund`;
 };
 
+const describeTier = (tier, index, tiers) => {
+  const outcome = formatRefundOutcome(tier.refundPercentage);
+  if (index === 0) {
+    return `At least ${formatDayLabel(tier.minimumDaysBeforeArrival)} before check-in: ${outcome}.`;
+  }
+
+  const upperBoundDays = tiers[index - 1].minimumDaysBeforeArrival;
+  if (tier.minimumDaysBeforeArrival === 0) {
+    return `Less than ${formatDayLabel(upperBoundDays)} before check-in: ${outcome}.`;
+  }
+  return `Between ${tier.minimumDaysBeforeArrival} and ${upperBoundDays} days before check-in: ${outcome}.`;
+};
+
+// The payout waits until a cancellation no longer earns the guest any refund.
+const describePayoutMoment = (tiers) => {
+  const lastTier = tiers.at(-1);
+  if (lastTier.refundPercentage > 0) {
+    return "at check-in";
+  }
+  return `${formatDayLabel(tiers.at(-2).minimumDaysBeforeArrival)} before check-in`;
+};
+
+const buildRefundablePolicy = ({ id, name, tiers }) => ({
+  id,
+  name,
+  summary: `Full refund until ${formatDayLabel(tiers[0].minimumDaysBeforeArrival)} before check-in`,
+  rules: tiers.map(describeTier),
+  important: `Your payout is processed once no refund is due anymore (${describePayoutMoment(tiers)}). You should receive your payout within 3 days of processing.`,
+});
+
 export const CANCELLATION_POLICIES = [
-  ...REFUNDABLE_POLICY_DEFINITIONS.map(buildRefundablePolicy),
+  ...REFUND_POLICY_DEFINITIONS.map(buildRefundablePolicy),
   {
     id: "non_refundable",
     name: "Non-refundable",
     summary: "No refunds provided",
-    rules: ["No refunds provided."],
+    rules: ["No refund at any time."],
     important:
       "Your payout is processed immediately upon booking confirmation. You should receive your payout within 3 days of processing.",
   },

@@ -535,6 +535,21 @@ describe("Listing Editor cancellation policies", () => {
     expect(updatePolicyRule).not.toHaveBeenCalledWith("CancellationPolicy:super-strict", true);
   });
 
+  test("shows the host the partial refund the guest receives for the selected policy", () => {
+    render(
+      <HostPropertyTabContent
+        {...buildTabContentProps()}
+        selectedTab="Policies"
+        policyRules={createInitialPolicyRules()}
+        updatePolicyRule={jest.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^moderate/i }));
+
+    expect(screen.getByText("Less than 5 days before check-in: guests receive a 50% refund.")).toBeInTheDocument();
+  });
+
   test("sends the selected cancellation policy string in the property save payload", async () => {
     const policyRules = {
       ...createInitialPolicyRules(),

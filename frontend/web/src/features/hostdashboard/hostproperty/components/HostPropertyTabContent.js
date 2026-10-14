@@ -26,6 +26,7 @@ import {
 } from "../../hostcalen/utils/date";
 import { useCalendarBookings } from "../../hostcalen/hooks/useCalendarBookings";
 import { usePhotoTileInteractionHandlers } from "../hooks/usePhotoTileInteractionHandlers";
+import { CANCELLATION_POLICIES as SHARED_CANCELLATION_POLICIES } from "../../../../utils/policyDisplayUtils";
 import {
   createInitialPricingForm,
   MAX_CAPACITY_VALUE,
@@ -58,44 +59,12 @@ const CAPACITY_COUNTER_FIELDS = [
   { key: "bathrooms", label: "Bathrooms" },
 ];
 
-const FLEXIBLE_PAYOUT_NOTE =
-  "Your payout is processed once the booking becomes non-refundable (within 24 hours of check-in). You should receive your payout within 3 days of processing.";
-
-const REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS = [
-  { id: "flexible", name: "Flexible", refundUntilDays: 1, important: FLEXIBLE_PAYOUT_NOTE },
-  { id: "moderate", name: "Moderate", refundUntilDays: 5 },
-  { id: "limited", name: "Limited", refundUntilDays: 14 },
-  { id: "firm", name: "Firm", refundUntilDays: 30 },
-  { id: "semi-strict", name: "Semi-strict", refundUntilDays: 60 },
-  { id: "strict", name: "Strict", refundUntilDays: 90 },
-  { id: "super-strict", name: "Super-strict", refundUntilDays: 180 },
-];
-
-const formatPolicyDayLabel = (days) => `${days} day${days === 1 ? "" : "s"}`;
-
-const buildRefundableCancellationPolicy = ({ id, name, refundUntilDays, important = null }) => {
-  const dayLabel = formatPolicyDayLabel(refundUntilDays);
-  return {
-    id,
-    ruleKey: `CancellationPolicy:${name}`,
-    name,
-    summary: `Full refund until ${dayLabel} before check-in`,
-    rules: [`100% refund up to ${dayLabel} before check-in.`, `No refund less than ${dayLabel} before check-in.`],
-    important,
-  };
-};
-
-const CANCELLATION_POLICIES = [
-  ...REFUNDABLE_CANCELLATION_POLICY_DEFINITIONS.map(buildRefundableCancellationPolicy),
-  {
-    id: "non-refundable",
-    ruleKey: "CancellationPolicy:Non-refundable",
-    name: "Non-refundable",
-    summary: "No refunds provided",
-    rules: ["No refunds provided."],
-    important: null,
-  },
-];
+// The host picks from the same definitions guests are shown, so both read the same refund terms.
+const CANCELLATION_POLICIES = SHARED_CANCELLATION_POLICIES.map((policy) => ({
+  ...policy,
+  id: policy.id.replaceAll("_", "-"),
+  ruleKey: `CancellationPolicy:${policy.name}`,
+}));
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
