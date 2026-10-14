@@ -1653,6 +1653,7 @@
         "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
         "checkoutSuccess": "Your Elite subscription is active.",
         "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
+        "checkoutStillPending": "We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.",
         "cardTitle": "Direct Booking Website Plan",
         "cardSubtitle": "Essentials is free; Elite includes advanced website tools.",
         "cardNote": "Choose and manage your website subscription.",
