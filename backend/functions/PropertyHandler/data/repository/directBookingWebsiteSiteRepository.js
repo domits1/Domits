@@ -1,5 +1,6 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
@@ -338,6 +339,45 @@ export class DirectBookingWebsiteSiteRepository {
       await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
 
       return site;
+    });
+  }
+
+  async queueStaticPage(siteId, { attemptLimit = STATIC_PAGE_ATTEMPT_LIMIT, evenWhileBusy = false } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const now = Date.now();
+
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `UPDATE ${tableName}
+      SET
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $2
+      WHERE id = $1
+        AND status = 'PUBLISHED'
+        AND ($4 OR NOT EXISTS (
+          SELECT 1
+          FROM ${outboxTableName} AS outbox
+          WHERE outbox.site_id = $1
+            AND (outbox.status IN ('PENDING', 'BUILDING')
+              OR (outbox.status = 'FAILED' AND outbox.attempt_count < $3))
+        ))
+      RETURNING
+        ${SITE_SELECT_COLUMNS}`,
+        [siteId, now, attemptLimit, Boolean(evenWhileBusy)],
+        true
+      );
+
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return false;
+      }
+
+      await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+
+      return true;
     });
   }
 

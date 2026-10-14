@@ -1,11 +1,18 @@
 import { randomUUID } from "node:crypto";
-import { buildStaticPageKey } from "../../data/repository/staticPageStore.js";
+import { buildStaticPageKey, buildStaticSitemapKey } from "../../data/repository/staticPageStore.js";
+import { buildStaticSiteSitemap } from "../../util/staticSiteSitemap.js";
 
 const DISTRIBUTION_ENV_NAME = "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID";
 
 const parentOf = (hostname) => hostname.split(".").slice(1).join(".");
 
-const pathsFor = (hostname) => ["/" + buildStaticPageKey(hostname), "/", "/index.html"];
+const pathsFor = (hostname) => [
+  "/" + buildStaticPageKey(hostname),
+  "/",
+  "/index.html",
+  "/" + buildStaticSitemapKey(hostname),
+  "/sitemap.xml",
+];
 
 export class StaticPageWithdrawal {
   constructor({
@@ -24,11 +31,32 @@ export class StaticPageWithdrawal {
     return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
+  async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
+    const removed = [];
+    const kept = [];
+    const failures = [];
+    for (const hostname of [...new Set(hostnames)]) {
+      try {
+        buildStaticPageKey(hostname);
+        if (await keep(hostname)) {
+          kept.push(hostname);
+          continue;
+        }
+        ((await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" })) ? removed : kept).push(hostname);
+      } catch (error) {
+        failures.push({ hostname, message: error.message });
+      }
+    }
+
+    return { removed, kept, failures, invalidationErrors: await this.#invalidate(removed) };
+  }
+
   async withdraw({ siteId, domains }) {
     const hostnames = [...new Set(domains.map((domain) => domain?.domain).filter(Boolean))];
     hostnames.forEach((hostname) => buildStaticPageKey(hostname));
     for (const hostname of hostnames) {
       await this.pageStore.deletePage({ hostname });
+      await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId });
     }
 
     return { siteId, hostnames, invalidationErrors: await this.#invalidate(hostnames) };
