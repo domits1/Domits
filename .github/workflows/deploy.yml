@@ -7,11 +7,7 @@ on:
       - 'main'
     paths:
       - 'backend/**'
-      - 'frontend/web/src/features/hostdashboard/website/**'
-      - 'frontend/web/src/store/amenities.js'
-      - 'frontend/web/src/store/iconWrapper.js'
-      - 'frontend/web/src/utils/accommodationImage.js'
-      - 'frontend/web/src/features/hostdashboard/hostproperty/constants.js'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -42,6 +38,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
+
+      - name: Configure and verify the ReviewSystem edit window
+        run: node backend/CD/npm/configureReviewEnvironment.js
 
       # Identify every file changed in this push, including earlier commits in a multi-commit push
       - name: Get changed files

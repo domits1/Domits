@@ -114,6 +114,11 @@ function GuestReviews() {
                 reviews.map((review, index) => (
                   <div key={index} className="reviewTab">
                     <h2 className="reviewHeader">{review.title}</h2>
+                    {review.can_edit && Date.now() < review.edit_expires_at && (
+                      <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
+                        Edit review
+                      </button>
+                    )}
                     <p className={`reviewContent ${reviewStyles.reviewText}`}>{review.content}</p>
                     <p className="reviewDate">
                       Written on: {DateFormatterDD_MM_YYYY(review.date)}
