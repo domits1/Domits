@@ -1,3 +1,5 @@
+import { compactChannexValuesToDateRanges } from "../../utils/channexAriDateRanges.js";
+
 const CHANNEX_BASE_URL = process.env.CHANNEX_BASE_URL || "https://staging.channex.io";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -88,8 +90,10 @@ const getPushGroupIdentity = (group, includeRatePlanId = false) => {
   return identity;
 };
 
+// Every availability and restrictions push goes out here, so the date ranges Channex asks
+// for are built in one place for the calendar outbox, the full sync and the older paths.
 const buildRequestBody = (group) => ({
-  values: Array.isArray(group?.values) ? group.values : [],
+  values: compactChannexValuesToDateRanges(Array.isArray(group?.values) ? group.values : []),
 });
 
 const getFailedPushProviderStatus = (httpStatus, fallbackStatus) => {

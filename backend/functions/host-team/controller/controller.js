@@ -1,6 +1,7 @@
 import { Service } from "../business/service/service.js";
 import { AuthManager } from "../auth/authManager.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
+import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 const ROLE_MANAGER_GROUPS = ["Host", "Admin"];
@@ -16,6 +17,23 @@ export class Controller {
             const { userId } = await this.authManager.getUser(event.headers?.Authorization);
             const members = await this.service.getTeamMembers(userId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(members) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async getTeamMemberInternal(event) {
+        try {
+            const providedSecret = event.headers?.["x-internal-secret"];
+            if (!providedSecret || providedSecret !== process.env.INTERNAL_TASK_SECRET) {
+                throw new UnauthorizedException("Invalid internal caller.");
+            }
+            const memberId = event.queryStringParameters?.id;
+            if (!memberId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "id is required" }) };
+            }
+            const member = await this.service.getTeamMemberById(memberId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ email: member.member_email }) };
         } catch (error) {
             return this.handleError(error);
         }

@@ -4,6 +4,7 @@ const STATIC_PAGE_STATUS_BUILDING = "BUILDING";
 const STATIC_PAGE_STATUS_ACTIVE = "ACTIVE";
 const STATIC_PAGE_STATUS_FAILED = "FAILED";
 const STATIC_PAGE_STATUS_SKIPPED = "SKIPPED";
+const STATIC_PAGE_STATUS_WITHDRAWN = "WITHDRAWN";
 export const STATIC_PAGE_BUILD_LEASE_MS = 15 * 60 * 1000;
 export const STATIC_PAGE_RETRY_DELAY_MS = 10 * 60 * 1000;
 export const STATIC_PAGE_ATTEMPT_LIMIT = 5;
@@ -185,6 +186,43 @@ export class StaticPageOutboxRepository {
         )
       RETURNING site_id`,
         [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_ACTIVE, now, normalizedSiteId]
+      );
+
+      return records.length > 0;
+    } catch (error) {
+      if (isTransientTransactionConflict(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  async markPageWithdrawn(siteId, revision, { now = Date.now() } = {}) {
+    const normalizedSiteId = requireSiteId(siteId);
+    const normalizedRevision = requireRevision(revision);
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+
+    try {
+      const { records } = await runStatement(
+        client,
+        `UPDATE ${outboxTableName(schemaName)}
+      SET status = $3,
+          failure_reason = NULL,
+          processed_at = $4,
+          updated_at = $4
+      WHERE site_id = $1
+        AND revision = $2
+        AND status = 'BUILDING'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM ${schemaName}.standalone_site AS site
+          WHERE site.id = $5
+            AND (site.status = 'PUBLISHED' OR site.static_page_revision <> $2)
+          FOR UPDATE
+        )
+      RETURNING site_id`,
+        [normalizedSiteId, normalizedRevision, STATIC_PAGE_STATUS_WITHDRAWN, now, normalizedSiteId]
       );
 
       return records.length > 0;

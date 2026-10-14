@@ -1,4 +1,5 @@
 const { Controller } = require("../../functions/host-team/controller/controller.js");
+const { NotFoundException } = require("../../functions/host-team/util/exception/notFoundException.js");
 
 const putEvent = (role, { id = "member-1" } = {}) => ({
   headers: { Authorization: "token-1" },
@@ -41,4 +42,75 @@ describe("Controller.updateMemberRole", () => {
       expect(service.updateMemberRole).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("Controller.getTeamMemberInternal", () => {
+  const SECRET = "test-internal-secret";
+
+  const buildEvent = (overrides = {}) => ({
+    headers: { "x-internal-secret": SECRET },
+    queryStringParameters: { id: "member-1" },
+    ...overrides,
+  });
+
+  const createInternalController = ({ member = { id: "member-1", member_email: "member@example.com" } } = {}) => {
+    const service = { getTeamMemberById: jest.fn(async () => member) };
+    return { service, controller: new Controller({ service }) };
+  };
+
+  const originalSecret = process.env.INTERNAL_TASK_SECRET;
+  beforeEach(() => {
+    process.env.INTERNAL_TASK_SECRET = SECRET;
+  });
+  afterAll(() => {
+    process.env.INTERNAL_TASK_SECRET = originalSecret;
+  });
+
+  test("returns the member's email when the secret is valid", async () => {
+    const { controller, service } = createInternalController();
+
+    const response = await controller.getTeamMemberInternal(buildEvent());
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({ email: "member@example.com" });
+    expect(service.getTeamMemberById).toHaveBeenCalledWith("member-1");
+  });
+
+  test("rejects when the secret header is missing", async () => {
+    const { controller, service } = createInternalController();
+
+    const response = await controller.getTeamMemberInternal(buildEvent({ headers: {} }));
+
+    expect(response.statusCode).toBe(401);
+    expect(service.getTeamMemberById).not.toHaveBeenCalled();
+  });
+
+  test("rejects when the secret header is wrong", async () => {
+    const { controller, service } = createInternalController();
+
+    const response = await controller.getTeamMemberInternal(buildEvent({ headers: { "x-internal-secret": "wrong" } }));
+
+    expect(response.statusCode).toBe(401);
+    expect(service.getTeamMemberById).not.toHaveBeenCalled();
+  });
+
+  test("returns 400 when id is missing", async () => {
+    const { controller, service } = createInternalController();
+
+    const response = await controller.getTeamMemberInternal(buildEvent({ queryStringParameters: {} }));
+
+    expect(response.statusCode).toBe(400);
+    expect(service.getTeamMemberById).not.toHaveBeenCalled();
+  });
+
+  test("returns 404 when the member does not exist", async () => {
+    const service = {
+      getTeamMemberById: jest.fn(async () => { throw new NotFoundException("Team member not found."); }),
+    };
+    const controller = new Controller({ service });
+
+    const response = await controller.getTeamMemberInternal(buildEvent());
+
+    expect(response.statusCode).toBe(404);
+  });
 });

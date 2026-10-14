@@ -1,13 +1,14 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const BUCKET_ENV_NAME = "DIRECT_BOOKING_WEBSITE_SITES_BUCKET";
 const APP_SHELL_KEY = "index.html";
 const PAGE_CONTENT_TYPE = "text/html; charset=utf-8";
 const PAGE_CACHE_CONTROL = "public, max-age=300";
+const SITEMAP_CONTENT_TYPE = "application/xml; charset=utf-8";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
 
-export const buildStaticPageKey = (hostname) => {
+const requireKeyHostname = (hostname) => {
   const labels = typeof hostname === "string" ? hostname.split(".") : [];
   const isHostname =
     labels.length >= 2 &&
@@ -17,8 +18,17 @@ export const buildStaticPageKey = (hostname) => {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
-  return `sites/by-host/${hostname}/index.html`;
+  return hostname;
 };
+
+export const buildStaticPageKey = (hostname) => `sites/by-host/${requireKeyHostname(hostname)}/index.html`;
+
+export const buildStaticSitemapKey = (hostname) => `sites/by-host/${requireKeyHostname(hostname)}/sitemap.xml`;
+
+const buildSourceMetadata = (siteId, revision) => ({
+  "site-id": String(siteId),
+  ...(revision === undefined ? {} : { revision: String(revision) }),
+});
 
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
@@ -47,9 +57,26 @@ export class StaticPageStore {
         Body: html,
         ContentType: PAGE_CONTENT_TYPE,
         CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: { "site-id": String(siteId), revision: String(revision) },
+        Metadata: buildSourceMetadata(siteId, revision),
       })
     );
+  }
+
+  async putSitemap({ hostname, xml, siteId, revision }) {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: buildStaticSitemapKey(hostname),
+        Body: xml,
+        ContentType: SITEMAP_CONTENT_TYPE,
+        CacheControl: PAGE_CACHE_CONTROL,
+        Metadata: buildSourceMetadata(siteId, revision),
+      })
+    );
+  }
+
+  async deletePage({ hostname }) {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: buildStaticPageKey(hostname) }));
   }
 }
 
