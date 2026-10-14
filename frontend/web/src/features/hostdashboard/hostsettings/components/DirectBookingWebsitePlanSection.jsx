@@ -275,7 +275,7 @@ const DirectBookingWebsitePlanSection = ({
             return;
           }
         } catch {
-          // Keep the checkout pending state and retry; never offer a second checkout.
+          continue;
         }
       }
 

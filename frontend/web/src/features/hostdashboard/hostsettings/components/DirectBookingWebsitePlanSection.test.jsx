@@ -255,7 +255,11 @@ describe("DirectBookingWebsitePlanSection", () => {
       ).toBeInTheDocument();
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(15_000);
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+          jest.advanceTimersByTime(1500);
+          await Promise.resolve();
+          await Promise.resolve();
+        }
       });
 
       expect(
