@@ -10,6 +10,8 @@ describe('CreateTaskModal', () => {
         bookingRef: '',
         type: 'Cleaning',
         assignee: '',
+        assigneeSelection: '',
+        assignee_team_member_id: '',
         dueDate: '',
         priority: 'Medium',
         attachments: null,
@@ -19,9 +21,13 @@ describe('CreateTaskModal', () => {
         isOpen: true,
         newTask,
         propertyOptions: [{ id: 'prop-1', label: 'Villa Sunshine' }],
-        currentUser: { name: 'Alex Host', email: 'alex@example.com' },
+        assigneeOptions: [
+            { id: 'host', label: 'Alex Host (Host)' },
+            { id: 'member-1', label: 'housekeeper@example.com (Property Operations Manager)' },
+        ],
         onInputChange: jest.fn(),
         onPropertyChange: jest.fn(),
+        onAssigneeChange: jest.fn(),
         onFileChange: jest.fn(),
         onSubmit: jest.fn((e) => e.preventDefault()),
         onCancel: jest.fn(),
@@ -32,10 +38,17 @@ describe('CreateTaskModal', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    test('renders the property options and the current user as the only assignee option', () => {
+    test('renders the property options and every assignee option, host and team members', () => {
         render(<CreateTaskModal {...baseProps} />);
         expect(screen.getByRole('option', { name: 'Villa Sunshine' })).toBeInTheDocument();
-        expect(screen.getByRole('option', { name: 'Alex Host (alex@example.com)' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Alex Host (Host)' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'housekeeper@example.com (Property Operations Manager)' })).toBeInTheDocument();
+    });
+
+    test('calls onAssigneeChange when selecting an assignee', () => {
+        render(<CreateTaskModal {...baseProps} />);
+        fireEvent.change(screen.getByLabelText('Assignee'), { target: { value: 'member-1' } });
+        expect(baseProps.onAssigneeChange).toHaveBeenCalled();
     });
 
     test('calls onInputChange when typing into the title field', () => {
@@ -45,7 +58,7 @@ describe('CreateTaskModal', () => {
     });
 
     test('calls onSubmit when the form is submitted', () => {
-        render(<CreateTaskModal {...baseProps} newTask={{ ...newTask, title: 'x', description: 'x', property_id: 'prop-1', dueDate: '2099-01-01', assignee: 'Alex Host' }} />);
+        render(<CreateTaskModal {...baseProps} newTask={{ ...newTask, title: 'x', description: 'x', property_id: 'prop-1', dueDate: '2099-01-01', assignee: 'Alex Host', assigneeSelection: 'host' }} />);
         fireEvent.click(screen.getByRole('button', { name: 'Create Task' }));
         expect(baseProps.onSubmit).toHaveBeenCalled();
     });

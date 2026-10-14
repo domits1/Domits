@@ -106,7 +106,8 @@ export class ReviewRepository {
     // Check ownership, the original deadline, and version in the same write.
     const result = await dataSource.getRepository(Review).createQueryBuilder()
       .update(Review)
-      .set({ overall_rating: overallRating, public_review: publicReview, updated_at: updatedAt })
+      .set({ overall_rating: overallRating, public_review: publicReview, updated_at: updatedAt,
+        status: "DRAFT", publication_status: "UNPUBLISHED" })
       .where("id = :id AND reviewer_user_id = :guestId", { id, guestId })
       .andWhere("updated_at = :previousUpdatedAt", { previousUpdatedAt })
       .andWhere("created_at <= :timestamp AND created_at > :cutoff", {

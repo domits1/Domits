@@ -218,6 +218,9 @@ const ReviewPage = () => {
   );
 
 
+  const idleSubmitLabel = reviewId ? "Save changes" : "Submit review";
+  const submitLabel = isSubmitting ? "Saving..." : idleSubmitLabel;
+
   if (isCheckingSession || checkedBookingId !== targetId) {
 
     return (
@@ -246,7 +249,7 @@ const ReviewPage = () => {
       <main className={styles.main}>
         <h1>{reviewId ? "Review updated" : "Review submitted"}</h1>
         <p className={styles.comment}>
-          {reviewId ? "Your changes have been saved."
+          {reviewId ? "Your changes have been saved as a draft for review."
             : "Thank you for sharing your experience. Your review was saved as a draft."}
         </p>
         <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
@@ -321,7 +324,7 @@ const ReviewPage = () => {
             type="submit"
             className={!form.rating || (!reviewId && !form.title.trim()) || !form.publicReview.trim() ? styles.disabled : ""}
             disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : reviewId ? "Save changes" : "Submit review"}
+            {submitLabel}
           </button>
         </div>
       </form>

@@ -60,11 +60,13 @@ export class Controller {
   // Fetch review data in the requested scope while enforcing valid combinations.
   // This prevents ambiguous or unauthorized queries from being processed.
   async getReviews(user, query) {
-    if (query.scope === "property-score" && query.reviewId !== undefined) {
-      throw new BadRequestException("Property score and individual review requests cannot be combined.");
+    if (["property-score", "property-categories"].includes(query.scope) && query.reviewId !== undefined) {
+      throw new BadRequestException("Property score/category and individual review requests cannot be combined.");
     }
     let result;
-    if (query.scope === "property-score") {
+    if (query.scope === "property-categories") {
+      result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+    } else if (query.scope === "property-score") {
       result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
     } else if (query.reviewId !== undefined) {
       result = await this.service.getEditableReview(user.userId, query.reviewId);
@@ -81,7 +83,6 @@ export class Controller {
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
   }
 
-<<<<<<< HEAD
   // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     try {
@@ -94,10 +95,6 @@ export class Controller {
 
   // Remove a review only for the authenticated owner.
   // This blocks one user from deleting another user's review by accident or malice.
-=======
-  // Delete a review only for the authenticated owner.
-  // This avoids allowing one user to remove another user's review.
->>>>>>> 02aa07849a3d06f6616dc7465b18d19b80ac7b6b
   async deleteReview(user, query) {
     await this.service.deleteReview(user.userId, query.reviewId);
     return { statusCode: 204, headers: responseHeaders, body: "" };
