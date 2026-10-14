@@ -6,7 +6,7 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
-describe('Review creation and existing operations', () => {
+describe("Review creation and existing operations", () => {
   const now = Date.parse("2026-10-01T12:00:00Z");
   const booking = {
     id: "reservation-1",
@@ -16,6 +16,78 @@ describe('Review creation and existing operations', () => {
     status: "Paid",
     departuredate: now - 1000,
   };
+
+  it.each([
+    undefined,
+    null,
+    "",
+    " \n\t ",
+    42,
+    true,
+    {},
+    [],
+    "x".repeat(501),
+    "Stay\u0000",
+  ])(
+    "rejects invalid written content before persistence: %p",
+    async (public_review) => {
+      const response = await controller.createReview({
+        headers: { Authorization: "token" },
+        body: JSON.stringify({ ...payload, public_review }),
+        requestContext: {
+          authorizer: {
+            claims: { sub: booking.guestid },
+          },
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(JSON.parse(response.body).message).toBeTruthy();
+      expect(repository.findBookingById).not.toHaveBeenCalled();
+      expect(repository.create).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ["x", "x"],
+    ["x".repeat(500), "x".repeat(500)],
+    [
+      "  Quiet room.\r\nBusy street.\rGood transport.  ",
+      "Quiet room.\nBusy street.\nGood transport.",
+    ],
+    [
+      "Café 😊 — 5 < 10 & O'Brien's room",
+      "Café 😊 — 5 < 10 & O'Brien's room",
+    ],
+    [
+      "<script>alert('test')</script>",
+      "<script>alert('test')</script>",
+    ],
+  ])(
+    "stores normalized plain text with verified booking identities: %p",
+    async (input, expected) => {
+      const saved = await service.createReview(booking.guestid, {
+        ...payload,
+        public_review: input,
+        reviewer_user_id: "spoof",
+        property_id: "spoof",
+      });
+
+      expect(saved.public_review).toBe(expected);
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          public_review: expected,
+          booking_id: booking.id,
+          reviewer_user_id: booking.guestid,
+          property_id: booking.property_id,
+          host_id: booking.hostid,
+        }),
+        {}
+      );
+    }
+  );
+
+  // The existing payload, variables, beforeEach, and remaining tests follow here.
   const payload = { booking_id: booking.id, overall_rating: 5, title: "Great stay", public_review: "Lovely place." };
 
   let repository;

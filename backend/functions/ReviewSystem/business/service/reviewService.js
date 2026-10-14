@@ -9,6 +9,12 @@ import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "..
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
+
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
 const toReviewView = (review) => ({
@@ -251,10 +257,12 @@ export class ReviewService {
   // Create a new guest review for a completed reservation.
   // This enforces booking eligibility and prevents duplicate or invalid review submissions.
   async createReview(callerUserId, reviewData) {
-    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
-      throw new UnauthorizedException("An authenticated caller is required.");
+    const publicReview = this.validateReviewPayload(reviewData);
+   if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+    throw new UnauthorizedException("An authenticated caller is required.");
     }
-    this.validateReviewPayload(reviewData);
+
+    const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
     const booking = await this.repository.findBookingById(bookingId);
@@ -262,7 +270,7 @@ export class ReviewService {
     if (!booking) {
       throw new NotFoundException("Reservation not found.");
     }
-
+    
     if (String(booking.guestid) !== String(callerUserId)) {
       throw new ForbiddenException("You can only review your own reservation.");
     }
@@ -297,7 +305,7 @@ export class ReviewService {
       }
     }
 
-    try {
+      try {
       return await this.repository.create(
         {
           id: randomUUID(),
@@ -307,8 +315,10 @@ export class ReviewService {
           reviewee_user_id: booking.hostid,
           overall_rating: reviewData.overall_rating,
           title: reviewData.title.trim(),
-          public_review: reviewData.public_review.trim(),
-          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          public_review: publicReview,
+          private_feedback: this.normalizeOptionalText(
+            reviewData.private_feedback
+          ),
           verification_status: "UNVERIFIED",
           publication_status: "UNPUBLISHED",
           status: "DRAFT",
@@ -319,7 +329,9 @@ export class ReviewService {
       );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
-        throw new ConflictException("This reservation already has a review.");
+        throw new ConflictException(
+          "This reservation already has a review."
+        );
       }
 
       throw error;

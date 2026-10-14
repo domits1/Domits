@@ -20,6 +20,8 @@ const parseBody = (event) => {
 };
 
 export class Controller {
+  // Attach the controller to the service and auth dependencies used by every request.
+  // This keeps the controller flexible and ensures all handlers use the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;

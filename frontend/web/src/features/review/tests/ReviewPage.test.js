@@ -4,12 +4,13 @@ import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-
-import { createReview, requestReview, getEditableReview, updateReview } from "../services/reviewAPI";
-
 import GuestReviews from "../../guestdashboard/GuestReviews";
-import { createReview, requestReview } from "../services/reviewAPI";
-
+import {
+  createReview,
+  requestReview,
+  getEditableReview,
+  updateReview,
+} from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
 let mockSearch;
