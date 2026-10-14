@@ -11,19 +11,56 @@ it("routes POST /reviews to authenticated review creation", async () => {
   expect(Controller.mock.results[0].value.createReview).toHaveBeenCalledWith(event);
 });
 
-// This foundation branch does not implement downstream dashboard, editing or response routes.
-it.each([
-  { httpMethod: "GET", resource: "/reviews" },
-  { httpMethod: "GET", resource: "/reviews/{id}" },
-  { httpMethod: "PATCH", resource: "/reviews/{id}" },
-  { httpMethod: "DELETE", resource: "/reviews/{id}" },
-  { httpMethod: "GET", resource: "/properties/{propertyId}/reviews" },
-  { httpMethod: "POST", resource: "/reviews/{id}/response" },
-  { httpMethod: "POST", resource: "/ReviewSystem" },
-])("keeps unsupported foundation routes rejected: %p", async (event) => {
-  expect((await handler(event)).statusCode).toBe(405);
+const pendingRoutes = [
+  ["GET", "/reviews", "getReviews"],
+  ["GET", "/reviews/{id}", "getReviewById"],
+  ["PATCH", "/reviews/{id}", "updateReview"],
+  ["GET", "/properties/{propertyId}/reviews", "getPropertyReviews"],
+  ["GET", "/reviews/{id}/domits-private-feedback", "getPrivateFeedback"],
+  ["POST", "/reviews/{id}/response", "createReviewResponse"],
+  ["PATCH", "/reviews/{id}/response", "updateReviewResponse"],
+  ["DELETE", "/reviews/{id}/response", "deleteReviewResponse"],
+  ["POST", "/reviews/{id}/publish", "publishReview"],
+];
+
+it.each(pendingRoutes)("recognizes pending %s %s without exposing implementation details", async (httpMethod, resource, action) => {
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    const response = await handler({ httpMethod, resource });
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body)).toEqual({ message: "Internal Server Error" });
+    expect(log).toHaveBeenCalledWith("ReviewSystem controller method is not implemented:", action);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+it.each(pendingRoutes)("dispatches %s %s when its controller implementation is available", async (httpMethod, resource, action) => {
+  await handler({ httpMethod: "POST", resource: "/reviews" });
+  const instance = Controller.mock.results[0].value;
+  const result = { statusCode: 200, headers: { "X-Test": "preserved" }, body: "[]" };
+  instance[action] = jest.fn().mockResolvedValue(result);
+  const event = { httpMethod, resource };
+  try {
+    const response = await handler(event);
+    expect(instance[action]).toHaveBeenCalledWith(event);
+    expect(response).toMatchObject(result);
+    expect(response.headers["Access-Control-Allow-Methods"]).toBe("GET,POST,PATCH,DELETE,OPTIONS");
+  } finally {
+    delete instance[action];
+  }
+});
+
+it("rejects unsupported methods with Allow and unknown resources with 404", async () => {
+  const response = await handler({ httpMethod: "DELETE", resource: "/reviews/{id}" });
+  expect(response.statusCode).toBe(405);
+  expect(response.headers.Allow).toBe("GET,PATCH,OPTIONS");
+  expect((await handler({ httpMethod: "POST", resource: "/ReviewSystem" })).statusCode).toBe(404);
 });
 
 it("allows preflight requests", async () => {
-  expect((await handler({ httpMethod: "OPTIONS", resource: "/reviews" })).statusCode).toBe(200);
+  const response = await handler({ httpMethod: "OPTIONS", resource: "/reviews" });
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toBe("");
+  expect(response.headers["Access-Control-Allow-Methods"]).toBe("GET,POST,OPTIONS");
 });

@@ -135,13 +135,46 @@ it("rejects an authorization header without verified authorizer claims", async (
   expect(repository.create).not.toHaveBeenCalled();
 });
 
-it.each(["{", "null", "[]"])("rejects malformed review bodies: %s", async (body) => {
+it.each([undefined, "", " ", "{", "null", "[]"])("rejects malformed review bodies: %s", async (body) => {
   const result = await controller.createReview({
     headers: { Authorization: "access-token" }, requestContext: { authorizer: { claims: { sub: booking.guestid } } },
     body,
   });
   expect(result.statusCode).toBe(400);
   expect(repository.create).not.toHaveBeenCalled();
+});
+
+it("decodes base64 request bodies and awaits authentication", async () => {
+  authManager.getUser.mockResolvedValue({ userId: booking.guestid });
+  const result = await controller.createReview({
+    body: Buffer.from(JSON.stringify(payload)).toString("base64"),
+    isBase64Encoded: true,
+  });
+  expect(result.statusCode).toBe(201);
+  expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ reviewer_user_id: booking.guestid }), {});
+});
+
+it.each([undefined, {}, { userId: " " }])("rejects invalid authentication results: %p", async (user) => {
+  authManager.getUser.mockResolvedValue(user);
+  const result = await controller.createReview({ body: JSON.stringify(payload) });
+  expect(result.statusCode).toBe(401);
+  expect(repository.findBookingById).not.toHaveBeenCalled();
+});
+
+it.each([undefined, null, "", " ", 123])("rejects invalid service caller IDs before storage: %p", async (callerUserId) => {
+  await expect(service.createReview(callerUserId, payload)).rejects.toMatchObject({ statusCode: 401 });
+  expect(repository.findBookingById).not.toHaveBeenCalled();
+});
+
+it.each([null, { statusCode: "400" }, { statusCode: 200 }, { statusCode: 600 }])("handles invalid error status codes safely: %p", (error) => {
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    const result = controller.handleError(error);
+    expect(result.statusCode).toBe(500);
+    expect(JSON.parse(result.body).message).toBe("Something went wrong, please contact support.");
+  } finally {
+    log.mockRestore();
+  }
 });
 
 it.each([undefined, null, "", "5", 0, 6, -1, 2.5, NaN, Infinity, true, {}, [], { toString: null }])(

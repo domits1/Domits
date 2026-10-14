@@ -4,17 +4,19 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
-
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const isDuplicateBookingReviewError = (error) => {
   const databaseError = error?.driverError || error;
-  return databaseError?.code === "23505" &&
+  return (
+    databaseError?.code === "23505" &&
     /\breview_booking_type_reviewer_unique(?:_test)?\b/.test(
       `${databaseError.constraint || ""} ${databaseError.message || ""}`
-    );
+    )
+  );
 };
 
 export class ReviewService {
@@ -26,6 +28,9 @@ export class ReviewService {
   // Derive review ownership and property details from the booking to prevent client spoofing.
   // Restrict reviews to completed, caller-owned reservations to protect review integrity.
   async createReview(callerUserId, reviewData) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("An authenticated caller is required.");
+    }
     this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
@@ -43,7 +48,9 @@ export class ReviewService {
       throw new ForbiddenException("You cannot review your own property.");
     }
 
-    const status = String(booking.status || "").trim().toLowerCase();
+    const status = String(booking.status || "")
+      .trim()
+      .toLowerCase();
     const checkoutAt = Number(booking.departuredate);
     const now = this.now();
 
@@ -59,7 +66,7 @@ export class ReviewService {
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
-    const categoryRatings = reviewData.category_ratings || {};
+    const categoryRatings = reviewData.category_ratings ?? {};
     if (Object.keys(categoryRatings).length) {
       const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
@@ -68,22 +75,25 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create({
-        id: randomUUID(),
-        ...duplicateKey,
-        property_id: booking.property_id,
-        host_id: booking.hostid,
-        reviewee_user_id: booking.hostid,
-        overall_rating: reviewData.overall_rating,
-        title: reviewData.title.trim(),
-        public_review: reviewData.public_review.trim(),
-        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-        verification_status: "UNVERIFIED",
-        publication_status: "UNPUBLISHED",
-        status: "DRAFT",
-        created_at: now,
-        updated_at: now,
-      }, categoryRatings);
+      return await this.repository.create(
+        {
+          id: randomUUID(),
+          ...duplicateKey,
+          property_id: booking.property_id,
+          host_id: booking.hostid,
+          reviewee_user_id: booking.hostid,
+          overall_rating: reviewData.overall_rating,
+          title: reviewData.title.trim(),
+          public_review: reviewData.public_review.trim(),
+          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          verification_status: "UNVERIFIED",
+          publication_status: "UNPUBLISHED",
+          status: "DRAFT",
+          created_at: now,
+          updated_at: now,
+        },
+        categoryRatings
+      );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
         throw new ConflictException("This reservation already has a review.");
@@ -107,7 +117,11 @@ export class ReviewService {
       throw new BadRequestException("A booking_id of up to 255 characters is required");
     }
 
-    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
+    if (
+      !Number.isInteger(reviewData.overall_rating) ||
+      reviewData.overall_rating < 1 ||
+      reviewData.overall_rating > 5
+    ) {
       throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
@@ -119,8 +133,13 @@ export class ReviewService {
     }
 
     const ratings = reviewData.category_ratings;
-    if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
-      Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
+    if (
+      ratings !== undefined &&
+      (!ratings ||
+        typeof ratings !== "object" ||
+        Array.isArray(ratings) ||
+        Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))
+    ) {
       throw new BadRequestException("category_ratings must contain ratings from 1 to 5");
     }
 
@@ -139,5 +158,4 @@ export class ReviewService {
     const text = value.trim();
     return text || null;
   }
-
 }
