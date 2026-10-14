@@ -144,21 +144,11 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       });
     });
 
-    it("should return 0 for unknown policy (safeguard)", () => {
+    it.each(["FakePolicy", null, undefined, ""])("should throw for unknown policy %p", (policy) => {
       const now = new Date();
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-      const percentage = getRefundPercentage("FakePolicy", futureDate, now);
-      expect(percentage).toBe(0);
-    });
-
-    it("should return 0 for null/undefined policy (safeguard)", () => {
-      const now = new Date();
-      const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-      expect(getRefundPercentage(null, futureDate, now)).toBe(0);
-      expect(getRefundPercentage(undefined, futureDate, now)).toBe(0);
-      expect(getRefundPercentage("", futureDate, now)).toBe(0);
+      expect(() => getRefundPercentage(policy, futureDate, now)).toThrow("Unsupported cancellation policy");
     });
 
     it("should throw error for invalid arrival date", () => {
@@ -396,6 +386,21 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundError: null,
       });
 
+      expect(result.statusCode).toBe(200);
+    });
+
+    it("records a refund error and refunds nothing when the booking has no known policy", async () => {
+      const bookingId = "booking_without_policy";
+      mockBooking({ id: bookingId, cancellation_policy: null });
+
+      const result = await controller.cancelBooking(bookingId, authEvent);
+
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectCancelRecord(bookingId, {
+        refundedAmount: 0,
+        stripeRefundId: null,
+        refundError: "Unsupported cancellation policy: null",
+      });
       expect(result.statusCode).toBe(200);
     });
 

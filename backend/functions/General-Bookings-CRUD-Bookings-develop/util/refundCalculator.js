@@ -59,9 +59,10 @@ function getRefundPercentage(policy, arrivalDate, cancellationDate = new Date())
   const normalizedPolicy = normalizePolicy(policy);
   const tiers = REFUND_POLICIES[normalizedPolicy];
 
+  // Throw rather than default to 0%: the caller records the error on the booking, so a refund
+  // that could not be calculated stays visible instead of looking like a deliberate no-refund.
   if (!tiers) {
-    console.error(`Unknown cancellation policy: ${policy}. Defaulting to 0% refund.`);
-    return 0;
+    throw new Error(`Unsupported cancellation policy: ${policy}`);
   }
 
   const arrival = parseDate(arrivalDate, "arrivalDate");
