@@ -12,6 +12,7 @@ import { fetchTeamMembers } from '../../services/teamService';
 import { HOST_ASSIGNEE_ID, resolveAssigneeSelection } from '../utils/assigneeSelection';
 import {
     fetchChecklistItems,
+    fetchChecklistTemplates,
     createChecklistItem,
     updateChecklistItem,
     deleteChecklistItem,
@@ -50,6 +51,7 @@ const HostTasks = () => {
     const asHostId = taskContext === 'managed' ? managedHostId : null;
     const loadRequestRef = useRef(0);
     const checklistRequestRef = useRef(0);
+    const isApplyingChecklistTemplateRef = useRef(false);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -65,6 +67,7 @@ const HostTasks = () => {
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
+    const [checklistTemplates, setChecklistTemplates] = useState({});
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -167,6 +170,10 @@ const HostTasks = () => {
     useEffect(() => {
         fetchTeamMembers().then(setTeamMembers).catch(() => {});
     }, []);
+
+    useEffect(() => {
+        fetchChecklistTemplates().then(setChecklistTemplates).catch(() => {});
+    }, []);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -266,7 +273,9 @@ const HostTasks = () => {
             }
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
-            
+
+            await applyChecklistTemplateIfEmpty(created.id, created.type, 0);
+
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
                 created = { ...created, status: 'Overdue', priority: 'Urgent' };
@@ -371,6 +380,24 @@ const HostTasks = () => {
         }
     };
 
+    const applyChecklistTemplateIfEmpty = async (taskId, type, currentItemCount) => {
+        const template = checklistTemplates[type];
+        if (!template || template.length === 0 || currentItemCount > 0 || isApplyingChecklistTemplateRef.current) return [];
+
+        isApplyingChecklistTemplateRef.current = true;
+        const created = [];
+        try {
+            for (const item of template) {
+                created.push(await createChecklistItem(taskId, item));
+            }
+        } catch (error) {
+            toast.error(error.message || "Error applying the checklist template");
+        } finally {
+            isApplyingChecklistTemplateRef.current = false;
+        }
+        return created;
+    };
+
     const loadChecklistItems = (taskId) => {
         const requestId = ++checklistRequestRef.current;
         setChecklistLoadError(null);
@@ -406,6 +433,13 @@ const HostTasks = () => {
     const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'type' && viewingTask) {
+            applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length)
+                .then(created => {
+                    if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
+                });
+        }
     };
 
     const closeTaskDetails = () => {
