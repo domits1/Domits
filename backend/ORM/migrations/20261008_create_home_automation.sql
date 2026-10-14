@@ -145,6 +145,18 @@ INSERT INTO test.access_credential (id, integration_account_id, booking_id, prop
 VALUES ('aaaaaaaa-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000007',
         'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
 ON CONFLICT DO NOTHING;
+INSERT INTO test.home_automation_device (id, integration_account_id, provider_device_id, property_id, device_type, status, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000002', 'smoke-device',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'LOCK', 'ACTIVE', 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
+INSERT INTO test.access_credential (id, integration_account_id, booking_id, property_id, device_id, provider_credential_id, credential_type, valid_from, valid_until, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-00000000000c', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-00000000000a',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-credential', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
+INSERT INTO test.access_credential (id, integration_account_id, booking_id, property_id, device_id, provider_credential_id, credential_type, valid_from, valid_until, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-00000000000d', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-00000000000b',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-credential', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
 SELECT count(*) AS should_be_one, min(status) AS default_status
 FROM test.access_credential
 WHERE booking_id = 'aaaaaaaa-0000-4000-8000-000000000005';
@@ -152,6 +164,14 @@ SELECT count(*) AS should_be_two
 FROM test.access_credential
 WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
   AND provider_credential_id IS NULL;
+SELECT count(*) AS device_should_be_one
+FROM test.home_automation_device
+WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
+  AND provider_device_id = 'smoke-device';
+SELECT count(*) AS provider_credential_should_be_one
+FROM test.access_credential
+WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
+  AND provider_credential_id = 'smoke-credential';
 ROLLBACK;
 
 BEGIN;
@@ -170,6 +190,18 @@ INSERT INTO main.access_credential (id, integration_account_id, booking_id, prop
 VALUES ('aaaaaaaa-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000007',
         'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
 ON CONFLICT DO NOTHING;
+INSERT INTO main.home_automation_device (id, integration_account_id, provider_device_id, property_id, device_type, status, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000002', 'smoke-device',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'LOCK', 'ACTIVE', 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
+INSERT INTO main.access_credential (id, integration_account_id, booking_id, property_id, device_id, provider_credential_id, credential_type, valid_from, valid_until, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-00000000000c', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-00000000000a',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-credential', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
+INSERT INTO main.access_credential (id, integration_account_id, booking_id, property_id, device_id, provider_credential_id, credential_type, valid_from, valid_until, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-00000000000d', 'aaaaaaaa-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-00000000000b',
+        'aaaaaaaa-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-credential', 'PIN', 1790000000000, 1790086400000, 1790000000000, 1790000000000)
+ON CONFLICT DO NOTHING;
 SELECT count(*) AS should_be_one, min(status) AS default_status
 FROM main.access_credential
 WHERE booking_id = 'aaaaaaaa-0000-4000-8000-000000000005';
@@ -177,9 +209,21 @@ SELECT count(*) AS should_be_two
 FROM main.access_credential
 WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
   AND provider_credential_id IS NULL;
+SELECT count(*) AS device_should_be_one
+FROM main.home_automation_device
+WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
+  AND provider_device_id = 'smoke-device';
+SELECT count(*) AS provider_credential_should_be_one
+FROM main.access_credential
+WHERE integration_account_id = 'aaaaaaaa-0000-4000-8000-000000000002'
+  AND provider_credential_id = 'smoke-credential';
 ROLLBACK;
 
-SELECT 'test' AS schema_name, (SELECT count(*) FROM test.home_automation_device) AS devices_should_be_zero,
-       (SELECT count(*) FROM test.access_credential) AS credentials_should_be_zero
+WITH smoke_ids (id) AS (VALUES ('aaaaaaaa-0000-4000-8000-000000000001'), ('aaaaaaaa-0000-4000-8000-000000000004'), ('aaaaaaaa-0000-4000-8000-000000000006'), ('aaaaaaaa-0000-4000-8000-000000000008'), ('aaaaaaaa-0000-4000-8000-000000000009'), ('aaaaaaaa-0000-4000-8000-00000000000c'), ('aaaaaaaa-0000-4000-8000-00000000000d'))
+SELECT 'test' AS schema_name,
+       (SELECT count(*) FROM test.home_automation_device WHERE id IN (SELECT id FROM smoke_ids)) AS devices_should_be_zero,
+       (SELECT count(*) FROM test.access_credential WHERE id IN (SELECT id FROM smoke_ids)) AS credentials_should_be_zero
 UNION ALL
-SELECT 'main', (SELECT count(*) FROM main.home_automation_device), (SELECT count(*) FROM main.access_credential);
+SELECT 'main',
+       (SELECT count(*) FROM main.home_automation_device WHERE id IN (SELECT id FROM smoke_ids)),
+       (SELECT count(*) FROM main.access_credential WHERE id IN (SELECT id FROM smoke_ids));
