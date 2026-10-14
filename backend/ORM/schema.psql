@@ -483,6 +483,30 @@ CREATE TABLE IF NOT EXISTS main.property_ical_source (
 );
 CREATE INDEX ASYNC property_ical_source_property_idx ON main.property_ical_source (property_id);
 
+CREATE TABLE IF NOT EXISTS main.destination (
+  id VARCHAR(1024) PRIMARY KEY,
+  type VARCHAR(20) NOT NULL,
+  parent_id VARCHAR(1024) NULL,
+  slug VARCHAR(255) NOT NULL,
+  path VARCHAR(1024) NOT NULL,
+  display_name VARCHAR(255) NOT NULL,
+  country_code VARCHAR(2) NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC destination_path_unique ON main.destination (path);
+CREATE INDEX ASYNC destination_parent ON main.destination (parent_id);
+
+CREATE TABLE IF NOT EXISTS main.property_destination (
+  property_id VARCHAR(255) PRIMARY KEY,
+  destination_id VARCHAR(1024) NOT NULL,
+  source_country VARCHAR(255) NOT NULL,
+  source_city VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC property_destination_destination ON main.property_destination (destination_id);
+
 -- -----------------------------------------------------
 -- Table main.property_test_status
 -- -----------------------------------------------------

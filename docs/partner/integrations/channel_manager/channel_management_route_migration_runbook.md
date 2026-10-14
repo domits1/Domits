@@ -121,7 +121,6 @@ GET  /messages
 GET  /webhooks/whatsapp
 POST /webhooks/whatsapp
 all /integrations/whatsapp/... routes
-/integrations/*/ingest/messages
 GET  /integrations
 POST /integrations
 PATCH /integrations/{id}

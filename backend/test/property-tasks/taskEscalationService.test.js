@@ -5,7 +5,7 @@ jest.mock("@aws-sdk/client-lambda", () => ({
     InvokeCommand: jest.fn().mockImplementation((input) => input),
 }));
 
-const { getHostEmailById, sendTaskEscalationEmail } = require("../../functions/property-tasks/business/service/taskEscalationService.js");
+const { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } = require("../../functions/property-tasks/business/service/taskEscalationService.js");
 
 const encodePayload = (body) => Buffer.from(JSON.stringify(body));
 
@@ -46,6 +46,48 @@ describe("getHostEmailById", () => {
         });
 
         await expect(getHostEmailById("host-1")).rejects.toThrow(/no email found/);
+    });
+});
+
+describe("getAssigneeEmailById", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("returns the assignee's email from a well-formed host-team response", async () => {
+        mockSend.mockResolvedValue({
+            Payload: encodePayload({ statusCode: 200, body: JSON.stringify({ email: "assignee@example.com" }) }),
+        });
+
+        await expect(getAssigneeEmailById("member-1")).resolves.toBe("assignee@example.com");
+    });
+
+    it("throws when host-team returns a FunctionError", async () => {
+        mockSend.mockResolvedValue({ FunctionError: "Unhandled", Payload: encodePayload({}) });
+
+        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+    });
+
+    it("throws when host-team responds with a non-200 status", async () => {
+        mockSend.mockResolvedValue({
+            Payload: encodePayload({ statusCode: 404, body: JSON.stringify({ message: "Team member not found" }) }),
+        });
+
+        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+    });
+
+    it("throws when the response body is malformed", async () => {
+        mockSend.mockResolvedValue({ Payload: encodePayload({ statusCode: 200, body: "not valid json" }) });
+
+        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+    });
+
+    it("throws when no email is present in the response", async () => {
+        mockSend.mockResolvedValue({
+            Payload: encodePayload({ statusCode: 200, body: JSON.stringify({}) }),
+        });
+
+        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/no email found/);
     });
 });
 

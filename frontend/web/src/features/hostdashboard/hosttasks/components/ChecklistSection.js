@@ -23,7 +23,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
             <div className="attachments-header">
                 <label>Checklist</label>
                 {!loadError && requiredItems.length > 0 && (
-                    <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required done</span>
+                    <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required completed</span>
                 )}
             </div>
 
@@ -45,7 +45,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                                     onChange={() => onToggleChecked(item)}
                                 />
                                 <span className={item.isChecked ? 'checklist-item-done' : ''}>{item.title}</span>
-                                {item.isRequired && <span className="checklist-required-badge">Required</span>}
+                                {item.isRequired && <span className="checklist-required-badge">*</span>}
                             </label>
                             <button
                                 type="button"
@@ -62,13 +62,16 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
 
             {!loadError && (
                 <form className="checklist-add-form" onSubmit={handleAdd}>
-                    <input
-                        type="text"
-                        value={newItemTitle}
-                        onChange={(e) => setNewItemTitle(e.target.value)}
-                        placeholder="Add checklist item..."
-                        aria-label="New checklist item title"
-                    />
+                    <div className="checklist-add-row">
+                        <input
+                            type="text"
+                            value={newItemTitle}
+                            onChange={(e) => setNewItemTitle(e.target.value)}
+                            placeholder="Add checklist item..."
+                            aria-label="New checklist item title"
+                        />
+                        <button type="submit" className="checklist-add-btn">Add</button>
+                    </div>
                     <label className="checklist-required-toggle">
                         <input
                             type="checkbox"
@@ -77,7 +80,6 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                         />
                         Required
                     </label>
-                    <button type="submit" className="btn-text">Add</button>
                 </form>
             )}
         </div>

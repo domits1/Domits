@@ -458,6 +458,71 @@
     color: #333;
 }
 
+.checklist-section .checklist-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checklist-section .checklist-add-row input[type="text"] {
+    width: auto;
+    flex: 1;
+}
+
+.checklist-add-btn {
+    background-color: #1e7e34;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checklist-add-btn:hover {
+    background-color: #155724;
+    color: white;
+}
+
+.checklist-section .checklist-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.checklist-section .checklist-item-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+
+.checklist-remove-btn {
+    background-color: #f1f3f5;
+    color: #6c757d;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.checklist-remove-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.checklist-required-badge {
+    color: #dc3545;
+    font-weight: 700;
+    margin-left: 4px;
+}
+
 .btn-escalate {
     background-color: #e8590c;
     color: white;

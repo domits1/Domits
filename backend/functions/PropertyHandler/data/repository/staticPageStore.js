@@ -10,6 +10,7 @@ const BUCKET_ENV_NAME = "DIRECT_BOOKING_WEBSITE_SITES_BUCKET";
 const APP_SHELL_KEY = "index.html";
 const PAGE_CONTENT_TYPE = "text/html; charset=utf-8";
 const PAGE_CACHE_CONTROL = "public, max-age=300";
+const SITEMAP_CONTENT_TYPE = "application/xml; charset=utf-8";
 const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
 const PAGE_KEY_PREFIX = "sites/by-host/";
@@ -25,13 +26,22 @@ export const isStaticPageHostname = (hostname) => {
   );
 };
 
-export const buildStaticPageKey = (hostname) => {
+const requireKeyHostname = (hostname) => {
   if (!isStaticPageHostname(hostname)) {
     throw new TypeError("A static page key needs a lowercase hostname.");
   }
 
-  return `${PAGE_KEY_PREFIX}${hostname}${PAGE_KEY_SUFFIX}`;
+  return hostname;
 };
+
+export const buildStaticPageKey = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}${PAGE_KEY_SUFFIX}`;
+
+export const buildStaticSitemapKey = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}/sitemap.xml`;
+
+const buildSourceMetadata = (siteId, revision) => ({
+  "site-id": String(siteId),
+  ...(revision === undefined ? {} : { revision: String(revision) }),
+});
 
 const hostnameOfPageKey = (key) =>
   key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(PAGE_KEY_SUFFIX)
@@ -65,7 +75,20 @@ export class StaticPageStore {
         Body: html,
         ContentType: PAGE_CONTENT_TYPE,
         CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: { "site-id": String(siteId), revision: String(revision) },
+        Metadata: buildSourceMetadata(siteId, revision),
+      })
+    );
+  }
+
+  async putSitemap({ hostname, xml, siteId, revision }) {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: buildStaticSitemapKey(hostname),
+        Body: xml,
+        ContentType: SITEMAP_CONTENT_TYPE,
+        CacheControl: PAGE_CACHE_CONTROL,
+        Metadata: buildSourceMetadata(siteId, revision),
       })
     );
   }

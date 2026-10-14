@@ -3,6 +3,7 @@ import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectC
 import {
   StaticPageStore,
   buildStaticPageKey,
+  buildStaticSitemapKey,
 } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 
 const BUCKET = "sites-bucket-under-test";
@@ -178,5 +179,52 @@ describe("StaticPageStore", () => {
 
     await expect(buildStore(send).listPageHostnames()).rejects.toThrow("More than 20000 keys");
     expect(send).toHaveBeenCalledTimes(21);
+  });
+
+  it("writes the sitemap as xml next to the page of the same hostname, tagged with the site and revision", async () => {
+    const send = jest.fn(async () => ({}));
+    const sitemap = { hostname: "www.villasensual.nl", xml: "<urlset/>", siteId: "site-1", revision: 4 };
+
+    await buildStore(send).putSitemap(sitemap);
+
+    const [command] = send.mock.calls[0];
+    expect(command).toBeInstanceOf(PutObjectCommand);
+    expect(command.input).toEqual({
+      Bucket: BUCKET,
+      Key: "sites/by-host/www.villasensual.nl/sitemap.xml",
+      Body: "<urlset/>",
+      ContentType: "application/xml; charset=utf-8",
+      CacheControl: "public, max-age=300",
+      Metadata: { "site-id": "site-1", revision: "4" },
+    });
+  });
+
+  it("tags a sitemap written without a revision with the site only, never with the word undefined", async () => {
+    const send = jest.fn(async () => ({}));
+
+    await buildStore(send).putSitemap({ hostname: "www.villasensual.nl", xml: "<urlset/>", siteId: "site-1" });
+
+    expect(send.mock.calls[0][0].input.Metadata).toEqual({ "site-id": "site-1" });
+  });
+
+  it("refuses to write a sitemap under a key that is not a hostname key", async () => {
+    const send = jest.fn();
+
+    await expect(
+      buildStore(send).putSitemap({ hostname: "../sitemap.xml", xml: "<urlset/>", siteId: "site-1" })
+    ).rejects.toThrow(new TypeError("A static page key needs a lowercase hostname."));
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe("the key a sitemap is stored under", () => {
+  it("sits under the same hostname prefix as the page, so the writer policy already covers it", () => {
+    expect(buildStaticSitemapKey("www.villasensual.nl")).toBe("sites/by-host/www.villasensual.nl/sitemap.xml");
+  });
+
+  it.each([["Wellness.Direct.Domits.com"], ["../index.html"], [""]])("refuses %j like the page key", (hostname) => {
+    expect(() => buildStaticSitemapKey(hostname)).toThrow(
+      new TypeError("A static page key needs a lowercase hostname.")
+    );
   });
 });

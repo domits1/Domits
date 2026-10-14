@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { RemoteLockApiClient } from "../../functions/.shared/homeAutomation/providers/remotelock/remoteLockApiClient.js";
 import { RemoteLockApiError } from "../../functions/.shared/homeAutomation/providers/remotelock/remoteLockApiError.js";
 
@@ -145,6 +145,14 @@ describe("RemoteLockApiClient argument checks", () => {
     ["a date without a time", (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: "2026-10-12", endsAt: ENDS })],
     ["month 13", (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: "2026-13-12T15:00:00", endsAt: ENDS })],
     ["hour 25", (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: "2026-10-12T25:00:00", endsAt: ENDS })],
+    [
+      "a one-element array as the start",
+      (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: [STARTS], endsAt: ENDS }),
+    ],
+    [
+      "an object that stringifies to a valid start",
+      (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: { toString: () => STARTS }, endsAt: ENDS }),
+    ],
     ["an end equal to the start", (c) => c.createAccessGuest(TOKEN, { name: "n", startsAt: STARTS, endsAt: STARTS })],
     ["an end before the start", (c) => c.updateAccessGuest(TOKEN, "g", { startsAt: ENDS, endsAt: STARTS })],
     ["an update end with a Z", (c) => c.updateAccessGuest(TOKEN, "g", { startsAt: STARTS, endsAt: `${ENDS}Z` })],
@@ -207,6 +215,33 @@ describe("RemoteLockApiClient errors", () => {
     expect(error.message).toBe("RemoteLock listDevices failed with status 502.");
   });
 
+  // The body never resolves, so the call can only report the status if it never waits for or reads the body.
+  it.each([401, 403, 404, 422, 429, 500, 503])("never reads the body of a %i response", async (status) => {
+    const text = jest.fn(() => new Promise(() => {}));
+    const cancel = jest.fn().mockResolvedValue(undefined);
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status, headers: new Headers(), text, body: { cancel } });
+    const client = new RemoteLockApiClient({ fetchImpl, timeoutMs: 50, now: () => NOW });
+
+    const error = await client.listDevices(TOKEN).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(RemoteLockApiError);
+    expect(error.code).not.toBe("TIMEOUT");
+    expect(error.status).toBe(status);
+    expect(text).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("still reports the status when cancelling the error body fails", async () => {
+    const body = { cancel: jest.fn().mockRejectedValue(new Error("locked")) };
+    const { client } = clientFor({ ok: false, status: 401, headers: new Headers(), text: jest.fn(), body });
+
+    const error = await client.listDevices(TOKEN).catch((caught) => caught);
+
+    expect(error).toMatchObject({ code: "AUTH", status: 401 });
+  });
+
   it("reports a network failure as retryable, without the original message", async () => {
     const fetchImpl = jest.fn().mockRejectedValue(new Error(`ECONNRESET, pin ${PIN}`));
     const client = new RemoteLockApiClient({ fetchImpl });
@@ -251,6 +286,62 @@ describe("RemoteLockApiClient errors", () => {
     const error = await call(client).catch((caught) => caught);
 
     expect(error).toMatchObject({ code: "INVALID_RESPONSE", retryable: false });
+  });
+});
+
+describe("RemoteLockApiClient timeout timer", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it.each([
+    ["a success", reply(200, guest())],
+    ["an HTTP error", reply(500, {})],
+    ["a rate limit", reply(429, "")],
+    ["an unreadable success body", reply(200, "created")],
+  ])("leaves no timer running after %s", async (_label, response) => {
+    const { client } = clientFor(response);
+
+    await createGuest(client).catch(() => {});
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("leaves no timer running after a network failure", async () => {
+    const client = new RemoteLockApiClient({ fetchImpl: jest.fn().mockRejectedValue(new Error("down")) });
+
+    await createGuest(client).catch(() => {});
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("does not abort a finished request when the timeout passes", async () => {
+    const { client, fetchImpl } = clientFor(reply(200, guest()));
+
+    await createGuest(client);
+    jest.advanceTimersByTime(60_000);
+
+    expect(fetchImpl.mock.calls[0][1].signal.aborted).toBe(false);
+  });
+});
+
+describe("RemoteLockApiClient surface", () => {
+  it("exposes only the five named methods", () => {
+    expect(Object.getOwnPropertyNames(RemoteLockApiClient.prototype).sort()).toEqual([
+      "constructor",
+      "createAccessGuest",
+      "deactivateAccessGuest",
+      "grantAccess",
+      "listDevices",
+      "updateAccessGuest",
+    ]);
+  });
+
+  it("has no own property, so the fetch function and the base URL cannot be reached", () => {
+    const client = new RemoteLockApiClient({ fetchImpl: jest.fn() });
+
+    expect(Reflect.ownKeys(client)).toEqual([]);
+    expect(client.send).toBeUndefined();
+    expect(client.fetchImpl).toBeUndefined();
   });
 });
 

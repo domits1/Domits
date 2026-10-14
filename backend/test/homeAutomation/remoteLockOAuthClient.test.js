@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { inspect } from "node:util";
 import { RemoteLockOAuthClient } from "../../functions/.shared/homeAutomation/providers/remotelock/remoteLockOAuthClient.js";
 import { RemoteLockOAuthError } from "../../functions/.shared/homeAutomation/providers/remotelock/remoteLockOAuthError.js";
@@ -191,11 +191,12 @@ describe("RemoteLockOAuthClient token results", () => {
 
   it("takes the receive time after the body has been read", async () => {
     let clock = NOW;
-    const { client } = clientFor(reply(200, tokenBody()), { now: () => clock });
-    client.fetchImpl = jest.fn(async () => {
+    const response = reply(200, tokenBody());
+    response.text = jest.fn(async () => {
       clock += 5000;
-      return reply(200, tokenBody());
+      return JSON.stringify(tokenBody());
     });
+    const { client } = clientFor(response, { now: () => clock });
 
     const result = await client.refresh(REFRESH);
 
@@ -207,6 +208,17 @@ describe("RemoteLockOAuthClient token results", () => {
     const { client } = clientFor(reply(200, tokenBody({ token_type: undefined })));
 
     expect((await client.refresh(REFRESH)).tokenType).toBeNull();
+  });
+
+  it("revoke cancels the unread body of a successful response, to free the connection", async () => {
+    const cancel = jest.fn().mockResolvedValue(undefined);
+    const response = { ...reply(200, ""), body: { cancel } };
+    const { client } = clientFor(response);
+
+    await client.revoke(ACCESS);
+
+    expect(response.text).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 
   it("revoke resolves with nothing and never reads a successful body", async () => {
@@ -333,6 +345,150 @@ describe("RemoteLockOAuthClient errors", () => {
     const error = await client.refresh(REFRESH).catch((caught) => caught);
 
     expect(error).toMatchObject({ code: "INVALID_RESPONSE", status: 200, retryable: false });
+  });
+});
+
+// The body never resolves, so a call can only report the status if it does not wait on a body it does not need.
+const stalled = (status) => {
+  const text = jest.fn(() => new Promise(() => {}));
+  const cancel = jest.fn().mockResolvedValue(undefined);
+  return { response: { ok: false, status, text, body: { cancel } }, text, cancel };
+};
+
+describe("RemoteLockOAuthClient error bodies", () => {
+  it.each([
+    [307, "HTTP"],
+    [403, "AUTH"],
+    [404, "HTTP"],
+    [422, "HTTP"],
+    [429, "RATE_LIMIT"],
+    [500, "HTTP"],
+    [503, "HTTP"],
+  ])("never reads the body of a %i response, so a stalled body cannot hide the status", async (status, code) => {
+    const { response, text, cancel } = stalled(status);
+    const { client } = clientFor(response, { timeoutMs: 50 });
+
+    const error = await client.refresh(REFRESH).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(RemoteLockOAuthError);
+    expect(error).toMatchObject({ status, code, oauthError: null });
+    expect(text).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([429, 500, 403])("ignores an oauth error name in the body of a %i response", async (status) => {
+    const response = reply(status, { error: "invalid_grant" });
+    const { client } = clientFor(response);
+
+    const error = await client.refresh(REFRESH).catch((caught) => caught);
+
+    expect(error.oauthError).toBeNull();
+    expect(response.text).not.toHaveBeenCalled();
+  });
+
+  it.each([400, 401])(
+    "keeps the real %i status with no oauth error when its body stalls, within the error body limit",
+    async (status) => {
+      jest.useFakeTimers();
+      try {
+        const { response } = stalled(status);
+        const { client } = clientFor(response, { timeoutMs: 5000, errorBodyTimeoutMs: 20 });
+        const pending = client.refresh(REFRESH).catch((caught) => caught);
+
+        await jest.advanceTimersByTimeAsync(20);
+        const error = await pending;
+
+        expect(error).toMatchObject({ status, code: "AUTH", retryable: false, oauthError: null });
+      } finally {
+        jest.useRealTimers();
+      }
+    }
+  );
+
+  it("keeps the real status when reading the 400 body fails", async () => {
+    const response = { ok: false, status: 400, text: jest.fn().mockRejectedValue(new Error(CLIENT_SECRET)) };
+    const { client } = clientFor(response);
+
+    const error = await client.refresh(REFRESH).catch((caught) => caught);
+
+    expect(error).toMatchObject({ status: 400, code: "AUTH", oauthError: null });
+    expect(dumpOf(error)).not.toContain(CLIENT_SECRET);
+  });
+
+  it("aborts the request when it gives up on a 400 body, to free the connection", async () => {
+    const { response } = stalled(400);
+    const { client, fetchImpl } = clientFor(response, { errorBodyTimeoutMs: 10 });
+
+    await client.refresh(REFRESH).catch(() => null);
+
+    expect(fetchImpl.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+});
+
+describe("RemoteLockOAuthClient timers", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  // No time is advanced, so a timer that was not cleared is still counted.
+  it.each([
+    ["a success", () => reply(200, tokenBody())],
+    ["a readable 400", () => reply(400, { error: "invalid_grant" })],
+    ["a stalled 500", () => stalled(500).response],
+    ["an unreadable success body", () => reply(200, "created")],
+  ])("leaves no timer running after %s", async (_label, makeResponse) => {
+    const { client } = clientFor(makeResponse());
+
+    await client.refresh(REFRESH).catch(() => null);
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("leaves no timer running after a stalled 400 gives up", async () => {
+    const { client } = clientFor(stalled(400).response, { errorBodyTimeoutMs: 100 });
+    const pending = client.refresh(REFRESH).catch(() => null);
+
+    await jest.advanceTimersByTimeAsync(100);
+    await pending;
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("leaves no timer running after a network failure", async () => {
+    const { client } = clientFor(reply(200, {}), { fetchImpl: jest.fn().mockRejectedValue(new Error("down")) });
+
+    await client.refresh(REFRESH).catch(() => null);
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("does not abort a finished request when the timeout passes", async () => {
+    const { client, fetchImpl } = clientFor(reply(200, tokenBody()));
+
+    await client.refresh(REFRESH);
+    jest.advanceTimersByTime(60_000);
+
+    expect(fetchImpl.mock.calls[0][1].signal.aborted).toBe(false);
+  });
+});
+
+describe("RemoteLockOAuthClient surface", () => {
+  it("exposes only the four named methods", () => {
+    expect(Object.getOwnPropertyNames(RemoteLockOAuthClient.prototype).sort()).toEqual([
+      "buildAuthorizeUrl",
+      "constructor",
+      "exchangeCode",
+      "refresh",
+      "revoke",
+    ]);
+  });
+
+  it("has no own property, so no setting or function can be read or replaced", () => {
+    const { client } = clientFor(reply(200, {}));
+
+    expect(Reflect.ownKeys(client)).toEqual([]);
+    ["clientId", "redirectUri", "baseUrl", "fetchImpl", "timeoutMs", "errorBodyTimeoutMs", "now", "post"].forEach(
+      (name) => expect(client[name]).toBeUndefined()
+    );
   });
 });
 
