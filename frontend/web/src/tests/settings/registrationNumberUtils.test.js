@@ -7,7 +7,6 @@ import {
 
 const UUID = "11111111-1111-4111-8111-111111111111";
 
-// Keep these two tables identical to backend/test/PropertyHandler/registrationNumberService.test.js.
 const PLACEHOLDER_CASES = [`AUTO-${UUID}`, `auto-${UUID}`, `Auto-${UUID.toUpperCase()}`, `  AUTO-${UUID}  `];
 const REAL_NUMBER_CASES = ["Auto-1234", "AUTO-123", "AUTO-", `AUTO-${UUID}-extra`, `NL-AUTO-${UUID}`, "NL-1234"];
 

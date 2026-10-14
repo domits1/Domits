@@ -63,15 +63,23 @@ class IntegrationPropertyRepository {
       .getMany();
   }
 
-  async listActiveByDomitsPropertyId(domitsPropertyId) {
+  async queryActivePropertiesWhere(whereClause, whereParams) {
     const client = await Database.getInstance();
     return client
       .getRepository(ChannelIntegrationProperty)
       .createQueryBuilder("p")
-      .where("p.domitsPropertyId = :d", { d: domitsPropertyId })
+      .where(whereClause, whereParams)
       .andWhere("p.status = :s", { s: "ACTIVE" })
       .orderBy("p.updatedAt", "DESC")
       .getMany();
+  }
+
+  async findByExternalPropertyId(externalPropertyId) {
+    return this.queryActivePropertiesWhere("p.externalPropertyId = :e", { e: externalPropertyId });
+  }
+
+  async listActiveByDomitsPropertyId(domitsPropertyId) {
+    return this.queryActivePropertiesWhere("p.domitsPropertyId = :d", { d: domitsPropertyId });
   }
 
   // Same "mapped to Channex" rule as the ARI outbox (channexAriOutboxWriter.isMappedToChannex).
