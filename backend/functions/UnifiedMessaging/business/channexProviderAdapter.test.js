@@ -71,4 +71,38 @@ describe("ChannexProviderAdapter.sendMessage", () => {
       adapter.sendMessage({ integrationAccountId: "integration-1", externalThreadId: "thread-1", content: "hi" })
     ).rejects.toThrow(expect.objectContaining({ code: "THREAD_NOT_FOUND", message: "Thread not found." }));
   });
+
+  test("rejects with CHANNEX_ATTACHMENTS_UNSUPPORTED when attachments are present, without calling the provider client", async () => {
+    const providerClient = { sendMessage: jest.fn() };
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: CREDENTIALS, providerClient });
+
+    await expect(
+      adapter.sendMessage({
+        integrationAccountId: "integration-1",
+        externalThreadId: "thread-1",
+        content: "hi",
+        attachments: [{ url: "https://example.com/a.png", type: "image" }],
+      })
+    ).rejects.toThrow(expect.objectContaining({ code: "CHANNEX_ATTACHMENTS_UNSUPPORTED" }));
+    expect(providerClient.sendMessage).not.toHaveBeenCalled();
+  });
+
+  test("an empty attachments array still sends normally, with no attachments", async () => {
+    const providerClient = {
+      sendMessage: jest.fn().mockResolvedValue({ success: true, providerMessageId: "msg-1" }),
+    };
+    const { adapter } = buildAdapter({ integration: INTEGRATION, credentials: CREDENTIALS, providerClient });
+
+    await adapter.sendMessage({
+      integrationAccountId: "integration-1",
+      externalThreadId: "thread-1",
+      content: "hi",
+      attachments: [],
+    });
+
+    expect(providerClient.sendMessage).toHaveBeenCalledWith(
+      { apiKey: "test-api-key" },
+      { externalThreadId: "thread-1", text: "hi" }
+    );
+  });
 });

@@ -19,7 +19,7 @@ export default class ChannexProviderAdapter {
     this.providerClient = providerClient;
   }
 
-  async sendMessage({ integrationAccountId, externalThreadId, content }) {
+  async sendMessage({ integrationAccountId, externalThreadId, content, attachments }) {
     const integration = await this.integrationAccounts.getById(integrationAccountId);
     if (!integration) {
       throw badRequest("Channex integration account not found", "CHANNEX_INTEGRATION_NOT_FOUND");
@@ -32,6 +32,10 @@ export default class ChannexProviderAdapter {
 
     if (!externalThreadId) {
       throw badRequest("Missing externalThreadId for Channex send", "CHANNEX_THREAD_ID_REQUIRED");
+    }
+
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      throw badRequest("Channex does not support sending attachments yet.", "CHANNEX_ATTACHMENTS_UNSUPPORTED");
     }
 
     const result = await this.providerClient.sendMessage(

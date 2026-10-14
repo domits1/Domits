@@ -34,6 +34,7 @@ jest.mock("./whatsappProviderAdapter.js", () => ({
 }));
 
 const MessageService = require("./messageService.js").default;
+const ChannexProviderAdapter = require("./channexProviderAdapter.js").default;
 
 const thread = buildThread;
 
@@ -44,6 +45,18 @@ const registeredTestProviderAdapter = () => ({
 const withTestProvider = (testProviderAdapter) => ({
   providerAdapters: { WHATSAPP: mockWhatsAppAdapterInstance, TEST_PROVIDER: testProviderAdapter },
 });
+
+const sendAndCaptureSavedRow = async (service) => {
+  mockMessageRepository.createMessage.mockClear();
+  const result = await service.sendMessage({ threadId: "thread-1", content: "hi" }, hostAuth);
+  const savedRow = mockMessageRepository.createMessage.mock.calls[0][0];
+  return { result, savedRow };
+};
+
+const expectRawTextAppearsNowhere = (result, savedRow, rawText) => {
+  expect(JSON.stringify(savedRow)).not.toContain(rawText);
+  expect(JSON.stringify(result)).not.toContain(rawText);
+};
 
 describe("MessageService outbound provider routing", () => {
   beforeEach(() => {
@@ -124,10 +137,17 @@ describe("MessageService outbound provider routing", () => {
         expect.objectContaining({
           deliveryStatus: "failed",
           errorCode: "WHATSAPP_SEND_FAILED",
-          errorMessage: "boom",
+          errorMessage: "This message could not be delivered.",
         })
       );
-      expect(result.response.providerResult).toEqual(describedFailure);
+      expect(result.response.providerResult).toEqual({
+        accepted: false,
+        mode: "live",
+        channel: "WHATSAPP",
+        recipientWhatsAppId: "guest-1",
+        messageType: "text",
+        error: "This message could not be delivered.",
+      });
       expect(result.statusCode).toBe(502);
     });
   });
@@ -158,8 +178,11 @@ describe("MessageService outbound provider routing", () => {
         thread({ id: "new-thread", platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
       );
       const testProviderAdapter = registeredTestProviderAdapter();
+      const integrationAccounts = {
+        getById: jest.fn().mockResolvedValue({ id: "integration-9", userId: "host-1" }),
+      };
 
-      const service = new MessageService(withTestProvider(testProviderAdapter));
+      const service = new MessageService({ ...withTestProvider(testProviderAdapter), integrationAccounts });
       const result = await service.sendMessage(
         {
           platform: "TEST_PROVIDER",
@@ -206,7 +229,7 @@ describe("MessageService outbound provider routing", () => {
         expect.objectContaining({
           deliveryStatus: "failed",
           errorCode: "TEST_PROVIDER_SEND_FAILED",
-          errorMessage: "provider unreachable",
+          errorMessage: "This message could not be delivered.",
         })
       );
       // toEqual (not objectContaining) proves the fallback shape has no WhatsApp-only
@@ -215,14 +238,12 @@ describe("MessageService outbound provider routing", () => {
         accepted: false,
         channel: "TEST_PROVIDER",
         recipientId: "guest-1",
-        error: "provider unreachable",
+        error: "This message could not be delivered.",
       });
       expect(result.statusCode).toBe(502);
     });
   });
 
-  // The Channex outbound send needs the Channex message_thread_id, which lives on the
-  // thread as externalThreadId; it must reach the adapter alongside the args it gets today.
   describe("forwards externalThreadId to the adapter for an existing external thread", () => {
     test("includes externalThreadId when sending on an existing WhatsApp thread, alongside today's args", async () => {
       mockThreadRepository.getThreadById.mockResolvedValue(
@@ -297,6 +318,115 @@ describe("MessageService outbound provider routing", () => {
       expect(mockThreadRepository.upsertExternalThread).not.toHaveBeenCalled();
       expect(mockThreadRepository.createThread).not.toHaveBeenCalled();
       expect(mockThreadRepository.findThread).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("CHANNEX attachments are rejected, not silently dropped", () => {
+    test("a CHANNEX send with attachments is saved with deliveryStatus failed and errorCode CHANNEX_ATTACHMENTS_UNSUPPORTED", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "CHANNEX", integrationAccountId: "integration-1", externalThreadId: "channex-thread-1" })
+      );
+      const integrationAccounts = {
+        getById: jest.fn().mockResolvedValue({ id: "integration-1", userId: "host-1", credentialsRef: "secret-ref-1" }),
+      };
+      const credentialStore = { readSecretOrNull: jest.fn().mockResolvedValue({ apiKey: "test-api-key" }) };
+      const providerClient = {
+        sendMessage: jest.fn().mockResolvedValue({ success: true, providerMessageId: "msg-1" }),
+      };
+      const channexAdapter = new ChannexProviderAdapter({ integrationAccounts, credentialStore, providerClient });
+      const attachments = [{ url: "https://example.com/a.png", type: "image" }];
+
+      const service = new MessageService({ providerAdapters: { CHANNEX: channexAdapter } });
+      const result = await service.sendMessage({ threadId: "thread-1", content: "", attachments }, hostAuth);
+
+      expect(providerClient.sendMessage).not.toHaveBeenCalled();
+      expect(mockMessageRepository.createMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ deliveryStatus: "failed", errorCode: "CHANNEX_ATTACHMENTS_UNSUPPORTED" })
+      );
+      expect(result.statusCode).toBe(502);
+    });
+  });
+
+  describe("provider failure errorMessage is generic per code, never the raw provider text", () => {
+    test("the same known error code produces the same generic errorMessage for two different raw provider texts", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
+      );
+      const knownCode = "CHANNEX_RECONNECT_REQUIRED";
+      const rawTextA = "raw detail A";
+      const rawTextB = "a totally different raw detail B";
+
+      const adapterA = {
+        sendMessage: jest.fn().mockRejectedValue(Object.assign(new Error(rawTextA), { code: knownCode })),
+      };
+      const serviceA = new MessageService(withTestProvider(adapterA));
+      const { result: resultA, savedRow: savedRowA } = await sendAndCaptureSavedRow(serviceA);
+
+      const adapterB = {
+        sendMessage: jest.fn().mockRejectedValue(Object.assign(new Error(rawTextB), { code: knownCode })),
+      };
+      const serviceB = new MessageService(withTestProvider(adapterB));
+      const { result: resultB, savedRow: savedRowB } = await sendAndCaptureSavedRow(serviceB);
+
+      expect(savedRowA.errorCode).toBe(knownCode);
+      expect(savedRowB.errorCode).toBe(knownCode);
+      expect(savedRowA.errorMessage).toBe(savedRowB.errorMessage);
+      expectRawTextAppearsNowhere(resultA, savedRowA, rawTextA);
+      expectRawTextAppearsNowhere(resultB, savedRowB, rawTextB);
+    });
+
+    test("an unknown error code falls back to one generic default errorMessage, not the raw provider text", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "TEST_PROVIDER", integrationAccountId: "integration-9", externalThreadId: "ext-9" })
+      );
+      const rawText = "some unmapped raw provider detail";
+      const testProviderAdapter = {
+        sendMessage: jest.fn().mockRejectedValue(Object.assign(new Error(rawText), { code: "SOME_UNMAPPED_CODE" })),
+      };
+
+      const service = new MessageService(withTestProvider(testProviderAdapter));
+      const { result, savedRow } = await sendAndCaptureSavedRow(service);
+
+      expect(savedRow.errorCode).toBe("SOME_UNMAPPED_CODE");
+      expectRawTextAppearsNowhere(result, savedRow, rawText);
+    });
+
+    test("WhatsApp failure: the raw provider error text appears nowhere in the saved row or the returned result", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "WHATSAPP", integrationAccountId: "integration-1", externalThreadId: "wa-1" })
+      );
+      const { default: RealWhatsAppProviderAdapter } = jest.requireActual("./whatsappProviderAdapter.js");
+      const realAdapter = new RealWhatsAppProviderAdapter();
+      const rawText = "WhatsApp rejected this message for a very specific raw reason";
+      realAdapter.sendMessage = jest
+        .fn()
+        .mockRejectedValue(Object.assign(new Error(rawText), { code: "WHATSAPP_SEND_FAILED" }));
+
+      const service = new MessageService({ providerAdapters: { WHATSAPP: realAdapter } });
+      const { result, savedRow } = await sendAndCaptureSavedRow(service);
+
+      expect(savedRow.errorCode).toBe("WHATSAPP_SEND_FAILED");
+      expectRawTextAppearsNowhere(result, savedRow, rawText);
+    });
+
+    test("WhatsApp failure: raw provider details nested in error.details appear nowhere in the saved row or the returned result", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        thread({ platform: "WHATSAPP", integrationAccountId: "integration-1", externalThreadId: "wa-1" })
+      );
+      const { default: RealWhatsAppProviderAdapter } = jest.requireActual("./whatsappProviderAdapter.js");
+      const realAdapter = new RealWhatsAppProviderAdapter();
+      const rawMetaText = "some very specific raw Meta API diagnostic text";
+      const sendError = Object.assign(new Error("WhatsApp send failed"), {
+        code: "WHATSAPP_SEND_FAILED",
+        details: { error: { message: rawMetaText } },
+      });
+      realAdapter.sendMessage = jest.fn().mockRejectedValue(sendError);
+
+      const service = new MessageService({ providerAdapters: { WHATSAPP: realAdapter } });
+      const { result, savedRow } = await sendAndCaptureSavedRow(service);
+
+      expect(savedRow.errorCode).toBe("WHATSAPP_SEND_FAILED");
+      expectRawTextAppearsNowhere(result, savedRow, rawMetaText);
     });
   });
 });
