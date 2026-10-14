@@ -59,16 +59,19 @@ function isPageKeyRequest(uri) {
   return decoded.indexOf(PAGE_KEY_PREFIX) === 0;
 }
 
-function robotsResponse(host) {
-  return {
+function robotsResponse(host, method) {
+  var response = {
     statusCode: 200,
     statusDescription: "OK",
     headers: {
       "content-type": { value: "text/plain; charset=utf-8" },
       "cache-control": { value: "public, max-age=300" },
     },
-    body: { encoding: "text", data: "User-agent: *\nAllow: /\nSitemap: https://" + host + "/sitemap.xml\n" },
   };
+  if (method !== "HEAD") {
+    response.body = { encoding: "text", data: "User-agent: *\nAllow: /\nSitemap: https://" + host + "/sitemap.xml\n" };
+  }
+  return response;
 }
 
 function handler(event) {
@@ -93,7 +96,7 @@ function handler(event) {
       return request;
     }
     if (isRobots) {
-      return robotsResponse(host);
+      return robotsResponse(host, request.method);
     }
     var pageUri = PAGE_KEY_PREFIX + host + "/" + HOST_FILES[request.uri];
     if (pageUri.length + queryStringLength(request.querystring) >= MAX_URI_LENGTH) {
