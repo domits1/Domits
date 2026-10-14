@@ -15,6 +15,7 @@ const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const MAX_HOSTNAME_LENGTH = 253;
 const PAGE_KEY_PREFIX = "sites/by-host/";
 const PAGE_KEY_SUFFIX = "/index.html";
+const SITEMAP_KEY_SUFFIX = "/sitemap.xml";
 const MAX_SCANNED_KEYS = 20000;
 
 export const isStaticPageHostname = (hostname) => {
@@ -36,17 +37,18 @@ const requireKeyHostname = (hostname) => {
 
 export const buildStaticPageKey = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}${PAGE_KEY_SUFFIX}`;
 
-export const buildStaticSitemapKey = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}/sitemap.xml`;
+export const buildStaticSitemapKey = (hostname) =>
+  `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}${SITEMAP_KEY_SUFFIX}`;
 
 const buildSourceMetadata = (siteId, revision) => ({
   "site-id": String(siteId),
   ...(revision === undefined ? {} : { revision: String(revision) }),
 });
 
-const hostnameOfPageKey = (key) =>
-  key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(PAGE_KEY_SUFFIX)
-    ? key.slice(PAGE_KEY_PREFIX.length, -PAGE_KEY_SUFFIX.length)
-    : "";
+const hostnameOfKey = (key, suffix) =>
+  key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(suffix) ? key.slice(PAGE_KEY_PREFIX.length, -suffix.length) : "";
+
+const isSitemapKey = (key) => isStaticPageHostname(hostnameOfKey(key, SITEMAP_KEY_SUFFIX));
 
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
@@ -109,7 +111,10 @@ export class StaticPageStore {
       );
       for (const object of response?.Contents || []) {
         const key = String(object?.Key || "");
-        const hostname = hostnameOfPageKey(key);
+        if (isSitemapKey(key)) {
+          continue;
+        }
+        const hostname = hostnameOfKey(key, PAGE_KEY_SUFFIX);
         if (isStaticPageHostname(hostname)) {
           hostnames.push(hostname);
           etags[hostname] = String(object?.ETag || "");

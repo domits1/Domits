@@ -164,6 +164,25 @@ describe("StaticPageStore", () => {
     });
   });
 
+  it("skips the sitemap next to a page when it lists the stored pages, instead of reporting it as a stray key", async () => {
+    const send = jest.fn(async () => ({
+      Contents: [
+        { Key: "sites/by-host/a.direct.domits.com/index.html", ETag: '"e1"' },
+        { Key: "sites/by-host/a.direct.domits.com/sitemap.xml" },
+        { Key: "sites/by-host/b.direct.domits.com/sitemap.xml" },
+      ],
+      IsTruncated: false,
+    }));
+
+    const listed = await buildStore(send).listPageHostnames();
+
+    expect(listed).toEqual({
+      hostnames: ["a.direct.domits.com"],
+      etags: { "a.direct.domits.com": '"e1"' },
+      rejected: [],
+    });
+  });
+
   it("refuses to reconcile a prefix with more keys than it is willing to scan, whatever they are", async () => {
     let page = 0;
     const send = jest.fn(async () => {
