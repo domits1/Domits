@@ -255,11 +255,18 @@ export default class WhatsAppService {
     const signatureHeader = getSignatureHeader(event);
     const appSecret = process.env.WHATSAPP_APP_SECRET || "";
 
-    if (appSecret && signatureHeader) {
-      const expected = computeMetaSignature(appSecret, rawBody);
-      if (signatureHeader !== expected) {
-        return bad(401, { error: "Invalid WhatsApp signature" });
-      }
+    if (!appSecret || !signatureHeader) {
+      return bad(401, { error: "Invalid WhatsApp signature" });
+    }
+
+    const expectedBuffer = Buffer.from(computeMetaSignature(appSecret, rawBody));
+    const signatureBuffer = Buffer.from(signatureHeader);
+
+    if (
+      expectedBuffer.length !== signatureBuffer.length ||
+      !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
+      return bad(401, { error: "Invalid WhatsApp signature" });
     }
 
     const normalized = await this.normalizeWebhookPayload(body);

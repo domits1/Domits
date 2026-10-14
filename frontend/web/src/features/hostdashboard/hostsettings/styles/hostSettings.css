@@ -717,6 +717,120 @@
     color: #9ca3af;
 }
 
+.pd-authenticator-setup-btn {
+    margin-left: auto;
+}
+
+.pd-authenticator-setup-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.pd-authenticator-row-error {
+    padding: 0 28px 12px;
+}
+
+.pd-authenticator-error {
+    margin: 0;
+}
+
+.pd-authenticator-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.pd-authenticator-qr {
+    display: block;
+    width: clamp(144px, 45vw, 192px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    image-rendering: pixelated;
+}
+
+.pd-authenticator-manual {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pd-authenticator-key {
+    align-self: flex-start;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+.pd-authenticator-code-input {
+    flex: none;
+    width: 100%;
+    max-width: 160px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.3em;
+}
+
+.pd-authenticator-success {
+    display: block;
+}
+
+.pd-authenticator-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.pd-authenticator-secondary-btn {
+    padding: 10px 22px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pd-authenticator-secondary-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+}
+
+.pd-authenticator-secondary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+    .pd-authenticator-setup-btn {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .pd-authenticator-row-error {
+        padding: 0 16px 12px;
+    }
+
+    .pd-authenticator-code-input {
+        max-width: none;
+    }
+
+    .pd-authenticator-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 /* Tablet: stack photo above fields before the layout gets too cramped */

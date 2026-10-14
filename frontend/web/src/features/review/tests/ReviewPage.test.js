@@ -10,7 +10,6 @@ import { createReview, requestReview, getEditableReview, updateReview } from "..
 import GuestReviews from "../../guestdashboard/GuestReviews";
 
 
-
 const mockNavigate = jest.fn();
 let mockSearch;
 

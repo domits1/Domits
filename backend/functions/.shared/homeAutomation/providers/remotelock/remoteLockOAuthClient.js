@@ -38,8 +38,19 @@ const parseJson = (rawText) => {
   }
 };
 
+// OAuth puts the error name in the body of these; they are the only error bodies that are read.
+const ERROR_NAME_STATUSES = new Set([400, 401]);
+
+// Frees the connection of a response whose body is not wanted, without reading it.
+const discardBody = (response) => {
+  response.body?.cancel?.()?.catch?.(() => {});
+};
+
 // Contract: every POST sends client_id and client_secret in the form body, never in a URL. A failed call throws
 // a RemoteLockOAuthError, never the response body; only an allowlisted "error" name survives, as oauthError.
+// The status decides the error. The body of an error response is read only for 400 and 401, where OAuth puts the
+// error name, under its own short limit: a body that stalls costs the name, never the real status. Every other
+// error body is cancelled unread.
 // AUTH (400/401/403) is not retryable, RATE_LIMIT (429) and 5xx are; TIMEOUT and NETWORK are retryable too: a
 // request that never reached RemoteLock can be retried, and if it did and the token rotated, the old token is
 // already dead, so a retry does not make it worse. The token provider decides the real policy.
@@ -48,7 +59,14 @@ const parseJson = (rawText) => {
 // AUTH errors (invalid_client, invalid_request, ...) point to a wrong Domits app secret or a bug, and would hit
 // every host at once. A redirect (3xx) is never followed; it is an HTTP error and not retryable.
 export class RemoteLockOAuthClient {
+  #clientId;
   #clientSecret;
+  #redirectUri;
+  #baseUrl;
+  #fetchImpl;
+  #timeoutMs;
+  #errorBodyTimeoutMs;
+  #now;
 
   constructor({
     clientId,
@@ -57,22 +75,24 @@ export class RemoteLockOAuthClient {
     baseUrl = REMOTELOCK_OAUTH_BASE_URL,
     fetchImpl = fetch,
     timeoutMs = 10000,
+    errorBodyTimeoutMs = 2000,
     now = Date.now,
   } = {}) {
-    this.clientId = requireText(clientId, "clientId");
+    this.#clientId = requireText(clientId, "clientId");
     this.#clientSecret = requireText(clientSecret, "clientSecret");
-    this.redirectUri = requireSecureUrl(redirectUri, "redirectUri");
-    this.baseUrl = requireSecureUrl(baseUrl, "baseUrl");
-    this.fetchImpl = fetchImpl;
-    this.timeoutMs = timeoutMs;
-    this.now = now;
+    this.#redirectUri = requireSecureUrl(redirectUri, "redirectUri");
+    this.#baseUrl = requireSecureUrl(baseUrl, "baseUrl");
+    this.#fetchImpl = fetchImpl;
+    this.#timeoutMs = timeoutMs;
+    this.#errorBodyTimeoutMs = errorBodyTimeoutMs;
+    this.#now = now;
   }
 
   buildAuthorizeUrl(state) {
-    const url = new URL("/oauth/authorize", this.baseUrl);
+    const url = new URL("/oauth/authorize", this.#baseUrl);
     url.search = new URLSearchParams({
-      client_id: this.clientId,
-      redirect_uri: this.redirectUri,
+      client_id: this.#clientId,
+      redirect_uri: this.#redirectUri,
       response_type: "code",
       state: requireText(state, "state"),
     }).toString();
@@ -80,27 +100,26 @@ export class RemoteLockOAuthClient {
   }
 
   async exchangeCode(code) {
-    return this.requestTokens("exchangeCode", {
+    return this.#requestTokens("exchangeCode", {
       grant_type: "authorization_code",
       code: requireText(code, "code"),
-      redirect_uri: this.redirectUri,
+      redirect_uri: this.#redirectUri,
     });
   }
 
   async refresh(refreshToken) {
-    return this.requestTokens("refresh", {
+    return this.#requestTokens("refresh", {
       grant_type: "refresh_token",
       refresh_token: requireText(refreshToken, "refreshToken"),
     });
   }
 
-  // Resolves with nothing. The body of a successful revoke is never read.
   async revoke(token) {
-    await this.post("revoke", "/oauth/revoke", { token: requireText(token, "token") }, { readsBody: false });
+    await this.#post("revoke", "/oauth/revoke", { token: requireText(token, "token") }, { readsBody: false });
   }
 
-  async requestTokens(operation, params) {
-    const { body, receivedAt, status } = await this.post(operation, "/oauth/token", params);
+  async #requestTokens(operation, params) {
+    const { body, receivedAt, status } = await this.#post(operation, "/oauth/token", params);
     const accessToken = nonEmptyString(body?.access_token);
     const refreshToken = nonEmptyString(body?.refresh_token);
     const expiresIn =
@@ -117,26 +136,25 @@ export class RemoteLockOAuthClient {
     };
   }
 
-  async post(operation, path, params, { readsBody = true } = {}) {
+  async #post(operation, path, params, { readsBody = true } = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), this.#timeoutMs);
     let response;
     let rawText = "";
     try {
-      response = await this.fetchImpl(new URL(path, this.baseUrl).toString(), {
+      response = await this.#fetchImpl(new URL(path, this.#baseUrl).toString(), {
         method: "POST",
         headers: FORM_HEADERS,
         // A redirect would re-send this body, with the client secret and a refresh token, to another address.
         redirect: "manual",
         body: new URLSearchParams({
-          client_id: this.clientId,
+          client_id: this.#clientId,
           client_secret: this.#clientSecret,
           ...params,
         }).toString(),
         signal: controller.signal,
       });
-      if (response.ok && !readsBody) return { body: null, receivedAt: this.now(), status: response.status };
-      rawText = await response.text();
+      if (response.ok && readsBody) rawText = await response.text();
     } catch {
       // The original error is dropped on purpose; see RemoteLockOAuthError.
       throw new RemoteLockOAuthError({
@@ -147,11 +165,22 @@ export class RemoteLockOAuthClient {
     } finally {
       clearTimeout(timer);
     }
-    const receivedAt = this.now();
     const { status } = response;
 
-    if (!response.ok) throw this.errorForStatus(operation, status, rawText);
+    if (!response.ok) {
+      let oauthError = null;
+      if (ERROR_NAME_STATUSES.has(status)) oauthError = await this.#readErrorName(response, controller);
+      else discardBody(response);
+      throw this.#errorForStatus(operation, status, oauthError);
+    }
 
+    // Taken after the body, so it includes the body read: RemoteLock counts expires_in from when it issued the token,
+    // which makes expiresAt slightly later than the real expiry. The token provider must refresh with a safety margin.
+    const receivedAt = this.#now();
+    if (!readsBody) {
+      discardBody(response);
+      return { body: null, receivedAt, status };
+    }
     const body = parseJson(rawText);
     if (body === null) {
       throw new RemoteLockOAuthError({ operation, code: CODE.INVALID_RESPONSE, status, retryable: false });
@@ -159,10 +188,28 @@ export class RemoteLockOAuthClient {
     return { body, receivedAt, status };
   }
 
-  // Only the "error" field of the body is looked at, and only an allowlisted value is kept.
-  errorForStatus(operation, status, rawText) {
-    const oauthError = allowedOAuthError(parseJson(rawText)?.error);
-    if (status === 400 || status === 401 || status === 403) {
+  // Only the "error" field is looked at, and only an allowlisted value is kept. The main timer is already
+  // cleared here, so this read has its own limit; giving up aborts the request, which frees the connection.
+  async #readErrorName(response, controller) {
+    let limit;
+    try {
+      const rawText = await Promise.race([
+        response.text(),
+        new Promise((_resolve, reject) => {
+          limit = setTimeout(() => reject(new Error("error body limit")), this.#errorBodyTimeoutMs);
+        }),
+      ]);
+      return allowedOAuthError(parseJson(rawText)?.error);
+    } catch {
+      controller.abort();
+      return null;
+    } finally {
+      clearTimeout(limit);
+    }
+  }
+
+  #errorForStatus(operation, status, oauthError) {
+    if (ERROR_NAME_STATUSES.has(status) || status === 403) {
       return new RemoteLockOAuthError({ operation, code: CODE.AUTH, status, retryable: false, oauthError });
     }
     if (status === 429) {

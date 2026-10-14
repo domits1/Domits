@@ -35,7 +35,6 @@ const ReviewPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-
   const bookingId = searchParams.get("bookingId") ?? searchParams.get("reservationId") ?? "";
   const reviewId = searchParams.get("reviewId") || "";
   const targetId = reviewId || bookingId;
