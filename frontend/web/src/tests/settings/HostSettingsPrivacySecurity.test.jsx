@@ -143,4 +143,32 @@ describe("HostSettingsPrivacySecurity page", () => {
         },
         15000
     );
+
+    test(
+        "a host turns off the authenticator app after confirming and the row turns Inactive",
+        async () => {
+            let totpPreferred = true;
+            Auth.getPreferredMFA.mockImplementation(async () => (totpPreferred ? "SOFTWARE_TOKEN_MFA" : "NOMFA"));
+            Auth.setPreferredMFA.mockImplementation(async (_user, method) => {
+                totpPreferred = method !== "NOMFA";
+                return "SUCCESS";
+            });
+            renderPage();
+
+            const authenticatorRow = await screen.findByRole("group", { name: "Authenticator app" });
+            expect(await within(authenticatorRow).findByText("Active")).toBeInTheDocument();
+
+            await userEvent.click(within(authenticatorRow).getByRole("button", { name: "Turn off" }));
+            expect(screen.getByText("Turn off the authenticator app?")).toBeInTheDocument();
+            expect(Auth.setPreferredMFA).not.toHaveBeenCalled();
+
+            await userEvent.click(screen.getByRole("button", { name: "Turn off" }));
+
+            expect(await within(authenticatorRow).findByText("Inactive")).toBeInTheDocument();
+            expect(Auth.setPreferredMFA).toHaveBeenCalledWith(MOCK_COGNITO_USER, "NOMFA");
+            expect(screen.getByText("Your authenticator app is turned off.")).toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: "Set up" })).not.toBeInTheDocument();
+        },
+        15000
+    );
 });
