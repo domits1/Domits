@@ -1433,7 +1433,7 @@
         "verified": "Geverifieerd",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-app",
-        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
         "loading": "Je authenticatiestatus wordt geladen...",
         "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
       },

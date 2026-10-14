@@ -1433,7 +1433,7 @@
         "verified": "Verificado",
         "sms": "SMS",
         "authenticatorApp": "Aplicación de autenticación",
-        "comingSoon": "Próximamente: inicio de sesión por SMS y aplicación de autenticación.",
+        "comingSoon": "Próximamente: inicio de sesión por SMS.",
         "loading": "Cargando tu estado de autenticación...",
         "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
       },
