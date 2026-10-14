@@ -1433,7 +1433,7 @@
         "verified": "Geverifieerd",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-app",
-        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
         "loading": "Je authenticatiestatus wordt geladen...",
         "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
       },
@@ -1654,6 +1654,7 @@
         "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
         "checkoutSuccess": "Je Elite-abonnement is actief.",
         "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
+        "checkoutStillPending": "We hebben nog geen bevestiging ontvangen. De betaling wordt mogelijk nog verwerkt. Vernieuw deze pagina over een moment en start geen nieuwe checkout.",
         "cardTitle": "Direct Booking-websiteabonnement",
         "cardSubtitle": "Essentials is gratis; Elite biedt geavanceerde websitefuncties.",
         "cardNote": "Kies en beheer het abonnement voor je website.",

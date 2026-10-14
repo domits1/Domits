@@ -4,6 +4,15 @@ import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/s
 const FALLBACK = { domain: "cliff-house-site-1.direct.domits.com", domainType: "FALLBACK", status: "DISABLED" };
 const CUSTOM = { domain: "www.cliffhouse.nl", domainType: "CUSTOM", status: "ACTIVE" };
 const WILDCARD_TENANT = { id: "dt_wildcard", domains: ["*.direct.domits.com", "developers.domits.com"] };
+const EMPTY_SITEMAP =
+  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>\n';
+const withdrawnPaths = (hostname) => [
+  `/sites/by-host/${hostname}/index.html`,
+  "/",
+  "/index.html",
+  `/sites/by-host/${hostname}/sitemap.xml`,
+  "/sitemap.xml",
+];
 
 const buildWithdrawal = ({
   tenants = [WILDCARD_TENANT],
@@ -11,7 +20,7 @@ const buildWithdrawal = ({
   domains = [FALLBACK, CUSTOM],
   distributionId = "E18DIST",
 } = {}) => {
-  const pageStore = { deletePage: jest.fn(async () => undefined) };
+  const pageStore = { deletePage: jest.fn(async () => undefined), putSitemap: jest.fn(async () => undefined) };
   const tenantRepository = {
     listTenantsForDistribution: jest.fn(async () => tenants),
     getTenantByDomain: jest.fn(async (domain) => tenantByDomain[domain] || null),
@@ -31,10 +40,40 @@ describe("StaticPageWithdrawal", () => {
     expect(pageStore.deletePage.mock.calls.map(([call]) => call.hostname)).toEqual([FALLBACK.domain, CUSTOM.domain]);
     expect(tenantRepository.listTenantsForDistribution).toHaveBeenCalledWith("E18DIST");
     expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths])).toEqual([
-      ["dt_wildcard", [`/sites/by-host/${FALLBACK.domain}/index.html`, "/", "/index.html"]],
-      ["dt_custom", [`/sites/by-host/${CUSTOM.domain}/index.html`, "/", "/index.html"]],
+      ["dt_wildcard", withdrawnPaths(FALLBACK.domain)],
+      ["dt_custom", withdrawnPaths(CUSTOM.domain)],
     ]);
     expect(result).toEqual({ siteId: "site-1", hostnames: [FALLBACK.domain, CUSTOM.domain], invalidationErrors: [] });
+  });
+
+  it("replaces the sitemap of every host with an empty one right after its page, so it lists nothing and stays valid", async () => {
+    const { withdrawal, pageStore } = buildWithdrawal();
+    const order = [];
+    pageStore.deletePage.mockImplementation(async ({ hostname }) => order.push(`delete ${hostname}`));
+    pageStore.putSitemap.mockImplementation(async ({ hostname }) => order.push(`sitemap ${hostname}`));
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] });
+
+    expect(order).toEqual([
+      `delete ${FALLBACK.domain}`,
+      `sitemap ${FALLBACK.domain}`,
+      `delete ${CUSTOM.domain}`,
+      `sitemap ${CUSTOM.domain}`,
+    ]);
+    expect(pageStore.putSitemap.mock.calls.map(([call]) => call)).toEqual([
+      { hostname: FALLBACK.domain, xml: EMPTY_SITEMAP, siteId: "site-1" },
+      { hostname: CUSTOM.domain, xml: EMPTY_SITEMAP, siteId: "site-1" },
+    ]);
+  });
+
+  it("stops at a sitemap write that fails and invalidates nothing, so the retry empties it again", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+    pageStore.putSitemap.mockRejectedValueOnce(new Error("SlowDown"));
+
+    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] })).rejects.toThrow("SlowDown");
+
+    expect(pageStore.deletePage).toHaveBeenCalledTimes(1);
+    expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
   });
 
   it("withdraws a site by its stored domains, read from the domain repository", async () => {
@@ -129,5 +168,44 @@ describe("StaticPageWithdrawal", () => {
     expect(result.invalidationErrors).toEqual([
       { hostname: FALLBACK.domain, message: "no tenant serves this hostname" },
     ]);
+  });
+
+  it("invalidates a domain only once when the site lists it twice", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [CUSTOM, { ...CUSTOM, status: "REMOVING" }] });
+
+    expect(pageStore.deletePage).toHaveBeenCalledTimes(1);
+    expect(tenantRepository.createInvalidation).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a batch, skipping kept and changed pages, carrying on past a key that fails, invalidating once per tenant", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+    const other = "other-site-2.direct.domits.com";
+    const third = "third-site-3.direct.domits.com";
+    const fourth = "fourth-site-4.direct.domits.com";
+    pageStore.deletePage.mockImplementation(async ({ hostname, etag }) => {
+      if (hostname === other) {
+        throw new Error("SlowDown");
+      }
+      return !(hostname === fourth && etag === '"old"');
+    });
+
+    const result = await withdrawal.removePages([FALLBACK.domain, other, third, fourth, CUSTOM.domain, "Bad Host"], {
+      keep: async (hostname) => hostname === CUSTOM.domain,
+      etags: { [fourth]: '"old"' },
+    });
+
+    expect(pageStore.deletePage).toHaveBeenCalledWith({ hostname: fourth, etag: '"old"' });
+    expect(result.removed).toEqual([FALLBACK.domain, third]);
+    expect(result.kept).toEqual([fourth, CUSTOM.domain]);
+    expect(result.failures).toEqual([
+      { hostname: other, message: "SlowDown" },
+      { hostname: "Bad Host", message: "A static page key needs a lowercase hostname." },
+    ]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths.length])).toEqual([
+      ["dt_wildcard", 7],
+    ]);
+    expect(result.invalidationErrors).toEqual([]);
   });
 });

@@ -125,6 +125,26 @@ export class StaticPageOutboxRepository {
     return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
   }
 
+  async listPagesBySiteIds(siteIds) {
+    const normalizedSiteIds = [...new Set((Array.isArray(siteIds) ? siteIds : []).map(requireSiteId))];
+    if (normalizedSiteIds.length === 0) {
+      return [];
+    }
+
+    const client = await Database.getInstance();
+    const tableName = outboxTableName(resolveSchemaName(client));
+
+    const rows = await client.query(
+      `SELECT
+        ${OUTBOX_SELECT_COLUMNS}
+      FROM ${tableName}
+      WHERE site_id = ANY($1)`,
+      [normalizedSiteIds]
+    );
+
+    return (Array.isArray(rows) ? rows : []).map(mapOutboxRow).filter(Boolean);
+  }
+
   async claimPage(siteId, revision, { now = Date.now() } = {}) {
     const normalizedSiteId = requireSiteId(siteId);
     const normalizedRevision = requireRevision(revision);

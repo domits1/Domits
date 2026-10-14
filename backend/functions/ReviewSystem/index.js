@@ -3,31 +3,66 @@ import responseHeaders from "./util/constant/responseHeader.json" with { type: "
 
 let controller;
 
+const routes = new Map([
+  ["/reviews", new Map([["GET", "getReviews"], ["POST", "createReview"]])],
+  ["/reviews/{id}", new Map([["GET", "getReviewById"], ["PATCH", "updateReview"], ["DELETE", "deleteReview"]])],
+  ["/properties/{propertyId}/reviews", new Map([["GET", "getPropertyReviews"]])],
+  ["/reviews/{id}/domits-private-feedback", new Map([["GET", "getPrivateFeedback"]])],
+  ["/reviews/{id}/response", new Map([
+    ["POST", "createReviewResponse"],
+    ["PATCH", "updateReviewResponse"],
+    ["DELETE", "deleteReviewResponse"],
+  ])],
+  ["/reviews/{id}/publish", new Map([["POST", "publishReview"]])],
+]);
+
+const headers = {
+  ...responseHeaders,
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+};
+
+const jsonResponse = (statusCode, message, extraHeaders = {}) => ({
+  statusCode,
+  headers: { ...headers, ...extraHeaders },
+  body: JSON.stringify({ message }),
+});
+
 export const handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: responseHeaders };
-  }
-
-  const publicPropertyRead = event.httpMethod === "GET" && event.resource === "/properties/{propertyId}/reviews";
-  const authenticatedOperation = (event.resource === "/reviews" && ["POST", "GET", "DELETE"].includes(event.httpMethod)) ||
-    (event.resource === "/reviews/{id}" && event.httpMethod === "DELETE");
-  if (!publicPropertyRead && !authenticatedOperation) {
-    return {
-      statusCode: 405,
-      headers: responseHeaders,
-      body: JSON.stringify({ message: "Method or resource not supported." }),
-    };
-  }
-
   try {
+    const method = event?.httpMethod;
+    const resourceRoutes = routes.get(event?.resource);
+
+    if (!resourceRoutes) return jsonResponse(404, "Route not found.");
+
+    const allowedMethods = [...resourceRoutes.keys(), "OPTIONS"].join(",");
+    if (method === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers: { ...headers, "Access-Control-Allow-Methods": allowedMethods },
+        body: "",
+      };
+    }
+
+    const action = resourceRoutes.get(method);
+    if (!action) {
+      return jsonResponse(405, "Method not supported for this resource.", { Allow: allowedMethods });
+    }
+
     controller ??= new Controller();
-    if (publicPropertyRead) return await controller.getPublicPropertyReviews(event);
-    return await (event.httpMethod === "POST" ? controller.createReview(event) : controller.manageReviews(event));
-  } catch {
+    
+    if (typeof controller[action] !== "function") {
+      console.error("ReviewSystem controller method is not implemented:", action);
+      return jsonResponse(500, "Internal Server Error");
+    }
+
+    const result = await controller[action](event);
     return {
-      statusCode: 500,
-      headers: responseHeaders,
-      body: JSON.stringify({ message: "Internal Server Error" }),
+      ...result,
+      headers: { ...result.headers, ...headers },
     };
+  } catch (error) {
+    console.error("ReviewSystem handler failed:", error);
+    return jsonResponse(500, "Internal Server Error");
   }
 };
