@@ -1,3 +1,5 @@
+import { Auth } from "aws-amplify";
+
 // Service to get accesstoken of loggedin user from localstorage
 export function getAccessToken() {
     const keys = Object.keys(localStorage).filter(
@@ -19,6 +21,11 @@ export function getAccessToken() {
 
     return keys.length === 1 ? localStorage.getItem(keys[0]) : null;
 
+    }
+
+    export async function getIdToken() {
+        const session = await Auth.currentSession();
+        return session.getIdToken().getJwtToken();
     }
 
     export function getCognitoUserId() {

@@ -493,6 +493,23 @@
   min-width: 0;
 }
 
+// Grid's default align-items: stretch matches a card's height to its row, which can be taller
+// than the card's own content — either because a row-mate is taller, or because
+// .channex-diagnostics-grid itself is taller than its natural content (page layout). Since each
+// card is itself display: grid, that extra height spreads into a gap between its header and its
+// content instead of sitting harmlessly below the card. Any card whose content can be much
+// shorter than its neighbours — an empty state, in particular — needs this to size to its own
+// content instead.
+.channex-diagnostics-card--align-top {
+  align-self: start;
+}
+
+// A standalone step (connect), not a side-by-side comparison with the mapping card next to it,
+// so it spans the full row instead of sharing one with a taller sibling.
+.channex-diagnostics-card--credentials {
+  grid-column: 1 / -1;
+}
+
 .channex-diagnostics-card-header {
   display: flex;
   align-items: flex-start;

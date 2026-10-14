@@ -11,9 +11,12 @@ export default function usePersonalDataSave({
     onSaveUserDateOfBirth,
     onSaveUserPlaceOfBirth,
     onSaveUserNationality,
+    onSaveUserTitle,
+    onSaveUserSex,
 }) {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState(false);
 
     const saveAll = async () => {
         const saves = [];
@@ -40,13 +43,41 @@ export default function usePersonalDataSave({
         if ((tempUser.nationality || "").trim() !== (user.nationality || "").trim()) {
             saves.push(onSaveUserNationality());
         }
+        if ((tempUser.title || "") !== (user.title || "")) {
+            saves.push(onSaveUserTitle());
+        }
+        if ((tempUser.sex || "") !== (user.sex || "")) {
+            saves.push(onSaveUserSex());
+        }
 
         setIsSaving(true);
-        await Promise.allSettled(saves);
+        setSaveError(false);
+        const results = await Promise.allSettled(saves);
         setIsSaving(false);
+
+        const hasFailure = results.some(
+            (result) => result.status === "rejected" || result.value === false
+        );
+
+        if (hasFailure) {
+            setSaveError(true);
+            setTimeout(() => setSaveError(false), 2500);
+            return;
+        }
+
+        // saveUserEmail returns "pending" (not true) when it only started email
+        // verification - that isn't a completed save, so don't claim "Saved!".
+        const hasPending = results.some(
+            (result) => result.status === "fulfilled" && result.value === "pending"
+        );
+
+        if (hasPending) {
+            return;
+        }
+
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
     };
 
-    return { saveAll, isSaving, saveSuccess };
+    return { saveAll, isSaving, saveSuccess, saveError };
 }

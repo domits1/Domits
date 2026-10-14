@@ -24,16 +24,8 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
   color: $accent-color;
   overflow: hidden;
-
-  &:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
 }
 
 .adr-donut-chart {

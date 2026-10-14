@@ -1,11 +1,11 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository, { isDomitsBookingThreadUniqueError } from "../data/threadRepository.js";
 import BookingRepository from "../data/bookingRepository.js";
-import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
+import { createDefaultProviderAdapters, resolveProviderAdapter } from "./providerAdapterRegistry.js";
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
 import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
 
-const isWhatsAppPayload = (payload) => payload.platform === "WHATSAPP";
+const isExternalProviderPayload = (payload) => Boolean(payload.platform) && payload.platform !== "DOMITS";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
 
 const buildExternalThreadPayload = (payload, senderId, recipientId) => ({
@@ -48,21 +48,15 @@ const normalizeThread = (thread) => {
   };
 };
 
-const buildWhatsAppFailureResult = (payload, recipientId, error) => ({
+const buildGenericProviderFailureResult = (payload, recipientId, error, platform) => ({
   accepted: false,
-  mode: "live",
-  channel: "WHATSAPP",
-  integrationAccountId: payload.integrationAccountId ?? null,
-  externalAccountId: null,
-  recipientWhatsAppId: recipientId,
-  messageType: Array.isArray(payload.attachments) && payload.attachments.length > 0 ? "media" : "text",
-  text: payload.content || "",
+  channel: platform,
+  recipientId,
   error: error?.message || String(error),
-  details: error?.details || null,
 });
 
 const buildStoredMetadata = (payload, providerResult) => {
-  if (!isWhatsAppPayload(payload)) {
+  if (!isExternalProviderPayload(payload)) {
     return payload.metadata;
   }
 
@@ -76,11 +70,11 @@ const buildStoredMetadata = (payload, providerResult) => {
 };
 
 class MessageService {
-  constructor({ realtimePublisher = publishRealtimeMessage } = {}) {
+  constructor({ realtimePublisher = publishRealtimeMessage, providerAdapters = createDefaultProviderAdapters() } = {}) {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
     this.bookingRepository = new BookingRepository();
-    this.whatsAppProviderAdapter = new WhatsAppProviderAdapter();
+    this.providerAdapters = providerAdapters;
     this.realtimePublisher = realtimePublisher;
   }
 
@@ -104,7 +98,7 @@ class MessageService {
     let threadId = payload.threadId || null;
     let thread = null;
     const shouldUpsertExternalThread =
-      isWhatsAppPayload(payload) && payload.integrationAccountId && payload.externalThreadId;
+      isExternalProviderPayload(payload) && payload.integrationAccountId && payload.externalThreadId;
 
     if (!threadId) {
       if (shouldUpsertExternalThread) {
@@ -161,6 +155,10 @@ class MessageService {
       return booking;
     }
 
+    if (thread?.propertyId && thread?.platform === "DOMITS") {
+      return null;
+    }
+
     const matches = await this.getMatchingLegacyBookings(thread, authenticatedUserId);
     if (matches.length === 0) {
       throw forbidden("This conversation is not connected to one of your reservations.");
@@ -209,9 +207,16 @@ class MessageService {
     }
   }
 
-  async sendWhatsAppMessage(payload, recipientId) {
+  assertSupportedProvider(payload) {
+    if (!isExternalProviderPayload(payload)) return;
+    resolveProviderAdapter(this.providerAdapters, payload.platform);
+  }
+
+  async sendViaProviderAdapter(payload, recipientId) {
+    const adapter = resolveProviderAdapter(this.providerAdapters, payload.platform);
+
     try {
-      const providerResult = await this.whatsAppProviderAdapter.sendMessage({
+      const providerResult = await adapter.sendMessage({
         integrationAccountId: payload.integrationAccountId,
         recipientId,
         content: payload.content,
@@ -226,12 +231,17 @@ class MessageService {
         errorMessage: null,
       };
     } catch (error) {
+      const providerResult =
+        typeof adapter.describeFailure === "function"
+          ? adapter.describeFailure(payload, recipientId, error)
+          : buildGenericProviderFailureResult(payload, recipientId, error, payload.platform);
+
       return {
-        providerResult: buildWhatsAppFailureResult(payload, recipientId, error),
+        providerResult,
         platformMessageId: payload.platformMessageId ?? null,
         deliveryStatus: "failed",
-        errorCode: error?.code || "WHATSAPP_SEND_FAILED",
-        errorMessage: error?.message || "WhatsApp send failed",
+        errorCode: error?.code || `${payload.platform}_SEND_FAILED`,
+        errorMessage: error?.message || `${payload.platform} send failed`,
       };
     }
   }
@@ -302,18 +312,40 @@ class MessageService {
     };
   }
 
-  resolveHostMessageContext(payload, authenticatedUser, senderId) {
+  async resolveHostMessageContext(payload, authenticatedUser, senderId) {
     const recipientId = payload.recipientId;
-
-    if (!authenticatedUser.isHost) {
-      throw badRequest("bookingId is required to start a guest conversation.");
-    }
 
     if (!recipientId || idsEqual(recipientId, senderId)) {
       throw badRequest("recipientId is required.");
     }
 
-    this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
+    if (authenticatedUser.isHost) {
+      this.assertConsistentOptionalId(payload.hostId, senderId, "hostId");
+      return {
+        senderId,
+        recipientId,
+        threadId: null,
+        resolvedPayload: {
+          ...payload,
+          senderId,
+          recipientId,
+          hostId: senderId,
+          guestId: payload.guestId || recipientId,
+          propertyId: payload.propertyId ?? null,
+          bookingId: null,
+          platform: payload.platform || "DOMITS",
+        },
+      };
+    }
+
+    if (!payload.propertyId) {
+      throw badRequest("propertyId is required to start a conversation without a booking.");
+    }
+    if (!(await this.bookingRepository.hostOwnsProperty(recipientId, payload.propertyId))) {
+      throw badRequest("propertyId does not belong to the specified host.");
+    }
+    this.assertConsistentOptionalId(payload.guestId, senderId, "guestId");
+    this.assertConsistentOptionalId(payload.hostId, recipientId, "hostId");
     return {
       senderId,
       recipientId,
@@ -322,9 +354,9 @@ class MessageService {
         ...payload,
         senderId,
         recipientId,
-        hostId: senderId,
-        guestId: payload.guestId || recipientId,
-        propertyId: payload.propertyId ?? null,
+        hostId: recipientId,
+        guestId: senderId,
+        propertyId: payload.propertyId,
         bookingId: null,
         platform: payload.platform || "DOMITS",
       },
@@ -342,7 +374,7 @@ class MessageService {
       return await this.resolveBookingMessageContext(payload, senderId);
     }
 
-    return this.resolveHostMessageContext(payload, authenticatedUser, senderId);
+    return await this.resolveHostMessageContext(payload, authenticatedUser, senderId);
   }
 
   async sendMessage(payload, authenticatedUser) {
@@ -355,18 +387,20 @@ class MessageService {
       authenticatedUser
     );
 
+    this.assertSupportedProvider(resolvedPayload);
+
     const { threadId: resolvedThreadId } = threadId
       ? { threadId }
       : await this.resolveThread(resolvedPayload, senderId, recipientId);
 
     let providerResult = null;
     let platformMessageId = resolvedPayload.platformMessageId ?? null;
-    let deliveryStatus = isWhatsAppPayload(resolvedPayload) ? "pending" : "delivered";
+    let deliveryStatus = isExternalProviderPayload(resolvedPayload) ? "pending" : "delivered";
     let errorCode = null;
     let errorMessage = null;
 
-    if (isWhatsAppPayload(resolvedPayload)) {
-      const sendResult = await this.sendWhatsAppMessage(resolvedPayload, recipientId);
+    if (isExternalProviderPayload(resolvedPayload)) {
+      const sendResult = await this.sendViaProviderAdapter(resolvedPayload, recipientId);
       providerResult = sendResult.providerResult;
       platformMessageId = sendResult.platformMessageId;
       deliveryStatus = sendResult.deliveryStatus;
@@ -387,7 +421,7 @@ class MessageService {
       deliveryStatus,
       direction: "OUTBOUND",
       externalCreatedAt: null,
-      externalSenderType: isWhatsAppPayload(resolvedPayload) ? "HOST" : null,
+      externalSenderType: isExternalProviderPayload(resolvedPayload) ? "HOST" : null,
       complianceStatus: null,
       errorCode,
       errorMessage,
@@ -522,6 +556,38 @@ class MessageService {
     return { statusCode: 201, response: { ...message, threadId, reused: false, diagnostic } };
   }
 
+  async markThreadRead(threadId, authenticatedUser) {
+    if (!threadId) throw badRequest("threadId is required.");
+    const thread = await this.threadRepository.getThreadById(threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+    const updated = await this.messageRepository.markThreadMessagesRead(threadId, authenticatedUser.userId);
+    return { statusCode: 200, response: { threadId, updated } };
+  }
+
+  async markThreadUnread(threadId, authenticatedUser) {
+    if (!threadId) throw badRequest("threadId is required.");
+    const thread = await this.threadRepository.getThreadById(threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+    const message = await this.messageRepository.getLatestIncomingMessage(threadId, authenticatedUser.userId);
+    if (!message) {
+      return { statusCode: 200, response: { threadId, updated: 0 } };
+    }
+    const updated = await this.messageRepository.markMessageUnread(message.id);
+    return { statusCode: 200, response: { threadId, updated } };
+  }
+
+  async closeThread(threadId, authenticatedUser) {
+    if (!threadId) throw badRequest("threadId is required.");
+    const thread = await this.threadRepository.getThreadById(threadId);
+    const access = await this.assertThreadAccess(thread, authenticatedUser);
+    if (access.role !== "host") throw forbidden("Only the host can close this conversation.");
+    if (access.thread.status === "CLOSED") {
+      return { statusCode: 200, response: { threadId, status: "CLOSED" } };
+    }
+    await this.threadRepository.updateThreadStatus(threadId, "CLOSED");
+    return { statusCode: 200, response: { threadId, status: "CLOSED" } };
+  }
+
   async getThreads(authenticatedUser) {
     const threads = await this.threadRepository.getThreadsForUser(authenticatedUser.userId);
     const visible = [];
@@ -536,9 +602,14 @@ class MessageService {
       }
     }
 
+    const unreadCounts = await this.messageRepository.getUnreadCountsForThreads(
+      visible.map((t) => t.id),
+      authenticatedUser.userId
+    );
+
     return {
       statusCode: 200,
-      response: visible,
+      response: visible.map((t) => ({ ...t, unreadCount: unreadCounts[t.id] || 0 })),
     };
   }
 

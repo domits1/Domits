@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ "acceptance" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
 
@@ -16,16 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v6.0.0
-      with:
-        node-version: 22
-        cache-dependency-path: frontend/web/package-lock.json
-
-    - name: Install dependencies
-      run: |
-        cd frontend/web
-        npm ci
+    - name: Setup frontend
+      uses: ./.github/actions/setup-frontend
 
     - name: Retieve aws-exports
       run: echo "$AWS_EXPORTS" > frontend/web/src/aws-exports.js

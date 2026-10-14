@@ -10,6 +10,12 @@ const DEFAULT_SYNC_BATCH_LIMIT = 500;
 const DEFAULT_SYNC_CONCURRENCY = 8;
 const DEFAULT_FETCH_TIMEOUT_MS = 10_000;
 
+const SYNC_OUTCOME = Object.freeze({
+  SYNCED: "synced",
+  SKIPPED: "skipped",
+  FAILED: "failed",
+});
+
 const isDueForSync = (lastSyncAt, cutoffMs) => {
   const rawValue = String(lastSyncAt || "").trim();
   if (!rawValue) {
@@ -55,19 +61,20 @@ export class Service {
 
     const syncResults = await runWithConcurrency(dueSources, config.concurrency, async (source) => {
       try {
-        await this.refreshSingleSource(source, config.fetchTimeoutMs);
-        return { sourceId: source.sourceId, propertyId: source.propertyId, ok: true };
+        const outcome = await this.refreshSingleSource(source, config.fetchTimeoutMs);
+        return { sourceId: source.sourceId, propertyId: source.propertyId, outcome };
       } catch (error) {
         console.error(
           `Ical-sync-scheduler source refresh failed: propertyId=${source?.propertyId} sourceId=${source?.sourceId}`,
           error?.message || error
         );
-        return { sourceId: source.sourceId, propertyId: source.propertyId, ok: false };
+        return { sourceId: source.sourceId, propertyId: source.propertyId, outcome: SYNC_OUTCOME.FAILED };
       }
     });
 
-    const succeeded = syncResults.filter((result) => result?.ok).length;
-    const failed = syncResults.length - succeeded;
+    const succeeded = syncResults.filter((result) => result?.outcome === SYNC_OUTCOME.SYNCED).length;
+    const skipped = syncResults.filter((result) => result?.outcome === SYNC_OUTCOME.SKIPPED).length;
+    const failed = syncResults.length - succeeded - skipped;
 
     return {
       ok: true,
@@ -80,6 +87,7 @@ export class Service {
       due: dueSources.length,
       synced: syncResults.length,
       succeeded,
+      skipped,
       failed,
       at: new Date(nowMs).toISOString(),
     };
@@ -90,7 +98,7 @@ export class Service {
     const sourceId = String(source?.sourceId || "").trim();
     const calendarUrl = String(source?.calendarUrl || "").trim();
     if (!propertyId || !sourceId || !calendarUrl) {
-      return;
+      return SYNC_OUTCOME.SKIPPED;
     }
 
     const { events, meta } = await this.retrieveFromExternalCalendar(calendarUrl, fetchTimeoutMs);
@@ -103,6 +111,7 @@ export class Service {
         meta,
       })
     );
+    return SYNC_OUTCOME.SYNCED;
   }
 
   async retrieveFromExternalCalendar(calendarUrl, timeoutMs) {

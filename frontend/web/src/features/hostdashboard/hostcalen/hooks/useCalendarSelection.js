@@ -26,6 +26,8 @@ const INHERIT_RESTRICTION_VALUE = "inherit";
 const TRUE_RESTRICTION_VALUE = "true";
 const FALSE_RESTRICTION_VALUE = "false";
 const EMPTY_PRICE_OVERRIDES = {};
+export const CALENDAR_SAVE_FAILED_MESSAGE =
+  "Your calendar change could not be saved. The calendar shows the saved values again.";
 
 const CALENDAR_RESTRICTION_FIELDS = [
   "stopSell",
@@ -318,6 +320,7 @@ export const useCalendarSelection = ({
   const [priceLabsIgnoredByPropertyId, setPriceLabsIgnoredByPropertyId] = useState({});
   const [restrictionOverrides, setRestrictionOverrides] = useState({});
   const [reloadKey, setReloadKey] = useState(0);
+  const [calendarSaveError, setCalendarSaveError] = useState("");
   const [selectionPriceInput, setSelectionPriceInput] = useState("");
   const [selectionPriceDirty, setSelectionPriceDirty] = useState(false);
   const [selectionRestrictionsForm, setSelectionRestrictionsForm] = useState(
@@ -332,6 +335,14 @@ export const useCalendarSelection = ({
 
   const markLocalOverrideTouched = () => {
     localOverrideVersionRef.current += 1;
+  };
+
+  // The calendar shows a change before the server confirms it, so a failed save has to
+  // reload the stored values; otherwise the host sees dates the server never saved.
+  const handleSaveFailure = (error) => {
+    console.error(error?.message || error);
+    setCalendarSaveError(CALENDAR_SAVE_FAILED_MESSAGE);
+    setReloadKey((key) => key + 1);
   };
 
   useEffect(() => {
@@ -356,6 +367,7 @@ export const useCalendarSelection = ({
       return false;
     }
 
+    setCalendarSaveError("");
     const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides`, {
       method: "PATCH",
       headers: {
@@ -708,6 +720,7 @@ export const useCalendarSelection = ({
     setSelectionRestrictionDirtyFields({});
     setPendingSelectionStartKey(null);
     setSelectedDateKeys([]);
+    setCalendarSaveError("");
     restrictionDraftSelectionKeyRef.current = "";
   }, [selectedPropertyId]);
 
@@ -776,9 +789,7 @@ export const useCalendarSelection = ({
       nextAvailabilityOverrides,
       selectedPropertyPriceOverrides,
       restrictionOverrides
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   const handleSelectionPriceChange = (nextValue) => {
@@ -812,9 +823,7 @@ export const useCalendarSelection = ({
       availabilityOverrides,
       nextPropertyPriceOverrides,
       restrictionOverrides
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   const removePriceLabsKeysAfterIgnore = (ignoredKeys) => {
@@ -853,9 +862,7 @@ export const useCalendarSelection = ({
       selectedPropertyPriceOverrides,
       restrictionOverrides,
       priceLabsIgnoredByKey
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   const handleApplyPriceLabsSuggestion = (dateKeys) => {
@@ -907,9 +914,7 @@ export const useCalendarSelection = ({
       nextPropertyPriceOverrides,
       restrictionOverrides,
       priceLabsIgnoredByKey
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   const handleUndoPriceLabsSuggestion = (dateKeys) => {
@@ -972,9 +977,7 @@ export const useCalendarSelection = ({
       nextPropertyPriceOverrides,
       restrictionOverrides,
       priceLabsIgnoredByKey
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   const handleSelectionRestrictionChange = (field, nextValue) => {
@@ -1044,9 +1047,7 @@ export const useCalendarSelection = ({
       availabilityOverrides,
       selectedPropertyPriceOverrides,
       nextRestrictionOverrides
-    ).catch((error) => {
-      console.error(error?.message || error);
-    });
+    ).catch(handleSaveFailure);
   };
 
   return {
@@ -1077,6 +1078,7 @@ export const useCalendarSelection = ({
     handleSelectionRestrictionChange,
     handleSaveSelectionRestrictions,
     resetSelectionState,
+    calendarSaveError,
     reloadOverrides: () => setReloadKey((k) => k + 1),
   };
 };

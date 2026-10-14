@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { LanguageContext } from "../../../context/LanguageContext";
 import LanguageIcon from "@mui/icons-material/Language";
 import HomeIcon from "@mui/icons-material/Home";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
@@ -14,6 +15,7 @@ import {
   DEFAULT_WEBSITE_TEMPLATE_ID,
   WEBSITE_TEMPLATE_OPTIONS,
   getWebsiteTemplateById,
+  getWebsiteTemplateCopy,
   isWebsiteTemplateBuilderEnabled,
 } from "./websiteTemplates";
 import WebsiteTemplatePreview from "./rendering/WebsiteTemplatePreview";
@@ -48,6 +50,9 @@ import {
   upsertWebsiteDraft,
 } from "./services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId } from "./services/websiteSiteService";
+import { formatPublishedAtLabel } from "./services/websiteListingChange";
+import { buildWebsiteDraftPreviewCacheKeyMap, resolveWebsiteDraftLiveSiteState } from "./services/websiteLiveSiteState";
+import WebsiteDomainPanel from "./domains/WebsiteDomainPanel";
 import { fetchWebsitePropertyDetails } from "./services/websitePropertyService";
 import { buildWebsiteTemplateModel } from "./rendering/buildWebsiteTemplateModel";
 import {
@@ -161,20 +166,20 @@ const getDraftPropertyId = (draft) => String(draft?.propertyId || "").trim();
 const getWebsiteDraftPreviewCacheKey = (draft) =>
   `${String(draft?.updatedAt || "").trim()}::${String(draft?.templateKey || "").trim()}`;
 
-const pruneWebsiteDraftPreviewModels = (previewModels, activePropertyIds) => {
-  let hasRemovedPreviewModel = false;
-  const nextPreviewModels = {};
+const keepActivePropertyEntries = (entriesByPropertyId, activePropertyIds) => {
+  let hasRemovedEntry = false;
+  const nextEntries = {};
 
-  Object.entries(previewModels || {}).forEach(([propertyId, previewModel]) => {
+  Object.entries(entriesByPropertyId || {}).forEach(([propertyId, entry]) => {
     if (activePropertyIds.has(propertyId)) {
-      nextPreviewModels[propertyId] = previewModel;
+      nextEntries[propertyId] = entry;
       return;
     }
 
-    hasRemovedPreviewModel = true;
+    hasRemovedEntry = true;
   });
 
-  return hasRemovedPreviewModel ? nextPreviewModels : previewModels;
+  return hasRemovedEntry ? nextEntries : entriesByPropertyId;
 };
 
 const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) => {
@@ -192,8 +197,8 @@ const pruneWebsiteDraftPreviewCacheKeys = (previewCacheKeys, activePropertyIds) 
 const buildWebsiteDraftPreviewModelMap = (previewEntries) =>
   Object.fromEntries(previewEntries.map(([propertyId, previewModel]) => [propertyId, previewModel]));
 
-const buildWebsiteDraftPreviewCacheKeyMap = (previewEntries) =>
-  Object.fromEntries(previewEntries.map(([propertyId, , previewCacheKey]) => [propertyId, previewCacheKey]));
+const buildWebsiteDraftLiveSiteStateMap = (previewEntries) =>
+  Object.fromEntries(previewEntries.map(([propertyId, , , liveSiteState]) => [propertyId, liveSiteState]));
 
 const buildImageVariantMap = (images) => {
   const imageVariantMap = new Map();
@@ -430,9 +435,20 @@ const buildDraftCardFallbackPreviewModel = (draft) => {
   return applyWebsiteDraftContentOverrides(themedModel, contentOverrides, draft.templateKey);
 };
 
-const buildWebsiteDraftPreviewModel = async (draft) => {
+const loadWebsiteDraftListingDetails = async (draft) => {
   try {
-    const propertyDetails = await fetchWebsitePropertyDetails(draft.propertyId);
+    return await fetchWebsitePropertyDetails(draft.propertyId);
+  } catch {
+    return null;
+  }
+};
+
+const buildWebsiteDraftPreviewModel = (draft, propertyDetails) => {
+  if (!propertyDetails) {
+    return buildDraftCardFallbackPreviewModel(draft);
+  }
+
+  try {
     const baseModel = buildWebsiteTemplateModel({
       propertyDetails,
       summaryProperty: null,
@@ -454,9 +470,11 @@ const buildWebsiteDraftPreviewModel = async (draft) => {
 
 const buildWebsiteDraftPreviewEntry = async (draft) => {
   const propertyId = getDraftPropertyId(draft);
-  const previewModel = await buildWebsiteDraftPreviewModel(draft);
+  const propertyDetails = await loadWebsiteDraftListingDetails(draft);
+  const previewModel = buildWebsiteDraftPreviewModel(draft, propertyDetails);
+  const liveSiteState = await resolveWebsiteDraftLiveSiteState(draft, propertyDetails);
   const previewCacheKey = getWebsiteDraftPreviewCacheKey(draft);
-  return [propertyId, previewModel, previewCacheKey];
+  return [propertyId, previewModel, previewCacheKey, liveSiteState];
 };
 
 function WebsiteDraftDeleteDialog({
@@ -591,6 +609,8 @@ WebsiteDraftDeleteDialog.propTypes = {
 };
 
 function WebsiteBuilderPage() {
+  const { language } = useContext(LanguageContext);
+  const templateCopy = getWebsiteTemplateCopy(language);
   const [workspaceTab, setWorkspaceTab] = useState(WORKSPACE_TAB_WEBSITES);
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
@@ -609,6 +629,7 @@ function WebsiteBuilderPage() {
   const [isLoadingWebsiteDrafts, setIsLoadingWebsiteDrafts] = useState(true);
   const [websiteDraftsError, setWebsiteDraftsError] = useState("");
   const [websiteDraftPreviewModels, setWebsiteDraftPreviewModels] = useState({});
+  const [websiteDraftLiveSiteStates, setWebsiteDraftLiveSiteStates] = useState({});
   const [isPersistingWebsiteDraft, setIsPersistingWebsiteDraft] = useState(false);
   const [persistWebsiteDraftError, setPersistWebsiteDraftError] = useState("");
   const [websiteDraftPendingDelete, setWebsiteDraftPendingDelete] = useState(null);
@@ -620,6 +641,9 @@ function WebsiteBuilderPage() {
   const websiteBuildAttemptRef = useRef(null);
   const websiteDraftPreviewCacheKeysRef = useRef({});
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialPropertyIdParam = String(searchParams.get("propertyId") || "").trim();
+  const hasAppliedInitialPropertyIdRef = useRef(false);
 
   const draftedPropertyIds = useMemo(
     () =>
@@ -681,6 +705,32 @@ function WebsiteBuilderPage() {
     void loadHostWebsiteDrafts();
   }, []);
 
+  // Pre-select the listing passed via ?propertyId= (e.g. from the Onboarding
+  // hub) once both the property list and the draft list have loaded, so we
+  // know whether it already has a draft. Applies once per page load only —
+  // deliberately does not re-run after the host builds a draft, which would
+  // otherwise yank them back to a tab they may have already left.
+  useEffect(() => {
+    if (hasAppliedInitialPropertyIdRef.current) return;
+    if (!initialPropertyIdParam) return;
+    if (isLoading || isLoadingWebsiteDrafts) return;
+
+    hasAppliedInitialPropertyIdRef.current = true;
+
+    const matchesKnownProperty = propertyOptions.some(
+      (option) => option.value === initialPropertyIdParam
+    );
+    if (!matchesKnownProperty) return;
+
+    if (draftedPropertyIds.has(initialPropertyIdParam)) {
+      // Already has a draft - the default "My websites" tab already shows it.
+      setWorkspaceTab(WORKSPACE_TAB_WEBSITES);
+    } else {
+      setWorkspaceTab(WORKSPACE_TAB_BUILDER);
+      setSelectedPropertyId(initialPropertyIdParam);
+    }
+  }, [initialPropertyIdParam, isLoading, isLoadingWebsiteDrafts, propertyOptions, draftedPropertyIds]);
+
   useEffect(() => {
     setSelectedPropertyId((currentPropertyId) => {
       if (!currentPropertyId) {
@@ -707,6 +757,7 @@ function WebsiteBuilderPage() {
         if (isMounted) {
           websiteDraftPreviewCacheKeysRef.current = {};
           setWebsiteDraftPreviewModels({});
+          setWebsiteDraftLiveSiteStates({});
         }
         return;
       }
@@ -722,7 +773,10 @@ function WebsiteBuilderPage() {
       );
       if (isMounted) {
         setWebsiteDraftPreviewModels((currentPreviewModels) =>
-          pruneWebsiteDraftPreviewModels(currentPreviewModels, activePropertyIds)
+          keepActivePropertyEntries(currentPreviewModels, activePropertyIds)
+        );
+        setWebsiteDraftLiveSiteStates((currentLiveSiteStates) =>
+          keepActivePropertyEntries(currentLiveSiteStates, activePropertyIds)
         );
       }
 
@@ -753,6 +807,10 @@ function WebsiteBuilderPage() {
         ...currentPreviewModels,
         ...buildWebsiteDraftPreviewModelMap(previewEntries),
       }));
+      setWebsiteDraftLiveSiteStates((currentLiveSiteStates) => ({
+        ...currentLiveSiteStates,
+        ...buildWebsiteDraftLiveSiteStateMap(previewEntries),
+      }));
     };
 
     void loadWebsiteDraftPreviewModels();
@@ -779,7 +837,7 @@ function WebsiteBuilderPage() {
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
-  const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
+  const selectedTemplate = getWebsiteTemplateById(selectedTemplateId, language);
   const selectedTemplateIsImplemented = isWebsiteTemplateImplemented(selectedTemplateId);
   const selectedTemplateIsBuilderEnabled = isWebsiteTemplateBuilderEnabled(selectedTemplateId);
   const selectedTemplateIsBuildable = selectedTemplateIsImplemented && selectedTemplateIsBuilderEnabled;
@@ -1201,7 +1259,13 @@ function WebsiteBuilderPage() {
       }
 
       globalThis.open(
-        buildPublishedWebsiteHref(liveDomain, siteId, liveDomainStatus),
+        buildPublishedWebsiteHref(
+          liveDomain,
+          siteId,
+          liveDomainStatus,
+          siteSummary?.site?.siteName,
+          siteSummary?.domains
+        ),
         "_blank",
         "noopener,noreferrer"
       );
@@ -1260,6 +1324,11 @@ function WebsiteBuilderPage() {
         const nextPreviewModels = { ...currentPreviewModels };
         delete nextPreviewModels[propertyId];
         return nextPreviewModels;
+      });
+      setWebsiteDraftLiveSiteStates((currentLiveSiteStates) => {
+        const nextLiveSiteStates = { ...currentLiveSiteStates };
+        delete nextLiveSiteStates[propertyId];
+        return nextLiveSiteStates;
       });
       setWebsiteDraftPendingDelete(null);
       setWebsiteDraftDeleteReasons([]);
@@ -1361,6 +1430,8 @@ function WebsiteBuilderPage() {
           const template = getWebsiteTemplateById(draft.templateKey);
           const templateName = template?.name || draft.templateKey || "Unknown template";
           const draftPreviewModel = websiteDraftPreviewModels[draft.propertyId] || null;
+          const draftLiveSiteState = websiteDraftLiveSiteStates[draft.propertyId] || null;
+          const draftPublishedAtLabel = formatPublishedAtLabel(draftLiveSiteState?.publishedAt);
           const draftDisplayTitle = getDraftDisplayTitle(draft, getDraftPublishedContentOverrides(draft));
 
           return (
@@ -1377,6 +1448,16 @@ function WebsiteBuilderPage() {
                     <span className={styles.metaText}>Template: {templateName}</span>
                     <span className={styles.metaText}>Updated: {formatDraftUpdatedAt(draft.updatedAt)}</span>
                   </div>
+
+                  {draftLiveSiteState?.isStale ? (
+                    <output className={styles.websiteDraftStaleNotice}>
+                      <strong>
+                        Your listing changed after the last publish
+                        {draftPublishedAtLabel ? ` (${draftPublishedAtLabel})` : ""}.
+                      </strong>{" "}
+                      Guests still see the older version. Open the editor and use &ldquo;Update live site&rdquo;.
+                    </output>
+                  ) : null}
 
                   <div className={styles.buttonRow}>
                     <button
@@ -1420,6 +1501,8 @@ function WebsiteBuilderPage() {
 
                 <span className={styles.statusPill}>{draft.status || "DRAFT"}</span>
               </div>
+
+              <WebsiteDomainPanel propertyId={String(draft.propertyId || "")} />
             </article>
           );
         })}
@@ -1553,7 +1636,8 @@ function WebsiteBuilderPage() {
     return (
       <div className={styles.templateStage}>
         <div className={styles.templateGrid}>
-          {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {
+          {WEBSITE_TEMPLATE_OPTIONS.map(({ id }) => {
+            const templateOption = getWebsiteTemplateById(id, language);
             const isSelected = templateOption.id === selectedTemplateId;
             const isBuilderEnabled = isWebsiteTemplateBuilderEnabled(templateOption.id);
             const isComingSoon = !isBuilderEnabled;
@@ -1576,8 +1660,8 @@ function WebsiteBuilderPage() {
                 <span className={styles.templateRadio} aria-hidden="true">
                   <span className={styles.templateRadioDot} />
                 </span>
-                {isSelected ? <span className={styles.templateSelectedTag}>Selected</span> : null}
-                {isComingSoon ? <span className={styles.templateComingSoonTag}>Coming soon</span> : null}
+                {isSelected ? <span className={styles.templateSelectedTag}>{templateCopy.selected}</span> : null}
+                {isComingSoon ? <span className={styles.templateComingSoonTag}>{templateCopy.comingSoon}</span> : null}
                 <div className={styles.templatePreviewShell}>
                   <TemplateSilhouette layout={templateOption.layout} />
                 </div>
@@ -1595,7 +1679,7 @@ function WebsiteBuilderPage() {
         <div className={styles.templateSelectionState}>
           <div className={styles.templateSelectionHeader}>
             <div className={styles.templateSelectionCopy}>
-              <p className={styles.summaryLabel}>Current template pick</p>
+              <p className={styles.summaryLabel}>{templateCopy.currentPick}</p>
               <p className={styles.selectedTemplateName}>{selectedTemplate.name}</p>
             </div>
 
@@ -1612,8 +1696,7 @@ function WebsiteBuilderPage() {
           <p className={styles.selectedTemplateDescription}>{selectedTemplate.description}</p>
           {showTemplateAvailabilityHint ? (
             <p className={styles.previewHelperText}>
-              Panorama Landing is currently the only selectable template. The other template directions
-              stay visible here as coming-soon options while we continue iterating on them.
+              {templateCopy.availabilityHint}
             </p>
           ) : null}
         </div>
@@ -1790,7 +1873,7 @@ function WebsiteBuilderPage() {
                     <section className={styles.builderStepSection}>
                       <div className={styles.stepHeader}>
                         <p className={styles.stepEyebrow}>Step 2</p>
-                        <h2>Choose a website template</h2>
+                        <h2>{templateCopy.title}</h2>
                         <p>
                           Select the layout direction you want to use for the listing website. You can keep
                           adjusting the listing choice above while you compare template options.

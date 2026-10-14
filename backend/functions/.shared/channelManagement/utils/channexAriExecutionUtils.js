@@ -247,6 +247,10 @@ const deriveEvidenceOutcome = ({ statusCode, ready, calledProvider, results, ove
   if (statusCode >= 401) return { status: "BLOCKED", overallSuccess: false };
   if (ready === false) return { status: "BLOCKED", overallSuccess: false };
   if (!calledProvider) return { status: "NOOP", overallSuccess: false };
+  // The provider was called but returned zero results (e.g. an empty group survived upstream
+  // filtering). There's nothing to verify as succeeded, so this must not fall through to the
+  // same SUCCESS the "everything succeeded" branches below return.
+  if (normalizedResults.length === 0) return { status: "NOOP", overallSuccess: false };
   if (overallSuccess === true && warningCount === 0 && failedCount === 0) {
     return { status: "SUCCESS", overallSuccess: true };
   }
@@ -304,6 +308,7 @@ const formatChannexAvailabilityProviderResult = (result) => ({
   requestBody: summarizeChannexRequestBody(result.requestBody, result),
   providerStatus: result.providerStatus ?? null,
   httpStatus: result.httpStatus ?? null,
+  retryAfterMs: result.retryAfterMs ?? null,
   success: !!result.success,
   taskId: result.taskId ?? null,
   warnings: Array.isArray(result.warnings) ? result.warnings : [],
@@ -319,6 +324,7 @@ const formatChannexRestrictionProviderResult = (result) => ({
   requestBody: summarizeChannexRequestBody(result.requestBody, result),
   providerStatus: result.providerStatus ?? null,
   httpStatus: result.httpStatus ?? null,
+  retryAfterMs: result.retryAfterMs ?? null,
   success: !!result.success,
   taskId: result.taskId ?? null,
   warnings: Array.isArray(result.warnings) ? result.warnings : [],

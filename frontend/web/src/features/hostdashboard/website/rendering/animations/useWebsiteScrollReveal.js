@@ -4,6 +4,19 @@ import motionStyles from "./WebsiteTemplateMotion.module.scss";
 const WEBSITE_SCROLL_REVEAL_THRESHOLD = 0.08;
 const WEBSITE_SCROLL_REVEAL_ROOT_MARGIN = "0px 0px 6% 0px";
 
+const settleAfterTransition = (target, settledClassName) => {
+  const handleTransitionEnd = (event) => {
+    if (event.target !== target) {
+      return;
+    }
+    target.classList.add(settledClassName);
+    target.removeEventListener("transitionend", handleTransitionEnd);
+  };
+
+  target.addEventListener("transitionend", handleTransitionEnd);
+  return () => target.removeEventListener("transitionend", handleTransitionEnd);
+};
+
 export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
   const previewCanvasRef = useRef(null);
 
@@ -23,8 +36,9 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
     }
 
     const revealClassName = motionStyles.scrollRevealVisible;
+    const settledClassName = motionStyles.scrollRevealSettled;
     revealTargets.forEach((target) => {
-      target.classList.remove(revealClassName);
+      target.classList.remove(revealClassName, settledClassName);
     });
 
     const prefersReducedMotion =
@@ -33,11 +47,12 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
 
     if (typeof IntersectionObserver === "undefined" || prefersReducedMotion) {
       revealTargets.forEach((target) => {
-        target.classList.add(revealClassName);
+        target.classList.add(revealClassName, settledClassName);
       });
       return undefined;
     }
 
+    const stopSettling = [];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -45,6 +60,7 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
             return;
           }
 
+          stopSettling.push(settleAfterTransition(entry.target, settledClassName));
           entry.target.classList.add(revealClassName);
           observer.unobserve(entry.target);
         });
@@ -61,6 +77,7 @@ export const useWebsiteScrollReveal = ({ enabled = false, deps = [] } = {}) => {
 
     return () => {
       observer.disconnect();
+      stopSettling.forEach((stop) => stop());
     };
   }, [enabled, ...deps]);
 

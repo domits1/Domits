@@ -1,0 +1,327 @@
+import { randomUUID } from "node:crypto";
+
+import { ChannexAriOutbox } from "database/models/channelManagement/ChannexAriOutbox";
+
+import Database from "../../integrations/ORM/index.js";
+import {
+  CHANNEX_ARI_CHANGE_TYPE,
+  CHANNEX_ARI_OUTBOX_DEFAULTS,
+  CHANNEX_ARI_OUTBOX_STATUS,
+  URGENT_SOURCES,
+} from "../utils/channexAriOutboxConstants.js";
+import { callTypeOf } from "../utils/channexAriOutboxPlanning.js";
+
+// changetypes is a comma-separated list, so a type is matched as a whole name
+// between commas; "rates" must not match a future "rates_extra".
+const carriesTypeSql = (alias, type) => `',' || ${alias}.changetypes || ',' LIKE '%,${type},%'`;
+
+// Built from the change types themselves, so a new type lands in the right call type.
+const CALL_TYPES = [...new Set(Object.values(CHANNEX_ARI_CHANGE_TYPE).map(callTypeOf))];
+const carriesCallTypeSql = (alias, callType) =>
+  Object.values(CHANNEX_ARI_CHANGE_TYPE)
+    .filter((type) => callTypeOf(type) === callType)
+    .map((type) => carriesTypeSql(alias, type))
+    .join(" OR ");
+const sharesCallTypeSql = (aliasA, aliasB) =>
+  CALL_TYPES.map(
+    (callType) => `((${carriesCallTypeSql(aliasA, callType)}) AND (${carriesCallTypeSql(aliasB, callType)}))`
+  ).join(" OR ");
+
+// A row can be claimed when it is due and no row of the same call type is waiting
+// after a failed call (Channex limits the two call types separately, #3280). The
+// readiness query and the claim share this rule, so a property is never "ready"
+// while its claim would come back empty.
+export const claimableRowSql = (table, { pending, now }) => `target.status = ${pending}
+          AND (target.nextattemptat IS NULL OR target.nextattemptat <= ${now})
+          AND NOT EXISTS (
+            SELECT 1
+              FROM ${table} AS waiting
+             WHERE waiting.domitspropertyid = target.domitspropertyid
+               AND waiting.status = ${pending}
+               AND waiting.nextattemptat > ${now}
+               AND (${sharesCallTypeSql("waiting", "target")})
+          )`;
+
+const requireStr = (value, field) => {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  if (!normalized) throw new Error(`${field} is required.`);
+  return normalized;
+};
+
+const requireDateInt = (value, field) => {
+  if (!Number.isInteger(value) || value < 19700101 || value > 99991231) {
+    throw new Error(`${field} must be an integer date in YYYYMMDD form.`);
+  }
+  return value;
+};
+
+// Rows come back from raw SQL with lowercase column names; the rest of the code
+// works in camelCase, and changeTypes is a list rather than a comma string.
+const toRow = (row) => ({
+  id: row.id,
+  domitsPropertyId: row.domitspropertyid,
+  kind: row.kind,
+  changeTypes: String(row.changetypes || "")
+    .split(",")
+    .filter(Boolean),
+  dateFrom: Number(row.datefrom),
+  dateTo: Number(row.dateto),
+  source: row.source,
+  attemptCount: Number(row.attemptcount ?? 0),
+});
+
+// For UPDATE and DELETE, TypeORM's raw query returns [rows, rowCount] instead of the
+// rows, which is why those methods destructure the first element.
+export default class ChannexAriOutboxRepository {
+  async table() {
+    const client = await Database.getInstance();
+    const schema = client?.options?.schema || "main";
+    return { client, table: `${schema}.channex_ari_outbox` };
+  }
+
+  // Called from inside the caller's transaction, so the row and the domain change
+  // commit together or not at all (design D8).
+  async insert(manager, { domitsPropertyId, kind, changeTypes, dateFrom, dateTo, source, now = Date.now() }) {
+    const types = Array.isArray(changeTypes) ? changeTypes.filter(Boolean) : [];
+    if (!types.length) throw new Error("changeTypes must not be empty.");
+
+    const propertyId = requireStr(domitsPropertyId, "domitsPropertyId");
+    const rowKind = requireStr(kind, "kind");
+    const rowSource = requireStr(source, "source");
+    const from = requireDateInt(dateFrom, "dateFrom");
+    const to = requireDateInt(dateTo, "dateTo");
+    if (to < from) throw new Error("dateTo must not be before dateFrom.");
+
+    const row = {
+      id: randomUUID(),
+      domitsPropertyId: propertyId,
+      kind: rowKind,
+      changeTypes: types.join(","),
+      dateFrom: from,
+      dateTo: to,
+      source: rowSource,
+      status: CHANNEX_ARI_OUTBOX_STATUS.PENDING,
+      attemptCount: 0,
+      nextAttemptAt: null,
+      failureReason: null,
+      sentSummary: null,
+      createdAt: now,
+      updatedAt: now,
+      processedAt: null,
+    };
+
+    await manager.createQueryBuilder().insert().into(ChannexAriOutbox).values(row).execute();
+    return row;
+  }
+
+  // One aggregate per run. A property is ready when none of its rows is waiting for
+  // a retry, and it either carries an urgent change (a booking), has been quiet for
+  // quietMs, or has been waiting longer than capMs (design D3).
+  async findReadyProperties({
+    now = Date.now(),
+    quietMs = CHANNEX_ARI_OUTBOX_DEFAULTS.QUIET_MS,
+    capMs = CHANNEX_ARI_OUTBOX_DEFAULTS.CAP_MS,
+    limit = 25,
+  } = {}) {
+    const { client, table } = await this.table();
+
+    const rows = await client.query(
+      `SELECT pending.domitspropertyid,
+              MIN(pending.createdat) AS oldestcreatedat
+         FROM ${table} AS pending
+        WHERE pending.status = $1
+        GROUP BY pending.domitspropertyid
+       HAVING EXISTS (SELECT 1 FROM ${table} AS target
+        WHERE target.domitspropertyid = pending.domitspropertyid
+          AND ${claimableRowSql(table, { pending: "$1", now: "$2" })})
+          AND (SUM(CASE WHEN pending.source = ANY($3) THEN 1 ELSE 0 END) > 0
+               OR MAX(pending.createdat) <= $4
+               OR MIN(pending.createdat) <= $5)
+        ORDER BY oldestcreatedat ASC
+        LIMIT $6`,
+      [CHANNEX_ARI_OUTBOX_STATUS.PENDING, now, [...URGENT_SOURCES], now - quietMs, now - capMs, limit]
+    );
+
+    return (Array.isArray(rows) ? rows : []).map((row) => ({
+      domitsPropertyId: row.domitspropertyid,
+      oldestCreatedAt: Number(row.oldestcreatedat),
+    }));
+  }
+
+  // One conditional UPDATE. On Aurora DSQL two runs that claim the same rows both
+  // appear to succeed, and the loser fails at commit with SQLSTATE 40001, which the
+  // caller treats as "another run has these rows".
+  // Channex limits availability calls and price/restriction calls separately, so a row
+  // waiting after a 429 only holds back rows of the same call type (#3280).
+  async claim(domitsPropertyId, { now = Date.now(), runStartedAt = now } = {}) {
+    const { client, table } = await this.table();
+
+    const [rows] = await client.query(
+      `UPDATE ${table} AS target
+          SET status = $1,
+              attemptcount = attemptcount + 1,
+              updatedat = $2
+        WHERE target.domitspropertyid = $3
+          AND target.createdat <= $5
+          AND ${claimableRowSql(table, { pending: "$4", now: "$2" })}
+        RETURNING id, domitspropertyid, kind, changetypes, datefrom, dateto, source, attemptcount`,
+      [CHANNEX_ARI_OUTBOX_STATUS.PROCESSING, now, domitsPropertyId, CHANNEX_ARI_OUTBOX_STATUS.PENDING, runStartedAt]
+    );
+
+    return (Array.isArray(rows) ? rows : []).map(toRow);
+  }
+
+  // A PROCESSING row that has not moved for staleMs belongs to a run that died
+  // before it could record a result. A worker run cannot outlive the Lambda's
+  // 60 seconds, so five minutes cannot catch a run that is still alive.
+  async recoverStaleProcessing({ now = Date.now(), staleMs = CHANNEX_ARI_OUTBOX_DEFAULTS.STALE_PROCESSING_MS } = {}) {
+    const { client, table } = await this.table();
+
+    const [rows] = await client.query(
+      `UPDATE ${table}
+          SET status = $1,
+              updatedat = $2
+        WHERE status = $3
+          AND updatedat <= $4
+        RETURNING id`,
+      [CHANNEX_ARI_OUTBOX_STATUS.PENDING, now, CHANNEX_ARI_OUTBOX_STATUS.PROCESSING, now - staleMs]
+    );
+
+    return Array.isArray(rows) ? rows.length : 0;
+  }
+
+  // One UPDATE for the whole claimed batch. processedat is only set when the rows
+  // really went out, and an existing sentsummary survives a later failure.
+  // expectedStatus guards against marking rows this run no longer holds: a run that
+  // was declared stale and recovered must not overwrite what a later run did.
+  async #setStatus(
+    ids,
+    {
+      status,
+      now,
+      failureReason = null,
+      nextAttemptAt = null,
+      sentSummary = null,
+      processed = false,
+      expectedStatus = null,
+      undoAttempt = false,
+    }
+  ) {
+    const list = Array.isArray(ids) ? ids.filter(Boolean) : [];
+    if (!list.length) return 0;
+
+    const assignments = [
+      "status = $1",
+      "updatedat = $2",
+      "failurereason = $3",
+      "sentsummary = COALESCE($4, sentsummary)",
+      "nextattemptat = $5",
+    ];
+    if (processed) assignments.push("processedat = $2");
+    if (undoAttempt) assignments.push("attemptcount = GREATEST(attemptcount - 1, 0)");
+
+    const parameters = [
+      status,
+      now,
+      failureReason,
+      sentSummary === null ? null : JSON.stringify(sentSummary),
+      nextAttemptAt,
+      list,
+    ];
+    let guard = "";
+    if (expectedStatus) {
+      parameters.push(expectedStatus);
+      guard = ` AND status = $${parameters.length}`;
+    }
+
+    const { client, table } = await this.table();
+    const [rows] = await client.query(
+      `UPDATE ${table} SET ${assignments.join(", ")} WHERE id = ANY($6)${guard} RETURNING id`,
+      parameters
+    );
+
+    return Array.isArray(rows) ? rows.length : 0;
+  }
+
+  async markProcessed(ids, { now = Date.now(), sentSummary = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.PROCESSED,
+      now,
+      sentSummary,
+      processed: true,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
+  async markFailed(ids, { now = Date.now(), failureReason = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.FAILED,
+      now,
+      failureReason,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
+  async markSkipped(ids, { now = Date.now(), failureReason = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.SKIPPED,
+      now,
+      failureReason,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
+  async returnToPending(ids, { now = Date.now(), failureReason = null, nextAttemptAt = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.PENDING,
+      now,
+      failureReason,
+      nextAttemptAt,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
+  // Aurora DSQL refuses a transaction that changes more than 3,000 rows, so the
+  // delete is capped well under that and whatever is left waits for the next run.
+  // For rows the run did not send because the Channex call limit was reached. They
+  // were never tried, so the attempt the claim counted is taken back.
+  async release(ids, { now = Date.now(), nextAttemptAt = null } = {}) {
+    return this.#setStatus(ids, {
+      status: CHANNEX_ARI_OUTBOX_STATUS.PENDING,
+      now,
+      nextAttemptAt,
+      undoAttempt: true,
+      expectedStatus: CHANNEX_ARI_OUTBOX_STATUS.PROCESSING,
+    });
+  }
+
+  async cleanup({
+    now = Date.now(),
+    batch = CHANNEX_ARI_OUTBOX_DEFAULTS.CLEANUP_BATCH,
+    processedRetentionMs = CHANNEX_ARI_OUTBOX_DEFAULTS.PROCESSED_RETENTION_MS,
+    failedRetentionMs = CHANNEX_ARI_OUTBOX_DEFAULTS.FAILED_RETENTION_MS,
+  } = {}) {
+    const { client, table } = await this.table();
+
+    const [rows] = await client.query(
+      `DELETE FROM ${table}
+        WHERE id IN (
+          SELECT id
+            FROM ${table}
+           WHERE (status = ANY($1) AND updatedat <= $2)
+              OR (status = $3 AND updatedat <= $4)
+           LIMIT $5
+        )
+        RETURNING id`,
+      [
+        [CHANNEX_ARI_OUTBOX_STATUS.PROCESSED, CHANNEX_ARI_OUTBOX_STATUS.SKIPPED],
+        now - processedRetentionMs,
+        CHANNEX_ARI_OUTBOX_STATUS.FAILED,
+        now - failedRetentionMs,
+        batch,
+      ]
+    );
+
+    return Array.isArray(rows) ? rows.length : 0;
+  }
+}

@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Gekozen sjabloon",
+    "availabilityHint": "Je kunt nu aan de slag met Essentials. Elite is binnenkort beschikbaar.",
+    "selected": "Geselecteerd",
+    "comingSoon": "Binnenkort beschikbaar",
+    "title": "Kies een websitesjabloon",
+    "unsupportedPreview": "Er is nog geen voorbeeld beschikbaar voor dit sjabloon.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Website met één pagina, basisaanpassingen en essentiële functies"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Veelzijdige website, uitgebreide aanpassingsmogelijkheden en exclusieve functies"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Waar je verblijft",
@@ -1064,7 +1082,9 @@
       },
       "manage": {
         "title": "Hoe maak en beheer ik mijn host-account?",
-        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop 'Word host' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
+        "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop '",
+        "becomeHost": "Word host",
+        "description2": "' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
       },
       "payout": {
         "title": "Hoe uitbetalingen en belastingen werken",
@@ -1072,7 +1092,15 @@
       },
       "calendar": {
         "title": "Hoe beheert u uw agenda en boekingen",
-        "description": "Een komende functie stelt u in staat uw boekingen efficiënter te beheren, rechtstreeks via het dashboard. Houd de updates in de gaten."
+        "description": "U kunt alles beheren vanaf het Host Dashboard: boekingen accepteren of afwijzen, en uw beschikbaarheid en prijzen per datum instellen."
+      },
+      "cost": {
+        "title": "Wat kost het?",
+        "description": "Domits is gratis te gebruiken — geen kosten voor ons boekingssysteem, dashboard of directe boekingswebsite. Wij rekenen alleen een 10% hostvergoeding per boeking via Domits.com, waarmee het platform 24/7 blijft draaien. Meer nodig? Neem contact met ons op voor add-ons en zakelijke tarieven."
+      },
+      "markets": {
+        "title": "In welke markten is Domits actief?",
+        "description": "Domits is wereldwijd beschikbaar voor hosts en gasten — u kunt uw accommodatie aanbieden, ongeacht waar deze zich bevindt."
       }
     },
     "advice": {
@@ -1111,12 +1139,21 @@
       "title": "Instellingen",
       "subtitle": "Beheer al je persoonlijke en accountinstellingen op één plek",
       "personalSection": "Persoonlijke instellingen",
+      "communicationSection": "Communicatievoorkeuren",
       "accountSection": "Accountinstellingen",
       "breadcrumb": "Instellingen",
       "cards": {
         "personalData": {
           "title": "Persoonlijke gegevens",
           "desc": "Beheer je contactgegevens, profielfoto en persoonlijke informatie."
+        },
+        "communicationPreferences": {
+          "title": "Communicatievoorkeuren",
+          "desc": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt."
+        },
+        "privacySecurity": {
+          "title": "Privacy & beveiliging",
+          "desc": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie."
         },
         "company": {
           "title": "Bedrijf",
@@ -1128,13 +1165,196 @@
         },
         "ratePlans": {
           "title": "Tariefplannen",
-          "desc": "Bekijk je 10% host-exclusieve en toekomstige prijsopties."
+          "desc": "Bekijk je 10% host-exclusieve en Direct Booking-prijsopties."
         },
         "compliance": {
           "title": "Compliance",
           "desc": "Beheer je registratienummer en verificatie."
+        },
+        "onboarding": {
+          "title": "Onboarding",
+          "desc": "Volg je voortgang van het aanmelden van je woning tot livegang."
+        },
+        "homeAutomation": {
+          "title": "Domotica",
+          "desc": "Koppel slimme sloten zodat gasten toegang krijgen tot je woningen."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domotica",
+      "title": "Domotica",
+      "subtitle": "Koppel RemoteLock om slimme sloten voor je gasten te beheren.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Laatste synchronisatie",
+        "never": "Nog niet gesynchroniseerd"
+      },
+      "statuses": {
+        "notConnected": "Niet gekoppeld",
+        "connecting": "Koppelen",
+        "connected": "Gekoppeld",
+        "authenticationError": "Inloggen mislukt",
+        "connectionError": "Verbindingsprobleem",
+        "disconnected": "Ontkoppeld",
+        "expiredCredentials": "Inlog verlopen",
+        "unknown": "Status onbekend"
+      },
+      "actions": {
+        "connect": "Koppelen",
+        "reconnect": "Opnieuw koppelen",
+        "disconnect": "Ontkoppelen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Koppelen",
+          "confirming": "Koppelen..."
+        },
+        "reconnect": {
+          "title": "RemoteLock opnieuw koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Opnieuw koppelen",
+          "confirming": "Opnieuw koppelen..."
+        },
+        "disconnect": {
+          "title": "RemoteLock ontkoppelen",
+          "body": "Domits beheert de deurcodes van je gasten niet meer.",
+          "confirm": "Ontkoppelen",
+          "confirming": "Ontkoppelen..."
+        },
+        "cancel": "Annuleren",
+        "error": "Er ging iets mis. Probeer het opnieuw."
+      },
+      "loading": "Je RemoteLock-koppeling wordt geladen...",
+      "loadError": "We konden je RemoteLock-koppeling niet laden.",
+      "retry": "Probeer opnieuw"
+    },
+    "onboardingHub": {
+      "breadcrumb": "Onboarding",
+      "title": "Onboarding",
+      "subtitle": "Volg per woning de voortgang, van aanmelden tot livegang.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Enterprise",
+        "navLabel": "Onboarding modus"
+      },
+      "propertyPicker": {
+        "label": "Woning",
+        "loading": "Je woningen worden geladen...",
+        "loadError": "We konden je woningen niet laden.",
+        "empty": "Je hebt nog geen gepubliceerde woningen."
+      },
+      "progress": {
+        "label": "{completed} van {total} stappen voltooid"
+      },
+      "accountWideBadge": "Voor je hele account",
+      "requiredBadge": "Verplicht",
+      "optionalBadge": "Optioneel",
+      "goLiveButton": "Live gaan",
+      "goLiveBlockedText": "Voltooi eerst de verplichte stappen",
+      "pricingConnectedSubDetail": "Dynamische prijzen via PriceLabs zijn ook gekoppeld.",
+      "steps": {
+        "listProperty": {
+          "title": "Woning aanmelden",
+          "desc": "Voeg de details, foto's en prijzen van je woning toe."
+        },
+        "website": {
+          "title": "Boekingswebsite bouwen",
+          "desc": "Maak een eigen boekingswebsite voor deze woning."
+        },
+        "channels": {
+          "title": "Kanalen koppelen",
+          "desc": "Synchroniseer deze woning met Airbnb, Booking.com, Vrbo en meer."
+        },
+        "automate": {
+          "title": "Werkzaamheden automatiseren",
+          "desc": "Stel betalingen en dynamische prijzen in voor je account."
+        },
+        "goLive": {
+          "title": "Live gaan",
+          "desc": "Controleer je woning en publiceer deze op Domits."
+        }
+      },
+      "statusComplete": "Voltooid",
+      "statusIncomplete": "Nog niet gestart",
+      "statusUnknown": "Status kon niet worden gecontroleerd",
+      "channelsComingSoon": "Binnenkort beschikbaar",
+      "enterprise": {
+        "breadcrumb": "Enterprise-onboarding",
+        "title": "Enterprise-onboarding",
+        "subtitle": "Volg de voortgang van je hele portefeuille, van bedrijfsinstellingen tot livegang.",
+        "goLiveSection": {
+          "title": "Live gaan",
+          "desc": "Gereedheid van je verplichte stappen.",
+          "readyLabel": "Klaar om live te gaan",
+          "notReadyLabel": "Nog niet klaar"
+        },
+        "steps": {
+          "company": {
+            "title": "Bedrijf instellen",
+            "desc": "Voeg je bedrijfsgegevens toe zodat gasten en partners je kunnen vinden."
+          },
+          "team": {
+            "title": "Teamleden",
+            "desc": "Nodig je team uit en wijs rollen toe binnen je portefeuille."
+          },
+          "listProperties": {
+            "title": "Woningen aanmelden",
+            "desc": "Beheer en voeg woningen toe binnen je portefeuille."
+          },
+          "website": {
+            "title": "Boekingswebsites bouwen",
+            "desc": "Maak eigen boekingswebsites voor je woningen."
+          },
+          "channels": {
+            "title": "Kanalen koppelen",
+            "desc": "Synchroniseer je woningen met Airbnb, Booking.com, Vrbo en meer."
+          },
+          "payments": {
+            "title": "Betalingen instellen",
+            "desc": "Koppel Stripe om uitbetalingen te ontvangen voor je hele portefeuille."
+          },
+          "pricing": {
+            "title": "Dynamische prijzen instellen",
+            "desc": "Koppel PriceLabs om prijzen automatisch aan te passen binnen je portefeuille."
+          },
+          "tasks": {
+            "title": "Taakbeheer instellen",
+            "desc": "Organiseer operationele taken voor je woningen."
+          },
+          "marketplace": {
+            "title": "Marketplace gebruiken",
+            "desc": "Ontdek integraties om je bedrijf te laten groeien."
+          }
+        }
+      }
+    },
+    "goLive": {
+      "breadcrumb": "Live gaan",
+      "title": "{propertyName} live zetten",
+      "subtitle": "Bekijk de checklist hieronder en publiceer daarna je woning.",
+      "loading": "Checklist wordt geladen...",
+      "loadError": "We konden deze woning niet laden.",
+      "missingPropertyId": "Er is geen woning opgegeven.",
+      "requiredSection": "Verplicht",
+      "optionalSection": "Optioneel",
+      "items": {
+        "listProperty": "Woning aanmelden",
+        "website": "Boekingswebsite bouwen",
+        "payments": "Betalingen (Stripe)",
+        "channels": "Kanalen koppelen",
+        "pricing": "Dynamische prijzen (PriceLabs)",
+        "tasks": "Taakbeheer"
+      },
+      "activateButton": "Woning publiceren",
+      "activating": "Bezig met publiceren...",
+      "alreadyLive": "Deze woning staat al live.",
+      "blockedMessage": "Voltooi eerst de verplichte stappen hierboven om live te gaan.",
+      "successMessage": "Je woning staat nu live!",
+      "errorMessage": "Er is iets misgegaan bij het publiceren van deze woning.",
+      "backToHub": "Terug naar Onboarding"
     },
     "personalData": {
       "breadcrumb": "Persoonlijke gegevens",
@@ -1144,8 +1364,11 @@
       "prefsSection": "Voorkeuren / Authenticatie",
       "photo": {
         "upload": "Uploaden",
-        "uploading": "Bezig...",
-        "remove": "Verwijderen"
+        "uploading": "Uploaden...",
+        "remove": "Verwijderen",
+        "removing": "Verwijderen...",
+        "uploaded": "Foto geüpload!",
+        "removed": "Foto verwijderd!"
       },
       "fields": {
         "fullName": "Volledige naam",
@@ -1157,6 +1380,7 @@
         "emailAddress": "E-mailadres",
         "verificationCode": "Verificatiecode verzonden naar je e-mail",
         "verify": "Verifiëren",
+        "emailUpdated": "E-mail bijgewerkt!",
         "phone": "Telefoon",
         "phoneNumber": "Telefoonnummer",
         "sex": "Geslacht",
@@ -1178,26 +1402,141 @@
         "phoneVerifiedYes": "Telefoon geverifieerd: Ja",
         "phoneVerifiedNo": "Telefoon geverifieerd: Nee",
         "authenticatorApp": "Authenticator-app",
-        "totp": "App-gebaseerde codes (TOTP)"
+        "totp": "App-gebaseerde codes (TOTP)",
+        "passwordLabel": "Wachtwoord",
+        "changePassword": "Wachtwoord wijzigen",
+        "changePasswordTitle": "Wijzig je wachtwoord",
+        "currentPassword": "Huidig wachtwoord",
+        "newPassword": "Nieuw wachtwoord",
+        "confirmPassword": "Bevestig nieuw wachtwoord",
+        "savePassword": "Wachtwoord opslaan",
+        "passwordChanged": "Wachtwoord succesvol gewijzigd.",
+        "showPassword": "Wachtwoord tonen",
+        "hidePassword": "Wachtwoord verbergen",
+        "passwordFieldsRequired": "Vul alstublieft alle wachtwoordvelden in.",
+        "passwordTooShort": "Wachtwoord moet minimaal {min} tekens bevatten.",
+        "passwordMismatch": "Nieuw wachtwoord en bevestiging komen niet overeen.",
+        "passwordChangeFailed": "Wachtwoord wijzigen mislukt. Probeer het opnieuw.",
+        "currentPasswordIncorrect": "Huidig wachtwoord is onjuist.",
+        "passwordPolicyViolation": "Nieuw wachtwoord voldoet niet aan de vereisten.",
+        "tooManyPasswordAttempts": "Te veel pogingen. Probeer het later opnieuw."
       },
       "buttons": {
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan...",
-        "saved": "Opgeslagen!"
+        "saved": "Opgeslagen!",
+        "saveError": "Opslaan mislukt. Probeer het opnieuw.",
+        "cancel": "Annuleren",
+        "close": "Sluiten"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacy & beveiliging",
+      "title": "Privacy & beveiliging",
+      "subtitle": "Beheer je inlogbeveiliging, wachtwoord en tweestapsverificatie.",
+      "authenticationSection": "Authenticatie",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "E-mail",
+        "active": "Actief",
+        "inactive": "Inactief",
+        "unavailable": "Niet beschikbaar",
+        "verified": "Geverifieerd",
+        "sms": "SMS",
+        "authenticatorApp": "Authenticator-app",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
+        "loading": "Je authenticatiestatus wordt geladen...",
+        "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
+      },
+      "pin": {
+        "comingSoon": "Binnenkort beschikbaar."
+      },
+      "authenticator": {
+        "setUp": "Instellen",
+        "setupTitle": "Je authenticator-app instellen",
+        "scanInstruction": "Scan deze QR-code met een authenticator-app, zoals Google Authenticator of Microsoft Authenticator.",
+        "qrAlt": "QR-code om Domits aan je authenticator-app toe te voegen",
+        "manualKeyLabel": "Kun je niet scannen? Voer deze sleutel handmatig in:",
+        "codeLabel": "6-cijferige code",
+        "verify": "Verifiëren",
+        "verifying": "Verifiëren...",
+        "cancel": "Annuleren",
+        "tryAgain": "Opnieuw proberen",
+        "close": "Sluiten",
+        "success": "Je authenticator-app is ingeschakeld. Je wordt om een code gevraagd wanneer je op een nieuw apparaat inlogt.",
+        "errors": {
+          "invalidCode": "Deze code is niet geldig. Voer de huidige 6-cijferige code uit je app in.",
+          "sessionExpired": "Je sessie is verlopen. Log opnieuw in en start de instelling opnieuw.",
+          "tooManyAttempts": "Te veel pogingen. Wacht even en probeer het opnieuw.",
+          "enableFailed": "Je code is geaccepteerd, maar we konden de authenticator-app niet inschakelen. Probeer het opnieuw.",
+          "generic": "Er is iets misgegaan. Probeer het opnieuw."
+        }
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Communicatievoorkeuren",
+      "title": "Communicatievoorkeuren",
+      "subtitle": "Kies hoe je belangrijke updates en meldingen van Domits ontvangt.",
+      "sectionTitle": "Meldingsvoorkeuren",
+      "required": "Verplicht",
+      "notificationsLabel": "meldingen",
+      "channels": {
+        "email": "E-mail",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reservering",
+        "cancellation": "Annulering",
+        "messages": "Berichten"
+      },
+      "states": {
+        "on": "AAN",
+        "off": "UIT"
+      },
+      "actions": {
+        "saveChanges": "Wijzigingen opslaan"
       }
     },
     "company": {
       "breadcrumb": "Bedrijf",
       "title": "Bedrijf",
       "subtitle": "Beheer je bedrijfsinformatie.",
-      "section": "Bedrijfsgegevens",
+      "privateSection": "Privé",
+      "privateSectionNote": "Alleen voor jou zichtbaar — gebruikt voor facturen en rapporten.",
+      "publicSection": "Openbare informatie",
+      "publicSectionNote": "Zichtbaar voor gasten op je advertenties.",
       "fields": {
         "companyName": "Bedrijfsnaam",
         "placeholder": "Voer bedrijfsnaam in",
-        "hint": "Deze informatie verschijnt op facturen en rapporten."
+        "hint": "Deze informatie verschijnt op facturen en rapporten.",
+        "displayName": "Weergavenaam",
+        "displayNamePlaceholder": "Naam die gasten zien",
+        "logo": "Logo",
+        "logoUpload": "Logo uploaden",
+        "logoUploading": "Bezig met uploaden...",
+        "logoRemove": "Verwijderen",
+        "description": "Beschrijving",
+        "descriptionPlaceholder": "Vertel gasten over je bedrijf",
+        "website": "Website",
+        "websitePlaceholder": "https://voorbeeld.nl",
+        "publicEmail": "Openbaar e-mailadres",
+        "publicEmailPlaceholder": "contact@voorbeeld.nl",
+        "publicPhone": "Openbaar telefoonnummer",
+        "publicPhonePlaceholder": "+31 6 12345678",
+        "country": "Land",
+        "countryPlaceholder": "Voer land in"
+      },
+      "errors": {
+        "website": "Voer een geldige website-URL in.",
+        "publicEmail": "Voer een geldig e-mailadres in.",
+        "publicPhone": "Voer een geldig telefoonnummer in.",
+        "logo": "Logo uploaden mislukt. Probeer het opnieuw."
       },
       "buttons": {
-        "comingSoon": "Binnenkort beschikbaar"
+        "save": "Opslaan",
+        "saving": "Bezig met opslaan...",
+        "saved": "Opgeslagen"
       }
     },
     "compliance": {
@@ -1206,12 +1545,31 @@
       "subtitle": "Verifieer je accommodatie en hostidentiteit voor lokale registraties.",
       "section": "Compliancegegevens",
       "fields": {
+        "property": "Accommodatie",
+        "untitledListing": "Accommodatie zonder titel",
         "propertyRegistration": "Accommodatieregistratie",
         "placeholder": "Registratienummer",
+        "noRegistrationYet": "Er is nog geen registratienummer toegevoegd.",
         "hint": "Dit nummer bewijst dat je accommodatie is geregistreerd bij de lokale autoriteiten. Aanvullende compliancemethoden (ID-verificatie, adresbewijs) zijn binnenkort beschikbaar."
       },
+      "states": {
+        "loading": "Je accommodaties worden geladen...",
+        "empty": "Je hebt nog geen accommodaties.",
+        "createListing": "Maak je eerste accommodatie aan"
+      },
+      "unsavedChangesConfirm": "Je hebt niet-opgeslagen wijzigingen. Van accommodatie wisselen en de wijzigingen negeren?",
+      "errors": {
+        "load": "We konden je accommodaties niet laden. Probeer het opnieuw.",
+        "duplicate": "Dit registratienummer wordt al gebruikt door een andere accommodatie.",
+        "noAccess": "Je hebt geen toegang om deze accommodatie te wijzigen.",
+        "validation": "Voer een geldig registratienummer in. Het mag niet leeg zijn, niet beginnen met AUTO- en niet langer zijn dan 255 tekens.",
+        "generic": "We konden je registratienummer niet opslaan. Probeer het opnieuw.",
+        "registrationUnavailable": "We konden het registratienummer van deze accommodatie niet laden. Vernieuw de pagina of neem contact op met support."
+      },
       "buttons": {
-        "comingSoon": "Binnenkort beschikbaar"
+        "save": "Opslaan",
+        "saving": "Opslaan...",
+        "saved": "Opgeslagen"
       }
     },
     "ratePlans": {
@@ -1220,11 +1578,136 @@
       "subtitle": "Beheer je tariefplannen.",
       "standardSection": "Standaard tariefplan",
       "additionalSection": "Aanvullende plannen",
-      "additionalSubtitle": "Aanvullende tariefplannen voor directe boekingen zijn binnenkort beschikbaar.",
+      "additionalSubtitle": "Aanvullende prijsopties voor directe boekingen.",
       "hostOnlyFee": {
         "title": "Host-exclusieve vergoeding",
         "sub": "10% van boekingen betaald door de host",
         "note": "Stelt Domits in staat het platform 24/7 te laten draaien"
+      },
+      "directBooking": {
+        "cardTitle": "Direct Booking-tariefplan",
+        "cardSubtitle": "4,9% per reservering betaald door de host",
+        "cardNote": "Geen maand- of woningkosten; gasten betalen €0 Domits-kosten.",
+        "breadcrumb": "Direct Booking-tariefplan",
+        "title": "Direct Booking-tariefplan",
+        "subtitle": "Prestatiegerichte prijzen voor reserveringen via je Direct Booking-website.",
+        "planName": "Direct Booking",
+        "perReservation": "per reservering",
+        "commission": "Commissie",
+        "commissionRate": "Hostcommissie",
+        "commissionFormula": "Commissieerbare accommodatie-omzet × 4,9%",
+        "commissionDescription": "De commissie wordt door de host betaald. De gast betaalt €0 Domits-boekingskosten.",
+        "commissionableBase": "De commissiegrondslag sluit schoonmaak, btw, belastingen, overheidskosten, borg en andere doorbelaste kosten uit.",
+        "monthlySubscription": "Maandabonnement",
+        "propertyFee": "Woningkosten",
+        "guestDomitsFee": "Domits-kosten voor gast",
+        "noFixedFee": "Geen vaste kosten",
+        "paidBy": "Betaald door",
+        "host": "HOST",
+        "reservationRevenue": "Reserveringsomzet",
+        "reservationRevenueDescription": "De vergoeding wordt berekend over het accommodatiegedeelte van elke in aanmerking komende directe reservering.",
+        "reservationValue": "Reserveringswaarde",
+        "domitsHostFee": "Domits-hostvergoeding",
+        "volumePricing": "Volumetarieven",
+        "volumePricingDescription": "Standaard groeitarieven uit het Direct Booking-tariefplan.",
+        "annualRevenue": "Jaarlijkse omzet uit directe boekingen",
+        "domitsFee": "Domits-kosten",
+        "enterprise": "Aangepast Enterprise",
+        "billing": "Facturering",
+        "billingDescription": "Commissieregels kunnen aan in aanmerking komende reserveringen worden gekoppeld voor controle en facturering.",
+        "billingHistory": "Factuurgeschiedenis",
+        "billingHistoryEmpty": "Er zijn nog geen factuurgegevens beschikbaar.",
+        "billingContact": "Factureringscontact",
+        "billingContactEmpty": "Beheer van het factureringscontact verschijnt hier zodra facturering is ingeschakeld."
+      },
+      "websitePlan": {
+        "sectionTitle": "Direct Booking-websiteabonnement",
+        "sectionSubtitle": "Kies het abonnement voor je boekingswebsite. De prijs van Elite wordt hieronder weergegeven.",
+        "loading": "Je websiteabonnement wordt geladen...",
+        "loadError": "Je huidige websiteabonnement kon niet worden geladen.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Alles wat nodig is voor je directe boekingswebsite.",
+        "essentialsFeaturesTitle": "Inbegrepen",
+        "featureBasicWebsite": "Basiswebsite en boekingsfuncties",
+        "featureBasicCustomization": "Basisaanpassingen en SEO",
+        "elite": "Elite",
+        "eliteDescription": "Meer functies om je directe boekingswebsite uit te breiden en aan te passen.",
+        "eliteFeaturesTitle": "Alles van Essentials, plus",
+        "featureCustomDomain": "Koppel je eigen domeinnaam",
+        "featureAdvancedBuilder": "Geavanceerde websitebouwer en onbeperkt aantal pagina's",
+        "featureLocalization": "Meerdere talen en valuta's",
+        "featureGrowthTools": "Geavanceerde SEO, analytics, CRM, AI-tools, upsells en experimenten",
+        "currentPlan": "Huidig abonnement",
+        "scheduled": "Gepland",
+        "status": {
+          "ACTIVE": "Actief",
+          "PAST_DUE": "Betaling achterstallig",
+          "TRIALING": "Proefperiode",
+          "INCOMPLETE": "Betaling in afwachting",
+          "INCOMPLETE_EXPIRED": "Betaling verlopen",
+          "EXPIRED": "Verlopen",
+          "CANCELLED": "Geannuleerd"
+        },
+        "perMonth": "per maand",
+        "free": "Gratis",
+        "upgrade": "Upgraden naar Elite",
+        "restoreElite": "Elite opnieuw activeren",
+        "switchToEssentials": "Wisselen naar Essentials",
+        "processing": "Bezig...",
+        "changeError": "Je websiteabonnement kon niet worden bijgewerkt. Probeer het opnieuw.",
+        "checkoutError": "Stripe Checkout kon niet worden gestart. Probeer het opnieuw.",
+        "downgradeScheduled": "De overstap naar Essentials staat gepland aan het einde van je huidige factureringsperiode.",
+        "downgradeSuccess": "Je websiteabonnement is nu Essentials.",
+        "restoreSuccess": "Je Elite-abonnement is opnieuw geactiveerd.",
+        "unchanged": "Je websiteabonnement is al bijgewerkt.",
+        "effectiveUntil": "Elite blijft actief tot {date}.",
+        "priceUnavailable": "Prijs niet beschikbaar",
+        "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
+        "checkoutSuccess": "Je Elite-abonnement is actief.",
+        "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
+        "cardTitle": "Direct Booking-websiteabonnement",
+        "cardSubtitle": "Essentials is gratis; Elite biedt geavanceerde websitefuncties.",
+        "cardNote": "Kies en beheer het abonnement voor je website.",
+        "breadcrumb": "Direct Booking-websiteabonnement",
+        "pageTitle": "Direct Booking-websiteabonnement",
+        "pageSubtitle": "Beheer het abonnement voor je Direct Booking-website."
+      },
+      "enterprise": {
+        "cardTitle": "Enterprise-tariefplan",
+        "cardSubtitle": "Prijs per actieve woning per maand.",
+        "cardNote": "Schaalt automatisch mee met je aantal actieve woningen.",
+        "breadcrumb": "Enterprise-tariefplan",
+        "title": "Enterprise-tariefplan",
+        "subtitle": "Eenvoudige prijzen die meegroeien met je actieve woningportefeuille.",
+        "loading": "Enterprise-tariefplan laden...",
+        "loadError": "We konden je Enterprise-tariefplan op dit moment niet laden.",
+        "notActiveTitle": "Je hebt geen Enterprise-tariefplan",
+        "notActiveDescription": "Dit account heeft geen actief Enterprise-tariefplan.",
+        "currentPlan": "Huidig plan",
+        "currentRate": "Huidig tarief",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "actieve woning / maand",
+        "active": "Actief",
+        "activeProperties": "Actieve woningen",
+        "billableProperties": "Factureerbare woningen in je portefeuille",
+        "pricePerProperty": "Prijs per woning",
+        "estimatedMonthlyCost": "Geschatte maandkosten",
+        "basedOnPropertyCount": "Op basis van je huidige aantal woningen",
+        "pricing": "Prijs",
+        "pricingLabel": "Enterprise-prijs",
+        "monthlySubscription": "Maandabonnement",
+        "nextInvoice": "Volgende factuur",
+        "nextInvoiceLabel": "Volgende factuur",
+        "billingFrequency": "Factureringsfrequentie",
+        "monthly": "Maandelijks",
+        "billingUnit": "Factureringseenheid",
+        "activeProperty": "Actieve woning",
+        "billingHistory": "Factuurgeschiedenis",
+        "noInvoices": "Nog geen facturen beschikbaar",
+        "invoicesDescription": "Je Enterprise-facturen verschijnen hier zodra de factuurgeschiedenis beschikbaar is.",
+        "billingContact": "Factureringscontact",
+        "billingContactTitle": "Factureringscontact",
+        "billingContactDescription": "Beheer van het factureringscontact komt hier beschikbaar."
       }
     },
     "team": {
@@ -1239,25 +1722,42 @@
       "inviteBtn": "+ Leden uitnodigen",
       "emptyState": "Nog geen aanvullende teamleden. Nodig een co-host uit om te beginnen.",
       "loadError": "Teamleden laden mislukt. Vernieuw de pagina.",
-      "activeMembers": "Actieve leden",
-      "pendingInvitations": "Uitnodigingen in behandeling",
+      "loadingMembers": "Teamleden laden…",
       "membershipsSection": "Teams waarvan je lid bent",
       "membershipsCardHeader": "Co-host lidmaatschappen",
       "joined": "Lid geworden op",
       "memberAvatarAlt": "Avatar lid",
       "hostAvatarAlt": "Avatar host",
+      "columnMember": "Lid",
+      "columnRole": "Rol",
+      "columnPermissions": "Rechten",
+      "columnStatus": "Status",
+      "columnActions": "Acties",
+      "statusActive": "Actief",
+      "statusPending": "In behandeling",
+      "actionsMenuLabel": "Actiemenu openen",
+      "removeAction": "Verwijderen",
+      "editRoleAction": "Rol bewerken",
+      "permissionsMore": "+{count} meer",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Teamlid verwijderen",
         "body": "Weet je zeker dat je dit lid wilt verwijderen? Ze verliezen toegang tot je accommodaties en taken.",
         "confirm": "Ja, verwijderen",
         "cancel": "Annuleren"
       },
+      "editRoleModal": {
+        "title": "Rol bewerken",
+        "roleLabel": "Rol",
+        "saveBtn": "Opslaan",
+        "cancel": "Annuleren",
+        "error": "Rol bijwerken mislukt. Probeer het opnieuw."
+      },
       "inviteModal": {
         "title": "Teamlid uitnodigen",
         "emailLabel": "E-mailadres",
         "emailPlaceholder": "collega@voorbeeld.com",
         "roleLabel": "Rol",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Uitnodiging verzenden",
         "cancel": "Annuleren",
         "success": "✓ Uitnodiging verstuurd naar",

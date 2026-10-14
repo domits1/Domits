@@ -1,8 +1,28 @@
+import { LISTING_NOT_FOUND, LISTING_REQUEST_FAILED, createListingError } from "./listingErrors";
+
 const FetchPropertyById = async (id) => {
   const response = await fetch(
     `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`
   );
-  const data = await response.json();
+
+  if (response.status === 404) {
+    throw createListingError(LISTING_NOT_FOUND, `Listing ${id} is not available.`);
+  }
+
+  if (!response.ok) {
+    throw createListingError(LISTING_REQUEST_FAILED, `Listing request failed with status ${response.status}.`);
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw createListingError(LISTING_REQUEST_FAILED, "Listing response could not be read.");
+  }
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw createListingError(LISTING_REQUEST_FAILED, "Listing response had an unexpected shape.");
+  }
 
   // Dev-only override for demo listing visuals
   if (id === '0a1f14bb-8dd9-45a9-aeb0-9ad9b609741e' && data && data.property) {

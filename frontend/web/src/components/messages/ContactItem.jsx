@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
+import { FaEllipsisH } from "react-icons/fa";
 import profileImage from "./domits-logo.jpg";
 
 const formatTime = (v) => {
@@ -26,7 +27,7 @@ const getChannelLabel = (contact) => {
   return raw;
 };
 
-const ContactItem = ({ contact, selected }) => {
+const ContactItem = ({ contact, selected, onActionsClick }) => {
   const time = useMemo(() => formatTime(contact?.latestMessage?.createdAt), [contact?.latestMessage?.createdAt]);
 
   const subtitle = contact?.latestMessage?.text ? contact.latestMessage.text : "No message history yet";
@@ -70,7 +71,24 @@ const ContactItem = ({ contact, selected }) => {
               </span>
             ) : null}
           </div>
-          <p className="contact-item-time">{time}</p>
+          <div className="contact-item-meta-actions">
+            <p className="contact-item-time">{time}</p>
+            {onActionsClick ? (
+              <button
+                type="button"
+                className="contact-item-actions-btn"
+                title="Conversation actions"
+                aria-label="Conversation actions"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onActionsClick(event);
+                }}
+              >
+                <FaEllipsisH />
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <p className="contact-item-subtitle">
@@ -85,6 +103,7 @@ const ContactItem = ({ contact, selected }) => {
 
 ContactItem.propTypes = {
   selected: PropTypes.bool,
+  onActionsClick: PropTypes.func,
   contact: PropTypes.shape({
     givenName: PropTypes.string,
     name: PropTypes.string,

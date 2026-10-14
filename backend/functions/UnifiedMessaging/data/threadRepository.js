@@ -169,6 +169,26 @@ class ThreadRepository {
       .execute();
   }
 
+  async updateThreadStatus(threadId, status) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(UnifiedThread)
+      .set({ status, updatedAt: Date.now() })
+      .where("id = :id", { id: threadId })
+      .execute();
+  }
+
+  async updateThreadGuestId(threadId, guestId) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(UnifiedThread)
+      .set({ guestId, updatedAt: Date.now() })
+      .where("id = :id", { id: threadId })
+      .execute();
+  }
+
   async updateThreadActivity({ threadId, direction, eventAt }) {
     const client = await Database.getInstance();
     const ts = Number(eventAt) || Date.now();

@@ -22,6 +22,18 @@ const renderPages = () =>
     </MemoryRouter>
   );
 
+describe("Pages2 missed revenue navigation", () => {
+  test("does not show a missed revenue nav link while the tab is hidden", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
+
+    renderPages();
+
+    await screen.findByText("Dashboard");
+    expect(screen.queryByRole("link", { name: /missed revenue/i })).toBeNull();
+  });
+});
+
 describe("Pages2 Channex certification navigation", () => {
   beforeEach(() => {
     delete process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS;

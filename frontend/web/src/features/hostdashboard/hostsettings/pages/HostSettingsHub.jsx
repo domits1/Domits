@@ -6,12 +6,17 @@ import CorporateFareOutlinedIcon from "@mui/icons-material/CorporateFareOutlined
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
+import SensorDoorOutlinedIcon from "@mui/icons-material/SensorDoorOutlined";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import de from "../../../../content/de.json";
 import es from "../../../../content/es.json";
+import { REMOTELOCK_UI_ENABLED } from "../../hosthomeautomation/constants/homeAutomationConstants";
 import "../styles/hostSettings.css";
 
 const contentByLanguage = { en, nl, de, es };
@@ -22,6 +27,10 @@ const CARD_ICONS = {
   team:            <PeopleOutlineIcon />,
   "rate-plans":    <PercentOutlinedIcon />,
   compliance:      <VerifiedUserOutlinedIcon />,
+  "communication-preferences": <NotificationsNoneOutlinedIcon />,
+  "privacy-security": <LockOutlinedIcon />,
+  onboarding:      <ChecklistOutlinedIcon />,
+  "home-automation": <SensorDoorOutlinedIcon />,
 };
 
 const SettingsCard = ({ to, icon, title, desc }) => (
@@ -45,17 +54,23 @@ SettingsCard.propTypes = {
 const HostSettingsHub = () => {
   const { language } = useContext(LanguageContext);
   const t = contentByLanguage[language]?.settings?.hub ?? contentByLanguage.en.settings.hub;
-  const { personalData, company, team, ratePlans, compliance } = t.cards;
+  const { personalData, communicationPreferences, privacySecurity, company, team, ratePlans, compliance, onboarding, homeAutomation } = t.cards;
 
   const personalCards = [
     { to: "personal-data", icon: CARD_ICONS["personal-data"], title: personalData.title, desc: personalData.desc },
+    { to: "communication-preferences", icon: CARD_ICONS["communication-preferences"], title: communicationPreferences.title, desc: communicationPreferences.desc },
+    { to: "privacy-security", icon: CARD_ICONS["privacy-security"], title: privacySecurity.title, desc: privacySecurity.desc },
   ];
 
   const accountCards = [
+    { to: "onboarding",  icon: CARD_ICONS.onboarding,    title: onboarding.title, desc: onboarding.desc },
     { to: "company",     icon: CARD_ICONS.company,      title: company.title,    desc: company.desc },
     { to: "team",        icon: CARD_ICONS.team,          title: team.title,       desc: team.desc },
     { to: "rate-plans",  icon: CARD_ICONS["rate-plans"], title: ratePlans.title,  desc: ratePlans.desc },
     { to: "compliance",  icon: CARD_ICONS.compliance,    title: compliance.title, desc: compliance.desc },
+    ...(REMOTELOCK_UI_ENABLED
+      ? [{ to: "home-automation", icon: CARD_ICONS["home-automation"], title: homeAutomation.title, desc: homeAutomation.desc }]
+      : []),
   ];
 
   return (

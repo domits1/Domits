@@ -10,7 +10,7 @@ const SHOW_AUTH_MFA = false;
 
 const GuestSettings = () => {
     const settingsData = useSettingsData();
-    const { saveAll, isSaving, saveSuccess } = usePersonalDataSave(settingsData);
+    const { saveAll, isSaving, saveSuccess, saveError } = usePersonalDataSave(settingsData);
 
     return (
         <PersonalDataForm
@@ -20,6 +20,7 @@ const GuestSettings = () => {
             onSaveAll={saveAll}
             isSaving={isSaving}
             saveSuccess={saveSuccess}
+            saveError={saveError}
             onVerifyEmail={settingsData.onSaveUserEmail}
         />
     );

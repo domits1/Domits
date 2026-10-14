@@ -8,18 +8,16 @@ import Unauthorized from "../util/exception/Unauthorized.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
-import ReservationRepository from "../data/reservationRepository.js";
+import ReservationRepository, { CONFLICT_EXISTING_BOOKING } from "../data/reservationRepository.js";
 import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
 import ExternalCalendarService from "./externalCalendarService.js";
-import ChannexBookingAvailabilityClient, {
-  CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
-  CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-  createBookingAvailabilityFallbackEvidence,
-} from "./channexBookingAvailabilityClient.js";
+import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
+import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -27,11 +25,6 @@ const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
 const BOOKING_STATUS_INQUIRY = "Inquiry";
 const BOOKING_STATUS_PAID = "Paid";
 const BOOKING_STATUS_CANCELLED = "Cancelled";
-const TRIGGER_BOOKING_CREATED = "BOOKING_CREATED";
-const TRIGGER_BOOKING_MODIFIED = "BOOKING_MODIFIED";
-const TRIGGER_BOOKING_CANCELLED = "BOOKING_CANCELLED";
-const CHANNEX_CANCEL_BOOKING_ALREADY_CANCELLED = "BOOKING_ALREADY_CANCELLED";
-const CHANNEX_CANCEL_BOOKING_NOT_ACTIVE = "BOOKING_STATUS_NOT_ACTIVE_FOR_CHANNEX_CANCEL";
 
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
@@ -53,8 +46,8 @@ class BookingService {
     authManager = new AuthManager(),
     getParamsModel = new GetParamsModel(),
     externalCalendarService = new ExternalCalendarService(),
-    channexBookingAvailabilityClient = new ChannexBookingAvailabilityClient(),
     priceLabsBookingNotifier = new PriceLabsBookingNotifier(),
+    taskAutomationNotifier = new TaskAutomationNotifier(),
     sendEmailFn = sendEmail,
     getHostEmailByIdFn = getHostEmailById,
   } = {}) {
@@ -65,8 +58,8 @@ class BookingService {
     this.authManager = authManager;
     this.getParamsModel = getParamsModel;
     this.externalCalendarService = externalCalendarService;
-    this.channexBookingAvailabilityClient = channexBookingAvailabilityClient;
     this.priceLabsBookingNotifier = priceLabsBookingNotifier;
+    this.taskAutomationNotifier = taskAutomationNotifier;
     this.sendEmail = sendEmailFn;
     this.getHostEmailById = getHostEmailByIdFn;
   }
@@ -131,46 +124,45 @@ class BookingService {
       },
     };
 
+    // An inquiry does not block nights yet; it reaches Channex when the host accepts it.
+    const channexChanges =
+      bookingStatus === BOOKING_STATUS_AWAITING_PAYMENT
+        ? [bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })]
+        : [];
     const result = await this.reservationRepository.addBookingToTable(
       eventWithParsedDates,
       authenticatedUser.sub,
       fetchedProperty.hostId,
       cancellationPolicy,
       bookingStatus,
-      fetchedProperty.bookingType
+      fetchedProperty.bookingType,
+      channexChanges
     );
 
     if (bookingStatus !== BOOKING_STATUS_AWAITING_PAYMENT) {
       return { ...result, isInquiry };
     }
 
-    const bookingAfter = {
-      id: result.bookingId,
-      property_id: propertyId,
-      hostid: fetchedProperty.hostId,
-      guestid: authenticatedUser.sub,
-      arrivaldate: arrivalDateMs,
-      departuredate: departureDateMs,
-      status: bookingStatus,
-      bookingtype: fetchedProperty.bookingType,
-    };
-    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
-      userId: fetchedProperty.hostId,
-      bookingAfter,
-      trigger: TRIGGER_BOOKING_CREATED,
-    });
-
     await this.priceLabsBookingNotifier.notifyBookingChange(fetchedProperty.hostId, "booking_created");
 
-    return {
-      ...result,
-      isInquiry,
-      ...(channexAvailabilitySync === undefined ? {} : { channexAvailabilitySync }),
-    };
+    await this.taskAutomationNotifier.notifyTaskCreation(fetchedProperty.hostId, {
+      title: "Prepare for arrival",
+      type: "Check-in",
+      property_id: propertyId,
+      property_snapshot_label: fetchedProperty.title,
+      due_date: arrivalDateMs,
+      source: "automation",
+    });
+
+    return { ...result, isInquiry };
   }
 
   parseBookingDateToMs(value, fieldName) {
     return parseBookingDateToMs(value, fieldName);
+  }
+
+  getStripeClient() {
+    return this.stripeRepository.getClient();
   }
 
   async confirmPayment(paymentid) {
@@ -190,7 +182,12 @@ class BookingService {
   async failPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
     if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
-      await this.reservationRepository.updateBookingStatus(booking.id, "Failed");
+      // A failed payment frees the nights the booking held, so Channex has to reopen them.
+      const channexChange = bookingAvailabilityChange(booking.property_id, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+        arrivalMs: Number(booking.arrivaldate),
+        departureMs: Number(booking.departuredate),
+      });
+      await this.reservationRepository.updateBookingStatus(booking.id, "Failed", [channexChange]);
       return true;
     }
   }
@@ -272,24 +269,28 @@ class BookingService {
     if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
     const booking = bookingResult.response;
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
-    if (booking.status !== "Inquiry") throw new BadRequestException("Booking is not in Inquiry status.");
+    if (booking.status !== BOOKING_STATUS_INQUIRY) throw new BadRequestException("Booking is not in Inquiry status.");
 
-    await this.reservationRepository.updateBookingStatus(bookingId, BOOKING_STATUS_AWAITING_PAYMENT);
-
-    const overlapping = await this.reservationRepository.getOverlappingInquiries({
+    const result = await this.reservationRepository.acceptInquiryWithOverlapDecline({
+      bookingId,
       propertyId: booking.property_id,
       arrivalDateMs: booking.arrivaldate,
       departureDateMs: booking.departuredate,
-      excludeBookingId: bookingId,
     });
-    await Promise.all(overlapping.map((b) => this.reservationRepository.updateBookingStatus(b.id, "Declined")));
+
+    if (!result.accepted) {
+      if (result.reason === CONFLICT_EXISTING_BOOKING) {
+        throw new BadRequestException("Dates are no longer available for this booking.");
+      }
+      throw new BadRequestException("Booking is not in Inquiry status.");
+    }
 
     return {
       bookingId,
       status: BOOKING_STATUS_AWAITING_PAYMENT,
       hostId: booking.hostid,
       propertyId: booking.property_id,
-      declinedCount: overlapping.length,
+      declinedCount: result.declinedCount,
       dates: {
         arrivalDate: booking.arrivaldate,
         departureDate: booking.departuredate,
@@ -308,51 +309,30 @@ class BookingService {
     return { bookingId, status: "Declined" };
   }
 
-  isChannexBookingAvailabilitySyncEnabled() {
-    return String(process.env.CHANNEX_BOOKING_AVAILABILITY_SYNC_ENABLED || "").trim().toLowerCase() === "true";
-  }
+  async markCheckedOut(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+    const booking = bookingResult.response;
+    if (booking.hostid !== user.sub) throw new Forbidden("Only the host may mark this booking as checked out.");
+    if (booking.status !== BOOKING_STATUS_PAID) throw new BadRequestException("Only a paid booking can be marked as checked out.");
+    if (booking.checked_out_at) throw new BadRequestException("Booking has already been checked out.");
 
-  async syncChannexBookingAvailabilityIfEnabled({
-    userId,
-    bookingBefore = null,
-    bookingAfter = null,
-    trigger,
-    includeDisabledEvidence = false,
-  }) {
-    const referenceBooking = bookingAfter || bookingBefore || {};
-    if (!this.isChannexBookingAvailabilitySyncEnabled()) {
-      return includeDisabledEvidence
-        ? createBookingAvailabilityFallbackEvidence({
-            booking: referenceBooking,
-            trigger,
-            skipped: true,
-            reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_DISABLED,
-          })
-        : undefined;
-    }
+    const property = await this.propertyRepository.getPropertyById(booking.property_id);
 
-    try {
-      return await this.channexBookingAvailabilityClient.syncAvailabilityForBookingChange({
-        userId,
-        bookingBefore,
-        bookingAfter,
-        trigger,
-      });
-    } catch (error) {
-      return createBookingAvailabilityFallbackEvidence({
-        booking: referenceBooking,
-        trigger,
-        skipped: false,
-        reason: CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-        errors: [
-          {
-            code: error?.code || error?.name || CHANNEX_BOOKING_AVAILABILITY_SYNC_FAILED,
-            message: error?.message || "Channex booking availability sync failed.",
-            httpStatus: error?.statusCode ?? null,
-          },
-        ],
-      });
-    }
+    const updated = await this.reservationRepository.markBookingCheckedOut(bookingId);
+    if (!updated) throw new BadRequestException("Booking has already been checked out.");
+
+    await this.taskAutomationNotifier.notifyTaskCreation(booking.hostid, {
+      title: "Clean the property",
+      type: "Cleaning",
+      property_id: booking.property_id,
+      property_snapshot_label: property?.title,
+      due_date: Date.now(),
+      source: "automation",
+    });
+
+    return { bookingId };
   }
 
   async modifyBookingDates(bookingId, arrivalDate, departureDate, authToken) {
@@ -398,7 +378,18 @@ class BookingService {
       excludeBookingId: normalizedBookingId,
     });
 
-    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs);
+    // The old nights reopen and the new ones close: one change per stay, so no row covers a
+    // night that did not change (design D9).
+    const channexChanges = isActiveBookingStatus(bookingBefore.status)
+      ? [
+          bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+            arrivalMs: Number(bookingBefore.arrivaldate),
+            departureMs: Number(bookingBefore.departuredate),
+          }),
+          bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs }),
+        ]
+      : [];
+    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChanges);
 
     const updatedBookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
     const bookingAfter = updatedBookingResult?.response || {
@@ -407,22 +398,41 @@ class BookingService {
       departuredate: departureDateMs,
     };
 
-    const channexAvailabilitySync = await this.syncChannexBookingAvailabilityIfEnabled({
-      userId: bookingAfter.hostid,
-      bookingBefore,
-      bookingAfter,
-      trigger: TRIGGER_BOOKING_MODIFIED,
-      includeDisabledEvidence: true,
-    });
-
     await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid, "booking_modified");
 
     return {
       booking: bookingAfter,
       bookingBefore,
       bookingAfter,
-      channexAvailabilitySync,
     };
+  }
+
+  async updateSpecialRequest(bookingId, specialRequest, authToken) {
+    const normalizedBookingId = requireStr(bookingId);
+    if (!normalizedBookingId) {
+      throw new BadRequestException("bookingId is required.");
+    }
+    if (!authToken) {
+      throw new Unauthorized("Missing Authorization header.");
+    }
+
+    if (typeof specialRequest !== "string") {
+      throw new BadRequestException("Special request must be a string.");
+    }
+    if (specialRequest.length > 500) {
+      throw new BadRequestException("Special request must not exceed 500 characters.");
+    }
+
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
+    if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
+
+    const bookingBefore = bookingResult.response;
+    if (bookingBefore.guestid !== user.sub) {
+      throw new Forbidden("Only the guest of this booking may update the special request.");
+    }
+
+    return await this.reservationRepository.updateBookingSpecialRequest(normalizedBookingId, specialRequest);
   }
 
   async cancelBooking(bookingId, authToken, { reason = null } = {}) {
@@ -447,7 +457,14 @@ class BookingService {
 
     const alreadyCancelled = isCancelledBookingStatus(bookingBefore.status);
     if (!alreadyCancelled) {
-      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED);
+      // Only a booking that blocked nights has nights to reopen on Channex.
+      const channexChange = isActiveBookingStatus(bookingBefore.status)
+        ? bookingAvailabilityChange(getPropertyId(bookingBefore), CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+            arrivalMs: Number(bookingBefore.arrivaldate),
+            departureMs: Number(bookingBefore.departuredate),
+          })
+        : null;
+      await this.reservationRepository.updateBookingStatus(normalizedBookingId, BOOKING_STATUS_CANCELLED, [channexChange]);
     }
 
     const updatedBookingResult = alreadyCancelled
@@ -457,22 +474,6 @@ class BookingService {
       ...bookingBefore,
       status: BOOKING_STATUS_CANCELLED,
     };
-
-    const shouldSyncChannex = !alreadyCancelled && isActiveBookingStatus(bookingBefore.status);
-    const channexAvailabilitySync = shouldSyncChannex
-      ? await this.syncChannexBookingAvailabilityIfEnabled({
-          userId: bookingAfter.hostid || bookingBefore.hostid,
-          bookingBefore,
-          bookingAfter,
-          trigger: TRIGGER_BOOKING_CANCELLED,
-          includeDisabledEvidence: true,
-        })
-      : createBookingAvailabilityFallbackEvidence({
-          booking: bookingAfter,
-          trigger: TRIGGER_BOOKING_CANCELLED,
-          skipped: true,
-          reason: alreadyCancelled ? CHANNEX_CANCEL_BOOKING_ALREADY_CANCELLED : CHANNEX_CANCEL_BOOKING_NOT_ACTIVE,
-        });
 
     if (!alreadyCancelled) {
       await this.priceLabsBookingNotifier.notifyBookingChange(bookingAfter.hostid || bookingBefore.hostid, "booking_cancelled");
@@ -484,7 +485,6 @@ class BookingService {
       bookingAfter,
       alreadyCancelled,
       reason: requireStr(reason),
-      channexAvailabilitySync,
     };
   }
 

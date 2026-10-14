@@ -7,46 +7,47 @@ $card-shadow: rgba(0, 0, 0, 0.1);
 
 .mc-comparison-card {
   width: 100%;
-  max-width: 900px;
-  margin: 25px auto;
   padding: 25px;
+  box-sizing: border-box;
   background: $card-bg;
   border-radius: 16px;
   box-shadow: 0 4px 8px $card-shadow;
   color: $accent-color;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.01);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
 
   .mc-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 15px;
 
-    h3 {
+    .mc-title {
       font-size: 20px;
       font-weight: 600;
       color: $text-dark;
+      margin: 0;
     }
 
     .mc-toggle {
-      display: flex;
-      gap: 10px;
+      display: inline-flex;
+      border: 1px solid $accent-color;
+      border-radius: 20px;
+      overflow: hidden;
 
       button {
         background: #fff;
-        border: 2px solid $accent-color;
-        border-radius: 30px;
+        border: none;
+        border-right: 1px solid $accent-color;
         color: $accent-color;
         font-weight: 500;
         font-size: 14px;
         padding: 6px 16px;
         cursor: pointer;
         transition: all 0.3s ease;
+
+        &:last-child {
+          border-right: none;
+        }
 
         &:hover {
           background: $accent-hover-bg;
@@ -55,25 +56,172 @@ $card-shadow: rgba(0, 0, 0, 0.1);
         &.active {
           background: $accent-color;
           color: #fff;
-          box-shadow: 0 0 0 3px rgba(13, 152, 19, 0.25);
         }
       }
     }
-  }
-
-  .mc-chart {
-    width: 100%;
-    height: 350px;
   }
 
   .mc-status {
     text-align: center;
     font-size: 16px;
     color: $text-muted;
-    margin-top: 80px;
+    margin-top: 40px;
+    margin-bottom: 40px;
 
     &.error {
       color: red;
     }
+  }
+
+  .mc-summary {
+    padding-top: 4px;
+  }
+
+  .mc-summary-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+
+    .mc-metric-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-dark;
+    }
+
+    .mc-metric-abbr {
+      color: $accent-color;
+      font-weight: 600;
+    }
+
+    .mc-metric-value {
+      font-size: 14px;
+      color: $text-muted;
+    }
+  }
+
+  .mc-breakdown-row {
+    display: flex;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+
+    .mc-breakdown-item {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 4px;
+
+      &:first-child {
+        border-right: 1px solid #e5e7eb;
+        padding-right: 16px;
+      }
+
+      &:last-child {
+        padding-left: 16px;
+      }
+    }
+
+    .mc-breakdown-label {
+      font-size: 14px;
+      color: $text-muted;
+    }
+
+    .mc-breakdown-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: $text-dark;
+    }
+  }
+
+  .mc-visual {
+    margin-top: 24px;
+  }
+
+  .mc-bar-track {
+    height: 10px;
+    border-radius: 6px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+
+  .mc-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: $accent-color;
+    transition: width 0.4s ease;
+  }
+
+  .mc-visual-caption {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: $text-muted;
+  }
+
+  .mc-stat-block {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .mc-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: $text-dark;
+    }
+
+    .mc-stat-label {
+      font-size: 13px;
+      color: $text-muted;
+    }
+  }
+
+  .mc-nights-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mc-night-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    background: #fff;
+
+    &.filled {
+      background: $accent-color;
+      border-color: $accent-color;
+    }
+  }
+
+  .mc-chart-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .mc-chart-title {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-dark;
+  }
+
+  .mc-chart {
+    position: relative;
+    width: 100%;
+  }
+
+  .mc-no-data-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $text-muted;
+    font-size: 14px;
+    background: rgba(249, 249, 249, 0.6);
   }
 }

@@ -22,15 +22,32 @@ import { PropertyCancellationPolicyRepository } from "../../data/repository/prop
 import { PropertyLateCheckinRepository } from "../../data/repository/propertyLateCheckinRepository.js";
 import { PropertyHouseRuleRepository } from "../../data/repository/propertyHouseRuleRepository.js";
 import { PropertyCustomRuleRepository } from "../../data/repository/propertyCustomRuleRepository.js";
+import { PropertyDraftRepository } from "../../data/repository/propertyDraftRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
+import { ConflictException } from "../../util/exception/ConflictException.js";
+import { TypeException } from "../../util/exception/TypeException.js";
+import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
+import {
+  AUTO_REGISTRATION_NUMBER_PATTERN,
+  MAX_REGISTRATION_NUMBER_LENGTH,
+  REGISTRATION_NUMBER_TAKEN_MESSAGE,
+} from "../../util/constant/registrationNumber.js";
 import {
   extractAvailableOverrideDateKeys,
   extractUnavailableOverrideDateKeys,
   normalizeBlockedDateKeys,
 } from "../../util/calendarAvailability.js";
+
+
+// Booking statuses whose guest may load the full property details. An allowlist on purpose: a
+// status added later (or one we do not know, like "Refunded") stays blocked until it is added here.
+const FULL_PROPERTY_ACCESS_BOOKING_STATUSES = new Set(["paid", "inquiry", "awaiting payment"]);
+const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
+const DRAFT_NUMERIC_FIELDS = ["capacity", "bedrooms", "bathrooms"];
+
 
 export class PropertyService {
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
@@ -50,13 +67,14 @@ export class PropertyService {
     this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
     this.propertyExternalCalendarRepository = new PropertyExternalCalendarRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
-    this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+    this.bookingRepository = new BookingRepository(systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
     this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
     this.propertyCancellationPolicyRepository = new PropertyCancellationPolicyRepository(systemManagerRepository);
     this.propertyLateCheckinRepository = new PropertyLateCheckinRepository(systemManagerRepository);
     this.propertyHouseRuleRepository = new PropertyHouseRuleRepository(systemManagerRepository);
     this.propertyCustomRuleRepository = new PropertyCustomRuleRepository(systemManagerRepository);
+    this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -118,6 +136,115 @@ export class PropertyService {
       throw new DatabaseException("Property status update was not completed.");
     }
     return updatedProperty;
+  }
+
+  normalizeRegistrationNumber(registrationNumber) {
+    if (typeof registrationNumber !== "string") {
+      throw new TypeException("Registration number must be a string.");
+    }
+    const normalized = registrationNumber.trim();
+    if (!normalized) {
+      throw new TypeException("Registration number is required.");
+    }
+    if (AUTO_REGISTRATION_NUMBER_PATTERN.test(normalized)) {
+      throw new TypeException("Registration number cannot be the automatically generated placeholder.");
+    }
+    if (normalized.length > MAX_REGISTRATION_NUMBER_LENGTH) {
+      throw new TypeException(`Registration number cannot be longer than ${MAX_REGISTRATION_NUMBER_LENGTH} characters.`);
+    }
+    return normalized;
+  }
+
+  async updateRegistrationNumber(propertyId, registrationNumber) {
+    const normalizedRegistrationNumber = this.normalizeRegistrationNumber(registrationNumber);
+
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    const isUsedByAnotherProperty = await this.propertyRepository.isRegistrationNumberUsedByAnotherProperty(
+      normalizedRegistrationNumber,
+      propertyId
+    );
+    if (isUsedByAnotherProperty) {
+      throw new ConflictException(REGISTRATION_NUMBER_TAKEN_MESSAGE);
+    }
+
+    const updatedProperty = await this.propertyRepository.updateRegistrationNumber(
+      propertyId,
+      normalizedRegistrationNumber
+    );
+    if (!updatedProperty) {
+      throw new DatabaseException("Registration number update was not completed.");
+    }
+
+    return { propertyId, registrationNumber: updatedProperty.registrationNumber };
+  }
+
+  async getDraft(propertyId) {
+    const draft = await this.propertyDraftRepository.getDraftById(propertyId);
+    if (!draft) {
+      throw new NotFoundException(`Property draft ${propertyId} not found.`);
+    }
+    return this.mapDraft(draft);
+  }
+
+  async updateDraft(propertyId, fields) {
+    const draft = await this.propertyDraftRepository.getDraftById(propertyId);
+    if (!draft) {
+      throw new NotFoundException(`Property draft ${propertyId} not found.`);
+    }
+    const validatedFields = this.validateDraftContent(fields);
+    await this.propertyDraftRepository.updateDraftContent(propertyId, validatedFields);
+  }
+
+  validateDraftContent(fields = {}) {
+    const name = typeof fields.name === "string" ? fields.name.trim() : "";
+    if (!name) {
+      throw new Error("Draft name is required.");
+    }
+
+    const addressLine = typeof fields.addressLine === "string" ? fields.addressLine.trim() : "";
+    if (!addressLine) {
+      throw new Error("Draft addressLine is required.");
+    }
+
+    const validatedFields = { name, addressLine };
+
+    for (const field of DRAFT_NUMERIC_FIELDS) {
+      if (fields[field] === undefined) continue;
+      const value = Number(fields[field]);
+      if (!Number.isInteger(value) || value <= 0) {
+        throw new Error(`Draft ${field} must be a number greater than 0.`);
+      }
+      validatedFields[field] = value;
+    }
+
+    if (fields.propertyType !== undefined) {
+      if (!ALLOWED_PROPERTY_TYPES.includes(fields.propertyType)) {
+        throw new Error(`Draft propertyType must be one of: ${ALLOWED_PROPERTY_TYPES.join(", ")}.`);
+      }
+      validatedFields.propertyType = fields.propertyType;
+    }
+
+    return validatedFields;
+  }
+
+  mapDraft(draft) {
+    return {
+      propertyId: draft.property_id,
+      hostId: draft.host_id,
+      createdAt: Number(draft.created_at),
+      lastActivityAt: Number(draft.last_activity_at),
+      name: draft.name ?? null,
+      addressLine: draft.address_line ?? null,
+      propertyType: draft.property_type ?? null,
+      capacity: draft.capacity ?? null,
+      bedrooms: draft.bedrooms ?? null,
+      bathrooms: draft.bathrooms ?? null,
+      status: draft.status,
+    };
   }
 
   async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
@@ -222,6 +349,14 @@ export class PropertyService {
     };
   }
 
+  async getPricingSavingConfig() {
+    return {
+      domitsCommissionRate: 0.10,
+      comparisonCommissionRate: 0.155,
+      comparisonPlatformLabel: "other sites",
+    };
+  }
+
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
     const properties = await Promise.all(
@@ -273,8 +408,8 @@ export class PropertyService {
 
   async getFullPropertyByBookingId(bookingId) {
     const booking = await this.bookingRepository.getBookingById(bookingId);
-    if (booking.status !== "Paid") {
-      throw new Forbidden("Payment must be processed before accessing the full property details.");
+    if (!FULL_PROPERTY_ACCESS_BOOKING_STATUSES.has(normalizeBookingStatus(booking.status))) {
+      throw new Forbidden("Full property details are not available for this booking.");
     }
     const basePropertyInfo = await this.getBasePropertyInfo(booking.property_id);
     if (!basePropertyInfo) {
@@ -595,8 +730,8 @@ export class PropertyService {
     return await this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId, range);
   }
 
-  async updatePropertyCalendarOverrides(propertyId, overrides, range = {}) {
-    return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range);
+  async updatePropertyCalendarOverrides(propertyId, overrides, range = {}, channexChanges = []) {
+    return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range, channexChanges);
   }
 
   async createRules(rules) {
@@ -780,11 +915,11 @@ export class PropertyService {
   }
 
   async getCustomRules(propertyId) {
-    return [];
+    return await this.propertyCustomRuleRepository.getCustomRulesByPropertyId(propertyId);
   }
 
   async updateCustomRules(propertyId, customRules) {
-    // Custom rules storage to be implemented
+    return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
   }
 
   async createPropertyType(type) {

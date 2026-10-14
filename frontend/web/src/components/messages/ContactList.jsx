@@ -1,9 +1,16 @@
 import { useState, useEffect, useContext, useMemo, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 import { getMessageCapabilities } from "./messageCapabilities";
+import {
+  markThreadRead,
+  markThreadUnread,
+  closeThread,
+} from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { getIdToken } from "../../services/getAccessToken";
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -25,6 +32,19 @@ const resolvePartnerId = (contact, selfUserId) => {
 
   const picked = candidates.find((id) => String(id) !== String(selfUserId));
   return picked || null;
+};
+
+const buildRowMenuKey = (contact, selfUserId) => {
+  if (contact?.threadId) return contact.threadId;
+
+  const partnerId = resolvePartnerId(contact, selfUserId);
+  if (!partnerId) return null;
+
+  const propertyId = contact?.propertyId || contact?.AccoId || "";
+  const bookingId = contact?.bookingId || contact?.bookingid || "";
+  const platform = String(contact?.platform || "DOMITS").toUpperCase();
+
+  return ["participants", partnerId, propertyId, bookingId, platform].join(":");
 };
 
 const resolveContactName = (contact) => {
@@ -103,14 +123,22 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
     return resolvePartnerId(c, selfUserId) === partnerId;
   });
 
+  const isFromCurrentUser = String(incoming?.userId ?? incoming?.senderId) === String(selfUserId);
+  const isAddressedToCurrentUser = String(incoming?.recipientId) === String(selfUserId);
+  const isGenuineIncoming = !isFromCurrentUser && isAddressedToCurrentUser;
+
   const hasExisting = idx > -1;
   if (hasExisting) {
+    const previousUnreadCount = updated[idx]?.unreadCount || 0;
+    const nextUnreadCount = isGenuineIncoming ? previousUnreadCount + 1 : previousUnreadCount;
+
     updated[idx] = {
       ...updated[idx],
       latestMessage: { ...incoming, text: displayText },
       platform: incoming?.platform || updated[idx]?.platform || "DOMITS",
       integrationAccountId: incoming?.integrationAccountId || updated[idx]?.integrationAccountId || null,
       externalThreadId: incoming?.externalThreadId || updated[idx]?.externalThreadId || null,
+      unreadCount: nextUnreadCount,
     };
   } else {
     updated.unshift({
@@ -130,12 +158,32 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
       externalThreadId: incoming?.externalThreadId || null,
       channelLabel: incoming?.platform === "WHATSAPP" ? "WhatsApp" : incoming?.platform || null,
       isWhatsApp: String(incoming?.platform || "").toUpperCase() === "WHATSAPP",
+      unreadCount: isGenuineIncoming ? 1 : 0,
     });
   }
 
   updated.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
   return updated;
 };
+
+const markContactThreadReadLocally = (prevContacts, threadId, updatedCount) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId)
+      ? { ...c, unreadCount: Math.max(0, (c.unreadCount || 0) - (updatedCount || 0)) }
+      : c
+  );
+
+const markContactThreadUnreadLocally = (prevContacts, threadId, updatedCount) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId)
+      ? { ...c, unreadCount: (c.unreadCount || 0) + updatedCount }
+      : c
+  );
+
+const markContactThreadClosedLocally = (prevContacts, threadId) =>
+  (Array.isArray(prevContacts) ? prevContacts : []).map((c) =>
+    c?.threadId && String(c.threadId) === String(threadId) ? { ...c, status: "CLOSED" } : c
+  );
 
 const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
   setContacts?.((prevContacts) => {
@@ -183,11 +231,21 @@ const ContactList = ({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
+  const [contextMenu, setContextMenu] = useState({ visible: false, contactKey: null, contact: null });
 
   const hydratingIdsRef = useRef(new Set());
   const lastWsMessageIdRef = useRef(null);
   const lastPropMessageIdRef = useRef(null);
+  const activeThreadIdRef = useRef(activeThreadId);
+  const activeContactIdRef = useRef(activeContactId);
+
+  useEffect(() => {
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
+
+  useEffect(() => {
+    activeContactIdRef.current = activeContactId;
+  }, [activeContactId]);
 
   const processIncomingMessage = useCallback(
     (incoming) => {
@@ -196,7 +254,27 @@ const ContactList = ({
       const partnerId = incoming?.userId === userId ? incoming?.recipientId : incoming?.userId;
       if (!partnerId || String(partnerId) === String(userId)) return;
 
+      const incomingThreadId = incoming?.threadId || null;
+      const isActiveThread = incomingThreadId
+        ? String(incomingThreadId) === String(activeThreadIdRef.current || "")
+        : String(partnerId) === String(activeContactIdRef.current || "");
+
       setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming }));
+
+      const isFromCurrentUser = String(incoming?.userId ?? incoming?.senderId) === String(userId);
+      const isAddressedToCurrentUser = String(incoming?.recipientId) === String(userId);
+      if (!isFromCurrentUser && isAddressedToCurrentUser && isActiveThread && incomingThreadId) {
+        getIdToken()
+          .then((idToken) => markThreadRead(incomingThreadId, idToken))
+          .then((result) => {
+            setContacts?.((prevContacts) =>
+              markContactThreadReadLocally(prevContacts, incomingThreadId, result?.updated ?? 0)
+            );
+          })
+          .catch(() => {
+            toast.error("Could not mark this conversation as read. Please try again.");
+          });
+      }
 
       const hydrateKey = String(partnerId);
       if (hydratingIdsRef.current.has(hydrateKey)) return;
@@ -250,16 +328,75 @@ const ContactList = ({
   const handleContextMenu = (event, contact) => {
     if (!capabilities.canManageConversation) return;
     event.preventDefault();
+    event.stopPropagation();
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
 
-    const key = contact?.threadId || partnerId;
-    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, contactKey: key });
+    const key = buildRowMenuKey(contact, userId);
+    setContextMenu({ visible: true, contactKey: key, contact });
   };
 
-  const handleCloseSelectedChat = () => {
-    if (contextMenu.contactKey) onCloseChat?.(activeContactId);
-    setContextMenu({ visible: false, x: 0, y: 0, contactKey: null });
+  const handleCloseSelectedChat = async () => {
+    const contact = contextMenu.contact;
+    const partnerId = resolvePartnerId(contact, userId);
+    const threadId = contact?.threadId;
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+
+    if (!threadId) {
+      if (partnerId) onCloseChat?.(partnerId);
+      return;
+    }
+
+    try {
+      const idToken = await getIdToken();
+      await closeThread(threadId, idToken);
+      setContacts?.((prevContacts) => markContactThreadClosedLocally(prevContacts, threadId));
+      if (partnerId) onCloseChat?.(partnerId);
+    } catch {
+      toast.error("Could not close this conversation. Please try again.");
+    }
+  };
+
+  const handleMarkAsRead = async () => {
+    const threadId = contextMenu.contact?.threadId;
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+    if (!threadId) return;
+
+    try {
+      const idToken = await getIdToken();
+      const result = await markThreadRead(threadId, idToken);
+      setContacts?.((prevContacts) => markContactThreadReadLocally(prevContacts, threadId, result?.updated ?? 0));
+    } catch {
+      toast.error("Could not mark this conversation as read. Please try again.");
+    }
+  };
+
+  const handleMarkAsUnread = async () => {
+    const threadId = contextMenu.contact?.threadId;
+    setContextMenu({ visible: false, contactKey: null, contact: null });
+    if (!threadId) return;
+
+    try {
+      const idToken = await getIdToken();
+      const result = await markThreadUnread(threadId, idToken);
+
+      if (String(activeThreadIdRef.current || "") === String(threadId)) {
+        try {
+          const readResult = await markThreadRead(threadId, idToken);
+          setContacts?.((prevContacts) =>
+            markContactThreadReadLocally(prevContacts, threadId, readResult?.updated ?? 0)
+          );
+        } catch {
+          setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
+          toast.error("Could not reopen this conversation as read. Please try again.");
+        }
+        return;
+      }
+
+      setContacts?.((prevContacts) => markContactThreadUnreadLocally(prevContacts, threadId, result?.updated ?? 0));
+    } catch {
+      toast.error("Could not mark this conversation as unread. Please try again.");
+    }
   };
 
   useEffect(() => {
@@ -285,7 +422,12 @@ const ContactList = ({
     let list = Array.isArray(contacts) ? [...contacts] : [];
 
     if (capabilities.canSearch && searchTerm) {
-      list = list.filter((c) => resolveContactName(c).toLowerCase().includes(searchTerm.toLowerCase()));
+      const term = searchTerm.toLowerCase();
+      list = list.filter((c) => {
+        const nameMatches = resolveContactName(c).toLowerCase().includes(term);
+        const bookingIdMatches = String(c?.bookingId ?? "").toLowerCase().includes(term);
+        return nameMatches || bookingIdMatches;
+      });
     }
     if (capabilities.canFilterByReadStatus && tab === "unread") {
       list = list.filter((c) => (c.unreadCount || 0) > 0);
@@ -312,8 +454,10 @@ const ContactList = ({
         contact?.id ||
         contact?.latestMessage?.id ||
         `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
-      const key = contact?.threadId || partnerId || fallbackKey;
-      const isActive = selectedKey === key;
+      const activeKey = contact?.threadId || partnerId || fallbackKey;
+      const key = buildRowMenuKey(contact, userId) || fallbackKey;
+      const isActive = selectedKey === activeKey;
+      const isMenuOpenForRow = capabilities.canManageConversation && contextMenu.visible && contextMenu.contactKey === key;
 
       return (
         <li
@@ -323,7 +467,48 @@ const ContactList = ({
           onContextMenu={capabilities.canManageConversation ? (event) => handleContextMenu(event, contact) : undefined}
           style={{ cursor: "pointer" }}
         >
-          <ContactItem contact={contact} selected={isActive} />
+          <ContactItem
+            contact={contact}
+            selected={isActive}
+            onActionsClick={
+              capabilities.canManageConversation ? (event) => handleContextMenu(event, contact) : undefined
+            }
+          />
+
+          {isMenuOpenForRow && (
+            <div className="contact-context-menu" role="menu">
+              {(contextMenu.contact?.unreadCount || 0) > 0 ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkAsRead();
+                  }}
+                >
+                  Mark as read
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkAsUnread();
+                  }}
+                >
+                  Mark as unread
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleCloseSelectedChat();
+                }}
+              >
+                Close chat
+              </button>
+            </div>
+          )}
         </li>
       );
     });
@@ -392,14 +577,6 @@ const ContactList = ({
       </div>
 
       <ul className="contact-list-list">{listContent}</ul>
-
-      {capabilities.canManageConversation && contextMenu.visible && (
-        <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">
-          <button type="button" onClick={handleCloseSelectedChat}>
-            Close chat
-          </button>
-        </div>
-      )}
     </div>
   );
 };

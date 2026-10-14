@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../services/getAccessToken";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 const BOOKINGS_API_URL = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
@@ -44,12 +44,13 @@ const readJsonOrText = async (response) => {
 const requestChannex = async (path, { method = "GET", query = {}, body } = {}) => {
   let response;
   try {
+    const authorizationHeader = { Authorization: `Bearer ${await getIdToken()}` };
     response = await fetch(buildUrl(path, query), {
       method,
       ...(body === undefined
-        ? {}
+        ? { headers: authorizationHeader }
         : {
-            headers: { "Content-Type": "application/json" },
+            headers: { ...authorizationHeader, "Content-Type": "application/json" },
             body: JSON.stringify(body),
           }),
     });
@@ -128,6 +129,16 @@ export const getChannexStatus = ({ userId }) =>
 export const getChannexAdminAccess = ({ userId }) =>
   requestChannex("/integrations/channex/admin-access", {
     query: { userId },
+  });
+
+export const connectChannex = ({ userId, apiKey, displayName }) =>
+  requestChannex("/integrations/channex/connect", {
+    method: "POST",
+    body: {
+      userId,
+      credentials: { apiKey },
+      ...(displayName ? { displayName } : {}),
+    },
   });
 
 export const getChannexAriTargets = ({ userId, domitsPropertyId }) =>
@@ -231,13 +242,6 @@ export const syncChannexFull = ({ userId, domitsPropertyId, dateFrom, dateTo }) 
     query: { userId, domitsPropertyId, dateFrom, dateTo },
   });
 
-export const syncChannexCertificationTestCase = ({ userId, domitsPropertyId, testCaseId }) =>
-  requestChannex("/integrations/channex/certification/test-case", {
-    method: "POST",
-    query: { userId, domitsPropertyId },
-    body: { testCaseId },
-  });
-
 export const receiveChannexBookingRevisions = ({ userId, domitsPropertyId }) =>
   requestChannex("/integrations/channex/bookings/receive", {
     method: "POST",
@@ -280,15 +284,5 @@ export const modifyBookingDates = ({ bookingId, arrivalDate, departureDate }) =>
       bookingId,
       arrivalDate,
       departureDate,
-    },
-  });
-
-export const cancelBooking = ({ userId, domitsPropertyId, bookingId, reason }) =>
-  requestChannex("/integrations/channex/certification/cancel-booking", {
-    method: "POST",
-    query: { userId, domitsPropertyId },
-    body: {
-      bookingId,
-      reason,
     },
   });

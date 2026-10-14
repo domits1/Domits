@@ -1,0 +1,154 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { WEBSITE_DOMAINS_STATUS, useWebsiteDomains } from "../domains/useWebsiteDomains";
+import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
+import {
+  fetchWebsiteDomains,
+  promoteWebsiteDomain,
+  removeWebsiteDomain,
+  verifyWebsiteDomain,
+} from "../services/websiteDomainService";
+
+jest.mock("../services/websiteSiteService", () => ({ fetchWebsiteSiteByPropertyId: jest.fn() }));
+jest.mock("../services/websiteDomainService", () => ({
+  fetchWebsiteDomains: jest.fn(),
+  connectWebsiteDomain: jest.fn(),
+  verifyWebsiteDomain: jest.fn(),
+  removeWebsiteDomain: jest.fn(),
+  promoteWebsiteDomain: jest.fn(),
+}));
+
+const summaryFor = (siteId) => ({ site: { id: siteId, status: "PUBLISHED" }, primaryDomain: null, domains: [] });
+const fallbackFor = (siteId) => ({ domain: `${siteId}.direct.domits.com`, domainType: "FALLBACK", status: "ACTIVE" });
+
+describe("useWebsiteDomains", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    fetchWebsiteSiteByPropertyId.mockImplementation(async (propertyId) => summaryFor(`site-for-${propertyId}`));
+    fetchWebsiteDomains.mockImplementation(async (siteId) => [fallbackFor(siteId)]);
+  });
+
+  it("starts over for a new property instead of keeping the previous site's domains", async () => {
+    const { result, rerender } = renderHook(({ propertyId }) => useWebsiteDomains({ propertyId, enabled: true }), {
+      initialProps: { propertyId: "property-1" },
+    });
+    await waitFor(() => expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.READY));
+    expect(result.current.domains[0].domain).toBe("site-for-property-1.direct.domits.com");
+
+    rerender({ propertyId: "property-2" });
+
+    await waitFor(() => expect(result.current.domains[0]?.domain).toBe("site-for-property-2.direct.domits.com"));
+    expect(fetchWebsiteSiteByPropertyId).toHaveBeenLastCalledWith("property-2");
+    expect(fetchWebsiteDomains).toHaveBeenLastCalledWith("site-for-property-2");
+  });
+
+  it("keeps a domain that is being removed and drops it once the server says it is gone", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE" };
+    fetchWebsiteDomains.mockImplementation(async (siteId) => [fallbackFor(siteId), custom]);
+    removeWebsiteDomain.mockResolvedValue([fallbackFor("site-for-property-1"), { ...custom, status: "REMOVING" }]);
+    verifyWebsiteDomain.mockResolvedValue([fallbackFor("site-for-property-1")]);
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    await act(() => result.current.remove("www.example.com"));
+
+    expect(removeWebsiteDomain).toHaveBeenCalledWith({ siteId: "site-for-property-1", domain: "www.example.com" });
+    expect(result.current.customDomain).toMatchObject({ status: "REMOVING" });
+    expect(result.current.isRemoving).toBe(false);
+
+    await act(() => result.current.checkAgain());
+
+    expect(result.current.customDomain).toBeNull();
+    expect(result.current.domains).toHaveLength(1);
+    expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.READY);
+  });
+
+  it("replaces the whole list once the main address moved so both rows show the new flag", async () => {
+    const fallback = { ...fallbackFor("site-for-property-1"), isPrimary: true };
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: false };
+    fetchWebsiteDomains.mockResolvedValue([fallback, custom]);
+    promoteWebsiteDomain.mockResolvedValue([
+      { ...fallback, isPrimary: false },
+      { ...custom, isPrimary: true },
+    ]);
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    await act(() => result.current.promote("www.example.com"));
+
+    expect(promoteWebsiteDomain).toHaveBeenCalledWith({ siteId: "site-for-property-1", domain: "www.example.com" });
+    expect(result.current.domains.map((entry) => [entry.domain, entry.isPrimary])).toEqual([
+      [fallback.domain, false],
+      ["www.example.com", true],
+    ]);
+    expect(result.current.isPromoting).toBe(false);
+    expect(result.current.notice).toBeNull();
+  });
+
+  it("reloads the list and keeps the notice when the server saved the change but could not reload the list", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...fallbackFor("site-for-property-1"), isPrimary: false }, custom])
+      .mockResolvedValueOnce([
+        { ...fallbackFor("site-for-property-1"), isPrimary: true },
+        { ...custom, status: "REMOVING", isPrimary: false },
+      ]);
+    removeWebsiteDomain.mockRejectedValue(
+      Object.assign(new Error("Saved, list unavailable."), { code: "domains_unavailable", requestId: "req-2" })
+    );
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    await act(() => result.current.remove("www.example.com"));
+
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(result.current.domains.map((entry) => [entry.status, entry.isPrimary])).toEqual([
+      ["ACTIVE", true],
+      ["REMOVING", false],
+    ]);
+    expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.READY);
+    expect(result.current.notice).toMatchObject({ scope: "panel", requestId: "req-2" });
+    expect(result.current.notice.message).toMatch(/request completed/i);
+  });
+
+  it("shows the reload failure instead of the original notice when the recovery reload fails", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
+    fetchWebsiteDomains
+      .mockResolvedValueOnce([{ ...fallbackFor("site-for-property-1"), isPrimary: false }, custom])
+      .mockRejectedValueOnce(Object.assign(new Error("Session expired."), { code: "unauthorized", status: 401 }));
+    removeWebsiteDomain.mockRejectedValue(
+      Object.assign(new Error("Completed, list unavailable."), { code: "domains_unavailable", requestId: "req-2" })
+    );
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.remove("www.example.com");
+    });
+
+    expect(outcome).toBe(false);
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe(WEBSITE_DOMAINS_STATUS.ERROR);
+    expect(result.current.notice.message).toMatch(/session has expired/i);
+    expect(result.current.notice.message).not.toMatch(/request completed/i);
+    expect(result.current.isRemoving).toBe(false);
+  });
+
+  it("shows a promote refusal as a panel notice and keeps the list as it was", async () => {
+    const custom = { domain: "www.example.com", domainType: "CUSTOM", status: "ACTIVE", isPrimary: false };
+    fetchWebsiteDomains.mockImplementation(async (siteId) => [fallbackFor(siteId), custom]);
+    promoteWebsiteDomain.mockRejectedValue(
+      Object.assign(new Error("Not live."), { code: "domain_not_active", requestId: "req-1" })
+    );
+    const { result } = renderHook(() => useWebsiteDomains({ propertyId: "property-1", enabled: true }));
+    await waitFor(() => expect(result.current.customDomain?.status).toBe("ACTIVE"));
+
+    await act(() => result.current.promote("www.example.com"));
+
+    expect(result.current.notice).toMatchObject({ scope: "panel", requestId: "req-1" });
+    expect(result.current.notice.message).toMatch(/not live, so it can't be the main address/i);
+    expect(result.current.fieldError).toBe("");
+    expect(result.current.domains).toHaveLength(2);
+    expect(fetchWebsiteDomains).toHaveBeenCalledTimes(1);
+  });
+});

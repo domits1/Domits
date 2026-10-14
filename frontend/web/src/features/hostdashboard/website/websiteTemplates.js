@@ -1,3 +1,13 @@
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+import de from "../../../content/de.json";
+import es from "../../../content/es.json";
+
+const CONTENT_BY_LANGUAGE = { en, nl, de, es };
+
+export const getWebsiteTemplateCopy = (language = "en") =>
+  (CONTENT_BY_LANGUAGE[language] || en).websiteTemplatePicker;
+
 const TEMPLATE_BUILDER_ENABLED_OPTIONS = Object.freeze({
   builderEnabled: true,
 });
@@ -13,8 +23,8 @@ const TEMPLATE_HIDDEN_OPTIONS = Object.freeze({
 const COMING_SOON_TEMPLATE_DEFINITIONS = [
   [
     "trust-signals",
-    "Trust Signals",
-    "A reassuring landing page with reviews, guest highlights, policy clarity, and a soft booking nudge.",
+    en.websiteTemplatePicker.templates["trust-signals"].name,
+    en.websiteTemplatePicker.templates["trust-signals"].description,
     "trustSignals",
   ],
   [
@@ -74,14 +84,14 @@ const buildComingSoonTemplateDefinition = ([id, name, description, layout]) => [
   name,
   description,
   layout,
-  TEMPLATE_COMING_SOON_OPTIONS,
+  { ...TEMPLATE_COMING_SOON_OPTIONS, hidden: id !== "trust-signals" },
 ];
 
 const TEMPLATE_DEFINITIONS = [
   [
     "panorama-landing",
-    "Panorama Landing",
-    "Large hero image with fast trust signals and a guided booking call-to-action.",
+    en.websiteTemplatePicker.templates["panorama-landing"].name,
+    en.websiteTemplatePicker.templates["panorama-landing"].description,
     "panorama",
     TEMPLATE_BUILDER_ENABLED_OPTIONS,
   ],
@@ -106,10 +116,12 @@ const WEBSITE_TEMPLATE_LOOKUP = new Map(
   WEBSITE_TEMPLATE_CATALOG.map((templateOption) => [templateOption.id, templateOption])
 );
 
-export const WEBSITE_TEMPLATE_LAYOUTS = [...new Set(WEBSITE_TEMPLATE_CATALOG.map(({ layout }) => layout))];
+export const WEBSITE_TEMPLATE_LAYOUTS = [...new Set(WEBSITE_TEMPLATE_OPTIONS.map(({ layout }) => layout))];
 
-export const getWebsiteTemplateById = (templateId) =>
-  WEBSITE_TEMPLATE_LOOKUP.get(templateId) || WEBSITE_TEMPLATE_OPTIONS[0];
+export const getWebsiteTemplateById = (templateId, language = "en") => {
+  const template = WEBSITE_TEMPLATE_LOOKUP.get(templateId) || WEBSITE_TEMPLATE_OPTIONS[0];
+  return { ...template, ...getWebsiteTemplateCopy(language).templates[template.id] };
+};
 
 export const isWebsiteTemplateBuilderEnabled = (templateId) =>
   WEBSITE_TEMPLATE_LOOKUP.get(templateId)?.builderEnabled === true;

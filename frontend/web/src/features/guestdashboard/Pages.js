@@ -5,12 +5,14 @@ import BookingIcon from "@mui/icons-material/LanguageOutlined";
 import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import WishlistIcon from "@mui/icons-material/Favorite";
 import Settings from "@mui/icons-material/Settings";
+import PaymentsIcon from "@mui/icons-material/Payments";
 // import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 
 const NAV = [
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "/guestdashboard" },
   { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "/guestdashboard/bookings" },
   { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "/guestdashboard/messages" },
+  { key: "Payments", label: "Payments", icon: <PaymentsIcon />, to: "/guestdashboard/payments" },
   // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
   { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "/guestdashboard/wishlist" },
 

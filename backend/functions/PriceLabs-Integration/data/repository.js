@@ -117,6 +117,35 @@ export class Repository {
   }
 
   /**
+   * Returns pricelabs_price rows for every property owned by the host within
+   * [from, to] (calendar_date as YYYYMMDD integers), for the missed-revenue KPI.
+   * Includes the availability/status flags the business layer needs to decide
+   * whether a night is actually sellable, plus min_stay/closed_to_arrival/
+   * closed_to_departure for root-cause categorization (min_stay's arrival-vs-
+   * stay-through scope is ambiguous in this codebase - see the comment on
+   * hasRestrictionSignal in missedRevenueService.js).
+   */
+  async getCalendarPriceDataForHost(hostId, from, to) {
+    const ds = await this._ds();
+    return ds.getRepository(Property_Calendar_Override)
+      .createQueryBuilder("cal")
+      .innerJoin(Property, "prop", "prop.id = cal.property_id")
+      .where("prop.hostid = :hostId", { hostId })
+      .andWhere("cal.calendar_date BETWEEN :from AND :to", { from, to })
+      .select("cal.property_id", "property_id")
+      .addSelect("cal.calendar_date", "calendar_date")
+      .addSelect("cal.pricelabs_price", "pricelabs_price")
+      .addSelect("cal.is_available", "is_available")
+      .addSelect("cal.stop_sell", "stop_sell")
+      .addSelect("cal.pricelabs_ignored", "pricelabs_ignored")
+      .addSelect("prop.status", "property_status")
+      .addSelect("cal.min_stay", "min_stay")
+      .addSelect("cal.closed_to_arrival", "closed_to_arrival")
+      .addSelect("cal.closed_to_departure", "closed_to_departure")
+      .getRawMany();
+  }
+
+  /**
    * Batch variant of the old applyPriceRecommendation. The PriceLabs sync webhook
    * pushes 12-18 months of prices per listing; writing those one date at a time
    * (SELECT + UPDATE per date) exceeded the Lambda timeout. This writes them with

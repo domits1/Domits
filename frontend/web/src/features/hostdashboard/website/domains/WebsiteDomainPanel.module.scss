@@ -1,0 +1,173 @@
+.panel {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+  padding-top: 0.75rem;
+}
+
+.toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+
+.toggle[aria-expanded="true"]::after {
+  content: " ▴";
+}
+
+.toggle[aria-expanded="false"]::after {
+  content: " ▾";
+}
+
+.body {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.rules {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.domainList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.domainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.domainName {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.domainMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.primaryPill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4b5563);
+  white-space: nowrap;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.step {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+}
+
+.stepDone {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.4);
+}
+
+.stepCurrent {
+  border-color: rgba(37, 99, 235, 0.6);
+  font-weight: 600;
+}
+
+.stepFailed {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+.stepPending {
+  opacity: 0.6;
+}
+
+.progress,
+.reason,
+.notice,
+.fieldError {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.reason,
+.noticeError,
+.fieldError {
+  color: #b91c1c;
+}
+
+.dnsRecord {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.dnsRow {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow-wrap: anywhere;
+  }
+}
+
+.copyButton {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(15, 23, 42, 0.3);
+  background: white;
+  cursor: pointer;
+}
+
+.connectForm {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.connectRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.domainInput {
+  flex: 1 1 14rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.3);
+  font: inherit;
+}

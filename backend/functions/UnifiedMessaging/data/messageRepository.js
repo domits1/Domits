@@ -2,6 +2,19 @@ import Database from "../.shared/integrations/ORM/index.js";
 import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { randomUUID } from "node:crypto";
 
+export const PLATFORM_MESSAGE_UNIQUE_INDEX = "idx_unified_message_platform_message_unique";
+
+export const isPlatformMessageUniqueError = (error) => {
+  const code = error?.code || error?.driverError?.code;
+  if (code !== "23505") return false;
+
+  const constraint = String(error?.constraint || error?.driverError?.constraint || "");
+  if (constraint) return constraint === PLATFORM_MESSAGE_UNIQUE_INDEX;
+
+  const detail = String(error?.detail || error?.driverError?.detail || error?.message || "");
+  return detail.includes(PLATFORM_MESSAGE_UNIQUE_INDEX);
+};
+
 class MessageRepository {
   async createMessage(data) {
     const client = await Database.getInstance();
@@ -61,7 +74,13 @@ class MessageRepository {
       if (exists) return false;
     }
 
-    await this.createMessage(data);
+    try {
+      await this.createMessage(data);
+    } catch (error) {
+      if (isPlatformMessageUniqueError(error)) return false;
+      throw error;
+    }
+
     return true;
   }
 
@@ -192,6 +211,60 @@ class MessageRepository {
       .getMany();
 
     return messages;
+  }
+
+  async markThreadMessagesRead(threadId, recipientId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ isRead: true })
+      .where({ threadId, recipientId, isRead: false })
+      .execute();
+    return result?.affected ?? 0;
+  }
+
+  async getUnreadCountsForThreads(threadIds, recipientId) {
+    if (!Array.isArray(threadIds) || threadIds.length === 0) return {};
+    const client = await Database.getInstance();
+    const rows = await client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("message")
+      .select("message.threadId", "threadId")
+      .addSelect("COUNT(*)", "count")
+      .where("message.threadId IN (:...threadIds)", { threadIds })
+      .andWhere("message.recipientId = :recipientId", { recipientId })
+      .andWhere("message.isRead = :isRead", { isRead: false })
+      .groupBy("message.threadId")
+      .getRawMany();
+
+    return rows.reduce((acc, row) => {
+      acc[row.threadId] = Number(row.count);
+      return acc;
+    }, {});
+  }
+
+  async getLatestIncomingMessage(threadId, recipientId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("message")
+      .where("message.threadId = :threadId", { threadId })
+      .andWhere("message.recipientId = :recipientId", { recipientId })
+      .orderBy("message.createdAt", "DESC")
+      .addOrderBy("message.id", "DESC")
+      .getOne();
+  }
+
+  async markMessageUnread(messageId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ isRead: false })
+      .where({ id: messageId, isRead: true })
+      .execute();
+    return result?.affected ?? 0;
   }
 }
 

@@ -8,13 +8,45 @@ import Forbidden from "../util/exception/Forbidden.js";
 import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 import { Property_Rule } from "database/models/Property_Rule";
+import { withDsqlRetry } from "../.shared/dsqlRetry.js";
+import ChannexAriOutboxWriter from "../.shared/channelManagement/services/channexAriOutboxWriter.js";
+import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
+import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
+const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
+const SERIALIZATION_FAILURE_SQLSTATE = "40001";
+// Everything that isn't Inquiry and isn't in NON_BLOCKING_BOOKING_STATUSES blocks a new booking
+// elsewhere in this file (assertNoBookingConflict, getBlockedDatesByPropertyId). Reuse that same
+// definition here instead of a second, separately-maintained list of "blocking" statuses.
+const ACCEPT_INQUIRY_EXCLUDED_STATUSES = NON_BLOCKING_BOOKING_STATUSES.filter((status) => status !== "Inquiry");
+export const CONFLICT_EXISTING_BOOKING = "CONFLICT_EXISTING_BOOKING";
 
 class ReservationRepository {
+  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+  }
+
+  // A booking change that opens or closes nights must reach Channex, so its outbox rows
+  // are saved in the same transaction (design D8). Without changes the write runs as before.
+  async #saveWithOutbox(channexChanges, work) {
+    const client = await Database.getInstance();
+    const changes = channexChanges.filter(Boolean);
+    if (!changes.length) return work(client);
+    return withDsqlRetry(() =>
+      client.transaction(async (manager) => {
+        const result = await work(manager);
+        for (const change of changes) {
+          await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, change);
+        }
+        return result;
+      })
+    );
+  }
+
   // ---------
   // Booking Create (auth)
   // ---------
@@ -24,36 +56,38 @@ class ReservationRepository {
     hostId,
     cancellationPolicy,
     status = "Awaiting Payment",
-    bookingType = "direct"
+    bookingType = "direct",
+    channexChanges = []
   ) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
     const tempPaymentId = randomUUID();
     const arrivalDate = parseBookingDateToMs(requestBody.general.arrivalDate, "arrivalDate");
     const departureDate = parseBookingDateToMs(requestBody.general.departureDate, "departureDate");
-    const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Booking)
-      .values({
-        id: id,
-        arrivaldate: arrivalDate,
-        createdat: date,
-        departuredate: departureDate,
-        guestid: userId,
-        hostid: hostId,
-        hostname: "WIP-Host",
-        guests: requestBody.general.guests.toString(),
-        guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
-        latepayment: false,
-        paymentid: "FAILED: ",
-        tempPaymentId,
-        property_id: requestBody.identifiers.property_Id,
-        status: status,
-        bookingtype: bookingType,
-      })
-      .execute();
+    await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager
+        .createQueryBuilder()
+        .insert()
+        .into(Booking)
+        .values({
+          id: id,
+          arrivaldate: arrivalDate,
+          createdat: date,
+          departuredate: departureDate,
+          guestid: userId,
+          hostid: hostId,
+          hostname: "WIP-Host",
+          guests: requestBody.general.guests.toString(),
+          guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
+          latepayment: false,
+          paymentid: "FAILED: ",
+          tempPaymentId,
+          property_id: requestBody.identifiers.property_Id,
+          status: status,
+          bookingtype: bookingType,
+        })
+        .execute()
+    );
     try {
       await this.getBookingById(id);
     } catch (error) {
@@ -347,6 +381,10 @@ class ReservationRepository {
         "booking.refunded_amount",
         "booking.stripe_refund_id",
         "booking.refund_error",
+        "booking.booking_source",
+        "booking.site_id",
+        "booking.guest_email",
+        "booking.public_booking_ref",
       ])
       .where("booking.id = :id", { id: id })
       .getOne();
@@ -379,14 +417,36 @@ class ReservationRepository {
     return query;
   }
 
-  async updateBookingStatus(id, status) {
+  async createPublicSiteBookingRequest(values) {
     const client = await Database.getInstance();
-    const query = await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({ status: status })
-      .where("id = :id ", { id: id })
-      .execute();
+    await client.createQueryBuilder().insert().into(Booking).values(values).execute();
+    return values;
+  }
+
+  async getByIdempotencyKey(idempotencyKey) {
+    const client = await Database.getInstance();
+    const booking = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.idempotency_key = :idempotencyKey", { idempotencyKey })
+      .getOne();
+    return booking || null;
+  }
+
+  async getByPublicBookingRef(publicBookingRef) {
+    const client = await Database.getInstance();
+    const booking = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.public_booking_ref = :publicBookingRef", { publicBookingRef })
+      .getOne();
+    return booking || null;
+  }
+
+  async updateBookingStatus(id, status, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
+    );
 
     if (query.length < 1) {
       return {
@@ -398,6 +458,20 @@ class ReservationRepository {
       response: query,
       statusCode: 200,
     };
+  }
+
+  async markBookingCheckedOut(id) {
+    const client = await Database.getInstance();
+    const result = await client
+      .getRepository(Booking)
+      .createQueryBuilder()
+      .update(Booking)
+      .set({ checked_out_at: Date.now() })
+      .where("id = :id", { id })
+      .andWhere("checked_out_at IS NULL")
+      .execute();
+
+    return Number(result?.affected || 0) === 1;
   }
 
   async markBookingPaidWithOutbox(id) {
@@ -438,27 +512,93 @@ class ReservationRepository {
     });
   }
 
-  async getOverlappingInquiries({ propertyId, arrivalDateMs, departureDateMs, excludeBookingId }) {
-    const client = await Database.getInstance();
-    return await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.property_id = :propertyId", { propertyId })
-      .andWhere("booking.status = :status", { status: "Inquiry" })
-      .andWhere("booking.id != :excludeBookingId", { excludeBookingId })
-      .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
-      .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
-      .getMany();
+  // Aurora DSQL uses optimistic concurrency: nothing blocks. FOR UPDATE puts the target and its
+  // overlapping Inquiry siblings in this transaction's conflict set, so when two overlapping
+  // inquiries are accepted at once, the second commit fails with SQLSTATE 40001 (OC000) and rolls
+  // back entirely. Retrying re-reads the committed state, where the loser finds its target already
+  // declined and returns accepted:false instead of surfacing a raw conflict error.
+  async acceptInquiryWithOverlapDecline(args) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.acceptInquiryWithOverlapDeclineOnce(args);
+      } catch (error) {
+        const isConflict = error?.code === SERIALIZATION_FAILURE_SQLSTATE;
+        if (!isConflict || attempt >= ACCEPT_INQUIRY_MAX_ATTEMPTS) throw error;
+      }
+    }
   }
 
-  async updateBookingDates(id, arrivalDateMs, departureDateMs) {
+  async acceptInquiryWithOverlapDeclineOnce({ bookingId, propertyId, arrivalDateMs, departureDateMs }) {
+    const client = await Database.getInstance();
+    return client.transaction(async (manager) => {
+      const lockedRows = await manager
+        .getRepository(Booking)
+        .createQueryBuilder("booking")
+        .setLock("pessimistic_write")
+        .where("booking.property_id = :propertyId", { propertyId })
+        .andWhere("booking.status NOT IN (:...excludedStatuses)", { excludedStatuses: ACCEPT_INQUIRY_EXCLUDED_STATUSES })
+        .andWhere("booking.arrivaldate < :departureDateMs", { departureDateMs })
+        .andWhere("booking.departuredate > :arrivalDateMs", { arrivalDateMs })
+        .getMany();
+
+      const targetRow = lockedRows.find((row) => row.id === bookingId);
+      if (!targetRow || targetRow.status !== "Inquiry") {
+        return { accepted: false, declinedCount: 0 };
+      }
+
+      // A concurrent create() or accept() may have already moved an overlapping booking past
+      // Inquiry before this transaction acquired the lock. Confirming here would double-book,
+      // so refuse instead of only declining Inquiry siblings.
+      const hasBlockingOverlap = lockedRows.some((row) => row.id !== bookingId && row.status !== "Inquiry");
+      if (hasBlockingOverlap) {
+        return { accepted: false, declinedCount: 0, reason: CONFLICT_EXISTING_BOOKING };
+      }
+
+      await manager.createQueryBuilder().update(Booking).set({ status: "Awaiting Payment" }).where("id = :id", { id: bookingId }).execute();
+
+      // The accepted booking now blocks its nights, so Channex has to close them too. The
+      // locked row has the current dates; the ones passed in were read before the lock.
+      const channexChange = bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+        arrivalMs: Number(targetRow.arrivaldate),
+        departureMs: Number(targetRow.departuredate),
+      });
+      if (channexChange) await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, channexChange);
+
+      const overlapping = lockedRows.filter((row) => row.id !== bookingId);
+      for (const overlap of overlapping) {
+        await manager.createQueryBuilder().update(Booking).set({ status: "Declined" }).where("id = :id", { id: overlap.id }).execute();
+      }
+
+      return { accepted: true, declinedCount: overlapping.length };
+    });
+  }
+
+  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChanges = []) {
+    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager
+        .createQueryBuilder()
+        .update(Booking)
+        .set({
+          arrivaldate: Number.parseFloat(arrivalDateMs),
+          departuredate: Number.parseFloat(departureDateMs),
+        })
+        .where("id = :id", { id })
+        .execute()
+    );
+
+    return {
+      response: query,
+      statusCode: 200,
+    };
+  }
+
+  async updateBookingSpecialRequest(id, specialRequest) {
     const client = await Database.getInstance();
     const query = await client
       .createQueryBuilder()
       .update(Booking)
       .set({
-        arrivaldate: Number.parseFloat(arrivalDateMs),
-        departuredate: Number.parseFloat(departureDateMs),
+        special_request: specialRequest,
       })
       .where("id = :id", { id })
       .execute();
@@ -469,7 +609,7 @@ class ReservationRepository {
     };
   }
 
-  async cancelBookingByGuest(id, guestId, refundInfo = {}) {
+  async cancelBookingByGuest(id, guestId, channexChanges = []) {
     const client = await Database.getInstance();
 
     const existing = await client
@@ -486,7 +626,18 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
-    const updateData = { status: "Cancelled" };
+    await this.#saveWithOutbox(channexChanges, (manager) =>
+      manager.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute()
+    );
+
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
+
+  // Runs after the cancellation has committed and the refund was attempted, so a failing
+  // cancellation never leaves money refunded on a booking that is still active.
+  async recordGuestRefund(id, refundInfo = {}) {
+    const client = await Database.getInstance();
+    const updateData = {};
     if (refundInfo.refundedAmount !== undefined) {
       updateData.refunded_amount = refundInfo.refundedAmount;
     }
@@ -496,19 +647,15 @@ class ReservationRepository {
     if (refundInfo.refundError) {
       updateData.refund_error = refundInfo.refundError;
     }
+    if (Object.keys(updateData).length) {
+      await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    }
 
-    await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();
+    return { response: await this.#readBooking(client, id), statusCode: 200 };
+  }
 
-    const updated = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.id = :id", { id })
-      .getOne();
-
-    return {
-      response: updated,
-      statusCode: 200,
-    };
+  async #readBooking(client, id) {
+    return client.getRepository(Booking).createQueryBuilder("booking").where("booking.id = :id", { id }).getOne();
   }
 }
 

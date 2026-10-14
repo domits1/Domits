@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- Homepage -->
-  <url>
-    <loc>https://www.domits.com/</loc>
-    <priority>1.0</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <!-- About page -->
-  <url>
-    <loc>https://www.domits.com/about</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <!-- Travel Innovation page -->
-  <url>
-    <loc>https://www.domits.com/travelinnovation</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
+  <url><loc>https://www.domits.com/</loc></url>
+  <url><loc>https://www.domits.com/home</loc></url>
+  <url><loc>https://www.domits.com/about</loc></url>
+  <url><loc>https://www.domits.com/team</loc></url>
+  <url><loc>https://www.domits.com/how-it-works</loc></url>
+  <url><loc>https://www.domits.com/why-domits</loc></url>
+  <url><loc>https://www.domits.com/contact</loc></url>
+  <url><loc>https://www.domits.com/helpdesk-guest</loc></url>
+  <url><loc>https://www.domits.com/helpdesk-host</loc></url>
+  <url><loc>https://www.domits.com/travelinnovation</loc></url>
+  <url><loc>https://www.domits.com/career</loc></url>
+  <url><loc>https://www.domits.com/release</loc></url>
+  <url><loc>https://www.domits.com/performance</loc></url>
+  <url><loc>https://www.domits.com/security</loc></url>
+  <url><loc>https://www.domits.com/data-safety</loc></url>
+  <url><loc>https://www.domits.com/policy</loc></url>
+  <url><loc>https://www.domits.com/terms</loc></url>
+  <url><loc>https://www.domits.com/disclaimers</loc></url>
+  <url><loc>https://www.domits.com/Sustainability</loc></url>
 </urlset>

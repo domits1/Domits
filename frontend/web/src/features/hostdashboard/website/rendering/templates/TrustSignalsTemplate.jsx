@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
 import { getAmenityIconNode } from "../amenityIconRegistry";
@@ -21,13 +21,34 @@ import {
   sitePropType,
   templateInteractionPropTypes,
   visibilityPropType,
+  quoteContextPropType,
 } from "./templatePropTypes";
+import { resolveQuotePanelSiteId } from "../booking/quotePanelGate";
 
-export default function TrustSignalsTemplate({ model, onSelectTarget, activeTargetId }) {
+const LazyQuoteAvailabilitySection = lazy(() => import("../booking/QuoteAvailabilitySection"));
+
+export default function TrustSignalsTemplate({ model, onSelectTarget, activeTargetId, quoteContext = null }) {
   const showTopBar = model.visibility?.topBar !== false;
   const showTrustCards = model.visibility?.trustCards !== false;
   const showAvailabilityCalendar = model.visibility?.availabilityCalendar !== false;
   const showCallToAction = model.visibility?.callToAction !== false;
+  const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
+
+  const availabilityCalendar = (
+    <TemplateAvailabilityCalendar
+      model={model}
+      templateKey="trust-signals"
+      onSelectTarget={onSelectTarget}
+      activeTargetId={activeTargetId}
+    />
+  );
+  const availabilityContent = quotePanelSiteId ? (
+    <Suspense fallback={availabilityCalendar}>
+      <LazyQuoteAvailabilitySection model={model} siteId={quotePanelSiteId} templateKey="trust-signals" />
+    </Suspense>
+  ) : (
+    availabilityCalendar
+  );
 
   return (
     <article className={styles.templateSite}>
@@ -106,14 +127,7 @@ export default function TrustSignalsTemplate({ model, onSelectTarget, activeTarg
           </div>
         ) : null}
 
-        {showAvailabilityCalendar ? (
-          <TemplateAvailabilityCalendar
-            model={model}
-            templateKey="trust-signals"
-            onSelectTarget={onSelectTarget}
-            activeTargetId={activeTargetId}
-          />
-        ) : null}
+        {showAvailabilityCalendar ? availabilityContent : null}
 
         {showCallToAction ? (
           <div className={styles.trustSignalsFooter}>
@@ -148,4 +162,5 @@ TrustSignalsTemplate.propTypes = {
     visibility: visibilityPropType.isRequired,
   }).isRequired,
   ...templateInteractionPropTypes,
+  quoteContext: quoteContextPropType,
 };

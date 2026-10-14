@@ -41,6 +41,7 @@
 .host-settings-cards-single {
     display: flex;
     flex-direction: column;
+    gap: 16px;
 }
 
 .host-settings-cards-single .host-settings-card {
@@ -307,6 +308,7 @@
 
 .pd-field {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 16px;
 }
@@ -335,6 +337,21 @@
 
 .pd-field-input:focus {
     border-color: #6b7280;
+}
+
+.pd-field-input-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.pd-field-input-wrapper .react-datepicker__input-container {
+    display: block;
+    width: 100%;
+}
+
+.pd-field-input-wrapper input.pd-field-input {
+    width: 100%;
 }
 
 .pd-select-wrapper {
@@ -399,9 +416,32 @@
 }
 
 .pd-field-error {
+    flex-basis: 100%;
     font-size: 0.78rem;
     color: #dc2626;
     margin: 4px 0 0 136px;
+}
+
+.pd-field-success {
+    flex-basis: 100%;
+    font-size: 0.78rem;
+    color: #15803d;
+    margin: 4px 0 0 136px;
+}
+
+.pd-photo-error,
+.pd-photo-success {
+    font-size: 0.8rem;
+    text-align: center;
+    margin: 0;
+}
+
+.pd-photo-error {
+    color: #dc2626;
+}
+
+.pd-photo-success {
+    color: #15803d;
 }
 
 .personal-data-card-footer {
@@ -434,6 +474,10 @@
 
 .pd-save-btn--saved {
     background: #1d4ed8;
+}
+
+.pd-save-btn--error {
+    background: #dc2626;
 }
 
 /* ─── Rate Plans page ────────────────────────────────────────────────────── */
@@ -489,6 +533,38 @@
     .company-card-hint {
         margin-left: 0;
     }
+}
+
+.settings-section-note {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: -8px 0 14px;
+}
+
+.company-logo-preview {
+    display: block;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+}
+
+.company-logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    border: 1px dashed #d1d5db;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
 /* ─── Preferences / Authentication card ─────────────────────────────────── */
@@ -551,6 +627,83 @@
     border-color: #fecaca;
 }
 
+.pd-password-dots {
+    flex: 1;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: #374151;
+}
+
+.pd-password-inline {
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pd-password-inline-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.pd-password-inline .pd-field-label {
+    width: 180px;
+    min-width: 180px;
+}
+
+.pd-password-inline .pd-field-input {
+    flex: none;
+    width: 100%;
+}
+
+.pd-password-input-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.pd-password-input-wrap .pd-field-input {
+    padding-right: 40px;
+}
+
+.pd-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.pd-password-toggle:hover {
+    color: #374151;
+}
+
+.pd-password-error {
+    margin: 0;
+}
+
+.pd-password-success {
+    font-size: 0.85rem;
+    color: #166534;
+    margin: 0;
+}
+
+.pd-password-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .pd-verified-check {
     display: flex;
     align-items: center;
@@ -562,6 +715,120 @@
 .pd-auth-subtext {
     font-size: 0.82rem;
     color: #9ca3af;
+}
+
+.pd-authenticator-setup-btn {
+    margin-left: auto;
+}
+
+.pd-authenticator-setup-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.pd-authenticator-row-error {
+    padding: 0 28px 12px;
+}
+
+.pd-authenticator-error {
+    margin: 0;
+}
+
+.pd-authenticator-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.pd-authenticator-qr {
+    display: block;
+    width: clamp(144px, 45vw, 192px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    image-rendering: pixelated;
+}
+
+.pd-authenticator-manual {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pd-authenticator-key {
+    align-self: flex-start;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+.pd-authenticator-code-input {
+    flex: none;
+    width: 100%;
+    max-width: 160px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.3em;
+}
+
+.pd-authenticator-success {
+    display: block;
+}
+
+.pd-authenticator-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.pd-authenticator-secondary-btn {
+    padding: 10px 22px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pd-authenticator-secondary-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+}
+
+.pd-authenticator-secondary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+@media (max-width: 640px) {
+    .pd-authenticator-setup-btn {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .pd-authenticator-row-error {
+        padding: 0 16px 12px;
+    }
+
+    .pd-authenticator-code-input {
+        max-width: none;
+    }
+
+    .pd-authenticator-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
@@ -648,7 +915,8 @@
         gap: 4px;
     }
 
-    .pd-field-label {
+    .pd-field-label,
+    .pd-password-inline .pd-field-label {
         width: auto;
         min-width: auto;
         padding-top: 0;
@@ -683,7 +951,8 @@
         width: 100%;
     }
 
-    .pd-field-error {
+    .pd-field-error,
+    .pd-field-success {
         margin-left: 0;
     }
 
@@ -710,5 +979,883 @@
 
     .pd-pref-select {
         width: 100%;
+    }
+
+    .pd-password-dots {
+        flex: 1 1 100%;
+    }
+
+    .pd-password-inline {
+        padding: 16px;
+    }
+
+    .pd-password-input-wrap {
+        max-width: none;
+        width: 100%;
+    }
+}
+
+/* Notification preferences */
+.notification-preferences-card {
+    overflow: hidden;
+}
+
+.notification-preferences-status {
+    padding: 14px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.notification-preferences-footer {
+    align-items: center;
+    gap: 16px;
+}
+
+.notification-preferences-feedback {
+    flex: 1;
+    min-height: 20px;
+    font-size: 0.85rem;
+}
+
+.notification-preferences-success {
+    color: #166534;
+    font-weight: 600;
+}
+
+.notification-preferences-error {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.notification-preferences-grid {
+    width: 100%;
+}
+
+.notification-preferences-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) repeat(3, minmax(96px, 120px));
+    align-items: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.notification-preferences-row--head {
+    background: #f9fafb;
+}
+
+.notification-preferences-cell {
+    padding: 16px 20px;
+}
+
+.notification-preferences-cell--event {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.notification-preferences-cell--channel {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.notification-preferences-cell--toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 72px;
+}
+
+.notification-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 76px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0 10px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.notification-toggle--on {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.notification-toggle--off {
+    justify-content: flex-end;
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #4b5563;
+}
+
+.notification-toggle-thumb {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+    transition: left 0.15s, right 0.15s;
+}
+
+.notification-toggle--off .notification-toggle-thumb {
+    right: auto;
+    left: 4px;
+}
+
+.notification-toggle:disabled {
+    cursor: not-allowed;
+}
+
+.notification-required-label {
+    position: absolute;
+    top: calc(50% + 23px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .notification-preferences-grid {
+        overflow-x: auto;
+    }
+
+    .notification-preferences-row {
+        grid-template-columns: minmax(130px, 1fr) repeat(3, 86px);
+        min-width: 420px;
+    }
+
+    .notification-preferences-cell {
+        padding: 14px 12px;
+    }
+
+    .notification-toggle {
+        width: 68px;
+    }
+}
+
+.rate-plan-enterprise-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.rate-plan-enterprise-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.enterprise-rate-plan-card {
+    margin-top: 14px;
+}
+
+.enterprise-plan-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+.enterprise-plan-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.enterprise-plan-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.enterprise-plan-header h2 {
+    margin: 0 0 6px;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+.enterprise-plan-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.enterprise-plan-status {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.enterprise-plan-divider {
+    margin: 24px 0;
+    border-top: 1px solid #f3f4f6;
+}
+
+.enterprise-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.enterprise-stat-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.enterprise-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.enterprise-stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-stat-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.enterprise-stat-value {
+    color: #111827;
+    font-size: 1.15rem;
+}
+
+.enterprise-stat-description {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.enterprise-pricing-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 28px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.enterprise-pricing-card > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-pricing-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.enterprise-pricing-card strong {
+    color: #111827;
+    font-size: 2rem;
+}
+
+.enterprise-pricing-card > div:first-child > span:last-child {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.enterprise-pricing-formula {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #374151;
+    font-size: 0.85rem;
+}
+
+.enterprise-pricing-formula strong {
+    font-size: 1rem;
+    color: #15803d;
+}
+
+.enterprise-invoice-card {
+    padding: 0;
+}
+
+.enterprise-invoice-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.enterprise-invoice-row:last-child {
+    border-bottom: none;
+}
+
+.enterprise-invoice-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.enterprise-invoice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.enterprise-invoice-content span {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.enterprise-invoice-content strong {
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.enterprise-empty-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+}
+
+.enterprise-empty-card strong {
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.enterprise-empty-card span {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+ .enterprise-rate-plan-loading,
+.enterprise-rate-plan-error,
+.enterprise-rate-plan-inactive {
+    padding: 24px;
+    color: #6b7280;
+}
+
+.enterprise-rate-plan-error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.enterprise-rate-plan-inactive {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+}
+
+@media (max-width: 800px) {
+    .enterprise-plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .enterprise-pricing-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .enterprise-pricing-formula {
+        flex-wrap: wrap;
+    }
+}
+
+.rate-plan-cards-grid {
+    align-items: stretch;
+}
+
+.rate-plan-cards-grid .personal-data-card {
+    min-width: 0;
+}
+
+.rate-plan-direct-booking-link,
+.rate-plan-enterprise-link,
+.rate-plan-website-link {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.direct-booking-plan-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.direct-booking-plan-header {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.direct-booking-plan-eyebrow {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.direct-booking-plan-header h2 {
+    margin: 0 0 0.375rem;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+.direct-booking-plan-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.direct-booking-plan-divider {
+    margin: clamp(1rem, 2.5vw, 1.5rem) 0;
+    border-top: 1px solid #f3f4f6;
+}
+
+.direct-booking-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.75rem, 2vw, 1rem);
+}
+
+.direct-booking-stat {
+    padding: clamp(1rem, 2.5vw, 1.125rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.direct-booking-stat-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.direct-booking-stat-value {
+    color: #111827;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.direct-booking-stat-description {
+    display: block;
+    margin-top: 0.25rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.direct-booking-formula-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(1rem, 3vw, 1.75rem);
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+.direct-booking-rate {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.direct-booking-rate-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.direct-booking-rate strong {
+    color: #111827;
+    font-size: 2rem;
+}
+
+.direct-booking-rate span:last-child {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.direct-booking-formula {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    border-radius: 12px;
+    background: #f9fafb;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.direct-booking-formula strong {
+    color: #15803d;
+}
+
+.direct-booking-note {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    margin-top: clamp(0.75rem, 2vw, 0.875rem);
+    border-left: 3px solid #15803d;
+    background: #f0fdf4;
+    color: #374151;
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.direct-booking-examples {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.75rem, 2vw, 1rem);
+}
+
+.direct-booking-example {
+    padding: clamp(1rem, 2.5vw, 1.125rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.direct-booking-example-label {
+    display: block;
+    margin-bottom: 0.3125rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.direct-booking-example-value {
+    display: block;
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.direct-booking-example-fee {
+    display: block;
+    margin-top: 0.25rem;
+    color: #15803d;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.direct-booking-tier-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.direct-booking-tier-table {
+    width: 100%;
+    min-width: 32rem;
+    border-collapse: collapse;
+}
+
+.direct-booking-tier-table th,
+.direct-booking-tier-table td {
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.25rem);
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.direct-booking-tier-table th {
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.direct-booking-tier-table td {
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.direct-booking-tier-table td:last-child {
+    color: #111827;
+    font-weight: 700;
+}
+
+.direct-booking-tier-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.direct-booking-empty {
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+}
+
+.direct-booking-empty strong {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.direct-booking-empty span {
+    color: #6b7280;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .direct-booking-plan-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .direct-booking-formula-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .direct-booking-examples {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .rate-plan-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .direct-booking-plan-grid,
+    .direct-booking-examples {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.website-rate-plan-section {
+    margin-top: 0.5rem;
+}
+
+.website-rate-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.875rem, 2.5vw, 1.25rem);
+}
+
+.website-rate-plan-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: clamp(1.125rem, 2.5vw, 1.5rem);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.website-rate-plan-card--featured {
+    border-color: #2563eb;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.website-rate-plan-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.website-rate-plan-card-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 1.2rem;
+}
+
+.website-rate-plan-badge {
+    flex-shrink: 0;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.website-rate-plan-badge--scheduled {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.website-rate-plan-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.125rem;
+}
+
+.website-rate-plan-price strong {
+    color: #111827;
+    font-size: clamp(1.65rem, 3vw, 2rem);
+    line-height: 1.2;
+}
+
+.website-rate-plan-price span {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.website-rate-plan-description {
+    min-height: 2.75rem;
+    margin: 0.625rem 0 1.25rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.website-rate-plan-feature-title {
+    margin: 0 0 0.625rem;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.website-rate-plan-features {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.website-rate-plan-features li {
+    position: relative;
+    padding-left: 1.375rem;
+    color: #4b5563;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.website-rate-plan-features li::before {
+    position: absolute;
+    left: 0;
+    color: #15803d;
+    content: "✓";
+    font-weight: 700;
+}
+
+.website-rate-plan-button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: auto;
+    padding: 0.7rem 1rem;
+    border: 1px solid #1d4ed8;
+    border-radius: 9px;
+    background: #1d4ed8;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: background 150ms ease, border-color 150ms ease;
+}
+
+.website-rate-plan-button:hover:not(:disabled) {
+    border-color: #1e40af;
+    background: #1e40af;
+}
+
+.website-rate-plan-button--secondary {
+    border-color: #d1d5db;
+    background: #fff;
+    color: #374151;
+}
+
+.website-rate-plan-button--secondary:hover:not(:disabled) {
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+.website-rate-plan-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.website-rate-plan-status {
+    margin: 0.875rem 0 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.website-rate-plan-feedback {
+    display: block;
+    margin: 0.875rem 0 0;
+    color: #166534;
+    font-size: 0.9rem;
+}
+
+.website-rate-plan-feedback--error {
+    color: #b91c1c;
+}
+
+@media (max-width: 800px) {
+    .website-rate-plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .website-rate-plan-description {
+        min-height: auto;
     }
 }

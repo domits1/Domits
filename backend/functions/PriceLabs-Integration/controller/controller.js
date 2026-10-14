@@ -1,5 +1,10 @@
 import { PriceLabsService } from "../business/service/priceLabsService.js";
+import { MissedRevenueService } from "../business/service/missedRevenueService.js";
 import { CognitoRepository } from "../data/cognitoRepository.js";
+import { Repository } from "../data/repository.js";
+import { validateDateRange } from "../util/dateRange.js";
+
+export { validateDateRange };
 
 const HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -8,10 +13,18 @@ const HEADERS = {
   "Content-Type": "application/json",
 };
 
+function defaultMonthRange() {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+  return { startDate: start.toISOString().slice(0, 10), endDate: end.toISOString().slice(0, 10) };
+}
+
 export class Controller {
   constructor() {
     this.service  = new PriceLabsService();
     this.cognito  = new CognitoRepository();
+    this.missedRevenueService = new MissedRevenueService({ repository: new Repository() });
   }
 
   async connect(event) {
@@ -41,6 +54,17 @@ export class Controller {
     return this._run(async () => {
       const hostId = await this.cognito.getHostId(event);
       return this.service.getStatus(hostId);
+    });
+  }
+
+  async getMissedRevenue(event) {
+    return this._run(async () => {
+      const hostId = await this.cognito.getHostId(event);
+      const qs = event.queryStringParameters || {};
+      const { startDate, endDate } = qs.startDate && qs.endDate ? qs : defaultMonthRange();
+      validateDateRange(startDate, endDate);
+
+      return this.missedRevenueService.getMissedRevenue(hostId, startDate, endDate);
     });
   }
 

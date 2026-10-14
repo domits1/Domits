@@ -1,0 +1,118 @@
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import MissedRevenueDashboardPage from "./MissedRevenueDashboardPage";
+import { fetchMissedRevenue } from "./services/missedRevenueService";
+import { EMPTY_MISSED_REVENUE } from "./missedRevenueFields";
+
+jest.mock("./services/missedRevenueService", () => ({
+  fetchMissedRevenue: jest.fn(),
+}));
+
+const CONNECTED_DATA = {
+  ...EMPTY_MISSED_REVENUE,
+  connected: true,
+  actualRevenue: 100,
+  potentialRevenue: 400,
+  grossMissedRevenue: 300,
+  revenueEfficiencyPct: 25,
+  byProperty: [
+    { propertyId: "prop-1", missedRevenue: 300, actualRevenue: 100, potentialRevenue: 400, potentialOccupiedNights: 4 },
+  ],
+};
+
+describe("MissedRevenueDashboardPage", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("shows a loading state before the data arrives", () => {
+    fetchMissedRevenue.mockReturnValue(new Promise(() => {}));
+
+    render(<MissedRevenueDashboardPage />);
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  test("renders current month, previous month, and YTD sections with cards after loading", async () => {
+    fetchMissedRevenue.mockResolvedValue(CONNECTED_DATA);
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Current month")).toBeInTheDocument());
+
+    expect(screen.getByText("Previous month")).toBeInTheDocument();
+    expect(screen.getByText("Year to date")).toBeInTheDocument();
+    expect(fetchMissedRevenue).toHaveBeenCalledTimes(3);
+    expect(screen.getAllByText("EUR 100.00").length).toBeGreaterThan(0);
+  });
+
+  test("renders the per-property breakdown table for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue(CONNECTED_DATA);
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("prop-1")).toBeInTheDocument());
+  });
+
+  test("renders the root-cause breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      rootCause: {
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 0, nights: 0 },
+        occupancy: { missedRevenue: 300, nights: 3 },
+      },
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText(/root cause/i)).toBeInTheDocument());
+    expect(screen.getByText(/^Occupancy/)).toBeInTheDocument();
+  });
+
+  test("renders the by-date breakdown for the current month", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      byDate: [{ date: "2026-09-15", missedRevenue: 150 }],
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("2026-09-15")).toBeInTheDocument());
+    expect(screen.getByText(/missed revenue by date/i)).toBeInTheDocument();
+  });
+
+  test("formats the root-cause and by-date tables with the response's currency", async () => {
+    fetchMissedRevenue.mockResolvedValue({
+      ...CONNECTED_DATA,
+      currency: "USD",
+      byDate: [{ date: "2026-09-15", missedRevenue: 150 }],
+      rootCause: {
+        restriction: { missedRevenue: 0, nights: 0 },
+        pricing: { missedRevenue: 0, nights: 0 },
+        occupancy: { missedRevenue: 175, nights: 3 },
+      },
+    });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("USD 150.00")).toBeInTheDocument());
+    expect(screen.getByText("USD 175.00")).toBeInTheDocument();
+  });
+
+  test("shows a connect-PriceLabs message when the host has no active connection", async () => {
+    fetchMissedRevenue.mockResolvedValue({ ...EMPTY_MISSED_REVENUE, connected: false });
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByText(/connect priceLabs/i)).toBeInTheDocument());
+  });
+
+  test("shows an error message when the fetch fails", async () => {
+    fetchMissedRevenue.mockRejectedValue(new Error("Date range must not exceed 366 days"));
+
+    render(<MissedRevenueDashboardPage />);
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Date range must not exceed 366 days"));
+  });
+});

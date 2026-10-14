@@ -11,6 +11,7 @@ import {
   buildPublishedWebsiteHref,
   buildWebsitePreviewPath,
   resolvePublishedWebsiteDomain,
+  resolvePublishedWebsiteLiveDomain,
 } from "../websitePublicSiteLinks";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
 
@@ -122,9 +123,8 @@ export const getDraftPublishedThemeOverrides = (draft) =>
     : {};
 
 export const getPrimaryWebsiteDomain = (siteSummary) =>
-  siteSummary?.primaryDomain && typeof siteSummary.primaryDomain === "object"
-    ? siteSummary.primaryDomain
-    : null;
+  resolvePublishedWebsiteLiveDomain(siteSummary?.domains) ||
+  (siteSummary?.primaryDomain && typeof siteSummary.primaryDomain === "object" ? siteSummary.primaryDomain : null);
 
 export const buildEditorValuesFromDraft = (baseModel, draft, templateKey = "") =>
   buildWebsiteDraftEditorValues(
@@ -290,7 +290,8 @@ export const resolvePublicSiteLinkPresentation = ({
     primarySiteDomain?.domain,
     siteSummary?.site?.id,
     primarySiteDomain?.status,
-    siteSummary?.site?.siteName
+    siteSummary?.site?.siteName,
+    siteSummary?.domains
   );
 
   if (hasLiveSite) {

@@ -20,7 +20,6 @@ const RegionCard = ({ item, link = "/home", useMotion = false }) => {
       <div className="gallery-overlay">
         <h3>{item.name}</h3>
         <p>{item.description}</p>
-        <span>200+ properties</span>
       </div>
     </Link>
   );

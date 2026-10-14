@@ -40,12 +40,14 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
+import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
   AWAITING_PAYMENT: styles.statusAwaiting,
   FAILED: styles.statusFailed,
   DECLINED: styles.statusFailed,
+  CANCELLED: styles.statusFailed,
   INQUIRY: styles.statusAwaiting,
 };
 
@@ -54,6 +56,7 @@ const PAYMENT_BOX_CLASS = {
   AWAITING_PAYMENT: styles.paymentBoxAwaiting,
   FAILED: styles.paymentBoxFailed,
   DECLINED: styles.paymentBoxFailed,
+  CANCELLED: styles.paymentBoxFailed,
   INQUIRY: styles.paymentBoxAwaiting,
 };
 
@@ -62,6 +65,7 @@ const RECEIPT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
   DECLINED: "Declined",
+  CANCELLED: "Cancelled",
   INQUIRY: "Request",
 };
 
@@ -70,11 +74,13 @@ const RECEIPT_PAYMENT_STATUS_LABELS = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Payment failed",
   DECLINED: "Payment declined",
+  CANCELLED: "Reservation cancelled",
   INQUIRY: "Pending request",
 };
 
 const DEFAULT_CHANNEL = "Direct";
 const DEFAULT_PAYMENT_METHOD = "Card";
+const CHANNEL_PAYMENT_STATUS_TEXT = "Collected by the channel";
 const DEFAULT_LAST4 = "****";
 
 const getStatusConfig = (t) => ({
@@ -82,6 +88,7 @@ const getStatusConfig = (t) => ({
   AWAITING_PAYMENT: { label: t.status.AWAITING_PAYMENT, icon: <FiClock /> },
   FAILED: { label: t.status.FAILED, icon: <FiAlertCircle /> },
   DECLINED: { label: t.status.DECLINED, icon: <FiAlertCircle /> },
+  CANCELLED: { label: t.status.CANCELLED, icon: <FiAlertCircle /> },
   INQUIRY: { label: t.status.INQUIRY, icon: <FiClock /> },
 });
 
@@ -106,6 +113,11 @@ const getPaymentStatusConfig = (t) => ({
     text: t.paymentStatus.DECLINED.text,
     className: styles.failed,
   },
+  CANCELLED: {
+    label: t.paymentStatus.CANCELLED.label,
+    text: t.paymentStatus.CANCELLED.text,
+    className: styles.failed,
+  },
   INQUIRY: {
     label: t.paymentStatus.INQUIRY.label,
     text: t.paymentStatus.INQUIRY.text,
@@ -123,6 +135,7 @@ const normalizeStatus = (status) => {
   if (normalizedStatus.includes("paid")) return "PAID";
   if (normalizedStatus.includes("await")) return "AWAITING_PAYMENT";
   if (normalizedStatus.includes("fail")) return "FAILED";
+  if (normalizedStatus.startsWith("cancel")) return "CANCELLED";
 
   return String(status).toUpperCase();
 };
@@ -245,6 +258,18 @@ const buildChannelLabel = (booking) => {
   }
 
   return rawChannel;
+};
+
+// Channex sends some OTA names as codes; the host knows them by their brand name.
+const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
+
+// A Channex booking was paid on the OTA, not by card through Domits (#3483).
+const buildPaymentMethod = (booking) => {
+  if (isChannexBooking(booking)) {
+    const otaName = normalizeStringValue(booking?.booking_source);
+    return `Paid via ${OTA_DISPLAY_NAMES[otaName] || otaName || "the channel"}`;
+  }
+  return normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD;
 };
 
 const resolveReservationImage = ({ booking, propertyDetails }) => {
@@ -448,7 +473,7 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     propertyDetails,
   });
   const checkInAvailable = hasCheckInInstructionsData({ booking, propertyDetails });
-  const bookingGuestEmail = firstDefined(booking?.guestemail, booking?.guestEmail);
+  const bookingGuestEmail = firstDefined(booking?.guestemail, booking?.guestEmail, booking?.guest_email);
   const bookingGuestPhone = firstDefined(booking?.guestphone, booking?.guestPhone);
   const isGuestProfilePending = guestProfile === null;
 
@@ -490,8 +515,9 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
         )
       ) || 0,
     cleaningFee: Number(firstDefined(booking?.cleaningFee, propertyDetails?.pricing?.cleaning, 0)) || 0,
-    paymentMethod:
-      normalizeStringValue(firstDefined(booking?.paymentMethod, booking?.payment?.method)) || DEFAULT_PAYMENT_METHOD,
+    paymentMethod: buildPaymentMethod(booking),
+    isChannelBooking: isChannexBooking(booking),
+    channelTotal: resolveChannexBookingTotal(booking),
     last4: normalizeStringValue(firstDefined(booking?.last4, booking?.payment?.last4)) || DEFAULT_LAST4,
     reservationId,
     confirmationCode: reservationId ? reservationId.slice(0, 6) : "",
@@ -523,6 +549,8 @@ const EMPTY_RESERVATION_DETAILS = Object.freeze({
   pricePerNight: 0,
   cleaningFee: 0,
   paymentMethod: DEFAULT_PAYMENT_METHOD,
+  isChannelBooking: false,
+  channelTotal: null,
   last4: DEFAULT_LAST4,
   reservationId: "",
   confirmationCode: "",
@@ -615,16 +643,20 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
   const statusConfig = getStatusConfig(t);
   const paymentStatusConfig = getPaymentStatusConfig(t);
   const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
-  const total = reservation.pricePerNight * nights + reservation.cleaningFee;
+  const total = reservation.channelTotal ?? reservation.pricePerNight * nights + reservation.cleaningFee;
   const statusMeta = statusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.status : t.empty.reservation,
     icon: null,
   };
-  const paymentMeta = paymentStatusConfig[reservation.status] || {
+  const basePaymentMeta = paymentStatusConfig[reservation.status] || {
     label: isShellLoading ? t.loading.payment : t.headings.payment,
     text: isShellLoading ? t.loading.paymentStatus : t.empty.paymentStatusUnavailable,
     className: "",
   };
+  const isPaidOnChannel = reservation.isChannelBooking && reservation.status === "PAID";
+  const paymentMeta = isPaidOnChannel
+    ? { ...basePaymentMeta, text: t.labels.collectedByChannel }
+    : basePaymentMeta;
   const title = hasDisplayValue(reservation.title) ? reservation.title : t.pageTitle;
   const guestName = hasDisplayValue(reservation.guestname) ? reservation.guestname : t.labels.guestFallbackName;
 
@@ -696,7 +728,9 @@ const buildMessageContext = (reservation) => ({
 
 const buildReservationReceiptPayload = (reservation) => {
   const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
-  const total = nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
+  const total =
+    reservation.channelTotal ?? nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
+  const isPaidOnChannel = reservation.isChannelBooking && reservation.status === "PAID";
 
   return {
     bookingId: getBookingId(reservation),
@@ -720,7 +754,11 @@ const buildReservationReceiptPayload = (reservation) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
-    paymentStatusLabel: RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
+    // The OTA sends only its total; a Domits nightly rate next to it would not add up.
+    showPriceBreakdown: (reservation.channelTotal ?? null) === null,
+    paymentStatusLabel: isPaidOnChannel
+      ? CHANNEL_PAYMENT_STATUS_TEXT
+      : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
     paymentDate: reservation.bookedOn,
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
     cancellationType: reservation.cancellationType || "Not specified",
@@ -750,6 +788,7 @@ const reservationTranslationShape = PropTypes.shape({
   }).isRequired,
   labels: PropTypes.shape({
     bookedVia: PropTypes.string.isRequired,
+    collectedByChannel: PropTypes.string.isRequired,
     checkIn: PropTypes.string.isRequired,
     bookedOn: PropTypes.string.isRequired,
     reservationId: PropTypes.string.isRequired,
@@ -804,6 +843,15 @@ const reservationTranslationShape = PropTypes.shape({
     updateFailed: PropTypes.string.isRequired,
     cancel: PropTypes.string.isRequired,
   }).isRequired,
+  checkOutAction: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
+    button: PropTypes.string.isRequired,
+    checkingOut: PropTypes.string.isRequired,
+    confirmMessage: PropTypes.string.isRequired,
+    success: PropTypes.string.isRequired,
+    failed: PropTypes.string.isRequired,
+  }).isRequired,
 });
 
 const reservationShape = PropTypes.shape({
@@ -821,6 +869,7 @@ const reservationShape = PropTypes.shape({
   status: PropTypes.string,
   reservationId: PropTypes.string,
   confirmationCode: PropTypes.string,
+  checked_out_at: PropTypes.number,
 });
 
 const viewModelShape = PropTypes.shape({
@@ -1264,26 +1313,31 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
 
     <div className={styles.paymentWrapper}>
       <div className={styles.payment}>
-        <div className={styles.row}>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.pricePerNight)} x {viewModel.nightCountText}
-          </span>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.pricePerNight * viewModel.nights)}
-          </span>
-        </div>
+        {/* The OTA sends only its total; the Domits nightly price and cleaning fee would not add up to it. */}
+        {reservation.channelTotal === null ? (
+          <>
+            <div className={styles.row}>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.pricePerNight)} x {viewModel.nightCountText}
+              </span>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.pricePerNight * viewModel.nights)}
+              </span>
+            </div>
 
-        <div className={styles.row}>
-          <span>{t.labels.cleaningFee}</span>
-          <span>
-            {"\u20AC"}
-            {formatCurrency(reservation.cleaningFee)}
-          </span>
-        </div>
+            <div className={styles.row}>
+              <span>{t.labels.cleaningFee}</span>
+              <span>
+                {"\u20AC"}
+                {formatCurrency(reservation.cleaningFee)}
+              </span>
+            </div>
 
-        <div className={styles.divider}></div>
+            <div className={styles.divider}></div>
+          </>
+        ) : null}
 
         <div className={`${styles.row} ${styles.total}`}>
           <span>{t.labels.totalPaid}</span>
@@ -1350,6 +1404,31 @@ RequestActionsCard.propTypes = {
   isBusy: PropTypes.bool.isRequired,
   onAccept: PropTypes.func.isRequired,
   onDecline: PropTypes.func.isRequired,
+  t: reservationTranslationShape.isRequired,
+};
+
+const CheckOutActionCard = ({ isBusy, onCheckOut, t }) => (
+  <div className={`${styles.card} ${styles.requestActionsCard}`}>
+    <div className={styles.blockHeader}>
+      <span>{t.checkOutAction.title}</span>
+    </div>
+
+    <p className={styles.requestActionsSubtitle}>{t.checkOutAction.subtitle}</p>
+
+    <div className={styles.requestActionsGrid}>
+      <button
+        className={`${styles.requestActionButton} ${styles.requestActionAccept}`}
+        onClick={onCheckOut}
+        disabled={isBusy}>
+        {isBusy ? t.checkOutAction.checkingOut : t.checkOutAction.button}
+      </button>
+    </div>
+  </div>
+);
+
+CheckOutActionCard.propTypes = {
+  isBusy: PropTypes.bool.isRequired,
+  onCheckOut: PropTypes.func.isRequired,
   t: reservationTranslationShape.isRequired,
 };
 
@@ -1484,6 +1563,7 @@ const HostReservationDetails = () => {
   const { reservationData, setReservationData, loading, error } = useReservationDetailsData(id, initialBooking);
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const [isUpdatingInquiry, setIsUpdatingInquiry] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
   if (error && !reservationData) {
@@ -1504,6 +1584,7 @@ const HostReservationDetails = () => {
     t,
   });
   const showRequestActions = reservation.status === "INQUIRY";
+  const showCheckOutAction = reservation.status === "PAID" && !reservation.checked_out_at;
 
   const handleViewInCalendar = () => {
     if (!hasReservationData) {
@@ -1645,6 +1726,46 @@ const HostReservationDetails = () => {
     });
   };
 
+  const handleCheckOutGuest = async () => {
+    if (!hasReservationData || isCheckingOut) {
+      return;
+    }
+
+    if (!window.confirm(t.checkOutAction.confirmMessage)) {
+      return;
+    }
+
+    const authToken = getAccessToken();
+    if (!authToken) {
+      toast.error(t.checkOutAction.failed);
+      return;
+    }
+
+    setIsCheckingOut(true);
+
+    try {
+      await updateInquiryStatus(getBookingId(reservationData), "mark-checked-out", authToken);
+
+      setReservationData((currentReservation) => {
+        if (!currentReservation) {
+          return currentReservation;
+        }
+
+        return {
+          ...currentReservation,
+          checked_out_at: Date.now(),
+        };
+      });
+
+      toast.success(t.checkOutAction.success);
+    } catch (checkOutError) {
+      console.error("Failed to mark booking checked out:", checkOutError);
+      toast.error(t.checkOutAction.failed);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   const handleDownloadReceipt = async () => {
     if (!hasReservationData || isDownloadingReceipt) {
       return;
@@ -1707,6 +1828,9 @@ const HostReservationDetails = () => {
               onDecline={handleDeclineRequest}
               t={t}
             />
+          ) : null}
+          {showCheckOutAction ? (
+            <CheckOutActionCard isBusy={isCheckingOut} onCheckOut={handleCheckOutGuest} t={t} />
           ) : null}
           <ReservationInfoCard reservation={reservation} loading={loading} t={t} />
           <ActionsCard

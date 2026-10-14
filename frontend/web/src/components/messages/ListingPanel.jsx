@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { getAccommodationByPropertyId } from "../../features/hostdashboard/hostmessages/services/messagingService";
-import { useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
+import { getAccessToken } from "../../services/getAccessToken";
 import {
   normalizeImageUrl,
   resolveAccommodationImageUrl,
@@ -14,7 +14,6 @@ const buildListingUrl = (propertyId) => {
 
 const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) => {
   const isGuest = dashboardType === "guest";
-  const { accessToken } = useUser();
 
   const [loading, setLoading] = useState(false);
   const [acco, setAcco] = useState(null);
@@ -36,7 +35,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
       setLoading(true);
       setLoadError(null);
       try {
-        const token = needsAuth ? accessToken : null;
+        const token = needsAuth ? getAccessToken() : null;
         const data = await getAccommodationByPropertyId(endpoint, propertyId, token);
         if (!cancelled) setAcco(data || null);
       } catch (e) {
@@ -54,7 +53,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
     return () => {
       cancelled = true;
     };
-  }, [propertyId, endpoint, needsAuth, accessToken]);
+  }, [propertyId, endpoint, needsAuth]);
 
   const title = useMemo(() => {
     return propertyTitle || acco?.property?.title || acco?.property?.name || (propertyId ? `Listing #${propertyId}` : "");

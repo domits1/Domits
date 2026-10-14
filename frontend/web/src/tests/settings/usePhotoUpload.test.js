@@ -14,13 +14,17 @@ describe("usePhotoUpload", () => {
   beforeEach(() => {
     mockSetUser = jest.fn();
     jest.clearAllMocks();
-    globalThis.fetch = jest.fn();
+    Auth.currentSession.mockResolvedValue({
+      getAccessToken: () => ({ getJwtToken: () => "mock-access-token" }),
+    });
   });
 
-  test("initial state: photoError is empty and isUploadingPhoto is false", () => {
+  test("initial state: photoError/photoSuccess are empty and isUploadingPhoto/isRemovingPhoto are false", () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     expect(result.current.photoError).toBe("");
+    expect(result.current.photoSuccess).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 
   test("onPhotoInputChange: does nothing when files array is empty", async () => {
@@ -42,49 +46,60 @@ describe("usePhotoUpload", () => {
     expect(mockSetUser).not.toHaveBeenCalled();
   });
 
-  test("onPhotoInputChange: sets error when file size exceeds 5 MB limit", async () => {
+  test("onPhotoInputChange: sets error when file size exceeds 4 MB limit", async () => {
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const oversizedFile = new File(["x"], "big.jpg", { type: "image/jpeg" });
     Object.defineProperty(oversizedFile, "size", { value: PROFILE_PHOTO_MAX_SIZE + 1 });
     await act(async () => {
       await result.current.onPhotoInputChange({ target: { files: [oversizedFile] } });
     });
-    expect(result.current.photoError).toBe("Image must be 5MB or smaller.");
+    expect(result.current.photoError).toBe("Image must be 4MB or smaller.");
   });
 
-  test("onPhotoInputChange: successful upload updates user state and Cognito picture attribute", async () => {
+  const performSuccessfulUpload = async () => {
     const mockCognitoUser = { username: "user-123" };
+    const fileUrl = "https://accommodation.s3.eu-north-1.amazonaws.com/images/profile/user-123/abc.jpg";
     Auth.currentAuthenticatedUser.mockResolvedValue(mockCognitoUser);
     Auth.updateUserAttributes.mockResolvedValue({});
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: "https://s3.example.com/upload",
-      fields: { key: "profile/user-123.jpg", "Content-Type": "image/jpeg" },
-      fileUrl: "https://s3.example.com/profile/user-123.jpg",
-    });
-    globalThis.fetch.mockResolvedValue({ ok: true });
+    profileUpload.uploadProfilePhoto.mockResolvedValue({ fileUrl });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
-
     await act(async () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
 
-    expect(profileUpload.getProfileUploadUrl).toHaveBeenCalledWith("image/jpeg");
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "https://s3.example.com/upload",
-      expect.objectContaining({ method: "POST" })
+    return { result, mockCognitoUser, fileUrl };
+  };
+
+  test("onPhotoInputChange: successful upload updates user state and Cognito picture attribute", async () => {
+    const { result, mockCognitoUser, fileUrl } = await performSuccessfulUpload();
+
+    expect(profileUpload.uploadProfilePhoto).toHaveBeenCalledWith(
+      "mock-access-token",
+      expect.stringMatching(/^data:image\/jpeg;base64,/)
     );
-    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(mockCognitoUser, {
-      picture: "https://s3.example.com/profile/user-123.jpg",
-    });
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(mockCognitoUser, { picture: fileUrl });
     expect(mockSetUser).toHaveBeenCalled();
     expect(result.current.photoError).toBe("");
+    expect(result.current.photoSuccess).toBe("uploaded");
     expect(result.current.isUploadingPhoto).toBe(false);
   });
 
-  test("onPhotoInputChange: sets error and clears uploading flag when presigned URL request fails", async () => {
-    profileUpload.getProfileUploadUrl.mockRejectedValue(new Error("Network error"));
+  test("onPhotoInputChange: photoSuccess clears itself after the display timeout", async () => {
+    jest.useFakeTimers();
+    const { result } = await performSuccessfulUpload();
+    expect(result.current.photoSuccess).toBe("uploaded");
+
+    act(() => {
+      jest.advanceTimersByTime(2500);
+    });
+    expect(result.current.photoSuccess).toBe("");
+    jest.useRealTimers();
+  });
+
+  test("onPhotoInputChange: surfaces the server's validation message when the upload request fails", async () => {
+    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error("Image must be 4MB or smaller."));
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
@@ -93,18 +108,14 @@ describe("usePhotoUpload", () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
 
-    expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
+    expect(result.current.photoError).toBe("Image must be 4MB or smaller.");
+    expect(result.current.photoSuccess).toBe("");
     expect(result.current.isUploadingPhoto).toBe(false);
     expect(mockSetUser).not.toHaveBeenCalled();
   });
 
-  test("onPhotoInputChange: sets error when S3 PUT returns non-ok response", async () => {
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: "https://s3.example.com/upload",
-      fields: { key: "some-key" },
-      fileUrl: "https://s3.example.com/photo.jpg",
-    });
-    globalThis.fetch.mockResolvedValue({ ok: false });
+  test("onPhotoInputChange: falls back to a generic message when the failure has no message", async () => {
+    profileUpload.uploadProfilePhoto.mockRejectedValue(new Error());
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
@@ -114,15 +125,10 @@ describe("usePhotoUpload", () => {
     });
 
     expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
-    expect(result.current.isUploadingPhoto).toBe(false);
   });
 
-  test("onPhotoInputChange: sets error when upload response is missing required fields", async () => {
-    profileUpload.getProfileUploadUrl.mockResolvedValue({
-      uploadUrl: null,
-      fields: null,
-      fileUrl: null,
-    });
+  test("onPhotoInputChange: sets error when upload response is missing fileUrl", async () => {
+    profileUpload.uploadProfilePhoto.mockResolvedValue({ fileUrl: null });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
@@ -131,7 +137,7 @@ describe("usePhotoUpload", () => {
       await result.current.onPhotoInputChange({ target: { files: [file] } });
     });
 
-    expect(result.current.photoError).toBe("Failed to upload photo. Please try again.");
+    expect(result.current.photoError).toBe("Invalid upload response.");
   });
 
   test("onPhotoRemove: clears picture in Cognito and calls setUser with empty picture", async () => {
@@ -150,7 +156,8 @@ describe("usePhotoUpload", () => {
     const updater = mockSetUser.mock.calls[0][0];
     expect(updater({ picture: "old-url.jpg" })).toEqual(expect.objectContaining({ picture: "" }));
     expect(result.current.photoError).toBe("");
-    expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.photoSuccess).toBe("removed");
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 
   test("onPhotoRemove: sets error when Auth call fails", async () => {
@@ -163,7 +170,29 @@ describe("usePhotoUpload", () => {
     });
 
     expect(result.current.photoError).toBe("Failed to remove photo. Please try again.");
-    expect(result.current.isUploadingPhoto).toBe(false);
+    expect(result.current.isRemovingPhoto).toBe(false);
     expect(mockSetUser).not.toHaveBeenCalled();
+  });
+
+  test("onPhotoRemove: isRemovingPhoto is true while the removal is in flight and false once settled", async () => {
+    const mockCognitoUser = { username: "user-123" };
+    let resolveAuth;
+    Auth.currentAuthenticatedUser.mockReturnValue(new Promise((resolve) => (resolveAuth = resolve)));
+    Auth.updateUserAttributes.mockResolvedValue({});
+
+    const { result } = renderHook(() => usePhotoUpload(mockSetUser));
+
+    let removePromise;
+    act(() => {
+      removePromise = result.current.onPhotoRemove();
+    });
+    expect(result.current.isRemovingPhoto).toBe(true);
+    expect(result.current.isUploadingPhoto).toBe(false);
+
+    await act(async () => {
+      resolveAuth(mockCognitoUser);
+      await removePromise;
+    });
+    expect(result.current.isRemovingPhoto).toBe(false);
   });
 });

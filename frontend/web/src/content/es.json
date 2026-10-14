@@ -1,4 +1,22 @@
 {
+  "websiteTemplatePicker": {
+    "currentPick": "Plantilla seleccionada",
+    "availabilityHint": "Ya puedes usar Essentials. Elite estará disponible próximamente.",
+    "selected": "Seleccionada",
+    "comingSoon": "Próximamente",
+    "title": "Elige una plantilla para tu sitio web",
+    "unsupportedPreview": "Aún no hay una vista previa disponible para esta plantilla.",
+    "templates": {
+      "panorama-landing": {
+        "name": "Essentials",
+        "description": "Sitio web de una sola página, personalización básica y funciones esenciales"
+      },
+      "trust-signals": {
+        "name": "Elite",
+        "description": "Sitio web multifuncional, personalización avanzada y funciones exclusivas"
+      }
+    }
+  },
   "listingDetails": {
     "location": {
       "title": "Dónde estarás",
@@ -1053,7 +1071,9 @@
       },
       "manage": {
         "title": "¿Cómo creo y gestiono mi cuenta de anfitrión?",
-        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón 'Sé un anfitrión' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
+        "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón '",
+        "becomeHost": "Sé un anfitrión",
+        "description2": "' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
       },
       "payout": {
         "title": "Cómo funcionan los pagos y los impuestos",
@@ -1061,7 +1081,15 @@
       },
       "calendar": {
         "title": "Cómo gestionar tu calendario y reservas",
-        "description": "Una próxima función te permitirá gestionar tus reservas de manera más eficiente directamente desde el panel. ¡Mantente atento a las novedades!"
+        "description": "Puedes gestionar todo desde el Panel de Anfitrión: aceptar o rechazar reservas, y establecer tu disponibilidad y precios por fecha."
+      },
+      "cost": {
+        "title": "¿Cuánto cuesta?",
+        "description": "Domits es gratis de usar: sin costo por nuestro sistema de reservas, el panel o el sitio web de reserva directa. Solo cobramos una tarifa del 10% para el anfitrión por cada reserva realizada a través de Domits.com, lo que permite mantener la plataforma funcionando 24/7. ¿Necesitas más? Contáctanos para conocer complementos y precios empresariales."
+      },
+      "markets": {
+        "title": "¿En qué mercados operan?",
+        "description": "Domits está disponible para anfitriones y huéspedes en todo el mundo — puedes publicar tu propiedad sin importar dónde se encuentre."
       }
     },
     "advice": {
@@ -1100,12 +1128,21 @@
       "title": "Configuración",
       "subtitle": "Gestiona tu configuración personal y de cuenta en un solo lugar",
       "personalSection": "Configuración personal",
+      "communicationSection": "Preferencias de comunicación",
       "accountSection": "Configuración de cuenta",
       "breadcrumb": "Configuración",
       "cards": {
         "personalData": {
           "title": "Datos personales",
           "desc": "Gestiona tu información de contacto, foto de perfil y datos personales."
+        },
+        "communicationPreferences": {
+          "title": "Preferencias de comunicación",
+          "desc": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits."
+        },
+        "privacySecurity": {
+          "title": "Privacidad y seguridad",
+          "desc": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos."
         },
         "company": {
           "title": "Empresa",
@@ -1117,13 +1154,196 @@
         },
         "ratePlans": {
           "title": "Planes de tarifas",
-          "desc": "Consulta tus opciones de precios exclusivas para host (10%) y futuras."
+          "desc": "Consulta tu tarifa exclusiva para host del 10% y las opciones de Direct Booking."
         },
         "compliance": {
           "title": "Cumplimiento",
           "desc": "Gestiona tu número de registro y verificación."
+        },
+        "onboarding": {
+          "title": "Incorporación",
+          "desc": "Sigue tu progreso desde publicar tu alojamiento hasta ponerlo en marcha."
+        },
+        "homeAutomation": {
+          "title": "Domótica",
+          "desc": "Conecta cerraduras inteligentes para dar acceso a los huéspedes a tus alojamientos."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domótica",
+      "title": "Domótica",
+      "subtitle": "Conecta RemoteLock para gestionar las cerraduras inteligentes de tus huéspedes.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Última sincronización",
+        "never": "Aún no hay sincronización"
+      },
+      "statuses": {
+        "notConnected": "No conectado",
+        "connecting": "Conectando",
+        "connected": "Conectado",
+        "authenticationError": "Error de inicio de sesión",
+        "connectionError": "Problema de conexión",
+        "disconnected": "Desconectado",
+        "expiredCredentials": "Inicio de sesión caducado",
+        "unknown": "Estado desconocido"
+      },
+      "actions": {
+        "connect": "Conectar",
+        "reconnect": "Volver a conectar",
+        "disconnect": "Desconectar"
+      },
+      "modal": {
+        "connect": {
+          "title": "Conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Conectar",
+          "confirming": "Conectando..."
+        },
+        "reconnect": {
+          "title": "Volver a conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Volver a conectar",
+          "confirming": "Reconectando..."
+        },
+        "disconnect": {
+          "title": "Desconectar RemoteLock",
+          "body": "Domits dejará de gestionar los códigos de acceso de tus huéspedes.",
+          "confirm": "Desconectar",
+          "confirming": "Desconectando..."
+        },
+        "cancel": "Cancelar",
+        "error": "Algo salió mal. Inténtalo de nuevo."
+      },
+      "loading": "Cargando tu conexión con RemoteLock...",
+      "loadError": "No pudimos cargar tu conexión con RemoteLock.",
+      "retry": "Intentar de nuevo"
+    },
+    "onboardingHub": {
+      "breadcrumb": "Incorporación",
+      "title": "Incorporación",
+      "subtitle": "Sigue el progreso de cada alojamiento, desde su creación hasta su publicación.",
+      "tabs": {
+        "host": "Host",
+        "enterprise": "Empresa",
+        "navLabel": "Modo de incorporación"
+      },
+      "propertyPicker": {
+        "label": "Alojamiento",
+        "loading": "Cargando tus alojamientos...",
+        "loadError": "No se pudieron cargar tus alojamientos.",
+        "empty": "Todavía no tienes ningún alojamiento publicado."
+      },
+      "progress": {
+        "label": "{completed} de {total} pasos completados"
+      },
+      "accountWideBadge": "Para toda la cuenta",
+      "requiredBadge": "Obligatorio",
+      "optionalBadge": "Opcional",
+      "goLiveButton": "Poner en marcha",
+      "goLiveBlockedText": "Completa primero los pasos obligatorios",
+      "pricingConnectedSubDetail": "Los precios dinámicos de PriceLabs también están conectados.",
+      "steps": {
+        "listProperty": {
+          "title": "Publicar tu alojamiento",
+          "desc": "Añade los detalles, fotos y precios de tu alojamiento."
+        },
+        "website": {
+          "title": "Crear sitio web de reserva directa",
+          "desc": "Crea un sitio web de reservas propio para este alojamiento."
+        },
+        "channels": {
+          "title": "Conectar canales",
+          "desc": "Sincroniza este alojamiento con Airbnb, Booking.com, Vrbo y más."
+        },
+        "automate": {
+          "title": "Automatizar operaciones",
+          "desc": "Configura los pagos y los precios dinámicos de tu cuenta."
+        },
+        "goLive": {
+          "title": "Poner en marcha",
+          "desc": "Revisa tu alojamiento y publícalo en Domits."
+        }
+      },
+      "statusComplete": "Completado",
+      "statusIncomplete": "Sin empezar",
+      "statusUnknown": "No se pudo comprobar el estado",
+      "channelsComingSoon": "Próximamente",
+      "enterprise": {
+        "breadcrumb": "Incorporación empresarial",
+        "title": "Incorporación empresarial",
+        "subtitle": "Sigue el progreso de toda tu cartera, desde la configuración de la empresa hasta la publicación.",
+        "goLiveSection": {
+          "title": "Poner en marcha",
+          "desc": "Preparación de tus pasos obligatorios.",
+          "readyLabel": "Listo para poner en marcha",
+          "notReadyLabel": "Aún no está listo"
+        },
+        "steps": {
+          "company": {
+            "title": "Configurar empresa",
+            "desc": "Añade los datos de tu empresa para que huéspedes y socios puedan encontrarte."
+          },
+          "team": {
+            "title": "Miembros del equipo",
+            "desc": "Invita a tu equipo y asigna roles en toda tu cartera."
+          },
+          "listProperties": {
+            "title": "Publicar tus alojamientos",
+            "desc": "Gestiona y añade alojamientos en toda tu cartera."
+          },
+          "website": {
+            "title": "Crear sitios web de reserva directa",
+            "desc": "Crea sitios web de reservas propios para tus alojamientos."
+          },
+          "channels": {
+            "title": "Conectar canales",
+            "desc": "Sincroniza tus alojamientos con Airbnb, Booking.com, Vrbo y más."
+          },
+          "payments": {
+            "title": "Configurar pagos",
+            "desc": "Conecta Stripe para recibir pagos en toda tu cartera."
+          },
+          "pricing": {
+            "title": "Configurar precios dinámicos",
+            "desc": "Conecta PriceLabs para automatizar los precios en toda tu cartera."
+          },
+          "tasks": {
+            "title": "Configurar gestión de tareas",
+            "desc": "Organiza las tareas operativas de tus alojamientos."
+          },
+          "marketplace": {
+            "title": "Utilizar Marketplace",
+            "desc": "Descubre integraciones para hacer crecer tu negocio."
+          }
+        }
+      }
+    },
+    "goLive": {
+      "breadcrumb": "Poner en marcha",
+      "title": "Poner en marcha {propertyName}",
+      "subtitle": "Revisa la siguiente lista y, después, publica tu alojamiento.",
+      "loading": "Cargando la lista de comprobación...",
+      "loadError": "No se pudo cargar este alojamiento.",
+      "missingPropertyId": "No se especificó ningún alojamiento.",
+      "requiredSection": "Obligatorio",
+      "optionalSection": "Opcional",
+      "items": {
+        "listProperty": "Publicar tu alojamiento",
+        "website": "Crear sitio web de reserva directa",
+        "payments": "Pagos (Stripe)",
+        "channels": "Conectar canales",
+        "pricing": "Precios dinámicos (PriceLabs)",
+        "tasks": "Gestión de tareas"
+      },
+      "activateButton": "Publicar alojamiento",
+      "activating": "Publicando...",
+      "alreadyLive": "Este alojamiento ya está en marcha.",
+      "blockedMessage": "Completa los pasos obligatorios anteriores antes de poner en marcha el alojamiento.",
+      "successMessage": "¡Tu alojamiento ya está en marcha!",
+      "errorMessage": "Ha ocurrido un error al publicar este alojamiento.",
+      "backToHub": "Volver a Incorporación"
     },
     "personalData": {
       "breadcrumb": "Datos personales",
@@ -1133,8 +1353,11 @@
       "prefsSection": "Preferencias / Autenticación",
       "photo": {
         "upload": "Subir",
-        "uploading": "Procesando...",
-        "remove": "Eliminar"
+        "uploading": "Subiendo...",
+        "remove": "Eliminar",
+        "removing": "Eliminando...",
+        "uploaded": "¡Foto subida!",
+        "removed": "¡Foto eliminada!"
       },
       "fields": {
         "fullName": "Nombre completo",
@@ -1146,6 +1369,7 @@
         "emailAddress": "Dirección de correo electrónico",
         "verificationCode": "Código de verificación enviado a tu correo electrónico",
         "verify": "Verificar",
+        "emailUpdated": "¡Correo electrónico actualizado!",
         "phone": "Teléfono",
         "phoneNumber": "Número de teléfono",
         "sex": "Sexo",
@@ -1167,26 +1391,141 @@
         "phoneVerifiedYes": "Teléfono verificado: Sí",
         "phoneVerifiedNo": "Teléfono verificado: No",
         "authenticatorApp": "Aplicación de autenticación",
-        "totp": "Códigos basados en aplicación (TOTP)"
+        "totp": "Códigos basados en aplicación (TOTP)",
+        "passwordLabel": "Contraseña",
+        "changePassword": "Cambiar contraseña",
+        "changePasswordTitle": "Cambia tu contraseña",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmPassword": "Confirmar nueva contraseña",
+        "savePassword": "Guardar contraseña",
+        "passwordChanged": "Contraseña cambiada con éxito.",
+        "showPassword": "Mostrar contraseña",
+        "hidePassword": "Ocultar contraseña",
+        "passwordFieldsRequired": "Por favor, complete todos los campos de contraseña.",
+        "passwordTooShort": "La contraseña debe tener al menos {min} caracteres.",
+        "passwordMismatch": "La nueva contraseña y la confirmación no coinciden.",
+        "passwordChangeFailed": "No se pudo cambiar la contraseña. Inténtalo de nuevo.",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta.",
+        "passwordPolicyViolation": "La nueva contraseña no cumple los requisitos.",
+        "tooManyPasswordAttempts": "Demasiados intentos. Inténtalo de nuevo más tarde."
       },
       "buttons": {
         "save": "Guardar cambios",
         "saving": "Guardando...",
-        "saved": "¡Guardado!"
+        "saved": "¡Guardado!",
+        "saveError": "Error al guardar. Inténtalo de nuevo.",
+        "cancel": "Cancelar",
+        "close": "Cerrar"
+      }
+    },
+    "privacySecurity": {
+      "breadcrumb": "Privacidad y seguridad",
+      "title": "Privacidad y seguridad",
+      "subtitle": "Gestiona la seguridad de tu inicio de sesión, tu contraseña y la autenticación en dos pasos.",
+      "authenticationSection": "Autenticación",
+      "pinSection": "PIN",
+      "auth": {
+        "emailLabel": "Correo electrónico",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "unavailable": "No disponible",
+        "verified": "Verificado",
+        "sms": "SMS",
+        "authenticatorApp": "Aplicación de autenticación",
+        "comingSoon": "Próximamente: inicio de sesión por SMS.",
+        "loading": "Cargando tu estado de autenticación...",
+        "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
+      },
+      "pin": {
+        "comingSoon": "Próximamente."
+      },
+      "authenticator": {
+        "setUp": "Configurar",
+        "setupTitle": "Configura tu aplicación de autenticación",
+        "scanInstruction": "Escanea este código QR con una aplicación de autenticación, como Google Authenticator o Microsoft Authenticator.",
+        "qrAlt": "Código QR para añadir Domits a tu aplicación de autenticación",
+        "manualKeyLabel": "¿No puedes escanearlo? Introduce esta clave manualmente:",
+        "codeLabel": "Código de 6 dígitos",
+        "verify": "Verificar",
+        "verifying": "Verificando...",
+        "cancel": "Cancelar",
+        "tryAgain": "Intentar de nuevo",
+        "close": "Cerrar",
+        "success": "Tu aplicación de autenticación está activada. Te pediremos un código cuando inicies sesión en un dispositivo nuevo.",
+        "errors": {
+          "invalidCode": "Este código no es válido. Introduce el código actual de 6 dígitos de tu aplicación.",
+          "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión y empieza la configuración de nuevo.",
+          "tooManyAttempts": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+          "enableFailed": "Tu código se aceptó, pero no pudimos activar la aplicación de autenticación. Inténtalo de nuevo.",
+          "generic": "Algo ha salido mal. Inténtalo de nuevo."
+        }
+      }
+    },
+    "communicationPreferences": {
+      "breadcrumb": "Preferencias de comunicación",
+      "title": "Preferencias de comunicación",
+      "subtitle": "Elige cómo recibes actualizaciones y notificaciones importantes de Domits.",
+      "sectionTitle": "Preferencias de notificaciones",
+      "required": "Obligatorio",
+      "notificationsLabel": "notificaciones",
+      "channels": {
+        "email": "Correo electrónico",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "events": {
+        "reservation": "Reserva",
+        "cancellation": "Cancelación",
+        "messages": "Mensajes"
+      },
+      "states": {
+        "on": "ACT.",
+        "off": "DES."
+      },
+      "actions": {
+        "saveChanges": "Guardar cambios"
       }
     },
     "company": {
       "breadcrumb": "Empresa",
       "title": "Empresa",
       "subtitle": "Gestiona la información de tu empresa.",
-      "section": "Detalles de la empresa",
+      "privateSection": "Privado",
+      "privateSectionNote": "Solo visible para ti: se usa en facturas e informes.",
+      "publicSection": "Información pública",
+      "publicSectionNote": "Visible para los huéspedes en tus alojamientos.",
       "fields": {
         "companyName": "Nombre de la empresa",
         "placeholder": "Introduce el nombre de la empresa",
-        "hint": "Esta información aparecerá en facturas e informes."
+        "hint": "Esta información aparecerá en facturas e informes.",
+        "displayName": "Nombre visible",
+        "displayNamePlaceholder": "Nombre que verán los huéspedes",
+        "logo": "Logotipo",
+        "logoUpload": "Subir logotipo",
+        "logoUploading": "Subiendo...",
+        "logoRemove": "Eliminar",
+        "description": "Descripción",
+        "descriptionPlaceholder": "Cuéntales a los huéspedes sobre tu empresa",
+        "website": "Sitio web",
+        "websitePlaceholder": "https://ejemplo.com",
+        "publicEmail": "Correo electrónico público",
+        "publicEmailPlaceholder": "contacto@ejemplo.com",
+        "publicPhone": "Teléfono público",
+        "publicPhonePlaceholder": "+34 612 345 678",
+        "country": "País",
+        "countryPlaceholder": "Introduce el país"
+      },
+      "errors": {
+        "website": "Introduce una URL de sitio web válida.",
+        "publicEmail": "Introduce una dirección de correo electrónico válida.",
+        "publicPhone": "Introduce un número de teléfono válido.",
+        "logo": "No se pudo subir el logotipo. Inténtalo de nuevo."
       },
       "buttons": {
-        "comingSoon": "Próximamente"
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Guardado"
       }
     },
     "compliance": {
@@ -1195,12 +1534,31 @@
       "subtitle": "Verifica tu propiedad e identidad como anfitrión para cumplir con los registros locales.",
       "section": "Detalles de cumplimiento",
       "fields": {
+        "property": "Alojamiento",
+        "untitledListing": "Alojamiento sin título",
         "propertyRegistration": "Registro de propiedad",
         "placeholder": "Número de registro",
+        "noRegistrationYet": "Todavía no se ha añadido ningún número de registro.",
         "hint": "Este número demuestra que tu propiedad está registrada con las autoridades locales. Pronto estarán disponibles métodos de cumplimiento adicionales (verificación de identidad, comprobante de domicilio)."
       },
+      "states": {
+        "loading": "Cargando tus alojamientos...",
+        "empty": "Todavía no tienes alojamientos.",
+        "createListing": "Crea tu primer alojamiento"
+      },
+      "unsavedChangesConfirm": "Tienes cambios sin guardar. ¿Cambiar de alojamiento y descartarlos?",
+      "errors": {
+        "load": "No pudimos cargar tus alojamientos. Inténtalo de nuevo.",
+        "duplicate": "Este número de registro ya lo usa otro alojamiento.",
+        "noAccess": "No tienes acceso para modificar este alojamiento.",
+        "validation": "Introduce un número de registro válido. No puede estar vacío, empezar por AUTO- ni superar los 255 caracteres.",
+        "generic": "No pudimos guardar tu número de registro. Inténtalo de nuevo.",
+        "registrationUnavailable": "No pudimos cargar el número de registro de este alojamiento. Actualiza la página o contacta con soporte."
+      },
       "buttons": {
-        "comingSoon": "Próximamente"
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Guardado"
       }
     },
     "ratePlans": {
@@ -1209,11 +1567,136 @@
       "subtitle": "Gestiona tus planes de tarifas.",
       "standardSection": "Plan de tarifa estándar",
       "additionalSection": "Planes adicionales",
-      "additionalSubtitle": "Pronto estarán disponibles planes de tarifas adicionales para reservas directas.",
+      "additionalSubtitle": "Opciones de precio adicionales para reservas directas.",
       "hostOnlyFee": {
         "title": "Tarifa exclusiva para host",
         "sub": "10% de las reservas pagadas por el host",
         "note": "Permite a Domits operar la plataforma 24/7"
+      },
+      "directBooking": {
+        "cardTitle": "Plan tarifario de Direct Booking",
+        "cardSubtitle": "4,9% por reserva pagado por el host",
+        "cardNote": "Sin cuota mensual ni por propiedad; los huéspedes pagan €0 de comisión Domits.",
+        "breadcrumb": "Plan tarifario de Direct Booking",
+        "title": "Plan tarifario de Direct Booking",
+        "subtitle": "Precios basados en el rendimiento para reservas realizadas mediante tu sitio de Direct Booking.",
+        "planName": "Direct Booking",
+        "perReservation": "por reserva",
+        "commission": "Comisión",
+        "commissionRate": "Comisión del host",
+        "commissionFormula": "Ingresos de alojamiento sujetos a comisión × 4,9%",
+        "commissionDescription": "La comisión la paga el host. El huésped paga €0 de comisión de reserva de Domits.",
+        "commissionableBase": "La base de comisión excluye limpieza, IVA, impuestos, tasas gubernamentales, depósitos y otros cargos repercutidos.",
+        "monthlySubscription": "Suscripción mensual",
+        "propertyFee": "Cuota por propiedad",
+        "guestDomitsFee": "Comisión Domits del huésped",
+        "noFixedFee": "Sin cuota fija",
+        "paidBy": "Pagado por",
+        "host": "HOST",
+        "reservationRevenue": "Ingresos por reservas",
+        "reservationRevenueDescription": "La comisión se calcula sobre la parte de alojamiento de cada reserva directa elegible.",
+        "reservationValue": "Valor de la reserva",
+        "domitsHostFee": "Comisión Domits del host",
+        "volumePricing": "Precios por volumen",
+        "volumePricingDescription": "Tramos de crecimiento predeterminados del plan Direct Booking.",
+        "annualRevenue": "Ingresos anuales por reservas directas",
+        "domitsFee": "Comisión Domits",
+        "enterprise": "Enterprise personalizado",
+        "billing": "Facturación",
+        "billingDescription": "Los registros de comisión pueden vincularse a reservas elegibles para conciliación y facturación.",
+        "billingHistory": "Historial de facturación",
+        "billingHistoryEmpty": "Todavía no hay registros de facturación disponibles.",
+        "billingContact": "Contacto de facturación",
+        "billingContactEmpty": "La gestión del contacto de facturación aparecerá aquí cuando la facturación esté habilitada."
+      },
+      "websitePlan": {
+        "sectionTitle": "Suscripción del sitio web de reserva directa",
+        "sectionSubtitle": "Elige el plan para tu sitio web de reservas. El precio de Elite se muestra a continuación.",
+        "loading": "Cargando tu plan del sitio web...",
+        "loadError": "No se pudo cargar tu plan actual del sitio web.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Lo básico para gestionar tu sitio web de reserva directa.",
+        "essentialsFeaturesTitle": "Incluye",
+        "featureBasicWebsite": "Funciones básicas del sitio web y de reservas",
+        "featureBasicCustomization": "Personalización básica y SEO",
+        "elite": "Elite",
+        "eliteDescription": "Más herramientas para ampliar y personalizar tu sitio web de reserva directa.",
+        "eliteFeaturesTitle": "Todo lo de Essentials, además de",
+        "featureCustomDomain": "Conecta tu propio dominio",
+        "featureAdvancedBuilder": "Creador web avanzado y páginas ilimitadas",
+        "featureLocalization": "Compatibilidad con varios idiomas y monedas",
+        "featureGrowthTools": "SEO avanzado, analítica, CRM, herramientas de IA, ventas adicionales y experimentos",
+        "currentPlan": "Plan actual",
+        "scheduled": "Programado",
+        "status": {
+          "ACTIVE": "Activo",
+          "PAST_DUE": "Pago pendiente",
+          "TRIALING": "Periodo de prueba",
+          "INCOMPLETE": "Pago pendiente",
+          "INCOMPLETE_EXPIRED": "Pago caducado",
+          "EXPIRED": "Caducado",
+          "CANCELLED": "Cancelado"
+        },
+        "perMonth": "al mes",
+        "free": "Gratis",
+        "upgrade": "Mejorar a Elite",
+        "restoreElite": "Reactivar Elite",
+        "switchToEssentials": "Cambiar a Essentials",
+        "processing": "Procesando...",
+        "changeError": "No se pudo actualizar tu plan del sitio web. Inténtalo de nuevo.",
+        "checkoutError": "No se pudo iniciar Stripe Checkout. Inténtalo de nuevo.",
+        "downgradeScheduled": "El cambio a Essentials está programado para el final del periodo de facturación actual.",
+        "downgradeSuccess": "Tu plan del sitio web ahora es Essentials.",
+        "restoreSuccess": "Tu suscripción Elite se ha reactivado.",
+        "unchanged": "Tu plan del sitio web ya está actualizado.",
+        "effectiveUntil": "Elite seguirá activo hasta el {date}.",
+        "priceUnavailable": "Precio no disponible",
+        "checkoutPending": "Estamos confirmando tu suscripción Elite. Puede tardar unos momentos.",
+        "checkoutSuccess": "Tu suscripción Elite está activa.",
+        "checkoutCancelled": "Se canceló el pago. Tu plan no ha cambiado.",
+        "cardTitle": "Plan del sitio web de reserva directa",
+        "cardSubtitle": "Essentials es gratis; Elite incluye herramientas avanzadas para tu sitio web.",
+        "cardNote": "Elige y gestiona la suscripción de tu sitio web.",
+        "breadcrumb": "Plan del sitio web de reserva directa",
+        "pageTitle": "Plan del sitio web de reserva directa",
+        "pageSubtitle": "Gestiona la suscripción de tu sitio web de reserva directa."
+      },
+      "enterprise": {
+        "cardTitle": "Plan de tarifas Enterprise",
+        "cardSubtitle": "Precio por alojamiento activo al mes.",
+        "cardNote": "Se ajusta automáticamente a tu número de alojamientos activos.",
+        "breadcrumb": "Plan de tarifas Enterprise",
+        "title": "Plan de tarifas Enterprise",
+        "subtitle": "Precios sencillos que se ajustan a tu cartera de alojamientos activos.",
+        "loading": "Cargando el plan de tarifas Enterprise...",
+        "loadError": "No se pudo cargar tu plan de tarifas Enterprise.",
+        "notActiveTitle": "No tienes un plan Enterprise",
+        "notActiveDescription": "Esta cuenta no tiene un plan de tarifas Enterprise activo.",
+        "currentPlan": "Plan actual",
+        "currentRate": "Tarifa actual",
+        "planName": "Enterprise",
+        "perActivePropertyMonth": "alojamiento activo / mes",
+        "active": "Activo",
+        "activeProperties": "Alojamientos activos",
+        "billableProperties": "Alojamientos facturables de tu cartera",
+        "pricePerProperty": "Precio por alojamiento",
+        "estimatedMonthlyCost": "Coste mensual estimado",
+        "basedOnPropertyCount": "Según tu número actual de alojamientos",
+        "pricing": "Precios",
+        "pricingLabel": "Precio Enterprise",
+        "monthlySubscription": "Suscripción mensual",
+        "nextInvoice": "Próxima factura",
+        "nextInvoiceLabel": "Próxima factura",
+        "billingFrequency": "Frecuencia de facturación",
+        "monthly": "Mensual",
+        "billingUnit": "Unidad de facturación",
+        "activeProperty": "Alojamiento activo",
+        "billingHistory": "Historial de facturas",
+        "noInvoices": "Todavía no hay facturas disponibles",
+        "invoicesDescription": "Tus facturas Enterprise aparecerán aquí cuando el historial de facturación esté disponible.",
+        "billingContact": "Contacto de facturación",
+        "billingContactTitle": "Contacto de facturación",
+        "billingContactDescription": "La gestión del contacto de facturación estará disponible aquí."
       }
     },
     "team": {
@@ -1228,25 +1711,42 @@
       "inviteBtn": "+ Invitar miembros",
       "emptyState": "Aún no hay miembros adicionales. Invita a un co-anfitrión para empezar.",
       "loadError": "Error al cargar los miembros del equipo. Por favor, actualiza la página.",
-      "activeMembers": "Miembros activos",
-      "pendingInvitations": "Invitaciones pendientes",
+      "loadingMembers": "Cargando miembros del equipo…",
       "membershipsSection": "Equipos a los que perteneces",
       "membershipsCardHeader": "Membresías de co-anfitrión",
       "joined": "Se unió el",
       "memberAvatarAlt": "Avatar del miembro",
       "hostAvatarAlt": "Avatar del host",
+      "columnMember": "Miembro",
+      "columnRole": "Rol",
+      "columnPermissions": "Permisos",
+      "columnStatus": "Estado",
+      "columnActions": "Acciones",
+      "statusActive": "Activo",
+      "statusPending": "Pendiente",
+      "actionsMenuLabel": "Abrir menú de acciones",
+      "removeAction": "Eliminar",
+      "editRoleAction": "Editar rol",
+      "permissionsMore": "+{count} más",
+      "permissionsEmpty": "—",
       "removeModal": {
         "title": "Eliminar miembro del equipo",
         "body": "¿Estás seguro de que quieres eliminar a este miembro de tu equipo? Perderá acceso a tus propiedades y tareas.",
         "confirm": "Sí, eliminar",
         "cancel": "Cancelar"
       },
+      "editRoleModal": {
+        "title": "Editar rol",
+        "roleLabel": "Rol",
+        "saveBtn": "Guardar",
+        "cancel": "Cancelar",
+        "error": "Error al actualizar el rol. Por favor, inténtalo de nuevo."
+      },
       "inviteModal": {
         "title": "Invitar miembro al equipo",
         "emailLabel": "Dirección de correo electrónico",
         "emailPlaceholder": "colega@ejemplo.com",
         "roleLabel": "Rol",
-        "roleOption": "Property Operations Manager",
         "sendBtn": "Enviar invitación",
         "cancel": "Cancelar",
         "success": "✓ Invitación enviada a",

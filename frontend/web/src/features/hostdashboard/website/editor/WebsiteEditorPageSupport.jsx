@@ -393,6 +393,7 @@ export const useWebsiteEditorDataLoader = ({
   setEditorValues,
   setIsEditorLoading,
   setIsPreviewLoading,
+  setListingDetails,
   setLoadError,
   setPreviewLoadError,
   setSiteSummary,
@@ -457,6 +458,7 @@ export const useWebsiteEditorDataLoader = ({
             return;
           }
 
+          setListingDetails(propertyDetails);
           const nextBaseModel = buildWebsiteTemplateModel({
             propertyDetails,
             summaryProperty: null,
@@ -522,6 +524,7 @@ export const useWebsiteEditorDataLoader = ({
     propertyId,
     setBaseModel,
     setDraftRecord,
+    setListingDetails,
     setEditorValues,
     setIsEditorLoading,
     setIsPreviewLoading,

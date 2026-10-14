@@ -6,6 +6,10 @@ import { CHANNEX_STATUS } from "../channelManagementConstants.js";
 import ChannexCredentialStore from "../providers/channex/credentialStore.js";
 import { hasChannexRequiredCredentialFields } from "../providers/channex/credentialUtils.js";
 import ChannexProviderClient from "../providers/channex/providerClient.js";
+import ChannexExternalBookingImportRepository from "../repositories/channexExternalBookingImportRepository.js";
+import Database from "../../integrations/ORM/index.js";
+import { withDsqlRetry } from "../../dsqlRetry.js";
+import ChannexAriOutboxWriter from "./channexAriOutboxWriter.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -34,13 +38,58 @@ export default class ChannexMappingService {
     roomTypes = new IntegrationRoomTypeRepository(),
     channexCredentialStore = new ChannexCredentialStore(),
     channexProviderClient = new ChannexProviderClient(),
+    propertyLookup = new ChannexExternalBookingImportRepository(),
+    channexAriOutboxWriter = new ChannexAriOutboxWriter(),
+    getDatabase = () => Database.getInstance(),
   } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+    this.getDatabase = getDatabase;
     this.accounts = accounts;
     this.props = props;
     this.ratePlans = ratePlans;
     this.roomTypes = roomTypes;
     this.channexCredentialStore = channexCredentialStore;
     this.channexProviderClient = channexProviderClient;
+    this.propertyLookup = propertyLookup;
+  }
+
+  // A mapping decides whose Channex account a property's availability and prices go
+  // through, so only the property's owner may save one (#3365). Returns null when allowed.
+  async checkPropertyOwner(userId, domitsPropertyId) {
+    const property = await this.propertyLookup.getDomitsPropertyContext(domitsPropertyId);
+    if (!property) {
+      return bad(404, { error: "Domits property not found.", errorCode: "CHANNEX_MAPPING_PROPERTY_NOT_FOUND" });
+    }
+    if (property.hostId !== userId) {
+      return bad(403, {
+        error: "Only the owner of this property can map it to Channex.",
+        errorCode: "CHANNEX_MAPPING_PROPERTY_NOT_OWNED",
+      });
+    }
+    return null;
+  }
+
+  // A property that goes live starts in Channex with its complete current state (#3282).
+  // The rows are written in one transaction so a full sync is never queued half. A failure
+  // is logged, not thrown: the mapping is already saved, and saving it again retries.
+  async queueGoLiveFullSync(domitsPropertyId) {
+    try {
+      const client = await this.getDatabase();
+      return await withDsqlRetry(() =>
+        client.transaction((manager) =>
+          this.channexAriOutboxWriter.enqueueChannexFullSync(manager, { domitsPropertyId })
+        )
+      );
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: "CHANNEX_GO_LIVE_FULL_SYNC_QUEUE_FAILED",
+          domitsPropertyId,
+          error: describeLocalError(error),
+        })
+      );
+      return false;
+    }
   }
 
   async resolveUsableChannexIntegration(
@@ -286,6 +335,9 @@ export default class ChannexMappingService {
     if (!externalPropertyId) return bad(400, { error: "Missing required field: externalPropertyId" });
 
     try {
+      const ownerRefusal = await this.checkPropertyOwner(normalizedUserId, domitsPropertyId);
+      if (ownerRefusal) return ownerRefusal;
+
       const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
       if (!channexContext.ok) return channexContext.response;
 
@@ -332,6 +384,9 @@ export default class ChannexMappingService {
     if (!externalRoomTypeId) return bad(400, { error: "Missing required field: externalRoomTypeId" });
 
     try {
+      const ownerRefusal = await this.checkPropertyOwner(normalizedUserId, domitsPropertyId);
+      if (ownerRefusal) return ownerRefusal;
+
       const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
       if (!channexContext.ok) return channexContext.response;
 
@@ -380,6 +435,9 @@ export default class ChannexMappingService {
     if (!externalRatePlanId) return bad(400, { error: "Missing required field: externalRatePlanId" });
 
     try {
+      const ownerRefusal = await this.checkPropertyOwner(normalizedUserId, domitsPropertyId);
+      if (ownerRefusal) return ownerRefusal;
+
       const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
       if (!channexContext.ok) return channexContext.response;
 
@@ -446,6 +504,9 @@ export default class ChannexMappingService {
     };
 
     try {
+      const ownerRefusal = await this.checkPropertyOwner(normalizedUserId, domitsPropertyId);
+      if (ownerRefusal) return ownerRefusal;
+
       const channexContext = await this.resolveUsableChannexIntegration(normalizedUserId);
       if (!channexContext.ok) return channexContext.response;
 
@@ -475,6 +536,8 @@ export default class ChannexMappingService {
 
       const readinessResult = await this.getChannexAriTargets(normalizedUserId, domitsPropertyId);
       const readiness = readinessResult?.response ?? null;
+      const ready = readiness?.ready === true;
+      const fullSyncQueued = ready ? await this.queueGoLiveFullSync(domitsPropertyId) : false;
 
       return ok({
         channel: "CHANNEX",
@@ -486,7 +549,8 @@ export default class ChannexMappingService {
         savedMappings,
         readinessStatusCode: readinessResult?.statusCode ?? null,
         readiness,
-        ready: readiness?.ready === true,
+        ready,
+        fullSyncQueued,
       });
     } catch (error) {
       const details = describeLocalError(error);

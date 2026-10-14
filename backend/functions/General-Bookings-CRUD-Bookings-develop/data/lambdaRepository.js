@@ -26,8 +26,12 @@ class LambdaRepository {
     const receivedData = await response.json();
     const propertyCards = this.extractPropertyCards(receivedData);
 
-    if (!response.ok || propertyCards === null || propertyCards.length < 1) {
+    if (propertyCards === null) {
       throw new NotFoundException("User has no active properties.");
+    }
+
+    if (propertyCards.length < 1) {
+      return [];
     }
 
     const client = await Database.getInstance();

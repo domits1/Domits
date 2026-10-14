@@ -9,7 +9,9 @@ const DigitAction = {
   None: "NONE",
 };
 
-function DigitInputs({ amount, inputRef, onComplete, error }) {
+const noop = () => {};
+
+function DigitInputs({ amount, inputRef, onComplete = noop, error }) {
   const digitInputMap = {
     0: DigitAction.Next,
     1: DigitAction.Next,

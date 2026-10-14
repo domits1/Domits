@@ -4,7 +4,7 @@ import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -149,6 +149,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         platform: t.platform || "DOMITS",
         externalThreadId: t.externalThreadId || null,
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
+        unreadCount: t.unreadCount ?? 0,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -204,7 +205,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
         guestId: guestIdForLookup,
         bookingId: contact?.bookingId || contact?.bookingid || null,
         propertyId: contact?.propertyId || contact?.AccoId || null,
-        token,
+        token: getAccessToken(),
         withAuth: role !== "guest",
         accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
       });
@@ -329,7 +330,7 @@ const useFetchContacts = (userId, role) => {
     setError(null);
 
     try {
-      const token = requireToken(getAccessToken());
+      const token = requireToken(await getIdToken());
       let unifiedContacts = [];
       try {
         const threadsRes = await fetch(`${UNIFIED_API}/threads`, {

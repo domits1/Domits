@@ -20,12 +20,6 @@ const buildCalendarController = ({
   authorizeError = null,
   previousOverrides = [{ date: 20260610, isAvailable: true }],
   updatedOverrides = [{ date: 20260610, isAvailable: true }],
-  channexSyncResult = {
-    syncType: "calendar-change",
-    requestCount: 1,
-    taskIds: ["task-calendar-1"],
-    overallSuccess: true,
-  },
 } = {}) => {
   const controller = new PropertyController();
   controller.authManager = {
@@ -36,9 +30,6 @@ const buildCalendarController = ({
   controller.propertyService = {
     getPropertyCalendarOverrides: jest.fn().mockResolvedValue(previousOverrides),
     updatePropertyCalendarOverrides: jest.fn().mockResolvedValue(updatedOverrides),
-  };
-  controller.channexCalendarChangeSyncClient = {
-    syncCalendarChange: jest.fn().mockResolvedValue(channexSyncResult),
   };
   return controller;
 };
@@ -190,18 +181,17 @@ describe("Property calendar override authorization", () => {
           isAvailable: true,
         }),
       ],
-      {}
+      {},
+      []
     );
-    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).not.toHaveBeenCalled();
-    expect(JSON.parse(patchResponse.body).channexCalendarChangeSync).toEqual(
-      expect.objectContaining({
-        syncType: "calendar-change",
-        reason: "NO_CHANNEX_RELEVANT_CALENDAR_CHANGES",
-      })
-    );
+    expect(JSON.parse(patchResponse.body)).toEqual({
+      propertyId: "property-1",
+      overrides: [{ date: 20260610, isAvailable: true }],
+    });
+    expect(JSON.parse(patchResponse.body)).not.toHaveProperty("channexCalendarChangeSync");
   });
 
-  it("notifies Channex when host calendar availability changes", async () => {
+  it("passes an availability change for the outbox to the save", async () => {
     const controller = buildCalendarController({
       previousOverrides: [{ date: 20260610, isAvailable: false }],
       updatedOverrides: [{ date: 20260610, isAvailable: true }],
@@ -216,22 +206,23 @@ describe("Property calendar override authorization", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).toHaveBeenCalledWith({
-      userId: "owner-host",
-      domitsPropertyId: "property-1",
-      changedDates: ["2026-06-10"],
-      changeTypes: ["availability"],
-      source: "HOST_CALENDAR_OVERRIDES_CHANGED",
-    });
-    expect(JSON.parse(response.body).channexCalendarChangeSync).toEqual(
-      expect.objectContaining({
-        requestCount: 1,
-        taskIds: ["task-calendar-1"],
-      })
+    expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
+      "property-1",
+      expect.any(Array),
+      {},
+      [
+        {
+          domitsPropertyId: "property-1",
+          changeTypes: ["availability"],
+          dateFrom: "2026-06-10",
+          dateTo: "2026-06-10",
+          source: "CALENDAR",
+        },
+      ]
     );
   });
 
-  it("notifies Channex when host calendar rates and restrictions change", async () => {
+  it("passes a rates and restrictions change for the outbox to the save", async () => {
     const controller = buildCalendarController({
       previousOverrides: [
         {
@@ -279,13 +270,75 @@ describe("Property calendar override authorization", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(controller.channexCalendarChangeSyncClient.syncCalendarChange).toHaveBeenCalledWith({
-      userId: "owner-host",
-      domitsPropertyId: "property-1",
-      changedDates: ["2026-06-10"],
-      changeTypes: ["rates", "restrictions"],
-      source: "HOST_CALENDAR_OVERRIDES_CHANGED",
+    expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
+      "property-1",
+      expect.any(Array),
+      {},
+      [
+        expect.objectContaining({ changeTypes: ["rates"], dateFrom: "2026-06-10", dateTo: "2026-06-10" }),
+        expect.objectContaining({ changeTypes: ["restrictions"], dateFrom: "2026-06-10", dateTo: "2026-06-10" }),
+      ]
+    );
+  });
+
+  // Design D9: a row never covers a date its change type did not change.
+  it("writes one outbox change per run of consecutive changed dates", async () => {
+    const controller = buildCalendarController({
+      previousOverrides: [
+        { date: 20260610, isAvailable: false },
+        { date: 20260611, isAvailable: false },
+        { date: 20260620, isAvailable: false },
+      ],
     });
+
+    await controller.updatePropertyCalendarOverrides({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({
+        propertyId: "property-1",
+        overrides: [
+          { date: 20260620, isAvailable: true },
+          { date: 20260610, isAvailable: true },
+          { date: 20260611, isAvailable: true },
+        ],
+      }),
+    });
+
+    expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
+      "property-1",
+      expect.any(Array),
+      {},
+      [
+        expect.objectContaining({ changeTypes: ["availability"], dateFrom: "2026-06-10", dateTo: "2026-06-11" }),
+        expect.objectContaining({ changeTypes: ["availability"], dateFrom: "2026-06-20", dateTo: "2026-06-20" }),
+      ]
+    );
+  });
+
+  it("keeps a run going across a month boundary", async () => {
+    const controller = buildCalendarController({
+      previousOverrides: [
+        { date: 20260630, isAvailable: false },
+        { date: 20260701, isAvailable: false },
+      ],
+    });
+
+    await controller.updatePropertyCalendarOverrides({
+      headers: { Authorization: "token" },
+      body: JSON.stringify({
+        propertyId: "property-1",
+        overrides: [
+          { date: 20260630, isAvailable: true },
+          { date: 20260701, isAvailable: true },
+        ],
+      }),
+    });
+
+    expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
+      "property-1",
+      expect.any(Array),
+      {},
+      [expect.objectContaining({ dateFrom: "2026-06-30", dateTo: "2026-07-01" })]
+    );
   });
 
   it("keeps unauthorized calendar override requests forbidden", async () => {

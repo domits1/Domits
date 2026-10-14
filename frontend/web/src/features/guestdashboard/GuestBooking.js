@@ -33,6 +33,15 @@ const formatBookingDates = (bookingItem) => {
   return `${dateFormatterDD_MM_YYYY(arrivalDate)} -> ${dateFormatterDD_MM_YYYY(departureDate)}`;
 };
 
+const matchesSearchQuery = (booking, query, propertyMap) => {
+  const propertyId = getPropertyId(booking);
+  const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
+  const city = (propertyInfo?.city || booking?.city || booking?.location?.city || "").toLowerCase();
+  const title = (propertyInfo?.title || booking?.title || booking?.Title || "").toLowerCase();
+  const bookingId = String(getBookingId(booking) || "").toLowerCase();
+  return city.includes(query) || title.includes(query) || bookingId.includes(query);
+};
+
 const BookingRow = ({ bookingItem, propertyMap, handleBookingClick }) => {
   const propertyId = getPropertyId(bookingItem);
   const fallbackTitle =
@@ -143,9 +152,10 @@ function GuestBooking() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [guestId, setGuestId] = useState(null);
-  const [user, setUser] = useState({ name: "", email: "" });
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [propertyMap, setPropertyMap] = useState({});
   const [propLoading, setPropLoading] = useState(false);
@@ -159,10 +169,6 @@ function GuestBooking() {
         if (!isMounted) return;
 
         setGuestId(userInfo?.attributes?.sub || null);
-        setUser({
-          name: userInfo?.attributes?.given_name || "",
-          email: userInfo?.attributes?.email || "",
-        });
       } catch {
         if (isMounted) setError("Could not load your session.");
       } finally {
@@ -235,12 +241,12 @@ function GuestBooking() {
   const inquiryBookings = useMemo(() => getInquiryBookings(bookings), [bookings]);
 
   useEffect(() => {
-    const combined = [...paidBookings, ...cancelledBookings];
+    const combined = [...paidBookings, ...cancelledBookings, ...inquiryBookings];
     if (!combined.length) return;
 
     const ids = Array.from(new Set(combined.map((b) => getPropertyId(b)).filter(Boolean)));
     if (ids.length) fetchPropertyDetails(ids);
-  }, [paidBookings, cancelledBookings, fetchPropertyDetails]);
+  }, [paidBookings, cancelledBookings, inquiryBookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const bookingId = getBookingId(bookingItem);
@@ -254,11 +260,64 @@ function GuestBooking() {
       navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
     }
   };
+  const TABS = [
+    { key: "all", label: "All" },
+    { key: "current", label: "Current" },
+    { key: "upcoming", label: "Upcoming" },
+    { key: "past", label: "Past" },
+  ];
 
   const { currentBookings, upcomingBookings, pastBookings } = useMemo(
     () => splitBookingsByTime(paidBookings),
     [paidBookings]
   );
+
+  const tabCounts = useMemo(
+    () => ({
+      all: paidBookings.length,
+      current: currentBookings.length,
+      upcoming: upcomingBookings.length,
+      past: pastBookings.length,
+    }),
+    [paidBookings, currentBookings, upcomingBookings, pastBookings]
+  );
+
+  const tabBookings = useMemo(() => {
+    switch (activeTab) {
+      case "current":
+        return currentBookings;
+      case "upcoming":
+        return upcomingBookings;
+      case "past":
+        return pastBookings;
+      default:
+        return paidBookings;
+    }
+  }, [activeTab, paidBookings, currentBookings, upcomingBookings, pastBookings]);
+
+  const tabEmptyMessages = {
+    all: "You do not have any bookings yet.",
+    current: "No current bookings this week.",
+    upcoming: "You do not have any upcoming bookings yet.",
+    past: "You do not have any past bookings yet.",
+  };
+  const filteredBookings = useMemo(() => {
+    if (!searchQuery.trim()) return tabBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return tabBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [tabBookings, searchQuery, propertyMap]);
+
+  const filteredInquiryBookings = useMemo(() => {
+    if (!searchQuery.trim()) return inquiryBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return inquiryBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [inquiryBookings, searchQuery, propertyMap]);
+
+  const filteredCancelledBookings = useMemo(() => {
+    if (!searchQuery.trim()) return cancelledBookings;
+    const query = searchQuery.trim().toLowerCase();
+    return cancelledBookings.filter((b) => matchesSearchQuery(b, query, propertyMap));
+  }, [cancelledBookings, searchQuery, propertyMap]);
 
   let bookingContent;
   if (isLoading) {
@@ -269,22 +328,16 @@ function GuestBooking() {
         {error}
       </div>
     );
-  } else if (paidBookings.length === 0 && inquiryBookings.length === 0) {
-    bookingContent = (
-      <div className="emptyState">
-        <p>You do not have any bookings yet.</p>
-      </div>
-    );
   } else {
     bookingContent = (
       <div className="guest-booking-bookingContent">
         {propLoading && <div className="guest-booking-loader-inline">Loading property details...</div>}
 
-        {inquiryBookings.length > 0 && (
+        {filteredInquiryBookings.length > 0 && (
           <div className="guest-booking-summary-grid">
             <BookingSection
               title="Requests"
-              bookings={inquiryBookings}
+              bookings={filteredInquiryBookings}
               emptyMessage="No requests."
               propertyMap={propertyMap}
               handleBookingClick={handleBookingClick}
@@ -292,41 +345,52 @@ function GuestBooking() {
           </div>
         )}
 
-        <div className="guest-booking-summary-grid">
-          <BookingSection
-            title="Current / This Week"
-            bookings={currentBookings}
-            emptyMessage="No current bookings this week."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-          />
-
-          <BookingSection
-            title="Upcoming Bookings"
-            bookings={upcomingBookings}
-            emptyMessage="You do not have any upcoming bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-          />
-
-          <BookingSection
-            title="Cancelled Bookings"
-            bookings={cancelledBookings}
-            emptyMessage="You do not have any cancelled bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-            extraClassName="guest-card--cancelled"
-          />
-
-          <BookingSection
-            title="Past Bookings"
-            bookings={pastBookings}
-            emptyMessage="You do not have any past bookings yet."
-            propertyMap={propertyMap}
-            handleBookingClick={handleBookingClick}
-            extraClassName="guest-card--past"
+        <div className="guest-booking-search">
+          <input
+            type="text"
+            aria-label="Search bookings"
+            placeholder="Search by city, property or booking id"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+
+        <div className="guest-booking-tabs" role="tablist">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`guest-booking-tab${activeTab === tab.key ? " guest-booking-tab--active" : ""}`}
+              onClick={() => setActiveTab(tab.key)}>
+              {tab.label}
+              <span className="guest-booking-tab-count">{tabCounts[tab.key]}</span>
+            </button>
+          ))}
+        </div>
+        <div className="guest-booking-summary-grid">
+          <BookingSection
+            title={TABS.find((t) => t.key === activeTab)?.label || "Bookings"}
+            bookings={filteredBookings}
+            emptyMessage={tabEmptyMessages[activeTab]}
+            propertyMap={propertyMap}
+            handleBookingClick={handleBookingClick}
+            extraClassName={activeTab === "past" ? "guest-card--past" : ""}
+          />
+        </div>
+        {filteredCancelledBookings.length > 0 && (
+          <div className="guest-booking-summary-grid">
+            <BookingSection
+              title="Cancelled Bookings"
+              bookings={filteredCancelledBookings}
+              emptyMessage="You do not have any cancelled bookings yet."
+              propertyMap={propertyMap}
+              handleBookingClick={handleBookingClick}
+              extraClassName="guest-card--cancelled"
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -334,21 +398,12 @@ function GuestBooking() {
   return (
     <div className="guest-dashboard-shell">
       <div className="guest-dashboard-page-body guest-booking-page-body">
-        <h2>{user.name || "Guest"} Bookings</h2>
+        <h1 className="guest-booking-title">Reservations</h1>
+        <p className="guest-booking-subtitle">View and manage your bookings</p>
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content guest-booking-dashboard-content">
-            <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">
-              <div className="dashboardHead">
-                <div className="buttonBox">
-                  <button className="greenBtn" onClick={fetchBookings} disabled={isLoading}>
-                    {isLoading ? "Refreshing..." : "Refresh"}
-                  </button>
-                </div>
-              </div>
-
-              {bookingContent}
-            </div>
+            <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">{bookingContent}</div>
 
             <aside className="guest-dashboard-personalInfoContent guest-booking-right-empty" />
           </div>
