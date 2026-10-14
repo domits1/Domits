@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
   StaticPageStore,
   buildStaticPageKey,
@@ -90,11 +90,32 @@ describe("StaticPageStore", () => {
   it("withdraws a page by deleting exactly its hostname key, a delete marker on this versioned bucket", async () => {
     const send = jest.fn(async () => ({}));
 
-    await buildStore(send).deletePage({ hostname: "www.villasensual.nl" });
+    expect(await buildStore(send).deletePage({ hostname: "www.villasensual.nl" })).toBe(true);
 
     const [command] = send.mock.calls[0];
     expect(command).toBeInstanceOf(DeleteObjectCommand);
     expect(command.input).toEqual({ Bucket: BUCKET, Key: "sites/by-host/www.villasensual.nl/index.html" });
+  });
+
+  it("deletes only the listed version of a page when given its etag, and answers false when the page changed", async () => {
+    const send = jest
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(Object.assign(new Error("PreconditionFailed"), { $metadata: { httpStatusCode: 412 } }));
+    const store = buildStore(send);
+
+    expect(await store.deletePage({ hostname: "www.villasensual.nl", etag: '"e1"' })).toBe(true);
+    expect(send.mock.calls[0][0].input.IfMatch).toBe('"e1"');
+    expect(await store.deletePage({ hostname: "www.villasensual.nl", etag: '"e1"' })).toBe(false);
+  });
+
+  it.each([
+    ["another conditional delete is in flight", 409, '"e1"', false],
+    ["another delete already won", 404, '"e1"', true],
+  ])("answers quietly when %s", async (_label, httpStatusCode, etag, expected) => {
+    const send = jest.fn().mockRejectedValueOnce(Object.assign(new Error("s3"), { $metadata: { httpStatusCode } }));
+
+    expect(await buildStore(send).deletePage({ hostname: "www.villasensual.nl", etag })).toBe(expected);
   });
 
   it("refuses to delete under a key that is not a hostname key", async () => {
@@ -102,6 +123,81 @@ describe("StaticPageStore", () => {
 
     await expect(buildStore(send).deletePage({ hostname: "../index.html" })).rejects.toThrow(TypeError);
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("lists the hostnames that have a page across pages of the listing, and reports keys that are not page keys", async () => {
+    const pages = [
+      {
+        Contents: [
+          { Key: "sites/by-host/a.direct.domits.com/index.html", ETag: '"e1"' },
+          { Key: "sites/by-host/a.direct.domits.com/old.html" },
+          { Key: "sites/by-host/index.html" },
+          { Key: "sites/by-host/UPPER.example/index.html" },
+        ],
+        IsTruncated: true,
+        NextContinuationToken: "t2",
+      },
+      { Contents: [{ Key: "sites/by-host/www.b.nl/index.html" }], IsTruncated: false },
+    ];
+    const send = jest.fn(async () => pages.shift());
+
+    const listed = await buildStore(send).listPageHostnames();
+
+    expect(send.mock.calls.map(([command]) => command)).toEqual([
+      expect.any(ListObjectsV2Command),
+      expect.any(ListObjectsV2Command),
+    ]);
+    expect(send.mock.calls[0][0].input).toEqual({
+      Bucket: BUCKET,
+      Prefix: "sites/by-host/",
+      ContinuationToken: undefined,
+    });
+    expect(send.mock.calls[1][0].input.ContinuationToken).toBe("t2");
+    expect(listed).toEqual({
+      hostnames: ["a.direct.domits.com", "www.b.nl"],
+      etags: { "a.direct.domits.com": '"e1"', "www.b.nl": "" },
+      rejected: [
+        "sites/by-host/a.direct.domits.com/old.html",
+        "sites/by-host/index.html",
+        "sites/by-host/UPPER.example/index.html",
+      ],
+    });
+  });
+
+  it("skips the sitemap next to a page when it lists the stored pages, instead of reporting it as a stray key", async () => {
+    const send = jest.fn(async () => ({
+      Contents: [
+        { Key: "sites/by-host/a.direct.domits.com/index.html", ETag: '"e1"' },
+        { Key: "sites/by-host/a.direct.domits.com/sitemap.xml" },
+        { Key: "sites/by-host/b.direct.domits.com/sitemap.xml" },
+      ],
+      IsTruncated: false,
+    }));
+
+    const listed = await buildStore(send).listPageHostnames();
+
+    expect(listed).toEqual({
+      hostnames: ["a.direct.domits.com"],
+      etags: { "a.direct.domits.com": '"e1"' },
+      rejected: [],
+    });
+  });
+
+  it("refuses to reconcile a prefix with more keys than it is willing to scan, whatever they are", async () => {
+    let page = 0;
+    const send = jest.fn(async () => {
+      page += 1;
+      return {
+        Contents: Array.from({ length: 1000 }, (_, index) => ({
+          Key: `sites/by-host/s${page}-${index}.direct.domits.com/stray`,
+        })),
+        IsTruncated: true,
+        NextContinuationToken: `t${page}`,
+      };
+    });
+
+    await expect(buildStore(send).listPageHostnames()).rejects.toThrow("More than 20000 keys");
+    expect(send).toHaveBeenCalledTimes(21);
   });
 
   it("writes the sitemap as xml next to the page of the same hostname, tagged with the site and revision", async () => {

@@ -169,4 +169,43 @@ describe("StaticPageWithdrawal", () => {
       { hostname: FALLBACK.domain, message: "no tenant serves this hostname" },
     ]);
   });
+
+  it("invalidates a domain only once when the site lists it twice", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [CUSTOM, { ...CUSTOM, status: "REMOVING" }] });
+
+    expect(pageStore.deletePage).toHaveBeenCalledTimes(1);
+    expect(tenantRepository.createInvalidation).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a batch, skipping kept and changed pages, carrying on past a key that fails, invalidating once per tenant", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+    const other = "other-site-2.direct.domits.com";
+    const third = "third-site-3.direct.domits.com";
+    const fourth = "fourth-site-4.direct.domits.com";
+    pageStore.deletePage.mockImplementation(async ({ hostname, etag }) => {
+      if (hostname === other) {
+        throw new Error("SlowDown");
+      }
+      return !(hostname === fourth && etag === '"old"');
+    });
+
+    const result = await withdrawal.removePages([FALLBACK.domain, other, third, fourth, CUSTOM.domain, "Bad Host"], {
+      keep: async (hostname) => hostname === CUSTOM.domain,
+      etags: { [fourth]: '"old"' },
+    });
+
+    expect(pageStore.deletePage).toHaveBeenCalledWith({ hostname: fourth, etag: '"old"' });
+    expect(result.removed).toEqual([FALLBACK.domain, third]);
+    expect(result.kept).toEqual([fourth, CUSTOM.domain]);
+    expect(result.failures).toEqual([
+      { hostname: other, message: "SlowDown" },
+      { hostname: "Bad Host", message: "A static page key needs a lowercase hostname." },
+    ]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths.length])).toEqual([
+      ["dt_wildcard", 7],
+    ]);
+    expect(result.invalidationErrors).toEqual([]);
+  });
 });
