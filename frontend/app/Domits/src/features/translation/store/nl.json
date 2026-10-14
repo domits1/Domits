@@ -114,6 +114,17 @@
     "You have no properties listed yet": "U hebt nog geen accommodaties toegevoegd",
     "Confirm Property Status": "Bevestig Accommodatie Status",
     "Are you sure you want to set this property LIVE?": "Weet u zeker dat u uw accommodatie LIVE wilt zetten?",
-    "Property is already live": "Accommodatie staat al LIVE"
+    "Property is already live": "Accommodatie staat al LIVE",
+    "Two-factor authentication": "Tweestapsverificatie",
+    "Enter the 6-digit code from your authenticator app.": "Voer de 6-cijferige code uit uw authenticator-app in.",
+    "6-digit code": "6-cijferige code",
+    "Verify": "Verifiëren",
+    "Verifying...": "Verifiëren...",
+    "Back to login": "Terug naar inloggen",
+    "Invalid code. Please try again.": "Ongeldige code. Probeer het opnieuw.",
+    "Too many attempts. Please wait a moment and try again.": "Te veel pogingen. Wacht even en probeer het opnieuw.",
+    "Something went wrong. Please try again.": "Er is iets misgegaan. Probeer het opnieuw.",
+    "Your sign-in session expired. Please sign in again.": "Uw inlogsessie is verlopen. Log opnieuw in.",
+    "This sign-in method is not supported yet. Please contact support.": "Deze inlogmethode wordt nog niet ondersteund. Neem contact op met support."
   }
 }
