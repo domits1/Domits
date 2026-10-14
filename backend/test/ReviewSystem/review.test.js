@@ -6,6 +6,66 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
+describe("Merged review query and edit routes", () => {
+  const id = "12345678-1234-1234-1234-123456789abc";
+  const timestamp = Date.parse("2026-10-01T12:00:00Z");
+  const review = { id, reviewer_user_id: "guest", overall_rating: 4, public_review: "Good",
+    created_at: timestamp - 100, updated_at: timestamp - 50, status: "PUBLISHED" };
+  let repository, service, controller;
+  const event = (method, query = {}, body) => ({ httpMethod: method, queryStringParameters: query,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    requestContext: { authorizer: { claims: { sub: "guest", "cognito:username": "verified-user" } } } });
+  beforeEach(() => {
+    repository = {
+      findReviewById: jest.fn().mockResolvedValue({ ...review }),
+      updateEditableReview: jest.fn().mockResolvedValue({ affected: 1, updated_at: timestamp }),
+      findManagedProperty: jest.fn().mockResolvedValue({ id: "p1" }),
+      getPropertyReviewScore: jest.fn().mockResolvedValue({ property_id: "p1", overall_score: 4, review_count: 1 }),
+      getPropertyCategoryRatings: jest.fn().mockResolvedValue([]),
+    };
+    service = new ReviewService({ repository, now: () => timestamp, editWindowMs: 1000 });
+    controller = new Controller({ service });
+  });
+
+  it("dispatches managed-property scopes using the verified username", async () => {
+    for (const scope of ["property-score", "property-categories"]) {
+      expect((await controller.getReviews(event("GET", { scope, propertyId: "p1", username: "spoof" }))).statusCode).toBe(200);
+    }
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "verified-user");
+  });
+
+  it("loads the query-based edit form using the verified subject", async () => {
+    const result = await controller.getReviews(event("GET", { reviewId: id }));
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toMatchObject({ id, updated_at: review.updated_at });
+  });
+
+  it("supports the existing query-based PATCH endpoint with normalized text and client version", async () => {
+    const result = await controller.manageReviews(event("PATCH", { reviewId: id }, {
+      overall_rating: 5, public_review: " Good\r\nStay ", updated_at: review.updated_at,
+    }));
+    expect(result.statusCode).toBe(200);
+    expect(repository.updateEditableReview).toHaveBeenCalledWith(expect.objectContaining({ id, guestId: "guest",
+      previousUpdatedAt: review.updated_at, publicReview: "Good\nStay", editWindowMs: 1000 }));
+  });
+
+  it("rejects stale versions and expired edit windows without saving", async () => {
+    const body = { overall_rating: 5, public_review: "Changed", updated_at: 1 };
+    expect((await controller.updateReview(event("PATCH", { reviewId: id }, body))).statusCode).toBe(409);
+    service.editWindowMs = 10;
+    expect((await controller.getReviews(event("GET", { reviewId: id }))).statusCode).toBe(403);
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+
+  it("does not allow editing a deleted review or conflicting path/query IDs", async () => {
+    repository.findReviewById.mockResolvedValue({ ...review, status: "DELETED" });
+    expect((await controller.getReviews(event("GET", { reviewId: id }))).statusCode).toBe(404);
+    const request = { ...event("PATCH", { reviewId: id }, {}), pathParameters: { id: "different" } };
+    expect((await controller.updateReview(request)).statusCode).toBe(400);
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+});
+
 describe('Review creation and existing operations', () => {
   const now = Date.parse("2026-10-01T12:00:00Z");
   const booking = {

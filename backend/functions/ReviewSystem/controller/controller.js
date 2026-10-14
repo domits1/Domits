@@ -43,7 +43,7 @@ export class Controller {
       if (typeof user?.userId !== "string" || !user.userId.trim()) {
         throw new UnauthorizedException("Verified authorization context is required.");
       }
-      return await callback(user.userId);
+      return await callback(user.userId, user);
     } catch (error) {
       return this.handleError(error);
     }
@@ -59,8 +59,24 @@ export class Controller {
   // Fetch the caller's review list for the selected scope.
   // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
   async getReviews(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.getReviews(userId, event.queryStringParameters?.scope ?? "written")));
+    return this.executeAuthenticated(event, async (userId, user) => {
+      const query = event.queryStringParameters ?? {};
+      const propertyScope = ["property-score", "property-categories"].includes(query.scope);
+      if (propertyScope && query.reviewId !== undefined) {
+        throw new BadRequestException("Property score/category and individual review requests cannot be combined.");
+      }
+      let result;
+      if (query.scope === "property-categories") {
+        result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+      } else if (query.scope === "property-score") {
+        result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+      } else if (query.reviewId !== undefined) {
+        result = await this.service.getEditableReview(userId, query.reviewId);
+      } else {
+        result = await this.service.getReviews(userId, query.scope ?? "written");
+      }
+      return this.jsonResponse(200, result);
+    });
   }
 
   // Fetch a single review with the correct visibility rules.
@@ -73,8 +89,19 @@ export class Controller {
   // Update an unpublished review draft.
   // This keeps the controller thin while preserving the service's conflict and validation checks.
   async updateReview(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.updateReview(userId, this.getPathParameter(event, "id"), parseBody(event))));
+    return this.executeAuthenticated(event, async (userId) => {
+      const pathId = event.pathParameters?.id;
+      const queryId = event.queryStringParameters?.reviewId;
+      if (pathId !== undefined && queryId !== undefined && pathId !== queryId) {
+        throw new BadRequestException("Conflicting review IDs.");
+      }
+      const data = parseBody(event);
+      if (queryId !== undefined || Object.hasOwn(data, "updated_at")) {
+        const reviewId = queryId ?? this.getPathParameter(event, "id");
+        return this.jsonResponse(200, await this.service.updateEditableReview(userId, reviewId, data));
+      }
+      return this.jsonResponse(200, await this.service.updateReview(userId, this.getPathParameter(event, "id"), data));
+    });
   }
 
   // Return the public review feed for a property.
@@ -138,6 +165,7 @@ export class Controller {
   // Retain existing direct callers while index uses the individual route methods.
   async manageReviews(event) {
     if (event.httpMethod === "GET") return this.getReviews(event);
+    if (event.httpMethod === "PATCH") return this.updateReview(event);
     if (event.httpMethod === "DELETE") return this.deleteReview(event);
     return this.jsonResponse(405, { message: "Method not supported." });
   }

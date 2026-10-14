@@ -5,14 +5,17 @@ import { Review } from "database/models/Review";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
 describe("property score repository", () => {
-  let query, propertyRepository, repository, reviewRepository;
+  let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
     for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
       query[method] = jest.fn(() => query);
     }
-    reviewRepository = { createQueryBuilder: () => query, update: jest.fn().mockResolvedValue({ affected: 1 }) };
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
+    reviewRepository = {
+      createQueryBuilder: () => query,
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => {
       if (entity === Property) return propertyRepository;
       if (entity === Review) return reviewRepository;
@@ -33,7 +36,7 @@ describe("property score repository", () => {
       "property.id = review.property_id AND property.hostid = :hostId", { hostId: "host-1" });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "property-1" });
     expect(query.andWhere.mock.calls).toEqual([
-      ["review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED_STAY" }],
+      ["review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }],
       ["review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" }],
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
@@ -63,10 +66,10 @@ describe("property score repository", () => {
       property_id: "property-1", overall_score: null, review_count: 0,
     });
   });
-  test("rounds the average to one decimal", async () => {
+  test("preserves average precision", async () => {
     query.getRawOne.mockResolvedValue({ overall_score: "4.333333333333333", review_count: "3" });
     const result = await repository.getPropertyReviewScore("property-1", "host-1");
-    expect(result.overall_score).toBe(4.3);
+    expect(result.overall_score).toBeCloseTo(13 / 3, 12);
     expect(result.review_count).toBe(3);
   });
 });

@@ -1,6 +1,7 @@
 const routeCases = [
   ["GET", "/reviews", "getReviews", 200],
   ["POST", "/reviews", "createReview", 201],
+  ["PATCH", "/reviews", "updateReview", 200],
   ["GET", "/reviews/{id}", "getReviewById", 200],
   ["PATCH", "/reviews/{id}", "updateReview", 200],
   ["DELETE", "/reviews/{id}", "deleteReview", 204],
