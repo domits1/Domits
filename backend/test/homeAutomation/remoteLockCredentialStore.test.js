@@ -57,5 +57,65 @@ describe("RemoteLockCredentialStore", () => {
       "DescribeSecretCommand",
       "PutSecretValueCommand",
     ]);
+    const [[describe], [put]] = send.mock.calls;
+    expect(describe.input).toEqual({ SecretId: "domits/remotelock/user-1/account-1" });
+    expect(put.input).toEqual({ SecretId: "domits/remotelock/user-1/account-1", SecretString: JSON.stringify(TOKENS) });
+  });
+
+  describe("secret names", () => {
+    const store = () => {
+      delete process.env.REMOTELOCK_SECRET_PREFIX;
+      return new RemoteLockCredentialStore({ secrets: { send: jest.fn() } });
+    };
+
+    it.each([
+      ["userId", { ...IDS, userId: "user/1" }],
+      ["userId", { ...IDS, userId: "/" }],
+      ["userId", { ...IDS, userId: "" }],
+      ["userId", { ...IDS, userId: "   " }],
+      ["userId", { ...IDS, userId: " user-1 " }],
+      ["userId", { ...IDS, userId: "us er" }],
+      ["userId", { ...IDS, userId: "user:1" }],
+      ["userId", { ...IDS, userId: "user\n1" }],
+      ["userId", { ...IDS, userId: "üser" }],
+      ["userId", { ...IDS, userId: undefined }],
+      ["userId", { ...IDS, userId: 7 }],
+      ["integrationAccountId", { ...IDS, integrationAccountId: "other-user/account-1" }],
+      ["integrationAccountId", { ...IDS, integrationAccountId: "" }],
+      ["integrationAccountId", { ...IDS, integrationAccountId: " " }],
+      ["integrationAccountId", { ...IDS, integrationAccountId: "account 1" }],
+      ["integrationAccountId", { ...IDS, integrationAccountId: null }],
+    ])("refuses a bad %s with a plain error that does not contain the value", (label, ids) => {
+      const error = (() => {
+        try {
+          return store().buildSecretName(ids);
+        } catch (caught) {
+          return caught;
+        }
+      })();
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain(label);
+      expect(error.message).not.toContain("other-user");
+      expect(error.message).not.toContain("user/1");
+      expect(error.message).not.toContain("us er");
+      expect(error.message).not.toContain("account 1");
+    });
+
+    it("refuses before any secret is touched", async () => {
+      const send = jest.fn();
+      const guarded = new RemoteLockCredentialStore({ secrets: { send } });
+
+      await expect(guarded.ensureSecret({ userId: "a/b", integrationAccountId: "c", payload: TOKENS })).rejects.toThrow(
+        "userId"
+      );
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it("accepts every character that AWS allows in a name, except the slash", () => {
+      expect(store().buildSecretName({ userId: "aZ09_+=.@-", integrationAccountId: "account-1" })).toBe(
+        "domits/remotelock/aZ09_+=.@-/account-1"
+      );
+    });
   });
 });
