@@ -1163,8 +1163,62 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Volg je voortgang van het aanmelden van je woning tot livegang."
+        },
+        "homeAutomation": {
+          "title": "Domotica",
+          "desc": "Koppel slimme sloten zodat gasten toegang krijgen tot je woningen."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domotica",
+      "title": "Domotica",
+      "subtitle": "Koppel RemoteLock om slimme sloten voor je gasten te beheren.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Laatste synchronisatie",
+        "never": "Nog niet gesynchroniseerd"
+      },
+      "statuses": {
+        "notConnected": "Niet gekoppeld",
+        "connecting": "Koppelen",
+        "connected": "Gekoppeld",
+        "authenticationError": "Inloggen mislukt",
+        "connectionError": "Verbindingsprobleem",
+        "disconnected": "Ontkoppeld",
+        "expiredCredentials": "Inlog verlopen",
+        "unknown": "Status onbekend"
+      },
+      "actions": {
+        "connect": "Koppelen",
+        "reconnect": "Opnieuw koppelen",
+        "disconnect": "Ontkoppelen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Koppelen",
+          "confirming": "Koppelen..."
+        },
+        "reconnect": {
+          "title": "RemoteLock opnieuw koppelen",
+          "body": "Je wordt doorgestuurd naar RemoteLock om in te loggen.",
+          "confirm": "Opnieuw koppelen",
+          "confirming": "Opnieuw koppelen..."
+        },
+        "disconnect": {
+          "title": "RemoteLock ontkoppelen",
+          "body": "Domits beheert de deurcodes van je gasten niet meer.",
+          "confirm": "Ontkoppelen",
+          "confirming": "Ontkoppelen..."
+        },
+        "cancel": "Annuleren",
+        "error": "Er ging iets mis. Probeer het opnieuw."
+      },
+      "loading": "Je RemoteLock-koppeling wordt geladen...",
+      "loadError": "We konden je RemoteLock-koppeling niet laden.",
+      "retry": "Probeer opnieuw"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
@@ -1379,12 +1433,33 @@
         "verified": "Geverifieerd",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-app",
-        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
         "loading": "Je authenticatiestatus wordt geladen...",
         "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
       },
       "pin": {
         "comingSoon": "Binnenkort beschikbaar."
+      },
+      "authenticator": {
+        "setUp": "Instellen",
+        "setupTitle": "Je authenticator-app instellen",
+        "scanInstruction": "Scan deze QR-code met een authenticator-app, zoals Google Authenticator of Microsoft Authenticator.",
+        "qrAlt": "QR-code om Domits aan je authenticator-app toe te voegen",
+        "manualKeyLabel": "Kun je niet scannen? Voer deze sleutel handmatig in:",
+        "codeLabel": "6-cijferige code",
+        "verify": "Verifiëren",
+        "verifying": "Verifiëren...",
+        "cancel": "Annuleren",
+        "tryAgain": "Opnieuw proberen",
+        "close": "Sluiten",
+        "success": "Je authenticator-app is ingeschakeld. Je wordt om een code gevraagd wanneer je op een nieuw apparaat inlogt.",
+        "errors": {
+          "invalidCode": "Deze code is niet geldig. Voer de huidige 6-cijferige code uit je app in.",
+          "sessionExpired": "Je sessie is verlopen. Log opnieuw in en start de instelling opnieuw.",
+          "tooManyAttempts": "Te veel pogingen. Wacht even en probeer het opnieuw.",
+          "enableFailed": "Je code is geaccepteerd, maar we konden de authenticator-app niet inschakelen. Probeer het opnieuw.",
+          "generic": "Er is iets misgegaan. Probeer het opnieuw."
+        }
       }
     },
     "communicationPreferences": {
@@ -1533,6 +1608,59 @@
         "billingHistoryEmpty": "Er zijn nog geen factuurgegevens beschikbaar.",
         "billingContact": "Factureringscontact",
         "billingContactEmpty": "Beheer van het factureringscontact verschijnt hier zodra facturering is ingeschakeld."
+      },
+      "websitePlan": {
+        "sectionTitle": "Direct Booking-websiteabonnement",
+        "sectionSubtitle": "Kies het abonnement voor je boekingswebsite. De prijs van Elite wordt hieronder weergegeven.",
+        "loading": "Je websiteabonnement wordt geladen...",
+        "loadError": "Je huidige websiteabonnement kon niet worden geladen.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Alles wat nodig is voor je directe boekingswebsite.",
+        "essentialsFeaturesTitle": "Inbegrepen",
+        "featureBasicWebsite": "Basiswebsite en boekingsfuncties",
+        "featureBasicCustomization": "Basisaanpassingen en SEO",
+        "elite": "Elite",
+        "eliteDescription": "Meer functies om je directe boekingswebsite uit te breiden en aan te passen.",
+        "eliteFeaturesTitle": "Alles van Essentials, plus",
+        "featureCustomDomain": "Koppel je eigen domeinnaam",
+        "featureAdvancedBuilder": "Geavanceerde websitebouwer en onbeperkt aantal pagina's",
+        "featureLocalization": "Meerdere talen en valuta's",
+        "featureGrowthTools": "Geavanceerde SEO, analytics, CRM, AI-tools, upsells en experimenten",
+        "currentPlan": "Huidig abonnement",
+        "scheduled": "Gepland",
+        "status": {
+          "ACTIVE": "Actief",
+          "PAST_DUE": "Betaling achterstallig",
+          "TRIALING": "Proefperiode",
+          "INCOMPLETE": "Betaling in afwachting",
+          "INCOMPLETE_EXPIRED": "Betaling verlopen",
+          "EXPIRED": "Verlopen",
+          "CANCELLED": "Geannuleerd"
+        },
+        "perMonth": "per maand",
+        "free": "Gratis",
+        "upgrade": "Upgraden naar Elite",
+        "restoreElite": "Elite opnieuw activeren",
+        "switchToEssentials": "Wisselen naar Essentials",
+        "processing": "Bezig...",
+        "changeError": "Je websiteabonnement kon niet worden bijgewerkt. Probeer het opnieuw.",
+        "checkoutError": "Stripe Checkout kon niet worden gestart. Probeer het opnieuw.",
+        "downgradeScheduled": "De overstap naar Essentials staat gepland aan het einde van je huidige factureringsperiode.",
+        "downgradeSuccess": "Je websiteabonnement is nu Essentials.",
+        "restoreSuccess": "Je Elite-abonnement is opnieuw geactiveerd.",
+        "unchanged": "Je websiteabonnement is al bijgewerkt.",
+        "effectiveUntil": "Elite blijft actief tot {date}.",
+        "priceUnavailable": "Prijs niet beschikbaar",
+        "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
+        "checkoutSuccess": "Je Elite-abonnement is actief.",
+        "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
+        "checkoutStillPending": "We hebben nog geen bevestiging ontvangen. De betaling wordt mogelijk nog verwerkt. Vernieuw deze pagina over een moment en start geen nieuwe checkout.",
+        "cardTitle": "Direct Booking-websiteabonnement",
+        "cardSubtitle": "Essentials is gratis; Elite biedt geavanceerde websitefuncties.",
+        "cardNote": "Kies en beheer het abonnement voor je website.",
+        "breadcrumb": "Direct Booking-websiteabonnement",
+        "pageTitle": "Direct Booking-websiteabonnement",
+        "pageSubtitle": "Beheer het abonnement voor je Direct Booking-website."
       },
       "enterprise": {
         "cardTitle": "Enterprise-tariefplan",

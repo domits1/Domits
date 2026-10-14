@@ -26,7 +26,6 @@ import ChannexAriPayloadService from "../.shared/channelManagement/services/chan
 import ChannexAriExecutionService from "../.shared/channelManagement/services/channexAriExecutionService.js";
 import ChannexAriOrchestrationService from "../.shared/channelManagement/services/channexAriOrchestrationService.js";
 import ChannexFullSyncService from "../.shared/channelManagement/services/channexFullSyncService.js";
-import ChannexCertificationService from "../.shared/channelManagement/services/channexCertificationService.js";
 import ChannexDiagnosticsService from "../.shared/channelManagement/services/channexDiagnosticsService.js";
 import {
   summarizeChannexGroupedPayloads,
@@ -217,7 +216,6 @@ export default class IntegrationService {
     channexAriExecutionService = null,
     channexAriOrchestrationService = null,
     channexFullSyncService = null,
-    channexCertificationService = null,
     channexDiagnosticsService = null,
     channexBookingRevisionImportService = null,
     channexAvailabilitySyncService = null,
@@ -321,12 +319,6 @@ export default class IntegrationService {
           this.resolveChannexSyncCredentialContext(...args),
         logChannexFullCertificationSync: (...args) =>
           this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
-      });
-    this.channexCertificationService =
-      channexCertificationService ||
-      new ChannexCertificationService({
-        externalBookingImportRepository,
-        channexBookingAvailabilityBridge,
       });
     this.channexBookingRevisionImportService =
       channexBookingRevisionImportService ||
@@ -853,7 +845,7 @@ export default class IntegrationService {
       externalAccountId: body.externalAccountId ?? null,
       displayName: body.displayName ?? null,
       status: body.status ?? "PENDING",
-      credentialsRef: body.credentialsRef ?? null,
+      credentialsRef: null,
       lastSuccessfulSyncAt: null,
       lastFailedSyncAt: null,
       lastErrorCode: null,
@@ -865,7 +857,7 @@ export default class IntegrationService {
     await this.sync.ensureStateRow(id, "MESSAGES");
     await this.sync.ensureStateRow(id, "RESERVATIONS");
 
-    return ok(created);
+    return ok(shapeCredentialIntegrationForResponse(created));
   }
 
   async listIntegrations(userId) {
@@ -884,13 +876,12 @@ export default class IntegrationService {
       externalAccountId: patch.externalAccountId,
       displayName: patch.displayName,
       status: patch.status,
-      credentialsRef: patch.credentialsRef,
       lastErrorCode: patch.lastErrorCode,
       lastErrorMessage: patch.lastErrorMessage,
     });
 
     if (!updated) return bad(404, { error: "Integration not found" });
-    return ok(updated);
+    return ok(shapeCredentialIntegrationForResponse(updated));
   }
 
   async getIntegrationLogs(integrationId, limit = 50) {
@@ -1090,14 +1081,6 @@ export default class IntegrationService {
 
   async listChannexBookingRevisions(userId, options = {}) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(userId, options);
-  }
-
-  buildChannexCertificationCancelSkippedEvidence(...args) {
-    return this.channexCertificationService.buildChannexCertificationCancelSkippedEvidence(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(userId, domitsPropertyId, options = {}) {
