@@ -30,8 +30,10 @@ describe('ChecklistSection', () => {
         const { container } = render(<ChecklistSection {...baseProps} items={items} />);
 
         expect(screen.getByText('Strip beds')).toBeInTheDocument();
-        expect(screen.getByText('1/2 required done')).toBeInTheDocument();
-        expect(container.querySelectorAll('.checklist-required-badge')).toHaveLength(2);
+        expect(screen.getByText('1/2 required completed')).toBeInTheDocument();
+        const badges = container.querySelectorAll('.checklist-required-badge');
+        expect(badges).toHaveLength(2);
+        expect(badges[0]).toHaveTextContent('*');
     });
 
     test('calls onToggleChecked with the item when its checkbox is clicked', () => {
