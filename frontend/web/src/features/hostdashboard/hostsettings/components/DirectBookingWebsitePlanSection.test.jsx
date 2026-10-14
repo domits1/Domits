@@ -254,13 +254,11 @@ describe("DirectBookingWebsitePlanSection", () => {
         screen.getByText("We're confirming your Elite subscription. This can take a few moments.")
       ).toBeInTheDocument();
 
-      await act(async () => {
-        for (let attempt = 0; attempt < 10; attempt += 1) {
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        await act(async () => {
           jest.advanceTimersByTime(1500);
-          await Promise.resolve();
-          await Promise.resolve();
-        }
-      });
+        });
+      }
 
       expect(
         screen.getByText("We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.")
