@@ -1,5 +1,7 @@
-// See 20261014_cancellation_policy_strict_to_limited.sql for the context, the precondition and
-// the verification queries. Run it before the #832 code is deployed.
+// Migration record only; nothing executes it. The statements to run, in batches, are in
+// 20261014_cancellation_policy_strict_to_limited.sql, and the run order, precondition and
+// verification are in docs/internal/tools/dsql_cancellation_policy_strict_to_limited_runbook.md.
+// Run it before the #832 code is deployed.
 export class CancellationPolicyStrictToLimited20261014 {
   async up(queryRunner) {
     await queryRunner.query(`
