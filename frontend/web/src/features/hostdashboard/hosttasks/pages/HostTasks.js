@@ -389,6 +389,9 @@ const HostTasks = () => {
         setIsApplyingChecklistTemplate(true);
         const created = [];
         try {
+            // Must stay sequential: the backend assigns each item's position as
+            // existingItems.length at creation time, so running these in parallel
+            // would let requests read the same stale count and collide.
             for (const item of template) {
                 created.push(await createChecklistItem(taskId, item));
             }
@@ -433,15 +436,13 @@ const HostTasks = () => {
         loadChecklistItems(viewingTask.id);
     };
 
-    const handleEditChange = (e) => {
+    const handleEditChange = async (e) => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
 
         if (name === 'type' && viewingTask) {
-            applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length)
-                .then(created => {
-                    if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
-                });
+            const created = await applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length);
+            if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
         }
     };
 
