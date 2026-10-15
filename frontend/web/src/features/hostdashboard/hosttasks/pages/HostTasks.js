@@ -42,6 +42,7 @@ const DEFAULT_NEW_TASK = {
     dueDate: '',
     priority: 'Medium',
     attachments: null,
+    checklistItems: [],
 };
 
 const HostTasks = () => {
@@ -53,6 +54,7 @@ const HostTasks = () => {
     const checklistRequestRef = useRef(0);
     const isApplyingChecklistTemplateRef = useRef(false);
     const templateCreatedItemIdsRef = useRef([]);
+    const draftChecklistIdRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -100,6 +102,18 @@ const HostTasks = () => {
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [isModalOpen]);
+
+    // Populates the draft checklist for the default/current Type as soon as the
+    // create form opens, rather than waiting for an explicit Type change -- the
+    // Type field already has a value (DEFAULT_NEW_TASK.type) that may have a
+    // template. Only fills while the draft is still empty, so it doesn't
+    // clobber anything the host already built up.
+    useEffect(() => {
+        if (!isModalOpen || newTask.checklistItems.length > 0) return;
+        const draft = buildChecklistDraftForType(newTask.type);
+        if (draft.length > 0) setNewTask(prev => ({ ...prev, checklistItems: draft }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isModalOpen, checklistTemplates]);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [teamMembers, setTeamMembers] = useState([]);
@@ -285,7 +299,7 @@ const HostTasks = () => {
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
 
-            await applyChecklistTemplate(created.id, created.type, []);
+            await persistDraftChecklist(created.id, newTask.checklistItems);
 
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
@@ -302,9 +316,65 @@ const HostTasks = () => {
         }
     };
 
+    // Persists the local checklist draft built up while creating a task, once
+    // the task itself has a real id. Creates default to unchecked (the backend
+    // ignores is_checked on create), so a locally-checked item needs a
+    // follow-up update. The task is already created at this point, so a
+    // failure here is reported but doesn't roll anything back.
+    const persistDraftChecklist = async (taskId, draftItems) => {
+        if (draftItems.length === 0) return;
+        const failures = [];
+        // Must stay sequential: the backend assigns each item's position as
+        // existingItems.length at creation time, so running these in parallel
+        // would let requests read the same stale count and collide.
+        for (const item of draftItems) {
+            try {
+                const createdItem = await createChecklistItem(taskId, { title: item.title, isRequired: item.isRequired });
+                if (item.isChecked) {
+                    await updateChecklistItem(createdItem.id, { isChecked: true });
+                }
+            } catch (error) {
+                failures.push(item.title);
+            }
+        }
+        if (failures.length > 0) {
+            toast.error(`Task created, but ${failures.length} checklist item(s) could not be saved: ${failures.join(', ')}`);
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'type') {
+            setNewTask(prev => ({ ...prev, type: value, checklistItems: buildChecklistDraftForType(value) }));
+            return;
+        }
         setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddDraftChecklistItem = (itemData) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: [...prev.checklistItems, {
+                id: `draft-${++draftChecklistIdRef.current}`,
+                title: itemData.title,
+                isRequired: itemData.isRequired,
+                isChecked: false,
+            }],
+        }));
+    };
+
+    const handleToggleDraftChecklistItem = (item) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: prev.checklistItems.map(i => i.id === item.id ? { ...i, isChecked: !i.isChecked } : i),
+        }));
+    };
+
+    const handleRemoveDraftChecklistItem = (itemId) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: prev.checklistItems.filter(i => i.id !== itemId),
+        }));
     };
 
     const handleFileChange = (e) => {
@@ -391,6 +461,18 @@ const HostTasks = () => {
             setIsModalOpen(false);
             resetForm();
         }
+    };
+
+    // Builds an unsaved, locally-held checklist draft for the create-task form,
+    // where there's no real task id yet to persist items against.
+    const buildChecklistDraftForType = (type) => {
+        const template = checklistTemplates[type] || [];
+        return template.map((item) => ({
+            id: `draft-${++draftChecklistIdRef.current}`,
+            title: item.title,
+            isRequired: item.isRequired,
+            isChecked: false,
+        }));
     };
 
     const applyChecklistTemplate = async (taskId, type, existingItems) => {
@@ -947,12 +1029,16 @@ const HostTasks = () => {
                 newTask={newTask}
                 propertyOptions={createPropertyOptions}
                 assigneeOptions={createAssigneeChoices}
+                checklistItems={newTask.checklistItems}
                 onInputChange={handleInputChange}
                 onPropertyChange={handlePropertyChange}
                 onAssigneeChange={handleAssigneeChange}
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
+                onAddChecklistItem={handleAddDraftChecklistItem}
+                onToggleChecklistItem={handleToggleDraftChecklistItem}
+                onRemoveChecklistItem={handleRemoveDraftChecklistItem}
                 isSubmitting={isCreatingTask}
             />
 

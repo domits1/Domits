@@ -3,18 +3,25 @@ import PropTypes from 'prop-types';
 import { LuX } from 'react-icons/lu';
 import { getTodayString } from '../utils/taskFilters';
 import { TASK_TYPE_OPTIONS } from '../utils/taskTypeOptions';
+import ChecklistSection from './ChecklistSection';
+
+const noop = () => {};
 
 const CreateTaskModal = ({
     isOpen,
     newTask,
     propertyOptions,
     assigneeOptions,
+    checklistItems,
     onInputChange,
     onPropertyChange,
     onAssigneeChange,
     onFileChange,
     onSubmit,
     onCancel,
+    onAddChecklistItem,
+    onToggleChecklistItem,
+    onRemoveChecklistItem,
     isSubmitting,
 }) => {
     if (!isOpen) return null;
@@ -80,6 +87,15 @@ const CreateTaskModal = ({
                                 <option value="Urgent">Urgent</option>
                             </select>
                         </div>
+                        <ChecklistSection
+                            items={checklistItems}
+                            loadError={null}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={noop}
+                        />
+
                         <div className="form-group">
                             <label htmlFor='task-attachments'>Attachments (optional)</label>
                             <div className="custom-file-upload">
@@ -123,6 +139,15 @@ CreateTaskModal.propTypes = {
         id: PropTypes.string,
         label: PropTypes.string,
     })).isRequired,
+    checklistItems: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        isRequired: PropTypes.bool,
+        isChecked: PropTypes.bool,
+    })).isRequired,
+    onAddChecklistItem: PropTypes.func.isRequired,
+    onToggleChecklistItem: PropTypes.func.isRequired,
+    onRemoveChecklistItem: PropTypes.func.isRequired,
     onInputChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
     onAssigneeChange: PropTypes.func.isRequired,
