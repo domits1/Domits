@@ -146,7 +146,7 @@ describe('TaskDetailsModal', () => {
     test('shows the checklist template loading indicator when applying a template', () => {
         render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
 
-        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+        expect(screen.getByText('Loading checklist...')).toBeInTheDocument();
     });
 
     test('disables Close, Cancel and the backdrop while a template is applying', () => {
