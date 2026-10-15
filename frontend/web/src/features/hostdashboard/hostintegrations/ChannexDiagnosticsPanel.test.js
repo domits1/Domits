@@ -128,17 +128,32 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(syncChannexRestrictions).not.toHaveBeenCalled();
     expect(
       await screen.findByText(
-        "The selected range is 501 days. Channex certification syncs support up to 500 inclusive days."
+        "The selected range is 501 days. Channex syncs support up to 500 inclusive days."
       )
     ).toBeTruthy();
   });
 
-  test("hides numbered certification test cases and keeps demo actions visible", async () => {
+  // The panel is an internal support tool and is shown to Channex during live testing;
+  // Channex rejects a UI that presents itself as built for the certification.
+  test("shows no certification wording in the overview and the manual actions", async () => {
+    const { container } = render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await waitFor(() => expect(getChannexStatus).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByRole("navigation", { name: "Channex diagnostics sections" })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/certification/i);
+
+    fillRequiredInputs();
+
+    expect(screen.getByText("Manual actions")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/certification|demo action/i);
+  });
+
+  test("hides numbered test cases and keeps the manual actions visible", async () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     expect(screen.getByRole("button", { name: "Sync availability" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Full/certification sync" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Full sync" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Modify booking dates" })).toBeTruthy();
     expect(screen.queryByText("Change-only certification test cases")).toBeNull();
     for (const testCaseId of ["2", "3", "4", "5", "6", "7", "8", "9", "10"]) {
@@ -254,7 +269,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(await screen.findByText("Channex property list failed")).toBeTruthy();
   });
 
-  test("runs full/certification sync from the admin actions UI", async () => {
+  test("runs a full sync from the admin actions UI", async () => {
     syncChannexFull.mockResolvedValue({
       requestCount: 2,
       calledProvider: true,
@@ -281,8 +296,9 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
-    fireEvent.click(screen.getByRole("button", { name: "Full/certification sync" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full sync" }));
 
+    expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringMatching(/^Run a full sync\?/));
     await waitFor(() => expect(syncChannexFull).toHaveBeenCalledTimes(1));
     expect(syncChannexFull).toHaveBeenCalledWith({
       userId: "user-1",
@@ -290,8 +306,8 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       dateFrom: "2026-05-24",
       dateTo: "2027-10-05",
     });
-    expect(await screen.findByText("Full/certification sync completed.")).toBeTruthy();
-    expect(screen.getByText("Full/certification sync summary")).toBeTruthy();
+    expect(await screen.findByText("Full sync completed.")).toBeTruthy();
+    expect(screen.getByText("Full sync summary")).toBeTruthy();
     expect(screen.getByText("Full Sync provider calls: 1 availability, 1 restrictions/rates.")).toBeTruthy();
     expect(screen.getByText("Availability call")).toBeTruthy();
     expect(screen.getByText("Restrictions/rates call")).toBeTruthy();

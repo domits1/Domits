@@ -39,7 +39,13 @@ const directRouteSpecs = [
   ["POST website domain primary request", "promoteWebsiteDomain", "POST", "/property/website/domains/primary", 200],
   ["GET website domains request", "listWebsiteDomains", "GET", "/property/website/domains", 200],
   ["DELETE website domain request", "removeWebsiteDomain", "DELETE", "/property/website/domains", 200],
-  ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  [
+    "GET property calendar overrides request",
+    "getPropertyCalendarOverrides",
+    "GET",
+    "/property/calendar/overrides",
+    200,
+  ],
   ["GET pricing saving-config request", "getPricingSavingConfig", "GET", "/property/pricing/saving-config", 200],
   ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
   ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
@@ -166,6 +172,11 @@ const notFoundCases = [
     expectedBody: "Method not found.",
   },
   {
+    name: "unknown task name",
+    event: { task: "something-else" },
+    expectedBody: "Method not found.",
+  },
+  {
     name: "unknown path",
     event: withHttpMethod("GET", { resource: "some/path/that/does/not/exist", pathParameters: {} }),
     expectedBody: "Path not found.",
@@ -190,6 +201,55 @@ describe("Routing unit tests", () => {
       }
     }
   );
+
+  it("should run the static page worker for a task event that carries no HTTP method", async () => {
+    const buildStaticPages = jest
+      .spyOn(PropertyController.prototype, "buildStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "build-static-pages", limit: 5 });
+
+    expect(response.statusCode).toBe(200);
+    expect(buildStaticPages).toHaveBeenCalledWith({ task: "build-static-pages", limit: 5 });
+  });
+
+  it("should fail the invocation when the static page run fails, so a scheduler sees it", async () => {
+    jest.spyOn(PropertyController.prototype, "buildStaticPages").mockRejectedValue(new Error("connection lost"));
+
+    await expect(handler({ task: "build-static-pages" })).rejects.toThrow("connection lost");
+  });
+
+  it("should route the reconcile task to the controller and hand its result back", async () => {
+    const reconcileStaticPages = jest
+      .spyOn(PropertyController.prototype, "reconcileStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "reconcile-static-pages", limit: 50 });
+
+    expect(response.statusCode).toBe(200);
+    expect(reconcileStaticPages).toHaveBeenCalledWith({ task: "reconcile-static-pages", limit: 50 });
+  });
+
+  it("should route the queue-all task to the controller", async () => {
+    const queueAllStaticPages = jest
+      .spyOn(PropertyController.prototype, "queueAllStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "queue-all-static-pages" });
+
+    expect(response.statusCode).toBe(200);
+    expect(queueAllStaticPages).toHaveBeenCalledWith({ task: "queue-all-static-pages" });
+  });
+
+  it("should route an HTTP request that also carries the task name as an HTTP request", async () => {
+    const buildStaticPages = jest.spyOn(PropertyController.prototype, "buildStaticPages");
+    jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });
+
+    const response = await handler({ httpMethod: "POST", task: "build-static-pages" });
+
+    expect(response.statusCode).toBe(201);
+    expect(buildStaticPages).not.toHaveBeenCalled();
+  });
 
   it.each(notFoundCases)("should return 404 for $name", async ({ event, expectedBody }) => {
     const response = await handler(event);

@@ -16,9 +16,6 @@ const mockIntegrationControllerMethods = {
   listIntegrations: jest.fn(),
   upsertIntegrationProperty: jest.fn(),
 };
-const mockIngestionControllerMethods = {
-  ingestMessages: jest.fn(),
-};
 const mockWhatsAppWebhookControllerMethods = {
   verifyWebhook: jest.fn(),
   handleWebhookEvent: jest.fn(),
@@ -35,11 +32,6 @@ jest.mock("./controller/messageController.js", () => ({
 jest.mock("./controller/integrationController.js", () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => mockIntegrationControllerMethods),
-}));
-
-jest.mock("./controller/ingestionController.js", () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => mockIngestionControllerMethods),
 }));
 
 jest.mock("./controller/whatsappWebhookController.js", () => ({
@@ -62,7 +54,6 @@ const { handler } = require("./index.js");
 const allControllerMethods = [
   ...Object.values(mockMessageControllerMethods),
   ...Object.values(mockIntegrationControllerMethods),
-  ...Object.values(mockIngestionControllerMethods),
   ...Object.values(mockWhatsAppWebhookControllerMethods),
   ...Object.values(mockChannexWebhookControllerMethods),
 ];
@@ -94,12 +85,6 @@ describe("UnifiedMessaging retained route contracts", () => {
     ["POST", "/default/threads/thread-1/read", mockMessageControllerMethods.markThreadRead, "mark-read"],
     ["POST", "/default/threads/thread-1/unread", mockMessageControllerMethods.markThreadUnread, "mark-unread"],
     ["POST", "/default/threads/thread-1/close", mockMessageControllerMethods.closeThread, "close"],
-    [
-      "POST",
-      "/default/integrations/whatsapp/ingest/messages",
-      mockIngestionControllerMethods.ingestMessages,
-      "ingest",
-    ],
     ["GET", "/default/webhooks/whatsapp", mockWhatsAppWebhookControllerMethods.verifyWebhook, "webhook-verify"],
     [
       "POST",
@@ -161,6 +146,45 @@ describe("UnifiedMessaging retained route contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual([{ id: "integration-1", channel: "WHATSAPP" }]);
     expect(mockIntegrationControllerMethods.listIntegrations).toHaveBeenCalledWith(event);
+  });
+
+  test("POST /integrations/{id}/ingest/messages is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations/integration-1/ingest/messages",
+        body: JSON.stringify({ platform: "CHANNEX", externalThreadId: "thread-1" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
+  });
+
+  test("POST /integrations is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations",
+        body: JSON.stringify({ userId: "user-1", channel: "WHATSAPP" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
+  });
+
+  test("PATCH /integrations/{id} is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "PATCH",
+        path: "/default/integrations/integration-1",
+        body: JSON.stringify({ displayName: "New name" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
   });
 
   // Saving a mapping without a user check let any caller pick the account a property's data
