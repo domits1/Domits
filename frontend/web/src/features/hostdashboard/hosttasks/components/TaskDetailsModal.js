@@ -165,6 +165,16 @@ const TaskDetailsModal = ({
                             </div>
                         </div>
 
+                        <ChecklistSection
+                            items={checklistItems}
+                            loadError={checklistLoadError}
+                            isApplyingTemplate={isApplyingChecklistTemplate}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={onRetryChecklistLoad}
+                        />
+
                         <div className="form-group attachments-section">
                             <div className="attachments-header">
                                 <label htmlFor='task-attachments-edit'>Attachments (optional)</label>
@@ -192,16 +202,6 @@ const TaskDetailsModal = ({
                                 </label>
                             </div>
                         </div>
-
-                        <ChecklistSection
-                            items={checklistItems}
-                            loadError={checklistLoadError}
-                            isApplyingTemplate={isApplyingChecklistTemplate}
-                            onAddItem={onAddChecklistItem}
-                            onToggleChecked={onToggleChecklistItem}
-                            onRemoveItem={onRemoveChecklistItem}
-                            onRetryLoad={onRetryChecklistLoad}
-                        />
 
                         <div className="activity-section">
                             <div className="activity-header">
