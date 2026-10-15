@@ -42,9 +42,18 @@ const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 
 const staticPageOutboxTableName = (schemaName) => `${schemaName}.static_page_outbox`;
 
-const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
-  queryRunner.query(
-    `INSERT INTO ${outboxTableName} (
+const OUTBOX_UPSERT_CLAUSE = `ON CONFLICT (site_id)
+      DO UPDATE SET
+        property_id = EXCLUDED.property_id,
+        host_id = EXCLUDED.host_id,
+        revision = EXCLUDED.revision,
+        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
+        attempt_count = 0,
+        failure_reason = NULL,
+        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
+        processed_at = NULL`;
+
+const OUTBOX_INSERT_COLUMNS = `(
         site_id,
         property_id,
         host_id,
@@ -55,19 +64,25 @@ const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
         created_at,
         updated_at,
         processed_at
-      )
+      )`;
+
+const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
+  queryRunner.query(
+    `INSERT INTO ${outboxTableName} ${OUTBOX_INSERT_COLUMNS}
       VALUES ($1, $2, $3, $4, 'PENDING', 0, NULL, $5, $5, NULL)
-      ON CONFLICT (site_id)
-      DO UPDATE SET
-        property_id = EXCLUDED.property_id,
-        host_id = EXCLUDED.host_id,
-        revision = EXCLUDED.revision,
-        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
-        attempt_count = 0,
-        failure_reason = NULL,
-        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
-        processed_at = NULL`,
+      ${OUTBOX_UPSERT_CLAUSE}`,
     [site.id, site.propertyId, site.hostId, site.staticPageRevision, now],
+    true
+  );
+
+const queueStaticPages = (queryRunner, outboxTableName, siteTableName, siteIds, now) =>
+  queryRunner.query(
+    `INSERT INTO ${outboxTableName} ${OUTBOX_INSERT_COLUMNS}
+      SELECT id, property_id, host_id, static_page_revision, 'PENDING', 0, NULL, $2, $2, NULL
+      FROM ${siteTableName}
+      WHERE id = ANY($1)
+      ${OUTBOX_UPSERT_CLAUSE}`,
+    [siteIds, now],
     true
   );
 
@@ -379,6 +394,64 @@ export class DirectBookingWebsiteSiteRepository {
 
       return true;
     });
+  }
+
+  async queueStaticPagesForPublishedSites({ batchSize = 25, maxBatches = 200 } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const normalizedBatchSize =
+      Number.isSafeInteger(Number(batchSize)) && Number(batchSize) > 0 ? Math.min(Number(batchSize), 25) : 25;
+    const siteIds = [];
+    let cursor = "";
+
+    for (let batch = 0; batch < maxBatches; batch += 1) {
+      const now = Date.now();
+      const queued = await client.transaction(async (manager) => {
+        const siteResult = await manager.queryRunner.query(
+          `UPDATE ${tableName}
+      SET
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $3
+      WHERE id IN (
+        SELECT id
+        FROM ${tableName}
+        WHERE status = 'PUBLISHED'
+          AND id > $1
+        ORDER BY id ASC
+        LIMIT $2
+      )
+      RETURNING id`,
+          [cursor, normalizedBatchSize, now],
+          true
+        );
+
+        const ids = (siteResult?.records || []).map((record) => String(record.id)).sort();
+        if (ids.length > 0) {
+          await queueStaticPages(manager.queryRunner, outboxTableName, tableName, ids, now);
+        }
+
+        return ids;
+      });
+
+      siteIds.push(...queued);
+      if (queued.length < normalizedBatchSize) {
+        return { siteIds, complete: true };
+      }
+      cursor = queued.at(-1);
+    }
+
+    const remaining = await client.query(
+      `SELECT id
+      FROM ${tableName}
+      WHERE status = 'PUBLISHED'
+        AND id > $1
+      LIMIT 1`,
+      [cursor]
+    );
+
+    return { siteIds, complete: !(Array.isArray(remaining) && remaining.length > 0) };
   }
 
   async getSiteByPropertyIdAndHostId(propertyId, hostId) {

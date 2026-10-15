@@ -811,6 +811,14 @@
     opacity: 0.75;
 }
 
+.pd-authenticator-danger-btn {
+    background: #b91c1c;
+}
+
+.pd-authenticator-danger-btn:hover:not(:disabled) {
+    background: #991b1b;
+}
+
 @media (max-width: 640px) {
     .pd-authenticator-setup-btn {
         margin-left: 0;

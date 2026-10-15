@@ -2,6 +2,9 @@ const { badRequest } = require("../util/httpErrors.js");
 
 const ChannexWebhookService = require("./channexWebhookService.js").default;
 const { baseWebhookEvent: baseChannexWebhookEvent } = require("./channexWebhookFixtures.js");
+const {
+  buildDeterministicChannexBookingId,
+} = require("../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js");
 
 const SECRET_HEADER = "X-Channex-Webhook-Secret";
 const VALID_SECRET = "test-channex-webhook-secret";
@@ -75,13 +78,14 @@ const buildService = ({
   normalizeInboundMessage = jest.fn().mockReturnValue(normalizedPayload),
   findExternalThread = jest.fn().mockResolvedValue(existingThread),
   updateThreadGuestId = jest.fn().mockResolvedValue({ ...existingThread, guestId: "CHANNEX_GUEST:channex-booking-1" }),
+  updateThreadBookingId = jest.fn().mockResolvedValue({}),
 } = {}) => {
   const deps = {
     properties: { findByExternalPropertyId },
     accounts: { getById },
     ingestionService: { ingestExternalThread },
     normalizeInboundMessage,
-    threads: { findExternalThread, updateThreadGuestId },
+    threads: { findExternalThread, updateThreadGuestId, updateThreadBookingId },
   };
   return { service: new ChannexWebhookService(deps), deps };
 };
@@ -418,6 +422,60 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       expect(deps.properties.findByExternalPropertyId).not.toHaveBeenCalled();
       expect(deps.threads.findExternalThread).not.toHaveBeenCalled();
       expect(deps.threads.updateThreadGuestId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("message_thread_booking_assigned", () => {
+    test("thread with bookingId null: updateThreadBookingId is called with the deterministic id", async () => {
+      const { service, deps } = buildService();
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() }));
+
+      const expectedBookingId = buildDeterministicChannexBookingId("integration-1", "channex-booking-1");
+      expect(deps.threads.updateThreadBookingId).toHaveBeenCalledWith("thread-1", expectedBookingId);
+    });
+
+    test("thread already has the deterministic bookingId: updateThreadBookingId is not called again", async () => {
+      const expectedBookingId = buildDeterministicChannexBookingId("integration-1", "channex-booking-1");
+      const findExternalThread = jest.fn().mockResolvedValue({ ...existingThread, bookingId: expectedBookingId });
+      const { service, deps } = buildService({ findExternalThread });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() }));
+
+      expect(deps.threads.updateThreadBookingId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("message event", () => {
+    test("booking_id present and ingest succeeds: updateThreadBookingId is called with the ingested threadId and the deterministic id", async () => {
+      const { service, deps } = buildService();
+
+      const result = await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      const expectedBookingId = buildDeterministicChannexBookingId("integration-1", "channex-booking-1");
+      expect(deps.threads.updateThreadBookingId).toHaveBeenCalledWith(result.response.threadId, expectedBookingId);
+    });
+
+    test("no booking_id in the payload: updateThreadBookingId is not called", async () => {
+      const { service, deps } = buildService();
+
+      await service.handleWebhookEvent(
+        buildLambdaEvent({ body: baseChannexWebhookEvent({ payload: { booking_id: null } }) })
+      );
+
+      expect(deps.threads.updateThreadBookingId).not.toHaveBeenCalled();
+    });
+
+    test("failed ingest (non-2xx result): updateThreadBookingId is not called", async () => {
+      const ingestExternalThread = jest.fn().mockResolvedValue({
+        statusCode: 400,
+        response: { error: "Channex message payload.id is required." },
+      });
+      const { service, deps } = buildService({ ingestExternalThread });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.threads.updateThreadBookingId).not.toHaveBeenCalled();
     });
   });
 });
