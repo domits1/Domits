@@ -34,6 +34,21 @@ describe("Direct Booking Website rate-plan schema", () => {
     }
   });
 
+  it("keeps the hand-run SQL migration as plain DDL statements for Aurora DSQL", () => {
+    const migration = loadMigrationSql(
+      "20261012_direct_booking_website_rate_plan_schemas.sql"
+    );
+    const statements = migration.split(";").map((statement) => statement.trim()).filter(Boolean);
+
+    expect(migration).not.toMatch(/^\s*DO\b/im);
+    expect(migration).not.toMatch(/\b(?:DECLARE|EXECUTE|BEGIN)\b/i);
+    expect(statements).toHaveLength(10);
+    expect(statements.every((statement) => /^CREATE\b/i.test(statement))).toBe(true);
+    expect(migration).toContain("CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans");
+    expect(migration).toContain("CREATE TABLE IF NOT EXISTS test.direct_booking_website_rate_plans");
+    expect(migration).toContain("CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique_test");
+  });
+
   it("has a migration that creates the table and uniqueness indexes in both schemas", () => {
     const migration = loadMigrationSql(
       "20261012_direct_booking_website_rate_plan_schemas.js"
