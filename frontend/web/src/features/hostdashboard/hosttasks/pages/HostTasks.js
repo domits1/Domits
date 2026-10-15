@@ -71,6 +71,7 @@ const HostTasks = () => {
     const [checklistTemplates, setChecklistTemplates] = useState({});
     const [isApplyingChecklistTemplate, setIsApplyingChecklistTemplate] = useState(false);
     const [isCreatingTask, setIsCreatingTask] = useState(false);
+    const [isChecklistLoaded, setIsChecklistLoaded] = useState(false);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -422,11 +423,13 @@ const HostTasks = () => {
     const loadChecklistItems = (taskId) => {
         const requestId = ++checklistRequestRef.current;
         setChecklistLoadError(null);
+        setIsChecklistLoaded(false);
         fetchChecklistItems(taskId)
             .then(items => {
                 if (requestId === checklistRequestRef.current) {
                     setChecklistItems(items);
                     setChecklistLoadError(null);
+                    setIsChecklistLoaded(true);
                 }
             })
             .catch((error) => {
@@ -456,7 +459,7 @@ const HostTasks = () => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
 
-        if (name === 'type' && viewingTask) {
+        if (name === 'type' && viewingTask && isChecklistLoaded) {
             const created = await applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length);
             if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
         }
