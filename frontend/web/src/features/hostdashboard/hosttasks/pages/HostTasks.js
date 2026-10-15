@@ -412,7 +412,22 @@ const HostTasks = () => {
                 }
             }
         } catch (error) {
-            toast.error(error.message || "Error applying the checklist template");
+            // Roll back whatever succeeded so a mid-template failure never leaves
+            // a half-filled checklist with no indication of what happened. If a
+            // rollback delete itself fails, that item genuinely still exists, so
+            // it's kept (here and in the discard-tracking ref) rather than
+            // silently losing track of it.
+            const rollbackResults = await Promise.allSettled(created.map(item => deleteChecklistItem(item.id)));
+            const stillPresent = created.filter((_item, index) => rollbackResults[index].status === 'rejected');
+            const removedIds = created
+                .filter((_item, index) => rollbackResults[index].status === 'fulfilled')
+                .map(item => item.id);
+            templateCreatedItemIdsRef.current = templateCreatedItemIdsRef.current.filter(id => !removedIds.includes(id));
+            created.length = 0;
+            created.push(...stillPresent);
+            toast.error(stillPresent.length > 0
+                ? `Error applying the checklist template. ${stillPresent.length} item(s) could not be rolled back.`
+                : "Error applying the checklist template. No items were added.");
         } finally {
             isApplyingChecklistTemplateRef.current = false;
             setIsApplyingChecklistTemplate(false);
