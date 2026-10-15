@@ -68,6 +68,7 @@ const HostTasks = () => {
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
     const [checklistTemplates, setChecklistTemplates] = useState({});
+    const [isApplyingChecklistTemplate, setIsApplyingChecklistTemplate] = useState(false);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -385,6 +386,7 @@ const HostTasks = () => {
         if (!template || template.length === 0 || currentItemCount > 0 || isApplyingChecklistTemplateRef.current) return [];
 
         isApplyingChecklistTemplateRef.current = true;
+        setIsApplyingChecklistTemplate(true);
         const created = [];
         try {
             for (const item of template) {
@@ -394,6 +396,7 @@ const HostTasks = () => {
             toast.error(error.message || "Error applying the checklist template");
         } finally {
             isApplyingChecklistTemplateRef.current = false;
+            setIsApplyingChecklistTemplate(false);
         }
         return created;
     };
@@ -883,6 +886,7 @@ const HostTasks = () => {
                 onClose={closeTaskDetails}
                 checklistItems={checklistItems}
                 checklistLoadError={checklistLoadError}
+                isApplyingChecklistTemplate={isApplyingChecklistTemplate}
                 onAddChecklistItem={handleAddChecklistItem}
                 onToggleChecklistItem={handleToggleChecklistItem}
                 onRemoveChecklistItem={handleRemoveChecklistItem}
