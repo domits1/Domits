@@ -11,6 +11,7 @@ const ACTION_ROUTES = {
         'upload-url': 'getUploadUrl',
         'view-url': 'getViewUrl',
         'checklist': 'getChecklistItems',
+        'checklist-templates': 'getChecklistTemplates',
     },
     POST: {
         'checklist': 'createChecklistItem',

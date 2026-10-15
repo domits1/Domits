@@ -828,60 +828,12 @@ export default class IntegrationService {
     }
   }
 
-  async createIntegration(body) {
-    const userId = requireStr(body.userId);
-    const channel = requireStr(body.channel);
-
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!channel) return bad(400, { error: "Missing required field: channel" });
-
-    const id = randomUUID();
-    const now = nowMs();
-
-    const created = await this.accounts.create({
-      id,
-      userId,
-      channel,
-      externalAccountId: body.externalAccountId ?? null,
-      displayName: body.displayName ?? null,
-      status: body.status ?? "PENDING",
-      credentialsRef: null,
-      lastSuccessfulSyncAt: null,
-      lastFailedSyncAt: null,
-      lastErrorCode: null,
-      lastErrorMessage: null,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await this.sync.ensureStateRow(id, "MESSAGES");
-    await this.sync.ensureStateRow(id, "RESERVATIONS");
-
-    return ok(shapeCredentialIntegrationForResponse(created));
-  }
-
   async listIntegrations(userId) {
     if (!requireStr(userId)) return bad(400, { error: "Missing required query param: userId" });
 
     const items = await this.accounts.listByUserId(userId);
     const hydrated = await Promise.all(items.map((item) => this.hydrateListedIntegration(item)));
     return ok(hydrated);
-  }
-
-  async updateIntegration(integrationId, patch) {
-    const id = requireStr(integrationId);
-    if (!id) return bad(400, { error: "Missing integration id in path" });
-
-    const updated = await this.accounts.update(id, {
-      externalAccountId: patch.externalAccountId,
-      displayName: patch.displayName,
-      status: patch.status,
-      lastErrorCode: patch.lastErrorCode,
-      lastErrorMessage: patch.lastErrorMessage,
-    });
-
-    if (!updated) return bad(404, { error: "Integration not found" });
-    return ok(shapeCredentialIntegrationForResponse(updated));
   }
 
   async getIntegrationLogs(integrationId, limit = 50) {

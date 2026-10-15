@@ -154,3 +154,79 @@
   margin: 0;
   width: auto;
 }
+
+.host-homeauto__devices {
+  margin-top: 1rem;
+}
+
+.host-homeauto__devices .host-homeauto__provider {
+  margin-bottom: 0.75rem;
+}
+
+.host-homeauto__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.host-homeauto__table th,
+.host-homeauto__table td {
+  padding: 0.6rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--homeauto-border);
+}
+
+.host-homeauto__table th {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.host-homeauto__unsupported {
+  display: block;
+  font-size: 0.78rem;
+  color: #666;
+}
+
+@media (max-width: 640px) {
+  .host-homeauto__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .host-homeauto__table,
+  .host-homeauto__table tbody,
+  .host-homeauto__table tr,
+  .host-homeauto__table td {
+    display: block;
+  }
+
+  .host-homeauto__table tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--homeauto-border);
+  }
+
+  .host-homeauto__table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    border-bottom: 0;
+    text-align: right;
+  }
+
+  .host-homeauto__table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+    text-align: left;
+  }
+}
+
+/* <output> is inline by default; the loading text sits on its own line like the other messages. */
+.host-homeauto__devices output {
+  display: block;
+}
