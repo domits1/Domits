@@ -280,7 +280,7 @@ const HostTasks = () => {
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
 
-            await applyChecklistTemplateIfEmpty(created.id, created.type, 0);
+            await applyChecklistTemplate(created.id, created.type, []);
 
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
@@ -388,9 +388,9 @@ const HostTasks = () => {
         }
     };
 
-    const applyChecklistTemplateIfEmpty = async (taskId, type, currentItemCount) => {
+    const applyChecklistTemplate = async (taskId, type, existingItems) => {
         const template = checklistTemplates[type];
-        if (!template || template.length === 0 || currentItemCount > 0 || isApplyingChecklistTemplateRef.current) return [];
+        if (!template || template.length === 0 || isApplyingChecklistTemplateRef.current) return null;
 
         // Captured so a stale result (the host switched to a different task while
         // this was still running) doesn't get applied to, or tracked against, the
@@ -399,6 +399,26 @@ const HostTasks = () => {
 
         isApplyingChecklistTemplateRef.current = true;
         setIsApplyingChecklistTemplate(true);
+
+        // Switching Type replaces the checklist with the new type's template,
+        // same as any other checklist edit (add/toggle/delete): immediate and
+        // permanent, not reversible via Discard.
+        if (existingItems.length > 0) {
+            const deleteResults = await Promise.allSettled(existingItems.map(item => deleteChecklistItem(item.id)));
+            const notDeleted = existingItems.filter((_item, index) => deleteResults[index].status === 'rejected');
+            const deletedIds = existingItems
+                .filter((_item, index) => deleteResults[index].status === 'fulfilled')
+                .map(item => item.id);
+            templateCreatedItemIdsRef.current = templateCreatedItemIdsRef.current.filter(id => !deletedIds.includes(id));
+
+            if (notDeleted.length > 0) {
+                isApplyingChecklistTemplateRef.current = false;
+                setIsApplyingChecklistTemplate(false);
+                toast.error(`Could not switch the template: ${notDeleted.length} existing item(s) could not be removed.`);
+                return requestId === checklistRequestRef.current ? notDeleted : null;
+            }
+        }
+
         const created = [];
         try {
             // Must stay sequential: the backend assigns each item's position as
@@ -427,12 +447,12 @@ const HostTasks = () => {
             created.push(...stillPresent);
             toast.error(stillPresent.length > 0
                 ? `Error applying the checklist template. ${stillPresent.length} item(s) could not be rolled back.`
-                : "Error applying the checklist template. No items were added.");
+                : "Error applying the checklist template. The checklist is now empty.");
         } finally {
             isApplyingChecklistTemplateRef.current = false;
             setIsApplyingChecklistTemplate(false);
         }
-        return requestId === checklistRequestRef.current ? created : [];
+        return requestId === checklistRequestRef.current ? created : null;
     };
 
     const loadChecklistItems = (taskId) => {
@@ -475,8 +495,8 @@ const HostTasks = () => {
         setEditedTask(prev => ({ ...prev, [name]: value }));
 
         if (name === 'type' && viewingTask && isChecklistLoaded) {
-            const created = await applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length);
-            if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
+            const result = await applyChecklistTemplate(viewingTask.id, value, checklistItems);
+            if (result !== null) setChecklistItems(result);
         }
     };
 
