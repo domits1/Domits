@@ -44,7 +44,10 @@ describe("Direct Booking Website rate-plan schema", () => {
     expect(migration).toContain("ON ${schema}.direct_booking_website_rate_plans (stripe_subscription_id)");
     expect(migration).toContain("WHERE status IN ('ACTIVE', 'PAST_DUE', 'TRIALING')");
     expect(migration).toContain("WHERE stripe_subscription_id IS NOT NULL");
-    expect(migration).toContain('for (const schema of ["main", "test"])');
+    expect(migration).toContain("const createSchemaObjects = async (schema, suffix) => {");
+    expect(migration).toContain('await createSchemaObjects("main", "");');
+    expect(migration).toContain('await createSchemaObjects("test", "_test");');
+    expect(migration).not.toContain('for (const schema of ["main", "test"])');
 
     const down = migration.slice(migration.indexOf("async down(queryRunner)"));
     expect(down).toContain('const schema = "test"');
