@@ -75,7 +75,7 @@ describe('Review entities and creation persistence', () => {
     repository = new ReviewRepository();
   });
 
-  // Entity contract: verify persisted column names, types, defaults and numeric conversions.
+  // Entity contract: verify persisted column names, types, defaults and numeric conversions!!
   it("builds PostgreSQL metadata and SQL for the established review contract without connecting", async () => {
     const source = new DataSource({ type: "postgres", schema: "main", synchronize: false,
       entities: [Review, Review_Rating, Review_Category, Review_Request] });
