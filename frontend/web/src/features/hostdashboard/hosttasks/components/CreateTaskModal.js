@@ -44,48 +44,50 @@ const CreateTaskModal = ({
                             <label htmlFor='task-description'>Description</label>
                             <textarea id='task-description' name="description" value={newTask.description} onChange={onInputChange} placeholder="Description here..." rows="3" required />
                         </div>
-                        <div className="form-group">
-                            <label htmlFor='task-property'>Property</label>
-                            <select id='task-property' name="property" value={newTask.property_id} onChange={onPropertyChange} required>
-                                <option value="" disabled hidden>Select Property</option>
-                                {propertyOptions.map(o => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor='task-booking-ref'>Booking Reference</label>
-                            <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor='task-type'>Type</label>
-                            <select id='task-type' name="type" value={newTask.type} onChange={onInputChange} required>
-                                {TASK_TYPE_OPTIONS.map(option => (
-                                    <option key={option} value={option}>{option}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor='task-assignee'>Assignee</label>
-                            <select id='task-assignee' name="assignee" value={newTask.assigneeSelection} onChange={onAssigneeChange} required>
-                                <option value="" disabled hidden>Select Assignee</option>
-                                {assigneeOptions.map(o => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor='task-due-date'>Due Date</label>
-                            <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={onInputChange} onClick={(e) => e.target.showPicker?.()} required />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor='task-priority'>Priority</label>
-                            <select id='task-priority' name="priority" value={newTask.priority} onChange={onInputChange} required>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
+                        <div className="form-row-grid">
+                            <div className="form-group">
+                                <label htmlFor='task-property'>Property</label>
+                                <select id='task-property' name="property" value={newTask.property_id} onChange={onPropertyChange} required>
+                                    <option value="" disabled hidden>Select Property</option>
+                                    {propertyOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-type'>Type</label>
+                                <select id='task-type' name="type" value={newTask.type} onChange={onInputChange} required>
+                                    {TASK_TYPE_OPTIONS.map(option => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-assignee'>Assignee</label>
+                                <select id='task-assignee' name="assignee" value={newTask.assigneeSelection} onChange={onAssigneeChange} required>
+                                    <option value="" disabled hidden>Select Assignee</option>
+                                    {assigneeOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-due-date'>Due Date</label>
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={onInputChange} onClick={(e) => e.target.showPicker?.()} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-booking-ref'>Booking Reference</label>
+                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-priority'>Priority</label>
+                                <select id='task-priority' name="priority" value={newTask.priority} onChange={onInputChange} required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
+                            </div>
                         </div>
                         <ChecklistSection
                             items={checklistItems}
