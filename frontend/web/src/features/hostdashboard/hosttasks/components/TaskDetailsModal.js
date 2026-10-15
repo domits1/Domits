@@ -58,7 +58,7 @@ const TaskDetailsModal = ({
 
     return (
         <>
-            <button className="modal-backdrop" onClick={onClose} aria-label="Close modal" />
+            <button className="modal-backdrop" onClick={onClose} aria-label="Close modal" disabled={isApplyingChecklistTemplate} />
             <div className="modal-overlay">
                 <div className="modal-content-large task-details-modal">
                     <div className="modal-header details-header">
@@ -69,7 +69,7 @@ const TaskDetailsModal = ({
                             onChange={onEditChange}
                             placeholder="Task title"
                         />
-                        <button className="close-btn" onClick={onClose}><LuX /></button>
+                        <button className="close-btn" onClick={onClose} disabled={isApplyingChecklistTemplate}><LuX /></button>
                     </div>
 
                     <div className="details-badges-row">
@@ -231,7 +231,7 @@ const TaskDetailsModal = ({
                     </div>
 
                     <div className="modal-footer details-footer">
-                        <button className="btn-text" onClick={onClose}>Cancel</button>
+                        <button className="btn-text" onClick={onClose} disabled={isApplyingChecklistTemplate}>Cancel</button>
 
                         {viewingTask.slaStatus === 'BREACHED' && (
                             <button className="btn-escalate" onClick={onEscalate}>Escalate</button>

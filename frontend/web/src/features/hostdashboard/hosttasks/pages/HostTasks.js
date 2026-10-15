@@ -501,6 +501,7 @@ const HostTasks = () => {
     };
 
     const closeTaskDetails = () => {
+        if (isApplyingChecklistTemplate) return;
         checklistRequestRef.current++;
         const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
         if (isEdited) {
