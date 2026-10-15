@@ -52,6 +52,7 @@ const HostTasks = () => {
     const loadRequestRef = useRef(0);
     const checklistRequestRef = useRef(0);
     const isApplyingChecklistTemplateRef = useRef(false);
+    const templateCreatedItemIdsRef = useRef([]);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -393,7 +394,9 @@ const HostTasks = () => {
             // existingItems.length at creation time, so running these in parallel
             // would let requests read the same stale count and collide.
             for (const item of template) {
-                created.push(await createChecklistItem(taskId, item));
+                const createdItem = await createChecklistItem(taskId, item);
+                created.push(createdItem);
+                templateCreatedItemIdsRef.current.push(createdItem.id);
             }
         } catch (error) {
             toast.error(error.message || "Error applying the checklist template");
@@ -429,6 +432,7 @@ const HostTasks = () => {
         };
         setViewingTask(taskWithAssigneeSelection);
         setEditedTask({ ...taskWithAssigneeSelection });
+        templateCreatedItemIdsRef.current = [];
         loadChecklistItems(task.id);
     };
 
@@ -456,7 +460,16 @@ const HostTasks = () => {
                 message: 'You have unsaved changes. Are you sure you want to close without saving?',
                 confirmText: 'Discard Changes',
                 cancelText: 'Keep Editing',
-                onConfirm: () => {
+                onConfirm: async () => {
+                    const idsToDiscard = templateCreatedItemIdsRef.current;
+                    templateCreatedItemIdsRef.current = [];
+                    if (idsToDiscard.length > 0) {
+                        const results = await Promise.allSettled(idsToDiscard.map(id => deleteChecklistItem(id)));
+                        const failedCount = results.filter(r => r.status === 'rejected').length;
+                        if (failedCount > 0) {
+                            toast.error(`${failedCount} checklist item(s) could not be discarded and may still be saved.`);
+                        }
+                    }
                     setViewingTask(null);
                     setEditedTask(null);
                     setChecklistItems([]);
@@ -517,6 +530,7 @@ const HostTasks = () => {
         setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
         setViewingTask(null);
         setEditedTask(null);
+        templateCreatedItemIdsRef.current = [];
 
         try {
             await updateTask(finalTask.id, finalTask);
