@@ -25,8 +25,7 @@ export class DirectBookingWebsiteRatePlanSchemas20261012 {
       );
     `;
 
-    for (const schema of ["main", "test"]) {
-      const suffix = schema === "test" ? "_test" : "";
+    const createSchemaObjects = async (schema, suffix) => {
       await queryRunner.query(createTable(schema, suffix));
       await queryRunner.query(`
         CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx${suffix}
@@ -42,7 +41,10 @@ export class DirectBookingWebsiteRatePlanSchemas20261012 {
         ON ${schema}.direct_booking_website_rate_plans (stripe_subscription_id)
         WHERE stripe_subscription_id IS NOT NULL;
       `);
-    }
+    };
+
+    await createSchemaObjects("main", "");
+    await createSchemaObjects("test", "_test");
   }
 
   async down(queryRunner) {
