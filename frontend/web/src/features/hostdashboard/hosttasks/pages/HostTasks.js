@@ -176,7 +176,12 @@ const HostTasks = () => {
     }, []);
 
     useEffect(() => {
-        fetchChecklistTemplates().then(setChecklistTemplates).catch(() => {});
+        fetchChecklistTemplates()
+            .then(setChecklistTemplates)
+            .catch((error) => {
+                console.error('[HostTasks] Failed to fetch checklist templates:', error);
+                toast.error('Could not load checklist templates. Checklist auto-fill will be unavailable.');
+            });
     }, []);
     
     const handleToggleComplete = async (task) => {
