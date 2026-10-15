@@ -31,6 +31,10 @@ import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
 import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
+import {
+  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+  CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE,
+} from "./channexadmin/channexCertificationAccess";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -122,7 +126,11 @@ function MainDashboardHost() {
           <Route path="messages/*" element={<HostMessagingPage />} />
           <Route path="integrations-marketplace" element={<HostIntegrations />} />
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
-          <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
+          <Route path={CHANNEX_CERTIFICATION_ADMIN_ROUTE} element={<ChannexCertificationAdminPage />} />
+          <Route
+            path={CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE}
+            element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
+          />
           <Route path="revenues" element={<HostReports />} />
 
           <Route path="tasks" element={<HostTasks />} />
