@@ -394,8 +394,8 @@ const HostTasks = () => {
     };
 
     const applyChecklistTemplate = async (taskId, type, existingItems) => {
-        const template = checklistTemplates[type];
-        if (!template || template.length === 0 || isApplyingChecklistTemplateRef.current) return null;
+        const template = checklistTemplates[type] || [];
+        if ((template.length === 0 && existingItems.length === 0) || isApplyingChecklistTemplateRef.current) return null;
 
         // Captured so a stale result (the host switched to a different task while
         // this was still running) doesn't get applied to, or tracked against, the
@@ -405,9 +405,11 @@ const HostTasks = () => {
         isApplyingChecklistTemplateRef.current = true;
         setIsApplyingChecklistTemplate(true);
 
-        // Switching Type replaces the checklist with the new type's template,
-        // same as any other checklist edit (add/toggle/delete): immediate and
-        // permanent, not reversible via Discard.
+        // Switching Type clears the checklist first, same as any other
+        // checklist edit (add/toggle/delete): immediate and permanent, not
+        // reversible via Discard. The new type's template is then added, if
+        // it has one -- if not, the checklist is simply left empty rather
+        // than keeping leftover items from the previous type.
         if (existingItems.length > 0) {
             const deleteResults = await Promise.allSettled(existingItems.map(item => deleteChecklistItem(item.id)));
             const notDeleted = existingItems.filter((_item, index) => deleteResults[index].status === 'rejected');
@@ -422,6 +424,12 @@ const HostTasks = () => {
                 toast.error(`Could not switch the template: ${notDeleted.length} existing item(s) could not be removed.`);
                 return requestId === checklistRequestRef.current ? notDeleted : null;
             }
+        }
+
+        if (template.length === 0) {
+            isApplyingChecklistTemplateRef.current = false;
+            setIsApplyingChecklistTemplate(false);
+            return requestId === checklistRequestRef.current ? [] : null;
         }
 
         const created = [];
