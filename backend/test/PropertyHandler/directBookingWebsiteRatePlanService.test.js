@@ -103,9 +103,10 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     });
   });
 
-  it("reports checkout as enabled only when the flag and webhook secret are both configured", async () => {
+  it("reports checkout as enabled only when all release configuration is present", async () => {
     repository.findCurrentByAccountId.mockResolvedValue(plan());
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
     process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
 
@@ -113,6 +114,27 @@ describe("DirectBookingWebsiteRatePlanService", () => {
       elitePriceCents: 4300,
       checkoutEnabled: true,
     });
+  });
+
+  it.each([
+    "DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS",
+    "DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID",
+  ])("refuses Elite checkout when %s is missing", async (missingVariable) => {
+    repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+    delete process.env[missingVariable];
+
+    await expect(service.changePlan({
+      accountId: "host-1", targetPlan: "elite", customerEmail: "host@example.com"
+    })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Elite checkout is disabled until the rate-plan database migration and Stripe webhook are configured.",
+    });
+
+    expect(stripeRepository.createEliteCheckoutSession).not.toHaveBeenCalled();
   });
 
   it("blocks Elite-only entitlements for Essentials", async () => {
@@ -135,6 +157,7 @@ describe("DirectBookingWebsiteRatePlanService", () => {
       id: "cs_1", url: "https://checkout.stripe.com/cs_test"
     });
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success?session_id={CHECKOUT_SESSION_ID}";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel?source=plans#checkout";
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";

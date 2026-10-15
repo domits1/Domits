@@ -47,7 +47,9 @@ export const getConfiguredElitePriceCents = () => {
 
 export const isWebsiteCheckoutEnabled = () =>
   String(process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED || "").trim() === "true" &&
-  Boolean(String(process.env.STRIPE_WEBHOOK_SECRET || "").trim());
+  Boolean(String(process.env.STRIPE_WEBHOOK_SECRET || "").trim()) &&
+  Boolean(getConfiguredElitePriceCents()) &&
+  Boolean(String(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID || "").trim());
 
 export const getWebsiteEntitlements = (plan) =>
   WEBSITE_PLAN_ENTITLEMENTS[plan] ? [...WEBSITE_PLAN_ENTITLEMENTS[plan]] : [];
