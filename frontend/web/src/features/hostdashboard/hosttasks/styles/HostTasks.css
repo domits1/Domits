@@ -523,6 +523,23 @@
     margin-left: 4px;
 }
 
+.checklist-template-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.checklist-template-spinner {
+    animation: checklist-template-spin 0.8s linear infinite;
+}
+
+@keyframes checklist-template-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .btn-escalate {
     background-color: #e8590c;
     color: white;
