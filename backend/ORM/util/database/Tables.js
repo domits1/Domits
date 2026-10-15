@@ -69,7 +69,6 @@ import { Review } from "../../models/Review.js";
 import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
-import { Review_Response } from "../../models/Review_Response.js";
 
 export const Tables = [
   Amenities,
@@ -141,6 +140,5 @@ export const Tables = [
   Review_Rating,
   Review_Category,
   Review_Request,
-  Review_Response,
   DirectBookingWebsiteRatePlan,
 ];

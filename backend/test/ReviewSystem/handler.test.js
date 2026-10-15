@@ -1,65 +1,66 @@
-const routeCases = [
-  ["GET", "/reviews", "getReviews", 200],
-  ["POST", "/reviews", "createReview", 201],
-  ["GET", "/reviews/{id}", "getReviewById", 200],
-  ["PATCH", "/reviews/{id}", "updateReview", 200],
-  ["DELETE", "/reviews/{id}", "deleteReview", 204],
-  ["GET", "/properties/{propertyId}/reviews", "getPropertyReviews", 200],
-  ["GET", "/reviews/{id}/domits-private-feedback", "getPrivateFeedback", 200],
-  ["POST", "/reviews/{id}/response", "createReviewResponse", 201],
-  ["PATCH", "/reviews/{id}/response", "updateReviewResponse", 200],
-  ["DELETE", "/reviews/{id}/response", "deleteReviewResponse", 204],
-  ["POST", "/reviews/{id}/publish", "publishReview", 200],
-];
-
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
-  Controller: jest.fn(() => ({})),
+  Controller: jest.fn(() => ({ createReview: jest.fn(async () => ({ statusCode: 201 })) })),
 }));
 
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
-it.each(routeCases)("dispatches %s %s with the complete controller response", async (httpMethod, resource, action, statusCode) => {
-  // Initialize the cached controller without relying on test execution order.
+it("routes POST /reviews to authenticated review creation", async () => {
+  const event = { httpMethod: "POST", resource: "/reviews" };
+  expect((await handler(event)).statusCode).toBe(201);
+  expect(Controller.mock.results[0].value.createReview).toHaveBeenCalledWith(event);
+});
+
+const pendingRoutes = [
+  ["GET", "/reviews", "getReviews"],
+  ["GET", "/reviews/{id}", "getReviewById"],
+  ["PATCH", "/reviews/{id}", "updateReview"],
+  ["GET", "/properties/{propertyId}/reviews", "getPropertyReviews"],
+  ["GET", "/reviews/{id}/domits-private-feedback", "getPrivateFeedback"],
+  ["POST", "/reviews/{id}/response", "createReviewResponse"],
+  ["PATCH", "/reviews/{id}/response", "updateReviewResponse"],
+  ["DELETE", "/reviews/{id}/response", "deleteReviewResponse"],
+  ["POST", "/reviews/{id}/publish", "publishReview"],
+];
+
+it.each(pendingRoutes)("recognizes pending %s %s without exposing implementation details", async (httpMethod, resource, action) => {
   const log = jest.spyOn(console, "error").mockImplementation(() => {});
   try {
-    await handler({ httpMethod: "POST", resource: "/reviews" });
-    const instance = Controller.mock.results[0].value;
-    const result = { statusCode, headers: { "X-Test": "preserved" }, body: statusCode === 204 ? "" : "[]" };
-    instance[action] = jest.fn().mockResolvedValue(result);
-    const event = { httpMethod, resource };
-    try {
-      expect(await handler(event)).toMatchObject(result);
-      expect(instance[action]).toHaveBeenCalledWith(event);
-    } finally {
-      delete instance[action];
-    }
+    const response = await handler({ httpMethod, resource });
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body)).toEqual({ message: "Internal Server Error" });
+    expect(log).toHaveBeenCalledWith("ReviewSystem controller method is not implemented:", action);
   } finally {
     log.mockRestore();
   }
 });
 
-it("returns a safe failure if a controller route disappears", async () => {
-  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+it.each(pendingRoutes)("dispatches %s %s when its controller implementation is available", async (httpMethod, resource, action) => {
+  await handler({ httpMethod: "POST", resource: "/reviews" });
+  const instance = Controller.mock.results[0].value;
+  const result = { statusCode: 200, headers: { "X-Test": "preserved" }, body: "[]" };
+  instance[action] = jest.fn().mockResolvedValue(result);
+  const event = { httpMethod, resource };
   try {
-    const response = await handler({ httpMethod: "GET", resource: "/reviews" });
-    expect(response.statusCode).toBe(500);
-    expect(JSON.parse(response.body)).toEqual({ message: "Internal Server Error" });
+    const response = await handler(event);
+    expect(instance[action]).toHaveBeenCalledWith(event);
+    expect(response).toMatchObject(result);
+    expect(response.headers["Access-Control-Allow-Methods"]).toBe("GET,POST,PATCH,DELETE,OPTIONS");
   } finally {
-    log.mockRestore();
+    delete instance[action];
   }
 });
 
 it("rejects unsupported methods with Allow and unknown resources with 404", async () => {
-  const response = await handler({ httpMethod: "PUT", resource: "/reviews/{id}" });
+  const response = await handler({ httpMethod: "DELETE", resource: "/reviews/{id}" });
   expect(response.statusCode).toBe(405);
-  expect(response.headers.Allow).toBe("GET,PATCH,DELETE,OPTIONS");
+  expect(response.headers.Allow).toBe("GET,PATCH,OPTIONS");
   expect((await handler({ httpMethod: "POST", resource: "/ReviewSystem" })).statusCode).toBe(404);
 });
 
-it("allows resource-specific preflight requests without invoking controller actions", async () => {
-  const response = await handler({ httpMethod: "OPTIONS", resource: "/reviews/{id}/response" });
+it("allows preflight requests", async () => {
+  const response = await handler({ httpMethod: "OPTIONS", resource: "/reviews" });
   expect(response.statusCode).toBe(200);
   expect(response.body).toBe("");
-  expect(response.headers["Access-Control-Allow-Methods"]).toBe("POST,PATCH,DELETE,OPTIONS");
+  expect(response.headers["Access-Control-Allow-Methods"]).toBe("GET,POST,OPTIONS");
 });

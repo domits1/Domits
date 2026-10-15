@@ -5,15 +5,12 @@ import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
-
 function GuestReviews() {
   const [reviews, setReviews] = useState([]);
   const [receivedReviews, setReceivedReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoading2, setIsLoading2] = useState(true);
   const [userId, setUserId] = useState(null);
-  const [reviewError, setReviewError] = useState("");
   const navigate = useNavigate();
 
   // Get user once & redirect if not logged in
@@ -38,12 +35,14 @@ function GuestReviews() {
     const retrieveReviews = async () => {
       setIsLoading(true);
       try {
-        const res = await requestReview("GET", { scope: "written" });
+        const res = await fetch(
+          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews",  
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        setReviewError("Could not load your reviews. Please try again.");
+        console.error("FetchReviews error:", e);
         setReviews([]);
       } finally {
         setIsLoading(false);
@@ -60,12 +59,14 @@ function GuestReviews() {
     const retrieveReceivedReviews = async () => {
       setIsLoading2(true);
       try {
-        const res = await requestReview("GET", { scope: "received" });
+        const res = await fetch(
+          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews",
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setReceivedReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        setReviewError("Could not load received reviews. Please try again.");
+        console.error("FetchReceivedReviews error:", e);
         setReceivedReviews([]);
       } finally {
         setIsLoading2(false);
@@ -80,22 +81,23 @@ function GuestReviews() {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
     
-    const reviewId = review.id;
+    const reviewId = review["reviewId "];
 
     try {
-      const res = await requestReview("DELETE", { reviewId });
+      const res = await fetch(
+        "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview",
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      setReviews((prev) => prev.filter((r) => r["reviewId "] !== reviewId));
     } catch (e) {
-      setReviewError("Could not delete your review. Please try again.");
+      console.error("DeleteReview error:", e);
     }
   };
 
   return (
     <main className="page-body">
       <h2>Reviews</h2>
-      {reviewError && <p role="alert">{reviewError}</p>}
 
       <div className="reviewGrid">
         <div className="contentContainer">

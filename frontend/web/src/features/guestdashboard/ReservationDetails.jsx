@@ -16,12 +16,10 @@ import useDashboardIdentity from "../../hooks/useDashboardIdentity";
 import { cancelGuestBooking, getGuestBookingPropertyDetails, getGuestBookings } from "./services/bookingAPI";
 import { buildCheckInInstructions } from "./utils/checkInInstructions";
 import {
-  canLeaveReview,
   formatFamilyLabel,
   getArrivalDate,
   getBookingCreatedAt,
   getBookingId,
-  getCanonicalBookingId,
   getBookingTotal,
   getDepartureDate,
   normalizeGuestBookingsResponse,
@@ -333,7 +331,6 @@ const buildReservationContent = ({
   handleCompletePayment,
   handleMessageHost,
   handleOpenCancelBooking,
-  handleOpenReview,
 }) => {
   if (isPageLoading) {
     return (
@@ -411,16 +408,6 @@ const buildReservationContent = ({
                 <p>The host accepted your request. Finish payment to confirm this booking.</p>
                 <button type="button" className="primaryBtn" onClick={handleCompletePayment}>
                   Continue to payment
-                </button>
-              </div>
-            )}
-
-            {reservation.stay.canLeaveReview && (
-              <div className="card helpCard">
-                <h3>Review your stay</h3>
-                <p>Share your experience now that checkout is complete.</p>
-                <button type="button" className="primaryBtn" onClick={handleOpenReview}>
-                  Leave a Review
                 </button>
               </div>
             )}
@@ -514,11 +501,9 @@ const buildReservationViewModel = ({ booking, propertyDetails }) => {
     },
     stay: {
       bookingId,
-      reviewBookingId: getCanonicalBookingId(booking),
       bookingType: String(booking?.bookingtype ?? booking?.bookingType ?? "direct"),
       reservationId: getReservationNumber(booking),
       status: normalizeStayStatus(booking?.status),
-      canLeaveReview: canLeaveReview(booking),
       bookedDate: formatDisplayDate(bookedDate),
       checkInDate: formatDisplayDate(arrivalDate),
       checkOutDate: formatDisplayDate(departureDate),
@@ -743,21 +728,6 @@ function ReservationDetails() {
     setIsCancelModalOpen(true);
   };
 
-  const handleOpenReview = () => {
-    const bookingId = reservation?.stay?.reviewBookingId;
-
-    if (!bookingId) {
-      toast.error("This reservation is missing a booking id.");
-      return;
-    }
-
-    navigate(`/review?bookingId=${encodeURIComponent(bookingId)}`, {
-      state: {
-        propertyTitle: reservation.property.title,
-      },
-    });
-  };
-
   const handleCloseCancelBooking = () => {
     if (cancelBookingLoading) {
       return;
@@ -786,7 +756,7 @@ function ReservationDetails() {
         const updatedStatus = normalizeStayStatus(updatedBooking.status);
         setReservation((prev) => {
           if (!prev) return prev;
-          return { ...prev, stay: { ...prev.stay, status: updatedStatus, canLeaveReview: false } };
+          return { ...prev, stay: { ...prev.stay, status: updatedStatus } };
         });
       }
 
@@ -806,7 +776,6 @@ function ReservationDetails() {
     handleCompletePayment,
     handleMessageHost,
     handleOpenCancelBooking,
-    handleOpenReview,
   });
 
   return (

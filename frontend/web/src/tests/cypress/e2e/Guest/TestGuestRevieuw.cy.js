@@ -4,11 +4,11 @@ describe('Guest Reviews', () => {
       cy.loginAsGuest(); 
   
       cy.fixture('reviews.json').then((reviewsData) => {
-        cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=written', {
+        cy.intercept('POST', 'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews', {
           body: reviewsData.reviews
         }).as('fetchReviews');
   
-      cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=received', {
+      cy.intercept('POST', 'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews', {
         body: reviewsData.receivedReviews
       }).as('fetchReceivedReviews');
     });
@@ -24,7 +24,7 @@ describe('Guest Reviews', () => {
       cy.wait('@fetchReceivedReviews');
       cy.wait(500); 
 
-      cy.contains('My reviews (2)').should('exist');
+      cy.contains('My reviews(2)').should('exist');
       cy.contains('Great service').should('exist');
       cy.contains('Good experience').should('exist');
       cy.wait(500); 
@@ -41,8 +41,8 @@ describe('Guest Reviews', () => {
   
       cy.wait('@fetchReviews');
  
-      cy.intercept('DELETE', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews/*', {
-        statusCode: 204
+      cy.intercept('DELETE', 'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview', {
+        statusCode: 200
       }).as('deleteReview');
   
       cy.get('button')

@@ -8,15 +8,12 @@ import general from './HostDashboard.module.scss'
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
-
 function HostReviews() {
     const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoading2, setIsLoading2] = useState(true);
     const [receivedReviews, setReceivedReviews] = useState([]);
     const [userId, setUserId] = useState(null);
-  const [reviewError, setReviewError] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -44,22 +41,32 @@ function HostReviews() {
                     }
                 } catch (error) {
                     console.error("Error checking user login status:", error);
-                    navigate('/login'); // Redirect to login on error
+                    history.push('/login'); // Redirect to login on error
                 }
             };
 
             checkUserLoggedIn();
-        }, [navigate]);
+        }, [history]);
 
     useEffect(() => {
         const retrieveReviews = async () => {
             if (!userId) {
+                console.log("No user id")
                 return;
             }
 
+            const options = {
+                userIdFrom: userId
+            };
             setIsLoading(true);
             try {
-                const response = await requestReview("GET", { scope: "written" });
+                const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews', {
+                    method: 'POST',
+                    body: JSON.stringify(options),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -67,7 +74,7 @@ function HostReviews() {
                 const data = await response.json();
                 setReviews(data);
             } catch (error) {
-                setReviewError("Could not load or update your reviews. Please try again.");
+                console.error(error);
             } finally {
                 setIsLoading(false);
             }
@@ -80,11 +87,22 @@ function HostReviews() {
     useEffect(() => {
         const retrieveReceivedReviews = async () => {
             if (!userId) {
+                console.log("No user id")
                 return;
             }
+            console.log(userId);
+            const options = {
+                itemIdTo: userId
+            };
             setIsLoading2(true);
             try {
-                const response = await requestReview("GET", { scope: "received" });
+                const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews', {
+                    method: 'POST',
+                    body: JSON.stringify(options),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -92,7 +110,7 @@ function HostReviews() {
                 const data = await response.json();
                 setReceivedReviews(data);
             } catch (error) {
-                setReviewError("Could not load or update your reviews. Please try again.");
+                console.error(error);
             } finally {
                 setIsLoading2(false);
             }
@@ -104,26 +122,34 @@ function HostReviews() {
     }, [userId]);
 
     const asyncDeleteReview = async (review) => {
-        if(window.confirm("Are you sure you want to delete this review?") === true) {
-            let reviewId = review.id;
+        if(confirm("Are you sure you want to delete this review?") == true) {
+            let reviewId = review["reviewId "];
 
+                    const options = {
+                                    "reviewId ": reviewId
+                                };
 
                     try {
-                         const response = await requestReview("DELETE", { reviewId });
+                         const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview', {
+                           method: 'DELETE',
+                           body: JSON.stringify(options),
+                           headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                             }
+                          });
                            if (!response.ok) {
                                throw new Error(`HTTP error! Status: ${response.status}`);
                             }
-                            const updatedReviews = reviews.filter(r => r.id !== reviewId);
+                            const updatedReviews = reviews.filter(r => r["reviewId "] !== reviewId);
                             setReviews(updatedReviews);
                           } catch (error) {
-                            setReviewError("Could not load or update your reviews. Please try again.");
+                            console.error(error);
                           }
         }
     }
     return (
         <main className="page-body">
             <h2>Reviews</h2>
-      {reviewError && <p role="alert">{reviewError}</p>}
             <div className={styles.reviewGrid}>
                 <Pages />
                 <div className={styles.contentContainer}>
@@ -132,7 +158,7 @@ function HostReviews() {
                             <p className={styles.boxText}>My reviews ({reviews.length})</p>
                             {isLoading ? (
                                     <div className={general.loadingContainer}>
-                                        <img className={general.spinner} src={spinner} alt="Loading reviews"/>
+                                        <img className={general.spinner} src={spinner}/>
                                     </div>
                                 ) :
                             reviews.length > 0 ? (
@@ -154,9 +180,9 @@ function HostReviews() {
                         </div>
                         <div className={styles.reviewBox}>
                             <p className={styles.boxText}>Received reviews({receivedReviews.length})</p>
-                            {isLoading2 ? (
+                            {isLoading ? (
                                     <div className={general.loadingContainer}>
-                                        <img className={general.spinner} src={spinner} alt="Loading reviews"/>
+                                        <img className={general.spinner} src={spinner}/>
                                     </div>
                                 ) :
                                 receivedReviews.length > 0 ? (
