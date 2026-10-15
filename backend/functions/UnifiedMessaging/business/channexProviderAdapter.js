@@ -1,6 +1,7 @@
 import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import ChannexCredentialStore from "../.shared/channelManagement/providers/channex/credentialStore.js";
 import ChannexProviderClient from "../.shared/channelManagement/providers/channex/providerClient.js";
+import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 const badRequest = (message, code) => {
   const error = new Error(message);
@@ -40,7 +41,8 @@ export default class ChannexProviderAdapter {
 
     const result = await this.providerClient.sendMessage(
       { apiKey: credentials.apiKey },
-      { externalThreadId, text: content }
+      { externalThreadId, text: content },
+      { requestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
     );
 
     if (!result?.success) {
