@@ -757,7 +757,12 @@ const HostTasks = () => {
             .filter(m => m.status === 'active')
             .map(m => {
                 const displayName = m.member_name || m.member_email;
-                return { id: m.id, label: `${displayName} (${m.role})`, name: displayName };
+                // The dropdown label still shows the email as a fallback, to tell
+                // apart members who share a role and have no name yet. But what
+                // gets saved as the task's assignee falls back to the role instead,
+                // so the table doesn't end up showing a raw email address.
+                const assigneeName = m.member_name || m.role;
+                return { id: m.id, label: `${displayName} (${m.role})`, name: assigneeName };
             });
         return [...hostChoice, ...memberChoices];
     }, [currentUser, teamMembers]);
