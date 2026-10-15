@@ -13,20 +13,9 @@ class IntegrationController {
     this.channelManagementController = channelManagementController;
   }
 
-  async createIntegration(event) {
-    const body = safeJson(event.body) || {};
-    return await this.integrationService.createIntegration(body);
-  }
-
   async listIntegrations(event) {
     const userId = event.queryStringParameters?.userId || null;
     return await this.integrationService.listIntegrations(userId);
-  }
-
-  async updateIntegration(event) {
-    const integrationId = extractIntegrationId(event.path);
-    const patch = safeJson(event.body) || {};
-    return await this.integrationService.updateIntegration(integrationId, patch);
   }
 
   async getIntegrationLogs(event) {
