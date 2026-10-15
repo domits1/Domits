@@ -1453,6 +1453,12 @@
         "tryAgain": "Intentar de nuevo",
         "close": "Cerrar",
         "success": "Tu aplicación de autenticación está activada. Te pediremos un código cuando inicies sesión en un dispositivo nuevo.",
+        "turnOff": "Desactivar",
+        "disableTitle": "¿Desactivar la aplicación de autenticación?",
+        "disableWarning": "Si la desactivas, tu cuenta será menos segura. Ya no te pediremos un código de tu aplicación de autenticación al iniciar sesión.",
+        "confirmTurnOff": "Desactivar",
+        "turningOff": "Desactivando...",
+        "disabledSuccess": "Tu aplicación de autenticación está desactivada.",
         "errors": {
           "invalidCode": "Este código no es válido. Introduce el código actual de 6 dígitos de tu aplicación.",
           "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión y empieza la configuración de nuevo.",

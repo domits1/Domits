@@ -1453,6 +1453,12 @@
         "tryAgain": "Erneut versuchen",
         "close": "Schließen",
         "success": "Deine Authenticator-App ist aktiviert. Bei der Anmeldung auf einem neuen Gerät wirst du nach einem Code gefragt.",
+        "turnOff": "Deaktivieren",
+        "disableTitle": "Authenticator-App deaktivieren?",
+        "disableWarning": "Wenn du sie deaktivierst, ist dein Konto weniger sicher. Bei der Anmeldung wirst du nicht mehr nach einem Code aus deiner Authenticator-App gefragt.",
+        "confirmTurnOff": "Deaktivieren",
+        "turningOff": "Wird deaktiviert...",
+        "disabledSuccess": "Deine Authenticator-App ist deaktiviert.",
         "errors": {
           "invalidCode": "Dieser Code ist ungültig. Gib den aktuellen 6-stelligen Code aus deiner App ein.",
           "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an und starte die Einrichtung neu.",

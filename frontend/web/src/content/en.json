@@ -1452,6 +1452,12 @@
         "tryAgain": "Try again",
         "close": "Close",
         "success": "Your authenticator app is on. You will be asked for a code when you sign in on a new device.",
+        "turnOff": "Turn off",
+        "disableTitle": "Turn off the authenticator app?",
+        "disableWarning": "Turning it off makes your account less secure. You will no longer be asked for a code from your authenticator app when you sign in.",
+        "confirmTurnOff": "Turn off",
+        "turningOff": "Turning off...",
+        "disabledSuccess": "Your authenticator app is turned off.",
         "errors": {
           "invalidCode": "That code is not valid. Enter the current 6-digit code from your app.",
           "sessionExpired": "Your session has expired. Please sign in again and restart the setup.",
