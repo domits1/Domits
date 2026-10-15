@@ -1027,6 +1027,12 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     );
     expect(payloadPreviewSpy).not.toHaveBeenCalled();
     expect(result.response.taskIds).toEqual(["task-availability-full", "task-restrictions-full"]);
+    // The notes show in the admin panel, which Channex sees during live testing.
+    expect(result.response.notes).toContain(
+      "Full sync: one availability request and one restrictions/rates request for the selected range."
+    );
+    expect(result.response.notes).toContain(`Full sync version: ${CHANNEX_FULL_CERTIFICATION_SYNC_VERSION}.`);
+    expect(result.response.notes.join(" ")).not.toMatch(/certification|staging/i);
     expect(result.response).not.toHaveProperty("pageRange");
     expect(result.response).not.toHaveProperty("syncRunId");
     expect(JSON.stringify(result.response)).not.toMatch(/pageDateFrom|pageSizeDays|chunkIndex|chunkCount|syncRunId/);
@@ -1260,6 +1266,25 @@ describe("IntegrationService Channex ARI restriction mapping", () => {
     expect(pushRestrictions).not.toHaveBeenCalled();
     expect(readSecretOrNull).not.toHaveBeenCalled();
     expect(evidenceCreate).not.toHaveBeenCalled();
+  });
+
+  test("full sync without a date range explains the default range without certification wording", async () => {
+    const service = createService({
+      channexProviderClient: {
+        pushAvailability: jest.fn(),
+        pushRestrictions: jest.fn(),
+      },
+    });
+
+    const result = await service.syncChannexFull("user-1", "domits-property-1", undefined, undefined, {
+      dryRun: "true",
+    });
+
+    expect(result.statusCode).toBe(200);
+    expect(result.response.notes).toContain(
+      "No explicit date range was supplied, so the full sync used a 500-day UTC date range starting from today."
+    );
+    expect(result.response.notes.join(" ")).not.toMatch(/certification|staging/i);
   });
 
   test("full certification sync debug stages return controlled JSON without provider calls", async () => {

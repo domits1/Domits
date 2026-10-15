@@ -1,15 +1,7 @@
-const ChannexProviderClient = require("../.shared/channelManagement/providers/channex/providerClient.js").default;
+const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = require("./channexProviderClientTestUtils.js");
 
-const originalFetch = global.fetch;
-const CREDENTIALS = { apiKey: "test-api-key" };
 const PROPERTY_ID = "ext-property-1";
 const REVISION_ID = "revision-1";
-
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(body),
-});
 
 const revisionRow = (overrides = {}) => ({
   id: REVISION_ID,
@@ -64,15 +56,11 @@ const REVISION_METHODS = [
 ];
 
 describe("ChannexProviderClient booking revisions", () => {
+  useMockedFetch();
   let client;
 
   beforeEach(() => {
     client = new ChannexProviderClient();
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
   });
 
   describe("missing apiKey short-circuits before any request", () => {

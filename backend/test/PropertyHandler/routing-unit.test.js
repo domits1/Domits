@@ -39,7 +39,13 @@ const directRouteSpecs = [
   ["POST website domain primary request", "promoteWebsiteDomain", "POST", "/property/website/domains/primary", 200],
   ["GET website domains request", "listWebsiteDomains", "GET", "/property/website/domains", 200],
   ["DELETE website domain request", "removeWebsiteDomain", "DELETE", "/property/website/domains", 200],
-  ["GET property calendar overrides request", "getPropertyCalendarOverrides", "GET", "/property/calendar/overrides", 200],
+  [
+    "GET property calendar overrides request",
+    "getPropertyCalendarOverrides",
+    "GET",
+    "/property/calendar/overrides",
+    200,
+  ],
   ["GET pricing saving-config request", "getPricingSavingConfig", "GET", "/property/pricing/saving-config", 200],
   ["GET public website resolve request", "resolvePublicWebsiteSite", "GET", "/property/website/public/resolve", 200],
   ["GET public website render request", "getPublicWebsiteRenderModel", "GET", "/property/website/public/render", 200],
@@ -211,6 +217,28 @@ describe("Routing unit tests", () => {
     jest.spyOn(PropertyController.prototype, "buildStaticPages").mockRejectedValue(new Error("connection lost"));
 
     await expect(handler({ task: "build-static-pages" })).rejects.toThrow("connection lost");
+  });
+
+  it("should route the reconcile task to the controller and hand its result back", async () => {
+    const reconcileStaticPages = jest
+      .spyOn(PropertyController.prototype, "reconcileStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "reconcile-static-pages", limit: 50 });
+
+    expect(response.statusCode).toBe(200);
+    expect(reconcileStaticPages).toHaveBeenCalledWith({ task: "reconcile-static-pages", limit: 50 });
+  });
+
+  it("should route the queue-all task to the controller", async () => {
+    const queueAllStaticPages = jest
+      .spyOn(PropertyController.prototype, "queueAllStaticPages")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+
+    const response = await handler({ task: "queue-all-static-pages" });
+
+    expect(response.statusCode).toBe(200);
+    expect(queueAllStaticPages).toHaveBeenCalledWith({ task: "queue-all-static-pages" });
   });
 
   it("should route an HTTP request that also carries the task name as an HTTP request", async () => {

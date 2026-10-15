@@ -34,7 +34,7 @@ describe("Pages2 missed revenue navigation", () => {
   });
 });
 
-describe("Pages2 Channex certification navigation", () => {
+describe("Pages2 Channex diagnostics navigation", () => {
   beforeEach(() => {
     delete process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS;
     jest.clearAllMocks();
@@ -43,30 +43,31 @@ describe("Pages2 Channex certification navigation", () => {
     });
   });
 
-  test("shows Channex certification nav item when backend admin-access allows the user", async () => {
+  test("shows Channex diagnostics nav item when backend admin-access allows the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: true });
 
     renderPages();
 
-    expect(await screen.findByText("Channex Certification")).toBeTruthy();
+    expect(await screen.findByText("Channex diagnostics")).toBeTruthy();
+    expect(screen.queryByText(/certification/i)).toBeNull();
     expect(getChannexAdminAccess).toHaveBeenCalledWith({ userId: "allowed-user" });
   });
 
-  test("hides Channex certification nav item when backend admin-access denies the user", async () => {
+  test("hides Channex diagnostics nav item when backend admin-access denies the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
 
     renderPages();
 
     await waitFor(() => expect(getChannexAdminAccess).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("Channex Certification")).toBeNull();
+    expect(screen.queryByText("Channex diagnostics")).toBeNull();
   });
 
-  test("hides Channex certification nav item when backend admin-access errors", async () => {
+  test("hides Channex diagnostics nav item when backend admin-access errors", async () => {
     getChannexAdminAccess.mockRejectedValue(new Error("access check failed"));
 
     renderPages();
 
     await waitFor(() => expect(getChannexAdminAccess).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("Channex Certification")).toBeNull();
+    expect(screen.queryByText("Channex diagnostics")).toBeNull();
   });
 });

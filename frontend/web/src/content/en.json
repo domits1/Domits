@@ -1215,6 +1215,35 @@
         "cancel": "Cancel",
         "error": "Something went wrong. Please try again."
       },
+      "devices": {
+        "title": "Devices",
+        "notConnected": "Connect to see your devices",
+        "empty": "No devices found in your RemoteLock account.",
+        "loading": "Loading your devices...",
+        "loadError": "We couldn't load your devices.",
+        "retry": "Try again",
+        "notSupported": "Not supported yet",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "status": "Status",
+          "battery": "Battery",
+          "lastSeen": "Last seen"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Unknown"
+        },
+        "types": {
+          "lock": "Lock",
+          "zwaveLock": "Z-Wave lock",
+          "connectorLock": "Connector lock",
+          "schlageHomeLock": "Schlage Home lock",
+          "resortLock": "Resort lock",
+          "other": "Other device"
+        }
+      },
       "loading": "Loading your RemoteLock connection...",
       "loadError": "We couldn't load your RemoteLock connection.",
       "retry": "Try again"
@@ -1432,7 +1461,7 @@
         "verified": "Verified",
         "sms": "SMS",
         "authenticatorApp": "Authenticator app",
-        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "comingSoon": "Coming soon: SMS sign-in.",
         "loading": "Loading your authentication status...",
         "error": "We couldn't load your authentication status. Please refresh the page."
       },
@@ -1452,6 +1481,12 @@
         "tryAgain": "Try again",
         "close": "Close",
         "success": "Your authenticator app is on. You will be asked for a code when you sign in on a new device.",
+        "turnOff": "Turn off",
+        "disableTitle": "Turn off the authenticator app?",
+        "disableWarning": "Turning it off makes your account less secure. You will no longer be asked for a code from your authenticator app when you sign in.",
+        "confirmTurnOff": "Turn off",
+        "turningOff": "Turning off...",
+        "disabledSuccess": "Your authenticator app is turned off.",
         "errors": {
           "invalidCode": "That code is not valid. Enter the current 6-digit code from your app.",
           "sessionExpired": "Your session has expired. Please sign in again and restart the setup.",
@@ -1653,6 +1688,7 @@
         "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
         "checkoutSuccess": "Your Elite subscription is active.",
         "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
+        "checkoutStillPending": "We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.",
         "cardTitle": "Direct Booking Website Plan",
         "cardSubtitle": "Essentials is free; Elite includes advanced website tools.",
         "cardNote": "Choose and manage your website subscription.",

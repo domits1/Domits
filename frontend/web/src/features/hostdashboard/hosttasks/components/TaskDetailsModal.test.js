@@ -143,6 +143,12 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onRetryChecklistLoad).toHaveBeenCalledTimes(1);
     });
 
+    test('shows the checklist template loading indicator when applying a template', () => {
+        render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
+
+        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+    });
+
     test('does not show an Escalate button when the task is not breaching its SLA', () => {
         render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
         expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();

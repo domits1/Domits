@@ -42,7 +42,7 @@ const NAV = [
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   {
     key: "ChannexCertification",
-    label: "Channex Certification",
+    label: "Channex diagnostics",
     icon: <AdminPanelSettingsIcon />,
     to: CHANNEX_CERTIFICATION_ADMIN_ROUTE,
     internalOnly: true,

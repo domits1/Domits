@@ -1216,6 +1216,35 @@
         "cancel": "Annuleren",
         "error": "Er ging iets mis. Probeer het opnieuw."
       },
+      "devices": {
+        "title": "Apparaten",
+        "notConnected": "Koppel om je apparaten te zien",
+        "empty": "Geen apparaten gevonden in je RemoteLock-account.",
+        "loading": "Je apparaten worden geladen...",
+        "loadError": "We konden je apparaten niet laden.",
+        "retry": "Probeer opnieuw",
+        "notSupported": "Nog niet ondersteund",
+        "columns": {
+          "name": "Naam",
+          "type": "Type",
+          "status": "Status",
+          "battery": "Batterij",
+          "lastSeen": "Laatst gezien"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Onbekend"
+        },
+        "types": {
+          "lock": "Slot",
+          "zwaveLock": "Z-Wave-slot",
+          "connectorLock": "Connector-slot",
+          "schlageHomeLock": "Schlage Home-slot",
+          "resortLock": "Resortslot",
+          "other": "Ander apparaat"
+        }
+      },
       "loading": "Je RemoteLock-koppeling wordt geladen...",
       "loadError": "We konden je RemoteLock-koppeling niet laden.",
       "retry": "Probeer opnieuw"
@@ -1433,7 +1462,7 @@
         "verified": "Geverifieerd",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-app",
-        "comingSoon": "Binnenkort beschikbaar: inloggen via sms en authenticator-app.",
+        "comingSoon": "Binnenkort beschikbaar: inloggen via sms.",
         "loading": "Je authenticatiestatus wordt geladen...",
         "error": "We konden je authenticatiestatus niet laden. Vernieuw de pagina."
       },
@@ -1453,6 +1482,12 @@
         "tryAgain": "Opnieuw proberen",
         "close": "Sluiten",
         "success": "Je authenticator-app is ingeschakeld. Je wordt om een code gevraagd wanneer je op een nieuw apparaat inlogt.",
+        "turnOff": "Uitschakelen",
+        "disableTitle": "Authenticator-app uitschakelen?",
+        "disableWarning": "Als je deze uitschakelt, is je account minder goed beveiligd. Je wordt bij het inloggen niet meer om een code uit je authenticator-app gevraagd.",
+        "confirmTurnOff": "Uitschakelen",
+        "turningOff": "Uitschakelen...",
+        "disabledSuccess": "Je authenticator-app is uitgeschakeld.",
         "errors": {
           "invalidCode": "Deze code is niet geldig. Voer de huidige 6-cijferige code uit je app in.",
           "sessionExpired": "Je sessie is verlopen. Log opnieuw in en start de instelling opnieuw.",
@@ -1654,6 +1689,7 @@
         "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
         "checkoutSuccess": "Je Elite-abonnement is actief.",
         "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
+        "checkoutStillPending": "We hebben nog geen bevestiging ontvangen. De betaling wordt mogelijk nog verwerkt. Vernieuw deze pagina over een moment en start geen nieuwe checkout.",
         "cardTitle": "Direct Booking-websiteabonnement",
         "cardSubtitle": "Essentials is gratis; Elite biedt geavanceerde websitefuncties.",
         "cardNote": "Kies en beheer het abonnement voor je website.",

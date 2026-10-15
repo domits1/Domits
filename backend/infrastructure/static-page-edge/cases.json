@@ -110,18 +110,151 @@
     "expectedUri": "/static/js/main.3f2a1c9d.js"
   },
   {
-    "name": "robots.txt",
+    "name": "robots.txt is answered for the hostname itself",
     "method": "GET",
+    "uri": "/robots.txt",
+    "host": "www.villasensual.nl",
+    "expectedRobotsFor": "www.villasensual.nl"
+  },
+  {
+    "name": "sitemap.xml goes to the sitemap of the hostname",
+    "method": "GET",
+    "uri": "/sitemap.xml",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/sites/by-host/www.villasensual.nl/sitemap.xml"
+  },
+  {
+    "name": "head request for the sitemap",
+    "method": "HEAD",
+    "uri": "/sitemap.xml",
+    "host": "villa-loiki-8cf98e11.direct.domits.com",
+    "expectedUri": "/sites/by-host/villa-loiki-8cf98e11.direct.domits.com/sitemap.xml"
+  },
+  {
+    "name": "sitemap with a query string",
+    "method": "GET",
+    "uri": "/sitemap.xml",
+    "host": "www.villasensual.nl",
+    "querystring": {
+      "v": {
+        "value": "2"
+      }
+    },
+    "expectedUri": "/sites/by-host/www.villasensual.nl/sitemap.xml"
+  },
+  {
+    "name": "sitemap on an upper case host with a port",
+    "method": "GET",
+    "uri": "/sitemap.xml",
+    "host": "WWW.VillaSensual.NL:443",
+    "expectedUri": "/sites/by-host/www.villasensual.nl/sitemap.xml"
+  },
+  {
+    "name": "sitemap with a trailing slash",
+    "method": "GET",
+    "uri": "/sitemap.xml/",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/sitemap.xml/"
+  },
+  {
+    "name": "upper case sitemap",
+    "method": "GET",
+    "uri": "/SITEMAP.XML",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/SITEMAP.XML"
+  },
+  {
+    "name": "percent encoded sitemap",
+    "method": "GET",
+    "uri": "/sitemap%2Exml",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/sitemap%2Exml"
+  },
+  {
+    "name": "post to the sitemap",
+    "method": "POST",
+    "uri": "/sitemap.xml",
+    "host": "www.villasensual.nl",
+    "expectedUri": "/sitemap.xml"
+  },
+  {
+    "name": "sitemap on a host that fails the hostname rule",
+    "method": "GET",
+    "uri": "/sitemap.xml",
+    "host": "my_villa.direct.domits.com",
+    "expectedUri": "/sitemap.xml"
+  },
+  {
+    "name": "sitemap on two host values",
+    "method": "GET",
+    "uri": "/sitemap.xml",
+    "host": "www.villasensual.nl",
+    "multiValue": [
+      "www.villasensual.nl",
+      "www.other.nl"
+    ],
+    "expectedUri": "/sitemap.xml"
+  },
+  {
+    "name": "head request for robots.txt",
+    "method": "HEAD",
+    "uri": "/robots.txt",
+    "host": "villa-loiki-8cf98e11.direct.domits.com",
+    "expectedRobotsFor": "villa-loiki-8cf98e11.direct.domits.com"
+  },
+  {
+    "name": "robots.txt on an upper case host with a port and a trailing dot",
+    "method": "GET",
+    "uri": "/robots.txt",
+    "host": "WWW.VillaSensual.NL.:443",
+    "expectedRobotsFor": "www.villasensual.nl"
+  },
+  {
+    "name": "robots.txt with a query string",
+    "method": "GET",
+    "uri": "/robots.txt",
+    "host": "www.villasensual.nl",
+    "querystring": {
+      "x": {
+        "value": "1"
+      }
+    },
+    "expectedRobotsFor": "www.villasensual.nl"
+  },
+  {
+    "name": "robots.txt on a host that fails the hostname rule keeps the shared file",
+    "method": "GET",
+    "uri": "/robots.txt",
+    "host": "my_villa.direct.domits.com",
+    "expectedUri": "/robots.txt"
+  },
+  {
+    "name": "robots.txt without a host header keeps the shared file",
+    "method": "GET",
+    "uri": "/robots.txt",
+    "host": null,
+    "expectedUri": "/robots.txt"
+  },
+  {
+    "name": "post to robots.txt",
+    "method": "POST",
     "uri": "/robots.txt",
     "host": "www.villasensual.nl",
     "expectedUri": "/robots.txt"
   },
   {
-    "name": "sitemap.xml",
+    "name": "robots.txt with a trailing slash",
     "method": "GET",
-    "uri": "/sitemap.xml",
+    "uri": "/robots.txt/",
     "host": "www.villasensual.nl",
-    "expectedUri": "/sitemap.xml"
+    "expectedUri": "/robots.txt/"
+  },
+  {
+    "name": "direct request to a sitemap key",
+    "method": "GET",
+    "uri": "/sites/by-host/www.villasensual.nl/sitemap.xml",
+    "host": "villa-loiki-8cf98e11.direct.domits.com",
+    "expectedStatus": 404
   },
   {
     "name": "favicon",
