@@ -1,4 +1,5 @@
 .main {
+    box-sizing: border-box;
     width: 90%;
     max-width: 75rem;
     margin: 0 auto;
@@ -62,6 +63,8 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
     button {
         padding: 1rem;
@@ -105,6 +108,9 @@
             line-height: 1rem;
         }
         .textarea {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 10rem;
             font-size: 1rem;
             border-radius: 0.25rem;
             border: 1px solid #cccccc;
@@ -126,4 +132,9 @@
         align-self: center;
         padding: 2rem;
     }
+}
+
+.reviewText {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }

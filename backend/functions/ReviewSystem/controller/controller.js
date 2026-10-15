@@ -20,8 +20,8 @@ const parseBody = (event) => {
 };
 
 export class Controller {
-  // Connect the controller to the service and auth dependencies used across requests.
-  // This makes the controller easy to test and keeps all handlers on the same trusted logic.
+  // Attach the controller to the service and auth dependencies used by every request.
+  // This keeps the controller flexible and ensures all handlers use the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -144,7 +144,6 @@ export class Controller {
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
-  // Public property reads use the service's filtered, privacy-safe response.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }
