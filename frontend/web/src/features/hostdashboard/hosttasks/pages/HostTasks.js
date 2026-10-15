@@ -70,6 +70,7 @@ const HostTasks = () => {
     const [checklistLoadError, setChecklistLoadError] = useState(null);
     const [checklistTemplates, setChecklistTemplates] = useState({});
     const [isApplyingChecklistTemplate, setIsApplyingChecklistTemplate] = useState(false);
+    const [isCreatingTask, setIsCreatingTask] = useState(false);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -255,6 +256,8 @@ const HostTasks = () => {
 
     const handleCreateTask = async (e) => {
         e.preventDefault();
+        if (isCreatingTask) return;
+        setIsCreatingTask(true);
         try {
             const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             
@@ -288,6 +291,8 @@ const HostTasks = () => {
             resetForm();
         } catch {
             alert("Error creating task");
+        } finally {
+            setIsCreatingTask(false);
         }
     };
 
@@ -891,6 +896,7 @@ const HostTasks = () => {
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
+                isSubmitting={isCreatingTask}
             />
 
             <TaskDetailsModal
