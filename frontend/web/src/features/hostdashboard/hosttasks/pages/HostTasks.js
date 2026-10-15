@@ -386,6 +386,11 @@ const HostTasks = () => {
         const template = checklistTemplates[type];
         if (!template || template.length === 0 || currentItemCount > 0 || isApplyingChecklistTemplateRef.current) return [];
 
+        // Captured so a stale result (the host switched to a different task while
+        // this was still running) doesn't get applied to, or tracked against, the
+        // task now being viewed.
+        const requestId = checklistRequestRef.current;
+
         isApplyingChecklistTemplateRef.current = true;
         setIsApplyingChecklistTemplate(true);
         const created = [];
@@ -396,7 +401,9 @@ const HostTasks = () => {
             for (const item of template) {
                 const createdItem = await createChecklistItem(taskId, item);
                 created.push(createdItem);
-                templateCreatedItemIdsRef.current.push(createdItem.id);
+                if (requestId === checklistRequestRef.current) {
+                    templateCreatedItemIdsRef.current.push(createdItem.id);
+                }
             }
         } catch (error) {
             toast.error(error.message || "Error applying the checklist template");
@@ -404,7 +411,7 @@ const HostTasks = () => {
             isApplyingChecklistTemplateRef.current = false;
             setIsApplyingChecklistTemplate(false);
         }
-        return created;
+        return requestId === checklistRequestRef.current ? created : [];
     };
 
     const loadChecklistItems = (taskId) => {
