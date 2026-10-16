@@ -1,48 +1,66 @@
+const routeCases = [
+  ["GET", "/reviews", "getReviews", 200],
+  ["POST", "/reviews", "createReview", 201],
+  ["PATCH", "/reviews", "updateReview", 200],
+  ["GET", "/reviews/{id}", "getReviewById", 200],
+  ["PATCH", "/reviews/{id}", "updateReview", 200],
+  ["DELETE", "/reviews/{id}", "deleteReview", 204],
+  ["GET", "/properties/{propertyId}/reviews", "getPublicReviews", 200],
+  ["GET", "/reviews/{id}/domits-private-feedback", "getPrivateFeedback", 200],
+  ["POST", "/reviews/{id}/response", "createReviewResponse", 201],
+  ["PATCH", "/reviews/{id}/response", "updateReviewResponse", 200],
+  ["DELETE", "/reviews/{id}/response", "deleteReviewResponse", 204],
+  ["POST", "/reviews/{id}/publish", "publishReview", 200],
+];
+
 jest.mock("../../functions/ReviewSystem/controller/controller.js", () => ({
-  Controller: jest.fn(() => ({
-    getPublicPropertyReviews: jest.fn(async () => ({ statusCode: 200 })),
-    createReview: jest.fn(async () => ({ statusCode: 201 })),
-    getPublicReviews: jest.fn(async () => ({ statusCode: 200 })),
-    manageReviews: jest.fn(async (event) => ({ statusCode: event.httpMethod === "DELETE" ? 204 : 200 })),
-  })),
+  Controller: jest.fn(() => ({})),
 }));
 
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
-it("routes anonymous public listing reviews separately", async () => {
-  const event = { httpMethod: "GET", resource: "/properties/{propertyId}/reviews", pathParameters: { propertyId: "p1" } };
-  expect((await handler(event)).statusCode).toBe(200);
-  expect(Controller.mock.results[0].value.getPublicReviews).toHaveBeenCalledWith(event);
-});
-
-it.each([["POST", 201], ["GET", 200], ["PATCH", 200]])(
-  "routes %s reviews to the controller", async (httpMethod, statusCode) => {
-    const event = { httpMethod, resource: httpMethod === "PATCH" ? "/reviews/{id}" : "/reviews",
-      pathParameters: { id: "r1" } };
-    expect((await handler(event)).statusCode).toBe(statusCode);
-    const controller = Controller.mock.results[0].value;
-    expect(httpMethod === "POST" ? controller.createReview : controller.manageReviews)
-      .toHaveBeenCalledWith(event);
+it.each(routeCases)("dispatches %s %s with the complete controller response", async (httpMethod, resource, action, statusCode) => {
+  // Initialize the cached controller without relying on test execution order.
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    await handler({ httpMethod: "POST", resource: "/reviews" });
+    const instance = Controller.mock.results[0].value;
+    const result = { statusCode, headers: { "X-Test": "preserved" }, body: statusCode === 204 ? "" : "[]" };
+    instance[action] = jest.fn().mockResolvedValue(result);
+    const event = { httpMethod, resource };
+    try {
+      expect(await handler(event)).toMatchObject(result);
+      expect(instance[action]).toHaveBeenCalledWith(event);
+    } finally {
+      delete instance[action];
+    }
+  } finally {
+    log.mockRestore();
   }
-);
-
-it.each([
-  { httpMethod: "PUT", resource: "/reviews" },
-  { httpMethod: "GET", resource: "/other" },
-  { httpMethod: "GET", resource: "/reviews/public" },
-  { httpMethod: "PATCH", resource: "/reviews" },
-  { httpMethod: "DELETE", resource: "/reviews/{id}" },
-])("rejects unsupported routes: %p", async (event) => {
-  expect((await handler(event)).statusCode).toBe(405);
 });
 
-it("allows preflight requests", async () => {
-  expect((await handler({ httpMethod: "OPTIONS", resource: "/reviews" })).statusCode).toBe(200);
+it("returns a safe failure if a controller route disappears", async () => {
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    const response = await handler({ httpMethod: "GET", resource: "/reviews" });
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body)).toEqual({ message: "Internal Server Error" });
+  } finally {
+    log.mockRestore();
+  }
 });
 
-it("routes individual review reads", async () => {
-  const event = { httpMethod: "GET", resource: "/reviews/{id}", pathParameters: { id: "r1" } };
-  expect((await handler(event)).statusCode).toBe(200);
-  expect(Controller.mock.results[0].value.manageReviews).toHaveBeenCalledWith(event);
+it("rejects unsupported methods with Allow and unknown resources with 404", async () => {
+  const response = await handler({ httpMethod: "PUT", resource: "/reviews/{id}" });
+  expect(response.statusCode).toBe(405);
+  expect(response.headers.Allow).toBe("GET,PATCH,DELETE,OPTIONS");
+  expect((await handler({ httpMethod: "POST", resource: "/ReviewSystem" })).statusCode).toBe(404);
+});
+
+it("allows resource-specific preflight requests without invoking controller actions", async () => {
+  const response = await handler({ httpMethod: "OPTIONS", resource: "/reviews/{id}/response" });
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toBe("");
+  expect(response.headers["Access-Control-Allow-Methods"]).toBe("POST,PATCH,DELETE,OPTIONS");
 });
