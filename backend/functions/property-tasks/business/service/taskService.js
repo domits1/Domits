@@ -2,6 +2,7 @@ import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
+import { notifyTaskAssigned } from "./taskNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -57,6 +58,10 @@ export const createTask = async (hostId, taskData) => {
         actionType: 'TASK_CREATED',
         newValue: 'Task created'
     });
+
+    if (newTask.assignee_team_member_id) {
+        await notifyTaskAssigned(hostId, newTask);
+    }
 
     return newTask;
 };
@@ -147,6 +152,12 @@ export const updateTask = async (hostId, taskId, updateData) => {
         oldValue: JSON.stringify(oldTask),
         newValue: JSON.stringify(fieldsToUpdate)
     });
+
+    const isNewAssignee = Boolean(fieldsToUpdate.assignee_team_member_id)
+        && fieldsToUpdate.assignee_team_member_id !== oldTask.assignee_team_member_id;
+    if (isNewAssignee) {
+        await notifyTaskAssigned(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
 
     return { message: "Task updated successfully" };
 };
