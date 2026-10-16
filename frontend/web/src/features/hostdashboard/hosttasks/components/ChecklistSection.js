@@ -24,7 +24,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                 <label>Checklist</label>
                 {isApplyingTemplate && (
                     <span className="checklist-template-loading">
-                        <LuRefreshCw className="checklist-template-spinner" /> Applying template...
+                        <LuRefreshCw className="checklist-template-spinner" /> Loading checklist...
                     </span>
                 )}
                 {!isApplyingTemplate && !loadError && requiredItems.length > 0 && (

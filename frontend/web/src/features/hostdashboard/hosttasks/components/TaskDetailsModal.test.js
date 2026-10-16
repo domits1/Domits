@@ -146,7 +146,21 @@ describe('TaskDetailsModal', () => {
     test('shows the checklist template loading indicator when applying a template', () => {
         render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
 
-        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+        expect(screen.getByText('Loading checklist...')).toBeInTheDocument();
+    });
+
+    test('disables Close, Cancel and the backdrop while a template is applying', () => {
+        render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
+
+        expect(screen.getByLabelText('Close modal')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    });
+
+    test('does not disable Close or Cancel by default', () => {
+        render(<TaskDetailsModal {...baseProps} />);
+
+        expect(screen.getByLabelText('Close modal')).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
     });
 
     test('does not show an Escalate button when the task is not breaching its SLA', () => {
