@@ -1,3 +1,4 @@
+import { readTrendPolicy, parseTrendQuery, classifyTrend, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -147,68 +148,28 @@ export class ReviewService {
     if (typeof username !== "string" || !username.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
-    // Policy is server-owned; absent or invalid settings disable trend detection.
-    const threshold = Number(process.env.REVIEW_DECLINE_THRESHOLD);
-    const minimumReviews = Number(process.env.REVIEW_TREND_MIN_REVIEWS);
-    if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 4
-      || !Number.isSafeInteger(minimumReviews) || minimumReviews < 1) {
-      throw new Error("Review trend policy is not configured.");
-    }
-    const integerParameter = (value, name, maximum) => {
-      if (typeof value !== "string" || !/^(0|[1-9]\d*)$/.test(value)
-        || !Number.isSafeInteger(Number(value)) || Number(value) > maximum) {
-        throw new BadRequestException(`Invalid ${name}.`);
-      }
-      return Number(value);
-    };
-    const days = integerParameter(query.days, "days", 366);
-    if (days < 1) throw new BadRequestException("days must be positive.");
-    const offset = integerParameter(query.offset ?? "0", "offset", 100000);
-    if (typeof query.endDate !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(query.endDate)) {
-      throw new BadRequestException("endDate must be YYYY-MM-DD.");
-    }
-    const endDate = Date.parse(`${query.endDate}T00:00:00.000Z`);
-    if (!Number.isFinite(endDate) || new Date(endDate).toISOString().slice(0, 10) !== query.endDate) {
-      throw new BadRequestException("endDate must be a valid date.");
-    }
-    const dayMs = 86_400_000;
-    const endExclusive = endDate + dayMs;
-    const currentStart = endExclusive - days * dayMs;
-    const previousStart = currentStart - days * dayMs;
-    const today = new Date(this.now());
-    today.setUTCHours(0, 0, 0, 0);
-    if (endExclusive > today.getTime()) {
-      throw new BadRequestException("endDate must be before today in UTC.");
-    }
-    const properties = await this.repository.findManagedProperties(username, offset);
-    const trends = [];
-    // Reuse the score aggregation for both equal, adjacent windows, with bounded concurrency.
-    for (const property of properties.slice(0, 25)) {
-      const previous = await this.repository.getPropertyReviewScore(property.id, username,
-        { start: previousStart, endExclusive: currentStart });
-      const current = await this.repository.getPropertyReviewScore(property.id, username,
-        { start: currentStart, endExclusive });
-      // Do not return data if the property changed owners during these reads.
-      if (!await this.repository.findManagedProperty(property.id, username)) continue;
-      const sufficient = previous.review_count >= minimumReviews && current.review_count >= minimumReviews
-        && Number.isFinite(previous.overall_score) && Number.isFinite(current.overall_score);
-      const change = sufficient ? current.overall_score - previous.overall_score : null;
-      let status = "INSUFFICIENT_DATA";
-      if (sufficient) {
-        // Avoid floating-point noise at the configured threshold boundary.
-        status = change <= -threshold * (1 - 1e-12) ? "DECLINING"
-          : change >= threshold * (1 - 1e-12) ? "IMPROVING" : "STABLE";
-      }
-      trends.push({ property_id: property.id, current_average_rating: current.overall_score,
-        previous_average_rating: previous.overall_score, rating_change: change,
-        current_review_count: current.review_count, previous_review_count: previous.review_count,
-        trend_status: status });
-    }
+    const policy = readTrendPolicy();
+    const options = parseTrendQuery(query, this.now());
+    const { days, offset, previousStart, currentStart } = options;
+    const { threshold, minimumReviews } = policy;
+    // Aggregate both windows and apply status/order before limiting the result.
+    // Ownership and all scores are read in one database statement/snapshot.
+    const rows = await this.repository.getPropertyRatingTrendPage(username, { ...options, ...policy });
+    const trends = rows.slice(0, TREND_PAGE_SIZE).map((row) => ({
+      property_id: row.property_id,
+      current_average_rating: row.current_average_rating,
+      previous_average_rating: row.previous_average_rating,
+      current_review_count: row.current_review_count,
+      previous_review_count: row.previous_review_count,
+      ...classifyTrend(
+        { overall_score: row.previous_average_rating, review_count: row.previous_review_count },
+        { overall_score: row.current_average_rating, review_count: row.current_review_count }, policy),
+    }));
     const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
     return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,
-      previous_period: { start_date: dateLabel(previousStart), end_date: dateLabel(currentStart - dayMs) },
+      previous_period: { start_date: dateLabel(previousStart), end_date: dateLabel(currentStart - DAY_MS) },
       current_period: { start_date: dateLabel(currentStart), end_date: query.endDate },
-      properties: trends, next_offset: properties.length > 25 ? offset + 25 : null };
+      properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
   }
 
   // Return the trusted review score for a manager-owned property.

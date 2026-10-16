@@ -215,6 +215,46 @@ export class ReviewRepository {
       order: { id: "ASC" }, skip: offset, take: 26 });
   }
 
+  async getPropertyRatingTrendPage(hostId, options) {
+    const database = await Database.getInstance();
+    const aggregates = database.getRepository(Property).createQueryBuilder("property")
+      .leftJoin(Review, "review", `review.property_id = property.id
+        AND review.verification_status = :verificationStatus
+        AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
+        AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
+        AND review.overall_rating = FLOOR(review.overall_rating)
+        AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
+      .where("property.hostid = :hostId")
+      .select("property.id", "property_id")
+      .addSelect("AVG(CASE WHEN review.created_at < :currentStart THEN review.overall_rating END)", "previous_average_rating")
+      .addSelect("AVG(CASE WHEN review.created_at >= :currentStart THEN review.overall_rating END)", "current_average_rating")
+      .addSelect("COUNT(CASE WHEN review.created_at < :currentStart THEN 1 END)", "previous_review_count")
+      .addSelect("COUNT(CASE WHEN review.created_at >= :currentStart THEN 1 END)", "current_review_count")
+      .groupBy("property.id");
+    const classified = database.createQueryBuilder().from(`(${aggregates.getQuery()})`, "scores")
+      .select("scores.*")
+      .addSelect(`CASE WHEN previous_review_count < :minimumReviews OR current_review_count < :minimumReviews
+          OR previous_average_rating IS NULL OR current_average_rating IS NULL THEN 'INSUFFICIENT_DATA'
+        WHEN current_average_rating - previous_average_rating <= -:boundary THEN 'DECLINING'
+        WHEN current_average_rating - previous_average_rating >= :boundary THEN 'IMPROVING'
+        ELSE 'STABLE' END`, "trend_status");
+    const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
+      .select("trends.*")
+      .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
+        endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
+        boundary: options.threshold * (1 - 1e-12), verificationStatus: "VERIFIED",
+        publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+    if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
+    if (options.sort === "declining-first") {
+      page.orderBy("CASE WHEN trends.trend_status = 'DECLINING' THEN 0 ELSE 1 END", "ASC");
+    }
+    const rows = await page.addOrderBy("trends.property_id", "ASC").offset(options.offset).limit(26).getRawMany();
+    return rows.map((row) => ({ ...row,
+      previous_average_rating: row.previous_average_rating == null ? null : Number(row.previous_average_rating),
+      current_average_rating: row.current_average_rating == null ? null : Number(row.current_average_rating),
+      previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));
+  }
+
   async getPropertyReviewScore(propertyId, hostId, range) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
