@@ -81,6 +81,55 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       expectedPercentage: 1,
       expectedAmountCents: totalPriceCents,
     },
+    {
+      name: "Semi-strict: Cancel 61 days before (60+ days)",
+      policy: "semi-strict",
+      hoursBeforeArrival: 1464,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Semi-strict: Cancel 59 days before (less than 60 days)",
+      policy: "semi-strict",
+      hoursBeforeArrival: 1416,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Strict: Cancel 91 days before (90+ days)",
+      policy: "strict",
+      hoursBeforeArrival: 2184,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Strict: Cancel 89 days before (less than 90 days)",
+      policy: "strict",
+      hoursBeforeArrival: 2136,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Super-strict: Cancel 181 days before (180+ days)",
+      policy: "super-strict",
+      hoursBeforeArrival: 4344,
+      expectedPercentage: 1,
+      expectedAmountCents: totalPriceCents,
+    },
+    {
+      name: "Super-strict: Cancel 179 days before (less than 180 days)",
+      policy: "super-strict",
+      hoursBeforeArrival: 4296,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
+    {
+      name: "Non-refundable: Cancel 300 days before (no refund)",
+      policy: "non-refundable",
+      hoursBeforeArrival: 7200,
+      expectedPercentage: 0,
+      expectedAmountCents: 0,
+    },
   ];
 
   describe("Refund Calculator - getRefundPercentage()", () => {
@@ -95,13 +144,11 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       });
     });
 
-    it("should throw error for invalid policy", () => {
+    it.each(["FakePolicy", null, undefined, ""])("should throw for unknown policy %p", (policy) => {
       const now = new Date();
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-      expect(() => {
-        getRefundPercentage("invalid_policy", futureDate, now);
-      }).toThrow("Unsupported cancellation policy");
+      expect(() => getRefundPercentage(policy, futureDate, now)).toThrow("Unsupported cancellation policy");
     });
 
     it("should throw error for invalid arrival date", () => {
@@ -339,6 +386,21 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundError: null,
       });
 
+      expect(result.statusCode).toBe(200);
+    });
+
+    it("records a refund error and refunds nothing when the booking has no known policy", async () => {
+      const bookingId = "booking_without_policy";
+      mockBooking({ id: bookingId, cancellation_policy: null });
+
+      const result = await controller.cancelBooking(bookingId, authEvent);
+
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectCancelRecord(bookingId, {
+        refundedAmount: 0,
+        stripeRefundId: null,
+        refundError: "Unsupported cancellation policy: null",
+      });
       expect(result.statusCode).toBe(200);
     });
 

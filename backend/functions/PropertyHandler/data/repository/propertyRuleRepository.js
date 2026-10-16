@@ -5,8 +5,12 @@ import { Property_Rule } from "database/models/Property_Rule";
 const RULE_VALUE_TYPE_OVERRIDES = Object.freeze({
   "CancellationPolicy:Firm": "text",
   "CancellationPolicy:Flexible": "text",
+  "CancellationPolicy:Limited": "text",
   "CancellationPolicy:Moderate": "text",
+  "CancellationPolicy:Non-refundable": "text",
+  "CancellationPolicy:Semi-strict": "text",
   "CancellationPolicy:Strict": "text",
+  "CancellationPolicy:Super-strict": "text",
   CheckInFrom: "time",
   CheckInTill: "time",
   CheckOutFrom: "time",
@@ -16,6 +20,8 @@ const RULE_VALUE_TYPE_OVERRIDES = Object.freeze({
   LateCheckoutEnabled: "boolean",
   LateCheckoutTime: "time",
 });
+
+const isCancellationPolicyRule = (ruleName) => String(ruleName || "").startsWith("CancellationPolicy:");
 
 export class PropertyRuleRepository {
   constructor(dynamoDbClient, systemManager) {
@@ -104,7 +110,7 @@ export class PropertyRuleRepository {
           .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
           .getRawMany();
 
-        return new Map(
+        const ruleDefinitionMap = new Map(
           rows.map((row) => [
             String(row.rule),
             {
@@ -113,6 +119,15 @@ export class PropertyRuleRepository {
             },
           ])
         );
+        normalizedRuleNames
+          .filter((ruleName) => !ruleDefinitionMap.has(ruleName) && isCancellationPolicyRule(ruleName))
+          .forEach((ruleName) => {
+            ruleDefinitionMap.set(ruleName, {
+              rule: ruleName,
+              value_type: "text",
+            });
+          });
+        return ruleDefinitionMap;
       } catch {
         const rows = await client
           .createQueryBuilder()
@@ -121,7 +136,7 @@ export class PropertyRuleRepository {
           .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
           .getRawMany();
 
-        return new Map(
+        const ruleDefinitionMap = new Map(
           rows.map((row) => [
             String(row.rule),
             {
@@ -130,6 +145,15 @@ export class PropertyRuleRepository {
             },
           ])
         );
+        normalizedRuleNames
+          .filter((ruleName) => !ruleDefinitionMap.has(ruleName) && isCancellationPolicyRule(ruleName))
+          .forEach((ruleName) => {
+            ruleDefinitionMap.set(ruleName, {
+              rule: ruleName,
+              value_type: "text",
+            });
+          });
+        return ruleDefinitionMap;
       }
     }
 
@@ -149,6 +173,13 @@ export class PropertyRuleRepository {
           .from("rules", "rules")
           .where("rules.rule = :id", { id })
           .getRawOne();
+
+        if (!row && isCancellationPolicyRule(id)) {
+          return {
+            rule: id,
+            value_type: "text",
+          };
+        }
 
         return row
           ? {
