@@ -1,7 +1,11 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
+import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
+const PUBLISH_ATTEMPT_LIMIT = 3;
+const SERIALIZATION_FAILURE_SQLSTATE = "40001";
 const DEFAULT_SITE_LOCALE = "en";
 const EMPTY_JSON_OBJECT = "{}";
 const SITE_SELECT_COLUMNS = `id,
@@ -17,6 +21,7 @@ const SITE_SELECT_COLUMNS = `id,
         preview_token_hash,
         published_at,
         suspended_at,
+        static_page_revision,
         created_at,
         updated_at`;
 
@@ -34,6 +39,37 @@ const resolveSchemaName = (client) => {
 };
 
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
+
+const staticPageOutboxTableName = (schemaName) => `${schemaName}.static_page_outbox`;
+
+const queueStaticPage = (queryRunner, outboxTableName, site, now) =>
+  queryRunner.query(
+    `INSERT INTO ${outboxTableName} (
+        site_id,
+        property_id,
+        host_id,
+        revision,
+        status,
+        attempt_count,
+        failure_reason,
+        created_at,
+        updated_at,
+        processed_at
+      )
+      VALUES ($1, $2, $3, $4, 'PENDING', 0, NULL, $5, $5, NULL)
+      ON CONFLICT (site_id)
+      DO UPDATE SET
+        property_id = EXCLUDED.property_id,
+        host_id = EXCLUDED.host_id,
+        revision = EXCLUDED.revision,
+        status = CASE WHEN static_page_outbox.status = 'BUILDING' THEN 'BUILDING' ELSE 'PENDING' END,
+        attempt_count = 0,
+        failure_reason = NULL,
+        updated_at = CASE WHEN static_page_outbox.status = 'BUILDING' THEN static_page_outbox.updated_at ELSE EXCLUDED.updated_at END,
+        processed_at = NULL`,
+    [site.id, site.propertyId, site.hostId, site.staticPageRevision, now],
+    true
+  );
 
 const runStatement = async (client, statement, parameters) => {
   const queryRunner = client.createQueryRunner();
@@ -99,6 +135,15 @@ const normalizeLocale = (locale) => {
   return normalizedLocale || DEFAULT_SITE_LOCALE;
 };
 
+const toStaticPageRevision = (value) => {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  const revision = Number(value);
+  return Number.isSafeInteger(revision) && revision > 0 ? revision : 0;
+};
+
 const mapSiteRow = (row) => {
   if (!row) {
     return null;
@@ -118,6 +163,7 @@ const mapSiteRow = (row) => {
     previewTokenHash: row.preview_token_hash ? String(row.preview_token_hash) : "",
     publishedAt: row.published_at === null || row.published_at === undefined ? null : Number(row.published_at),
     suspendedAt: row.suspended_at === null || row.suspended_at === undefined ? null : Number(row.suspended_at),
+    staticPageRevision: toStaticPageRevision(row.static_page_revision),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -132,34 +178,47 @@ export class DirectBookingWebsiteSiteRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
 
-    const { records } = await runStatement(
-      client,
-      `DELETE FROM ${tableName}
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2
       RETURNING
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at`,
-      [propertyId, hostId]
-    );
+        ${SITE_SELECT_COLUMNS}`,
+        [propertyId, hostId],
+        true
+      );
 
-    return mapSiteRow(records[0] || null);
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return null;
+      }
+
+      await manager.queryRunner.query(
+        `DELETE FROM ${outboxTableName}
+      WHERE site_id = $1`,
+        [site.id],
+        true
+      );
+
+      return site;
+    });
   }
 
-  async upsertSite({
+  async upsertSiteWithStaticPageOutbox(input) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.upsertSiteWithStaticPageOutboxOnce(input);
+      } catch (error) {
+        const isConflict = String(error?.code || error?.driverError?.code || "") === SERIALIZATION_FAILURE_SQLSTATE;
+        if (!isConflict) throw error;
+        if (attempt >= PUBLISH_ATTEMPT_LIMIT) throw new WebsitePublishConflictError({ cause: error });
+      }
+    }
+  }
+
+  async upsertSiteWithStaticPageOutboxOnce({
     propertyId,
     hostId,
     siteName,
@@ -176,11 +235,12 @@ export class DirectBookingWebsiteSiteRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
     const now = Date.now();
-    const normalizedStatus = normalizeSiteStatus(status);
 
-    const rows = await client.query(
-      `INSERT INTO ${tableName} (
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `INSERT INTO ${tableName} (
         id,
         property_id,
         host_id,
@@ -194,10 +254,11 @@ export class DirectBookingWebsiteSiteRepository {
         preview_token_hash,
         published_at,
         suspended_at,
+        static_page_revision,
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 1, $14, $15)
       ON CONFLICT (property_id)
       DO UPDATE SET
         host_id = EXCLUDED.host_id,
@@ -211,43 +272,113 @@ export class DirectBookingWebsiteSiteRepository {
         preview_token_hash = EXCLUDED.preview_token_hash,
         published_at = EXCLUDED.published_at,
         suspended_at = EXCLUDED.suspended_at,
+        static_page_revision = COALESCE(standalone_site.static_page_revision, 0) + 1,
         updated_at = EXCLUDED.updated_at
       RETURNING
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at`,
-      [
-        randomUUID(),
-        propertyId,
-        hostId,
-        String(siteName || "").trim() || `website-${String(propertyId || "").slice(0, 8)}`,
-        normalizeLocale(primaryLocale),
-        normalizedStatus,
-        String(templateKey || "").trim(),
-        normalizeJsonObject(publishedPropertySnapshot),
-        normalizeJsonObject(publishedContentOverrides),
-        normalizeJsonObject(publishedThemeOverrides),
-        previewTokenHash ? String(previewTokenHash).trim() : null,
-        publishedAt === null || publishedAt === undefined ? null : Number(publishedAt),
-        suspendedAt === null || suspendedAt === undefined ? null : Number(suspendedAt),
-        now,
-        now,
-      ]
-    );
+        ${SITE_SELECT_COLUMNS}`,
+        [
+          randomUUID(),
+          propertyId,
+          hostId,
+          String(siteName || "").trim() || `website-${String(propertyId || "").slice(0, 8)}`,
+          normalizeLocale(primaryLocale),
+          normalizeSiteStatus(status),
+          String(templateKey || "").trim(),
+          normalizeJsonObject(publishedPropertySnapshot),
+          normalizeJsonObject(publishedContentOverrides),
+          normalizeJsonObject(publishedThemeOverrides),
+          previewTokenHash ? String(previewTokenHash).trim() : null,
+          publishedAt === null || publishedAt === undefined ? null : Number(publishedAt),
+          suspendedAt === null || suspendedAt === undefined ? null : Number(suspendedAt),
+          now,
+          now,
+        ],
+        true
+      );
 
-    return mapSiteRow(rows?.[0] || null);
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        throw new Error("Publishing a website site did not return the stored site.");
+      }
+
+      await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+
+      return site;
+    });
+  }
+
+  async updateSiteStatusWithStaticPageOutbox(siteId, status) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const normalizedStatus = normalizeSiteStatus(status);
+    const now = Date.now();
+    const suspendedAt = normalizedStatus === "SUSPENDED" ? now : null;
+
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `UPDATE ${tableName}
+      SET
+        status = $2,
+        suspended_at = $3,
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $4
+      WHERE id = $1
+      RETURNING
+        ${SITE_SELECT_COLUMNS}`,
+        [siteId, normalizedStatus, suspendedAt, now],
+        true
+      );
+
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return null;
+      }
+
+      await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+
+      return site;
+    });
+  }
+
+  async queueStaticPage(siteId, { attemptLimit = STATIC_PAGE_ATTEMPT_LIMIT, evenWhileBusy = false } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+    const outboxTableName = staticPageOutboxTableName(schemaName);
+    const now = Date.now();
+
+    return client.transaction(async (manager) => {
+      const siteResult = await manager.queryRunner.query(
+        `UPDATE ${tableName}
+      SET
+        static_page_revision = COALESCE(static_page_revision, 0) + 1,
+        updated_at = $2
+      WHERE id = $1
+        AND status = 'PUBLISHED'
+        AND ($4 OR NOT EXISTS (
+          SELECT 1
+          FROM ${outboxTableName} AS outbox
+          WHERE outbox.site_id = $1
+            AND (outbox.status IN ('PENDING', 'BUILDING')
+              OR (outbox.status = 'FAILED' AND outbox.attempt_count < $3))
+        ))
+      RETURNING
+        ${SITE_SELECT_COLUMNS}`,
+        [siteId, now, attemptLimit, Boolean(evenWhileBusy)],
+        true
+      );
+
+      const site = mapSiteRow(siteResult?.records?.[0] || null);
+      if (!site) {
+        return false;
+      }
+
+      await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
+
+      return true;
+    });
   }
 
   async getSiteByPropertyIdAndHostId(propertyId, hostId) {
@@ -255,10 +386,10 @@ export class DirectBookingWebsiteSiteRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
 
-    const rows = await client.query(
-      buildSiteSelectQuery(tableName, "WHERE property_id = $1 AND host_id = $2"),
-      [propertyId, hostId]
-    );
+    const rows = await client.query(buildSiteSelectQuery(tableName, "WHERE property_id = $1 AND host_id = $2"), [
+      propertyId,
+      hostId,
+    ]);
 
     return mapSiteRow(rows?.[0] || null);
   }
@@ -268,10 +399,7 @@ export class DirectBookingWebsiteSiteRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
 
-    const rows = await client.query(
-      buildSiteSelectQuery(tableName, "WHERE id = $1"),
-      [siteId]
-    );
+    const rows = await client.query(buildSiteSelectQuery(tableName, "WHERE id = $1"), [siteId]);
 
     return mapSiteRow(rows?.[0] || null);
   }
@@ -280,7 +408,9 @@ export class DirectBookingWebsiteSiteRepository {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
-    const normalizedPrefix = String(normalizedIdPrefix || "").trim().toLowerCase();
+    const normalizedPrefix = String(normalizedIdPrefix || "")
+      .trim()
+      .toLowerCase();
     if (!normalizedPrefix) {
       return null;
     }
@@ -316,21 +446,7 @@ export class DirectBookingWebsiteSiteRepository {
         updated_at = $4
       WHERE id = $1
       RETURNING
-        id,
-        property_id,
-        host_id,
-        site_name,
-        primary_locale,
-        status,
-        template_key,
-        published_property_snapshot_json,
-        published_content_overrides_json,
-        published_theme_overrides_json,
-        preview_token_hash,
-        published_at,
-        suspended_at,
-        created_at,
-        updated_at`,
+        ${SITE_SELECT_COLUMNS}`,
       [siteId, normalizedStatus, suspendedAt, now]
     );
 

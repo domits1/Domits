@@ -17,7 +17,7 @@ describe("property review performance controller/service", () => {
     controller = new Controller({ service: new ReviewService({ repository }) });
   });
   test("returns chronological numeric chart points and fills empty months", async () => {
-    const response = await controller.manageReviews(event());
+    const response = await controller.getReviews(event());
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ property_id: "property-1", interval: "month",
       timezone: "UTC", start_date: "2026-01-15", end_date: "2026-03-10", periods: [
@@ -27,14 +27,14 @@ describe("property review performance controller/service", () => {
       ] });
   });
   test("uses the selected property, trusted owner and exact inclusive date bounds", async () => {
-    await controller.manageReviews(event({ propertyId: " property-1 ", hostId: "spoofed" }));
+    await controller.getReviews(event({ propertyId: " property-1 ", hostId: "spoofed" }));
     expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "host-1");
     expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
       Date.parse("2026-01-15T00:00:00Z"), Date.parse("2026-03-11T00:00:00Z"), "month");
   });
   test("returns null scores and zero counts when there are no reviews", async () => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
-    const response = await controller.manageReviews(event());
+    const response = await controller.getReviews(event());
     expect(JSON.parse(response.body).periods).toEqual([
       { period: "2026-01-01", average_score: null, review_count: 0 },
       { period: "2026-02-01", average_score: null, review_count: 0 },
@@ -42,7 +42,7 @@ describe("property review performance controller/service", () => {
     ]);
   });
   test("supports a single-day leap-year range", async () => {
-    const response = await controller.manageReviews(event({ startDate: "2024-02-29", endDate: "2024-02-29" }));
+    const response = await controller.getReviews(event({ startDate: "2024-02-29", endDate: "2024-02-29" }));
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).periods).toHaveLength(1);
     expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
@@ -50,7 +50,7 @@ describe("property review performance controller/service", () => {
   });
   test("fills months across year boundaries", async () => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
-    const response = await controller.manageReviews(event({ startDate: "2025-12-31", endDate: "2026-01-01" }));
+    const response = await controller.getReviews(event({ startDate: "2025-12-31", endDate: "2026-01-01" }));
     expect(JSON.parse(response.body).periods.map((point) => point.period)).toEqual(["2025-12-01", "2026-01-01"]);
   });
   test.each([
@@ -58,7 +58,7 @@ describe("property review performance controller/service", () => {
     ["year", "2024-06-01", "2026-02-01", ["2024-01-01", "2025-01-01", "2026-01-01"]],
   ])("fills chronological %s buckets", async (interval, startDate, endDate, expected) => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
-    const response = await controller.manageReviews(event({ interval, startDate, endDate }));
+    const response = await controller.getReviews(event({ interval, startDate, endDate }));
     const result = JSON.parse(response.body);
     expect(response.statusCode).toBe(200);
     expect(result.interval).toBe(interval);
@@ -74,33 +74,33 @@ describe("property review performance controller/service", () => {
     { startDate: "2026-04-01", endDate: "2026-03-01" },
     { startDate: "2010-01-01", endDate: "2026-01-01" }, { interval: "day" }, { propertyId: "" },
   ])("rejects invalid input: %j", async (query) => {
-    expect((await controller.manageReviews(event(query))).statusCode).toBe(400);
+    expect((await controller.getReviews(event(query))).statusCode).toBe(400);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });
   test("rejects unauthenticated requests before repository access", async () => {
     const request = event();
     delete request.requestContext;
-    expect((await controller.manageReviews(request)).statusCode).toBe(401);
+    expect((await controller.getReviews(request)).statusCode).toBe(401);
     expect(repository.findManagedProperty).not.toHaveBeenCalled();
   });
   test("requires a verified manager identity", async () => {
     const request = event();
     delete request.requestContext.authorizer.claims["cognito:username"];
-    expect((await controller.manageReviews(request)).statusCode).toBe(401);
+    expect((await controller.getReviews(request)).statusCode).toBe(401);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });
   test("rejects inaccessible properties before aggregation", async () => {
     repository.findManagedProperty.mockResolvedValue(null);
-    expect((await controller.manageReviews(event())).statusCode).toBe(404);
+    expect((await controller.getReviews(event())).statusCode).toBe(404);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });
   test("rejects combining aggregate and individual review requests", async () => {
-    expect((await controller.manageReviews(event({ reviewId: "r1" }))).statusCode).toBe(400);
+    expect((await controller.getReviews(event({ reviewId: "r1" }))).statusCode).toBe(400);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });
   test("hides internal database failures", async () => {
     repository.getPropertyReviewPerformance.mockRejectedValue(new Error("database credentials"));
-    const response = await controller.manageReviews(event());
+    const response = await controller.getReviews(event());
     expect(response.statusCode).toBe(500);
     expect(response.body).not.toContain("credentials");
   });

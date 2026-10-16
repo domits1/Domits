@@ -1071,7 +1071,9 @@
       },
       "manage": {
         "title": "Wie erstelle und verwalte ich mein Gastgeberkonto?",
-        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button 'Gastgeber werden' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
+        "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button '",
+        "becomeHost": "Gastgeber werden",
+        "description2": "' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
       },
       "payout": {
         "title": "Wie Auszahlungen und Steuern funktionieren",
@@ -1079,7 +1081,15 @@
       },
       "calendar": {
         "title": "Wie Sie Ihren Kalender und Ihre Buchungen verwalten",
-        "description": "Eine kommende Funktion wird es Ihnen ermöglichen, Ihre Buchungen direkt über das Dashboard noch effizienter zu verwalten. Bleiben Sie gespannt auf Updates."
+        "description": "Sie können alles über das Host-Dashboard verwalten – Buchungen annehmen oder ablehnen und Ihre Verfügbarkeit und Preise pro Datum festlegen."
+      },
+      "cost": {
+        "title": "Was kostet es?",
+        "description": "Domits ist kostenlos nutzbar – keine Kosten für unser Buchungssystem, das Dashboard oder die Direktbuchungs-Website. Wir berechnen lediglich eine 10 %-Host-Gebühr pro Buchung über Domits.com, die den 24/7-Betrieb der Plattform ermöglicht. Brauchen Sie mehr? Kontaktieren Sie uns für Add-ons und individuelle Unternehmenspreise."
+      },
+      "markets": {
+        "title": "In welchen Märkten ist Domits tätig?",
+        "description": "Domits ist weltweit für Hosts und Gäste verfügbar – Sie können Ihre Unterkunft unabhängig vom Standort inserieren."
       }
     },
     "advice": {
@@ -1153,8 +1163,62 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Verfolge deinen Fortschritt vom Eintragen deiner Unterkunft bis zur Veröffentlichung."
+        },
+        "homeAutomation": {
+          "title": "Hausautomation",
+          "desc": "Verbinde Smart Locks, damit Gäste Zugang zu deinen Unterkünften erhalten."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Hausautomation",
+      "title": "Hausautomation",
+      "subtitle": "Verbinde RemoteLock, um Smart Locks für deine Gäste zu verwalten.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Letzte Synchronisierung",
+        "never": "Noch nicht synchronisiert"
+      },
+      "statuses": {
+        "notConnected": "Nicht verbunden",
+        "connecting": "Verbindung wird hergestellt",
+        "connected": "Verbunden",
+        "authenticationError": "Anmeldung fehlgeschlagen",
+        "connectionError": "Verbindungsproblem",
+        "disconnected": "Getrennt",
+        "expiredCredentials": "Anmeldung abgelaufen",
+        "unknown": "Status unbekannt"
+      },
+      "actions": {
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Verbinden",
+          "confirming": "Verbinde..."
+        },
+        "reconnect": {
+          "title": "RemoteLock erneut verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Erneut verbinden",
+          "confirming": "Verbinde erneut..."
+        },
+        "disconnect": {
+          "title": "RemoteLock trennen",
+          "body": "Domits verwaltet die Türcodes deiner Gäste nicht mehr.",
+          "confirm": "Trennen",
+          "confirming": "Trenne..."
+        },
+        "cancel": "Abbrechen",
+        "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      },
+      "loading": "Deine RemoteLock-Verbindung wird geladen...",
+      "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
+      "retry": "Erneut versuchen"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
@@ -1369,12 +1433,33 @@
         "verified": "Verifiziert",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-App",
-        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS.",
         "loading": "Dein Authentifizierungsstatus wird geladen...",
         "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
       },
       "pin": {
         "comingSoon": "Demnächst verfügbar."
+      },
+      "authenticator": {
+        "setUp": "Einrichten",
+        "setupTitle": "Authenticator-App einrichten",
+        "scanInstruction": "Scanne diesen QR-Code mit einer Authenticator-App, zum Beispiel Google Authenticator oder Microsoft Authenticator.",
+        "qrAlt": "QR-Code, um Domits zu deiner Authenticator-App hinzuzufügen",
+        "manualKeyLabel": "Scannen nicht möglich? Gib diesen Schlüssel manuell ein:",
+        "codeLabel": "6-stelliger Code",
+        "verify": "Bestätigen",
+        "verifying": "Wird bestätigt...",
+        "cancel": "Abbrechen",
+        "tryAgain": "Erneut versuchen",
+        "close": "Schließen",
+        "success": "Deine Authenticator-App ist aktiviert. Bei der Anmeldung auf einem neuen Gerät wirst du nach einem Code gefragt.",
+        "errors": {
+          "invalidCode": "Dieser Code ist ungültig. Gib den aktuellen 6-stelligen Code aus deiner App ein.",
+          "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an und starte die Einrichtung neu.",
+          "tooManyAttempts": "Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.",
+          "enableFailed": "Dein Code wurde akzeptiert, aber die Authenticator-App konnte nicht aktiviert werden. Bitte versuche es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+        }
       }
     },
     "communicationPreferences": {
@@ -1523,6 +1608,59 @@
         "billingHistoryEmpty": "Noch keine Abrechnungsdaten verfügbar.",
         "billingContact": "Abrechnungskontakt",
         "billingContactEmpty": "Die Verwaltung des Abrechnungskontakts wird hier verfügbar, sobald die Abrechnung aktiviert ist."
+      },
+      "websitePlan": {
+        "sectionTitle": "Abonnement für die Direct-Booking-Website",
+        "sectionSubtitle": "Wähle den Tarif für deine Buchungswebsite. Der Elite-Preis wird unten angezeigt.",
+        "loading": "Dein Website-Tarif wird geladen...",
+        "loadError": "Dein aktueller Website-Tarif konnte nicht geladen werden.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Alles Wesentliche für deine Direct-Booking-Website.",
+        "essentialsFeaturesTitle": "Enthalten",
+        "featureBasicWebsite": "Grundlegende Website- und Buchungsfunktionen",
+        "featureBasicCustomization": "Grundlegende Anpassung und SEO",
+        "elite": "Elite",
+        "eliteDescription": "Mehr Tools, um deine Direct-Booking-Website auszubauen und anzupassen.",
+        "eliteFeaturesTitle": "Alles aus Essentials, plus",
+        "featureCustomDomain": "Eigene Domain verbinden",
+        "featureAdvancedBuilder": "Erweiterter Website-Builder und unbegrenzt viele Seiten",
+        "featureLocalization": "Mehrsprachigkeit und mehrere Währungen",
+        "featureGrowthTools": "Erweiterte SEO, Analytics, CRM, KI-Tools, Upsells und Experimente",
+        "currentPlan": "Aktueller Tarif",
+        "scheduled": "Geplant",
+        "status": {
+          "ACTIVE": "Aktiv",
+          "PAST_DUE": "Zahlung überfällig",
+          "TRIALING": "Testphase",
+          "INCOMPLETE": "Zahlung ausstehend",
+          "INCOMPLETE_EXPIRED": "Zahlung abgelaufen",
+          "EXPIRED": "Abgelaufen",
+          "CANCELLED": "Gekündigt"
+        },
+        "perMonth": "pro Monat",
+        "free": "Kostenlos",
+        "upgrade": "Auf Elite upgraden",
+        "restoreElite": "Elite reaktivieren",
+        "switchToEssentials": "Zu Essentials wechseln",
+        "processing": "Wird verarbeitet...",
+        "changeError": "Dein Website-Tarif konnte nicht geändert werden. Bitte versuche es erneut.",
+        "checkoutError": "Stripe Checkout konnte nicht gestartet werden. Bitte versuche es erneut.",
+        "downgradeScheduled": "Der Wechsel zu Essentials ist zum Ende des aktuellen Abrechnungszeitraums geplant.",
+        "downgradeSuccess": "Dein Website-Tarif ist jetzt Essentials.",
+        "restoreSuccess": "Dein Elite-Abonnement wurde reaktiviert.",
+        "unchanged": "Dein Website-Tarif ist bereits aktuell.",
+        "effectiveUntil": "Elite bleibt bis zum {date} aktiv.",
+        "priceUnavailable": "Preis nicht verfügbar",
+        "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
+        "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
+        "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
+        "checkoutStillPending": "Wir haben noch keine Bestätigung erhalten. Deine Zahlung wird möglicherweise noch verarbeitet. Aktualisiere die Seite in einem Moment und starte keinen weiteren Checkout.",
+        "cardTitle": "Direct-Booking-Website-Tarif",
+        "cardSubtitle": "Essentials ist kostenlos; Elite bietet erweiterte Website-Funktionen.",
+        "cardNote": "Wähle und verwalte das Abonnement deiner Website.",
+        "breadcrumb": "Direct-Booking-Website-Tarif",
+        "pageTitle": "Direct-Booking-Website-Tarif",
+        "pageSubtitle": "Verwalte das Abonnement für deine Direct-Booking-Website."
       },
       "enterprise": {
         "cardTitle": "Enterprise-Tarifplan",
