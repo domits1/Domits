@@ -212,38 +212,13 @@ describe('Review entities and creation persistence', () => {
     }
   );
 
-  // Provision both schemas and remove dependent tables before reviews on rollback.
-  it("creates review tables and uniqueness indexes in both schemas and rolls them back", async () => {
+  it("keeps the retired review migration inert", async () => {
     const runner = { query: jest.fn() };
     await new CreateReviews20260930().up(runner);
-    expect(runner.query).toHaveBeenCalledTimes(12);
-    for (const schema of ["test", "main"]) {
-      const suffix = schema === "test" ? "_test" : "";
-      for (const table of ["review", "review_rating", "review_category", "review_request"]) {
-        expect(runner.query).toHaveBeenCalledWith(expect.stringContaining(
-          `CREATE TABLE IF NOT EXISTS ${schema}.${table} (`
-        ));
-      }
-      const statements = runner.query.mock.calls.map(([sql]) => sql.replace(/\s+/g, " ").trim());
-      expect(statements).toContain(
-        `CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique${suffix} ` +
-        `ON ${schema}.review (booking_id, review_type, reviewer_user_id);`
-      );
-      expect(statements).toContain(
-        `CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique${suffix} ` +
-        `ON ${schema}.review_request (booking_id, review_type, guest_id);`
-      );
-    }
-    runner.query.mockClear();
     await new CreateReviews20260930().down(runner);
-    expect(runner.query.mock.calls.map(([sql]) => sql)).toEqual(
-      ["main", "test"].flatMap((schema) =>
-        ["review_request", "review_rating", "review_category", "review"].map(
-          (table) => `DROP TABLE IF EXISTS ${schema}.${table};`
-        )
-      )
-    );
+    expect(runner.query).not.toHaveBeenCalled();
   });
+
 });
 
 describe('Review transactional writes', () => {
