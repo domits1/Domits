@@ -45,4 +45,6 @@ The entities are registered in `backend/ORM/util/database/Tables.js`. They are n
 
 ## Status
 
-Not applied. Nothing has been run against any schema.
+Applied on the `test` schema on 2026-10-16, as `admin`. `main` is **not** applied.
+
+Results on `test`, all as expected: pre-flight empty; both tables and the four async indexes created, all four `sys.jobs` jobs `completed`; 15 columns on `access_credential` and 13 on `home_automation_device`; six valid indexes (two primary keys and the four above); smoke test `should_be_one` = 1 with `default_status` `PENDING`, `should_be_two` = 2, `device_should_be_one` = 1, `provider_credential_should_be_one` = 1; final check 0 / 0.
