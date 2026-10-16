@@ -1,41 +1,35 @@
 import { useCallback, useState } from "react";
-import { getVerificationStatusFromDB } from "../../verification/hostverification/services/HostVerifyServices";
+import { getStripeAccountDetails } from "../hostfinance/services/stripeAccountService";
 
-export const useSetLiveEligibility = ({ userId }) => {
+export const isLiveEligible = (stripeDetails) => Boolean(stripeDetails?.bankDetailsProvided);
+
+export const useSetLiveEligibility = () => {
   const [liveEligibility, setLiveEligibility] = useState(false);
   const [liveEligibilityError, setLiveEligibilityError] = useState("");
   const [liveEligibilityLoading, setLiveEligibilityLoading] = useState(false);
 
-  const fetchVerificationStatus = useCallback(async () => {
-    if (!userId) {
-      setLiveEligibility(false);
-      setLiveEligibilityError("Host user is not loaded.");
-      return false;
-    }
-
+  const fetchLiveEligibility = useCallback(async () => {
     setLiveEligibilityLoading(true);
     setLiveEligibilityError("");
+
     try {
-      const status = await getVerificationStatusFromDB(userId);
-      const isVerified = status.verificationStatus === "verified";
-      setLiveEligibility(isVerified);
-      return isVerified;
+      const stripeDetails = await getStripeAccountDetails();
+      const eligible = isLiveEligible(stripeDetails);
+      setLiveEligibility(eligible);
+      return eligible;
     } catch (error) {
       setLiveEligibility(false);
-      if (error.statusCode === 404) {
-        return false;
-      }
-      setLiveEligibilityError(error?.message || "Failed to fetch verification status.");
+      setLiveEligibilityError(error?.message || "Failed to fetch bank details status.");
       return false;
     } finally {
       setLiveEligibilityLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   return {
     liveEligibility,
     liveEligibilityError,
     liveEligibilityLoading,
-    fetchVerificationStatus,
+    fetchLiveEligibility,
   };
 };
