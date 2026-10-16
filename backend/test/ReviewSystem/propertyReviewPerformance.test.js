@@ -21,9 +21,9 @@ describe("property review performance controller/service", () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ property_id: "property-1", interval: "month",
       timezone: "UTC", start_date: "2026-01-15", end_date: "2026-03-10", periods: [
-        { period: "2026-01-01", average_score: 4.5, review_count: 2 },
-        { period: "2026-02-01", average_score: null, review_count: 0 },
-        { period: "2026-03-01", average_score: 4, review_count: 1 },
+        { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: 4.5, review_count: 2 },
+        { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
+        { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: 4, review_count: 1 },
       ] });
   });
   test("uses the selected property, trusted owner and exact inclusive date bounds", async () => {
@@ -36,9 +36,9 @@ describe("property review performance controller/service", () => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
     const response = await controller.getReviews(event());
     expect(JSON.parse(response.body).periods).toEqual([
-      { period: "2026-01-01", average_score: null, review_count: 0 },
-      { period: "2026-02-01", average_score: null, review_count: 0 },
-      { period: "2026-03-01", average_score: null, review_count: 0 },
+      { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: null, review_count: 0 },
+      { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
+      { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: null, review_count: 0 },
     ]);
   });
   test("supports a single-day leap-year range", async () => {
@@ -66,6 +66,39 @@ describe("property review performance controller/service", () => {
     expect(result.periods.every((point) => point.average_score === null && point.review_count === 0)).toBe(true);
     expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
       Date.parse(`${startDate}T00:00:00Z`), Date.parse(`${endDate}T00:00:00Z`) + 86400000, interval);
+  });
+  test.each([
+    ["week", "2025-12-31", "2026-01-08", [
+      { period: "2025-12-29", coverage_start: "2025-12-31", coverage_end: "2026-01-04", is_partial: true },
+      { period: "2026-01-05", coverage_start: "2026-01-05", coverage_end: "2026-01-08", is_partial: true },
+    ]],
+    ["week", "2026-01-05", "2026-01-11", [
+      { period: "2026-01-05", coverage_start: "2026-01-05", coverage_end: "2026-01-11", is_partial: false },
+    ]],
+    ["month", "2024-02-29", "2024-02-29", [
+      { period: "2024-02-01", coverage_start: "2024-02-29", coverage_end: "2024-02-29", is_partial: true },
+    ]],
+    ["year", "2024-06-01", "2026-02-01", [
+      { period: "2024-01-01", coverage_start: "2024-06-01", coverage_end: "2024-12-31", is_partial: true },
+      { period: "2025-01-01", coverage_start: "2025-01-01", coverage_end: "2025-12-31", is_partial: false },
+      { period: "2026-01-01", coverage_start: "2026-01-01", coverage_end: "2026-02-01", is_partial: true },
+    ]],
+  ])("describes exact coverage for %s periods from %s through %s", async (interval, startDate, endDate, expected) => {
+    repository.getPropertyReviewPerformance.mockResolvedValue([]);
+    const response = await controller.getReviews(event({ interval, startDate, endDate }));
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body).periods).toEqual(expected.map((bucket) => ({
+      ...bucket, average_score: null, review_count: 0,
+    })));
+  });
+  test("allows exactly 120 periods and rejects the next period", async () => {
+    repository.getPropertyReviewPerformance.mockResolvedValue([]);
+    const response = await controller.getReviews(event({ startDate: "2016-01-01", endDate: "2025-12-31" }));
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body).periods).toHaveLength(120);
+    repository.getPropertyReviewPerformance.mockClear();
+    expect((await controller.getReviews(event({ startDate: "2016-01-01", endDate: "2026-01-01" }))).statusCode).toBe(400);
+    expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });
   test.each([
     { startDate: undefined }, { endDate: undefined }, { startDate: "2026-02-30" },
