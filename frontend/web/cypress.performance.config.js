@@ -6,7 +6,7 @@ module.exports = defineConfig({
       framework: "create-react-app",
       bundler: "webpack",
     },
-    specPattern: "cypress/component/ReviewPerformance.cy.jsx",
+    specPattern: "cypress/component/{ReviewPerformance,DecliningPropertyRatings}.cy.jsx",
     supportFile: false,
   },
 });
