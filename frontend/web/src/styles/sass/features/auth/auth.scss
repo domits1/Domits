@@ -220,6 +220,13 @@
   text-align: center;
 }
 
+.mfaChallengeFields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
 @keyframes authButtonSpin {
   to {
     transform: rotate(360deg);

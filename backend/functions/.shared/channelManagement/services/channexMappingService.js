@@ -7,6 +7,9 @@ import ChannexCredentialStore from "../providers/channex/credentialStore.js";
 import { hasChannexRequiredCredentialFields } from "../providers/channex/credentialUtils.js";
 import ChannexProviderClient from "../providers/channex/providerClient.js";
 import ChannexExternalBookingImportRepository from "../repositories/channexExternalBookingImportRepository.js";
+import Database from "../../integrations/ORM/index.js";
+import { withDsqlRetry } from "../../dsqlRetry.js";
+import ChannexAriOutboxWriter from "./channexAriOutboxWriter.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -36,7 +39,11 @@ export default class ChannexMappingService {
     channexCredentialStore = new ChannexCredentialStore(),
     channexProviderClient = new ChannexProviderClient(),
     propertyLookup = new ChannexExternalBookingImportRepository(),
+    channexAriOutboxWriter = new ChannexAriOutboxWriter(),
+    getDatabase = () => Database.getInstance(),
   } = {}) {
+    this.channexAriOutboxWriter = channexAriOutboxWriter;
+    this.getDatabase = getDatabase;
     this.accounts = accounts;
     this.props = props;
     this.ratePlans = ratePlans;
@@ -60,6 +67,29 @@ export default class ChannexMappingService {
       });
     }
     return null;
+  }
+
+  // A property that goes live starts in Channex with its complete current state (#3282).
+  // The rows are written in one transaction so a full sync is never queued half. A failure
+  // is logged, not thrown: the mapping is already saved, and saving it again retries.
+  async queueGoLiveFullSync(domitsPropertyId) {
+    try {
+      const client = await this.getDatabase();
+      return await withDsqlRetry(() =>
+        client.transaction((manager) =>
+          this.channexAriOutboxWriter.enqueueChannexFullSync(manager, { domitsPropertyId })
+        )
+      );
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: "CHANNEX_GO_LIVE_FULL_SYNC_QUEUE_FAILED",
+          domitsPropertyId,
+          error: describeLocalError(error),
+        })
+      );
+      return false;
+    }
   }
 
   async resolveUsableChannexIntegration(
@@ -506,6 +536,8 @@ export default class ChannexMappingService {
 
       const readinessResult = await this.getChannexAriTargets(normalizedUserId, domitsPropertyId);
       const readiness = readinessResult?.response ?? null;
+      const ready = readiness?.ready === true;
+      const fullSyncQueued = ready ? await this.queueGoLiveFullSync(domitsPropertyId) : false;
 
       return ok({
         channel: "CHANNEX",
@@ -517,7 +549,8 @@ export default class ChannexMappingService {
         savedMappings,
         readinessStatusCode: readinessResult?.statusCode ?? null,
         readiness,
-        ready: readiness?.ready === true,
+        ready,
+        fullSyncQueued,
       });
     } catch (error) {
       const details = describeLocalError(error);

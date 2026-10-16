@@ -1,7 +1,7 @@
 export class ChannexAriOutbox20260924 {
   // Aurora DSQL runs one DDL statement per transaction and never mixes DDL with DML,
   // so each statement stands on its own. See
-  // docs/internal/tools/dsql_channex_ari_outbox_runbook.md for the apply order.
+  // docs/partner/integrations/channel_manager/channex/dsql_channex_ari_outbox_runbook.md for the apply order.
   async up(queryRunner) {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS main.channex_ari_outbox (
