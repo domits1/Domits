@@ -2,6 +2,13 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+export const getPropertyRatingTrends = async (query) => {
+  const response = await requestReview("GET", { ...query, scope: "property-trends" });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not load rating trends. Please try again.");
+  return payload;
+};
+
 export const getPropertyReviewPerformance = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-performance" });
   const payload = await parseResponse(response);
