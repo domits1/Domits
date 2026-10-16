@@ -70,15 +70,17 @@ export class Controller {
   async getReviews(event) {
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
-      const propertyScope = ["property-score", "property-categories"].includes(query.scope);
+      const propertyScope = ["property-score", "property-categories", "property-performance"].includes(query.scope);
       if (propertyScope && query.reviewId !== undefined) {
-        throw new BadRequestException("Property score/category and individual review requests cannot be combined.");
+        throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
       if (query.scope === "property-categories") {
         result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
       } else if (query.scope === "property-score") {
         result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+      } else if (query.scope === "property-performance") {
+        result = await this.service.getPropertyReviewPerformance(user.username, query.propertyId, query);
       } else if (query.reviewId !== undefined) {
         result = await this.service.getEditableReview(userId, query.reviewId);
       } else {
