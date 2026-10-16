@@ -180,6 +180,7 @@ describe("DirectBookingWebsiteRatePlanService", () => {
 
   it("refuses Elite checkout when webhook configuration is missing", async () => {
     repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel";
@@ -198,6 +199,7 @@ describe("DirectBookingWebsiteRatePlanService", () => {
 
   it("refuses Elite checkout until deployment readiness is explicitly enabled", async () => {
     repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success";
     process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel";
