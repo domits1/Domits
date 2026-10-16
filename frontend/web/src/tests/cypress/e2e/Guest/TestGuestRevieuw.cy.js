@@ -4,11 +4,11 @@ describe('Guest Reviews', () => {
       cy.loginAsGuest(); 
   
       cy.fixture('reviews.json').then((reviewsData) => {
-        cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/ReviewSystem?scope=written', {
+        cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=written', {
           body: reviewsData.reviews
         }).as('fetchReviews');
   
-      cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/ReviewSystem?scope=received', {
+      cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=received', {
         body: reviewsData.receivedReviews
       }).as('fetchReceivedReviews');
     });
@@ -41,8 +41,8 @@ describe('Guest Reviews', () => {
   
       cy.wait('@fetchReviews');
  
-      cy.intercept('DELETE', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/ReviewSystem?reviewId=*', {
-        statusCode: 200
+      cy.intercept('DELETE', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews/*', {
+        statusCode: 204
       }).as('deleteReview');
   
       cy.get('button')
