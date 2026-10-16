@@ -1,5 +1,6 @@
 const { Controller } = require("../../functions/host-team/controller/controller.js");
 const { NotFoundException } = require("../../functions/host-team/util/exception/notFoundException.js");
+const { ForbiddenException } = require("../../functions/host-team/util/exception/forbiddenException.js");
 
 const putEvent = (role, { id = "member-1" } = {}) => ({
   headers: { Authorization: "token-1" },
@@ -49,7 +50,7 @@ describe("Controller.getTeamMemberInternal", () => {
 
   const buildEvent = (overrides = {}) => ({
     headers: { "x-internal-secret": SECRET },
-    queryStringParameters: { id: "member-1" },
+    queryStringParameters: { id: "member-1", hostId: "host-1" },
     ...overrides,
   });
 
@@ -73,7 +74,7 @@ describe("Controller.getTeamMemberInternal", () => {
 
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ email: "member@example.com" });
-    expect(service.getTeamMemberById).toHaveBeenCalledWith("member-1");
+    expect(service.getTeamMemberById).toHaveBeenCalledWith("member-1", "host-1");
   });
 
   test("rejects when the secret header is missing", async () => {
@@ -97,7 +98,16 @@ describe("Controller.getTeamMemberInternal", () => {
   test("returns 400 when id is missing", async () => {
     const { controller, service } = createInternalController();
 
-    const response = await controller.getTeamMemberInternal(buildEvent({ queryStringParameters: {} }));
+    const response = await controller.getTeamMemberInternal(buildEvent({ queryStringParameters: { hostId: "host-1" } }));
+
+    expect(response.statusCode).toBe(400);
+    expect(service.getTeamMemberById).not.toHaveBeenCalled();
+  });
+
+  test("returns 400 when hostId is missing", async () => {
+    const { controller, service } = createInternalController();
+
+    const response = await controller.getTeamMemberInternal(buildEvent({ queryStringParameters: { id: "member-1" } }));
 
     expect(response.statusCode).toBe(400);
     expect(service.getTeamMemberById).not.toHaveBeenCalled();
@@ -112,5 +122,16 @@ describe("Controller.getTeamMemberInternal", () => {
     const response = await controller.getTeamMemberInternal(buildEvent());
 
     expect(response.statusCode).toBe(404);
+  });
+
+  test("returns 403 when the member belongs to a different host", async () => {
+    const service = {
+      getTeamMemberById: jest.fn(async () => { throw new ForbiddenException("You do not have permission to access this team member."); }),
+    };
+    const controller = new Controller({ service });
+
+    const response = await controller.getTeamMemberInternal(buildEvent());
+
+    expect(response.statusCode).toBe(403);
   });
 });
