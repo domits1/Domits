@@ -9,35 +9,56 @@ import { formatDateTime } from "../utils/formatDateTime";
 
 const NO_VALUE = "—";
 
+// Small screens set display: block on these elements, which drops the table semantics in Safari.
 function DevicesTable({ devices, copy, language }) {
   const { columns } = copy;
 
   return (
-    <table className="host-homeauto__table">
-      <thead>
-        <tr>
-          <th scope="col">{columns.name}</th>
-          <th scope="col">{columns.type}</th>
-          <th scope="col">{columns.status}</th>
-          <th scope="col">{columns.battery}</th>
-          <th scope="col">{columns.lastSeen}</th>
+    <table className="host-homeauto__table" role="table">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader">
+            {columns.name}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.type}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.status}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.battery}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.lastSeen}
+          </th>
         </tr>
       </thead>
-      <tbody>
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <tbody role="rowgroup">
         {devices.map((device) => {
           const lastSeen = device.lastSeenAt ? formatDateTime(device.lastSeenAt, language) : "";
           return (
-            <tr key={device.id}>
-              <td data-label={columns.name}>{device.name}</td>
-              <td data-label={columns.type}>
+            <tr key={device.id} role="row">
+              <td data-label={columns.name} role="cell">
+                {device.name}
+              </td>
+              <td data-label={columns.type} role="cell">
                 {copy.types[getDeviceTypeLabelKey(device.type)]}
                 {UNSUPPORTED_DEVICE_TYPES.includes(device.type) && (
                   <span className="host-homeauto__unsupported">{copy.notSupported}</span>
                 )}
               </td>
-              <td data-label={columns.status}>{copy.statuses[getDeviceStatusLabelKey(device.status)]}</td>
-              <td data-label={columns.battery}>{Number.isFinite(device.battery) ? `${device.battery}%` : NO_VALUE}</td>
-              <td data-label={columns.lastSeen}>{lastSeen || NO_VALUE}</td>
+              <td data-label={columns.status} role="cell">
+                {copy.statuses[getDeviceStatusLabelKey(device.status)]}
+              </td>
+              <td data-label={columns.battery} role="cell">
+                {Number.isFinite(device.battery) ? `${device.battery}%` : NO_VALUE}
+              </td>
+              <td data-label={columns.lastSeen} role="cell">
+                {lastSeen || NO_VALUE}
+              </td>
             </tr>
           );
         })}

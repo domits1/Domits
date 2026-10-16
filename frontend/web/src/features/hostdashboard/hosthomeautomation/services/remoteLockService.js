@@ -64,14 +64,14 @@ export const setMockRemoteLockStatus = (status) => {
   currentStatus = status;
 };
 
-// Real endpoint (not built yet): GET /integrations/home-automation/remotelock/status
+// Real endpoint (not built yet): GET /integrations/home-automation/remotelocks/status
 // lastSyncAt is epoch milliseconds, or null when nothing has synced.
 export const getRemoteLockStatus = async () => ({
   status: currentStatus,
   lastSyncAt: currentStatus === "CONNECTED" ? MOCK_LAST_SYNC_AT : null,
 });
 
-// Real endpoint (not built yet): POST /integrations/home-automation/remotelock/connect
+// Real endpoint (not built yet): POST /integrations/home-automation/remotelocks/connect
 // The real one will hand back a RemoteLock sign-in URL to send the host to; the mock connects straight away.
 // Resolves with the new status, in the shape of getRemoteLockStatus.
 export const connectRemoteLock = async () => {
@@ -79,13 +79,13 @@ export const connectRemoteLock = async () => {
   return getRemoteLockStatus();
 };
 
-// Real endpoint (not built yet): POST /integrations/home-automation/remotelock/disconnect
+// Real endpoint (not built yet): POST /integrations/home-automation/remotelocks/disconnect
 // Resolves with the new status, in the shape of getRemoteLockStatus.
 export const disconnectRemoteLock = async () => {
   currentStatus = "DISCONNECTED";
   return getRemoteLockStatus();
 };
 
-// Real endpoint (not built yet): GET /integrations/home-automation/remotelock/devices
+// Real endpoint (not built yet): GET /integrations/home-automation/remotelocks/devices
 // Only meaningful while the account is CONNECTED; the page does not call it in any other status.
 export const getRemoteLockDevices = async () => MOCK_DEVICES.map((device) => ({ ...device }));
