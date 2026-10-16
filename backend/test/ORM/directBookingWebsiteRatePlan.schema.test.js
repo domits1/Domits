@@ -57,7 +57,12 @@ describe("Direct Booking Website rate-plan schema", () => {
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS ${schema}.direct_booking_website_rate_plans");
     expect(migration).toContain("ON ${schema}.direct_booking_website_rate_plans (account_id)");
     expect(migration).toContain("ON ${schema}.direct_booking_website_rate_plans (stripe_subscription_id)");
-    expect(migration).toContain("WHERE status IN ('ACTIVE', 'PAST_DUE', 'TRIALING')");
+    expect(migration).toContain(`const ACTIVE_STATUS_SQL = "'ACTIVE'";`);
+    expect(migration).toContain(
+      `const CURRENT_PLAN_STATUSES_SQL = [ACTIVE_STATUS_SQL, "'PAST_DUE'", "'TRIALING'"].join(", ");`
+    );
+    expect(migration).toContain("status VARCHAR(20) NOT NULL DEFAULT ${ACTIVE_STATUS_SQL},");
+    expect(migration).toContain("WHERE status IN (${CURRENT_PLAN_STATUSES_SQL});");
     expect(migration).toContain("WHERE stripe_subscription_id IS NOT NULL");
     expect(migration).toContain("const createSchemaObjects = async (schema, suffix) => {");
     expect(migration).toContain('await createSchemaObjects("main", "");');
