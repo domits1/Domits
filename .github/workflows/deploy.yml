@@ -7,6 +7,7 @@ on:
       - 'main'
     paths:
       - 'backend/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -37,6 +38,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
+
+      - name: Configure and verify the ReviewSystem edit window
+        run: node backend/CD/npm/configureReviewEnvironment.js
 
       # Identify every file changed in this push, including earlier commits in a multi-commit push
       - name: Get changed files
@@ -80,6 +84,38 @@ jobs:
           fi
 
       # Find and deploy all modified Lambda functions
+      - name: Decide whether the static page generator changed
+        run: |
+          set -euo pipefail
+          GENERATOR_CHANGED=false
+          if [[ "${GLOBAL_LAMBDA_DEPLOY:-false}" == "true" ]] || \
+             grep -qE '^(backend/prerender/|frontend/web/src/features/hostdashboard/website/|frontend/web/src/store/(amenities|iconWrapper)\.js$|frontend/web/src/utils/accommodationImage\.js$|frontend/web/src/features/hostdashboard/hostproperty/constants\.js$)' changed_files.txt; then
+            GENERATOR_CHANGED=true
+            echo "The static page generator changed; PropertyHandler will be rebuilt."
+          fi
+          echo "STATIC_PAGE_GENERATOR_CHANGED=$GENERATOR_CHANGED" >> "$GITHUB_ENV"
+
+          if [ "$GENERATOR_CHANGED" = "true" ] || \
+             grep -q '^backend/functions/PropertyHandler/' changed_files.txt || \
+             grep -q '^backend/test/PropertyHandler/' changed_files.txt; then
+            echo "BUNDLE_STATIC_PAGE=true" >> "$GITHUB_ENV"
+          else
+            echo "BUNDLE_STATIC_PAGE=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Bundle the static page generator for PropertyHandler
+        if: env.BUNDLE_STATIC_PAGE == 'true'
+        run: |
+          set -euo pipefail
+          if [ -f backend/functions/PropertyHandler/.deployment-disabled ]; then
+            echo "PropertyHandler deployment is disabled; skipping the bundle."
+            exit 0
+          fi
+          npm install --silent --no-save --prefix "$RUNNER_TEMP/esbuild" esbuild@0.25.10
+          ESBUILD_MODULE="$RUNNER_TEMP/esbuild/node_modules/esbuild/lib/main.js" \
+            node backend/prerender/buildStaticPageBundle.mjs
+          test -s backend/functions/PropertyHandler/generated/staticPageBundle.mjs
+
       - name: Find and deploy modified Lambda functions
         run: |
           set -euo pipefail  # Fail on errors and undefined variables
@@ -99,7 +135,8 @@ jobs:
           
             if [[ "${GLOBAL_LAMBDA_DEPLOY:-false}" == "true" ]] || \
                grep -q "^backend/functions/$FUNC_NAME/" changed_files.txt || \
-               grep -q "^backend/test/$FUNC_NAME/" changed_files.txt; then
+               grep -q "^backend/test/$FUNC_NAME/" changed_files.txt || \
+               { [ "$FUNC_NAME" = "PropertyHandler" ] && [ "${STATIC_PAGE_GENERATOR_CHANGED:-false}" = "true" ]; }; then
           
               echo "Changes detected for $FUNC_NAME – preparing deployment..."
           
@@ -131,7 +168,7 @@ jobs:
               fi
           
               echo "Deploying $LAMBDA_FUNC_NAME to AWS Lambda..."
-          
+
               # Create deployment package in a temporary directory
               mkdir -p deploy_temp
           

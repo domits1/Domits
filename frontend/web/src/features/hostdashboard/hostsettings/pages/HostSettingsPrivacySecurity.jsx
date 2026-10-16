@@ -3,7 +3,9 @@ import useSettingsTrans from "../hooks/useSettingsTrans";
 import SettingsSubPage from "../components/SettingsSubPage";
 import useUserProfile from "../../../../hooks/useUserProfile";
 import usePasswordChange from "../../../../hooks/usePasswordChange";
+import useAuthenticatorSetup from "../hooks/useAuthenticatorSetup";
 import AuthenticationStatusSection from "../../../../components/settings/AuthenticationStatusSection";
+import AuthenticatorAppSection from "../components/AuthenticatorAppSection";
 import PasswordChangeSection from "../../../../components/settings/PasswordChangeSection";
 import "../../../../styles/sass/pages/dashboard/settingsDashboard.css";
 import "../styles/hostSettings.css";
@@ -11,8 +13,9 @@ import "../styles/hostSettings.css";
 const HostSettingsPrivacySecurity = () => {
     const { t, hub } = useSettingsTrans("privacySecurity");
     const { t: personalDataT } = useSettingsTrans("personalData");
-    const { authStatus, authStatusLoading, authStatusError, mfaStatusError } = useUserProfile();
+    const { authStatus, authStatusLoading, authStatusError, mfaStatusError, refreshMfaStatus } = useUserProfile();
     const passwordChange = usePasswordChange();
+    const authenticatorSetup = useAuthenticatorSetup({ onStatusChange: refreshMfaStatus });
 
     return (
         <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={t.breadcrumb} title={t.title} subtitle={t.subtitle}>
@@ -25,6 +28,16 @@ const HostSettingsPrivacySecurity = () => {
                         authStatusError={authStatusError}
                         mfaStatusError={mfaStatusError}
                         labels={t.auth}
+                    />
+
+                    <AuthenticatorAppSection
+                        authStatus={authStatus}
+                        authStatusLoading={authStatusLoading}
+                        authStatusError={authStatusError}
+                        mfaStatusError={mfaStatusError}
+                        labels={t.auth}
+                        t={t.authenticator}
+                        {...authenticatorSetup}
                     />
 
                     <PasswordChangeSection t={personalDataT} {...passwordChange} />
