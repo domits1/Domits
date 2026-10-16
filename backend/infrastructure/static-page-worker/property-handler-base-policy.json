@@ -1,0 +1,51 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConnectToTheClusterAsAdmin",
+      "Effect": "Allow",
+      "Action": "dsql:DbConnectAdmin",
+      "Resource": "arn:aws:dsql:eu-west-2:115462458880:cluster/6qabud3emiqhbfkh2h4ttwz35i"
+    },
+    {
+      "Sid": "ReadTheParametersTheCodeNames",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": [
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/region",
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/host",
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/dbName",
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/schema",
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/direct-booking-website/quote-token-secret"
+      ]
+    },
+    {
+      "Sid": "InvokeTheFunctionsTheCodeNames",
+      "Effect": "Allow",
+      "Action": "lambda:InvokeFunction",
+      "Resource": [
+        "arn:aws:lambda:eu-north-1:115462458880:function:PriceLabs-Integration",
+        "arn:aws:lambda:eu-north-1:115462458880:function:UnifiedMessaging"
+      ]
+    },
+    {
+      "Sid": "ReadTheWhatsAppNumberSecrets",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:eu-north-1:115462458880:secret:domits/whatsapp/*"
+    },
+    {
+      "Sid": "ReadUsersAndTablesAndWriteLogs",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:GetUser",
+        "dynamodb:GetItem",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

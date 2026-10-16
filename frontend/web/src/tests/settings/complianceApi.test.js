@@ -20,7 +20,6 @@ const VILLA_PLACEHOLDER = `AUTO-${VILLA_ID}`;
 
 const MISSING = Symbol("missing");
 
-// Copies the real-shaped fixture and replaces (or removes) the registration number of the first listing.
 const fixtureWithRegistration = (value) => {
     const listings = JSON.parse(JSON.stringify(hostDashboardAll));
     if (value === MISSING) {

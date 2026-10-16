@@ -1163,8 +1163,62 @@
         "onboarding": {
           "title": "Incorporación",
           "desc": "Sigue tu progreso desde publicar tu alojamiento hasta ponerlo en marcha."
+        },
+        "homeAutomation": {
+          "title": "Domótica",
+          "desc": "Conecta cerraduras inteligentes para dar acceso a los huéspedes a tus alojamientos."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Domótica",
+      "title": "Domótica",
+      "subtitle": "Conecta RemoteLock para gestionar las cerraduras inteligentes de tus huéspedes.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Última sincronización",
+        "never": "Aún no hay sincronización"
+      },
+      "statuses": {
+        "notConnected": "No conectado",
+        "connecting": "Conectando",
+        "connected": "Conectado",
+        "authenticationError": "Error de inicio de sesión",
+        "connectionError": "Problema de conexión",
+        "disconnected": "Desconectado",
+        "expiredCredentials": "Inicio de sesión caducado",
+        "unknown": "Estado desconocido"
+      },
+      "actions": {
+        "connect": "Conectar",
+        "reconnect": "Volver a conectar",
+        "disconnect": "Desconectar"
+      },
+      "modal": {
+        "connect": {
+          "title": "Conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Conectar",
+          "confirming": "Conectando..."
+        },
+        "reconnect": {
+          "title": "Volver a conectar RemoteLock",
+          "body": "Te enviaremos a RemoteLock para iniciar sesión.",
+          "confirm": "Volver a conectar",
+          "confirming": "Reconectando..."
+        },
+        "disconnect": {
+          "title": "Desconectar RemoteLock",
+          "body": "Domits dejará de gestionar los códigos de acceso de tus huéspedes.",
+          "confirm": "Desconectar",
+          "confirming": "Desconectando..."
+        },
+        "cancel": "Cancelar",
+        "error": "Algo salió mal. Inténtalo de nuevo."
+      },
+      "loading": "Cargando tu conexión con RemoteLock...",
+      "loadError": "No pudimos cargar tu conexión con RemoteLock.",
+      "retry": "Intentar de nuevo"
     },
     "onboardingHub": {
       "breadcrumb": "Incorporación",
@@ -1379,12 +1433,33 @@
         "verified": "Verificado",
         "sms": "SMS",
         "authenticatorApp": "Aplicación de autenticación",
-        "comingSoon": "Próximamente: inicio de sesión por SMS y aplicación de autenticación.",
+        "comingSoon": "Próximamente: inicio de sesión por SMS.",
         "loading": "Cargando tu estado de autenticación...",
         "error": "No pudimos cargar tu estado de autenticación. Actualiza la página."
       },
       "pin": {
         "comingSoon": "Próximamente."
+      },
+      "authenticator": {
+        "setUp": "Configurar",
+        "setupTitle": "Configura tu aplicación de autenticación",
+        "scanInstruction": "Escanea este código QR con una aplicación de autenticación, como Google Authenticator o Microsoft Authenticator.",
+        "qrAlt": "Código QR para añadir Domits a tu aplicación de autenticación",
+        "manualKeyLabel": "¿No puedes escanearlo? Introduce esta clave manualmente:",
+        "codeLabel": "Código de 6 dígitos",
+        "verify": "Verificar",
+        "verifying": "Verificando...",
+        "cancel": "Cancelar",
+        "tryAgain": "Intentar de nuevo",
+        "close": "Cerrar",
+        "success": "Tu aplicación de autenticación está activada. Te pediremos un código cuando inicies sesión en un dispositivo nuevo.",
+        "errors": {
+          "invalidCode": "Este código no es válido. Introduce el código actual de 6 dígitos de tu aplicación.",
+          "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión y empieza la configuración de nuevo.",
+          "tooManyAttempts": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+          "enableFailed": "Tu código se aceptó, pero no pudimos activar la aplicación de autenticación. Inténtalo de nuevo.",
+          "generic": "Algo ha salido mal. Inténtalo de nuevo."
+        }
       }
     },
     "communicationPreferences": {
@@ -1533,6 +1608,59 @@
         "billingHistoryEmpty": "Todavía no hay registros de facturación disponibles.",
         "billingContact": "Contacto de facturación",
         "billingContactEmpty": "La gestión del contacto de facturación aparecerá aquí cuando la facturación esté habilitada."
+      },
+      "websitePlan": {
+        "sectionTitle": "Suscripción del sitio web de reserva directa",
+        "sectionSubtitle": "Elige el plan para tu sitio web de reservas. El precio de Elite se muestra a continuación.",
+        "loading": "Cargando tu plan del sitio web...",
+        "loadError": "No se pudo cargar tu plan actual del sitio web.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Lo básico para gestionar tu sitio web de reserva directa.",
+        "essentialsFeaturesTitle": "Incluye",
+        "featureBasicWebsite": "Funciones básicas del sitio web y de reservas",
+        "featureBasicCustomization": "Personalización básica y SEO",
+        "elite": "Elite",
+        "eliteDescription": "Más herramientas para ampliar y personalizar tu sitio web de reserva directa.",
+        "eliteFeaturesTitle": "Todo lo de Essentials, además de",
+        "featureCustomDomain": "Conecta tu propio dominio",
+        "featureAdvancedBuilder": "Creador web avanzado y páginas ilimitadas",
+        "featureLocalization": "Compatibilidad con varios idiomas y monedas",
+        "featureGrowthTools": "SEO avanzado, analítica, CRM, herramientas de IA, ventas adicionales y experimentos",
+        "currentPlan": "Plan actual",
+        "scheduled": "Programado",
+        "status": {
+          "ACTIVE": "Activo",
+          "PAST_DUE": "Pago pendiente",
+          "TRIALING": "Periodo de prueba",
+          "INCOMPLETE": "Pago pendiente",
+          "INCOMPLETE_EXPIRED": "Pago caducado",
+          "EXPIRED": "Caducado",
+          "CANCELLED": "Cancelado"
+        },
+        "perMonth": "al mes",
+        "free": "Gratis",
+        "upgrade": "Mejorar a Elite",
+        "restoreElite": "Reactivar Elite",
+        "switchToEssentials": "Cambiar a Essentials",
+        "processing": "Procesando...",
+        "changeError": "No se pudo actualizar tu plan del sitio web. Inténtalo de nuevo.",
+        "checkoutError": "No se pudo iniciar Stripe Checkout. Inténtalo de nuevo.",
+        "downgradeScheduled": "El cambio a Essentials está programado para el final del periodo de facturación actual.",
+        "downgradeSuccess": "Tu plan del sitio web ahora es Essentials.",
+        "restoreSuccess": "Tu suscripción Elite se ha reactivado.",
+        "unchanged": "Tu plan del sitio web ya está actualizado.",
+        "effectiveUntil": "Elite seguirá activo hasta el {date}.",
+        "priceUnavailable": "Precio no disponible",
+        "checkoutPending": "Estamos confirmando tu suscripción Elite. Puede tardar unos momentos.",
+        "checkoutSuccess": "Tu suscripción Elite está activa.",
+        "checkoutCancelled": "Se canceló el pago. Tu plan no ha cambiado.",
+        "checkoutStillPending": "Todavía no hemos recibido la confirmación. Es posible que el pago siga procesándose. Actualiza esta página dentro de un momento y no inicies otro proceso de pago.",
+        "cardTitle": "Plan del sitio web de reserva directa",
+        "cardSubtitle": "Essentials es gratis; Elite incluye herramientas avanzadas para tu sitio web.",
+        "cardNote": "Elige y gestiona la suscripción de tu sitio web.",
+        "breadcrumb": "Plan del sitio web de reserva directa",
+        "pageTitle": "Plan del sitio web de reserva directa",
+        "pageSubtitle": "Gestiona la suscripción de tu sitio web de reserva directa."
       },
       "enterprise": {
         "cardTitle": "Plan de tarifas Enterprise",

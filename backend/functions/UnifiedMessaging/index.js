@@ -1,5 +1,4 @@
 import { handleChannelManagementEvent } from "./.shared/channelManagement/handler/channelManagementHandler.js";
-import IngestionController from "./controller/ingestionController.js";
 import IntegrationController from "./controller/integrationController.js";
 import MessageController from "./controller/messageController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
@@ -8,7 +7,6 @@ import AutomatedMessageController from "./controller/automatedMessageController.
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
-const ingestionController = new IngestionController();
 const whatsAppWebhookController = new WhatsAppWebhookController();
 const channexWebhookController = new ChannexWebhookController();
 const automatedMessageController = new AutomatedMessageController();
@@ -152,13 +150,6 @@ const routeDefinitions = [
     matches: (method, path) =>
       method === "POST" && /\/threads\/[^/]+\/close$/.test(String(path || "")),
     handle: (event) => messageController.closeThread(event),
-  },
-  {
-    matches: (method, path) =>
-      method === "POST" &&
-      String(path || "").includes("/integrations/") &&
-      String(path || "").endsWith("/ingest/messages"),
-    handle: (event) => ingestionController.ingestMessages(event),
   },
   {
     matches: (method, path) =>
