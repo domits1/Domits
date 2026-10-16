@@ -14,7 +14,7 @@ The migration uses `IF NOT EXISTS` so it can be re-run, but that does not valida
 - **`main` schema:** Pending execution and verification
 - **`test` schema:** Pending execution and verification
 - **Stripe price amount check:** Pending — no access to the deployed Lambda configuration or Stripe Dashboard was available from this workspace
-- **Merge gate:** Do not merge/deploy until the migration has been run and verified, this section has been updated with the actual date and operator, and the Stripe amount check is confirmed
+- **Release readiness:** These are pre-deployment and checkout-enablement checks, not a merge requirement. Complete the migration and verification in each target environment before deploying code that depends on the new tables, and confirm the Stripe amount before setting `DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED=true`.
 
 ## Before you start
 
