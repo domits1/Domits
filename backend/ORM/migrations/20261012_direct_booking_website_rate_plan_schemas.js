@@ -1,3 +1,6 @@
+const ACTIVE_STATUS_SQL = "'ACTIVE'";
+const CURRENT_PLAN_STATUSES_SQL = [ACTIVE_STATUS_SQL, "'PAST_DUE'", "'TRIALING'"].join(", ");
+
 export class DirectBookingWebsiteRatePlanSchemas20261012 {
   async up(queryRunner) {
     await queryRunner.query("CREATE SCHEMA IF NOT EXISTS main;");
@@ -11,7 +14,7 @@ export class DirectBookingWebsiteRatePlanSchemas20261012 {
         price_cents INTEGER NOT NULL,
         currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
         billing_frequency VARCHAR(20) NOT NULL DEFAULT 'monthly',
-        status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+        status VARCHAR(20) NOT NULL DEFAULT ${ACTIVE_STATUS_SQL},
         effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         effective_until TIMESTAMP WITH TIME ZONE,
         stripe_customer_id VARCHAR(255),
@@ -34,7 +37,7 @@ export class DirectBookingWebsiteRatePlanSchemas20261012 {
       await queryRunner.query(`
         CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique${suffix}
         ON ${schema}.direct_booking_website_rate_plans (account_id)
-        WHERE status IN ('ACTIVE', 'PAST_DUE', 'TRIALING');
+        WHERE status IN (${CURRENT_PLAN_STATUSES_SQL});
       `);
       await queryRunner.query(`
         CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique${suffix}
