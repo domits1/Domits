@@ -8,6 +8,8 @@ import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
 import { Review_Response } from "database/models/Review_Response";
+import { Team_Member } from "database/models/Team_Member";
+import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import {
@@ -104,7 +106,7 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
 export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
-      .where("review.property_id = :propertyId", { propertyId })
+      .where(propertyId === undefined ? "1 = 1" : "review.property_id = :propertyId", { propertyId })
       .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
@@ -113,6 +115,53 @@ export class ReviewRepository {
       .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
   }
 
+  hostResponseQuery(database, username) {
+    return this.eligibleReviewQuery(database)
+      .innerJoin(Property, "property", "property.id = review.property_id")
+      .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :username AND member.status = :active AND member.role = :role",
+        { username, active: "active", role: "Property Operations Manager" })
+      .andWhere("(property.hostid = :username OR member.id IS NOT NULL)", { username })
+      .andWhere("property.status = :propertyStatus", { propertyStatus: "ACTIVE" })
+      .andWhere("TRIM(review.public_review) <> ''");
+  }
+
+  async findResponseEligibleReviews(username) {
+    const database = await Database.getInstance();
+    const reviews = await this.hostResponseQuery(database, username)
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`)).orderBy("review.created_at", "DESC").getMany();
+    return this.attachPublicDetails(database, reviews);
+  }
+
+  async saveHostResponse(user, reviewId, message, action, now) {
+    try {
+      const database = await Database.getInstance();
+      return await database.transaction(async (manager) => {
+        const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
+        if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
+        const repository = manager.getRepository(Review_Response);
+        const existing = await repository.findOne({ where: { reviewId } });
+        if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");
+        if (action === "draft" && existing?.status === "published") throw new ConflictException("A published response cannot become a draft.");
+        let status = "draft";
+        if (action === "edit") {
+          status = existing.status;
+        } else if (action === "publish") {
+          status = "published";
+        }
+        const saved = await repository.save({ ...existing, id: existing?.id || randomUUID(), reviewId,
+          authorId: user.userId, authorRole: "host", message, status, createdAt: existing?.createdAt ?? now,
+          updatedAt: now, publishedAt: status === "published" ? existing?.publishedAt ?? now : null, deletedAt: null });
+        return { id: saved.id, message: saved.message, status: saved.status, createdAt: saved.createdAt,
+          updatedAt: saved.updatedAt, publishedAt: saved.publishedAt };
+      });
+    } catch (error) {
+      const cause = error.driverError || error;
+      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_response_review_unique")) {
+        throw new ConflictException("A response already exists. Reload the review before editing.");
+      }
+      throw error;
+    }
+  }
 
   async getPublicReviewPage(propertyId, offset) {
     const database = await Database.getInstance();
@@ -139,10 +188,16 @@ export class ReviewRepository {
       .andWhere("rating.rating BETWEEN 1 AND 5")
       .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
     const count = Number(summary.count);
+    const responses = ids.length ? await database.getRepository(Review_Response).find({
+      where: { reviewId: In(ids), status: "published", deletedAt: IsNull() },
+      select: ["reviewId", "message", "publishedAt"],
+    }) : [];
     return { property_id: propertyId, overall_score: count ? Number(summary.score) : null,
       review_count: count, next_offset: offset + 10 < count ? offset + 10 : null,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: true,
+        response: responses.filter((response) => response.reviewId === review.id)
+          .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
         categories: ratings.filter((rating) => rating.review_id === review.id)
           .map(({ key, label, rating }) => ({ key, label, rating: Number(rating) })) })) };
   }

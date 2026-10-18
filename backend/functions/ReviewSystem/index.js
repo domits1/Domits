@@ -9,10 +9,11 @@ const routes = new Map([
   ["/properties/{propertyId}/reviews", new Map([["GET", "getPublicReviews"]])],
   ["/reviews/{id}/domits-private-feedback", new Map([["GET", "getPrivateFeedback"]])],
   ["/reviews/{id}/response", new Map([
-    ["POST", "createReviewResponse"],
-    ["PATCH", "updateReviewResponse"],
+    ["POST", "saveHostResponse"],
+    ["PATCH", "saveHostResponse"],
     ["DELETE", "deleteReviewResponse"],
   ])],
+  ["/reviews/{id}/response/publish", new Map([["POST", "saveHostResponse"]])],
   ["/reviews/{id}/publish", new Map([["POST", "publishReview"]])],
 ]);
 
