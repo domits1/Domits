@@ -10,8 +10,7 @@ const labels = {
     unavailable: "Unavailable",
     verified: "Verified",
     sms: "SMS",
-    authenticatorApp: "Authenticator app",
-    comingSoon: "Coming soon: SMS and authenticator app sign-in.",
+    comingSoon: "Coming soon: SMS sign-in.",
     loading: "Loading your authentication status...",
     error: "We couldn't load your authentication status. Please refresh the page.",
 };
@@ -31,13 +30,14 @@ describe("AuthenticationStatusSection", () => {
         expect(screen.queryByText(labels.emailLabel)).not.toBeInTheDocument();
     });
 
-    test("shows Active for a verified email and the coming-soon note for SMS/Authenticator", () => {
+    test("shows Active for a verified email and the coming-soon note for SMS", () => {
         render(<AuthenticationStatusSection {...baseProps} />);
         expect(screen.getByText(labels.emailLabel)).toBeInTheDocument();
         expect(screen.getAllByText(labels.active)).toHaveLength(1);
         expect(screen.getByText(labels.verified)).toBeInTheDocument();
-        expect(screen.getAllByText(labels.inactive)).toHaveLength(2);
+        expect(screen.getAllByText(labels.inactive)).toHaveLength(1);
         expect(screen.getByText(labels.comingSoon)).toBeInTheDocument();
+        expect(screen.queryByText("Authenticator app")).not.toBeInTheDocument();
     });
 
     test("shows Inactive for an unverified email", () => {
@@ -47,13 +47,13 @@ describe("AuthenticationStatusSection", () => {
                 authStatus={{ emailVerified: false, phoneVerified: false, preferredMFA: "NOMFA" }}
             />
         );
-        expect(screen.getAllByText(labels.inactive)).toHaveLength(3);
+        expect(screen.getAllByText(labels.inactive)).toHaveLength(2);
         expect(screen.queryByText(labels.verified)).not.toBeInTheDocument();
     });
 
     test("when the whole fetch failed, email also shows Unavailable, not Inactive", () => {
         render(<AuthenticationStatusSection {...baseProps} authStatusError />);
-        expect(screen.getAllByText(labels.unavailable)).toHaveLength(3);
+        expect(screen.getAllByText(labels.unavailable)).toHaveLength(2);
         expect(screen.queryByText(labels.inactive)).not.toBeInTheDocument();
         expect(screen.getByText(labels.error)).toBeInTheDocument();
     });
@@ -62,7 +62,7 @@ describe("AuthenticationStatusSection", () => {
         render(<AuthenticationStatusSection {...baseProps} mfaStatusError />);
         expect(screen.getByText(labels.active)).toBeInTheDocument();
         expect(screen.getByText(labels.verified)).toBeInTheDocument();
-        expect(screen.getAllByText(labels.unavailable)).toHaveLength(2);
+        expect(screen.getAllByText(labels.unavailable)).toHaveLength(1);
         expect(screen.getByText(labels.error)).toBeInTheDocument();
     });
 });

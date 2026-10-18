@@ -73,7 +73,7 @@ describe("guest history service and authenticated controller", () => {
       queryStringParameters: { view: "history" } });
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body).can_edit).toBe(false);
-    await expect(service.updateReview("guest-1", id, { overall_rating: 4, public_review: "Updated", updated_at: 1500 }))
+    await expect(service.updateEditableReview("guest-1", id, { overall_rating: 4, public_review: "Updated", updated_at: 1500 }))
       .rejects.toThrow("editing period");
     expect(repository.updateEditableReview).not.toHaveBeenCalled();
   });
@@ -81,7 +81,7 @@ describe("guest history service and authenticated controller", () => {
     repository.findGuestReviewHistory.mockResolvedValue([]);
     await expect(service.getGuestReviewDetail("guest-2", id)).rejects.toThrow("Review not found");
     expect(repository.findGuestReviewHistory).toHaveBeenCalledWith("guest-2", { id });
-    await expect(service.updateReview("guest-2", id, {})).rejects.toThrow("own reviews");
+    await expect(service.updateEditableReview("guest-2", id, { overall_rating: 4, public_review: "Updated", updated_at: 1500 })).rejects.toThrow("own reviews");
     expect(repository.updateEditableReview).not.toHaveBeenCalled();
   });
   test("disables editing without configured policy", async () => {
