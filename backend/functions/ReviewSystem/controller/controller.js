@@ -37,8 +37,9 @@ export class Controller {
 
   async getPublicReviews(event) {
     try {
+      const { offset = "0", ...filters } = event.queryStringParameters ?? {};
       return this.jsonResponse(200, await this.service.getPublicReviews(
-        this.getPathParameter(event, "propertyId"), event.queryStringParameters?.offset ?? "0"));
+        this.getPathParameter(event, "propertyId"), offset, filters));
     } catch (error) {
       return this.handleError(error);
     }
