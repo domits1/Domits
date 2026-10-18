@@ -365,6 +365,7 @@ export class ReviewRepository {
     const query = database.getRepository(Review).createQueryBuilder("review")
       .select(REVIEW_FIELDS.map((field) => `review.${field}`))
       .where("review.reviewer_user_id = :guestId", { guestId })
+      .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
     if (id !== undefined) query.andWhere("review.id = :id", { id });
     // A guest's own history includes rejected entries and properties no longer publicly active.
@@ -820,16 +821,7 @@ export class ReviewRepository {
   }
 
   async deleteOwnReview(id, reviewerUserId, now) {
-    const dataSource = await Database.getInstance();
-
-    return dataSource.getRepository(Review).update(
-      { id, reviewer_user_id: reviewerUserId },
-      {
-        status: "REJECTED",
-        publication_status: "REJECTED",
-        updated_at: now,
-      }
-    );
+    return this.softDelete(id, reviewerUserId, now);
   }
 
   async softDeleteResponse({ reviewId, authorId, deletedAt }) {

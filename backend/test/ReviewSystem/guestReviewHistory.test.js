@@ -113,10 +113,12 @@ describe("guest history repository query", () => {
     });
     Database.getInstance.mockResolvedValue(database);
     const result = await new ReviewRepository().findGuestReviewHistory("guest-1", { id: reviewId });
-    expect(query.getParameters()).toMatchObject({ guestId: "guest-1", reviewType: "GUEST_TO_PROPERTY" });
+    expect(query.getParameters()).toMatchObject({ guestId: "guest-1", reviewType: "GUEST_TO_PROPERTY", deletedStatus: "DELETED" });
     const sql = query.getQuery();
     expect(sql).toContain('"review"."reviewer_user_id" = :guestId');
     expect(sql).not.toContain(":status");
+    expect(sql).toContain('"review"."status" <> :deletedStatus');
+    expect(sql.indexOf('"review"."status" <> :deletedStatus')).toBeLessThan(sql.indexOf("LIMIT"));
     expect(sql).toContain('ORDER BY "review_created_at" DESC, "review_id" DESC');
     expect(query.expressionMap.limit).toBe(reviewId === undefined ? 11 : 1);
     if (reviewId) expect(query.getParameters().id).toBe(id);

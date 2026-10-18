@@ -670,8 +670,7 @@ export class ReviewService {
     return text || null;
   }
 
-  // Return the caller's review list using the requested scope and editability rules.
-  // This gives a clear view of written or received reviews while marking which entries can still be edited.
+  // Map a guest's own review to history fields, including response and editability.
   guestHistoryItem(review, timestamp) {
     const deadline = this.editDeadline(review);
     return { id: review.id, property_id: review.property_id, property_name: review.property_name,
