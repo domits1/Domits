@@ -11,6 +11,7 @@ import { Review_Response } from "database/models/Review_Response";
 import { Team_Member } from "database/models/Team_Member";
 import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import {
   assertEligibleBooking,
@@ -167,9 +168,11 @@ export class ReviewRepository {
     const query = this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" })
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
       .andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
         filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
       });
+    applyCompletedStayConditions(query, filters.verificationNow ?? Date.now());
     if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
     if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
     return query;
@@ -182,10 +185,12 @@ export class ReviewRepository {
     });
     if (!property) return null;
     const eligible = () => this.filteredPublicReviewQuery(database, propertyId, filters);
-    const summary = await this.eligibleReviewQuery(database, propertyId)
+    const summaryQuery = this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" })
-      .select("AVG(review.overall_rating)", "score").getRawOne();
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id");
+    applyCompletedStayConditions(summaryQuery, filters.verificationNow ?? Date.now());
+    const summary = await summaryQuery.select("AVG(review.overall_rating)", "score").getRawOne();
     const matching = await eligible().select("COUNT(*)", "count").getRawOne();
     const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
     const recent = !filters.sort || filters.sort === "recent";
