@@ -84,19 +84,6 @@ export class DestinationRepository {
 
     return retryOnConflict(() =>
       client.transaction(async (manager) => {
-        const locked = await manager.queryRunner.query(
-          `SELECT country, city
-      FROM ${locationTableName(schemaName)}
-      WHERE property_id = $1
-      FOR UPDATE`,
-          [normalizedPropertyId],
-          true
-        );
-        const stored = (Array.isArray(locked?.records) ? locked.records : [])[0];
-        if (!stored || String(stored.country ?? "") !== country || String(stored.city ?? "") !== city) {
-          return false;
-        }
-
         const rows = [
           [chain.continent, null, null],
           [chain.country, chain.continent.path, chain.country.code],
