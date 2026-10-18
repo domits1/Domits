@@ -15,6 +15,8 @@ test("encodes the selected property and fetches public reviews without credentia
     expect(options.headers).toBeUndefined();
     global.fetch.mockResolvedValue({ ok: false, text: async () => "" });
     await expect(getPublicReviews("p1", 0)).rejects.toThrow("Could not load reviews");
+    global.fetch.mockResolvedValue({ ok: false, text: async () => '{"message":"Invalid review date."}' });
+    await expect(getPublicReviews("p1", 0)).rejects.toThrow("Invalid review date.");
   } finally {
     global.fetch = originalFetch;
   }
