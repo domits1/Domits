@@ -62,7 +62,10 @@ describe("the destination page repository", () => {
     expect(destinations[1]).toMatchObject({ parentId: null, countryCode: null, activeListings: 0 });
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
-    expect(statement).toContain("count(p.id) AS active_listings");
+    expect(statement).toContain("count(l.property_id) AS active_listings");
+    expect(statement).toContain(
+      `LEFT JOIN ${SCHEMA}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city`
+    );
     expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property_destination m ON m.destination_id = d.id`);
     expect(statement).not.toContain("count(*)");
     expect(statement).not.toContain("count(m.");
@@ -116,6 +119,9 @@ describe("the destination page repository", () => {
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
     expect(statement).not.toContain(`LEFT JOIN ${SCHEMA}.property p`);
+    expect(statement).toContain(
+      `JOIN ${SCHEMA}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city`
+    );
     expect(statement).toContain("WHERE d.path = $2 OR d.path LIKE $3");
     expect(statement).toContain("v.variant = 'web'");
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
