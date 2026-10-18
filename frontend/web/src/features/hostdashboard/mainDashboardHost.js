@@ -21,6 +21,7 @@ import HostSettingsCompany from "./hostsettings/pages/HostSettingsCompany";
 import HostSettingsRatePlans from "./hostsettings/pages/HostSettingsRatePlans";
 import HostSettingsCompliance from "./hostsettings/pages/HostSettingsCompliance";
 import HostSettingsPrivacySecurity from "./hostsettings/pages/HostSettingsPrivacySecurity";
+import HomeAutomationRoute from "./hosthomeautomation/views/HomeAutomationRoute";
 import HostOnboardingHub from "./onboardinghub/pages/HostOnboardingHub";
 import HostOnboardingEnterprise from "./onboardinghub/pages/HostOnboardingEnterprise";
 import HostOnboardingGoLive from "./onboardinghub/pages/HostOnboardingGoLive";
@@ -30,6 +31,10 @@ import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
 import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
+import {
+  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
+  CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE,
+} from "./channexadmin/channexCertificationAccess";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -51,6 +56,7 @@ import RegistrationNumberView from "../../features/verification/hostverification
 import HostReservationDetails from "./HostReservationDetails";
 import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnterpriseRatePlan";
 import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
+import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
 function MainDashboardHost() {
   return (
@@ -120,7 +126,11 @@ function MainDashboardHost() {
           <Route path="messages/*" element={<HostMessagingPage />} />
           <Route path="integrations-marketplace" element={<HostIntegrations />} />
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
-          <Route path="admin/channex-certification" element={<ChannexCertificationAdminPage />} />
+          <Route path={CHANNEX_CERTIFICATION_ADMIN_ROUTE} element={<ChannexCertificationAdminPage />} />
+          <Route
+            path={CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE}
+            element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
+          />
           <Route path="revenues" element={<HostReports />} />
 
           <Route path="tasks" element={<HostTasks />} />
@@ -147,8 +157,13 @@ function MainDashboardHost() {
             path="settings/rate-plans/direct-booking"
             element={<HostSettingsDirectBookingRatePlan />}
           />
+          <Route
+            path="settings/rate-plans/direct-booking-website"
+            element={<HostSettingsDirectBookingWebsiteRatePlan />}
+          />
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
+          <Route path="settings/home-automation" element={<HomeAutomationRoute />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />

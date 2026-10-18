@@ -26,7 +26,6 @@ import ChannexAriPayloadService from "../.shared/channelManagement/services/chan
 import ChannexAriExecutionService from "../.shared/channelManagement/services/channexAriExecutionService.js";
 import ChannexAriOrchestrationService from "../.shared/channelManagement/services/channexAriOrchestrationService.js";
 import ChannexFullSyncService from "../.shared/channelManagement/services/channexFullSyncService.js";
-import ChannexCertificationService from "../.shared/channelManagement/services/channexCertificationService.js";
 import ChannexDiagnosticsService from "../.shared/channelManagement/services/channexDiagnosticsService.js";
 import {
   summarizeChannexGroupedPayloads,
@@ -217,7 +216,6 @@ export default class IntegrationService {
     channexAriExecutionService = null,
     channexAriOrchestrationService = null,
     channexFullSyncService = null,
-    channexCertificationService = null,
     channexDiagnosticsService = null,
     channexBookingRevisionImportService = null,
     channexAvailabilitySyncService = null,
@@ -321,12 +319,6 @@ export default class IntegrationService {
           this.resolveChannexSyncCredentialContext(...args),
         logChannexFullCertificationSync: (...args) =>
           this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
-      });
-    this.channexCertificationService =
-      channexCertificationService ||
-      new ChannexCertificationService({
-        externalBookingImportRepository,
-        channexBookingAvailabilityBridge,
       });
     this.channexBookingRevisionImportService =
       channexBookingRevisionImportService ||
@@ -836,61 +828,12 @@ export default class IntegrationService {
     }
   }
 
-  async createIntegration(body) {
-    const userId = requireStr(body.userId);
-    const channel = requireStr(body.channel);
-
-    if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!channel) return bad(400, { error: "Missing required field: channel" });
-
-    const id = randomUUID();
-    const now = nowMs();
-
-    const created = await this.accounts.create({
-      id,
-      userId,
-      channel,
-      externalAccountId: body.externalAccountId ?? null,
-      displayName: body.displayName ?? null,
-      status: body.status ?? "PENDING",
-      credentialsRef: body.credentialsRef ?? null,
-      lastSuccessfulSyncAt: null,
-      lastFailedSyncAt: null,
-      lastErrorCode: null,
-      lastErrorMessage: null,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await this.sync.ensureStateRow(id, "MESSAGES");
-    await this.sync.ensureStateRow(id, "RESERVATIONS");
-
-    return ok(created);
-  }
-
   async listIntegrations(userId) {
     if (!requireStr(userId)) return bad(400, { error: "Missing required query param: userId" });
 
     const items = await this.accounts.listByUserId(userId);
     const hydrated = await Promise.all(items.map((item) => this.hydrateListedIntegration(item)));
     return ok(hydrated);
-  }
-
-  async updateIntegration(integrationId, patch) {
-    const id = requireStr(integrationId);
-    if (!id) return bad(400, { error: "Missing integration id in path" });
-
-    const updated = await this.accounts.update(id, {
-      externalAccountId: patch.externalAccountId,
-      displayName: patch.displayName,
-      status: patch.status,
-      credentialsRef: patch.credentialsRef,
-      lastErrorCode: patch.lastErrorCode,
-      lastErrorMessage: patch.lastErrorMessage,
-    });
-
-    if (!updated) return bad(404, { error: "Integration not found" });
-    return ok(updated);
   }
 
   async getIntegrationLogs(integrationId, limit = 50) {
@@ -1090,14 +1033,6 @@ export default class IntegrationService {
 
   async listChannexBookingRevisions(userId, options = {}) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(userId, options);
-  }
-
-  buildChannexCertificationCancelSkippedEvidence(...args) {
-    return this.channexCertificationService.buildChannexCertificationCancelSkippedEvidence(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(userId, domitsPropertyId, options = {}) {
