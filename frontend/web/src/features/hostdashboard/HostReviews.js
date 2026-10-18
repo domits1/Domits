@@ -212,7 +212,7 @@ function HostReviews() {
                                     </div>
                                 ))
                             ) : (
-                                <p className={styles.reviewAlert}>It appears that you have not received any reviews yet...</p>
+                                <p className={styles.reviewAlert}>You haven’t received any reviews yet.</p>
                             )}
                         </div>
                     </div>

@@ -20,7 +20,8 @@ export default function HostResponseForm({ review }) {
       const saved = await saveHostResponse(review.id, text);
       setResponse(saved); setMessage(saved.message);
     } catch (error_) {
-      setError(error_ instanceof Error ? error_.message : "Could not save your response.");
+      const message = error_ instanceof Error ? error_.message : "";
+      setError(message || "Could not save your response. Please try again.");
     }
     finally { setBusy(false); }
   };
