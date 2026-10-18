@@ -73,6 +73,7 @@ const ReviewsSection = ({
   totalReviews = 0,
   categoryScores = {},
   onShowAll,
+  emptyMessage = "No reviews yet.",
 }) => {
   const hasReviews = reviews.length > 0;
   const hasCategories = Object.keys(categoryScores).length > 0;
@@ -126,7 +127,7 @@ const ReviewsSection = ({
           )}
         </>
       ) : (
-        <p className="reviews-section__empty">No reviews yet.</p>
+        emptyMessage && <p className="reviews-section__empty">{emptyMessage}</p>
       )}
     </div>
   );
@@ -166,6 +167,7 @@ ReviewsSection.propTypes = {
     value: PropTypes.number,
   }),
   onShowAll: PropTypes.func,
+  emptyMessage: PropTypes.string,
 };
 
 export default ReviewsSection;

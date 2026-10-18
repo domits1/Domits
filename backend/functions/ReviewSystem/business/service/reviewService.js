@@ -125,7 +125,7 @@ export class ReviewService {
       || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
       throw new BadRequestException("Invalid review page offset.");
     }
-    const allowed = ["minRating", "maxRating", "startDate", "endDate", "verified", "sort"];
+    const allowed = ["minRating", "maxRating", "startDate", "endDate", "sort"];
     if (Object.keys(filters).some((key) => !allowed.includes(key))) {
       throw new BadRequestException("Unsupported review filter.");
     }
@@ -152,11 +152,7 @@ export class ReviewService {
     if (minRating > maxRating || (start !== undefined && end !== undefined && start > end)) {
       throw new BadRequestException("Invalid review filter range.");
     }
-    if (filters.verified !== undefined && !["true", "false"].includes(filters.verified)) {
-      throw new BadRequestException("verified must be true or false.");
-    }
     if (!["recent", "highest", "lowest"].includes(sort)) throw new BadRequestException("Unsupported review sort.");
-    // Verified preferences never relax the existing public eligibility rules.
     const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
       minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort,
     });

@@ -59,15 +59,12 @@ test("combines filters, resets the page, keeps filters during pagination, and cl
   fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "4" } });
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
     expect.objectContaining({ minRating: "4" })));
-  fireEvent.click(screen.getByLabelText("Verified stays only"));
-  await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
-    expect.objectContaining({ minRating: "4", verified: "true" })));
   fireEvent.click(await screen.findByText("Next reviews"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 10, expect.anything(),
-    expect.objectContaining({ minRating: "4", verified: "true" })));
+    expect.objectContaining({ minRating: "4" })));
   fireEvent.click(screen.getByText("Clear filters"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
-    expect.objectContaining({ minRating: "", verified: "" })));
+    expect.objectContaining({ minRating: "" })));
 });
 test("keeps filters visible when there are no matches", async () => {
   getPublicReviews.mockResolvedValue(empty);
@@ -75,6 +72,20 @@ test("keeps filters visible when there are no matches", async () => {
   await screen.findByText("No reviews match your selected filters.");
   expect(screen.getByLabelText("Minimum rating")).toBeInTheDocument();
   expect(screen.getByText("0 matching reviews")).toBeInTheDocument();
+});
+
+test.each([0, 1])("keeps the property rating visible with %s matches and removes the verified filter", async (count) => {
+  getPublicReviews.mockResolvedValue({ ...empty, overall_score: 4.2, review_count: count,
+    reviews: count ? [{ id: "five", rating: 5, text: "Excellent", date: 1000, verified: true }] : [] });
+  render(<PublicReviews propertyId="p1" />);
+  expect(await screen.findByText("4.2")).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "5" } });
+  await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
+    expect.objectContaining({ minRating: "5" })));
+  expect(await screen.findByText("4.2")).toBeInTheDocument();
+  expect(screen.queryByLabelText("Verified stays only")).not.toBeInTheDocument();
+  expect(getPublicReviews.mock.calls.at(-1)[3]).not.toHaveProperty("verified");
+  if (count === 0) expect(screen.getByText("No reviews match your selected filters.")).toBeInTheDocument();
 });
 test("resets filters when switching properties and ignores the old request", async () => {
   let oldResult;

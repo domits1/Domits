@@ -182,8 +182,11 @@ export class ReviewRepository {
     });
     if (!property) return null;
     const eligible = () => this.filteredPublicReviewQuery(database, propertyId, filters);
-    const summary = await eligible().select("AVG(review.overall_rating)", "score")
-      .addSelect("COUNT(*)", "count").getRawOne();
+    const summary = await this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
+        { propertyStatus: "ACTIVE" })
+      .select("AVG(review.overall_rating)", "score").getRawOne();
+    const matching = await eligible().select("COUNT(*)", "count").getRawOne();
     const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
     if (filters.sort === "highest" || filters.sort === "lowest") {
       page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
@@ -199,12 +202,12 @@ export class ReviewRepository {
       .where("rating.reviewId IN (:...ids)", { ids })
       .andWhere("rating.rating BETWEEN 1 AND 5")
       .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
-    const count = Number(summary.count);
+    const count = Number(matching.count);
     const responses = ids.length ? await database.getRepository(Review_Response).find({
       where: { reviewId: In(ids), status: "published", deletedAt: IsNull() },
       select: ["reviewId", "message", "publishedAt"],
     }) : [];
-    return { property_id: propertyId, overall_score: count ? Number(summary.score) : null,
+    return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
       review_count: count, next_offset: offset + 10 < count ? offset + 10 : null,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: true,

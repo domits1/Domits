@@ -49,20 +49,19 @@ describe("public review retrieval", () => {
     expect((await controller.getPublicReviews({})).statusCode).toBe(400);
   });
   test.each([{ minRating: "0" }, { maxRating: "6" }, { minRating: "4.5" },
-    { minRating: "5", maxRating: "2" }, { verified: "yes" }, { sort: "unknown" },
+    { minRating: "5", maxRating: "2" }, { verified: "yes" }, { verified: "true" }, { verified: "false" }, { sort: "unknown" },
     { startDate: "2026-02-30" }, { startDate: "bad" }, { minRating: [] },
     { startDate: "2026-02-01", endDate: "2026-01-01" }, { propertyId: "spoofed" }])(
     "rejects invalid filters %j before querying", async (filters) => {
       expect((await controller.getPublicReviews(request(filters))).statusCode).toBe(400);
       expect(query.getMany).not.toHaveBeenCalled();
     });
-  test.each([{ minRating: "4" }, { maxRating: "2" }, { verified: "true" },
-    { verified: "false" }, { startDate: "2026-01-01" }, { endDate: "2026-01-31" }, { sort: "lowest" }])(
+  test.each([{ minRating: "4" }, { maxRating: "2" }, { startDate: "2026-01-01" }, { endDate: "2026-01-31" }, { sort: "lowest" }])(
     "accepts individual filters %j", async (filters) => {
       expect((await controller.getPublicReviews(request(filters))).statusCode).toBe(200);
     });
-  test("combines filters for the summary and page with inclusive UTC dates", async () => {
-    const result = await controller.getPublicReviews(request({ minRating: "4", maxRating: "5", verified: "true",
+  test("combines filters for the matching count and page with inclusive UTC dates", async () => {
+    const result = await controller.getPublicReviews(request({ minRating: "4", maxRating: "5",
       startDate: "2026-01-01", endDate: "2026-01-31", sort: "highest", offset: "10" }));
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toMatchObject({ review_count: 11, next_offset: null });
@@ -82,6 +81,13 @@ describe("public review retrieval", () => {
     const result = JSON.parse((await controller.getPublicReviews(request({ minRating: "5" }))).body);
     expect(result).toEqual({ property_id: "p1", overall_score: null, review_count: 0, next_offset: null, reviews: [] });
     expect(query.getRawMany).not.toHaveBeenCalled();
+  });
+  test.each([0, 2])("preserves the property score with %s filtered matches", async (count) => {
+    query.getRawOne.mockResolvedValueOnce({ score: "4.2" }).mockResolvedValueOnce({ count: String(count) });
+    reviews = [];
+    const result = JSON.parse((await controller.getPublicReviews(request({ minRating: "5",
+      startDate: "2026-01-01" }))).body);
+    expect(result).toMatchObject({ overall_score: 4.2, review_count: count, next_offset: null });
   });
   test("rejects unavailable properties without retrieving review data", async () => {
     property = null;
@@ -107,4 +113,32 @@ test("keeps review publication and property visibility parameters independent in
   expect(query.getQuery()).toContain(">= :filterStart");
   expect(query.getQuery()).toContain("< :filterEnd");
   expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));
+});
+
+test("applies filters to count and list but never to the overall rating SQL", async () => {
+  const database = new DataSource({ type: "postgres", schema: "main", entities: [Property, Review] });
+  await database.buildMetadatas();
+  const queries = [];
+  const repository = database.getRepository(Review);
+  const build = repository.createQueryBuilder.bind(repository);
+  jest.spyOn(database, "getRepository").mockImplementation((entity) => entity === Property
+    ? { findOne: async () => ({ id: "p1" }) }
+    : { createQueryBuilder: () => {
+      const query = build("review");
+      jest.spyOn(query, "getRawOne").mockResolvedValue({ score: "4.2", count: "0" });
+      jest.spyOn(query, "getMany").mockResolvedValue([]);
+      queries.push(query);
+      return query;
+    } });
+  Database.getInstance.mockResolvedValue(database);
+  const result = await new ReviewRepository().getPublicReviewPage("p1", 0,
+    { minRating: 5, maxRating: 5, start: 1000, endExclusive: 2000 });
+  expect(result).toMatchObject({ overall_score: 4.2, review_count: 0 });
+  expect(queries).toHaveLength(3);
+  expect(queries[0].getQuery()).toContain('AVG("review"."overall_rating")');
+  expect(queries[0].getQuery()).not.toContain(":filter");
+  for (const query of queries.slice(1)) {
+    expect(query.getParameters()).toMatchObject({ filterMinimum: 5, filterMaximum: 5,
+      filterStart: 1000, filterEnd: 2000 });
+  }
 });
