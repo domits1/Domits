@@ -49,6 +49,13 @@ export class Service {
         return created;
     }
 
+    async getTeamMemberById(memberId) {
+        const dataSource = await Database.getInstance();
+        const member = await this.repository.findById(dataSource, memberId);
+        if (!member) throw new NotFoundException("Team member not found.");
+        return member;
+    }
+
     async removeMember(hostId, memberId) {
         const dataSource = await Database.getInstance();
 

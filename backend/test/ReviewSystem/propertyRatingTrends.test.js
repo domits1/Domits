@@ -6,17 +6,16 @@ describe("property rating trends", () => {
   let repository, service, originalThreshold, originalMinimum;
   const query = { endDate: "2026-10-06", days: "30" };
   const scores = (previous, current, previousCount = 3, currentCount = 3) => {
-    repository.getPropertyReviewScore
-      .mockResolvedValueOnce({ overall_score: previous, review_count: previousCount })
-      .mockResolvedValueOnce({ overall_score: current, review_count: currentCount });
+    repository.getPropertyRatingTrendPage.mockResolvedValue([{ property_id: "p1",
+      previous_average_rating: previous, current_average_rating: current,
+      previous_review_count: previousCount, current_review_count: currentCount }]);
   };
   beforeEach(() => {
     originalThreshold = process.env.REVIEW_DECLINE_THRESHOLD;
     originalMinimum = process.env.REVIEW_TREND_MIN_REVIEWS;
     process.env.REVIEW_DECLINE_THRESHOLD = "0.5";
     process.env.REVIEW_TREND_MIN_REVIEWS = "3";
-    repository = { findManagedProperties: jest.fn().mockResolvedValue([{ id: "p1" }]),
-      findManagedProperty: jest.fn().mockResolvedValue({ id: "p1" }), getPropertyReviewScore: jest.fn() };
+    repository = { getPropertyRatingTrendPage: jest.fn().mockResolvedValue([]) };
     service = new ReviewService({ repository, now: () => Date.parse("2026-10-07T12:00:00Z") });
   });
   afterEach(() => {
@@ -42,29 +41,29 @@ describe("property rating trends", () => {
   test("uses equal adjacent windows and ignores spoofed owner/policy parameters", async () => {
     scores(4.5, 4);
     await service.getPropertyRatingTrends("host-1", { ...query, hostId: "spoofed", threshold: 99 });
-    expect(repository.findManagedProperties).toHaveBeenCalledWith("host-1", 0);
-    expect(repository.getPropertyReviewScore.mock.calls).toEqual([
-      ["p1", "host-1", { start: Date.parse("2026-08-08T00:00:00Z"), endExclusive: Date.parse("2026-09-07T00:00:00Z") }],
-      ["p1", "host-1", { start: Date.parse("2026-09-07T00:00:00Z"), endExclusive: Date.parse("2026-10-07T00:00:00Z") }],
-    ]);
+    expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledWith("host-1", expect.objectContaining({
+      previousStart: Date.parse("2026-08-08T00:00:00Z"), currentStart: Date.parse("2026-09-07T00:00:00Z"),
+      endExclusive: Date.parse("2026-10-07T00:00:00Z"), threshold: 0.5, minimumReviews: 3,
+    }));
   });
-  test("excludes properties transferred during aggregation", async () => {
-    scores(4.5, 4);
-    repository.findManagedProperty.mockResolvedValue(null);
+  test("returns empty results for managers without matching properties", async () => {
     expect((await service.getPropertyRatingTrends("host-1", query)).properties).toEqual([]);
   });
-  test("returns empty results for managers without properties", async () => {
-    repository.findManagedProperties.mockResolvedValue([]);
-    expect((await service.getPropertyRatingTrends("host-1", query)).properties).toEqual([]);
-    expect(repository.getPropertyReviewScore).not.toHaveBeenCalled();
-  });
-  test("bounds processing to 25 properties and returns a next offset", async () => {
-    repository.findManagedProperties.mockResolvedValue(Array.from({ length: 26 }, (_, index) => ({ id: `p${index}` })));
-    repository.getPropertyReviewScore.mockResolvedValue({ overall_score: 4, review_count: 3 });
+  test("returns a next offset when the filtered query has another result", async () => {
+    repository.getPropertyRatingTrendPage.mockResolvedValue(Array.from({ length: 26 }, (_, index) => ({
+      property_id: `p${index}`, previous_average_rating: 4, current_average_rating: 4,
+      previous_review_count: 3, current_review_count: 3,
+    })));
     const result = await service.getPropertyRatingTrends("host-1", { ...query, offset: "25" });
     expect(result.properties).toHaveLength(25);
     expect(result.next_offset).toBe(50);
-    expect(repository.getPropertyReviewScore).toHaveBeenCalledTimes(50);
+    expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledTimes(1);
+  });
+  test("passes validated filter and ordering into the database page query", async () => {
+    await service.getPropertyRatingTrends("host-1", { ...query, status: "DECLINING", sort: "declining-first" });
+    expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledWith("host-1", expect.objectContaining({
+      status: "DECLINING", sort: "declining-first", offset: 0,
+    }));
   });
   test("handles decimal threshold boundaries", async () => {
     process.env.REVIEW_DECLINE_THRESHOLD = "0.3";
@@ -72,14 +71,14 @@ describe("property rating trends", () => {
     expect((await service.getPropertyRatingTrends("host-1", query)).properties[0].trend_status).toBe("DECLINING");
   });
   test.each([{ days: "0" }, { days: "367" }, { days: "1.5" }, { offset: "-1" }, { offset: [] },
-    { endDate: "2026-02-30" }, { endDate: "2026-10-07" }, { endDate: null }])("rejects invalid input %j", async (invalid) => {
+    { endDate: "2026-02-30" }, { endDate: "2026-10-07" }, { endDate: null }, { status: "unknown" }, { sort: "unknown" }, { status: [] }])("rejects invalid input %j", async (invalid) => {
     await expect(service.getPropertyRatingTrends("host-1", { ...query, ...invalid })).rejects.toMatchObject({ statusCode: 400 });
-    expect(repository.findManagedProperties).not.toHaveBeenCalled();
+    expect(repository.getPropertyRatingTrendPage).not.toHaveBeenCalled();
   });
   test.each([undefined, "", "0", "5", "NaN"])("fails closed for invalid policy %j", async (value) => {
     if (value === undefined) delete process.env.REVIEW_DECLINE_THRESHOLD; else process.env.REVIEW_DECLINE_THRESHOLD = value;
     await expect(service.getPropertyRatingTrends("host-1", query)).rejects.toThrow("not configured");
-    expect(repository.findManagedProperties).not.toHaveBeenCalled();
+    expect(repository.getPropertyRatingTrendPage).not.toHaveBeenCalled();
   });
   test("controller rejects unauthenticated requests and missing manager identities", async () => {
     const controller = new Controller({ service });
@@ -87,7 +86,7 @@ describe("property rating trends", () => {
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
     request.requestContext = { authorizer: { claims: { sub: "user-sub" } } };
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
-    expect(repository.findManagedProperties).not.toHaveBeenCalled();
+    expect(repository.getPropertyRatingTrendPage).not.toHaveBeenCalled();
   });
   test("routes authenticated requests and hides configuration failures", async () => {
     const controller = new Controller({ service });

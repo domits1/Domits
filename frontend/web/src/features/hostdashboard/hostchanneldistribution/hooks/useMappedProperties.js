@@ -7,10 +7,14 @@ const toOption = (listing) => {
   return { value: id, label: listing?.property?.title || id };
 };
 
-export function useMappedProperties({ userId } = {}) {
+// `enabled: false` makes the hook inert: no request, and no options. The view uses it to keep the
+// picker (and with it the mock listing list) out of the tab while those listings are mock data.
+export function useMappedProperties({ userId, enabled = true } = {}) {
   const [listings, setListings] = useState([]);
 
   useEffect(() => {
+    if (!enabled) return undefined;
+
     let cancelled = false;
     getMappedProperties({ userId })
       .then((result) => {
@@ -25,7 +29,7 @@ export function useMappedProperties({ userId } = {}) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, enabled]);
 
-  return useMemo(() => listings.map(toOption).filter(Boolean), [listings]);
+  return useMemo(() => (enabled ? listings.map(toOption).filter(Boolean) : []), [enabled, listings]);
 }

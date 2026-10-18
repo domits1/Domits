@@ -1,0 +1,130 @@
+{
+  "resolution": {
+    "siteId": "bf378265-b563-4406-9c38-5232d8c1f7ae",
+    "propertyId": "ecd926d9-67dc-4d0a-9b40-2884d0838406",
+    "hostId": "dac2b1dc-c8e4-446b-b5d3-4d65646d7ed0",
+    "templateKey": "panorama-landing",
+    "primaryLocale": "en",
+    "siteName": "Wellness Villa Bisous",
+    "siteStatus": "PUBLISHED",
+    "publishedAt": 1782204057102,
+    "isReachable": true,
+    "domain": {
+      "domain": "wellness-villa-bisous-bf378265.direct.domits.com",
+      "domainType": "FALLBACK",
+      "status": "ACTIVE",
+      "isPrimary": true
+    }
+  },
+  "site": {
+    "id": "bf378265-b563-4406-9c38-5232d8c1f7ae",
+    "propertyId": "ecd926d9-67dc-4d0a-9b40-2884d0838406",
+    "hostId": "dac2b1dc-c8e4-446b-b5d3-4d65646d7ed0",
+    "siteName": "Wellness Villa Bisous",
+    "primaryLocale": "en",
+    "status": "PUBLISHED",
+    "templateKey": "panorama-landing",
+    "publishedAt": 1782204057102
+  },
+  "domain": {
+    "domain": "wellness-villa-bisous-bf378265.direct.domits.com",
+    "domainType": "FALLBACK",
+    "status": "ACTIVE",
+    "isPrimary": true
+  },
+  "propertySnapshot": {
+    "property": {
+      "id": "ecd926d9-67dc-4d0a-9b40-2884d0838406",
+      "hostId": "dac2b1dc-c8e4-446b-b5d3-4d65646d7ed0",
+      "title": "Wellness Villa Bisous",
+      "subtitle": "Private pool villa",
+      "description": "Escape to a serene four-bedroom private villa designed for space, comfort and a peaceful connection with nature.",
+      "status": "ACTIVE"
+    },
+    "location": {
+      "country": "Indonesia",
+      "city": "Ubud",
+      "street": "Jalan Raya Sayan",
+      "houseNumber": "17",
+      "houseNumberExtension": "B",
+      "postalCode": "80571"
+    },
+    "propertyType": {
+      "property_type": "House",
+      "spaceType": "Entire house"
+    },
+    "pricing": {
+      "roomRate": 550,
+      "weekendRate": 550,
+      "cleaning": 0
+    },
+    "generalDetails": [
+      {
+        "detail": "Guests",
+        "value": 8
+      },
+      {
+        "detail": "Bedrooms",
+        "value": 4
+      },
+      {
+        "detail": "Beds",
+        "value": 4
+      },
+      {
+        "detail": "Bathrooms",
+        "value": 3
+      }
+    ],
+    "availabilityRestrictions": [
+      {
+        "restriction": "MinimumStay",
+        "value": 2
+      }
+    ],
+    "amenities": [
+      {
+        "amenityId": "96"
+      },
+      {
+        "amenityId": "12"
+      }
+    ],
+    "rules": [
+      {
+        "rule": "smoking",
+        "value": false
+      }
+    ],
+    "checkIn": {
+      "checkIn": {
+        "from": "15:00"
+      },
+      "checkOut": {
+        "till": "11:00"
+      }
+    },
+    "images": [
+      {
+        "image_id": "first",
+        "sort_order": 0,
+        "status": "READY",
+        "web_key": "images/property/first/web.jpg"
+      },
+      {
+        "image_id": "second",
+        "sort_order": 1,
+        "status": "READY",
+        "web_key": "images/property/second/web.jpg"
+      }
+    ],
+    "hostProfile": {
+      "givenName": "Amara"
+    }
+  },
+  "contentOverrides": {
+    "heroEyebrow": "Entire house in Ubud, Indonesia"
+  },
+  "themeOverrides": {},
+  "renderSource": "published_site"
+}

@@ -16,7 +16,7 @@ describe("useChannexDistribution", () => {
   test("sets error and clears loading when getChannexStatus rejects", async () => {
     getChannexStatus.mockRejectedValue(new Error("GET /integrations/channex/status failed with status 500"));
 
-    const { result } = renderHook(() => useChannexDistribution({ userId: "user-1" }));
+    const { result } = renderHook(() => useChannexDistribution());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -27,7 +27,7 @@ describe("useChannexDistribution", () => {
   test("exposes the HTTP status of the failed request", async () => {
     getChannexStatus.mockRejectedValue(Object.assign(new Error("forbidden"), { status: 403 }));
 
-    const { result } = renderHook(() => useChannexDistribution({ userId: "user-1" }));
+    const { result } = renderHook(() => useChannexDistribution());
 
     await waitFor(() => expect(result.current.errorStatus).toBe(403));
   });
@@ -35,7 +35,7 @@ describe("useChannexDistribution", () => {
   test("reload clears the error and fetches again", async () => {
     getChannexStatus.mockRejectedValueOnce(new Error("boom"));
 
-    const { result } = renderHook(() => useChannexDistribution({ userId: "user-1" }));
+    const { result } = renderHook(() => useChannexDistribution());
     await waitFor(() => expect(result.current.error).toBe("boom"));
 
     act(() => result.current.reload());
@@ -46,7 +46,7 @@ describe("useChannexDistribution", () => {
   });
 
   test("does not fetch sync evidence until a property is selected", async () => {
-    const { result } = renderHook(() => useChannexDistribution({ userId: "user-1" }));
+    const { result } = renderHook(() => useChannexDistribution());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -54,10 +54,9 @@ describe("useChannexDistribution", () => {
   });
 
   test("refetches sync evidence for a new property without refetching status", async () => {
-    const { result, rerender } = renderHook(
-      ({ domitsPropertyId }) => useChannexDistribution({ userId: "user-1", domitsPropertyId }),
-      { initialProps: { domitsPropertyId: "property-1" } }
-    );
+    const { result, rerender } = renderHook(({ domitsPropertyId }) => useChannexDistribution({ domitsPropertyId }), {
+      initialProps: { domitsPropertyId: "property-1" },
+    });
     await waitFor(() => expect(result.current.status).toEqual(CONNECTED_STATUS));
 
     rerender({ domitsPropertyId: "property-2" });
