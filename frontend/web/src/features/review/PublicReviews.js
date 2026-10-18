@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import ReviewsSection from "../bookingengine/listingdetails/components/ReviewsSection";
+import ReviewsSection from "./ReviewsSection";
 import { getPublicReviews } from "./services/reviewAPI";
 import styles from "./PublicReviewFilters.module.css";
 
