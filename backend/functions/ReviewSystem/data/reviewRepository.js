@@ -142,7 +142,12 @@ export class ReviewRepository {
         const existing = await repository.findOne({ where: { reviewId } });
         if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");
         if (action === "draft" && existing?.status === "published") throw new ConflictException("A published response cannot become a draft.");
-        const status = action === "edit" ? existing.status : action === "publish" ? "published" : "draft";
+        let status = "draft";
+        if (action === "edit") {
+          status = existing.status;
+        } else if (action === "publish") {
+          status = "published";
+        }
         const saved = await repository.save({ ...existing, id: existing?.id || randomUUID(), reviewId,
           authorId: user.userId, authorRole: "host", message, status, createdAt: existing?.createdAt ?? now,
           updatedAt: now, publishedAt: status === "published" ? existing?.publishedAt ?? now : null, deletedAt: null });

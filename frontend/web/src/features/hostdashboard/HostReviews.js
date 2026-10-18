@@ -100,7 +100,7 @@ function HostReviews() {
                 const data = await response.json();
                 if (!Array.isArray(data)) throw new Error("Invalid review list");
                 if (active) setReceivedReviews(data);
-            } catch (error) {
+            } catch {
                 if (active) setReviewError("Could not load or update your reviews. Please try again.");
             } finally {
                 if (active) setIsLoading2(false);
@@ -132,7 +132,8 @@ function HostReviews() {
                     if (active) setEligibilityError("Could not check which reviews you can respond to. Your received reviews are still available.");
                 }
             };
-            retrieveEligibility();
+            // Eligibility failures are handled inside this task without hiding received reviews.
+            void retrieveEligibility();
         }
         return () => { active = false; };
     }, [userId, eligibilityRetry]);
