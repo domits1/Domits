@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { LuX } from 'react-icons/lu';
+import { LuX, LuRefreshCw } from 'react-icons/lu';
 
-const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemoveItem, onRetryLoad }) => {
+const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemoveItem, onRetryLoad, isApplyingTemplate }) => {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemRequired, setNewItemRequired] = useState(true);
 
@@ -22,7 +22,12 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
         <div className="form-group checklist-section">
             <div className="attachments-header">
                 <label>Checklist</label>
-                {!loadError && requiredItems.length > 0 && (
+                {isApplyingTemplate && (
+                    <span className="checklist-template-loading">
+                        <LuRefreshCw className="checklist-template-spinner" /> Applying template...
+                    </span>
+                )}
+                {!isApplyingTemplate && !loadError && requiredItems.length > 0 && (
                     <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required completed</span>
                 )}
             </div>
@@ -98,6 +103,7 @@ ChecklistSection.propTypes = {
     onToggleChecked: PropTypes.func.isRequired,
     onRemoveItem: PropTypes.func.isRequired,
     onRetryLoad: PropTypes.func.isRequired,
+    isApplyingTemplate: PropTypes.bool,
 };
 
 export default ChecklistSection;

@@ -72,4 +72,17 @@ describe('CreateTaskModal', () => {
 
         expect(onCancel).toHaveBeenCalledTimes(2);
     });
+
+    test('disables the submit button and shows a busy label while isSubmitting is true', () => {
+        render(<CreateTaskModal {...baseProps} isSubmitting />);
+
+        const button = screen.getByRole('button', { name: 'Creating...' });
+        expect(button).toBeDisabled();
+    });
+
+    test('does not disable the submit button by default', () => {
+        render(<CreateTaskModal {...baseProps} />);
+
+        expect(screen.getByRole('button', { name: 'Create Task' })).not.toBeDisabled();
+    });
 });
