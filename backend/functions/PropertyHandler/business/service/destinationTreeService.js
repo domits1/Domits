@@ -96,6 +96,9 @@ export class DestinationTreeService {
     }
 
     const listings = await this.destinationPageRepository.listActiveListingsUnderPath(path);
+    if (listings.length === 0) {
+      return null;
+    }
     return buildDestinationPage({
       destination: { type: destination.type, name: destination.name, path: destination.path },
       parents,
