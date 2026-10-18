@@ -28,18 +28,19 @@ const buildClient = ({
   const statements = [];
   const names = new Map();
   let remainingConflicts = conflicts;
-  const answer = async (statement, parameters) => {
+  const answer = async (statement, parameters, structured) => {
     statements.push({ statement, parameters });
     if (failOn && statement.includes(failOn)) {
       throw new Error(`failed on ${failOn}`);
     }
-    if (remainingConflicts > 0 && statement.includes(conflictOn)) {
+    if (remainingConflicts > 0 && (statement.includes(conflictOn) || parameters?.[1] === conflictOn)) {
       remainingConflicts -= 1;
       Object.entries(concurrent).forEach(([id, name]) => names.set(id, name));
       throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
     }
     if (statement.trim().startsWith("SELECT display_name")) {
-      return { records: names.has(parameters[0]) ? [{ display_name: names.get(parameters[0]) }] : [] };
+      const records = names.has(parameters[0]) ? [{ display_name: names.get(parameters[0]) }] : [];
+      return structured ? { records } : records;
     }
     if (statement.includes(" AS d (") && (!names.has(parameters[0]) || parameters[8] === true)) {
       names.set(parameters[0], parameters[5]);
@@ -131,8 +132,6 @@ describe("the destination repository", () => {
 
   it("never lets a weaker spelling replace a stored city name, whatever order host saves, backfills and lost conflicts write in", async () => {
     const amsterdam = "/destinations/europe/netherlands/amsterdam";
-    const write = (city, country = "Netherlands") =>
-      sync(resolveDestinationChain({ country, city }), { sourceCountry: country, sourceCity: city });
     const cases = [
       [["Amsterdam", "amsterdam "], "Amsterdam"],
       [["amsterdam ", "Amsterdam"], "Amsterdam"],
@@ -140,11 +139,12 @@ describe("the destination repository", () => {
       [["amsterdam", "AMSTERDAM", "amsterdam"], "AMSTERDAM"],
       [["amsterdam", "amsterdam "], "amsterdam"],
       [["Evora", "Évora", "évora", "ÉVORA"], "Évora", {}, "Portugal"],
-      [["amsterdam"], "Amsterdam", { conflicts: 1, conflictOn: " AS d (", concurrent: { [amsterdam]: "Amsterdam" } }],
+      [["amsterdam"], "Amsterdam", { conflicts: 1, conflictOn: "city", concurrent: { [amsterdam]: "Amsterdam" } }],
     ];
     for (const [writes, expected, options, country = "Netherlands"] of cases) {
       const client = buildClient(options);
-      for (const city of writes) await write(city, country);
+      for (const city of writes)
+        await sync(resolveDestinationChain({ country, city }), { sourceCountry: country, sourceCity: city });
       const { path } = resolveDestinationChain({ country, city: writes[0] }).city;
       expect([writes, client.names.get(path)]).toEqual([writes, expected]);
     }
