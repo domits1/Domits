@@ -1,7 +1,6 @@
 const DEFAULT_SITE = Object.freeze({
   id: "bf378265-b563-4406-9c38-5232d8c1f7ae",
   propertyId: "ecd926d9-67dc-4d0a-9b40-2884d0838406",
-  hostId: "dac2b1dc-c8e4-446b-b5d3-4d65646d7ed0",
   siteName: "Wellness Villa Bisous",
   primaryLocale: "en",
   status: "PUBLISHED",
@@ -11,7 +10,6 @@ const DEFAULT_SITE = Object.freeze({
 
 const DEFAULT_DOMAIN = Object.freeze({
   domain: "wellness-villa-bisous-bf378265.direct.domits.com",
-  domainType: "FALLBACK",
   status: "ACTIVE",
   isPrimary: true,
 });
@@ -19,7 +17,6 @@ const DEFAULT_DOMAIN = Object.freeze({
 const buildResolution = (site, domain) => ({
   siteId: site.id,
   propertyId: site.propertyId,
-  hostId: site.hostId,
   templateKey: site.templateKey,
   primaryLocale: site.primaryLocale,
   siteName: site.siteName,
@@ -27,6 +24,14 @@ const buildResolution = (site, domain) => ({
   publishedAt: site.publishedAt,
   isReachable: site.status === "PUBLISHED" && domain.status === "ACTIVE",
   domain,
+});
+
+const toPublicSite = ({ id, siteName, primaryLocale, status, templateKey }) => ({
+  id,
+  siteName,
+  primaryLocale,
+  status,
+  templateKey,
 });
 
 export const buildPublishedSiteRenderPayload = ({
@@ -40,7 +45,7 @@ export const buildPublishedSiteRenderPayload = ({
     { ...DEFAULT_SITE, ...siteOverrides },
     { ...DEFAULT_DOMAIN, ...domainOverrides }
   ),
-  site: { ...DEFAULT_SITE, ...siteOverrides },
+  site: toPublicSite({ ...DEFAULT_SITE, ...siteOverrides }),
   domain: { ...DEFAULT_DOMAIN, ...domainOverrides },
   propertySnapshot: {
     property: {

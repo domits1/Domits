@@ -19,9 +19,18 @@ export default function HostResponseForm({ review }) {
     try {
       const saved = await saveHostResponse(review.id, text);
       setResponse(saved); setMessage(saved.message);
-    } catch (failure) { setError(failure.message || "Could not save your response. Please try again."); }
+    } catch (error_) {
+      const message = error_ instanceof Error ? error_.message : "";
+      setError(message || "Could not save your response. Please try again.");
+    }
     finally { setBusy(false); }
   };
+  let submitLabel = "Publish response";
+  if (busy) {
+    submitLabel = "Saving...";
+  } else if (response) {
+    submitLabel = "Update public response";
+  }
   return <div>
     {response && <aside aria-label="Host response"><strong>Host response</strong>
       <p className={styles.reviewText}>{response.message}</p></aside>}
@@ -32,7 +41,7 @@ export default function HostResponseForm({ review }) {
         onChange={(event) => { setMessage(event.target.value); setError(""); }} />
       <p>{message.length}/500 characters</p>
       {error && <p id={`response-error-${review.id}`} role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>{busy ? "Saving..." : response ? "Update public response" : "Publish response"}</button>
+      <button type="submit" disabled={busy}>{submitLabel}</button>
     </form>
   </div>;
 }

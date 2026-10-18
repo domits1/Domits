@@ -30,7 +30,6 @@ const dependencyNames = [
   "channexAriExecutionService",
   "channexAriOrchestrationService",
   "channexFullSyncService",
-  "channexCertificationService",
   "channexDiagnosticsService",
   "channexBookingRevisionImportService",
   "channexAvailabilitySyncService",
