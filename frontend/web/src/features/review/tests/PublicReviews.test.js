@@ -81,6 +81,7 @@ test("returns to the previous recent page and keeps offset pagination for rating
   fireEvent.click(await screen.findByText("Previous reviews"));
   await waitFor(() => expect(getPublicReviews.mock.calls[getPublicReviews.mock.calls.length - 1][3]).not.toHaveProperty("cursor"));
   fireEvent.change(screen.getByLabelText("Sort reviews"), { target: { value: "lowest" } });
+  fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
   fireEvent.click(await screen.findByText("Next reviews"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 10, expect.anything(),
     expect.objectContaining({ sort: "lowest" })));
