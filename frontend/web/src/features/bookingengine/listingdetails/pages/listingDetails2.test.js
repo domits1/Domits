@@ -92,6 +92,10 @@ const mockProperty = (calendarAvailability = {}, options = {}) => {
   fetchHostInfo.mockResolvedValue({ name: "Host" });
 };
 
+const calendarDateLabel = (day) => new Date(2026, 5, day).toLocaleDateString(undefined, {
+  month: "long", day: "numeric", year: "numeric",
+});
+
 const renderRangeCalendar = (props = {}) => {
   const onRangeChange = jest.fn();
   render(
@@ -107,6 +111,8 @@ const renderRangeCalendar = (props = {}) => {
   return onRangeChange;
 };
 
+const originalFetch = globalThis.fetch;
+
 describe("ListingDetails2 availability", () => {
   beforeEach(() => {
     globalThis.fetch = jest.fn().mockResolvedValue({
@@ -116,6 +122,7 @@ describe("ListingDetails2 availability", () => {
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
     jest.clearAllMocks();
   });
 
@@ -228,8 +235,8 @@ describe("RangeCalendar effective availability", () => {
   test("renders outside-base-window dates as unavailable with a visible marker", () => {
     renderRangeCalendar();
 
-    const outsideWindowDate = screen.getByRole("button", { name: "June 10, 2026" });
-    const insideWindowDate = screen.getByRole("button", { name: "June 15, 2026" });
+    const outsideWindowDate = screen.getByRole("button", { name: calendarDateLabel(10) });
+    const insideWindowDate = screen.getByRole("button", { name: calendarDateLabel(15) });
 
     expect(outsideWindowDate).toBeDisabled();
     expect(outsideWindowDate).toHaveClass("range-calendar__day--outside-window");
@@ -244,7 +251,7 @@ describe("RangeCalendar effective availability", () => {
       unavailableDateKeys: ["2026-06-16"],
     });
 
-    const bookedDate = screen.getByRole("button", { name: "June 16, 2026" });
+    const bookedDate = screen.getByRole("button", { name: calendarDateLabel(16) });
 
     expect(bookedDate).toBeDisabled();
     expect(bookedDate).toHaveClass("range-calendar__day--unavailable");
@@ -256,15 +263,15 @@ describe("RangeCalendar effective availability", () => {
   test("does not mass-disable outside-window dates when available override snapshot is missing", () => {
     renderRangeCalendar({ availableDateKeys: null });
 
-    expect(screen.getByRole("button", { name: "June 10, 2026" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: calendarDateLabel(10) })).not.toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   test("shows a clear message when selected stay includes outside-window unavailable nights", () => {
     const onRangeChange = renderRangeCalendar({ availableDateKeys: ["2026-06-10"] });
 
-    fireEvent.click(screen.getByRole("button", { name: "June 10, 2026" }));
-    fireEvent.click(screen.getByRole("button", { name: "June 15, 2026" }));
+    fireEvent.click(screen.getByRole("button", { name: calendarDateLabel(10) }));
+    fireEvent.click(screen.getByRole("button", { name: calendarDateLabel(15) }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("This property has no availability for the selected dates.");
     expect(onRangeChange).toHaveBeenLastCalledWith("2026-06-15", "");
@@ -273,7 +280,7 @@ describe("RangeCalendar effective availability", () => {
   test("keeps explicit available override outside base window selectable", () => {
     const onRangeChange = renderRangeCalendar({ availableDateKeys: ["2026-06-10"] });
 
-    const availableOverrideDate = screen.getByRole("button", { name: "June 10, 2026" });
+    const availableOverrideDate = screen.getByRole("button", { name: calendarDateLabel(10) });
 
     expect(availableOverrideDate).not.toBeDisabled();
     fireEvent.click(availableOverrideDate);
@@ -284,7 +291,7 @@ describe("RangeCalendar effective availability", () => {
   test("keeps explicit unavailable override inside base window unavailable", () => {
     renderRangeCalendar({ unavailableDateKeys: ["2026-06-16"] });
 
-    const unavailableOverrideDate = screen.getByRole("button", { name: "June 16, 2026" });
+    const unavailableOverrideDate = screen.getByRole("button", { name: calendarDateLabel(16) });
 
     expect(unavailableOverrideDate).toBeDisabled();
     expect(unavailableOverrideDate).toHaveClass("range-calendar__day--unavailable");
@@ -298,7 +305,7 @@ describe("RangeCalendar effective availability", () => {
       bookedDateKeys: ["2026-06-16"],
     });
 
-    const availableOverrideDate = screen.getByRole("button", { name: "June 16, 2026" });
+    const availableOverrideDate = screen.getByRole("button", { name: calendarDateLabel(16) });
 
     expect(availableOverrideDate).toBeDisabled();
     expect(availableOverrideDate).toHaveClass("range-calendar__day--unavailable");
@@ -313,15 +320,15 @@ describe("RangeCalendar effective availability", () => {
       bookedDateKeys: ["2026-06-19", "2026-06-20", "2026-06-21"],
     });
 
-    const firstBookedNight = screen.getByRole("button", { name: "June 19, 2026" });
-    const checkoutDate = screen.getByRole("button", { name: "June 22, 2026" });
+    const firstBookedNight = screen.getByRole("button", { name: calendarDateLabel(19) });
+    const checkoutDate = screen.getByRole("button", { name: calendarDateLabel(22) });
 
     expect(firstBookedNight).toBeDisabled();
     expect(firstBookedNight).toHaveClass("range-calendar__day--unavailable");
     expect(within(firstBookedNight).getByText("--")).toBeInTheDocument();
     expect(within(firstBookedNight).queryByText("Booked")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "June 20, 2026" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "June 21, 2026" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: calendarDateLabel(20) })).toBeDisabled();
+    expect(screen.getByRole("button", { name: calendarDateLabel(21) })).toBeDisabled();
     expect(checkoutDate).not.toBeDisabled();
     expect(checkoutDate).not.toHaveClass("range-calendar__day--unavailable");
     expect(within(checkoutDate).queryByText("Booked")).not.toBeInTheDocument();
@@ -330,8 +337,8 @@ describe("RangeCalendar effective availability", () => {
   test("shows the generic unavailable message when selected stay includes booked nights", () => {
     const onRangeChange = renderRangeCalendar({ bookedDateKeys: ["2026-06-16"] });
 
-    fireEvent.click(screen.getByRole("button", { name: "June 15, 2026" }));
-    fireEvent.click(screen.getByRole("button", { name: "June 18, 2026" }));
+    fireEvent.click(screen.getByRole("button", { name: calendarDateLabel(15) }));
+    fireEvent.click(screen.getByRole("button", { name: calendarDateLabel(18) }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("This property has no availability for the selected dates.");
     expect(onRangeChange).toHaveBeenLastCalledWith("2026-06-18", "");

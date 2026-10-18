@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import ReviewsSection from "../bookingengine/listingdetails/components/ReviewsSection";
+import ReviewsSection from "./ReviewsSection";
 import { getPublicReviews } from "./services/reviewAPI";
 import styles from "./PublicReviewFilters.module.css";
 
-const defaults = { minRating: "", maxRating: "", startDate: "", endDate: "", verified: "", sort: "recent" };
+const defaults = { minRating: "", maxRating: "", startDate: "", endDate: "", sort: "recent" };
 const PropertyReviews = ({ propertyId }) => {
   const [filters, setFilters] = useState(defaults);
   const [offset, setOffset] = useState(0);
@@ -43,8 +43,6 @@ const PropertyReviews = ({ propertyId }) => {
         onChange={(event) => change("startDate", event.target.value)} /></label>
       <label>To date<input type="date" value={filters.endDate}
         onChange={(event) => change("endDate", event.target.value)} /></label>
-      <label><input type="checkbox" checked={filters.verified === "true"}
-        onChange={(event) => change("verified", event.target.checked ? "true" : "")} />Verified stays only</label>
       <label>Sort reviews<select value={filters.sort} onChange={(event) => change("sort", event.target.value)}>
         <option value="recent">Most recent</option><option value="highest">Highest rating</option>
         <option value="lowest">Lowest rating</option>
@@ -57,10 +55,10 @@ const PropertyReviews = ({ propertyId }) => {
     </div>}
     {data && <>
     <p aria-live="polite">{data.review_count} matching reviews</p>
-    {data.review_count === 0 ? <p>No reviews match your selected filters.</p> :
+    {data.review_count === 0 && <p>No reviews match your selected filters.</p>}
     <ReviewsSection overallRating={data.overall_score} totalReviews={data.review_count}
       reviews={data.reviews.map((review) => ({ ...review,
-        timeAgo: new Date(review.date).toLocaleDateString() }))} />}
+        timeAgo: new Date(review.date).toLocaleDateString() }))} emptyMessage="" />
     {(recent ? cursors.length > 1 : offset > 0) && <button type="button" className="reviews-section__show-all-btn"
       onClick={() => {
         setState({ loading: true });

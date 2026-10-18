@@ -1,5 +1,9 @@
 import { PropertyController } from "./controller/propertyController.js";
 
+const STATIC_PAGE_TASK = "build-static-pages";
+const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
+const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
+
 let controller = new PropertyController();
 
 const notFound = (body) => ({
@@ -50,6 +54,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/domains")) {
     return controller.createWebsiteDomain(event);
   }
+  if (isPath(event, "/property/website/rate-plan/webhook")) {
+    return controller.handleWebsiteRatePlanWebhook(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -73,6 +80,9 @@ const handlePatch = async (event) => {
   }
   if (isPath(event, "/property/calendar/overrides")) {
     return controller.updatePropertyCalendarOverrides(event);
+  }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.changeWebsiteRatePlan(event);
   }
   if (isPath(event, DRAFT_ID_RESOURCE)) {
     return controller.updateDraft(event);
@@ -120,6 +130,9 @@ const handleGet = async (event) => {
   if (isPath(event, "/property/website/site")) {
     return controller.getWebsiteSiteByPropertyId(event);
   }
+  if (isPath(event, "/property/website/rate-plan")) {
+    return controller.getWebsiteRatePlan(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.getWebsiteDraftByPropertyId(event);
   }
@@ -139,9 +152,7 @@ const handleGet = async (event) => {
   );
   if (hostDashboardSubResource) {
     const handler = hostDashboardHandlers[hostDashboardSubResource];
-    return handler
-      ? handler(event)
-      : notFound("Sub-resource for '/property/hostDashboard' not found.");
+    return handler ? handler(event) : notFound("Sub-resource for '/property/hostDashboard' not found.");
   }
 
   const bookingEngineSubResource = getSubResource(
@@ -151,9 +162,7 @@ const handleGet = async (event) => {
   );
   if (bookingEngineSubResource) {
     const handler = bookingEngineHandlers[bookingEngineSubResource];
-    return handler
-      ? handler(event)
-      : notFound("Sub-resource for '/property/bookingEngine' not found.");
+    return handler ? handler(event) : notFound("Sub-resource for '/property/bookingEngine' not found.");
   }
 
   return notFound("Path not found.");
@@ -185,6 +194,18 @@ const methodHandlers = {
 export const handler = async (event) => {
   if (!controller) {
     controller = new PropertyController();
+  }
+
+  if (event?.task === STATIC_PAGE_TASK && !event.httpMethod) {
+    return controller.buildStaticPages(event);
+  }
+
+  if (event?.task === STATIC_PAGE_RECONCILE_TASK && !event.httpMethod) {
+    return controller.reconcileStaticPages(event);
+  }
+
+  if (event?.task === STATIC_PAGE_QUEUE_ALL_TASK && !event.httpMethod) {
+    return controller.queueAllStaticPages(event);
   }
 
   try {
