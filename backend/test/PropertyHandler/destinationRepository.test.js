@@ -108,7 +108,7 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
-    expect(upserts[0].statement).toContain(
+    expect(upserts[0].statement.split("\n").at(-1).trim()).toBe(
       "WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
     );
     const mapping = client.statements[4];
