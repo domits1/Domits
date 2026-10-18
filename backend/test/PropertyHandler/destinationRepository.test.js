@@ -40,7 +40,7 @@ const buildClient = ({
     if (statement.trim().startsWith("SELECT display_name")) {
       return { records: names.has(parameters[0]) ? [{ display_name: names.get(parameters[0]) }] : [] };
     }
-    if (statement.includes(" AS d (") && (!names.has(parameters[0]) || parameters[8] !== false)) {
+    if (statement.includes(" AS d (") && (!names.has(parameters[0]) || parameters[8] === true)) {
       names.set(parameters[0], parameters[5]);
     }
     return { records: statement.includes("property_destination") ? mappingRecords : [] };
@@ -91,6 +91,7 @@ describe("the destination repository", () => {
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
+    expect(client.statements[0].statement).toBe(`SELECT display_name FROM ${SCHEMA}.destination WHERE id = $1`);
     expect(client.statements[0].parameters).toEqual([PATHS[2]]);
     const upserts = client.statements.slice(1, 4);
     expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
@@ -108,7 +109,7 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
-    expect(upserts[0].statement.split("\n").at(-1).trim()).toBe(
+    expect(upserts[2].statement.split("\n").at(-1).trim()).toBe(
       "WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
     );
     const mapping = client.statements[4];
@@ -138,16 +139,14 @@ describe("the destination repository", () => {
       [["amsterdam", "AMSTERDAM", "amsterdam"], "AMSTERDAM"],
       [["amsterdam", "amsterdam "], "amsterdam"],
       [["Évora", "évora", "ÉVORA"], "Évora", "Portugal"],
+      [["amsterdam"], "Amsterdam", "Netherlands", { conflicts: 1, concurrentNames: { [amsterdam]: "Amsterdam" } }],
     ];
-    for (const [writes, expected, country = "Netherlands"] of cases) {
-      const client = buildClient();
+    for (const [writes, expected, country = "Netherlands", options] of cases) {
+      const client = buildClient(options);
       for (const city of writes) await write(city, country);
       const { path } = resolveDestinationChain({ country, city: writes[0] }).city;
       expect([writes, client.names.get(path)]).toEqual([writes, expected]);
     }
-    const raced = buildClient({ conflicts: 1, concurrentNames: { [amsterdam]: "Amsterdam" } });
-    await write("amsterdam");
-    expect(raced.names.get(amsterdam)).toBe("Amsterdam");
   });
 
   it("binds the exact stored address, and answers false when no location of an existing property carries it any more", async () => {
