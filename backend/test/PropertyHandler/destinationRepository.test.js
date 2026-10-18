@@ -22,7 +22,8 @@ const buildClient = ({
   queryRows = [],
   failOn = null,
   conflicts = 0,
-  concurrentNames = {},
+  conflictOn = "property_destination",
+  concurrent = {},
 } = {}) => {
   const statements = [];
   const names = new Map();
@@ -32,9 +33,9 @@ const buildClient = ({
     if (failOn && statement.includes(failOn)) {
       throw new Error(`failed on ${failOn}`);
     }
-    if (remainingConflicts > 0 && statement.includes("property_destination")) {
+    if (remainingConflicts > 0 && statement.includes(conflictOn)) {
       remainingConflicts -= 1;
-      Object.entries(concurrentNames).forEach(([id, name]) => names.set(id, name));
+      Object.entries(concurrent).forEach(([id, name]) => names.set(id, name));
       throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
     }
     if (statement.trim().startsWith("SELECT display_name")) {
@@ -109,8 +110,8 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
-    expect(upserts[2].statement.split("\n").at(-1).trim()).toBe(
-      "WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
+    expect(upserts[2].statement.slice(upserts[2].statement.indexOf("DO UPDATE")).replace(/\s+/g, " ")).toBe(
+      "DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = EXCLUDED.updated_at WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
     );
     const mapping = client.statements[4];
     expect(mapping.statement).toContain(
@@ -138,10 +139,10 @@ describe("the destination repository", () => {
       [["AMSTERDAM", "Amsterdam", "amsterdam", "AMSTERDAM"], "Amsterdam"],
       [["amsterdam", "AMSTERDAM", "amsterdam"], "AMSTERDAM"],
       [["amsterdam", "amsterdam "], "amsterdam"],
-      [["Évora", "évora", "ÉVORA"], "Évora", "Portugal"],
-      [["amsterdam"], "Amsterdam", "Netherlands", { conflicts: 1, concurrentNames: { [amsterdam]: "Amsterdam" } }],
+      [["Evora", "Évora", "évora", "ÉVORA"], "Évora", {}, "Portugal"],
+      [["amsterdam"], "Amsterdam", { conflicts: 1, conflictOn: " AS d (", concurrent: { [amsterdam]: "Amsterdam" } }],
     ];
-    for (const [writes, expected, country = "Netherlands", options] of cases) {
+    for (const [writes, expected, options, country = "Netherlands"] of cases) {
       const client = buildClient(options);
       for (const city of writes) await write(city, country);
       const { path } = resolveDestinationChain({ country, city: writes[0] }).city;
