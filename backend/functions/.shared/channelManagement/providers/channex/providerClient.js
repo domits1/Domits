@@ -1,3 +1,5 @@
+import { compactChannexValuesToDateRanges } from "../../utils/channexAriDateRanges.js";
+
 const CHANNEX_BASE_URL = process.env.CHANNEX_BASE_URL || "https://staging.channex.io";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
@@ -61,6 +63,13 @@ const getProviderStatusForHttpStatus = (httpStatus, fallbackStatus) => {
   return fallbackStatus;
 };
 
+const CHANNEX_MESSAGE_SEND_ERROR_CODES = {
+  401: "UNAUTHORIZED",
+  403: "MESSAGING_NOT_INSTALLED",
+  404: "THREAD_NOT_FOUND",
+  422: "OTA_MESSAGING_UNSUPPORTED",
+};
+
 const getPushGroupIdentity = (group, includeRatePlanId = false) => {
   const identity = {
     externalPropertyId: requireStr(group?.externalPropertyId),
@@ -81,8 +90,10 @@ const getPushGroupIdentity = (group, includeRatePlanId = false) => {
   return identity;
 };
 
+// Every availability and restrictions push goes out here, so the date ranges Channex asks
+// for are built in one place for the calendar outbox, the full sync and the older paths.
 const buildRequestBody = (group) => ({
-  values: Array.isArray(group?.values) ? group.values : [],
+  values: compactChannexValuesToDateRanges(Array.isArray(group?.values) ? group.values : []),
 });
 
 const getFailedPushProviderStatus = (httpStatus, fallbackStatus) => {
@@ -746,7 +757,7 @@ export default class ChannexProviderClient {
     });
   }
 
-  async listBookingRevisionFeed(credentials, { externalPropertyId } = {}) {
+  async listBookingRevisionFeed(credentials, { externalPropertyId, page = null } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const propertyId = requireStr(externalPropertyId);
 
@@ -774,6 +785,11 @@ export default class ChannexProviderClient {
       const url = new URL("/api/v1/booking_revisions/feed", CHANNEX_BASE_URL);
       url.searchParams.set("filter[property_id]", propertyId);
       url.searchParams.set("order[inserted_at]", "asc");
+      // Channex returns 10 items per page unless asked for more; 100 is its maximum.
+      url.searchParams.set("pagination[limit]", "100");
+      if (page !== null) {
+        url.searchParams.set("pagination[page]", String(page));
+      }
 
       const response = await fetch(url, {
         method: "GET",
@@ -790,6 +806,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisions: [],
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_FEED_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -806,6 +823,7 @@ export default class ChannexProviderClient {
       return {
         success: true,
         revisions: rows.map((row) => normalizeChannexBookingRevision(row)).filter((row) => row.revisionId),
+        meta: parsed?.meta ?? null,
         providerStatus: "ACTIVE",
         errorCode: null,
         errorMessage: null,
@@ -814,6 +832,7 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisions: [],
+        httpStatus: null,
         providerStatus: "BOOKING_FEED_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_FEED_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision feed request failed.",
@@ -945,6 +964,7 @@ export default class ChannexProviderClient {
         return {
           success: false,
           revisionId: normalizedRevisionId,
+          httpStatus: response.status,
           providerStatus: response.status === 401 ? "UNAUTHORIZED" : "BOOKING_REVISION_ACK_FAILED",
           errorCode:
             parsed?.errors?.code ||
@@ -968,10 +988,104 @@ export default class ChannexProviderClient {
       return {
         success: false,
         revisionId: normalizedRevisionId,
+        httpStatus: null,
         providerStatus: "BOOKING_REVISION_ACK_FAILED",
         errorCode: error?.code || error?.name || "CHANNEX_BOOKING_ACK_REQUEST_FAILED",
         errorMessage: error?.message || "Channex booking revision acknowledge request failed.",
       };
+    }
+  }
+
+  async sendMessage(credentials, { externalThreadId, text } = {}, options = {}) {
+    const apiKey = requireStr(credentials?.apiKey);
+
+    if (!apiKey) {
+      return {
+        success: false,
+        providerMessageId: null,
+        providerStatus: "INVALID_CREDENTIALS",
+        errorCode: "MISSING_API_KEY",
+        errorMessage: "Channex credentials must include apiKey.",
+      };
+    }
+
+    const threadId = requireStr(externalThreadId);
+    if (!threadId) {
+      return {
+        success: false,
+        providerMessageId: null,
+        providerStatus: "INVALID_REQUEST",
+        errorCode: "MISSING_THREAD_ID",
+        errorMessage: "Channex message send requires externalThreadId.",
+      };
+    }
+
+    const requestTimeoutMs = options?.requestTimeoutMs;
+    const controller =
+      Number.isFinite(Number(requestTimeoutMs)) && Number(requestTimeoutMs) > 0 ? new AbortController() : null;
+    const timeout = controller
+      ? setTimeout(() => controller.abort(), Math.trunc(Number(requestTimeoutMs)))
+      : null;
+
+    try {
+      const url = new URL(`/api/v1/message_threads/${encodeURIComponent(threadId)}/messages`, CHANNEX_BASE_URL);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "user-api-key": apiKey,
+        },
+        body: JSON.stringify({ message: { message: text } }),
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+
+      const rawText = await response.text();
+      const parsed = parseJsonSafely(rawText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          providerMessageId: null,
+          httpStatus: response.status,
+          providerStatus: getProviderStatusForHttpStatus(response.status, "MESSAGE_SEND_FAILED"),
+          errorCode:
+            CHANNEX_MESSAGE_SEND_ERROR_CODES[response.status] ||
+            parsed?.errors?.code ||
+            parsed?.error?.code ||
+            `CHANNEX_MESSAGE_SEND_${response.status}`,
+          errorMessage:
+            parsed?.errors?.title ||
+            parsed?.error?.message ||
+            `Channex message send failed with status ${response.status}.`,
+        };
+      }
+
+      return {
+        success: true,
+        providerMessageId: requireStr(parsed?.data?.id),
+        providerStatus: "SENT",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      if (controller?.signal?.aborted) {
+        return {
+          success: false,
+          providerMessageId: null,
+          providerStatus: "MESSAGE_SEND_FAILED",
+          errorCode: "CHANNEX_MESSAGE_SEND_TIMEOUT",
+          errorMessage: `Channex message send timed out after ${Math.trunc(Number(requestTimeoutMs))} ms.`,
+        };
+      }
+      return {
+        success: false,
+        providerMessageId: null,
+        providerStatus: "MESSAGE_SEND_FAILED",
+        errorCode: error?.code || error?.name || "CHANNEX_MESSAGE_SEND_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex message send request failed.",
+      };
+    } finally {
+      if (timeout) clearTimeout(timeout);
     }
   }
 }

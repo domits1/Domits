@@ -9,6 +9,20 @@ import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewReposi
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 const user = { userId: "host-sub", username: "host-1" };
+
+test.each([
+  ["POST", "/reviews/{id}/response", "draft"],
+  ["PATCH", "/reviews/{id}/response", "edit"],
+  ["POST", "/reviews/{id}/response/publish", "publish"],
+])("controller preserves %s %s host response actions", async (httpMethod, resource, action) => {
+  const service = { saveHostResponse: jest.fn().mockResolvedValue({ id: "response-1", message: "Thanks" }) };
+  const controller = new Controller({ service, authManager: { getUser: jest.fn().mockResolvedValue(user) } });
+  const result = await controller.saveHostResponse({ httpMethod, resource,
+    pathParameters: { id: "r1" }, body: JSON.stringify({ message: "Thanks" }) });
+  expect(result.statusCode).toBe(200);
+  expect(JSON.parse(result.body)).toEqual({ response: { id: "response-1", message: "Thanks" } });
+  expect(service.saveHostResponse).toHaveBeenCalledWith(user, "r1", { message: "Thanks" }, action);
+});
 describe("host response", () => {
   let query, responses, repository, service;
   beforeEach(async () => {

@@ -5,16 +5,20 @@ import { Review } from "database/models/Review";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
 describe("property score repository", () => {
-  let query, propertyRepository, repository;
+  let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
     for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
       query[method] = jest.fn(() => query);
     }
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
+    reviewRepository = {
+      createQueryBuilder: () => query,
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => {
       if (entity === Property) return propertyRepository;
-      if (entity === Review) return { createQueryBuilder: () => query };
+      if (entity === Review) return reviewRepository;
       throw new Error("Unexpected entity");
     } });
     repository = new ReviewRepository();
@@ -42,6 +46,19 @@ describe("property score repository", () => {
     expect(query.select).toHaveBeenCalledWith("AVG(review.overall_rating)", "overall_score");
     expect(query.addSelect).toHaveBeenCalledWith("COUNT(*)", "review_count");
     expect(result).toEqual({ property_id: "property-1", overall_score: 4.5, review_count: 2 });
+  });
+  test("deleted reviews cannot satisfy the score publication filters", async () => {
+    await repository.deleteOwnReview("review-1", "guest-1", 1234);
+    const [owner, deletedState] = reviewRepository.update.mock.calls[0];
+    expect(owner).toEqual({ id: "review-1", reviewer_user_id: "guest-1" });
+    expect(deletedState).toEqual({ status: "REJECTED", publication_status: "REJECTED", updated_at: 1234 });
+    await repository.getPropertyReviewScore("property-1", "host-1");
+    for (const field of ["status", "publication_status"]) {
+      const condition = query.andWhere.mock.calls.find(([sql]) => sql.startsWith(`review.${field} =`));
+      expect(condition).toBeDefined();
+      expect(Object.values(condition[1])).toEqual(["PUBLISHED"]);
+      expect(Object.values(condition[1])).not.toContain(deletedState[field]);
+    }
   });
   test("does not convert an absent average into a zero score", async () => {
     query.getRawOne.mockResolvedValue({ overall_score: null, review_count: "0" });
