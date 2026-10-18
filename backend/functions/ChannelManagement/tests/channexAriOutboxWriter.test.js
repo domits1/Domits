@@ -112,6 +112,39 @@ describe("ChannexAriOutboxWriter.enqueueChannexAriChange", () => {
   });
 });
 
+describe("ChannexAriOutboxWriter.enqueueChannexFullSync", () => {
+  // One row per type over the same 500 days: the worker merges types with equal dates,
+  // so these rows go out as the 2 calls Channex expects for a full sync (scenario 1).
+  test("writes a FULL_SYNC row per change type covering today and the next 499 days", async () => {
+    const manager = buildManager();
+    const { outbox, writer } = buildWriter();
+
+    await expect(writer.enqueueChannexFullSync(manager, { domitsPropertyId: "property-1" })).resolves.toBe(true);
+
+    expect(outbox.insert).toHaveBeenCalledTimes(3);
+    for (const type of ["availability", "rates", "restrictions"]) {
+      expect(outbox.insert).toHaveBeenCalledWith(manager, {
+        domitsPropertyId: "property-1",
+        kind: "FULL_SYNC",
+        changeTypes: [type],
+        dateFrom: 20261001,
+        dateTo: 20280212,
+        source: "GO_LIVE",
+        now: NOW,
+      });
+    }
+  });
+
+  test("writes nothing for a property that is not mapped to Channex", async () => {
+    const { outbox, writer } = buildWriter();
+
+    await expect(writer.enqueueChannexFullSync(buildManager(0), { domitsPropertyId: "property-1" })).resolves.toBe(
+      false
+    );
+    expect(outbox.insert).not.toHaveBeenCalled();
+  });
+});
+
 describe("buildForwardSyncRange", () => {
   test("covers today and the next 499 days", () => {
     expect(buildForwardSyncRange(NOW)).toEqual({ dateFrom: "2026-10-01", dateTo: "2028-02-12" });

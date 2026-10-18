@@ -9,6 +9,8 @@ import ChannexBookingAvailabilityBridge, {
 } from "./channexBookingAvailabilityBridge.js";
 import ChannelManagementService from "./channelManagementService.js";
 import ChannexCredentialStore from "./providers/channex/credentialStore.js";
+import ChannexWebhookSecretVerifier from "./providers/channex/webhookSecretVerifier.js";
+import { createSecretsClient } from "./providers/integrationCredentialStore.js";
 import ChannexProviderClient from "./providers/channex/providerClient.js";
 import HoliduCredentialStore from "./providers/holidu/credentialStore.js";
 import HoliduProviderClient from "./providers/holidu/providerClient.js";
@@ -26,7 +28,7 @@ import ChannexAriPayloadService from "./services/channexAriPayloadService.js";
 import ChannexAvailabilitySyncService from "./services/channexAvailabilitySyncService.js";
 import ChannexBookingPollingService from "./services/channexBookingPollingService.js";
 import ChannexBookingRevisionImportService from "./services/channexBookingRevisionImportService.js";
-import ChannexCertificationService from "./services/channexCertificationService.js";
+import ChannexBookingWebhookService from "./services/channexBookingWebhookService.js";
 import ChannexDiagnosticsService from "./services/channexDiagnosticsService.js";
 import ChannexFullSyncService from "./services/channexFullSyncService.js";
 import ChannexMappingService from "./services/channexMappingService.js";
@@ -49,6 +51,8 @@ const appendMissingMappingNotes = (notes, missingMappings) =>
   Array.isArray(missingMappings) && missingMappings.length
     ? [...notes, `Missing mappings: ${missingMappings.join(", ")}`]
     : notes;
+
+const CHANNEX_BOOKING_WEBHOOK_SECRET_NAME = "domits/channex/webhook/bookings";
 
 const describeLocalError = (error) => ({
   code: error?.code || error?.name || "INTERNAL_ERROR",
@@ -76,7 +80,12 @@ export default class ChannelManagementApiService {
     holiduProviderClient = new HoliduProviderClient(),
     channexCredentialStore = new ChannexCredentialStore(),
     channexProviderClient = new ChannexProviderClient(),
+    channexWebhookSecretVerifier = new ChannexWebhookSecretVerifier({
+      secrets: createSecretsClient(process.env.AWS_REGION || "eu-north-1"),
+      secretName: CHANNEX_BOOKING_WEBHOOK_SECRET_NAME,
+    }),
   } = {}) {
+    this.channexWebhookSecretVerifier = channexWebhookSecretVerifier;
     this.channelManagementService = new ChannelManagementService({
       accounts,
       sync,
@@ -143,10 +152,6 @@ export default class ChannelManagementApiService {
       logChannexFullCertificationSync: (...args) =>
         this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
     });
-    this.channexCertificationService = new ChannexCertificationService({
-      externalBookingImportRepository,
-      channexBookingAvailabilityBridge,
-    });
     this.channexBookingRevisionImportService =
       new ChannexBookingRevisionImportService({
         accounts,
@@ -198,6 +203,14 @@ export default class ChannelManagementApiService {
           ...args
         ),
     });
+    this.channexBookingWebhookService = new ChannexBookingWebhookService({
+      props,
+      accounts,
+      channexCredentialStore,
+      sync,
+      pullLatestChannexBookingsForResolvedContext: (...args) =>
+        this.channexBookingRevisionImportService.pullLatestChannexBookingsForResolvedContext(...args),
+    });
     this.channexAriOutboxWorker = new ChannexAriOutboxWorker({
       outbox: new ChannexAriOutboxRepository(),
       props,
@@ -206,6 +219,14 @@ export default class ChannelManagementApiService {
       schemaGuard: new ChannexAriSchemaGuard(new ChannelManagementSchemaRepository()),
       syncCalendarChange: (...args) => this.syncChannexCalendarChange(...args),
     });
+  }
+
+  async verifyChannexBookingWebhookSecret(headers) {
+    return this.channexWebhookSecretVerifier.verify(headers);
+  }
+
+  async receiveChannexBookingWebhook(...args) {
+    return this.channexBookingWebhookService.receiveBookingEvent(...args);
   }
 
   async connectHolidu(...args) {
@@ -306,10 +327,6 @@ export default class ChannelManagementApiService {
 
   async listChannexBookingRevisions(...args) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(...args) {

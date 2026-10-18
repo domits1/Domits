@@ -12,25 +12,37 @@ import { DirectBookingWebsiteDraftRepository } from "../data/repository/directBo
 import { DirectBookingWebsiteEventRepository } from "../data/repository/directBookingWebsiteEventRepository.js";
 import { DirectBookingWebsiteSiteRepository } from "../data/repository/directBookingWebsiteSiteRepository.js";
 import { DirectBookingWebsiteDomainRepository } from "../data/repository/directBookingWebsiteDomainRepository.js";
+import { StaticPageOutboxRepository } from "../data/repository/staticPageOutboxRepository.js";
+import { StaticPageStore } from "../data/repository/staticPageStore.js";
+import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
+import { StaticPageWorker } from "../business/service/staticPageWorker.js";
+import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
+import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
+import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
 } from "../util/exception/WebsiteCustomDomainError.js";
 import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
+import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
+import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
     isDirectBookingWebsiteFallbackRoutingActive,
     getDirectBookingWebsiteFallbackRoutingStatus,
     resolveDirectBookingWebsiteFallbackDomainStatus,
+    resolveDirectBookingWebsiteRuntimeDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
 
 const draftResponseHeaders = {
@@ -178,17 +190,6 @@ const getRequestHostHeaderValue = (headers = {}) =>
     headers.host ||
     headers.Host ||
     "";
-const resolveDirectBookingWebsiteRuntimeDomainStatus = (site, domainEntry = {}) => {
-    const resolvedStatus = resolveDirectBookingWebsiteFallbackDomainStatus(domainEntry);
-    const shouldTreatPublishedFallbackDomainAsActive =
-        String(site?.status || "").trim().toUpperCase() === "PUBLISHED" &&
-        isDirectBookingWebsiteFallbackRoutingActive() &&
-        isDirectBookingWebsiteFallbackDomain(domainEntry) &&
-        resolvedStatus === "DISABLED" &&
-        domainEntry?.verificationDetails?.disabledByHost === true;
-
-    return shouldTreatPublishedFallbackDomainAsActive ? "ACTIVE" : resolvedStatus;
-};
 const isDirectBookingWebsiteCustomDomain = (domainEntry) =>
     String(domainEntry?.domainType || "").trim().toUpperCase() === DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM;
 const selectDirectBookingWebsiteMainAddress = (site, domains = []) => {
@@ -227,6 +228,7 @@ export class PropertyController {
         this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+        this.directBookingWebsiteRatePlanService = new DirectBookingWebsiteRatePlanService();
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
         this.websiteCustomDomainService = null;
@@ -569,6 +571,7 @@ export class PropertyController {
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                     bookingType: normalizedOverviewPayload.bookingType,
+                    customRules: normalizedOverviewPayload.customRules,
                 }
             );
 
@@ -591,12 +594,12 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // PATCH /property/registration
-    // -------------------------
     async updateRegistrationNumber(event) {
         try {
-            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            if (!accessToken) {
+                throw new Unauthorized("You must be logged in.");
+            }
 
             let rawBody;
             try {
@@ -797,6 +800,7 @@ export class PropertyController {
             amenities: body.amenities,
             rules: body.rules,
             bookingType: body.bookingType,
+            customRules: body.customRules,
         };
     }
 
@@ -1013,6 +1017,20 @@ export class PropertyController {
                             }))
                             .filter((rule) => rule.rule)
                             .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined,
+            customRules: Array.isArray(payload.customRules)
+                ? Array.from(
+                    new Map(
+                        payload.customRules
+                            .map((rule) => ({
+                                category: String(rule?.category || "").trim(),
+                                rule_text: String(rule?.rule_text || rule?.ruleText || "").trim(),
+                                enabled: rule?.enabled !== false,
+                            }))
+                            .filter((rule) => rule.category && rule.rule_text)
+                            .map((rule) => [`${rule.category}::${rule.rule_text}`, rule])
                     ).values()
                 )
                 : undefined,
@@ -1697,7 +1715,13 @@ export class PropertyController {
         };
     }
 
-    buildPublicDirectBookingWebsiteRenderPayload(site, domain, propertySnapshot = undefined, primaryDomain = null) {
+    buildPublicDirectBookingWebsiteRenderPayload(
+        site,
+        domain,
+        propertySnapshot = undefined,
+        primaryDomain = null,
+        host = null
+    ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
@@ -1708,10 +1732,12 @@ export class PropertyController {
             site: toPublicWebsiteSiteView(site),
             domain: toPublicWebsiteDomainView(domain),
             primaryDomain,
-            propertySnapshot:
+            host: host || buildEmptyPublicWebsiteHost(),
+            propertySnapshot: toPublicWebsitePropertySnapshotView(
                 propertySnapshot && typeof propertySnapshot === "object"
                     ? propertySnapshot
-                    : site.publishedPropertySnapshot || {},
+                    : site.publishedPropertySnapshot || {}
+            ),
             contentOverrides: site.publishedContentOverrides || {},
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
@@ -1811,6 +1837,90 @@ export class PropertyController {
             site,
             domain: healedPrimaryDomain,
             siteDomains: storedSiteDomains,
+        };
+    }
+
+    createStaticPageWithdrawal(pageStore = new StaticPageStore()) {
+        return new StaticPageWithdrawal({
+            pageStore,
+            tenantRepository: new CloudFrontTenantRepository(),
+            domainRepository: this.directBookingWebsiteDomainRepository,
+        });
+    }
+
+    createStaticPageWorker() {
+        const pageStore = new StaticPageStore();
+        return new StaticPageWorker({
+            outboxRepository: new StaticPageOutboxRepository(),
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            pageStore,
+            renderer: new StaticPageRenderer(),
+            withdrawal: this.createStaticPageWithdrawal(pageStore),
+        });
+    }
+
+    createStaticPageReconciler() {
+        const pageStore = new StaticPageStore();
+        return new StaticPageReconciler({
+            pageStore,
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            outboxRepository: new StaticPageOutboxRepository(),
+            withdrawal: this.createStaticPageWithdrawal(pageStore),
+        });
+    }
+
+    async reconcileStaticPages(event) {
+        const summary = await this.createStaticPageReconciler().run({ limit: event?.limit });
+        if (summary.errors.length > 0 || summary.stuck.length > 0) {
+            throw new Error(
+                `The static page reconciliation left ${summary.errors.length} failures and ${summary.stuck.length} stuck sites: ` +
+                    JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
+        };
+    }
+
+    async queueAllStaticPages() {
+        const { siteIds, complete } = await this.directBookingWebsiteSiteRepository.queueStaticPagesForPublishedSites();
+        if (!complete) {
+            throw new Error(`Queued ${siteIds.length} sites and stopped; more published sites remain than one run may queue.`);
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ queued: siteIds.length, siteIds }),
+        };
+    }
+
+    async withdrawStaticPageSafely(site) {
+        try {
+            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+            invalidationErrors.forEach((failure) => {
+                console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+            });
+        } catch (error) {
+            console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the reconciler will remove it.`, error);
+        }
+    }
+
+    async buildStaticPages(event) {
+        const summary = await this.createStaticPageWorker().run({ limit: event?.limit });
+        if (summary.failed > 0 || summary.errors.length > 0) {
+            throw new Error(
+                `The static page run left ${summary.failed} failed and ${summary.errors.length} unfinished pages: ` +
+                    JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
         };
     }
 
@@ -1986,7 +2096,7 @@ export class PropertyController {
     }
 
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatus(site.id, "PREVIEW");
+        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatusWithStaticPageOutbox(site.id, "PREVIEW");
         const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
             site.id,
             "DISABLED",
@@ -2805,6 +2915,13 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
+            if (error instanceof WebsitePublishConflictError) {
+                return {
+                    statusCode: error.statusCode,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ code: error.code, message: error.message }),
+                };
+            }
             return this.websiteServerError();
         }
     }
@@ -2947,9 +3064,10 @@ export class PropertyController {
                 },
             });
 
-            const [propertySnapshot, primaryDomain] = await Promise.all([
+            const [propertySnapshot, primaryDomain, host] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
                 this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
+                this.loadPublicWebsiteHostSafely(resolutionResult.site),
             ]);
 
             return {
@@ -2959,7 +3077,8 @@ export class PropertyController {
                     resolutionResult.site,
                     resolutionResult.domain,
                     propertySnapshot,
-                    primaryDomain
+                    primaryDomain,
+                    host
                 )),
             };
         } catch (error) {
@@ -3234,6 +3353,20 @@ export class PropertyController {
         }
     }
 
+    getWebsitePublicHostService() {
+        this.websitePublicHostService ??= new WebsitePublicHostService();
+        return this.websitePublicHostService;
+    }
+
+    async loadPublicWebsiteHostSafely(site) {
+        try {
+            return await this.getWebsitePublicHostService().loadPublicHost(site?.hostId);
+        } catch (error) {
+            console.error(`[WebsitePublicHost] the host block could not be built for site ${site?.id}.`, error);
+            return buildEmptyPublicWebsiteHost();
+        }
+    }
+
     getWebsiteCustomDomainService() {
         this.websiteCustomDomainService ??= new WebsiteCustomDomainService({
             domainRepository: this.directBookingWebsiteDomainRepository,
@@ -3348,6 +3481,7 @@ export class PropertyController {
             const existingSite = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
 
             if (existingSite?.id) {
+                await this.withdrawStaticPageSafely(existingSite);
                 await this.releaseWebsiteCustomDomainSafely(existingSite);
                 await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
@@ -3522,6 +3656,103 @@ export class PropertyController {
     isDraftContentClientError(error) {
         return Boolean(error?.message?.startsWith("Draft "));
     }
+
+    async getWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const plan = await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(plan),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async changeWebsiteRatePlan(event) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const user = await this.authManager.getAuthorizedUser(accessToken);
+            const group = user.UserAttributes?.find((attribute) => attribute.Name === "custom:group")?.Value;
+            if (group !== "Host") {
+                const error = new Error("You must be a Host.");
+                error.statusCode = 403;
+                throw error;
+            }
+
+            let body;
+            try {
+                body = JSON.parse(event.body || "{}");
+            } catch {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be valid JSON.")
+                };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Request body must be a JSON object.")
+                };
+            }
+
+            const result = await this.directBookingWebsiteRatePlanService.changePlan({
+                accountId: user.Username,
+                targetPlan: body.plan,
+                customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+            });
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(result),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    async handleWebsiteRatePlanWebhook(event) {
+        try {
+            const headers = event.headers || {};
+            const signature = headers["Stripe-Signature"] || headers["stripe-signature"] || "";
+            const rawBody = event.isBase64Encoded
+                ? Buffer.from(event.body || "", "base64").toString("utf8")
+                : String(event.body || "");
+
+            await this.directBookingWebsiteRatePlanService.handleStripeWebhook(rawBody, signature);
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ received: true }),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 400,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message || "Unable to process Stripe webhook." }),
+            };
+        }
+    }
+
 
     // -------------------------
     // Helper method (internal only)
