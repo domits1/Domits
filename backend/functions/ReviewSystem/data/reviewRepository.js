@@ -219,7 +219,7 @@ export class ReviewRepository {
       select: ["reviewId", "message", "publishedAt"],
     }) : [];
     return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
-      review_count: count, next_offset: !filters.cursor && offset + 10 < count ? offset + 10 : null,
+      review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
       next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: true,

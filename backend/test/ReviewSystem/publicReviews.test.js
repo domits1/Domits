@@ -30,7 +30,7 @@ describe("public review retrieval", () => {
     const result = await controller.getPublicReviews(request());
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11,
-      next_offset: 10, next_cursor: null, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true, response: { message: "Thanks", publishedAt: 2000 },
+      next_offset: null, next_cursor: null, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true, response: { message: "Thanks", publishedAt: 2000 },
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
     expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" });
@@ -102,8 +102,14 @@ describe("public review retrieval", () => {
     expect(body.reviews).toHaveLength(10);
     expect(body.reviews.map((review) => review.id)).toEqual(reviews.slice(0, 10).map((review) => review.id));
     expect(JSON.parse(Buffer.from(body.next_cursor, "base64url").toString())).toEqual({ propertyId: "p1", date: 1000, id: "r02" });
+    expect(body.next_offset).toBeNull();
     expect(query.addOrderBy).toHaveBeenCalledWith("review.id", "DESC");
     expect(query.limit).toHaveBeenCalledWith(11);
+  });
+  test.each(["highest", "lowest"])("retains offset pagination for %s rating sorting", async (sort) => {
+    const body = JSON.parse((await controller.getPublicReviews(request({ sort }))).body);
+    expect(body.next_offset).toBe(10);
+    expect(body.next_cursor).toBeNull();
   });
   test("uses the cursor only for the page while retaining property/public filters", async () => {
     const body = JSON.parse((await controller.getPublicReviews(request({
