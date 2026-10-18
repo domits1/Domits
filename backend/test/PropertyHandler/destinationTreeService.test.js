@@ -160,6 +160,12 @@ describe("the destination tree", () => {
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
   });
 
+  it("answers null instead of an empty page when the listings are gone between the count and the listing read", async () => {
+    const { service, repository } = buildService();
+    repository.listActiveListingsUnderPath.mockResolvedValue([]);
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
+  });
+
   it("lets a repository failure reach the caller instead of rendering an empty page", async () => {
     const { service, repository } = buildService();
     repository.listDestinationsWithActiveListings.mockRejectedValue(new Error("connection refused"));
