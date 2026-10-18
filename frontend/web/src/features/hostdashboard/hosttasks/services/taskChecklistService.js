@@ -42,6 +42,17 @@ export const fetchChecklistItems = async (taskId) => {
     return items.map(normalizeChecklistItem);
 };
 
+export const fetchChecklistTemplates = async () => {
+    const params = new URLSearchParams({ action: 'checklist-templates' });
+    const response = await fetch(`${TASKS_API_URL}?${params}`, { method: "GET", headers: getHeaders() });
+
+    if (!response.ok) {
+        await throwWithBackendMessage(response, `Failed to fetch checklist templates: ${response.status}`);
+    }
+
+    return await response.json();
+};
+
 export const createChecklistItem = async (taskId, itemData) => {
     const params = new URLSearchParams({ action: 'checklist' });
     const response = await fetch(`${TASKS_API_URL}?${params}`, {

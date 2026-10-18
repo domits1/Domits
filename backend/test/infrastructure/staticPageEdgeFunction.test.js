@@ -8,7 +8,27 @@ const SOURCE = readFileSync(join(DIRECTORY, "viewer-request.js"), "utf8");
 const CASES = JSON.parse(readFileSync(join(DIRECTORY, "cases.json"), "utf8"));
 const FUNCTION_SIZE_LIMIT_BYTES = 10 * 1024;
 const HOSTNAME_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
-const PAGE_KEY_PATTERN = new RegExp(`^/sites/by-host/((?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL})/index\\.html$`);
+const PAGE_KEY_PATTERN = new RegExp(
+  `^/sites/by-host/((?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL})/(?:index\\.html|sitemap\\.xml)$`
+);
+
+const robotsResponseFor = (host, method) => {
+  const response = {
+    statusCode: 200,
+    statusDescription: "OK",
+    headers: {
+      "content-type": { value: "text/plain; charset=utf-8" },
+      "cache-control": { value: "public, max-age=300" },
+    },
+  };
+  if (method === "HEAD") {
+    return response;
+  }
+  return {
+    ...response,
+    body: { encoding: "text", data: `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n` },
+  };
+};
 
 const loadHandler = () => vm.runInNewContext(`${SOURCE}\nhandler`, {});
 
@@ -50,7 +70,9 @@ describe("the viewer request function source", () => {
   });
 
   it("carries no comments", () => {
-    expect(SOURCE).not.toMatch(/\/\/|\/\*/);
+    const withoutStrings = SOURCE.replaceAll(/"(?:[^"\\\n]|\\.)*"/g, '""');
+    expect(withoutStrings).not.toMatch(/\/\/|\/\*/);
+    expect(withoutStrings).toContain("isPageKeyRequest");
   });
 });
 
@@ -62,6 +84,11 @@ describe("the viewer request function", () => {
 
     const result = handler(event);
 
+    if (testCase.expectedRobotsFor) {
+      expect(result).toEqual(robotsResponseFor(testCase.expectedRobotsFor, testCase.method));
+      expect(event.request).toEqual(original);
+      return;
+    }
     if (testCase.expectedStatus) {
       expect(result).toEqual({ statusCode: testCase.expectedStatus, statusDescription: "Not Found" });
       expect(event.request).toEqual(original);
@@ -79,6 +106,28 @@ describe("the viewer request function", () => {
       expect(match).not.toBeNull();
       expect(match[1].length).toBeLessThanOrEqual(253);
     }
+  });
+
+  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file unchecked", () => {
+    const robotsCases = CASES.filter((testCase) => testCase.expectedRobotsFor && testCase.method === "GET");
+    expect(robotsCases.length).toBeGreaterThan(0);
+    for (const testCase of robotsCases) {
+      const body = loadHandler()(buildEvent(testCase)).body.data;
+      expect(body).toMatch(
+        new RegExp(
+          `^User-agent: \\*\nAllow: /\nSitemap: https://(?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL}/sitemap\\.xml\n$`
+        )
+      );
+    }
+  });
+
+  it("answers a HEAD request for robots.txt with the same headers and no body", () => {
+    const head = loadHandler()(buildEvent({ method: "HEAD", uri: "/robots.txt", host: "www.villasensual.nl" }));
+    const get = loadHandler()(buildEvent({ method: "GET", uri: "/robots.txt", host: "www.villasensual.nl" }));
+
+    expect(head).not.toHaveProperty("body");
+    expect(head.statusCode).toBe(200);
+    expect(head.headers).toEqual(get.headers);
   });
 
   it("returns nothing instead of throwing when there is no event at all", () => {

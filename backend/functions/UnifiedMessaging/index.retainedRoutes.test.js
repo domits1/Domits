@@ -161,6 +161,32 @@ describe("UnifiedMessaging retained route contracts", () => {
     allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
   });
 
+  test("POST /integrations is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "POST",
+        path: "/default/integrations",
+        body: JSON.stringify({ userId: "user-1", channel: "WHATSAPP" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
+  });
+
+  test("PATCH /integrations/{id} is no longer routed", async () => {
+    const response = await handler(
+      buildEvent({
+        method: "PATCH",
+        path: "/default/integrations/integration-1",
+        body: JSON.stringify({ displayName: "New name" }),
+      })
+    );
+
+    expect(response.statusCode).toBe(404);
+    allControllerMethods.forEach((method) => expect(method).not.toHaveBeenCalled());
+  });
+
   // Saving a mapping without a user check let any caller pick the account a property's data
   // goes through; mappings are saved through the Channex routes, which check the owner (#3365).
   test("POST /integrations/{id}/properties is no longer routed", async () => {

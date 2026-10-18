@@ -1,13 +1,4 @@
-const ChannexProviderClient = require("../.shared/channelManagement/providers/channex/providerClient.js").default;
-
-const originalFetch = global.fetch;
-const CREDENTIALS = { apiKey: "test-api-key" };
-
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(body),
-});
+const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = require("./channexProviderClientTestUtils.js");
 
 const availabilityGroup = (overrides = {}) => ({
   externalPropertyId: "ext-property-1",
@@ -50,15 +41,11 @@ const PUSH_METHODS = [
 ];
 
 describe("ChannexProviderClient ARI push", () => {
+  useMockedFetch();
   let client;
 
   beforeEach(() => {
     client = new ChannexProviderClient();
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
   });
 
   describe("missing apiKey short-circuits before any request", () => {
