@@ -22,7 +22,6 @@ const buildClient = ({
   queryRows = [],
   failOn = null,
   conflicts = 0,
-  lockedLocation = { country: "Spain", city: "Marbella" },
 } = {}) => {
   const statements = [];
   let remainingConflicts = conflicts;
@@ -34,9 +33,6 @@ const buildClient = ({
     if (remainingConflicts > 0 && statement.includes("property_destination")) {
       remainingConflicts -= 1;
       throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
-    }
-    if (statement.includes("FOR UPDATE")) {
-      return { records: lockedLocation ? [lockedLocation] : [] };
     }
     return { records: statement.includes("property_destination") ? mappingRecords : [] };
   };
@@ -79,18 +75,12 @@ describe("the destination repository", () => {
 
     expect(client.committed).toBe(true);
     expect(kinds(client)).toEqual([
-      "SELECT country, city",
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
-    const lock = client.statements[0];
-    expect(lock.statement).toContain(
-      `FROM ${SCHEMA}.property_location\n      WHERE property_id = $1\n      FOR UPDATE`
-    );
-    expect(lock.parameters).toEqual(["property-1"]);
-    const upserts = client.statements.slice(1, 4);
+    const upserts = client.statements.slice(0, 3);
     expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
       [PATHS[0], null],
       [PATHS[1], PATHS[0]],
@@ -106,7 +96,7 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
-    const mapping = client.statements[4];
+    const mapping = client.statements[3];
     expect(mapping.statement).toContain(
       `JOIN ${SCHEMA}.property p ON p.id = l.property_id\n      WHERE l.property_id = $1\n        AND l.country = $4\n        AND l.city = $5`
     );
@@ -115,36 +105,20 @@ describe("the destination repository", () => {
   });
 
   it("maps a property without a resolvable city to its country row and writes no city row", async () => {
-    const client = buildClient({ lockedLocation: { country: "Spain", city: " - " } });
+    const client = buildClient();
     const chain = resolveDestinationChain({ country: "Spain", city: " - " });
     expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
-    expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([
-      "property-1",
-      PATHS[0],
-      PATHS[1],
-      "property-1",
-    ]);
+    expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([PATHS[0], PATHS[1], "property-1"]);
     expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], 1, "Spain", " - "]);
   });
 
-  it("answers false and writes nothing when the locked location no longer carries the judged address, or is gone", async () => {
-    const changed = buildClient();
-    expect(await sync(CHAIN, { sourceCountry: " Spain ", sourceCity: "Marbella" })).toBe(false);
-    expect(changed.committed).toBe(true);
-    expect(kinds(changed)).toEqual(["SELECT country, city"]);
-
-    const gone = buildClient({ lockedLocation: null });
-    expect(await sync()).toBe(false);
-    expect(kinds(gone)).toEqual(["SELECT country, city"]);
-  });
-
-  it("binds the exact stored address in the mapping write, and answers false when the property row is gone", async () => {
+  it("binds the exact stored address, and answers false when no location of an existing property carries it any more", async () => {
     const client = buildClient({ mappingRecords: [] });
 
-    expect(await sync()).toBe(false);
+    expect(await sync(CHAIN, { sourceCountry: " Spain ", sourceCity: "Marbella" })).toBe(false);
 
     expect(client.committed).toBe(true);
-    expect(client.statements.at(-1).parameters.slice(3)).toEqual(["Spain", "Marbella"]);
+    expect(client.statements.at(-1).parameters.slice(3)).toEqual([" Spain ", "Marbella"]);
   });
 
   it("retries a transaction that lost a DSQL conflict, and gives up after three attempts", async () => {
