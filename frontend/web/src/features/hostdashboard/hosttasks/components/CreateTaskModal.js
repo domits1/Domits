@@ -8,12 +8,14 @@ const CreateTaskModal = ({
     isOpen,
     newTask,
     propertyOptions,
-    currentUser,
+    assigneeOptions,
     onInputChange,
     onPropertyChange,
+    onAssigneeChange,
     onFileChange,
     onSubmit,
     onCancel,
+    isSubmitting,
 }) => {
     if (!isOpen) return null;
 
@@ -58,9 +60,11 @@ const CreateTaskModal = ({
                         </div>
                         <div className="form-group">
                             <label htmlFor='task-assignee'>Assignee</label>
-                            <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={onInputChange} required>
+                            <select id='task-assignee' name="assignee" value={newTask.assigneeSelection} onChange={onAssigneeChange} required>
                                 <option value="" disabled hidden>Select Assignee</option>
-                                {currentUser.name && <option value={currentUser.name}>{currentUser.name}{currentUser.email ? ` (${currentUser.email})` : ''}</option>}
+                                {assigneeOptions.map(o => (
+                                    <option key={o.id} value={o.id}>{o.label}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="form-group">
@@ -86,8 +90,8 @@ const CreateTaskModal = ({
                             </div>
                         </div>
                         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                            <button type="button" className="btn-text" onClick={onCancel}>Cancel</button>
-                            <button type="submit" className="btn-create-green">Create Task</button>
+                            <button type="button" className="btn-text" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
+                            <button type="submit" className="btn-create-green" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Task'}</button>
                         </div>
                     </form>
                 </div>
@@ -105,6 +109,8 @@ CreateTaskModal.propTypes = {
         bookingRef: PropTypes.string,
         type: PropTypes.string,
         assignee: PropTypes.string,
+        assigneeSelection: PropTypes.string,
+        assignee_team_member_id: PropTypes.string,
         dueDate: PropTypes.string,
         priority: PropTypes.string,
         attachments: PropTypes.array,
@@ -113,15 +119,17 @@ CreateTaskModal.propTypes = {
         id: PropTypes.string,
         label: PropTypes.string,
     })).isRequired,
-    currentUser: PropTypes.shape({
-        name: PropTypes.string,
-        email: PropTypes.string,
-    }).isRequired,
+    assigneeOptions: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+    })).isRequired,
     onInputChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
+    onAssigneeChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
+    isSubmitting: PropTypes.bool,
 };
 
 export default CreateTaskModal;

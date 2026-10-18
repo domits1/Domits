@@ -5,6 +5,22 @@ import { getPublicReviews } from "../../../review/services/reviewAPI";
 jest.mock("../../../review/services/reviewAPI", () => ({ getPublicReviews: jest.fn() }));
 const empty = { overall_score: null, review_count: 0, reviews: [], next_offset: null };
 beforeEach(() => getPublicReviews.mockReset());
+
+test("preserves the reviews anchor through loading, error, retry and success", async () => {
+  getPublicReviews.mockRejectedValueOnce(new Error("Could not load reviews"))
+    .mockResolvedValueOnce(empty);
+  const { container } = render(<PublicReviews propertyId="p1" />);
+  const section = container.querySelector("#listing-reviews");
+
+  expect(section).not.toBeNull();
+  expect(section.contains(screen.getByRole("status"))).toBe(true);
+  expect(section.contains(await screen.findByRole("alert"))).toBe(true);
+  expect(container.querySelector("#listing-reviews")).toBe(section);
+
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(section.contains(await screen.findByText("No reviews match your selected filters."))).toBe(true);
+  expect(container.querySelector("#listing-reviews")).toBe(section);
+});
 test("shows loading, empty, error and retry states", async () => {
   getPublicReviews.mockRejectedValueOnce(new Error("Could not load reviews"))
     .mockResolvedValueOnce(empty);

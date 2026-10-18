@@ -1,15 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { navigateToHostDestination } from "../../../utils/hostRedirect";
 
-const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
+const FaqItem = ({ question, answer, answerLink, answerAfterLink, answerLinkHostRoute = "/hostdashboard", toggleOpen, isOpen }) => {
   const contentRef = useRef(null);
   const [height, setHeight] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (contentRef.current) {
       setHeight(contentRef.current.scrollHeight);
     }
   }, [isOpen]);
+
+  // Resolves host status fresh via Auth.currentAuthenticatedUser() at click time, not from mount-time context.
+  const handleLinkClick = (e) => {
+    e.stopPropagation();
+    navigateToHostDestination({ navigate, hostPath: answerLinkHostRoute });
+  };
 
   return (
     <motion.div
@@ -44,6 +53,14 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
       >
         <div ref={contentRef}>
           {answer}
+          {answerLink && (
+            <>
+              <button type="button" className="landing__faq__link" onClick={handleLinkClick}>
+                {answerLink}
+              </button>
+              {answerAfterLink}
+            </>
+          )}
         </div>
       </motion.div>
     </motion.div>

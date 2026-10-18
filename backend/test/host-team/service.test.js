@@ -23,6 +23,23 @@ const createService = (opts) => {
   return { repository, service: new Service({ repository }) };
 };
 
+describe("Service.getTeamMemberById", () => {
+  test("returns the member when found", async () => {
+    const { repository, service } = createService({ member: { id: "member-1", member_email: "member@example.com" } });
+
+    const member = await service.getTeamMemberById("member-1");
+
+    expect(member).toEqual({ id: "member-1", member_email: "member@example.com" });
+    expect(repository.findById).toHaveBeenCalledWith(expect.anything(), "member-1");
+  });
+
+  test("throws NotFoundException when the member does not exist", async () => {
+    const { service } = createService({ member: null });
+
+    await expect(service.getTeamMemberById("missing")).rejects.toThrow(/Team member not found/);
+  });
+});
+
 describe("normalizeRole", () => {
   test("defaults to Property Operations Manager when role is falsy", () => {
     expect(normalizeRole(undefined)).toBe(DEFAULT_TEAM_MEMBER_ROLE);

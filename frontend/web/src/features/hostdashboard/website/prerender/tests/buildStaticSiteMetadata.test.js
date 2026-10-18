@@ -302,7 +302,7 @@ describe("calling it with no argument at all", () => {
 describe("the canonical never drifts to another domain", () => {
   it("accepts a custom domain when it is the primary one", () => {
     const { metadata } = buildMetadataFor({
-      domain: { domain: "www.villasensual.nl", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true },
+      domain: { domain: "www.villasensual.nl", status: "ACTIVE", isPrimary: true },
     });
 
     expect(metadata.canonicalUrl).toBe("https://www.villasensual.nl/");
@@ -311,7 +311,7 @@ describe("the canonical never drifts to another domain", () => {
 
   it("claims nothing when the fallback domain is not the primary one", () => {
     const { metadata } = buildMetadataFor({
-      domain: { domain: "villa-x-12345678.direct.domits.com", domainType: "FALLBACK", status: "ACTIVE", isPrimary: false },
+      domain: { domain: "villa-x-12345678.direct.domits.com", status: "ACTIVE", isPrimary: false },
     });
 
     expect(metadata.canonicalUrl).toBe("");

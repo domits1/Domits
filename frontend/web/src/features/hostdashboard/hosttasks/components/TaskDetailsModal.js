@@ -4,6 +4,7 @@ import { LuX } from 'react-icons/lu';
 import { getTodayString } from '../utils/taskFilters';
 import { TASK_TYPE_OPTIONS } from '../utils/taskTypeOptions';
 import AttachmentThumb from './AttachmentThumb';
+import ChecklistSection from './ChecklistSection';
 
 const STATUS_OPTIONS = [
     { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
@@ -24,14 +25,23 @@ const TaskDetailsModal = ({
     viewingTask,
     editedTask,
     editPropertyOptions,
-    currentUser,
+    assigneeOptions,
+    checklistItems,
+    checklistLoadError,
+    isApplyingChecklistTemplate,
     onEditChange,
     onPropertyChange,
+    onAssigneeChange,
     onFileChange,
     onRemoveAttachment,
+    onAddChecklistItem,
+    onToggleChecklistItem,
+    onRemoveChecklistItem,
+    onRetryChecklistLoad,
     onSave,
     onDelete,
     onClose,
+    onEscalate,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -131,8 +141,10 @@ const TaskDetailsModal = ({
                         <div className="form-row-grid">
                             <div className="form-group">
                                 <label htmlFor='task-assignee'>Assignee</label>
-                                <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={onEditChange}>
-                                    {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
+                                <select id='task-assignee' name="assignee" value={editedTask.assigneeSelection || ''} onChange={onAssigneeChange}>
+                                    {assigneeOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -181,6 +193,16 @@ const TaskDetailsModal = ({
                             </div>
                         </div>
 
+                        <ChecklistSection
+                            items={checklistItems}
+                            loadError={checklistLoadError}
+                            isApplyingTemplate={isApplyingChecklistTemplate}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={onRetryChecklistLoad}
+                        />
+
                         <div className="activity-section">
                             <div className="activity-header">
                                 <h4>Activity</h4>
@@ -211,6 +233,10 @@ const TaskDetailsModal = ({
                     <div className="modal-footer details-footer">
                         <button className="btn-text" onClick={onClose}>Cancel</button>
 
+                        {viewingTask.slaStatus === 'BREACHED' && (
+                            <button className="btn-escalate" onClick={onEscalate}>Escalate</button>
+                        )}
+
                         {isUnchanged ? (
                             <button className="btn-danger" onClick={onDelete}>Delete</button>
                         ) : (
@@ -230,17 +256,31 @@ TaskDetailsModal.propTypes = {
         id: PropTypes.string,
         label: PropTypes.string,
     })).isRequired,
-    currentUser: PropTypes.shape({
-        name: PropTypes.string,
-        email: PropTypes.string,
-    }).isRequired,
+    assigneeOptions: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+    })).isRequired,
+    checklistItems: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        isRequired: PropTypes.bool,
+        isChecked: PropTypes.bool,
+    })).isRequired,
+    checklistLoadError: PropTypes.string,
+    isApplyingChecklistTemplate: PropTypes.bool,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
+    onAssigneeChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onRemoveAttachment: PropTypes.func.isRequired,
+    onAddChecklistItem: PropTypes.func.isRequired,
+    onToggleChecklistItem: PropTypes.func.isRequired,
+    onRetryChecklistLoad: PropTypes.func.isRequired,
+    onRemoveChecklistItem: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
+    onEscalate: PropTypes.func.isRequired,
 };
 
 export default TaskDetailsModal;
