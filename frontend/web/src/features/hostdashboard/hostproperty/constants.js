@@ -1,4 +1,4 @@
-export const PROPERTY_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+export { PROPERTY_API_BASE } from "../../../services/propertyApiConfig";
 export const TABS = ["Overview", "Photos", "Amenities", "Pricing", "Availability", "Policies"];
 export const SPACE_TYPE_OPTIONS = ["Entire house", "Private room", "Shared room"];
 export const MAX_CAPACITY_VALUE = 99;

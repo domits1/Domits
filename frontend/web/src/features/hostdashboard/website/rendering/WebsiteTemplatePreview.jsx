@@ -151,7 +151,6 @@ UnsupportedTemplatePreview.propTypes = {
 
 const websiteTemplatePreviewModelPropType = PropTypes.shape({
   source: PropTypes.shape({
-    hostId: PropTypes.string,
     propertyId: PropTypes.string,
   }),
   host: PropTypes.shape({

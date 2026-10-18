@@ -1,5 +1,6 @@
 import { PropertyTask as TaskEntity } from "database/models/Property_Task";
 import { Property_Task_Activity as TaskActivityEntity } from "database/models/Property_Task_Activity";
+import { Property_Task_Checklist_Item as ChecklistItemEntity } from "database/models/Property_Task_Checklist_Item";
 import { Team_Member as TeamMemberEntity } from "database/models/Team_Member";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
@@ -55,7 +56,7 @@ export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const tasks = await query.getMany();
 
     const withOverdue = tasks.map(task => {
-        if (task.due_date && task.due_date < now && task.status !== 'Completed') {
+        if (task.due_date && task.due_date < now && !['Completed', 'Cancelled'].includes(task.status)) {
             return { ...task, status: 'Overdue', priority: 'Urgent' };
         }
         return task;
@@ -86,6 +87,45 @@ export const getTaskById = async (dataSource, taskId, hostId) => {
 export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.update(taskId, updateData);
+};
+
+export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({ escalated_at: escalatedAt })
+        .where("id = :taskId", { taskId })
+        .andWhere("host_id = :hostId", { hostId })
+        .andWhere("escalated_at IS NULL")
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
+export const getChecklistItemsForTask = async (dataSource, taskId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.find({ where: { task_id: taskId }, order: { position: "ASC" } });
+};
+
+export const getChecklistItemById = async (dataSource, itemId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.findOne({ where: { id: itemId } });
+};
+
+export const saveChecklistItemToDb = async (dataSource, itemData) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.save(itemData);
+};
+
+export const updateChecklistItemInDb = async (dataSource, itemId, updateData) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.update(itemId, updateData);
+};
+
+export const deleteChecklistItemFromDb = async (dataSource, itemId) => {
+    const repository = dataSource.getRepository(ChecklistItemEntity);
+    return await repository.delete(itemId);
 };
 
 export const getTeamMemberById = async (dataSource, teamMemberId, hostId) => {

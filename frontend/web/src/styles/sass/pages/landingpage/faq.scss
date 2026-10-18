@@ -68,6 +68,23 @@
   margin: 0;
 }
 
+.landing__faq__link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #046c2c;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.landing__faq__link:hover {
+  color: #03511f;
+}
+
 .faq-landing__cta {
   text-align: center;
   margin-top: 50px;
