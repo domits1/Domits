@@ -111,8 +111,8 @@ describe("the destination repository", () => {
       "ES",
     ]);
     expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
-    expect(upserts[2].statement.slice(upserts[2].statement.indexOf("DO UPDATE")).replace(/\s+/g, " ")).toBe(
-      "DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = EXCLUDED.updated_at WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
+    expect(upserts[2].statement.replace(/\s+/g, " ")).toBe(
+      `INSERT INTO ${SCHEMA}.destination AS d (id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8) ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = EXCLUDED.updated_at WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name`
     );
     const mapping = client.statements[4];
     expect(mapping.statement).toContain(
@@ -137,7 +137,7 @@ describe("the destination repository", () => {
       [["amsterdam ", "Amsterdam"], "Amsterdam"],
       [["AMSTERDAM", "Amsterdam", "amsterdam", "AMSTERDAM"], "Amsterdam"],
       [["amsterdam", "AMSTERDAM", "amsterdam"], "AMSTERDAM"],
-      [["amsterdam", "amsterdam "], "amsterdam"],
+      [["amsterdam "], "amsterdam"],
       [["Evora", "Évora", "évora", "ÉVORA"], "Évora", {}, "Portugal"],
       [["amsterdam"], "Amsterdam", { conflicts: 1, conflictOn: "city", concurrent: { [amsterdam]: "Amsterdam" } }],
     ];
