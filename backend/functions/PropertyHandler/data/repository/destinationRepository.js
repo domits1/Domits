@@ -61,7 +61,17 @@ const upsertDestinationStatement = (
       DO UPDATE SET
         display_name = EXCLUDED.display_name,
         updated_at = EXCLUDED.updated_at
-      WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name`;
+      WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name`;
+
+const nameRank = (name) => {
+  const text = String(name ?? "");
+  const hasCapital = text !== text.toLowerCase();
+  const hasSmall = text !== text.toUpperCase();
+  if (hasCapital && hasSmall) {
+    return 2;
+  }
+  return hasCapital ? 1 : 0;
+};
 
 const locationMatches = (schemaName) => `SELECT 1
       FROM ${locationTableName(schemaName)} l
@@ -89,7 +99,17 @@ export class DestinationRepository {
           [chain.country, chain.continent.path, chain.country.code],
           ...(chain.city ? [[chain.city, chain.country.path, chain.country.code]] : []),
         ];
+        const ids = rows.map(([destination]) => destination.path);
+        const placeholders = ids.map((_, index) => `$${index + 1}`).join(", ");
+        const stored = await manager.queryRunner.query(
+          `SELECT id, display_name FROM ${destinationTableName(schemaName)} WHERE id IN (${placeholders})`,
+          ids,
+          true
+        );
+        const storedRows = Array.isArray(stored?.records) ? stored.records : [];
+        const storedNames = new Map(storedRows.map((row) => [String(row.id), String(row.display_name ?? "")]));
         for (const [destination, parentId, countryCode] of rows) {
+          const storedName = storedNames.get(destination.path);
           await manager.queryRunner.query(
             upsertDestinationStatement(destinationTableName(schemaName)),
             [
@@ -101,6 +121,7 @@ export class DestinationRepository {
               destination.name,
               countryCode,
               now,
+              storedName === undefined || nameRank(destination.name) >= nameRank(storedName),
             ],
             true
           );

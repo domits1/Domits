@@ -17,11 +17,15 @@ const sync = (chain = CHAIN, source = SOURCE) =>
 const remove = (source = { sourceCountry: "Narnia", sourceCity: "Cair Paravel" }) =>
   new DestinationRepository().removePropertyDestination("property-1", source);
 
+const conflictError = () =>
+  Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
+
 const buildClient = ({
   mappingRecords = [{ property_id: "property-1" }],
   queryRows = [],
   failOn = null,
   conflicts = 0,
+  storedNames = {},
 } = {}) => {
   const statements = [];
   let remainingConflicts = conflicts;
@@ -32,7 +36,10 @@ const buildClient = ({
     }
     if (remainingConflicts > 0 && statement.includes("property_destination")) {
       remainingConflicts -= 1;
-      throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
+      throw conflictError();
+    }
+    if (statement.trim().startsWith("SELECT id, display_name")) {
+      return { records: Object.entries(storedNames).map(([id, display_name]) => ({ id, display_name })) };
     }
     return { records: statement.includes("property_destination") ? mappingRecords : [] };
   };
@@ -75,12 +82,14 @@ describe("the destination repository", () => {
 
     expect(client.committed).toBe(true);
     expect(kinds(client)).toEqual([
+      "SELECT id, display_name",
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
-    const upserts = client.statements.slice(0, 3);
+    expect(client.statements[0].parameters).toEqual(PATHS);
+    const upserts = client.statements.slice(1, 4);
     expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
       [PATHS[0], null],
       [PATHS[1], PATHS[0]],
@@ -95,8 +104,11 @@ describe("the destination repository", () => {
       "Marbella",
       "ES",
     ]);
-    expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
-    const mapping = client.statements[3];
+    expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
+    expect(upserts[0].statement).toContain(
+      "WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name"
+    );
+    const mapping = client.statements[4];
     expect(mapping.statement).toContain(
       `JOIN ${SCHEMA}.property p ON p.id = l.property_id\n      WHERE l.property_id = $1\n        AND l.country = $4\n        AND l.city = $5`
     );
@@ -108,8 +120,67 @@ describe("the destination repository", () => {
     const client = buildClient();
     const chain = resolveDestinationChain({ country: "Spain", city: " - " });
     expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
-    expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([PATHS[0], PATHS[1], "property-1"]);
+    expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([
+      PATHS[0],
+      PATHS[0],
+      PATHS[1],
+      "property-1",
+    ]);
     expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], 1, "Spain", " - "]);
+  });
+
+  it("lets a city name replace the stored one only when it is not a weaker spelling", async () => {
+    const cases = [
+      ["Spain", "Marbella", "marbella", false],
+      ["Spain", "Marbella", "MARBELLA", false],
+      ["Spain", "MARBELLA", "Marbella", true],
+      ["Spain", "marbella", "MARBELLA", true],
+      ["Spain", undefined, "marbella", true],
+      ["Portugal", "Évora", "évora", false],
+    ];
+    for (const [country, stored, written, expected] of cases) {
+      const chain = resolveDestinationChain({ country, city: written });
+      const client = buildClient({ storedNames: stored ? { [chain.city.path]: stored } : {} });
+      await sync(chain, { sourceCountry: country, sourceCity: written });
+      expect([stored, written, client.statements[3].parameters[8]]).toEqual([stored, written, expected]);
+    }
+  });
+
+  it("ends with the capitalised city name whatever order a host save, a backfill or a lost conflict write it in", async () => {
+    const run = async (writes, concurrentName = null) => {
+      const table = new Map();
+      let pending = concurrentName;
+      const answer = async (statement, parameters) => {
+        if (statement.trim().startsWith("SELECT id, display_name")) {
+          return { records: [...table].map(([id, display_name]) => ({ id, display_name })) };
+        }
+        if (!statement.includes(`INSERT INTO ${SCHEMA}.destination`))
+          return { records: [{ property_id: "property-1" }] };
+        const [id, type, , , , name, , , mayRename] = parameters;
+        if (pending && type === "city") {
+          table.set(id, pending);
+          pending = null;
+          throw conflictError();
+        }
+        if (!table.has(id) || (mayRename && table.get(id) !== name)) table.set(id, name);
+        return { records: [] };
+      };
+      const client = { options: { schema: "main" }, transaction: (work) => work({ queryRunner: { query: answer } }) };
+      Database.getInstance.mockResolvedValue(client);
+      for (const city of writes)
+        await sync(resolveDestinationChain({ country: "Netherlands", city }), {
+          ...SOURCE,
+          sourceCountry: "Netherlands",
+          sourceCity: city,
+        });
+      return table.get("/destinations/europe/netherlands/amsterdam");
+    };
+
+    expect(await run(["Amsterdam", "amsterdam "])).toBe("Amsterdam");
+    expect(await run(["amsterdam ", "Amsterdam"])).toBe("Amsterdam");
+    expect(await run(["AMSTERDAM", "Amsterdam", "amsterdam"])).toBe("Amsterdam");
+    expect(await run(["amsterdam"])).toBe("amsterdam");
+    expect(await run(["amsterdam"], "Amsterdam")).toBe("Amsterdam");
   });
 
   it("binds the exact stored address, and answers false when no location of an existing property carries it any more", async () => {
