@@ -17,6 +17,17 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
 4. Fails the run (so CloudWatch shows an error) when a booking could not be handled at all, for example when the database is down.
 
+## What One Cancel Run Does
+
+With `"task": "cancel-cancelled-bookings"` the same Lambda handles cancelled bookings instead:
+
+1. Lists up to `limit` Truvi rows in `guest_risk_assessment` that have a `providerassessmentid`, whose booking has status `Cancelled` or `Canceled`, and whose status is not `CANCELLED` or `CANCEL_REFUSED` yet.
+2. Sends `PUT /verificationRequests/cancel` with the verification id and the booking id as reservation id.
+3. Saves `CANCELLED` on a 200, and also on `already cancelled` (a retry of a request that went through).
+4. Saves `CANCEL_REFUSED` with the reason when Truvi cannot cancel anymore: the check-in has passed, the verification is screening only, or Truvi does not know it. These rows are not tried again.
+5. Leaves the row for the next run on a timeout or a 5xx.
+6. Fails the run on any other 400, without saving, because that means the request itself is wrong.
+
 ## Prerequisites
 
 - The `guest_risk_assessment` migration has run in the target database.
@@ -46,8 +57,8 @@ Without `TRUVI_BASE_URL` the Lambda uses the Truvi sandbox. Production needs the
 
 Safety behavior:
 
-- If `TRUVI_SCREENING_ENABLED` is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
-- An event without `"task": "screen-pending-bookings"` returns 400 and does nothing.
+- `TRUVI_SCREENING_ENABLED` switches both tasks. If it is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
+- An event without `"task": "screen-pending-bookings"` or `"task": "cancel-cancelled-bookings"` returns 400 and does nothing.
 - A missing or invalid `TRUVI_EXTENDED_AMOUNT` or a non-https `TRUVI_BASE_URL` fails the run before any Truvi call.
 
 ## EventBridge Rule
@@ -75,6 +86,24 @@ Target input:
 }
 ```
 
+Cancel rule:
+
+```text
+domits-truvi-cancel-rate-15-minutes
+rate(15 minutes)
+```
+
+Target input:
+
+```json
+{
+  "task": "cancel-cancelled-bookings",
+  "limit": 10
+}
+```
+
+Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day after). A booking cancelled later ends as `CANCEL_REFUSED`.
+
 ## Enablement Steps
 
 1. Confirm the Truvi code is deployed to the `Truvi-Integration` Lambda.
@@ -87,7 +116,7 @@ Target input:
 
 ## Manual Lambda Test Event
 
-Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json`:
+Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json` for screening and `truvi-cancel-cancelled-bookings.event.json` for cancellations:
 
 ```json
 {
@@ -107,6 +136,7 @@ Saved results stay in `guest_risk_assessment`. Deleting a row makes the booking 
 
 - Do not claim production screening is enabled; the default is the Truvi sandbox.
 - Do not claim screening happens at booking time; it runs every 15 minutes.
-- Do not claim booking changes or cancellations are sent to Truvi yet.
+- Do not claim date or guest changes are sent to Truvi yet; only cancellations are.
+- Do not claim a cancelled booking keeps its screening status; the row status becomes `CANCELLED` or `CANCEL_REFUSED`.
 - Do not claim Truvi webhooks are handled.
 - Do not claim retries are idempotent at Truvi: a retried booking creates a new verification request.

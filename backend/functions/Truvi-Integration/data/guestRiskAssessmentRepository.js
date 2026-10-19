@@ -36,6 +36,14 @@ export class GuestRiskAssessmentRepository {
     return row;
   }
 
+  async saveCancellation({ provider = TRUVI_PROVIDER, bookingId, status, errorMessage = null, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to save a cancellation");
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, { status, errorMessage, updatedAt: now });
+  }
+
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {
     const repository = await this.getRepository();
     return repository.findOne({ where: { id: assessmentId(provider, bookingId) } });
