@@ -6,6 +6,8 @@ import { StaticPageStore } from "../../functions/PropertyHandler/data/repository
 const HOST = "finca-los-olivos-1a2b3c4d.direct.domits.com";
 const PAGE_KEY = `sites/by-host/${HOST}/index.html`;
 const SITEMAP_KEY = `sites/by-host/${HOST}/sitemap.xml`;
+const WITHDRAWN = [`DeleteObjectCommand ${PAGE_KEY}`, `PutObjectCommand ${SITEMAP_KEY}`];
+const DELETED = [...WITHDRAWN, "invalidate", "delete images", "delete rows"];
 
 const buildS3 = (calls, { failSitemapWrites = 0 } = {}) => {
   let remainingFailures = failSitemapWrites;
@@ -74,13 +76,7 @@ describe("deleting a listing takes its static page offline first", () => {
       "property-1",
       "host-1"
     );
-    expect(calls).toEqual([
-      `DeleteObjectCommand ${PAGE_KEY}`,
-      `PutObjectCommand ${SITEMAP_KEY}`,
-      "invalidate",
-      "delete images",
-      "delete rows",
-    ]);
+    expect(calls).toEqual(DELETED);
   });
 
   it("refuses the deletion with a 503 when the sitemap cannot be emptied after the page was removed, and deletes nothing", async () => {
@@ -92,19 +88,13 @@ describe("deleting a listing takes its static page offline first", () => {
     expect(JSON.parse(response.body)).toBe(
       "The website of this listing could not be taken offline, so the listing was not deleted. Please try again in a few minutes."
     );
-    expect(calls).toEqual([`DeleteObjectCommand ${PAGE_KEY}`, `PutObjectCommand ${SITEMAP_KEY}`]);
+    expect(calls).toEqual(WITHDRAWN);
     expect(service.propertyDeletionRepository.deletePropertyById).not.toHaveBeenCalled();
 
     const retry = await remove();
 
     expect(retry.statusCode).toBe(204);
-    expect(calls.slice(2)).toEqual([
-      `DeleteObjectCommand ${PAGE_KEY}`,
-      `PutObjectCommand ${SITEMAP_KEY}`,
-      "invalidate",
-      "delete images",
-      "delete rows",
-    ]);
+    expect(calls.slice(2)).toEqual(DELETED);
   });
 
   it("deletes a listing without a website without touching the bucket", async () => {
