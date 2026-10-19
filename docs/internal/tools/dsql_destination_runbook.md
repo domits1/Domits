@@ -10,7 +10,7 @@ Connect the same way as for [dsql_static_page_outbox_runbook.md](./dsql_static_p
 
 `main.property_destination` maps one property to the deepest destination its address resolves to, the city, or the country when the city text cannot be turned into a slug, and remembers the `source_country` and `source_city` text it was derived from, so a later address change or a backfill can tell whether a mapping is current. Whether a destination has a page is not stored: it is computed from the mapped properties whose status is `ACTIVE`, with the thresholds of `util/destination/destinationSettings.js`.
 
-Only `main` has the property tables; there is no `test` variant.
+The property tables exist in `main` and `test`. The destination tables are in `main`; `test` follows in #3617. Do not run the backfill with `TEST=true` until then.
 
 ## Why this is safe to run while hosts are working
 
@@ -34,3 +34,7 @@ Concurrency, on purpose kept simple: a mapping is written in one transaction fro
 ## Rollback
 
 `20261007_destination_rollback.sql` drops the three indexes and the two tables, one statement per transaction. Everything in them is derived, so a later re-apply plus the backfill task rebuilds the same content.
+
+## Status
+
+Applied in main on 19 October 2026. Test: follows in #3617.
