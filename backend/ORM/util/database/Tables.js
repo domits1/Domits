@@ -63,6 +63,8 @@ import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
+import { Property_Owner } from "../../models/Property_Owner.js";
+import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
 import { Invoice } from "../../models/Invoice.js";
 
 export const Tables = [
@@ -129,6 +131,8 @@ export const Tables = [
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,
+  Property_Owner,
+  Property_Owner_Property,
   Invoice,
   EnterpriseRatePlan,
   DirectBookingWebsiteRatePlan,
