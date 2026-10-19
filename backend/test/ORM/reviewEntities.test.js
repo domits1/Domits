@@ -12,6 +12,24 @@ const entities = [Review, Review_Rating, Review_Category, Review_Request];
 const sql = readFileSync("ORM/migrations/20260930_create_reviews.sql", "utf8");
 const normalize = (value) => value.replace(/\s+/g, " ").trim();
 
+// Independent expectations ensure removing a default or transformer fails.
+const expectedDefaults = {
+  review: { verification_status: "UNVERIFIED", publication_status: "UNPUBLISHED", status: "DRAFT" },
+  review_rating: {},
+  review_category: { is_active: true, sort_order: 0 },
+  review_request: { status: "OPEN" },
+};
+
+const expectedTransformers = {
+  review: ["overall_rating", "created_at", "updated_at"],
+  review_rating: ["rating", "created_at"],
+  review_category: ["created_at", "updated_at"],
+  review_request: [
+    "requested_at", "expires_at", "completed_at", "created_at", "updated_at",
+    "last_sent_at", "next_send_at", "claimed_at",
+  ],
+};
+
 describe.each(entities.map((entity) => [entity.options.tableName, entity]))(
   "%s persistence mapping",
   (table, entity) => {
@@ -36,23 +54,36 @@ describe.each(entities.map((entity) => [entity.options.tableName, entity]))(
           expect(definition).toContain(`${column.databaseName} ${type}${parameters} `);
           expect(definition.includes("NOT NULL")).toBe(!column.isNullable);
           expect(definition.includes("PRIMARY KEY")).toBe(column.isPrimary);
-          if (column.default !== undefined) {
-            const value = typeof column.default === "string" ? `'${column.default}'` : String(column.default);
+          const expected = expectedDefaults[table][column.databaseName];
+          expect(column.default).toBe(expected);
+          if (expected !== undefined) {
+            const value = typeof expected === "string" ? `'${expected}'` : String(expected);
             expect(definition).toContain(`DEFAULT ${value}`);
+          } else {
+            expect(definition).not.toContain("DEFAULT ");
           }
         }
       }
     });
 
     it("converts PostgreSQL numeric strings and preserves nullable values", () => {
-      for (const column of Object.values(entity.options.columns)) {
-        if (!column.transformer) continue;
-        const value = column.type === "numeric" ? "4.5" : "1792368000000";
-        expect(column.transformer.from(value)).toBe(Number(value));
-        expect(column.transformer.from(null)).toBeNull();
-        expect(column.transformer.from(undefined)).toBeNull();
-        expect(column.transformer.to(Number(value))).toBe(Number(value));
-        expect(column.transformer.to(null)).toBeNull();
+      const columns = Object.fromEntries(
+        Object.entries(entity.options.columns).map(([property, column]) => [column.name ?? property, column])
+      );
+      for (const name of expectedTransformers[table]) {
+        expect(columns[name]).toBeDefined();
+        const transformer = columns[name].transformer;
+        expect(transformer).toBeDefined();
+        expect(typeof transformer.from).toBe("function");
+        expect(typeof transformer.to).toBe("function");
+        const value = ["overall_rating", "rating"].includes(name) ? "4.5" : "1792368000000";
+        expect(transformer.from(value)).toBe(Number(value));
+        expect(transformer.from("0")).toBe(0);
+        expect(transformer.from(null)).toBeNull();
+        expect(transformer.from(undefined)).toBeNull();
+        expect(transformer.to(Number(value))).toBe(Number(value));
+        expect(transformer.to(0)).toBe(0);
+        expect(transformer.to(null)).toBeNull();
       }
     });
   }

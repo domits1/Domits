@@ -2,7 +2,7 @@
 
 ## Status
 
-2026-10-19: NOT APPLIED by this change. AWS identity check failed with `NoCredentials`. Applying and verifying this migration remains a merge blocker. After execution, record operator, UTC timestamp, account/cluster, schema verification results, and completed index job IDs here.
+2026-10-19: NOT APPLIED by this change. AWS identity check failed with `NoCredentials`. Applying and verifying this migration remains a merge blocker. After execution, record operator, UTC timestamp, account/cluster, schema verification results, and any completed index job IDs here. If all objects already existed and no jobs were started, record that explicitly.
 
 ## Scope and files
 
@@ -53,8 +53,8 @@ Duplicates block application; resolve with the data owner without automatically 
 ## Apply and verify before merge
 
 1. Use a quiet window and autocommit, one DDL statement per transaction. Do not wrap the file in BEGIN. Enable ON_ERROR_STOP when using psql.
-2. Execute the test statements first. Check sys.jobs until both unique index builds complete successfully.
-3. Execute main statements, then wait for both index builds to complete. Save job IDs and results while available.
+2. Execute the test statements first. IF NOT EXISTS starts no builds for indexes that already exist. Only for newly started builds, record their job IDs and check sys.jobs until they complete successfully. Verify existing indexes directly instead of waiting for jobs that were never started.
+3. Execute main statements. Wait only for builds started by this apply, saving their job IDs and results while available. If all tables and indexes already exist, expect no new jobs and proceed to catalog verification. Investigate existing in-progress or failed review builds before continuing.
 4. Repeat column and index inspection. Verify all eight tables match the SQL and all four unique indexes have the intended keys and are valid:
 
 ```sql
@@ -84,4 +84,22 @@ Fetch current refs and identify each PR's actual parent. Rebase from foundation 
 
 ## Outstanding live-schema parity
 
-The reviewer reports additional unique rules on review_rating and review_category. Their exact definitions are not recorded in this repository. Capture the index inspection results for both schemas before modifying the migration; do not infer key columns or index names. This remains a merge blocker. The main request index uses the reported live name review_request_booking_type_guest_unique_main to avoid creating a duplicate.
+The reviewer reports additional unique rules on review_rating and review_category. Their exact definitions are not recorded in this repository. Capture the index inspection results for both schemas before modifying the migration; do not infer key columns or index names. The reviewer approved this as a non-blocking follow-up; live uniqueness parity remains outstanding. The main request index uses the reported live name review_request_booking_type_guest_unique_main to avoid creating a duplicate.
+
+## Unique-rule inspection
+
+Capture the following results before adding the missing rating and category rules to the JavaScript and hand-run SQL migrations. Preserve the exact live names and keys to avoid duplicate indexes.
+
+```sql
+SELECT n.nspname AS schema_name, t.relname AS table_name,
+       c.relname AS index_name, i.indisunique, i.indisvalid,
+       pg_get_indexdef(i.indexrelid) AS index_definition
+FROM pg_index i
+JOIN pg_class t ON t.oid = i.indrelid
+JOIN pg_class c ON c.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+WHERE n.nspname IN ('main', 'test')
+  AND t.relname IN ('review_rating', 'review_category')
+  AND i.indisunique
+ORDER BY schema_name, table_name, index_name;
+```
