@@ -47,6 +47,7 @@ describe("Direct Booking Website rate-plan schema", () => {
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans");
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS test.direct_booking_website_rate_plans");
     expect(migration).toContain("CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique_test");
+    expect(migration).toContain("WHERE status = 'ACTIVE'\\n  OR status = 'PAST_DUE'\\n  OR status = 'TRIALING';");
   });
 
   it("has a migration that creates the table and uniqueness indexes in both schemas", () => {
@@ -58,11 +59,9 @@ describe("Direct Booking Website rate-plan schema", () => {
     expect(migration).toContain("ON ${schema}.direct_booking_website_rate_plans (account_id)");
     expect(migration).toContain("ON ${schema}.direct_booking_website_rate_plans (stripe_subscription_id)");
     expect(migration).toContain(`const ACTIVE_STATUS_SQL = "'ACTIVE'";`);
-    expect(migration).toContain(
-      `const CURRENT_PLAN_STATUSES_SQL = [ACTIVE_STATUS_SQL, "'PAST_DUE'", "'TRIALING'"].join(", ");`
-    );
+    expect(migration).toContain("const CURRENT_PLAN_STATUS_PREDICATE_SQL = `status = ${ACTIVE_STATUS_SQL} OR status = 'PAST_DUE' OR status = 'TRIALING'`;");
     expect(migration).toContain("status VARCHAR(20) NOT NULL DEFAULT ${ACTIVE_STATUS_SQL},");
-    expect(migration).toContain("WHERE status IN (${CURRENT_PLAN_STATUSES_SQL});");
+    expect(migration).toContain("WHERE ${CURRENT_PLAN_STATUS_PREDICATE_SQL};");
     expect(migration).toContain("WHERE stripe_subscription_id IS NOT NULL");
     expect(migration).toContain("const createSchemaObjects = async (schema, suffix) => {");
     expect(migration).toContain('await createSchemaObjects("main", "");');
