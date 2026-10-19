@@ -40,7 +40,16 @@ const REQUESTS = [
       meta: { page: 2, per_page: 10, total_pages: 3, total_count: 25 },
     },
     result: {
-      devices: [{ providerDeviceId: "device-1", deviceType: "lock", name: "Front door" }],
+      devices: [
+        {
+          providerDeviceId: "device-1",
+          deviceType: "lock",
+          name: "Front door",
+          status: "UNKNOWN",
+          batteryLevel: null,
+          lastSeenAt: null,
+        },
+      ],
       page: 2,
       perPage: 10,
       totalPages: 3,

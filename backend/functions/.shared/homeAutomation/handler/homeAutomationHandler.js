@@ -1,9 +1,12 @@
 import { resolveAuthenticatedUserId } from "../../channelManagement/utils/channelAuthenticatedUser.js";
 import IntegrationAccountRepository from "../../integrations/repositories/integrationAccountRepository.js";
+import { RemoteLockApiClient } from "../providers/remotelock/remoteLockApiClient.js";
 import RemoteLockCredentialStore from "../providers/remotelock/remoteLockCredentialStore.js";
+import { RemoteLockTokenProvider } from "../providers/remotelock/remoteLockTokenProvider.js";
 import CredentialLeaseRepository from "../repositories/credentialLeaseRepository.js";
 import { createRemoteLockOAuthClientLoader } from "../remoteLockConfig.js";
 import RemoteLockConnectionService from "../services/remoteLockConnectionService.js";
+import RemoteLockDevicesService from "../services/remoteLockDevicesService.js";
 
 const BASE_PATH = "/integrations/home-automation/remotelocks";
 const corsHeaders = {
@@ -13,10 +16,11 @@ const corsHeaders = {
 };
 
 const routes = {
-  "POST /connect": (service, userId) => service.startConnect(userId),
-  "POST /connect/complete": (service, userId, body) => service.completeConnect(userId, body),
-  "GET /status": (service, userId) => service.getStatus(userId),
-  "POST /disconnect": (service, userId) => service.disconnect(userId),
+  "POST /connect": ({ connection }, userId) => connection.startConnect(userId),
+  "POST /connect/complete": ({ connection }, userId, body) => connection.completeConnect(userId, body),
+  "GET /status": ({ connection }, userId) => connection.getStatus(userId),
+  "POST /disconnect": ({ connection }, userId) => connection.disconnect(userId),
+  "GET /devices": ({ devices }, userId) => devices.listDevices(userId),
 };
 
 const respond = ({ statusCode, response }) => ({
@@ -35,19 +39,28 @@ const parseBody = (raw) => {
 };
 
 // Built on first use, so loading the Lambda does not open a database or a secrets client for other routes.
-let defaultService = null;
-const getDefaultService = () => {
-  defaultService ??= new RemoteLockConnectionService({
-    accounts: new IntegrationAccountRepository(),
-    credentialStore: new RemoteLockCredentialStore(),
-    leaseRepository: new CredentialLeaseRepository(),
-    loadOAuthClient: createRemoteLockOAuthClientLoader(),
-  });
-  return defaultService;
+let defaultServices = null;
+const getDefaultServices = () => {
+  if (defaultServices) return defaultServices;
+  const accounts = new IntegrationAccountRepository();
+  const credentialStore = new RemoteLockCredentialStore();
+  const leaseRepository = new CredentialLeaseRepository();
+  const loadOAuthClient = createRemoteLockOAuthClientLoader();
+  defaultServices = {
+    connection: new RemoteLockConnectionService({ accounts, credentialStore, leaseRepository, loadOAuthClient }),
+    devices: new RemoteLockDevicesService({
+      accounts,
+      apiClient: new RemoteLockApiClient(),
+      loadOAuthClient,
+      createTokenProvider: (oauthClient) =>
+        new RemoteLockTokenProvider({ oauthClient, credentialStore, leaseRepository, accountRepository: accounts }),
+    }),
+  };
+  return defaultServices;
 };
 
 // Returns null for any other path, so the Lambda can go on to its other routes.
-export const handleHomeAutomationEvent = async (event, { service } = {}) => {
+export const handleHomeAutomationEvent = async (event, { service, devicesService } = {}) => {
   const path = String(event?.path || "");
   const baseIndex = path.indexOf(BASE_PATH);
   if (baseIndex === -1) return null;
@@ -62,7 +75,9 @@ export const handleHomeAutomationEvent = async (event, { service } = {}) => {
   if (!userId) return respond({ statusCode: 401, response: { error: "UNAUTHORIZED" } });
 
   try {
-    return respond(await route(service ?? getDefaultService(), userId, parseBody(event.body)));
+    const services =
+      service || devicesService ? { connection: service, devices: devicesService } : getDefaultServices();
+    return respond(await route(services, userId, parseBody(event.body)));
   } catch (error) {
     console.error(JSON.stringify({ event: "REMOTELOCK_ROUTE_FAILED", errorName: error?.name ?? null }));
     return respond({ statusCode: 500, response: { error: "INTERNAL_ERROR" } });

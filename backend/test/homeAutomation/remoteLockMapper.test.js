@@ -10,10 +10,63 @@ import {
 const PIN = "482913";
 
 describe("mapDevice", () => {
-  it("maps the id, the raw type and the name, and ignores everything else", () => {
-    const raw = { id: "d-1", type: "zwave_lock", attributes: { name: "Front door", model_id: "m", location_id: "l" } };
+  it("maps named fields only, and ignores everything else", () => {
+    const raw = {
+      id: "d-1",
+      type: "zwave_lock",
+      attributes: {
+        name: "Front door",
+        model_id: "m",
+        connected: true,
+        power_level: 82,
+        connected_at: "2026-10-08T09:25:00Z",
+      },
+    };
 
-    expect(mapDevice(raw)).toEqual({ providerDeviceId: "d-1", deviceType: "zwave_lock", name: "Front door" });
+    expect(mapDevice(raw)).toEqual({
+      providerDeviceId: "d-1",
+      deviceType: "zwave_lock",
+      name: "Front door",
+      status: "ONLINE",
+      batteryLevel: 82,
+      lastSeenAt: Date.UTC(2026, 9, 8, 9, 25),
+    });
+  });
+
+  it.each([
+    [82, 82],
+    ["82", 82],
+    [" 82 ", 82],
+    [82.6, 83],
+    [150, 100],
+    [-5, 0],
+    ["", null],
+    ["abc", null],
+    [null, null],
+    [true, null],
+  ])("reads a power level of %j as %j", (power, expected) => {
+    expect(mapDevice({ id: "d-1", type: "lock", attributes: { power_level: power } }).batteryLevel).toBe(expected);
+  });
+
+  it.each([
+    [true, "ONLINE"],
+    [false, "OFFLINE"],
+    [undefined, "UNKNOWN"],
+    ["true", "UNKNOWN"],
+  ])("reads connected %j as %s", (connected, expected) => {
+    expect(mapDevice({ id: "d-1", type: "lock", attributes: { connected } }).status).toBe(expected);
+  });
+
+  it.each([
+    ["2026-10-08T09:25:00Z", Date.UTC(2026, 9, 8, 9, 25)],
+    ["2000-01-01T00:00:00Z", null],
+    ["2009-12-31T23:59:59Z", null],
+    ["2010-01-01T00:00:00Z", Date.UTC(2010, 0, 1)],
+    ["yesterday", null],
+    ["5", null],
+    [1790000000000, null],
+  ])("reads connected_at %j as %j", (connectedAt, expected) => {
+    expect(mapDevice({ id: "d-1", type: "lock", attributes: { connected_at: connectedAt } }).lastSeenAt).toBe(expected);
   });
 
   it("keeps a device without a name, with name null", () => {
@@ -33,7 +86,16 @@ describe("mapDevicePage", () => {
     };
 
     expect(mapDevicePage(raw)).toEqual({
-      devices: [{ providerDeviceId: "d-1", deviceType: "lock", name: "A" }],
+      devices: [
+        {
+          providerDeviceId: "d-1",
+          deviceType: "lock",
+          name: "A",
+          status: "UNKNOWN",
+          batteryLevel: null,
+          lastSeenAt: null,
+        },
+      ],
       page: 1,
       perPage: 50,
       totalPages: 2,

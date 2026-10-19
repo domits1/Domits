@@ -52,6 +52,17 @@ describe("handleHomeAutomationEvent", () => {
     expect(service.completeConnect).toHaveBeenCalledWith("user-1", { code: "c", state: "s" });
   });
 
+  it("routes GET /devices to the devices service with the id from the token, whatever the query says", async () => {
+    const devicesService = { listDevices: jest.fn(async () => ({ statusCode: 200, response: { devices: [] } })) };
+
+    const response = await handleHomeAutomationEvent(event("GET", "/devices", { query: { userId: "attacker" } }), {
+      devicesService,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(devicesService.listDevices).toHaveBeenCalledWith("user-1");
+  });
+
   it("takes the user only from the token, whatever the body or the query string say", async () => {
     const service = makeService();
     const forged = { userId: "attacker", code: "c", state: "s" };
