@@ -30,7 +30,7 @@ ORDER BY table_schema, table_name, ordinal_position;
 SELECT schemaname, tablename, indexname, indexdef
 FROM pg_indexes
 WHERE schemaname IN ('test', 'main')
-  AND tablename IN ('review', 'review_request');
+  AND tablename IN ('review', 'review_request', 'review_rating', 'review_category');
 
 SELECT * FROM sys.jobs;
 ```
@@ -65,7 +65,7 @@ JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname IN ('test', 'main')
   AND c.relname IN ('review_booking_type_reviewer_unique',
     'review_booking_type_reviewer_unique_test',
-    'review_request_booking_type_guest_unique',
+    'review_request_booking_type_guest_unique_main',
     'review_request_booking_type_guest_unique_test');
 ```
 
@@ -81,3 +81,7 @@ Both down() and rollback SQL intentionally leave the database unchanged. Tables 
 Local cached refs show guest submission and review-api-routing-auth contain the pre-reduction foundation commit 970190fbb. Remote verification failed on 2026-10-19 because git fetch could not resolve GitHub (`getaddrinfo() thread failed to start`). No branches were rewritten. Rebase status is unverified.
 
 Fetch current refs and identify each PR's actual parent. Rebase from foundation outward, replaying only each branch's own commits, preserving dependent feature code, and running its tests. Do not rebase all branches directly onto acceptance. Inspect diffs for reintroduced removed code before publishing a rewrite with force-with-lease.
+
+## Outstanding live-schema parity
+
+The reviewer reports additional unique rules on review_rating and review_category. Their exact definitions are not recorded in this repository. Capture the index inspection results for both schemas before modifying the migration; do not infer key columns or index names. This remains a merge blocker. The main request index uses the reported live name review_request_booking_type_guest_unique_main to avoid creating a duplicate.

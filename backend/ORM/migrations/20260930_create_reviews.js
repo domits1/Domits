@@ -72,8 +72,9 @@ export class CreateReviews20260930 {
       CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique${suffix}
       ON ${schema}.review (booking_id, review_type, reviewer_user_id);
     `);
+    const requestSuffix = schema === "main" ? "_main" : "_test";
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique${suffix}
+      CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique${requestSuffix}
       ON ${schema}.review_request (booking_id, review_type, guest_id);
     `);
   }

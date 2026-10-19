@@ -123,5 +123,5 @@ CREATE TABLE IF NOT EXISTS main.review_request (
 CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique
 ON main.review (booking_id, review_type, reviewer_user_id);
 
-CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique_main
 ON main.review_request (booking_id, review_type, guest_id);
