@@ -132,7 +132,8 @@ export const updateTask = async (hostId, taskId, updateData) => {
         fieldsToUpdate.attachments = newKeys.length > 0 ? JSON.stringify(newKeys) : null;
     }
 
-    if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
+    const isNewlyCompleted = fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed';
+    if (isNewlyCompleted) {
         const checklistItems = await taskRepository.getChecklistItemsForTask(dataSource, taskId);
         const hasIncompleteRequiredItems = checklistItems.some(item => item.is_required && !item.is_checked);
         if (hasIncompleteRequiredItems) {

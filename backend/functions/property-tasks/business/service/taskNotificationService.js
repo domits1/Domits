@@ -15,14 +15,14 @@ const sendEmail = async (toEmail, subject, body) => {
     }
 };
 
-// An assignee without a saved settings row, or who has not accepted the invite yet
+// A user without a saved settings row, or one who has not accepted the invite yet
 // and so has no user id, keeps the default (on).
-const isAssignmentEmailEnabled = async (dataSource, teamMember) => {
-    if (!teamMember.member_user_id) {
+const isEmailEnabled = async (dataSource, userId, settingKey) => {
+    if (!userId) {
         return true;
     }
-    const settings = await taskRepository.getHostSettings(dataSource, teamMember.member_user_id);
-    return settings?.notif_email_assigned ?? true;
+    const settings = await taskRepository.getHostSettings(dataSource, userId);
+    return settings?.[settingKey] ?? true;
 };
 
 // The task is already saved when this runs, so a failed email is logged and must not fail the request.
@@ -33,7 +33,7 @@ export const notifyTaskAssigned = async (hostId, task) => {
         if (!teamMember) {
             return;
         }
-        if (!(await isAssignmentEmailEnabled(dataSource, teamMember))) {
+        if (!(await isEmailEnabled(dataSource, teamMember.member_user_id, "notif_email_assigned"))) {
             return;
         }
 
