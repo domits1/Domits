@@ -65,6 +65,7 @@ it("creates the same destination tables and _test indexes in the test schema, an
   });
   [manual, up].forEach((sql) => {
     expect(sql).not.toMatch(/\bmain\.(destination|property_destination)\b/);
+    expect(sql.search(/CREATE (UNIQUE )?INDEX/)).toBeGreaterThan(sql.lastIndexOf("CREATE TABLE"));
     const creates = sql.match(/CREATE (UNIQUE )?\w+( ASYNC)?/g);
     expect(sql.match(/CREATE (UNIQUE )?\w+( ASYNC)? IF NOT EXISTS/g)).toEqual(creates.map((c) => `${c} IF NOT EXISTS`));
   });
