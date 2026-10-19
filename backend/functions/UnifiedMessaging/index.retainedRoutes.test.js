@@ -50,6 +50,7 @@ jest.mock("../.shared/channelManagement/handler/channelManagementHandler.js", ()
 }));
 
 const { handler } = require("./index.js");
+const { handleChannelManagementEvent } = require("../.shared/channelManagement/handler/channelManagementHandler.js");
 
 const allControllerMethods = [
   ...Object.values(mockMessageControllerMethods),
@@ -129,6 +130,16 @@ describe("UnifiedMessaging retained route contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual({ route: path });
     expect(controllerMethod).toHaveBeenCalledWith(event);
+  });
+
+  test("home automation routes are answered before the channel handler, and need a token", async () => {
+    handleChannelManagementEvent.mockClear();
+    const event = buildEvent({ path: "/default/integrations/home-automation/remotelocks/status" });
+
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(401);
+    expect(handleChannelManagementEvent).not.toHaveBeenCalled();
   });
 
   test("GET /integrations remains routed to the generic integration listing", async () => {
