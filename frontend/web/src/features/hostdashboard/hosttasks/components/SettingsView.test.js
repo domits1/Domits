@@ -96,7 +96,27 @@ describe('SettingsView', () => {
             expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ notifEmailAssigned: false }));
         });
 
-        test.each(['Task overdue', 'Task completed', 'Urgent tasks only', 'Enable notifications'])(
+        test('lets the user turn off task-completed emails and saves the choice', async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await screen.findByText('Team Members');
+
+            const completedToggle = screen.getByRole('button', { name: 'Task completed' });
+            await waitFor(() => expect(completedToggle).toHaveClass('on'));
+
+            fireEvent.click(completedToggle);
+            expect(completedToggle).not.toHaveClass('on');
+
+            saveSettings.mockResolvedValue();
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(saveSettings).toHaveBeenCalledWith(
+                expect.objectContaining({ notifEmailCompleted: false, notifEmailAssigned: true })
+            );
+        });
+
+        test.each(['Task overdue', 'Urgent tasks only', 'Enable notifications'])(
             'keeps "%s" inert because nothing sends it yet',
             async (label) => {
                 render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
