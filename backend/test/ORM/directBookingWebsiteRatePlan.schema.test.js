@@ -47,7 +47,11 @@ describe("Direct Booking Website rate-plan schema", () => {
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans");
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS test.direct_booking_website_rate_plans");
     expect(migration).toContain("CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique_test");
-    expect(migration).toContain("WHERE status = 'ACTIVE'\\n  OR status = 'PAST_DUE'\\n  OR status = 'TRIALING';");
+    expect(migration).toContain([
+      "WHERE status = 'ACTIVE'",
+      "  OR status = 'PAST_DUE'",
+      "  OR status = 'TRIALING';",
+    ].join("\n"));
   });
 
   it("has a migration that creates the table and uniqueness indexes in both schemas", () => {
