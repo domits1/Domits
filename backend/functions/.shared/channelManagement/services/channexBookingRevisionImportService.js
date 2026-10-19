@@ -1032,6 +1032,7 @@ export default class ChannexBookingRevisionImportService {
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
         totalPrice: toEuroAmountOrNull(revision),
+        guestCount: revision?.guestCount ?? null,
         bookingSource: requireStr(revision?.otaName),
         channexChanges: [
           importedBookingChange(propertyContext.propertyId, {
@@ -1210,6 +1211,7 @@ export default class ChannexBookingRevisionImportService {
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
       totalPrice: toEuroAmountOrNull(revision),
+      guestCount: revision?.guestCount ?? null,
       // The old nights reopen and the new ones close: one change per stay, so the nights
       // between them are not resent (design D9).
       channexChanges: [
