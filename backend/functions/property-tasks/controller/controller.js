@@ -6,10 +6,14 @@ import {
     deleteChecklistItem,
 } from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
+import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+
+const DEFAULT_OVERDUE_SWEEP_LIMIT = 20;
+const MAX_OVERDUE_SWEEP_LIMIT = 100;
 
 export class Controller {
     constructor() {
@@ -176,6 +180,21 @@ export class Controller {
             const { effectiveHostId } = await this.resolveHost(event);
             const itemId = event.queryStringParameters?.id;
             const result = await deleteChecklistItem(effectiveHostId, itemId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    // Invoked by the schedule, not over HTTP: the caller needs lambda:InvokeFunction, and index.js
+    // refuses events that carry an httpMethod, so there is no token to check here.
+    async runOverdueSweep(event) {
+        try {
+            const requested = Number(event.limit);
+            const limit = Number.isInteger(requested) && requested > 0
+                ? Math.min(requested, MAX_OVERDUE_SWEEP_LIMIT)
+                : DEFAULT_OVERDUE_SWEEP_LIMIT;
+            const result = await notifyOverdueTasks({ limit });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

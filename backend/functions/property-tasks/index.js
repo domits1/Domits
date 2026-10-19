@@ -2,6 +2,8 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
+const OVERDUE_SWEEP_TASK = "notify-overdue-tasks";
+
 const INTERNAL_ROUTES = {
     "/internal/create-task": "internalCreateTask",
 };
@@ -38,6 +40,10 @@ export const handler = async (event) => {
     try {
         if (!controller) {
             controller = new Controller();
+        }
+
+        if (event?.task === OVERDUE_SWEEP_TASK && !event.httpMethod) {
+            return await controller.runOverdueSweep(event);
         }
 
         const path = event.path || "";
