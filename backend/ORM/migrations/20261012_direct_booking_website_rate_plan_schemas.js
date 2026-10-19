@@ -1,5 +1,5 @@
 const ACTIVE_STATUS_SQL = "'ACTIVE'";
-const CURRENT_PLAN_STATUSES_SQL = [ACTIVE_STATUS_SQL, "'PAST_DUE'", "'TRIALING'"].join(", ");
+const CURRENT_PLAN_STATUS_PREDICATE_SQL = `status = ${ACTIVE_STATUS_SQL} OR status = 'PAST_DUE' OR status = 'TRIALING'`;
 
 export class DirectBookingWebsiteRatePlanSchemas20261012 {
   async up(queryRunner) {
@@ -37,7 +37,7 @@ export class DirectBookingWebsiteRatePlanSchemas20261012 {
       await queryRunner.query(`
         CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique${suffix}
         ON ${schema}.direct_booking_website_rate_plans (account_id)
-        WHERE status IN (${CURRENT_PLAN_STATUSES_SQL});
+        WHERE ${CURRENT_PLAN_STATUS_PREDICATE_SQL};
       `);
       await queryRunner.query(`
         CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique${suffix}
