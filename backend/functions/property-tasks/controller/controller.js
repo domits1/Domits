@@ -56,10 +56,10 @@ export class Controller {
 
     async updateTask(event) {
         try {
-            const { effectiveHostId } = await this.resolveHost(event);
+            const { effectiveHostId, isPOM } = await this.resolveHost(event);
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
-            const result = await updateTask(effectiveHostId, taskId, updateData);
+            const result = await updateTask(effectiveHostId, taskId, updateData, { actorIsTeamMember: isPOM });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

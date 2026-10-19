@@ -1,6 +1,7 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import Database from "database";
 import * as taskRepository from "../../data/taskRepository.js";
+import { getHostEmailById } from "./taskEscalationService.js";
 
 const lambdaClient = new LambdaClient({ region: "eu-north-1" });
 
@@ -49,5 +50,29 @@ Open your Domits dashboard to view it.`
         );
     } catch (error) {
         console.error(`Failed to send task assigned notification for task ${task.id}`, error);
+    }
+};
+
+// Same contract as notifyTaskAssigned: the task is already saved, so a failure is logged, not thrown.
+export const notifyTaskCompleted = async (hostId, task) => {
+    try {
+        const dataSource = await Database.getInstance();
+        if (!(await isEmailEnabled(dataSource, hostId, "notif_email_completed"))) {
+            return;
+        }
+
+        const hostEmail = await getHostEmailById(hostId);
+        const completedAt = task.completed_date ? new Date(task.completed_date).toISOString() : "no completion time recorded";
+        await sendEmail(
+            hostEmail,
+            `Task completed: ${task.title}`,
+            `The task "${task.title}" (property: ${task.property_snapshot_label}) has been completed.
+
+Completed: ${completedAt}
+
+Open your Domits dashboard to view it.`
+        );
+    } catch (error) {
+        console.error(`Failed to send task completed notification for task ${task.id}`, error);
     }
 };

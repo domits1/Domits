@@ -2,7 +2,7 @@ import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
-import { notifyTaskAssigned } from "./taskNotificationService.js";
+import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -66,7 +66,7 @@ export const createTask = async (hostId, taskData) => {
     return newTask;
 };
 
-export const updateTask = async (hostId, taskId, updateData) => {
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
@@ -158,6 +158,11 @@ export const updateTask = async (hostId, taskId, updateData) => {
         && fieldsToUpdate.assignee_team_member_id !== oldTask.assignee_team_member_id;
     if (isNewAssignee) {
         await notifyTaskAssigned(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
+
+    // A host who completes their own task already knows, so only a team member's completion is worth an email.
+    if (isNewlyCompleted && actorIsTeamMember) {
+        await notifyTaskCompleted(hostId, { ...oldTask, ...fieldsToUpdate });
     }
 
     return { message: "Task updated successfully" };

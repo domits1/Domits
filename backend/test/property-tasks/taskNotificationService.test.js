@@ -18,7 +18,13 @@ jest.mock("@aws-sdk/client-lambda", () => ({
     InvokeCommand: jest.fn().mockImplementation((input) => input),
 }));
 
-const { notifyTaskAssigned } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
+const mockGetHostEmailById = jest.fn();
+
+jest.mock("../../functions/property-tasks/business/service/taskEscalationService.js", () => ({
+    getHostEmailById: (...args) => mockGetHostEmailById(...args),
+}));
+
+const { notifyTaskAssigned, notifyTaskCompleted } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
 
 const TEAM_MEMBER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -121,5 +127,91 @@ describe("notifyTaskAssigned", () => {
 
         expect(mockSend).not.toHaveBeenCalled();
         expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+});
+
+describe("notifyTaskCompleted", () => {
+    let consoleErrorSpy;
+
+    const completedTask = {
+        id: "task-1",
+        title: "Clean the villa",
+        property_snapshot_label: "Villa Sunshine",
+        completed_date: new Date("2030-01-01T12:00:00Z").getTime(),
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        mockGetHostSettings.mockResolvedValue(null);
+        mockGetHostEmailById.mockResolvedValue("host@example.com");
+        mockSend.mockResolvedValue({ StatusCode: 200 });
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+    });
+
+    it("emails the host when they have never saved notification settings", async () => {
+        await notifyTaskCompleted("host-1", completedTask);
+
+        expect(mockSend).toHaveBeenCalledTimes(1);
+        const payload = JSON.parse(mockSend.mock.calls[0][0].Payload);
+        expect(payload.body.toEmail).toBe("host@example.com");
+        expect(payload.body.subject).toContain("Clean the villa");
+        expect(payload.body.body).toContain("Villa Sunshine");
+    });
+
+    it("reads the host's own settings row", async () => {
+        await notifyTaskCompleted("host-1", completedTask);
+
+        expect(mockGetHostSettings).toHaveBeenCalledWith(expect.anything(), "host-1");
+    });
+
+    it("emails the host when they have explicitly left completion emails on", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_email_completed: true });
+
+        await notifyTaskCompleted("host-1", completedTask);
+
+        expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not email a host who turned completion emails off, and does not look up their address", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_email_completed: false });
+
+        await notifyTaskCompleted("host-1", completedTask);
+
+        expect(mockGetHostEmailById).not.toHaveBeenCalled();
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("logs and resolves when the host's email address cannot be found", async () => {
+        mockGetHostEmailById.mockRejectedValue(new Error("Failed to fetch host email: no email found for this host"));
+
+        await expect(notifyTaskCompleted("host-1", completedTask)).resolves.toBeUndefined();
+
+        expect(mockSend).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            expect.stringContaining("task completed"),
+            expect.any(Error)
+        );
+    });
+
+    it("logs and resolves when the email service reports a function error", async () => {
+        mockSend.mockResolvedValue({ FunctionError: "Unhandled" });
+
+        await expect(notifyTaskCompleted("host-1", completedTask)).resolves.toBeUndefined();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            expect.stringContaining("task completed"),
+            expect.any(Error)
+        );
+    });
+
+    it("says no completion time was recorded when the task has none", async () => {
+        await notifyTaskCompleted("host-1", { ...completedTask, completed_date: null });
+
+        const payload = JSON.parse(mockSend.mock.calls[0][0].Payload);
+        expect(payload.body.body).toContain("no completion time recorded");
     });
 });
