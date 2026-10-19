@@ -24,7 +24,7 @@ jest.mock("../../functions/property-tasks/business/service/taskEscalationService
     getHostEmailById: (...args) => mockGetHostEmailById(...args),
 }));
 
-const { notifyTaskAssigned, notifyTaskCompleted } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
+const { notifyTaskAssigned, notifyTaskCompleted, notifyTaskOverdue } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
 
 const TEAM_MEMBER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -213,5 +213,122 @@ describe("notifyTaskCompleted", () => {
 
         const payload = JSON.parse(mockSend.mock.calls[0][0].Payload);
         expect(payload.body.body).toContain("no completion time recorded");
+    });
+});
+
+describe("notifyTaskOverdue", () => {
+    let consoleErrorSpy;
+
+    const overdueTask = {
+        id: "task-1",
+        host_id: "host-1",
+        title: "Clean the villa",
+        property_snapshot_label: "Villa Sunshine",
+        due_date: new Date("2030-01-01T10:00:00Z").getTime(),
+        assignee_team_member_id: TEAM_MEMBER_ID,
+    };
+
+    const unassignedTask = { ...overdueTask, assignee_team_member_id: null };
+
+    const sentPayload = () => JSON.parse(mockSend.mock.calls[0][0].Payload);
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        mockGetTeamMemberById.mockResolvedValue(activeMember);
+        mockGetHostSettings.mockResolvedValue(null);
+        mockGetHostEmailById.mockResolvedValue("host@example.com");
+        mockSend.mockResolvedValue({ StatusCode: 200 });
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+    });
+
+    it("emails the assignee when the task has one", async () => {
+        await notifyTaskOverdue(overdueTask);
+
+        expect(mockSend).toHaveBeenCalledTimes(1);
+        expect(sentPayload().body.toEmail).toBe("housekeeper@example.com");
+        expect(sentPayload().body.subject).toContain("Clean the villa");
+        expect(sentPayload().body.body).toContain("Villa Sunshine");
+        expect(mockGetHostEmailById).not.toHaveBeenCalled();
+    });
+
+    it("sends a plain overdue email the first time", async () => {
+        await notifyTaskOverdue({ ...overdueTask, overdue_notify_count: null });
+
+        expect(sentPayload().body.subject).toBe("Task overdue: Clean the villa");
+    });
+
+    it("says it is a reminder once an overdue email has already gone out", async () => {
+        await notifyTaskOverdue({ ...overdueTask, overdue_notify_count: 1 });
+
+        expect(sentPayload().body.subject).toBe("Reminder, task still overdue: Clean the villa");
+        expect(sentPayload().body.body).toContain("still");
+    });
+
+    it("reads the assignee's own settings row, not the host's", async () => {
+        await notifyTaskOverdue(overdueTask);
+
+        expect(mockGetTeamMemberById).toHaveBeenCalledWith(expect.anything(), TEAM_MEMBER_ID, "host-1");
+        expect(mockGetHostSettings).toHaveBeenCalledWith(expect.anything(), "member-user-1");
+    });
+
+    it("does not email an assignee who turned overdue emails off", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_email_overdue: false });
+
+        await notifyTaskOverdue(overdueTask);
+
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("only looks at the overdue setting, not the assigned or completed ones", async () => {
+        mockGetHostSettings.mockResolvedValue({
+            notif_email_assigned: false,
+            notif_email_completed: false,
+            notif_email_overdue: true,
+        });
+
+        await notifyTaskOverdue(overdueTask);
+
+        expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+
+    it("emails the host when the task has no assignee", async () => {
+        await notifyTaskOverdue(unassignedTask);
+
+        expect(mockGetTeamMemberById).not.toHaveBeenCalled();
+        expect(mockGetHostSettings).toHaveBeenCalledWith(expect.anything(), "host-1");
+        expect(mockGetHostEmailById).toHaveBeenCalledWith("host-1");
+        expect(sentPayload().body.toEmail).toBe("host@example.com");
+    });
+
+    it("does not email a host who turned overdue emails off, and does not look up their address", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_email_overdue: false });
+
+        await notifyTaskOverdue(unassignedTask);
+
+        expect(mockGetHostEmailById).not.toHaveBeenCalled();
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the host when the assignee is no longer on the team", async () => {
+        mockGetTeamMemberById.mockResolvedValue(null);
+
+        await notifyTaskOverdue(overdueTask);
+
+        expect(sentPayload().body.toEmail).toBe("host@example.com");
+    });
+
+    it("logs and resolves when the email service reports a function error", async () => {
+        mockSend.mockResolvedValue({ FunctionError: "Unhandled" });
+
+        await expect(notifyTaskOverdue(overdueTask)).resolves.toBeUndefined();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            expect.stringContaining("task overdue"),
+            expect.any(Error)
+        );
     });
 });

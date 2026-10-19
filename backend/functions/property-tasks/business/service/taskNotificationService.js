@@ -76,3 +76,37 @@ Open your Domits dashboard to view it.`
         console.error(`Failed to send task completed notification for task ${task.id}`, error);
     }
 };
+
+const findAssignee = async (dataSource, task) => {
+    if (!task.assignee_team_member_id) {
+        return null;
+    }
+    return await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, task.host_id);
+};
+
+// The sweep claims the task before calling this, so a failed email is logged and not retried.
+// Goes to the assignee, or to the host when there is none or the assignee has left the team.
+export const notifyTaskOverdue = async (task) => {
+    try {
+        const dataSource = await Database.getInstance();
+        const assignee = await findAssignee(dataSource, task);
+        const recipientUserId = assignee ? assignee.member_user_id : task.host_id;
+        if (!(await isEmailEnabled(dataSource, recipientUserId, "notif_email_overdue"))) {
+            return;
+        }
+
+        const toEmail = assignee ? assignee.member_email : await getHostEmailById(task.host_id);
+        const isReminder = Number(task.overdue_notify_count) > 0;
+        await sendEmail(
+            toEmail,
+            isReminder ? `Reminder, task still overdue: ${task.title}` : `Task overdue: ${task.title}`,
+            `The task "${task.title}" (property: ${task.property_snapshot_label}) ${isReminder ? "is still overdue and still" : "is past its due date and"} has not been completed.
+
+Due: ${new Date(task.due_date).toISOString()}
+
+Open your Domits dashboard to view it.`
+        );
+    } catch (error) {
+        console.error(`Failed to send task overdue notification for task ${task.id}`, error);
+    }
+};
