@@ -1,4 +1,5 @@
 import { handleChannelManagementEvent } from "./.shared/channelManagement/handler/channelManagementHandler.js";
+import { handleHomeAutomationEvent } from "./.shared/homeAutomation/handler/homeAutomationHandler.js";
 import IntegrationController from "./controller/integrationController.js";
 import MessageController from "./controller/messageController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
@@ -222,6 +223,9 @@ export const handler = async (event) => {
       });
     }
   }
+
+  const homeAutomationResponse = await handleHomeAutomationEvent(event);
+  if (homeAutomationResponse) return homeAutomationResponse;
 
   const channelResponse = await handleChannelManagementEvent(event);
   if (channelResponse) return channelResponse;
