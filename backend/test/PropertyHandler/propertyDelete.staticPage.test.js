@@ -121,4 +121,14 @@ describe("deleting a listing takes its static page offline first", () => {
     expect(calls).toEqual(["archive"]);
     expect(service.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId).not.toHaveBeenCalled();
   });
+
+  it("builds its withdrawal from a real page store and the service's own domain repository", () => {
+    const service = new PropertyController().propertyService;
+    const withdrawal = service.createStaticPageWithdrawal();
+
+    expect(withdrawal).toBeInstanceOf(StaticPageWithdrawal);
+    expect(withdrawal.pageStore).toBeInstanceOf(StaticPageStore);
+    expect(withdrawal.domainRepository).toBe(service.directBookingWebsiteDomainRepository);
+    expect(withdrawal.tenantRepository).toBeTruthy();
+  });
 });
