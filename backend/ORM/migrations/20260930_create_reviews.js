@@ -78,16 +78,9 @@ export class CreateReviews20260930 {
     `);
   }
 
-  // Rollback removes review data; run only when these tables can be discarded.
-  async down(queryRunner) {
-    await this.dropSchemaTables(queryRunner, "main");
-    await this.dropSchemaTables(queryRunner, "test");
-  }
-
-  async dropSchemaTables(queryRunner, schema) {
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_request;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_rating;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_category;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review;`);
+  // Tables and indexes may predate this migration (up uses IF NOT EXISTS).
+  // Their ownership cannot be established, so rollback must preserve them.
+  async down() {
+    // Intentionally no-op; see docs/internal/tools/dsql_reviews_runbook.md.
   }
 }
