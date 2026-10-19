@@ -9,12 +9,13 @@ The migration uses `IF NOT EXISTS` so it can be re-run, but that does not valida
 ## Status
 
 - **Status last checked:** 2026-10-19 (Europe/Amsterdam)
-- **Manual database work recorded:** 2026-10-19 — Mounir Bekkaoui ran statements through the Aurora DSQL Query Editor in cluster `domits` (`eu-west-2`). The AWS IAM identity/role is not recorded in the query output.
-- **Checked-in migration file applied end-to-end:** Pending — test-schema statements were entered individually. Run the corrected checked-in SQL migration before merging so the actual migration file is validated on the target cluster.
-- **`main` schema:** Existing table and all three named rate-plan indexes plus the primary-key index were verified present; each index reported `is_valid = true`. The checked-in migration file has not yet been run end-to-end.
-- **`test` schema:** Schema and table created. All three asynchronous index jobs completed successfully on 2026-10-19: account index `ucpulmf7v5beln35xj74agfamy`, current-plan unique index `63g5nixfebaphligindil74ipy`, and subscription unique index `dtyh76hz35gqdi5av6i2ooicca`. The verification query showed all three named indexes and the primary-key index with `is_valid = true`.
-- **Stripe price amount check:** Pending — verify the deployed `DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS` matches the amount, currency, interval, and mode of the configured Stripe price before enabling checkout.
-- **Release readiness:** The database and Stripe checks are deployment/checkout-enablement requirements, not a merge requirement. Complete migration-file verification in the target cluster before deploying code that depends on the new tables, and confirm the Stripe amount before setting `DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED=true`.
+- **Database migration applied:** 2026-10-19 — Mounir Bekkaoui executed the checked-in migration's DDL statements individually through the Aurora DSQL Query Editor in cluster `domits` (`eu-west-2`). The statements were not submitted as one multi-statement script. Existing `main` objects were protected by `IF NOT EXISTS`; no main table was replaced.
+- **`main` schema:** The rate-plan table and all three named rate-plan indexes plus the primary-key index were verified present. All four indexes reported `is_valid = true`. Re-running the index statements produced no new index jobs because the indexes already existed.
+- **`test` schema:** Schema and table are present. All three asynchronous index jobs completed successfully on 2026-10-19: account index `ucpulmf7v5beln35xj74agfamy`, current-plan unique index `63g5nixfebaphligindil74ipy`, and subscription unique index `dtyh76hz35gqdi5av6i2ooicca`. The verification query showed all three named indexes and the primary-key index with `is_valid = true`.
+- **Stripe Elite price check:** Verified in the Stripe Dashboard: price ID `price_1UOC5wGiInrsWMEcDideonLh`, `€43.00 EUR` recurring monthly. Lambda price ID matched. `DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS` has been set to `4300`; `DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED` is set to `false`.
+- **Webhook and environment alignment:** Pending. Confirm `STRIPE_WEBHOOK_SECRET` is configured without exposing its value. Also confirm with the deployment owner that using the live Stripe key with the acceptance success/cancel URLs and acceptance sites bucket is intentional before any checkout enablement.
+- **Release readiness:** Database objects are present and valid, and the Stripe amount matches the configured cents. Keep checkout disabled until the webhook configuration and Stripe-mode/environment alignment are confirmed. Do not enable `DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED=true` as part of this verification.
+
 ## Before you start
 
 1. Open AWS CloudShell with the approved account/role and select the Aurora DSQL cluster used by PropertyHandler. Confirm the endpoint/database before running DDL.
