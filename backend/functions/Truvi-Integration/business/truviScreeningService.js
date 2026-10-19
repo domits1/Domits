@@ -16,7 +16,7 @@ export class TruviScreeningService {
         providerAssessmentId: null,
         status: "ERROR",
         flaggedReason: null,
-        error: { status: error.status ?? null, message: error.message },
+        error: { status: error.status ?? null, message: String(error.message ?? "Truvi request failed").slice(0, 200) },
       };
     }
 
