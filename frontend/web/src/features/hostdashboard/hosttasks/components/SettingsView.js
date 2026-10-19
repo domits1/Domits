@@ -178,7 +178,7 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                         <p className="settings-card-subtitle">Customize your app preferences.</p>
                         <p className="settings-group-label">Email notifications</p>
                         {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me')}
-                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue', true)}
+                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
                         {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
                         <p className="settings-group-label">SMS notifications</p>
                         {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
