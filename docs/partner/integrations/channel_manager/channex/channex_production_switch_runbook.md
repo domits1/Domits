@@ -33,7 +33,7 @@ An API key is stored per Domits user, and saving a mapping checks that the user 
 ## Before the switch (day before)
 
 - [ ] **P1. Staging tests finished.** Messaging tests on staging are done (team informed), and the staging test bookings are cancelled.
-- [ ] **P2. Monitoring v1 is live** (#2869): alarms on failed outbox rows, outbox backlog and webhook errors reach the team.
+- [ ] **P2. Monitoring v1 is live** (#3620): the alarms in [Alarms](#alarms) exist and a test alarm email arrived.
 - [ ] **P3. Villa ready in Domits.** Prices, blocked dates, minimum stay and existing bookings in Calendar & Pricing are correct; this is what Channex receives.
 - [ ] **P4. Villa host's Domits user id is known** (Cognito `sub` of the host account). Needed for the allowlist.
 - [ ] **P5. Channex production property checked** (ids above). No channel connected yet.
@@ -149,6 +149,22 @@ The switch is done once for the whole backend. Connecting a listing to an OTA is
 | Check prices, availability and a first booking | Domits | about 15 minutes |
 
 The listing must already exist on the OTA; a new Booking.com listing needs Booking.com's approval first, which takes days.
+
+## Alarms
+
+Set up for #3620 in `eu-north-1`. All alarms send an email through the SNS topic `channex-alerts` when they go to ALARM and when they return to OK. Threshold: 1 or more in 5 minutes; no data counts as OK.
+
+| Alarm | Watches | What it means | What to do |
+|---|---|---|---|
+| `channex-outbox-rows-failed` | Metric filter `ChannexOutboxRowsFailed` on `"CHANNEX_ARI_OUTBOX_ROWS_FAILED"` | A price, availability or restriction change will never reach Channex (rejected, or 8 failed attempts) | Look up the log line (property id, reason) in the ChannelManagement logs; check Channex diagnostics → Evidence; fix the cause, then save the dates again in the calendar so a new change is queued |
+| `channex-webhook-rejected` | Metric filter `ChannexWebhookRejected` on `"CHANNEX_BOOKING_WEBHOOK_SECRET_REJECTED"` | A call to the booking webhook had a wrong or missing secret header | Check the webhook's `X-Channex-Webhook-Secret` header in Channex against the secret; repeated calls from elsewhere are probing and can be ignored |
+| `channex-webhook-errors` | Metric filter `ChannexWebhookErrors` on the webhook's unexpected-error, unreadable-credentials and secret-unavailable lines | The booking webhook could not process a delivery | Check the ChannelManagement logs; Channex retries for about 24 hours, so bookings arrive once the cause is fixed |
+| `channelmanagement-errors` | `AWS/Lambda` `Errors`, function `ChannelManagement` | The Lambda threw an error | Check the ChannelManagement logs for the failing request |
+| `channelmanagement-throttles` | `AWS/Lambda` `Throttles`, function `ChannelManagement` | The Lambda hit its reserved concurrency | Check whether many webhooks arrived at once; consider raising the reserved concurrency |
+
+The metric filters use text patterns: the Lambda's text log format puts a timestamp and request id before each JSON line, so a JSON selector would not match.
+
+After the switch, check that the booking webhook still logs to `/aws/lambda/ChannelManagement`; if it logs to another function, add the same filters there.
 
 ## Rollback
 
