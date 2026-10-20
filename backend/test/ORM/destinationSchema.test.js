@@ -71,6 +71,14 @@ it("creates the same destination tables and _test indexes in the test schema, an
   });
 });
 
+it("keeps every destination statement in the test part of schema.psql safe to run twice", () => {
+  const schema = read("schema.psql");
+  const testPart = schema.slice(schema.indexOf("CREATE SCHEMA IF NOT EXISTS test;"));
+  const creates = testPart.match(/CREATE [^;]*\btest\.(destination|property_destination)\b[^;]*;/g);
+  expect(creates).toHaveLength(5);
+  creates.forEach((statement) => expect(statement).toMatch(/^CREATE (UNIQUE )?\w+( ASYNC)? IF NOT EXISTS /));
+});
+
 it("rolls back only the test objects it created, and the rollback SQL does the same", async () => {
   const down = await statementsOf("down");
   expect(down).toEqual([

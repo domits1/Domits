@@ -643,8 +643,8 @@ CREATE TABLE IF NOT EXISTS test.destination (
   created_at BIGINT NOT NULL,
   updated_at BIGINT NOT NULL
 );
-CREATE UNIQUE INDEX ASYNC destination_path_unique_test ON test.destination (path);
-CREATE INDEX ASYNC destination_parent_test ON test.destination (parent_id);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS destination_path_unique_test ON test.destination (path);
+CREATE INDEX ASYNC IF NOT EXISTS destination_parent_test ON test.destination (parent_id);
 
 CREATE TABLE IF NOT EXISTS test.property_destination (
   property_id VARCHAR(255) PRIMARY KEY,
@@ -654,4 +654,4 @@ CREATE TABLE IF NOT EXISTS test.property_destination (
   created_at BIGINT NOT NULL,
   updated_at BIGINT NOT NULL
 );
-CREATE INDEX ASYNC property_destination_destination_test ON test.property_destination (destination_id);
+CREATE INDEX ASYNC IF NOT EXISTS property_destination_destination_test ON test.property_destination (destination_id);
