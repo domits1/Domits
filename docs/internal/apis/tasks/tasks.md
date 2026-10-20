@@ -1,6 +1,6 @@
 # Tasks: notifications
 
-Email notifications for the host dashboard Tasks module (issue #3510). This page covers notifications only, not the rest of the tasks API.
+Email and in-app notifications for the host dashboard Tasks module (issue #3510). This page covers notifications only, not the rest of the tasks API.
 
 ## What is sent today
 
@@ -10,6 +10,8 @@ Email notifications for the host dashboard Tasks module (issue #3510). This page
 | Task completed | The host | The host's own `notif_email_completed` | A **team member** moves a task to Completed. A host who completes their own task is not emailed |
 | Task overdue | The assignee, or the host when there is no assignee or the assignee has left the team | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
 
+Each of the three events also stores an **in-app notification** for the same person (see below), whether or not they turned that event's email off. It is skipped when they turned in-app notifications off, and for an assignee who has not accepted their invite yet.
+
 Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand is skipped, so nobody gets both.
 
 ## Settings
@@ -17,7 +19,7 @@ Re-saving the same assignee, unassigning, completing an already completed task, 
 - Stored in the `host_settings` table, written by the `host-settings` Lambda. There is one row per **logged-in user**, keyed by their Cognito username, so a team member has their own row.
 - The email settings (assigned, overdue, completed) and the in-app setting default to **on**. The SMS setting defaults to **off**, and nothing reads it yet. A user with no saved row gets these defaults.
 - An assignee who has not accepted their invite yet has no `member_user_id`, so there is no row to read and the default (on) applies.
-- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me", "Task completed" and "Task overdue" are live. "Urgent tasks only" (SMS) and "Enable notifications" (in-app) are disabled and tagged "Coming soon".
+- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me", "Task completed" and "Task overdue" switch the emails. "Enable notifications" switches the in-app notifications. Only "Urgent tasks only" (SMS) is disabled and tagged "Coming soon".
 - The page blocks **Save** until the settings have loaded. A save sends every field, so saving over defaults that never loaded would overwrite a saved opt-out. If the load fails, an alert says so.
 
 ## How it works
@@ -34,6 +36,27 @@ EmailNotificationService (existing Lambda)   payload: { body: { toEmail, subject
 
 - `updateTask(hostId, taskId, updateData, { actorIsTeamMember })` takes the option from the controller, which fills it from `isPOM` (derived server-side from the token and team membership, never from the request body).
 - The completed email looks the host's address up through the `GetUserInfo` Lambda, as the escalation email does.
+
+### In-app notifications
+
+```
+notifyTaskAssigned / notifyTaskCompleted / notifyTaskOverdue
+        │  read the recipient's host_settings row
+        │  notif_inapp_enabled on (the default) and the recipient has a user id?
+        ▼
+createNotification (INSERT ... ON CONFLICT DO NOTHING)   data/taskNotificationRepository.js
+        │  task_notification row: id = <event>:<task id>:<user id>:<marker>
+        ▼
+Tasks page bell ◀── GET ?action=notifications   (poll every 60 s; list of 30 + unread count)
+                ──▶ PATCH ?action=notification-read&id=...      (one, own notifications only)
+                ──▶ PATCH ?action=notifications-read-all
+```
+
+- The row id is the dedupe key. The marker is the update time for "assigned", the completion time for "completed" and the email number (1 for the first, 2 for the first reminder, ...) for "overdue". The same event for the same person is stored once, so a retry cannot duplicate it.
+- The in-app copy does not depend on the email setting, and a failure to store it does not stop the email (it is logged as `Failed to store in-app notification for task <id>`).
+- An assignee who has not accepted their invite has no user id, so there is nobody to show it to: no in-app notification is stored for them.
+- The endpoints use the signed-in person's own username, never the host id they may be acting for, so a team member and the host each see only their own notifications. Marking as read is limited to the caller's own rows.
+- The bell is in the Tasks page header (`NotificationBell.js`). It shows an unread badge, a list, "Mark all as read", and a message with "Try again" when loading fails.
 
 ### The overdue sweep
 
@@ -65,6 +88,10 @@ notifyTaskOverdue → recipient's notif_email_overdue → EmailNotificationServi
 - There is no retry, no delivery record, and no message to the user when an email fails. For overdue, the task is marked as emailed before the email goes out, so a failed overdue email is **not** retried straight away. It counts as one of the 4, and the next reminder comes 2 days later.
 - The email calls are synchronous Lambda invokes with no timeout, so a slow email service slows the task request.
 
+## Turning on in-app notifications
+
+**Create the table before the code is deployed.** The `Task_Notification` entity is registered with the ORM, and the bell calls the new endpoints, so they fail until `task_notification` exists. Run `backend/ORM/migrations/20261020_task_notification.sql` as the `admin` user, one statement at a time: the pre-flight check (no rows), the table in `test`, the table in `main`, the async index (note its `job_id`, then wait for `completed` in `sys.jobs`), and the checks at the end. The rollback file drops the index and both tables. Nothing else is needed: the endpoints use the existing `property-tasks` API routes.
+
 ## Turning on the overdue sweep
 
 The code is inert until these are done, in this order. They are manual AWS steps.
@@ -77,17 +104,17 @@ The code is inert until these are done, in this order. They are manual AWS steps
 
 ## Not built yet
 
-- SMS, push and in-app channels, quiet hours, daily digests, reminders for events other than overdue, retries and a delivery log.
+- SMS and push channels, in-app notifications for reassigned, status-changed and deadline-changed events, quiet hours, daily digests, reminders for events other than overdue, retries and a delivery log.
 
 ## Where the code is
 
 | Layer | File |
 |---|---|
-| Routing | `backend/functions/property-tasks/index.js` (the scheduled `notify-overdue-tasks` event) |
-| Controller | `backend/functions/property-tasks/controller/controller.js` (`updateTask`, `runOverdueSweep`) |
-| Business | `backend/functions/property-tasks/business/service/taskNotificationService.js`, `taskOverdueService.js`, `taskService.js` |
-| Data | `backend/functions/property-tasks/data/taskRepository.js` (`getHostSettings`, `getOverdueTasksToNotify`, `claimOverdueNotification`) |
-| Schema | `backend/ORM/models/Property_Task.js`, `backend/ORM/migrations/20261019_property_task_overdue_notified.*` |
+| Routing | `backend/functions/property-tasks/index.js` (the scheduled `notify-overdue-tasks` event; the `notifications`, `notification-read` and `notifications-read-all` actions) |
+| Controller | `backend/functions/property-tasks/controller/controller.js` (`updateTask`, `runOverdueSweep`, `getNotifications`, `markNotificationRead`, `markAllNotificationsRead`) |
+| Business | `backend/functions/property-tasks/business/service/taskNotificationService.js`, `taskInAppNotificationService.js`, `taskOverdueService.js`, `taskService.js` |
+| Data | `backend/functions/property-tasks/data/taskRepository.js` (`getHostSettings`, `getOverdueTasksToNotify`, `claimOverdueNotification`), `taskNotificationRepository.js` |
+| Schema | `backend/ORM/models/Property_Task.js`, `Task_Notification.js`, `backend/ORM/migrations/20261019_property_task_overdue_notified.*`, `20261020_task_notification.*` |
 | Schedule | `backend/infrastructure/task-overdue/` |
-| UI | `frontend/web/src/features/hostdashboard/hosttasks/components/SettingsView.js` |
-| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskOverdueService`, `taskRepository.overdue`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `index`) and `SettingsView.test.js` |
+| UI | `frontend/web/src/features/hostdashboard/hosttasks/components/SettingsView.js`, `NotificationBell.js`, `services/notificationService.js` |
+| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskNotificationRepository`, `taskInAppNotificationService`, `taskOverdueService`, `taskRepository.overdue`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `controller.notifications`, `index`) and `SettingsView.test.js`, `NotificationBell.test.js`, `notificationService.test.js` |
