@@ -183,7 +183,7 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                         <p className="settings-group-label">SMS notifications</p>
                         {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
                         <p className="settings-group-label">In-App notifications</p>
-                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
                     </div>
 
                     <div className="settings-card">
