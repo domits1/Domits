@@ -530,9 +530,14 @@ CREATE TABLE IF NOT EXISTS main.property_owner_property (
   owner_id UUID NOT NULL,
   property_id VARCHAR(255) NOT NULL,
   host_id VARCHAR(255) NOT NULL,
-  created_at BIGINT NOT NULL
+  ownership_basis_points INTEGER NOT NULL,
+  effective_from BIGINT NOT NULL,
+  effective_to BIGINT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
 );
-CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_unique ON main.property_owner_property (owner_id, property_id);
+CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique ON main.property_owner_property (owner_id, property_id, effective_from);
+CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique ON main.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
 CREATE INDEX ASYNC property_owner_property_property_id_idx ON main.property_owner_property (property_id);
 CREATE INDEX ASYNC property_owner_property_host_id_idx ON main.property_owner_property (host_id);
 
@@ -653,9 +658,14 @@ CREATE TABLE IF NOT EXISTS test.property_owner_property (
   owner_id UUID NOT NULL,
   property_id VARCHAR(255) NOT NULL,
   host_id VARCHAR(255) NOT NULL,
-  created_at BIGINT NOT NULL
+  ownership_basis_points INTEGER NOT NULL,
+  effective_from BIGINT NOT NULL,
+  effective_to BIGINT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
 );
-CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_unique_test ON test.property_owner_property (owner_id, property_id);
+CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique_test ON test.property_owner_property (owner_id, property_id, effective_from);
+CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique_test ON test.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
 CREATE INDEX ASYNC property_owner_property_property_id_idx_test ON test.property_owner_property (property_id);
 CREATE INDEX ASYNC property_owner_property_host_id_idx_test ON test.property_owner_property (host_id);
 

@@ -35,12 +35,21 @@ export class PropertyOwner20261016 {
             owner_id UUID NOT NULL,
             property_id VARCHAR(255) NOT NULL,
             host_id VARCHAR(255) NOT NULL,
-            created_at BIGINT NOT NULL
+            ownership_basis_points INTEGER NOT NULL,
+            effective_from BIGINT NOT NULL,
+            effective_to BIGINT NULL,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL
         );
       `);
       await queryRunner.query(`
-        CREATE UNIQUE INDEX ASYNC IF NOT EXISTS property_owner_property_owner_property_unique${suffix}
-        ON ${schema}.property_owner_property (owner_id, property_id);
+        CREATE UNIQUE INDEX ASYNC IF NOT EXISTS property_owner_property_owner_property_from_unique${suffix}
+        ON ${schema}.property_owner_property (owner_id, property_id, effective_from);
+      `);
+      await queryRunner.query(`
+        CREATE UNIQUE INDEX ASYNC IF NOT EXISTS property_owner_property_open_unique${suffix}
+        ON ${schema}.property_owner_property (owner_id, property_id)
+        WHERE effective_to IS NULL;
       `);
       await queryRunner.query(`
         CREATE INDEX ASYNC IF NOT EXISTS property_owner_property_property_id_idx${suffix}
@@ -57,7 +66,10 @@ export class PropertyOwner20261016 {
     for (const { schema, suffix } of [...SCHEMAS].reverse()) {
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.property_owner_property_host_id_idx${suffix};`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.property_owner_property_property_id_idx${suffix};`);
-      await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.property_owner_property_owner_property_unique${suffix};`);
+      await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.property_owner_property_open_unique${suffix};`);
+      await queryRunner.query(
+        `DROP INDEX IF EXISTS ${schema}.property_owner_property_owner_property_from_unique${suffix};`
+      );
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.property_owner_property;`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.property_owner_host_id_idx${suffix};`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.property_owner;`);

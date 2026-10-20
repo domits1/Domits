@@ -32,7 +32,7 @@ const TABLES = [
       created_at: ["bigint", false, null],
       updated_at: ["bigint", false, null],
     },
-    indexes: [["", "property_owner_host_id_idx", "host_id"]],
+    indexes: [["", "property_owner_host_id_idx", "host_id", ""]],
   },
   {
     table: "property_owner_property",
@@ -42,17 +42,22 @@ const TABLES = [
       owner_id: ["uuid", false, null],
       property_id: ["varchar", false, 255],
       host_id: ["varchar", false, 255],
+      ownership_basis_points: ["int", false, null],
+      effective_from: ["bigint", false, null],
+      effective_to: ["bigint", true, null],
       created_at: ["bigint", false, null],
+      updated_at: ["bigint", false, null],
     },
     indexes: [
-      ["UNIQUE ", "property_owner_property_owner_property_unique", "owner_id, property_id"],
-      ["", "property_owner_property_property_id_idx", "property_id"],
-      ["", "property_owner_property_host_id_idx", "host_id"],
+      ["UNIQUE ", "property_owner_property_owner_property_from_unique", "owner_id, property_id, effective_from", ""],
+      ["UNIQUE ", "property_owner_property_open_unique", "owner_id, property_id", "effective_to IS NULL"],
+      ["", "property_owner_property_property_id_idx", "property_id", ""],
+      ["", "property_owner_property_host_id_idx", "host_id", ""],
     ],
   },
 ];
 
-const SQL_TYPES = { uuid: "uuid", varchar: "varchar", text: "text", bigint: "bigint" };
+const SQL_TYPES = { uuid: "uuid", varchar: "varchar", text: "text", bigint: "bigint", integer: "int" };
 
 const readOrmFile = (...parts) =>
   readFileSync(path.join(process.cwd(), "ORM", ...parts), "utf8").replaceAll("\r\n", "\n");
@@ -104,14 +109,20 @@ const columnDefinitions = (sql, qualifiedTable) =>
     })
   );
 
+const normalizePredicate = (predicate = "") => predicate.replaceAll(/\s+/g, " ").trim();
+
 const indexesOn = (sql, qualifiedTable) =>
-  [...sql.matchAll(/CREATE (UNIQUE )?INDEX ASYNC (?:IF NOT EXISTS )?(\w+)\s+ON (\w+\.\w+) \(([^)]+)\);/g)]
+  [
+    ...sql.matchAll(
+      /CREATE (UNIQUE )?INDEX ASYNC (?:IF NOT EXISTS )?(\w+)\s+ON (\w+\.\w+) \(([^)]+)\)(?:\s+WHERE ([^;]+?))?\s*;/g
+    ),
+  ]
     .filter((match) => match[3] === qualifiedTable)
-    .map(([, unique = "", name, , keyColumns]) => [unique, name, keyColumns])
+    .map(([, unique = "", name, , keyColumns, predicate]) => [unique, name, keyColumns, normalizePredicate(predicate)])
     .sort();
 
 const expectedIndexes = (indexes, suffix) =>
-  indexes.map(([unique, name, keyColumns]) => [unique, `${name}${suffix}`, keyColumns]).sort();
+  indexes.map(([unique, name, keyColumns, predicate]) => [unique, `${name}${suffix}`, keyColumns, predicate]).sort();
 
 const dropStatements = (sql) => [...sql.matchAll(/DROP (INDEX|TABLE) IF EXISTS (\w+\.\w+);/g)].map((match) => match[2]);
 
@@ -192,11 +203,13 @@ describe("property_owner entity defaults", () => {
 describe("migration SQL smoke tests", () => {
   const smokeBlocks = (sql) => [...sql.matchAll(/BEGIN;([\s\S]*?)ROLLBACK;/g)].map((match) => match[1]);
 
-  it.each(SCHEMAS)("checks the unique pair and multiple owners per property in $schema", ({ schema }) => {
+  it.each(SCHEMAS)("checks both unique indexes, the period history and multiple owners in $schema", ({ schema }) => {
     const block = smokeBlocks(readOrmFile("migrations", "20261016_property_owner.sql")).find((candidate) =>
       candidate.includes(`INTO ${schema}.`)
     );
     expect(block).toMatch(/\bshould_be_one\b/);
+    expect(block).toMatch(/\bperiods_should_be_two\b/);
+    expect(block).toMatch(/\bopen_should_be_one\b/);
     expect(block).toMatch(/\bowners_should_be_two\b/);
     expect(block).toMatch(/\bdefault_status_should_be_active\b/);
   });
