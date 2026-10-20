@@ -1,9 +1,33 @@
 import Database from "database";
 import { GuestRiskAssessment } from "database/models/unified/integrations/GuestRiskAssessment";
+import { isDsqlConflict } from "../.shared/dsqlRetry.js";
+import { randomInt } from "node:crypto";
 
 export const TRUVI_PROVIDER = "truvi";
 
 const assessmentId = (provider, bookingId) => `${provider}:${bookingId}`;
+
+const UNIQUE_VIOLATION = "23505";
+const SAVE_ATTEMPTS = 3;
+
+const errorCode = (error) => String(error?.code || error?.driverError?.code || "");
+const isRetryableWrite = (error) => isDsqlConflict(error) || errorCode(error) === UNIQUE_VIOLATION;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const randomJitterMs = () => randomInt(20, 51);
+
+export const withWriteRetry = async (
+  work,
+  { attempts = SAVE_ATTEMPTS, wait = sleep, jitterMs = randomJitterMs } = {},
+  attempt = 1
+) => {
+  try {
+    return await work();
+  } catch (error) {
+    if (!isRetryableWrite(error) || attempt >= attempts) throw error;
+    await wait(jitterMs());
+    return withWriteRetry(work, { attempts, wait, jitterMs }, attempt + 1);
+  }
+};
 
 export class GuestRiskAssessmentRepository {
   async getRepository() {
@@ -11,7 +35,11 @@ export class GuestRiskAssessmentRepository {
     return client.getRepository(GuestRiskAssessment);
   }
 
-  async saveResult({ provider = TRUVI_PROVIDER, bookingId, result, now = Date.now() }) {
+  async saveResult(args) {
+    return withWriteRetry(() => this.#saveResultOnce(args));
+  }
+
+  async #saveResultOnce({ provider = TRUVI_PROVIDER, bookingId, result, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to save a risk assessment");
     }
@@ -42,6 +70,18 @@ export class GuestRiskAssessmentRepository {
     }
     const repository = await this.getRepository();
     await repository.update({ id: assessmentId(provider, bookingId) }, { status, errorMessage, updatedAt: now });
+  }
+
+  async saveTruviDates({ provider = TRUVI_PROVIDER, bookingId, arrivalDate, departureDate, errorMessage, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to save the Truvi dates");
+    }
+    const changes = { arrivalDate, departureDate, updatedAt: now };
+    if (errorMessage !== undefined) {
+      changes.errorMessage = errorMessage;
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, changes);
   }
 
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {
