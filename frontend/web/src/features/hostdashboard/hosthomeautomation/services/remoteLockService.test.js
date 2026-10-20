@@ -2,6 +2,7 @@ import {
   MOCK_STATUS,
   connectRemoteLock,
   disconnectRemoteLock,
+  getRemoteLockDevices,
   getRemoteLockStatus,
   resetMockRemoteLock,
   setMockRemoteLockStatus,
@@ -47,5 +48,22 @@ describe("remoteLockService (mock)", () => {
 
     expect(result).toEqual({ status: "DISCONNECTED", lastSyncAt: null });
     expect(await getRemoteLockStatus()).toEqual(result);
+  });
+
+  it("lists devices that use RemoteLock's type values and cover the cases the page must handle", async () => {
+    const devices = await getRemoteLockDevices();
+
+    expect(devices.map((device) => device.type).sort()).toEqual(
+      ["connector_lock", "lock", "resort_lock", "schlage_home_lock", "zwave_lock"].sort()
+    );
+    expect(new Set(devices.map((device) => device.status))).toEqual(new Set(["ONLINE", "OFFLINE", "UNKNOWN"]));
+    expect(devices.some((device) => device.battery === null)).toBe(true);
+    expect(devices.some((device) => device.lastSeenAt === null)).toBe(true);
+  });
+
+  it("hands out copies, so a caller cannot change the next list", async () => {
+    (await getRemoteLockDevices())[0].name = "changed";
+
+    expect((await getRemoteLockDevices())[0].name).not.toBe("changed");
   });
 });

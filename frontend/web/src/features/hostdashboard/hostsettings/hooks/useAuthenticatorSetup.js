@@ -1,26 +1,17 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Auth } from "aws-amplify";
 import QRCode from "qrcode";
+import { isSessionExpired, toErrorKey as toSharedErrorKey, useExclusiveSubmit } from "./authenticatorErrors";
 
 const ISSUER = "Domits";
 const CODE_PATTERN = /^\d{6}$/;
 
-const ERROR_KEYS_BY_CODE = {
+const SETUP_ERROR_KEYS_BY_CODE = {
   EnableSoftwareTokenMFAException: "invalidCode",
   CodeMismatchException: "invalidCode",
-  NotAuthorizedException: "sessionExpired",
-  LimitExceededException: "tooManyAttempts",
-  TooManyRequestsException: "tooManyAttempts",
 };
 
-const AMPLIFY_NOT_AUTHENTICATED = "The user is not authenticated";
-
-const getErrorCode = (error) => error?.code ?? error?.name;
-
-const toErrorKey = (error) => ERROR_KEYS_BY_CODE[getErrorCode(error)] ?? "generic";
-
-const isSessionExpired = (error) =>
-  error === AMPLIFY_NOT_AUTHENTICATED || getErrorCode(error) === "NotAuthorizedException";
+const toErrorKey = (error) => toSharedErrorKey(error, SETUP_ERROR_KEYS_BY_CODE);
 
 const buildOtpauthUri = (accountName, secret) =>
   `otpauth://totp/${ISSUER}:${encodeURIComponent(accountName)}?secret=${encodeURIComponent(secret)}&issuer=${ISSUER}`;
@@ -29,24 +20,8 @@ export default function useAuthenticatorSetup({ onStatusChange }) {
   const [step, setStep] = useState("idle");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [secretKey, setSecretKey] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState(null);
-  const isSubmittingRef = useRef(false);
-
-  const runExclusive = async (action) => {
-    if (isSubmittingRef.current) {
-      return;
-    }
-
-    isSubmittingRef.current = true;
-    setIsSubmitting(true);
-    try {
-      await action();
-    } finally {
-      isSubmittingRef.current = false;
-      setIsSubmitting(false);
-    }
-  };
+  const { isSubmitting, isBusy, runExclusive } = useExclusiveSubmit();
 
   const clearSecret = () => {
     setSecretKey("");
@@ -156,7 +131,7 @@ export default function useAuthenticatorSetup({ onStatusChange }) {
     });
 
   const cancelSetup = () => {
-    if (isSubmittingRef.current) {
+    if (isBusy()) {
       return;
     }
 
