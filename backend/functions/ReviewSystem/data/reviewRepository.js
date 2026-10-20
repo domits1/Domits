@@ -116,7 +116,6 @@ export class ReviewRepository {
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count")
       .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED_STAY" })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })

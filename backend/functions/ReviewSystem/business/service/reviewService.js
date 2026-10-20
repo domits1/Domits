@@ -7,7 +7,6 @@ import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "../reviewRules.js";
 
-
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
 
@@ -52,8 +51,6 @@ export class ReviewService {
     this.canPublishReview = canPublishReview;
   }
 
-  // Fetch the caller's reviews by scope.
-  // This keeps the profile and dashboard views consistent with the user's written and received history.
   async getPropertyReviewScore(userId, propertyId) {
     this.assertCaller(userId);
     this.assertId(propertyId, "property ID");
@@ -64,6 +61,8 @@ export class ReviewService {
     return this.repository.getPropertyReviewScore(id, userId);
   }
 
+  // Fetch the caller's reviews by scope.
+  // This keeps the profile and dashboard views consistent with the user's written and received history.
   async getReviews(callerUserId, scope = "written") {
     this.assertCaller(callerUserId);
     if (!["written", "received"].includes(scope)) {
