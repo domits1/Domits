@@ -5,6 +5,7 @@ jest.mock("../../functions/ReviewSystem/data/reviewRepository.js", () => ({
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
+import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
 describe('Review creation and existing operations', () => {
   const now = Date.parse("2026-10-01T12:00:00Z");
@@ -435,8 +436,10 @@ describe('Review workflows', () => {
     expect((await controller.updateReview(event("guest", { title: "Changed" }))).statusCode).toBe(409);
   });
 
-  it("requires an explicit private-feedback policy", async () => {
-    expect((await controller.getPrivateFeedback(event("host"))).statusCode).toBe(403);
+  it("allows private feedback for the author and host and supports an explicit policy", async () => {
+    expect((await controller.getPrivateFeedback(event("host"))).statusCode).toBe(200);
+    expect((await controller.getPrivateFeedback(event("guest"))).statusCode).toBe(200);
+    expect((await controller.getPrivateFeedback(event("other"))).statusCode).toBe(403);
     service.canReadPrivateFeedback = async ({ userId }) => userId === "staff";
     const response = await controller.getPrivateFeedback(event("staff"));
     expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
@@ -471,9 +474,45 @@ describe('Review workflows', () => {
     expect((await controller.deleteReviewResponse(event("host"))).statusCode).toBe(404);
   });
 
-  it("denies publishing without an explicit policy", async () => {
-    expect((await controller.publishReview(event())).statusCode).toBe(403);
+  it("denies publishing another user's review", async () => {
+    expect((await controller.publishReview(event("host"))).statusCode).toBe(403);
     expect(repository.publishDraft).not.toHaveBeenCalled();
+  });
+
+  it("publishes and permits a host response through the default controller", async () => {
+    ReviewRepository.mockImplementation(() => repository);
+    const defaultController = new Controller();
+    try {
+      expect((await defaultController.publishReview(event("other"))).statusCode).toBe(403);
+      expect(repository.publishDraft).not.toHaveBeenCalled();
+      const response = await defaultController.publishReview(event());
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.body)).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
+      expect(response.body).not.toContain("secret");
+      const { authorize } = repository.publishDraft.mock.calls[0][0];
+      expect(await authorize(draft)).toBe(true);
+      expect(await authorize({ ...draft, reviewer_user_id: "other" })).toBe(false);
+      repository.findById.mockResolvedValue(published);
+      expect((await defaultController.createReviewResponse(event("host", { message: "Thanks" }))).statusCode).toBe(201);
+    } finally {
+      ReviewRepository.mockReset();
+    }
+  });
+
+  it("enforces private feedback ownership through the default controller", async () => {
+    ReviewRepository.mockImplementation(() => repository);
+    const defaultController = new Controller();
+    try {
+      for (const userId of ["guest", "host"]) {
+        const response = await defaultController.getPrivateFeedback(event(userId));
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
+      }
+      expect((await defaultController.getPrivateFeedback(event("other"))).statusCode).toBe(403);
+      expect((await defaultController.getPrivateFeedback({})).statusCode).toBe(401);
+    } finally {
+      ReviewRepository.mockReset();
+    }
   });
 
   it("publishes through the authorized transaction without claiming verified-stay evidence", async () => {

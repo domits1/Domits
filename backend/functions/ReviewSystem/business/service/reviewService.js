@@ -36,7 +36,9 @@ const isDuplicateBookingReviewError = (error) => {
 
 export class ReviewService {
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
-    canReadPrivateFeedback = async () => false, canPublishReview = async () => false } = {}) {
+    canReadPrivateFeedback = async ({ userId, review }) =>
+      review.reviewer_user_id === userId || review.host_id === userId,
+    canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
