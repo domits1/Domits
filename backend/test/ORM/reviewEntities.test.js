@@ -90,10 +90,10 @@ describe.each(entities.map((entity) => [entity.options.tableName, entity]))(
 );
 
 describe("review migration", () => {
-  it("keeps the retired migration inert while retaining the hand-run SQL indexes", async () => {
+  it("keeps the hand-run SQL synchronized with up", async () => {
     const statements = [];
     await new CreateReviews20260930().up({ query: async (statement) => statements.push(statement) });
-    expect(statements).toEqual([]);
+    expect(normalize(statements.join("\n"))).toBe(normalize(sql));
     expect(sql).toContain("IF NOT EXISTS review_request_booking_type_guest_unique_main");
     expect(sql).not.toMatch(/IF NOT EXISTS review_request_booking_type_guest_unique\s/);
   });
