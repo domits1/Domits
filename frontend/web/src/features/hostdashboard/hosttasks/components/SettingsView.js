@@ -27,6 +27,7 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
     const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
     const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
     const [settingsSaved, setSettingsSaved] = useState(false);
+    const [saveFailed, setSaveFailed] = useState(false);
     const [settingsLoadStatus, setSettingsLoadStatus] = useState('loading');
     const [teamMembers, setTeamMembers] = useState([]);
     const [teamMemberships, setTeamMemberships] = useState([]);
@@ -59,10 +60,12 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
         try {
             await saveSettings(settingsDraft);
             setSettings({ ...settingsDraft });
+            setSaveFailed(false);
             setSettingsSaved(true);
             setTimeout(() => setSettingsSaved(false), 3000);
         } catch {
             setSettingsSaved(false);
+            setSaveFailed(true);
         }
     };
 
@@ -213,6 +216,11 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
 
             <div className="settings-footer">
                 {settingsSaved && <span className="settings-saved-msg"><LuCheck /> Settings saved successfully.</span>}
+                {saveFailed && (
+                    <span className="settings-load-error" role="alert">
+                        Couldn't save your settings. Please try again.
+                    </span>
+                )}
                 {settingsLoadStatus === 'failed' && (
                     <span className="settings-load-error" role="alert">
                         Couldn't load your settings. Reload the page to try again.
