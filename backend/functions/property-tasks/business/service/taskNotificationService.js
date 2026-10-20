@@ -17,14 +17,11 @@ const sendEmail = async (toEmail, subject, body) => {
 };
 
 // A user without a saved settings row, or one who has not accepted the invite yet
-// and so has no user id, keeps the default (on).
-const isEmailEnabled = async (dataSource, userId, settingKey) => {
-    if (!userId) {
-        return true;
-    }
-    const settings = await taskRepository.getHostSettings(dataSource, userId);
-    return settings?.[settingKey] ?? true;
-};
+// and so has no user id, keeps the defaults (everything on).
+const readSettings = async (dataSource, userId) =>
+    userId ? await taskRepository.getHostSettings(dataSource, userId) : null;
+
+const isOn = (settings, settingKey) => settings?.[settingKey] ?? true;
 
 // The task is already saved when this runs, so a failed email is logged and must not fail the request.
 export const notifyTaskAssigned = async (hostId, task) => {
@@ -35,7 +32,8 @@ export const notifyTaskAssigned = async (hostId, task) => {
         if (!teamMember || teamMember.status !== "active") {
             return;
         }
-        if (!(await isEmailEnabled(dataSource, teamMember.member_user_id, "notif_email_assigned"))) {
+        const settings = await readSettings(dataSource, teamMember.member_user_id);
+        if (!isOn(settings, "notif_email_assigned")) {
             return;
         }
 
@@ -58,7 +56,8 @@ Open your Domits dashboard to view it.`
 export const notifyTaskCompleted = async (hostId, task) => {
     try {
         const dataSource = await Database.getInstance();
-        if (!(await isEmailEnabled(dataSource, hostId, "notif_email_completed"))) {
+        const settings = await readSettings(dataSource, hostId);
+        if (!isOn(settings, "notif_email_completed")) {
             return;
         }
 
@@ -90,7 +89,8 @@ const emailAssigneeOrHost = async (task, settingKey, { subject, body }) => {
     const dataSource = await Database.getInstance();
     const assignee = await findActiveAssignee(dataSource, task);
     const recipientUserId = assignee ? assignee.member_user_id : task.host_id;
-    if (!(await isEmailEnabled(dataSource, recipientUserId, settingKey))) {
+    const settings = await readSettings(dataSource, recipientUserId);
+    if (!isOn(settings, settingKey)) {
         return;
     }
 
