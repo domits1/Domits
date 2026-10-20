@@ -9,7 +9,10 @@ const readEditResponse = async (response) => {
 };
 
 export const getEditableReview = async (reviewId) =>
-  readEditResponse(await requestReview("GET", { reviewId }));
+  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
+    method: "GET",
+    headers: { Authorization: getAccessToken() },
+  }));
 
 export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }) =>
   readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
