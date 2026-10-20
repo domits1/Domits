@@ -9,6 +9,7 @@ import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
+import reviewStyles from "../review/ReviewPage.module.css";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);
@@ -139,7 +140,7 @@ function HostReviews() {
                                 reviews.map((review, index) => (
                                     <div key={index} className={styles.reviewTab}>
                                         <h2 className={styles.reviewHeader}>{review.title}</h2>
-                                        <p className={styles.reviewContent}>{review.content}</p>
+                                        <p className={`${styles.reviewContent} ${reviewStyles.reviewText}`}>{review.content}</p>
                                         <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(review.date)}</p>
                                         <button
                                             onClick={() => asyncDeleteReview(review)}
@@ -163,7 +164,7 @@ function HostReviews() {
                                     receivedReviews.map((receivedReview, index) => (
                                         <div key={index} className={styles.reviewTab}>
                                         <h2 className={styles.reviewHeader}>{receivedReview.title}</h2>
-                                        <p className={styles.reviewContent}>{receivedReview.content}</p>
+                                        <p className={`${styles.reviewContent} ${reviewStyles.reviewText}`}>{receivedReview.content}</p>
                                         <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}</p>
                                     </div>
                                 ))

@@ -6,6 +6,7 @@ import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
+import reviewStyles from "../review/ReviewPage.module.css";
 
 function GuestReviews() {
   const [reviews, setReviews] = useState([]);
@@ -113,7 +114,7 @@ function GuestReviews() {
                 reviews.map((review, index) => (
                   <div key={index} className="reviewTab">
                     <h2 className="reviewHeader">{review.title}</h2>
-                    <p className="reviewContent">{review.content}</p>
+                    <p className={`reviewContent ${reviewStyles.reviewText}`}>{review.content}</p>
                     <p className="reviewDate">
                       Written on: {DateFormatterDD_MM_YYYY(review.date)}
                     </p>
@@ -149,7 +150,7 @@ function GuestReviews() {
                 receivedReviews.map((receivedReview, index) => (
                   <div key={index} className="reviewTab">
                     <h2 className="reviewHeader">{receivedReview.title}</h2>
-                    <p className="reviewContent">{receivedReview.content}</p>
+                    <p className={`reviewContent ${reviewStyles.reviewText}`}>{receivedReview.content}</p>
                     <p className="reviewDate">
                       Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}
                     </p>
