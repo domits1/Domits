@@ -144,7 +144,16 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
 
     fieldsToUpdate.updated_at = Date.now();
 
-    await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    if (isNewlyCompleted) {
+        // Two people can complete a task at the same moment. The write only applies while the task is
+        // not completed, so one of them wins and only that one logs and notifies.
+        const applied = await taskRepository.updateTaskUnlessCompleted(dataSource, taskId, fieldsToUpdate);
+        if (!applied) {
+            return { message: "Task updated successfully" };
+        }
+    } else {
+        await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    }
 
     await logActivity(dataSource, {
         taskId,

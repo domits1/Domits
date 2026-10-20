@@ -33,6 +33,7 @@ EmailNotificationService (existing Lambda)   payload: { body: { toEmail, subject
 
 - `updateTask(hostId, taskId, updateData, { actorIsTeamMember })` takes the option from the controller, which fills it from `isPOM` (derived server-side from the token and team membership, never from the request body).
 - The completed email looks the host's address up through the `GetUserInfo` Lambda, as the escalation email does.
+- Completing a task is written with `UPDATE ... WHERE status <> 'Completed'` (`updateTaskUnlessCompleted`). If two people complete the same task at the same moment, one wins; the other changes nothing, logs no activity and sends no email, so the host gets exactly one completion email.
 
 ## Failure behaviour
 

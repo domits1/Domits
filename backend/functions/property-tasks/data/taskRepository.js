@@ -90,6 +90,21 @@ export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     return await repository.update(taskId, updateData);
 };
 
+// The write only applies while the task is not completed, so when two requests complete the same
+// task at once exactly one of them changes it. Returns false for the one that lost.
+export const updateTaskUnlessCompleted = async (dataSource, taskId, updateData) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set(updateData)
+        .where("id = :taskId", { taskId })
+        .andWhere("status <> :completed", { completed: "Completed" })
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
     const repository = dataSource.getRepository(TaskEntity);
     const result = await repository
