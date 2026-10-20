@@ -52,11 +52,14 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     delete process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL;
     delete process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL;
     delete process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED;
   });
 
   it("defines pricing and the entitlement boundary", () => {
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     expect(getConfiguredElitePriceCents()).toBe(4300);
+    delete process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS;
+    expect(getConfiguredElitePriceCents()).toBeNull();
     expect(getWebsiteEntitlements("essentials")).toEqual([
       "website.basic",
       "website.booking",
@@ -72,16 +75,66 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     repository.findCurrentByAccountId.mockResolvedValue(null);
     repository.findLatestByAccountId.mockResolvedValue(null);
     repository.createPlan.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
 
-    await expect(service.getCurrentPlan("host-1")).resolves.toMatchObject({
+    const currentPlan = await service.getCurrentPlan("host-1");
+    expect(currentPlan).toMatchObject({
       plan: "essentials",
       price: 0,
       currency: "EUR",
       billingFrequency: "monthly",
+      elitePriceCents: 4300,
+      checkoutEnabled: false,
     });
     expect(repository.createPlan).toHaveBeenCalledWith(expect.objectContaining({
       account_id: "host-1", plan: "essentials", price_cents: 0, status: "ACTIVE"
     }));
+  });
+
+  it("returns 503 without leaking the database error when the rate-plan table is missing", async () => {
+    repository.findCurrentByAccountId.mockRejectedValue(Object.assign(
+      new Error('relation "main.direct_booking_website_rate_plans" does not exist'),
+      { code: "42P01" }
+    ));
+
+    await expect(service.getCurrentPlan("host-1")).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+    });
+  });
+
+  it("reports checkout as enabled only when all release configuration is present", async () => {
+    repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+
+    await expect(service.getCurrentPlan("host-1")).resolves.toMatchObject({
+      elitePriceCents: 4300,
+      checkoutEnabled: true,
+    });
+  });
+
+  it.each([
+    "DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS",
+    "DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID",
+  ])("refuses Elite checkout when %s is missing", async (missingVariable) => {
+    repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+    delete process.env[missingVariable];
+
+    await expect(service.changePlan({
+      accountId: "host-1", targetPlan: "elite", customerEmail: "host@example.com"
+    })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Elite checkout is disabled until the rate-plan database migration and Stripe webhook are configured.",
+    });
+
+    expect(stripeRepository.createEliteCheckoutSession).not.toHaveBeenCalled();
   });
 
   it("blocks Elite-only entitlements for Essentials", async () => {
@@ -104,8 +157,11 @@ describe("DirectBookingWebsiteRatePlanService", () => {
       id: "cs_1", url: "https://checkout.stripe.com/cs_test"
     });
     process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
-    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success";
-    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success?session_id={CHECKOUT_SESSION_ID}";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel?source=plans#checkout";
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+    process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
 
     await expect(service.changePlan({
       accountId: "host-1", targetPlan: "elite", customerEmail: "host@example.com"
@@ -116,9 +172,52 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     });
 
     expect(repository.updatePlanById).not.toHaveBeenCalled();
+    expect(stripeRepository.createEliteCheckoutSession).toHaveBeenCalledWith(expect.objectContaining({
+      successUrl: "https://example.com/success?session_id={CHECKOUT_SESSION_ID}&websiteCheckout=success",
+      cancelUrl: "https://example.com/cancel?source=plans&websiteCheckout=cancelled#checkout",
+    }));
+  });
+
+  it("refuses Elite checkout when webhook configuration is missing", async () => {
+    repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel";
+    process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED = "true";
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+
+    await expect(service.changePlan({
+      accountId: "host-1", targetPlan: "elite", customerEmail: "host@example.com"
+    })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Elite checkout is disabled until the rate-plan database migration and Stripe webhook are configured.",
+    });
+
+    expect(stripeRepository.createEliteCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("refuses Elite checkout until deployment readiness is explicitly enabled", async () => {
+    repository.findCurrentByAccountId.mockResolvedValue(plan());
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID = "price_elite";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL = "https://example.com/success";
+    process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL = "https://example.com/cancel";
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+    delete process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED;
+
+    await expect(service.changePlan({
+      accountId: "host-1", targetPlan: "elite", customerEmail: "host@example.com"
+    })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Elite checkout is disabled until the rate-plan database migration and Stripe webhook are configured.",
+    });
+
+    expect(stripeRepository.createEliteCheckoutSession).not.toHaveBeenCalled();
   });
 
   it("activates Elite after a paid checkout webhook", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     repository.findByStripeSubscriptionId.mockResolvedValue(null);
     stripeRepository.constructWebhookEvent.mockResolvedValue({
       type: "checkout.session.completed",
@@ -145,7 +244,23 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     }));
   });
 
+  it("does not activate a paid subscription without a configured Elite price", async () => {
+    repository.findByStripeSubscriptionId.mockResolvedValue(null);
+
+    await expect(service.activateEliteFromSubscription("host-1", {
+      id: "sub_missing_price",
+      customer: "cus_1",
+      status: "active",
+      cancel_at_period_end: false,
+    })).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Elite plan price is not configured.",
+    });
+    expect(repository.activatePaidPlan).not.toHaveBeenCalled();
+  });
+
   it("does not set an end date on a new Elite row when the subscription renews normally", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     repository.findByStripeSubscriptionId.mockResolvedValue(null);
     repository.activatePaidPlan.mockResolvedValue(plan({
       plan: "elite",
@@ -167,6 +282,7 @@ describe("DirectBookingWebsiteRatePlanService", () => {
   });
 
   it("sets the Elite end date when Stripe has scheduled cancellation", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS = "4300";
     repository.findByStripeSubscriptionId.mockResolvedValue(null);
     repository.activatePaidPlan.mockResolvedValue(plan({
       plan: "elite",

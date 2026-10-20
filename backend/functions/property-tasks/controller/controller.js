@@ -8,6 +8,7 @@ import {
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
+import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
@@ -19,6 +20,15 @@ export class Controller {
         const { username, role } = await this.authManager.getUser(event.headers?.Authorization);
         const asHostId = event.queryStringParameters?.asHostId || null;
         return await resolveEffectiveHostId(username, role, asHostId);
+    }
+
+    async getChecklistTemplates(event) {
+        try {
+            await this.authManager.getUser(event.headers?.Authorization);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(CHECKLIST_TEMPLATES) };
+        } catch (error) {
+            return this.handleError(error);
+        }
     }
 
     async getTasks(event) {

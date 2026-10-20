@@ -12,6 +12,7 @@ import { fetchTeamMembers } from '../../services/teamService';
 import { HOST_ASSIGNEE_ID, resolveAssigneeSelection } from '../utils/assigneeSelection';
 import {
     fetchChecklistItems,
+    fetchChecklistTemplates,
     createChecklistItem,
     updateChecklistItem,
     deleteChecklistItem,
@@ -50,6 +51,8 @@ const HostTasks = () => {
     const asHostId = taskContext === 'managed' ? managedHostId : null;
     const loadRequestRef = useRef(0);
     const checklistRequestRef = useRef(0);
+    const isApplyingChecklistTemplateRef = useRef(false);
+    const templateCreatedItemIdsRef = useRef([]);
 
     const [activeTab, setActiveTab] = useState('Overview');
     const [tasks, setTasks] = useState([]);
@@ -65,6 +68,10 @@ const HostTasks = () => {
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
+    const [checklistTemplates, setChecklistTemplates] = useState({});
+    const [isApplyingChecklistTemplate, setIsApplyingChecklistTemplate] = useState(false);
+    const [isCreatingTask, setIsCreatingTask] = useState(false);
+    const [isChecklistLoaded, setIsChecklistLoaded] = useState(false);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -167,6 +174,10 @@ const HostTasks = () => {
     useEffect(() => {
         fetchTeamMembers().then(setTeamMembers).catch(() => {});
     }, []);
+
+    useEffect(() => {
+        fetchChecklistTemplates().then(setChecklistTemplates).catch(() => {});
+    }, []);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -246,6 +257,8 @@ const HostTasks = () => {
 
     const handleCreateTask = async (e) => {
         e.preventDefault();
+        if (isCreatingTask) return;
+        setIsCreatingTask(true);
         try {
             const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             
@@ -266,7 +279,9 @@ const HostTasks = () => {
             }
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
-            
+
+            await applyChecklistTemplateIfEmpty(created.id, created.type, 0);
+
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
                 created = { ...created, status: 'Overdue', priority: 'Urgent' };
@@ -277,6 +292,8 @@ const HostTasks = () => {
             resetForm();
         } catch {
             alert("Error creating task");
+        } finally {
+            setIsCreatingTask(false);
         }
     };
 
@@ -371,14 +388,63 @@ const HostTasks = () => {
         }
     };
 
+    const applyChecklistTemplateIfEmpty = async (taskId, type, currentItemCount) => {
+        const template = checklistTemplates[type];
+        if (!template || template.length === 0 || currentItemCount > 0 || isApplyingChecklistTemplateRef.current) return [];
+
+        // Captured so a stale result (the host switched to a different task while
+        // this was still running) doesn't get applied to, or tracked against, the
+        // task now being viewed.
+        const requestId = checklistRequestRef.current;
+
+        isApplyingChecklistTemplateRef.current = true;
+        setIsApplyingChecklistTemplate(true);
+        const created = [];
+        try {
+            // Must stay sequential: the backend assigns each item's position as
+            // existingItems.length at creation time, so running these in parallel
+            // would let requests read the same stale count and collide.
+            for (const item of template) {
+                const createdItem = await createChecklistItem(taskId, item);
+                created.push(createdItem);
+                if (requestId === checklistRequestRef.current) {
+                    templateCreatedItemIdsRef.current.push(createdItem.id);
+                }
+            }
+        } catch (error) {
+            // Roll back whatever succeeded so a mid-template failure never leaves
+            // a half-filled checklist with no indication of what happened. If a
+            // rollback delete itself fails, that item genuinely still exists, so
+            // it's kept (here and in the discard-tracking ref) rather than
+            // silently losing track of it.
+            const rollbackResults = await Promise.allSettled(created.map(item => deleteChecklistItem(item.id)));
+            const stillPresent = created.filter((_item, index) => rollbackResults[index].status === 'rejected');
+            const removedIds = created
+                .filter((_item, index) => rollbackResults[index].status === 'fulfilled')
+                .map(item => item.id);
+            templateCreatedItemIdsRef.current = templateCreatedItemIdsRef.current.filter(id => !removedIds.includes(id));
+            created.length = 0;
+            created.push(...stillPresent);
+            toast.error(stillPresent.length > 0
+                ? `Error applying the checklist template. ${stillPresent.length} item(s) could not be rolled back.`
+                : "Error applying the checklist template. No items were added.");
+        } finally {
+            isApplyingChecklistTemplateRef.current = false;
+            setIsApplyingChecklistTemplate(false);
+        }
+        return requestId === checklistRequestRef.current ? created : [];
+    };
+
     const loadChecklistItems = (taskId) => {
         const requestId = ++checklistRequestRef.current;
         setChecklistLoadError(null);
+        setIsChecklistLoaded(false);
         fetchChecklistItems(taskId)
             .then(items => {
                 if (requestId === checklistRequestRef.current) {
                     setChecklistItems(items);
                     setChecklistLoadError(null);
+                    setIsChecklistLoaded(true);
                 }
             })
             .catch((error) => {
@@ -396,6 +462,7 @@ const HostTasks = () => {
         };
         setViewingTask(taskWithAssigneeSelection);
         setEditedTask({ ...taskWithAssigneeSelection });
+        templateCreatedItemIdsRef.current = [];
         loadChecklistItems(task.id);
     };
 
@@ -403,9 +470,14 @@ const HostTasks = () => {
         loadChecklistItems(viewingTask.id);
     };
 
-    const handleEditChange = (e) => {
+    const handleEditChange = async (e) => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'type' && viewingTask && isChecklistLoaded) {
+            const created = await applyChecklistTemplateIfEmpty(viewingTask.id, value, checklistItems.length);
+            if (created.length > 0) setChecklistItems(prev => [...prev, ...created]);
+        }
     };
 
     const closeTaskDetails = () => {
@@ -418,7 +490,16 @@ const HostTasks = () => {
                 message: 'You have unsaved changes. Are you sure you want to close without saving?',
                 confirmText: 'Discard Changes',
                 cancelText: 'Keep Editing',
-                onConfirm: () => {
+                onConfirm: async () => {
+                    const idsToDiscard = templateCreatedItemIdsRef.current;
+                    templateCreatedItemIdsRef.current = [];
+                    if (idsToDiscard.length > 0) {
+                        const results = await Promise.allSettled(idsToDiscard.map(id => deleteChecklistItem(id)));
+                        const failedCount = results.filter(r => r.status === 'rejected').length;
+                        if (failedCount > 0) {
+                            toast.error(`${failedCount} checklist item(s) could not be discarded and may still be saved.`);
+                        }
+                    }
                     setViewingTask(null);
                     setEditedTask(null);
                     setChecklistItems([]);
@@ -479,6 +560,7 @@ const HostTasks = () => {
         setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
         setViewingTask(null);
         setEditedTask(null);
+        templateCreatedItemIdsRef.current = [];
 
         try {
             await updateTask(finalTask.id, finalTask);
@@ -832,6 +914,7 @@ const HostTasks = () => {
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
+                isSubmitting={isCreatingTask}
             />
 
             <TaskDetailsModal
@@ -849,6 +932,7 @@ const HostTasks = () => {
                 onClose={closeTaskDetails}
                 checklistItems={checklistItems}
                 checklistLoadError={checklistLoadError}
+                isApplyingChecklistTemplate={isApplyingChecklistTemplate}
                 onAddChecklistItem={handleAddChecklistItem}
                 onToggleChecklistItem={handleToggleChecklistItem}
                 onRemoveChecklistItem={handleRemoveChecklistItem}

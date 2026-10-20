@@ -15,6 +15,7 @@ const CreateTaskModal = ({
     onFileChange,
     onSubmit,
     onCancel,
+    isSubmitting,
 }) => {
     if (!isOpen) return null;
 
@@ -89,8 +90,8 @@ const CreateTaskModal = ({
                             </div>
                         </div>
                         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                            <button type="button" className="btn-text" onClick={onCancel}>Cancel</button>
-                            <button type="submit" className="btn-create-green">Create Task</button>
+                            <button type="button" className="btn-text" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
+                            <button type="submit" className="btn-create-green" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Task'}</button>
                         </div>
                     </form>
                 </div>
@@ -128,6 +129,7 @@ CreateTaskModal.propTypes = {
     onFileChange: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
+    isSubmitting: PropTypes.bool,
 };
 
 export default CreateTaskModal;
