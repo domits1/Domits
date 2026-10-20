@@ -1,69 +1,141 @@
 import {
-  MOCK_STATUS,
+  RemoteLockRequestError,
+  completeRemoteLockConnect,
   connectRemoteLock,
   disconnectRemoteLock,
   getRemoteLockDevices,
   getRemoteLockStatus,
-  resetMockRemoteLock,
-  setMockRemoteLockStatus,
 } from "./remoteLockService";
+import { getIdToken } from "../../../../services/getAccessToken";
 
-beforeEach(resetMockRemoteLock);
+jest.mock("../../../../services/getAccessToken");
 
-describe("remoteLockService (mock)", () => {
-  it("starts as NOT_CONNECTED with nothing synced", async () => {
-    expect(MOCK_STATUS).toBe("NOT_CONNECTED");
-    expect(await getRemoteLockStatus()).toEqual({ status: "NOT_CONNECTED", lastSyncAt: null });
+const BASE = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/home-automation/remotelocks";
+const ID_TOKEN = "id-token-aaa";
+const CODE = "one-time-code-xyz";
+const STATE = "state-value-123";
+const AUTHORIZE_URL = "https://connect.remotelock.com/oauth/authorize?client_id=c&state=s";
+
+const respond = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  getIdToken.mockResolvedValue(ID_TOKEN);
+  global.fetch = jest.fn();
+});
+
+describe("remoteLockService requests", () => {
+  it.each([
+    ["getRemoteLockStatus", () => getRemoteLockStatus(), "GET", "/status", undefined],
+    ["connectRemoteLock", () => connectRemoteLock(), "POST", "/connect", undefined],
+    [
+      "completeRemoteLockConnect",
+      () => completeRemoteLockConnect({ code: CODE, state: STATE }),
+      "POST",
+      "/connect/complete",
+      { code: CODE, state: STATE },
+    ],
+    ["disconnectRemoteLock", () => disconnectRemoteLock(), "POST", "/disconnect", undefined],
+    ["getRemoteLockDevices", () => getRemoteLockDevices(), "GET", "/devices", undefined],
+  ])("%s sends %s %s with the Cognito id token", async (_name, call, method, path, body) => {
+    fetch.mockResolvedValue(respond(200, { status: "CONNECTED", authorizeUrl: AUTHORIZE_URL, devices: [] }));
+
+    await call();
+
+    const [url, options] = fetch.mock.calls[0];
+    expect(url).toBe(`${BASE}${path}`);
+    expect(options.method).toBe(method);
+    expect(options.headers.Authorization).toBe(`Bearer ${ID_TOKEN}`);
+    expect(options.body).toBe(body === undefined ? undefined : JSON.stringify(body));
   });
 
-  it("returns a last sync time once connected", async () => {
-    setMockRemoteLockStatus("CONNECTED");
+  it("reads the status and the last sync time", async () => {
+    fetch.mockResolvedValue(respond(200, { status: "CONNECTED", lastSyncAt: 1790000000000 }));
 
-    const result = await getRemoteLockStatus();
-
-    expect(result.status).toBe("CONNECTED");
-    expect(Number.isFinite(result.lastSyncAt)).toBe(true);
+    await expect(getRemoteLockStatus()).resolves.toEqual({ status: "CONNECTED", lastSyncAt: 1790000000000 });
   });
 
-  it("keeps the status it was given until it is reset", async () => {
-    setMockRemoteLockStatus("EXPIRED_CREDENTIALS");
-    expect((await getRemoteLockStatus()).status).toBe("EXPIRED_CREDENTIALS");
+  it("completes the connection and resolves the new status", async () => {
+    fetch.mockResolvedValue(respond(200, { status: "CONNECTED", lastSyncAt: null }));
 
-    resetMockRemoteLock();
-    expect((await getRemoteLockStatus()).status).toBe("NOT_CONNECTED");
+    await expect(completeRemoteLockConnect({ code: CODE, state: STATE })).resolves.toEqual({
+      status: "CONNECTED",
+      lastSyncAt: null,
+    });
   });
 
-  it("connects: resolves CONNECTED with a sync time, and the next status read agrees", async () => {
-    const result = await connectRemoteLock();
+  it("unwraps the devices and the truncated flag", async () => {
+    const devices = [{ id: "d-1", name: "Front door", type: "lock", status: "ONLINE", battery: 82, lastSeenAt: null }];
+    fetch.mockResolvedValueOnce(respond(200, { devices, truncated: true }));
+    fetch.mockResolvedValueOnce(respond(200, {}));
 
-    expect(result.status).toBe("CONNECTED");
-    expect(Number.isFinite(result.lastSyncAt)).toBe(true);
-    expect(await getRemoteLockStatus()).toEqual(result);
+    await expect(getRemoteLockDevices()).resolves.toEqual({ devices, truncated: true });
+    await expect(getRemoteLockDevices()).resolves.toEqual({ devices: [], truncated: false });
+  });
+});
+
+describe("remoteLockService connect", () => {
+  it("resolves the sign-in URL when it is RemoteLock's own", async () => {
+    fetch.mockResolvedValue(respond(200, { status: "CONNECTING", authorizeUrl: AUTHORIZE_URL }));
+
+    await expect(connectRemoteLock()).resolves.toEqual({ status: "CONNECTING", authorizeUrl: AUTHORIZE_URL });
   });
 
-  it("disconnects: resolves DISCONNECTED with no sync time, and the next status read agrees", async () => {
-    setMockRemoteLockStatus("CONNECTED");
+  it.each([
+    ["another host", "https://evil.example.com/oauth/authorize"],
+    ["a look-alike host", "https://connect.remotelock.com.evil.example.com/oauth"],
+    ["user info in front of another host", "https://connect.remotelock.com@evil.example.com/"],
+    ["plain http", "http://connect.remotelock.com/oauth/authorize"],
+    ["another port", "https://connect.remotelock.com:8443/oauth/authorize"],
+    ["a data URL", "data:text/html,hello"],
+    ["no URL", undefined],
+  ])("refuses %s", async (_label, authorizeUrl) => {
+    fetch.mockResolvedValue(respond(200, { status: "CONNECTING", authorizeUrl }));
 
-    const result = await disconnectRemoteLock();
-
-    expect(result).toEqual({ status: "DISCONNECTED", lastSyncAt: null });
-    expect(await getRemoteLockStatus()).toEqual(result);
+    await expect(connectRemoteLock()).rejects.toMatchObject({ code: "INVALID_AUTHORIZE_URL" });
   });
+});
 
-  it("lists devices that use RemoteLock's type values and cover the cases the page must handle", async () => {
-    const devices = await getRemoteLockDevices();
-
-    expect(devices.map((device) => device.type).sort()).toEqual(
-      ["connector_lock", "lock", "resort_lock", "schlage_home_lock", "zwave_lock"].sort()
+describe("remoteLockService errors", () => {
+  it("carries the status and the backend codes, and nothing else from the response", async () => {
+    fetch.mockResolvedValue(
+      respond(503, { error: "RATE_LIMITED", retryable: true, retryAfterSeconds: 7, detail: `token ${CODE}` })
     );
-    expect(new Set(devices.map((device) => device.status))).toEqual(new Set(["ONLINE", "OFFLINE", "UNKNOWN"]));
-    expect(devices.some((device) => device.battery === null)).toBe(true);
-    expect(devices.some((device) => device.lastSeenAt === null)).toBe(true);
+
+    const error = await getRemoteLockDevices().catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(RemoteLockRequestError);
+    expect(error).toMatchObject({ status: 503, code: "RATE_LIMITED", retryable: true, retryAfterSeconds: 7 });
+    expect(JSON.stringify([error.message, Object.values(error)])).not.toContain(CODE);
   });
 
-  it("hands out copies, so a caller cannot change the next list", async () => {
-    (await getRemoteLockDevices())[0].name = "changed";
+  it.each([
+    ["a 401 without a body", respond(401, null), { status: 401, code: null, retryable: false }],
+    ["a code that is not text", respond(500, { error: { nested: true } }), { status: 500, code: null }],
+  ])("handles %s", async (_label, response, expected) => {
+    fetch.mockResolvedValue(response);
 
-    expect((await getRemoteLockDevices())[0].name).not.toBe("changed");
+    await expect(getRemoteLockStatus()).rejects.toMatchObject(expected);
+  });
+
+  it("keeps the code and the state out of the message of a failed completion", async () => {
+    fetch.mockResolvedValue(respond(409, { error: "STATE_INVALID", retryable: false }));
+
+    const error = await completeRemoteLockConnect({ code: CODE, state: STATE }).catch((caught) => caught);
+
+    expect(error.code).toBe("STATE_INVALID");
+    expect(`${error.message} ${error.name}`).not.toMatch(new RegExp(`${CODE}|${STATE}`));
+  });
+
+  it.each([
+    ["a network failure", () => fetch.mockRejectedValue(new Error(`offline ${CODE}`))],
+    ["a missing session", () => getIdToken.mockRejectedValue(new Error("No current user"))],
+  ])("turns %s into a retryable error without its message", async (_label, arrange) => {
+    arrange();
+
+    const error = await getRemoteLockStatus().catch((caught) => caught);
+
+    expect(error).toMatchObject({ status: null, code: null, retryable: true });
+    expect(error.message).not.toContain(CODE);
   });
 });
