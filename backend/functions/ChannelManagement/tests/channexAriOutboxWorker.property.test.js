@@ -141,6 +141,24 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     });
   });
 
+  test("a failing alert line does not change how the FAILED rows are recorded", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker({
+      log: {
+        error: jest.fn(() => {
+          throw new Error("log unavailable");
+        }),
+      },
+    });
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
+    });
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
+    expect(outbox.returnToPending).not.toHaveBeenCalled();
+  });
+
   // The first call goes through and the second fails; only the row the first call
   // carried may be PROCESSED.
   test.each([
