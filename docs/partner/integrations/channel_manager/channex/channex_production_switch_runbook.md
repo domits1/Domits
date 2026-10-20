@@ -121,12 +121,15 @@ Channex production → Webhooks → Property Webhooks → Create:
 | Send data | off (Domits reads the feed itself) |
 | Signed (HMAC) | off for now; signature checking is not built yet (#3574) |
 
-Check: the webhook's test call answers `200`.
+Check: the webhook's test call answers `200`. This only proves the webhook is reachable; S8 proves that bookings are processed.
 
 ### S8. End-to-end check
 
-1. Change one price on a date for the villa in Domits; after about 2 minutes the evidence shows one call and Channex Inventory shows the new price. Change it back.
-2. Booking receiving can only be tested once an OTA channel is connected, or with a manual booking in Channex (Booking CRS app, if installed in production); cancel it straight after.
+1. **Prices and availability out:** change one price on a date for the villa in Domits; after about 2 minutes the evidence shows one call and Channex Inventory shows the new price. Change it back.
+2. **Bookings in:** in Channex production → Bookings → New booking, create a test booking on the villa for one free night (no OTA is connected yet, so no guest is affected). The "New booking" button comes from the Booking CRS app; install it under Applications if the button is missing.
+   - Check, within about 1 minute: the booking is in Domits → Reservations with the right dates and amount, Channex shows it as acknowledged, and the night is closed in the Domits calendar.
+   - Cancel the booking in Channex straight after. Check: Domits shows it as cancelled and the night is open again.
+   - If the booking does not reach Domits, the switch is not complete: check the `channex-webhook-*` alarms and the ChannelManagement logs before connecting any OTA.
 
 ## After the switch
 
@@ -187,9 +190,13 @@ $vars | Add-Member -NotePropertyName CHANNEX_BASE_URL -NotePropertyValue "https:
 @{ Variables = $vars } | ConvertTo-Json -Depth 5 | Set-Content -Encoding ascii env.json
 aws lambda update-function-configuration --function-name $fn --environment file://env.json --query "LastUpdateStatus"
 Remove-Item env.json
+aws lambda wait function-updated --function-name $fn
+aws lambda get-function-configuration --function-name $fn --query "LastUpdateStatus" --output text
 ```
 
-`env.json` holds every variable of the function, including secrets; delete it straight after and never commit it. For the allowlist, read the current `CHANNEX_CERTIFICATION_USER_IDS`, append the new id with a comma, and set the result the same way.
+Check: the last command prints `Successful`. The update runs asynchronously, so do not move on to the next function or step before that. If it prints `Failed`, run the block again; it starts from the current variables.
+
+`env.json` holds every variable of the function, including secrets; it is deleted straight after the update call on purpose and must never be committed. For the allowlist, read the current `CHANNEX_CERTIFICATION_USER_IDS`, append the new id with a comma, and set the result the same way.
 
 ## Status
 
