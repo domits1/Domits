@@ -1,4 +1,4 @@
-import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "../utils/channexAriOutboxConstants.js";
+﻿import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "../utils/channexAriOutboxConstants.js";
 import {
   OUTCOME,
   callTypeOf,
@@ -146,7 +146,7 @@ export default class ChannexAriOutboxWorker {
         await this.outbox.markSkipped(ids, { now, failureReason: reason });
         recorded.push(outcome);
       } else if (outcome === OUTCOME.FAILED) {
-        await this.markFailed(outcomeRows, { now, failureReason: reason });
+        await this.markFailedAndReport(outcomeRows, { now, failureReason: reason });
         recorded.push(outcome);
       } else {
         recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason, partlySent })));
@@ -158,7 +158,7 @@ export default class ChannexAriOutboxWorker {
 
   // A FAILED row is a change that will never reach Channex, so it is also logged as one
   // JSON line: the alarm on failed changes is a CloudWatch metric filter on it (#3620).
-  async markFailed(rows, { now, failureReason }) {
+  async markFailedAndReport(rows, { now, failureReason }) {
     await this.outbox.markFailed(rows.map((row) => row.id), { now, failureReason });
     this.log.error(
       JSON.stringify({
@@ -197,7 +197,7 @@ export default class ChannexAriOutboxWorker {
       recorded.push(OUTCOME.DEFERRED);
     }
     if (exhausted.length) {
-      await this.markFailed(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      await this.markFailedAndReport(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
       recorded.push(OUTCOME.FAILED);
     }
     return recorded;
@@ -212,7 +212,7 @@ export default class ChannexAriOutboxWorker {
     const recorded = [];
     const exhausted = rows.filter((row) => partlySent.has(row.id) && (row.attemptCount || 1) >= MAX_ATTEMPTS);
     if (exhausted.length) {
-      await this.markFailed(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      await this.markFailedAndReport(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
       recorded.push(OUTCOME.FAILED);
     }
 
