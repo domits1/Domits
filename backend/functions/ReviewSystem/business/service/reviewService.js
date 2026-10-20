@@ -54,6 +54,16 @@ export class ReviewService {
 
   // Fetch the caller's reviews by scope.
   // This keeps the profile and dashboard views consistent with the user's written and received history.
+  async getPropertyReviewScore(userId, propertyId) {
+    this.assertCaller(userId);
+    this.assertId(propertyId, "property ID");
+    const id = propertyId.trim();
+    if (!(await this.repository.findManagedProperty(id, userId))) {
+      throw new NotFoundException("Property not found.");
+    }
+    return this.repository.getPropertyReviewScore(id, userId);
+  }
+
   async getReviews(callerUserId, scope = "written") {
     this.assertCaller(callerUserId);
     if (!["written", "received"].includes(scope)) {
