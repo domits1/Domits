@@ -25,6 +25,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import CreateTaskModal from '../components/CreateTaskModal';
 import TaskDetailsModal from '../components/TaskDetailsModal';
 import SettingsView from '../components/SettingsView';
+import NotificationBell from '../components/NotificationBell';
 import MyTasksView from '../components/MyTasksView';
 import ReportsView from '../components/ReportsView';
 import TableView from '../components/TableView';
@@ -823,6 +824,7 @@ const HostTasks = () => {
             <div className="top-header">
                 <h2>Tasks</h2>
                 <div className="top-header-actions">
+                    <NotificationBell />
                     {managedHostId && !isPurelyPOM && (
                         <div className="task-context-toggle">
                             <button
