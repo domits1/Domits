@@ -514,3 +514,38 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS public_booking_ref VARCHAR(255
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
+
+-- -----------------------------------------------------
+-- Table main.guest_risk_assessment
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS main.guest_risk_assessment (
+  id VARCHAR(255) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  bookingid VARCHAR(255) NOT NULL,
+  providerassessmentid VARCHAR(255),
+  status VARCHAR(30) NOT NULL,
+  flaggedreason TEXT,
+  errormessage TEXT,
+  arrivaldate BIGINT,
+  departuredate BIGINT,
+  createdat BIGINT NOT NULL,
+  updatedat BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx ON main.guest_risk_assessment (bookingid);
+
+CREATE TABLE IF NOT EXISTS test.guest_risk_assessment (
+  id VARCHAR(255) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  bookingid VARCHAR(255) NOT NULL,
+  providerassessmentid VARCHAR(255),
+  status VARCHAR(30) NOT NULL,
+  flaggedreason TEXT,
+  errormessage TEXT,
+  arrivaldate BIGINT,
+  departuredate BIGINT,
+  createdat BIGINT NOT NULL,
+  updatedat BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx_test ON test.guest_risk_assessment (bookingid);
