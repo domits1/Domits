@@ -7,6 +7,11 @@ import {
 } from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
+import {
+    listNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+} from "../business/service/taskInAppNotificationService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
@@ -180,6 +185,38 @@ export class Controller {
             const { effectiveHostId } = await this.resolveHost(event);
             const itemId = event.queryStringParameters?.id;
             const result = await deleteChecklistItem(effectiveHostId, itemId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    // Notifications belong to the signed-in person, not to the host they may be acting for,
+    // so these use the caller's own username and never the effective host id.
+    async getNotifications(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await listNotifications(username);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async markNotificationRead(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await markNotificationAsRead(username, event.queryStringParameters?.id);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async markAllNotificationsRead(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await markAllNotificationsAsRead(username);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
