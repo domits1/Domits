@@ -68,6 +68,18 @@ export class GuestRiskAssessmentRepository {
     await repository.update({ id: assessmentId(provider, bookingId) }, { status, errorMessage, updatedAt: now });
   }
 
+  async saveTruviDates({ provider = TRUVI_PROVIDER, bookingId, arrivalDate, departureDate, errorMessage, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to save the Truvi dates");
+    }
+    const changes = { arrivalDate, departureDate, updatedAt: now };
+    if (errorMessage !== undefined) {
+      changes.errorMessage = errorMessage;
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, changes);
+  }
+
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {
     const repository = await this.getRepository();
     return repository.findOne({ where: { id: assessmentId(provider, bookingId) } });

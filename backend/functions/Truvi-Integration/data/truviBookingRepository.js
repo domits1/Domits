@@ -3,6 +3,7 @@ import Database from "database";
 const PAID_STATUS = "Paid";
 export const CANCELLED_BOOKING_STATUSES = ["Cancelled", "Canceled"];
 export const FINAL_CANCEL_STATUSES = ["CANCELLED", "CANCEL_REFUSED"];
+export const MODIFIABLE_STATUSES = ["PASSED", "FLAGGED", "FAILED"];
 const PETS_RULE = "PetsAllowed";
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -115,6 +116,36 @@ export class TruviBookingRepository {
     return (Array.isArray(rows) ? rows : []).map((row) => ({
       bookingId: row.bookingid,
       verificationId: row.providerassessmentid,
+    }));
+  }
+
+  async listVerificationsToModify({ now = Date.now(), limit } = {}) {
+    const client = await Database.getInstance();
+    const schema = resolveSchemaName(client);
+
+    const rows = await client.query(
+      `SELECT g.bookingid, g.providerassessmentid,
+        g.arrivaldate AS sent_arrivaldate, g.departuredate AS sent_departuredate,
+        b.arrivaldate, b.departuredate
+      FROM ${schema}.guest_risk_assessment g
+      JOIN ${schema}.booking b ON b.id = g.bookingid
+      WHERE g.provider = $1
+        AND g.providerassessmentid IS NOT NULL
+        AND g.status IN ($2, $3, $4)
+        AND b.status NOT IN ($5, $6)
+        AND b.departuredate > $7
+        AND (g.arrivaldate IS NULL OR g.departuredate IS NULL
+          OR g.arrivaldate <> b.arrivaldate OR g.departuredate <> b.departuredate)
+      ORDER BY g.updatedat ASC
+      LIMIT $8`,
+      ["truvi", ...MODIFIABLE_STATUSES, ...CANCELLED_BOOKING_STATUSES, now, normalizeLimit(limit)]
+    );
+
+    return (Array.isArray(rows) ? rows : []).map((row) => ({
+      bookingId: row.bookingid,
+      verificationId: row.providerassessmentid,
+      sent: { arrivaldate: toNumber(row.sent_arrivaldate), departuredate: toNumber(row.sent_departuredate) },
+      current: { arrivaldate: toNumber(row.arrivaldate), departuredate: toNumber(row.departuredate) },
     }));
   }
 }

@@ -58,8 +58,21 @@ Without `TRUVI_BASE_URL` the Lambda uses the Truvi sandbox. Production needs the
 Safety behavior:
 
 - `TRUVI_SCREENING_ENABLED` switches both tasks. If it is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
-- An event without `"task": "screen-pending-bookings"` or `"task": "cancel-cancelled-bookings"` returns 400 and does nothing.
+- An event with another task than `screen-pending-bookings`, `cancel-cancelled-bookings` or `modify-changed-bookings` returns 400 and does nothing.
 - A missing or invalid `TRUVI_EXTENDED_AMOUNT` or a non-https `TRUVI_BASE_URL` fails the run before any Truvi call.
+
+## What One Modify Run Does
+
+With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
+
+1. Lists up to `limit` Truvi rows with a verification id and status `PASSED`, `FLAGGED` or `FAILED`, whose booking is not cancelled, whose check-out is still in the future, and whose `arrivaldate`/`departuredate` in `guest_risk_assessment` differ from the booking (or are still empty).
+2. A row with empty dates only gets the current booking dates saved, without a Truvi call. This sets the starting point for rows screened before the dates columns existed and for new screenings.
+3. When the dates differ on the day, sends `PUT /verificationRequests` with both new dates (Truvi only accepts the dates, it does not screen again).
+4. Saves the new dates on a 200, so the booking is not sent again.
+5. When Truvi refuses (check-in or check-out in the past, verification cancelled or unknown), saves the new dates with the reason in `errormessage`, so it is not sent again.
+6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400.
+
+Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
 
 ## EventBridge Rule
 
@@ -102,6 +115,22 @@ Target input:
 }
 ```
 
+Modify rule:
+
+```text
+domits-truvi-modify-rate-15-minutes
+rate(15 minutes)
+```
+
+Target input:
+
+```json
+{
+  "task": "modify-changed-bookings",
+  "limit": 10
+}
+```
+
 Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day after). A booking cancelled later ends as `CANCEL_REFUSED`.
 
 ## Enablement Steps
@@ -116,7 +145,7 @@ Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day afte
 
 ## Manual Lambda Test Event
 
-Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json` for screening and `truvi-cancel-cancelled-bookings.event.json` for cancellations:
+Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json` for screening, `truvi-cancel-cancelled-bookings.event.json` for cancellations and `truvi-modify-changed-bookings.event.json` for date changes:
 
 ```json
 {
@@ -136,7 +165,8 @@ Saved results stay in `guest_risk_assessment`. Deleting a row makes the booking 
 
 - Do not claim production screening is enabled; the default is the Truvi sandbox.
 - Do not claim screening happens at booking time; it runs every 15 minutes.
-- Do not claim date or guest changes are sent to Truvi yet; only cancellations are.
+- Do not claim guest, listing or amount changes are sent to Truvi; Truvi only accepts new dates on a modify.
+- Do not claim a date change is sent at once; it is picked up within 15 minutes.
 - Do not claim a cancelled booking keeps its screening status; the row status becomes `CANCELLED` or `CANCEL_REFUSED`.
 - Do not claim Truvi webhooks are handled.
 - Do not claim retries are idempotent at Truvi: a retried booking creates a new verification request.
