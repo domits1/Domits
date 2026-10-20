@@ -252,6 +252,9 @@ const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
     if (!teamMember) {
         throw new BadRequestException("assignee_team_member_id does not belong to this host");
     }
+    if (teamMember.status !== "active") {
+        throw new BadRequestException("assignee_team_member_id must be an active team member of this host");
+    }
     return teamMember.member_email;
 };
 

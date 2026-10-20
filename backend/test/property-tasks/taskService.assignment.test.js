@@ -47,6 +47,7 @@ describe("task assignment", () => {
             mockGetTeamMemberById.mockResolvedValue({
                 id: "550e8400-e29b-41d4-a716-446655440000",
                 host_id: "host-1",
+                status: "active",
                 member_email: "housekeeper@example.com",
             });
 
@@ -66,11 +67,39 @@ describe("task assignment", () => {
         });
     });
 
+    describe("a team member whose invite is not accepted yet", () => {
+        const memberId = "550e8400-e29b-41d4-a716-446655440000";
+        const pendingMember = { id: memberId, host_id: "host-1", status: "pending", member_email: "invited@example.com" };
+
+        it("cannot be given a new task", async () => {
+            mockGetTeamMemberById.mockResolvedValue(pendingMember);
+
+            await expect(
+                createTask("host-1", { ...baseTaskData, assignee_team_member_id: memberId })
+            ).rejects.toThrow(/active team member/);
+
+            expect(mockSaveTaskToDb).not.toHaveBeenCalled();
+            expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+        });
+
+        it("cannot be assigned an existing task", async () => {
+            mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: null });
+            mockGetTeamMemberById.mockResolvedValue(pendingMember);
+
+            await expect(
+                updateTask("host-1", "task-1", { assignee_team_member_id: memberId })
+            ).rejects.toThrow(/active team member/);
+
+            expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+            expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+        });
+    });
+
     describe("createTask notification", () => {
         const memberId = "550e8400-e29b-41d4-a716-446655440000";
 
         beforeEach(() => {
-            mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", member_email: "housekeeper@example.com" });
+            mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", status: "active", member_email: "housekeeper@example.com" });
         });
 
         it("notifies the assignee with the saved task", async () => {
@@ -115,7 +144,7 @@ describe("task assignment", () => {
             const otherMemberId = "6ba7b810-9dad-41d1-80b4-00c04fd430c8";
 
             beforeEach(() => {
-                mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", member_email: "maintenance@example.com" });
+                mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", status: "active", member_email: "maintenance@example.com" });
             });
 
             it("notifies the new assignee with the task as it is after the update", async () => {
@@ -197,6 +226,7 @@ describe("task assignment", () => {
             mockGetTeamMemberById.mockResolvedValue({
                 id: "550e8400-e29b-41d4-a716-446655440000",
                 host_id: "host-1",
+                status: "active",
                 member_email: "maintenance@example.com",
             });
 
