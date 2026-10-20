@@ -19,6 +19,8 @@ export const GuestRiskAssessment = new EntitySchema({
     status: { type: "varchar", nullable: false },
     flaggedReason: { name: "flaggedreason", type: "text", nullable: true },
     errorMessage: { name: "errormessage", type: "text", nullable: true },
+    arrivalDate: { name: "arrivaldate", ...bigintNumber, nullable: true },
+    departureDate: { name: "departuredate", ...bigintNumber, nullable: true },
     createdAt: { name: "createdat", ...bigintNumber, nullable: false },
     updatedAt: { name: "updatedat", ...bigintNumber, nullable: false },
   },
