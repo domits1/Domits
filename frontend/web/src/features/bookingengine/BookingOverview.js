@@ -23,15 +23,21 @@ const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const BOOKINGS_ENDPOINT = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
 
-export const normalizeBookingDateForRequest = (value) => {
+// Query params are always strings, but the listing page sends epoch milliseconds. `new Date("1781481600000")` is
+// invalid, so numeric strings become numbers while YYYY-MM-DD keys stay strings.
+export const parseBookingDateParam = (value) => {
   const normalized = String(value ?? "").trim();
   if (DATE_KEY_PATTERN.test(normalized)) {
     return normalized;
   }
 
   const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? String(numericValue) : normalized;
+  return Number.isFinite(numericValue) ? numericValue : normalized;
 };
+
+export const normalizeBookingDateForRequest = (value) => String(parseBookingDateParam(value));
+
+const formatBookingDateForDisplay = (value) => DateFormatterDD_MM_YYYY(parseBookingDateParam(value));
 
 export const buildBookingRequestEvent = ({ propertyId, bookingDetails, userName }) => ({
   identifiers: {
@@ -273,8 +279,8 @@ const BookingOverview = () => {
                 <Calender /> Date:
               </span>
               <span className="detail-value">
-                {DateFormatterDD_MM_YYYY(bookingDetails.checkInDate)} -{" "}
-                {DateFormatterDD_MM_YYYY(bookingDetails.checkOutDate)}
+                {formatBookingDateForDisplay(bookingDetails.checkInDate)} -{" "}
+                {formatBookingDateForDisplay(bookingDetails.checkOutDate)}
               </span>
             </div>
             <div className="detail-row">
