@@ -12,7 +12,7 @@ export const getEditableReview = async (reviewId) =>
   readEditResponse(await requestReview("GET", { reviewId }));
 
 export const updateReview = async ({ reviewId, rating, publicReview, updatedAt }) =>
-  readEditResponse(await fetch(`${API_REVIEW_BASE}?${new URLSearchParams({ reviewId })}`, {
+  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews?${new URLSearchParams({ reviewId })}`, {
     method: "PATCH",
     headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview, updated_at: updatedAt }),

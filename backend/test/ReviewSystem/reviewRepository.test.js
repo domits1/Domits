@@ -13,7 +13,7 @@ test("updates only editable fields with atomic ownership, original deadline, and
   const result = await new ReviewRepository().updateEditableReview({ id: "review", guestId: "guest",
     previousUpdatedAt: 1500, editWindowMs: 500, now: () => clock, overallRating: 4, publicReview: "Updated" });
   expect(query.set).toHaveBeenCalledWith({ overall_rating: 4, public_review: "Updated", updated_at: 1501 });
-  expect(query.where).toHaveBeenCalledWith("id = :id AND guest_id = :guestId", { id: "review", guestId: "guest" });
+  expect(query.where).toHaveBeenCalledWith("id = :id AND reviewer_user_id = :guestId", { id: "review", guestId: "guest" });
   expect(query.andWhere).toHaveBeenCalledWith("updated_at = :previousUpdatedAt", { previousUpdatedAt: 1500 });
   expect(query.andWhere).toHaveBeenCalledWith("created_at <= :timestamp AND created_at > :cutoff", {
     timestamp: 1500, cutoff: 1000,
