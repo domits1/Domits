@@ -9,6 +9,8 @@ export class GuestRiskAssessment20261012 {
         status VARCHAR(30) NOT NULL,
         flaggedreason TEXT,
         errormessage TEXT,
+        arrivaldate BIGINT,
+        departuredate BIGINT,
         createdat BIGINT NOT NULL,
         updatedat BIGINT NOT NULL
       );
@@ -26,6 +28,8 @@ export class GuestRiskAssessment20261012 {
         status VARCHAR(30) NOT NULL,
         flaggedreason TEXT,
         errormessage TEXT,
+        arrivaldate BIGINT,
+        departuredate BIGINT,
         createdat BIGINT NOT NULL,
         updatedat BIGINT NOT NULL
       );
