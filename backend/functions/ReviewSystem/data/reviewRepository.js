@@ -35,11 +35,10 @@ const REVIEW_FIELDS = [
   "updated_at",
 ];
 
-const average = (values) =>
-  values.length
-    ? values.reduce((total, value) => total + Number(value), 0) /
-      values.length
-    : 0;
+const average = (values) => {
+  const numbers = values.map(Number).filter(Number.isFinite);
+  return numbers.length ? Math.round(numbers.reduce((sum, n) => sum + n, 0) / numbers.length * 10) / 10 : null;
+};
 
 const nextTimestamp = (requestedAt, previousAt) =>
   Math.max(requestedAt, Number(previousAt) + 1);

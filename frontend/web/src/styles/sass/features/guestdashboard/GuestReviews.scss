@@ -20,17 +20,31 @@
   position: relative;
 }
 
-.reviewHeader { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+.reviewHeader {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  padding-right: 44px;
+  overflow-wrap: anywhere;
+}
+.reviewTab > button:not(.reviewDelete) { min-height: 44px; margin: 4px 0 8px; }
 .reviewContent { margin: 0 0 6px; color: #334155; }
 .reviewDate { font-size: 12px; color: #64748b; }
 
 .reviewAlert { color: #64748b; font-style: italic; }
 
 .reviewDelete {
+  min-width: 44px;
+  min-height: 44px;
   position: absolute;
   right: 0; top: 0;
   background: transparent;
   border: 0;
   cursor: pointer;
   padding: 6px;
+}
+
+@media (max-width: 640px) {
+  .contentContainer { grid-template-columns: minmax(0, 1fr); }
+  .reviewColumn { min-width: 0; }
 }

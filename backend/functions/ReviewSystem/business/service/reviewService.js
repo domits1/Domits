@@ -9,6 +9,12 @@ import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "..
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
+
+const REVIEW_MIN_LENGTH = 1;
+const REVIEW_MAX_LENGTH = 500;
+// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
 const toReviewView = (review) => ({
@@ -136,8 +142,14 @@ export class ReviewService {
     const fields = { updated_at: this.now() };
     for (const key of keys) {
       if (key === "category_ratings") continue;
-      fields[key] = key === "private_feedback" ? this.normalizeOptionalText(changes[key])
-        : typeof changes[key] === "string" ? changes[key].trim() : changes[key];
+      const value = changes[key];
+      if (key === "public_review") {
+        fields[key] = this.normalizePublicReview(value);
+      } else if (key === "private_feedback") {
+        fields[key] = this.normalizeOptionalText(value);
+      } else {
+        fields[key] = typeof value === "string" ? value.trim() : value;
+      }
     }
     const updated = await this.repository.updateDraft({ reviewId: review.id, reviewerUserId: userId,
       expectedUpdatedAt: review.updated_at, fields, categoryRatings: changes.category_ratings });
@@ -253,10 +265,8 @@ export class ReviewService {
   // Create a new guest review for a completed reservation.
   // This enforces booking eligibility and prevents duplicate or invalid review submissions.
   async createReview(callerUserId, reviewData) {
-    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
-      throw new UnauthorizedException("An authenticated caller is required.");
-    }
-    this.validateReviewPayload(reviewData);
+    this.assertCaller(callerUserId);
+    const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
     const booking = await this.repository.findBookingById(bookingId);
@@ -291,7 +301,7 @@ export class ReviewService {
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
-    const categoryRatings = reviewData.category_ratings ?? {};
+    const categoryRatings = reviewData.category_ratings || {};
     if (Object.keys(categoryRatings).length) {
       const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
@@ -300,28 +310,27 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create(
-        {
-          id: randomUUID(),
-          ...duplicateKey,
-          property_id: booking.property_id,
-          host_id: booking.hostid,
-          reviewee_user_id: booking.hostid,
-          overall_rating: reviewData.overall_rating,
-          title: reviewData.title.trim(),
-          public_review: reviewData.public_review.trim(),
-          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-          verification_status: "UNVERIFIED",
-          publication_status: "UNPUBLISHED",
-          status: "DRAFT",
-          created_at: now,
-          updated_at: now,
-        },
-        categoryRatings
-      );
+      return await this.repository.create({
+        id: randomUUID(),
+        ...duplicateKey,
+        property_id: booking.property_id,
+        host_id: booking.hostid,
+        reviewee_user_id: booking.hostid,
+        overall_rating: reviewData.overall_rating,
+        title: reviewData.title.trim(),
+        public_review: publicReview,
+        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+        verification_status: "UNVERIFIED",
+        publication_status: "UNPUBLISHED",
+        status: "DRAFT",
+        created_at: now,
+        updated_at: now,
+      }, categoryRatings);
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
-        throw new ConflictException("This reservation already has a review.");
+        throw new ConflictException(
+          "This reservation already has a review."
+        );
       }
 
       throw error;
@@ -340,29 +349,16 @@ export class ReviewService {
       throw new BadRequestException("A booking_id of up to 255 characters is required");
     }
 
-    if (
-      !Number.isInteger(reviewData.overall_rating) ||
-      reviewData.overall_rating < 1 ||
-      reviewData.overall_rating > 5
-    ) {
+    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
       throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
     if (typeof reviewData.title !== "string" || !reviewData.title.trim() || reviewData.title.trim().length > 120) {
       throw new BadRequestException("A review title of up to 120 characters is required");
     }
-    if (typeof reviewData.public_review !== "string" || !reviewData.public_review.trim()) {
-      throw new BadRequestException("public_review is required and must be a string");
-    }
-
     const ratings = reviewData.category_ratings;
-    if (
-      ratings !== undefined &&
-      (!ratings ||
-        typeof ratings !== "object" ||
-        Array.isArray(ratings) ||
-        Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))
-    ) {
+    if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
+      Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
       throw new BadRequestException("category_ratings must contain ratings from 1 to 5");
     }
 
@@ -373,6 +369,26 @@ export class ReviewService {
     ) {
       throw new BadRequestException("private_feedback must be a string");
     }
+    return this.normalizePublicReview(reviewData.public_review);
+  }
+
+  normalizePublicReview(value) {
+    if (value === undefined || value === null) {
+      throw new BadRequestException("Please describe your stay before submitting your review.");
+    }
+    if (typeof value !== "string") throw new BadRequestException("Written review must be plain text.");
+    if (INVALID_TEXT_CONTROLS.test(value)) {
+      throw new BadRequestException("Please remove unsupported control characters from your review.");
+    }
+    const text = value.replace(/\r\n?/g, "\n").trim();
+    if (text.length < REVIEW_MIN_LENGTH) {
+      throw new BadRequestException("Please describe your stay before submitting your review.");
+    }
+    if (text.length > REVIEW_MAX_LENGTH) {
+      throw new BadRequestException(`Your written review must be ${REVIEW_MAX_LENGTH} characters or fewer.`);
+    }
+    // Store plain text; React text children escape HTML when displaying it.
+    return text;
   }
 
   normalizeOptionalText(value) {
