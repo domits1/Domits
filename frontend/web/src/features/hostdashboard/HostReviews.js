@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
-import styles from './HostReviews.module.css';
+import styles from '../../styles/review/HostReviews.module.css';
 import general from './HostDashboard.module.scss'
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
@@ -12,7 +12,7 @@ import { requestReview } from "../review/services/reviewAPI";
 import HostResponseForm from "../review/HostResponseForm";
 import ReviewPerformance from "./ReviewPerformance";
 import DecliningPropertyRatings from "../review/DecliningPropertyRatings";
-import reviewStyles from "../review/ReviewPage.module.css";
+import reviewStyles from "../../styles/review/ReviewPage.module.css";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);

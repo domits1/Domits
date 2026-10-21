@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import DecliningPropertyRatings from "../DecliningPropertyRatings";
-import { getPropertyRatingTrends } from "../services/reviewAPI";
-import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
-jest.mock("../services/reviewAPI", () => ({ getPropertyRatingTrends: jest.fn() }));
-jest.mock("../../../services/hostPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
+import DecliningPropertyRatings from "../../features/review/DecliningPropertyRatings";
+import { getPropertyRatingTrends } from "../../features/review/services/reviewAPI";
+import { fetchHostPropertySelectOptions } from "../../services/hostPropertyService";
+jest.mock("../../features/review/services/reviewAPI", () => ({ getPropertyRatingTrends: jest.fn() }));
+jest.mock("../../services/hostPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
 const property = (id, status) => ({ property_id: id, trend_status: status, previous_average_rating: 4.5,
   current_average_rating: 4, rating_change: -0.5, previous_review_count: 3, current_review_count: 4 });
 const result = { properties: [property("p1", "DECLINING"), property("p2", "STABLE")],

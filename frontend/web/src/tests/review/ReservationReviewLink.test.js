@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import ReservationDetails from "../../guestdashboard/ReservationDetails";
-import { getGuestBookings, getGuestBookingPropertyDetails } from "../../guestdashboard/services/bookingAPI";
+import ReservationDetails from "../../features/guestdashboard/ReservationDetails";
+import { getGuestBookings, getGuestBookingPropertyDetails } from "../../features/guestdashboard/services/bookingAPI";
 import { toast } from "react-toastify";
 
 const mockNavigate = jest.fn();
@@ -9,18 +9,18 @@ let mockPath;
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: mockPath }) }));
 jest.mock("react-toastify", () => ({ toast: { error: jest.fn() } }));
-jest.mock("../../../hooks/useDashboardIdentity", () => ({ __esModule: true,
+jest.mock("../../hooks/useDashboardIdentity", () => ({ __esModule: true,
   default: () => ({ userId: "guest-1", loading: false, error: null }) }));
-jest.mock("../../guestdashboard/services/bookingAPI", () => ({
+jest.mock("../../features/guestdashboard/services/bookingAPI", () => ({
   getGuestBookings: jest.fn(), getGuestBookingPropertyDetails: jest.fn(), cancelGuestBooking: jest.fn(),
 }));
-jest.mock("../../guestdashboard/services/propertySummaryService", () => ({ fetchPropertySummaries: async () => ({}) }));
-jest.mock("../../guestdashboard/components/PropertyCard", () => () => null);
-jest.mock("../../guestdashboard/components/CheckInInstructions", () => () => null);
-jest.mock("../../guestdashboard/components/HouseRules", () => () => null);
-jest.mock("../../guestdashboard/components/PaymentSummary", () => () => null);
-jest.mock("../../guestdashboard/components/BookingDetails", () => () => null);
-jest.mock("../../guestdashboard/components/CancellationPolicySection", () => ({
+jest.mock("../../features/guestdashboard/services/propertySummaryService", () => ({ fetchPropertySummaries: async () => ({}) }));
+jest.mock("../../features/guestdashboard/components/PropertyCard", () => () => null);
+jest.mock("../../features/guestdashboard/components/CheckInInstructions", () => () => null);
+jest.mock("../../features/guestdashboard/components/HouseRules", () => () => null);
+jest.mock("../../features/guestdashboard/components/PaymentSummary", () => () => null);
+jest.mock("../../features/guestdashboard/components/BookingDetails", () => () => null);
+jest.mock("../../features/guestdashboard/components/CancellationPolicySection", () => ({
   __esModule: true, default: () => null, resolveGuestCancellationPolicy: () => null,
 }));
 

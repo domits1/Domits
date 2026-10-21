@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import ReviewsSection from "../ReviewsSection";
+import ReviewsSection from "../../features/review/ReviewsSection";
 
 const review = { id: "r1", rating: 4, text: "Enjoyed the stay", date: 1000, categories: [] };
 test("shows the badge for a backend-confirmed verified stay", () => {

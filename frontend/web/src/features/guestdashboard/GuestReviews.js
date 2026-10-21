@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, ArrowDownLeft, ArrowUpRight, Pencil, Trash2, CalendarDays, Star, Lightbulb } from "lucide-react";
-import styles from "./GuestReviews.module.css";
+import styles from "../../styles/review/GuestReviews.module.css";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 

@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import HostResponseForm from "../HostResponseForm";
-import { saveHostResponse } from "../services/reviewAPI";
-jest.mock("../services/reviewAPI", () => ({ saveHostResponse: jest.fn() }));
+import HostResponseForm from "../../features/review/HostResponseForm";
+import { saveHostResponse } from "../../features/review/services/reviewAPI";
+jest.mock("../../features/review/services/reviewAPI", () => ({ saveHostResponse: jest.fn() }));
 beforeEach(() => jest.clearAllMocks());
 test("rejects an empty response", () => {
   render(<HostResponseForm review={{ id: "r1" }} />);

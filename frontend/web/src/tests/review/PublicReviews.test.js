@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import PublicReviews from "../PublicReviews";
-import { getPublicReviews } from "../services/reviewAPI";
-jest.mock("../services/reviewAPI", () => ({ getPublicReviews: jest.fn() }));
+import PublicReviews from "../../features/review/PublicReviews";
+import { getPublicReviews } from "../../features/review/services/reviewAPI";
+jest.mock("../../features/review/services/reviewAPI", () => ({ getPublicReviews: jest.fn() }));
 const empty = { overall_score: null, review_count: 0, reviews: [], next_offset: null, next_cursor: null };
 beforeEach(() => getPublicReviews.mockReset());
 

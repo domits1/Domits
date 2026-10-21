@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import ReviewsSection from "./ReviewsSection";
 import { getPublicReviews } from "./services/reviewAPI";
-import styles from "./PublicReviewFilters.module.css";
+import styles from "../../styles/review/PublicReviewFilters.module.css";
 
 const defaults = { minRating: "", maxRating: "", startDate: "", endDate: "", sort: "recent" };
 const PropertyReviews = ({ propertyId }) => {
