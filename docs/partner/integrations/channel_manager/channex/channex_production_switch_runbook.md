@@ -70,7 +70,25 @@ await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/int
 }).then((r) => r.json());
 ```
 
-Check: the response says the integration is disconnected. The staging secret is kept, so this can be undone by connecting again.
+Check: the response says the integration is disconnected. Disconnecting clears the account's reference to its key (`integrationAccountRepository.js`); the staging secret stays in Secrets Manager, but undoing this means connecting again with a staging API key.
+
+Repeat this for every connected Channex account, not only the test host. List them in the Aurora DSQL query editor:
+
+```sql
+SELECT "displayName", status FROM main.channel_integration_account
+WHERE UPPER(channel) = 'CHANNEX';
+```
+
+Check: no row is `CONNECTED`. For an account nobody can log in to (for example an old test account), copy its row first so it can be restored, then set the same fields as the disconnect endpoint:
+
+```sql
+UPDATE main.channel_integration_account
+SET status = 'DISCONNECTED', "credentialsRef" = NULL, "externalAccountId" = NULL,
+    "updatedAt" = (EXTRACT(EPOCH FROM now()) * 1000)::bigint
+WHERE UPPER(channel) = 'CHANNEX' AND "displayName" = '<display name>' AND status = 'CONNECTED';
+```
+
+Check: exactly 1 row is updated.
 
 ### S3. Allow the villa host on the admin endpoints
 
