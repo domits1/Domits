@@ -1,6 +1,7 @@
 const mockController = {
   listOwners: jest.fn(),
   getOwner: jest.fn(),
+  createOwner: jest.fn(),
 };
 
 jest.mock("../../functions/property-owners/controller/controller.js", () => ({
@@ -20,7 +21,14 @@ const event = (httpMethod, queryStringParameters = null) => ({
 beforeEach(() => {
   mockController.listOwners.mockReset().mockResolvedValue({ statusCode: 200, body: "[]" });
   mockController.getOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
+  mockController.createOwner.mockReset().mockResolvedValue({ statusCode: 201, body: "{}" });
 });
+
+const expectNoControllerCall = () => {
+  expect(mockController.listOwners).not.toHaveBeenCalled();
+  expect(mockController.getOwner).not.toHaveBeenCalled();
+  expect(mockController.createOwner).not.toHaveBeenCalled();
+};
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -57,14 +65,43 @@ describe("property-owners router", () => {
     expect(mockController.listOwners).not.toHaveBeenCalled();
   });
 
-  test.each(["POST", "PUT", "PATCH", "DELETE", "HEAD", "constructor", "__proto__", undefined])(
+  test("routes POST without an id or action to createOwner with the event", async () => {
+    const request = { ...event("POST"), body: '{"first_name":"Anna"}' };
+
+    const response = await handler(request);
+
+    expect(response).toEqual({ statusCode: 201, body: "{}" });
+    expect(mockController.createOwner).toHaveBeenCalledWith(request);
+    expect(mockController.listOwners).not.toHaveBeenCalled();
+    expect(mockController.getOwner).not.toHaveBeenCalled();
+  });
+
+  test("routes POST with unrelated query parameters but no id or action to createOwner", async () => {
+    await handler(event("POST", { page: "1" }));
+
+    expect(mockController.createOwner).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    ["an action", { action: "archive" }],
+    ["an empty action", { action: "" }],
+    ["an id", { id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["an empty id", { id: "" }],
+    ["an action next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+  ])("returns 405 for POST with %s without calling the controller", async (_label, query) => {
+    const response = await handler(event("POST", query));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
+  test.each(["PUT", "PATCH", "DELETE", "HEAD", "constructor", "__proto__", undefined])(
     "returns 405 for method %p without calling the controller",
     async (method) => {
       const response = await handler(event(method));
 
       expect(response.statusCode).toBe(405);
-      expect(mockController.listOwners).not.toHaveBeenCalled();
-      expect(mockController.getOwner).not.toHaveBeenCalled();
+      expectNoControllerCall();
     }
   );
 

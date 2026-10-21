@@ -4,7 +4,10 @@ import { GENERIC_ERROR_MESSAGE, respond } from "./util/http/response.js";
 
 const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed.";
 
-const ROUTES = new Map([["GET", (query) => (Object.hasOwn(query, "id") ? "getOwner" : "listOwners")]]);
+const ROUTES = new Map([
+  ["GET", (query) => (Object.hasOwn(query, "id") ? "getOwner" : "listOwners")],
+  ["POST", (query) => (Object.hasOwn(query, "id") ? null : "createOwner")],
+]);
 
 let controller = null;
 

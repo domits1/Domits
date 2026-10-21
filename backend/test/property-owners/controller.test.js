@@ -11,15 +11,26 @@ const { UnauthorizedException } = require("../../functions/property-owners/util/
 const OWNER_ID = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 const GENERIC_ERROR_MESSAGE = "Something went wrong, please contact support.";
 
+const VALID_BODY = Object.freeze({
+  first_name: "Anna",
+  last_name: "de Vries",
+  email: "anna@example.com",
+  owner_type: "individual",
+});
+
 const OPERATIONS = [
   ["listOwners", (id) => ({ headers: { Authorization: "token-1" }, queryStringParameters: id ? { id } : null })],
   ["getOwner", () => ({ headers: { Authorization: "token-1" }, queryStringParameters: { id: OWNER_ID } })],
+  ["createOwner", () => ({ headers: { Authorization: "token-1" }, body: JSON.stringify(VALID_BODY) })],
 ];
+
+const createEvent = (body) => ({ headers: { Authorization: "token-1" }, queryStringParameters: null, body });
 
 const createController = ({ role = "Host", getUser } = {}) => {
   const service = {
     listOwners: jest.fn(async () => [{ id: OWNER_ID, properties: [] }]),
     getOwner: jest.fn(async () => ({ id: OWNER_ID, properties: [] })),
+    createOwner: jest.fn(async (_hostId, body) => ({ id: OWNER_ID, ...body, properties: [] })),
   };
   const authManager = {
     getUser: getUser ?? jest.fn(async () => ({ userId: "host-1", email: "host@example.com", role })),
@@ -125,6 +136,83 @@ describe("Controller.getOwner", () => {
     await controller.getOwner({ headers: { Authorization: "token-1" }, queryStringParameters: { id: "" } });
 
     expect(service.getOwner).toHaveBeenCalledWith("host-1", "");
+  });
+});
+
+describe("Controller.createOwner", () => {
+  test.each(["Property Operations Manager", "Traveler", null])(
+    "rejects a caller whose group is %p with 403 before the body is parsed",
+    async (role) => {
+      const { controller, service } = createController({ role });
+
+      const response = await controller.createOwner(createEvent("{not json"));
+
+      expect(response.statusCode).toBe(403);
+      expect(service.createOwner).not.toHaveBeenCalled();
+    }
+  );
+
+  test("rejects a failing getUser with 401 before the body is parsed", async () => {
+    const getUser = jest.fn(async () => {
+      throw new UnauthorizedException("Invalid or expired authorization token.");
+    });
+    const { controller, service } = createController({ getUser });
+
+    const response = await controller.createOwner(createEvent("{not json"));
+
+    expect(response.statusCode).toBe(401);
+    expect(bodyOf(response)).toEqual({ message: "Invalid or expired authorization token." });
+    expect(service.createOwner).not.toHaveBeenCalled();
+  });
+
+  test.each(["Host", "Admin"])("lets a %s create an owner for their own host and answers 201", async (role) => {
+    const { controller, service } = createController({ role });
+
+    const response = await controller.createOwner(createEvent(JSON.stringify(VALID_BODY)));
+
+    expect(response.statusCode).toBe(201);
+    expect(bodyOf(response)).toEqual({ id: OWNER_ID, ...VALID_BODY, properties: [] });
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(service.createOwner).toHaveBeenCalledWith("host-1", VALID_BODY);
+  });
+
+  test.each([
+    ["a missing body", undefined],
+    ["a null body", null],
+    ["an empty body", ""],
+    ["malformed JSON", "{not json"],
+    ["truncated JSON", '{"first_name":'],
+  ])("rejects %s with 400 without calling the service", async (_label, body) => {
+    const { controller, service } = createController();
+
+    const response = await controller.createOwner(createEvent(body));
+
+    expect(response.statusCode).toBe(400);
+    expect(bodyOf(response)).toEqual({ message: "Request body must be valid JSON." });
+    expect(service.createOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["null", "null", null],
+    ["an array", "[]", []],
+    ["a string", '"owner"', "owner"],
+    ["a number", "42", 42],
+  ])("passes a parsed %s on to the service, whose validator rejects it", async (_label, body, parsed) => {
+    const { controller, service } = createController();
+
+    await controller.createOwner(createEvent(body));
+
+    expect(service.createOwner).toHaveBeenCalledWith("host-1", parsed);
+  });
+
+  test("keeps the message of a 400 from the service", async () => {
+    const { controller, service } = createController();
+    service.createOwner.mockRejectedValue(new BadRequestException("Request body must be a JSON object."));
+
+    const response = await controller.createOwner(createEvent("[]"));
+
+    expect(response.statusCode).toBe(400);
+    expect(bodyOf(response)).toEqual({ message: "Request body must be a JSON object." });
   });
 });
 

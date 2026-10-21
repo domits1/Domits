@@ -71,4 +71,10 @@ export class Repository {
       order: ASSIGNMENT_ORDER,
     });
   }
+
+  async createOwner(record) {
+    requireHostId(record.host_id);
+    const dataSource = await Database.getInstance();
+    return await dataSource.getRepository(Property_Owner).save(record);
+  }
 }
