@@ -1,10 +1,12 @@
-import { getAccessToken } from "../../../services/getAccessToken";
 
-export const API_REVIEW_BASE = "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
+import { getIdToken } from "../../../services/getAccessToken";
+
+export const API_REVIEW_BASE =
+  "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
 export const saveHostResponse = async (reviewId, message) => {
   const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response/publish`, {
-    method: "POST", headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
+    method: "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
   const payload = await parseResponse(response);
@@ -39,25 +41,6 @@ export const getPublicReviews = async (propertyId, offset = 0, signal, filters =
   return payload;
 };
 
-const readEditResponse = async (response) => {
-  const payload = await parseResponse(response);
-  if (!response.ok) throw new Error(payload?.message || "Could not access or update this review. Please try again.");
-  return payload;
-};
-
-export const getEditableReview = async (reviewId) =>
-  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}`, {
-    method: "GET",
-    headers: { Authorization: getAccessToken() },
-  }));
-
-export const updateReview = async ({ reviewId, rating, publicReview }) =>
-  readEditResponse(await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}`, {
-    method: "PATCH",
-    headers: { Authorization: getAccessToken(), "Content-Type": "application/json" },
-    body: JSON.stringify({ overall_rating: Number(rating), public_review: publicReview }),
-  }));
-
 const parseResponse = async (response) => {
   const text = await response.text().catch(() => "");
   if (!text) return null;
@@ -69,28 +52,117 @@ const parseResponse = async (response) => {
   }
 };
 
+const readEditResponse = async (response) => {
+  const payload = await parseResponse(response);
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.message ||
+        "Could not access or update this review. Please try again."
+    );
+  }
+
+  return payload;
+};
+
 const getReviewErrorMessage = (status, payload) => {
-  if (status === 401) return "Please log in again before leaving a review.";
-  if (status === 403) return "You can only review your own completed reservations.";
-  if (status === 409) return "This reservation already has a review.";
-  if (status === 400) return payload?.message || "Please check your review and try again.";
+  if (status === 401)
+    return "Please log in again before leaving a review.";
+
+  if (status === 403)
+    return "You can only review your own completed reservations.";
+
+  if (status === 409)
+    return "This reservation already has a review.";
+
+  if (status === 400)
+    return payload?.message || "Please check your review and try again.";
+
   return "Could not submit your review. Please try again.";
 };
 
-export const requestReview = async (method = "GET", query = {}) => {
-  const { reviewId, ...parameters } = query;
-  const path = reviewId === undefined ? "/reviews" : `/reviews/${encodeURIComponent(reviewId)}`;
-  const search = new URLSearchParams(parameters).toString();
-  return fetch(`${API_REVIEW_BASE}${path}${search ? `?${search}` : ""}`, {
-    method, headers: { Authorization: getAccessToken() },
-  });
+// Get an existing review
+export const getEditableReview = async (reviewId) => {
+  const token = await getIdToken();
+
+  return readEditResponse(
+    await fetch(
+      `${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+      }
+    )
+  );
 };
 
-export const createReview = async ({ bookingId, rating, title, publicReview, privateFeedback }) => {
+// Update an existing review
+export const updateReview = async ({
+  reviewId,
+  rating,
+  publicReview,
+}) => {
+  const token = await getIdToken();
+
+  return readEditResponse(
+    await fetch(
+      `${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          overall_rating: Number(rating),
+          public_review: publicReview,
+        }),
+      }
+    )
+  );
+};
+
+// Fetch written or received reviews
+export const requestReview = async (method = "GET", query = {}) => {
+  const token = await getIdToken();
+
+  const { reviewId, ...parameters } = query;
+
+  const path =
+    reviewId === undefined
+      ? "/reviews"
+      : `/reviews/${encodeURIComponent(reviewId)}`;
+
+  const search = new URLSearchParams(parameters).toString();
+
+  const queryString = search ? "?" + search : "";
+  return fetch(
+    `${API_REVIEW_BASE}${path}${queryString}`,
+    {
+      method,
+      headers: {
+        Authorization: token,
+      },
+    }
+  );
+};
+
+// Create a new review
+export const createReview = async ({
+  bookingId,
+  rating,
+  title,
+  publicReview,
+  privateFeedback,
+}) => {
+  const token = await getIdToken();
+
   const response = await fetch(`${API_REVIEW_BASE}/reviews`, {
     method: "POST",
     headers: {
-      Authorization: getAccessToken(),
+      Authorization: token,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

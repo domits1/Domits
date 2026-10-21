@@ -67,10 +67,9 @@ function generatePerformancePeriods(start, endExclusive, interval) {
 }
 
 
-
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
-// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+// eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
 const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
@@ -551,7 +550,9 @@ export class ReviewService {
   // Create a new guest review for a completed reservation.
   // This enforces booking eligibility and prevents duplicate or invalid review submissions.
   async createReview(callerUserId, reviewData) {
-    this.assertCaller(callerUserId);
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("An authenticated caller is required.");
+    }
     const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
@@ -586,22 +587,25 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create({
-        id: randomUUID(),
-        ...duplicateKey,
-        property_id: booking.property_id,
-        host_id: booking.hostid,
-        reviewee_user_id: booking.hostid,
-        overall_rating: reviewData.overall_rating,
-        title: reviewData.title.trim(),
-        public_review: publicReview,
-        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-        verification_status: "UNVERIFIED",
-        publication_status: "UNPUBLISHED",
-        status: "DRAFT",
-        created_at: now,
-        updated_at: now,
-      }, categoryRatings);
+      return await this.repository.create(
+        {
+          id: randomUUID(),
+          ...duplicateKey,
+          property_id: booking.property_id,
+          host_id: booking.hostid,
+          reviewee_user_id: booking.hostid,
+          overall_rating: reviewData.overall_rating,
+          title: reviewData.title.trim(),
+          public_review: publicReview,
+          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          verification_status: "UNVERIFIED",
+          publication_status: "UNPUBLISHED",
+          status: "DRAFT",
+          created_at: now,
+          updated_at: now,
+        },
+        categoryRatings
+      );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
         throw new ConflictException(
