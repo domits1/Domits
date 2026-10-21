@@ -172,12 +172,26 @@ describe("the destination tree", () => {
     expect(page.html).toContain("Marbella");
     expect(page.html).toContain("Málaga");
     expect(page.html).not.toContain("Ronda");
-    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain");
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain", 24);
 
     expect(await service.renderDestinationPage("/destinations/europe/portugal")).toBeNull();
     expect(await service.renderDestinationPage("/destinations/europe/spain/ronda")).toBeNull();
     expect(await service.renderDestinationPage("/destinations/nowhere")).toBeNull();
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for the first 24 listings and still counts every active listing under the destination", async () => {
+    const rows = ROWS.map((destination) =>
+      destination.path === "/destinations/europe/spain/marbella" ? { ...destination, activeListings: 25 } : destination
+    );
+    const firstPage = Array.from({ length: 24 }, (_, index) => ({ ...LISTING, id: `p${index}` }));
+    const { service, repository } = buildService({ rows, listings: firstPage });
+
+    const page = await service.renderDestinationPage("/destinations/europe/spain/marbella");
+
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain/marbella", 24);
+    expect(page.html.match(/<li class="listing">/g)).toHaveLength(24);
+    expect(page.description).toContain("25 holiday rentals");
   });
 
   it("answers null instead of an empty page when the listings are gone between the count and the listing read", async () => {

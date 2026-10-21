@@ -6,6 +6,8 @@ import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 
 const byPath = (left, right) => left.path.localeCompare(right.path);
 
+export const DESTINATION_PAGE_LISTING_LIMIT = 24;
+
 export const buildDestinationTree = (destinations, settings = readDestinationSettings()) => {
   const byId = new Map(destinations.map((destination) => [destination.id, { ...destination, children: [] }]));
   for (const destination of byId.values()) {
@@ -95,7 +97,10 @@ export class DestinationTreeService {
       parentId = parent.parentId;
     }
 
-    const listings = await this.destinationPageRepository.listActiveListingsUnderPath(path);
+    const listings = await this.destinationPageRepository.listActiveListingsUnderPath(
+      path,
+      DESTINATION_PAGE_LISTING_LIMIT
+    );
     if (listings.length === 0) {
       return null;
     }
