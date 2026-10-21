@@ -4,12 +4,13 @@ import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
 import ReviewPage from "../ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-
-import { createReview, requestReview, getEditableReview, updateReview } from "../services/reviewAPI";
-
 import GuestReviews from "../../guestdashboard/GuestReviews";
-
-
+import {
+  createReview,
+  requestReview,
+  getEditableReview,
+  updateReview,
+} from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
 let mockSearch;
@@ -315,7 +316,7 @@ it("requires a title before submission", async () => {
   expect(createReview).not.toHaveBeenCalled();
 });
 
-it.each(["GET", "PATCH"])("uses the supported collection route for editing: %s", async (method) => {
+it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", async (method) => {
   const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   const review = { id: "review-1", overall_rating: 4, public_review: "Updated", updated_at: 123 };
@@ -326,8 +327,9 @@ it.each(["GET", "PATCH"])("uses the supported collection route for editing: %s",
       : await api.updateReview({ reviewId: "review-1", rating: 4, publicReview: "Updated", updatedAt: 123 });
     expect(result).toEqual(review);
     const [url, request] = global.fetch.mock.calls[0];
-    expect(url).toBe(`${api.API_REVIEW_BASE}/reviews?reviewId=review-1`);
+    expect(url).toBe(`${api.API_REVIEW_BASE}/reviews/review-1`);
     expect(request.method).toBe(method);
+    if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated" });
     expect(request.headers.Authorization).toBe("access-token");
   } finally { global.fetch = originalFetch; }
 });

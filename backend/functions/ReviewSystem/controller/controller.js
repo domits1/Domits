@@ -82,11 +82,18 @@ export class Controller {
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
       const propertyScope = ["property-score", "property-categories", "property-performance", "property-trends"].includes(query.scope);
-      if (propertyScope && query.reviewId !== undefined) {
+      if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "respondable") {
+      if (query.reviewId !== undefined && query.view !== undefined) {
+        if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
+          throw new BadRequestException("Unsupported review detail parameter.");
+        }
+        result = await this.service.getGuestReviewDetail(userId, query.reviewId);
+      } else if (query.scope === "guest-history") {
+        result = await this.service.getGuestReviewHistory(userId, query);
+      } else if (query.scope === "respondable") {
         result = await this.service.getResponseEligibleReviews(user.username);
       } else if (query.scope === "property-trends") {
         result = await this.service.getPropertyRatingTrends(user.username, query);
@@ -108,6 +115,11 @@ export class Controller {
   // Fetch a single review with the correct visibility rules.
   // This ensures the endpoint returns a review only when it is permitted by the service's access checks.
   async getReviewById(event) {
+    if (event.queryStringParameters?.view !== undefined) {
+      return this.getReviews({ ...event, queryStringParameters: {
+        ...event.queryStringParameters, reviewId: event.pathParameters?.id,
+      } });
+    }
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getReviewById(userId, this.getPathParameter(event, "id"))));
   }
@@ -190,7 +202,8 @@ export class Controller {
 
   // Retain existing direct callers while index uses the individual route methods.
   async manageReviews(event) {
-    if (event.httpMethod === "GET") return this.getReviews(event);
+    if (event.httpMethod === "GET") return event.pathParameters?.id !== undefined
+      ? this.getReviewById(event) : this.getReviews(event);
     if (event.httpMethod === "PATCH") return this.updateReview(event);
     if (event.httpMethod === "DELETE") return this.deleteReview(event);
     return this.jsonResponse(405, { message: "Method not supported." });

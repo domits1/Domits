@@ -39,11 +39,10 @@ const REVIEW_FIELDS = [
   "updated_at",
 ];
 
-const average = (values) =>
-  values.length
-    ? values.reduce((total, value) => total + Number(value), 0) /
-      values.length
-    : 0;
+const average = (values) => {
+  const numbers = values.map(Number).filter(Number.isFinite);
+  return numbers.length ? Math.round(numbers.reduce((sum, n) => sum + n, 0) / numbers.length * 10) / 10 : null;
+};
 
 const nextTimestamp = (requestedAt, previousAt) =>
   Math.max(requestedAt, Number(previousAt) + 1);
@@ -345,19 +344,46 @@ export class ReviewRepository {
   async getPropertyReviewScore(propertyId, hostId, range) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
-    const query = this.eligibleReviewQuery(dataSource, propertyId)
+    const query = dataSource.getRepository(Review).createQueryBuilder("review")
+      .where("review.property_id = :propertyId", { propertyId })
+      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
+      .andWhere("review.status = :status", { status: "PUBLISHED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
+      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
+      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count");
     if (range) {
-      query.andWhere("review.created_at >= :start", { start: range.start })
+      query.andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
+        .andWhere("review.created_at >= :start", { start: range.start })
         .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
     }
     const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
-      overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
+      overall_score: result.overall_score == null ? null : Number(result.overall_score), review_count: reviewCount };
+  }
+
+  async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
+    const database = await Database.getInstance();
+    const query = database.getRepository(Review).createQueryBuilder("review")
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`))
+      .where("review.reviewer_user_id = :guestId", { guestId })
+      .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+    if (id !== undefined) query.andWhere("review.id = :id", { id });
+    // A guest's own history includes rejected entries and properties no longer publicly active.
+    const reviews = await query.orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
+      .offset(offset).limit(id === undefined ? 11 : 1).getMany();
+    if (!reviews.length) return [];
+    const properties = await database.getRepository(Property).find({
+      where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
+    });
+    const names = new Map(properties.map((property) => [property.id, property.title]));
+    const detailed = await this.attachPublicDetails(database, reviews);
+    return detailed.map((review) => ({ ...review, property_name: names.get(review.property_id) ?? null }));
   }
 
   async findReviewById(id) {
@@ -801,16 +827,7 @@ export class ReviewRepository {
   }
 
   async deleteOwnReview(id, reviewerUserId, now) {
-    const dataSource = await Database.getInstance();
-
-    return dataSource.getRepository(Review).update(
-      { id, reviewer_user_id: reviewerUserId },
-      {
-        status: "REJECTED",
-        publication_status: "REJECTED",
-        updated_at: now,
-      }
-    );
+    return this.softDelete(id, reviewerUserId, now);
   }
 
   async softDeleteResponse({ reviewId, authorId, deletedAt }) {

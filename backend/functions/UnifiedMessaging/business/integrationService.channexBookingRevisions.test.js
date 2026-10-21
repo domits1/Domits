@@ -327,6 +327,22 @@ describe("IntegrationService Channex booking pull import", () => {
     );
   });
 
+  test.each([
+    { guestCount: 3, expected: 3 },
+    { guestCount: null, expected: null },
+  ])("passes the revision's guest count $guestCount to the new booking", async ({ guestCount, expected }) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ guestCount })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ guestCount: expected })
+    );
+  });
+
   test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
     const { service, externalBookingImportRepository } = createService({
       feedRevisions: [buildFeedRevision({ amount })],
@@ -641,6 +657,7 @@ describe("IntegrationService Channex booking pull import", () => {
             arrivalDate: "2026-06-02",
             departureDate: "2026-06-04",
             guestName: "Modified Guest",
+            guestCount: 4,
           }),
         ],
         existingRevision: null,
@@ -665,6 +682,7 @@ describe("IntegrationService Channex booking pull import", () => {
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
       totalPrice: 200,
+      guestCount: 4,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
       channexChanges: [
         {

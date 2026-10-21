@@ -43,7 +43,8 @@ const DEVICE_STATUS_LABEL_KEYS = Object.freeze({ ONLINE: "online", OFFLINE: "off
 // Device types the page lists but cannot manage yet.
 export const UNSUPPORTED_DEVICE_TYPES = Object.freeze(["resort_lock"]);
 
-const labelKeyOf = (labelKeys, value, fallback) => (Object.hasOwn(labelKeys, value) ? labelKeys[value] : fallback);
+const labelKeyOf = (labelKeys, value, fallback) =>
+  Object.prototype.hasOwnProperty.call(labelKeys, value) ? labelKeys[value] : fallback;
 
 export const getDeviceTypeLabelKey = (type) => labelKeyOf(DEVICE_TYPE_LABEL_KEYS, type, "other");
 

@@ -8,9 +8,10 @@ describe("property score repository", () => {
   let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
-    for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
+    for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere", "update", "set"]) {
       query[method] = jest.fn(() => query);
     }
+    query.execute = jest.fn().mockResolvedValue({ affected: 1 });
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
     reviewRepository = {
       createQueryBuilder: () => query,
@@ -30,13 +31,12 @@ describe("property score repository", () => {
     });
     expect(query.getRawOne).not.toHaveBeenCalled();
   });
-  test("averages only valid verified published ratings for the requested owned property", async () => {
+  test("averages only valid published ratings for the requested owned property", async () => {
     const result = await repository.getPropertyReviewScore("property-1", "host-1");
     expect(query.innerJoin).toHaveBeenCalledWith(Property, "property",
       "property.id = review.property_id AND property.hostid = :hostId", { hostId: "host-1" });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "property-1" });
     expect(query.andWhere.mock.calls).toEqual([
-      ["review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }],
       ["review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" }],
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
@@ -49,15 +49,16 @@ describe("property score repository", () => {
   });
   test("deleted reviews cannot satisfy the score publication filters", async () => {
     await repository.deleteOwnReview("review-1", "guest-1", 1234);
-    const [owner, deletedState] = reviewRepository.update.mock.calls[0];
-    expect(owner).toEqual({ id: "review-1", reviewer_user_id: "guest-1" });
-    expect(deletedState).toEqual({ status: "REJECTED", publication_status: "REJECTED", updated_at: 1234 });
+    expect(query.where).toHaveBeenCalledWith("id = :id", { id: "review-1" });
+    expect(query.andWhere).toHaveBeenCalledWith("reviewer_user_id = :reviewerUserId", { reviewerUserId: "guest-1" });
+    expect(query.set).toHaveBeenCalledWith({ status: "DELETED", updated_at: 1234 });
+    expect(query.execute).toHaveBeenCalledTimes(1);
     await repository.getPropertyReviewScore("property-1", "host-1");
     for (const field of ["status", "publication_status"]) {
       const condition = query.andWhere.mock.calls.find(([sql]) => sql.startsWith(`review.${field} =`));
       expect(condition).toBeDefined();
       expect(Object.values(condition[1])).toEqual(["PUBLISHED"]);
-      expect(Object.values(condition[1])).not.toContain(deletedState[field]);
+      expect(Object.values(condition[1])).not.toContain("DELETED");
     }
   });
   test("does not convert an absent average into a zero score", async () => {
