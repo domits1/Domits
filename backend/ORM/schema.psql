@@ -534,7 +534,9 @@ CREATE TABLE IF NOT EXISTS main.property_owner_property (
   effective_from BIGINT NOT NULL,
   effective_to BIGINT NULL,
   created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT property_owner_property_basis_points_check CHECK (ownership_basis_points BETWEEN 1 AND 10000),
+  CONSTRAINT property_owner_property_period_check CHECK (effective_to IS NULL OR effective_to > effective_from)
 );
 CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique ON main.property_owner_property (owner_id, property_id, effective_from);
 CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique ON main.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
@@ -662,7 +664,9 @@ CREATE TABLE IF NOT EXISTS test.property_owner_property (
   effective_from BIGINT NOT NULL,
   effective_to BIGINT NULL,
   created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT property_owner_property_basis_points_check_test CHECK (ownership_basis_points BETWEEN 1 AND 10000),
+  CONSTRAINT property_owner_property_period_check_test CHECK (effective_to IS NULL OR effective_to > effective_from)
 );
 CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique_test ON test.property_owner_property (owner_id, property_id, effective_from);
 CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique_test ON test.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;

@@ -1,3 +1,17 @@
+-- 2026-10-16 property_owner and property_owner_property tables (schemas: test, main)
+-- Runbook: docs/internal/tools/dsql_property_owner_runbook.md
+-- Run order:
+-- 1) Run this file statement by statement, in order, each statement on its own in autocommit.
+--    The test schema first, then main. Never wrap the DDL in BEGIN.
+-- 2) After each schema's DDL, re-run its sys.jobs query until every index job reads completed.
+--    Before the first smoke block, every index in the catalog query must show indisvalid = true.
+-- 3) The smoke blocks write into test and main inside BEGIN ... ROLLBACK.
+--    Run each block as a whole, from BEGIN to its ROLLBACK, so nothing is committed.
+-- 4) The last four BEGIN ... ROLLBACK blocks are negative checks. Their INSERT is expected to fail
+--    with a check violation (SQLSTATE 23514) on property_owner_property_basis_points_check or
+--    property_owner_property_period_check (suffix _test in test). Run the ROLLBACK after the error.
+-- 5) Finish with the zero-rows check at the end of the file: every count must be 0.
+
 SELECT table_schema, table_name
 FROM information_schema.tables
 WHERE table_schema IN ('main', 'test')
@@ -38,7 +52,9 @@ CREATE TABLE IF NOT EXISTS test.property_owner_property (
     effective_from BIGINT NOT NULL,
     effective_to BIGINT NULL,
     created_at BIGINT NOT NULL,
-    updated_at BIGINT NOT NULL
+    updated_at BIGINT NOT NULL,
+    CONSTRAINT property_owner_property_basis_points_check_test CHECK (ownership_basis_points BETWEEN 1 AND 10000),
+    CONSTRAINT property_owner_property_period_check_test CHECK (effective_to IS NULL OR effective_to > effective_from)
 );
 
 CREATE UNIQUE INDEX ASYNC IF NOT EXISTS property_owner_property_owner_property_from_unique_test
@@ -88,7 +104,9 @@ CREATE TABLE IF NOT EXISTS main.property_owner_property (
     effective_from BIGINT NOT NULL,
     effective_to BIGINT NULL,
     created_at BIGINT NOT NULL,
-    updated_at BIGINT NOT NULL
+    updated_at BIGINT NOT NULL,
+    CONSTRAINT property_owner_property_basis_points_check CHECK (ownership_basis_points BETWEEN 1 AND 10000),
+    CONSTRAINT property_owner_property_period_check CHECK (effective_to IS NULL OR effective_to > effective_from)
 );
 
 CREATE UNIQUE INDEX ASYNC IF NOT EXISTS property_owner_property_owner_property_from_unique
@@ -125,6 +143,15 @@ JOIN pg_namespace n ON n.oid = t.relnamespace
 WHERE n.nspname IN ('main', 'test')
   AND t.relname IN ('property_owner', 'property_owner_property')
 ORDER BY n.nspname ASC, t.relname ASC, c.relname ASC;
+
+SELECT n.nspname AS schema_name, c.conname AS constraint_name, pg_get_constraintdef(c.oid) AS definition
+FROM pg_constraint c
+JOIN pg_class t ON t.oid = c.conrelid
+JOIN pg_namespace n ON n.oid = t.relnamespace
+WHERE n.nspname IN ('main', 'test')
+  AND t.relname = 'property_owner_property'
+  AND c.contype = 'c'
+ORDER BY n.nspname ASC, c.conname ASC;
 
 BEGIN;
 INSERT INTO test.property_owner (id, host_id, first_name, last_name, email, owner_type, created_at, updated_at)
@@ -220,7 +247,31 @@ WHERE property_id = 'smoke-property'
   AND effective_to IS NULL;
 ROLLBACK;
 
-WITH smoke_ids (id) AS (VALUES ('aaaaaaaa-0000-4000-8000-000000000001'::uuid), ('aaaaaaaa-0000-4000-8000-000000000002'::uuid), ('aaaaaaaa-0000-4000-8000-000000000003'::uuid), ('aaaaaaaa-0000-4000-8000-000000000004'::uuid), ('aaaaaaaa-0000-4000-8000-000000000005'::uuid), ('aaaaaaaa-0000-4000-8000-000000000006'::uuid), ('aaaaaaaa-0000-4000-8000-000000000007'::uuid))
+BEGIN;
+INSERT INTO test.property_owner_property (id, owner_id, property_id, host_id, ownership_basis_points, effective_from, effective_to, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-property', 'smoke-host',
+        0, 1767225600000, NULL, 1790000000000, 1790000000000);
+ROLLBACK;
+
+BEGIN;
+INSERT INTO test.property_owner_property (id, owner_id, property_id, host_id, ownership_basis_points, effective_from, effective_to, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-property', 'smoke-host',
+        5000, 1767225600000, 1767225600000, 1790000000000, 1790000000000);
+ROLLBACK;
+
+BEGIN;
+INSERT INTO main.property_owner_property (id, owner_id, property_id, host_id, ownership_basis_points, effective_from, effective_to, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-property', 'smoke-host',
+        0, 1767225600000, NULL, 1790000000000, 1790000000000);
+ROLLBACK;
+
+BEGIN;
+INSERT INTO main.property_owner_property (id, owner_id, property_id, host_id, ownership_basis_points, effective_from, effective_to, created_at, updated_at)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000001', 'smoke-property', 'smoke-host',
+        5000, 1767225600000, 1767225600000, 1790000000000, 1790000000000);
+ROLLBACK;
+
+WITH smoke_ids (id) AS (VALUES ('aaaaaaaa-0000-4000-8000-000000000001'::uuid), ('aaaaaaaa-0000-4000-8000-000000000002'::uuid), ('aaaaaaaa-0000-4000-8000-000000000003'::uuid), ('aaaaaaaa-0000-4000-8000-000000000004'::uuid), ('aaaaaaaa-0000-4000-8000-000000000005'::uuid), ('aaaaaaaa-0000-4000-8000-000000000006'::uuid), ('aaaaaaaa-0000-4000-8000-000000000007'::uuid), ('aaaaaaaa-0000-4000-8000-000000000008'::uuid), ('aaaaaaaa-0000-4000-8000-000000000009'::uuid))
 SELECT 'test' AS schema_name,
        (SELECT count(*) FROM test.property_owner WHERE id IN (SELECT id FROM smoke_ids)) AS owners_should_be_zero,
        (SELECT count(*) FROM test.property_owner_property WHERE id IN (SELECT id FROM smoke_ids)) AS assignments_should_be_zero

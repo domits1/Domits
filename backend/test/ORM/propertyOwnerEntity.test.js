@@ -33,6 +33,7 @@ const TABLES = [
       updated_at: ["bigint", false, null],
     },
     indexes: [["", "property_owner_host_id_idx", "host_id", ""]],
+    checks: [],
   },
   {
     table: "property_owner_property",
@@ -53,6 +54,10 @@ const TABLES = [
       ["UNIQUE ", "property_owner_property_open_unique", "owner_id, property_id", "effective_to IS NULL"],
       ["", "property_owner_property_property_id_idx", "property_id", ""],
       ["", "property_owner_property_host_id_idx", "host_id", ""],
+    ],
+    checks: [
+      ["property_owner_property_basis_points_check", "ownership_basis_points BETWEEN 1 AND 10000"],
+      ["property_owner_property_period_check", "effective_to IS NULL OR effective_to > effective_from"],
     ],
   },
 ];
@@ -93,11 +98,15 @@ const createTableBlock = (sql, qualifiedTable) => {
   return match[1];
 };
 
-const columnLines = (sql, qualifiedTable) =>
+const isConstraintLine = (line) => /^CONSTRAINT\b/i.test(line);
+
+const blockLines = (sql, qualifiedTable) =>
   createTableBlock(sql, qualifiedTable)
     .split("\n")
     .map((line) => line.trim().replace(/,$/, ""))
     .filter(Boolean);
+
+const columnLines = (sql, qualifiedTable) => blockLines(sql, qualifiedTable).filter((line) => !isConstraintLine(line));
 
 const columnDefinitions = (sql, qualifiedTable) =>
   Object.fromEntries(
@@ -108,6 +117,18 @@ const columnDefinitions = (sql, qualifiedTable) =>
       return [name, [SQL_TYPES[typeName.toLowerCase()], nullable, length ? Number(length) : null]];
     })
   );
+
+const checkConstraints = (sql, qualifiedTable) =>
+  blockLines(sql, qualifiedTable)
+    .filter(isConstraintLine)
+    .map((line) => {
+      const match = /^CONSTRAINT (\w+) CHECK \((.+)\)$/i.exec(line);
+      if (!match) throw new Error(`Unexpected constraint in ${qualifiedTable}: ${line}`);
+      return [match[1], match[2]];
+    })
+    .sort();
+
+const expectedChecks = (checks, suffix) => checks.map(([name, expression]) => [`${name}${suffix}`, expression]).sort();
 
 const normalizePredicate = (predicate = "") => predicate.replaceAll(/\s+/g, " ").trim();
 
@@ -144,7 +165,7 @@ describe.each(TABLES)("$table entity", ({ table, entity, columns }) => {
 });
 
 describe.each(SOURCES)("%s", (_label, loadSql) => {
-  describe.each(TABLES)("$table", ({ table, columns, indexes }) => {
+  describe.each(TABLES)("$table", ({ table, columns, indexes, checks }) => {
     it.each(SCHEMAS)("declares the entity columns for $schema", async ({ schema }) => {
       expect(columnDefinitions(await loadSql(), `${schema}.${table}`)).toEqual(columns);
     });
@@ -157,8 +178,19 @@ describe.each(SOURCES)("%s", (_label, loadSql) => {
       expect(columnLines(await loadSql(), `${schema}.${table}`)).toContain("id UUID DEFAULT gen_random_uuid() PRIMARY KEY");
     });
 
-    it.each(SCHEMAS)("declares no foreign key or CHECK constraint for $schema", async ({ schema }) => {
-      expect(createTableBlock(await loadSql(), `${schema}.${table}`)).not.toMatch(/FOREIGN KEY|REFERENCES|CHECK\s*\(/i);
+    it.each(SCHEMAS)("declares no foreign key for $schema", async ({ schema }) => {
+      expect(createTableBlock(await loadSql(), `${schema}.${table}`)).not.toMatch(/FOREIGN KEY|REFERENCES/i);
+    });
+
+    it.each(SCHEMAS)("declares exactly the expected named CHECK constraints for $schema", async ({ schema, suffix }) => {
+      const sql = await loadSql();
+      const block = createTableBlock(sql, `${schema}.${table}`);
+      expect(checkConstraints(sql, `${schema}.${table}`)).toEqual(expectedChecks(checks, suffix));
+      expect(block.match(/CHECK\s*\(/gi) ?? []).toHaveLength(checks.length);
+    });
+
+    it.each(SCHEMAS)("adds no constraint after the CREATE TABLE for $schema", async ({ schema }) => {
+      expect(await loadSql()).not.toMatch(new RegExp(String.raw`ALTER TABLE (IF EXISTS )?${schema}\.${table}\s`, "i"));
     });
   });
 
@@ -201,21 +233,139 @@ describe("property_owner entity defaults", () => {
 });
 
 describe("migration SQL smoke tests", () => {
+  const migrationSql = () => readOrmFile("migrations", "20261016_property_owner.sql");
+
   const smokeBlocks = (sql) => [...sql.matchAll(/BEGIN;([\s\S]*?)ROLLBACK;/g)].map((match) => match[1]);
 
-  it.each(SCHEMAS)("checks both unique indexes, the period history and multiple owners in $schema", ({ schema }) => {
-    const block = smokeBlocks(readOrmFile("migrations", "20261016_property_owner.sql")).find((candidate) =>
-      candidate.includes(`INTO ${schema}.`)
+  const statements = (block) =>
+    block
+      .split(";")
+      .map((statement) => statement.replaceAll(/\s+/g, " ").trim())
+      .filter(Boolean);
+
+  const parseInsert = (statement) => {
+    const match = /^INSERT INTO (\w+\.\w+) \(([^)]*)\) VALUES \((.*?)\)( ON CONFLICT DO NOTHING)?$/.exec(statement);
+    if (!match) return null;
+    const [, table, columnList, valueList, onConflict] = match;
+    const values = valueList.split(/,\s*/).map((value) => (value === "NULL" ? null : value.replaceAll(/^'|'$/g, "")));
+    const row = Object.fromEntries(columnList.split(/,\s*/).map((column, index) => [column, values[index]]));
+    return { table, row, onConflictDoNothing: Boolean(onConflict) };
+  };
+
+  const inserts = (block) => statements(block).map(parseInsert).filter(Boolean);
+
+  const assignmentsById = (block, schema) =>
+    Object.fromEntries(
+      inserts(block)
+        .filter((insert) => insert.table === `${schema}.property_owner_property`)
+        .map((insert) => [insert.row.id, insert])
     );
-    expect(block).toMatch(/\bshould_be_one\b/);
-    expect(block).toMatch(/\bperiods_should_be_two\b/);
-    expect(block).toMatch(/\bopen_should_be_one\b/);
-    expect(block).toMatch(/\bowners_should_be_two\b/);
-    expect(block).toMatch(/\bdefault_status_should_be_active\b/);
+
+  const positiveBlock = (schema) =>
+    smokeBlocks(migrationSql()).find((block) =>
+      inserts(block).some((insert) => insert.table === `${schema}.property_owner`)
+    );
+
+  const negativeInserts = (schema) =>
+    smokeBlocks(migrationSql())
+      .map(statements)
+      .filter((blockStatements) => blockStatements.length === 1)
+      .map(([statement]) => parseInsert(statement))
+      .filter((insert) => insert?.table === `${schema}.property_owner_property`);
+
+  const smokeId = (n) => `aaaaaaaa-0000-4000-8000-${String(n).padStart(12, "0")}`;
+
+  const conflictKey = ({ owner_id, property_id }) => ({ owner_id, property_id });
+
+  const expectedSmokeQueries = (schema, open) => {
+    const owner = `owner_id = '${open.owner_id}'`;
+    const property = `property_id = '${open.property_id}'`;
+    return [
+      [
+        "default_status_should_be_active",
+        `SELECT status AS default_status_should_be_active FROM ${schema}.property_owner`,
+        [`id = '${open.owner_id}'`],
+      ],
+      [
+        "should_be_one",
+        `SELECT count(*) AS should_be_one FROM ${schema}.property_owner_property`,
+        [owner, property, `effective_from = ${open.effective_from}`],
+      ],
+      [
+        "periods_should_be_two",
+        `SELECT count(*) AS periods_should_be_two FROM ${schema}.property_owner_property`,
+        [owner, property],
+      ],
+      [
+        "open_should_be_one",
+        `SELECT count(*) AS open_should_be_one FROM ${schema}.property_owner_property`,
+        [owner, property, "effective_to IS NULL"],
+      ],
+      [
+        "owners_should_be_two",
+        `SELECT count(DISTINCT owner_id) AS owners_should_be_two FROM ${schema}.property_owner_property`,
+        [property, "effective_to IS NULL"],
+      ],
+    ];
+  };
+
+  it.each(SCHEMAS)("inserts the rows that collide with each unique index with ON CONFLICT DO NOTHING in $schema", ({ schema }) => {
+    const rows = assignmentsById(positiveBlock(schema), schema);
+    const open = rows[smokeId(4)];
+    const sameStart = rows[smokeId(5)];
+    const secondOpen = rows[smokeId(6)];
+    const otherOwner = rows[smokeId(7)];
+
+    expect(open).toMatchObject({ onConflictDoNothing: false, row: { effective_to: null } });
+
+    expect(sameStart).toMatchObject({ onConflictDoNothing: true, row: conflictKey(open.row) });
+    expect(sameStart.row.effective_from).toBe(open.row.effective_from);
+    expect(sameStart.row.effective_to).not.toBeNull();
+
+    expect(secondOpen).toMatchObject({ onConflictDoNothing: true, row: { ...conflictKey(open.row), effective_to: null } });
+    expect(secondOpen.row.effective_from).not.toBe(open.row.effective_from);
+
+    expect(otherOwner).toMatchObject({
+      onConflictDoNothing: false,
+      row: { property_id: open.row.property_id, effective_to: null },
+    });
+    expect(otherOwner.row.owner_id).not.toBe(open.row.owner_id);
+  });
+
+  it.each(SCHEMAS)("filters each smoke query on the condition it checks in $schema", ({ schema }) => {
+    const block = positiveBlock(schema);
+    const open = assignmentsById(block, schema)[smokeId(4)].row;
+
+    expectedSmokeQueries(schema, open).forEach(([alias, head, conditions]) => {
+      const query = statements(block).find((statement) => new RegExp(String.raw`\bAS ${alias}\b`).test(statement));
+      const [actualHead, where = ""] = query.split(" WHERE ");
+      expect(actualHead).toBe(head);
+      expect(where.split(" AND ").filter(Boolean).sort()).toEqual([...conditions].sort());
+    });
+  });
+
+  it.each(SCHEMAS)("tries each CHECK in its own rolled back block in $schema", ({ schema }) => {
+    const negatives = negativeInserts(schema).map(({ row }) => row);
+    const zeroShare = negatives.filter((row) => row.ownership_basis_points === "0");
+    const emptyPeriod = negatives.filter((row) => row.effective_to === row.effective_from);
+
+    expect(negatives).toHaveLength(2);
+    expect(zeroShare).toHaveLength(1);
+    expect(zeroShare[0].effective_to).toBeNull();
+    expect(emptyPeriod).toHaveLength(1);
+    expect(Number(emptyPeriod[0].ownership_basis_points)).toBeGreaterThanOrEqual(1);
+    expect(Number(emptyPeriod[0].ownership_basis_points)).toBeLessThanOrEqual(10000);
+  });
+
+  it("ends every transaction in ROLLBACK and never commits", () => {
+    const sql = migrationSql();
+    expect(sql).not.toMatch(/\bCOMMIT\b/i);
+    expect(sql.match(/^BEGIN;$/gm)).toHaveLength(sql.match(/^ROLLBACK;$/gm).length);
+    expect(smokeBlocks(sql).every((block) => !/\bBEGIN;/.test(block))).toBe(true);
   });
 
   it("counts only the smoke rows in the final check, and lists every id the smoke tests insert", () => {
-    const sql = readOrmFile("migrations", "20261016_property_owner.sql");
+    const sql = migrationSql();
     const finalCheck = sql.slice(sql.lastIndexOf("ROLLBACK;"));
     const insertedIds = smokeBlocks(sql).flatMap((block) =>
       [...block.matchAll(/INSERT INTO \w+\.\w+ \([^)]*\)\s*VALUES \('([^']+)'/g)].map((match) => match[1])
