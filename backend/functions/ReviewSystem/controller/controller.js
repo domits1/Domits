@@ -20,8 +20,6 @@ const parseBody = (event) => {
 };
 
 export class Controller {
-  // Connect the controller to the service and auth dependencies used across requests.
-  // This makes the controller easy to test and keeps all handlers on the same trusted logic.
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
@@ -61,8 +59,16 @@ export class Controller {
   // Fetch the caller's review list for the selected scope.
   // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
   async getReviews(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.getReviews(userId, event.queryStringParameters?.scope ?? "written")));
+    return this.executeAuthenticated(event, async (userId) => {
+      const query = event.queryStringParameters ?? {};
+      if (query.scope === "property-score") {
+        if (query.reviewId !== undefined || event.pathParameters?.id !== undefined) {
+          throw new BadRequestException("Property score cannot be combined with an individual review request.");
+        }
+        return this.jsonResponse(200, await this.service.getPropertyReviewScore(userId, query.propertyId));
+      }
+      return this.jsonResponse(200, await this.service.getReviews(userId, query.scope ?? "written"));
+    });
   }
 
   // Fetch a single review with the correct visibility rules.

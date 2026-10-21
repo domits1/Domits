@@ -1,3 +1,5 @@
+import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
+import { Property } from "../../ORM/models/Property.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
@@ -333,6 +335,65 @@ describe('Review transactional writes', () => {
     };
     Database.getInstance.mockResolvedValue(source);
     repository = new ReviewRepository();
+  });
+
+  it("scores a created unverified review only after publication and excludes it after service deletion", async () => {
+    committed.set(Review, []);
+    committed.set(Property, [{ id: "p1", hostid: "host" }]);
+    repositories.set(Property, { findOne: async ({ where }) =>
+      active.get(Property).find((row) => matches(row, where)) ?? null });
+    repositories.get(Review_Request).createQueryBuilder = () => {
+      const insert = { insert: () => insert, values: () => insert, orIgnore: () => insert,
+        execute: async () => ({}) };
+      return insert;
+    };
+    repositories.get(Review).createQueryBuilder = () => {
+      const filters = [];
+      let fields;
+      let owner;
+      const query = {
+        innerJoin: (_entity, _alias, _sql, parameters) => { owner = parameters.hostId; return query; },
+        select: () => query, addSelect: () => query, update: () => query,
+        set: (values) => { fields = values; return query; },
+        where: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        andWhere: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        getRawOne: async () => {
+          const rows = active.get(Review).filter((row) =>
+            active.get(Property).some((property) => property.id === row.property_id && property.hostid === owner) &&
+            filters.every(([sql, parameters]) => {
+              if (sql.includes("BETWEEN")) return row.overall_rating >= parameters.minimum && row.overall_rating <= parameters.maximum;
+              if (sql.includes("FLOOR")) return Number.isInteger(row.overall_rating);
+              const field = sql.match(/review\.(\w+)/)[1];
+              return row[field] === Object.values(parameters)[0];
+            }));
+          return { overall_score: rows.length ? rows.reduce((sum, row) => sum + row.overall_rating, 0) / rows.length : null,
+            review_count: String(rows.length) };
+        },
+        execute: async () => {
+          const rows = active.get(Review).filter((row) => filters.every(([sql, parameters]) => {
+            if (sql.includes("NOT IN")) return !parameters.excluded.includes(row.status);
+            const field = sql.split(" = ")[0];
+            return row[field] === Object.values(parameters)[0];
+          }));
+          rows.forEach((row) => Object.assign(row, fields));
+          return { affected: rows.length };
+        },
+      };
+      return query;
+    };
+    const service = new ReviewService({ repository, now: () => now });
+    const review = await service.createReview("guest", { booking_id: "b1", overall_rating: 5,
+      title: "Stay", public_review: "Good" });
+    expect(review.verification_status).toBe("UNVERIFIED");
+    const empty = { property_id: "p1", overall_score: null, review_count: 0 };
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
+    await service.publishReview("guest", review.id);
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual({
+      property_id: "p1", overall_score: 5, review_count: 1,
+    });
+    await service.deleteReview("guest", review.id);
+    expect(committed.get(Review)[0].status).toBe("DELETED");
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
   });
 
   it("updates a draft and replaces ratings atomically while advancing its version", async () => {
