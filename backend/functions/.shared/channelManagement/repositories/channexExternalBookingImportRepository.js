@@ -119,6 +119,7 @@ class ChannexExternalBookingImportRepository {
     arrivalDateMs,
     departureDateMs,
     totalPrice = null,
+    guestCount = null,
     bookingSource = null,
     channexChanges = [],
   }) {
@@ -131,7 +132,8 @@ class ChannexExternalBookingImportRepository {
       departuredate: Math.trunc(Number(departureDateMs)),
       createdat: now,
       guestid: `CHANNEX_GUEST:${normalizedExternalReservationId}`,
-      guests: 1,
+      // One guest when Channex sends no occupancy, so a booking never counts zero guests.
+      guests: guestCount ?? 1,
       hostid: requireStr(hostId),
       latepayment: false,
       paymentid: `CHANNEX:${normalizedExternalReservationId}`,
@@ -187,6 +189,7 @@ class ChannexExternalBookingImportRepository {
     arrivalDateMs,
     departureDateMs,
     totalPrice = null,
+    guestCount = null,
     channexChanges = [],
   }) {
     const normalizedBookingId = requireStr(bookingId);
@@ -201,7 +204,8 @@ class ChannexExternalBookingImportRepository {
               departuredate = $3,
               guestname = $4,
               status = $5,
-              total_price = COALESCE($6, total_price)
+              total_price = COALESCE($6, total_price),
+              guests = COALESCE($7, guests)
           WHERE id = $1
         `,
         [
@@ -211,6 +215,7 @@ class ChannexExternalBookingImportRepository {
           requireStr(guestName) || "Channex guest",
           BOOKING_STATUS_PAID,
           totalPrice,
+          guestCount,
         ]
       )
     );

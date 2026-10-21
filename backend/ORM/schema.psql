@@ -519,6 +519,36 @@ CREATE TABLE IF NOT EXISTS   property_test_status (
   PRIMARY KEY (property_id)
 );
 
+-- Table main.direct_booking_website_rate_plans
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id VARCHAR(255) NOT NULL,
+  plan VARCHAR(20) NOT NULL,
+  price_cents INTEGER NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+  billing_frequency VARCHAR(20) NOT NULL DEFAULT 'monthly',
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  effective_until TIMESTAMP WITH TIME ZONE,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT direct_booking_website_rate_plan_plan_check CHECK (plan IN ('essentials', 'elite')),
+  CONSTRAINT direct_booking_website_rate_plan_price_check CHECK (price_cents >= 0)
+);
+CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx
+  ON main.direct_booking_website_rate_plans (account_id, effective_from);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique
+  ON main.direct_booking_website_rate_plans (account_id)
+  WHERE status = 'ACTIVE'
+  OR status = 'PAST_DUE'
+  OR status = 'TRIALING';
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique
+  ON main.direct_booking_website_rate_plans (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
+
 CREATE SCHEMA IF NOT EXISTS test;
 
 -- -----------------------------------------------------
@@ -570,3 +600,214 @@ CREATE TABLE IF NOT EXISTS test.property_custom_rules (
   PRIMARY KEY (id)
 );
 CREATE INDEX ASYNC property_custom_rules_property_id_idx_test ON test.property_custom_rules (property_id);
+
+
+-- Review persistence
+CREATE TABLE IF NOT EXISTS test.review (
+          id VARCHAR(255) NOT NULL PRIMARY KEY,
+          booking_id VARCHAR(255) NOT NULL,
+          property_id VARCHAR(255) NOT NULL,
+          host_id VARCHAR(255) NOT NULL,
+          reviewer_user_id VARCHAR(255) NOT NULL,
+          reviewee_user_id VARCHAR(255) NULL,
+          review_type VARCHAR(50) NOT NULL,
+          overall_rating NUMERIC(2, 1) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          public_review TEXT NOT NULL,
+          private_feedback TEXT NULL,
+          verification_status VARCHAR(50) NOT NULL DEFAULT 'UNVERIFIED',
+          publication_status VARCHAR(50) NOT NULL DEFAULT 'UNPUBLISHED',
+          status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS test.review_rating (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          review_id VARCHAR NOT NULL,
+          category VARCHAR NOT NULL,
+          rating NUMERIC(2, 1) NOT NULL,
+          created_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS test.review_category (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          key VARCHAR NOT NULL,
+          label VARCHAR NOT NULL,
+          description TEXT NULL,
+          review_type VARCHAR NOT NULL,
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS test.review_request (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          booking_id VARCHAR NOT NULL,
+          property_id VARCHAR NOT NULL,
+          host_id VARCHAR NOT NULL,
+          guest_id VARCHAR NOT NULL,
+          review_type VARCHAR NOT NULL,
+          status VARCHAR NOT NULL DEFAULT 'OPEN',
+          requested_at BIGINT NOT NULL,
+          expires_at BIGINT NOT NULL,
+          completed_at BIGINT NULL,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL,
+          last_sent_at BIGINT NULL,
+          next_send_at BIGINT NULL,
+          claimed_at BIGINT NULL,
+          send_count INTEGER NULL
+        );
+
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique_test
+        ON test.review (booking_id, review_type, reviewer_user_id);
+
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique_test
+        ON test.review_request (booking_id, review_type, guest_id);
+
+CREATE TABLE IF NOT EXISTS main.review (
+          id VARCHAR(255) NOT NULL PRIMARY KEY,
+          booking_id VARCHAR(255) NOT NULL,
+          property_id VARCHAR(255) NOT NULL,
+          host_id VARCHAR(255) NOT NULL,
+          reviewer_user_id VARCHAR(255) NOT NULL,
+          reviewee_user_id VARCHAR(255) NULL,
+          review_type VARCHAR(50) NOT NULL,
+          overall_rating NUMERIC(2, 1) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          public_review TEXT NOT NULL,
+          private_feedback TEXT NULL,
+          verification_status VARCHAR(50) NOT NULL DEFAULT 'UNVERIFIED',
+          publication_status VARCHAR(50) NOT NULL DEFAULT 'UNPUBLISHED',
+          status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS main.review_rating (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          review_id VARCHAR NOT NULL,
+          category VARCHAR NOT NULL,
+          rating NUMERIC(2, 1) NOT NULL,
+          created_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS main.review_category (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          key VARCHAR NOT NULL,
+          label VARCHAR NOT NULL,
+          description TEXT NULL,
+          review_type VARCHAR NOT NULL,
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL
+        );
+
+CREATE TABLE IF NOT EXISTS main.review_request (
+          id VARCHAR NOT NULL PRIMARY KEY,
+          booking_id VARCHAR NOT NULL,
+          property_id VARCHAR NOT NULL,
+          host_id VARCHAR NOT NULL,
+          guest_id VARCHAR NOT NULL,
+          review_type VARCHAR NOT NULL,
+          status VARCHAR NOT NULL DEFAULT 'OPEN',
+          requested_at BIGINT NOT NULL,
+          expires_at BIGINT NOT NULL,
+          completed_at BIGINT NULL,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL,
+          last_sent_at BIGINT NULL,
+          next_send_at BIGINT NULL,
+          claimed_at BIGINT NULL,
+          send_count INTEGER NULL
+        );
+
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique
+        ON main.review (booking_id, review_type, reviewer_user_id);
+
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique
+        ON main.review_request (booking_id, review_type, guest_id);
+
+CREATE TABLE IF NOT EXISTS main.review_response (
+  id VARCHAR NOT NULL PRIMARY KEY,
+  review_id VARCHAR NOT NULL,
+  author_id VARCHAR NOT NULL,
+  author_role VARCHAR NOT NULL,
+  status VARCHAR NOT NULL DEFAULT 'draft',
+  message TEXT NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  published_at BIGINT NULL,
+  deleted_at BIGINT NULL
+);
+CREATE INDEX ASYNC IF NOT EXISTS review_response_review_id ON main.review_response (review_id);
+
+CREATE TABLE IF NOT EXISTS test.review_response (
+  id VARCHAR NOT NULL PRIMARY KEY,
+  review_id VARCHAR NOT NULL,
+  author_id VARCHAR NOT NULL,
+  author_role VARCHAR NOT NULL,
+  status VARCHAR NOT NULL DEFAULT 'draft',
+  message TEXT NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  published_at BIGINT NULL,
+  deleted_at BIGINT NULL
+);
+CREATE INDEX ASYNC IF NOT EXISTS review_response_review_id_test ON test.review_response (review_id);
+-- Table test.direct_booking_website_rate_plans
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS test.direct_booking_website_rate_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id VARCHAR(255) NOT NULL,
+  plan VARCHAR(20) NOT NULL,
+  price_cents INTEGER NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+  billing_frequency VARCHAR(20) NOT NULL DEFAULT 'monthly',
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  effective_until TIMESTAMP WITH TIME ZONE,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT direct_booking_website_rate_plan_plan_check_test CHECK (plan IN ('essentials', 'elite')),
+  CONSTRAINT direct_booking_website_rate_plan_price_check_test CHECK (price_cents >= 0)
+);
+CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx_test
+  ON test.direct_booking_website_rate_plans (account_id, effective_from);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique_test
+  ON test.direct_booking_website_rate_plans (account_id)
+  WHERE status = 'ACTIVE'
+  OR status = 'PAST_DUE'
+  OR status = 'TRIALING';
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique_test
+  ON test.direct_booking_website_rate_plans (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS test.destination (
+  id VARCHAR(1024) PRIMARY KEY,
+  type VARCHAR(20) NOT NULL,
+  parent_id VARCHAR(1024) NULL,
+  slug VARCHAR(255) NOT NULL,
+  path VARCHAR(1024) NOT NULL,
+  display_name VARCHAR(255) NOT NULL,
+  country_code VARCHAR(2) NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS destination_path_unique_test ON test.destination (path);
+CREATE INDEX ASYNC IF NOT EXISTS destination_parent_test ON test.destination (parent_id);
+
+CREATE TABLE IF NOT EXISTS test.property_destination (
+  property_id VARCHAR(255) PRIMARY KEY,
+  destination_id VARCHAR(1024) NOT NULL,
+  source_country VARCHAR(255) NOT NULL,
+  source_city VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC IF NOT EXISTS property_destination_destination_test ON test.property_destination (destination_id);
