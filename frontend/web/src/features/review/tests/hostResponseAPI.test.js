@@ -1,5 +1,5 @@
 import { saveHostResponse, API_REVIEW_BASE } from "../services/reviewAPI";
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "token" }));
+jest.mock("../../../services/getAccessToken", () => ({ getIdToken: () => "token" }));
 const originalFetch = global.fetch;
 afterEach(() => { global.fetch = originalFetch; });
 test("publishes only response text to the authenticated response endpoint", async () => {

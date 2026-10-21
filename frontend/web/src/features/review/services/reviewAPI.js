@@ -137,8 +137,9 @@ export const requestReview = async (method = "GET", query = {}) => {
 
   const search = new URLSearchParams(parameters).toString();
 
+  const queryString = search ? "?" + search : "";
   return fetch(
-    `${API_REVIEW_BASE}${path}${search ? `?${search}` : ""}`,
+    `${API_REVIEW_BASE}${path}${queryString}`,
     {
       method,
       headers: {

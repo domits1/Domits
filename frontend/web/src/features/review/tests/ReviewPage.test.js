@@ -2,15 +2,15 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
-import ReviewPage from "../../features/review/ReviewPage";
-import { getGuestBookings } from "../../features/guestdashboard/services/bookingAPI";
-import GuestReviews from "../../features/guestdashboard/GuestReviews";
+import ReviewPage from "../ReviewPage";
+import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
+import GuestReviews from "../../guestdashboard/GuestReviews";
 import {
   createReview,
   requestReview,
   getEditableReview,
   updateReview,
-} from "../../features/review/services/reviewAPI";
+} from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
 let mockSearch;
@@ -22,16 +22,16 @@ jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => ({ search: mockSearch, state: null }),
 }));
-jest.mock("../../features/guestdashboard/services/bookingAPI", () => ({
+jest.mock("../../guestdashboard/services/bookingAPI", () => ({
   getGuestBookings: jest.fn(),
 }));
-jest.mock("../../features/review/services/reviewAPI", () => ({
+jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
   requestReview: jest.fn(),
   getEditableReview: jest.fn(),
   updateReview: jest.fn(),
 }));
-jest.mock("../../services/getAccessToken", () => ({
+jest.mock("../../../services/getAccessToken", () => ({
   getIdToken: async () => "id-token",
 }));
 
@@ -274,7 +274,7 @@ it("supports keyboard selection and arrow navigation with native radios", async 
 });
 
 it("maps the selected rating to overall_rating in the authenticated HTTP request", async () => {
-  const api = jest.requireActual("../../features/review/services/reviewAPI");
+  const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   global.fetch = jest.fn().mockResolvedValue({
     ok: true, text: async () => JSON.stringify({ id: "review-1", overall_rating: 4 }),
@@ -295,7 +295,7 @@ it("maps the selected rating to overall_rating in the authenticated HTTP request
 });
 
 it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", async (method) => {
-  const web = jest.requireActual("../../features/review/services/reviewAPI");
+  const web = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   global.fetch = jest.fn().mockResolvedValue({ ok: true });
   try {
@@ -319,7 +319,7 @@ it("requires a title before submission", async () => {
 });
 
 it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", async (method) => {
-  const api = jest.requireActual("../../features/review/services/reviewAPI");
+  const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   const review = { id: "review-1", overall_rating: 4, public_review: "Updated", updated_at: 123 };
   global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify(review) });
@@ -358,7 +358,7 @@ it("does not interpret a payment ID as the review booking ID", async () => {
 });
 
 it("never serializes client-supplied identity or status fields", async () => {
-  const api = jest.requireActual("../../features/review/services/reviewAPI");
+  const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => "{}" });
   try {

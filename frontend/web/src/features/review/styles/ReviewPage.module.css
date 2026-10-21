@@ -71,17 +71,17 @@
         border-radius: 0.5rem;
         border: none;
         box-shadow: 0.25rem 0.25rem #0A760F;
-        background: #0fa616;
+        background: #087d12;
         color: white;
         cursor: pointer;
     }
-    .disabled {
-        background: darkgray !important;
+    button.disabled, button.disabled:hover {
+        background: #626262;
         box-shadow: 0.25rem 0.25rem gray;
         cursor: not-allowed;
     }
     button:hover {
-        background: lightgreen;
+        background: #08680f;
     }
     input {
         font-size: 1rem;
