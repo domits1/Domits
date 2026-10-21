@@ -17,7 +17,7 @@ export class DestinationPageService {
   constructor({
     destinationTreeService = new DestinationTreeService(),
     destinationSwitchRepository = new DestinationSwitchRepository(),
-    now = Date.now,
+    now = () => Date.now(),
     renderTimeoutMs = DESTINATION_RENDER_TIMEOUT_MS,
   } = {}) {
     this.destinationTreeService = destinationTreeService;
