@@ -507,6 +507,40 @@ CREATE TABLE IF NOT EXISTS main.property_destination (
 );
 CREATE INDEX ASYNC property_destination_destination ON main.property_destination (destination_id);
 
+CREATE TABLE IF NOT EXISTS main.property_owner (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  host_id VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  company_name VARCHAR(200) NULL,
+  email VARCHAR(254) NOT NULL,
+  phone VARCHAR(50) NULL,
+  preferred_language VARCHAR(10) NULL,
+  owner_type VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
+  notes TEXT NULL,
+  owner_user_id VARCHAR(255) NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC property_owner_host_id_idx ON main.property_owner (host_id);
+
+CREATE TABLE IF NOT EXISTS main.property_owner_property (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  owner_id UUID NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  ownership_basis_points INTEGER NOT NULL,
+  effective_from BIGINT NOT NULL,
+  effective_to BIGINT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique ON main.property_owner_property (owner_id, property_id, effective_from);
+CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique ON main.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
+CREATE INDEX ASYNC property_owner_property_property_id_idx ON main.property_owner_property (property_id);
+CREATE INDEX ASYNC property_owner_property_host_id_idx ON main.property_owner_property (host_id);
+
 -- -----------------------------------------------------
 -- Table main.property_test_status
 -- -----------------------------------------------------
@@ -601,6 +635,39 @@ CREATE TABLE IF NOT EXISTS test.property_custom_rules (
 );
 CREATE INDEX ASYNC property_custom_rules_property_id_idx_test ON test.property_custom_rules (property_id);
 
+CREATE TABLE IF NOT EXISTS test.property_owner (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  host_id VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  company_name VARCHAR(200) NULL,
+  email VARCHAR(254) NOT NULL,
+  phone VARCHAR(50) NULL,
+  preferred_language VARCHAR(10) NULL,
+  owner_type VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
+  notes TEXT NULL,
+  owner_user_id VARCHAR(255) NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC property_owner_host_id_idx_test ON test.property_owner (host_id);
+
+CREATE TABLE IF NOT EXISTS test.property_owner_property (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  owner_id UUID NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  ownership_basis_points INTEGER NOT NULL,
+  effective_from BIGINT NOT NULL,
+  effective_to BIGINT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique_test ON test.property_owner_property (owner_id, property_id, effective_from);
+CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique_test ON test.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
+CREATE INDEX ASYNC property_owner_property_property_id_idx_test ON test.property_owner_property (property_id);
+CREATE INDEX ASYNC property_owner_property_host_id_idx_test ON test.property_owner_property (host_id);
 
 -- Review persistence
 CREATE TABLE IF NOT EXISTS test.review (
