@@ -66,6 +66,63 @@ function generatePerformancePeriods(start, endExclusive, interval) {
   return periods;
 }
 
+
+const DAY_MS = 86_400_000;
+const MAX_PERFORMANCE_PERIODS = 120;
+const formatPerformanceDate = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+
+function parsePerformanceDate(value, name) {
+  if (typeof value !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException(`${name} must be YYYY-MM-DD.`);
+  }
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(timestamp) || formatPerformanceDate(timestamp) !== value) {
+    throw new BadRequestException(`${name} must be a valid date.`);
+  }
+  return timestamp;
+}
+
+function getPerformancePeriodStart(timestamp, interval) {
+  const date = new Date(timestamp);
+  if (interval === "week") {
+    date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  } else {
+    date.setUTCDate(1);
+    if (interval === "year") date.setUTCMonth(0);
+  }
+  return date.getTime();
+}
+
+function getNextPerformancePeriod(timestamp, interval) {
+  const date = new Date(timestamp);
+  switch (interval) {
+    case "week": date.setUTCDate(date.getUTCDate() + 7); break;
+    case "month": date.setUTCMonth(date.getUTCMonth() + 1); break;
+    case "year": date.setUTCFullYear(date.getUTCFullYear() + 1); break;
+  }
+  return date.getTime();
+}
+
+function generatePerformancePeriods(start, endExclusive, interval) {
+  const periods = [];
+  for (let periodStart = getPerformancePeriodStart(start, interval); periodStart < endExclusive;) {
+    if (periods.length >= MAX_PERFORMANCE_PERIODS) {
+      throw new BadRequestException("Select a range covering at most 120 periods.");
+    }
+    const nextPeriod = getNextPerformancePeriod(periodStart, interval);
+    const coverageStart = Math.max(start, periodStart);
+    const coverageEndExclusive = Math.min(endExclusive, nextPeriod);
+    periods.push({
+      period: formatPerformanceDate(periodStart),
+      coverage_start: formatPerformanceDate(coverageStart),
+      coverage_end: formatPerformanceDate(coverageEndExclusive - DAY_MS),
+      is_partial: coverageStart !== periodStart || coverageEndExclusive !== nextPeriod,
+    });
+    periodStart = nextPeriod;
+  }
+  return periods;
+}
+
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
 // eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
@@ -174,23 +231,16 @@ export class ReviewService {
   }
 
 
-  constructor({
-    repository = new ReviewRepository(),
-    now = () => Date.now(),
+  constructor({ repository = new ReviewRepository(), now = () => Date.now(),
     canReadPrivateFeedback = async ({ userId, review }) =>
       review.reviewer_user_id === userId || review.host_id === userId,
-    canPublishReview = async ({ userId, review }) =>
-      review.reviewer_user_id === userId,
-    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS),
-  } = {}) {
+    canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId,
+    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
-    this.editWindowMs =
-      Number.isSafeInteger(editWindowMs) && editWindowMs > 0
-        ? editWindowMs
-        : 0;
+    this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
   }
 
   editDeadline(review) {

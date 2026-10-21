@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { saveHostResponse } from "./services/reviewAPI";
-import styles from "../../styles/review/ReviewPage.module.css";
+import styles from "./styles/ReviewPage.module.css";
 
 export default function HostResponseForm({ review }) {
   const [message, setMessage] = useState(review.response?.message || "");

@@ -356,13 +356,14 @@ export class ReviewRepository {
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count");
     if (range) {
-      query.andWhere("review.created_at >= :start", { start: range.start })
+      query.andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
+        .andWhere("review.created_at >= :start", { start: range.start })
         .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
     }
     const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
-      overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
+      overall_score: result.overall_score == null ? null : Number(result.overall_score), review_count: reviewCount };
   }
 
   async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
