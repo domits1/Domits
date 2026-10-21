@@ -17,6 +17,7 @@ const createDataSource = ({ owners = [], owner = null, assignments = [] } = {}) 
   const ownerRepository = {
     find: jest.fn(async () => owners),
     findOne: jest.fn(async () => owner),
+    save: jest.fn(async (record) => ({ ...record, id: OWNER_ID })),
   };
   const assignmentRepository = {
     find: jest.fn(async () => assignments),
@@ -189,6 +190,47 @@ describe("Repository.findAssignmentsByOwnerAndHost", () => {
     expect(matched).not.toContain("another owner");
     where.forEach((branch) => expect(branch.owner_id).toBe(OWNER_ID));
   });
+});
+
+describe("Repository.createOwner", () => {
+  const record = Object.freeze({
+    host_id: "host-1",
+    first_name: "Anna",
+    last_name: "de Vries",
+    company_name: null,
+    email: "anna@example.com",
+    phone: null,
+    preferred_language: null,
+    owner_type: "individual",
+    status: "active",
+    notes: null,
+    owner_user_id: null,
+    created_at: 1782919800000,
+    updated_at: 1782919800000,
+  });
+
+  test("saves exactly the record as one owner row", async () => {
+    const { ownerRepository } = createDataSource();
+
+    await new Repository().createOwner({ ...record });
+
+    expect(ownerRepository.save).toHaveBeenCalledTimes(1);
+    expect(ownerRepository.save).toHaveBeenCalledWith(record);
+  });
+
+  test("returns the saved row with the id the database generated", async () => {
+    createDataSource();
+
+    await expect(new Repository().createOwner({ ...record })).resolves.toEqual({ ...record, id: OWNER_ID });
+  });
+
+  test.each([undefined, null, "", 42])(
+    "refuses to create an owner when the host id is %p, before touching the database",
+    async (hostId) => {
+      await expect(new Repository().createOwner({ ...record, host_id: hostId })).rejects.toThrow(/host id/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("Repository scope guards", () => {

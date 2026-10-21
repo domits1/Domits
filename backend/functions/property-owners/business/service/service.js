@@ -1,6 +1,6 @@
 import { Repository } from "../../data/repository.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
-import { assertOwnerId } from "../validation/ownerValidator.js";
+import { assertOwnerId, validateCreateOwner } from "../validation/ownerValidator.js";
 
 const OWNER_NOT_FOUND_MESSAGE = "Owner not found.";
 const DAY_MS = 86400000;
@@ -52,5 +52,18 @@ export class Service {
     }
     const assignments = await this.repository.findAssignmentsByOwnerAndHost(ownerId, hostId, this.today());
     return { ...owner, properties: assignments.map(toProperty) };
+  }
+
+  async createOwner(hostId, body) {
+    const fields = validateCreateOwner(body);
+    const now = this.clock();
+    const saved = await this.repository.createOwner({
+      ...fields,
+      host_id: hostId,
+      owner_user_id: null,
+      created_at: now,
+      updated_at: now,
+    });
+    return { ...saved, properties: [] };
   }
 }
