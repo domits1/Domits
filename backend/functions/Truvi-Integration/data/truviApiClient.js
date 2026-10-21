@@ -10,10 +10,11 @@ function shortMessage(data, status) {
 }
 
 export class TruviApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, { verificationId = null } = {}) {
     super(message);
     this.name = "TruviApiError";
     this.status = status;
+    this.verificationId = verificationId;
   }
 }
 
@@ -40,21 +41,20 @@ export class TruviApiClient {
     return this.send("PUT", "/verificationRequests/cancel", request);
   }
 
+  getVerification(verificationId) {
+    if (!verificationId) {
+      throw new Error("verificationId is required to retrieve a Truvi verification");
+    }
+    return this.send("GET", `/v1/verificationRequests/${encodeURIComponent(verificationId)}`);
+  }
+
   async send(method, path, body) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     let response;
     let text;
     try {
-      response = await this.fetchImpl(`${this.baseUrl}${path}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Ocp-Apim-Subscription-Key": this.subscriptionKey,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      response = await this.fetchImpl(`${this.baseUrl}${path}`, this.#options(method, body, controller.signal));
       text = await response.text();
     } catch (error) {
       if (controller.signal.aborted) {
@@ -73,8 +73,22 @@ export class TruviApiClient {
     }
 
     if (!response.ok) {
-      throw new TruviApiError(response.status, shortMessage(data, response.status));
+      const verificationId = typeof data?.verificationId === "string" ? data.verificationId : null;
+      throw new TruviApiError(response.status, shortMessage(data, response.status), { verificationId });
     }
     return data;
+  }
+
+  #options(method, body, signal) {
+    const key = { "Ocp-Apim-Subscription-Key": this.subscriptionKey };
+    if (body === undefined) {
+      return { method, headers: key, signal };
+    }
+    return {
+      method,
+      headers: { "Content-Type": "application/json", ...key },
+      body: JSON.stringify(body),
+      signal,
+    };
   }
 }
