@@ -260,6 +260,7 @@ describe("ChannexProviderClient booking revisions", () => {
         currency: "EUR",
         insertedAt: "2026-05-20T10:00:00Z",
         guestName: "Ada Lovelace",
+        guestCount: null,
         rooms: [{ roomTypeId: "ext-room-1", ratePlanId: "ext-rate-1" }],
         ratePlanId: "ext-rate-1",
         roomTypeId: "ext-room-1",
@@ -329,6 +330,53 @@ describe("ChannexProviderClient booking revisions", () => {
         const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
 
         expect(result.revisions[0].guestName).toBe(expected);
+      });
+    });
+
+    // Infants are left out: they do not count towards a stay's guest maximum.
+    describe("guest count resolution", () => {
+      it.each([
+        {
+          description: "counts adults from the booking occupancy",
+          overrides: { occupancy: { adults: 2, children: 0, infants: 0 } },
+          expected: 2,
+        },
+        {
+          description: "adds children and leaves infants out",
+          overrides: { occupancy: { adults: 2, children: 1, infants: 1 } },
+          expected: 3,
+        },
+        {
+          description: "sums the room occupancies when the booking has none",
+          overrides: {
+            rooms: [
+              { room_type_id: "ext-room-1", occupancy: { adults: 2, children: 1 } },
+              { room_type_id: "ext-room-2", occupancy: { adults: 1, children: 0 } },
+            ],
+          },
+          expected: 4,
+        },
+        {
+          description: "is null when no occupancy is given",
+          overrides: {},
+          expected: null,
+        },
+        {
+          description: "is null when the occupancy counts no guests",
+          overrides: { occupancy: { adults: 0, children: 0, infants: 1 } },
+          expected: null,
+        },
+        {
+          description: "ignores counts that are not whole non-negative numbers",
+          overrides: { occupancy: { adults: "2", children: -1 } },
+          expected: 2,
+        },
+      ])("$description", async ({ overrides, expected }) => {
+        global.fetch.mockResolvedValue(jsonResponse(200, { data: [revisionRow(overrides)] }));
+
+        const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+        expect(result.revisions[0].guestCount).toBe(expected);
       });
     });
   });

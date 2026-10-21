@@ -31,13 +31,12 @@ describe("property score repository", () => {
     });
     expect(query.getRawOne).not.toHaveBeenCalled();
   });
-  test("averages only valid verified published ratings for the requested owned property", async () => {
+  test("averages only valid published ratings for the requested owned property", async () => {
     const result = await repository.getPropertyReviewScore("property-1", "host-1");
     expect(query.innerJoin).toHaveBeenCalledWith(Property, "property",
       "property.id = review.property_id AND property.hostid = :hostId", { hostId: "host-1" });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "property-1" });
     expect(query.andWhere.mock.calls).toEqual([
-      ["review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }],
       ["review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" }],
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],

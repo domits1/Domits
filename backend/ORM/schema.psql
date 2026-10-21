@@ -519,6 +519,36 @@ CREATE TABLE IF NOT EXISTS   property_test_status (
   PRIMARY KEY (property_id)
 );
 
+-- Table main.direct_booking_website_rate_plans
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS main.direct_booking_website_rate_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id VARCHAR(255) NOT NULL,
+  plan VARCHAR(20) NOT NULL,
+  price_cents INTEGER NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+  billing_frequency VARCHAR(20) NOT NULL DEFAULT 'monthly',
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  effective_until TIMESTAMP WITH TIME ZONE,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT direct_booking_website_rate_plan_plan_check CHECK (plan IN ('essentials', 'elite')),
+  CONSTRAINT direct_booking_website_rate_plan_price_check CHECK (price_cents >= 0)
+);
+CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx
+  ON main.direct_booking_website_rate_plans (account_id, effective_from);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique
+  ON main.direct_booking_website_rate_plans (account_id)
+  WHERE status = 'ACTIVE'
+  OR status = 'PAST_DUE'
+  OR status = 'TRIALING';
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique
+  ON main.direct_booking_website_rate_plans (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
+
 CREATE SCHEMA IF NOT EXISTS test;
 
 -- -----------------------------------------------------
@@ -728,3 +758,56 @@ CREATE TABLE IF NOT EXISTS test.review_response (
   deleted_at BIGINT NULL
 );
 CREATE INDEX ASYNC IF NOT EXISTS review_response_review_id_test ON test.review_response (review_id);
+-- Table test.direct_booking_website_rate_plans
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS test.direct_booking_website_rate_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id VARCHAR(255) NOT NULL,
+  plan VARCHAR(20) NOT NULL,
+  price_cents INTEGER NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+  billing_frequency VARCHAR(20) NOT NULL DEFAULT 'monthly',
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  effective_until TIMESTAMP WITH TIME ZONE,
+  stripe_customer_id VARCHAR(255),
+  stripe_subscription_id VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT direct_booking_website_rate_plan_plan_check_test CHECK (plan IN ('essentials', 'elite')),
+  CONSTRAINT direct_booking_website_rate_plan_price_check_test CHECK (price_cents >= 0)
+);
+CREATE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_account_idx_test
+  ON test.direct_booking_website_rate_plans (account_id, effective_from);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_current_unique_test
+  ON test.direct_booking_website_rate_plans (account_id)
+  WHERE status = 'ACTIVE'
+  OR status = 'PAST_DUE'
+  OR status = 'TRIALING';
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS direct_booking_website_rate_plan_subscription_unique_test
+  ON test.direct_booking_website_rate_plans (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS test.destination (
+  id VARCHAR(1024) PRIMARY KEY,
+  type VARCHAR(20) NOT NULL,
+  parent_id VARCHAR(1024) NULL,
+  slug VARCHAR(255) NOT NULL,
+  path VARCHAR(1024) NOT NULL,
+  display_name VARCHAR(255) NOT NULL,
+  country_code VARCHAR(2) NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC IF NOT EXISTS destination_path_unique_test ON test.destination (path);
+CREATE INDEX ASYNC IF NOT EXISTS destination_parent_test ON test.destination (parent_id);
+
+CREATE TABLE IF NOT EXISTS test.property_destination (
+  property_id VARCHAR(255) PRIMARY KEY,
+  destination_id VARCHAR(1024) NOT NULL,
+  source_country VARCHAR(255) NOT NULL,
+  source_city VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC IF NOT EXISTS property_destination_destination_test ON test.property_destination (destination_id);
