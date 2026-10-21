@@ -39,7 +39,7 @@ const createWorker = (overrides = {}) => {
 
 describe("ChannexAriOutboxWorker.processProperty", () => {
   test("sends the claimed change as the account owner, with a timeout, and marks it PROCESSED", async () => {
-    const { worker, syncCalendarChange, outbox } = createWorker();
+    const { worker, syncCalendarChange, outbox, log } = createWorker();
 
     const outcome = await worker.processProperty("property-1", { runStartedAt: NOW });
 
@@ -55,6 +55,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     );
     expect(outbox.markProcessed).toHaveBeenCalledWith(["row-1"], { now: NOW, sentSummary: { taskIds: ["task-1"], calls: 1 } });
     expect(outcome).toBe("PROCESSED");
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   test("takes the per-property lock and always releases it", async () => {
@@ -119,6 +120,43 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
+  });
+
+  // The alarm on failed changes (#3620) is a CloudWatch metric filter on this one line.
+  test("logs one alert line when rows end as FAILED", async () => {
+    const { worker, syncCalendarChange, log } = createWorker();
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
+    });
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(log.error.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+      domitsPropertyId: "property-1",
+      count: 1,
+      reason: "CHANNEX_UNAUTHORIZED",
+    });
+  });
+
+  test("a failing alert line does not change how the FAILED rows are recorded", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker({
+      log: {
+        error: jest.fn(() => {
+          throw new Error("log unavailable");
+        }),
+      },
+    });
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
+    });
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
+    expect(outbox.returnToPending).not.toHaveBeenCalled();
   });
 
   // The first call goes through and the second fails; only the row the first call
@@ -345,7 +383,7 @@ describe("ChannexAriOutboxWorker call limit", () => {
   });
 
   test("a row too wide to ever fit in one run ends as FAILED after its last attempt", async () => {
-    const { worker, outbox } = createWorker();
+    const { worker, outbox, log } = createWorker();
     outbox.claim.mockResolvedValue([
       claimedRow({ id: "row-wide", changeTypes: ["availability"], dateFrom: spanDate(0), dateTo: spanDate(11), attemptCount: 8 }),
     ]);
@@ -353,5 +391,10 @@ describe("ChannexAriOutboxWorker call limit", () => {
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-wide"], { now: NOW, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
     expect(outbox.release).not.toHaveBeenCalled();
+    expect(JSON.parse(log.error.mock.calls[0][0])).toMatchObject({
+      event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+      count: 1,
+      reason: "MAX_ATTEMPTS_EXCEEDED",
+    });
   });
 });

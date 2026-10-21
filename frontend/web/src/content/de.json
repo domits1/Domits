@@ -1199,26 +1199,26 @@
           "title": "RemoteLock verbinden",
           "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
           "confirm": "Verbinden",
-          "confirming": "Verbinde..."
+          "confirming": "Wird verbunden..."
         },
         "reconnect": {
           "title": "RemoteLock erneut verbinden",
           "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
           "confirm": "Erneut verbinden",
-          "confirming": "Verbinde erneut..."
+          "confirming": "Wird erneut verbunden..."
         },
         "disconnect": {
           "title": "RemoteLock trennen",
           "body": "Domits verwaltet die Türcodes deiner Gäste nicht mehr.",
           "confirm": "Trennen",
-          "confirming": "Trenne..."
+          "confirming": "Wird getrennt..."
         },
         "cancel": "Abbrechen",
         "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
       },
       "devices": {
         "title": "Geräte",
-        "notConnected": "Verbinde dich, um deine Geräte zu sehen",
+        "notConnected": "Verbinde RemoteLock, um deine Geräte zu sehen",
         "empty": "In deinem RemoteLock-Konto wurden keine Geräte gefunden.",
         "loading": "Deine Geräte werden geladen...",
         "loadError": "Wir konnten deine Geräte nicht laden.",
