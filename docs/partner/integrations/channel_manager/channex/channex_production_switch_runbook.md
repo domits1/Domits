@@ -21,7 +21,7 @@ after:   Domits Lambdas ──▶ app.channex.io       (villa host, Wellness Vil
 |---|---|
 | Lambdas that contain the Channex code | `ChannelManagement`, `UnifiedMessaging`, `General-Bookings-CRUD-Bookings-develop`, `PropertyHandler` |
 | Setting for the Channex address | `CHANNEX_BASE_URL` |
-| Admin allowlist (who may use the Channex diagnostics page and its endpoints) | `CHANNEX_CERTIFICATION_USER_IDS` (comma-separated Domits user ids) |
+| Admin allowlist (who may use the Channex diagnostics page and its endpoints, including connect, disconnect, status and mapping; `channelManagementHandler.js`) | `CHANNEX_CERTIFICATION_USER_IDS` (comma-separated Domits user ids) |
 | Where API keys are stored | Secrets Manager, prefix `domits/channex`, one secret per Domits user (`credentialStore.js`) |
 | Booking webhook secret | Secrets Manager `domits/channex/webhook/bookings`, sent by Channex in header `X-Channex-Webhook-Secret` |
 | Booking webhook URL | `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/webhooks/channex/bookings` |
@@ -79,13 +79,20 @@ SELECT "displayName", status FROM main.channel_integration_account
 WHERE UPPER(channel) = 'CHANNEX';
 ```
 
-Check: no row is `CONNECTED`. For an account nobody can log in to (for example an old test account), copy its row first so it can be restored, then set the same fields as the disconnect endpoint:
+Check: no row is `CONNECTED`. For an account nobody can log in to (for example an old test account), look up its id and copy its full row first, so it can be restored:
+
+```sql
+SELECT * FROM main.channel_integration_account
+WHERE UPPER(channel) = 'CHANNEX' AND status = 'CONNECTED';
+```
+
+Then set the same fields as the disconnect endpoint, on that one id. Filter on `id`, never on `"displayName"`: every connection gets the display name "Channex" unless a name was entered, so a name can match several accounts.
 
 ```sql
 UPDATE main.channel_integration_account
 SET status = 'DISCONNECTED', "credentialsRef" = NULL, "externalAccountId" = NULL,
     "updatedAt" = (EXTRACT(EPOCH FROM now()) * 1000)::bigint
-WHERE UPPER(channel) = 'CHANNEX' AND "displayName" = '<display name>' AND status = 'CONNECTED';
+WHERE id = '<account id>' AND status = 'CONNECTED';
 ```
 
 Check: exactly 1 row is updated.
@@ -118,7 +125,7 @@ Check: Overview shows status `CONNECTED`. The key is stored in Secrets Manager; 
 
 ### S6. Map the villa
 
-Channex diagnostics → Setup & Connection → Load Channex resources → select Wellness Villa Bisous, Entire Villa, Standard Rate → Save mapping.
+Channex diagnostics → Setup & Connection → fill in the Domits property ID of the villa (the field starts empty) → Load Channex resources → select Wellness Villa Bisous, Entire Villa, Standard Rate → Save mapping.
 
 Saving a ready mapping queues a full sync (#3282).
 
@@ -165,7 +172,7 @@ Check: the webhook's test call answers `200`. This only proves the webhook is re
 - [ ] Watch the alarms and the evidence for the first days.
 - [ ] Deactivate the staging property webhook (Channex staging → Webhooks), so the shared webhook secret is only used by production.
 - [ ] Set up the production guest-message webhook with the messaging owner; guest messages also go to production after S4.
-- [ ] Once the first days are checked, remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS` (S3 added it only for the diagnostics page). Add it again the same way when the mapping or evidence needs work.
+- [ ] Once the first days are checked, remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS`. The allowlist also covers connect and disconnect, so without it the villa host cannot disconnect or remap either; add it again the same way (S3) before any of that, including a rollback.
 
 ## Connecting an OTA after the switch
 
@@ -203,7 +210,7 @@ After the switch, check that the booking webhook still logs to `/aws/lambda/Chan
 In reverse order, only as far as needed:
 
 1. Deactivate the production property webhook in Channex.
-2. Disconnect the villa host's Channex account (S2 snippet, logged in as the villa host).
+2. Disconnect the villa host's Channex account (S2 snippet, logged in as the villa host). If the villa host was already removed from `CHANNEX_CERTIFICATION_USER_IDS`, add them back first (S3); otherwise the disconnect is refused with 403.
 3. Set `CHANNEX_BASE_URL` back to `https://staging.channex.io` on all four Lambdas.
 4. Reconnect the test host with a staging API key (Setup & Connection → Connect). Channex shows a key only once and Domits does not show it again; if the old key was not saved, create a new one on `staging.channex.io` → API Keys.
 5. Remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS` if no longer needed.
