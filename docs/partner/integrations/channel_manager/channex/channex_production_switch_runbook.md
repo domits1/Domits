@@ -33,7 +33,7 @@ An API key is stored per Domits user, and saving a mapping checks that the user 
 ## Before the switch (day before)
 
 - [ ] **P1. Staging tests finished.** Messaging tests on staging are done (team informed), and the staging test bookings are cancelled.
-- [ ] **P2. Monitoring v1 is live** (#3620): the alarms in [Alarms](#alarms) exist and a test alarm email arrived.
+- [ ] **P2. Monitoring v1 is live** (#3620): the alarms in [Alarms](#alarms) exist, a test alarm email arrived, and #3621 is merged and deployed to `ChannelManagement`. Without #3621 the failed-changes log line does not exist, so `channex-outbox-rows-failed` never fires.
 - [ ] **P3. Villa ready in Domits.** Prices, blocked dates, minimum stay and existing bookings in Calendar & Pricing are correct; this is what Channex receives.
 - [ ] **P4. Villa host's Domits user id is known** (Cognito `sub` of the host account). Needed for the allowlist.
 - [ ] **P5. Channex production property checked** (ids above). No channel connected yet.
@@ -121,6 +121,15 @@ Channex production → Webhooks → Property Webhooks → Create:
 | Send data | off (Domits reads the feed itself) |
 | Signed (HMAC) | off for now; signature checking is not built yet (#3574) |
 
+The secret is stored as JSON (`{"webhookSecret": "..."}`, `webhookSecretVerifier.js`). Copy only the value to the clipboard, so it is never shown on screen, and clear the clipboard after pasting it into the header field:
+
+```powershell
+(aws secretsmanager get-secret-value --secret-id domits/channex/webhook/bookings --region eu-north-1 --query SecretString --output text | ConvertFrom-Json).webhookSecret | Set-Clipboard
+Set-Clipboard -Value " "
+```
+
+Run the second line only after pasting.
+
 Check: the webhook's test call answers `200`. This only proves the webhook is reachable; S8 proves that bookings are processed.
 
 ### S8. End-to-end check
@@ -138,6 +147,7 @@ Check: the webhook's test call answers `200`. This only proves the webhook is re
 - [ ] Watch the alarms and the evidence for the first days.
 - [ ] Deactivate the staging property webhook (Channex staging → Webhooks), so the shared webhook secret is only used by production.
 - [ ] Set up the production guest-message webhook with the messaging owner; guest messages also go to production after S4.
+- [ ] Once the first days are checked, remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS` (S3 added it only for the diagnostics page). Add it again the same way when the mapping or evidence needs work.
 
 ## Connecting an OTA after the switch
 
@@ -148,6 +158,7 @@ The switch is done once for the whole backend. Connecting a listing to an OTA is
 | Property, room type and rate plan in Channex production, mapping saved in Domits (full sync follows) | Domits | about 20 minutes |
 | Booking.com: Account → Connectivity provider → Channex.io, then share the Hotel ID | Host (two-step verification on their phone) | about 5 minutes |
 | Airbnb: log in to the host's Airbnb account through Channex | Host or Domits with the host | about 5 minutes |
+| Confirm the Domits calendar: prices, blocked dates and minimum stay are what guests may book. After activation every open date is bookable on the OTA | Host | about 5 minutes |
 | Channels → Create → OTA → map room and rate → Activate | Domits | about 15–30 minutes |
 | Check prices, availability and a first booking | Domits | about 15 minutes |
 
