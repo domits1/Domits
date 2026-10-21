@@ -40,14 +40,23 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
-  constructor({ repository = new ReviewRepository(), now = () => Date.now(),
-    canReadPrivateFeedback = async () => false, canPublishReview = async () => false,
-    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
+  constructor({
+    repository = new ReviewRepository(),
+    now = () => Date.now(),
+    canReadPrivateFeedback = async ({ userId, review }) =>
+      review.reviewer_user_id === userId || review.host_id === userId,
+    canPublishReview = async ({ userId, review }) =>
+      review.reviewer_user_id === userId,
+    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS),
+  } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
-    this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
+    this.editWindowMs =
+      Number.isSafeInteger(editWindowMs) && editWindowMs > 0
+        ? editWindowMs
+        : 0;
   }
 
   editDeadline(review) {
