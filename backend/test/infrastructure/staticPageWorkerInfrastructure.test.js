@@ -16,6 +16,7 @@ const PARAMETERS_THE_CODE_READS = [
   "/aurora/dsql/dbName",
   "/aurora/dsql/schema",
   "/direct-booking-website/quote-token-secret",
+  "/destinations/pages/enabled",
 ].map((name) => `arn:aws:ssm:eu-north-1:${ACCOUNT}:parameter${name}`);
 const FUNCTIONS_THE_CODE_INVOKES = ["PriceLabs-Integration", "UnifiedMessaging"].map(
   (name) => `arn:aws:lambda:eu-north-1:${ACCOUNT}:function:${name}`
