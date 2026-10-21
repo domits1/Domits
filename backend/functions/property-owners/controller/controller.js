@@ -1,19 +1,12 @@
 import { Service } from "../business/service/service.js";
 import { AuthManager } from "../auth/authManager.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
-import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+import { GENERIC_ERROR_MESSAGE, respond } from "../util/http/response.js";
 
 const OWNER_MANAGER_GROUPS = Object.freeze(["Host", "Admin"]);
 const FORBIDDEN_MESSAGE = "You must be a Host or Admin to manage property owners.";
-const GENERIC_ERROR_MESSAGE = "Something went wrong, please contact support.";
 
 const readAuthorizationHeader = (event) => event.headers?.Authorization || event.headers?.authorization;
-
-const respond = (statusCode, body) => ({
-  statusCode,
-  headers: responseHeaders,
-  body: JSON.stringify(body),
-});
 
 const isClientError = (error) =>
   Number.isInteger(error?.statusCode) && error.statusCode >= 400 && error.statusCode < 500;

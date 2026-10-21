@@ -1,18 +1,12 @@
 import { Controller } from "./controller/controller.js";
 import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
+import { GENERIC_ERROR_MESSAGE, respond } from "./util/http/response.js";
 
-const GENERIC_ERROR_MESSAGE = "Something went wrong, please contact support.";
 const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed.";
 
 const ROUTES = new Map([["GET", (query) => (Object.hasOwn(query, "id") ? "getOwner" : "listOwners")]]);
 
 let controller = null;
-
-const respond = (statusCode, body) => ({
-  statusCode,
-  headers: responseHeaders,
-  body: JSON.stringify(body),
-});
 
 const resolveRoute = (event) => {
   const query = event.queryStringParameters ?? {};
