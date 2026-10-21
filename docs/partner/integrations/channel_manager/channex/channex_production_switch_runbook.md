@@ -21,7 +21,7 @@ after:   Domits Lambdas ──▶ app.channex.io       (villa host, Wellness Vil
 |---|---|
 | Lambdas that contain the Channex code | `ChannelManagement`, `UnifiedMessaging`, `General-Bookings-CRUD-Bookings-develop`, `PropertyHandler` |
 | Setting for the Channex address | `CHANNEX_BASE_URL` |
-| Admin allowlist (who may use the Channex diagnostics page and its endpoints) | `CHANNEX_CERTIFICATION_USER_IDS` (comma-separated Domits user ids) |
+| Admin allowlist (who may use the Channex diagnostics page and its endpoints, including connect, disconnect, status and mapping; `channelManagementHandler.js`) | `CHANNEX_CERTIFICATION_USER_IDS` (comma-separated Domits user ids) |
 | Where API keys are stored | Secrets Manager, prefix `domits/channex`, one secret per Domits user (`credentialStore.js`) |
 | Booking webhook secret | Secrets Manager `domits/channex/webhook/bookings`, sent by Channex in header `X-Channex-Webhook-Secret` |
 | Booking webhook URL | `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/webhooks/channex/bookings` |
@@ -33,7 +33,7 @@ An API key is stored per Domits user, and saving a mapping checks that the user 
 ## Before the switch (day before)
 
 - [ ] **P1. Staging tests finished.** Messaging tests on staging are done (team informed), and the staging test bookings are cancelled.
-- [ ] **P2. Monitoring v1 is live** (#3620): the alarms in [Alarms](#alarms) exist and a test alarm email arrived.
+- [ ] **P2. Monitoring v1 is live** (#3620): the alarms in [Alarms](#alarms) exist, a test alarm email arrived, and #3621 is merged and deployed to `ChannelManagement`. Without #3621 the failed-changes log line does not exist, so `channex-outbox-rows-failed` never fires.
 - [ ] **P3. Villa ready in Domits.** Prices, blocked dates, minimum stay and existing bookings in Calendar & Pricing are correct; this is what Channex receives.
 - [ ] **P4. Villa host's Domits user id is known** (Cognito `sub` of the host account). Needed for the allowlist.
 - [ ] **P5. Channex production property checked** (ids above). No channel connected yet.
@@ -70,7 +70,32 @@ await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/int
 }).then((r) => r.json());
 ```
 
-Check: the response says the integration is disconnected. The staging secret is kept, so this can be undone by connecting again.
+Check: the response says the integration is disconnected. Disconnecting clears the account's reference to its key (`integrationAccountRepository.js`); the staging secret stays in Secrets Manager, but undoing this means connecting again with a staging API key.
+
+Repeat this for every connected Channex account, not only the test host. List them in the Aurora DSQL query editor:
+
+```sql
+SELECT "displayName", status FROM main.channel_integration_account
+WHERE UPPER(channel) = 'CHANNEX';
+```
+
+Check: no row is `CONNECTED`. For an account nobody can log in to (for example an old test account), look up its id and copy its full row first, so it can be restored:
+
+```sql
+SELECT * FROM main.channel_integration_account
+WHERE UPPER(channel) = 'CHANNEX' AND status = 'CONNECTED';
+```
+
+Then set the same fields as the disconnect endpoint, on that one id. Filter on `id`, never on `"displayName"`: every connection gets the display name "Channex" unless a name was entered, so a name can match several accounts.
+
+```sql
+UPDATE main.channel_integration_account
+SET status = 'DISCONNECTED', "credentialsRef" = NULL, "externalAccountId" = NULL,
+    "updatedAt" = (EXTRACT(EPOCH FROM now()) * 1000)::bigint
+WHERE id = '<account id>' AND status = 'CONNECTED';
+```
+
+Check: exactly 1 row is updated.
 
 ### S3. Allow the villa host on the admin endpoints
 
@@ -100,7 +125,7 @@ Check: Overview shows status `CONNECTED`. The key is stored in Secrets Manager; 
 
 ### S6. Map the villa
 
-Channex diagnostics → Setup & Connection → Load Channex resources → select Wellness Villa Bisous, Entire Villa, Standard Rate → Save mapping.
+Channex diagnostics → Setup & Connection → fill in the Domits property ID of the villa (the field starts empty) → Load Channex resources → select Wellness Villa Bisous, Entire Villa, Standard Rate → Save mapping.
 
 Saving a ready mapping queues a full sync (#3282).
 
@@ -121,6 +146,15 @@ Channex production → Webhooks → Property Webhooks → Create:
 | Send data | off (Domits reads the feed itself) |
 | Signed (HMAC) | off for now; signature checking is not built yet (#3574) |
 
+The secret is stored as JSON (`{"webhookSecret": "..."}`, `webhookSecretVerifier.js`). Copy only the value to the clipboard, so it is never shown on screen, and clear the clipboard after pasting it into the header field:
+
+```powershell
+(aws secretsmanager get-secret-value --secret-id domits/channex/webhook/bookings --region eu-north-1 --query SecretString --output text | ConvertFrom-Json).webhookSecret | Set-Clipboard
+Set-Clipboard -Value " "
+```
+
+Run the second line only after pasting.
+
 Check: the webhook's test call answers `200`. This only proves the webhook is reachable; S8 proves that bookings are processed.
 
 ### S8. End-to-end check
@@ -138,6 +172,7 @@ Check: the webhook's test call answers `200`. This only proves the webhook is re
 - [ ] Watch the alarms and the evidence for the first days.
 - [ ] Deactivate the staging property webhook (Channex staging → Webhooks), so the shared webhook secret is only used by production.
 - [ ] Set up the production guest-message webhook with the messaging owner; guest messages also go to production after S4.
+- [ ] Once the first days are checked, remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS`. The allowlist also covers connect and disconnect, so without it the villa host cannot disconnect or remap either; add it again the same way (S3) before any of that, including a rollback.
 
 ## Connecting an OTA after the switch
 
@@ -148,6 +183,7 @@ The switch is done once for the whole backend. Connecting a listing to an OTA is
 | Property, room type and rate plan in Channex production, mapping saved in Domits (full sync follows) | Domits | about 20 minutes |
 | Booking.com: Account → Connectivity provider → Channex.io, then share the Hotel ID | Host (two-step verification on their phone) | about 5 minutes |
 | Airbnb: log in to the host's Airbnb account through Channex | Host or Domits with the host | about 5 minutes |
+| Confirm the Domits calendar: prices, blocked dates and minimum stay are what guests may book. After activation every open date is bookable on the OTA | Host | about 5 minutes |
 | Channels → Create → OTA → map room and rate → Activate | Domits | about 15–30 minutes |
 | Check prices, availability and a first booking | Domits | about 15 minutes |
 
@@ -174,7 +210,7 @@ After the switch, check that the booking webhook still logs to `/aws/lambda/Chan
 In reverse order, only as far as needed:
 
 1. Deactivate the production property webhook in Channex.
-2. Disconnect the villa host's Channex account (S2 snippet, logged in as the villa host).
+2. Disconnect the villa host's Channex account (S2 snippet, logged in as the villa host). If the villa host was already removed from `CHANNEX_CERTIFICATION_USER_IDS`, add them back first (S3); otherwise the disconnect is refused with 403.
 3. Set `CHANNEX_BASE_URL` back to `https://staging.channex.io` on all four Lambdas.
 4. Reconnect the test host with a staging API key (Setup & Connection → Connect). Channex shows a key only once and Domits does not show it again; if the old key was not saved, create a new one on `staging.channex.io` → API Keys.
 5. Remove the villa host from `CHANNEX_CERTIFICATION_USER_IDS` if no longer needed.
