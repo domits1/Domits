@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
 import { getPropertyReviewPerformance } from "../review/services/reviewAPI";
-import styles from "../review/ReviewPerformance.module.css";
+import styles from "../review/styles/ReviewPerformance.module.css";
 
 const defaults = () => {
   const today = new Date().toISOString().slice(0, 10);

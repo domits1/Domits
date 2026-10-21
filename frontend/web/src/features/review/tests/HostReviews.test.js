@@ -1,17 +1,17 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import HostReviews from "./HostReviews";
+import HostReviews from "../../hostdashboard/hostreviews";
 import { Auth } from "aws-amplify";
-import { requestReview } from "../review/services/reviewAPI";
+import { requestReview } from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
 jest.mock("aws-amplify", () => ({ Auth: { currentUserInfo: jest.fn() } }));
-jest.mock("./Pages", () => () => null);
-jest.mock("./ReviewPerformance", () => () => null);
-jest.mock("../review/DecliningPropertyRatings", () => () => null);
-jest.mock("../review/services/reviewAPI", () => ({ requestReview: jest.fn() }));
-jest.mock("../review/HostResponseForm", () => ({ review }) =>
+jest.mock("../../hostdashboard/pages", () => () => null);
+jest.mock("../../hostdashboard/ReviewPerformance", () => () => null);
+jest.mock("../DecliningPropertyRatings", () => () => null);
+jest.mock("../services/reviewAPI", () => ({ requestReview: jest.fn() }));
+jest.mock("../HostResponseForm", () => ({ review }) =>
   <button>Respond to {review.id}: {review.response?.message || "new response"}</button>);
 
 const received = [
