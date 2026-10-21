@@ -68,6 +68,13 @@ import { Property_Owner } from "../../models/Property_Owner.js";
 import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
 import { Invoice } from "../../models/Invoice.js";
 
+import { Review } from "../../models/Review.js";
+import { Review_Rating } from "../../models/Review_Rating.js";
+import { Review_Category } from "../../models/Review_Category.js";
+import { Review_Request } from "../../models/Review_Request.js";
+import { Review_Response } from "../../models/Review_Response.js";
+
+
 export const Tables = [
   Amenities,
   Amenity_And_Category,
@@ -137,5 +144,10 @@ export const Tables = [
   Property_Owner_Property,
   Invoice,
   EnterpriseRatePlan,
+  Review,
+  Review_Rating,
+  Review_Category,
+  Review_Request,
+  Review_Response,
   DirectBookingWebsiteRatePlan,
 ];

@@ -39,7 +39,9 @@ export class PropertyOwner20261016 {
             effective_from BIGINT NOT NULL,
             effective_to BIGINT NULL,
             created_at BIGINT NOT NULL,
-            updated_at BIGINT NOT NULL
+            updated_at BIGINT NOT NULL,
+            CONSTRAINT property_owner_property_basis_points_check${suffix} CHECK (ownership_basis_points BETWEEN 1 AND 10000),
+            CONSTRAINT property_owner_property_period_check${suffix} CHECK (effective_to IS NULL OR effective_to > effective_from)
         );
       `);
       await queryRunner.query(`

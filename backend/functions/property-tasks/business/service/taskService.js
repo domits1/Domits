@@ -174,12 +174,13 @@ export const escalateTask = async (hostId, taskId) => {
 
     try {
         const recipientEmail = task.assignee_team_member_id
-            ? await getAssigneeEmailById(task.assignee_team_member_id)
+            ? await getAssigneeEmailById(task.assignee_team_member_id, hostId)
             : await getHostEmailById(hostId);
         await sendTaskEscalationEmail(recipientEmail, task);
     } catch (emailError) {
+        console.error("[escalateTask] Failed to send the escalation email:", emailError);
         await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
-        throw emailError;
+        throw new Error("Failed to send the escalation email. Please try again or contact support.");
     }
 
     return { message: "Task escalated successfully" };
