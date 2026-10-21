@@ -72,22 +72,16 @@ export class CreateReviews20260930 {
       CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_booking_type_reviewer_unique${suffix}
       ON ${schema}.review (booking_id, review_type, reviewer_user_id);
     `);
+    const requestSuffix = schema === "main" ? "_main" : "_test";
     await queryRunner.query(`
-      CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique${suffix}
+      CREATE UNIQUE INDEX ASYNC IF NOT EXISTS review_request_booking_type_guest_unique${requestSuffix}
       ON ${schema}.review_request (booking_id, review_type, guest_id);
     `);
   }
 
-  // Rollback removes review data; run only when these tables can be discarded.
-  async down(queryRunner) {
-    await this.dropSchemaTables(queryRunner, "main");
-    await this.dropSchemaTables(queryRunner, "test");
-  }
-
-  async dropSchemaTables(queryRunner, schema) {
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_request;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_rating;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review_category;`);
-    await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.review;`);
+  // Tables and indexes may predate this migration (up uses IF NOT EXISTS).
+  // Their ownership cannot be established, so rollback must preserve them.
+  async down() {
+    // Intentionally no-op; see docs/internal/tools/dsql_reviews_runbook.md.
   }
 }

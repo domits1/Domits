@@ -50,7 +50,7 @@ export const handler = async (event) => {
     }
 
     controller ??= new Controller();
-    
+
     if (typeof controller[action] !== "function") {
       console.error("ReviewSystem controller method is not implemented:", action);
       return jsonResponse(500, "Internal Server Error");

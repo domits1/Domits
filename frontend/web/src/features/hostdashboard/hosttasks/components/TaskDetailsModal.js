@@ -28,6 +28,7 @@ const TaskDetailsModal = ({
     assigneeOptions,
     checklistItems,
     checklistLoadError,
+    isApplyingChecklistTemplate,
     onEditChange,
     onPropertyChange,
     onAssigneeChange,
@@ -195,6 +196,7 @@ const TaskDetailsModal = ({
                         <ChecklistSection
                             items={checklistItems}
                             loadError={checklistLoadError}
+                            isApplyingTemplate={isApplyingChecklistTemplate}
                             onAddItem={onAddChecklistItem}
                             onToggleChecked={onToggleChecklistItem}
                             onRemoveItem={onRemoveChecklistItem}
@@ -265,6 +267,7 @@ TaskDetailsModal.propTypes = {
         isChecked: PropTypes.bool,
     })).isRequired,
     checklistLoadError: PropTypes.string,
+    isApplyingChecklistTemplate: PropTypes.bool,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
     onAssigneeChange: PropTypes.func.isRequired,

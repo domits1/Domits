@@ -20,8 +20,13 @@
   position: relative;
 }
 
-.reviewHeader { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
-.reviewHeader { padding-right: 44px; overflow-wrap: anywhere; }
+.reviewHeader {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  padding-right: 44px;
+  overflow-wrap: anywhere;
+}
 .reviewTab > button:not(.reviewDelete) { min-height: 44px; margin: 4px 0 8px; }
 .reviewContent { margin: 0 0 6px; color: #334155; }
 .reviewDate { font-size: 12px; color: #64748b; }

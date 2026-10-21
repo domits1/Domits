@@ -86,4 +86,16 @@ describe('ChecklistSection', () => {
 
         expect(baseProps.onRetryLoad).toHaveBeenCalledTimes(1);
     });
+
+    test('shows a loading indicator while a checklist template is being applied', () => {
+        render(<ChecklistSection {...baseProps} isApplyingTemplate />);
+
+        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+    });
+
+    test('does not show the template loading indicator by default', () => {
+        render(<ChecklistSection {...baseProps} />);
+
+        expect(screen.queryByText('Applying template...')).not.toBeInTheDocument();
+    });
 });

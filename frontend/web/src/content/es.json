@@ -1216,6 +1216,35 @@
         "cancel": "Cancelar",
         "error": "Algo salió mal. Inténtalo de nuevo."
       },
+      "devices": {
+        "title": "Dispositivos",
+        "notConnected": "Conecta para ver tus dispositivos",
+        "empty": "No se encontraron dispositivos en tu cuenta de RemoteLock.",
+        "loading": "Cargando tus dispositivos...",
+        "loadError": "No pudimos cargar tus dispositivos.",
+        "retry": "Intentar de nuevo",
+        "notSupported": "Aún no compatible",
+        "columns": {
+          "name": "Nombre",
+          "type": "Tipo",
+          "status": "Estado",
+          "battery": "Batería",
+          "lastSeen": "Visto por última vez"
+        },
+        "statuses": {
+          "online": "En línea",
+          "offline": "Sin conexión",
+          "unknown": "Desconocido"
+        },
+        "types": {
+          "lock": "Cerradura",
+          "zwaveLock": "Cerradura Z-Wave",
+          "connectorLock": "Cerradura con conector",
+          "schlageHomeLock": "Cerradura Schlage Home",
+          "resortLock": "Cerradura de resort",
+          "other": "Otro dispositivo"
+        }
+      },
       "loading": "Cargando tu conexión con RemoteLock...",
       "loadError": "No pudimos cargar tu conexión con RemoteLock.",
       "retry": "Intentar de nuevo"
@@ -1453,6 +1482,12 @@
         "tryAgain": "Intentar de nuevo",
         "close": "Cerrar",
         "success": "Tu aplicación de autenticación está activada. Te pediremos un código cuando inicies sesión en un dispositivo nuevo.",
+        "turnOff": "Desactivar",
+        "disableTitle": "¿Desactivar la aplicación de autenticación?",
+        "disableWarning": "Si la desactivas, tu cuenta será menos segura. Ya no te pediremos un código de tu aplicación de autenticación al iniciar sesión.",
+        "confirmTurnOff": "Desactivar",
+        "turningOff": "Desactivando...",
+        "disabledSuccess": "Tu aplicación de autenticación está desactivada.",
         "errors": {
           "invalidCode": "Este código no es válido. Introduce el código actual de 6 dígitos de tu aplicación.",
           "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión y empieza la configuración de nuevo.",

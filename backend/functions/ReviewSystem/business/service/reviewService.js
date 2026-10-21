@@ -129,6 +129,16 @@ export class ReviewService {
       public_review: publicReview, updated_at: result.updated_at };
   }
 
+  async getPropertyReviewScore(userId, propertyId) {
+    this.assertCaller(userId);
+    this.assertId(propertyId, "property ID");
+    const id = propertyId.trim();
+    if (!(await this.repository.findManagedProperty(id, userId))) {
+      throw new NotFoundException("Property not found.");
+    }
+    return this.repository.getPropertyReviewScore(id, userId);
+  }
+
   // Fetch the caller's reviews by scope.
   // This keeps the profile and dashboard views consistent with the user's written and received history.
   async getReviews(callerUserId, scope = "written") {
@@ -222,8 +232,14 @@ export class ReviewService {
     const fields = { updated_at: this.now() };
     for (const key of keys) {
       if (key === "category_ratings") continue;
-      fields[key] = key === "private_feedback" ? this.normalizeOptionalText(changes[key])
-        : typeof changes[key] === "string" ? changes[key].trim() : changes[key];
+      const value = changes[key];
+      if (key === "public_review") {
+        fields[key] = this.normalizePublicReview(value);
+      } else if (key === "private_feedback") {
+        fields[key] = this.normalizeOptionalText(value);
+      } else {
+        fields[key] = typeof value === "string" ? value.trim() : value;
+      }
     }
     if (Object.hasOwn(changes, "public_review")) fields.public_review = publicReview;
     const updated = await this.repository.updateDraft({ reviewId: review.id, reviewerUserId: userId,
@@ -378,7 +394,7 @@ export class ReviewService {
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
-    const categoryRatings = reviewData.category_ratings ?? {};
+    const categoryRatings = reviewData.category_ratings || {};
     if (Object.keys(categoryRatings).length) {
       const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
@@ -408,7 +424,9 @@ export class ReviewService {
       );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
-        throw new ConflictException("This reservation already has a review.");
+        throw new ConflictException(
+          "This reservation already has a review."
+        );
       }
 
       throw error;
@@ -427,11 +445,7 @@ export class ReviewService {
       throw new BadRequestException("A booking_id of up to 255 characters is required");
     }
 
-    if (
-      !Number.isInteger(reviewData.overall_rating) ||
-      reviewData.overall_rating < 1 ||
-      reviewData.overall_rating > 5
-    ) {
+    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
       throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
@@ -439,13 +453,8 @@ export class ReviewService {
       throw new BadRequestException("A review title of up to 120 characters is required");
     }
     const ratings = reviewData.category_ratings;
-    if (
-      ratings !== undefined &&
-      (!ratings ||
-        typeof ratings !== "object" ||
-        Array.isArray(ratings) ||
-        Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))
-    ) {
+    if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
+      Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
       throw new BadRequestException("category_ratings must contain ratings from 1 to 5");
     }
 

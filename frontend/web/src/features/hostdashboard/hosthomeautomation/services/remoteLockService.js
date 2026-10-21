@@ -3,11 +3,55 @@
 //
 // To preview a state: set REMOTELOCK_UI_ENABLED = true (homeAutomationConstants.js) and MOCK_STATUS below to
 // the state you want, look at Settings > Home automation, then revert both before committing. Connect and
-// disconnect change the mocked status in memory, so you can click through NOT_CONNECTED > CONNECTED > DISCONNECTED;
-// a page reload starts again from MOCK_STATUS.
+// disconnect change the mocked status in memory, so you can click through NOT_CONNECTED > CONNECTED (devices
+// appear) > DISCONNECTED (devices disappear); a page reload starts again from MOCK_STATUS.
 
 export const MOCK_STATUS = "NOT_CONNECTED";
 const MOCK_LAST_SYNC_AT = Date.UTC(2026, 9, 8, 9, 30);
+
+// Types are the values RemoteLock reports. lastSeenAt is epoch milliseconds or null, battery is a percentage or null.
+const MOCK_DEVICES = [
+  {
+    id: "lock-1",
+    name: "Front door",
+    type: "lock",
+    status: "ONLINE",
+    battery: 82,
+    lastSeenAt: Date.UTC(2026, 9, 8, 9, 25),
+  },
+  {
+    id: "lock-2",
+    name: "Back entrance",
+    type: "zwave_lock",
+    status: "OFFLINE",
+    battery: 15,
+    lastSeenAt: Date.UTC(2026, 9, 7, 18, 2),
+  },
+  {
+    id: "lock-3",
+    name: "Garage keypad",
+    type: "connector_lock",
+    status: "UNKNOWN",
+    battery: null,
+    lastSeenAt: null,
+  },
+  {
+    id: "lock-4",
+    name: "Guest cottage",
+    type: "schlage_home_lock",
+    status: "ONLINE",
+    battery: 64,
+    lastSeenAt: Date.UTC(2026, 9, 8, 9, 10),
+  },
+  {
+    id: "lock-5",
+    name: "Pool gate",
+    type: "resort_lock",
+    status: "ONLINE",
+    battery: null,
+    lastSeenAt: Date.UTC(2026, 9, 8, 8, 45),
+  },
+];
 
 // Held in the module so a later connect or disconnect can change what the next status read returns.
 let currentStatus = MOCK_STATUS;
@@ -41,3 +85,7 @@ export const disconnectRemoteLock = async () => {
   currentStatus = "DISCONNECTED";
   return getRemoteLockStatus();
 };
+
+// Real endpoint (not built yet): GET /integrations/home-automation/remotelock/devices
+// Only meaningful while the account is CONNECTED; the page does not call it in any other status.
+export const getRemoteLockDevices = async () => MOCK_DEVICES.map((device) => ({ ...device }));

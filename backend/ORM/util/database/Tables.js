@@ -53,6 +53,7 @@ import { BookingAutomationOutbox } from "../../models/automation/BookingAutomati
 import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbox.js";
 import { HomeAutomationDevice } from "../../models/homeAutomation/HomeAutomationDevice.js";
 import { AccessCredential } from "../../models/homeAutomation/AccessCredential.js";
+import { CredentialLease } from "../../models/homeAutomation/CredentialLease.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
@@ -70,6 +71,7 @@ import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
 import { Review_Response } from "../../models/Review_Response.js";
+
 
 export const Tables = [
   Amenities,
@@ -124,6 +126,7 @@ export const Tables = [
   ChannexAriOutbox,
   HomeAutomationDevice,
   AccessCredential,
+  CredentialLease,
 
   User_Table,
   PropertyTask,

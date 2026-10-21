@@ -36,11 +36,10 @@ const REVIEW_FIELDS = [
   "updated_at",
 ];
 
-const average = (values) =>
-  values.length
-    ? values.reduce((total, value) => total + Number(value), 0) /
-      values.length
-    : 0;
+const average = (values) => {
+  const numbers = values.map(Number).filter(Number.isFinite);
+  return numbers.length ? Math.round(numbers.reduce((sum, n) => sum + n, 0) / numbers.length * 10) / 10 : null;
+};
 
 const nextTimestamp = (requestedAt, previousAt) =>
   Math.max(requestedAt, Number(previousAt) + 1);
@@ -151,7 +150,6 @@ export class ReviewRepository {
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count")
       .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
