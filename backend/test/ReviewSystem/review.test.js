@@ -177,7 +177,7 @@ describe('Review creation and existing operations', () => {
     httpMethod: method,
     requestContext: { authorizer: { claims: { sub: userId } } },
     queryStringParameters: { scope },
-    pathParameters: { id: "review-1" },
+    pathParameters: method === "GET" ? {} : { id: "review-1" },
   });
 
   it.each(["written", "received"])("lists %s reviews for the verified caller", async (scope) => {

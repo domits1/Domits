@@ -157,10 +157,15 @@ describe('Review entities and creation persistence', () => {
 
 // Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
 it("soft deletes only the author while retaining supporting records", async () => {
+  const query = {};
+  for (const method of ["update", "set", "where", "andWhere"]) query[method] = jest.fn(() => query);
+  query.execute = jest.fn().mockResolvedValue({ affected: 1 });
+  repositories.get(Review).createQueryBuilder = jest.fn(() => query);
   await repository.deleteOwnReview("legacy-review", "guest-1", 123);
-  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
-    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
-  });
+  expect(query.where).toHaveBeenCalledWith("id = :id", { id: "legacy-review" });
+  expect(query.andWhere).toHaveBeenCalledWith("reviewer_user_id = :reviewerUserId", { reviewerUserId: "guest-1" });
+  expect(query.set).toHaveBeenCalledWith({ status: "DELETED", updated_at: 123 });
+  expect(query.execute).toHaveBeenCalledTimes(1);
   for (const entity of [Review_Rating, Review_Request, Review_Response]) {
     expect(repositories.get(entity).update).not.toHaveBeenCalled();
   }

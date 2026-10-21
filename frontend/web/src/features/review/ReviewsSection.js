@@ -49,14 +49,24 @@ const ReviewCard = ({ review }) => (
     </div>
     <div className="reviews-section__card-sub">
       <StarRating value={review.rating} />
-      <span className="reviews-section__card-time">{review.timeAgo}</span>
-      {review.verified && (
-        <span className="reviews-section__card-verified">
-          <CheckCircleIcon fontSize="inherit" /> Verified stay
+      {Number.isFinite(review.date) && Number.isFinite(new Date(review.date).getTime()) ?
+        <time className="reviews-section__card-time" dateTime={new Date(review.date).toISOString()}>
+          Reviewed on {new Date(review.date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+        </time> : <span className="reviews-section__card-time">{review.timeAgo}</span>}
+      {review.verified === true && (
+        <span className="reviews-section__card-verified" title="Linked to a paid or confirmed reservation whose checkout has passed.">
+          <CheckCircleIcon fontSize="inherit" aria-hidden="true" /> Verified Stay
         </span>
       )}
     </div>
     <p className="reviews-section__card-text">{review.text}</p>
+    {review.response && <aside aria-label="Host response"><strong>Host response</strong>
+      <p className="reviews-section__card-text">{review.response.message}</p></aside>}
+    <div className="reviews-section__categories">
+      {(review.categories || []).map(({ key, label, rating }) => (
+        <span key={key} className="reviews-section__category-pill">{label}: {rating.toFixed(1)}/5</span>
+      ))}
+    </div>
   </div>
 );
 
@@ -66,6 +76,7 @@ const ReviewsSection = ({
   totalReviews = 0,
   categoryScores = {},
   onShowAll,
+  emptyMessage = "No reviews yet.",
 }) => {
   const hasReviews = reviews.length > 0;
   const hasCategories = Object.keys(categoryScores).length > 0;
@@ -104,7 +115,7 @@ const ReviewsSection = ({
       {hasReviews ? (
         <>
           <div className="reviews-section__grid">
-            {reviews.slice(0, 2).map((review, i) => (
+            {reviews.map((review, i) => (
               <ReviewCard key={review.id || i} review={review} />
             ))}
           </div>
@@ -119,7 +130,7 @@ const ReviewsSection = ({
           )}
         </>
       ) : (
-        <p className="reviews-section__empty">No reviews yet.</p>
+        emptyMessage && <p className="reviews-section__empty">{emptyMessage}</p>
       )}
     </div>
   );
@@ -137,8 +148,13 @@ ReviewCard.propTypes = {
     location: PropTypes.string,
     rating: PropTypes.number,
     timeAgo: PropTypes.string,
+    date: PropTypes.number,
     verified: PropTypes.bool,
     text: PropTypes.string,
+    response: PropTypes.shape({ message: PropTypes.string }),
+    categories: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string, label: PropTypes.string, rating: PropTypes.number,
+    })),
   }),
 };
 
@@ -155,6 +171,7 @@ ReviewsSection.propTypes = {
     value: PropTypes.number,
   }),
   onShowAll: PropTypes.func,
+  emptyMessage: PropTypes.string,
 };
 
 export default ReviewsSection;

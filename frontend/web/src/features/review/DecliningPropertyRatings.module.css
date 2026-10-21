@@ -1,0 +1,4 @@
+.DECLINING { color: #a51c30; font-weight: 700; }
+.IMPROVING { color: #167037; font-weight: 700; }
+.STABLE, .INSUFFICIENT_DATA { color: #555; }
+.pages { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; }

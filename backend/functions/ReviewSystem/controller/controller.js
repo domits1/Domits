@@ -20,9 +20,29 @@ const parseBody = (event) => {
 };
 
 export class Controller {
+  async saveHostResponse(event) {
+    return this.executeAuthenticated(event, async (userId, user) => {
+      let action = "draft";
+      if (event.resource.endsWith("/publish")) action = "publish";
+      else if (event.httpMethod === "PATCH") action = "edit";
+      const response = await this.service.saveHostResponse(user,
+        this.getPathParameter(event, "id"), parseBody(event), action);
+      return this.jsonResponse(200, { response });
+    });
+  }
   constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
     this.service = service;
     this.authManager = authManager;
+  }
+
+  async getPublicReviews(event) {
+    try {
+      const { offset = "0", ...filters } = event.queryStringParameters ?? {};
+      return this.jsonResponse(200, await this.service.getPublicReviews(
+        this.getPathParameter(event, "propertyId"), offset, filters));
+    } catch (error) {
+      return this.handleError(error);
+    }
   }
 
   jsonResponse(statusCode, result) {
@@ -61,15 +81,28 @@ export class Controller {
   async getReviews(event) {
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
-      const propertyScope = ["property-score", "property-categories"].includes(query.scope);
+      const propertyScope = ["property-score", "property-categories", "property-performance", "property-trends"].includes(query.scope);
       if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
-        throw new BadRequestException("Property score/category and individual review requests cannot be combined.");
+        throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "property-categories") {
+      if (query.reviewId !== undefined && query.view !== undefined) {
+        if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
+          throw new BadRequestException("Unsupported review detail parameter.");
+        }
+        result = await this.service.getGuestReviewDetail(userId, query.reviewId);
+      } else if (query.scope === "guest-history") {
+        result = await this.service.getGuestReviewHistory(userId, query);
+      } else if (query.scope === "respondable") {
+        result = await this.service.getResponseEligibleReviews(user.username);
+      } else if (query.scope === "property-trends") {
+        result = await this.service.getPropertyRatingTrends(user.username, query);
+      } else if (query.scope === "property-categories") {
         result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
       } else if (query.scope === "property-score") {
         result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+      } else if (query.scope === "property-performance") {
+        result = await this.service.getPropertyReviewPerformance(user.username, query.propertyId, query);
       } else if (query.reviewId !== undefined) {
         result = await this.service.getEditableReview(userId, query.reviewId);
       } else {
@@ -82,6 +115,11 @@ export class Controller {
   // Fetch a single review with the correct visibility rules.
   // This ensures the endpoint returns a review only when it is permitted by the service's access checks.
   async getReviewById(event) {
+    if (event.queryStringParameters?.view !== undefined) {
+      return this.getReviews({ ...event, queryStringParameters: {
+        ...event.queryStringParameters, reviewId: event.pathParameters?.id,
+      } });
+    }
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getReviewById(userId, this.getPathParameter(event, "id"))));
   }
@@ -164,12 +202,14 @@ export class Controller {
 
   // Retain existing direct callers while index uses the individual route methods.
   async manageReviews(event) {
-    if (event.httpMethod === "GET") return this.getReviews(event);
+    if (event.httpMethod === "GET") return event.pathParameters?.id !== undefined
+      ? this.getReviewById(event) : this.getReviews(event);
     if (event.httpMethod === "PATCH") return this.updateReview(event);
     if (event.httpMethod === "DELETE") return this.deleteReview(event);
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
+  // Retain compatibility with direct callers of the public property review method.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }

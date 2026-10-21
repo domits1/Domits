@@ -8,7 +8,10 @@ import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
 import { Review_Response } from "database/models/Review_Response";
+import { Team_Member } from "database/models/Team_Member";
+import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import {
   assertEligibleBooking,
@@ -101,6 +104,157 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
 };
 
 export class ReviewRepository {
+  eligibleReviewQuery(database, propertyId) {
+    return database.getRepository(Review).createQueryBuilder("review")
+      .where(propertyId === undefined ? "1 = 1" : "review.property_id = :propertyId", { propertyId })
+      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
+      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
+      .andWhere("review.status = :status", { status: "PUBLISHED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
+      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
+      .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
+  }
+
+  hostResponseQuery(database, username) {
+    return this.eligibleReviewQuery(database)
+      .innerJoin(Property, "property", "property.id = review.property_id")
+      .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :username AND member.status = :active AND member.role = :role",
+        { username, active: "active", role: "Property Operations Manager" })
+      .andWhere("(property.hostid = :username OR member.id IS NOT NULL)", { username })
+      .andWhere("property.status = :propertyStatus", { propertyStatus: "ACTIVE" })
+      .andWhere("TRIM(review.public_review) <> ''");
+  }
+
+  async findResponseEligibleReviews(username) {
+    const database = await Database.getInstance();
+    const reviews = await this.hostResponseQuery(database, username)
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`)).orderBy("review.created_at", "DESC").getMany();
+    return this.attachPublicDetails(database, reviews);
+  }
+
+  async saveHostResponse(user, reviewId, message, action, now) {
+    try {
+      const database = await Database.getInstance();
+      return await database.transaction(async (manager) => {
+        const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
+        if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
+        const repository = manager.getRepository(Review_Response);
+        const existing = await repository.findOne({ where: { reviewId } });
+        if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");
+        if (action === "draft" && existing?.status === "published") throw new ConflictException("A published response cannot become a draft.");
+        let status = "draft";
+        if (action === "edit") {
+          status = existing.status;
+        } else if (action === "publish") {
+          status = "published";
+        }
+        const saved = await repository.save({ ...existing, id: existing?.id || randomUUID(), reviewId,
+          authorId: user.userId, authorRole: "host", message, status, createdAt: existing?.createdAt ?? now,
+          updatedAt: now, publishedAt: status === "published" ? existing?.publishedAt ?? now : null, deletedAt: null });
+        return { id: saved.id, message: saved.message, status: saved.status, createdAt: saved.createdAt,
+          updatedAt: saved.updatedAt, publishedAt: saved.publishedAt };
+      });
+    } catch (error) {
+      const cause = error.driverError || error;
+      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_response_review_unique")) {
+        throw new ConflictException("A response already exists. Reload the review before editing.");
+      }
+      throw error;
+    }
+  }
+
+  filteredPublicReviewQuery(database, propertyId, filters = {}) {
+    const query = this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
+        { propertyStatus: "ACTIVE" })
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
+      .andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
+        filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
+      });
+    applyCompletedStayConditions(query, filters.verificationNow ?? Date.now());
+    if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
+    if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
+    return query;
+  }
+
+  async getPublicReviewPage(propertyId, offset, filters = {}) {
+    const database = await Database.getInstance();
+    const property = await database.getRepository(Property).findOne({
+      where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
+    });
+    if (!property) return null;
+    const eligible = () => this.filteredPublicReviewQuery(database, propertyId, filters);
+    const summaryQuery = this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
+        { propertyStatus: "ACTIVE" })
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id");
+    applyCompletedStayConditions(summaryQuery, filters.verificationNow ?? Date.now());
+    const summary = await summaryQuery.select("AVG(review.overall_rating)", "score").getRawOne();
+    const matching = await eligible().select("COUNT(*)", "count").getRawOne();
+    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    const recent = !filters.sort || filters.sort === "recent";
+    if (filters.sort === "highest" || filters.sort === "lowest") {
+      page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
+        .addOrderBy("review.created_at", "DESC");
+    } else {
+      page.orderBy("review.created_at", "DESC");
+      if (filters.cursor) page.andWhere(
+        "(review.created_at < :cursorDate OR (review.created_at = :cursorDate AND review.id < :cursorId))",
+        { cursorDate: filters.cursor.date, cursorId: filters.cursor.id });
+    }
+    // Fetch one extra row to detect another page without applying the cursor to the matching count.
+    const rows = await page.addOrderBy("review.id", "DESC").offset(offset).limit(recent ? 11 : 10).getMany();
+    const reviews = rows.slice(0, 10), last = reviews[reviews.length - 1];
+    const nextCursor = recent && rows.length > 10 ? Buffer.from(JSON.stringify({
+      propertyId, date: Number(last.created_at), id: last.id,
+    })).toString("base64url") : null;
+    const ids = reviews.map((review) => review.id);
+    const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
+      .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",
+        { active: true, reviewType: "GUEST_TO_PROPERTY" })
+      .select("rating.reviewId", "review_id").addSelect("category.key", "key")
+      .addSelect("category.label", "label").addSelect("rating.rating", "rating")
+      .where("rating.reviewId IN (:...ids)", { ids })
+      .andWhere("rating.rating BETWEEN 1 AND 5")
+      .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
+    const count = Number(matching.count);
+    const responses = ids.length ? await database.getRepository(Review_Response).find({
+      where: { reviewId: In(ids), status: "published", deletedAt: IsNull() },
+      select: ["reviewId", "message", "publishedAt"],
+    }) : [];
+    return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
+      review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
+      next_cursor: nextCursor,
+      reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
+        text: review.public_review, date: Number(review.created_at), verified: true,
+        response: responses.filter((response) => response.reviewId === review.id)
+          .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
+        categories: ratings.filter((rating) => rating.review_id === review.id)
+          .map(({ key, label, rating }) => ({ key, label, rating: Number(rating) })) })) };
+  }
+
+  async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
+    // Fixed expressions keep the requested interval out of SQL interpolation.
+    const expressions = {
+      week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+      month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+      year: "DATE_TRUNC('year', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
+    };
+    if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
+    const period = expressions[interval];
+    const database = await Database.getInstance();
+    // Recheck property ownership during aggregation, using the shared eligibility filters.
+    return this.eligibleReviewQuery(database, propertyId)
+      .innerJoin(Property, "property",
+        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .andWhere("review.created_at >= :start", { start })
+      .andWhere("review.created_at < :endExclusive", { endExclusive })
+      .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
+      .addSelect("AVG(review.overall_rating)", "average_score")
+      .addSelect("COUNT(*)", "review_count")
+      .groupBy(period).orderBy(period, "ASC").getRawMany();
+  }
+
   async getPropertyCategoryRatings(propertyId, hostId) {
     const database = await Database.getInstance();
     const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
@@ -141,24 +295,94 @@ export class ReviewRepository {
     });
   }
 
-  async getPropertyReviewScore(propertyId, hostId) {
+  async findManagedProperties(hostId, offset) {
+    const database = await Database.getInstance();
+    return database.getRepository(Property).find({ where: { hostid: hostId }, select: ["id"],
+      order: { id: "ASC" }, skip: offset, take: 26 });
+  }
+
+  async getPropertyRatingTrendPage(hostId, options) {
+    const database = await Database.getInstance();
+    const aggregates = database.getRepository(Property).createQueryBuilder("property")
+      .leftJoin(Review, "review", `review.property_id = property.id
+        AND review.verification_status = :verificationStatus
+        AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
+        AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
+        AND review.overall_rating = FLOOR(review.overall_rating)
+        AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
+      .where("property.hostid = :hostId")
+      .select("property.id", "property_id")
+      .addSelect("AVG(CASE WHEN review.created_at < :currentStart THEN review.overall_rating END)", "previous_average_rating")
+      .addSelect("AVG(CASE WHEN review.created_at >= :currentStart THEN review.overall_rating END)", "current_average_rating")
+      .addSelect("COUNT(CASE WHEN review.created_at < :currentStart THEN 1 END)", "previous_review_count")
+      .addSelect("COUNT(CASE WHEN review.created_at >= :currentStart THEN 1 END)", "current_review_count")
+      .groupBy("property.id");
+    const classified = database.createQueryBuilder().from(`(${aggregates.getQuery()})`, "scores")
+      .select("scores.*")
+      .addSelect(`CASE WHEN previous_review_count < :minimumReviews OR current_review_count < :minimumReviews
+          OR previous_average_rating IS NULL OR current_average_rating IS NULL THEN 'INSUFFICIENT_DATA'
+        WHEN current_average_rating - previous_average_rating <= -:boundary THEN 'DECLINING'
+        WHEN current_average_rating - previous_average_rating >= :boundary THEN 'IMPROVING'
+        ELSE 'STABLE' END`, "trend_status");
+    const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
+      .select("trends.*")
+      .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
+        endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
+        boundary: options.threshold * (1 - 1e-12), verificationStatus: "VERIFIED",
+        publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+    if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
+    if (options.sort === "declining-first") {
+      page.orderBy("CASE WHEN trends.trend_status = 'DECLINING' THEN 0 ELSE 1 END", "ASC");
+    }
+    const rows = await page.addOrderBy("trends.property_id", "ASC").offset(options.offset).limit(26).getRawMany();
+    return rows.map((row) => ({ ...row,
+      previous_average_rating: row.previous_average_rating == null ? null : Number(row.previous_average_rating),
+      current_average_rating: row.current_average_rating == null ? null : Number(row.current_average_rating),
+      previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));
+  }
+
+  async getPropertyReviewScore(propertyId, hostId, range) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
-    const result = await dataSource.getRepository(Review).createQueryBuilder("review")
-      .innerJoin(Property, "property",
-        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
-      .select("AVG(review.overall_rating)", "overall_score")
-      .addSelect("COUNT(*)", "review_count")
+    const query = dataSource.getRepository(Review).createQueryBuilder("review")
       .where("review.property_id = :propertyId", { propertyId })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
       .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
-      .getRawOne();
+      .innerJoin(Property, "property",
+        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .select("AVG(review.overall_rating)", "overall_score")
+      .addSelect("COUNT(*)", "review_count");
+    if (range) {
+      query.andWhere("review.created_at >= :start", { start: range.start })
+        .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
+    }
+    const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
       overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
+  }
+
+  async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
+    const database = await Database.getInstance();
+    const query = database.getRepository(Review).createQueryBuilder("review")
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`))
+      .where("review.reviewer_user_id = :guestId", { guestId })
+      .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+    if (id !== undefined) query.andWhere("review.id = :id", { id });
+    // A guest's own history includes rejected entries and properties no longer publicly active.
+    const reviews = await query.orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
+      .offset(offset).limit(id === undefined ? 11 : 1).getMany();
+    if (!reviews.length) return [];
+    const properties = await database.getRepository(Property).find({
+      where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
+    });
+    const names = new Map(properties.map((property) => [property.id, property.title]));
+    const detailed = await this.attachPublicDetails(database, reviews);
+    return detailed.map((review) => ({ ...review, property_name: names.get(review.property_id) ?? null }));
   }
 
   async findReviewById(id) {
@@ -602,16 +826,7 @@ export class ReviewRepository {
   }
 
   async deleteOwnReview(id, reviewerUserId, now) {
-    const dataSource = await Database.getInstance();
-
-    return dataSource.getRepository(Review).update(
-      { id, reviewer_user_id: reviewerUserId },
-      {
-        status: "REJECTED",
-        publication_status: "REJECTED",
-        updated_at: now,
-      }
-    );
+    return this.softDelete(id, reviewerUserId, now);
   }
 
   async softDeleteResponse({ reviewId, authorId, deletedAt }) {
