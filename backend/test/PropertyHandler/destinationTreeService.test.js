@@ -172,6 +172,15 @@ describe("the destination tree", () => {
     expect(await empty.service.renderDestinationSitemap()).toBeNull();
   });
 
+  it("leaves a destination out of the sitemap when its path is longer than the page route accepts", async () => {
+    const long = `/destinations/europe/spain/${"a".repeat(231)}`;
+    const rows = [...ROWS, row(long, "city", "/destinations/europe/spain", "A".repeat(231), 1)];
+    const xml = await buildService({ rows }).service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" });
+    expect(long.length).toBeGreaterThan(256);
+    expect(xml).toContain("<loc>https://www.domits.com/destinations/europe/spain/marbella</loc>");
+    expect(xml).not.toContain("a".repeat(231));
+  });
+
   it("gives every URL in the sitemap a page and puts every page in the sitemap, whatever the tree", async () => {
     const counts = fc.array(fc.integer({ min: 0, max: 2 }), { minLength: ROWS.length, maxLength: ROWS.length });
     await fc.assert(

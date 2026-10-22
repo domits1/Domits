@@ -4,6 +4,7 @@ import { flagDestinationCity } from "../../util/destination/destinationFlags.js"
 import { DESTINATIONS_ROOT_PATH, buildDestinationPage, buildDestinationRootPage } from "./destinationPageBuilder.js";
 import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 import { createExpiringRead } from "../../util/expiringRead.js";
+import { readDestinationRequestPath } from "./destinationPageRequest.js";
 
 const byPath = (left, right) => left.path.localeCompare(right.path);
 
@@ -99,7 +100,9 @@ export class DestinationTreeService {
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
     const tree = await this.readTree();
     const root = buildRootContinents(tree).length > 0 ? [{ path: DESTINATIONS_ROOT_PATH }] : [];
-    const destinations = tree.filter((destination) => destination.eligible);
+    const destinations = tree.filter(
+      (destination) => destination.eligible && readDestinationRequestPath(destination.path).kind === "page"
+    );
     return buildDestinationSitemap([...root, ...destinations], { siteOrigin, lastModified });
   }
 
