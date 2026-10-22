@@ -28,11 +28,11 @@ describe("Merged review query and edit routes", () => {
     controller = new Controller({ service });
   });
 
-  it("dispatches managed-property scopes using the verified username", async () => {
+  it("dispatches managed-property scopes using the verified subject", async () => {
     for (const scope of ["property-score", "property-categories"]) {
       expect((await controller.getReviews(event("GET", { scope, propertyId: "p1", username: "spoof" }))).statusCode).toBe(200);
     }
-    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "verified-user");
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "guest");
   });
 
   it("loads the query-based edit form using the verified subject", async () => {

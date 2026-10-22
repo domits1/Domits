@@ -66,8 +66,8 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
-  async authorizeManagedProperty(callerUsername, propertyId) {
-    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
     if (typeof propertyId !== "string" || !propertyId.trim()) {
@@ -75,20 +75,15 @@ export class ReviewService {
     }
     this.assertId(propertyId, "property ID");
     const normalizedPropertyId = propertyId.trim();
-    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
     // Avoid disclosing whether another manager's property exists.
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
   }
 
-  async getPropertyOverallScore(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    return this.repository.getPropertyReviewScore(id, username);
-  }
-
-  async getPropertyCategoryRatings(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+  async getPropertyCategoryRatings(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
@@ -139,12 +134,7 @@ export class ReviewService {
   }
 
   async getPropertyReviewScore(userId, propertyId) {
-    this.assertCaller(userId);
-    this.assertId(propertyId, "property ID");
-    const id = propertyId.trim();
-    if (!(await this.repository.findManagedProperty(id, userId))) {
-      throw new NotFoundException("Property not found.");
-    }
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     return this.repository.getPropertyReviewScore(id, userId);
   }
 

@@ -59,7 +59,7 @@ export class Controller {
   // Fetch the caller's review list for the selected scope.
   // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
   async getReviews(event) {
-    return this.executeAuthenticated(event, async (userId, user) => {
+    return this.executeAuthenticated(event, async (userId) => {
       const query = event.queryStringParameters ?? {};
       const propertyScope = ["property-score", "property-categories"].includes(query.scope);
       if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
@@ -67,9 +67,9 @@ export class Controller {
       }
       let result;
       if (query.scope === "property-categories") {
-        result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+        result = await this.service.getPropertyCategoryRatings(userId, query.propertyId);
       } else if (query.scope === "property-score") {
-        result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+        result = await this.service.getPropertyReviewScore(userId, query.propertyId);
       } else if (query.reviewId !== undefined) {
         result = await this.service.getEditableReview(userId, query.reviewId);
       } else {

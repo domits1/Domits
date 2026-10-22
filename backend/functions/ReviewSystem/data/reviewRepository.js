@@ -112,7 +112,6 @@ export class ReviewRepository {
         .from(Review_Rating, "rating")
         .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
-        .andWhere("review.verification_status = :verified")
         .andWhere("review.publication_status = :published")
         .andWhere("review.status = :published")
         .andWhere("review.review_type = :reviewType")
@@ -126,7 +125,7 @@ export class ReviewRepository {
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
-      .setParameters({ propertyId, hostId, verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+      .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
       .orderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
@@ -158,7 +157,7 @@ export class ReviewRepository {
       .getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
-      overall_score: reviewCount === 0 ? null : Number(result.overall_score), review_count: reviewCount };
+      overall_score: reviewCount === 0 || result.overall_score == null ? null : Math.round(Number(result.overall_score) * 10) / 10, review_count: reviewCount };
   }
 
   async findReviewById(id) {
