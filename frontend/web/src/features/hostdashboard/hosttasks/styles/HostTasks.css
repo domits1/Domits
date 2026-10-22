@@ -1919,6 +1919,13 @@
     margin-right: auto;
 }
 
+.settings-load-error {
+    color: #dc3545;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: auto;
+}
+
 .settings-cancel-btn {
     padding: 9px 24px;
     border-radius: 6px;
