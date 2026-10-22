@@ -9,6 +9,7 @@ import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
+import { isValidInternalSecret } from "../.shared/internalSecretAuth.js";
 import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
@@ -72,6 +73,10 @@ export class Controller {
 
     async internalCreateTask(event) {
         try {
+            const providedSecret = event.headers?.["x-internal-secret"];
+            if (!isValidInternalSecret(providedSecret, process.env.INTERNAL_TASK_SECRET)) {
+                throw new UnauthorizedException("Invalid internal caller.");
+            }
             const { hostId, taskData } = JSON.parse(event.body || "{}");
             if (!hostId) {
                 return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "hostId is required" }) };

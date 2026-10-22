@@ -39,6 +39,7 @@ const task = {
 const activeMember = {
     id: TEAM_MEMBER_ID,
     host_id: "host-1",
+    status: "active",
     member_email: "housekeeper@example.com",
     member_user_id: "member-user-1",
 };
@@ -90,13 +91,29 @@ describe("notifyTaskAssigned", () => {
         expect(mockSend).not.toHaveBeenCalled();
     });
 
-    it("falls back to the default when the assignee has not accepted the invite yet", async () => {
-        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, member_user_id: null });
+    it("does not email someone whose invite has not been accepted yet", async () => {
+        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "pending", member_user_id: null });
 
         await notifyTaskAssigned("host-1", task);
 
         expect(mockGetHostSettings).not.toHaveBeenCalled();
-        expect(mockSend).toHaveBeenCalledTimes(1);
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("does not email a member who is no longer active", async () => {
+        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "removed" });
+
+        await notifyTaskAssigned("host-1", task);
+
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("logs and resolves when the call to the email service itself fails", async () => {
+        mockSend.mockRejectedValue(new Error("network down"));
+
+        await expect(notifyTaskAssigned("host-1", task)).resolves.toBeUndefined();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("task assigned"), expect.any(Error));
     });
 
     it("does not email anyone when the team member no longer belongs to the host", async () => {

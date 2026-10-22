@@ -151,6 +151,44 @@ describe('SettingsView', () => {
         );
     });
 
+    describe('when saving fails', () => {
+        const turnOffAssignedEmails = async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await waitFor(() => expect(screen.getByRole('button', { name: 'Task assigned to me' })).toHaveClass('on'));
+            fireEvent.click(screen.getByRole('button', { name: 'Task assigned to me' }));
+        };
+
+        test('tells the user the settings were not saved, and does not say they were', async () => {
+            saveSettings.mockRejectedValue(new Error('Failed to save settings: 500'));
+            await turnOffAssignedEmails();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(screen.getByRole('alert')).toHaveTextContent("Couldn't save your settings");
+            expect(screen.queryByText('Settings saved successfully.')).not.toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled();
+        });
+
+        test('removes the message once a retry succeeds', async () => {
+            saveSettings.mockRejectedValueOnce(new Error('Failed to save settings: 500')).mockResolvedValueOnce();
+            await turnOffAssignedEmails();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+            expect(screen.getByRole('alert')).toBeInTheDocument();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+            expect(screen.getByText('Settings saved successfully.')).toBeInTheDocument();
+        });
+    });
+
     describe('when the saved settings are not known', () => {
         // Saving sends every field, so a save made on top of unloaded defaults
         // would overwrite a saved opt-out.

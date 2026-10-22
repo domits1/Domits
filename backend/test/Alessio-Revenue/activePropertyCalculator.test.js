@@ -190,7 +190,7 @@ describe("Enterprise Active Property Calculator", () => {
       .mockReturnValueOnce(countQueryBuilder);
 
     mockRatePlanQueryBuilder.getOne.mockResolvedValue({
-      price_per_property_cents: 4900,
+      price_per_property_cents: 4300,
       currency: "EUR",
     });
 
@@ -199,9 +199,9 @@ describe("Enterprise Active Property Calculator", () => {
     ).resolves.toEqual({
       enterpriseId: "ent_123",
       activeProperties: 3,
-      pricePerProperty: 49,
+      pricePerProperty: 43,
       currency: "EUR",
-      estimatedMonthlyCost: 147,
+      estimatedMonthlyCost: 129,
     });
 
     expect(authQueryBuilder.where).toHaveBeenCalledWith(

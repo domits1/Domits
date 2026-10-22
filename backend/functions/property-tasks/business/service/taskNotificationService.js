@@ -31,7 +31,8 @@ export const notifyTaskAssigned = async (hostId, task) => {
     try {
         const dataSource = await Database.getInstance();
         const teamMember = await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, hostId);
-        if (!teamMember) {
+        // Someone whose invite is still pending, or who has left the team, must not get task emails.
+        if (!teamMember || teamMember.status !== "active") {
             return;
         }
         if (!(await isEmailEnabled(dataSource, teamMember.member_user_id, "notif_email_assigned"))) {

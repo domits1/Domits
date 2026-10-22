@@ -11,6 +11,8 @@ jest.mock("../../functions/property-tasks/business/service/taskNotificationServi
 const {
     mockGetTaskById,
     mockUpdateTaskInDb,
+    mockUpdateTaskUnlessCompleted,
+    mockSaveActivityToDb,
     mockGetChecklistItemsForTask,
     resetTaskRepositoryMocks,
 } = require("./taskRepositoryTestDoubles.js");
@@ -73,12 +75,43 @@ describe("updateTask completion notification", () => {
     });
 
     it("does not notify when the update could not be saved", async () => {
-        mockUpdateTaskInDb.mockRejectedValue(new Error("database down"));
+        mockUpdateTaskUnlessCompleted.mockRejectedValue(new Error("database down"));
 
         await expect(
             updateTask("host-1", "task-1", { status: "Completed" }, TEAM_MEMBER)
         ).rejects.toThrow("database down");
 
         expect(mockNotifyTaskCompleted).not.toHaveBeenCalled();
+    });
+
+    describe("when two people complete the same task at the same moment", () => {
+        it("completes the task with a write that only applies while it is not completed yet", async () => {
+            await updateTask("host-1", "task-1", { status: "Completed" }, TEAM_MEMBER);
+
+            expect(mockUpdateTaskUnlessCompleted).toHaveBeenCalledWith(
+                expect.anything(),
+                "task-1",
+                expect.objectContaining({ status: "Completed", completed_date: expect.any(Number) })
+            );
+            expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+        });
+
+        it("sends no email, writes no activity and still answers normally for the one that lost", async () => {
+            mockUpdateTaskUnlessCompleted.mockResolvedValue(false);
+
+            await expect(
+                updateTask("host-1", "task-1", { status: "Completed" }, TEAM_MEMBER)
+            ).resolves.toEqual({ message: "Task updated successfully" });
+
+            expect(mockNotifyTaskCompleted).not.toHaveBeenCalled();
+            expect(mockSaveActivityToDb).not.toHaveBeenCalled();
+        });
+
+        it("uses the plain write for updates that do not complete the task", async () => {
+            await updateTask("host-1", "task-1", { priority: "High" }, TEAM_MEMBER);
+
+            expect(mockUpdateTaskInDb).toHaveBeenCalledTimes(1);
+            expect(mockUpdateTaskUnlessCompleted).not.toHaveBeenCalled();
+        });
     });
 });

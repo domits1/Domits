@@ -144,7 +144,16 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
 
     fieldsToUpdate.updated_at = Date.now();
 
-    await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    if (isNewlyCompleted) {
+        // Two people can complete a task at the same moment. The write only applies while the task is
+        // not completed, so one of them wins and only that one logs and notifies.
+        const applied = await taskRepository.updateTaskUnlessCompleted(dataSource, taskId, fieldsToUpdate);
+        if (!applied) {
+            return { message: "Task updated successfully" };
+        }
+    } else {
+        await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    }
 
     await logActivity(dataSource, {
         taskId,
@@ -191,12 +200,13 @@ export const escalateTask = async (hostId, taskId) => {
 
     try {
         const recipientEmail = task.assignee_team_member_id
-            ? await getAssigneeEmailById(task.assignee_team_member_id)
+            ? await getAssigneeEmailById(task.assignee_team_member_id, hostId)
             : await getHostEmailById(hostId);
         await sendTaskEscalationEmail(recipientEmail, task);
     } catch (emailError) {
+        console.error("[escalateTask] Failed to send the escalation email:", emailError);
         await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
-        throw emailError;
+        throw new Error("Failed to send the escalation email. Please try again or contact support.");
     }
 
     return { message: "Task escalated successfully" };
@@ -251,6 +261,9 @@ const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
     const teamMember = await taskRepository.getTeamMemberById(dataSource, teamMemberId, hostId);
     if (!teamMember) {
         throw new BadRequestException("assignee_team_member_id does not belong to this host");
+    }
+    if (teamMember.status !== "active") {
+        throw new BadRequestException("assignee_team_member_id must be an active team member of this host");
     }
     return teamMember.member_email;
 };

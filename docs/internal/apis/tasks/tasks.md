@@ -16,9 +16,9 @@ Re-saving the same assignee, unassigning, completing an already completed task, 
 
 - Stored in the `host_settings` table, written by the `host-settings` Lambda. There is one row per **logged-in user**, keyed by their Cognito username, so a team member has their own row.
 - The email settings (assigned, overdue, completed) and the in-app setting default to **on**. The SMS setting defaults to **off**, and nothing reads it yet. A user with no saved row gets these defaults.
-- An assignee who has not accepted their invite yet has no `member_user_id`, so there is no row to read and the default (on) applies.
-- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me", "Task completed" and "Task overdue" are live. "Urgent tasks only" (SMS) and "Enable notifications" (in-app) are disabled and tagged "Coming soon".
-- The page blocks **Save** until the settings have loaded. A save sends every field, so saving over defaults that never loaded would overwrite a saved opt-out. If the load fails, an alert says so.
+- Only **active** team members can be assigned a task and emailed. Someone whose invite is still pending (or who has left the team) cannot be assigned a task (the API answers 400) and gets no "Task assigned" email. The manual Escalate email looks the assignee up without checking this, so it is not covered.
+- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me" and "Task completed" are live. "Task overdue", "Urgent tasks only" (SMS) and "Enable notifications" (in-app) are disabled and tagged "Coming soon".
+- The page blocks **Save** until the settings have loaded. A save sends every field, so saving over defaults that never loaded would overwrite a saved opt-out. If the load fails, an alert says so, and if a save fails, a message says so and the Save button stays available.
 
 ## How it works
 
@@ -34,6 +34,7 @@ EmailNotificationService (existing Lambda)   payload: { body: { toEmail, subject
 
 - `updateTask(hostId, taskId, updateData, { actorIsTeamMember })` takes the option from the controller, which fills it from `isPOM` (derived server-side from the token and team membership, never from the request body).
 - The completed email looks the host's address up through the `GetUserInfo` Lambda, as the escalation email does.
+- Completing a task is written with `UPDATE ... WHERE status <> 'Completed'` (`updateTaskUnlessCompleted`). If two people complete the same task at the same moment, one wins; the other changes nothing, logs no activity and sends no email, so the host gets exactly one completion email.
 
 ### The overdue sweep
 

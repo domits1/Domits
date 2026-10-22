@@ -33,6 +33,7 @@ export class StaticPageWithdrawal {
 
   async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
     const removed = [];
+    const deleted = [];
     const kept = [];
     const failures = [];
     for (const hostname of [...new Set(hostnames)]) {
@@ -42,13 +43,19 @@ export class StaticPageWithdrawal {
           kept.push(hostname);
           continue;
         }
-        ((await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" })) ? removed : kept).push(hostname);
+        if (!(await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" }))) {
+          kept.push(hostname);
+          continue;
+        }
+        deleted.push(hostname);
+        await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId: "" });
+        removed.push(hostname);
       } catch (error) {
         failures.push({ hostname, message: error.message });
       }
     }
 
-    return { removed, kept, failures, invalidationErrors: await this.#invalidate(removed) };
+    return { removed, kept, failures, invalidationErrors: await this.#invalidate(deleted) };
   }
 
   async withdraw({ siteId, domains }) {

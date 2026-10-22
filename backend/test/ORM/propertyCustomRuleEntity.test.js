@@ -86,3 +86,13 @@ describe.each([
     );
   });
 });
+
+describe("schema.psql test schema", () => {
+  it("keeps every property_custom_rules statement in the test part safe to run twice", () => {
+    const schema = loadSchemaSql();
+    const testPart = schema.slice(schema.indexOf("CREATE SCHEMA IF NOT EXISTS test;"));
+    const creates = testPart.match(/CREATE [^;]*\btest\.property_custom_rules\b[^;]*;/g);
+    expect(creates).toHaveLength(2);
+    creates.forEach((statement) => expect(statement).toMatch(/^CREATE (UNIQUE )?\w+( ASYNC)? IF NOT EXISTS /));
+  });
+});
