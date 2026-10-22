@@ -190,6 +190,39 @@ describe("the destination tree", () => {
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
   });
 
+  it("renders the root page with the continents and countries that have a page, without reading listings", async () => {
+    const { service, repository } = buildService();
+
+    const page = await service.renderDestinationPage("/destinations", { siteOrigin: "https://acceptance.domits.com/" });
+
+    expect(page).not.toBeNull();
+    expect(page.canonical).toBe("https://acceptance.domits.com/destinations");
+    expect(page.cacheControl).toBe("public, max-age=300");
+    expect(page.html).toContain('<link rel="canonical" href="https://acceptance.domits.com/destinations">');
+    expect(page.html).toContain('<a href="/destinations/europe">Europe</a>');
+    expect(page.html).toContain(
+      '<a href="/destinations/europe/spain">Spain</a> <span class="count">3 holiday rentals</span>'
+    );
+    expect(page.html).not.toMatch(/Portugal|Asia|Marbella|Ronda/);
+    expect(repository.listActiveListingsUnderPath).not.toHaveBeenCalled();
+  });
+
+  it("escapes the names on the root page", async () => {
+    const rows = [
+      row("/destinations/caribbean", "continent", null, "Caribbean <Isles>"),
+      row("/destinations/caribbean/trinidad-and-tobago", "country", "/destinations/caribbean", "Trinidad & Tobago", 1),
+    ];
+    const page = await buildService({ rows }).service.renderDestinationPage("/destinations");
+    expect(page.html).toContain("Caribbean &lt;Isles&gt;");
+    expect(page.html).toContain("Trinidad &amp; Tobago");
+    expect(page.html).not.toContain("Trinidad & Tobago");
+  });
+
+  it("answers null for the root page when no destination has a page, so it is a 404 and never an empty page", async () => {
+    const { service } = buildService({ rows: ROWS.map((destination) => ({ ...destination, activeListings: 0 })) });
+    expect(await service.renderDestinationPage("/destinations")).toBeNull();
+  });
+
   it("asks for the first 24 listings and still counts every active listing under the destination", async () => {
     const rows = ROWS.map((destination) =>
       destination.path === "/destinations/europe/spain/marbella" ? { ...destination, activeListings: 25 } : destination

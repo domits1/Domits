@@ -3,6 +3,24 @@ import { DestinationPageController } from "../../functions/PropertyHandler/contr
 import { handler } from "../../functions/PropertyHandler/index.js";
 import { DestinationTreeService } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
 import { DestinationSwitchRepository } from "../../functions/PropertyHandler/data/repository/destinationSwitchRepository.js";
+import { DestinationPageRepository } from "../../functions/PropertyHandler/data/repository/destinationPageRepository.js";
+
+const treeRow = (path, type, parentId, name, activeListings = 0) => ({
+  id: path,
+  type,
+  parentId,
+  slug: path.split("/").pop(),
+  path,
+  name,
+  countryCode: type === "continent" ? null : "ES",
+  activeListings,
+});
+
+const TREE_ROWS = [
+  treeRow("/destinations/europe", "continent", null, "Europe"),
+  treeRow("/destinations/europe/spain", "country", "/destinations/europe", "Spain"),
+  treeRow("/destinations/europe/spain/marbella", "city", "/destinations/europe/spain", "Marbella", 2),
+];
 
 const controllerAnswering = (outcome) => {
   const destinationPageService = { serve: jest.fn(async () => outcome) };
@@ -133,5 +151,17 @@ describe("a destination request through the property handler", () => {
     expect(madeUp.statusCode).toBe(404);
     expect(switchRead).not.toHaveBeenCalled();
     expect(render).not.toHaveBeenCalled();
+  });
+
+  it("serves the root page on the root resource from the real tree", async () => {
+    jest.useFakeTimers({ now: Date.now() + 480000, doNotFake: ["setTimeout", "clearTimeout"] });
+    jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(true);
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(TREE_ROWS);
+
+    const response = await request("/destinations", "/destinations");
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
+    expect(response.body).toContain('<a href="/destinations/europe/spain">Spain</a>');
   });
 });

@@ -1,7 +1,7 @@
 import { DestinationPageRepository } from "../../data/repository/destinationPageRepository.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 import { flagDestinationCity } from "../../util/destination/destinationFlags.js";
-import { buildDestinationPage } from "./destinationPageBuilder.js";
+import { DESTINATIONS_ROOT_PATH, buildDestinationPage, buildDestinationRootPage } from "./destinationPageBuilder.js";
 import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
 import { createExpiringRead } from "../../util/expiringRead.js";
 
@@ -59,6 +59,22 @@ export const buildDestinationTree = (destinations, settings = readDestinationSet
     .sort(byPath);
 };
 
+const buildRootContinents = (tree) =>
+  tree
+    .filter((destination) => destination.type === "continent")
+    .map((continent) => ({
+      name: continent.name,
+      path: continent.path,
+      hasPage: continent.eligible,
+      countries: tree
+        .filter(
+          (destination) =>
+            destination.type === "country" && destination.parentId === continent.id && destination.eligible
+        )
+        .map((country) => ({ name: country.name, path: country.path, activeListings: country.totalListings })),
+    }))
+    .filter((continent) => continent.hasPage || continent.countries.length > 0);
+
 export class DestinationTreeService {
   constructor({
     destinationPageRepository = new DestinationPageRepository(),
@@ -86,6 +102,9 @@ export class DestinationTreeService {
 
   async renderDestinationPage(path, { siteOrigin } = {}) {
     const tree = await this.readTree();
+    if (path === DESTINATIONS_ROOT_PATH) {
+      return buildDestinationRootPage({ continents: buildRootContinents(tree), siteOrigin });
+    }
     const destination = tree.find((candidate) => candidate.path === path);
     if (!destination?.eligible) {
       return null;
