@@ -479,17 +479,16 @@ const HostTasks = () => {
         }));
     };
 
+    // Only called from handleSaveChanges, which holds isApplyingChecklistTemplateRef for the whole save,
+    // so two checklist switches can never overlap.
     const applyChecklistTemplate = async (taskId, type, existingItems) => {
         const template = checklistTemplates[type] || [];
-        if ((template.length === 0 && existingItems.length === 0) || isApplyingChecklistTemplateRef.current) return null;
+        if (template.length === 0 && existingItems.length === 0) return null;
 
         // Captured so a stale result (the host switched to a different task while
         // this was still running) doesn't get applied to, or tracked against, the
         // task now being viewed.
         const requestId = checklistRequestRef.current;
-
-        isApplyingChecklistTemplateRef.current = true;
-        setIsApplyingChecklistTemplate(true);
 
         // Runs when the host saves a Type change, after the task itself has been saved. The existing
         // items are removed first, then the new Type's template is added, if it has one -- if not, the
@@ -499,16 +498,12 @@ const HostTasks = () => {
             const notDeleted = existingItems.filter((_item, index) => deleteResults[index].status === 'rejected');
 
             if (notDeleted.length > 0) {
-                isApplyingChecklistTemplateRef.current = false;
-                setIsApplyingChecklistTemplate(false);
                 toast.error(`Could not switch the template: ${notDeleted.length} existing item(s) could not be removed.`);
                 return requestId === checklistRequestRef.current ? notDeleted : null;
             }
         }
 
         if (template.length === 0) {
-            isApplyingChecklistTemplateRef.current = false;
-            setIsApplyingChecklistTemplate(false);
             return requestId === checklistRequestRef.current ? [] : null;
         }
 
@@ -533,9 +528,6 @@ const HostTasks = () => {
             toast.error(stillPresent.length > 0
                 ? `Error applying the checklist template. ${stillPresent.length} item(s) could not be rolled back.`
                 : "Error applying the checklist template. The checklist is now empty.");
-        } finally {
-            isApplyingChecklistTemplateRef.current = false;
-            setIsApplyingChecklistTemplate(false);
         }
         return requestId === checklistRequestRef.current ? created : null;
     };
@@ -561,6 +553,7 @@ const HostTasks = () => {
     };
 
     const openTaskDetails = (task) => {
+        if (isApplyingChecklistTemplateRef.current) return;
         const taskWithAssigneeSelection = {
             ...task,
             assigneeSelection: resolveAssigneeSelection(task, currentUser),
@@ -608,7 +601,33 @@ const HostTasks = () => {
         }
     };
 
+    // A Type change also replaces the task's checklist, and that takes several requests. The form stays
+    // open and locked until all of them are done, so no other task can be opened or saved in between.
     const handleSaveChanges = async () => {
+        const isTypeChanged = editedTask.type !== viewingTask.type;
+        if (!isTypeChanged) {
+            await saveTaskChanges(false);
+            return;
+        }
+        // Without the saved checklist there is nothing to replace, and saving the new Type anyway
+        // would leave the task with a Type its checklist does not belong to.
+        if (!isChecklistLoaded) {
+            toast.error('The checklist has not loaded, so the Type cannot be changed yet. Retry loading the checklist, then save again.');
+            return;
+        }
+        if (isApplyingChecklistTemplateRef.current) return;
+
+        isApplyingChecklistTemplateRef.current = true;
+        setIsApplyingChecklistTemplate(true);
+        try {
+            await saveTaskChanges(true);
+        } finally {
+            isApplyingChecklistTemplateRef.current = false;
+            setIsApplyingChecklistTemplate(false);
+        }
+    };
+
+    const saveTaskChanges = async (shouldSwitchChecklist) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newLogs = [];
 
@@ -649,17 +668,20 @@ const HostTasks = () => {
         }
 
         const finalTask = { ...updatedTask, attachments: existingUrls };
-        const shouldSwitchChecklist = isChecklistLoaded && editedTask.type !== viewingTask.type;
+        const closeForm = () => {
+            setViewingTask(null);
+            setEditedTask(null);
+        };
 
         setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
-        setViewingTask(null);
-        setEditedTask(null);
+        if (!shouldSwitchChecklist) closeForm();
 
         try {
             await updateTask(finalTask.id, finalTask);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");
+            closeForm();
             return;
         }
 
@@ -667,6 +689,7 @@ const HostTasks = () => {
         // Type, and its checklist must not have been replaced by the new Type's template.
         if (shouldSwitchChecklist) {
             await applyChecklistTemplate(finalTask.id, finalTask.type, checklistItems);
+            closeForm();
         }
     };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Auth } from 'aws-amplify';
+import { toast } from 'react-toastify';
 import HostTasks from './HostTasks';
 import { updateTask, fetchTasks } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
@@ -179,6 +180,56 @@ describe('HostTasks', () => {
             await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
             expect(deleteChecklistItem).not.toHaveBeenCalled();
             expect(createChecklistItem).not.toHaveBeenCalled();
+        });
+
+        test('refuses to save a Type change while the checklist is not loaded, so the Type never ends up out of sync with it', async () => {
+            fetchChecklistItems.mockRejectedValue(new Error('Could not load checklist'));
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await screen.findByText('Could not load checklist');
+            fireEvent.change(screen.getByLabelText('Type'), { target: { name: 'type', value: 'Maintenance' } });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/checklist/i)));
+            expect(updateTask).not.toHaveBeenCalled();
+            expect(screen.getByLabelText('Type')).toBeInTheDocument();
+        });
+
+        describe('while the checklist is being switched', () => {
+            const SECOND_TASK = { ...TASK, id: 'task-2', title: 'Water the garden' };
+            let releaseDelete;
+
+            const saveAndHoldTheSwitch = async () => {
+                fetchTasks.mockResolvedValue([TASK, SECOND_TASK]);
+                deleteChecklistItem.mockImplementation(() => new Promise((resolve) => { releaseDelete = resolve; }));
+                await openTaskAndSwitchTypeTo('Maintenance');
+                fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+                await waitFor(() => expect(deleteChecklistItem).toHaveBeenCalled());
+            };
+
+            test('keeps the form open and locked until the new checklist is in place', async () => {
+                await saveAndHoldTheSwitch();
+
+                expect(screen.getByLabelText('Type')).toBeDisabled();
+                expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+
+                releaseDelete({});
+                await waitFor(() => expect(screen.queryByLabelText('Type')).not.toBeInTheDocument());
+                expect(createChecklistItem).toHaveBeenCalledTimes(2);
+            });
+
+            test('does not let another task be opened, so its own Type save cannot be dropped', async () => {
+                await saveAndHoldTheSwitch();
+
+                fireEvent.click(screen.getByText('Water the garden'));
+
+                expect(screen.getByDisplayValue('Clean the villa')).toBeInTheDocument();
+                expect(screen.queryByDisplayValue('Water the garden')).not.toBeInTheDocument();
+
+                releaseDelete({});
+                await waitFor(() => expect(screen.queryByLabelText('Type')).not.toBeInTheDocument());
+            });
         });
     });
 
