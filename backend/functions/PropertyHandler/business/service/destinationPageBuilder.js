@@ -16,6 +16,14 @@ const cleanText = (value) =>
     .replaceAll(/\s+/g, " ")
     .trim();
 
+const toSiteOrigin = (siteOrigin) => {
+  let origin = cleanText(siteOrigin);
+  while (origin.endsWith("/")) {
+    origin = origin.slice(0, -1);
+  }
+  return origin || DEFAULT_SITE_ORIGIN;
+};
+
 const pluralListings = (count) => (count === 1 ? "1 holiday rental" : `${count} holiday rentals`);
 
 const describe = (destination, listingCount, children) => {
@@ -114,11 +122,7 @@ export const buildDestinationPage = ({
     throw new Error(`${destination.path} has no active listings and no destinations below it, so it has no page.`);
   }
 
-  let origin = cleanText(siteOrigin);
-  while (origin.endsWith("/")) {
-    origin = origin.slice(0, -1);
-  }
-  origin ||= DEFAULT_SITE_ORIGIN;
+  const origin = toSiteOrigin(siteOrigin);
   const trail = [{ name: DESTINATIONS_ROOT_NAME, path: DESTINATIONS_ROOT_PATH }, ...parents, destination];
   const breadcrumbs = renderBreadcrumbs(trail, origin);
   const title = `Holiday rentals in ${cleanText(destination.name)} | Domits`;
