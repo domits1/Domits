@@ -4,20 +4,23 @@ import { GENERIC_ERROR_MESSAGE, respond } from "./util/http/response.js";
 
 const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed.";
 
+const NO_ACTION = null;
+
 const ROUTES = new Map([
-  ["GET", (query) => (Object.hasOwn(query, "id") ? "getOwner" : "listOwners")],
-  ["POST", (query) => (Object.hasOwn(query, "id") ? null : "createOwner")],
+  ["GET", new Map([[NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }]])],
+  ["POST", new Map([[NO_ACTION, { withId: null, withoutId: "createOwner" }]])],
 ]);
 
 let controller = null;
 
 const resolveRoute = (event) => {
   const query = event.queryStringParameters ?? {};
-  const route = ROUTES.get(event.httpMethod);
-  if (!route || Object.hasOwn(query, "action")) {
+  const action = Object.hasOwn(query, "action") ? query.action : NO_ACTION;
+  const route = ROUTES.get(event.httpMethod)?.get(action);
+  if (!route) {
     return null;
   }
-  return route(query);
+  return Object.hasOwn(query, "id") ? route.withId : route.withoutId;
 };
 
 export const handler = async (event) => {
