@@ -112,7 +112,7 @@ Problems seen so far, and where to look first:
 | A change is `FAILED` in the outbox, alarm `channex-outbox-rows-failed` | Channex rejected it, or 8 attempts failed | `failurereason` in the outbox; ChannelManagement logs, line `CHANNEX_ARI_OUTBOX_ROWS_FAILED` |
 | Dates show as closed in Channex while open in Domits | The dates are outside the property's availability period | `main.property_availability` for the property |
 | A booking does not arrive in Domits | Webhook inactive or wrong secret (alarm `channex-webhook-rejected`), or booked on an unmapped room or rate | Channex → Webhooks; the booking's room and rate in Channex |
-| A booking is stored but not on the Reservations page | The page loads only 12 of a host's properties | `main.booking` with `bookingtype = 'channex'` |
+| A booking is stored but not on the Reservations page | The page loads only 12 of a host's properties (#3642) | `main.booking` with `bookingtype = 'channex'` |
 | Webhook test returns `401` | The header value differs from the secret | Fingerprint check in the [runbook, S7](./channex_production_switch_runbook.md#s7-production-booking-webhook) |
 | Connect or mapping returns `403` | The user is not on `CHANNEX_CERTIFICATION_USER_IDS` | Allowlist on ChannelManagement and UnifiedMessaging |
 | Mapping refused with `CHANNEX_MAPPING_PROPERTY_NOT_OWNED` | Logged in as someone other than the property's host | Log in as the host |
@@ -128,7 +128,7 @@ Problems seen so far, and where to look first:
 | Existing future bookings are not imported | Before a channel is activated, the host must block those dates in the Domits calendar | #3582 |
 | Only the guest's first name is stored | Channex sends name and surname separately | #3616 |
 | Booking currency and cancellation date of imported bookings | Open bugs in how they are stored | #3583, #3585 |
-| Reservations page loads only 12 of a host's properties | Bookings on the other properties are stored but not shown | issue from 22 Oct 2026 |
+| Reservations page loads only 12 of a host's properties | Bookings on the other properties are stored but not shown | #3642 |
 | Webhook only, no polling backup | A missed webhook means a missed booking until it is fetched manually | #3576 |
 | Webhook deliveries are not signed | The shared secret header is the only check; HMAC signing is available in Channex | #3574 |
 | Dates outside the availability period | Sent as closed; Channex shows them as unavailable | by design |
