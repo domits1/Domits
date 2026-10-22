@@ -1,10 +1,12 @@
 import { PropertyController } from "./controller/propertyController.js";
+import { DestinationPageController } from "./controller/destinationPageController.js";
 
 const STATIC_PAGE_TASK = "build-static-pages";
 const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
 const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
 
 let controller = new PropertyController();
+const destinationPageController = new DestinationPageController();
 
 const notFound = (body) => ({
   statusCode: 404,
@@ -12,6 +14,13 @@ const notFound = (body) => ({
 });
 
 const isPath = (event, route) => event.resource === route || event.path === route;
+
+const DESTINATION_PAGE_RESOURCES = new Set(["/destinations", "/destinations/{proxy+}"]);
+
+const isDestinationPageRequest = (event) =>
+  DESTINATION_PAGE_RESOURCES.has(event.resource) ||
+  isPath(event, "/destinations") ||
+  String(event.path || "").startsWith("/destinations/");
 
 const getSubResource = (event, resourceTemplate, pathPrefix) => {
   if (event.resource === resourceTemplate) {
@@ -109,6 +118,9 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isDestinationPageRequest(event)) {
+    return destinationPageController.getDestinationPage(event);
+  }
   if (isPath(event, "/property/website/public/resolve")) {
     return controller.resolvePublicWebsiteSite(event);
   }

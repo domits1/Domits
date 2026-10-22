@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+  DESTINATION_TREE_READ_TIMEOUT_MS,
   DestinationTreeService,
   buildDestinationTree,
 } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
@@ -37,12 +38,21 @@ const LISTING = {
   destinationPath: "/destinations/europe/spain/marbella",
 };
 
-const buildService = ({ rows = ROWS, listings = [LISTING], settings = readDestinationSettings({}) } = {}) => {
+const buildService = ({
+  rows = ROWS,
+  listings = [LISTING],
+  settings = readDestinationSettings({}),
+  clock = { now: 0 },
+} = {}) => {
   const repository = {
     listDestinationsWithActiveListings: jest.fn(async () => rows),
     listActiveListingsUnderPath: jest.fn(async () => listings),
   };
-  return { service: new DestinationTreeService({ destinationPageRepository: repository, settings }), repository };
+  return {
+    service: new DestinationTreeService({ destinationPageRepository: repository, settings, now: () => clock.now }),
+    repository,
+    clock,
+  };
 };
 
 describe("the destination tree", () => {
@@ -172,7 +182,7 @@ describe("the destination tree", () => {
     expect(page.html).toContain("Marbella");
     expect(page.html).toContain("Málaga");
     expect(page.html).not.toContain("Ronda");
-    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain");
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain", 24);
 
     expect(await service.renderDestinationPage("/destinations/europe/portugal")).toBeNull();
     expect(await service.renderDestinationPage("/destinations/europe/spain/ronda")).toBeNull();
@@ -180,10 +190,84 @@ describe("the destination tree", () => {
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
   });
 
+  it("asks for the first 24 listings and still counts every active listing under the destination", async () => {
+    const rows = ROWS.map((destination) =>
+      destination.path === "/destinations/europe/spain/marbella" ? { ...destination, activeListings: 25 } : destination
+    );
+    const firstPage = Array.from({ length: 24 }, (_, index) => ({ ...LISTING, id: `p${index}` }));
+    const { service, repository } = buildService({ rows, listings: firstPage });
+
+    const page = await service.renderDestinationPage("/destinations/europe/spain/marbella");
+
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledWith("/destinations/europe/spain/marbella", 24);
+    expect(page.html.match(/<li class="listing">/g)).toHaveLength(24);
+    expect(page.description).toContain("25 holiday rentals");
+  });
+
   it("answers null instead of an empty page when the listings are gone between the count and the listing read", async () => {
     const { service, repository } = buildService();
     repository.listActiveListingsUnderPath.mockResolvedValue([]);
     expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
+  });
+
+  it("answers a made up path from the tree it read within the last minute, without asking the database again", async () => {
+    const { service, repository, clock } = buildService();
+
+    await service.renderDestinationPage("/destinations/europe/spain");
+    clock.now = 59999;
+    expect(await service.renderDestinationPage("/destinations/europe/spain/nowhere")).toBeNull();
+    expect(await service.renderDestinationPage("/destinations/aaa/bbb/ccc")).toBeNull();
+    expect(await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })).toContain("<urlset");
+
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(1);
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the tree again once a minute has passed and uses the new one", async () => {
+    const { service, repository, clock } = buildService();
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    repository.listDestinationsWithActiveListings.mockResolvedValue(ROWS.filter((row) => !row.path.includes("spain")));
+    clock.now = 60000;
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares one tree read between two pages asked at the same time", async () => {
+    const { service, repository } = buildService();
+    const pages = await Promise.all([
+      service.renderDestinationPage("/destinations/europe/spain"),
+      service.renderDestinationPage("/destinations/europe/spain/marbella"),
+    ]);
+    expect(pages.map((page) => page.title)).toEqual([
+      "Holiday rentals in Spain | Domits",
+      "Holiday rentals in Marbella | Domits",
+    ]);
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not keep a failed tree read, so the next page reads it again", async () => {
+    const { service, repository } = buildService();
+    repository.listDestinationsWithActiveListings.mockRejectedValueOnce(new Error("connection refused"));
+    await expect(service.renderDestinationPage("/destinations/europe/spain")).rejects.toThrow("connection refused");
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives up on a tree read that hangs, so the next page reads the tree again", async () => {
+    jest.useFakeTimers();
+    const { service, repository } = buildService();
+    repository.listDestinationsWithActiveListings.mockImplementationOnce(() => new Promise(() => {}));
+
+    const hanging = expect(service.renderDestinationPage("/destinations/europe/spain")).rejects.toThrow(
+      `The read took longer than ${DESTINATION_TREE_READ_TIMEOUT_MS} ms.`
+    );
+    await jest.advanceTimersByTimeAsync(DESTINATION_TREE_READ_TIMEOUT_MS);
+    await hanging;
+
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it("lets a repository failure reach the caller instead of rendering an empty page", async () => {
