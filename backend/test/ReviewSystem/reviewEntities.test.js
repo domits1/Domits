@@ -475,11 +475,12 @@ describe('Review transactional writes', () => {
     expect(committed.get(Review_Response)).toHaveLength(1);
   });
 
-  it("publishes and completes the matching request in one transaction without upgrading verification", async () => {
+  it.each(["OPEN", "SENDING", "SENT", "FAILED", "CANCELLED"])("publishes and completes a %s request without upgrading verification", async (status) => {
+    committed.get(Review_Request)[0].status = status;
     const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true });
     expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
-    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: null });
+    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: now - 100 });
   });
 
   it("rechecks publication policy and booking eligibility before committing", async () => {

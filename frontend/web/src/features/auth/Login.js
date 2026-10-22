@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
+import { safeReviewDestination } from "./safeReviewDestination";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
 import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
@@ -16,6 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const returnTo = safeReviewDestination(location.state?.returnTo);
   const _rawRedirect = new URLSearchParams(location.search).get("redirect");
   const redirect = _rawRedirect ? decodeURIComponent(_rawRedirect) : null;
 
@@ -40,6 +42,11 @@ const Login = () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
 
+        if (returnTo) {
+          navigate(returnTo, { replace: true });
+          return;
+        }
+
         if (redirect) {
           window.location.href = redirect;
           return;
@@ -53,7 +60,7 @@ const Login = () => {
     };
 
     checkAuth();
-  }, [navigate, redirect]);
+  }, [navigate, redirect, returnTo]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -62,7 +69,9 @@ const Login = () => {
   const completeSignIn = () => {
     globalThis.dispatchEvent(new Event("authChanged"));
 
-    if (redirect) {
+    if (returnTo) {
+      navigate(returnTo, { replace: true });
+    } else if (redirect) {
       window.location.href = redirect;
     } else {
       globalThis.location.reload();

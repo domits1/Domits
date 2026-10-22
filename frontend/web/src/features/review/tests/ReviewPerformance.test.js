@@ -1,4 +1,5 @@
 import React from "react";
+import userEvent from "@testing-library/user-event";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import ReviewPerformance from "../../hostdashboard/ReviewPerformance";
 import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hostTaskPropertyService";
@@ -15,7 +16,7 @@ const points = [{ period: "2026-01-01", average_score: 4.5, review_count: 2 },
   { period: "2026-02-01", average_score: null, review_count: 0 }];
 const selectProperty = async (value = "p1") => {
   await screen.findByRole("option", { name: "Beach house" });
-  await act(async () => { fireEvent.change(screen.getByLabelText("Property"), { target: { value } }); });
+  await userEvent.selectOptions(screen.getByLabelText("Property"), value);
 };
 beforeEach(() => {
   jest.clearAllMocks();
@@ -34,13 +35,12 @@ test("loads owned properties and displays scores and counts after selection", as
 test.each(["week", "year"])("requests %s with the selected date range", async (interval) => {
   render(<ReviewPerformance userId="host" />);
   await selectProperty();
-  await act(async () => {
   fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2025-01-01" } });
   fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2026-03-01" } });
-  fireEvent.change(screen.getByLabelText("Interval"), { target: { value: interval } });
-  });
+  await userEvent.selectOptions(screen.getByLabelText("Interval"), interval);
   await waitFor(() => expect(getPropertyReviewPerformance).toHaveBeenLastCalledWith({ propertyId: "p1",
     startDate: "2025-01-01", endDate: "2026-03-01", interval }));
+  await screen.findByText("4.50");
 });
 test("rejects reversed dates without fetching or retaining the old chart", async () => {
   render(<ReviewPerformance userId="host" />);

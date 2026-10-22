@@ -20,7 +20,7 @@ jest.mock("aws-amplify", () => ({
 }));
 jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
-  useLocation: () => ({ search: mockSearch, state: null }),
+  useLocation: () => ({ pathname: "/review", search: mockSearch, state: null }),
 }));
 jest.mock("../../guestdashboard/services/bookingAPI", () => ({
   getGuestBookings: jest.fn(),
@@ -31,7 +31,9 @@ jest.mock("../services/reviewAPI", () => ({
   getEditableReview: jest.fn(),
   updateReview: jest.fn(),
 }));
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
+jest.mock("../../../services/getAccessToken", () => ({
+  getIdToken: async () => "id-token",
+}));
 
 const booking = {
   id: "reservation-1",
@@ -171,7 +173,7 @@ it("rejects direct URLs without a reservation", async () => {
 it("redirects unauthenticated guests without displaying the form", async () => {
   Auth.currentUserInfo.mockResolvedValue(null);
   render(<ReviewPage />);
-  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login"));
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true, state: { returnTo: `/review${mockSearch}` } }));
   expect(screen.queryAllByRole("radio")).toHaveLength(0);
   expect(getGuestBookings).not.toHaveBeenCalled();
 });
@@ -282,7 +284,7 @@ it("maps the selected rating to overall_rating in the authenticated HTTP request
     const [url, request] = global.fetch.mock.calls[0];
     expect(url).toBe(`${api.API_REVIEW_BASE}/reviews`);
     expect(request.method).toBe("POST");
-    expect(request.headers.Authorization).toBe("access-token");
+    expect(request.headers.Authorization).toBe("id-token");
     expect(JSON.parse(request.body)).toEqual({
       booking_id: booking.id, overall_rating: 4, title: "Great stay", public_review: "Great stay.", private_feedback: "",
     });
@@ -301,7 +303,7 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
     await web.requestReview(method, query);
     const path = method === "GET" ? "/reviews?scope=received" : "/reviews/review-1";
     expect(global.fetch.mock.calls[0]).toEqual([`${web.API_REVIEW_BASE}${path}`,
-      { method, headers: { Authorization: "access-token" } }]);
+      { method, headers: { Authorization: "id-token" } }]);
   } finally { global.fetch = originalFetch; }
 });
 
@@ -330,7 +332,7 @@ it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", asy
     expect(url).toBe(`${api.API_REVIEW_BASE}/reviews/review-1`);
     expect(request.method).toBe(method);
     if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated" });
-    expect(request.headers.Authorization).toBe("access-token");
+    expect(request.headers.Authorization).toBe("id-token");
   } finally { global.fetch = originalFetch; }
 });
 

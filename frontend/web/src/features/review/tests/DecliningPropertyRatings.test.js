@@ -41,12 +41,10 @@ test("requests chosen periods and resets pagination when filters change", async 
   getPropertyRatingTrends.mockImplementation(({ offset }) => Promise.resolve({ ...result, next_offset: offset === "0" ? 7 : null }));
   render(<DecliningPropertyRatings userId="host" />);
   await screen.findByText("Beach house");
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Next page" })); });
+  fireEvent.click(screen.getByRole("button", { name: "Next page" }));
   expect(getPropertyRatingTrends).toHaveBeenLastCalledWith(expect.objectContaining({ offset: "7" }));
-  await act(async () => {
-    fireEvent.change(screen.getByLabelText("Comparison end date"), { target: { value: "2026-01-01" } });
+  fireEvent.change(screen.getByLabelText("Comparison end date"), { target: { value: "2026-01-01" } });
     fireEvent.change(screen.getByLabelText("Days per period"), { target: { value: "14" } });
-  });
   await waitFor(() => expect(getPropertyRatingTrends).toHaveBeenLastCalledWith({ endDate: "2026-01-01", days: "14", offset: "0", status: "DECLINING" }));
 });
 test.each(["0", "367", ""])("rejects invalid days %s without fetching", async (value) => {
@@ -87,7 +85,7 @@ test("ignores stale responses after changing the period", async () => {
   let resolveFirst;
   getPropertyRatingTrends.mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }));
   render(<DecliningPropertyRatings userId="host" />);
-  await act(async () => { fireEvent.change(screen.getByLabelText("Days per period"), { target: { value: "14" } }); });
+  fireEvent.change(screen.getByLabelText("Days per period"), { target: { value: "14" } });
   await screen.findByText("Beach house");
   await act(async () => { resolveFirst({ ...result, properties: [property("stale", "DECLINING")] }); });
   await waitFor(() => expect(screen.queryByText("stale")).not.toBeInTheDocument());

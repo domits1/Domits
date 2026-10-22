@@ -1,7 +1,9 @@
+import { ReviewService } from "./business/service/reviewService.js";
 import { Controller } from "./controller/controller.js";
 import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
 
 let controller;
+let scheduledService;
 
 const routes = new Map([
   ["/reviews", new Map([["GET", "getReviews"], ["POST", "createReview"], ["PATCH", "updateReview"]])],
@@ -31,6 +33,11 @@ const jsonResponse = (statusCode, message, extraHeaders = {}) => ({
 
 export const handler = async (event) => {
   try {
+    if (event?.source === "aws.events" && event?.["detail-type"] === "Scheduled Event" &&
+        event?.resources?.some(arn => arn.endsWith("/domits-review-requests"))) {
+      scheduledService ??= new ReviewService();
+      return { statusCode: 200, body: JSON.stringify(await scheduledService.processReviewRequests()) };
+    }
     const method = event?.httpMethod;
     const resourceRoutes = routes.get(event?.resource);
 

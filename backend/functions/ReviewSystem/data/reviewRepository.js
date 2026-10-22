@@ -21,6 +21,14 @@ import {
 const MAX_TRANSACTION_ATTEMPTS = 3;
 const REVIEW_REQUEST_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
+const reviewRequestCutoff = (now) => {
+  const startAt = Number(process.env.REVIEW_REQUEST_START_AT);
+  if (!Number.isSafeInteger(startAt) || startAt <= 0) {
+    throw new Error("REVIEW_REQUEST_START_AT must be a positive epoch timestamp.");
+  }
+  return Math.max(startAt, now - REVIEW_REQUEST_DURATION_MS);
+};
+
 const REVIEW_FIELDS = [
   "id",
   "booking_id",
@@ -512,6 +520,48 @@ export class ReviewRepository {
     });
   }
 
+  async findReviewRequestCandidates(now) {
+    const db = await Database.getInstance();
+    const query = db.getRepository(Booking).createQueryBuilder("stay")
+      .leftJoin(Review_Request, "request", "request.bookingId = stay.id AND request.guestId = stay.guestid AND request.reviewType = :type", { type: "GUEST_TO_PROPERTY" })
+      .leftJoin(Review, "existing", "existing.booking_id = stay.id AND existing.reviewer_user_id = stay.guestid AND existing.review_type = :type")
+      .where("existing.id IS NULL")
+      .andWhere("(request.id IS NULL OR (request.status = :open AND request.claimedAt IS NULL AND request.lastSentAt IS NULL AND request.expiresAt > :now))", { open: "OPEN", now });
+    for (const field of ["guestid", "hostid", "property_id"]) query.andWhere(`TRIM(stay.${field}) <> ''`);
+    applyCompletedStayConditions(query, now);
+    query.andWhere("stay.departuredate >= :requestCutoff", { requestCutoff: reviewRequestCutoff(now) });
+    return query.orderBy("stay.departuredate", "ASC").addOrderBy("stay.id", "ASC").take(50).getMany();
+  }
+
+  async claimReviewRequest(booking, now) {
+    const db = await Database.getInstance();
+    const requests = db.getRepository(Review_Request);
+    const key = { bookingId: booking.id, guestId: booking.guestid, reviewType: "GUEST_TO_PROPERTY" };
+    await requests.createQueryBuilder().insert().values({
+      ...key, id: randomUUID(), propertyId: booking.property_id, hostId: booking.hostid,
+      status: "OPEN", requestedAt: now, expiresAt: Number(booking.departuredate) + REVIEW_REQUEST_DURATION_MS,
+      createdAt: now, updatedAt: now, sendCount: 0,
+    }).orIgnore().execute();
+    const request = await requests.findOne({ where: key });
+    if (!request) return null;
+    const result = await requests.createQueryBuilder().update(Review_Request)
+      .set({ status: "SENDING", claimedAt: now, updatedAt: now, sendCount: 1 })
+      .where("id = :id", { id: request.id }).andWhere("status = :open", { open: "OPEN" })
+      .andWhere("claimed_at IS NULL AND last_sent_at IS NULL")
+      .andWhere("expires_at > :now", { now }).execute();
+    return Number(result.affected) === 1 ? request : null;
+  }
+
+  async finishReviewRequest(id, status, now) {
+    const db = await Database.getInstance();
+    const requests = db.getRepository(Review_Request);
+    if (status === "SENT") {
+      // Publication may have completed the request while delivery was in flight.
+      await requests.update({ id, status: In(["SENDING", "COMPLETED"]) }, { lastSentAt: now });
+    }
+    return requests.update({ id, status: "SENDING" }, { status, updatedAt: now });
+  }
+
   async findBookingById(bookingId) {
     const dataSource = await Database.getInstance();
 
@@ -955,14 +1005,13 @@ export class ReviewRepository {
         bookingId: review.booking_id,
         reviewType: review.review_type,
         guestId: review.reviewer_user_id,
-        status: "OPEN",
+        status: In(["OPEN", "SENDING", "SENT", "FAILED", "CANCELLED"]),
       },
       {
         status: "COMPLETED",
         completedAt: timestamp,
         updatedAt: timestamp,
         nextSendAt: null,
-        claimedAt: null,
       }
     );
   }
