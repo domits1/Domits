@@ -2,6 +2,7 @@ import { DestinationSwitchRepository } from "../../data/repository/destinationSw
 import { buildDestinationNotFoundPage, buildDestinationUnavailablePage } from "./destinationPageBuilder.js";
 import { readDestinationRequestPath, resolveDestinationSiteOrigin } from "./destinationPageRequest.js";
 import { DestinationTreeService } from "./destinationTreeService.js";
+import { createExpiringRead } from "../../util/expiringRead.js";
 
 export const DESTINATION_SWITCH_TTL_MS = 60000;
 export const DESTINATION_RENDER_TIMEOUT_MS = 5000;
@@ -22,10 +23,12 @@ export class DestinationPageService {
   } = {}) {
     this.destinationTreeService = destinationTreeService;
     this.destinationSwitchRepository = destinationSwitchRepository;
-    this.now = now;
     this.renderTimeoutMs = renderTimeoutMs;
-    this.switchState = null;
-    this.switchRead = null;
+    this.readSwitch = createExpiringRead({
+      read: () => this.destinationSwitchRepository.isDestinationPagesSwitchOn(),
+      ttlMs: DESTINATION_SWITCH_TTL_MS,
+      now,
+    });
   }
 
   async serve({ path, forwardedHost } = {}) {
@@ -49,22 +52,6 @@ export class DestinationPageService {
       console.error("Destination page unavailable:", error?.name, error?.message);
       return { kind: "unavailable", html: buildDestinationUnavailablePage() };
     }
-  }
-
-  readSwitch() {
-    if (this.switchState && this.now() < this.switchState.expiresAt) {
-      return Promise.resolve(this.switchState.on);
-    }
-    this.switchRead ??= this.destinationSwitchRepository
-      .isDestinationPagesSwitchOn()
-      .then((on) => {
-        this.switchState = { on, expiresAt: this.now() + DESTINATION_SWITCH_TTL_MS };
-        return on;
-      })
-      .finally(() => {
-        this.switchRead = null;
-      });
-    return this.switchRead;
   }
 
   async renderWithinLimit(path, siteOrigin) {
