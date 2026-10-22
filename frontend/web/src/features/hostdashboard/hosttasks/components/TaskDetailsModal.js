@@ -55,6 +55,8 @@ const TaskDetailsModal = ({
     if (!viewingTask || !editedTask) return null;
 
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
+    // Nothing happens to the checklist until Save: a different Type here only changes the form.
+    const isSwitchingType = editedTask.type !== viewingTask.type;
 
     return (
         <>
@@ -149,7 +151,7 @@ const TaskDetailsModal = ({
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
-                                <select id='task-type' name="type" value={editedTask.type} onChange={onEditChange}>
+                                <select id='task-type' name="type" value={editedTask.type} onChange={onEditChange} disabled={isApplyingChecklistTemplate}>
                                     {TASK_TYPE_OPTIONS.map(option => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
@@ -164,6 +166,13 @@ const TaskDetailsModal = ({
                                 <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={onEditChange} onClick={(e) => e.target.showPicker?.()} />
                             </div>
                         </div>
+
+                        {isSwitchingType && (
+                            <p className="checklist-switch-notice" role="status">
+                                Saving will replace this checklist with the {editedTask.type} checklist.
+                                Existing items, including checked and custom ones, will be removed.
+                            </p>
+                        )}
 
                         <ChecklistSection
                             items={checklistItems}
@@ -240,7 +249,7 @@ const TaskDetailsModal = ({
                         {isUnchanged ? (
                             <button className="btn-danger" onClick={onDelete}>Delete</button>
                         ) : (
-                            <button className="btn-create-green" onClick={onSave}>Save Changes</button>
+                            <button className="btn-create-green" onClick={onSave} disabled={isApplyingChecklistTemplate}>Save Changes</button>
                         )}
                     </div>
                 </div>

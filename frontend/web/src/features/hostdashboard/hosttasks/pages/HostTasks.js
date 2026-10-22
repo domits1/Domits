@@ -9,7 +9,7 @@ import '../styles/HostTasks.css';
 import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
-import { HOST_ASSIGNEE_ID, resolveAssigneeSelection } from '../utils/assigneeSelection';
+import { HOST_ASSIGNEE_ID, resolveAssigneeSelection, resolveAssigneeDisplayName } from '../utils/assigneeSelection';
 import {
     fetchChecklistItems,
     fetchChecklistTemplates,
@@ -53,11 +53,16 @@ const HostTasks = () => {
     const loadRequestRef = useRef(0);
     const checklistRequestRef = useRef(0);
     const isApplyingChecklistTemplateRef = useRef(false);
-    const templateCreatedItemIdsRef = useRef([]);
     const draftChecklistIdRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
-    const [tasks, setTasks] = useState([]);
+    const [loadedTasks, setTasks] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
+    // The server stores a team member's email as assignee_name, so the name shown comes from the team list.
+    const tasks = useMemo(
+        () => loadedTasks.map(task => ({ ...task, assignee: resolveAssigneeDisplayName(task, teamMembers) })),
+        [loadedTasks, teamMembers]
+    );
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +121,6 @@ const HostTasks = () => {
     }, [isModalOpen, checklistTemplates]);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
-    const [teamMembers, setTeamMembers] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
 
     const reportData = useMemo(() => {
@@ -487,18 +491,12 @@ const HostTasks = () => {
         isApplyingChecklistTemplateRef.current = true;
         setIsApplyingChecklistTemplate(true);
 
-        // Switching Type clears the checklist first, same as any other
-        // checklist edit (add/toggle/delete): immediate and permanent, not
-        // reversible via Discard. The new type's template is then added, if
-        // it has one -- if not, the checklist is simply left empty rather
-        // than keeping leftover items from the previous type.
+        // Runs when the host saves a Type change, after the task itself has been saved. The existing
+        // items are removed first, then the new Type's template is added, if it has one -- if not, the
+        // checklist is simply left empty rather than keeping leftover items from the previous Type.
         if (existingItems.length > 0) {
             const deleteResults = await Promise.allSettled(existingItems.map(item => deleteChecklistItem(item.id)));
             const notDeleted = existingItems.filter((_item, index) => deleteResults[index].status === 'rejected');
-            const deletedIds = existingItems
-                .filter((_item, index) => deleteResults[index].status === 'fulfilled')
-                .map(item => item.id);
-            templateCreatedItemIdsRef.current = templateCreatedItemIdsRef.current.filter(id => !deletedIds.includes(id));
 
             if (notDeleted.length > 0) {
                 isApplyingChecklistTemplateRef.current = false;
@@ -522,22 +520,14 @@ const HostTasks = () => {
             for (const item of template) {
                 const createdItem = await createChecklistItem(taskId, item);
                 created.push(createdItem);
-                if (requestId === checklistRequestRef.current) {
-                    templateCreatedItemIdsRef.current.push(createdItem.id);
-                }
             }
         } catch (error) {
             // Roll back whatever succeeded so a mid-template failure never leaves
             // a half-filled checklist with no indication of what happened. If a
             // rollback delete itself fails, that item genuinely still exists, so
-            // it's kept (here and in the discard-tracking ref) rather than
-            // silently losing track of it.
+            // it's kept rather than silently losing track of it.
             const rollbackResults = await Promise.allSettled(created.map(item => deleteChecklistItem(item.id)));
             const stillPresent = created.filter((_item, index) => rollbackResults[index].status === 'rejected');
-            const removedIds = created
-                .filter((_item, index) => rollbackResults[index].status === 'fulfilled')
-                .map(item => item.id);
-            templateCreatedItemIdsRef.current = templateCreatedItemIdsRef.current.filter(id => !removedIds.includes(id));
             created.length = 0;
             created.push(...stillPresent);
             toast.error(stillPresent.length > 0
@@ -577,7 +567,6 @@ const HostTasks = () => {
         };
         setViewingTask(taskWithAssigneeSelection);
         setEditedTask({ ...taskWithAssigneeSelection });
-        templateCreatedItemIdsRef.current = [];
         loadChecklistItems(task.id);
     };
 
@@ -585,14 +574,11 @@ const HostTasks = () => {
         loadChecklistItems(viewingTask.id);
     };
 
-    const handleEditChange = async (e) => {
+    // Changing the Type only changes the form. The checklist is replaced when the host saves (see
+    // handleSaveChanges), so Discard has nothing to undo and no saved item is lost on the way.
+    const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
-
-        if (name === 'type' && viewingTask && isChecklistLoaded) {
-            const result = await applyChecklistTemplate(viewingTask.id, value, checklistItems);
-            if (result !== null) setChecklistItems(result);
-        }
     };
 
     const closeTaskDetails = () => {
@@ -606,16 +592,7 @@ const HostTasks = () => {
                 message: 'You have unsaved changes. Are you sure you want to close without saving?',
                 confirmText: 'Discard Changes',
                 cancelText: 'Keep Editing',
-                onConfirm: async () => {
-                    const idsToDiscard = templateCreatedItemIdsRef.current;
-                    templateCreatedItemIdsRef.current = [];
-                    if (idsToDiscard.length > 0) {
-                        const results = await Promise.allSettled(idsToDiscard.map(id => deleteChecklistItem(id)));
-                        const failedCount = results.filter(r => r.status === 'rejected').length;
-                        if (failedCount > 0) {
-                            toast.error(`${failedCount} checklist item(s) could not be discarded and may still be saved.`);
-                        }
-                    }
+                onConfirm: () => {
                     setViewingTask(null);
                     setEditedTask(null);
                     setChecklistItems([]);
@@ -672,17 +649,24 @@ const HostTasks = () => {
         }
 
         const finalTask = { ...updatedTask, attachments: existingUrls };
+        const shouldSwitchChecklist = isChecklistLoaded && editedTask.type !== viewingTask.type;
 
         setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
         setViewingTask(null);
         setEditedTask(null);
-        templateCreatedItemIdsRef.current = [];
 
         try {
             await updateTask(finalTask.id, finalTask);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");
+            return;
+        }
+
+        // Only once the task itself is saved: if the save had failed the task would still have its old
+        // Type, and its checklist must not have been replaced by the new Type's template.
+        if (shouldSwitchChecklist) {
+            await applyChecklistTemplate(finalTask.id, finalTask.type, checklistItems);
         }
     };
 
