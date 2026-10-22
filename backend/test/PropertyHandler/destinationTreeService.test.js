@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+  DESTINATION_TREE_READ_TIMEOUT_MS,
   DESTINATION_TREE_TTL_MS,
   DestinationTreeService,
   buildDestinationTree,
@@ -247,6 +248,23 @@ describe("the destination tree", () => {
     await expect(service.renderDestinationPage("/destinations/europe/spain")).rejects.toThrow("connection refused");
     expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
     expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives up on a tree read that hangs, so the next page reads the tree again", async () => {
+    jest.useFakeTimers();
+    const { service, repository } = buildService();
+    repository.listDestinationsWithActiveListings.mockImplementationOnce(() => new Promise(() => {}));
+
+    const hanging = expect(service.renderDestinationPage("/destinations/europe/spain")).rejects.toThrow(
+      `The read took longer than ${DESTINATION_TREE_READ_TIMEOUT_MS} ms.`
+    );
+    await jest.advanceTimersByTimeAsync(DESTINATION_TREE_READ_TIMEOUT_MS);
+    await hanging;
+
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   it("lets a repository failure reach the caller instead of rendering an empty page", async () => {

@@ -28,6 +28,7 @@ export class DestinationPageService {
     this.readSwitch = createExpiringRead({
       read: () => this.destinationSwitchRepository.isDestinationPagesSwitchOn(),
       ttlMs: DESTINATION_SWITCH_TTL_MS,
+      timeoutMs: renderTimeoutMs,
       now,
     });
   }
@@ -44,10 +45,11 @@ export class DestinationPageService {
     }
 
     try {
-      if (!(await this.readSwitch())) {
-        return notFound;
-      }
-      const page = await this.renderWithinLimit(request.path, siteOrigin);
+      const page = await withinTimeLimit(
+        this.renderWhenSwitchedOn(request.path, siteOrigin),
+        this.renderTimeoutMs,
+        () => new DestinationRenderTimeout()
+      );
       return page ? { kind: "page", html: page.html, cacheControl: page.cacheControl } : notFound;
     } catch (error) {
       console.error("Destination page unavailable:", error?.name, error?.message);
@@ -55,11 +57,10 @@ export class DestinationPageService {
     }
   }
 
-  renderWithinLimit(path, siteOrigin) {
-    return withinTimeLimit(
-      this.destinationTreeService.renderDestinationPage(path, { siteOrigin }),
-      this.renderTimeoutMs,
-      () => new DestinationRenderTimeout()
-    );
+  async renderWhenSwitchedOn(path, siteOrigin) {
+    if (!(await this.readSwitch())) {
+      return null;
+    }
+    return this.destinationTreeService.renderDestinationPage(path, { siteOrigin });
   }
 }

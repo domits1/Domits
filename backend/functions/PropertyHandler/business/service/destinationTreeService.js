@@ -9,6 +9,7 @@ const byPath = (left, right) => left.path.localeCompare(right.path);
 
 export const DESTINATION_PAGE_LISTING_LIMIT = 24;
 export const DESTINATION_TREE_TTL_MS = 60000;
+export const DESTINATION_TREE_READ_TIMEOUT_MS = 5000;
 
 export const buildDestinationTree = (destinations, settings = readDestinationSettings()) => {
   const byId = new Map(destinations.map((destination) => [destination.id, { ...destination, children: [] }]));
@@ -70,6 +71,7 @@ export class DestinationTreeService {
       read: async () =>
         buildDestinationTree(await this.destinationPageRepository.listDestinationsWithActiveListings(), this.settings),
       ttlMs: DESTINATION_TREE_TTL_MS,
+      timeoutMs: DESTINATION_TREE_READ_TIMEOUT_MS,
       now,
     });
   }

@@ -138,6 +138,20 @@ describe("the destination page service", () => {
     expect(DESTINATION_RENDER_TIMEOUT_MS).toBeLessThan(29000);
   });
 
+  it("answers unavailable within the limit when the switch read hangs, and reads the switch again next time", async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const reads = [() => new Promise(() => {}), async () => true];
+    const { service, destinationSwitchRepository } = buildService({ switchOn: () => reads.shift()() });
+
+    const pending = service.serve({ path: "/destinations/europe" });
+    await jest.advanceTimersByTimeAsync(DESTINATION_RENDER_TIMEOUT_MS);
+
+    expect((await pending).kind).toBe("unavailable");
+    expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("page");
+    expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(2);
+  });
+
   it("clears the render limit once the page is rendered", async () => {
     jest.useFakeTimers();
     const { service } = buildService();
