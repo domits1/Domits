@@ -51,6 +51,22 @@ describe("RemoteLockDevicesList", () => {
     expect(screen.getAllByRole("row")).toHaveLength(3);
   });
 
+  it("states the table roles explicitly, because small screens drop the native semantics in Safari", () => {
+    renderList({ devices: [device()] });
+
+    expect(screen.getByRole("table")).toHaveAttribute("role", "table");
+    [
+      ["rowgroup", 2],
+      ["row", 2],
+      ["columnheader", 5],
+      ["cell", 5],
+    ].forEach(([role, count]) => {
+      const elements = screen.getAllByRole(role);
+      expect(elements).toHaveLength(count);
+      elements.forEach((element) => expect(element).toHaveAttribute("role", role));
+    });
+  });
+
   it("shows a device's name, type, status, battery and last seen", () => {
     renderList({ devices: [device({ type: "zwave_lock", status: "OFFLINE", battery: 15 })] });
 

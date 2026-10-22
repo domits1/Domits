@@ -8,6 +8,7 @@ import { PropertyAvailabilityRestrictionRepository } from "../../data/repository
 import { PropertyCheckInRepository } from "../../data/repository/propertyCheckInRepository.js";
 import { PropertyGeneralDetailRepository } from "../../data/repository/propertyGeneralDetailRepository.js";
 import { PropertyLocationRepository } from "../../data/repository/propertyLocationRepository.js";
+import { DestinationMappingService } from "./destinationMappingService.js";
 import { PropertyPricingRepository } from "../../data/repository/propertyPricingRepository.js";
 import { PropertyRuleRepository } from "../../data/repository/propertyRuleRepository.js";
 import { PropertyTechnicalDetailRepository } from "../../data/repository/propertyTechnicalDetailRepository.js";
@@ -83,6 +84,7 @@ export class PropertyService {
     this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
     this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
     this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+    this.destinationMappingService = new DestinationMappingService();
   }
 
   createStaticPageWithdrawal() {
@@ -717,6 +719,7 @@ export class PropertyService {
     if (!result) {
       throw new DatabaseException(`Failed to register property location.`);
     }
+    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id);
   }
 
   async updateLocation(propertyId, location) {
@@ -724,6 +727,7 @@ export class PropertyService {
     if (!result) {
       throw new DatabaseException("Failed to update property location.");
     }
+    await this.destinationMappingService.mapPropertyLocationSafely(propertyId);
   }
 
   async getLocation(property) {

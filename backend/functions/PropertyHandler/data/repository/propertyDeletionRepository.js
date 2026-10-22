@@ -261,6 +261,7 @@ export class PropertyDeletionRepository {
         { tableName: "property_checkin", propertyColumns: ["property_id"] },
         { tableName: "property_generaldetail", propertyColumns: ["property_id"] },
         { tableName: "property_location", propertyColumns: ["property_id"] },
+        { tableName: "property_destination", propertyColumns: ["property_id"] },
         { tableName: "property_pricing", propertyColumns: ["property_id"] },
         { tableName: "property_rule", propertyColumns: ["property_id"] },
         { tableName: "property_technicaldetails", propertyColumns: ["property_id"] },
