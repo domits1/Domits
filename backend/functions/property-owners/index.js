@@ -9,6 +9,7 @@ const NO_ACTION = null;
 const ROUTES = new Map([
   ["GET", new Map([[NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }]])],
   ["POST", new Map([[NO_ACTION, { withId: null, withoutId: "createOwner" }]])],
+  ["PUT", new Map([["set-shares", { withId: null, withoutId: "setShares" }]])],
 ]);
 
 let controller = null;
