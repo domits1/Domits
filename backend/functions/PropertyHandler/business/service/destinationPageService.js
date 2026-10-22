@@ -44,23 +44,31 @@ export class DestinationPageService {
       return notFound;
     }
 
+    return this.answer(
+      () => this.destinationTreeService.renderDestinationPage(request.path, { siteOrigin }),
+      notFound,
+      (page) => ({ kind: "page", html: page.html, cacheControl: page.cacheControl })
+    );
+  }
+
+  async answer(render, notFound, found) {
     try {
-      const page = await withinTimeLimit(
-        this.renderWhenSwitchedOn(request.path, siteOrigin),
+      const result = await withinTimeLimit(
+        this.whenSwitchedOn(render),
         this.renderTimeoutMs,
         () => new DestinationRenderTimeout()
       );
-      return page ? { kind: "page", html: page.html, cacheControl: page.cacheControl } : notFound;
+      return result ? found(result) : notFound;
     } catch (error) {
       console.error("Destination page unavailable:", error?.name, error?.message);
       return { kind: "unavailable", html: buildDestinationUnavailablePage() };
     }
   }
 
-  async renderWhenSwitchedOn(path, siteOrigin) {
+  async whenSwitchedOn(render) {
     if (!(await this.readSwitch())) {
       return null;
     }
-    return this.destinationTreeService.renderDestinationPage(path, { siteOrigin });
+    return render();
   }
 }
