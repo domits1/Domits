@@ -11,9 +11,19 @@ Runbook for the live steps after the serving PRs: the destination pages (`/desti
 | `/sitemap-destinations.xml` with at least one destination with a page | `200`, `application/xml`, same cache |
 | A destination without a page, an invalid path, no destination at all, or the switch off | `404`, HTML with `noindex, nofollow`, `public, max-age=60` |
 | The same path with one trailing slash | `301` to the path without it, `public, max-age=3600` |
-| The switch or the database slow (5 s for both together) or down, or more than 50,000 sitemap entries | `503`, `no-store`, `Retry-After: 60` |
+| The switch or the database slow (5 s for both together) or down, or a sitemap over 50,000 URLs or 5 MiB | `503`, `no-store`, `Retry-After: 60` |
 
-The host in canonicals and sitemap URLs comes from `X-Forwarded-Host`, but only `www.domits.com` and `acceptance.domits.com` are used; anything else becomes `www.domits.com`. The switch and the destination tree are kept 60 s per container. A destination that loses its last listing can stay in the sitemap for up to 60 s plus the 300 s sitemap cache; its page answers `404` in the meantime. A sitemap holds at most 50,000 URLs; above that the route answers `503` and the log names the limit, which is the moment to split it with `buildSitemapIndex`.
+The host in canonicals and sitemap URLs comes from `X-Forwarded-Host`, but only `www.domits.com` and `acceptance.domits.com` are used; anything else becomes `www.domits.com`. The sitemap only lists paths the page route accepts, so every URL in it is a page.
+
+Timing, so a check does not fail for the wrong reason:
+
+- The switch and the destination tree are kept 60 s per container, and a `404` is cached 60 s, so a change of the switch can take up to about 2 minutes to show everywhere.
+- A page is cached 300 s. A destination that loses its last listing answers `404` at the origin straight away, but a cached `200` can stay visible for up to 300 s, and the sitemap can still list it for up to 60 s plus 300 s.
+
+Known limits:
+
+- A sitemap is refused above 50,000 URLs (the sitemap protocol) or 5 MiB (a Lambda response is at most 6 MB); the route then answers `503` and the log names the limit. That is the moment to split it with `buildSitemapIndex`.
+- The 5 s limit stops waiting, not the database work itself. If the database connection itself hangs, every request in that container answers `503` after 5 s until the connection or the container recovers.
 
 ## Before starting
 
@@ -60,10 +70,19 @@ Save the current deployment first, and make sure the API has no changes waiting 
 
 ```bash
 aws apigateway get-stage --rest-api-id $API --stage-name default --query deploymentId --output text > deployment-before.txt
-aws apigateway get-export --rest-api-id $API --stage-name default --export-type oas30 export-before.json
+aws apigateway get-export --rest-api-id $API --stage-name default --export-type oas30 --parameters extensions=apigateway export-before.json
 ```
 
-Compare the paths in `export-before.json` with `aws apigateway get-resources --rest-api-id $API --limit 500 --query 'items[].path'`; stop if they differ.
+A new deployment publishes the whole API as it is now, not only these routes. Compare the deployed export with the current configuration, path by path and method by method, including the authorization type and the integration URI:
+
+```bash
+jq -r '.paths | to_entries[] | .key as $p | .value | to_entries[] | select(.key != "parameters") | "\($p) \(.key | ascii_upcase | sub("X-AMAZON-APIGATEWAY-ANY-METHOD"; "ANY")) \(.value["x-amazon-apigateway-integration"].uri // "-")"' export-before.json | sort > deployed.txt
+aws apigateway get-resources --rest-api-id $API --limit 500 --embed methods --output json | jq -r '.items[] | .path as $p | (.resourceMethods // {}) | to_entries[] | "\($p) \(.key) \(.value.methodIntegration.uri // "-")"' | sort > current.txt
+diff deployed.txt current.txt
+aws apigateway get-resources --rest-api-id $API --limit 500 --embed methods --output json | jq -r '.items[] | .path as $p | (.resourceMethods // {}) | to_entries[] | "\($p) \(.key) \(.value.authorizationType)"' | sort
+```
+
+Stop when `diff` shows anything, or when an authorization type differs from what the deployed API uses; that is someone else's change waiting to go live.
 
 Create `/destinations`, `/destinations/{proxy+}` and `/sitemap-destinations.xml` under the root resource, each with **GET only, never ANY** (a POST would reach the property create route), authorization `NONE`, integration `AWS_PROXY` to `PropertyHandler`, a Lambda permission per method, and a method throttle (rate 20, burst 40). Then `aws apigateway create-deployment --rest-api-id $API --stage-name default --description "destination pages"`.
 
@@ -124,12 +143,21 @@ Rollback: read the live list, compare it with the one you wrote, and write `rule
 aws ssm put-parameter --name $PARAM --type String --value true --overwrite
 ```
 
-Wait a minute for the containers, then check on `www.domits.com`: `/destinations` answers `200`, a city page `200` with a canonical equal to its URL, and every URL in `/sitemap-destinations.xml` answers `200` without a redirect and with that same canonical:
+Wait 3 minutes for the containers and the cached `404`s, then check on `www.domits.com`. First the sitemap itself, so an empty or failed sitemap cannot pass:
 
 ```bash
-curl -s https://www.domits.com/sitemap-destinations.xml | grep -o '<loc>[^<]*' | cut -c6- | while read u; do
-  printf "%s %s %s\n" "$(curl -s -o /dev/null -w '%{http_code}' "$u")" "$(curl -s "$u" | grep -c "rel=\"canonical\" href=\"$u\"")" "$u"
-done | grep -v '^200 1 '
+curl -s -D sitemap-headers.txt -o sitemap.xml https://www.domits.com/sitemap-destinations.xml
+head -1 sitemap-headers.txt; grep -i '^content-type' sitemap-headers.txt; grep -c '<loc>' sitemap.xml
+```
+
+Expected: `200`, `application/xml`, and at least one `<loc>`; stop otherwise. Then every URL in it must answer `200` without a redirect and carry exactly that URL as its canonical:
+
+```bash
+grep -o '<loc>[^<]*' sitemap.xml | cut -c6- | while read u; do
+  status=$(curl -s -o page.html -w '%{http_code}' "$u")
+  grep -F -q "<link rel=\"canonical\" href=\"$u\">" page.html && canon=ok || canon=WRONG
+  [ "$status" = "200" ] && [ "$canon" = "ok" ] || echo "$status $canon $u"
+done
 ```
 
 Expected: no output. Watch `PropertyHandler` Errors and Duration for the first hour.
