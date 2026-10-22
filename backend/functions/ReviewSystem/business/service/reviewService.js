@@ -189,6 +189,28 @@ export class ReviewService {
     this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
   }
 
+  async reviewSchedule(userId, propertyId, settings) {
+    this.assertCaller(userId);
+    this.assertId(propertyId, "property ID");
+    const id = propertyId.trim();
+    if (!await this.repository.findScheduleManagedProperty(id, userId)) throw new NotFoundException("Property not found.");
+    if (settings === undefined) return this.repository.getReviewSchedule(id);
+    if (!settings || Array.isArray(settings) || typeof settings.enabled !== "boolean" ||
+        ![0, 24, 48, 72].includes(settings.delayHours) ||
+        Object.keys(settings).some(key => !["enabled", "delayHours"].includes(key))) {
+      throw new BadRequestException("Provide enabled and a delay of 0, 24, 48 or 72 hours.");
+    }
+    return this.repository.saveReviewSchedule(id, settings);
+  }
+
+  async isReviewRequestDue(booking) {
+    const settings = await this.repository.getReviewSchedule(booking.property_id);
+    const now = this.now();
+    return settings.enabled && !completedStayError(booking, now) &&
+      Number.isSafeInteger(Number(booking.departuredate)) &&
+      Number(booking.departuredate) + settings.delayHours * 3600000 <= now;
+  }
+
   async processReviewRequests() {
     const bookings = await this.repository.findReviewRequestCandidates(this.now());
     const results = [];
@@ -210,6 +232,7 @@ export class ReviewService {
   }
 
   async processReviewRequest(candidate) {
+    if (!await this.isReviewRequestDue(candidate)) return { bookingId: candidate.id, status: "DEFERRED" };
     const request = await this.repository.claimReviewRequest(candidate, this.now());
     if (!request) return { bookingId: candidate.id, status: "SKIPPED" };
     let status = "CANCELLED";
@@ -222,6 +245,10 @@ export class ReviewService {
           booking_id: booking.id, reviewer_user_id: booking.guestid, review_type: "GUEST_TO_PROPERTY",
         });
         if (!existing) {
+          if (!await this.isReviewRequestDue(booking)) {
+            await this.repository.releaseUnsentReviewRequest(request.id, this.now());
+            return { bookingId: booking.id, status: "DEFERRED" };
+          }
           this.notifier ??= new ReviewRequestNotifier();
           await this.notifier.send(booking);
           status = "SENT";
