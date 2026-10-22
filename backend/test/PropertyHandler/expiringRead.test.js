@@ -16,6 +16,8 @@ describe("an expiring read", () => {
     expect(await cached()).toBe(0);
     clock.now = 1000;
     expect(await cached()).toBe(1000);
+    clock.now = 1500;
+    expect(await cached()).toBe(1000);
     expect(read).toHaveBeenCalledTimes(2);
   });
 

@@ -50,6 +50,7 @@ describe("the destination request path", () => {
   });
 
   it("refuses a path longer than the limit even when every segment is a slug", () => {
+    expect(DESTINATION_PATH_MAX_LENGTH).toBe(256);
     const longest = `/destinations/${"a".repeat(DESTINATION_PATH_MAX_LENGTH - "/destinations/".length)}`;
     expect(readDestinationRequestPath(longest)).toEqual({ kind: "page", path: longest });
     expect(readDestinationRequestPath(`${longest}a`)).toEqual({ kind: "invalid" });

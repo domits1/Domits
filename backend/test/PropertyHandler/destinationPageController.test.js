@@ -20,6 +20,10 @@ describe("the destination page controller", () => {
       headers: { "X-Forwarded-Host": "acceptance.domits.com", Cookie: "session=1", "X-Forwarded-For": "203.0.113.9" },
     });
     await controller.getDestinationPage({ path: "/destinations/asia", headers: null });
+    await controller.getDestinationPage({
+      path: "/destinations/asia",
+      headers: { "x-forwarded-host": "www.domits.com" },
+    });
 
     expect(destinationPageService.serve).toHaveBeenNthCalledWith(1, {
       path: "/destinations/europe",
@@ -28,6 +32,10 @@ describe("the destination page controller", () => {
     expect(destinationPageService.serve).toHaveBeenNthCalledWith(2, {
       path: "/destinations/asia",
       forwardedHost: undefined,
+    });
+    expect(destinationPageService.serve).toHaveBeenNthCalledWith(3, {
+      path: "/destinations/asia",
+      forwardedHost: "www.domits.com",
     });
   });
 
@@ -113,6 +121,7 @@ describe("a destination request through the property handler", () => {
   });
 
   it("redirects a trailing slash and refuses a made up path without the switch or the database", async () => {
+    jest.useFakeTimers({ now: Date.now() + 360000, doNotFake: ["setTimeout", "clearTimeout"] });
     const switchRead = jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn");
     const render = jest.spyOn(DestinationTreeService.prototype, "renderDestinationPage");
 

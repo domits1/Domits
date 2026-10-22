@@ -1,7 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
   DESTINATION_TREE_READ_TIMEOUT_MS,
-  DESTINATION_TREE_TTL_MS,
   DestinationTreeService,
   buildDestinationTree,
 } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
@@ -215,7 +214,7 @@ describe("the destination tree", () => {
     const { service, repository, clock } = buildService();
 
     await service.renderDestinationPage("/destinations/europe/spain");
-    clock.now = DESTINATION_TREE_TTL_MS - 1;
+    clock.now = 59999;
     expect(await service.renderDestinationPage("/destinations/europe/spain/nowhere")).toBeNull();
     expect(await service.renderDestinationPage("/destinations/aaa/bbb/ccc")).toBeNull();
     expect(await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })).toContain("<urlset");
@@ -224,11 +223,12 @@ describe("the destination tree", () => {
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
   });
 
-  it("reads the tree again once a minute has passed", async () => {
+  it("reads the tree again once a minute has passed and uses the new one", async () => {
     const { service, repository, clock } = buildService();
-    await service.renderDestinationPage("/destinations/aaa");
-    clock.now = DESTINATION_TREE_TTL_MS;
-    await service.renderDestinationPage("/destinations/aaa");
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    repository.listDestinationsWithActiveListings.mockResolvedValue(ROWS.filter((row) => !row.path.includes("spain")));
+    clock.now = 60000;
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
     expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
   });
 
@@ -238,7 +238,10 @@ describe("the destination tree", () => {
       service.renderDestinationPage("/destinations/europe/spain"),
       service.renderDestinationPage("/destinations/europe/spain/marbella"),
     ]);
-    expect(pages.every(Boolean)).toBe(true);
+    expect(pages.map((page) => page.title)).toEqual([
+      "Holiday rentals in Spain | Domits",
+      "Holiday rentals in Marbella | Domits",
+    ]);
     expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(1);
   });
 

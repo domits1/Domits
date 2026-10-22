@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import {
   DESTINATION_RENDER_TIMEOUT_MS,
-  DESTINATION_SWITCH_TTL_MS,
   DestinationPageService,
 } from "../../functions/PropertyHandler/business/service/destinationPageService.js";
 
@@ -84,6 +83,7 @@ describe("the destination page service", () => {
     const { service, destinationTreeService } = buildService({ switchOn: async () => false });
     const outcome = await service.serve({ path: "/destinations/europe/spain/marbella" });
     expect(outcome.kind).toBe("not_found");
+    expect(outcome.html).toContain('<meta name="robots" content="noindex, nofollow">');
     expect(destinationTreeService.renderDestinationPage).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,9 @@ describe("the destination page service", () => {
         throw new Error("connection refused");
       },
     });
-    expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("unavailable");
+    const outcome = await service.serve({ path: "/destinations/europe" });
+    expect(outcome.kind).toBe("unavailable");
+    expect(outcome.html).toContain("Please try again in a minute.");
   });
 
   it("answers unavailable when the database is slower than the render limit", async () => {
@@ -135,7 +137,7 @@ describe("the destination page service", () => {
       "DestinationRenderTimeout",
       "The destination page took too long to render."
     );
-    expect(DESTINATION_RENDER_TIMEOUT_MS).toBeLessThan(29000);
+    expect(DESTINATION_RENDER_TIMEOUT_MS).toBe(5000);
   });
 
   it("answers unavailable within the limit when the switch read hangs, and reads the switch again next time", async () => {
@@ -162,6 +164,7 @@ describe("the destination page service", () => {
   it("reads the switch once for two requests at the same time", async () => {
     let release;
     const { service, destinationSwitchRepository } = buildService({
+      render: async (path) => ({ ...PAGE, html: path }),
       switchOn: () =>
         new Promise((resolve) => {
           release = () => resolve(true);
@@ -172,8 +175,8 @@ describe("the destination page service", () => {
     const second = service.serve({ path: "/destinations/asia" });
     release();
 
-    expect((await first).kind).toBe("page");
-    expect((await second).kind).toBe("page");
+    expect((await first).html).toBe("/destinations/europe");
+    expect((await second).html).toBe("/destinations/asia");
     expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(1);
   });
 
@@ -182,9 +185,9 @@ describe("the destination page service", () => {
     const { service, destinationSwitchRepository, clock } = buildService({ switchOn: async () => values.shift() });
 
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("not_found");
-    clock.now = DESTINATION_SWITCH_TTL_MS - 1;
+    clock.now = 59999;
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("not_found");
-    clock.now = DESTINATION_SWITCH_TTL_MS;
+    clock.now = 60000;
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("page");
     expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(2);
   });
