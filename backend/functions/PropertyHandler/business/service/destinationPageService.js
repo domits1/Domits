@@ -51,6 +51,15 @@ export class DestinationPageService {
     );
   }
 
+  async serveSitemap({ forwardedHost } = {}) {
+    const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
+    return this.answer(
+      () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin }),
+      { kind: "not_found", html: buildDestinationNotFoundPage({ siteOrigin }) },
+      (xml) => ({ kind: "sitemap", xml })
+    );
+  }
+
   async answer(render, notFound, found) {
     try {
       const result = await withinTimeLimit(

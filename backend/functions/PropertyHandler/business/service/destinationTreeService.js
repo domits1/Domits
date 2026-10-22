@@ -97,7 +97,10 @@ export class DestinationTreeService {
   }
 
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
-    return buildDestinationSitemap(await this.listEligibleDestinations(), { siteOrigin, lastModified });
+    const tree = await this.readTree();
+    const root = buildRootContinents(tree).length > 0 ? [{ path: DESTINATIONS_ROOT_PATH }] : [];
+    const destinations = tree.filter((destination) => destination.eligible);
+    return buildDestinationSitemap([...root, ...destinations], { siteOrigin, lastModified });
   }
 
   async renderDestinationPage(path, { siteOrigin } = {}) {

@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import fc from "fast-check";
 import {
   DESTINATION_TREE_READ_TIMEOUT_MS,
   DestinationTreeService,
@@ -156,7 +157,8 @@ describe("the destination tree", () => {
       siteOrigin: "https://www.domits.com",
       lastModified: "2026-10-07",
     });
-    expect(xml.match(/<loc>/g)).toHaveLength(4);
+    expect(xml.match(/<loc>/g)).toHaveLength(5);
+    expect(xml).toContain("<loc>https://www.domits.com/destinations</loc>");
     expect(xml).toContain(
       "<loc>https://www.domits.com/destinations/europe/spain/malaga</loc><lastmod>2026-10-07</lastmod>"
     );
@@ -168,6 +170,27 @@ describe("the destination tree", () => {
 
     const empty = buildService({ rows: [] });
     expect(await empty.service.renderDestinationSitemap()).toBeNull();
+  });
+
+  it("gives every URL in the sitemap a page and puts every page in the sitemap, whatever the tree", async () => {
+    const counts = fc.array(fc.integer({ min: 0, max: 2 }), { minLength: ROWS.length, maxLength: ROWS.length });
+    await fc.assert(
+      fc.asyncProperty(counts, async (activeListings) => {
+        const rows = ROWS.map((destination, index) => ({ ...destination, activeListings: activeListings[index] }));
+        const { service } = buildService({ rows });
+        const xml = (await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })) || "";
+        const inSitemap = [...xml.matchAll(/<loc>https:\/\/www\.domits\.com([^<]+)<\/loc>/g)].map((match) => match[1]);
+        const candidates = ["/destinations", ...rows.map((destination) => destination.path)];
+        const withPage = [];
+        for (const path of candidates) {
+          if (await service.renderDestinationPage(path)) {
+            withPage.push(path);
+          }
+        }
+        expect([...inSitemap].sort()).toEqual([...withPage].sort());
+      }),
+      { numRuns: 60 }
+    );
   });
 
   it("renders a page with its parents and eligible children, and answers null for a destination without a page", async () => {

@@ -165,3 +165,96 @@ describe("a destination request through the property handler", () => {
     expect(response.body).toContain('<a href="/destinations/europe/spain">Spain</a>');
   });
 });
+
+describe("the destination sitemap through the property handler", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  const at = (offsetMs) =>
+    jest.useFakeTimers({ now: Date.now() + offsetMs, doNotFake: ["setTimeout", "clearTimeout"] });
+  const sitemap = (host = "acceptance.domits.com") =>
+    handler({
+      httpMethod: "GET",
+      resource: "/sitemap-destinations.xml",
+      path: "/sitemap-destinations.xml",
+      headers: { "x-forwarded-host": host },
+    });
+  const switchOn = (on = true) =>
+    jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(on);
+  const treeRows = (rows) =>
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(rows);
+
+  it("serves only the destinations that have a page, the root page included, as XML for five minutes", async () => {
+    at(600000);
+    switchOn();
+    treeRows(TREE_ROWS);
+
+    const response = await sitemap();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Content-Type"]).toBe("application/xml");
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
+    expect(response.body.match(/<loc>[^<]+<\/loc>/g)).toEqual([
+      "<loc>https://acceptance.domits.com/destinations</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe/spain</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe/spain/marbella</loc>",
+    ]);
+  });
+
+  it("puts only hosts from the fixed list in the URLs", async () => {
+    at(720000);
+    switchOn();
+    treeRows(TREE_ROWS);
+    const response = await sitemap("evil.example");
+    expect(response.statusCode).toBe(200);
+    expect(response.body).not.toContain("evil.example");
+    expect(response.body).toContain("<loc>https://www.domits.com/destinations</loc>");
+  });
+
+  it("answers 404 instead of an empty sitemap when no destination has a page", async () => {
+    at(840000);
+    switchOn();
+    treeRows(TREE_ROWS.map((row) => ({ ...row, activeListings: 0 })));
+    const response = await sitemap();
+    expect(response.statusCode).toBe(404);
+    expect(response.body).not.toContain("<urlset");
+  });
+
+  it("answers 404 without reading the tree while the switch is off", async () => {
+    at(960000);
+    switchOn(false);
+    const read = treeRows(TREE_ROWS);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(404);
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("answers 503 without caching when the database fails, and logs no request data", async () => {
+    at(1080000);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    switchOn();
+    jest
+      .spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings")
+      .mockRejectedValue(new Error("connection refused"));
+    const response = await sitemap();
+    expect(response.statusCode).toBe(503);
+    expect(response.headers["Cache-Control"]).toBe("no-store");
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/acceptance\.domits\.com|x-forwarded-host/i);
+  });
+
+  it("answers 503 and names the limit instead of a cut off sitemap when there are more than 50000 destinations", async () => {
+    at(1200000);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    switchOn();
+    const many = Array.from({ length: 50001 }, (_, index) =>
+      treeRow(`/destinations/europe/spain/city-${index}`, "city", "/destinations/europe/spain", `City ${index}`, 1)
+    );
+    treeRows([...TREE_ROWS.slice(0, 2), ...many]);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(503);
+    expect(JSON.stringify(log.mock.calls)).toContain("A sitemap holds at most 50000 entries");
+  });
+});
