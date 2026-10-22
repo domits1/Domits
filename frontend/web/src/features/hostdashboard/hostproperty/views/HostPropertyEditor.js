@@ -1,3 +1,4 @@
+import ReviewSchedule from "../../../review/components/ReviewSchedule";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useEffectiveHostId from "../../../../hooks/useEffectiveHostId";
@@ -910,6 +911,7 @@ export default function HostProperty() {
             saving={isBusy}
           />
 
+          {selectedTab === "Policies" && <ReviewSchedule key={propertyId} propertyId={propertyId} />}
           <HostPropertyTabContent
             selectedTab={selectedTab}
             form={form}

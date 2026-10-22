@@ -78,7 +78,18 @@ export class Controller {
 
   // Fetch the caller's review list for the selected scope.
   // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
+  async manageReviewSchedule(event) {
+    return this.executeAuthenticated(event, async userId => {
+      const query = event.queryStringParameters ?? {};
+      if (event.pathParameters?.id !== undefined ||
+          Object.keys(query).some(key => !["scope", "propertyId"].includes(key))) throw new BadRequestException("Unexpected scheduling parameter.");
+      return this.jsonResponse(200, await this.service.reviewSchedule(userId, query.propertyId,
+        event.httpMethod === "PATCH" ? parseBody(event) : undefined));
+    });
+  }
+
   async getReviews(event) {
+    if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
       const propertyScope = ["property-score", "property-categories", "property-performance", "property-trends"].includes(query.scope);
@@ -127,6 +138,7 @@ export class Controller {
   // Update an unpublished review draft.
   // This keeps the controller thin while preserving the service's conflict and validation checks.
   async updateReview(event) {
+    if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     return this.executeAuthenticated(event, async (userId) => {
       const pathId = event.pathParameters?.id;
       const queryId = event.queryStringParameters?.reviewId;

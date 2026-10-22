@@ -520,6 +520,38 @@ export class ReviewRepository {
     });
   }
 
+  async findScheduleManagedProperty(propertyId, userId) {
+    const db = await Database.getInstance();
+    return db.getRepository(Property).createQueryBuilder("property")
+      .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :userId AND member.status = :active AND member.role = :role",
+        { userId, active: "active", role: "Property Operations Manager" })
+      .where("property.id = :propertyId", { propertyId })
+      .andWhere("(property.hostid = :userId OR member.id IS NOT NULL)").getOne();
+  }
+
+  async getReviewSchedule(propertyId) {
+    const db = await Database.getInstance();
+    const row = await db.getRepository(Property).findOne({ where: { id: propertyId },
+      select: ["review_requests_enabled", "review_request_delay_hours"] });
+    if (!row) throw new NotFoundException("Property not found.");
+    return { enabled: row.review_requests_enabled, delayHours: row.review_request_delay_hours };
+  }
+
+  async saveReviewSchedule(propertyId, settings) {
+    const db = await Database.getInstance();
+    const result = await db.getRepository(Property).update({ id: propertyId }, {
+      review_requests_enabled: settings.enabled, review_request_delay_hours: settings.delayHours,
+    });
+    if (!result.affected) throw new NotFoundException("Property not found.");
+    return settings;
+  }
+
+  async releaseUnsentReviewRequest(id, now) {
+    const db = await Database.getInstance();
+    return db.getRepository(Review_Request).update({ id, status: "SENDING", lastSentAt: IsNull() },
+      { status: "OPEN", claimedAt: null, sendCount: 0, updatedAt: now });
+  }
+
   async findReviewRequestCandidates(now) {
     const db = await Database.getInstance();
     const query = db.getRepository(Booking).createQueryBuilder("stay")
@@ -530,6 +562,9 @@ export class ReviewRepository {
     for (const field of ["guestid", "hostid", "property_id"]) query.andWhere(`TRIM(stay.${field}) <> ''`);
     applyCompletedStayConditions(query, now);
     query.andWhere("stay.departuredate >= :requestCutoff", { requestCutoff: reviewRequestCutoff(now) });
+    query.innerJoin(Property, "schedule", "schedule.id = stay.property_id")
+      .andWhere("schedule.review_requests_enabled = TRUE")
+      .andWhere("stay.departuredate + schedule.review_request_delay_hours * 3600000 <= :scheduleNow", { scheduleNow: now });
     return query.orderBy("stay.departuredate", "ASC").addOrderBy("stay.id", "ASC").take(50).getMany();
   }
 

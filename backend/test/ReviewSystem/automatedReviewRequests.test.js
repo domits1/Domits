@@ -1,6 +1,7 @@
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
 import { DataSource, SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder } from "typeorm";
+import { Property } from "database/models/Property";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Review_Request } from "database/models/Review_Request";
@@ -16,6 +17,7 @@ let repository, notifier, service;
 beforeEach(() => {
   process.env.REVIEW_REQUEST_START_AT = String(now - 1000);
   repository = {
+    getReviewSchedule: jest.fn().mockResolvedValue({ enabled: true, delayHours: 0 }),
     findReviewRequestCandidates: jest.fn().mockResolvedValue([booking]),
     claimReviewRequest: jest.fn().mockResolvedValue({ id: "r1" }),
     findBookingById: jest.fn().mockResolvedValue(booking),
@@ -57,7 +59,7 @@ test("tracks delivery failures and exposes acknowledgement failures", async () =
   ]);
 });
 test("integrates repository claims, email delivery and acknowledgement without duplicate sends", async () => {
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   let claimed = false;
@@ -75,6 +77,7 @@ test("integrates repository claims, email delivery and acknowledgement without d
     { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
   ]))).mockResolvedValueOnce(response("Email sent")) };
   const real = new ReviewRepository();
+  real.getReviewSchedule = repository.getReviewSchedule;
   real.findBookingById = repository.findBookingById;
   real.findReviewByBookingTypeAndReviewer = repository.findReviewByBookingTypeAndReviewer;
   service = new ReviewService({ repository: real, notifier: new ReviewRequestNotifier(client, notifierOptions), now: () => now });
@@ -88,6 +91,8 @@ test("integrates repository claims, email delivery and acknowledgement without d
   const query = jest.spyOn(SelectQueryBuilder.prototype, "getMany").mockResolvedValue([]);
   await real.findReviewRequestCandidates(now);
   expect(query.mock.instances[0].getQuery()).toContain('"existing"."id" IS NULL');
+  expect(query.mock.instances[0].getQuery()).toContain('"schedule"."review_requests_enabled" = TRUE');
+  expect(query.mock.instances[0].getQuery()).toContain('"stay"."departuredate" + "schedule"."review_request_delay_hours" * 3600000 <= :scheduleNow');
   expect(query.mock.instances[0].getParameters()).toMatchObject({ stayStatuses: ["paid", "confirmed"], stayNow: now });
 });
 test("rejects email Lambda failures and missing addresses", async () => {
@@ -135,7 +140,7 @@ test("does not overwrite completion when acknowledging an in-flight email", asyn
 test.each([undefined, "", "invalid", "0", "-1", "1.5"])("fails closed with invalid rollout configuration %s", async startAt => {
   if (startAt === undefined) delete process.env.REVIEW_REQUEST_START_AT;
   else process.env.REVIEW_REQUEST_START_AT = startAt;
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   await expect(new ReviewRepository().findReviewRequestCandidates(now)).rejects.toThrow("REVIEW_REQUEST_START_AT");
@@ -143,7 +148,7 @@ test.each([undefined, "", "invalid", "0", "-1", "1.5"])("fails closed with inval
 
 test.each([now - 1000, now - 40 * 86400000])("limits candidates to rollout and recent checkouts: %s", async startAt => {
   process.env.REVIEW_REQUEST_START_AT = String(startAt);
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   const getMany = jest.spyOn(SelectQueryBuilder.prototype, "getMany").mockResolvedValue([]);

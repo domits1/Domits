@@ -182,3 +182,15 @@ export const createReview = async ({
 
   return payload;
 };
+
+export async function reviewSchedule(propertyId, settings, signal) {
+  const query = new URLSearchParams({ scope: "property-review-schedule", propertyId });
+  const response = await fetch(`${API_REVIEW_BASE}/reviews?${query}`, {
+    method: settings === undefined ? "GET" : "PATCH", signal,
+    headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    ...(settings === undefined ? {} : { body: JSON.stringify(settings) }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not save review preferences.");
+  return payload;
+}
