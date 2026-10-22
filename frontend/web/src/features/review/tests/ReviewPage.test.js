@@ -20,7 +20,7 @@ jest.mock("aws-amplify", () => ({
 }));
 jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
-  useLocation: () => ({ search: mockSearch, state: null }),
+  useLocation: () => ({ pathname: "/review", search: mockSearch, state: null }),
 }));
 jest.mock("../../guestdashboard/services/bookingAPI", () => ({
   getGuestBookings: jest.fn(),
@@ -173,7 +173,7 @@ it("rejects direct URLs without a reservation", async () => {
 it("redirects unauthenticated guests without displaying the form", async () => {
   Auth.currentUserInfo.mockResolvedValue(null);
   render(<ReviewPage />);
-  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login"));
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true, state: { returnTo: `/review${mockSearch}` } }));
   expect(screen.queryAllByRole("radio")).toHaveLength(0);
   expect(getGuestBookings).not.toHaveBeenCalled();
 });

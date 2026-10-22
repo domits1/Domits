@@ -1,3 +1,4 @@
+import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
 import { readTrendPolicy, parseTrendQuery, classifyTrend, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
@@ -179,12 +180,60 @@ export class ReviewService {
     canReadPrivateFeedback = async ({ userId, review }) =>
       review.reviewer_user_id === userId || review.host_id === userId,
     canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId,
-    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
+    notifier, editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
+    this.notifier = notifier;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
     this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
+  }
+
+  async processReviewRequests() {
+    const bookings = await this.repository.findReviewRequestCandidates(this.now());
+    const results = [];
+    for (const booking of bookings) {
+      try {
+        results.push(await this.processReviewRequest(booking));
+      } catch (error) {
+        this.logReviewRequestFailure("REVIEW_REQUEST_PROCESSING_FAILED", booking.id, null, error);
+        results.push({ bookingId: booking.id, status: "RECONCILIATION_REQUIRED" });
+      }
+    }
+    return results;
+  }
+
+  logReviewRequestFailure(event, bookingId, requestId, error) {
+    console.error(JSON.stringify({ event, bookingId, requestId,
+      errorType: error?.name || "Error", errorCode: error?.code || "UNKNOWN",
+      dependency: error?.dependency, requiresReconciliation: true }));
+  }
+
+  async processReviewRequest(candidate) {
+    const request = await this.repository.claimReviewRequest(candidate, this.now());
+    if (!request) return { bookingId: candidate.id, status: "SKIPPED" };
+    let status = "CANCELLED";
+    try {
+      const booking = await this.repository.findBookingById(candidate.id);
+      const valid = booking && ["guestid", "hostid", "property_id"].every(key =>
+        typeof booking[key] === "string" && booking[key].trim() && booking[key] === candidate[key]);
+      if (valid && Number.isSafeInteger(Number(booking.departuredate)) && !completedStayError(booking, this.now())) {
+        const existing = await this.repository.findReviewByBookingTypeAndReviewer({
+          booking_id: booking.id, reviewer_user_id: booking.guestid, review_type: "GUEST_TO_PROPERTY",
+        });
+        if (!existing) {
+          this.notifier ??= new ReviewRequestNotifier();
+          await this.notifier.send(booking);
+          status = "SENT";
+        }
+      }
+    } catch (error) {
+      status = "FAILED";
+      this.logReviewRequestFailure("REVIEW_REQUEST_DELIVERY_FAILED", candidate.id, request.id, error);
+    }
+    // Never resend a claimed request after an uncertain delivery or acknowledgement.
+    await this.repository.finishReviewRequest(request.id, status, this.now());
+    return { bookingId: candidate.id, requestId: request.id, status };
   }
 
   editDeadline(review) {

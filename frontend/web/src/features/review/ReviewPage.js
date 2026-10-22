@@ -73,7 +73,7 @@ const ReviewPage = () => {
         const guestId = user?.attributes?.sub;
         if (!guestId) {
           setEligibilityError("Please log in before leaving a review.");
-          navigate("/login");
+          navigate("/login", { replace: true, state: { returnTo: `${location.pathname}${location.search}` } });
           return;
         }
 
@@ -123,7 +123,7 @@ const ReviewPage = () => {
       active = false;
     };
 
-  }, [navigate, bookingId, reviewId, targetId]);
+  }, [navigate, bookingId, reviewId, targetId, location.pathname, location.search]);
 
 
   const updateField = (field) => (event) => {
