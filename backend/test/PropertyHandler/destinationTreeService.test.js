@@ -262,6 +262,24 @@ describe("the destination tree", () => {
     expect(page.html).toContain('<a href="/destinations/europe/spain">Spain</a>');
   });
 
+  it("still lists a country on the root page when only a city below it has a page, without linking the country", async () => {
+    const rows = [
+      row("/destinations/europe", "continent", null, "Europe"),
+      row("/destinations/europe/spain", "country", "/destinations/europe", "Spain"),
+      row("/destinations/europe/spain/marbella", "city", "/destinations/europe/spain", "Marbella", 1),
+    ];
+    const settings = readDestinationSettings({ DESTINATION_PARENT_FROM_ANY_CHILD: "false" });
+    const { service } = buildService({ rows, settings });
+    const page = await service.renderDestinationPage("/destinations");
+    expect(page).not.toBeNull();
+    expect(page.html).toContain("<h2>Europe</h2>");
+    expect(page.html).toContain("<li>Spain <span");
+    expect(page.html).not.toContain('<a href="/destinations/europe/spain">');
+    expect(await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })).toContain(
+      "<loc>https://www.domits.com/destinations</loc>"
+    );
+  });
+
   it("answers null for the root page when no destination has a page, so it is a 404 and never an empty page", async () => {
     const { service } = buildService({ rows: ROWS.map((destination) => ({ ...destination, activeListings: 0 })) });
     expect(await service.renderDestinationPage("/destinations")).toBeNull();

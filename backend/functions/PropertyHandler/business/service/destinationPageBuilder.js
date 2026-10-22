@@ -102,7 +102,7 @@ const renderRootContinent = (continent) => {
   const countries = continent.countries
     .map(
       (country) =>
-        `<li><a href="${escapeHtml(country.path)}">${escapeHtml(country.name)}</a> <span class="count">${pluralListings(country.activeListings)}</span></li>`
+        `<li>${country.hasPage ? `<a href="${escapeHtml(country.path)}">${escapeHtml(country.name)}</a>` : escapeHtml(country.name)} <span class="count">${pluralListings(country.activeListings)}</span></li>`
     )
     .join("");
   return `<section class="children"><h2>${heading}</h2>${countries ? `<ul>${countries}</ul>` : ""}</section>`;

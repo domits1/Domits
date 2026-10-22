@@ -60,6 +60,11 @@ export const buildDestinationTree = (destinations, settings = readDestinationSet
     .sort(byPath);
 };
 
+const hasPageBelow = (tree, parent) =>
+  tree.some(
+    (destination) => destination.parentId === parent.id && (destination.eligible || hasPageBelow(tree, destination))
+  );
+
 const buildRootContinents = (tree) =>
   tree
     .filter((destination) => destination.type === "continent")
@@ -70,9 +75,16 @@ const buildRootContinents = (tree) =>
       countries: tree
         .filter(
           (destination) =>
-            destination.type === "country" && destination.parentId === continent.id && destination.eligible
+            destination.type === "country" &&
+            destination.parentId === continent.id &&
+            (destination.eligible || hasPageBelow(tree, destination))
         )
-        .map((country) => ({ name: country.name, path: country.path, activeListings: country.totalListings })),
+        .map((country) => ({
+          name: country.name,
+          path: country.path,
+          hasPage: country.eligible,
+          activeListings: country.totalListings,
+        })),
     }))
     .filter((continent) => continent.hasPage || continent.countries.length > 0);
 
