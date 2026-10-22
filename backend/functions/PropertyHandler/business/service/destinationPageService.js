@@ -3,6 +3,7 @@ import { buildDestinationNotFoundPage, buildDestinationUnavailablePage } from ".
 import { readDestinationRequestPath, resolveDestinationSiteOrigin } from "./destinationPageRequest.js";
 import { DestinationTreeService } from "./destinationTreeService.js";
 import { createExpiringRead } from "../../util/expiringRead.js";
+import { withinTimeLimit } from "../../util/timeLimit.js";
 
 export const DESTINATION_SWITCH_TTL_MS = 60000;
 export const DESTINATION_RENDER_TIMEOUT_MS = 5000;
@@ -54,15 +55,11 @@ export class DestinationPageService {
     }
   }
 
-  async renderWithinLimit(path, siteOrigin) {
-    let timer;
-    const limit = new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new DestinationRenderTimeout()), this.renderTimeoutMs);
-    });
-    try {
-      return await Promise.race([this.destinationTreeService.renderDestinationPage(path, { siteOrigin }), limit]);
-    } finally {
-      clearTimeout(timer);
-    }
+  renderWithinLimit(path, siteOrigin) {
+    return withinTimeLimit(
+      this.destinationTreeService.renderDestinationPage(path, { siteOrigin }),
+      this.renderTimeoutMs,
+      () => new DestinationRenderTimeout()
+    );
   }
 }
