@@ -174,12 +174,12 @@ describe("the destination sitemap through the property handler", () => {
 
   const at = (offsetMs) =>
     jest.useFakeTimers({ now: Date.now() + offsetMs, doNotFake: ["setTimeout", "clearTimeout"] });
-  const sitemap = (host = "acceptance.domits.com") =>
+  const sitemap = (host = "acceptance.domits.com", headers = {}) =>
     handler({
       httpMethod: "GET",
       resource: "/sitemap-destinations.xml",
       path: "/sitemap-destinations.xml",
-      headers: { "x-forwarded-host": host },
+      headers: { "x-forwarded-host": host, ...headers },
     });
   const switchOn = (on = true) =>
     jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(on);
@@ -234,15 +234,22 @@ describe("the destination sitemap through the property handler", () => {
 
   it("answers 503 without caching when the database fails, and logs no request data", async () => {
     at(1080000);
-    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    const logs = ["error", "warn", "log", "info"].map((level) =>
+      jest.spyOn(console, level).mockImplementation(() => {})
+    );
     switchOn();
     jest
       .spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings")
       .mockRejectedValue(new Error("connection refused"));
-    const response = await sitemap();
+    const response = await sitemap("acceptance.domits.com", {
+      Cookie: "session=secret-cookie-value",
+      "X-Forwarded-For": "203.0.113.7",
+    });
     expect(response.statusCode).toBe(503);
     expect(response.headers["Cache-Control"]).toBe("no-store");
-    expect(JSON.stringify(log.mock.calls)).not.toMatch(/acceptance\.domits\.com|x-forwarded-host/i);
+    const logged = JSON.stringify(logs.map((spy) => spy.mock.calls));
+    expect(logged).toContain("connection refused");
+    expect(logged).not.toMatch(/secret-cookie-value|203\.0\.113\.7|acceptance\.domits\.com|x-forwarded-host/i);
   });
 
   it("answers 503 and names the limit instead of a cut off sitemap when there are more than 50000 destinations", async () => {
