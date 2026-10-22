@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+  DESTINATION_TREE_TTL_MS,
   DestinationTreeService,
   buildDestinationTree,
 } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
@@ -37,12 +38,21 @@ const LISTING = {
   destinationPath: "/destinations/europe/spain/marbella",
 };
 
-const buildService = ({ rows = ROWS, listings = [LISTING], settings = readDestinationSettings({}) } = {}) => {
+const buildService = ({
+  rows = ROWS,
+  listings = [LISTING],
+  settings = readDestinationSettings({}),
+  clock = { now: 0 },
+} = {}) => {
   const repository = {
     listDestinationsWithActiveListings: jest.fn(async () => rows),
     listActiveListingsUnderPath: jest.fn(async () => listings),
   };
-  return { service: new DestinationTreeService({ destinationPageRepository: repository, settings }), repository };
+  return {
+    service: new DestinationTreeService({ destinationPageRepository: repository, settings, now: () => clock.now }),
+    repository,
+    clock,
+  };
 };
 
 describe("the destination tree", () => {
@@ -198,6 +208,45 @@ describe("the destination tree", () => {
     const { service, repository } = buildService();
     repository.listActiveListingsUnderPath.mockResolvedValue([]);
     expect(await service.renderDestinationPage("/destinations/europe/spain")).toBeNull();
+  });
+
+  it("answers a made up path from the tree it read within the last minute, without asking the database again", async () => {
+    const { service, repository, clock } = buildService();
+
+    await service.renderDestinationPage("/destinations/europe/spain");
+    clock.now = DESTINATION_TREE_TTL_MS - 1;
+    expect(await service.renderDestinationPage("/destinations/europe/spain/nowhere")).toBeNull();
+    expect(await service.renderDestinationPage("/destinations/aaa/bbb/ccc")).toBeNull();
+    expect(await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })).toContain("<urlset");
+
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(1);
+    expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the tree again once a minute has passed", async () => {
+    const { service, repository, clock } = buildService();
+    await service.renderDestinationPage("/destinations/aaa");
+    clock.now = DESTINATION_TREE_TTL_MS;
+    await service.renderDestinationPage("/destinations/aaa");
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares one tree read between two pages asked at the same time", async () => {
+    const { service, repository } = buildService();
+    const pages = await Promise.all([
+      service.renderDestinationPage("/destinations/europe/spain"),
+      service.renderDestinationPage("/destinations/europe/spain/marbella"),
+    ]);
+    expect(pages.every(Boolean)).toBe(true);
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not keep a failed tree read, so the next page reads it again", async () => {
+    const { service, repository } = buildService();
+    repository.listDestinationsWithActiveListings.mockRejectedValueOnce(new Error("connection refused"));
+    await expect(service.renderDestinationPage("/destinations/europe/spain")).rejects.toThrow("connection refused");
+    expect(await service.renderDestinationPage("/destinations/europe/spain")).not.toBeNull();
+    expect(repository.listDestinationsWithActiveListings).toHaveBeenCalledTimes(2);
   });
 
   it("lets a repository failure reach the caller instead of rendering an empty page", async () => {

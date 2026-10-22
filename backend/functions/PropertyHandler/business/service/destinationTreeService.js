@@ -3,10 +3,12 @@ import { isDestinationEligible, readDestinationSettings } from "../../util/desti
 import { flagDestinationCity } from "../../util/destination/destinationFlags.js";
 import { buildDestinationPage } from "./destinationPageBuilder.js";
 import { buildDestinationSitemap } from "./destinationSitemapBuilder.js";
+import { createExpiringRead } from "../../util/expiringRead.js";
 
 const byPath = (left, right) => left.path.localeCompare(right.path);
 
 export const DESTINATION_PAGE_LISTING_LIMIT = 24;
+export const DESTINATION_TREE_TTL_MS = 60000;
 
 export const buildDestinationTree = (destinations, settings = readDestinationSettings()) => {
   const byId = new Map(destinations.map((destination) => [destination.id, { ...destination, children: [] }]));
@@ -60,14 +62,20 @@ export class DestinationTreeService {
   constructor({
     destinationPageRepository = new DestinationPageRepository(),
     settings = readDestinationSettings(),
+    now = () => Date.now(),
   } = {}) {
     this.destinationPageRepository = destinationPageRepository;
     this.settings = settings;
+    this.readTree = createExpiringRead({
+      read: async () =>
+        buildDestinationTree(await this.destinationPageRepository.listDestinationsWithActiveListings(), this.settings),
+      ttlMs: DESTINATION_TREE_TTL_MS,
+      now,
+    });
   }
 
   async listEligibleDestinations() {
-    const destinations = await this.destinationPageRepository.listDestinationsWithActiveListings();
-    return buildDestinationTree(destinations, this.settings).filter((destination) => destination.eligible);
+    return (await this.readTree()).filter((destination) => destination.eligible);
   }
 
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
@@ -75,10 +83,7 @@ export class DestinationTreeService {
   }
 
   async renderDestinationPage(path, { siteOrigin } = {}) {
-    const tree = buildDestinationTree(
-      await this.destinationPageRepository.listDestinationsWithActiveListings(),
-      this.settings
-    );
+    const tree = await this.readTree();
     const destination = tree.find((candidate) => candidate.path === path);
     if (!destination?.eligible) {
       return null;
