@@ -33,9 +33,7 @@ Known limits:
 
 ```bash
 export AWS_PROFILE=domits AWS_REGION=eu-north-1
-API=wkmwpwurbc
-ROLE=domits-property-handler
-PARAM=/destinations/pages/enabled
+export API=wkmwpwurbc ROLE=domits-property-handler PARAM=/destinations/pages/enabled
 ```
 
 ## 1. IAM: let PropertyHandler read the switch
@@ -66,23 +64,52 @@ Rollback: `aws ssm delete-parameter --name $PARAM`; a missing switch is also off
 
 ## 3. API Gateway: three GET routes
 
-Save the current deployment first, and make sure the API has no changes waiting that a new deployment would publish along with these routes:
+Save the current deployment first, and make sure the API has no changes waiting that a new deployment would publish along with these routes. A new deployment publishes the whole API as it is now, not only these routes. This check compares the deployed export with the current configuration, method by method: the authorization (type, authorizer and API key), the request parameters, whether a validator or model is set, the integration and its responses, and for the whole API the gateway responses, binary media types and resource policy. It prints `OK` only when every call worked, neither side is empty, and both sides are equal:
 
 ```bash
+bash -euo pipefail <<'CHECK'
 aws apigateway get-stage --rest-api-id $API --stage-name default --query deploymentId --output text > deployment-before.txt
-aws apigateway get-export --rest-api-id $API --stage-name default --export-type oas30 --parameters extensions=apigateway export-before.json
+aws apigateway get-deployment --rest-api-id $API --deployment-id "$(cat deployment-before.txt)" --embed apisummary --output json > summary-before.json
+aws apigateway get-export --rest-api-id $API --stage-name default --export-type oas30 --parameters extensions=apigateway export-before.json > /dev/null
+aws apigateway get-resources --rest-api-id $API --limit 500 --embed methods --output json > resources-now.json
+aws apigateway get-authorizers --rest-api-id $API --limit 500 --output json > authorizers-now.json
+aws apigateway get-gateway-responses --rest-api-id $API --limit 500 --output json > gateway-responses-now.json
+aws apigateway get-rest-api --rest-api-id $API --output json > api-now.json
+jq -c -S --slurpfile summary summary-before.json '
+  def templates: . // {} | with_entries(select(.value != null));
+  (.paths | to_entries[] | .key as $p | .value | to_entries[] | select(.key != "parameters")
+    | (.key | ascii_upcase | sub("X-AMAZON-APIGATEWAY-ANY-METHOD"; "ANY")) as $m | .value as $v | ($v["x-amazon-apigateway-integration"] // {}) as $i
+    | {path: $p, method: $m, auth: $summary[0].apiSummary[$p][$m], security: ([$v.security // [] | .[] | keys[]] | sort),
+       parameters: ([$v.parameters // [] | .[] | "method.request.\(.in | sub("^query$"; "querystring")).\(.name)=\(.required // false)"] | sort),
+       validator: ($v["x-amazon-apigateway-request-validator"] != null), models: ($v.requestBody != null),
+       integration: {type: ($i.type // "" | ascii_upcase), httpMethod: $i.httpMethod, uri: $i.uri, passthroughBehavior: ($i.passthroughBehavior // "" | ascii_upcase),
+         contentHandling: $i.contentHandling, timeoutInMillis: ($i.timeoutInMillis // 29000), responseTransferMode: ($i.responseTransferMode // "BUFFERED"),
+         requestTemplates: ($i.requestTemplates | templates), requestParameters: ($i.requestParameters // {})},
+       responses: ([$i.responses // {} | to_entries[] | {pattern: .key, statusCode: .value.statusCode, parameters: (.value.responseParameters // {}), templates: (.value.responseTemplates | templates)}] | sort_by(.pattern))}),
+  {gatewayResponses: (.["x-amazon-apigateway-gateway-responses"] // {} | map_values({statusCode, parameters: (.responseParameters // {}), templates: (.responseTemplates | templates)})),
+   binaryMediaTypes: (.["x-amazon-apigateway-binary-media-types"] // [] | sort), policy: (.["x-amazon-apigateway-policy"] // null)}
+' export-before.json | sort > deployed.txt
+jq -c -S --slurpfile authorizers authorizers-now.json --slurpfile gateway gateway-responses-now.json --slurpfile api api-now.json '
+  def templates: . // {} | with_entries(select(.value != null));
+  (.items[] | .path as $p | .resourceMethods // {} | to_entries[] | .key as $m | .value as $v | ($v.methodIntegration // {}) as $i
+    | {path: $p, method: $m, auth: {authorizationType: $v.authorizationType, apiKeyRequired: $v.apiKeyRequired},
+       security: ([($authorizers[0].items[] | select(.id == $v.authorizerId) | .name), (if $v.authorizationType == "AWS_IAM" then "sigv4" else empty end), (if $v.apiKeyRequired then "api_key" else empty end)] | sort),
+       parameters: ([$v.requestParameters // {} | to_entries[] | "\(.key)=\(.value)"] | sort),
+       validator: ($v.requestValidatorId != null), models: (($v.requestModels // {}) | length > 0),
+       integration: {type: $i.type, httpMethod: $i.httpMethod, uri: $i.uri, passthroughBehavior: $i.passthroughBehavior,
+         contentHandling: $i.contentHandling, timeoutInMillis: ($i.timeoutInMillis // 29000), responseTransferMode: ($i.responseTransferMode // "BUFFERED"),
+         requestTemplates: ($i.requestTemplates | templates), requestParameters: ($i.requestParameters // {})},
+       responses: ([$i.integrationResponses // {} | .[] | {pattern: (.selectionPattern // "default"), statusCode, parameters: (.responseParameters // {}), templates: (.responseTemplates | templates)}] | sort_by(.pattern))}),
+  {gatewayResponses: ([$gateway[0].items[] | select(.defaultResponse == false) | {key: .responseType, value: {statusCode, parameters: (.responseParameters // {}), templates: (.responseTemplates | templates)}}] | from_entries),
+   binaryMediaTypes: ($api[0].binaryMediaTypes // [] | sort), policy: ($api[0].policy // null | if . == null then null else gsub("\\\\\""; "\"") | fromjson end)}
+' resources-now.json | sort > current.txt
+grep -q '"method":' deployed.txt && grep -q '"method":' current.txt || { echo "STOP: the deployed or the current API came back without methods"; exit 1; }
+diff deployed.txt current.txt || { echo "STOP: the API has changes that a new deployment would publish"; exit 1; }
+echo "OK: nothing else waiting to go live, $(grep -c '"method":' current.txt) methods compared"
+CHECK
 ```
 
-A new deployment publishes the whole API as it is now, not only these routes. Compare the deployed export with the current configuration, path by path and method by method, including the authorization type and the integration URI:
-
-```bash
-jq -r '.paths | to_entries[] | .key as $p | .value | to_entries[] | select(.key != "parameters") | "\($p) \(.key | ascii_upcase | sub("X-AMAZON-APIGATEWAY-ANY-METHOD"; "ANY")) \(.value["x-amazon-apigateway-integration"].uri // "-")"' export-before.json | sort > deployed.txt
-aws apigateway get-resources --rest-api-id $API --limit 500 --embed methods --output json | jq -r '.items[] | .path as $p | (.resourceMethods // {}) | to_entries[] | "\($p) \(.key) \(.value.methodIntegration.uri // "-")"' | sort > current.txt
-diff deployed.txt current.txt
-aws apigateway get-resources --rest-api-id $API --limit 500 --embed methods --output json | jq -r '.items[] | .path as $p | (.resourceMethods // {}) | to_entries[] | "\($p) \(.key) \(.value.authorizationType)"' | sort
-```
-
-Stop when `diff` shows anything, or when an authorization type differs from what the deployed API uses; that is someone else's change waiting to go live.
+Stop on anything but the `OK` line; a difference is someone else's change waiting to go live. Request models and validators are compared only on whether one is set, not on their content; on 22 October 2026 the API had none.
 
 Create `/destinations`, `/destinations/{proxy+}` and `/sitemap-destinations.xml` under the root resource, each with **GET only, never ANY** (a POST would reach the property create route), authorization `NONE`, integration `AWS_PROXY` to `PropertyHandler`, a Lambda permission per method, and a method throttle (rate 20, burst 40). Then `aws apigateway create-deployment --rest-api-id $API --stage-name default --description "destination pages"`.
 
@@ -143,24 +170,31 @@ Rollback: read the live list, compare it with the one you wrote, and write `rule
 aws ssm put-parameter --name $PARAM --type String --value true --overwrite
 ```
 
-Wait 3 minutes for the containers and the cached `404`s, then check on `www.domits.com`. First the sitemap itself, so an empty or failed sitemap cannot pass:
+Wait 3 minutes for the containers and the cached `404`s, then check on `www.domits.com`. The check first requires a complete sitemap (`200`, `application/xml`, ending in `</urlset>`, at least one URL, only `www.domits.com/destinations` URLs), then requires every URL in it to answer `200` without a redirect, with a complete page that carries exactly that URL as its canonical. It prints `OK` only when all of that holds:
 
 ```bash
-curl -s -D sitemap-headers.txt -o sitemap.xml https://www.domits.com/sitemap-destinations.xml
-head -1 sitemap-headers.txt; grep -i '^content-type' sitemap-headers.txt; grep -c '<loc>' sitemap.xml
+bash -euo pipefail <<'CHECK'
+curl -sS --max-time 30 -D sitemap-headers.txt -o sitemap.xml https://www.domits.com/sitemap-destinations.xml || { echo "STOP: the sitemap download failed"; exit 1; }
+head -1 sitemap-headers.txt | grep -q ' 200' || { echo "STOP: the sitemap does not answer 200"; exit 1; }
+grep -i '^content-type:' sitemap-headers.txt | grep -q 'application/xml' || { echo "STOP: the sitemap is not application/xml"; exit 1; }
+tail -1 sitemap.xml | grep -q '^</urlset>$' || { echo "STOP: the sitemap is not complete"; exit 1; }
+{ grep -o '<loc>[^<]*' sitemap.xml || true; } | cut -c6- > urls.txt
+[ -s urls.txt ] || { echo "STOP: the sitemap lists no URL"; exit 1; }
+if grep -v -q '^https://www\.domits\.com/destinations' urls.txt; then echo "STOP: the sitemap lists URLs outside www.domits.com/destinations"; exit 1; fi
+failed=0
+while read -r u; do
+  status=$(curl -sS --max-time 30 -o page.html -w '%{http_code}' "$u" < /dev/null) || status=curl-error
+  if [ "$status" != 200 ] || ! grep -F -q "<link rel=\"canonical\" href=\"$u\">" page.html || ! tail -1 page.html | grep -q '</html>$'; then
+    echo "WRONG $status $u"
+    failed=$((failed + 1))
+  fi
+done < urls.txt
+[ "$failed" -eq 0 ] || { echo "STOP: $failed of $(wc -l < urls.txt | tr -d ' ') URLs are wrong"; exit 1; }
+echo "OK: the sitemap and all $(wc -l < urls.txt | tr -d ' ') URLs in it answer 200 with their own canonical"
+CHECK
 ```
 
-Expected: `200`, `application/xml`, and at least one `<loc>`; stop otherwise. Then every URL in it must answer `200` without a redirect and carry exactly that URL as its canonical:
-
-```bash
-grep -o '<loc>[^<]*' sitemap.xml | cut -c6- | while read u; do
-  status=$(curl -s -o page.html -w '%{http_code}' "$u")
-  grep -F -q "<link rel=\"canonical\" href=\"$u\">" page.html && canon=ok || canon=WRONG
-  [ "$status" = "200" ] && [ "$canon" = "ok" ] || echo "$status $canon $u"
-done
-```
-
-Expected: no output. Watch `PropertyHandler` Errors and Duration for the first hour.
+Stop on anything but the `OK` line. Watch `PropertyHandler` Errors and Duration for the first hour.
 Rollback: `aws ssm put-parameter --name $PARAM --type String --value false --overwrite`. Pages answer `404` again within 60 s per container, plus up to 300 s of cache.
 
 ## After going live
