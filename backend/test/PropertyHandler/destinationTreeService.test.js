@@ -241,6 +241,18 @@ describe("the destination tree", () => {
     expect(page.html).not.toContain("Trinidad & Tobago");
   });
 
+  it("names a continent without its own page on the root page without linking to it", async () => {
+    const rows = [
+      row("/destinations/europe", "continent", null, "Europe"),
+      row("/destinations/europe/spain", "country", "/destinations/europe", "Spain", 2),
+    ];
+    const settings = readDestinationSettings({ DESTINATION_PARENT_FROM_ANY_CHILD: "false" });
+    const page = await buildService({ rows, settings }).service.renderDestinationPage("/destinations");
+    expect(page.html).toContain("<h2>Europe</h2>");
+    expect(page.html).not.toContain('<a href="/destinations/europe">');
+    expect(page.html).toContain('<a href="/destinations/europe/spain">Spain</a>');
+  });
+
   it("answers null for the root page when no destination has a page, so it is a 404 and never an empty page", async () => {
     const { service } = buildService({ rows: ROWS.map((destination) => ({ ...destination, activeListings: 0 })) });
     expect(await service.renderDestinationPage("/destinations")).toBeNull();
