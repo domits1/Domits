@@ -210,7 +210,7 @@ describe("StaticPageWithdrawal", () => {
     expect(result.invalidationErrors).toEqual([]);
   });
 
-  it("empties the sitemap of each page it removes, so an orphan host lists nothing, and reports a sitemap it cannot write", async () => {
+  it("empties the sitemap of each page it removes, reports a sitemap it cannot write only as a failure, and still invalidates that deleted page", async () => {
     process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = "sites-bucket-under-test";
     const sent = [];
     const client = {
@@ -239,7 +239,11 @@ describe("StaticPageWithdrawal", () => {
       ["DeleteObjectCommand", `sites/by-host/${CUSTOM.domain}/index.html`, undefined],
       ["PutObjectCommand", `sites/by-host/${CUSTOM.domain}/sitemap.xml`, EMPTY_SITEMAP],
     ]);
-    expect(result.removed).toEqual([FALLBACK.domain, CUSTOM.domain]);
+    expect(result.removed).toEqual([FALLBACK.domain]);
     expect(result.failures).toEqual([{ hostname: CUSTOM.domain, message: "SlowDown" }]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths])).toEqual([
+      ["dt_wildcard", withdrawnPaths(FALLBACK.domain)],
+      ["dt_custom", withdrawnPaths(CUSTOM.domain)],
+    ]);
   });
 });
