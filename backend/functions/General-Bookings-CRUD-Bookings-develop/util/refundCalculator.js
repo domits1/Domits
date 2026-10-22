@@ -20,6 +20,19 @@ const REFUND_POLICIES = {
     { minimumMsBeforeArrival: 7 * DAY_IN_MS, refundPercentage: 0.5 },
     { minimumMsBeforeArrival: 0, refundPercentage: 0 },
   ],
+  "semi-strict": [
+    { minimumMsBeforeArrival: 60 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  strict: [
+    { minimumMsBeforeArrival: 90 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  "super-strict": [
+    { minimumMsBeforeArrival: 180 * DAY_IN_MS, refundPercentage: 1 },
+    { minimumMsBeforeArrival: 0, refundPercentage: 0 },
+  ],
+  "non-refundable": [{ minimumMsBeforeArrival: 0, refundPercentage: 0 }],
 };
 
 function normalizePolicy(policy) {
@@ -46,6 +59,8 @@ function getRefundPercentage(policy, arrivalDate, cancellationDate = new Date())
   const normalizedPolicy = normalizePolicy(policy);
   const tiers = REFUND_POLICIES[normalizedPolicy];
 
+  // Throw rather than default to 0%: the caller records the error on the booking, so a refund
+  // that could not be calculated stays visible instead of looking like a deliberate no-refund.
   if (!tiers) {
     throw new Error(`Unsupported cancellation policy: ${policy}`);
   }
