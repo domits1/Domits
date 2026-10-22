@@ -257,4 +257,24 @@ describe("the destination sitemap through the property handler", () => {
     expect(response.statusCode).toBe(503);
     expect(JSON.stringify(log.mock.calls)).toContain("A sitemap holds at most 50000 entries");
   });
+
+  it("answers 503 and names the limit when the sitemap is too large for one Lambda response", async () => {
+    at(1440000);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    switchOn();
+    const long = Array.from({ length: 25000 }, (_, index) =>
+      treeRow(
+        `/destinations/europe/spain/city-${index}-${"a".repeat(150)}`,
+        "city",
+        "/destinations/europe/spain",
+        `City ${index}`,
+        1
+      )
+    );
+    treeRows([...TREE_ROWS.slice(0, 2), ...long]);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(503);
+    expect(response.headers["Cache-Control"]).toBe("no-store");
+    expect(JSON.stringify(log.mock.calls)).toContain("larger than 5242880 bytes");
+  });
 });

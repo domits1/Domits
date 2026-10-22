@@ -7,6 +7,7 @@ import { withinTimeLimit } from "../../util/timeLimit.js";
 
 export const DESTINATION_SWITCH_TTL_MS = 60000;
 export const DESTINATION_RENDER_TIMEOUT_MS = 5000;
+export const DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES = 5 * 1024 * 1024;
 
 class DestinationRenderTimeout extends Error {
   constructor() {
@@ -56,7 +57,14 @@ export class DestinationPageService {
     return this.answer(
       () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin }),
       { kind: "not_found", html: buildDestinationNotFoundPage({ siteOrigin }) },
-      (xml) => ({ kind: "sitemap", xml })
+      (xml) => {
+        if (Buffer.byteLength(xml, "utf8") > DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES) {
+          throw new Error(
+            `The destination sitemap is larger than ${DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES} bytes, split it into a sitemap index.`
+          );
+        }
+        return { kind: "sitemap", xml };
+      }
     );
   }
 
