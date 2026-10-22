@@ -1,19 +1,6 @@
-jest.mock("../../functions/property-tasks/business/service/taskService.js", () => ({
-    getTasks: jest.fn(),
-    createTask: jest.fn(),
-    updateTask: jest.fn(),
-    deleteTask: jest.fn(),
-    getUploadUrl: jest.fn(),
-    getViewUrl: jest.fn(),
-    escalateTask: jest.fn(),
-}));
-
-jest.mock("../../functions/property-tasks/business/service/taskChecklistService.js", () => ({
-    getChecklistItems: jest.fn(),
-    createChecklistItem: jest.fn(),
-    updateChecklistItem: jest.fn(),
-    deleteChecklistItem: jest.fn(),
-}));
+// The sweep never calls these services. They are replaced only so loading the controller does not load the database.
+jest.mock("../../functions/property-tasks/business/service/taskService.js", () => ({}));
+jest.mock("../../functions/property-tasks/business/service/taskChecklistService.js", () => ({}));
 
 jest.mock("../../functions/property-tasks/business/service/taskOverdueService.js", () => ({
     notifyOverdueTasks: jest.fn(),

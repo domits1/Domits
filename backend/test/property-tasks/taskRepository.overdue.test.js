@@ -1,4 +1,5 @@
 import { getOverdueTasksToNotify, claimOverdueNotification } from "../../functions/property-tasks/data/taskRepository.js";
+import { buildUpdateDataSource } from "./updateQueryBuilderDouble.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -72,19 +73,8 @@ describe("getOverdueTasksToNotify", () => {
 });
 
 describe("claimOverdueNotification", () => {
-    const buildDataSource = (affected) => {
-        const chain = {
-            update: jest.fn().mockReturnThis(),
-            set: jest.fn().mockReturnThis(),
-            where: jest.fn().mockReturnThis(),
-            andWhere: jest.fn().mockReturnThis(),
-            execute: jest.fn().mockResolvedValue({ affected }),
-        };
-        return { chain, dataSource: { getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => chain) })) } };
-    };
-
     it("stamps the time and adds one to the count", async () => {
-        const { dataSource, chain } = buildDataSource(1);
+        const { dataSource, chain } = buildUpdateDataSource(1);
 
         await claimOverdueNotification(dataSource, { id: "task-1", overdue_last_notified_at: null }, 5000);
 
@@ -95,7 +85,7 @@ describe("claimOverdueNotification", () => {
     });
 
     it("claims a first email only while the task has still never been emailed", async () => {
-        const { dataSource, chain } = buildDataSource(1);
+        const { dataSource, chain } = buildUpdateDataSource(1);
 
         await claimOverdueNotification(dataSource, { id: "task-1", overdue_last_notified_at: null }, 5000);
 
@@ -103,7 +93,7 @@ describe("claimOverdueNotification", () => {
     });
 
     it("claims a reminder only while the last email time is still the one that was read", async () => {
-        const { dataSource, chain } = buildDataSource(1);
+        const { dataSource, chain } = buildUpdateDataSource(1);
 
         await claimOverdueNotification(dataSource, { id: "task-1", overdue_last_notified_at: 1000 }, 5000);
 
@@ -111,13 +101,13 @@ describe("claimOverdueNotification", () => {
     });
 
     it("reports a win when exactly one row was claimed", async () => {
-        const { dataSource } = buildDataSource(1);
+        const { dataSource } = buildUpdateDataSource(1);
 
         await expect(claimOverdueNotification(dataSource, { id: "task-1" }, 5000)).resolves.toBe(true);
     });
 
     it("reports a loss when another run claimed the task first", async () => {
-        const { dataSource } = buildDataSource(0);
+        const { dataSource } = buildUpdateDataSource(0);
 
         await expect(claimOverdueNotification(dataSource, { id: "task-1" }, 5000)).resolves.toBe(false);
     });
