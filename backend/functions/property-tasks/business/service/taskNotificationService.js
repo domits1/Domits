@@ -114,11 +114,29 @@ Open your Domits dashboard to view it.`,
     };
 };
 
+const buildDueSoonMessage = (task) => ({
+    subject: `Task due soon: ${task.title}`,
+    body: `The task "${task.title}" (property: ${task.property_snapshot_label}) is due soon and has not been completed.
+
+Due: ${new Date(task.due_date).toISOString()}
+
+Open your Domits dashboard to view it.`,
+});
+
 // The sweep claims the task before calling this, so a failed email is logged and not retried.
 export const notifyTaskOverdue = async (task) => {
     try {
         await emailAssigneeOrHost(task, "notif_email_overdue", buildOverdueMessage(task));
     } catch (error) {
         console.error(`Failed to send task overdue notification for task ${task.id}`, error);
+    }
+};
+
+// Same contract as notifyTaskOverdue.
+export const notifyTaskDueSoon = async (task) => {
+    try {
+        await emailAssigneeOrHost(task, "notif_email_due_soon", buildDueSoonMessage(task));
+    } catch (error) {
+        console.error(`Failed to send task due soon notification for task ${task.id}`, error);
     }
 };
