@@ -67,12 +67,15 @@ describe("Controller.runDueSoonSweep", () => {
         expect(notifyOverdueTasks).not.toHaveBeenCalled();
     });
 
-    it("answers with an error status when the sweep fails", async () => {
+    it("logs the error and throws when the sweep fails, so the scheduled run fails", async () => {
+        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
         notifyDueSoonTasks.mockRejectedValue(new Error("database down"));
 
-        const response = await new Controller().runDueSoonSweep({ task: "notify-due-soon-tasks", limit: 5 });
+        await expect(
+            new Controller().runDueSoonSweep({ task: "notify-due-soon-tasks", limit: 5 })
+        ).rejects.toThrow("database down");
 
-        expect(response.statusCode).toBe(500);
-        expect(JSON.parse(response.body).message).toContain("database down");
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("due soon sweep"), expect.any(Error));
+        consoleErrorSpy.mockRestore();
     });
 });
