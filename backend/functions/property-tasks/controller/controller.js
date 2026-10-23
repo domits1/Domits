@@ -191,18 +191,17 @@ export class Controller {
         }
     }
 
-    // Invoked by the schedule, not over HTTP: the caller needs lambda:InvokeFunction, and index.js
-    // refuses events that carry an httpMethod, so there is no token to check here.
     async runOverdueSweep(event) {
+        const requested = Number(event.limit);
+        const limit = Number.isInteger(requested) && requested > 0
+            ? Math.min(requested, MAX_OVERDUE_SWEEP_LIMIT)
+            : DEFAULT_OVERDUE_SWEEP_LIMIT;
         try {
-            const requested = Number(event.limit);
-            const limit = Number.isInteger(requested) && requested > 0
-                ? Math.min(requested, MAX_OVERDUE_SWEEP_LIMIT)
-                : DEFAULT_OVERDUE_SWEEP_LIMIT;
             const result = await notifyOverdueTasks({ limit });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
-            return this.handleError(error);
+            console.error("The overdue sweep failed", error);
+            throw error;
         }
     }
 

@@ -4,6 +4,8 @@ let controller = null;
 
 const OVERDUE_SWEEP_TASK = "notify-overdue-tasks";
 
+const isOverdueSweep = (event) => event?.task === OVERDUE_SWEEP_TASK && !event.httpMethod;
+
 const INTERNAL_ROUTES = {
     "/internal/create-task": "internalCreateTask",
 };
@@ -42,7 +44,7 @@ export const handler = async (event) => {
             controller = new Controller();
         }
 
-        if (event?.task === OVERDUE_SWEEP_TASK && !event.httpMethod) {
+        if (isOverdueSweep(event)) {
             return await controller.runOverdueSweep(event);
         }
 
@@ -77,6 +79,10 @@ export const handler = async (event) => {
         const methodName = methodRoutes[action] || DEFAULT_ROUTES[event.httpMethod];
         return await controller[methodName](event);
     } catch (error) {
+        // Nobody reads the answer to a scheduled run, so a failed sweep has to fail the invocation.
+        if (isOverdueSweep(event)) {
+            throw error;
+        }
         return {
             statusCode: 500,
             headers: CORS_HEADERS,
