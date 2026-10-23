@@ -379,6 +379,105 @@ describe("the structured data gives the check-in and check-out times", () => {
   });
 });
 
+describe("the boundary of the structured data", () => {
+  const ALLOWED_KEYS = {
+    LodgingBusiness: [
+      "@context",
+      "@type",
+      "name",
+      "description",
+      "url",
+      "image",
+      "address",
+      "amenityFeature",
+      "checkinTime",
+      "checkoutTime",
+      "containsPlace",
+    ],
+    PostalAddress: ["@type", "addressLocality", "addressCountry"],
+    LocationFeatureSpecification: ["@type", "name", "value"],
+    Accommodation: ["@type", "occupancy", "numberOfBedrooms", "numberOfBathroomsTotal"],
+    QuantitativeValue: ["@type", "value"],
+  };
+
+  const collectNodes = (value, nodes = []) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => collectNodes(item, nodes));
+    } else if (value && typeof value === "object") {
+      nodes.push(value);
+      Object.values(value).forEach((item) => collectNodes(item, nodes));
+    }
+    return nodes;
+  };
+
+  it("uses only schema.org properties that belong to the type they sit on", () => {
+    const nodes = collectNodes(buildMetadataFor().metadata.jsonLd);
+
+    expect(nodes.map((node) => node["@type"])).toEqual([
+      "LodgingBusiness",
+      "PostalAddress",
+      "LocationFeatureSpecification",
+      "LocationFeatureSpecification",
+      "Accommodation",
+      "QuantitativeValue",
+    ]);
+    nodes.forEach((node) => {
+      Object.keys(node).forEach((key) => expect(ALLOWED_KEYS[node["@type"]]).toContain(key));
+    });
+  });
+
+  it("never writes a phone number, coordinates, a street or an e-mail address into the structured data", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: {
+        location: {
+          country: "Indonesia",
+          city: "Ubud",
+          street: "Jalan Raya Sayan",
+          houseNumber: "17",
+          postalCode: "80571",
+          latitude: -8.5069,
+          longitude: 115.2625,
+        },
+        hostProfile: {
+          givenName: "Amara",
+          email: "amara@example.com",
+          whatsapp: {
+            isAvailable: true,
+            connected: true,
+            displayName: "Amara",
+            phoneNumber: "+62 812 3456 7890",
+            phoneNumberDigits: "6281234567890",
+          },
+        },
+      },
+    });
+    const serialized = JSON.stringify(metadata.jsonLd);
+
+    ["telephone", "faxNumber", "email", "geo", "latitude", "longitude", "streetAddress", "postalCode"].forEach((key) =>
+      expect(serialized).not.toContain(`"${key}"`)
+    );
+    ["3456", "6281234567890", "Jalan Raya Sayan", "80571", "115.26", "8.5069", "example.com"].forEach((value) =>
+      expect(serialized).not.toContain(value)
+    );
+    expect(metadata.jsonLd.address).toEqual({ "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" });
+  });
+
+  it("claims no rating, because the published snapshot carries no reviews", () => {
+    const { metadata } = buildMetadataFor();
+
+    expect(metadata.jsonLd.aggregateRating).toBeUndefined();
+    expect(metadata.jsonLd.review).toBeUndefined();
+    expect(JSON.stringify(metadata.jsonLd)).not.toMatch(/rating|review/i);
+  });
+
+  it("still publishes no price", () => {
+    const serialized = JSON.stringify(buildMetadataFor().metadata.jsonLd);
+
+    expect(serialized).not.toContain("550");
+    expect(serialized).not.toMatch(/price|offer/i);
+  });
+});
+
 describe("what happens when the input is missing or malformed", () => {
   it("returns a safe, non indexable result for nothing at all", () => {
     [undefined, {}, { renderPayload: null, model: null }].forEach((input) => {
