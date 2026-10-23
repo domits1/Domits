@@ -498,14 +498,48 @@ describe("the boundary of the structured data", () => {
     });
     const linked = buildMetadataFor({
       contentOverrides: {
-        amenities: [{ id: "link", label: "See www.example.com" }, { id: "url", label: "https://example.com/villa" }],
+        amenities: [
+          { id: "sauna", label: "Sauna & jacuzzi (heated), 2 towels" },
+          { id: "link", label: "See www.example.com" },
+          { id: "url", label: "https://example.com/villa" },
+          { id: "short-link", label: "Bekijk maps.app.goo.gl/AbCdEf" },
+          { id: "comma-decimal", label: "Breedtegraad 52,1234" },
+          { id: "spaced-phone", label: "Tel 06 12 34 56 78" },
+        ],
       },
     });
 
     expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Heated pool", "55-inch TV"]);
     const serialized = JSON.stringify(metadata.jsonLd);
     ["3456", "example.com", "115.2625", "AAAA"].forEach((value) => expect(serialized).not.toContain(value));
-    expect(linked.metadata.jsonLd.amenityFeature).toBeUndefined();
+    expect(linked.metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual([
+      "Sauna & jacuzzi (heated), 2 towels",
+    ]);
+  });
+
+  it("lists only photos from the accommodation bucket, so a photo address cannot carry text", () => {
+    const bucket = "https://accommodation.s3.eu-north-1.amazonaws.com/images/";
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: {
+        site: { title: "Villa" },
+        media: {
+          heroImage: `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/0a1b2c3d/web.jpg`,
+          galleryImages: [
+            "https://photos.example.com/amara@example.com/pool.jpg",
+            `${bucket}p/amara@example.com/web.jpg`,
+            `${bucket}p/0612345678 pool/web.jpg`,
+            "https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/p/web.jpg",
+            `${bucket}p/second/web.jpg`,
+          ],
+        },
+      },
+    });
+
+    expect(metadata.jsonLd.image).toEqual([
+      `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/0a1b2c3d/web.jpg`,
+      `${bucket}p/second/web.jpg`,
+    ]);
   });
 
   it("lists no photo whose address carries a query string or a fragment", () => {

@@ -1,3 +1,4 @@
+import { S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
 import { DEFAULT_WEBSITE_AMENITY_LABEL } from "../config/websiteAmenitiesConfig";
 
 const DESCRIPTION_MAX_LENGTH = 160;
@@ -7,8 +8,10 @@ const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
 const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
 const FEATURE_NAME_MAX_LENGTH = 80;
-const PRIVATE_TEXT_PATTERN = /@|https?:|www\.|\d\.\d{3}/i;
+const FEATURE_NAME_PATTERN = /^[\p{L}\p{N}\s,'’&()+-]+$/u;
+const DIGIT_RUN_PATTERN = /\d{4}/;
 const PRIVATE_DIGIT_COUNT = 7;
+const LISTING_PHOTO_PATTERN = new RegExp(`^${S3_ACCOMMODATION_URL.replaceAll(".", "\\.")}[\\w/.-]+$`);
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -96,12 +99,13 @@ const buildAmenityFeatures = (model) => {
     }));
 };
 
-const isPlainImageUrl = (imageUrl) => !imageUrl.includes("?") && !imageUrl.includes("#");
+const isListingPhotoUrl = (imageUrl) => LISTING_PHOTO_PATTERN.test(imageUrl);
 
 const looksLikeFeatureName = (label) =>
   label !== DEFAULT_WEBSITE_AMENITY_LABEL &&
   label.length <= FEATURE_NAME_MAX_LENGTH &&
-  !PRIVATE_TEXT_PATTERN.test(label) &&
+  FEATURE_NAME_PATTERN.test(label) &&
+  !DIGIT_RUN_PATTERN.test(label) &&
   (label.match(/\d/g) || []).length < PRIVATE_DIGIT_COUNT;
 
 const selectStaticSiteImages = (model) => [
@@ -109,7 +113,7 @@ const selectStaticSiteImages = (model) => [
     [
       resolveStaticSiteImageUrl(model?.media?.heroImage),
       ...(isStaticSiteSectionVisible(model, "gallerySection") ? selectStaticSiteGalleryImages(model) : []),
-    ].filter((imageUrl) => imageUrl && isPlainImageUrl(imageUrl))
+    ].filter((imageUrl) => imageUrl && isListingPhotoUrl(imageUrl))
   ),
 ];
 
