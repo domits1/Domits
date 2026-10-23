@@ -131,6 +131,19 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(model.amenities.featured.length).toBeLessThanOrEqual(6);
   });
 
+  it("skips an amenity the host added but never named", () => {
+    const html = renderStaticSiteContent({
+      model: buildModelFor({
+        contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
+      }),
+      title: "Villa",
+      templateKey: PANORAMA,
+    });
+
+    expect(html).toContain("<li>Heated pool</li>");
+    expect(html).not.toContain("New amenity");
+  });
+
   it("renders only the sections the panorama template renders itself", () => {
     const html = renderContentFor();
 

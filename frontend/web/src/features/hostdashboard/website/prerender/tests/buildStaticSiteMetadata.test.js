@@ -151,6 +151,10 @@ describe("static site metadata for a published direct booking website", () => {
       url: "https://wellness-villa-bisous-bf378265.direct.domits.com/",
       image: [FIRST_PHOTO, SECOND_PHOTO],
       address: { "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" },
+      amenityFeature: [
+        { "@type": "LocationFeatureSpecification", name: "Freezer", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Oven", value: true },
+      ],
     });
     const serializedJsonLd = JSON.stringify(metadata.jsonLd);
     expect(serializedJsonLd).not.toContain("550");
@@ -236,6 +240,51 @@ describe("the structured data lists the photos the static page shows", () => {
     expect(model.media.heroImage).toContain("data:image/svg+xml");
     expect(metadata.jsonLd.image).toBeUndefined();
     expect(JSON.stringify(metadata.jsonLd)).not.toContain("data:image");
+  });
+});
+
+describe("the structured data names the amenities the static page lists", () => {
+  const FEATURE = "LocationFeatureSpecification";
+
+  it("names each listed amenity as a feature the stay has, in the order of the page", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(metadata.jsonLd.amenityFeature).toEqual([
+      { "@type": FEATURE, name: "Freezer", value: true },
+      { "@type": FEATURE, name: "Oven", value: true },
+    ]);
+    expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(
+      model.amenities.featured.map((amenity) => amenity.label)
+    );
+  });
+
+  it("claims no amenity when the host hid the amenities panel", () => {
+    const { metadata } = buildMetadataFor({ contentOverrides: { visibility: { amenitiesPanel: false } } });
+
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+
+  it("claims no amenity when the listing has none", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { amenities: [] } });
+
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+
+  it("follows the amenities a host renamed or added, because the page shows those", () => {
+    const { metadata } = buildMetadataFor({
+      contentOverrides: { amenities: [{ id: "pool", label: "Heated pool", category: "Outdoor" }] },
+    });
+
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
+  });
+
+  it("leaves an amenity the host never named out of the page and the structured data", () => {
+    const { metadata } = buildMetadataFor({
+      contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
+    });
+
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("New amenity");
   });
 });
 

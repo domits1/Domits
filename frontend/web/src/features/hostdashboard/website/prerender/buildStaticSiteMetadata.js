@@ -1,3 +1,5 @@
+import { DEFAULT_WEBSITE_AMENITY_LABEL } from "../config/websiteAmenitiesConfig";
+
 const DESCRIPTION_MAX_LENGTH = 160;
 const HOSTNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
@@ -51,7 +53,19 @@ export const selectStaticSiteGalleryImages = (model) =>
 export const selectStaticSiteAmenities = (model) =>
   toArray(model?.amenities?.featured)
     .map((amenity) => cleanText(amenity?.label))
-    .filter(Boolean);
+    .filter((label) => label && label !== DEFAULT_WEBSITE_AMENITY_LABEL);
+
+const buildAmenityFeatures = (model) => {
+  if (!isStaticSiteSectionVisible(model, "amenitiesPanel")) {
+    return [];
+  }
+
+  return selectStaticSiteAmenities(model).map((name) => ({
+    "@type": "LocationFeatureSpecification",
+    name,
+    value: true,
+  }));
+};
 
 const selectStaticSiteImages = (model) => [
   ...new Set(
@@ -157,6 +171,10 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
       ...(city ? { addressLocality: city } : {}),
       ...(country ? { addressCountry: country } : {}),
     };
+  }
+  const amenityFeature = buildAmenityFeatures(model);
+  if (amenityFeature.length > 0) {
+    jsonLd.amenityFeature = amenityFeature;
   }
 
   return jsonLd;
