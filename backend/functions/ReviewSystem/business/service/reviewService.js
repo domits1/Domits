@@ -578,13 +578,21 @@ export class ReviewService {
       throw new ConflictException("Review cannot be published in its current state.");
     }
     this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating) });
+    const timestamp = this.now();
     const booking = await this.repository.findBookingById(review.booking_id);
-    this.assertPublicationBooking(booking, review, this.now());
+    this.assertPublicationBooking(booking, review, timestamp);
     const published = await this.repository.publishDraft({ reviewId: review.id,
-      expectedUpdatedAt: review.updated_at, updatedAt: this.now(),
+      expectedUpdatedAt: review.updated_at, updatedAt: timestamp,
       authorize: (current) => this.canPublishReview({ userId, review: current }) });
-    if (!published) throw new ConflictException("Review changed. Reload it before publishing.");
-    return toReviewView(published);
+    if (published) return toReviewView(published);
+
+    // Another request may have published this draft while this request waited.
+    const current = await this.requireReview(review.id);
+    if (!(await this.canPublishReview({ userId, review: current }))) {
+      throw new ForbiddenException("You cannot publish this review.");
+    }
+    if (isPublished(current)) return toReviewView(current);
+    throw new ConflictException("Review changed. Reload it before publishing.");
   }
 
   assertPublicationBooking(booking, review, now) {
