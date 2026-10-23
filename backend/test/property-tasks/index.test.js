@@ -11,6 +11,7 @@ const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
 const mockInternalCreateTask = jest.fn();
 const mockEscalateTask = jest.fn();
+const mockRunOverdueSweep = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -27,6 +28,7 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         deleteChecklistItem: mockDeleteChecklistItem,
         internalCreateTask: mockInternalCreateTask,
         escalateTask: mockEscalateTask,
+        runOverdueSweep: mockRunOverdueSweep,
     })),
 }));
 
@@ -43,8 +45,29 @@ describe("property-tasks handler routing", () => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
             mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
-            mockInternalCreateTask, mockEscalateTask]
+            mockInternalCreateTask, mockEscalateTask, mockRunOverdueSweep]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
+    });
+
+    it("a scheduled event with task=notify-overdue-tasks routes to runOverdueSweep", async () => {
+        const event = { task: "notify-overdue-tasks", limit: 5 };
+
+        await handler(event);
+
+        expect(mockRunOverdueSweep).toHaveBeenCalledWith(event);
+    });
+
+    it("a failing scheduled sweep fails the invocation instead of answering 500, so the failure is visible", async () => {
+        mockRunOverdueSweep.mockRejectedValue(new Error("database down"));
+
+        await expect(handler({ task: "notify-overdue-tasks", limit: 5 })).rejects.toThrow("database down");
+    });
+
+    it("an HTTP request cannot trigger the overdue sweep, even if it carries the task name", async () => {
+        await handler({ httpMethod: "GET", task: "notify-overdue-tasks", queryStringParameters: null });
+
+        expect(mockRunOverdueSweep).not.toHaveBeenCalled();
+        expect(mockGetTasks).toHaveBeenCalledTimes(1);
     });
 
     it("GET with no action routes to getTasks", async () => {

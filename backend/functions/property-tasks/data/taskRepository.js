@@ -119,6 +119,53 @@ export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) 
     return Number(result?.affected || 0) === 1;
 };
 
+const RESOLVED_STATUSES = ["Completed", "Cancelled"];
+const DAY_MS = 24 * 60 * 60 * 1000;
+const FIRST_EMAIL_WINDOW_MS = DAY_MS;
+const REMINDER_INTERVAL_MS = 2 * DAY_MS;
+const MAX_OVERDUE_EMAILS = 4;
+
+export const getOverdueTasksToNotify = async (dataSource, now, limit) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    return await repository.createQueryBuilder("task")
+        .where("task.due_date < :now", { now })
+        .andWhere("task.status NOT IN (:...resolved)", { resolved: RESOLVED_STATUSES })
+        .andWhere(
+            "((task.overdue_last_notified_at IS NULL AND task.due_date >= :since)"
+            + " OR (task.overdue_last_notified_at <= :remindBefore AND COALESCE(task.overdue_notify_count, 0) < :maxNotifications))",
+            {
+                since: now - FIRST_EMAIL_WINDOW_MS,
+                remindBefore: now - REMINDER_INTERVAL_MS,
+                maxNotifications: MAX_OVERDUE_EMAILS,
+            }
+        )
+        .andWhere("task.escalated_at IS NULL")
+        .andWhere("task.is_legacy = false")
+        .orderBy("task.overdue_last_notified_at", "ASC", "NULLS FIRST")
+        .limit(limit)
+        .getMany();
+};
+
+export const claimOverdueNotification = async (dataSource, task, claimedAt) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const previous = task.overdue_last_notified_at;
+    const query = repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({
+            overdue_last_notified_at: claimedAt,
+            overdue_notify_count: () => "COALESCE(overdue_notify_count, 0) + 1",
+        })
+        .where("id = :taskId", { taskId: task.id });
+
+    const result = await (previous === null || previous === undefined
+        ? query.andWhere("overdue_last_notified_at IS NULL")
+        : query.andWhere("overdue_last_notified_at = :previous", { previous })
+    ).execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const getChecklistItemsForTask = async (dataSource, taskId) => {
     const repository = dataSource.getRepository(ChecklistItemEntity);
     return await repository.find({ where: { task_id: taskId }, order: { position: "ASC" } });
