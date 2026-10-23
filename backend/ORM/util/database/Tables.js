@@ -54,6 +54,7 @@ import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbo
 import { HomeAutomationDevice } from "../../models/homeAutomation/HomeAutomationDevice.js";
 import { AccessCredential } from "../../models/homeAutomation/AccessCredential.js";
 import { CredentialLease } from "../../models/homeAutomation/CredentialLease.js";
+import { HomeAutomationDeviceAudit } from "../../models/homeAutomation/HomeAutomationDeviceAudit.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
@@ -127,6 +128,7 @@ export const Tables = [
   HomeAutomationDevice,
   AccessCredential,
   CredentialLease,
+  HomeAutomationDeviceAudit,
 
   User_Table,
   PropertyTask,
