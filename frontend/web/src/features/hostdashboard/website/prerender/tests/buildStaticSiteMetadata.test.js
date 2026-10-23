@@ -5,13 +5,6 @@ import { buildPublishedSiteRenderPayload } from "./publishedSiteRenderPayload";
 
 const FIRST_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg";
 const SECOND_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/second/web.jpg";
-const photoFixture = (name, index) => ({
-  image_id: name,
-  sort_order: index,
-  status: "READY",
-  web_key: `images/property/${name}/web.jpg`,
-});
-
 const buildMetadataFor = (payloadOverrides = {}) => {
   const renderPayload = buildPublishedSiteRenderPayload(payloadOverrides);
   const baseModel = buildWebsiteTemplateModel({ propertyDetails: renderPayload.propertySnapshot });
@@ -228,6 +221,21 @@ describe("the structured data lists the photos the static page shows", () => {
     expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
   });
 
+  it("lists a photo once, however often a gallery repeats it, without using up a slot", () => {
+    const photos = ["a", "b", "c", "d", "e", "f", "g"].map(
+      (name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`
+    );
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: {
+        site: { title: "Villa" },
+        media: { heroImage: photos[0], galleryImages: [photos[0], photos[1], photos[0], photos[1], ...photos.slice(2)] },
+      },
+    });
+
+    expect(metadata.jsonLd.image).toEqual(photos.slice(0, 6));
+  });
+
   it("stops at the six gallery photos the page renders, even when a model carries more", () => {
     const photos = ["a", "b", "c", "d", "e", "f", "g", "h", "i"].map(
       (name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`
@@ -330,7 +338,16 @@ describe("the structured data gives the size of the stay", () => {
     expect(metadata.jsonLd.containsPlace).toBeUndefined();
   });
 
-  it("ignores a count that is not a positive whole number", () => {
+  it("ignores a count that reaches it as a fraction, a string or a boolean", () => {
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { site: { title: "Villa" }, stay: { guests: 2.5, bedrooms: "3", bathrooms: true } },
+    });
+
+    expect(metadata.jsonLd.containsPlace).toBeUndefined();
+  });
+
+  it("follows the counts the model shows: whole numbers, nothing for a missing or negative count", () => {
     const { metadata } = buildMetadataFor({
       propertySnapshot: {
         generalDetails: [detail("Guests", "eight"), detail("Bedrooms", -1), detail("Bathrooms", 2.5), detail("Beds", 4)],
@@ -353,11 +370,11 @@ describe("the structured data gives the check-in and check-out times", () => {
 
   it("accepts the seconds the database stores and keeps them", () => {
     const { metadata } = buildMetadataFor({
-      propertySnapshot: { checkIn: { checkIn: { from: "14:30:00" }, checkOut: { from: "08:00:00", till: "10:00:00" } } },
+      propertySnapshot: { checkIn: { checkIn: { from: "14:30:15" }, checkOut: { from: "08:00:00", till: "10:45:30" } } },
     });
 
-    expect(metadata.jsonLd.checkinTime).toBe("14:30:00");
-    expect(metadata.jsonLd.checkoutTime).toBe("10:00:00");
+    expect(metadata.jsonLd.checkinTime).toBe("14:30:15");
+    expect(metadata.jsonLd.checkoutTime).toBe("10:45:30");
   });
 
   it("leaves a time out when the listing has none or it is not a time of day", () => {

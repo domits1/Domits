@@ -63,7 +63,9 @@ describe("a complete static document for a published direct booking website", ()
     expect(jsonLd.containsPlace).toMatchObject({ numberOfBedrooms: 4, numberOfBathroomsTotal: 3 });
     expect(jsonLd.checkinTime).toBe("15:00:00");
     expect(html).toContain("<li>Freezer</li>");
-    expect(html.match(/<img/g)).toHaveLength(3);
+    const pageImages = [...html.matchAll(/<img src="([^"]+)"/g)].map((match) => match[1]);
+    expect(pageImages).toHaveLength(3);
+    expect(jsonLd.image).toEqual([...new Set(pageImages)]);
   });
 
   it("replaces an Open Graph tag the shell already carries", () => {
