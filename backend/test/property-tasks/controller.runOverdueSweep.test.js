@@ -6,8 +6,13 @@ jest.mock("../../functions/property-tasks/business/service/taskOverdueService.js
     notifyOverdueTasks: jest.fn(),
 }));
 
+jest.mock("../../functions/property-tasks/business/service/taskDueSoonService.js", () => ({
+    notifyDueSoonTasks: jest.fn(),
+}));
+
 const { Controller } = require("../../functions/property-tasks/controller/controller.js");
 const { notifyOverdueTasks } = require("../../functions/property-tasks/business/service/taskOverdueService.js");
+const { notifyDueSoonTasks } = require("../../functions/property-tasks/business/service/taskDueSoonService.js");
 
 describe("Controller.runOverdueSweep", () => {
     beforeEach(() => {
@@ -38,6 +43,31 @@ describe("Controller.runOverdueSweep", () => {
         notifyOverdueTasks.mockRejectedValue(new Error("database down"));
 
         const response = await new Controller().runOverdueSweep({ task: "notify-overdue-tasks", limit: 5 });
+
+        expect(response.statusCode).toBe(500);
+        expect(JSON.parse(response.body).message).toContain("database down");
+    });
+});
+
+describe("Controller.runDueSoonSweep", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        notifyDueSoonTasks.mockResolvedValue({ found: 4, claimed: 3 });
+    });
+
+    it("runs the due soon sweep with the same limit rules as the overdue one", async () => {
+        const response = await new Controller().runDueSoonSweep({ task: "notify-due-soon-tasks", limit: 5000 });
+
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toEqual({ found: 4, claimed: 3 });
+        expect(notifyDueSoonTasks).toHaveBeenCalledWith({ limit: 100 });
+        expect(notifyOverdueTasks).not.toHaveBeenCalled();
+    });
+
+    it("answers with an error status when the sweep fails", async () => {
+        notifyDueSoonTasks.mockRejectedValue(new Error("database down"));
+
+        const response = await new Controller().runDueSoonSweep({ task: "notify-due-soon-tasks", limit: 5 });
 
         expect(response.statusCode).toBe(500);
         expect(JSON.parse(response.body).message).toContain("database down");

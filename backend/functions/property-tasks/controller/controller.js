@@ -7,14 +7,15 @@ import {
 } from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
 import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
+import { notifyDueSoonTasks } from "../business/service/taskDueSoonService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import { isValidInternalSecret } from "../.shared/internalSecretAuth.js";
 import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
-const DEFAULT_OVERDUE_SWEEP_LIMIT = 20;
-const MAX_OVERDUE_SWEEP_LIMIT = 100;
+const DEFAULT_SWEEP_LIMIT = 20;
+const MAX_SWEEP_LIMIT = 100;
 
 export class Controller {
     constructor() {
@@ -194,12 +195,20 @@ export class Controller {
     // Invoked by the schedule, not over HTTP: the caller needs lambda:InvokeFunction, and index.js
     // refuses events that carry an httpMethod, so there is no token to check here.
     async runOverdueSweep(event) {
+        return await this.runSweep(event, notifyOverdueTasks);
+    }
+
+    async runDueSoonSweep(event) {
+        return await this.runSweep(event, notifyDueSoonTasks);
+    }
+
+    async runSweep(event, sweep) {
         try {
             const requested = Number(event.limit);
             const limit = Number.isInteger(requested) && requested > 0
-                ? Math.min(requested, MAX_OVERDUE_SWEEP_LIMIT)
-                : DEFAULT_OVERDUE_SWEEP_LIMIT;
-            const result = await notifyOverdueTasks({ limit });
+                ? Math.min(requested, MAX_SWEEP_LIMIT)
+                : DEFAULT_SWEEP_LIMIT;
+            const result = await sweep({ limit });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
