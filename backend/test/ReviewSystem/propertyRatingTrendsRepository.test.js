@@ -18,14 +18,15 @@ test("uses the existing score aggregation with ownership, eligibility and exact 
   expect(sql).toContain('AVG("review"."overall_rating")');
   expect(sql).toContain('COUNT(*)');
   expect(sql).toContain('"property"."id" = "review"."property_id"');
-  for (const field of ["property_id", "verification_status", "publication_status", "status", "review_type"]) {
+  expect(sql).not.toContain("verification_status");
+  for (const field of ["property_id", "publication_status", "status", "review_type"]) {
     expect(sql).toMatch(new RegExp(`"review"\\."${field}" = :`));
   }
   expect(sql).toContain('"property"."hostid" = :hostId');
   expect(sql).toContain('"review"."created_at" >= :start');
   expect(sql).toContain('"review"."created_at" < :endExclusive');
   expect(query.getParameters()).toMatchObject({ propertyId: "p1", hostId: "host-1", start: 1000, endExclusive: 2000,
-    status: "PUBLISHED", publicationStatus: "PUBLISHED", verificationStatus: "VERIFIED", reviewType: "GUEST_TO_PROPERTY" });
+    status: "PUBLISHED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
 });
 test("lists only manager-owned properties with bounded ordered pagination", async () => {
   const find = jest.fn().mockResolvedValue([{ id: "p1" }]);

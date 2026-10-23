@@ -97,6 +97,18 @@ describe("StaticPageReconciler", () => {
     expect(summary).toMatchObject({ removed: 3, queued: 0 });
   });
 
+  it("removes nothing and reports it when the database lists no website domain while pages are stored", async () => {
+    const { reconciler, withdrawal, siteRepository } = buildReconciler({ stored: ["a.direct.domits.com", "www.b.nl"] });
+
+    const summary = await reconciler.run();
+
+    expect(withdrawal.removePages).not.toHaveBeenCalled();
+    expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
+    expect(summary.errors).toEqual([
+      { message: "The database lists no website domain while 2 pages are stored; nothing was removed." },
+    ]);
+  });
+
   it("looks at each orphan again right before its own delete, so a site republished while earlier orphans go keeps its page", async () => {
     const { reconciler, domainRepository, withdrawal } = buildReconciler({
       stored: ["a.direct.domits.com", "b.direct.domits.com"],

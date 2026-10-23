@@ -6,6 +6,7 @@ import ThreadRepository from "../data/threadRepository.js";
 import IngestionService from "./ingestionService.js";
 import { normalizeChannexInboundMessage } from "./channexMessageNormalizer.js";
 import { CHANNEX_STATUS } from "../.shared/channelManagement/channelManagementConstants.js";
+import { buildDeterministicChannexBookingId } from "../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js";
 import { badRequest } from "../util/httpErrors.js";
 
 const MESSAGE_THREAD_BOOKING_ASSIGNED_EVENT = "message_thread_booking_assigned";
@@ -123,11 +124,15 @@ export default class ChannexWebhookService {
       return ok({ ok: true, ingested: false, reason: "THREAD_NOT_FOUND" });
     }
 
-    if (thread.guestId === context.guestId) {
-      return ok({ ok: true });
+    if (thread.guestId !== context.guestId) {
+      await this.threads.updateThreadGuestId(thread.id, context.guestId);
     }
 
-    await this.threads.updateThreadGuestId(thread.id, context.guestId);
+    const deterministicBookingId = buildDeterministicChannexBookingId(context.integrationAccountId, payload.booking_id);
+    if (thread.bookingId !== deterministicBookingId) {
+      await this.threads.updateThreadBookingId(thread.id, deterministicBookingId);
+    }
+
     return ok({ ok: true });
   }
 
@@ -160,6 +165,15 @@ export default class ChannexWebhookService {
     }
 
     const result = await this.ingestionService.ingestExternalThread(normalized);
+
+    if (result.statusCode === 200 && webhookEvent.payload.booking_id) {
+      const deterministicBookingId = buildDeterministicChannexBookingId(
+        context.integrationAccountId,
+        webhookEvent.payload.booking_id
+      );
+      await this.threads.updateThreadBookingId(result.response.threadId, deterministicBookingId);
+    }
+
     return result;
   }
 }

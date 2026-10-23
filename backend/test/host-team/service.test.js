@@ -24,19 +24,25 @@ const createService = (opts) => {
 };
 
 describe("Service.getTeamMemberById", () => {
-  test("returns the member when found", async () => {
-    const { repository, service } = createService({ member: { id: "member-1", member_email: "member@example.com" } });
+  test("returns the member when found and owned by the requesting host", async () => {
+    const { repository, service } = createService({ member: { id: "member-1", host_id: "host-1", member_email: "member@example.com" } });
 
-    const member = await service.getTeamMemberById("member-1");
+    const member = await service.getTeamMemberById("member-1", "host-1");
 
-    expect(member).toEqual({ id: "member-1", member_email: "member@example.com" });
+    expect(member).toEqual({ id: "member-1", host_id: "host-1", member_email: "member@example.com" });
     expect(repository.findById).toHaveBeenCalledWith(expect.anything(), "member-1");
   });
 
   test("throws NotFoundException when the member does not exist", async () => {
     const { service } = createService({ member: null });
 
-    await expect(service.getTeamMemberById("missing")).rejects.toThrow(/Team member not found/);
+    await expect(service.getTeamMemberById("missing", "host-1")).rejects.toThrow(/Team member not found/);
+  });
+
+  test("throws ForbiddenException when the member belongs to a different host", async () => {
+    const { service } = createService({ member: { id: "member-1", host_id: "host-1", member_email: "member@example.com" } });
+
+    await expect(service.getTeamMemberById("member-1", "host-2")).rejects.toThrow(/do not have permission/);
   });
 });
 

@@ -7,7 +7,11 @@ on:
       - 'main'
     paths:
       - 'backend/**'
-      - '.github/workflows/deploy.yml'
+      - 'frontend/web/src/features/hostdashboard/website/**'
+      - 'frontend/web/src/store/amenities.js'
+      - 'frontend/web/src/store/iconWrapper.js'
+      - 'frontend/web/src/utils/accommodationImage.js'
+      - 'frontend/web/src/features/hostdashboard/hostproperty/constants.js'
 
 jobs:
   deploy:

@@ -1,5 +1,6 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
+import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 
 const FALLBACK = { domain: "cliff-house-site-1.direct.domits.com", domainType: "FALLBACK", status: "DISABLED" };
 const CUSTOM = { domain: "www.cliffhouse.nl", domainType: "CUSTOM", status: "ACTIVE" };
@@ -207,5 +208,42 @@ describe("StaticPageWithdrawal", () => {
       ["dt_wildcard", 7],
     ]);
     expect(result.invalidationErrors).toEqual([]);
+  });
+
+  it("empties the sitemap of each page it removes, reports a sitemap it cannot write only as a failure, and still invalidates that deleted page", async () => {
+    process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = "sites-bucket-under-test";
+    const sent = [];
+    const client = {
+      send: jest.fn(async (command) => {
+        sent.push([command.constructor.name, command.input.Key, command.input.Body]);
+        if (command.input.Key === `sites/by-host/${CUSTOM.domain}/sitemap.xml`) {
+          throw new Error("SlowDown");
+        }
+        return {};
+      }),
+    };
+    const { tenantRepository } = buildWithdrawal();
+    const pageStore = new StaticPageStore({ client });
+    const withdrawal = new StaticPageWithdrawal({
+      pageStore,
+      tenantRepository,
+      domainRepository: {},
+      distributionId: "E18DIST",
+    });
+
+    const result = await withdrawal.removePages([FALLBACK.domain, CUSTOM.domain]);
+
+    expect(sent).toEqual([
+      ["DeleteObjectCommand", `sites/by-host/${FALLBACK.domain}/index.html`, undefined],
+      ["PutObjectCommand", `sites/by-host/${FALLBACK.domain}/sitemap.xml`, EMPTY_SITEMAP],
+      ["DeleteObjectCommand", `sites/by-host/${CUSTOM.domain}/index.html`, undefined],
+      ["PutObjectCommand", `sites/by-host/${CUSTOM.domain}/sitemap.xml`, EMPTY_SITEMAP],
+    ]);
+    expect(result.removed).toEqual([FALLBACK.domain]);
+    expect(result.failures).toEqual([{ hostname: CUSTOM.domain, message: "SlowDown" }]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths])).toEqual([
+      ["dt_wildcard", withdrawnPaths(FALLBACK.domain)],
+      ["dt_custom", withdrawnPaths(CUSTOM.domain)],
+    ]);
   });
 });

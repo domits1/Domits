@@ -84,7 +84,7 @@ describe("property rating trends", () => {
     const controller = new Controller({ service });
     const request = { httpMethod: "GET", resource: "/reviews", queryStringParameters: { scope: "property-trends", ...query } };
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
-    request.requestContext = { authorizer: { claims: { sub: "user-sub" } } };
+    request.requestContext = { authorizer: { claims: { "cognito:username": "host-1" } } };
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
     expect(repository.getPropertyRatingTrendPage).not.toHaveBeenCalled();
   });
@@ -93,6 +93,9 @@ describe("property rating trends", () => {
     const request = { httpMethod: "GET", resource: "/reviews", queryStringParameters: { scope: "property-trends", ...query },
       requestContext: { authorizer: { claims: { sub: "user-sub", "cognito:username": "host-1" } } } };
     scores(4.5, 4);
+    expect((await controller.manageReviews(request)).statusCode).toBe(200);
+    expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledWith("user-sub", expect.any(Object));
+    delete request.requestContext.authorizer.claims["cognito:username"];
     expect((await controller.manageReviews(request)).statusCode).toBe(200);
     delete process.env.REVIEW_DECLINE_THRESHOLD;
     const failure = await controller.manageReviews(request);

@@ -99,16 +99,16 @@ describe("HostSettingsEnterpriseRatePlan", () => {
   test("shows plan details for an active enterprise plan", async () => {
     getEnterpriseRatePlan.mockResolvedValue({
       activeProperties: 100,
-      pricePerProperty: 49,
+      pricePerProperty: 43,
       currency: "EUR",
-      estimatedMonthlyCost: 4900,
+      estimatedMonthlyCost: 4300,
     });
 
     render(<HostSettingsEnterpriseRatePlan />);
 
     expect(await screen.findByText("Enterprise")).toBeInTheDocument();
 
-    expect(screen.getAllByText("€49.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("€4,900.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("€43.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("€4,300.00").length).toBeGreaterThan(0);
   });
 });
