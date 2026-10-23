@@ -2,6 +2,7 @@ import { PropertyTask as TaskEntity } from "database/models/Property_Task";
 import { Property_Task_Activity as TaskActivityEntity } from "database/models/Property_Task_Activity";
 import { Property_Task_Checklist_Item as ChecklistItemEntity } from "database/models/Property_Task_Checklist_Item";
 import { Team_Member as TeamMemberEntity } from "database/models/Team_Member";
+import { Host_Settings as HostSettingsEntity } from "database/models/Host_Settings";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const repository = dataSource.getRepository(TaskEntity);
@@ -89,6 +90,21 @@ export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     return await repository.update(taskId, updateData);
 };
 
+// The write only applies while the task is not completed, so when two requests complete the same
+// task at once exactly one of them changes it. Returns false for the one that lost.
+export const updateTaskUnlessCompleted = async (dataSource, taskId, updateData) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set(updateData)
+        .where("id = :taskId", { taskId })
+        .andWhere("status <> :completed", { completed: "Completed" })
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
     const repository = dataSource.getRepository(TaskEntity);
     const result = await repository
@@ -131,4 +147,11 @@ export const deleteChecklistItemFromDb = async (dataSource, itemId) => {
 export const getTeamMemberById = async (dataSource, teamMemberId, hostId) => {
     const repository = dataSource.getRepository(TeamMemberEntity);
     return await repository.findOne({ where: { id: teamMemberId, host_id: hostId } });
+};
+
+// host-settings stores one row per logged-in user (its host_id is the Cognito username),
+// so a team member has their own row and is looked up by their own user id.
+export const getHostSettings = async (dataSource, userId) => {
+    const repository = dataSource.getRepository(HostSettingsEntity);
+    return await repository.findOne({ where: { host_id: userId } });
 };

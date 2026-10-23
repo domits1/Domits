@@ -131,7 +131,7 @@ EnablePendingPanel.propTypes = {
     onCancel: PropTypes.func.isRequired,
 };
 
-const DonePanel = ({ t, onClose }) => {
+const DonePanel = ({ message, closeLabel, onClose }) => {
     const closeButtonRef = useRef(null);
 
     useEffect(() => {
@@ -140,10 +140,10 @@ const DonePanel = ({ t, onClose }) => {
 
     return (
         <div className="pd-password-inline">
-            <output className="pd-password-success pd-authenticator-success">{t.success}</output>
+            <output className="pd-password-success pd-authenticator-success">{message}</output>
             <div className="pd-authenticator-actions">
                 <button ref={closeButtonRef} type="button" className="pd-save-btn" onClick={onClose}>
-                    {t.close}
+                    {closeLabel}
                 </button>
             </div>
         </div>
@@ -151,8 +151,52 @@ const DonePanel = ({ t, onClose }) => {
 };
 
 DonePanel.propTypes = {
-    t: PropTypes.object.isRequired,
+    message: PropTypes.string.isRequired,
+    closeLabel: PropTypes.string.isRequired,
     onClose: PropTypes.func.isRequired,
+};
+
+const DisableConfirmPanel = ({ t, isSubmitting, errorText, onConfirm, onCancel }) => {
+    const cancelButtonRef = useRef(null);
+
+    useEffect(() => {
+        cancelButtonRef.current?.focus();
+    }, []);
+
+    return (
+        <div className="pd-password-inline">
+            <p className="pd-password-inline-title">{t.disableTitle}</p>
+            <p className="pd-authenticator-text">{t.disableWarning}</p>
+            {errorText && <ErrorText text={errorText} />}
+            <div className="pd-authenticator-actions">
+                <button
+                    ref={cancelButtonRef}
+                    type="button"
+                    className="pd-authenticator-secondary-btn"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                >
+                    {t.cancel}
+                </button>
+                <button
+                    type="button"
+                    className="pd-save-btn pd-authenticator-danger-btn"
+                    onClick={onConfirm}
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? t.turningOff : t.confirmTurnOff}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+DisableConfirmPanel.propTypes = {
+    t: PropTypes.object.isRequired,
+    isSubmitting: PropTypes.bool.isRequired,
+    errorText: PropTypes.string,
+    onConfirm: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
 };
 
 const AuthenticatorAppSection = ({
@@ -171,32 +215,52 @@ const AuthenticatorAppSection = ({
     verifySetup,
     retryEnable,
     cancelSetup,
+    disable,
 }) => {
     const labelId = useId();
     const rowRef = useRef(null);
-    const setUpButtonRef = useRef(null);
-    const previousStepRef = useRef(step);
+    const rowActionRef = useRef(null);
+    const isIdle = step === "idle" && disable.step === "idle";
+    const wasIdleRef = useRef(isIdle);
 
     useEffect(() => {
-        const returnedToIdle = previousStepRef.current !== "idle" && step === "idle";
-        previousStepRef.current = step;
+        const returnedToIdle = !wasIdleRef.current && isIdle;
+        wasIdleRef.current = isIdle;
 
         if (returnedToIdle) {
-            (setUpButtonRef.current ?? rowRef.current)?.focus();
+            (rowActionRef.current ?? rowRef.current)?.focus();
         }
-    }, [step]);
+    }, [isIdle]);
 
     if (authStatusLoading) {
         return null;
     }
 
+    const toErrorText = (key) => (key ? (t.errors[key] ?? t.errors.generic) : null);
     const isUnavailable = authStatusError || mfaStatusError;
     const statusPill = getStatusPill(authStatus, isUnavailable, labels);
     const isActive = !isUnavailable && authStatus.preferredMFA === "TOTP";
-    const canSetUp = !isUnavailable && !isActive && step === "idle";
-    const errorText = errorKey ? (t.errors[errorKey] ?? t.errors.generic) : null;
+    const canSetUp = !isUnavailable && !isActive && isIdle;
+    const canTurnOff = isActive && isIdle;
+    const errorText = toErrorText(errorKey);
+    const disableErrorText = toErrorText(disable.errorKey);
+    const rowErrorText = isIdle ? (disableErrorText ?? errorText) : null;
 
     const renderPanel = () => {
+        if (disable.step === "confirm") {
+            return (
+                <DisableConfirmPanel
+                    t={t}
+                    isSubmitting={disable.isSubmitting}
+                    errorText={disableErrorText}
+                    onConfirm={disable.confirmDisable}
+                    onCancel={disable.cancelDisable}
+                />
+            );
+        }
+        if (disable.step === "done") {
+            return <DonePanel message={t.disabledSuccess} closeLabel={t.close} onClose={disable.cancelDisable} />;
+        }
         if (step === "setup") {
             return (
                 <SetupPanel
@@ -222,7 +286,7 @@ const AuthenticatorAppSection = ({
             );
         }
         if (step === "done") {
-            return <DonePanel t={t} onClose={cancelSetup} />;
+            return <DonePanel message={t.success} closeLabel={t.close} onClose={cancelSetup} />;
         }
         return null;
     };
@@ -236,7 +300,7 @@ const AuthenticatorAppSection = ({
                 <span className={`pd-status-pill pd-status-pill--${statusPill.modifier}`}>{statusPill.text}</span>
                 {canSetUp && (
                     <button
-                        ref={setUpButtonRef}
+                        ref={rowActionRef}
                         type="button"
                         className="pd-verify-btn pd-authenticator-setup-btn"
                         onClick={startSetup}
@@ -245,11 +309,22 @@ const AuthenticatorAppSection = ({
                         {t.setUp}
                     </button>
                 )}
+                {canTurnOff && (
+                    <button
+                        ref={rowActionRef}
+                        type="button"
+                        className="pd-verify-btn pd-authenticator-setup-btn"
+                        onClick={disable.requestDisable}
+                        disabled={disable.isSubmitting}
+                    >
+                        {t.turnOff}
+                    </button>
+                )}
             </div>
 
-            {step === "idle" && errorText && (
+            {rowErrorText && (
                 <div className="pd-authenticator-row-error">
-                    <ErrorText text={errorText} />
+                    <ErrorText text={rowErrorText} />
                 </div>
             )}
 
@@ -282,6 +357,12 @@ AuthenticatorAppSection.propTypes = {
         tryAgain: PropTypes.string.isRequired,
         close: PropTypes.string.isRequired,
         success: PropTypes.string.isRequired,
+        turnOff: PropTypes.string.isRequired,
+        disableTitle: PropTypes.string.isRequired,
+        disableWarning: PropTypes.string.isRequired,
+        confirmTurnOff: PropTypes.string.isRequired,
+        turningOff: PropTypes.string.isRequired,
+        disabledSuccess: PropTypes.string.isRequired,
         errors: PropTypes.objectOf(PropTypes.string).isRequired,
     }).isRequired,
     step: PropTypes.oneOf(["idle", "setup", "enablePending", "done"]).isRequired,
@@ -293,6 +374,14 @@ AuthenticatorAppSection.propTypes = {
     verifySetup: PropTypes.func.isRequired,
     retryEnable: PropTypes.func.isRequired,
     cancelSetup: PropTypes.func.isRequired,
+    disable: PropTypes.shape({
+        step: PropTypes.oneOf(["idle", "confirm", "done"]).isRequired,
+        isSubmitting: PropTypes.bool.isRequired,
+        errorKey: PropTypes.string,
+        requestDisable: PropTypes.func.isRequired,
+        confirmDisable: PropTypes.func.isRequired,
+        cancelDisable: PropTypes.func.isRequired,
+    }).isRequired,
 };
 
 export default AuthenticatorAppSection;

@@ -1199,22 +1199,51 @@
           "title": "RemoteLock verbinden",
           "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
           "confirm": "Verbinden",
-          "confirming": "Verbinde..."
+          "confirming": "Wird verbunden..."
         },
         "reconnect": {
           "title": "RemoteLock erneut verbinden",
           "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
           "confirm": "Erneut verbinden",
-          "confirming": "Verbinde erneut..."
+          "confirming": "Wird erneut verbunden..."
         },
         "disconnect": {
           "title": "RemoteLock trennen",
           "body": "Domits verwaltet die Türcodes deiner Gäste nicht mehr.",
           "confirm": "Trennen",
-          "confirming": "Trenne..."
+          "confirming": "Wird getrennt..."
         },
         "cancel": "Abbrechen",
         "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      },
+      "devices": {
+        "title": "Geräte",
+        "notConnected": "Verbinde RemoteLock, um deine Geräte zu sehen",
+        "empty": "In deinem RemoteLock-Konto wurden keine Geräte gefunden.",
+        "loading": "Deine Geräte werden geladen...",
+        "loadError": "Wir konnten deine Geräte nicht laden.",
+        "retry": "Erneut versuchen",
+        "notSupported": "Noch nicht unterstützt",
+        "columns": {
+          "name": "Name",
+          "type": "Typ",
+          "status": "Status",
+          "battery": "Batterie",
+          "lastSeen": "Zuletzt gesehen"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Unbekannt"
+        },
+        "types": {
+          "lock": "Schloss",
+          "zwaveLock": "Z-Wave-Schloss",
+          "connectorLock": "Connector-Schloss",
+          "schlageHomeLock": "Schlage-Home-Schloss",
+          "resortLock": "Resort-Schloss",
+          "other": "Anderes Gerät"
+        }
       },
       "loading": "Deine RemoteLock-Verbindung wird geladen...",
       "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
@@ -1453,6 +1482,12 @@
         "tryAgain": "Erneut versuchen",
         "close": "Schließen",
         "success": "Deine Authenticator-App ist aktiviert. Bei der Anmeldung auf einem neuen Gerät wirst du nach einem Code gefragt.",
+        "turnOff": "Deaktivieren",
+        "disableTitle": "Authenticator-App deaktivieren?",
+        "disableWarning": "Wenn du sie deaktivierst, ist dein Konto weniger sicher. Bei der Anmeldung wirst du nicht mehr nach einem Code aus deiner Authenticator-App gefragt.",
+        "confirmTurnOff": "Deaktivieren",
+        "turningOff": "Wird deaktiviert...",
+        "disabledSuccess": "Deine Authenticator-App ist deaktiviert.",
         "errors": {
           "invalidCode": "Dieser Code ist ungültig. Gib den aktuellen 6-stelligen Code aus deiner App ein.",
           "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an und starte die Einrichtung neu.",
