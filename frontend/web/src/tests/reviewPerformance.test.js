@@ -1,5 +1,5 @@
-import { getPropertyReviewPerformance, API_REVIEW_BASE } from "./reviewAPI";
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "token" }));
+import { getPropertyReviewPerformance, API_REVIEW_BASE } from "../features/review/services/reviewAPI";
+jest.mock("../services/getAccessToken", () => ({ getAccessToken: () => "token" }));
 afterEach(() => { delete global.fetch; });
 test("uses the authenticated review endpoint with performance filters", async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => '{"periods":[]}' });
