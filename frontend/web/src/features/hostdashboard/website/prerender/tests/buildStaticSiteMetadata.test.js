@@ -543,6 +543,7 @@ describe("the boundary of the structured data", () => {
       `https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/${PROPERTY_ID}/${other}/web.jpg`,
       `https://evil.example/${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg`,
       `https://accommodationXs3Xeu-north-1XamazonawsXcom/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodatiox.s3.eu-north-1.amazonaws.com/images/${PROPERTY_ID}/${other}/web.jpg`,
       `${BUCKET}photos/${PROPERTY_ID}/${other}/web.jpg`,
       `${BUCKET}images/property/${other}/web.jpg`,
       `${BUCKET}images/${PROPERTY_ID}/Kerkstraat123/web.jpg`,
