@@ -53,6 +53,15 @@ export const selectStaticSiteAmenities = (model) =>
     .map((amenity) => cleanText(amenity?.label))
     .filter(Boolean);
 
+const selectStaticSiteImages = (model) => [
+  ...new Set(
+    [
+      resolveStaticSiteImageUrl(model?.media?.heroImage),
+      ...(isStaticSiteSectionVisible(model, "gallerySection") ? selectStaticSiteGalleryImages(model) : []),
+    ].filter(Boolean)
+  ),
+];
+
 export const resolveOpenGraphLocale = (locale) => {
   const match = REGIONAL_LOCALE_PATTERN.exec(cleanText(locale));
   return match ? `${match[1].toLowerCase()}_${match[2].toUpperCase()}` : "";
@@ -137,6 +146,10 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
   }
   if (canonicalUrl) {
     jsonLd.url = canonicalUrl;
+  }
+  const images = selectStaticSiteImages(model);
+  if (images.length > 0) {
+    jsonLd.image = images;
   }
   if (city || country) {
     jsonLd.address = {

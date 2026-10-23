@@ -3,6 +3,15 @@ import { applyWebsiteDraftContentOverrides } from "../../rendering/websiteDraftC
 import { buildStaticSiteMetadata } from "../buildStaticSiteMetadata";
 import { buildPublishedSiteRenderPayload } from "./publishedSiteRenderPayload";
 
+const FIRST_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg";
+const SECOND_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/second/web.jpg";
+const photoFixture = (name, index) => ({
+  image_id: name,
+  sort_order: index,
+  status: "READY",
+  web_key: `images/property/${name}/web.jpg`,
+});
+
 const buildMetadataFor = (payloadOverrides = {}) => {
   const renderPayload = buildPublishedSiteRenderPayload(payloadOverrides);
   const baseModel = buildWebsiteTemplateModel({ propertyDetails: renderPayload.propertySnapshot });
@@ -140,6 +149,7 @@ describe("static site metadata for a published direct booking website", () => {
       name: "Wellness Villa Bisous",
       description: metadata.description,
       url: "https://wellness-villa-bisous-bf378265.direct.domits.com/",
+      image: [FIRST_PHOTO, SECOND_PHOTO],
       address: { "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" },
     });
     const serializedJsonLd = JSON.stringify(metadata.jsonLd);
@@ -147,13 +157,15 @@ describe("static site metadata for a published direct booking website", () => {
     expect(serializedJsonLd).not.toMatch(/price|offer/i);
   });
 
-  it("claims no photos and no amenities in the structured data, because a template may hide them", () => {
-    const { metadata } = buildMetadataFor();
+  it("claims nothing the page does not show once a host hid the gallery and the amenities", () => {
+    const { metadata } = buildMetadataFor({
+      contentOverrides: { visibility: { gallerySection: false, amenitiesPanel: false } },
+    });
 
-    expect(metadata.jsonLd.image).toBeUndefined();
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
     expect(metadata.jsonLd.amenityFeature).toBeUndefined();
     expect(metadata.jsonLd.alternateName).toBeUndefined();
-    expect(metadata.openGraph["og:image"]).toContain("first/web.jpg");
+    expect(metadata.openGraph["og:image"]).toBe(FIRST_PHOTO);
   });
 
 
@@ -185,6 +197,45 @@ describe("static site metadata for a published direct booking website", () => {
     ["nl_NL", "nl_nl", "nl-NL", "nl-nl"].forEach((primaryLocale) => {
       expect(buildMetadataFor({ site: { primaryLocale } }).metadata.openGraph["og:locale"]).toBe("nl_NL");
     });
+  });
+});
+
+describe("the structured data lists the photos the static page shows", () => {
+  it("lists the hero photo first and every gallery photo once", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO, SECOND_PHOTO]);
+    expect(metadata.jsonLd.image[0]).toBe(model.media.heroImage);
+    expect(model.media.galleryImages).toEqual([FIRST_PHOTO, SECOND_PHOTO]);
+  });
+
+  it("keeps only the hero photo when the host hid the gallery section", () => {
+    const { metadata } = buildMetadataFor({ contentOverrides: { visibility: { gallerySection: false } } });
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
+  });
+
+  it("stops at the six gallery photos the page renders", () => {
+    const names = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+    const { metadata } = buildMetadataFor({ propertySnapshot: { images: names.map(photoFixture) } });
+
+    expect(metadata.jsonLd.image).toHaveLength(6);
+    expect(metadata.jsonLd.image).toEqual(names.slice(0, 6).map((name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`));
+  });
+
+  it("lists a hero photo the host picked outside the gallery as an extra image", () => {
+    const hostPick = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/hero-pick/web.jpg";
+    const { metadata } = buildMetadataFor({ contentOverrides: { heroImage: hostPick } });
+
+    expect(metadata.jsonLd.image).toEqual([hostPick, FIRST_PHOTO, SECOND_PHOTO]);
+  });
+
+  it("claims no image at all rather than the placeholder when the listing has no photo", () => {
+    const { metadata, model } = buildMetadataFor({ propertySnapshot: { images: [] } });
+
+    expect(model.media.heroImage).toContain("data:image/svg+xml");
+    expect(metadata.jsonLd.image).toBeUndefined();
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("data:image");
   });
 });
 
