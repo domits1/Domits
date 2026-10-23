@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
+import Pages from "../guestdashboard/Pages";
+import { ArrowLeft, MessageSquare, ShieldCheck, Lightbulb } from "lucide-react";
 import styles from "./styles/ReviewPage.module.css";
-import { createReview, getEditableReview, updateReview } from "./services/reviewAPI";
+import { createReview, getEditableReview, updateReview, publishReview } from "./services/reviewAPI";
 import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
 import {
   canLeaveReview,
@@ -31,7 +33,7 @@ const REVIEW_MAX_LENGTH = 500;
 // eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
 const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
-const ReviewPage = () => {
+const ReviewForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -48,9 +50,12 @@ const ReviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [pendingPublicationId, setPendingPublicationId] = useState("");
   const [checkedBookingId, setCheckedBookingId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
   const [ratingError, setRatingError] = useState("");
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const displayedRating = hoveredRating || Number(form.rating);
   const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
@@ -59,10 +64,12 @@ const ReviewPage = () => {
     setIsCheckingSession(true);
     setEligibilityError("");
     setIsSubmitted(false);
+    setPendingPublicationId("");
     setSubmitError("");
     setForm(INITIAL_FORM);
     setEditingReview(null);
     setRatingError("");
+    setHoveredRating(0);
     setReviewError("");
 
     const checkEligibility = async () => {
@@ -136,6 +143,21 @@ const ReviewPage = () => {
     if (field === "publicReview") setReviewError("");
   };
 
+  const publishSavedReview = async (id) => {
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      await publishReview(id);
+      setPendingPublicationId("");
+      setForm(INITIAL_FORM);
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message || "Could not publish your saved review. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -180,13 +202,20 @@ const ReviewPage = () => {
       if (reviewId) {
         await updateReview({ reviewId, rating: Number(form.rating), publicReview, updatedAt: editingReview.updated_at });
       } else {
-        await createReview({
+        const draft = await createReview({
           bookingId,
           title: form.title.trim(),
           rating: Number(form.rating),
           publicReview,
           privateFeedback: form.privateFeedback.trim(),
         });
+        if (typeof draft?.id !== "string" || !draft.id.trim()) {
+          setEligibilityError("We could not confirm your saved review. Check your review history before submitting again.");
+          return;
+        }
+        setPendingPublicationId(draft.id);
+        await publishSavedReview(draft.id);
+        return;
       }
 
       setForm(INITIAL_FORM);
@@ -199,7 +228,7 @@ const ReviewPage = () => {
   };
 
   const renderRatingInput = (value) => (
-    <label key={value}>
+    <label key={value} onMouseEnter={() => !isSubmitting && setHoveredRating(value)}>
       <input
         type="radio"
         name="stars"
@@ -211,8 +240,8 @@ const ReviewPage = () => {
         aria-label={`${value} ${value === 1 ? "star" : "stars"}: ${RATING_LABELS[value]}`}
         aria-describedby={`rating-description${ratingError ? " rating-error" : ""}`}
       />
-      <span className={styles.icon} aria-hidden="true">
-        {value <= Number(form.rating) ? "★" : "☆"}
+      <span className={styles.icon} data-filled={value <= displayedRating} aria-hidden="true">
+        {value <= displayedRating ? "★" : "☆"}
       </span>
     </label>
   );
@@ -224,7 +253,7 @@ const ReviewPage = () => {
   if (isCheckingSession || checkedBookingId !== targetId) {
 
     return (
-      <main className={styles.main}>
+      <main className={`${styles.main} ${styles.publicationPage}`}>
         <h1>Loading review form...</h1>
       </main>
     );
@@ -234,7 +263,7 @@ const ReviewPage = () => {
   if (eligibilityError || !targetId) {
 
     return (
-      <main className={styles.main}>
+      <main className={`${styles.main} ${styles.publicationPage}`}>
         <h1>Review unavailable</h1>
         <p role="alert">{eligibilityError}</p>
         <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
@@ -244,37 +273,68 @@ const ReviewPage = () => {
     );
   }
 
+  if (pendingPublicationId) {
+    return (
+      <main className={`${styles.main} ${styles.publicationPage}`}>
+        <section className={styles.statusCard} aria-busy={isSubmitting}>
+          <span className={styles.eyebrow}>YOUR EXPERIENCE</span>
+          <h1>{isSubmitting ? "Publishing your review" : "Your review is saved"}</h1>
+          <p role="status">{isSubmitting ? "Sharing your experience with future guests."
+            : "Publication has not completed yet. Retry to publish your saved review."}</p>
+          {submitError && <p role="alert">{submitError}</p>}
+          <button type="button" disabled={isSubmitting}
+            onClick={() => publishSavedReview(pendingPublicationId)}>
+            {isSubmitting ? "Publishing..." : "Retry publication"}
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   if (isSubmitted) {
     return (
-      <main className={styles.main}>
-        <h1>{reviewId ? "Review updated" : "Review submitted"}</h1>
-        <p className={styles.comment}>
-          {reviewId ? "Your changes have been saved as a draft for review."
-            : "Thank you for sharing your experience. Your review was saved as a draft."}
-        </p>
-        <button type="button" onClick={() => navigate("/guestdashboard/bookings")}>
-          Back to reservations
-        </button>
+      <main className={`${styles.main} ${styles.publicationPage}`}>
+        <section className={styles.statusCard}>
+          <span className={styles.eyebrow}>THANK YOU FOR SHARING</span>
+          <h1>{reviewId ? "Review updated" : "Your review is published"}</h1>
+          <p role="status">{reviewId ? "Your changes have been saved as a draft for review."
+            : "Your experience can now help future guests choose their next stay."}</p>
+          <button type="button" onClick={() => navigate("/guestdashboard/reviews")}>
+            View my reviews
+          </button>
+        </section>
       </main>
     );
   }
 
   return (
-    <main className={styles.main}>
-      <h1>{reviewId ? "Edit review" : `Review ${propertyTitle}`}</h1>
-      <form onSubmit={handleSubmit} noValidate>
-        <fieldset className={styles.rating} disabled={isSubmitting}>
+    <main className={`${styles.main} ${styles.publicationPage}`}>
+      <button className={styles.backLink} type="button" onClick={() => navigate("/guestdashboard/reviews")}>
+        <ArrowLeft size={16} aria-hidden="true" /> Back to review history
+      </button>
+      <header className={styles.pageHeader}>
+        <div><span className={styles.eyebrow}>YOUR EXPERIENCES</span>
+        <h1>{reviewId ? "Edit review" : `How was ${propertyTitle}?`}</h1>
+        <p>Share the details that made your stay memorable and help future guests
+          feel confident about their next booking.</p></div>
+        <span className={styles.headerIcon}><MessageSquare size={26} aria-hidden="true" /></span>
+      </header>
+      <div className={styles.formLayout}>
+      <form className={styles.reviewForm} onSubmit={handleSubmit} noValidate>
+        <div className={styles.formIntro}><h2>Your stay, in your words</h2>
+          <p>A few honest details can make a big difference.</p></div>
+        <fieldset className={styles.rating} data-rating={displayedRating} disabled={isSubmitting}>
           <legend>Overall experience (required)</legend>
-          <div>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
+          <div onMouseLeave={() => setHoveredRating(0)}>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
           <p id="rating-description" aria-live="polite">
-            {form.rating ? `${form.rating} out of 5 stars — ${RATING_LABELS[form.rating]}` : "Select a rating"}
+            {displayedRating ? `${displayedRating} out of 5 stars — ${RATING_LABELS[displayedRating]}` : "Select a rating"}
           </p>
           {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
         </fieldset>
         {!reviewId && <section className={styles.content}>
           <label htmlFor="title">Review title (required)</label>
           <input id="title" value={form.title} onChange={updateField("title")}
-            maxLength={120} disabled={isSubmitting} required />
+            maxLength={120} placeholder="Give your stay a short headline" disabled={isSubmitting} required />
         </section>}
         <section className={styles.content}>
           <label htmlFor="publicReview">Written review (required)</label>
@@ -301,7 +361,7 @@ const ReviewPage = () => {
         </section>
 
         {!reviewId && <section className={styles.content}>
-          <label htmlFor="privateFeedback">Do you have any feedback? (not required)</label>
+          <label htmlFor="privateFeedback">Private feedback for your host (optional)</label>
           <textarea
             id="privateFeedback"
             className={styles.textarea}
@@ -316,6 +376,11 @@ const ReviewPage = () => {
 
         {submitError && <p role="alert">{submitError}</p>}
 
+        {!reviewId && <p className={styles.privacyNote}>
+          <ShieldCheck size={18} aria-hidden="true" /> <span>
+          Your rating and written review will be public. Private feedback is shared
+          separately with your host.</span>
+        </p>}
         <div className={styles.buttonBox}>
           <button type="button" onClick={() => navigate(-1)} disabled={isSubmitting}>
             Cancel
@@ -328,8 +393,22 @@ const ReviewPage = () => {
           </button>
         </div>
       </form>
+      <aside className={styles.guidance} aria-label="Review writing tips">
+        <span className={styles.tipIcon}><Lightbulb size={22} aria-hidden="true" /></span>
+        <h2>Small details.<br />Better stays.</h2>
+        <p>Your perspective helps hosts improve and fellow travellers feel at home.</p>
+        <h3>Keep it personal</h3><p>Share what stood out, from a warm welcome to a favourite corner.</p>
+        <h3>Keep it helpful</h3><p>Describe your experience honestly, including what could be better.</p>
+        <h3>Keep some things private</h3><p>Use private feedback for details you only want your host to see.</p>
+      </aside>
+      </div>
     </main>
   );
 };
 
-export default ReviewPage;
+export default function ReviewPage() {
+  return <div className="main-dashboard-guest">
+    <div className="main-dashboard-sidebar"><Pages /></div>
+    <div className="main-dashboard-content"><ReviewForm /></div>
+  </div>;
+}

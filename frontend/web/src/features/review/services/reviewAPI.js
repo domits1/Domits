@@ -194,3 +194,16 @@ export async function reviewSchedule(propertyId, settings, signal) {
   if (!response.ok) throw new Error(payload?.message || "Could not save review preferences.");
   return payload;
 }
+
+export const publishReview = async (reviewId) => {
+  const response = await fetch(
+    `${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`,
+    { method: "POST", headers: { Authorization: await getIdToken() } }
+  );
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not publish your review. Please try again.");
+  if (payload?.status !== "PUBLISHED" || payload?.publication_status !== "PUBLISHED") {
+    throw new Error("Publication could not be confirmed. Please retry.");
+  }
+  return payload;
+};

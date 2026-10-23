@@ -5,8 +5,16 @@ const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, character =
 export const httpsUrl = value => {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
-  } catch { return null; }
+
+    const isHttps = url.protocol === "https:";
+    const isLocalhost =
+      url.protocol === "http:" &&
+      url.hostname === "localhost";
+
+    return isHttps || isLocalhost ? url.href : null;
+  } catch {
+    return null;
+  }
 };
 
 const date = value => {

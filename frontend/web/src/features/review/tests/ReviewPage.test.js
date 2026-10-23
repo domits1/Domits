@@ -7,18 +7,103 @@ import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 import GuestReviews from "../../guestdashboard/GuestReviews";
 import {
   createReview,
+  publishReview,
   requestReview,
   getEditableReview,
   updateReview,
 } from "../services/reviewAPI";
 
 const mockNavigate = jest.fn();
+
+it("previews hovered stars without changing the selected rating", async () => {
+  render(<ReviewPage />);
+  await screen.findByRole("group", { name: "Overall experience (required)" });
+  const radios = screen.getAllByRole("radio");
+  const stars = () => radios.map(radio => radio.parentElement.querySelector("span").textContent).join("");
+  fireEvent.mouseEnter(radios[3].parentElement);
+  expect(stars()).toBe("★★★★☆");
+  expect(radios.every(radio => !radio.checked)).toBe(true);
+  fireEvent.mouseLeave(radios[3].parentElement.parentElement);
+  expect(stars()).toBe("☆☆☆☆☆");
+  fireEvent.click(radios[1]);
+  fireEvent.mouseEnter(radios[4].parentElement);
+  expect(stars()).toBe("★★★★★");
+  expect(radios[1]).toBeChecked();
+  fireEvent.mouseLeave(radios[4].parentElement.parentElement);
+  expect(stars()).toBe("★★☆☆☆");
+  expect(screen.getByText(/^2 out of 5 stars/)).toBeInTheDocument();
+});
+
+it.each([1, 2, 3, 4, 5])("applies the %s-star palette during selection and hover", async (rating) => {
+  render(<ReviewPage />);
+  const group = await screen.findByRole("group", { name: "Overall experience (required)" });
+  const radios = screen.getAllByRole("radio");
+  fireEvent.click(radios[rating - 1]);
+  expect(group).toHaveAttribute("data-rating", String(rating));
+  expect(group.querySelectorAll('[data-filled="true"]')).toHaveLength(rating);
+  const preview = rating === 5 ? 1 : rating + 1;
+  fireEvent.mouseEnter(radios[preview - 1].parentElement);
+  expect(group).toHaveAttribute("data-rating", String(preview));
+  expect(radios[rating - 1]).toBeChecked();
+  fireEvent.mouseLeave(radios[preview - 1].parentElement.parentElement);
+  expect(group).toHaveAttribute("data-rating", String(rating));
+});
+
+it("retries publication without creating another draft", async () => {
+  publishReview.mockRejectedValueOnce(new Error("Publication unavailable"));
+  await submitReview();
+  await screen.findByRole("heading", { name: "Your review is saved" });
+  expect(screen.getByRole("alert")).toHaveTextContent("Publication unavailable");
+  fireEvent.click(screen.getByRole("button", { name: "Retry publication" }));
+  await screen.findByRole("heading", { name: "Your review is published" });
+  expect(createReview).toHaveBeenCalledTimes(1);
+  expect(publishReview).toHaveBeenCalledTimes(2);
+  expect(publishReview).toHaveBeenLastCalledWith("review-1");
+  fireEvent.click(screen.getByRole("button", { name: "View my reviews" }));
+  expect(mockNavigate).toHaveBeenCalledWith("/guestdashboard/reviews");
+});
+
+it("does not publish when creation fails", async () => {
+  createReview.mockRejectedValueOnce(new Error("Save failed"));
+  await submitReview();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Save failed");
+  expect(publishReview).not.toHaveBeenCalled();
+});
+
+it("blocks resubmission when the saved review ID cannot be confirmed", async () => {
+  createReview.mockResolvedValueOnce({});
+  await submitReview();
+  await screen.findByRole("heading", { name: "Review unavailable" });
+  expect(publishReview).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: "Submit review" })).toBeNull();
+});
+
+it.each([
+  { ok: false, payload: { message: "Access denied" } },
+  { ok: true, payload: { status: "DRAFT", publication_status: "UNPUBLISHED" } },
+  { ok: true, payload: { status: "PUBLISHED", publication_status: "PUBLISHED" } },
+])("validates the publication API response: %o", async ({ ok, payload }) => {
+  const api = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok, text: async () => JSON.stringify(payload) });
+  try {
+    const result = api.publishReview("review/1");
+    if (ok && payload.status === "PUBLISHED") await expect(result).resolves.toEqual(payload);
+    else await expect(result).rejects.toThrow();
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${api.API_REVIEW_BASE}/reviews/review%2F1/publish`,
+      { method: "POST", headers: { Authorization: "id-token" } }
+    );
+  } finally { global.fetch = originalFetch; }
+});
 let mockSearch;
 
 jest.mock("aws-amplify", () => ({
   Auth: { currentUserInfo: jest.fn() },
 }));
 jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  NavLink: ({ children, to, className }) => <a href={to} className={typeof className === "function" ? className({ isActive: false }) : className}>{children}</a>,
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: "/review", search: mockSearch, state: null }),
 }));
@@ -27,6 +112,7 @@ jest.mock("../../guestdashboard/services/bookingAPI", () => ({
 }));
 jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
+  publishReview: jest.fn(),
   requestReview: jest.fn(),
   getEditableReview: jest.fn(),
   updateReview: jest.fn(),
@@ -140,6 +226,7 @@ beforeEach(() => {
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
   createReview.mockResolvedValue({ id: "review-1" });
+  publishReview.mockResolvedValue({ status: "PUBLISHED", publication_status: "PUBLISHED" });
 });
 
 it("hides the form while eligibility is being checked", () => {
@@ -197,7 +284,7 @@ const submitReview = async () => {
 
 it("submits the reservation and shows confirmation", async () => {
   await submitReview();
-  await screen.findByRole("heading", { name: "Review submitted" });
+  await screen.findByRole("heading", { name: "Your review is published" });
   expect(createReview).toHaveBeenCalledWith({
     bookingId: booking.id,
     rating: 5,
@@ -214,7 +301,7 @@ it.each([
   createReview.mockRejectedValue(new Error(message));
   await submitReview();
   await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(message));
-  expect(screen.queryByRole("heading", { name: "Review submitted" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Your review is published" })).toBeNull();
   expect(screen.getAllByRole("radio")[4].checked).toBe(true);
 });
 
@@ -225,7 +312,7 @@ it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selec
   fireEvent.click(radio);
   fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
   fireEvent.change(text, { target: { value: "Great stay." } });
-  fireEvent.change(screen.getByLabelText(/Do you have any feedback/), { target: { value: "Thanks!" } });
+  fireEvent.change(screen.getByLabelText(/Private feedback for your host/), { target: { value: "Thanks!" } });
   expect(radio.checked).toBe(true);
   expect(screen.getByText(new RegExp(`^${rating} out of 5 stars`))).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
@@ -264,7 +351,7 @@ it("supports keyboard selection and arrow navigation with native radios", async 
   const user = userEvent.setup();
   render(<ReviewPage />);
   await screen.findByRole("group", { name: "Overall experience (required)" });
-  await user.tab();
+  screen.getAllByRole("radio")[0].focus();
   await user.keyboard(" ");
   expect(screen.getAllByRole("radio")[0].checked).toBe(true);
   await user.keyboard("{ArrowRight}");
@@ -339,14 +426,14 @@ it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", asy
 it("keeps legacy reservationId links compatible", async () => {
   mockSearch = `?reservationId=${booking.id}`;
   await submitReview();
-  await screen.findByRole("heading", { name: "Review submitted" });
+  await screen.findByRole("heading", { name: "Your review is published" });
   expect(createReview).toHaveBeenCalledWith(expect.objectContaining({ bookingId: booking.id }));
 });
 
 it("gives bookingId precedence over the legacy parameter", async () => {
   mockSearch = `?bookingId=${booking.id}&reservationId=wrong`;
   await submitReview();
-  await screen.findByRole("heading", { name: "Review submitted" });
+  await screen.findByRole("heading", { name: "Your review is published" });
   expect(createReview).toHaveBeenCalledWith(expect.objectContaining({ bookingId: booking.id }));
 });
 
@@ -369,4 +456,13 @@ it("never serializes client-supplied identity or status fields", async () => {
       booking_id: booking.id, overall_rating: 4, title: "Stay", public_review: "Good", private_feedback: "Host only",
     });
   } finally { global.fetch = originalFetch; }
+});
+
+
+it("shows the guest sidebar with Reviews active on the submission page", async () => {
+  render(<ReviewPage />);
+  await screen.findByLabelText("Written review (required)");
+  expect(screen.getByRole("navigation", { name: "Guest navigation" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Reviews" })).toHaveClass("active");
+  expect(screen.getByRole("textbox", { name: "Review title (required)" })).toHaveAttribute("maxLength", "120");
 });
