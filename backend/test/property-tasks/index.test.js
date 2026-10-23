@@ -81,6 +81,12 @@ describe("property-tasks handler routing", () => {
         expect(mockRunOverdueSweep).not.toHaveBeenCalled();
     });
 
+    it("a failing scheduled due soon sweep fails the invocation instead of answering 500, so the failure is visible", async () => {
+        mockRunDueSoonSweep.mockRejectedValue(new Error("database down"));
+
+        await expect(handler({ task: "notify-due-soon-tasks", limit: 5 })).rejects.toThrow("database down");
+    });
+
     it("an HTTP request cannot trigger the due soon sweep, even if it carries the task name", async () => {
         await handler({ httpMethod: "GET", task: "notify-due-soon-tasks", queryStringParameters: null });
 
