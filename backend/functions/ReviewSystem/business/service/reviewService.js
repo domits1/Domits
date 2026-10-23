@@ -9,6 +9,62 @@ import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "..
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
+const DAY_MS = 86_400_000;
+const MAX_PERFORMANCE_PERIODS = 120;
+const formatPerformanceDate = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+
+function parsePerformanceDate(value, name) {
+  if (typeof value !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException(`${name} must be YYYY-MM-DD.`);
+  }
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(timestamp) || formatPerformanceDate(timestamp) !== value) {
+    throw new BadRequestException(`${name} must be a valid date.`);
+  }
+  return timestamp;
+}
+
+function getPerformancePeriodStart(timestamp, interval) {
+  const date = new Date(timestamp);
+  if (interval === "week") {
+    date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  } else {
+    date.setUTCDate(1);
+    if (interval === "year") date.setUTCMonth(0);
+  }
+  return date.getTime();
+}
+
+function getNextPerformancePeriod(timestamp, interval) {
+  const date = new Date(timestamp);
+  switch (interval) {
+    case "week": date.setUTCDate(date.getUTCDate() + 7); break;
+    case "month": date.setUTCMonth(date.getUTCMonth() + 1); break;
+    case "year": date.setUTCFullYear(date.getUTCFullYear() + 1); break;
+  }
+  return date.getTime();
+}
+
+function generatePerformancePeriods(start, endExclusive, interval) {
+  const periods = [];
+  for (let periodStart = getPerformancePeriodStart(start, interval); periodStart < endExclusive;) {
+    if (periods.length >= MAX_PERFORMANCE_PERIODS) {
+      throw new BadRequestException("Select a range covering at most 120 periods.");
+    }
+    const nextPeriod = getNextPerformancePeriod(periodStart, interval);
+    const coverageStart = Math.max(start, periodStart);
+    const coverageEndExclusive = Math.min(endExclusive, nextPeriod);
+    periods.push({
+      period: formatPerformanceDate(periodStart),
+      coverage_start: formatPerformanceDate(coverageStart),
+      coverage_end: formatPerformanceDate(coverageEndExclusive - DAY_MS),
+      is_partial: coverageStart !== periodStart || coverageEndExclusive !== nextPeriod,
+    });
+    periodStart = nextPeriod;
+  }
+  return periods;
+}
+
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
 // eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
@@ -91,9 +147,41 @@ export class ReviewService {
     return normalizedPropertyId;
   }
 
-  async getPropertyCategoryRatings(userId, propertyId) {
-    const id = await this.authorizeManagedProperty(userId, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
+  async getPropertyOverallScore(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    return this.repository.getPropertyReviewScore(id, username);
+  }
+
+  // Group current eligible scores by review creation period, rather than reconstructing past edits.
+  // Exact inclusive UTC dates clip calendar buckets; coverage dates expose partial periods.
+  // Week labels identify Mondays. Empty periods retain coverage with null scores and zero counts.
+  async getPropertyReviewPerformance(username, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const interval = query.interval === undefined ? "month" : query.interval;
+    if (!["week", "month", "year"].includes(interval)) {
+      throw new BadRequestException("interval must be week, month, or year.");
+    }
+    const start = parsePerformanceDate(query.startDate, "startDate");
+    const end = parsePerformanceDate(query.endDate, "endDate");
+    if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
+    const endExclusive = end + DAY_MS;
+    const buckets = generatePerformancePeriods(start, endExclusive, interval);
+    // The exclusive bound includes the entire requested end date in UTC.
+    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, endExclusive, interval);
+    const byPeriod = new Map(rows.map((row) => [row.period, row]));
+    const periods = buckets.map((bucket) => {
+      const row = byPeriod.get(bucket.period);
+      return { ...bucket, average_score: row ? Number(row.average_score) : null,
+        review_count: row ? Number(row.review_count) : 0 };
+    });
+    return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
+      end_date: query.endDate, periods };
+  }
+
+  // Return category-level review metrics for a property the caller manages.
+  async getPropertyCategoryRatings(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, username);
     return { property_id: id, categories };
   }
 
