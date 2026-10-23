@@ -54,7 +54,7 @@ export const selectStaticSiteGalleryImages = (model) =>
 export const selectStaticSiteAmenities = (model) =>
   toArray(model?.amenities?.featured)
     .map((amenity) => cleanText(amenity?.label))
-    .filter((label) => label && label !== DEFAULT_WEBSITE_AMENITY_LABEL);
+    .filter(Boolean);
 
 const resolveTimeOfDay = (value) => {
   const match = TIME_OF_DAY_PATTERN.exec(cleanText(value));
@@ -84,11 +84,13 @@ const buildAmenityFeatures = (model) => {
     return [];
   }
 
-  return selectStaticSiteAmenities(model).map((name) => ({
-    "@type": "LocationFeatureSpecification",
-    name,
-    value: true,
-  }));
+  return selectStaticSiteAmenities(model)
+    .filter((label) => label !== DEFAULT_WEBSITE_AMENITY_LABEL)
+    .map((name) => ({
+      "@type": "LocationFeatureSpecification",
+      name,
+      value: true,
+    }));
 };
 
 const selectStaticSiteImages = (model) => [

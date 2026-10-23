@@ -291,7 +291,7 @@ describe("the structured data names the amenities the static page lists", () => 
     expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
   });
 
-  it("leaves an amenity the host never named out of the page and the structured data", () => {
+  it("leaves an amenity the host never named out of the structured data", () => {
     const { metadata } = buildMetadataFor({
       contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
     });

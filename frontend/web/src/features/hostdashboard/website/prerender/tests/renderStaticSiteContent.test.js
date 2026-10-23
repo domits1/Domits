@@ -131,7 +131,7 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(model.amenities.featured.length).toBeLessThanOrEqual(6);
   });
 
-  it("skips an amenity the host added but never named", () => {
+  it("keeps an amenity the host never named, because the live template shows it too", () => {
     const html = renderStaticSiteContent({
       model: buildModelFor({
         contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
@@ -141,7 +141,7 @@ describe("static site content for a crawler without JavaScript", () => {
     });
 
     expect(html).toContain("<li>Heated pool</li>");
-    expect(html).not.toContain("New amenity");
+    expect(html).toContain("<li>New amenity</li>");
   });
 
   it("renders only the sections the panorama template renders itself", () => {
