@@ -70,6 +70,7 @@ const createService = ({
   assignments = [],
   ownerAssignments = [],
   titles = TITLES,
+  updatedRows = 1,
   clock = CLOCK,
 } = {}) => {
   const repository = {
@@ -79,6 +80,7 @@ const createService = ({
     findAssignmentsByOwnerAndHost: jest.fn(async () => ownerAssignments),
     findPropertyTitlesByIds: jest.fn(async () => titles),
     createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
+    updateOwner: jest.fn(async () => updatedRows),
     replacePropertyShares: jest.fn(async ({ assertWritable }) => {
       assertWritable({ property: shareProperty, owners: shareOwners, changedToday });
       return { property: shareProperty, rows: savedShares };
@@ -392,6 +394,114 @@ describe("Service.createOwner", () => {
 
     await expect(service.createOwner("host-1", body)).rejects.toMatchObject({ statusCode: 400 });
     expect(repository.createOwner).not.toHaveBeenCalled();
+  });
+});
+
+describe("Service.updateOwner", () => {
+  const company = owner(OWNER_A, { owner_type: "company", company_name: "Acme BV" });
+  const individual = owner(OWNER_A, { owner_type: "individual", company_name: null });
+
+  test("rejects clearing the company name of a stored company with 400 and writes nothing", async () => {
+    const { repository, service } = createService({ ownerById: company });
+
+    await expect(service.updateOwner("host-1", OWNER_A, { company_name: "" })).rejects.toMatchObject({
+      statusCode: 400,
+      message: "company_name is required when owner_type is company or trust.",
+    });
+    expect(repository.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test("rejects turning a stored individual without a company name into a company with 400", async () => {
+    const { repository, service } = createService({ ownerById: individual });
+
+    await expect(service.updateOwner("host-1", OWNER_A, { owner_type: "company" })).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    expect(repository.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test("lets a stored company become a trust because it keeps its company name", async () => {
+    const { repository, service } = createService({ ownerById: company });
+
+    await service.updateOwner("host-1", OWNER_A, { owner_type: "trust" });
+
+    expect(repository.updateOwner).toHaveBeenCalledWith(OWNER_A, "host-1", { owner_type: "trust", updated_at: CLOCK() });
+  });
+
+  test.each([undefined, null, "", "owner-1", 42])("rejects the owner id %p with 400 before any query", async (id) => {
+    const { repository, service } = createService({ ownerById: individual });
+
+    await expect(service.updateOwner("host-1", id, { first_name: "Bea" })).rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.findOwnerByIdAndHost).not.toHaveBeenCalled();
+    expect(repository.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test("returns 404 without a write when the owner does not exist or belongs to another host", async () => {
+    const { repository, service } = createService({ ownerById: null });
+
+    await expect(service.updateOwner("host-2", OWNER_A, { first_name: "Bea" })).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Owner not found.",
+    });
+    expect(repository.findOwnerByIdAndHost).toHaveBeenCalledWith(OWNER_A, "host-2");
+    expect(repository.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the archived status", { status: "archived" }],
+    ["a host_id", { host_id: "host-2" }],
+    ["an id", { id: OWNER_B }],
+    ["no fields", {}],
+    ["null", null],
+  ])("rejects a body with %s with 400 and writes nothing", async (_label, body) => {
+    const { repository, service } = createService({ ownerById: individual });
+
+    await expect(service.updateOwner("host-1", OWNER_A, body)).rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test("writes exactly the normalized changes plus updated_at from the raw clock, for the caller's host", async () => {
+    const { repository, service } = createService({ ownerById: individual });
+
+    await service.updateOwner("host-1", OWNER_A, { first_name: " Bea ", notes: "" });
+
+    expect(repository.updateOwner).toHaveBeenCalledTimes(1);
+    expect(repository.updateOwner).toHaveBeenCalledWith(OWNER_A, "host-1", {
+      first_name: "Bea",
+      notes: null,
+      updated_at: CLOCK(),
+    });
+  });
+
+  test("writes the restore of an archived owner through status active", async () => {
+    const { repository, service } = createService({ ownerById: owner(OWNER_A, { status: "archived" }) });
+
+    await service.updateOwner("host-1", OWNER_A, { status: "active" });
+
+    expect(repository.updateOwner).toHaveBeenCalledWith(OWNER_A, "host-1", { status: "active", updated_at: CLOCK() });
+  });
+
+  test("returns 404 when the write changed no row", async () => {
+    const { repository, service } = createService({ ownerById: individual, updatedRows: 0 });
+
+    await expect(service.updateOwner("host-1", OWNER_A, { first_name: "Bea" })).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Owner not found.",
+    });
+    expect(repository.findAssignmentsByOwnerAndHost).not.toHaveBeenCalled();
+  });
+
+  test("answers with the owner as getOwner reads it after the write, with titled properties", async () => {
+    const updated = { ...individual, first_name: "Bea", updated_at: CLOCK() };
+    const { repository, service } = createService({ ownerAssignments: [assignment(OWNER_A, "property-1")] });
+    repository.findOwnerByIdAndHost.mockResolvedValueOnce(individual).mockResolvedValueOnce(updated);
+
+    const result = await service.updateOwner("host-1", OWNER_A, { first_name: "Bea" });
+
+    expect(result).toEqual({ ...updated, properties: [property("property-1")] });
+    expect(result.properties[0].property_title).toBe("Villa Sensual");
+    expect(repository.findOwnerByIdAndHost).toHaveBeenCalledTimes(2);
+    expect(repository.findAssignmentsByOwnerAndHost).toHaveBeenCalledWith(OWNER_A, "host-1", TODAY);
   });
 });
 
