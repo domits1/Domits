@@ -7,6 +7,17 @@ const readPublicFile = (name) => readFileSync(join(__dirname, "..", "..", "..", 
 const readSitesFile = (name) => readFileSync(join(__dirname, "..", "..", "..", "..", "public-sites", name), "utf8");
 const readWorkflow = () =>
   readFileSync(join(__dirname, "..", "..", "..", "..", "..", "..", ".github", "workflows", "deploy-direct-booking-sites.yml"), "utf8");
+const readDestinationSitemapPath = () => {
+  const builder = readFileSync(
+    join(
+      __dirname,
+      "..", "..", "..", "..", "..", "..",
+      "backend", "functions", "PropertyHandler", "business", "service", "destinationSitemapBuilder.js"
+    ),
+    "utf8"
+  );
+  return /DESTINATION_SITEMAP_PATH = "(\/[^"]+\.xml)"/.exec(builder)[1];
+};
 
 const sitemapUrls = () => [...readPublicFile("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 const robotsLines = () =>
@@ -101,6 +112,20 @@ describe("the marketplace robots.txt", () => {
 
   it("points at the production sitemap", () => {
     expect(robotsLines()).toContain("Sitemap: https://www.domits.com/sitemap.xml");
+  });
+
+  it("points at the destination sitemap on the path PropertyHandler serves it", () => {
+    expect(readDestinationSitemapPath()).toBe("/sitemap-destinations.xml");
+    expect(robotsLines()).toContain(`Sitemap: https://www.domits.com${readDestinationSitemapPath()}`);
+  });
+
+  it("lists each sitemap once, both on the production host", () => {
+    const sitemaps = robotsLines().filter((line) => line.startsWith("Sitemap:"));
+
+    expect(sitemaps).toEqual([
+      "Sitemap: https://www.domits.com/sitemap.xml",
+      "Sitemap: https://www.domits.com/sitemap-destinations.xml",
+    ]);
   });
 });
 
