@@ -2,6 +2,7 @@ const DESCRIPTION_MAX_LENGTH = 160;
 const HOSTNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
 const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
+const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -38,6 +39,19 @@ export const resolveStaticSiteImageUrl = (value) => {
 
   return candidate;
 };
+
+export const isStaticSiteSectionVisible = (model, sectionKey) => model?.visibility?.[sectionKey] !== false;
+
+export const selectStaticSiteGalleryImages = (model) =>
+  [...new Set(toArray(model?.media?.galleryImages).map(resolveStaticSiteImageUrl).filter(Boolean))].slice(
+    0,
+    MAX_STATIC_SITE_GALLERY_IMAGES
+  );
+
+export const selectStaticSiteAmenities = (model) =>
+  toArray(model?.amenities?.featured)
+    .map((amenity) => cleanText(amenity?.label))
+    .filter(Boolean);
 
 export const resolveOpenGraphLocale = (locale) => {
   const match = REGIONAL_LOCALE_PATTERN.exec(cleanText(locale));
