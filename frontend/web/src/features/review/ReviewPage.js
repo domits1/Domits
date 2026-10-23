@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Pages from "../guestdashboard/Pages";
-import { ArrowLeft, MessageSquare, ShieldCheck, Lightbulb } from "lucide-react";
+import { ArrowLeft, MessageSquare, ShieldCheck, Lightbulb, LockKeyhole, House } from "lucide-react";
 import styles from "./styles/ReviewPage.module.css";
 import { createReview, getEditableReview, updateReview, publishReview } from "./services/reviewAPI";
+import { buildPropertySummary } from "../guestdashboard/services/propertySummaryService";
 import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
 import {
+  getArrivalDate, getDepartureDate, getPropertyId, normalizeImageUrl,
   canLeaveReview,
   getCanonicalBookingId,
   normalizeGuestBookingsResponse,
@@ -19,6 +21,9 @@ const RATING_LABELS = {
   4: "Decent",
   5: "Amazing",
 };
+
+const CATEGORIES = ["Cleanliness", "Communication", "Location", "Check-in", "Comfort", "Amenities", "Value", "Accuracy"];
+const categoryKey = label => label === "Check-in" ? "checkIn" : label.toLowerCase();
 
 const INITIAL_FORM = {
   rating: "",
@@ -42,6 +47,10 @@ const ReviewForm = () => {
   const reviewId = searchParams.get("reviewId") || "";
   const targetId = reviewId || bookingId;
   const [editingReview, setEditingReview] = useState(null);
+  const [stay, setStay] = useState(null);
+  const [categoryRatings, setCategoryRatings] = useState({});
+  const [hoveredCategories, setHoveredCategories] = useState({});
+  const [categoryError, setCategoryError] = useState("");
 
   const propertyTitle = location.state?.propertyTitle || "your stay";
 
@@ -68,6 +77,10 @@ const ReviewForm = () => {
     setSubmitError("");
     setForm(INITIAL_FORM);
     setEditingReview(null);
+    setStay(null);
+    setCategoryRatings({});
+    setHoveredCategories({});
+    setCategoryError("");
     setRatingError("");
     setHoveredRating(0);
     setReviewError("");
@@ -107,8 +120,25 @@ const ReviewForm = () => {
             String(item.guestid ?? item.guestId) === String(guestId)
         );
 
+        setStay(booking || null);
         if (!booking || !canLeaveReview(booking)) {
           setEligibilityError("You can only review your own completed reservations.");
+          return;
+        }
+        const propertyId = getPropertyId(booking);
+        if (propertyId) {
+          // Reservation responses may only include the property ID, so resolve the listing title.
+          void buildPropertySummary(propertyId).then(summary => {
+            if (active) setStay(current => ({
+              ...current,
+              title: summary.title,
+              propertyImage: summary.imageUrl || current?.propertyImage,
+              city: summary.city || current?.city,
+              country: summary.country || current?.country,
+              hostName: summary.hostName || current?.hostName,
+              propertyId,
+            }));
+          }).catch(() => {});
         }
       } catch (error) {
         if (active) {
@@ -194,6 +224,13 @@ const ReviewForm = () => {
       return;
     }
 
+    const missingCategory = !reviewId && CATEGORIES.find(label => ![1, 2, 3, 4, 5].includes(categoryRatings[categoryKey(label)]));
+    if (missingCategory) {
+      setCategoryError("Please rate every category before submitting your review.");
+      event.currentTarget.querySelector(`input[name="category-${categoryKey(missingCategory)}"]`)?.focus();
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError("");
 
@@ -208,6 +245,7 @@ const ReviewForm = () => {
           rating: Number(form.rating),
           publicReview,
           privateFeedback: form.privateFeedback.trim(),
+          ...(Object.keys(categoryRatings).length ? { categoryRatings } : {}),
         });
         if (typeof draft?.id !== "string" || !draft.id.trim()) {
           setEligibilityError("We could not confirm your saved review. Check your review history before submitting again.");
@@ -246,6 +284,13 @@ const ReviewForm = () => {
     </label>
   );
 
+
+  const stayHostName = stay?.hostName || stay?.hostname;
+  const stayTitle = stay?.title || stay?.Title || stay?.property?.title || stay?.property?.name || propertyTitle;
+  const propertyId = getPropertyId(stay);
+  const propertyUrl = propertyId ? `/listingdetails?ID=${encodeURIComponent(propertyId)}` : "";
+  const stayPicture = normalizeImageUrl(stay?.propertyImage || stay?.image);
+  const stayPictureContent = stayPicture ? <img src={stayPicture} alt={stayTitle} /> : <House size={38} aria-hidden="true" />;
 
   const idleSubmitLabel = reviewId ? "Save changes" : "Submit review";
   const submitLabel = isSubmitting ? "Saving..." : idleSubmitLabel;
@@ -314,31 +359,52 @@ const ReviewForm = () => {
       </button>
       <header className={styles.pageHeader}>
         <div><span className={styles.eyebrow}>YOUR EXPERIENCES</span>
-        <h1>{reviewId ? "Edit review" : `How was ${propertyTitle}?`}</h1>
-        <p>Share the details that made your stay memorable and help future guests
+        <h1>{reviewId ? "Edit review" : "Write a review"}</h1>
+        <p>Share the details of your stay and help future guests
           feel confident about their next booking.</p></div>
-        <span className={styles.headerIcon}><MessageSquare size={26} aria-hidden="true" /></span>
+
       </header>
       <div className={styles.formLayout}>
+      <div className={styles.formColumn}>
+      {!reviewId && <section className={styles.stayCard} aria-label="Your reservation">
+        {propertyUrl ? <Link className={styles.stayImage} to={propertyUrl} aria-label={`View ${stayTitle}`}>{stayPictureContent}</Link> : <div className={styles.stayImage}>{stayPictureContent}</div>}
+        <div className={styles.stayDetails}><h2>{propertyUrl ? <Link className={styles.propertyTitleLink} to={propertyUrl}>{stayTitle}</Link> : stayTitle}</h2>
+          {(stay?.city || stay?.location?.city) && <p>{stay.city || stay.location.city}{stay.country ? `, ${stay.country}` : ""}</p>}
+          <span className={styles.verified}><ShieldCheck size={14} aria-hidden="true" /> Verified stay</span>
+          <p>{[getArrivalDate(stay), getDepartureDate(stay)].filter(Boolean).map(date => date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })).join(" – ")} <span> | Reservation #{bookingId}</span></p>
+        </div>
+        <div className={styles.stayHost}>{stayHostName && <p>Hosted by<br />{stayHostName}</p>}
+        </div>
+      </section>}
       <form className={styles.reviewForm} onSubmit={handleSubmit} noValidate>
-        <div className={styles.formIntro}><h2>Your stay, in your words</h2>
-          <p>A few honest details can make a big difference.</p></div>
+
         <fieldset className={styles.rating} data-rating={displayedRating} disabled={isSubmitting}>
-          <legend>Overall experience (required)</legend>
+          <legend>Overall experience <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></legend>
           <div onMouseLeave={() => setHoveredRating(0)}>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
           <p id="rating-description" aria-live="polite">
             {displayedRating ? `${displayedRating} out of 5 stars — ${RATING_LABELS[displayedRating]}` : "Select a rating"}
           </p>
           {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
         </fieldset>
+        {!reviewId && <section className={styles.categories} aria-label="Category ratings (required)">
+          <h2>Category ratings <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></h2>
+          <div className={styles.categoryGrid}>{CATEGORIES.map(label => <fieldset key={label} className={styles.category} disabled={isSubmitting}>
+            <legend>{label}</legend><div onMouseLeave={() => setHoveredCategories(current => ({ ...current, [categoryKey(label)]: 0 }))}>{[1, 2, 3, 4, 5].map(value => <label key={value} onMouseEnter={() => !isSubmitting && setHoveredCategories(current => ({ ...current, [categoryKey(label)]: value }))}>
+              <input type="radio" name={`category-${categoryKey(label)}`} aria-label={`${label}: ${value} stars`} required aria-describedby={categoryError ? "category-error" : undefined} checked={categoryRatings[categoryKey(label)] === value} onChange={() => { setCategoryRatings(current => ({ ...current, [categoryKey(label)]: value })); setCategoryError(""); }} />
+              <span data-filled={value <= (hoveredCategories[categoryKey(label)] || categoryRatings[categoryKey(label)] || 0)} aria-hidden="true">{value <= (hoveredCategories[categoryKey(label)] || categoryRatings[categoryKey(label)] || 0) ? "★" : "☆"}</span>
+            </label>)}</div>
+          </fieldset>)}</div>
+          {categoryError && <p id="category-error" role="alert">{categoryError}</p>}
+        </section>}
         {!reviewId && <section className={styles.content}>
-          <label htmlFor="title">Review title (required)</label>
+          <label htmlFor="title">Review title <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></label>
           <input id="title" value={form.title} onChange={updateField("title")}
             maxLength={120} placeholder="Give your stay a short headline" disabled={isSubmitting} required />
+          <p className={styles.characterCount}>{form.title.length}/120 characters</p>
         </section>}
         <section className={styles.content}>
-          <label htmlFor="publicReview">Written review (required)</label>
-          <p id="publicReview-help">
+          <label htmlFor="publicReview">Written review <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></label>
+          <p id="publicReview-help" className={styles.srOnly}>
             Describe your stay in your own words, including anything you liked or disliked.
             Use up to {REVIEW_MAX_LENGTH} characters.
           </p>
@@ -351,12 +417,12 @@ const ReviewForm = () => {
             required
             minLength={REVIEW_MIN_LENGTH}
             maxLength={REVIEW_MAX_LENGTH}
-            rows={6}
+            rows={2}
             aria-invalid={Boolean(reviewError)}
             aria-describedby={`publicReview-help publicReview-count${reviewError ? " publicReview-error" : ""}`}
             disabled={isSubmitting}
           />
-          <p id="publicReview-count">{form.publicReview.length}/{REVIEW_MAX_LENGTH} characters</p>
+          <p id="publicReview-count" className={styles.characterCount}>{form.publicReview.length}/{REVIEW_MAX_LENGTH} characters</p>
           {reviewError && <p id="publicReview-error" role="alert">{reviewError}</p>}
         </section>
 
@@ -371,16 +437,11 @@ const ReviewForm = () => {
             maxLength={500}
             disabled={isSubmitting}
           />
-          <p>{form.privateFeedback.length}/500</p>
+          <p className={styles.characterCount}>{form.privateFeedback.length}/500 characters</p>
         </section>}
 
         {submitError && <p role="alert">{submitError}</p>}
 
-        {!reviewId && <p className={styles.privacyNote}>
-          <ShieldCheck size={18} aria-hidden="true" /> <span>
-          Your rating and written review will be public. Private feedback is shared
-          separately with your host.</span>
-        </p>}
         <div className={styles.buttonBox}>
           <button type="button" onClick={() => navigate(-1)} disabled={isSubmitting}>
             Cancel
@@ -393,13 +454,15 @@ const ReviewForm = () => {
           </button>
         </div>
       </form>
+      </div>
       <aside className={styles.guidance} aria-label="Review writing tips">
         <span className={styles.tipIcon}><Lightbulb size={22} aria-hidden="true" /></span>
         <h2>Small details.<br />Better stays.</h2>
         <p>Your perspective helps hosts improve and fellow travellers feel at home.</p>
-        <h3>Keep it personal</h3><p>Share what stood out, from a warm welcome to a favourite corner.</p>
-        <h3>Keep it helpful</h3><p>Describe your experience honestly, including what could be better.</p>
-        <h3>Keep some things private</h3><p>Use private feedback for details you only want your host to see.</p>
+        <div className={styles.tip}><span className={styles.tipIcon}><MessageSquare aria-hidden="true" /></span><div><h3>Keep it personal</h3><p>Share what stood out, from a warm welcome to a favourite corner.</p></div></div>
+        <div className={styles.tip}><span className={styles.tipIcon}><ShieldCheck aria-hidden="true" /></span><div><h3>Keep it helpful</h3><p>Describe your experience honestly, including what could be better.</p></div></div>
+        <div className={styles.tip}><span className={styles.tipIcon}><LockKeyhole aria-hidden="true" /></span><div><h3>Keep some things private</h3><p>Use private feedback for details you only want your host to see.</p></div></div>
+        <p className={styles.guidanceFooter}>Every experience has a story.</p>
       </aside>
       </div>
     </main>
@@ -407,7 +470,7 @@ const ReviewForm = () => {
 };
 
 export default function ReviewPage() {
-  return <div className="main-dashboard-guest">
+  return <div className={`main-dashboard-guest ${styles.reviewDashboard}`}>
     <div className="main-dashboard-sidebar"><Pages /></div>
     <div className="main-dashboard-content"><ReviewForm /></div>
   </div>;

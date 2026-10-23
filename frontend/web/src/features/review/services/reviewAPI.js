@@ -156,6 +156,7 @@ export const createReview = async ({
   title,
   publicReview,
   privateFeedback,
+  categoryRatings,
 }) => {
   const token = await getIdToken();
 
@@ -171,6 +172,7 @@ export const createReview = async ({
       title,
       public_review: publicReview,
       private_feedback: privateFeedback,
+      ...(categoryRatings ? { category_ratings: categoryRatings } : {}),
     }),
   });
 
