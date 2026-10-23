@@ -183,18 +183,26 @@ export default function HostFinanceTab() {
     listingsRequest
       .then((listings) => {
         if (isCancelled) return;
+        const hasProperty = listings.length > 0;
         setListingState({
-          hasProperty: listings.length > 0,
+          hasProperty,
           isLive: listings.some(
             (listing) => String(listing?.property?.status || "").toUpperCase() === "ACTIVE"
           ),
           loading: false,
           error: false,
         });
+        if (!hasProperty) {
+          navigate("/hostonboarding", { replace: true });
+        }
       })
       .catch((error) => {
         if (isCancelled) return;
         console.error("Error fetching host listings for finance status:", error);
+        if (error?.message === "Failed to load your properties.") {
+          navigate("/hostonboarding", { replace: true });
+          return;
+        }
         setListingState((previous) => ({
           ...previous,
           loading: false,
