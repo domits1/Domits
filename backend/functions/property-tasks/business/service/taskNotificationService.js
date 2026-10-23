@@ -85,8 +85,6 @@ const findAssignee = async (dataSource, task) => {
     return await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, task.host_id);
 };
 
-// The sweep claims the task before calling this, so a failed email is logged and not retried.
-// Goes to the assignee, or to the host when there is none or the assignee has left the team.
 export const notifyTaskOverdue = async (task) => {
     try {
         const dataSource = await Database.getInstance();
