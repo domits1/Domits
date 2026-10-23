@@ -155,6 +155,8 @@ describe("static site metadata for a published direct booking website", () => {
         { "@type": "LocationFeatureSpecification", name: "Freezer", value: true },
         { "@type": "LocationFeatureSpecification", name: "Oven", value: true },
       ],
+      checkinTime: "15:00:00",
+      checkoutTime: "11:00:00",
       containsPlace: {
         "@type": "Accommodation",
         occupancy: { "@type": "QuantitativeValue", value: 8 },
@@ -332,6 +334,48 @@ describe("the structured data gives the size of the stay", () => {
     });
 
     expect(metadata.jsonLd.containsPlace).toEqual({ "@type": "Accommodation", numberOfBathroomsTotal: 2 });
+  });
+});
+
+describe("the structured data gives the check-in and check-out times", () => {
+  it("writes the earliest check-in and the latest check-out as schema.org times", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(model.stay.checkInLabel).toBe("15:00");
+    expect(model.stay.checkOutLabel).toBe("11:00");
+    expect(metadata.jsonLd.checkinTime).toBe("15:00:00");
+    expect(metadata.jsonLd.checkoutTime).toBe("11:00:00");
+  });
+
+  it("accepts the seconds the database stores and keeps them", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: { checkIn: { checkIn: { from: "14:30:00" }, checkOut: { from: "08:00:00", till: "10:00:00" } } },
+    });
+
+    expect(metadata.jsonLd.checkinTime).toBe("14:30:00");
+    expect(metadata.jsonLd.checkoutTime).toBe("10:00:00");
+  });
+
+  it("leaves a time out when the listing has none or it is not a time of day", () => {
+    [
+      { checkIn: {}, checkOut: {} },
+      { checkIn: { from: "whenever" }, checkOut: { till: "25:00" } },
+      { checkIn: { from: "15:60" }, checkOut: { till: "1100" } },
+      { checkIn: { from: 1500 }, checkOut: { till: null } },
+    ].forEach((checkIn) => {
+      const { metadata } = buildMetadataFor({ propertySnapshot: { checkIn } });
+
+      expect(metadata.jsonLd.checkinTime).toBeUndefined();
+      expect(metadata.jsonLd.checkoutTime).toBeUndefined();
+    });
+    expect(buildMetadataFor({ propertySnapshot: { checkIn: null } }).metadata.jsonLd.checkinTime).toBeUndefined();
+  });
+
+  it("keeps one time when only the other is missing", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { checkIn: { checkIn: { from: "16:00" }, checkOut: {} } } });
+
+    expect(metadata.jsonLd.checkinTime).toBe("16:00:00");
+    expect(metadata.jsonLd.checkoutTime).toBeUndefined();
   });
 });
 

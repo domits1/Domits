@@ -5,6 +5,7 @@ const HOSTNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a
 const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
 const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
 const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
+const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -54,6 +55,11 @@ export const selectStaticSiteAmenities = (model) =>
   toArray(model?.amenities?.featured)
     .map((amenity) => cleanText(amenity?.label))
     .filter((label) => label && label !== DEFAULT_WEBSITE_AMENITY_LABEL);
+
+const resolveTimeOfDay = (value) => {
+  const match = TIME_OF_DAY_PATTERN.exec(cleanText(value));
+  return match ? `${match[1]}:${match[2]}:${match[3] ?? "00"}` : "";
+};
 
 const resolveCount = (value) => (typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0);
 
@@ -193,6 +199,14 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
   const amenityFeature = buildAmenityFeatures(model);
   if (amenityFeature.length > 0) {
     jsonLd.amenityFeature = amenityFeature;
+  }
+  const checkinTime = resolveTimeOfDay(model?.stay?.checkInLabel);
+  if (checkinTime) {
+    jsonLd.checkinTime = checkinTime;
+  }
+  const checkoutTime = resolveTimeOfDay(model?.stay?.checkOutLabel);
+  if (checkoutTime) {
+    jsonLd.checkoutTime = checkoutTime;
   }
   const accommodation = buildAccommodation(model);
   if (accommodation) {
