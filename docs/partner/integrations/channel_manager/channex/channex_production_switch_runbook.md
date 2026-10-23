@@ -134,7 +134,7 @@ Check, after 2–3 minutes:
 - Evidence → Refresh latest evidence: a full sync with 2 task ids (availability, rates/restrictions), no errors.
 - Channex production → Inventory → Wellness Villa Bisous: prices, availability and restrictions match the Domits calendar for the next months.
 
-The evidence shows the full sync as `calendar-change`, because it runs through the outbox; a range of about 500 days shows it is the full sync. Dates outside the property's availability period (`main.property_availability`) are sent as availability 0, so Channex shows them as closed.
+The evidence shows the full sync as `calendar-change`, because it runs through the outbox; a range of about 500 days shows it is the full sync. Dates outside the property's availability period (`main.property_availability`) are sent as unavailable; on 21 October the villa showed as closed in Channex after its period ended on 25 May 2027.
 
 ### S7. Production booking webhook
 
@@ -188,7 +188,7 @@ Check: the webhook's test call answers `200`. This only proves the webhook is re
      ORDER BY createdat DESC;
      ```
 
-   - Check that the night was closed: the outbox has a `CHANNEX_IMPORT` availability row for that date with status `PROCESSED`. Channex only shows it closed until the cancellation below.
+   - Check that the night was closed: the outbox has a `CHANNEX_IMPORT` availability row for that date with status `PROCESSED`, and Channex → Inventory shows availability 0 for that night. `PROCESSED` only means the call succeeded, so check Inventory before the cancellation below, which opens the night again.
 
      ```sql
      SELECT kind, changetypes, source, status, datefrom, to_timestamp(processedat / 1000) AS processed
@@ -197,7 +197,7 @@ Check: the webhook's test call answers `200`. This only proves the webhook is re
      ORDER BY createdat DESC
      LIMIT 6;
      ```
-   - Cancel the booking in Channex straight after. Check: the booking status is `Cancelled` and a second `CHANNEX_IMPORT` row for that date is `PROCESSED`, which opens the night again.
+   - Cancel the booking in Channex straight after. Check: the booking status is `Cancelled`, a second `CHANNEX_IMPORT` row for that date is `PROCESSED`, and Channex → Inventory shows the night open again.
    - If the booking does not reach Domits, the switch is not complete: check the `channex-webhook-*` alarms and the ChannelManagement logs before connecting any OTA.
 
 ## After the switch
@@ -278,6 +278,7 @@ foreach ($fn in "ChannelManagement", "UnifiedMessaging", "General-Bookings-CRUD-
   Remove-Item env.json
   if ($updated -ne 0) { "STOP: update failed for $fn"; break }
   aws lambda wait function-updated --function-name $fn
+  if ($LASTEXITCODE -ne 0) { "STOP: $fn did not finish updating; check LastUpdateStatus before going on"; break }
   $afterCount = aws lambda get-function-configuration --function-name $fn --query "length(keys(Environment.Variables))" --output text
   "$fn : $(aws lambda get-function-configuration --function-name $fn --query LastUpdateStatus --output text) | vars $before -> $afterCount | CHANNEX_BASE_URL = $(aws lambda get-function-configuration --function-name $fn --query Environment.Variables.CHANNEX_BASE_URL --output text)"
 }
@@ -303,18 +304,19 @@ foreach ($fn in "ChannelManagement", "UnifiedMessaging") {
   Remove-Item env.json
   if ($updated -ne 0) { "STOP: update failed for $fn"; break }
   aws lambda wait function-updated --function-name $fn
+  if ($LASTEXITCODE -ne 0) { "STOP: $fn did not finish updating; check LastUpdateStatus before going on"; break }
   [string[]]$after = (aws lambda get-function-configuration --function-name $fn --query "Environment.Variables.CHANNEX_CERTIFICATION_USER_IDS" --output text) -split ","
   "$fn : $(aws lambda get-function-configuration --function-name $fn --query LastUpdateStatus --output text) | ids: $($after.Count) | new id on list: $($after -contains $newId) | each 36 chars: $(-not ($after | Where-Object { $_.Length -ne 36 }))"
 }
 ```
 
-Check: every line shows `Successful`, one id more than before, `new id on list: True` and `each 36 chars: True`. `[string[]]` matters: with exactly one id, PowerShell otherwise keeps a plain string, and `+=` glues the two ids together without a comma. For removing an id, filter it out of `$ids` instead of adding it.
+Check: every line shows `Successful`, one id more than before (or the same number when the block is run again and the id was already on the list), `new id on list: True` and `each 36 chars: True`. `[string[]]` matters: with exactly one id, PowerShell otherwise keeps a plain string, and `+=` glues the two ids together without a comma. For removing an id, filter it out of `$ids` instead of adding it.
 
 `env.json` holds every variable of the function, including secrets; it is deleted straight after the update call on purpose and must never be committed.
 
 ## Rotating the booking webhook secret
 
-The secret is stored as JSON in `domits/channex/webhook/bookings` and read by the Lambda with a cache of at most 5 minutes (`webhookSecretVerifier.js`). Channex counts a `401` as delivered and does not retry it, so update Channex straight after the secret, and preferably while no OTA is connected or bookings are quiet.
+The secret is stored as JSON in `domits/channex/webhook/bookings` and read by the Lambda with a cache of at most 5 minutes (`webhookSecretVerifier.js`). Channex counts a `401` as delivered and does not retry it. Between storing the new secret and the last container reading it (up to 5 minutes after Channex is updated), a real booking webhook can be rejected; that booking then stays unacknowledged in Channex and only reaches Domits with the next booking webhook for that property, while its nights stay open in Domits. Rotate while no OTA is connected when possible, update Channex straight after the secret, and always do step 5.
 
 1. Check the secret holds only `webhookSecret`; writing a new value replaces the whole JSON:
 
@@ -335,12 +337,13 @@ The secret is stored as JSON in `domits/channex/webhook/bookings` and read by th
    ```
 
 3. `$new | Set-Clipboard`, then in Channex production replace the header value of the property webhook.
-4. Wait 5 minutes for the cache, use "Send test message" (expect `200`), and save.
-5. Clear the values: `Remove-Variable new, stored, b; Set-Clipboard -Value " "`.
+4. Wait 5 minutes for the cache, use "Send test message" (expect `200`), and save. The test only proves the webhook is reachable; it does not read the booking feed.
+5. Check for rejected bookings in the window: did `channex-webhook-rejected` fire, and does Channex → Bookings show a booking from that window that is not acknowledged? If so, import it: Domits → Channex diagnostics, logged in as that property's host → Pull latest Channex bookings. Check that it is acknowledged in Channex and stored in Domits (the S8 booking query).
+6. Clear the values: `Remove-Variable new, stored, b; Set-Clipboard -Value " "`.
 
 ## Status
 
-Executed on Wednesday 21 October 2026, about 14:00–15:10 UTC. Domits has used Channex production since then.
+Executed on Wednesday 21 October 2026, about 13:20–15:10 UTC. Domits has used Channex production since then.
 
 | Step | Result |
 |---|---|
