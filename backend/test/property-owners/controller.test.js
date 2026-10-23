@@ -45,6 +45,14 @@ const OPERATIONS = [
       body: JSON.stringify(SHARES_BODY),
     }),
   ],
+  [
+    "updateOwner",
+    () => ({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: { id: OWNER_ID },
+      body: JSON.stringify({ first_name: "Bea" }),
+    }),
+  ],
 ];
 
 const createEvent = (body) => ({ headers: { Authorization: "token-1" }, queryStringParameters: null, body });
@@ -55,6 +63,7 @@ const createController = ({ role = "Host", getUser } = {}) => {
     getOwner: jest.fn(async () => ({ id: OWNER_ID, properties: [] })),
     createOwner: jest.fn(async (_hostId, body) => ({ id: OWNER_ID, ...body, properties: [] })),
     setShares: jest.fn(async () => SHARES_RESPONSE),
+    updateOwner: jest.fn(async (_hostId, _id, body) => ({ id: OWNER_ID, ...body, properties: [] })),
   };
   const authManager = {
     getUser: getUser ?? jest.fn(async () => ({ userId: "host-1", email: "host@example.com", role })),
@@ -307,6 +316,84 @@ describe("Controller.setShares", () => {
 
     expect(response.statusCode).toBe(statusCode);
     expect(bodyOf(response)).toEqual({ message: error.message });
+  });
+});
+
+describe("Controller.updateOwner", () => {
+  const PATCH_BODY = Object.freeze({ first_name: "Bea", status: "active" });
+
+  const updateEvent = (body, id = OWNER_ID) => ({
+    headers: { Authorization: "token-1" },
+    queryStringParameters: { id },
+    body,
+  });
+
+  test.each(["Property Operations Manager", "Traveler", null])(
+    "rejects a caller whose group is %p with 403 before the body is parsed",
+    async (role) => {
+      const { controller, service } = createController({ role });
+
+      const response = await controller.updateOwner(updateEvent("{not json"));
+
+      expect(response.statusCode).toBe(403);
+      expect(service.updateOwner).not.toHaveBeenCalled();
+    }
+  );
+
+  test("rejects a failing getUser with 401 before the body is parsed", async () => {
+    const getUser = jest.fn(async () => {
+      throw new UnauthorizedException("Invalid or expired authorization token.");
+    });
+    const { controller, service } = createController({ getUser });
+
+    const response = await controller.updateOwner(updateEvent("{not json"));
+
+    expect(response.statusCode).toBe(401);
+    expect(bodyOf(response)).toEqual({ message: "Invalid or expired authorization token." });
+    expect(service.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test.each(["Host", "Admin"])("lets a %s update their owner by the raw id and answers 200", async (role) => {
+    const { controller, service } = createController({ role });
+
+    const response = await controller.updateOwner(updateEvent(JSON.stringify(PATCH_BODY)));
+
+    expect(response.statusCode).toBe(200);
+    expect(bodyOf(response)).toEqual({ id: OWNER_ID, ...PATCH_BODY, properties: [] });
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(service.updateOwner).toHaveBeenCalledWith("host-1", OWNER_ID, PATCH_BODY);
+  });
+
+  test("passes an empty id through so the service can reject it", async () => {
+    const { controller, service } = createController();
+
+    await controller.updateOwner(updateEvent(JSON.stringify(PATCH_BODY), ""));
+
+    expect(service.updateOwner).toHaveBeenCalledWith("host-1", "", PATCH_BODY);
+  });
+
+  test.each([
+    ["a missing body", undefined],
+    ["an empty body", ""],
+    ["malformed JSON", "{not json"],
+  ])("rejects %s with 400 without calling the service", async (_label, body) => {
+    const { controller, service } = createController();
+
+    const response = await controller.updateOwner(updateEvent(body));
+
+    expect(response.statusCode).toBe(400);
+    expect(bodyOf(response)).toEqual({ message: "Request body must be valid JSON." });
+    expect(service.updateOwner).not.toHaveBeenCalled();
+  });
+
+  test("keeps the message of a 404 from the service", async () => {
+    const { controller, service } = createController();
+    service.updateOwner.mockRejectedValue(new NotFoundException("Owner not found."));
+
+    const response = await controller.updateOwner(updateEvent(JSON.stringify(PATCH_BODY)));
+
+    expect(response.statusCode).toBe(404);
+    expect(bodyOf(response)).toEqual({ message: "Owner not found." });
   });
 });
 

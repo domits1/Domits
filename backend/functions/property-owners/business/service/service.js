@@ -2,7 +2,7 @@ import { Repository } from "../../data/repository.js";
 import { ConflictException } from "../../util/exception/conflictException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { ARCHIVED_OWNER_STATUS } from "../../util/ownerConstants.js";
-import { assertOwnerId, validateCreateOwner } from "../validation/ownerValidator.js";
+import { assertOwnerId, validateCreateOwner, validatePatchOwner } from "../validation/ownerValidator.js";
 import { validateSetShares } from "../validation/shareValidator.js";
 
 const OWNER_NOT_FOUND_MESSAGE = "Owner not found.";
@@ -106,6 +106,20 @@ export class Service {
       updated_at: now,
     });
     return { ...saved, properties: [] };
+  }
+
+  async updateOwner(hostId, id, body) {
+    const ownerId = assertOwnerId(id);
+    const owner = await this.repository.findOwnerByIdAndHost(ownerId, hostId);
+    if (!owner) {
+      throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
+    }
+    const changes = validatePatchOwner(body, owner);
+    const affected = await this.repository.updateOwner(ownerId, hostId, { ...changes, updated_at: this.clock() });
+    if (affected === 0) {
+      throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
+    }
+    return await this.getOwner(hostId, ownerId);
   }
 
   async setShares(hostId, body) {

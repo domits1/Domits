@@ -3,6 +3,7 @@ const mockController = {
   getOwner: jest.fn(),
   createOwner: jest.fn(),
   setShares: jest.fn(),
+  updateOwner: jest.fn(),
 };
 
 jest.mock("../../functions/property-owners/controller/controller.js", () => ({
@@ -24,6 +25,7 @@ beforeEach(() => {
   mockController.getOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
   mockController.createOwner.mockReset().mockResolvedValue({ statusCode: 201, body: "{}" });
   mockController.setShares.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
+  mockController.updateOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
 });
 
 const expectNoControllerCall = () => {
@@ -31,6 +33,7 @@ const expectNoControllerCall = () => {
   expect(mockController.getOwner).not.toHaveBeenCalled();
   expect(mockController.createOwner).not.toHaveBeenCalled();
   expect(mockController.setShares).not.toHaveBeenCalled();
+  expect(mockController.updateOwner).not.toHaveBeenCalled();
 };
 
 afterEach(() => {
@@ -124,6 +127,33 @@ describe("property-owners router", () => {
     expectNoControllerCall();
   });
 
+  test.each([
+    ["a uuid", "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b"],
+    ["an empty value", ""],
+  ])("routes PATCH with an id that is %s and no action to updateOwner with the event", async (_label, id) => {
+    const request = { ...event("PATCH", { id }), body: '{"first_name":"Anna"}' };
+
+    const response = await handler(request);
+
+    expect(response).toEqual({ statusCode: 200, body: "{}" });
+    expect(mockController.updateOwner).toHaveBeenCalledWith(request);
+    expect(mockController.getOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no query", null],
+    ["unrelated query parameters but no id", { page: "1" }],
+    ["action archive and no id", { action: "archive" }],
+    ["action archive next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["set-shares next to an id", { action: "set-shares", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["an empty action next to an id", { action: "", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+  ])("returns 405 for PATCH with %s without calling the controller", async (_label, query) => {
+    const response = await handler(event("PATCH", query));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
   test.each(["GET", "POST"])("returns 405 for %s with action set-shares", async (method) => {
     const response = await handler(event(method, { action: "set-shares" }));
 
@@ -159,7 +189,7 @@ describe("property-owners router", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers).toEqual({
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type,Authorization",
     });
     expect(mockController.listOwners).not.toHaveBeenCalled();
