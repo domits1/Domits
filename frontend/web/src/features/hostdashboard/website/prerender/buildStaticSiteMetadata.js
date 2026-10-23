@@ -55,6 +55,24 @@ export const selectStaticSiteAmenities = (model) =>
     .map((amenity) => cleanText(amenity?.label))
     .filter((label) => label && label !== DEFAULT_WEBSITE_AMENITY_LABEL);
 
+const resolveCount = (value) => (typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0);
+
+const buildAccommodation = (model) => {
+  const guests = resolveCount(model?.stay?.guests);
+  const bedrooms = resolveCount(model?.stay?.bedrooms);
+  const bathrooms = resolveCount(model?.stay?.bathrooms);
+  if (!guests && !bedrooms && !bathrooms) {
+    return null;
+  }
+
+  return {
+    "@type": "Accommodation",
+    ...(guests ? { occupancy: { "@type": "QuantitativeValue", value: guests } } : {}),
+    ...(bedrooms ? { numberOfBedrooms: bedrooms } : {}),
+    ...(bathrooms ? { numberOfBathroomsTotal: bathrooms } : {}),
+  };
+};
+
 const buildAmenityFeatures = (model) => {
   if (!isStaticSiteSectionVisible(model, "amenitiesPanel")) {
     return [];
@@ -175,6 +193,10 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
   const amenityFeature = buildAmenityFeatures(model);
   if (amenityFeature.length > 0) {
     jsonLd.amenityFeature = amenityFeature;
+  }
+  const accommodation = buildAccommodation(model);
+  if (accommodation) {
+    jsonLd.containsPlace = accommodation;
   }
 
   return jsonLd;

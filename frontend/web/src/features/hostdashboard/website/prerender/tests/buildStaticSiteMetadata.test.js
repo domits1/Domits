@@ -155,6 +155,12 @@ describe("static site metadata for a published direct booking website", () => {
         { "@type": "LocationFeatureSpecification", name: "Freezer", value: true },
         { "@type": "LocationFeatureSpecification", name: "Oven", value: true },
       ],
+      containsPlace: {
+        "@type": "Accommodation",
+        occupancy: { "@type": "QuantitativeValue", value: 8 },
+        numberOfBedrooms: 4,
+        numberOfBathroomsTotal: 3,
+      },
     });
     const serializedJsonLd = JSON.stringify(metadata.jsonLd);
     expect(serializedJsonLd).not.toContain("550");
@@ -178,7 +184,8 @@ describe("static site metadata for a published direct booking website", () => {
 
     expect(model.stay.bedrooms).toBe(4);
     expect(metadata.jsonLd.numberOfRooms).toBeUndefined();
-    expect(JSON.stringify(metadata.jsonLd)).not.toContain("4");
+    expect(metadata.jsonLd.containsPlace.numberOfRooms).toBeUndefined();
+    expect(metadata.jsonLd.containsPlace.numberOfBedrooms).toBe(4);
   });
 
   it("falls back to the site name when the snapshot carries no listing title", () => {
@@ -285,6 +292,46 @@ describe("the structured data names the amenities the static page lists", () => 
 
     expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
     expect(JSON.stringify(metadata.jsonLd)).not.toContain("New amenity");
+  });
+});
+
+describe("the structured data gives the size of the stay", () => {
+  const detail = (name, value) => ({ detail: name, value });
+
+  it("describes the accommodation with its guests, bedrooms and bathrooms", () => {
+    const { metadata } = buildMetadataFor();
+
+    expect(metadata.jsonLd.containsPlace).toEqual({
+      "@type": "Accommodation",
+      occupancy: { "@type": "QuantitativeValue", value: 8 },
+      numberOfBedrooms: 4,
+      numberOfBathroomsTotal: 3,
+    });
+  });
+
+  it("leaves out a count the listing does not have", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { generalDetails: [detail("Guests", 6)] } });
+
+    expect(metadata.jsonLd.containsPlace).toEqual({
+      "@type": "Accommodation",
+      occupancy: { "@type": "QuantitativeValue", value: 6 },
+    });
+  });
+
+  it("leaves the accommodation out when the listing has no counts at all", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { generalDetails: [] } });
+
+    expect(metadata.jsonLd.containsPlace).toBeUndefined();
+  });
+
+  it("ignores a count that is not a positive whole number", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: {
+        generalDetails: [detail("Guests", "eight"), detail("Bedrooms", -1), detail("Bathrooms", 2.5), detail("Beds", 4)],
+      },
+    });
+
+    expect(metadata.jsonLd.containsPlace).toEqual({ "@type": "Accommodation", numberOfBathroomsTotal: 2 });
   });
 });
 
