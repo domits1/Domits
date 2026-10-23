@@ -96,7 +96,7 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("Freezer");
     expect(html).not.toContain("Your host");
     expect(html.match(/<img/g)).toHaveLength(1);
-    expect(html).not.toContain("second/web.jpg");
+    expect(html).not.toContain("00000000-0000-4000-8000-000000000002/web.jpg");
     expect(html).toContain("<h1>");
   });
 

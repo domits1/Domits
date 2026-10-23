@@ -3,8 +3,12 @@ import { applyWebsiteDraftContentOverrides } from "../../rendering/websiteDraftC
 import { buildStaticSiteMetadata } from "../buildStaticSiteMetadata";
 import { buildPublishedSiteRenderPayload } from "./publishedSiteRenderPayload";
 
-const FIRST_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg";
-const SECOND_PHOTO = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/second/web.jpg";
+const BUCKET = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const PROPERTY_ID = "ecd926d9-67dc-4d0a-9b40-2884d0838406";
+const photoId = (number) => `00000000-0000-4000-8000-${String(number).padStart(12, "0")}`;
+const photoUrl = (number, file = "web.jpg") => `${BUCKET}images/${PROPERTY_ID}/${photoId(number)}/${file}`;
+const FIRST_PHOTO = photoUrl(1);
+const SECOND_PHOTO = photoUrl(2);
 const buildMetadataFor = (payloadOverrides = {}) => {
   const renderPayload = buildPublishedSiteRenderPayload(payloadOverrides);
   const baseModel = buildWebsiteTemplateModel({ propertyDetails: renderPayload.propertySnapshot });
@@ -119,9 +123,7 @@ describe("static site metadata for a published direct booking website", () => {
   it("uses the first gallery photo as the shared image", () => {
     const { metadata } = buildMetadataFor();
 
-    expect(metadata.openGraph["og:image"]).toBe(
-      "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg"
-    );
+    expect(metadata.openGraph["og:image"]).toBe(FIRST_PHOTO);
     expect(metadata.openGraph["og:image:alt"]).toBe(metadata.title);
     expect(metadata.twitter["twitter:card"]).toBe("summary_large_image");
   });
@@ -222,9 +224,7 @@ describe("the structured data lists the photos the static page shows", () => {
   });
 
   it("lists a photo once, however often a gallery repeats it, without using up a slot", () => {
-    const photos = ["a", "b", "c", "d", "e", "f", "g"].map(
-      (name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`
-    );
+    const photos = [1, 2, 3, 4, 5, 6, 7].map((number) => photoUrl(number));
     const metadata = buildStaticSiteMetadata({
       renderPayload: buildPublishedSiteRenderPayload(),
       model: {
@@ -237,9 +237,7 @@ describe("the structured data lists the photos the static page shows", () => {
   });
 
   it("stops at the six gallery photos the page renders, even when a model carries more", () => {
-    const photos = ["a", "b", "c", "d", "e", "f", "g", "h", "i"].map(
-      (name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`
-    );
+    const photos = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => photoUrl(number));
     const metadata = buildStaticSiteMetadata({
       renderPayload: buildPublishedSiteRenderPayload(),
       model: { site: { title: "Villa" }, media: { heroImage: photos[0], galleryImages: photos } },
@@ -249,7 +247,7 @@ describe("the structured data lists the photos the static page shows", () => {
   });
 
   it("lists a hero photo the host picked outside the gallery as an extra image", () => {
-    const hostPick = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/heropick/web.jpg";
+    const hostPick = photoUrl(99);
     const { metadata } = buildMetadataFor({ contentOverrides: { heroImage: hostPick } });
 
     expect(metadata.jsonLd.image).toEqual([hostPick, FIRST_PHOTO, SECOND_PHOTO]);
@@ -532,25 +530,30 @@ describe("the boundary of the structured data", () => {
     ]);
   });
 
-  it("lists only generated photo keys from the accommodation bucket, so a photo address cannot carry text", () => {
-    const bucket = "https://accommodation.s3.eu-north-1.amazonaws.com/images/";
+  it("lists only photo keys in the shape the upload code generates", () => {
+    const other = "3f9c1b2a-5d6e-4f70-8a9b-0c1d2e3f4a5b";
     const kept = [
-      `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/3f9c1b2a-5d6e-4f70-8a9b-0c1d2e3f4a5b/web.jpg`,
-      `${bucket}property/second/web.jpg`,
-      `${bucket}property/second/original.PNG`,
+      photoUrl(1),
+      photoUrl(1, "thumb.jpg"),
+      photoUrl(1, "original.PNG"),
+      `${BUCKET}images/${PROPERTY_ID}/${other}`,
     ];
     const refused = [
-      "https://photos.example.com/amara@example.com/pool.jpg",
-      `${bucket}p/amara@example.com/web.jpg`,
-      `${bucket}p/0612345678 pool/web.jpg`,
-      `${bucket}p/0612345678/web.jpg`,
-      `${bucket}p/Kerkstraat-123/web.jpg`,
-      `${bucket}p/x/web.jpg?v=2`,
-      `${bucket}p/x/y/web.jpg`,
-      `${bucket}p/x/pool.txt`,
-      "https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/p/x/web.jpg",
-      "https://evil.example/https://accommodation.s3.eu-north-1.amazonaws.com/images/p/x/web.jpg",
-      "https://accommodationXs3Xeu-north-1XamazonawsXcom/images/p/x/web.jpg",
+      `https://photos.example.com/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://evil.example/${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodationXs3Xeu-north-1XamazonawsXcom/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `${BUCKET}photos/${PROPERTY_ID}/${other}/web.jpg`,
+      `${BUCKET}images/property/${other}/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/Kerkstraat123/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/0612345678/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/amara@example.com/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/Kerkstraat.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.txt`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg?v=2`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/`,
+      `${BUCKET}images/${PROPERTY_ID}`,
     ];
     const imagesFor = (imageUrl) =>
       buildStaticSiteMetadata({
@@ -563,12 +566,9 @@ describe("the boundary of the structured data", () => {
   });
 
   it("lists no photo whose address carries a query string or a fragment", () => {
-    const tracked = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/x/web.jpg?phone=6281234567890";
+    const tracked = `${photoUrl(3)}?phone=6281234567890`;
     const { metadata } = buildMetadataFor({
-      contentOverrides: {
-        heroImage: tracked,
-        galleryImages: [FIRST_PHOTO, "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/y/web.jpg#tel"],
-      },
+      contentOverrides: { heroImage: tracked, galleryImages: [FIRST_PHOTO, `${photoUrl(4)}#tel`] },
     });
 
     expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);

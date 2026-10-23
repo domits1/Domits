@@ -13,8 +13,7 @@ const DIGIT_RUN_PATTERN = /\d{4}/;
 const PRIVATE_DIGIT_COUNT = 7;
 const MAX_NUMBER_GROUPS = 2;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const KEY_TOKEN_PATTERN = /^[A-Za-z0-9]{1,40}$/;
-const PHOTO_FILE_PATTERN = /^[a-z]+\.(jpe?g|png|webp|avif|gif)$/i;
+const PHOTO_FILE_PATTERN = /^(web|thumb|original)\.(jpe?g|png|webp|avif|gif)$/i;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -104,22 +103,17 @@ const buildAmenityFeatures = (model) => {
 
 const countDigits = (text) => (text.match(/\d/g) || []).length;
 
-const isKeyToken = (segment) =>
-  UUID_PATTERN.test(segment) || (KEY_TOKEN_PATTERN.test(segment) && countDigits(segment) < PRIVATE_DIGIT_COUNT);
-
 const isListingPhotoUrl = (imageUrl) => {
   if (!imageUrl.startsWith(S3_ACCOMMODATION_URL)) {
     return false;
   }
 
-  const segments = imageUrl.slice(S3_ACCOMMODATION_URL.length).split("/");
-  return (
-    segments.length === 4 &&
-    segments[0] === "images" &&
-    isKeyToken(segments[1]) &&
-    isKeyToken(segments[2]) &&
-    PHOTO_FILE_PATTERN.test(segments[3])
-  );
+  const [folder, propertyId, imageId, ...rest] = imageUrl.slice(S3_ACCOMMODATION_URL.length).split("/");
+  if (folder !== "images" || !UUID_PATTERN.test(propertyId) || !UUID_PATTERN.test(imageId)) {
+    return false;
+  }
+
+  return rest.length === 0 || (rest.length === 1 && PHOTO_FILE_PATTERN.test(rest[0]));
 };
 
 const looksLikeFeatureName = (label) =>
