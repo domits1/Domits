@@ -192,28 +192,28 @@ export class Controller {
         }
     }
 
-    // Invoked by the schedule, not over HTTP: the caller needs lambda:InvokeFunction, and index.js
-    // refuses events that carry an httpMethod, so there is no token to check here.
     async runOverdueSweep(event) {
-        return await this.runSweep(event, notifyOverdueTasks);
+        return await this.runSweep(event, notifyOverdueTasks, "overdue");
     }
 
     async runDueSoonSweep(event) {
-        return await this.runSweep(event, notifyDueSoonTasks);
+        return await this.runSweep(event, notifyDueSoonTasks, "due soon");
     }
 
-    async runSweep(event, sweep) {
+    async runSweep(event, sweep, label) {
+        const requested = Number(event.limit);
+        const limit = Number.isInteger(requested) && requested > 0
+            ? Math.min(requested, MAX_SWEEP_LIMIT)
+            : DEFAULT_SWEEP_LIMIT;
         try {
-            const requested = Number(event.limit);
-            const limit = Number.isInteger(requested) && requested > 0
-                ? Math.min(requested, MAX_SWEEP_LIMIT)
-                : DEFAULT_SWEEP_LIMIT;
             const result = await sweep({ limit });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
-            return this.handleError(error);
+            console.error(`The ${label} sweep failed`, error);
+            throw error;
         }
     }
+
 
     handleError(error) {
         return {

@@ -25,6 +25,15 @@ export class Controller {
     this.authManager = authManager;
   }
 
+  async getPublicReviews(event) {
+    try {
+      return this.jsonResponse(200, await this.service.getPublicReviews(
+        this.getPathParameter(event, "propertyId"), event.queryStringParameters?.offset ?? "0"));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   jsonResponse(statusCode, result) {
     return { statusCode, headers: responseHeaders, body: JSON.stringify(result) };
   }
@@ -43,7 +52,7 @@ export class Controller {
       if (typeof user?.userId !== "string" || !user.userId.trim()) {
         throw new UnauthorizedException("Verified authorization context is required.");
       }
-      return await callback(user.userId);
+      return await callback(user.userId, user);
     } catch (error) {
       return this.handleError(error);
     }
@@ -61,13 +70,23 @@ export class Controller {
   async getReviews(event) {
     return this.executeAuthenticated(event, async (userId) => {
       const query = event.queryStringParameters ?? {};
-      if (query.scope === "property-score") {
-        if (query.reviewId !== undefined || event.pathParameters?.id !== undefined) {
-          throw new BadRequestException("Property score cannot be combined with an individual review request.");
-        }
-        return this.jsonResponse(200, await this.service.getPropertyReviewScore(userId, query.propertyId));
+      const propertyScope = ["property-score", "property-categories", "property-performance"].includes(query.scope);
+      if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
+        throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
-      return this.jsonResponse(200, await this.service.getReviews(userId, query.scope ?? "written"));
+      let result;
+      if (query.scope === "property-categories") {
+        result = await this.service.getPropertyCategoryRatings(userId, query.propertyId);
+      } else if (query.scope === "property-score") {
+        result = await this.service.getPropertyReviewScore(userId, query.propertyId);
+      } else if (query.scope === "property-performance") {
+        result = await this.service.getPropertyReviewPerformance(userId, query.propertyId, query);
+      } else if (query.reviewId !== undefined) {
+        result = await this.service.getEditableReview(userId, query.reviewId);
+      } else {
+        result = await this.service.getReviews(userId, query.scope ?? "written");
+      }
+      return this.jsonResponse(200, result);
     });
   }
 
@@ -81,8 +100,19 @@ export class Controller {
   // Update an unpublished review draft.
   // This keeps the controller thin while preserving the service's conflict and validation checks.
   async updateReview(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.updateReview(userId, this.getPathParameter(event, "id"), parseBody(event))));
+    return this.executeAuthenticated(event, async (userId) => {
+      const pathId = event.pathParameters?.id;
+      const queryId = event.queryStringParameters?.reviewId;
+      if (pathId !== undefined && queryId !== undefined && pathId !== queryId) {
+        throw new BadRequestException("Conflicting review IDs.");
+      }
+      const data = parseBody(event);
+      if (queryId !== undefined || Object.hasOwn(data, "updated_at")) {
+        const reviewId = queryId ?? this.getPathParameter(event, "id");
+        return this.jsonResponse(200, await this.service.updateEditableReview(userId, reviewId, data));
+      }
+      return this.jsonResponse(200, await this.service.updateReview(userId, this.getPathParameter(event, "id"), data));
+    });
   }
 
   // Return the public review feed for a property.
@@ -146,14 +176,18 @@ export class Controller {
   // Retain existing direct callers while index uses the individual route methods.
   async manageReviews(event) {
     if (event.httpMethod === "GET") return this.getReviews(event);
+    if (event.httpMethod === "PATCH") return this.updateReview(event);
     if (event.httpMethod === "DELETE") return this.deleteReview(event);
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
+  // Retain compatibility with direct callers of the public property review method.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }
 
+  // Hide unexpected failure details because they may expose internal implementation data.
+  // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
     const statusCode = Number.isInteger(error?.statusCode) && error.statusCode >= 400 && error.statusCode <= 599
       ? error.statusCode : 500;

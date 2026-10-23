@@ -1,3 +1,4 @@
+import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { Property } from "../../ORM/models/Property.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
@@ -268,7 +269,6 @@ it("returns empty public aggregates without querying child tables", async () => 
       expect(dataSource.transaction).toHaveBeenCalledTimes(1);
     }
   );
-
 
 
 });

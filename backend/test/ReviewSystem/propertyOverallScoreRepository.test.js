@@ -5,14 +5,17 @@ import { Review } from "database/models/Review";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
 describe("property score repository", () => {
-  let query, propertyRepository, repository, reviewRepository;
+  let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
     for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
       query[method] = jest.fn(() => query);
     }
-    reviewRepository = { createQueryBuilder: () => query, update: jest.fn().mockResolvedValue({ affected: 1 }) };
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
+    reviewRepository = {
+      createQueryBuilder: () => query,
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => {
       if (entity === Property) return propertyRepository;
       if (entity === Review) return reviewRepository;

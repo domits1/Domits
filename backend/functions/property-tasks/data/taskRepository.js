@@ -125,10 +125,6 @@ const FIRST_EMAIL_WINDOW_MS = DAY_MS;
 const REMINDER_INTERVAL_MS = 2 * DAY_MS;
 const MAX_OVERDUE_EMAILS = 4;
 
-// Not scoped to one host: the overdue sweep is a system job that covers every host.
-// A task gets its first email only if it went overdue within the last day, so switching the sweep
-// on does not email about a backlog of old unfinished tasks. After that it gets a reminder every
-// two days, up to MAX_OVERDUE_EMAILS emails in total. Tasks never emailed come first.
 export const getOverdueTasksToNotify = async (dataSource, now, limit) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.createQueryBuilder("task")
@@ -150,7 +146,6 @@ export const getOverdueTasksToNotify = async (dataSource, now, limit) => {
         .getMany();
 };
 
-// Compare-and-swap on the last email time the sweep read: a run that lost the race changes nothing.
 export const claimOverdueNotification = async (dataSource, task, claimedAt) => {
     const repository = dataSource.getRepository(TaskEntity);
     const previous = task.overdue_last_notified_at;

@@ -88,6 +88,7 @@ notifyTaskDueSoon → recipient's notif_email_due_soon → EmailNotificationServ
 
 - The task is already saved when the email is sent. A failed lookup or send is logged as `Failed to send task assigned notification for task <id>` (or `task completed`, `task overdue`, `task due soon`) and **never fails the task request**.
 - There is no retry, no delivery record, and no message to the user when an email fails. For overdue, the task is marked as emailed before the email goes out, so a failed overdue email is **not** retried straight away. It counts as one of the 4, and the next reminder comes 2 days later.
+- If the overdue sweep itself fails (for example the database is down), the error is logged and the invocation fails, so it shows up in the Lambda's error metrics. A single failed email does not do this: that is logged and the sweep carries on.
 - The email calls are synchronous Lambda invokes with no timeout, so a slow email service slows the task request.
 
 ## Turning on the overdue sweep

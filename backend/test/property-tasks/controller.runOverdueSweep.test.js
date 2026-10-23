@@ -39,13 +39,16 @@ describe("Controller.runOverdueSweep", () => {
         expect(notifyOverdueTasks).toHaveBeenCalledWith({ limit: expected });
     });
 
-    it("answers with an error status when the sweep fails", async () => {
+    it("logs the error and throws when the sweep fails, so the scheduled run fails and the alarm can fire", async () => {
+        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
         notifyOverdueTasks.mockRejectedValue(new Error("database down"));
 
-        const response = await new Controller().runOverdueSweep({ task: "notify-overdue-tasks", limit: 5 });
+        await expect(
+            new Controller().runOverdueSweep({ task: "notify-overdue-tasks", limit: 5 })
+        ).rejects.toThrow("database down");
 
-        expect(response.statusCode).toBe(500);
-        expect(JSON.parse(response.body).message).toContain("database down");
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("overdue sweep"), expect.any(Error));
+        consoleErrorSpy.mockRestore();
     });
 });
 

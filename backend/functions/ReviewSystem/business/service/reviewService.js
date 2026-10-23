@@ -9,10 +9,65 @@ import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "..
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
+const DAY_MS = 86_400_000;
+const MAX_PERFORMANCE_PERIODS = 120;
+const formatPerformanceDate = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+
+function parsePerformanceDate(value, name) {
+  if (typeof value !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException(`${name} must be YYYY-MM-DD.`);
+  }
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(timestamp) || formatPerformanceDate(timestamp) !== value) {
+    throw new BadRequestException(`${name} must be a valid date.`);
+  }
+  return timestamp;
+}
+
+function getPerformancePeriodStart(timestamp, interval) {
+  const date = new Date(timestamp);
+  if (interval === "week") {
+    date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  } else {
+    date.setUTCDate(1);
+    if (interval === "year") date.setUTCMonth(0);
+  }
+  return date.getTime();
+}
+
+function getNextPerformancePeriod(timestamp, interval) {
+  const date = new Date(timestamp);
+  switch (interval) {
+    case "week": date.setUTCDate(date.getUTCDate() + 7); break;
+    case "month": date.setUTCMonth(date.getUTCMonth() + 1); break;
+    case "year": date.setUTCFullYear(date.getUTCFullYear() + 1); break;
+  }
+  return date.getTime();
+}
+
+function generatePerformancePeriods(start, endExclusive, interval) {
+  const periods = [];
+  for (let periodStart = getPerformancePeriodStart(start, interval); periodStart < endExclusive;) {
+    if (periods.length >= MAX_PERFORMANCE_PERIODS) {
+      throw new BadRequestException("Select a range covering at most 120 periods.");
+    }
+    const nextPeriod = getNextPerformancePeriod(periodStart, interval);
+    const coverageStart = Math.max(start, periodStart);
+    const coverageEndExclusive = Math.min(endExclusive, nextPeriod);
+    periods.push({
+      period: formatPerformanceDate(periodStart),
+      coverage_start: formatPerformanceDate(coverageStart),
+      coverage_end: formatPerformanceDate(coverageEndExclusive - DAY_MS),
+      is_partial: coverageStart !== periodStart || coverageEndExclusive !== nextPeriod,
+    });
+    periodStart = nextPeriod;
+  }
+  return periods;
+}
 
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
-// eslint-disable-next-line no-control-regex -- Deliberately reject controls while allowing tabs and line breaks.
+// eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
 const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
@@ -41,23 +96,143 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
+  async getPublicReviews(propertyId, offset = "0") {
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    if (typeof offset !== "string" || !/^(0|[1-9]\d*)$/.test(offset)
+      || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
+      throw new BadRequestException("Invalid review page offset.");
+    }
+    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset));
+    if (!result) throw new NotFoundException("Property not found.");
+    return result;
+  }
+
+
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
     canReadPrivateFeedback = async ({ userId, review }) =>
       review.reviewer_user_id === userId || review.host_id === userId,
-    canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId } = {}) {
+    canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId,
+    editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
+    this.editWindowMs =
+      Number.isSafeInteger(editWindowMs) && editWindowMs > 0
+        ? editWindowMs
+        : 0;
+  }
+
+  editDeadline(review) {
+    const createdAt = Number(review.created_at);
+    const deadline = createdAt + this.editWindowMs;
+    return this.editWindowMs && Number.isSafeInteger(createdAt) && createdAt > 0
+      && Number.isSafeInteger(deadline) ? deadline : 0;
+  }
+
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("A verified user identity is required.");
+    }
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      throw new BadRequestException("A property ID is required.");
+    }
+    this.assertId(propertyId, "property ID");
+    const normalizedPropertyId = propertyId.trim();
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
+    // Avoid disclosing whether another manager's property exists.
+    if (!property) throw new NotFoundException("Property not found or access is denied.");
+    return normalizedPropertyId;
+  }
+
+  async getPropertyOverallScore(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    return this.repository.getPropertyReviewScore(id, username);
+  }
+
+  // Group current eligible scores by review creation period, rather than reconstructing past edits.
+  // Exact inclusive UTC dates clip calendar buckets; coverage dates expose partial periods.
+  // Week labels identify Mondays. Empty periods retain coverage with null scores and zero counts.
+  async getPropertyReviewPerformance(username, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const interval = query.interval === undefined ? "month" : query.interval;
+    if (!["week", "month", "year"].includes(interval)) {
+      throw new BadRequestException("interval must be week, month, or year.");
+    }
+    const start = parsePerformanceDate(query.startDate, "startDate");
+    const end = parsePerformanceDate(query.endDate, "endDate");
+    if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
+    const endExclusive = end + DAY_MS;
+    const buckets = generatePerformancePeriods(start, endExclusive, interval);
+    // The exclusive bound includes the entire requested end date in UTC.
+    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, endExclusive, interval);
+    const byPeriod = new Map(rows.map((row) => [row.period, row]));
+    const periods = buckets.map((bucket) => {
+      const row = byPeriod.get(bucket.period);
+      return { ...bucket, average_score: row ? Number(row.average_score) : null,
+        review_count: row ? Number(row.review_count) : 0 };
+    });
+    return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
+      end_date: query.endDate, periods };
+  }
+
+  // Return category-level review metrics for a property the caller manages.
+  async getPropertyCategoryRatings(username, propertyId) {
+    const id = await this.authorizeManagedProperty(username, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+    return { property_id: id, categories };
+  }
+
+  async getEditableReview(callerUserId, reviewId) {
+    this.assertCaller(callerUserId);
+    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const review = await this.repository.findReviewById(reviewId);
+    if (!review || ["DELETED", "REJECTED"].includes(review.status)) throw new NotFoundException("Review not found.");
+    if (String(review.reviewer_user_id) !== String(callerUserId)) {
+      throw new ForbiddenException("You can only edit your own reviews.");
+    }
+    const timestamp = this.now();
+    if (timestamp < Number(review.created_at) || timestamp >= this.editDeadline(review)) {
+      throw new ForbiddenException("The review editing period has ended or editing is unavailable.");
+    }
+    return { id: review.id, overall_rating: review.overall_rating,
+      public_review: review.public_review, updated_at: Number(review.updated_at) };
+  }
+
+  async updateEditableReview(callerUserId, reviewId, data) {
+    const review = await this.getEditableReview(callerUserId, reviewId);
+    const allowed = new Set(["overall_rating", "public_review", "updated_at"]);
+    if (!data || typeof data !== "object" || Array.isArray(data)
+      || Object.keys(data).some((key) => !allowed.has(key))) {
+      throw new BadRequestException("Only the rating, written review, and update version may be submitted.");
+    }
+    const publicReview = this.validateReviewPayload({
+      booking_id: reviewId, title: "Existing review", overall_rating: data.overall_rating, public_review: data.public_review,
+    });
+    if (!Number.isSafeInteger(data.updated_at) || data.updated_at < 0 || data.updated_at >= Number.MAX_SAFE_INTEGER) {
+      throw new BadRequestException("A valid review update version is required.");
+    }
+    if (data.updated_at !== review.updated_at) {
+      throw new ConflictException("This review has changed. Reload it before editing.");
+    }
+    const result = await this.repository.updateEditableReview({
+      id: reviewId, guestId: callerUserId, previousUpdatedAt: data.updated_at,
+      editWindowMs: this.editWindowMs, now: this.now,
+      overallRating: data.overall_rating, publicReview,
+    });
+    if (!result.affected) {
+      throw new ConflictException("The review changed or its editing period ended. Reload the review.");
+    }
+    return { id: reviewId, overall_rating: data.overall_rating,
+      public_review: publicReview, updated_at: result.updated_at };
   }
 
   async getPropertyReviewScore(userId, propertyId) {
-    this.assertCaller(userId);
-    this.assertId(propertyId, "property ID");
-    const id = propertyId.trim();
-    if (!(await this.repository.findManagedProperty(id, userId))) {
-      throw new NotFoundException("Property not found.");
-    }
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     return this.repository.getPropertyReviewScore(id, userId);
   }
 
@@ -73,6 +248,8 @@ export class ReviewService {
       ? String(review.reviewer_user_id) === callerUserId && !["DELETED", "REJECTED"].includes(review.status)
       : String(review.reviewee_user_id) === callerUserId && isPublished(review)).map((review) => ({
         ...toReviewView(review), rating: Number(review.overall_rating), content: review.public_review, date: review.created_at,
+        can_edit: scope === "written" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
+        edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
       }));
   }
 
@@ -142,7 +319,7 @@ export class ReviewService {
     if (review.status !== "DRAFT" || review.publication_status !== "UNPUBLISHED") {
       throw new ConflictException("Only unpublished draft reviews can be edited.");
     }
-    this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating), ...changes });
+    const publicReview = this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating), ...changes });
     if (changes.category_ratings !== undefined && Object.keys(changes.category_ratings).length) {
       const supported = await this.repository.findActiveCategoryKeys(review.review_type);
       if (Object.keys(changes.category_ratings).some((key) => !supported.has(key))) {
@@ -161,6 +338,7 @@ export class ReviewService {
         fields[key] = typeof value === "string" ? value.trim() : value;
       }
     }
+    if (Object.hasOwn(changes, "public_review")) fields.public_review = publicReview;
     const updated = await this.repository.updateDraft({ reviewId: review.id, reviewerUserId: userId,
       expectedUpdatedAt: review.updated_at, fields, categoryRatings: changes.category_ratings });
     if (!updated) throw new ConflictException("Review changed. Reload it before editing.");
@@ -275,7 +453,9 @@ export class ReviewService {
   // Create a new guest review for a completed reservation.
   // This enforces booking eligibility and prevents duplicate or invalid review submissions.
   async createReview(callerUserId, reviewData) {
-    this.assertCaller(callerUserId);
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
+      throw new UnauthorizedException("An authenticated caller is required.");
+    }
     const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
@@ -320,22 +500,25 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create({
-        id: randomUUID(),
-        ...duplicateKey,
-        property_id: booking.property_id,
-        host_id: booking.hostid,
-        reviewee_user_id: booking.hostid,
-        overall_rating: reviewData.overall_rating,
-        title: reviewData.title.trim(),
-        public_review: publicReview,
-        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-        verification_status: "UNVERIFIED",
-        publication_status: "UNPUBLISHED",
-        status: "DRAFT",
-        created_at: now,
-        updated_at: now,
-      }, categoryRatings);
+      return await this.repository.create(
+        {
+          id: randomUUID(),
+          ...duplicateKey,
+          property_id: booking.property_id,
+          host_id: booking.hostid,
+          reviewee_user_id: booking.hostid,
+          overall_rating: reviewData.overall_rating,
+          title: reviewData.title.trim(),
+          public_review: publicReview,
+          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          verification_status: "UNVERIFIED",
+          publication_status: "UNPUBLISHED",
+          status: "DRAFT",
+          created_at: now,
+          updated_at: now,
+        },
+        categoryRatings
+      );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
         throw new ConflictException(
@@ -382,6 +565,8 @@ export class ReviewService {
     return this.normalizePublicReview(reviewData.public_review);
   }
 
+  // Normalize and sanitize the written review text before saving it.
+  // This ensures reviews are plain text, within limits, and free of unsafe control characters.
   normalizePublicReview(value) {
     if (value === undefined || value === null) {
       throw new BadRequestException("Please describe your stay before submitting your review.");
@@ -401,6 +586,8 @@ export class ReviewService {
     return text;
   }
 
+  // Normalize optional private feedback without letting blanks become stored garbage.
+  // This keeps optional feedback consistent while avoiding empty values in the database.
   normalizeOptionalText(value) {
     if (!value) return null;
 

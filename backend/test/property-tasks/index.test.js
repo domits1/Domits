@@ -59,6 +59,12 @@ describe("property-tasks handler routing", () => {
         expect(mockRunOverdueSweep).toHaveBeenCalledWith(event);
     });
 
+    it("a failing scheduled sweep fails the invocation instead of answering 500, so the failure is visible", async () => {
+        mockRunOverdueSweep.mockRejectedValue(new Error("database down"));
+
+        await expect(handler({ task: "notify-overdue-tasks", limit: 5 })).rejects.toThrow("database down");
+    });
+
     it("an HTTP request cannot trigger the overdue sweep, even if it carries the task name", async () => {
         await handler({ httpMethod: "GET", task: "notify-overdue-tasks", queryStringParameters: null });
 

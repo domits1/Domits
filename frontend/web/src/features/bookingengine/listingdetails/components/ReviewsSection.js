@@ -57,6 +57,11 @@ const ReviewCard = ({ review }) => (
       )}
     </div>
     <p className="reviews-section__card-text">{review.text}</p>
+    <div className="reviews-section__categories">
+      {(review.categories || []).map(({ key, label, rating }) => (
+        <span key={key} className="reviews-section__category-pill">{label}: {rating.toFixed(1)}/5</span>
+      ))}
+    </div>
   </div>
 );
 
@@ -104,7 +109,7 @@ const ReviewsSection = ({
       {hasReviews ? (
         <>
           <div className="reviews-section__grid">
-            {reviews.slice(0, 2).map((review, i) => (
+            {reviews.map((review, i) => (
               <ReviewCard key={review.id || i} review={review} />
             ))}
           </div>
@@ -139,6 +144,9 @@ ReviewCard.propTypes = {
     timeAgo: PropTypes.string,
     verified: PropTypes.bool,
     text: PropTypes.string,
+    categories: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string, label: PropTypes.string, rating: PropTypes.number,
+    })),
   }),
 };
 
