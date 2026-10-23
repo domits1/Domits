@@ -8,10 +8,13 @@ const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
 const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
 const FEATURE_NAME_MAX_LENGTH = 80;
-const FEATURE_NAME_PATTERN = /^[\p{L}\p{N}\s,'’&()+-]+$/u;
+const FEATURE_NAME_PATTERN = /^[\p{L}0-9\s,'’&()+/-]+$/u;
 const DIGIT_RUN_PATTERN = /\d{4}/;
 const PRIVATE_DIGIT_COUNT = 7;
-const LISTING_PHOTO_PATTERN = new RegExp(`^${S3_ACCOMMODATION_URL.replaceAll(".", "\\.")}[\\w/.-]+$`);
+const MAX_NUMBER_GROUPS = 2;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const KEY_TOKEN_PATTERN = /^[A-Za-z0-9]{1,40}$/;
+const PHOTO_FILE_PATTERN = /^[a-z]+\.(jpe?g|png|webp|avif|gif)$/i;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -99,14 +102,33 @@ const buildAmenityFeatures = (model) => {
     }));
 };
 
-const isListingPhotoUrl = (imageUrl) => LISTING_PHOTO_PATTERN.test(imageUrl);
+const countDigits = (text) => (text.match(/\d/g) || []).length;
+
+const isKeyToken = (segment) =>
+  UUID_PATTERN.test(segment) || (KEY_TOKEN_PATTERN.test(segment) && countDigits(segment) < PRIVATE_DIGIT_COUNT);
+
+const isListingPhotoUrl = (imageUrl) => {
+  if (!imageUrl.startsWith(S3_ACCOMMODATION_URL)) {
+    return false;
+  }
+
+  const segments = imageUrl.slice(S3_ACCOMMODATION_URL.length).split("/");
+  return (
+    segments.length === 4 &&
+    segments[0] === "images" &&
+    isKeyToken(segments[1]) &&
+    isKeyToken(segments[2]) &&
+    PHOTO_FILE_PATTERN.test(segments[3])
+  );
+};
 
 const looksLikeFeatureName = (label) =>
   label !== DEFAULT_WEBSITE_AMENITY_LABEL &&
   label.length <= FEATURE_NAME_MAX_LENGTH &&
   FEATURE_NAME_PATTERN.test(label) &&
   !DIGIT_RUN_PATTERN.test(label) &&
-  (label.match(/\d/g) || []).length < PRIVATE_DIGIT_COUNT;
+  countDigits(label) < PRIVATE_DIGIT_COUNT &&
+  (label.match(/\d+/g) || []).length <= MAX_NUMBER_GROUPS;
 
 const selectStaticSiteImages = (model) => [
   ...new Set(

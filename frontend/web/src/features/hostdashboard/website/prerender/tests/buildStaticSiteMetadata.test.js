@@ -249,7 +249,7 @@ describe("the structured data lists the photos the static page shows", () => {
   });
 
   it("lists a hero photo the host picked outside the gallery as an extra image", () => {
-    const hostPick = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/hero-pick/web.jpg";
+    const hostPick = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/heropick/web.jpg";
     const { metadata } = buildMetadataFor({ contentOverrides: { heroImage: hostPick } });
 
     expect(metadata.jsonLd.image).toEqual([hostPick, FIRST_PHOTO, SECOND_PHOTO]);
@@ -508,6 +508,17 @@ describe("the boundary of the structured data", () => {
         ],
       },
     });
+    const foreign = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "closet", label: "Closet/drawers" },
+          { id: "cable", label: "TV with cable/satellite" },
+          { id: "arabic-phone", label: "Tel +٣١ ٦ ١٢٣٤٥٦٧٨" },
+          { id: "coarse-geo", label: "52,12 4,9" },
+          { id: "three-numbers", label: "Wifi 300 Mbps, 2 routers, 1 repeater" },
+        ],
+      },
+    });
 
     expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Heated pool", "55-inch TV"]);
     const serialized = JSON.stringify(metadata.jsonLd);
@@ -515,31 +526,40 @@ describe("the boundary of the structured data", () => {
     expect(linked.metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual([
       "Sauna & jacuzzi (heated), 2 towels",
     ]);
+    expect(foreign.metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual([
+      "Closet/drawers",
+      "TV with cable/satellite",
+    ]);
   });
 
-  it("lists only photos from the accommodation bucket, so a photo address cannot carry text", () => {
+  it("lists only generated photo keys from the accommodation bucket, so a photo address cannot carry text", () => {
     const bucket = "https://accommodation.s3.eu-north-1.amazonaws.com/images/";
-    const metadata = buildStaticSiteMetadata({
-      renderPayload: buildPublishedSiteRenderPayload(),
-      model: {
-        site: { title: "Villa" },
-        media: {
-          heroImage: `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/0a1b2c3d/web.jpg`,
-          galleryImages: [
-            "https://photos.example.com/amara@example.com/pool.jpg",
-            `${bucket}p/amara@example.com/web.jpg`,
-            `${bucket}p/0612345678 pool/web.jpg`,
-            "https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/p/web.jpg",
-            `${bucket}p/second/web.jpg`,
-          ],
-        },
-      },
-    });
+    const kept = [
+      `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/3f9c1b2a-5d6e-4f70-8a9b-0c1d2e3f4a5b/web.jpg`,
+      `${bucket}property/second/web.jpg`,
+      `${bucket}property/second/original.PNG`,
+    ];
+    const refused = [
+      "https://photos.example.com/amara@example.com/pool.jpg",
+      `${bucket}p/amara@example.com/web.jpg`,
+      `${bucket}p/0612345678 pool/web.jpg`,
+      `${bucket}p/0612345678/web.jpg`,
+      `${bucket}p/Kerkstraat-123/web.jpg`,
+      `${bucket}p/x/web.jpg?v=2`,
+      `${bucket}p/x/y/web.jpg`,
+      `${bucket}p/x/pool.txt`,
+      "https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/p/x/web.jpg",
+      "https://evil.example/https://accommodation.s3.eu-north-1.amazonaws.com/images/p/x/web.jpg",
+      "https://accommodationXs3Xeu-north-1XamazonawsXcom/images/p/x/web.jpg",
+    ];
+    const imagesFor = (imageUrl) =>
+      buildStaticSiteMetadata({
+        renderPayload: buildPublishedSiteRenderPayload(),
+        model: { site: { title: "Villa" }, media: { heroImage: imageUrl, galleryImages: [imageUrl] } },
+      }).jsonLd.image;
 
-    expect(metadata.jsonLd.image).toEqual([
-      `${bucket}ecd926d9-67dc-4d0a-9b40-2884d0838406/0a1b2c3d/web.jpg`,
-      `${bucket}p/second/web.jpg`,
-    ]);
+    kept.forEach((imageUrl) => expect(imagesFor(imageUrl)).toEqual([imageUrl]));
+    refused.forEach((imageUrl) => expect(imagesFor(imageUrl)).toBeUndefined());
   });
 
   it("lists no photo whose address carries a query string or a fragment", () => {
