@@ -289,21 +289,38 @@ describe("the structured data names the amenities the static page lists", () => 
     expect(metadata.jsonLd.amenityFeature).toBeUndefined();
   });
 
-  it("follows the amenities a host renamed or added, because the page shows those", () => {
-    const { metadata } = buildMetadataFor({
-      contentOverrides: { amenities: [{ id: "pool", label: "Heated pool", category: "Outdoor" }] },
+  it("names only the catalogue amenities among those the page lists, under the catalogue name and in page order", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "12", label: "Oven", category: "Kitchen" },
+          { id: "website-amenity-pool", label: "Heated pool", category: "Outdoor" },
+          { id: "96", label: "Freezer", category: "Kitchen" },
+        ],
+      },
     });
 
-    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
+    expect(model.amenities.featured.map((amenity) => amenity.label)).toEqual(["Oven", "Heated pool", "Freezer"]);
+    expect(metadata.jsonLd.amenityFeature).toEqual([
+      { "@type": FEATURE, name: "Oven", value: true },
+      { "@type": FEATURE, name: "Freezer", value: true },
+    ]);
   });
 
-  it("leaves an amenity the host never named out of the structured data", () => {
-    const { metadata } = buildMetadataFor({
-      contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
+  it("leaves out an amenity the host added, renamed or left unnamed, even with a catalogue icon or id", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "website-amenity-wifi", iconAmenityId: "1", label: "Wi-Fi", category: "Essentials" },
+          { id: "1", label: "Wi-Fi 300 Mbps", category: "Essentials" },
+          { id: "12", label: "Freezer", category: "Kitchen" },
+          { id: "96", label: "", category: "Kitchen" },
+        ],
+      },
     });
 
-    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Heated pool", value: true }]);
-    expect(JSON.stringify(metadata.jsonLd)).not.toContain("New amenity");
+    expect(model.amenities.featured).toHaveLength(4);
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
   });
 });
 
@@ -481,53 +498,26 @@ describe("the boundary of the structured data", () => {
     expect(metadata.jsonLd.address).toEqual({ "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" });
   });
 
-  it("skips an amenity name that carries a phone number, an e-mail address, coordinates or a link", () => {
+  it("never copies an amenity name a host typed into the structured data, whatever it holds", () => {
+    const typedNames = [
+      "WhatsApp +62 812 3456 7890",
+      "Mail amara@example.com",
+      "Pool at -8.5069, 115.2625",
+      "See www.example.com",
+      "Kerkstraat 17",
+    ];
     const { metadata } = buildMetadataFor({
       contentOverrides: {
         amenities: [
-          { id: "pool", label: "Heated pool" },
-          { id: "tv", label: "55-inch TV" },
-          { id: "phone", label: "WhatsApp +62 812 3456 7890" },
-          { id: "mail", label: "Mail amara@example.com" },
-          { id: "geo", label: "Pool at -8.5069, 115.2625" },
-          { id: "long", label: "A".repeat(81) },
-        ],
-      },
-    });
-    const linked = buildMetadataFor({
-      contentOverrides: {
-        amenities: [
-          { id: "sauna", label: "Sauna & jacuzzi (heated), 2 towels" },
-          { id: "link", label: "See www.example.com" },
-          { id: "url", label: "https://example.com/villa" },
-          { id: "short-link", label: "Bekijk maps.app.goo.gl/AbCdEf" },
-          { id: "comma-decimal", label: "Breedtegraad 52,1234" },
-          { id: "spaced-phone", label: "Tel 06 12 34 56 78" },
-        ],
-      },
-    });
-    const foreign = buildMetadataFor({
-      contentOverrides: {
-        amenities: [
-          { id: "closet", label: "Closet/drawers" },
-          { id: "cable", label: "TV with cable/satellite" },
-          { id: "arabic-phone", label: "Tel +٣١ ٦ ١٢٣٤٥٦٧٨" },
-          { id: "coarse-geo", label: "52,12 4,9" },
-          { id: "three-numbers", label: "Wifi 300 Mbps, 2 routers, 1 repeater" },
+          { id: "12", label: "Oven" },
+          ...typedNames.map((label, index) => ({ id: index % 2 === 0 ? `website-amenity-${index}` : "96", label })),
         ],
       },
     });
 
-    expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Heated pool", "55-inch TV"]);
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": "LocationFeatureSpecification", name: "Oven", value: true }]);
     const serialized = JSON.stringify(metadata.jsonLd);
-    ["3456", "example.com", "115.2625", "AAAA"].forEach((value) => expect(serialized).not.toContain(value));
-    expect(linked.metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual([
-      "Sauna & jacuzzi (heated), 2 towels",
-    ]);
-    expect(foreign.metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual([
-      "Closet/drawers",
-      "TV with cable/satellite",
-    ]);
+    ["3456", "example.com", "115.2625", "Kerkstraat"].forEach((value) => expect(serialized).not.toContain(value));
   });
 
   it("lists only photo keys in the shape the upload code generates", () => {

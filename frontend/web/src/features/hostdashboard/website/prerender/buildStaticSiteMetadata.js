@@ -1,5 +1,5 @@
 import { S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
-import { DEFAULT_WEBSITE_AMENITY_LABEL } from "../config/websiteAmenitiesConfig";
+import amenitiesCatalog from "../../../../store/amenities";
 
 const DESCRIPTION_MAX_LENGTH = 160;
 const HOSTNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
@@ -7,11 +7,6 @@ const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
 const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
 const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
-const FEATURE_NAME_MAX_LENGTH = 80;
-const FEATURE_NAME_PATTERN = /^[\p{L}0-9\s,'’&()+/-]+$/u;
-const DIGIT_RUN_PATTERN = /\d{4}/;
-const PRIVATE_DIGIT_COUNT = 7;
-const MAX_NUMBER_GROUPS = 2;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PHOTO_FILE_PATTERN = /^(web|thumb|original)\.(jpe?g|png|webp|avif|gif)$/i;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
@@ -26,6 +21,8 @@ const cleanText = (value) => {
 };
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const CATALOG_AMENITY_NAMES = new Map(amenitiesCatalog.map(({ id, amenity }) => [cleanText(id), cleanText(amenity)]));
 
 const truncateAtWordBoundary = (value, maxLength) => {
   if (value.length <= maxLength) {
@@ -69,6 +66,11 @@ const resolveTimeOfDay = (value) => {
   return match ? `${match[1]}:${match[2]}:${match[3] ?? "00"}` : "";
 };
 
+const resolveCatalogAmenityName = (amenity) => {
+  const catalogName = CATALOG_AMENITY_NAMES.get(cleanText(amenity?.id));
+  return catalogName && cleanText(amenity?.label) === catalogName ? catalogName : "";
+};
+
 const resolveCount = (value) => (typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0);
 
 const buildAccommodation = (model) => {
@@ -92,16 +94,15 @@ const buildAmenityFeatures = (model) => {
     return [];
   }
 
-  return selectStaticSiteAmenities(model)
-    .filter(looksLikeFeatureName)
+  return toArray(model?.amenities?.featured)
+    .map(resolveCatalogAmenityName)
+    .filter(Boolean)
     .map((name) => ({
       "@type": "LocationFeatureSpecification",
       name,
       value: true,
     }));
 };
-
-const countDigits = (text) => (text.match(/\d/g) || []).length;
 
 const isListingPhotoUrl = (imageUrl) => {
   if (!imageUrl.startsWith(S3_ACCOMMODATION_URL)) {
@@ -115,14 +116,6 @@ const isListingPhotoUrl = (imageUrl) => {
 
   return rest.length === 0 || (rest.length === 1 && PHOTO_FILE_PATTERN.test(rest[0]));
 };
-
-const looksLikeFeatureName = (label) =>
-  label !== DEFAULT_WEBSITE_AMENITY_LABEL &&
-  label.length <= FEATURE_NAME_MAX_LENGTH &&
-  FEATURE_NAME_PATTERN.test(label) &&
-  !DIGIT_RUN_PATTERN.test(label) &&
-  countDigits(label) < PRIVATE_DIGIT_COUNT &&
-  (label.match(/\d+/g) || []).length <= MAX_NUMBER_GROUPS;
 
 const selectStaticSiteImages = (model) => [
   ...new Set(
