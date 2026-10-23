@@ -228,12 +228,16 @@ describe("the structured data lists the photos the static page shows", () => {
     expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
   });
 
-  it("stops at the six gallery photos the page renders", () => {
-    const names = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
-    const { metadata } = buildMetadataFor({ propertySnapshot: { images: names.map(photoFixture) } });
+  it("stops at the six gallery photos the page renders, even when a model carries more", () => {
+    const photos = ["a", "b", "c", "d", "e", "f", "g", "h", "i"].map(
+      (name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`
+    );
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { site: { title: "Villa" }, media: { heroImage: photos[0], galleryImages: photos } },
+    });
 
-    expect(metadata.jsonLd.image).toHaveLength(6);
-    expect(metadata.jsonLd.image).toEqual(names.slice(0, 6).map((name) => `https://accommodation.s3.eu-north-1.amazonaws.com/images/property/${name}/web.jpg`));
+    expect(metadata.jsonLd.image).toEqual(photos.slice(0, 6));
   });
 
   it("lists a hero photo the host picked outside the gallery as an extra image", () => {
