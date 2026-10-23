@@ -27,6 +27,12 @@ const requireOwnerId = (ownerId) => {
   }
 };
 
+const requirePropertyIds = (propertyIds) => {
+  if (!Array.isArray(propertyIds) || !propertyIds.every(isNonEmptyString)) {
+    throw new Error("property ids must be an array of non-empty strings.");
+  }
+};
+
 const requireToday = (today) => {
   if (!Number.isSafeInteger(today) || today < 0 || today % DAY_MS !== 0) {
     throw new Error("today must be a UTC midnight in epoch milliseconds.");
@@ -137,6 +143,20 @@ export class Repository {
     return await dataSource.getRepository(Property_Owner_Property).find({
       where: currentAssignmentWhere({ owner_id: ownerId, host_id: hostId }, today),
       order: ASSIGNMENT_ORDER,
+    });
+  }
+
+  async findPropertyTitlesByIds(propertyIds, hostId) {
+    requireHostId(hostId);
+    requirePropertyIds(propertyIds);
+    const ids = [...new Set(propertyIds)];
+    if (ids.length === 0) {
+      return [];
+    }
+    const dataSource = await Database.getInstance();
+    return await dataSource.getRepository(Property).find({
+      select: { id: true, title: true },
+      where: { id: In(ids), hostid: hostId },
     });
   }
 

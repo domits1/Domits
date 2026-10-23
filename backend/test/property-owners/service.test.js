@@ -34,8 +34,17 @@ const assignment = (ownerId, propertyId, overrides = {}) => ({
   ...overrides,
 });
 
+const TITLES = Object.freeze([
+  { id: "property-1", title: "Villa Sensual" },
+  { id: "property-2", title: "Casa Azul" },
+  { id: "property-3", title: "Chalet Noord" },
+]);
+
+const titleOf = (propertyId) => TITLES.find(({ id }) => id === propertyId)?.title ?? null;
+
 const property = (propertyId, overrides = {}) => ({
   property_id: propertyId,
+  property_title: titleOf(propertyId),
   ownership_basis_points: 5000,
   effective_from: TODAY - 30 * DAY_MS,
   effective_to: null,
@@ -60,6 +69,7 @@ const createService = ({
   ownerById = null,
   assignments = [],
   ownerAssignments = [],
+  titles = TITLES,
   clock = CLOCK,
 } = {}) => {
   const repository = {
@@ -67,6 +77,7 @@ const createService = ({
     findOwnerByIdAndHost: jest.fn(async () => ownerById),
     findAssignmentsByHost: jest.fn(async () => assignments),
     findAssignmentsByOwnerAndHost: jest.fn(async () => ownerAssignments),
+    findPropertyTitlesByIds: jest.fn(async () => titles),
     createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
     replacePropertyShares: jest.fn(async ({ assertWritable }) => {
       assertWritable({ property: shareProperty, owners: shareOwners, changedToday });
@@ -153,7 +164,7 @@ describe("Service.listOwners", () => {
     expect(result).not.toHaveProperty("property_ids");
   });
 
-  test("exposes only property_id, ownership_basis_points, effective_from and effective_to per property", async () => {
+  test("exposes only property_id, property_title, ownership_basis_points, effective_from and effective_to per property", async () => {
     const { service } = createService({ owners: [owner(OWNER_A)], assignments: [assignment(OWNER_A, "property-1")] });
 
     const [result] = await service.listOwners("host-1");
@@ -163,7 +174,51 @@ describe("Service.listOwners", () => {
       "effective_to",
       "ownership_basis_points",
       "property_id",
+      "property_title",
     ]);
+  });
+
+  test("reads the titles of every assigned property in one query for the caller's host", async () => {
+    const { repository, service } = createService({
+      owners: [owner(OWNER_A), owner(OWNER_B)],
+      assignments: [
+        assignment(OWNER_A, "property-1"),
+        assignment(OWNER_B, "property-2"),
+        assignment(OWNER_B, "property-1"),
+      ],
+    });
+
+    const result = await service.listOwners("host-1");
+
+    expect(repository.findPropertyTitlesByIds).toHaveBeenCalledTimes(1);
+    expect(repository.findPropertyTitlesByIds).toHaveBeenCalledWith(
+      ["property-1", "property-2", "property-1"],
+      "host-1"
+    );
+    expect(result.map(({ properties }) => properties.map(({ property_title }) => property_title))).toEqual([
+      ["Villa Sensual"],
+      ["Casa Azul", "Villa Sensual"],
+    ]);
+  });
+
+  test("gives a property the titles query did not return a null title", async () => {
+    const { service } = createService({
+      owners: [owner(OWNER_A)],
+      assignments: [assignment(OWNER_A, "property-1"), assignment(OWNER_A, "property-9")],
+    });
+
+    const [result] = await service.listOwners("host-1");
+
+    expect(result.properties).toEqual([property("property-1"), property("property-9")]);
+    expect(result.properties[1].property_title).toBeNull();
+  });
+
+  test("does not read titles when the host has no current assignments", async () => {
+    const { repository, service } = createService({ owners: [owner(OWNER_A)] });
+
+    await service.listOwners("host-1");
+
+    expect(repository.findPropertyTitlesByIds).not.toHaveBeenCalled();
   });
 
   test("includes archived owners", async () => {
@@ -216,12 +271,27 @@ describe("Service.getOwner", () => {
     expect(result).not.toHaveProperty("property_ids");
     expect(repository.findOwnerByIdAndHost).toHaveBeenCalledWith(OWNER_A, "host-1");
     expect(repository.findAssignmentsByOwnerAndHost).toHaveBeenCalledWith(OWNER_A, "host-1", TODAY);
+    expect(repository.findPropertyTitlesByIds).toHaveBeenCalledTimes(1);
+    expect(repository.findPropertyTitlesByIds).toHaveBeenCalledWith(["property-1", "property-2"], "host-1");
   });
 
-  test("returns an empty properties list for an owner without current assignments", async () => {
-    const { service } = createService({ ownerById: owner(OWNER_A) });
+  test("gives a property the titles query did not return a null title", async () => {
+    const { service } = createService({
+      ownerById: owner(OWNER_A),
+      ownerAssignments: [assignment(OWNER_A, "property-1")],
+      titles: [],
+    });
+
+    const result = await service.getOwner("host-1", OWNER_A);
+
+    expect(result.properties).toEqual([{ ...property("property-1"), property_title: null }]);
+  });
+
+  test("returns an empty properties list for an owner without current assignments, without reading titles", async () => {
+    const { repository, service } = createService({ ownerById: owner(OWNER_A) });
 
     await expect(service.getOwner("host-1", OWNER_A)).resolves.toEqual({ ...owner(OWNER_A), properties: [] });
+    expect(repository.findPropertyTitlesByIds).not.toHaveBeenCalled();
   });
 
   test.each([undefined, null, "", "owner-1", `${OWNER_A}x`, 42])(

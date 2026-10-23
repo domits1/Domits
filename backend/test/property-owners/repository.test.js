@@ -16,7 +16,7 @@ const OWNER_ID = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 const DAY_MS = 86400000;
 const TODAY = Date.UTC(2026, 6, 1);
 
-const createDataSource = ({ owners = [], owner = null, assignments = [] } = {}) => {
+const createDataSource = ({ owners = [], owner = null, assignments = [], properties = [] } = {}) => {
   const ownerRepository = {
     find: jest.fn(async () => owners),
     findOne: jest.fn(async () => owner),
@@ -25,12 +25,16 @@ const createDataSource = ({ owners = [], owner = null, assignments = [] } = {}) 
   const assignmentRepository = {
     find: jest.fn(async () => assignments),
   };
+  const propertyRepository = {
+    find: jest.fn(async () => properties),
+  };
   const repositories = new Map([
     [Property_Owner, ownerRepository],
     [Property_Owner_Property, assignmentRepository],
+    [Property, propertyRepository],
   ]);
   Database.getInstance.mockResolvedValue({ getRepository: jest.fn((entity) => repositories.get(entity)) });
-  return { ownerRepository, assignmentRepository };
+  return { ownerRepository, assignmentRepository, propertyRepository };
 };
 
 const matchesCondition = (value, condition) => {
@@ -192,6 +196,70 @@ describe("Repository.findAssignmentsByOwnerAndHost", () => {
 
     expect(matched).not.toContain("another owner");
     where.forEach((branch) => expect(branch.owner_id).toBe(OWNER_ID));
+  });
+});
+
+describe("Repository.findPropertyTitlesByIds", () => {
+  const readOptions = async (propertyIds) => {
+    const { propertyRepository } = createDataSource();
+    await new Repository().findPropertyTitlesByIds(propertyIds, "host-1");
+    return propertyRepository.find.mock.calls[0][0];
+  };
+
+  test("returns the rows the database gives back", async () => {
+    const properties = [{ id: "property-1", title: "Villa Sensual" }];
+    createDataSource({ properties });
+
+    await expect(new Repository().findPropertyTitlesByIds(["property-1"], "host-1")).resolves.toBe(properties);
+  });
+
+  test("reads only the id and title of the caller's properties, once per distinct id", async () => {
+    const { propertyRepository } = createDataSource();
+
+    await new Repository().findPropertyTitlesByIds(["property-1", "property-2", "property-1"], "host-1");
+
+    expect(propertyRepository.find).toHaveBeenCalledTimes(1);
+    const { select, where } = propertyRepository.find.mock.calls[0][0];
+    expect(select).toEqual({ id: true, title: true });
+    expect(Object.keys(where).sort()).toEqual(["hostid", "id"]);
+    expect(where.hostid).toBe("host-1");
+    expect([where.id.type, where.id.value]).toEqual(["in", ["property-1", "property-2"]]);
+  });
+
+  test("answers an empty list without touching the database", async () => {
+    await expect(new Repository().findPropertyTitlesByIds([], "host-1")).resolves.toEqual([]);
+    expect(Database.getInstance).not.toHaveBeenCalled();
+  });
+
+  test("generates SQL with the ids and the caller's host", async () => {
+    const options = await readOptions(["property-1", "property-2"]);
+    const dataSource = new DataSource({ type: "postgres", entities: [Property] });
+    await dataSource.buildMetadatas();
+    const queryBuilder = dataSource.getRepository(Property).createQueryBuilder("property");
+    queryBuilder.setFindOptions(options);
+
+    const [sql, parameters] = queryBuilder.getQueryAndParameters();
+
+    expect(sql).toMatch(/^SELECT "property"\."id" AS "property_id", "property"\."title" AS "property_title" FROM "property"/);
+    expect(sql).toContain('"property"."id" IN ($1, $2)');
+    expect(sql).toContain('"property"."hostid" = $3');
+    expect(parameters).toEqual(["property-1", "property-2", "host-1"]);
+  });
+
+  test.each([undefined, null, "", 42])("refuses a host id %p before touching the database", async (hostId) => {
+    await expect(new Repository().findPropertyTitlesByIds(["property-1"], hostId)).rejects.toThrow(/host id/);
+    await expect(new Repository().findPropertyTitlesByIds([], hostId)).rejects.toThrow(/host id/);
+    expect(Database.getInstance).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["not an array", null],
+    ["holding undefined", ["property-1", undefined]],
+    ["holding an empty string", [""]],
+    ["holding a number", [42]],
+  ])("refuses property ids %s before touching the database", async (_label, propertyIds) => {
+    await expect(new Repository().findPropertyTitlesByIds(propertyIds, "host-1")).rejects.toThrow(/property ids/);
+    expect(Database.getInstance).not.toHaveBeenCalled();
   });
 });
 
