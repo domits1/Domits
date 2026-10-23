@@ -142,21 +142,12 @@ export class ReviewService {
     this.assertId(propertyId, "property ID");
     const normalizedPropertyId = propertyId.trim();
     const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
-    // Avoid disclosing whether another manager's property exists.
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
   }
 
-  async getPropertyOverallScore(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    return this.repository.getPropertyReviewScore(id, username);
-  }
-
-  // Group current eligible scores by review creation period, rather than reconstructing past edits.
-  // Exact inclusive UTC dates clip calendar buckets; coverage dates expose partial periods.
-  // Week labels identify Mondays. Empty periods retain coverage with null scores and zero counts.
-  async getPropertyReviewPerformance(username, propertyId, query = {}) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
+  async getPropertyReviewPerformance(userId, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     const interval = query.interval === undefined ? "month" : query.interval;
     if (!["week", "month", "year"].includes(interval)) {
       throw new BadRequestException("interval must be week, month, or year.");
@@ -166,8 +157,7 @@ export class ReviewService {
     if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
     const endExclusive = end + DAY_MS;
     const buckets = generatePerformancePeriods(start, endExclusive, interval);
-    // The exclusive bound includes the entire requested end date in UTC.
-    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, endExclusive, interval);
+    const rows = await this.repository.getPropertyReviewPerformance(id, userId, start, endExclusive, interval);
     const byPeriod = new Map(rows.map((row) => [row.period, row]));
     const periods = buckets.map((bucket) => {
       const row = byPeriod.get(bucket.period);
@@ -178,10 +168,9 @@ export class ReviewService {
       end_date: query.endDate, periods };
   }
 
-  // Return category-level review metrics for a property the caller manages.
-  async getPropertyCategoryRatings(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+  async getPropertyCategoryRatings(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
