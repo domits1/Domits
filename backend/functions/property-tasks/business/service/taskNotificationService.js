@@ -78,35 +78,46 @@ Open your Domits dashboard to view it.`
     }
 };
 
-const findAssignee = async (dataSource, task) => {
+// Only an active team member is emailed as the assignee. Someone revoked from the team after being
+// assigned still has a record, so the status is checked, and the email falls back to the host.
+const findActiveAssignee = async (dataSource, task) => {
     if (!task.assignee_team_member_id) {
         return null;
     }
-    return await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, task.host_id);
+    const teamMember = await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, task.host_id);
+    return teamMember?.status === "active" ? teamMember : null;
 };
 
-// The sweep claims the task before calling this, so a failed email is logged and not retried.
-// Goes to the assignee, or to the host when there is none or the assignee has left the team.
-export const notifyTaskOverdue = async (task) => {
-    try {
-        const dataSource = await Database.getInstance();
-        const assignee = await findAssignee(dataSource, task);
-        const recipientUserId = assignee ? assignee.member_user_id : task.host_id;
-        if (!(await isEmailEnabled(dataSource, recipientUserId, "notif_email_overdue"))) {
-            return;
-        }
+// For the scheduled emails, which have no request to take a recipient from: the assignee, or the host
+// when there is none or the assignee cannot be emailed. The recipient's own setting decides.
+const emailAssigneeOrHost = async (task, settingKey, { subject, body }) => {
+    const dataSource = await Database.getInstance();
+    const assignee = await findActiveAssignee(dataSource, task);
+    const recipientUserId = assignee ? assignee.member_user_id : task.host_id;
+    if (!(await isEmailEnabled(dataSource, recipientUserId, settingKey))) {
+        return;
+    }
 
-        const toEmail = assignee ? assignee.member_email : await getHostEmailById(task.host_id);
-        const isReminder = Number(task.overdue_notify_count) > 0;
-        await sendEmail(
-            toEmail,
-            isReminder ? `Reminder, task still overdue: ${task.title}` : `Task overdue: ${task.title}`,
-            `The task "${task.title}" (property: ${task.property_snapshot_label}) ${isReminder ? "is still overdue and still" : "is past its due date and"} has not been completed.
+    const toEmail = assignee ? assignee.member_email : await getHostEmailById(task.host_id);
+    await sendEmail(toEmail, subject, body);
+};
+
+const buildOverdueMessage = (task) => {
+    const isReminder = Number(task.overdue_notify_count) > 0;
+    return {
+        subject: isReminder ? `Reminder, task still overdue: ${task.title}` : `Task overdue: ${task.title}`,
+        body: `The task "${task.title}" (property: ${task.property_snapshot_label}) ${isReminder ? "is still overdue and still" : "is past its due date and"} has not been completed.
 
 Due: ${new Date(task.due_date).toISOString()}
 
-Open your Domits dashboard to view it.`
-        );
+Open your Domits dashboard to view it.`,
+    };
+};
+
+// The sweep claims the task before calling this, so a failed email is logged and not retried.
+export const notifyTaskOverdue = async (task) => {
+    try {
+        await emailAssigneeOrHost(task, "notif_email_overdue", buildOverdueMessage(task));
     } catch (error) {
         console.error(`Failed to send task overdue notification for task ${task.id}`, error);
     }
