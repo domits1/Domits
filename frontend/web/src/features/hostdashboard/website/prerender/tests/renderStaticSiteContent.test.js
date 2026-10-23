@@ -156,7 +156,7 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("static-site-policies");
   });
 
-  it("publishes no house rule and no check-in time, because panorama only shows those through an overridable card", () => {
+  it("publishes no house rule and no check-in time in the static html, which mirrors only the hero, amenities, gallery and host", () => {
     const text = stripTags(renderContentFor());
 
     expect(text).not.toContain("No smoking");
