@@ -30,7 +30,8 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
 
     const firstImage = resolvePrimaryAccommodationImageUrl(accommodation?.images, "thumb");
     const formatHour = (hour) => {
-        return `${hour}:00`;
+        const [hours, minutes = "00"] = String(hour).split(":");
+        return `${hours}:${minutes}`;
     };
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
