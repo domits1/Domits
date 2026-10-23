@@ -1,5 +1,5 @@
 import { updateTaskUnlessCompleted } from "../../functions/property-tasks/data/taskRepository.js";
-import { buildUpdateDataSource as buildDataSource } from "./updateQueryBuilderDouble.js";
+import { buildUpdateDataSource as buildDataSource } from "./queryBuilderDoubles.js";
 
 describe("updateTaskUnlessCompleted", () => {
     it("writes the given fields to that task", async () => {
