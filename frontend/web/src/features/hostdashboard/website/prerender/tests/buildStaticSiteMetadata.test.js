@@ -466,6 +466,44 @@ describe("the boundary of the structured data", () => {
     expect(metadata.jsonLd.address).toEqual({ "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" });
   });
 
+  it("skips an amenity name that carries a phone number, an e-mail address, coordinates or a link", () => {
+    const { metadata } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "pool", label: "Heated pool" },
+          { id: "tv", label: "55-inch TV" },
+          { id: "phone", label: "WhatsApp +62 812 3456 7890" },
+          { id: "mail", label: "Mail amara@example.com" },
+          { id: "geo", label: "Pool at -8.5069, 115.2625" },
+          { id: "long", label: "A".repeat(81) },
+        ],
+      },
+    });
+    const linked = buildMetadataFor({
+      contentOverrides: {
+        amenities: [{ id: "link", label: "See www.example.com" }, { id: "url", label: "https://example.com/villa" }],
+      },
+    });
+
+    expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Heated pool", "55-inch TV"]);
+    const serialized = JSON.stringify(metadata.jsonLd);
+    ["3456", "example.com", "115.2625", "AAAA"].forEach((value) => expect(serialized).not.toContain(value));
+    expect(linked.metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+
+  it("lists no photo whose address carries a query string or a fragment", () => {
+    const tracked = "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/x/web.jpg?phone=6281234567890";
+    const { metadata } = buildMetadataFor({
+      contentOverrides: {
+        heroImage: tracked,
+        galleryImages: [FIRST_PHOTO, "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/y/web.jpg#tel"],
+      },
+    });
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("6281234567890");
+  });
+
   it("claims no rating, because the published snapshot carries no reviews", () => {
     const { metadata } = buildMetadataFor();
 

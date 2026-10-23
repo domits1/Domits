@@ -6,6 +6,9 @@ const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
 const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
 const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+const FEATURE_NAME_MAX_LENGTH = 80;
+const PRIVATE_TEXT_PATTERN = /@|https?:|www\.|\d\.\d{3}/i;
+const PRIVATE_DIGIT_COUNT = 7;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -85,7 +88,7 @@ const buildAmenityFeatures = (model) => {
   }
 
   return selectStaticSiteAmenities(model)
-    .filter((label) => label !== DEFAULT_WEBSITE_AMENITY_LABEL)
+    .filter(looksLikeFeatureName)
     .map((name) => ({
       "@type": "LocationFeatureSpecification",
       name,
@@ -93,12 +96,20 @@ const buildAmenityFeatures = (model) => {
     }));
 };
 
+const isPlainImageUrl = (imageUrl) => !imageUrl.includes("?") && !imageUrl.includes("#");
+
+const looksLikeFeatureName = (label) =>
+  label !== DEFAULT_WEBSITE_AMENITY_LABEL &&
+  label.length <= FEATURE_NAME_MAX_LENGTH &&
+  !PRIVATE_TEXT_PATTERN.test(label) &&
+  (label.match(/\d/g) || []).length < PRIVATE_DIGIT_COUNT;
+
 const selectStaticSiteImages = (model) => [
   ...new Set(
     [
       resolveStaticSiteImageUrl(model?.media?.heroImage),
       ...(isStaticSiteSectionVisible(model, "gallerySection") ? selectStaticSiteGalleryImages(model) : []),
-    ].filter(Boolean)
+    ].filter((imageUrl) => imageUrl && isPlainImageUrl(imageUrl))
   ),
 ];
 
