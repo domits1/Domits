@@ -307,6 +307,15 @@ describe("the structured data names the amenities the static page lists", () => 
     ]);
   });
 
+  it("writes the catalogue name, not the spacing the host left in a catalogue label", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: { amenities: [{ id: "2", label: "Air  conditioning", category: "Essentials" }] },
+    });
+
+    expect(model.amenities.featured[0].label).toBe("Air  conditioning");
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Air conditioning", value: true }]);
+  });
+
   it("leaves out an amenity the host added, renamed or left unnamed, even with a catalogue icon or id", () => {
     const { metadata, model } = buildMetadataFor({
       contentOverrides: {
