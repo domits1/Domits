@@ -4,6 +4,15 @@ import { getIdToken } from "../../../services/getAccessToken";
 export const API_REVIEW_BASE =
   "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+export const getPublicReviews = async (propertyId, offset = 0, signal) => {
+  const query = new URLSearchParams({ offset: String(offset) });
+  const response = await fetch(
+    `${API_REVIEW_BASE}/properties/${encodeURIComponent(propertyId)}/reviews?${query}`, { signal },
+  );
+  if (!response.ok) throw new Error("Could not load reviews. Please try again.");
+  return response.json();
+};
+
 const parseResponse = async (response) => {
   const text = await response.text().catch(() => "");
   if (!text) return null;
@@ -66,6 +75,7 @@ export const updateReview = async ({
   reviewId,
   rating,
   publicReview,
+  updatedAt,
 }) => {
   const token = await getIdToken();
 
@@ -81,6 +91,7 @@ export const updateReview = async ({
         body: JSON.stringify({
           overall_rating: Number(rating),
           public_review: publicReview,
+          updated_at: updatedAt,
         }),
       }
     )

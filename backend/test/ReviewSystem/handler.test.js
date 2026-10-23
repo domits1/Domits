@@ -5,7 +5,7 @@ const routeCases = [
   ["GET", "/reviews/{id}", "getReviewById", 200],
   ["PATCH", "/reviews/{id}", "updateReview", 200],
   ["DELETE", "/reviews/{id}", "deleteReview", 204],
-  ["GET", "/properties/{propertyId}/reviews", "getPropertyReviews", 200],
+  ["GET", "/properties/{propertyId}/reviews", "getPublicReviews", 200],
   ["GET", "/reviews/{id}/domits-private-feedback", "getPrivateFeedback", 200],
   ["POST", "/reviews/{id}/response", "createReviewResponse", 201],
   ["PATCH", "/reviews/{id}/response", "updateReviewResponse", 200],

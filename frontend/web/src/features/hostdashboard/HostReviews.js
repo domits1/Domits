@@ -9,7 +9,7 @@ import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../review/services/reviewAPI";
-import reviewStyles from "../review/ReviewPage.module.css";
+import reviewStyles from "../review/styles/ReviewPage.module.css";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);

@@ -6,7 +6,7 @@ let controller;
 const routes = new Map([
   ["/reviews", new Map([["GET", "getReviews"], ["POST", "createReview"], ["PATCH", "updateReview"]])],
   ["/reviews/{id}", new Map([["GET", "getReviewById"], ["PATCH", "updateReview"], ["DELETE", "deleteReview"]])],
-  ["/properties/{propertyId}/reviews", new Map([["GET", "getPropertyReviews"]])],
+  ["/properties/{propertyId}/reviews", new Map([["GET", "getPublicReviews"]])],
   ["/reviews/{id}/domits-private-feedback", new Map([["GET", "getPrivateFeedback"]])],
   ["/reviews/{id}/response", new Map([
     ["POST", "createReviewResponse"],

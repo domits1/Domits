@@ -25,6 +25,15 @@ export class Controller {
     this.authManager = authManager;
   }
 
+  async getPublicReviews(event) {
+    try {
+      return this.jsonResponse(200, await this.service.getPublicReviews(
+        this.getPathParameter(event, "propertyId"), event.queryStringParameters?.offset ?? "0"));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   jsonResponse(statusCode, result) {
     return { statusCode, headers: responseHeaders, body: JSON.stringify(result) };
   }
@@ -170,6 +179,7 @@ export class Controller {
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
+  // Retain compatibility with direct callers of the public property review method.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }

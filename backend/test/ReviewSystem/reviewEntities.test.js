@@ -271,7 +271,6 @@ it("returns empty public aggregates without querying child tables", async () => 
   );
 
 
-
 });
 
 describe('Review transactional writes', () => {
