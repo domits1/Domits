@@ -192,15 +192,17 @@ export default function HostFinanceTab() {
           loading: false,
           error: false,
         });
-        if (!hasProperty) {
-          navigate("/hostonboarding", { replace: true });
-        }
       })
       .catch((error) => {
         if (isCancelled) return;
         console.error("Error fetching host listings for finance status:", error);
         if (error?.message === "Failed to load your properties.") {
-          navigate("/hostonboarding", { replace: true });
+          setListingState({
+            hasProperty: false,
+            isLive: false,
+            loading: false,
+            error: false,
+          });
           return;
         }
         setListingState((previous) => ({
