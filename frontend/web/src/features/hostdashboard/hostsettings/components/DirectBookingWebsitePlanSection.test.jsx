@@ -67,6 +67,7 @@ const essentialsPlan = (overrides = {}) => ({
   plan: "essentials",
   priceCents: 0,
   elitePriceCents: 4300,
+  checkoutEnabled: true,
   currency: "EUR",
   status: "ACTIVE",
   effectiveUntil: null,
@@ -104,6 +105,17 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(
       screen.getByRole("button", { name: "Upgrade to Elite" })
     ).toBeDisabled();
+    expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
+  });
+
+  test("disables new Elite checkout when the backend release gate is off", async () => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({ checkoutEnabled: false }));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    const upgradeButton = await screen.findByRole("button", { name: "Upgrade to Elite" });
+    expect(upgradeButton).toBeDisabled();
+    fireEvent.click(upgradeButton);
     expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
   });
 

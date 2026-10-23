@@ -153,23 +153,10 @@ const routeDefinitions = [
   },
   {
     matches: (method, path) =>
-      method === "POST" &&
-      pathIncludesOrEndsWith(path, "/integrations") &&
-      !hasNestedIntegrationSubroute(path),
-    handle: (event) => integrationController.createIntegration(event),
-  },
-  {
-    matches: (method, path) =>
       method === "GET" &&
       pathIncludesOrEndsWith(path, "/integrations") &&
       !hasNestedIntegrationSubroute(path),
     handle: (event) => integrationController.listIntegrations(event),
-  },
-  {
-    matches: (method, path) =>
-      method === "PATCH" &&
-      String(path || "").includes("/integrations/"),
-    handle: (event) => integrationController.updateIntegration(event),
   },
   {
     matches: (method, path) =>

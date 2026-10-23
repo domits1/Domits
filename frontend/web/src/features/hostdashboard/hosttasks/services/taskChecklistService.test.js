@@ -4,6 +4,7 @@
 
 import {
     fetchChecklistItems,
+    fetchChecklistTemplates,
     createChecklistItem,
     updateChecklistItem,
     deleteChecklistItem,
@@ -49,6 +50,31 @@ describe('taskChecklistService', () => {
         });
 
         await expect(fetchChecklistItems('task-1')).rejects.toThrow('Task not found or access denied');
+    });
+
+    test('fetchChecklistTemplates requests the checklist-templates action and returns the raw map', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: jest.fn().mockResolvedValue({ Cleaning: [{ title: 'Deep cleaning', isRequired: true }] }),
+        });
+
+        const templates = await fetchChecklistTemplates();
+
+        expect(globalThis.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('action=checklist-templates'),
+            expect.objectContaining({ method: 'GET' })
+        );
+        expect(templates).toEqual({ Cleaning: [{ title: 'Deep cleaning', isRequired: true }] });
+    });
+
+    test('fetchChecklistTemplates throws the backend message on a non-ok response', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: false,
+            status: 500,
+            json: jest.fn().mockResolvedValue({ message: 'Something went wrong' }),
+        });
+
+        await expect(fetchChecklistTemplates()).rejects.toThrow('Something went wrong');
     });
 
     test('fetchChecklistItems falls back to a generic message when the error body has none', async () => {

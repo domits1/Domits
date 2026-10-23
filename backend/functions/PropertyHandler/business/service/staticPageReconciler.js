@@ -58,6 +58,13 @@ export class StaticPageReconciler {
       errors: listed.rejected.map((key) => ({ key, message: "not a page key" })),
     };
 
+    if (entries.length === 0 && storedHostnames.size > 0) {
+      summary.errors.push({
+        message: `The database lists no website domain while ${storedHostnames.size} pages are stored; nothing was removed.`,
+      });
+      return summary;
+    }
+
     const orphans = [...storedHostnames].filter((hostname) => !expectedHostnames.has(hostname)).slice(0, budget);
     const repairs = new Set();
     if (orphans.length > 0) {

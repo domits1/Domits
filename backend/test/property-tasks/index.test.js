@@ -5,6 +5,7 @@ const mockDeleteTask = jest.fn();
 const mockGetUploadUrl = jest.fn();
 const mockGetViewUrl = jest.fn();
 const mockGetChecklistItems = jest.fn();
+const mockGetChecklistTemplates = jest.fn();
 const mockCreateChecklistItem = jest.fn();
 const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
@@ -20,6 +21,7 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         getUploadUrl: mockGetUploadUrl,
         getViewUrl: mockGetViewUrl,
         getChecklistItems: mockGetChecklistItems,
+        getChecklistTemplates: mockGetChecklistTemplates,
         createChecklistItem: mockCreateChecklistItem,
         updateChecklistItem: mockUpdateChecklistItem,
         deleteChecklistItem: mockDeleteChecklistItem,
@@ -40,7 +42,7 @@ describe("property-tasks handler routing", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
-            mockGetChecklistItems, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
+            mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
             mockInternalCreateTask, mockEscalateTask]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
     });
@@ -63,6 +65,12 @@ describe("property-tasks handler routing", () => {
     it("GET with action=checklist routes to getChecklistItems", async () => {
         await handler({ httpMethod: "GET", queryStringParameters: { action: "checklist" } });
         expect(mockGetChecklistItems).toHaveBeenCalledTimes(1);
+        expect(mockGetTasks).not.toHaveBeenCalled();
+    });
+
+    it("GET with action=checklist-templates routes to getChecklistTemplates", async () => {
+        await handler({ httpMethod: "GET", queryStringParameters: { action: "checklist-templates" } });
+        expect(mockGetChecklistTemplates).toHaveBeenCalledTimes(1);
         expect(mockGetTasks).not.toHaveBeenCalled();
     });
 

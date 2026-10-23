@@ -38,9 +38,18 @@ const DEFAULT_CURRENCY = "EUR";
 const DEFAULT_BILLING_FREQUENCY = "monthly";
 
 export const getConfiguredElitePriceCents = () => {
-  const configured = Number(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS || 4300);
-  return Number.isInteger(configured) && configured > 0 ? configured : 4300;
+  const rawValue = String(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS || "").trim();
+  if (!rawValue) return null;
+
+  const configured = Number(rawValue);
+  return Number.isInteger(configured) && configured > 0 ? configured : null;
 };
+
+export const isWebsiteCheckoutEnabled = () =>
+  String(process.env.DIRECT_BOOKING_WEBSITE_CHECKOUT_ENABLED || "").trim() === "true" &&
+  Boolean(String(process.env.STRIPE_WEBHOOK_SECRET || "").trim()) &&
+  Boolean(getConfiguredElitePriceCents()) &&
+  Boolean(String(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID || "").trim());
 
 export const getWebsiteEntitlements = (plan) =>
   WEBSITE_PLAN_ENTITLEMENTS[plan] ? [...WEBSITE_PLAN_ENTITLEMENTS[plan]] : [];
@@ -48,10 +57,39 @@ export const getWebsiteEntitlements = (plan) =>
 export const hasWebsiteEntitlement = (plan, entitlement) =>
   getWebsiteEntitlements(plan).includes(entitlement);
 
+const withCheckoutStatus = (rawUrl, checkoutStatus) => {
+  const value = String(rawUrl || "").trim();
+  if (!value) return value;
+
+  const hashIndex = value.indexOf("#");
+  const baseUrl = hashIndex === -1 ? value : value.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : value.slice(hashIndex);
+  let separator = "?";
+  if (baseUrl.includes("?")) {
+    if (baseUrl.endsWith("?") || baseUrl.endsWith("&")) {
+      separator = "";
+    } else {
+      separator = "&";
+    }
+  }
+
+  return `${baseUrl}${separator}websiteCheckout=${encodeURIComponent(checkoutStatus)}${hash}`;
+};
+
 const serviceError = (message, statusCode = 400) => {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+};
+
+const isRatePlanTableUnavailableError = (error) => {
+  const code = String(error?.code || error?.driverError?.code || error?.cause?.code || "");
+  const message = String(
+    error?.message || error?.driverError?.message || error?.cause?.message || ""
+  ).toLowerCase();
+  return code === "42P01" ||
+    (message.includes("direct_booking_website_rate_plans") &&
+      /(does not exist|doesn't exist|undefined table|unknown table|table not found|relation not found)/.test(message));
 };
 
 const fromUnix = (value) =>
@@ -85,6 +123,8 @@ const toView = (plan) => ({
   plan: plan.plan,
   price: Number(plan.price_cents || 0) / 100,
   priceCents: Number(plan.price_cents || 0),
+  elitePriceCents: getConfiguredElitePriceCents(),
+  checkoutEnabled: isWebsiteCheckoutEnabled(),
   currency: plan.currency || DEFAULT_CURRENCY,
   billingFrequency: plan.billing_frequency || DEFAULT_BILLING_FREQUENCY,
   status: plan.status,
@@ -107,35 +147,45 @@ export class DirectBookingWebsiteRatePlanService {
   async getCurrentPlan(accountId) {
     if (!accountId) throw serviceError("accountId is required.");
 
-    const current = await this.repository.findCurrentByAccountId(accountId);
-    if (current) return toView(current);
-
-    const latest = await this.repository.findLatestByAccountId(accountId);
-    if (
-      latest &&
-      ACTIVE_PLAN_STATUSES.has(latest.status) &&
-      latest.effective_until &&
-      new Date(latest.effective_until).getTime() <= Date.now()
-    ) {
-      await this.repository.updatePlanById(latest.id, { status: "EXPIRED" });
-    }
-
     try {
-      const created = await this.repository.createPlan({
-        account_id: accountId,
-        plan: WEBSITE_PLAN_NAMES.ESSENTIALS,
-        price_cents: 0,
-        currency: DEFAULT_CURRENCY,
-        billing_frequency: DEFAULT_BILLING_FREQUENCY,
-        status: "ACTIVE",
-        effective_from: new Date(),
-        effective_until: null,
-      });
-      return toView(created);
+      const current = await this.repository.findCurrentByAccountId(accountId);
+      if (current) return toView(current);
+
+      const latest = await this.repository.findLatestByAccountId(accountId);
+      if (
+        latest &&
+        ACTIVE_PLAN_STATUSES.has(latest.status) &&
+        latest.effective_until &&
+        new Date(latest.effective_until).getTime() <= Date.now()
+      ) {
+        await this.repository.updatePlanById(latest.id, { status: "EXPIRED" });
+      }
+
+      try {
+        const created = await this.repository.createPlan({
+          account_id: accountId,
+          plan: WEBSITE_PLAN_NAMES.ESSENTIALS,
+          price_cents: 0,
+          currency: DEFAULT_CURRENCY,
+          billing_frequency: DEFAULT_BILLING_FREQUENCY,
+          status: "ACTIVE",
+          effective_from: new Date(),
+          effective_until: null,
+        });
+        return toView(created);
+      } catch (error) {
+        if (String(error?.code || "") === "23505") {
+          const racedCurrent = await this.repository.findCurrentByAccountId(accountId);
+          if (racedCurrent) return toView(racedCurrent);
+        }
+        throw error;
+      }
     } catch (error) {
-      if (String(error?.code || "") === "23505") {
-        const racedCurrent = await this.repository.findCurrentByAccountId(accountId);
-        if (racedCurrent) return toView(racedCurrent);
+      if (isRatePlanTableUnavailableError(error)) {
+        throw serviceError(
+          "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+          503
+        );
       }
       throw error;
     }
@@ -168,12 +218,25 @@ export class DirectBookingWebsiteRatePlanService {
     }
 
     if (targetPlan === WEBSITE_PLAN_NAMES.ELITE) {
+      if (!isWebsiteCheckoutEnabled()) {
+        throw serviceError(
+          "Elite checkout is disabled until the rate-plan database migration and Stripe webhook are configured.",
+          503
+        );
+      }
+
       const session = await this.stripeRepository.createEliteCheckoutSession({
         accountId,
         email: customerEmail,
         priceId: String(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_ID || "").trim(),
-        successUrl: String(process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL || "").trim(),
-        cancelUrl: String(process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL || "").trim(),
+        successUrl: withCheckoutStatus(
+          process.env.DIRECT_BOOKING_WEBSITE_STRIPE_SUCCESS_URL,
+          "success"
+        ),
+        cancelUrl: withCheckoutStatus(
+          process.env.DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL,
+          "cancelled"
+        ),
       });
       return {
         action: "checkout_required",
@@ -320,11 +383,16 @@ export class DirectBookingWebsiteRatePlanService {
       return this.repository.expireSubscriptionAndCreateEssentials(subscriptionId, effectiveFrom);
     }
 
+    const configuredPriceCents = getConfiguredElitePriceCents();
+    if (!configuredPriceCents) {
+      throw serviceError("Elite plan price is not configured.", 503);
+    }
+
     try {
       return await this.repository.activatePaidPlan({
         accountId,
         plan: WEBSITE_PLAN_NAMES.ELITE,
-        priceCents: getConfiguredElitePriceCents(),
+        priceCents: configuredPriceCents,
         currency: DEFAULT_CURRENCY,
         billingFrequency: DEFAULT_BILLING_FREQUENCY,
         status,

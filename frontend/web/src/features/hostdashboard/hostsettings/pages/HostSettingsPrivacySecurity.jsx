@@ -4,6 +4,7 @@ import SettingsSubPage from "../components/SettingsSubPage";
 import useUserProfile from "../../../../hooks/useUserProfile";
 import usePasswordChange from "../../../../hooks/usePasswordChange";
 import useAuthenticatorSetup from "../hooks/useAuthenticatorSetup";
+import useAuthenticatorDisable from "../hooks/useAuthenticatorDisable";
 import AuthenticationStatusSection from "../../../../components/settings/AuthenticationStatusSection";
 import AuthenticatorAppSection from "../components/AuthenticatorAppSection";
 import PasswordChangeSection from "../../../../components/settings/PasswordChangeSection";
@@ -16,6 +17,7 @@ const HostSettingsPrivacySecurity = () => {
     const { authStatus, authStatusLoading, authStatusError, mfaStatusError, refreshMfaStatus } = useUserProfile();
     const passwordChange = usePasswordChange();
     const authenticatorSetup = useAuthenticatorSetup({ onStatusChange: refreshMfaStatus });
+    const authenticatorDisable = useAuthenticatorDisable({ onStatusChange: refreshMfaStatus });
 
     return (
         <SettingsSubPage hubLabel={hub.breadcrumb} breadcrumb={t.breadcrumb} title={t.title} subtitle={t.subtitle}>
@@ -38,6 +40,7 @@ const HostSettingsPrivacySecurity = () => {
                         labels={t.auth}
                         t={t.authenticator}
                         {...authenticatorSetup}
+                        disable={authenticatorDisable}
                     />
 
                     <PasswordChangeSection t={personalDataT} {...passwordChange} />

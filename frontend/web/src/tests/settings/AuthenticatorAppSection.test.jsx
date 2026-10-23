@@ -26,7 +26,19 @@ const baseProps = {
   verifySetup: jest.fn(),
   retryEnable: jest.fn(),
   cancelSetup: jest.fn(),
+  disable: {
+    step: "idle",
+    isSubmitting: false,
+    errorKey: null,
+    requestDisable: jest.fn(),
+    confirmDisable: jest.fn(),
+    cancelDisable: jest.fn(),
+  },
 };
+
+const activeStatus = { ...baseProps.authStatus, preferredMFA: "TOTP" };
+
+const withDisable = (overrides) => ({ ...baseProps.disable, ...overrides });
 
 const setupProps = { step: "setup", qrCodeUrl: QR_DATA_URL, secretKey: SECRET };
 
@@ -121,8 +133,7 @@ describe("AuthenticatorAppSection", () => {
     expect(baseProps.cancelSetup).toHaveBeenCalledTimes(1);
   });
 
-  test("done shows the success message, focuses Close, and returns focus to the row once closed", async () => {
-    const activeStatus = { ...baseProps.authStatus, preferredMFA: "TOTP" };
+  test("done shows the success message, focuses Close, and returns focus to Turn off once closed", async () => {
     const { rerender } = renderSection({ step: "done", authStatus: activeStatus });
 
     expect(screen.getByText(t.success)).toBeInTheDocument();
@@ -131,6 +142,14 @@ describe("AuthenticatorAppSection", () => {
     expect(baseProps.cancelSetup).toHaveBeenCalledTimes(1);
 
     rerender(<AuthenticatorAppSection {...baseProps} step="idle" authStatus={activeStatus} />);
+
+    expect(screen.getByRole("button", { name: t.turnOff })).toHaveFocus();
+  });
+
+  test("returns focus to the row when no row button is shown after closing", () => {
+    const { rerender } = renderSection({ step: "done", authStatus: activeStatus });
+
+    rerender(<AuthenticatorAppSection {...baseProps} step="idle" authStatus={activeStatus} mfaStatusError />);
 
     expect(authenticatorRow()).toHaveFocus();
   });
@@ -170,5 +189,88 @@ describe("AuthenticatorAppSection", () => {
 
     expect(screen.getByText(t.errors.sessionExpired)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.setUp })).toBeInTheDocument();
+  });
+
+  test("offers Turn off next to an Active status when no flow is running", async () => {
+    renderSection({ authStatus: activeStatus });
+
+    expect(within(authenticatorRow()).getByText(labels.active)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: t.turnOff }));
+    expect(baseProps.disable.requestDisable).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not offer Turn off while the status is Inactive or unavailable", () => {
+    const { rerender } = renderSection();
+    expect(screen.queryByRole("button", { name: t.turnOff })).not.toBeInTheDocument();
+
+    rerender(<AuthenticatorAppSection {...baseProps} authStatus={activeStatus} mfaStatusError />);
+    expect(screen.queryByRole("button", { name: t.turnOff })).not.toBeInTheDocument();
+  });
+
+  test("hides Set up while the disable flow is still open", () => {
+    renderSection({ disable: withDisable({ step: "done" }) });
+
+    expect(screen.queryByRole("button", { name: t.setUp })).not.toBeInTheDocument();
+  });
+
+  test("hides Turn off while the setup flow is still open", () => {
+    renderSection({ authStatus: activeStatus, step: "done" });
+
+    expect(screen.queryByRole("button", { name: t.turnOff })).not.toBeInTheDocument();
+  });
+
+  test("the confirmation explains the risk, focuses Cancel, and confirms or cancels", async () => {
+    renderSection({ authStatus: activeStatus, disable: withDisable({ step: "confirm" }) });
+
+    expect(screen.getByText(t.disableTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.disableWarning)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.cancel })).toHaveFocus();
+    expect(screen.getAllByRole("button", { name: t.confirmTurnOff })).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole("button", { name: t.confirmTurnOff }));
+    expect(baseProps.disable.confirmDisable).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole("button", { name: t.cancel }));
+    expect(baseProps.disable.cancelDisable).toHaveBeenCalledTimes(1);
+  });
+
+  test("while turning off, the confirm button shows progress and both actions are disabled", () => {
+    renderSection({ authStatus: activeStatus, disable: withDisable({ step: "confirm", isSubmitting: true }) });
+
+    expect(screen.getByRole("button", { name: t.turningOff })).toBeDisabled();
+    expect(screen.getByRole("button", { name: t.cancel })).toBeDisabled();
+  });
+
+  test.each(["tooManyAttempts", "generic"])("shows the translated %s error in the confirmation", (errorKey) => {
+    renderSection({ authStatus: activeStatus, disable: withDisable({ step: "confirm", errorKey }) });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(t.errors[errorKey]);
+  });
+
+  test("shows a session expiry from the disable flow under the row", () => {
+    renderSection({ authStatus: activeStatus, disable: withDisable({ errorKey: "sessionExpired" }) });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(t.errors.sessionExpired);
+    expect(screen.getByRole("button", { name: t.turnOff })).toBeInTheDocument();
+  });
+
+  test("the disabled confirmation focuses Close, and closing returns focus to Set up", async () => {
+    const { rerender } = renderSection({ disable: withDisable({ step: "done" }) });
+
+    expect(screen.getByText(t.disabledSuccess)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.close })).toHaveFocus();
+    await userEvent.click(screen.getByRole("button", { name: t.close }));
+    expect(baseProps.disable.cancelDisable).toHaveBeenCalledTimes(1);
+
+    rerender(<AuthenticatorAppSection {...baseProps} />);
+
+    expect(screen.getByRole("button", { name: t.setUp })).toHaveFocus();
+  });
+
+  test("cancelling the confirmation returns focus to Turn off", () => {
+    const { rerender } = renderSection({ authStatus: activeStatus, disable: withDisable({ step: "confirm" }) });
+
+    rerender(<AuthenticatorAppSection {...baseProps} authStatus={activeStatus} />);
+
+    expect(screen.getByRole("button", { name: t.turnOff })).toHaveFocus();
   });
 });
