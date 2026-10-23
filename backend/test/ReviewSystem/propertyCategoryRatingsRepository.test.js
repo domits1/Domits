@@ -30,7 +30,7 @@ describe("category aggregation repository", () => {
     expect(sql).toMatch(/"review"\."property_id" = \$\d+/);
     expect(sql).toMatch(/"property"\."hostid" = \$\d+/);
     expect(sql).toMatch(/"property"\."id" = \$\d+/);
-    expect(sql).toMatch(/"review"\."verification_status" = \$\d+/);
+    expect(sql).not.toContain("verification_status");
     expect(sql).toMatch(/"review"\."publication_status" = \$\d+/);
     expect(sql).toMatch(/"rating"\."rating" BETWEEN \$\d+ AND \$\d+/);
     expect(sql).toContain('"rating"."rating" * 2 = FLOOR("rating"."rating" * 2)');
@@ -42,8 +42,8 @@ describe("category aggregation repository", () => {
     expect(sql).toContain('COUNT(*)');
     expect(sql).toContain('GROUP BY "rating"."category"');
     expect(query.getParameters()).toEqual({ propertyId: "p1", hostId: "host-1",
-      verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", minimum: 1, maximum: 5, active: true });
-    expect(parameters).toEqual(expect.arrayContaining(["p1", "host-1", "VERIFIED", "PUBLISHED", "GUEST_TO_PROPERTY", 1, 5, true]));
+      published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", minimum: 1, maximum: 5, active: true });
+    expect(parameters).toEqual(expect.arrayContaining(["p1", "host-1", "PUBLISHED", "GUEST_TO_PROPERTY", 1, 5, true]));
   });
   test("preserves missing categories and converts aggregate numeric strings", async () => {
     const result = await new ReviewRepository().getPropertyCategoryRatings("p1", "host-1");

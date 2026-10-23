@@ -305,7 +305,7 @@ const validateSelectedDateRange = (startDate, endDate) => {
 
   if (totalDays > CHANNEX_CERTIFICATION_MAX_SYNC_DAYS) {
     return {
-      message: `The selected range is ${totalDays} days. Channex certification syncs support up to ${CHANNEX_CERTIFICATION_MAX_SYNC_DAYS} inclusive days.`,
+      message: `The selected range is ${totalDays} days. Channex syncs support up to ${CHANNEX_CERTIFICATION_MAX_SYNC_DAYS} inclusive days.`,
       totalDays,
     };
   }
@@ -1251,20 +1251,20 @@ const ACTION_CONFIG = [
   {
     key: "ari",
     label: "Sync combined ARI",
-    description: "Diagnostic two-step sync. Use Full/certification sync for Channex Full Sync submission.",
+    description: "Diagnostic two-step sync. Use Full sync to send all values.",
     run: syncChannexAri,
     needsDateRange: true,
     confirmMessage: "Run combined Channex ARI sync for this property and date range?",
   },
   {
     key: "full",
-    label: "Full/certification sync",
+    label: "Full sync",
     description: "Heavy action: sends one availability request and one rates/restrictions request for the selected range.",
     run: syncChannexFull,
     needsDateRange: true,
     danger: true,
     confirmMessage:
-      "Run full/certification sync? This can send availability, rates, and restrictions to Channex for the selected date range.",
+      "Run a full sync? This can send availability, rates, and restrictions to Channex for the selected date range.",
   },
 ];
 
@@ -1611,7 +1611,7 @@ function ChannexDiagnosticsPanel({ userId }) {
 
   const renderOverview = () => (
     <div className="channex-diagnostics-grid">
-      <SectionCard title="Overview" description="Current certification workspace state.">
+      <SectionCard title="Overview" description="Current Channex connection and mapping state.">
         <DetailGrid
           items={[
             { label: "Domits property ID", value: domitsPropertyId.trim() || "Not selected" },
@@ -2054,7 +2054,7 @@ function ChannexDiagnosticsPanel({ userId }) {
     <section className="channex-diagnostics-card">
       <div className="channex-diagnostics-card-header">
         <div>
-          <h3>Manual certification actions</h3>
+          <h3>Manual actions</h3>
           <p className="host-integrations-muted">
             These actions contact Channex only after explicit confirmation.
           </p>
@@ -2095,7 +2095,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               </button>
               {config.danger ? (
                 <p className="host-integrations-warning-banner">
-                  Heavy certification action. Verify property, mappings, and date range before running.
+                  Heavy action. Verify property, mappings, and date range before running.
                 </p>
               ) : null}
               {state.success ? <p className="host-integrations-success-banner">{state.success}</p> : null}
@@ -2123,7 +2123,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           <div>
             <h3>Modify booking dates</h3>
             <p className="host-integrations-muted">
-              Internal demo action for changing an existing booking date range and showing Channex availability sync evidence.
+              Support action for changing an existing booking date range and showing Channex availability sync evidence.
             </p>
           </div>
         </div>
@@ -2203,7 +2203,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         </div>
       </div>
 
-      <nav className="channex-diagnostics-tabs" aria-label="Channex certification sections">
+      <nav className="channex-diagnostics-tabs" aria-label="Channex diagnostics sections">
         {SECTION_TABS.map((tab) => (
           <button
             type="button"

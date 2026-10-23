@@ -27,3 +27,28 @@ export const getStatusPresentation = (status) =>
   Object.prototype.hasOwnProperty.call(STATUS_PRESENTATION, status)
     ? STATUS_PRESENTATION[status]
     : UNKNOWN_STATUS_PRESENTATION;
+
+// Keys under settings.homeAutomation.devices.types / .statuses. RemoteLock reports these type values; any other
+// type is shown as "other" and any other status as "unknown", so a new value never renders blank.
+const DEVICE_TYPE_LABEL_KEYS = Object.freeze({
+  lock: "lock",
+  zwave_lock: "zwaveLock",
+  connector_lock: "connectorLock",
+  schlage_home_lock: "schlageHomeLock",
+  resort_lock: "resortLock",
+});
+
+const DEVICE_STATUS_LABEL_KEYS = Object.freeze({ ONLINE: "online", OFFLINE: "offline", UNKNOWN: "unknown" });
+
+// Device types the page lists but cannot manage yet.
+export const UNSUPPORTED_DEVICE_TYPES = Object.freeze(["resort_lock"]);
+
+const labelKeyOf = (labelKeys, value, fallback) =>
+  Object.prototype.hasOwnProperty.call(labelKeys, value) ? labelKeys[value] : fallback;
+
+export const getDeviceTypeLabelKey = (type) => labelKeyOf(DEVICE_TYPE_LABEL_KEYS, type, "other");
+
+export const getDeviceStatusLabelKey = (status) => labelKeyOf(DEVICE_STATUS_LABEL_KEYS, status, "unknown");
+
+export const DEVICE_TYPE_LABEL_KEY_VALUES = [...Object.values(DEVICE_TYPE_LABEL_KEYS), "other"];
+export const DEVICE_STATUS_LABEL_KEY_VALUES = Object.values(DEVICE_STATUS_LABEL_KEYS);

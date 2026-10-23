@@ -55,13 +55,18 @@ export class ReviewService {
 
 
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
-    canReadPrivateFeedback = async () => false, canPublishReview = async () => false,
+    canReadPrivateFeedback = async ({ userId, review }) =>
+      review.reviewer_user_id === userId || review.host_id === userId,
+    canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId,
     editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
-    this.editWindowMs = Number.isSafeInteger(editWindowMs) && editWindowMs > 0 ? editWindowMs : 0;
+    this.editWindowMs =
+      Number.isSafeInteger(editWindowMs) && editWindowMs > 0
+        ? editWindowMs
+        : 0;
   }
 
   editDeadline(review) {
@@ -71,8 +76,8 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
-  async authorizeManagedProperty(callerUsername, propertyId) {
-    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
     if (typeof propertyId !== "string" || !propertyId.trim()) {
@@ -80,20 +85,15 @@ export class ReviewService {
     }
     this.assertId(propertyId, "property ID");
     const normalizedPropertyId = propertyId.trim();
-    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
     // Avoid disclosing whether another manager's property exists.
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
   }
 
-  async getPropertyOverallScore(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    return this.repository.getPropertyReviewScore(id, username);
-  }
-
-  async getPropertyCategoryRatings(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+  async getPropertyCategoryRatings(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
@@ -141,6 +141,11 @@ export class ReviewService {
     }
     return { id: reviewId, overall_rating: data.overall_rating,
       public_review: publicReview, updated_at: result.updated_at };
+  }
+
+  async getPropertyReviewScore(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    return this.repository.getPropertyReviewScore(id, userId);
   }
 
   // Fetch the caller's reviews by scope.
@@ -236,8 +241,14 @@ export class ReviewService {
     const fields = { updated_at: this.now() };
     for (const key of keys) {
       if (key === "category_ratings") continue;
-      fields[key] = key === "private_feedback" ? this.normalizeOptionalText(changes[key])
-        : typeof changes[key] === "string" ? changes[key].trim() : changes[key];
+      const value = changes[key];
+      if (key === "public_review") {
+        fields[key] = this.normalizePublicReview(value);
+      } else if (key === "private_feedback") {
+        fields[key] = this.normalizeOptionalText(value);
+      } else {
+        fields[key] = typeof value === "string" ? value.trim() : value;
+      }
     }
     if (Object.hasOwn(changes, "public_review")) fields.public_review = publicReview;
     const updated = await this.repository.updateDraft({ reviewId: review.id, reviewerUserId: userId,
@@ -392,7 +403,7 @@ export class ReviewService {
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
-    const categoryRatings = reviewData.category_ratings ?? {};
+    const categoryRatings = reviewData.category_ratings || {};
     if (Object.keys(categoryRatings).length) {
       const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
@@ -422,7 +433,9 @@ export class ReviewService {
       );
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
-        throw new ConflictException("This reservation already has a review.");
+        throw new ConflictException(
+          "This reservation already has a review."
+        );
       }
 
       throw error;
@@ -441,11 +454,7 @@ export class ReviewService {
       throw new BadRequestException("A booking_id of up to 255 characters is required");
     }
 
-    if (
-      !Number.isInteger(reviewData.overall_rating) ||
-      reviewData.overall_rating < 1 ||
-      reviewData.overall_rating > 5
-    ) {
+    if (!Number.isInteger(reviewData.overall_rating) || reviewData.overall_rating < 1 || reviewData.overall_rating > 5) {
       throw new BadRequestException("Please select an overall experience rating from 1 to 5 stars.");
     }
 
@@ -453,13 +462,8 @@ export class ReviewService {
       throw new BadRequestException("A review title of up to 120 characters is required");
     }
     const ratings = reviewData.category_ratings;
-    if (
-      ratings !== undefined &&
-      (!ratings ||
-        typeof ratings !== "object" ||
-        Array.isArray(ratings) ||
-        Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))
-    ) {
+    if (ratings !== undefined && (!ratings || typeof ratings !== "object" || Array.isArray(ratings) ||
+      Object.values(ratings).some((value) => !Number.isFinite(value) || value < 1 || value > 5))) {
       throw new BadRequestException("category_ratings must contain ratings from 1 to 5");
     }
 

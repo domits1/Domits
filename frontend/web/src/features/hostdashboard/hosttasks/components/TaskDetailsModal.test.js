@@ -143,6 +143,56 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onRetryChecklistLoad).toHaveBeenCalledTimes(1);
     });
 
+    test('shows the checklist template loading indicator when applying a template', () => {
+        render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
+
+        expect(screen.getByText('Loading checklist...')).toBeInTheDocument();
+    });
+
+    test('disables Close, Cancel and the backdrop while a template is applying', () => {
+        render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
+
+        expect(screen.getByLabelText('Close modal')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    });
+
+    describe('changing the task Type', () => {
+        const switchedTask = { ...baseTask, type: 'Maintenance' };
+
+        test('warns that saving replaces the checklist, once the Type differs from the saved one', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} />);
+
+            expect(screen.getByRole('status')).toHaveTextContent(/saving will replace this checklist with the Maintenance checklist/i);
+        });
+
+        test('shows no warning while the Type is unchanged', () => {
+            render(<TaskDetailsModal {...baseProps} />);
+
+            expect(screen.queryByText(/saving will replace this checklist/i)).not.toBeInTheDocument();
+        });
+
+        test('disables the Type select and Save Changes while a template is being applied', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} isApplyingChecklistTemplate />);
+
+            expect(screen.getByLabelText('Type')).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+        });
+
+        test('keeps the Type select and Save Changes enabled otherwise', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} />);
+
+            expect(screen.getByLabelText('Type')).toBeEnabled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled();
+        });
+    });
+
+    test('does not disable Close or Cancel by default', () => {
+        render(<TaskDetailsModal {...baseProps} />);
+
+        expect(screen.getByLabelText('Close modal')).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
+    });
+
     test('does not show an Escalate button when the task is not breaching its SLA', () => {
         render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
         expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();

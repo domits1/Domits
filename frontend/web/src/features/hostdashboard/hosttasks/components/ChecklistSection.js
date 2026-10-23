@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { LuX } from 'react-icons/lu';
+import { LuX, LuRefreshCw } from 'react-icons/lu';
 
-const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemoveItem, onRetryLoad }) => {
+const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemoveItem, onRetryLoad, isApplyingTemplate }) => {
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemRequired, setNewItemRequired] = useState(true);
 
     const requiredItems = items.filter(i => i.isRequired);
     const requiredDoneCount = requiredItems.filter(i => i.isChecked).length;
 
-    const handleAdd = (e) => {
-        e.preventDefault();
+    const handleAdd = () => {
         const title = newItemTitle.trim();
         if (!title) return;
         onAddItem({ title, isRequired: newItemRequired });
@@ -18,11 +17,24 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
         setNewItemRequired(true);
     };
 
+    // This section sits inside the Create Task form, and a form inside a form is not valid. So it has
+    // no form of its own: Enter is caught here, and kept from submitting the surrounding form.
+    const handleTitleKeyDown = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        handleAdd();
+    };
+
     return (
         <div className="form-group checklist-section">
             <div className="attachments-header">
                 <label>Checklist</label>
-                {!loadError && requiredItems.length > 0 && (
+                {isApplyingTemplate && (
+                    <span className="checklist-template-loading">
+                        <LuRefreshCw className="checklist-template-spinner" /> Loading checklist...
+                    </span>
+                )}
+                {!isApplyingTemplate && !loadError && requiredItems.length > 0 && (
                     <span className="attachments-count">{requiredDoneCount}/{requiredItems.length} required completed</span>
                 )}
             </div>
@@ -61,16 +73,17 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
             )}
 
             {!loadError && (
-                <form className="checklist-add-form" onSubmit={handleAdd}>
+                <div className="checklist-add-form">
                     <div className="checklist-add-row">
                         <input
                             type="text"
                             value={newItemTitle}
                             onChange={(e) => setNewItemTitle(e.target.value)}
+                            onKeyDown={handleTitleKeyDown}
                             placeholder="Add checklist item..."
                             aria-label="New checklist item title"
                         />
-                        <button type="submit" className="checklist-add-btn">Add</button>
+                        <button type="button" className="checklist-add-btn" onClick={handleAdd}>Add</button>
                     </div>
                     <label className="checklist-required-toggle">
                         <input
@@ -80,7 +93,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                         />
                         Required
                     </label>
-                </form>
+                </div>
             )}
         </div>
     );
@@ -98,6 +111,7 @@ ChecklistSection.propTypes = {
     onToggleChecked: PropTypes.func.isRequired,
     onRemoveItem: PropTypes.func.isRequired,
     onRetryLoad: PropTypes.func.isRequired,
+    isApplyingTemplate: PropTypes.bool,
 };
 
 export default ChecklistSection;

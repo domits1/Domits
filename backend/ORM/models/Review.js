@@ -2,8 +2,8 @@
 import { EntitySchema } from "typeorm";
 
 const bigintTransformer = {
-    from: (value) => value !== null && value !== undefined ? Number(value) : null,
-    to: (value) => value,
+  from: (value) => value !== null && value !== undefined ? Number(value) : null,
+  to: (value) => value,
 };
 
 export const Review = new EntitySchema({
