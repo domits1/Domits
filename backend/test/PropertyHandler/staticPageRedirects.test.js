@@ -1,0 +1,98 @@
+import { describe, it, expect } from "@jest/globals";
+import { StaticPageRedirects } from "../../functions/PropertyHandler/business/service/staticPageRedirects.js";
+import { StaticPageRedirectStore } from "../../functions/PropertyHandler/data/repository/staticPageRedirectStore.js";
+import { buildFakeKeyValueStoreClient } from "./fakeKeyValueStoreClient.js";
+
+const KVS_ARN = "arn:aws:cloudfront::115462458880:key-value-store/redirects";
+const ALIAS = "beautiful-home-amsterdam-6156b005.direct.domits.com";
+const PRIMARY = "www.villasensual.nl";
+
+const buildRedirects = ({ keys = {}, kvsArn = KVS_ARN } = {}) => {
+  const client = buildFakeKeyValueStoreClient({ keys });
+  const store = new StaticPageRedirectStore({ kvsArn, client });
+  return { client, store, redirects: new StaticPageRedirects({ store }) };
+};
+
+describe("writing redirects to the key value store", () => {
+  it("does nothing at all while no store is configured", async () => {
+    const { client, redirects } = buildRedirects({ kvsArn: "" });
+
+    expect(await redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).toBe(false);
+    expect(await redirects.remove([ALIAS])).toBe(false);
+    expect(client.calls).toEqual([]);
+  });
+
+  it("puts a redirect with the current version of the store, and removes it again", async () => {
+    const { client, redirects } = buildRedirects();
+
+    expect(await redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).toBe(true);
+    expect(Object.fromEntries(client.state.keys)).toEqual({ [ALIAS]: PRIMARY });
+    expect(client.calls.find((call) => call.name === "UpdateKeysCommand").input).toEqual({
+      KvsARN: KVS_ARN,
+      IfMatch: "etag-1",
+      Puts: [{ Key: ALIAS, Value: PRIMARY }],
+    });
+
+    expect(await redirects.remove([ALIAS, PRIMARY])).toBe(true);
+    expect(client.state.keys.size).toBe(0);
+  });
+
+  it("only reads the store, without a write, when there is nothing to remove", async () => {
+    const { client, redirects } = buildRedirects();
+
+    expect(await redirects.remove([ALIAS])).toBe(false);
+    expect(client.calls.map((call) => call.name)).toEqual(["DescribeKeyValueStoreCommand"]);
+  });
+
+  it("tries again with the new version when someone else wrote in between", async () => {
+    const { client, redirects } = buildRedirects();
+    client.writeBeforeNextUpdate();
+
+    expect(await redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).toBe(true);
+    expect(client.state.keys.get(ALIAS)).toBe(PRIMARY);
+    expect(client.state.keys.get("someone-else.example.com")).toBe("www.example.com");
+    expect(client.calls.filter((call) => call.name === "UpdateKeysCommand")).toHaveLength(2);
+  });
+
+  it("gives up after three conflicts and lets the caller fail", async () => {
+    const { client, redirects } = buildRedirects();
+    client.writeBeforeNextUpdate();
+    client.writeBeforeNextUpdate();
+    client.writeBeforeNextUpdate();
+
+    await expect(redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).rejects.toThrow("Pre-Condition failed");
+    expect(client.state.keys.has(ALIAS)).toBe(false);
+  });
+
+  it("does not retry an error that is not a conflict", async () => {
+    const { client, redirects } = buildRedirects();
+    client.failNextCall(Object.assign(new Error("not allowed"), { name: "AccessDeniedException" }));
+
+    await expect(redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).rejects.toThrow("not allowed");
+    expect(client.calls).toHaveLength(1);
+  });
+
+  it("splits more than fifty changes, each part with the version the previous part returned", async () => {
+    const { client, store } = buildRedirects();
+    const puts = Array.from({ length: 120 }, (_, index) => ({ hostname: `alias-${index}.direct.domits.com`, primary: PRIMARY }));
+
+    await store.update({ etag: (await store.describe()).etag, puts });
+
+    expect(client.state.keys.size).toBe(120);
+    expect(client.calls.filter((call) => call.name === "UpdateKeysCommand").map((call) => call.input.IfMatch)).toEqual([
+      "etag-1",
+      "etag-2",
+      "etag-3",
+    ]);
+  });
+
+  it("reads every redirect, page after page", async () => {
+    const keys = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [`alias-${index}.direct.domits.com`, PRIMARY]));
+    const { store } = buildRedirects({ keys });
+
+    const redirects = await store.listRedirects();
+
+    expect(redirects.size).toBe(70);
+    expect(redirects.get("alias-69.direct.domits.com")).toBe(PRIMARY);
+  });
+});
