@@ -92,18 +92,23 @@ export class StaticPageWorker {
       return this.#withdrawPage(job, site);
     }
 
+    const errors = [];
     try {
       template ||= await this.pageStore.readAppShell().catch(failWith("SHELL_UNREADABLE"));
       const domains = await this.#loadDomains(site);
       const activeDomains = this.#activeDomains(domains);
       const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
       const redirects = planSiteRedirects({ site, domains });
-      await this.redirects.remove(redirects.deletes).catch(failWith("REDIRECT_REMOVE_FAILED"));
+      await this.redirects.remove(redirects.deletes).catch((error) => {
+        errors.push({ siteId: site.id, revision: job.revision, message: `REDIRECT_REMOVE_FAILED: ${error.message}` });
+      });
       const html = await this.renderer
         .render({ template, site, mainAddress, destination: activeDomains[0] })
         .catch(failWith("RENDER_FAILED"));
       await this.#upload({ site, revision: job.revision, domains: activeDomains, html, mainAddress });
-      await this.redirects.add(redirects.puts).catch(failWith("REDIRECT_ADD_FAILED"));
+      if (redirects.puts.length > 0 && (await this.#isCurrent(site.id, job.revision))) {
+        await this.redirects.add(redirects.puts).catch(failWith("REDIRECT_ADD_FAILED"));
+      }
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
         throw error;
@@ -113,7 +118,7 @@ export class StaticPageWorker {
       );
     }
 
-    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision));
+    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision), errors);
   }
 
   async #withdrawPage(job, site) {
@@ -153,6 +158,11 @@ export class StaticPageWorker {
 
     await this.outboxRepository.requeueNewerRevision(job.siteId, job.revision);
     return { outcome: "superseded", errors };
+  }
+
+  async #isCurrent(siteId, revision) {
+    const latest = await this.siteRepository.getSiteById(siteId);
+    return latest?.status === "PUBLISHED" && latest.staticPageRevision === revision;
   }
 
   async #loadDomains(site) {

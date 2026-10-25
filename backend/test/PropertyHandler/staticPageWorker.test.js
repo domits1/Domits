@@ -728,7 +728,7 @@ describe("the sitemap the worker writes per host", () => {
 });
 
 describe("keeping the redirects of a site in step with its pages", () => {
-  const buildRedirectWorker = ({ keys = {}, domains }) => {
+  const buildRedirectWorker = ({ keys = {}, domains, sites = [buildSite()] }) => {
     const log = [];
     const client = buildFakeKeyValueStoreClient({ keys, log });
     const store = new StaticPageRedirectStore({ kvsArn: "arn:aws:cloudfront::1:key-value-store/redirects", client });
@@ -737,9 +737,9 @@ describe("keeping the redirects of a site in step with its pages", () => {
       putPage: jest.fn(async ({ hostname }) => log.push(`page:${hostname}`)),
       putSitemap: jest.fn(async () => undefined),
     };
-    return { log, client, ...buildWorker({ domains, pageStore, redirects: new StaticPageRedirects({ store }) }) };
+    const redirects = new StaticPageRedirects({ store });
+    return { log, client, ...buildWorker({ domains, sites, pageStore, redirects }) };
   };
-  const updates = (log) => log.filter((entry) => entry === "kvs:UpdateKeysCommand").length;
 
   beforeEach(() => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
@@ -752,7 +752,7 @@ describe("keeping the redirects of a site in step with its pages", () => {
 
     expect(Object.fromEntries(client.state.keys)).toEqual({ [FALLBACK.domain]: CUSTOM.domain });
     expect(log.indexOf("kvs:UpdateKeysCommand")).toBeGreaterThan(log.lastIndexOf(`page:${CUSTOM.domain}`));
-    expect(updates(log)).toBe(1);
+    expect(log.filter((entry) => entry === "kvs:UpdateKeysCommand")).toHaveLength(1);
   });
 
   it("removes the redirect before writing any page once the primary is no longer active", async () => {
@@ -775,19 +775,29 @@ describe("keeping the redirects of a site in step with its pages", () => {
     expect(log).toEqual(["kvs:DescribeKeyValueStoreCommand", `page:${FALLBACK.domain}`]);
   });
 
-  it("fails the job and writes no page when a stale redirect cannot be removed", async () => {
-    const { worker, log, client, outbox } = buildRedirectWorker({
+  it("still builds the pages, and reports it, when a stale redirect cannot be removed", async () => {
+    const { worker, log, client } = buildRedirectWorker({
       keys: { [FALLBACK.domain]: CUSTOM.domain },
       domains: [FALLBACK, { ...CUSTOM, isPrimary: false }],
     });
     client.failNextCall(undefined);
     client.failNextCall(new Error("store unavailable"));
 
-    expect(await worker.run()).toMatchObject({ failed: 1 });
+    const summary = await worker.run();
 
-    expect(outbox.table.get("site-1").failureReason).toMatch(/^REDIRECT_REMOVE_FAILED: /);
-    expect(log.filter((entry) => entry.startsWith("page:"))).toEqual([]);
+    expect(summary).toMatchObject({ built: 1, errors: [{ message: "REDIRECT_REMOVE_FAILED: store unavailable" }] });
+    expect(log.filter((entry) => entry.startsWith("page:"))).toHaveLength(2);
     expect(client.state.keys.get(FALLBACK.domain)).toBe(CUSTOM.domain);
+  });
+
+  it("adds no redirect when the site was published again or unpublished while its pages were built", async () => {
+    const sites = [buildSite()];
+    const { worker, client, renderer } = buildRedirectWorker({ domains: [FALLBACK, CUSTOM], sites });
+    renderer.render.mockImplementation(async () => Object.assign(sites[0], { staticPageRevision: 5 }) && PAGE);
+
+    await worker.run();
+
+    expect(client.state.keys.size).toBe(0);
   });
 
   it("fails the job when the redirect cannot be added after the pages, and adds it on the next attempt", async () => {
