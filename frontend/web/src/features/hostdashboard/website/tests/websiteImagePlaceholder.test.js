@@ -13,7 +13,9 @@ describe("the No image placeholder on a direct booking website", () => {
     expect(normalizeImageUrl("images/property-1/web.webp")).toBe(`${S3_ACCOMMODATION_URL}images/property-1/web.webp`);
   });
 
-  it("does not pass any other data URI through as an image source", () => {
-    expect(normalizeImageUrl("data:text/html,<script>alert(1)</script>").startsWith(S3_ACCOMMODATION_URL)).toBe(true);
+  it("does not pass any other data URI through, not even an SVG that looks like the placeholder", () => {
+    const lookalike = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><text>No image</text></svg>";
+
+    expect(normalizeImageUrl(lookalike)).toBe(`${S3_ACCOMMODATION_URL}${lookalike}`);
   });
 });
