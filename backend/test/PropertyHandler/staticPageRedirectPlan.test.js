@@ -3,7 +3,7 @@ import fc from "fast-check";
 import { planSiteRedirects } from "../../functions/PropertyHandler/business/service/staticPageRedirectPlan.js";
 
 const PUBLISHED = { id: "site-1", status: "PUBLISHED" };
-const ALIAS = { domain: "beautiful-home-amsterdam-6156b005.direct.domits.com", domainType: "FALLBACK", status: "ACTIVE", isPrimary: false };
+const ALIAS = { domain: "home-6156b005.direct.domits.com", domainType: "FALLBACK", status: "ACTIVE", isPrimary: false };
 const PRIMARY = { domain: "www.villasensual.nl", domainType: "CUSTOM", status: "ACTIVE", isPrimary: true };
 
 describe("which hostnames of a site redirect to its primary domain", () => {

@@ -27,12 +27,12 @@ const row = (siteId, status, attemptCount = 0, updatedAt = NOW) => ({
   failureReason: "",
 });
 
-const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null, redirects, log = [] } = {}) => {
+const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null, redirects } = {}) => {
   const deps = {
     pageStore: { listPageHostnames: jest.fn(async () => ({ hostnames: stored, etags: { x: '"e"' }, rejected })) },
     siteRepository: { queueStaticPage: jest.fn(async () => true) },
     domainRepository: {
-      listDomainsWithSites: jest.fn(async () => log.push("db:listDomainsWithSites") && entries),
+      listDomainsWithSites: jest.fn(async () => entries),
       getDomainWithSiteByName: jest.fn(
         async (domain) => (now || entries).find((candidate) => candidate.domain === domain) || null
       ),
@@ -261,7 +261,9 @@ describe("repairing the redirects of every site", () => {
     const store = new StaticPageRedirectStore({ kvsArn: "arn:aws:cloudfront::1:key-value-store/redirects", client });
     const redirects = new StaticPageRedirects({ store });
     const stored = entries.map((candidate) => candidate.domain);
-    return { log, client, ...buildReconciler({ stored, entries, rows: [row("site-1", "ACTIVE")], redirects, log }) };
+    const built = buildReconciler({ stored, entries, rows: [row("site-1", "ACTIVE")], redirects });
+    built.domainRepository.listDomainsWithSites.mockImplementation(async () => log.push("db:list") && entries);
+    return { log, client, ...built };
   };
 
   beforeEach(() => {
@@ -272,7 +274,7 @@ describe("repairing the redirects of every site", () => {
     delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
   });
 
-  it("adds a missing redirect and removes every redirect the database no longer expects, after reading the version first", async () => {
+  it("repairs missing and stale redirects, after reading the version of the store first", async () => {
     const { reconciler, client, log } = reconcileWith({
       keys: { "gone.direct.domits.com": "www.gone.nl", [ALIAS]: "www.old-primary.nl" },
     });
@@ -282,7 +284,7 @@ describe("repairing the redirects of every site", () => {
     expect(Object.fromEntries(client.state.keys)).toEqual({ [ALIAS]: PRIMARY });
     expect(summary.redirects).toEqual({ put: 1, deleted: 1 });
     expect(summary.errors).toEqual([]);
-    expect(log.indexOf("kvs:DescribeKeyValueStoreCommand")).toBeLessThan(log.indexOf("db:listDomainsWithSites"));
+    expect(log.indexOf("kvs:DescribeKeyValueStoreCommand")).toBeLessThan(log.indexOf("db:list"));
   });
 
   it("skips the round, without an error, when someone else writes the store during the run", async () => {

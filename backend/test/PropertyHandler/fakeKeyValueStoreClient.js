@@ -23,7 +23,7 @@ export const buildFakeKeyValueStoreClient = ({ keys = {}, log = [] } = {}) => {
         throw validationError("Validation error during update keys. Payload does not contain any update.");
       }
       if (new Set(changed).size !== changed.length) {
-        throw validationError("Validation error during update keys. Payload contains multiple updates for the same key.");
+        throw validationError("Payload contains multiple updates for the same key.");
       }
       if (changed.length > MAX_KEYS_PER_UPDATE) {
         throw Object.assign(new Error("Limit exceeded"), { name: "ServiceQuotaExceededException" });

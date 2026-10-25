@@ -34,7 +34,8 @@ export class StaticPageRedirects {
     if (sites.length === 0) {
       return { put: 0, deleted: 0 };
     }
-    const expected = new Map(sites.flatMap((site) => planSiteRedirects(site).puts.map((put) => [put.hostname, put.primary])));
+    const planned = sites.flatMap((site) => planSiteRedirects(site).puts);
+    const expected = new Map(planned.map((put) => [put.hostname, put.primary]));
     if (expected.size === 0 && snapshot.itemCount === 0) {
       return { put: 0, deleted: 0 };
     }

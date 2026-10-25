@@ -1900,8 +1900,8 @@ export class PropertyController {
 
     async withdrawStaticPageSafely(site) {
         try {
-            const { invalidationErrors, redirectErrors = [] } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-            [...invalidationErrors, ...redirectErrors].forEach((failure) => {
+            const withdrawn = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+            [...withdrawn.invalidationErrors, ...(withdrawn.redirectErrors || [])].forEach((failure) => {
                 console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
             });
         } catch (error) {

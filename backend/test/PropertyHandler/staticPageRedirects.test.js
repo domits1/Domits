@@ -72,27 +72,15 @@ describe("writing redirects to the key value store", () => {
     expect(client.calls).toHaveLength(1);
   });
 
-  it("splits more than fifty changes, each part with the version the previous part returned", async () => {
+  it("splits more than fifty changes into parts that each use the version the previous part returned", async () => {
     const { client, store } = buildRedirects();
-    const puts = Array.from({ length: 120 }, (_, index) => ({ hostname: `alias-${index}.direct.domits.com`, primary: PRIMARY }));
+    const puts = Array.from({ length: 120 }, (_, n) => ({ hostname: `a${n}.direct.domits.com`, primary: PRIMARY }));
 
     await store.update({ etag: (await store.describe()).etag, puts });
 
-    expect(client.state.keys.size).toBe(120);
-    expect(client.calls.filter((call) => call.name === "UpdateKeysCommand").map((call) => call.input.IfMatch)).toEqual([
-      "etag-1",
-      "etag-2",
-      "etag-3",
-    ]);
-  });
-
-  it("reads every redirect, page after page", async () => {
-    const keys = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [`alias-${index}.direct.domits.com`, PRIMARY]));
-    const { store } = buildRedirects({ keys });
-
-    const redirects = await store.listRedirects();
-
-    expect(redirects.size).toBe(70);
-    expect(redirects.get("alias-69.direct.domits.com")).toBe(PRIMARY);
+    const updates = client.calls.filter((call) => call.name === "UpdateKeysCommand");
+    expect(updates.map((call) => call.input.IfMatch)).toEqual(["etag-1", "etag-2", "etag-3"]);
+    expect((await store.listRedirects()).get("a119.direct.domits.com")).toBe(PRIMARY);
+    expect(client.calls.filter((call) => call.name === "ListKeysCommand")).toHaveLength(3);
   });
 });

@@ -38,14 +38,10 @@ const buildKeyValueStore = (redirects, storeFails) => ({
     if (storeFails) {
       throw new Error("no key value store is associated");
     }
+    const has = (key) => Object.hasOwn(redirects, key);
     return {
-      get: async (key) => {
-        if (Object.hasOwn(redirects, key)) {
-          return redirects[key];
-        }
-        throw new Error("KeyNotFound");
-      },
-      exists: async (key) => Object.hasOwn(redirects, key),
+      get: async (key) => (has(key) ? redirects[key] : Promise.reject(new Error("KeyNotFound"))),
+      exists: async (key) => has(key),
     };
   },
 });
@@ -138,7 +134,7 @@ describe("the viewer request function", () => {
     }
   });
 
-  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file unchecked", async () => {
+  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file", async () => {
     const robotsCases = CASES.filter((testCase) => testCase.expectedRobotsFor && testCase.method === "GET");
     expect(robotsCases.length).toBeGreaterThan(0);
     for (const testCase of robotsCases) {

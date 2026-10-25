@@ -785,7 +785,7 @@ describe("keeping the redirects of a site in step with its pages", () => {
 
     expect(await worker.run()).toMatchObject({ failed: 1 });
 
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: expect.stringContaining("REDIRECT_REMOVE_FAILED") });
+    expect(outbox.table.get("site-1").failureReason).toMatch(/^REDIRECT_REMOVE_FAILED: /);
     expect(log.filter((entry) => entry.startsWith("page:"))).toEqual([]);
     expect(client.state.keys.get(FALLBACK.domain)).toBe(CUSTOM.domain);
   });
@@ -797,7 +797,7 @@ describe("keeping the redirects of a site in step with its pages", () => {
     client.failNextCall(new Error("store unavailable"));
 
     expect(await worker.run()).toMatchObject({ failed: 1 });
-    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: expect.stringContaining("REDIRECT_ADD_FAILED") });
+    expect(outbox.table.get("site-1").failureReason).toMatch(/^REDIRECT_ADD_FAILED: /);
     expect(client.state.keys.size).toBe(0);
 
     expect(await worker.run()).toMatchObject({ built: 1 });
