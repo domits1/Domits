@@ -2,6 +2,7 @@ import Database from "database";
 import { randomUUID } from "node:crypto";
 import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
+import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const PUBLISH_ATTEMPT_LIMIT = 3;
@@ -190,6 +191,10 @@ export class DirectBookingWebsiteSiteRepository {
   }
 
   async deleteSiteByPropertyIdAndHostId(propertyId, hostId) {
+    return retryWebsiteDelete(() => this.deleteSiteByPropertyIdAndHostIdOnce(propertyId, hostId));
+  }
+
+  async deleteSiteByPropertyIdAndHostIdOnce(propertyId, hostId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
