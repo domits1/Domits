@@ -3484,7 +3484,6 @@ export class PropertyController {
             if (existingSite?.id) {
                 await this.withdrawStaticPageSafely(existingSite);
                 await this.releaseWebsiteCustomDomainSafely(existingSite);
-                await this.directBookingWebsiteDomainRepository.deleteDomainsBySiteId(existingSite.id);
                 await this.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId(propertyId, hostId);
             }
 

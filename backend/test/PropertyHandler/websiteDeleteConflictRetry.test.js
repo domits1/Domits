@@ -44,7 +44,9 @@ describe("deleting a website site when the commit hits an Aurora DSQL conflict",
     expect(client.statements.map(({ parameters }) => parameters)).toEqual([
       ["property-1", "host-1"],
       ["site-1"],
+      ["site-1"],
       ["property-1", "host-1"],
+      ["site-1"],
       ["site-1"],
     ]);
   });
