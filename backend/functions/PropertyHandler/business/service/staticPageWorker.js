@@ -130,11 +130,14 @@ export class StaticPageWorker {
       );
     }
 
-    const errors = result.invalidationErrors.map((failure) => ({
-      siteId: site.id,
-      revision: job.revision,
-      message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
-    }));
+    const errors = [
+      ...result.invalidationErrors.map((failure) => ({
+        siteId: site.id,
+        revision: job.revision,
+        message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
+      })),
+      ...(result.redirectErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
+    ];
     return this.#record(
       job,
       "withdrawn",
