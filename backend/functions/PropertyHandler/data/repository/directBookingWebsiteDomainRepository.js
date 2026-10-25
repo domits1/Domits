@@ -1,6 +1,5 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
-import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const DOMAIN_ALLOWED_TYPES = new Set(["FALLBACK", "CUSTOM"]);
 const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED", "REMOVING"]);
@@ -290,20 +289,6 @@ export class DirectBookingWebsiteDomainRepository {
 
       return { deleted: true, changedRecords: records.map(mapSiteDomainRow).filter(Boolean) };
     });
-  }
-
-  async deleteDomainsBySiteId(siteId) {
-    const client = await Database.getInstance();
-    const schemaName = resolveSchemaName(client);
-    const tableName = siteDomainTableName(schemaName);
-
-    await retryWebsiteDelete(() =>
-      client.query(
-        `DELETE FROM ${tableName}
-      WHERE site_id = $1`,
-        [siteId]
-      )
-    );
   }
 
   async countDomainsByTenantId(tenantId) {

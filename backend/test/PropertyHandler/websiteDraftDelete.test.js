@@ -43,7 +43,6 @@ const buildController = ({ customDomain = null, service = null, serviceFactory =
   controller.directBookingWebsiteDomainRepository = {
     getCustomDomainBySiteId: jest.fn().mockResolvedValue(customDomain),
     listDomainsBySiteId: jest.fn().mockResolvedValue(customDomain ? [customDomain] : []),
-    deleteDomainsBySiteId: jest.fn().mockResolvedValue(undefined),
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
   controller.createStaticPageWithdrawal = jest.fn(() => ({
