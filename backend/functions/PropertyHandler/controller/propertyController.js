@@ -3311,6 +3311,11 @@ export class PropertyController {
             }
 
             const { statusCode, body: responseBody } = await handle({ site, body, requestId });
+            if (event.httpMethod !== "GET") {
+                await this.directBookingWebsiteSiteRepository
+                    .queueStaticPage(site.id, { evenWhileBusy: true })
+                    .catch((error) => console.error(`[StaticPage] queueing site ${site.id} failed:`, error));
+            }
             return {
                 statusCode,
                 headers: draftResponseHeaders,
