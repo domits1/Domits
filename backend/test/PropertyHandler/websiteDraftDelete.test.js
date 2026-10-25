@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { WebsiteDeleteConflictError } from "../../functions/PropertyHandler/util/exception/WebsiteDeleteConflictError.js";
 
 const HOST_ID = "host-1";
 const PROPERTY_ID = "property-1";
@@ -177,5 +178,37 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     expect(response.statusCode).toBe(204);
     expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
     expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the domain rows", "directBookingWebsiteDomainRepository", "deleteDomainsBySiteId"],
+    ["the site row", "directBookingWebsiteSiteRepository", "deleteSiteByPropertyIdAndHostId"],
+    ["the draft", "directBookingWebsiteDraftRepository", "deleteDraftByPropertyIdAndHostId"],
+  ])("answers 409 with the conflict message when deleting %s keeps conflicting", async (_label, repository, method) => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = buildController();
+    controller[repository][method].mockRejectedValue(new WebsiteDeleteConflictError());
+
+    const response = await controller.deleteWebsiteDraft(buildEvent());
+
+    expect(response.statusCode).toBe(409);
+    expect(response.headers).toMatchObject({ "Access-Control-Allow-Origin": "*", "Cache-Control": expect.any(String) });
+    expect(JSON.parse(response.body)).toEqual({
+      code: "delete_conflict",
+      message: expect.stringMatching(/delete it again/),
+    });
+    expect(controller.directBookingWebsiteEventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("still answers 500 when deleting fails for another reason", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = buildController();
+    controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId.mockRejectedValue(
+      Object.assign(new Error("connection terminated"), { code: "57P01" })
+    );
+
+    const response = await controller.deleteWebsiteDraft(buildEvent());
+
+    expect(response.statusCode).toBe(500);
   });
 });

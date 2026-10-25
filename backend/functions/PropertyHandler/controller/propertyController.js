@@ -28,6 +28,7 @@ import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
+import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -3510,6 +3511,13 @@ export class PropertyController {
             console.error(error);
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
+            }
+            if (error instanceof WebsiteDeleteConflictError) {
+                return {
+                    statusCode: error.statusCode,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ code: error.code, message: error.message }),
+                };
             }
             return this.websiteServerError();
         }
