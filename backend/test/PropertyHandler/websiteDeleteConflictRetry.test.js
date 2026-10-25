@@ -1,5 +1,8 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import Database from "database";
 import { DirectBookingWebsiteSiteRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js";
+import { DirectBookingWebsiteDomainRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteDomainRepository.js";
+import { DirectBookingWebsiteDraftRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteDraftRepository.js";
 import { SITE_ROW, buildTransactionClient } from "./support/staticPageOutboxTransactionClient.js";
 
 jest.mock("database", () => ({
@@ -77,5 +80,58 @@ describe("deleting a website site when the commit hits an Aurora DSQL conflict",
       new DirectBookingWebsiteSiteRepository().deleteSiteByPropertyIdAndHostId("property-1", "host-1")
     ).rejects.toBe(failure);
     expect(client.transaction).toHaveBeenCalledTimes(1);
+  });
+});
+
+const buildStatementClient = (failures) => {
+  const client = {
+    options: { schema: "main" },
+    query: jest.fn(async () => {
+      if (failures.length > 0) {
+        throw failures.shift();
+      }
+      return [];
+    }),
+  };
+  Database.getInstance.mockResolvedValue(client);
+  return client;
+};
+
+describe.each([
+  [
+    "the domain rows of a site",
+    () => new DirectBookingWebsiteDomainRepository().deleteDomainsBySiteId("site-1"),
+    ["site-1"],
+  ],
+  [
+    "the draft of a property",
+    () => new DirectBookingWebsiteDraftRepository().deleteDraftByPropertyIdAndHostId("property-1", "host-1"),
+    ["property-1", "host-1"],
+  ],
+])("deleting %s when the statement hits an Aurora DSQL conflict", (_, deleteRows, parameters) => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("runs the same delete again", async () => {
+    const client = buildStatementClient([conflict()]);
+
+    await expect(deleteRows()).resolves.toBeUndefined();
+    expect(client.query.mock.calls.map(([, values]) => values)).toEqual([parameters, parameters]);
+  });
+
+  it("gives up after three conflicting attempts with the same 409", async () => {
+    const client = buildStatementClient([conflict(), conflict(), conflict()]);
+
+    await expect(deleteRows()).rejects.toMatchObject({ statusCode: 409, code: "delete_conflict" });
+    expect(client.query).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not run the delete again for an error that is not a conflict", async () => {
+    const failure = Object.assign(new Error("connection terminated"), { code: "57P01" });
+    const client = buildStatementClient([failure]);
+
+    await expect(deleteRows()).rejects.toBe(failure);
+    expect(client.query).toHaveBeenCalledTimes(1);
   });
 });

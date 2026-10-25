@@ -1,5 +1,6 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const DOMAIN_ALLOWED_TYPES = new Set(["FALLBACK", "CUSTOM"]);
 const DOMAIN_ALLOWED_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED", "REMOVING"]);
@@ -296,10 +297,12 @@ export class DirectBookingWebsiteDomainRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = siteDomainTableName(schemaName);
 
-    await client.query(
-      `DELETE FROM ${tableName}
+    await retryWebsiteDelete(() =>
+      client.query(
+        `DELETE FROM ${tableName}
       WHERE site_id = $1`,
-      [siteId]
+        [siteId]
+      )
     );
   }
 
