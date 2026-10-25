@@ -2,6 +2,7 @@ import { buildWebsiteTemplateModel } from "../../rendering/buildWebsiteTemplateM
 import { applyWebsiteDraftContentOverrides } from "../../rendering/websiteDraftContentOverrides";
 import { buildStaticSiteMetadata } from "../buildStaticSiteMetadata";
 import { buildPublishedSiteRenderPayload } from "./publishedSiteRenderPayload";
+import { placeholderImage, S3_ACCOMMODATION_URL } from "../../../../../utils/accommodationImage";
 
 const buildMetadataFor = (payloadOverrides = {}) => {
   const renderPayload = buildPublishedSiteRenderPayload(payloadOverrides);
@@ -98,7 +99,7 @@ describe("static site metadata for a published direct booking website", () => {
     expect(JSON.stringify(metadata)).not.toContain("alias.example.com");
   });
 
-  it("keeps the placeholder image out of og:image even though it arrives as an https URL", () => {
+  it("keeps the placeholder image out of og:image", () => {
     const { metadata, model } = buildMetadataFor({
       propertySnapshot: {
         property: { title: "Wellness Villa Bisous" },
@@ -111,6 +112,17 @@ describe("static site metadata for a published direct booking website", () => {
     expect(metadata.openGraph["og:image"]).toBeUndefined();
     expect(metadata.openGraph["og:image:alt"]).toBeUndefined();
     expect(metadata.twitter["twitter:card"]).toBe("summary");
+    expect(JSON.stringify(metadata)).not.toContain("data:image");
+  });
+
+  it("keeps a placeholder that a stored hero image carries inside a bucket URL out of og:image", () => {
+    const { metadata, model } = buildMetadataFor({
+      propertySnapshot: { property: { title: "Wellness Villa Bisous" }, images: [] },
+      contentOverrides: { heroImage: `${S3_ACCOMMODATION_URL}${placeholderImage}` },
+    });
+
+    expect(model.media.heroImage).toMatch(/^https:\/\/.*data:image\/svg\+xml/);
+    expect(metadata.openGraph["og:image"]).toBeUndefined();
     expect(JSON.stringify(metadata)).not.toContain("data:image");
   });
 
