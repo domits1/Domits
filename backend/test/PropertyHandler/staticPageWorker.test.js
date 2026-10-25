@@ -3,6 +3,9 @@ import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sd
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
+import { StaticPageRedirects } from "../../functions/PropertyHandler/business/service/staticPageRedirects.js";
+import { StaticPageRedirectStore } from "../../functions/PropertyHandler/data/repository/staticPageRedirectStore.js";
+import { buildFakeKeyValueStoreClient } from "./fakeKeyValueStoreClient.js";
 
 const SHELL = '<html><head></head><body><div id="root"></div></body></html>';
 const PAGE = "<html>rendered</html>";
@@ -69,6 +72,7 @@ const buildWorker = ({
   outbox = null,
   pageStore = null,
   withdrawal = null,
+  redirects = undefined,
 } = {}) => {
   const deps = {
     outboxRepository: outbox || buildOutbox(rows),
@@ -87,6 +91,7 @@ const buildWorker = ({
         invalidationErrors: [],
       })),
     },
+    redirects,
   };
   return { worker: new StaticPageWorker(deps), outbox: deps.outboxRepository, ...deps };
 };
@@ -719,5 +724,83 @@ describe("the sitemap the worker writes per host", () => {
     expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "ACTIVE" });
     expect(bucket.objects.get(sitemapKey(CUSTOM.domain))).toBe(EMPTY_SITEMAP);
     expect(bucket.objects.get(sitemapKey(FALLBACK.domain))).toBe(sitemapListing(`https://${FALLBACK.domain}/`));
+  });
+});
+
+describe("keeping the redirects of a site in step with its pages", () => {
+  const buildRedirectWorker = ({ keys = {}, domains }) => {
+    const log = [];
+    const client = buildFakeKeyValueStoreClient({ keys, log });
+    const store = new StaticPageRedirectStore({ kvsArn: "arn:aws:cloudfront::1:key-value-store/redirects", client });
+    const pageStore = {
+      readAppShell: jest.fn(async () => SHELL),
+      putPage: jest.fn(async ({ hostname }) => log.push(`page:${hostname}`)),
+      putSitemap: jest.fn(async () => undefined),
+    };
+    return { log, client, ...buildWorker({ domains, pageStore, redirects: new StaticPageRedirects({ store }) }) };
+  };
+  const updates = (log) => log.filter((entry) => entry === "kvs:UpdateKeysCommand").length;
+
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  it("points the alias at the active primary only after both pages are written", async () => {
+    const { worker, log, client } = buildRedirectWorker({ domains: [FALLBACK, CUSTOM] });
+
+    expect(await worker.run()).toMatchObject({ built: 1 });
+
+    expect(Object.fromEntries(client.state.keys)).toEqual({ [FALLBACK.domain]: CUSTOM.domain });
+    expect(log.indexOf("kvs:UpdateKeysCommand")).toBeGreaterThan(log.lastIndexOf(`page:${CUSTOM.domain}`));
+    expect(updates(log)).toBe(1);
+  });
+
+  it("removes the redirect before writing any page once the primary is no longer active", async () => {
+    const { worker, log, client } = buildRedirectWorker({
+      keys: { [FALLBACK.domain]: CUSTOM.domain },
+      domains: [FALLBACK, { ...CUSTOM, status: "FAILED" }],
+    });
+
+    expect(await worker.run()).toMatchObject({ built: 1 });
+
+    expect(client.state.keys.size).toBe(0);
+    expect(log.indexOf("kvs:UpdateKeysCommand")).toBeLessThan(log.indexOf(`page:${FALLBACK.domain}`));
+  });
+
+  it("only reads the store for a site without a custom domain", async () => {
+    const { worker, log } = buildRedirectWorker({ domains: [FALLBACK] });
+
+    expect(await worker.run()).toMatchObject({ built: 1 });
+
+    expect(log).toEqual(["kvs:DescribeKeyValueStoreCommand", `page:${FALLBACK.domain}`]);
+  });
+
+  it("fails the job and writes no page when a stale redirect cannot be removed", async () => {
+    const { worker, log, client, outbox } = buildRedirectWorker({
+      keys: { [FALLBACK.domain]: CUSTOM.domain },
+      domains: [FALLBACK, { ...CUSTOM, isPrimary: false }],
+    });
+    client.failNextCall(undefined);
+    client.failNextCall(new Error("store unavailable"));
+
+    expect(await worker.run()).toMatchObject({ failed: 1 });
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: expect.stringContaining("REDIRECT_REMOVE_FAILED") });
+    expect(log.filter((entry) => entry.startsWith("page:"))).toEqual([]);
+    expect(client.state.keys.get(FALLBACK.domain)).toBe(CUSTOM.domain);
+  });
+
+  it("fails the job when the redirect cannot be added after the pages, and adds it on the next attempt", async () => {
+    const { worker, client, outbox } = buildRedirectWorker({ domains: [FALLBACK, CUSTOM] });
+    client.failNextCall(undefined);
+    client.failNextCall(undefined);
+    client.failNextCall(new Error("store unavailable"));
+
+    expect(await worker.run()).toMatchObject({ failed: 1 });
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "FAILED", failureReason: expect.stringContaining("REDIRECT_ADD_FAILED") });
+    expect(client.state.keys.size).toBe(0);
+
+    expect(await worker.run()).toMatchObject({ built: 1 });
+    expect(client.state.keys.get(FALLBACK.domain)).toBe(CUSTOM.domain);
   });
 });
