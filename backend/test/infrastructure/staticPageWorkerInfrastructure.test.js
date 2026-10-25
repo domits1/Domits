@@ -220,3 +220,14 @@ describe("the schedule", () => {
     expect(trust.Condition).toEqual({ StringEquals: { "aws:SourceAccount": ACCOUNT } });
   });
 });
+
+describe("the redirect store policy", () => {
+  it("lets PropertyHandler read and update the one redirect store, through a placeholder, and nothing else", () => {
+    const [statement, ...others] = load("static-page-redirects-policy.json").Statement;
+    const actions = ["DescribeKeyValueStore", "ListKeys", "UpdateKeys"].map((n) => `cloudfront-keyvaluestore:${n}`);
+
+    expect(others).toEqual([]);
+    expect(statement).toMatchObject({ Effect: "Allow", Action: actions });
+    expect(statement.Resource).toBe("arn:aws:cloudfront::115462458880:key-value-store/__REDIRECTS_KVS_ID__");
+  });
+});
