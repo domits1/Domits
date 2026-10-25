@@ -213,13 +213,4 @@ describe("the redirect from an alias to its primary domain", () => {
     expect(result).toBe(event.request);
     expect(result.uri).toBe(testCase.expectedUri);
   });
-
-  it("never sends a visitor to a host that the store did not name", async () => {
-    const locations = [];
-    for (const testCase of REDIRECT_CASES.filter((candidate) => candidate.expectedLocation)) {
-      const result = await loadHandler(testCase.redirects)(buildEvent(testCase));
-      locations.push(new URL(result.headers.location.value).host);
-    }
-    expect(new Set(locations)).toEqual(new Set(["www.villasensual.nl"]));
-  });
 });

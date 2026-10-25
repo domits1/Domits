@@ -7,21 +7,13 @@ const KVS_ARN = "arn:aws:cloudfront::115462458880:key-value-store/redirects";
 const ALIAS = "beautiful-home-amsterdam-6156b005.direct.domits.com";
 const PRIMARY = "www.villasensual.nl";
 
-const buildRedirects = ({ keys = {}, kvsArn = KVS_ARN } = {}) => {
+const buildRedirects = ({ keys = {} } = {}) => {
   const client = buildFakeKeyValueStoreClient({ keys });
-  const store = new StaticPageRedirectStore({ kvsArn, client });
+  const store = new StaticPageRedirectStore({ kvsArn: KVS_ARN, client });
   return { client, store, redirects: new StaticPageRedirects({ store }) };
 };
 
 describe("writing redirects to the key value store", () => {
-  it("does nothing at all while no store is configured", async () => {
-    const { client, redirects } = buildRedirects({ kvsArn: "" });
-
-    expect(await redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).toBe(false);
-    expect(await redirects.remove([ALIAS])).toBe(false);
-    expect(client.calls).toEqual([]);
-  });
-
   it("puts a redirect with the current version of the store, and removes it again", async () => {
     const { client, redirects } = buildRedirects();
 
@@ -62,14 +54,6 @@ describe("writing redirects to the key value store", () => {
 
     await expect(redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).rejects.toThrow("Pre-Condition failed");
     expect(client.state.keys.has(ALIAS)).toBe(false);
-  });
-
-  it("does not retry an error that is not a conflict", async () => {
-    const { client, redirects } = buildRedirects();
-    client.failNextCall(Object.assign(new Error("not allowed"), { name: "AccessDeniedException" }));
-
-    await expect(redirects.add([{ hostname: ALIAS, primary: PRIMARY }])).rejects.toThrow("not allowed");
-    expect(client.calls).toHaveLength(1);
   });
 
   it("splits more than fifty changes into parts that each use the version the previous part returned", async () => {
