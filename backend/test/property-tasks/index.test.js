@@ -11,6 +11,8 @@ const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
 const mockInternalCreateTask = jest.fn();
 const mockEscalateTask = jest.fn();
+const mockApproveTask = jest.fn();
+const mockRejectTask = jest.fn();
 const mockRunOverdueSweep = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
@@ -28,6 +30,8 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         deleteChecklistItem: mockDeleteChecklistItem,
         internalCreateTask: mockInternalCreateTask,
         escalateTask: mockEscalateTask,
+        approveTask: mockApproveTask,
+        rejectTask: mockRejectTask,
         runOverdueSweep: mockRunOverdueSweep,
     })),
 }));
@@ -45,7 +49,7 @@ describe("property-tasks handler routing", () => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
             mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
-            mockInternalCreateTask, mockEscalateTask, mockRunOverdueSweep]
+            mockInternalCreateTask, mockEscalateTask, mockApproveTask, mockRejectTask, mockRunOverdueSweep]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
     });
 
@@ -111,6 +115,18 @@ describe("property-tasks handler routing", () => {
     it("POST with action=escalate routes to escalateTask", async () => {
         await handler({ httpMethod: "POST", queryStringParameters: { action: "escalate" } });
         expect(mockEscalateTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("POST with action=approve routes to approveTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "approve" } });
+        expect(mockApproveTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("POST with action=reject routes to rejectTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "reject" } });
+        expect(mockRejectTask).toHaveBeenCalledTimes(1);
         expect(mockCreateTask).not.toHaveBeenCalled();
     });
 
