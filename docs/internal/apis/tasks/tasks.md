@@ -8,8 +8,8 @@ Email notifications for the host dashboard Tasks module (issue #3510). This page
 |---|---|---|---|
 | Task assigned | The assignee (a team member) | The assignee's own `notif_email_assigned` | A task is created with an assignee, or an update changes the assignee to someone new |
 | Task completed | The host | The host's own `notif_email_completed` | A **team member** moves a task to Completed. A host who completes their own task is not emailed |
-| Task due soon | The assignee, or the host when there is no assignee or the assignee cannot be emailed (revoked from the team) | The recipient's own `notif_email_due_soon` | A scheduled sweep finds an open task that is due within the next 24 hours and has not been emailed about its current due date. One email per due date |
-| Task overdue | The assignee, or the host when there is no assignee or the assignee cannot be emailed (revoked from the team) | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
+| Task due soon | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_due_soon` | A scheduled sweep finds an open task that is due within the next 24 hours and has not been emailed about its current due date. One email each time the due date changes |
+| Task overdue | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
 
 Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand is skipped, so nobody gets both.
 
@@ -78,7 +78,7 @@ notifyTaskDueSoon → recipient's notif_email_due_soon → EmailNotificationServ
 ```
 
 - It shares the claim-then-email loop (`sweepTasks`), the recipient rule and the 20 / 100 `limit` with the overdue sweep, but runs as its own scheduled event, so each can be switched off on its own.
-- What is stored is the **due date that was emailed about**, not a time. A task whose due date is moved gets one more email for the new date, and a task is never emailed twice for the same date.
+- What is stored is the **due date that was emailed about**, not a time. A task whose due date is moved gets one more email for the new date. Only the latest emailed date is stored, so if the due date goes from A to B and back to A, the task is emailed again for A.
 - "A day early" means the first sweep that runs once the task is within 24 hours of its due date. With the schedule at every 15 minutes, that is between 24 hours and 23 hours 45 minutes before.
 - A task created with a due date less than 24 hours away is emailed on the next sweep, as well as getting its "Task assigned" email.
 - Escalated tasks are **not** skipped here (they are for overdue). A task can only be escalated once its due date has passed (`computeSlaStatus`), so the two emails do not normally meet. If an escalated task's due date is then moved into the future, it can still get a due soon email.
@@ -105,7 +105,7 @@ The code is inert until these are done, in this order. They are manual AWS steps
 
 Do the overdue steps above first: the Lambda timeout, async retries and the scheduler role are shared. Then, in this order:
 
-1. **Add the columns before the code is deployed.** `property_task.due_soon_notified_for` and `host_settings.notif_email_due_soon` are in the entities, so every task query and every settings read fails with "column does not exist" until they exist. Run `backend/ORM/migrations/20261023_task_due_soon.sql` as the `admin` user, `test` schema first, then `main`, one statement at a time. The rollback file drops the columns again.
+1. **Add the columns before the code is deployed.** `property_task.due_soon_notified_for` and `host_settings.notif_email_due_soon` are in the entities, so every task query and every settings read fails with "column does not exist" until they exist. Run `backend/ORM/migrations/20261023_task_due_soon.sql` as the `admin` user, `test` schema first, then `main`, one statement at a time. The `test` schema has no `host_settings` table, so `notif_email_due_soon` is added to `main` only. The rollback file drops the columns again.
 2. Create the schedule from `backend/infrastructure/task-due-soon/schedule.json`. It is created `DISABLED` and reuses the overdue scheduler role.
 3. After deployment, invoke the Lambda once by hand with `{"task":"notify-due-soon-tasks","limit":1}` on an open test task due within 24 hours and check the email and `due_soon_notified_for`.
 4. Enable the schedule.
