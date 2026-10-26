@@ -1222,6 +1222,7 @@
         "loading": "Loading your devices...",
         "loadError": "We couldn't load your devices.",
         "retry": "Try again",
+        "truncated": "Not all devices are shown.",
         "notSupported": "Not supported yet",
         "columns": {
           "name": "Name",
@@ -1243,6 +1244,21 @@
           "resortLock": "Resort lock",
           "other": "Other device"
         }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock needs to be reconnected.",
+        "alreadyConnected": "RemoteLock is already connected.",
+        "notConfigured": "RemoteLock isn't available right now. Please contact support.",
+        "tryLater": "RemoteLock is busy. Please try again in a moment.",
+        "startAgain": "The sign-in expired or was already used. Please start again.",
+        "providerError": "RemoteLock reported a problem. Please try again later.",
+        "cancelled": "The RemoteLock sign-in was cancelled.",
+        "missingParams": "This page needs a RemoteLock sign-in. Please start from Home automation."
+      },
+      "callback": {
+        "title": "Connecting RemoteLock",
+        "working": "Finishing the connection...",
+        "back": "Back to Home automation"
       },
       "loading": "Loading your RemoteLock connection...",
       "loadError": "We couldn't load your RemoteLock connection.",

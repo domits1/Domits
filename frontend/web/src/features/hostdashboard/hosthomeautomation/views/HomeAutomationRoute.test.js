@@ -43,6 +43,26 @@ describe("HomeAutomationRoute", () => {
     expect(getRemoteLockStatus).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["off", false, "Settings hub"],
+    ["on", true, "Connecting RemoteLock"],
+  ])("handles the callback with the page switched %s", (_label, enabled, text) => {
+    mockUiEnabled = enabled;
+
+    render(
+      <LanguageContext.Provider value={{ language: "en" }}>
+        <MemoryRouter initialEntries={["/hostdashboard/settings/home-automation/callback"]}>
+          <Routes>
+            <Route path="/hostdashboard/settings" element={<p>Settings hub</p>} />
+            <Route path="/hostdashboard/settings/home-automation/callback" element={<HomeAutomationRoute callback />} />
+          </Routes>
+        </MemoryRouter>
+      </LanguageContext.Provider>
+    );
+
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
   it("shows the page when it is switched on", async () => {
     mockUiEnabled = true;
 
