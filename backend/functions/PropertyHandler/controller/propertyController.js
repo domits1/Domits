@@ -18,6 +18,7 @@ import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
 import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
+import { WebsiteCleanupService } from "../business/service/websiteCleanupService.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
@@ -1903,6 +1904,31 @@ export class PropertyController {
         return {
             statusCode: 200,
             body: JSON.stringify({ queued: siteIds.length, siteIds }),
+        };
+    }
+
+    createWebsiteCleanupService() {
+        return new WebsiteCleanupService({
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            propertyRepository: this.propertyService.propertyRepository,
+            unpublisher: this.createWebsiteUnpublisher(),
+        });
+    }
+
+    async unpublishSitesOfInactiveListings(event) {
+        const summary = await this.createWebsiteCleanupService().unpublishSitesOfInactiveListings({
+            apply: event?.apply,
+            limit: event?.limit,
+        });
+        if (summary.errors.length > 0) {
+            throw new Error(
+                `The website cleanup left ${summary.errors.length} failures: ` + JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
         };
     }
 

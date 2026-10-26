@@ -379,6 +379,52 @@ aws scheduler get-schedule --name domits-static-page-worker-rate-5-minutes --pro
 
 `schedule.json` carries `State: DISABLED`, so this stops new ticks; expected `DISABLED`. A run that was already accepted finishes on its own within the 30 second timeout, so wait one minute and confirm with the outbox query that no row is `BUILDING` before touching anything else. Then step 6's rows and objects only if the pages must go, and steps 5, 4 and 3 in reverse only if the role or the configuration is the problem. Disabling the schedule is enough for every failure that is not an `AccessDenied` on the API.
 
+## 10. Unpublish the sites of inactive listings [REPEATABLE AUDIT, WRITES ONLY WITH `apply`]
+
+A website follows its listing: when a listing leaves `ACTIVE`, `PropertyService` takes its site down. That hook only fires on future status changes, so a site that was already `PUBLISHED` on a listing that is not `ACTIVE` (or whose property row is gone) stays public. The task `unpublish-sites-of-inactive-listings` finds those sites and takes each one down through `WebsiteUnpublisher.takeDown`, the same path as the host's Unpublish: the site moves to `PREVIEW`, its fallback domain is disabled, `WEBSITE_SITE_UNPUBLISHED` is recorded with reason `property_not_active`, and the outbox row is queued in the same transaction so the worker removes the page from S3 and CloudFront. Never fix this with hand-written SQL: only this path queues the outbox, so the page would stay online.
+
+It is safe to run again and again. A taken-down site is `PREVIEW`, so the next run no longer lists it; a run with nothing to do answers `candidates: 0`. It stays in the code as an audit for the same drift. Invoking it needs `lambda:InvokeFunction` on `PropertyHandler` (IAM only; an HTTP request that carries the task name is routed as an ordinary request and never reaches it).
+
+**Dry run first.** Without `apply` nothing is written; `apply` counts only when it is the JSON boolean `true` (`"true"` or `1` stay a dry run). The default `limit` is 10 and the maximum 50; `truncated: true` in the answer means more sites match than the limit.
+
+```bash
+aws lambda invoke --function-name PropertyHandler --profile domits --region eu-north-1 --cli-binary-format raw-in-base64-out \
+  --payload '{"task":"unpublish-sites-of-inactive-listings"}' cleanup-dry-run.json --query '{status:StatusCode,error:FunctionError}'
+cat cleanup-dry-run.json; echo
+```
+
+Expected: `status 200`, no `FunctionError`, a body whose `body` field is a JSON string with `mode: "dry-run"`, `candidates` and one `sites[]` entry per candidate (`siteId`, `propertyId`, `propertyStatus`, `outcome: "would-unpublish"`; `propertyStatus` is `MISSING` when the property row is gone). Check that the list is exactly the sites you expect. The answer carries no hostnames, host ids or tokens.
+
+**Apply only after the mentor has approved the dry run output.**
+
+Keep `limit` at 10: the `PropertyHandler` timeout is not confirmed, and 7 sites are expected.
+
+```bash
+aws lambda invoke --function-name PropertyHandler --profile domits --region eu-north-1 --cli-binary-format raw-in-base64-out \
+  --payload '{"task":"unpublish-sites-of-inactive-listings","apply":true,"limit":10}' cleanup-apply.json --query '{status:StatusCode,error:FunctionError}'
+cat cleanup-apply.json; echo
+```
+
+Expected: `status 200`, no `FunctionError`, `mode: "apply"`, `unpublished` equal to the candidates and `errors: []`. Each site is read again right before the take-down and skipped (`skipped`) when it is no longer `PUBLISHED` or its listing became `ACTIVE` in the meantime. One failing site does not stop the others; failures are listed in `errors` and make the invocation fail (`FunctionError`), with the full summary in `errorMessage` and in the function log. Fix the cause and run the apply again: sites already taken down are not listed again.
+
+A site listed in `errors` may already be `PREVIEW` (the site step is done and the domain step failed). A re-run will **not** list it again, so check that site's fallback domain by hand in `main.standalone_site_domain` and tell the mentor.
+
+**Verify**, in the DSQL query editor. The first query is read-only and must answer `0`:
+
+```sql
+SELECT count(*) FROM main.standalone_site s
+LEFT JOIN main.property p ON p.id = s.property_id
+WHERE s.status = 'PUBLISHED' AND (p.id IS NULL OR p.status IS DISTINCT FROM 'ACTIVE');
+```
+
+The page is removed by the worker on one of its next ticks (every five minutes). A withdrawn page ends with the outbox status `WITHDRAWN`; `ACTIVE` is the finished status of a *built* page, not of a withdrawal. Check the rows of the sites the apply listed:
+
+```sql
+SELECT site_id, status, attempt_count, failure_reason FROM main.static_page_outbox WHERE site_id IN ('<site id 1>', '<site id 2>');
+```
+
+Expected: `WITHDRAWN` for each, none `PENDING` or `BUILDING` for longer than a tick, none `FAILED`. A row that stays `FAILED` with `failure_reason` `S3_DELETE_FAILED` is retried by the worker; the hourly reconciler also removes any page whose site is no longer published. Finally run the dry run again: `candidates: 0`.
+
 ## What it costs per month
 
 Prices for eu-north-1, list, rounded up. The idle polling dominates; the pages themselves are almost free.
