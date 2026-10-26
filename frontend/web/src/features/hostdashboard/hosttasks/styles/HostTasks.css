@@ -523,6 +523,16 @@
     margin-left: 4px;
 }
 
+.checklist-switch-notice {
+    margin: 0 0 8px;
+    padding: 8px 12px;
+    border: 1px solid #f5c26b;
+    border-radius: 6px;
+    background: #fff8e6;
+    color: #7a4b00;
+    font-size: 13px;
+}
+
 .checklist-template-loading {
     display: inline-flex;
     align-items: center;
@@ -1914,6 +1924,13 @@
 
 .settings-saved-msg {
     color: #28a745;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: auto;
+}
+
+.settings-load-error {
+    color: #dc3545;
     font-size: 13px;
     font-weight: 600;
     margin-right: auto;

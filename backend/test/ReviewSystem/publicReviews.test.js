@@ -14,7 +14,7 @@ describe("public review retrieval", () => {
     property = { id: "p1" };
     summary = { score: "4", count: "11" };
     reviews = [{ id: "r1", overall_rating: 4, public_review: "Good stay", created_at: 1000,
-      private_feedback: "secret", reviewer_user_id: "private" }];
+      verification_status: "UNVERIFIED", private_feedback: "secret", reviewer_user_id: "private" }];
     query = { getRawOne: jest.fn(async () => summary), getMany: jest.fn(async () => reviews),
       getRawMany: jest.fn(async () => [{ review_id: "r1", key: "comfort", label: "Comfort", rating: "4.5" }]) };
     for (const method of ["where", "andWhere", "innerJoin", "select", "addSelect", "orderBy", "addOrderBy", "offset", "limit"]) {
@@ -28,16 +28,24 @@ describe("public review retrieval", () => {
     const result = await controller.getPublicReviews(request({ propertyId: "spoofed" }));
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11,
-      next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: true,
+      next_offset: 10, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: false,
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
     expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" });
-    expect(query.andWhere).toHaveBeenCalledWith("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" });
-    expect(query.select).toHaveBeenCalledWith(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    expect(query.andWhere.mock.calls.some(([clause]) => clause.includes("verification_status"))).toBe(false);
+    expect(query.select).toHaveBeenCalledWith(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
     expect(query.orderBy).toHaveBeenCalledWith("review.created_at", "DESC");
     expect(query.limit).toHaveBeenCalledWith(10);
     expect(query.andWhere).toHaveBeenCalledWith("review.status = :status", { status: "PUBLISHED" });
     expect(query.andWhere).toHaveBeenCalledWith("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+  });
+  test.each([
+    ["VERIFIED_STAY", true], ["UNVERIFIED", false], ["VERIFIED", false], [null, false], [undefined, false],
+  ])("derives the verified stay badge from status %s", async (status, verified) => {
+    reviews[0].verification_status = status;
+    const result = await new ReviewRepository().getPublicReviewPage("p1", 0);
+    expect(result.reviews[0].verified).toBe(verified);
+    expect(result.review_count).toBe(11);
   });
   test.each(["-1", "1.5", "", "100001", [], {}])("rejects invalid offset %j", async (offset) => {
     expect((await controller.getPublicReviews(request({ offset }))).statusCode).toBe(400);
@@ -72,6 +80,7 @@ test("keeps review publication and property visibility parameters independent in
   Database.getInstance.mockResolvedValue(database);
   await new ReviewRepository().getPublicReviewPage("p1", 0);
   expect(query.getParameters()).toMatchObject({ status: "PUBLISHED", propertyStatus: "ACTIVE",
-    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+    publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+  expect(query.getQuery().split(" WHERE ")[1]).not.toContain("verification_status");
   expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));
 });

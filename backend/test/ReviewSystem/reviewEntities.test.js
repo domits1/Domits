@@ -1,8 +1,10 @@
 import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
+import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
+import { Property } from "../../ORM/models/Property.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
-import { DataSource } from "typeorm";
+import { DataSource, In, IsNull, Not } from "typeorm";
 import Database from "database";
 import { Review } from "../../ORM/models/Review.js";
 import { Booking } from "../../ORM/models/Booking.js";
@@ -10,7 +12,6 @@ import { Review_Rating } from "../../ORM/models/Review_Rating.js";
 import { Review_Category } from "../../ORM/models/Review_Category.js";
 import { Review_Request } from "../../ORM/models/Review_Request.js";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
-import { CreateReviews20260930 } from "../../ORM/migrations/20260930_create_reviews.js";
 import { Review_Response } from "../../ORM/models/Review_Response.js";
 import { CreateReviewResponse20261014 } from "../../ORM/migrations/20261014_create_review_response.js";
 import { assertReviewResponseSchema } from "../../functions/ReviewSystem/util/assertReviewResponseSchema.js";
@@ -64,7 +65,7 @@ describe('Review entities and creation persistence', () => {
   let repository;
   // Give each test fresh repositories and a transaction stub so calls cannot leak between tests.
   beforeEach(() => {
-    repositories = new Map([Review, Booking, Review_Rating, Review_Category, Review_Request]
+    repositories = new Map([Review, Booking, Review_Rating, Review_Category, Review_Request, Review_Response]
       .map((entity) => [entity, { find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null),
         save: jest.fn(async (record) => record), update: jest.fn().mockResolvedValue({ affected: 1 }) }]));
     const requestInsert = { insert: jest.fn().mockReturnThis(), values: jest.fn().mockReturnThis(),
@@ -76,7 +77,7 @@ describe('Review entities and creation persistence', () => {
     repository = new ReviewRepository();
   });
 
-  // Entity contract: verify persisted column names, types, defaults and numeric conversions.
+  // Entity contract: verify persisted column names, types, defaults and numeric conversions!!
   it("builds PostgreSQL metadata and SQL for the established review contract without connecting", async () => {
     const source = new DataSource({ type: "postgres", schema: "main", synchronize: false,
       entities: [Review, Review_Rating, Review_Category, Review_Request] });
@@ -154,6 +155,63 @@ describe('Review entities and creation persistence', () => {
     });
   });
 
+// Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
+it("soft deletes only the author while retaining supporting records", async () => {
+  await repository.deleteOwnReview("legacy-review", "guest-1", 123);
+  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
+    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
+  });
+  for (const entity of [Review_Rating, Review_Request, Review_Response]) {
+    expect(repositories.get(entity).update).not.toHaveBeenCalled();
+  }
+});
+
+it("keeps soft-deleted reviews out of dashboard lists after reloading", async () => {
+  await repository.findReviews({ reviewer_user_id: "guest-1" });
+  expect(repositories.get(Review).find.mock.calls[0][0].where).toEqual({
+    reviewer_user_id: "guest-1", status: Not("REJECTED"),
+  });
+});
+
+// Public output: check scores, filtering and published responses while excluding private data.
+it("returns public ratings, averages and published responses without private fields", async () => {
+  repositories.get(Review).find.mockResolvedValue([
+    { id: "r1", overall_rating: 5, public_review: "Good", title: "Stay", created_at: 1,
+      status: "PUBLISHED", verification_status: "VERIFIED_STAY", private_feedback: "secret", reviewer_user_id: "private" },
+    { id: "r2", overall_rating: 3, public_review: "Okay", title: "Stay", created_at: 2, status: "PUBLISHED" },
+  ]);
+  repositories.get(Review_Rating).find.mockResolvedValue([
+    { reviewId: "r1", category: "cleanliness", rating: "5.0" },
+    { reviewId: "r2", category: "cleanliness", rating: "3.0" },
+  ]);
+  repositories.get(Review_Response).find.mockResolvedValue([
+    { id: "response1", reviewId: "r1", status: "published", authorRole: "host", message: "Thanks", publishedAt: 5 },
+    { id: "response2", reviewId: "r2", status: "draft", message: "Hidden" },
+  ]);
+  const result = await repository.findPublicPropertyReviews("p1", { sort: "highest" });
+  expect(repositories.get(Review).find.mock.calls[0][0].where).toEqual({ property_id: "p1",
+    review_type: "GUEST_TO_PROPERTY", status: "PUBLISHED", publication_status: "PUBLISHED" });
+  expect(repositories.get(Review).find.mock.calls[0][0].select).not.toContain("private_feedback");
+  expect(repositories.get(Review_Response).find).toHaveBeenCalledWith({ where: {
+    reviewId: In(["r1", "r2"]), status: "published", deletedAt: IsNull(),
+  } });
+  expect(result).toMatchObject({ totalReviews: 2, overallRating: 4, categoryRatings: { cleanliness: 4 } });
+  expect(result.reviews.map((review) => review.id)).toEqual(["r1", "r2"]);
+  expect(result.reviews[0].response).toMatchObject({ message: "Thanks" });
+  expect(result.reviews[1].response).toBeNull();
+  expect(JSON.stringify(result)).not.toMatch(/secret|private_feedback|reviewer_user_id|Hidden/);
+  expect((await repository.findPublicPropertyReviews("p1", { verifiedOnly: true })).totalReviews).toBe(1);
+  expect((await repository.findPublicPropertyReviews("p1", { category: "missing" })).totalReviews).toBe(0);
+  expect((await repository.findPublicPropertyReviews("p1", { sort: "lowest" })).reviews[0].id).toBe("r2");
+});
+
+it("returns empty public aggregates without querying child tables", async () => {
+  expect(await repository.findPublicPropertyReviews("p1")).toEqual({ reviews: [], totalReviews: 0,
+    overallRating: null, categoryRatings: {} });
+  expect(repositories.get(Review_Rating).find).not.toHaveBeenCalled();
+});
+
+
   // Creation: verify the repository groups related writes and leaves existing requests untouched.
   it("persists review, category ratings and draft request in one transaction", async () => {
     const record = { id: "r1", booking_id: "b1", property_id: "p1", host_id: "h1", reviewer_user_id: "g1",
@@ -212,12 +270,6 @@ describe('Review entities and creation persistence', () => {
     }
   );
 
-  it("keeps the retired review migration inert", async () => {
-    const runner = { query: jest.fn() };
-    await new CreateReviews20260930().up(runner);
-    await new CreateReviews20260930().down(runner);
-    expect(runner.query).not.toHaveBeenCalled();
-  });
 
 });
 
@@ -283,6 +335,65 @@ describe('Review transactional writes', () => {
     };
     Database.getInstance.mockResolvedValue(source);
     repository = new ReviewRepository();
+  });
+
+  it("scores a created unverified review only after publication and excludes it after service deletion", async () => {
+    committed.set(Review, []);
+    committed.set(Property, [{ id: "p1", hostid: "host" }]);
+    repositories.set(Property, { findOne: async ({ where }) =>
+      active.get(Property).find((row) => matches(row, where)) ?? null });
+    repositories.get(Review_Request).createQueryBuilder = () => {
+      const insert = { insert: () => insert, values: () => insert, orIgnore: () => insert,
+        execute: async () => ({}) };
+      return insert;
+    };
+    repositories.get(Review).createQueryBuilder = () => {
+      const filters = [];
+      let fields;
+      let owner;
+      const query = {
+        innerJoin: (_entity, _alias, _sql, parameters) => { owner = parameters.hostId; return query; },
+        select: () => query, addSelect: () => query, update: () => query,
+        set: (values) => { fields = values; return query; },
+        where: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        andWhere: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        getRawOne: async () => {
+          const rows = active.get(Review).filter((row) =>
+            active.get(Property).some((property) => property.id === row.property_id && property.hostid === owner) &&
+            filters.every(([sql, parameters]) => {
+              if (sql.includes("BETWEEN")) return row.overall_rating >= parameters.minimum && row.overall_rating <= parameters.maximum;
+              if (sql.includes("FLOOR")) return Number.isInteger(row.overall_rating);
+              const field = sql.match(/review\.(\w+)/)[1];
+              return row[field] === Object.values(parameters)[0];
+            }));
+          return { overall_score: rows.length ? rows.reduce((sum, row) => sum + row.overall_rating, 0) / rows.length : null,
+            review_count: String(rows.length) };
+        },
+        execute: async () => {
+          const rows = active.get(Review).filter((row) => filters.every(([sql, parameters]) => {
+            if (sql.includes("NOT IN")) return !parameters.excluded.includes(row.status);
+            const field = sql.split(" = ")[0];
+            return row[field] === Object.values(parameters)[0];
+          }));
+          rows.forEach((row) => Object.assign(row, fields));
+          return { affected: rows.length };
+        },
+      };
+      return query;
+    };
+    const service = new ReviewService({ repository, now: () => now });
+    const review = await service.createReview("guest", { booking_id: "b1", overall_rating: 5,
+      title: "Stay", public_review: "Good" });
+    expect(review.verification_status).toBe("UNVERIFIED");
+    const empty = { property_id: "p1", overall_score: null, review_count: 0 };
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
+    await service.publishReview("guest", review.id);
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual({
+      property_id: "p1", overall_score: 5, review_count: 1,
+    });
+    await service.deleteReview("guest", review.id);
+    expect(committed.get(Review)[0].status).toBe("DELETED");
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
   });
 
   it("updates a draft and replaces ratings atomically while advancing its version", async () => {

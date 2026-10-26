@@ -59,13 +59,24 @@ describe("getAssigneeEmailById", () => {
             Payload: encodePayload({ statusCode: 200, body: JSON.stringify({ email: "assignee@example.com" }) }),
         });
 
-        await expect(getAssigneeEmailById("member-1")).resolves.toBe("assignee@example.com");
+        await expect(getAssigneeEmailById("member-1", "host-1")).resolves.toBe("assignee@example.com");
+    });
+
+    it("scopes the lookup to the requesting host", async () => {
+        mockSend.mockResolvedValue({
+            Payload: encodePayload({ statusCode: 200, body: JSON.stringify({ email: "assignee@example.com" }) }),
+        });
+
+        await getAssigneeEmailById("member-1", "host-1");
+
+        const sentPayload = JSON.parse(mockSend.mock.calls[0][0].Payload);
+        expect(sentPayload.queryStringParameters).toEqual({ id: "member-1", hostId: "host-1" });
     });
 
     it("throws when host-team returns a FunctionError", async () => {
         mockSend.mockResolvedValue({ FunctionError: "Unhandled", Payload: encodePayload({}) });
 
-        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+        await expect(getAssigneeEmailById("member-1", "host-1")).rejects.toThrow(/Failed to fetch assignee email/);
     });
 
     it("throws when host-team responds with a non-200 status", async () => {
@@ -73,13 +84,13 @@ describe("getAssigneeEmailById", () => {
             Payload: encodePayload({ statusCode: 404, body: JSON.stringify({ message: "Team member not found" }) }),
         });
 
-        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+        await expect(getAssigneeEmailById("member-1", "host-1")).rejects.toThrow(/Failed to fetch assignee email/);
     });
 
     it("throws when the response body is malformed", async () => {
         mockSend.mockResolvedValue({ Payload: encodePayload({ statusCode: 200, body: "not valid json" }) });
 
-        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/Failed to fetch assignee email/);
+        await expect(getAssigneeEmailById("member-1", "host-1")).rejects.toThrow(/Failed to fetch assignee email/);
     });
 
     it("throws when no email is present in the response", async () => {
@@ -87,7 +98,7 @@ describe("getAssigneeEmailById", () => {
             Payload: encodePayload({ statusCode: 200, body: JSON.stringify({}) }),
         });
 
-        await expect(getAssigneeEmailById("member-1")).rejects.toThrow(/no email found/);
+        await expect(getAssigneeEmailById("member-1", "host-1")).rejects.toThrow(/no email found/);
     });
 });
 

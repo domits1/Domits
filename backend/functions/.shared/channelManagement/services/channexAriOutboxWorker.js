@@ -146,7 +146,7 @@ export default class ChannexAriOutboxWorker {
         await this.outbox.markSkipped(ids, { now, failureReason: reason });
         recorded.push(outcome);
       } else if (outcome === OUTCOME.FAILED) {
-        await this.outbox.markFailed(ids, { now, failureReason: reason });
+        await this.markFailedAndReport(outcomeRows, { now, failureReason: reason });
         recorded.push(outcome);
       } else {
         recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason, partlySent })));
@@ -155,6 +155,24 @@ export default class ChannexAriOutboxWorker {
     return worstOutcome(recorded);
   }
 
+  // A FAILED row is a change that will never reach Channex, so it is also logged as one
+  // JSON line: the alarm on failed changes is a CloudWatch metric filter on it (#3620).
+  // The line is best-effort: a logging error must not interrupt recording the other rows.
+  async markFailedAndReport(rows, { now, failureReason }) {
+    await this.outbox.markFailed(rows.map((row) => row.id), { now, failureReason });
+    try {
+      this.log.error(
+        JSON.stringify({
+          event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+          domitsPropertyId: rows[0]?.domitsPropertyId ?? null,
+          count: rows.length,
+          reason: failureReason ?? null,
+        })
+      );
+    } catch {
+      // Nothing else to report to: the rows are already FAILED and stay visible in the table.
+    }
+  }
 
   // Rows the call limit held back wait one minute: while they wait, the claim holds
   // back their call type, so a property never gets two batches of calls within one
@@ -183,7 +201,7 @@ export default class ChannexAriOutboxWorker {
       recorded.push(OUTCOME.DEFERRED);
     }
     if (exhausted.length) {
-      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      await this.markFailedAndReport(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
       recorded.push(OUTCOME.FAILED);
     }
     return recorded;
@@ -198,7 +216,7 @@ export default class ChannexAriOutboxWorker {
     const recorded = [];
     const exhausted = rows.filter((row) => partlySent.has(row.id) && (row.attemptCount || 1) >= MAX_ATTEMPTS);
     if (exhausted.length) {
-      await this.outbox.markFailed(exhausted.map((row) => row.id), { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
+      await this.markFailedAndReport(exhausted, { now, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
       recorded.push(OUTCOME.FAILED);
     }
 

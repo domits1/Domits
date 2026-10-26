@@ -63,6 +63,58 @@ describe('ChecklistSection', () => {
         expect(screen.getByLabelText('New checklist item title')).toHaveValue('');
     });
 
+    describe('inside another form, as in the Create Task modal', () => {
+        const renderInsideForm = () => {
+            const onOuterSubmit = jest.fn(e => e.preventDefault());
+            render(
+                <form onSubmit={onOuterSubmit}>
+                    <button type="submit">Create Task</button>
+                    <ChecklistSection {...baseProps} />
+                </form>
+            );
+            return onOuterSubmit;
+        };
+
+        test('clicking Add adds the item and does not submit the surrounding form', () => {
+            const onOuterSubmit = renderInsideForm();
+
+            fireEvent.change(screen.getByLabelText('New checklist item title'), { target: { value: 'Check AC' } });
+            fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+            expect(baseProps.onAddItem).toHaveBeenCalledWith({ title: 'Check AC', isRequired: true });
+            expect(onOuterSubmit).not.toHaveBeenCalled();
+        });
+
+        test('pressing Enter in the title field adds the item and is stopped from submitting the surrounding form', () => {
+            renderInsideForm();
+            const titleInput = screen.getByLabelText('New checklist item title');
+            fireEvent.change(titleInput, { target: { value: 'Check AC' } });
+
+            const wasNotPrevented = fireEvent.keyDown(titleInput, { key: 'Enter', code: 'Enter' });
+
+            expect(wasNotPrevented).toBe(false);
+            expect(baseProps.onAddItem).toHaveBeenCalledWith({ title: 'Check AC', isRequired: true });
+            expect(titleInput).toHaveValue('');
+        });
+
+        test('pressing Enter on a blank title adds nothing and still does not submit the surrounding form', () => {
+            renderInsideForm();
+
+            const wasNotPrevented = fireEvent.keyDown(screen.getByLabelText('New checklist item title'), { key: 'Enter', code: 'Enter' });
+
+            expect(wasNotPrevented).toBe(false);
+            expect(baseProps.onAddItem).not.toHaveBeenCalled();
+        });
+
+        test('other keys are left alone', () => {
+            renderInsideForm();
+
+            const wasNotPrevented = fireEvent.keyDown(screen.getByLabelText('New checklist item title'), { key: 'a', code: 'KeyA' });
+
+            expect(wasNotPrevented).toBe(true);
+        });
+    });
+
     test('does not add an item when the title is blank', () => {
         render(<ChecklistSection {...baseProps} />);
 
@@ -90,12 +142,12 @@ describe('ChecklistSection', () => {
     test('shows a loading indicator while a checklist template is being applied', () => {
         render(<ChecklistSection {...baseProps} isApplyingTemplate />);
 
-        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+        expect(screen.getByText('Loading checklist...')).toBeInTheDocument();
     });
 
     test('does not show the template loading indicator by default', () => {
         render(<ChecklistSection {...baseProps} />);
 
-        expect(screen.queryByText('Applying template...')).not.toBeInTheDocument();
+        expect(screen.queryByText('Loading checklist...')).not.toBeInTheDocument();
     });
 });
