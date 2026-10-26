@@ -6,11 +6,15 @@ import {
     deleteChecklistItem,
 } from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
+import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import { isValidInternalSecret } from "../.shared/internalSecretAuth.js";
 import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+
+const DEFAULT_OVERDUE_SWEEP_LIMIT = 20;
+const MAX_OVERDUE_SWEEP_LIMIT = 100;
 
 export class Controller {
     constructor() {
@@ -184,6 +188,20 @@ export class Controller {
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
+        }
+    }
+
+    async runOverdueSweep(event) {
+        const requested = Number(event.limit);
+        const limit = Number.isInteger(requested) && requested > 0
+            ? Math.min(requested, MAX_OVERDUE_SWEEP_LIMIT)
+            : DEFAULT_OVERDUE_SWEEP_LIMIT;
+        try {
+            const result = await notifyOverdueTasks({ limit });
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            console.error("The overdue sweep failed", error);
+            throw error;
         }
     }
 

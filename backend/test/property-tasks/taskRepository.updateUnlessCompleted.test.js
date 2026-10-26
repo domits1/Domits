@@ -1,15 +1,5 @@
 import { updateTaskUnlessCompleted } from "../../functions/property-tasks/data/taskRepository.js";
-
-const buildDataSource = (affected) => {
-    const chain = {
-        update: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue({ affected }),
-    };
-    return { chain, dataSource: { getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => chain) })) } };
-};
+import { buildUpdateDataSource as buildDataSource } from "./updateQueryBuilderDouble.js";
 
 describe("updateTaskUnlessCompleted", () => {
     it("writes the given fields to that task", async () => {
