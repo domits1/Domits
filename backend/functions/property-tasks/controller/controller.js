@@ -214,7 +214,6 @@ export class Controller {
         }
     }
 
-
     handleError(error) {
         return {
             statusCode: error.statusCode || 500,

@@ -166,9 +166,6 @@ export const claimOverdueNotification = async (dataSource, task, claimedAt) => {
     return Number(result?.affected || 0) === 1;
 };
 
-// Not scoped to one host: like the overdue sweep, this is a system job that covers every host.
-// A task is due soon when it is open and due within the next day. It is emailed once for each due
-// date, so a task whose due date is moved gets a new email for the new date.
 export const getDueSoonTasksToNotify = async (dataSource, now, limit) => {
     const repository = dataSource.getRepository(TaskEntity);
     return await repository.createQueryBuilder("task")
@@ -182,8 +179,6 @@ export const getDueSoonTasksToNotify = async (dataSource, now, limit) => {
         .getMany();
 };
 
-// Compare-and-swap on the due date the sweep read: a run that lost the race, or a task whose due
-// date was moved since it was read, changes nothing.
 export const claimDueSoonNotification = async (dataSource, task) => {
     const repository = dataSource.getRepository(TaskEntity);
     const result = await repository

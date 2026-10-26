@@ -78,8 +78,6 @@ Open your Domits dashboard to view it.`
     }
 };
 
-// Only an active team member is emailed as the assignee. Someone revoked from the team after being
-// assigned still has a record, so the status is checked, and the email falls back to the host.
 const findActiveAssignee = async (dataSource, task) => {
     if (!task.assignee_team_member_id) {
         return null;
@@ -88,8 +86,6 @@ const findActiveAssignee = async (dataSource, task) => {
     return teamMember?.status === "active" ? teamMember : null;
 };
 
-// For the scheduled emails, which have no request to take a recipient from: the assignee, or the host
-// when there is none or the assignee cannot be emailed. The recipient's own setting decides.
 const emailAssigneeOrHost = async (task, settingKey, { subject, body }) => {
     const dataSource = await Database.getInstance();
     const assignee = await findActiveAssignee(dataSource, task);

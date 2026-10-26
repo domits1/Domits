@@ -1,5 +1,3 @@
-// What the scheduled email sweeps have in common. Each task is claimed before its email goes out, so
-// overlapping runs cannot send twice. A failed email is not retried straight away: the claim is kept.
 export const sweepTasks = async ({ label, findTasks, claimTask, notifyTask }) => {
     const tasks = await findTasks();
 

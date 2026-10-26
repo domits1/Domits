@@ -338,8 +338,8 @@ describe("notifyTaskOverdue", () => {
         expect(sentPayload().body.toEmail).toBe("host@example.com");
     });
 
-    it("emails the host, not the assignee, once the assignee has been revoked from the team", async () => {
-        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "revoked" });
+    it("emails the host, not the assignee, when the assignee is not an active team member", async () => {
+        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "pending", member_user_id: null });
 
         await notifyTaskOverdue(overdueTask);
 
@@ -438,8 +438,8 @@ describe("notifyTaskDueSoon", () => {
         expect(sentBody().toEmail).toBe("host@example.com");
     });
 
-    it("emails the host, not the assignee, once the assignee has been revoked from the team", async () => {
-        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "revoked" });
+    it("emails the host, not the assignee, when the assignee is not an active team member", async () => {
+        mockGetTeamMemberById.mockResolvedValue({ ...activeMember, status: "pending", member_user_id: null });
 
         await notifyTaskDueSoon(dueSoonTask);
 
