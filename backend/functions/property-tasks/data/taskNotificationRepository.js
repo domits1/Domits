@@ -1,8 +1,6 @@
 import { IsNull } from "typeorm";
 import { Task_Notification as NotificationEntity } from "database/models/Task_Notification";
 
-// The id doubles as the dedupe key. Returns true when the row was stored, false when the same
-// event had already been stored.
 export const createNotification = async (dataSource, notification) => {
     const repository = dataSource.getRepository(NotificationEntity);
     const result = await repository
@@ -27,7 +25,6 @@ export const countUnreadForUser = async (dataSource, userId) => {
     return await repository.count({ where: { user_id: userId, read_at: IsNull() } });
 };
 
-// Scoped to the user, so nobody can mark someone else's notification as read.
 export const markNotificationRead = async (dataSource, notificationId, userId, readAt) => {
     const repository = dataSource.getRepository(NotificationEntity);
     const result = await repository

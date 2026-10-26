@@ -197,8 +197,6 @@ export class Controller {
         }
     }
 
-    // Notifications belong to the signed-in person, not to the host they may be acting for,
-    // so these use the caller's own username and never the effective host id.
     async getNotifications(event) {
         try {
             const { username } = await this.authManager.getUser(event.headers?.Authorization);

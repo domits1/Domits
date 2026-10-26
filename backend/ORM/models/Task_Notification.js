@@ -5,8 +5,6 @@ const bigintTransformer = {
     to: (value) => value,
 };
 
-// One row per notification per person. The id is built by the code that creates it from the
-// event, the task, the person and the change, so the same event can only be stored once.
 export const Task_Notification = new EntitySchema({
     name: "Task_Notification",
     tableName: "task_notification",

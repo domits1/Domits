@@ -24,9 +24,6 @@ const readSettings = async (dataSource, userId) =>
 
 const isOn = (settings, settingKey) => settings?.[settingKey] ?? true;
 
-// The in-app copy does not depend on the email setting. Someone with no user id yet (an invite that
-// is not accepted) has nobody to show it to. A failure is logged so the email can still go out.
-// The id is the dedupe key: the same event for the same person can only be stored once.
 const storeInApp = async (dataSource, settings, userId, { hostId, task, eventType, marker, title, message }) => {
     if (!userId || !isOn(settings, "notif_inapp_enabled")) {
         return;
