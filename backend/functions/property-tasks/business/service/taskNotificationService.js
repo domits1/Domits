@@ -5,7 +5,7 @@ import { getHostEmailById } from "./taskEscalationService.js";
 
 const lambdaClient = new LambdaClient({ region: "eu-north-1" });
 
-const sendEmail = async (toEmail, subject, body) => {
+export const sendEmail = async (toEmail, subject, body) => {
     const response = await lambdaClient.send(new InvokeCommand({
         FunctionName: "EmailNotificationService",
         Payload: JSON.stringify({ body: { toEmail, subject, body } }),
