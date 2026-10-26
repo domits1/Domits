@@ -216,6 +216,10 @@ export const deleteTask = async (hostId, taskId) => {
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
 
+    if (task?.status === "Completed") {
+        throw new BadRequestException("A completed task cannot be deleted. Change its status first.");
+    }
+
     if (task?.attachments) {
         try {
             const keys = JSON.parse(task.attachments);
