@@ -1,6 +1,7 @@
 import React from "react";
 import { mount } from "cypress/react";
-import DecliningPropertyRatings from "../../src/features/review/DecliningPropertyRatings";
+import { Auth } from "aws-amplify";
+import DecliningPropertyRatings from "../../views/DecliningPropertyRatings";
 
 const property = { property_id: "p1", trend_status: "DECLINING", previous_average_rating: 4.5,
   current_average_rating: 4, rating_change: -0.5, previous_review_count: 3, current_review_count: 4 };
@@ -11,6 +12,9 @@ const response = { properties: [property],
 
 describe("Declining property ratings layout", () => {
   beforeEach(() => {
+    cy.stub(Auth, "currentSession").resolves({
+      getIdToken: () => ({ getJwtToken: () => "test-token" }),
+    });
     cy.clock(Date.UTC(2026, 9, 7, 12), ["Date"]);
     cy.window().then((win) => {
       win.localStorage.clear();
@@ -26,13 +30,13 @@ describe("Declining property ratings layout", () => {
     }).as("trends");
   });
 
-  [[375, 812, "mobile"], [1440, 900, "desktop"]].forEach(([width, height, name]) => {
+  [[375, 812, "mobile"], [768, 1024, "tablet"], [1440, 900, "desktop"]].forEach(([width, height, name]) => {
     it(`renders the ${name} layout without page overflow`, () => {
       cy.viewport(width, height);
-      mount(<DecliningPropertyRatings userId="host" />);
+      mount(<div style={{ padding: 16, background: "#f5f7f5", fontFamily: "Arial, sans-serif" }}><DecliningPropertyRatings userId="host" /></div>);
       cy.wait(["@properties", "@trends"]);
       cy.contains("th", "Beach house").should("be.visible");
-      cy.contains("td", "-0.50").should("be.visible");
+      cy.contains("td", "-0.50").scrollIntoView().should("be.visible");
       cy.get("section input").each(($input) => {
         const bounds = $input[0].getBoundingClientRect();
         expect(bounds.left).to.be.at.least(0);
@@ -48,7 +52,7 @@ describe("Declining property ratings layout", () => {
       });
       cy.contains("td", "Declining").should("be.visible");
       cy.get("table").parent().scrollTo("left", { ensureScrollable: false });
-      cy.screenshot(`declining-property-ratings-${name}`, { capture: "viewport" });
+      cy.screenshot(`declining-property-ratings-${name}`, { capture: "fullPage" });
     });
   });
 });

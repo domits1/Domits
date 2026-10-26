@@ -1,0 +1,79 @@
+.page {
+  padding-right: 80px;
+  box-sizing: border-box;
+  min-width: 0;
+  color: #101d2e;
+}
+.pageHeading h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+.pageHeading p {
+  margin: 0;
+  color: #516780;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.viewMenu {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 20px 0 28px;
+  padding: 0;
+  border: 1px solid #deebe2;
+  border-radius: 9px;
+  background: #f3f8f4;
+  box-sizing: border-box;
+}
+.viewMenu button {
+  position: relative;
+  flex: 1 0 auto;
+  width: auto;
+  min-height: 50px;
+  margin: 0;
+  padding: 15px 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #3d5852;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
+}
+.viewMenu button + button::before {
+  position: absolute;
+  content: "";
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: #dfebe3;
+}
+.viewMenu button:hover {
+  background: #eaf7ed;
+}
+.viewMenu button[aria-pressed="true"] {
+  color: #104722;
+  background: #e7f6e9;
+  box-shadow: inset 0 -2px #00a414;
+}
+.viewMenu button:focus-visible {
+  outline: 3px solid #92ce9a;
+  outline-offset: -3px;
+}
+@media (max-width: 768px) {
+  .page {
+    padding-right: 16px;
+  }
+  .viewMenu button {
+    padding: 13px 16px;
+  }
+}
+.viewMenu button { transition: background-color 150ms ease, border-color 150ms ease; }
+.viewMenu button[aria-pressed="true"]:hover { background: #eaf7ed; }

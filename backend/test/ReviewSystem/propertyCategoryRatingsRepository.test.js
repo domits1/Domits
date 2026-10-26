@@ -39,8 +39,13 @@ describe("category aggregation repository", () => {
     expect(sql).toMatch(/"category"\."review_type" = \$\d+/);
     expect(sql).toMatch(/"category"\."is_active" = \$\d+/);
     expect(sql).toContain('AVG("rating"."rating")');
+    expect(sql).toContain('ORDER BY "category"."sort_order" ASC');
     expect(sql).toContain('COUNT(*)');
-    expect(sql).toContain('GROUP BY "rating"."category"');
+    expect(sql).toContain('GROUP BY "definition"."key"');
+    expect(sql).toContain('LOWER(TRIM("rating"."category")) = LOWER(TRIM("definition"."key"))');
+    expect(sql).toContain('LOWER(TRIM("rating"."category")) = LOWER(TRIM("definition"."label"))');
+    expect(sql).toMatch(/"definition"\."is_active" = \$\d+/);
+    expect(sql).toMatch(/"definition"\."review_type" = \$\d+/);
     expect(query.getParameters()).toEqual({ propertyId: "p1", hostId: "host-1",
       published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", minimum: 1, maximum: 5, active: true });
     expect(parameters).toEqual(expect.arrayContaining(["p1", "host-1", "PUBLISHED", "GUEST_TO_PROPERTY", 1, 5, true]));
@@ -49,8 +54,8 @@ describe("category aggregation repository", () => {
     const result = await new ReviewRepository().getPropertyCategoryRatings("p1", "host-1");
     expect(query.getQuery()).toContain('LEFT JOIN');
     expect(result).toEqual([
-      { category_key: "cleanliness", label: "Cleanliness", average_rating: 4.25, rating_count: 2 },
-      { category_key: "comfort", label: "Comfort", average_rating: null, rating_count: 0 },
+      { category_key: "cleanliness", label: "Cleanliness", average_rating: 4.25, rating_count: 2, sort_order: 0 },
+      { category_key: "comfort", label: "Comfort", average_rating: null, rating_count: 0, sort_order: 0 },
     ]);
   });
 });

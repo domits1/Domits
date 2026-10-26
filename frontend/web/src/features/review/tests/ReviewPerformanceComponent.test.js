@@ -1,14 +1,15 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import ReviewPerformance from "./ReviewPerformance";
-import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
-import { getPropertyReviewPerformance } from "../review/services/reviewAPI";
-jest.mock("./services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
-jest.mock("../review/services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
+import ReviewPerformance from "../views/ReviewPerformance";
+import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hostTaskPropertyService";
+import { getPropertyReviewPerformance } from "../services/reviewAPI";
+jest.mock("../../hostdashboard/services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
+jest.mock("../services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
+jest.mock("../components/CommonReviewTopics", () => () => null);
 jest.mock("recharts", () => {
   const React = require("react");
   const Container = ({ children }) => <div>{children}</div>;
-  return { ResponsiveContainer: Container, LineChart: Container, Line: () => null,
+  return { ResponsiveContainer: Container, ComposedChart: Container, Bar: () => null, Line: () => null,
     XAxis: () => null, YAxis: () => null, CartesianGrid: () => null, Tooltip: () => null };
 });
 const points = [{ period: "2026-01-01", average_score: 4.5, review_count: 2 },
@@ -60,8 +61,9 @@ test("displays an empty range and preserves missing scores", async () => {
   expect(screen.getByText("No score")).toBeInTheDocument();
 });
 test("shows authorization failures and retries the selected property", async () => {
-  getPropertyReviewPerformance.mockRejectedValueOnce(new Error("Property not found or access is denied."));
   render(<ReviewPerformance userId="host" />);
+  await screen.findByText("4.50");
+  getPropertyReviewPerformance.mockRejectedValueOnce(new Error("Property not found or access is denied."));
   await selectProperty();
   expect(await screen.findByRole("alert")).toHaveTextContent("access is denied");
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -89,4 +91,15 @@ test("handles a host with no properties", async () => {
   render(<ReviewPerformance userId="host" />);
   expect(await screen.findByText("No properties available.")).toBeInTheDocument();
   expect(getPropertyReviewPerformance).not.toHaveBeenCalled();
+});
+test("defaults to all properties and weights scores by review count", async () => {
+  getPropertyReviewPerformance.mockImplementation(async ({ propertyId }) => ({ periods: [
+    { period: "2026-01-01", average_score: propertyId === "p1" ? 5 : 3, review_count: propertyId === "p1" ? 3 : 1 },
+    { period: "2026-02-01", average_score: null, review_count: 0 },
+  ] }));
+  render(<ReviewPerformance userId="host" />);
+  expect(screen.getByLabelText("Property")).toHaveValue("");
+  expect(screen.getByRole("option", { name: "All Properties" })).toBeInTheDocument();
+  expect(await screen.findByText("4.50")).toBeInTheDocument();
+  expect(screen.getByText("No score")).toBeInTheDocument();
 });

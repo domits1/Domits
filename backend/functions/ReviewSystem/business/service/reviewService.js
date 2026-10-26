@@ -193,7 +193,8 @@ export class ReviewService {
     const periods = buckets.map((bucket) => {
       const row = byPeriod.get(bucket.period);
       return { ...bucket, average_score: row ? Number(row.average_score) : null,
-        review_count: row ? Number(row.review_count) : 0 };
+        review_count: row ? Number(row.review_count) : 0,
+        rating_distribution: Object.fromEntries([1, 2, 3, 4, 5].map((stars) => [stars, Number(row?.[`stars_${stars}`] ?? 0)])) };
     });
     return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
       end_date: query.endDate, periods };
@@ -268,6 +269,7 @@ export class ReviewService {
       ? String(review.reviewer_user_id) === callerUserId && !["DELETED", "REJECTED"].includes(review.status)
       : String(review.reviewee_user_id) === callerUserId && isPublished(review)).map((review) => ({
         ...toReviewView(review), rating: Number(review.overall_rating), content: review.public_review, date: review.created_at,
+        ...(scope === "received" ? { guest_name: review.guest_name ?? null } : {}),
         can_edit: scope === "written" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
         edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
       }));

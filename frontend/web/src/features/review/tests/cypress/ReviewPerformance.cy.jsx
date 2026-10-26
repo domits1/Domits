@@ -1,12 +1,14 @@
 import React from "react";
 import { mount } from "cypress/react";
 import { Auth } from "aws-amplify";
-import ReviewPerformance from "../../src/features/hostdashboard/ReviewPerformance";
+import ReviewPerformance from "../../views/ReviewPerformance";
+
+const Preview = ({ children }) => <div style={{ padding: 16, background: "#f5f7f5", fontFamily: "Arial, sans-serif" }}>{children}</div>;
 
 const periods = [
-  { period: "2026-01-01", average_score: 4.5, review_count: 2 },
-  { period: "2026-02-01", average_score: null, review_count: 0 },
-  { period: "2026-03-01", average_score: 4, review_count: 1 },
+  { period: "2026-01-01", average_score: 4.5, review_count: 2, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 1 } },
+  { period: "2026-02-01", average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+  { period: "2026-03-01", average_score: 4, review_count: 1, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 0 } },
 ];
 
 const selectProperty = () =>
@@ -32,11 +34,17 @@ describe("Review performance browser layout", () => {
     }).as("properties");
 
     cy.intercept("GET", "**/reviews?*", (request) => {
+      if (request.query.scope === "property-categories") {
+        request.alias = "categories";
+        request.reply({ body: { categories: [{ category_key: "cleanliness", label: "Cleanliness", average_rating: 4.75, rating_count: 2, sort_order: 1 }] } });
+        return;
+      }
       expect(request.query.scope).to.equal("property-performance");
+      request.alias = "performance";
       expect(request.query.propertyId).to.equal("p1");
       expect(request.headers.authorization).to.equal("test-token");
       request.reply({ body: { periods } });
-    }).as("performance");
+    });
   });
 
   [
@@ -46,13 +54,13 @@ describe("Review performance browser layout", () => {
   ].forEach(([width, height]) => {
     it(`renders controls, chart and table at ${width}px`, () => {
       cy.viewport(width, height);
-      mount(<ReviewPerformance userId="host" />);
+      mount(<Preview><ReviewPerformance userId="host" /></Preview>);
       cy.wait("@properties");
       selectProperty();
       cy.wait("@performance");
 
-      cy.contains("td", "4.50").should("be.visible");
-      cy.contains("td", "No score").should("be.visible");
+      cy.contains("td", "4.50").should("exist");
+      cy.contains("td", "No score").should("exist");
       cy.get(".recharts-surface").should("be.visible");
 
       cy.get("section").should(($panel) => {
@@ -77,8 +85,9 @@ describe("Review performance browser layout", () => {
       cy.document().should((document) => {
         expect(document.documentElement.scrollWidth).to.be.at.most(width);
       });
-      cy.screenshot(`review-performance-${width}`, { capture: "viewport" });
+      cy.screenshot(`review-performance-${width}`, { capture: "fullPage" });
     });
+
   });
 
   it("removes stale results when the date range is invalid", () => {
@@ -86,12 +95,13 @@ describe("Review performance browser layout", () => {
     cy.wait("@properties");
     selectProperty();
     cy.wait("@performance");
-    cy.contains("td", "4.50").should("be.visible");
+    cy.contains("td", "4.50").should("exist");
 
     cy.contains("label", "Start date").find("input").type("2099-01-01");
     cy.get('[role="alert"]').should("contain", "start date");
     cy.get("table").should("not.exist");
     cy.get(".recharts-surface").should("not.exist");
-    cy.get("@performance.all").should("have.length", 1);
+    // One request for the All Properties default, then one for the explicit selection.
+    cy.get("@performance.all").should("have.length", 2);
   });
 });

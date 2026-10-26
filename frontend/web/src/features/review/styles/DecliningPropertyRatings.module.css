@@ -1,0 +1,144 @@
+.headingIcon {
+  color: #a66b28;
+  background: #fff8eb;
+  border-color: #f1e5cc;
+}
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 20px;
+  color: #455e4f;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.toggle input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #23844b;
+  cursor: pointer;
+}
+.toggle input:focus-visible {
+  outline: 3px solid #acd8b9;
+  outline-offset: 3px;
+}
+.periods {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #e4ebe6;
+  border-radius: 12px;
+  background: #fbfcfa;
+  color: #7f9386;
+}
+.periods > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.periods span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.periods strong {
+  color: #3e5848;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+.policy {
+  margin: 14px 0 22px;
+  color: #68796f;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f0f3f1;
+  color: #5b6c61;
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.DECLINING {
+  color: #ac493c;
+  background: #fff0ec;
+}
+.IMPROVING {
+  color: #247747;
+  background: #ecf7ef;
+}
+.STABLE {
+  color: #526b87;
+  background: #edf3fa;
+}
+.INSUFFICIENT_DATA {
+  color: #786c51;
+  background: #f5f1e8;
+}
+.pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 22px;
+}
+.pages span {
+  color: #68796f;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 540px) {
+  .periods {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .periods > svg {
+    transform: rotate(90deg);
+  }
+  .pages {
+    justify-content: space-between;
+    gap: 8px;
+  }
+}
+.summaryGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 4px 0 20px; }
+.summaryCard { display: flex; align-items: center; gap: 20px; padding: 22px; border: 1px solid #e3ebe5; border-radius: 11px; background: #fff; transition: background-color 150ms ease, box-shadow 150ms ease; }
+.summaryCard:hover { background: #eaf7ed; box-shadow: 0 6px 18px #20372c1a; }
+.summaryIcon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 56px; height: 56px; border-radius: 12px; background: #eef9f0; color: #009d12; }
+.summaryCard:nth-child(n+2) .summaryIcon { color: #e33232; background: #fff0ef; }
+.summaryCard h4 { margin: 0 0 8px; font-size: 12px; font-weight: 650; color: #142033; }
+.summaryCard strong { color: #101c2e; font-size: 32px; line-height: 1.2; }
+.summaryCard p { margin: 7px 0 0; font-size: 11px; color: #63768a; line-height: 1.5; }
+.propertyCell { display: flex; align-items: center; gap: 14px; min-width: 210px; }
+.propertyCell strong { display: block; font-size: 12px; color: #142033; }
+.propertyCell small { display: block; margin-top: 5px; font-size: 11px; color: #60738a; font-weight: 400; }
+.propertyImage { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 64px; height: 52px; border-radius: 7px; background: #edf4ef; color: #68836f; overflow: hidden; }
+.propertyImage img { width: 100%; height: 100%; object-fit: cover; }
+.change { display: inline-block; padding: 6px 10px; border-radius: 7px; font-size: 12px; font-weight: 650; white-space: nowrap; }
+.trendCell { min-width: 140px; }
+.trendCell svg { display: block; width: 140px; height: 42px; margin-bottom: 4px; }
+@media (max-width: 1050px) { .summaryGrid { grid-template-columns: minmax(0, 1fr); } .summaryCard { padding: 18px; } }
+.summaryCard strong { display: inline-block; }
+.comparisonBadge { display: inline-block; margin-left: 10px; padding: 5px 9px; border-radius: 6px; background: #ffeded; color: #d52b2b; font-size: 11px; font-weight: 650; white-space: nowrap; }

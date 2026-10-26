@@ -164,6 +164,11 @@ export class ReviewRepository {
       .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
       .addSelect("AVG(review.overall_rating)", "average_score")
       .addSelect("COUNT(*)", "review_count")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 1 THEN 1 END)", "stars_1")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 2 THEN 1 END)", "stars_2")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 3 THEN 1 END)", "stars_3")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 4 THEN 1 END)", "stars_4")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 5 THEN 1 END)", "stars_5")
       .groupBy(period).orderBy(period, "ASC").getRawMany();
   }
 
@@ -172,10 +177,15 @@ export class ReviewRepository {
     const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
       .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
       .leftJoin((query) => query
-        .select("rating.category", "category_key")
+        .select("definition.key", "category_key")
         .addSelect("AVG(rating.rating)", "average_rating")
         .addSelect("COUNT(*)", "rating_count")
         .from(Review_Rating, "rating")
+        // Historical ratings store display labels; group both formats under the canonical key.
+        .innerJoin(Review_Category, "definition",
+          `(LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.key))
+            OR LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.label)))
+            AND definition.isActive = :active AND definition.reviewType = :reviewType`)
         .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
         .andWhere("review.publication_status = :published")
@@ -183,20 +193,21 @@ export class ReviewRepository {
         .andWhere("review.review_type = :reviewType")
         .andWhere("rating.rating BETWEEN :minimum AND :maximum")
         .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
-        .groupBy("rating.category"),
+        .groupBy("definition.key"),
       "aggregate", "aggregate.category_key = category.key")
       .select("category.key", "category_key")
       .addSelect("category.label", "label")
       .addSelect("aggregate.average_rating", "average_rating")
+      .addSelect("category.sortOrder", "sort_order")
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
       .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
-      .orderBy("category.key", "ASC").getRawMany();
+      .orderBy("category.sortOrder", "ASC").addOrderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
       average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
-      rating_count: Number(row.rating_count) }));
+      rating_count: Number(row.rating_count), sort_order: Number(row.sort_order ?? 0) }));
   }
 
   async findManagedProperty(propertyId, hostId) {
@@ -465,7 +476,19 @@ export class ReviewRepository {
         });
     }
 
-    return query.getMany();
+    const reviews = await query.getMany();
+    if (scope !== "received" || !reviews.length) return reviews;
+    // Match both identities so a mismatched review cannot expose another booking's guest name.
+    const bookings = await dataSource.getRepository(Booking).find({
+      where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+      select: ["id", "guestid", "guestname"],
+    });
+    const byId = new Map(bookings.map((booking) => [booking.id, booking]));
+    return reviews.map((review) => {
+      const booking = byId.get(review.booking_id);
+      return { ...review, guest_name: booking?.guestid === review.reviewer_user_id
+        ? booking.guestname?.trim() || null : null };
+    });
   }
 
   async findReviews(where) {
