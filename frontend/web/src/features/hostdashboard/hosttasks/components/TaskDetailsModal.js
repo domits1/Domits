@@ -55,6 +55,7 @@ const TaskDetailsModal = ({
     if (!viewingTask || !editedTask) return null;
 
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
+    const isCompleted = viewingTask.status === 'Completed';
     // Nothing happens to the checklist until Save: a different Type here only changes the form.
     const isSwitchingType = editedTask.type !== viewingTask.type;
 
@@ -247,7 +248,14 @@ const TaskDetailsModal = ({
                         )}
 
                         {isUnchanged ? (
-                            <button className="btn-danger" onClick={onDelete}>Delete</button>
+                            <button
+                                className="btn-danger"
+                                onClick={onDelete}
+                                disabled={isCompleted}
+                                title={isCompleted ? 'Change the status of a completed task before deleting it' : undefined}
+                            >
+                                Delete
+                            </button>
                         ) : (
                             <button className="btn-create-green" onClick={onSave} disabled={isApplyingChecklistTemplate}>Save Changes</button>
                         )}
