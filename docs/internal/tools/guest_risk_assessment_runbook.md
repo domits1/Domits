@@ -24,8 +24,8 @@ Checked on 2026-10-19: `information_schema.columns` returned no rows for `guest_
 | status | VARCHAR(30) | no | `PASSED`, `FLAGGED`, `FAILED` or `ERROR` (later Truvi PRs add `CANCELLED` and `CANCEL_REFUSED`) |
 | flaggedreason | TEXT | yes | Reason Truvi gave for a flag |
 | errormessage | TEXT | yes | Short error message (max 200 characters, no guest data) |
-| arrivaldate | BIGINT | yes | Check-in (epoch ms) last sent to Truvi, used to send date changes |
-| departuredate | BIGINT | yes | Check-out (epoch ms) last sent to Truvi |
+| arrivaldate | BIGINT | yes | Check-in (epoch ms) last sent to Truvi, used to send date changes. Set by the screening run. When Truvi refused a change, it holds the refused date and `errormessage` says why |
+| departuredate | BIGINT | yes | Check-out (epoch ms) last sent to Truvi, same rules as `arrivaldate` |
 | createdat | BIGINT | no | Epoch ms |
 | updatedat | BIGINT | no | Epoch ms |
 

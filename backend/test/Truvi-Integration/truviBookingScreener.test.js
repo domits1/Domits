@@ -58,6 +58,8 @@ describe("TruviBookingScreener", () => {
     expect(assessmentRepository.saveResult).toHaveBeenCalledWith({
       bookingId: "booking-1",
       result: { providerAssessmentId: "v-1", status: "PASSED", flaggedReason: null },
+      arrivalDate: Date.UTC(2026, 11, 1),
+      departureDate: Date.UTC(2026, 11, 5),
       now: 1000,
     });
     expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, errors: [] });
