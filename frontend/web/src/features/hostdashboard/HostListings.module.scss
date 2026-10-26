@@ -227,6 +227,14 @@
   color: #6b7280;
 }
 
+.isPending {
+  color: #b45309;
+}
+
+.isRejected {
+  color: #b91c1c;
+}
+
 @media (max-width: 768px) {
   .listingsDisplay {
     padding: 18px;
@@ -270,6 +278,7 @@
 
 .tabsNav {
   display: flex;
+  flex-wrap: wrap;
   gap: 32px;
   border-bottom: 1px solid #eaeaea;
 }

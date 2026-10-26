@@ -106,10 +106,16 @@ export const checkPricingStatus = async () => {
 // blocks publishing; it's shown for visibility only.
 export const checkTasksStatus = async () => ({ complete: false, scope: "account", unknown: true });
 
-export const checkGoLiveStatus = (property) => ({
-  complete: String(property?.status || "").toUpperCase() === "ACTIVE",
-  scope: "property",
-});
+// Only ACTIVE counts as complete: a listing under review is not live yet, and a rejected one needs resubmitting.
+export const checkGoLiveStatus = (property) => {
+  const status = String(property?.status || "").toUpperCase();
+  return {
+    complete: status === "ACTIVE",
+    pending: status === "PENDING_REVIEW",
+    rejected: status === "REJECTED",
+    scope: "property",
+  };
+};
 
 // --- Enterprise onboarding (portfolio-wide, not scoped to one listing) ---
 

@@ -1350,6 +1350,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Je woning is ingediend ter beoordeling.",
+      "pendingReviewNotice": "Deze woning wacht op beoordeling en gaat live zodra deze is goedgekeurd.",
       "breadcrumb": "Live gaan",
       "title": "{propertyName} live zetten",
       "subtitle": "Bekijk de checklist hieronder en publiceer daarna je woning.",

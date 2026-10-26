@@ -112,7 +112,9 @@ const HostOnboardingGoLive = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId]);
 
-  const isAlreadyLive = checkGoLiveStatus(property).complete;
+  const goLiveStatus = checkGoLiveStatus(property);
+  const isAlreadyLive = goLiveStatus.complete;
+  const isPendingReview = goLiveStatus.pending;
   const requiredEntries = Object.entries(checklist.required);
   const allRequiredComplete =
     requiredEntries.length === REQUIRED_CHECKS.length && requiredEntries.every(([, status]) => status?.complete);
@@ -121,9 +123,9 @@ const HostOnboardingGoLive = () => {
     setIsActivating(true);
     setActivateError(null);
     try {
-      await updatePropertyLifecycleStatus({ propertyId, status: "ACTIVE" });
+      const result = await updatePropertyLifecycleStatus({ propertyId, status: "ACTIVE" });
       setActivateSuccess(true);
-      setProperty((current) => ({ ...current, status: "ACTIVE" }));
+      setProperty((current) => ({ ...current, status: result?.status || "ACTIVE" }));
     } catch (error) {
       setActivateError(error.message || t.errorMessage);
     } finally {
@@ -153,6 +155,9 @@ const HostOnboardingGoLive = () => {
       {!isLoadingProperty && !loadError && (
         <>
           {isAlreadyLive && <p className="onboarding-golive-already-live">{t.alreadyLive}</p>}
+          {isPendingReview && !activateSuccess && (
+            <p className="onboarding-golive-already-live">{t.pendingReviewNotice}</p>
+          )}
 
           <div className="onboarding-golive-section">
             <h2 className="onboarding-golive-section-title">{t.requiredSection}</h2>
@@ -184,14 +189,16 @@ const HostOnboardingGoLive = () => {
             </ul>
           </div>
 
-          {!isAlreadyLive && !allRequiredComplete && (
+          {!isAlreadyLive && !isPendingReview && !allRequiredComplete && (
             <p className="onboarding-golive-blocked">{t.blockedMessage}</p>
           )}
 
           {activateError && <p className="onboarding-hub-error">{activateError}</p>}
-          {activateSuccess && <p className="onboarding-golive-success">{t.successMessage}</p>}
+          {activateSuccess && (
+            <p className="onboarding-golive-success">{isPendingReview ? t.submittedMessage : t.successMessage}</p>
+          )}
 
-          {!isAlreadyLive && (
+          {!isAlreadyLive && !isPendingReview && (
             <button
               type="button"
               className="onboarding-golive-activate-button"
