@@ -17,6 +17,7 @@ import { StaticPageStore } from "../data/repository/staticPageStore.js";
 import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
+import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
@@ -30,6 +31,7 @@ import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
+import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -1665,6 +1667,10 @@ export class PropertyController {
         if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
             throw new TypeError("Listing data could not be loaded for this live site.");
         }
+
+        if (String(propertyDetails.property.status ?? "").trim().toUpperCase() !== "ACTIVE") {
+            throw new WebsitePublishNotAllowedError();
+        }
     }
 
     buildDirectBookingWebsiteSummary(site, domains = []) {
@@ -2097,32 +2103,24 @@ export class PropertyController {
         return this.buildDirectBookingWebsiteSummary(site, liveDomain ? [liveDomain] : []);
     }
 
+    createWebsiteUnpublisher() {
+        return new WebsiteUnpublisher({
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            eventRepository: this.directBookingWebsiteEventRepository,
+        });
+    }
+
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatusWithStaticPageOutbox(site.id, "PREVIEW");
-        const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
-            site.id,
-            "DISABLED",
-            {
-                activationMode: "internal",
-                disabledByHost: true,
-                routingConfigured: false,
-            }
-        );
+        const { site: nextSite, liveDomain } = await this.createWebsiteUnpublisher().takeDown({
+            site,
+            draftId: draft?.id || null,
+            hostId,
+            propertyId,
+        });
         const allDomains = liveDomain
             ? [liveDomain]
             : await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-
-        await this.recordStandaloneWebsiteEventSafely({
-            draftId: draft?.id || null,
-            propertyId,
-            hostId,
-            eventType: "WEBSITE_SITE_UNPUBLISHED",
-            payload: {
-                siteId: site.id,
-                domain: liveDomain?.domain || "",
-                domainStatus: liveDomain?.status || "DISABLED",
-            },
-        });
 
         return this.buildDirectBookingWebsiteSummary(nextSite, allDomains);
     }
@@ -2970,7 +2968,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            if (error instanceof WebsitePublishConflictError) {
+            if (error instanceof WebsitePublishConflictError || error instanceof WebsitePublishNotAllowedError) {
                 return {
                     statusCode: error.statusCode,
                     headers: draftResponseHeaders,
