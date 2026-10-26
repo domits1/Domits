@@ -388,6 +388,243 @@ describe("Repository.updateOwner", () => {
   });
 });
 
+describe("Repository.archiveOwner", () => {
+  const NOW = TODAY + 15 * 3600000;
+  const ACTIVE_OWNER = Object.freeze({ id: OWNER_ID, status: "active" });
+  const CONFLICT_MESSAGE = "This owner changed at the same time. Reload and try again.";
+  const conflict = () => Object.assign(new Error("conflict"), { code: "40001" });
+
+  const archiveArgs = (overrides = {}) => ({
+    ownerId: OWNER_ID,
+    hostId: "host-1",
+    today: TODAY,
+    now: NOW,
+    assertArchivable: jest.fn(),
+    ...overrides,
+  });
+
+  const createArchiveDataSource = ({ owner = ACTIVE_OWNER, heldShares = [], failures = [] } = {}) => {
+    const calls = [];
+    const recorder = (name, result) =>
+      jest.fn(async () => {
+        calls.push(name);
+        return result;
+      });
+    const ownerRepository = {
+      findOne: recorder("lock owner", owner),
+      update: recorder("update owner", { affected: 1 }),
+    };
+    const shareRepository = {
+      find: recorder("read held shares", heldShares),
+      update: recorder("write shares", {}),
+      delete: recorder("write shares", {}),
+      insert: recorder("write shares", {}),
+      save: recorder("write shares", {}),
+    };
+    const repositories = new Map([
+      [Property_Owner, ownerRepository],
+      [Property_Owner_Property, shareRepository],
+    ]);
+    const manager = { getRepository: jest.fn((entity) => repositories.get(entity)) };
+    const pendingFailures = [...failures];
+    const transaction = jest.fn(async (work) => {
+      calls.push("begin");
+      const result = await work(manager);
+      const failure = pendingFailures.shift();
+      if (failure) throw failure;
+      return result;
+    });
+    Database.getInstance.mockResolvedValue({ transaction });
+    return { calls, transaction, ownerRepository, shareRepository };
+  };
+
+  const recordingAssert = (calls, implementation = () => {}) =>
+    jest.fn((facts) => {
+      calls.push("assertArchivable");
+      return implementation(facts);
+    });
+
+  const sqlOf = async (build) => {
+    const dataSource = new DataSource({ type: "postgres", entities: [Property_Owner, Property_Owner_Property] });
+    await dataSource.buildMetadatas();
+    return build(dataSource.createQueryBuilder()).getQueryAndParameters();
+  };
+
+  test("locks the owner, reads held shares, checks and then archives, in that order and in one transaction", async () => {
+    const dataSource = createArchiveDataSource();
+    const assertArchivable = recordingAssert(dataSource.calls);
+
+    await new Repository().archiveOwner(archiveArgs({ assertArchivable }));
+
+    expect(dataSource.calls).toEqual(["begin", "lock owner", "read held shares", "assertArchivable", "update owner"]);
+    expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  test("locks the caller's owner row for writing", async () => {
+    const { ownerRepository } = createArchiveDataSource();
+
+    await new Repository().archiveOwner(archiveArgs());
+
+    expect(ownerRepository.findOne).toHaveBeenCalledWith({
+      select: { id: true, status: true },
+      where: { id: OWNER_ID, host_id: "host-1" },
+      lock: { mode: "pessimistic_write" },
+    });
+  });
+
+  test("reads the owner's open and future-ending shares for the caller's host", async () => {
+    const { shareRepository } = createArchiveDataSource();
+
+    await new Repository().archiveOwner(archiveArgs());
+
+    const [{ where }] = shareRepository.find.mock.calls[0];
+    expect(where).toHaveLength(2);
+    where.forEach((branch) => {
+      expect(Object.keys(branch).sort()).toEqual(["effective_to", "host_id", "owner_id"]);
+      expect(branch).toMatchObject({ owner_id: OWNER_ID, host_id: "host-1" });
+    });
+    expect(where[0].effective_to.type).toBe("isNull");
+    expect([where[1].effective_to.type, where[1].effective_to.value]).toEqual(["moreThan", TODAY]);
+  });
+
+  test("hands the locked owner and the held shares to assertArchivable", async () => {
+    const heldShares = [{ owner_id: OWNER_ID, property_id: "property-1" }];
+    createArchiveDataSource({ heldShares });
+    const assertArchivable = jest.fn();
+
+    await new Repository().archiveOwner(archiveArgs({ assertArchivable }));
+
+    expect(assertArchivable).toHaveBeenCalledWith({ owner: ACTIVE_OWNER, heldShares });
+  });
+
+  test("sets only status archived and updated_at on the caller's owner row and never writes shares", async () => {
+    const { ownerRepository, calls } = createArchiveDataSource();
+
+    await new Repository().archiveOwner(archiveArgs());
+
+    expect(ownerRepository.update).toHaveBeenCalledTimes(1);
+    expect(ownerRepository.update).toHaveBeenCalledWith(
+      { id: OWNER_ID, host_id: "host-1" },
+      { status: "archived", updated_at: NOW }
+    );
+    expect(calls).not.toContain("write shares");
+  });
+
+  test("writes nothing for an owner that is already archived", async () => {
+    const dataSource = createArchiveDataSource({ owner: { id: OWNER_ID, status: "archived" } });
+    const assertArchivable = recordingAssert(dataSource.calls);
+
+    await new Repository().archiveOwner(archiveArgs({ assertArchivable }));
+
+    expect(dataSource.calls).toEqual(["begin", "lock owner", "read held shares", "assertArchivable"]);
+    expect(dataSource.ownerRepository.update).not.toHaveBeenCalled();
+  });
+
+  test("writes nothing when assertArchivable throws, and passes its error on", async () => {
+    const { ownerRepository, calls, transaction } = createArchiveDataSource({ owner: null });
+    const error = new NotFoundException("Owner not found.");
+    const assertArchivable = jest.fn(() => {
+      throw error;
+    });
+
+    await expect(new Repository().archiveOwner(archiveArgs({ assertArchivable }))).rejects.toBe(error);
+    expect(assertArchivable).toHaveBeenCalledWith({ owner: null, heldShares: [] });
+    expect(ownerRepository.update).not.toHaveBeenCalled();
+    expect(calls).not.toContain("write shares");
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  test("reruns the whole transaction after a DSQL conflict", async () => {
+    const dataSource = createArchiveDataSource({ failures: [conflict()] });
+
+    await new Repository().archiveOwner(archiveArgs());
+
+    expect(dataSource.transaction).toHaveBeenCalledTimes(2);
+    expect(dataSource.calls.filter((call) => call === "lock owner")).toHaveLength(2);
+    expect(dataSource.calls.filter((call) => call === "read held shares")).toHaveLength(2);
+  });
+
+  test("answers 409 when the conflict outlasts the retries", async () => {
+    const dataSource = createArchiveDataSource({ failures: [conflict(), conflict(), conflict()] });
+
+    const failure = new Repository().archiveOwner(archiveArgs());
+
+    await expect(failure).rejects.toBeInstanceOf(ConflictException);
+    await expect(failure).rejects.toMatchObject({ statusCode: 409, message: CONFLICT_MESSAGE });
+    expect(dataSource.transaction).toHaveBeenCalledTimes(3);
+  });
+
+  test("passes any other database error on unchanged", async () => {
+    const error = new Error("connection reset");
+    const dataSource = createArchiveDataSource({ failures: [error] });
+
+    await expect(new Repository().archiveOwner(archiveArgs())).rejects.toBe(error);
+    expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  test("generates SQL for the held shares read with the owner and the host in both branches", async () => {
+    const { shareRepository } = createArchiveDataSource();
+    await new Repository().archiveOwner(archiveArgs());
+    const [options] = shareRepository.find.mock.calls[0];
+
+    const [sql, parameters] = await sqlOf((builder) =>
+      builder.select("share").from(Property_Owner_Property, "share").setFindOptions(options)
+    );
+
+    const where = sql.slice(sql.indexOf("WHERE"));
+    expect(where.match(/"share"\."owner_id" = \$\d+/g)).toHaveLength(2);
+    expect(where.match(/"share"\."host_id" = \$\d+/g)).toHaveLength(2);
+    expect(where).toContain('"share"."effective_to" IS NULL');
+    expect(where).toMatch(/"share"\."effective_to" > \$\d+/);
+    expect(parameters).toEqual([OWNER_ID, "host-1", OWNER_ID, "host-1", TODAY]);
+  });
+
+  test("generates SQL for the archive with both the id and the host in the WHERE", async () => {
+    const { ownerRepository } = createArchiveDataSource();
+    await new Repository().archiveOwner(archiveArgs());
+    const [criteria, values] = ownerRepository.update.mock.calls[0];
+
+    const [sql, parameters] = await sqlOf((builder) => builder.update(Property_Owner).set(values).where(criteria));
+
+    expect(sql).toBe('UPDATE "property_owner" SET "status" = $1, "updated_at" = $2 WHERE ("id" = $3 AND "host_id" = $4)');
+    expect(parameters).toEqual(["archived", NOW, OWNER_ID, "host-1"]);
+  });
+
+  describe("guards", () => {
+    test.each([undefined, null, "", 42])("refuses an owner id %p before touching the database", async (ownerId) => {
+      await expect(new Repository().archiveOwner(archiveArgs({ ownerId }))).rejects.toThrow(/owner id/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+
+    test.each([undefined, null, "", 42])("refuses a host id %p before touching the database", async (hostId) => {
+      await expect(new Repository().archiveOwner(archiveArgs({ hostId }))).rejects.toThrow(/host id/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["undefined", undefined],
+      ["a string", String(TODAY)],
+      ["not a UTC midnight", TODAY + 1],
+      ["negative", -DAY_MS],
+    ])("refuses a today that is %s before touching the database", async (_label, today) => {
+      await expect(new Repository().archiveOwner(archiveArgs({ today }))).rejects.toThrow(/today/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["undefined", undefined],
+      ["null", null],
+      ["a string", String(NOW)],
+      ["a fraction", NOW + 0.5],
+      ["NaN", Number.NaN],
+      ["beyond the safe range", Number.MAX_SAFE_INTEGER + 1],
+    ])("refuses a now that is %s before touching the database", async (_label, now) => {
+      await expect(new Repository().archiveOwner(archiveArgs({ now }))).rejects.toThrow(/now/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+  });
+});
+
 describe("Repository scope guards", () => {
   const missingValues = [undefined, null, "", 42];
 

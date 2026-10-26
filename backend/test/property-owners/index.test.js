@@ -4,6 +4,7 @@ const mockController = {
   createOwner: jest.fn(),
   setShares: jest.fn(),
   updateOwner: jest.fn(),
+  archiveOwner: jest.fn(),
 };
 
 jest.mock("../../functions/property-owners/controller/controller.js", () => ({
@@ -26,6 +27,7 @@ beforeEach(() => {
   mockController.createOwner.mockReset().mockResolvedValue({ statusCode: 201, body: "{}" });
   mockController.setShares.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
   mockController.updateOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
+  mockController.archiveOwner.mockReset().mockResolvedValue({ statusCode: 200, body: '{"status":"archived"}' });
 });
 
 const expectNoControllerCall = () => {
@@ -34,6 +36,7 @@ const expectNoControllerCall = () => {
   expect(mockController.createOwner).not.toHaveBeenCalled();
   expect(mockController.setShares).not.toHaveBeenCalled();
   expect(mockController.updateOwner).not.toHaveBeenCalled();
+  expect(mockController.archiveOwner).not.toHaveBeenCalled();
 };
 
 afterEach(() => {
@@ -140,13 +143,28 @@ describe("property-owners router", () => {
     expect(response).toEqual({ statusCode: 200, body: "{}" });
     expect(mockController.updateOwner).toHaveBeenCalledWith(request);
     expect(mockController.getOwner).not.toHaveBeenCalled();
+    expect(mockController.archiveOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a uuid", "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b"],
+    ["an empty value", ""],
+  ])("routes PATCH with action archive and an id that is %s to archiveOwner with the event", async (_label, id) => {
+    const request = event("PATCH", { action: "archive", id });
+
+    const response = await handler(request);
+
+    expect(response).toEqual({ statusCode: 200, body: '{"status":"archived"}' });
+    expect(mockController.archiveOwner).toHaveBeenCalledWith(request);
+    expect(mockController.updateOwner).not.toHaveBeenCalled();
   });
 
   test.each([
     ["no query", null],
     ["unrelated query parameters but no id", { page: "1" }],
     ["action archive and no id", { action: "archive" }],
-    ["action archive next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["an unknown action next to an id", { action: "restore", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["archive in another case next to an id", { action: "ARCHIVE", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["set-shares next to an id", { action: "set-shares", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["an empty action next to an id", { action: "", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["a null action next to an id", { action: null, id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],

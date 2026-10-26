@@ -86,6 +86,15 @@ export class Controller {
     }
   }
 
+  async archiveOwner(event) {
+    try {
+      const hostId = await this.authorize(event);
+      return respond(200, await this.service.archiveOwner(hostId, event.queryStringParameters?.id));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   handleError(error) {
     if (isClientError(error)) {
       return respond(error.statusCode, { message: error.message });
