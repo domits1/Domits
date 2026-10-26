@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Pages from "./Pages.js";
-import spinner from "../../images/spinnner.gif";
-import deleteIcon from "../../images/icons/cross.png";
-import styles from './HostReviews.module.css';
-import general from './HostDashboard.module.scss'
+import Pages from "../../hostdashboard/Pages.js";
+import spinner from "../../../images/spinnner.gif";
+import deleteIcon from "../../../images/icons/cross.png";
+import styles from '../styles/HostReviews.module.css';
+import general from '../../hostdashboard/HostDashboard.module.scss'
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
+import { requestReview } from "../services/reviewAPI";
 import ReviewPerformance from "./ReviewPerformance";
-import reviewStyles from "../review/styles/ReviewPage.module.css";
+import reviewStyles from "../styles/ReviewPage.module.css";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);

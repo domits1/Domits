@@ -10,11 +10,11 @@ import {
   Star,
   Lightbulb,
 } from "lucide-react";
-import styles from "../review/styles/GuestReviews.module.css";
+import styles from "../styles/GuestReviews.module.css";
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
+import { requestReview } from "../services/reviewAPI";
 
 function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
   const rating = Number(review.overall_rating ?? review.rating);
