@@ -29,6 +29,16 @@ describe('notificationService', () => {
 
             await expect(fetchNotifications()).rejects.toThrow('Failed to load notifications: 500');
         });
+
+        it.each([
+            ['a task list, as an API without this endpoint answers', [{ id: 'task-1' }]],
+            ['an object without notifications', { message: 'ok' }],
+            ['nothing at all', null],
+        ])('throws when the request succeeds but the answer is %s, so the bell shows an error and not a crash', async (_label, body) => {
+            global.fetch.mockResolvedValue(okResponse(body));
+
+            await expect(fetchNotifications()).rejects.toThrow('Failed to load notifications: unexpected answer');
+        });
     });
 
     describe('markNotificationRead', () => {

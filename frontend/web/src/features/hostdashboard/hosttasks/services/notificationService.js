@@ -5,7 +5,9 @@ import { TASKS_API_URL, getHeaders } from '../../services/taskService';
 export const fetchNotifications = async () => {
     const response = await fetch(`${TASKS_API_URL}?action=notifications`, { method: 'GET', headers: getHeaders() });
     if (!response.ok) throw new Error(`Failed to load notifications: ${response.status}`);
-    return await response.json();
+    const data = await response.json();
+    if (!Array.isArray(data?.notifications)) throw new Error('Failed to load notifications: unexpected answer');
+    return data;
 };
 
 export const markNotificationRead = async (notificationId) => {
