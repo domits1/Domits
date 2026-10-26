@@ -55,11 +55,25 @@ describe("escalateTask", () => {
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
     });
 
-    it("rejects escalating a task that is not breaching its SLA", async () => {
-        const future = Date.now() + 24 * 60 * 60 * 1000;
-        mockGetTaskById.mockResolvedValue({ id: "task-1", status: "Pending", due_date: future });
+    it.each([
+        ["not due yet", Date.now() + 24 * 60 * 60 * 1000],
+        ["due soon", Date.now() + 60 * 60 * 1000],
+        ["without a due date", null],
+    ])("escalates an open task that is %s, not only an overdue one", async (_label, dueDate) => {
+        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: dueDate, title: "Fix AC" });
 
-        await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/not breaching/);
+        await expect(escalateTask("host-1", "task-1")).resolves.toEqual({ message: "Task escalated successfully" });
+
+        expect(mockEscalateTaskInDb).toHaveBeenCalledTimes(1);
+        expect(mockSendTaskEscalationEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(["Completed", "Cancelled"])("rejects escalating a %s task, since there is nothing left to chase", async (status) => {
+        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status, due_date: Date.now() - 1000 });
+
+        await expect(escalateTask("host-1", "task-1")).rejects.toThrow(/already closed/);
+
+        expect(mockEscalateTaskInDb).not.toHaveBeenCalled();
         expect(mockSendTaskEscalationEmail).not.toHaveBeenCalled();
     });
 
