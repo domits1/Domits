@@ -143,8 +143,8 @@ export const getAttachmentViewUrl = async (key) => {
     return viewUrl;
 };
 
-export const escalateTask = async (taskId) => {
-    const params = new URLSearchParams({ action: 'escalate', id: taskId });
+const postTaskAction = async (action, taskId) => {
+    const params = new URLSearchParams({ action, id: taskId });
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "POST",
         headers: getHeaders(),
@@ -152,11 +152,17 @@ export const escalateTask = async (taskId) => {
 
     if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.message || `Failed to escalate task: ${response.status}`);
+        throw new Error(errorBody?.message || `Failed to ${action} task: ${response.status}`);
     }
 
     return await response.json();
 };
+
+export const escalateTask = async (taskId) => await postTaskAction('escalate', taskId);
+
+export const approveTask = async (taskId) => await postTaskAction('approve', taskId);
+
+export const rejectTask = async (taskId) => await postTaskAction('reject', taskId);
 
 export const deleteTask = async (taskId) => {
     const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
