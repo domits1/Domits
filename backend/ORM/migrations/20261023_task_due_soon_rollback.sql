@@ -10,6 +10,3 @@ ALTER TABLE main.host_settings
 
 ALTER TABLE test.property_task
     DROP COLUMN IF EXISTS due_soon_notified_for;
-
-ALTER TABLE test.host_settings
-    DROP COLUMN IF EXISTS notif_email_due_soon;
