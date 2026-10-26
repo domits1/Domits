@@ -18,7 +18,7 @@ Re-saving the same assignee, unassigning, completing an already completed task, 
 - Stored in the `host_settings` table, written by the `host-settings` Lambda. There is one row per **logged-in user**, keyed by their Cognito username, so a team member has their own row.
 - The email settings (assigned, due soon, overdue, completed) and the in-app setting default to **on**. `notif_email_due_soon` is a nullable column, and an empty value counts as on, so users who saved settings before it existed keep getting the email. The SMS setting defaults to **off**, and nothing reads it yet. A user with no saved row gets these defaults.
 - Only **active** team members can be assigned a task and emailed. Someone whose invite is still pending (or who has left the team) cannot be assigned a task (the API answers 400) and gets no "Task assigned" email. The manual Escalate email looks the assignee up without checking this, so it is not covered.
-- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me", "Task due soon", "Task overdue" and "Task completed" are live. "Urgent tasks only" (SMS) and "Enable notifications" (in-app) are disabled and tagged "Coming soon".
+- Users change them in **Tasks → Settings → Notifications**. "Task assigned to me", "Task due soon", "Task overdue" and "Task completed" are live. "Enable notifications" switches the in-app notifications. Only "Urgent tasks only" (SMS) is disabled and tagged "Coming soon".
 - The page blocks **Save** until the settings have loaded. A save sends every field, so saving over defaults that never loaded would overwrite a saved opt-out. If the load fails, an alert says so, and if a save fails, a message says so and the Save button stays available.
 
 ## How it works
@@ -105,7 +105,8 @@ PATCH ?action=notifications-read-all
 - A failure to store a notification is logged as `Failed to store in-app notification for task <id>` and never stops the email.
 - Someone with no user id yet, such as an invitee who has not accepted, has nobody to show it to, so nothing is stored for them.
 - The endpoints use the signed-in person's own username, never the host id they may be acting for, and every query is limited to that user. A person cannot read or mark anyone else's notifications, and a host and a team member each see their own.
-- This page of the docs covers the server only. Nothing in the web app reads these endpoints yet, and the "Enable notifications" toggle in Settings is still disabled, so until the web part ships nobody can turn in-app notifications off and they are stored for everyone.
+- The bell is in the Tasks page header (`NotificationBell.js`). It loads the notifications when the page opens and again every 60 seconds, and shows an unread badge (99+ at most), the list, "Mark all as read", and "No notifications yet." when there are none. When loading fails it shows "Couldn't load your notifications." with "Try again". If the server answers OK but with something that is not a list of notifications, which is what an API without these endpoints does, the bell shows the same message and the rest of the page keeps working.
+- The "Enable notifications" toggle in Settings switches in-app notifications on and off for the signed-in person.
 
 ## Failure behaviour
 
@@ -137,6 +138,8 @@ Do the overdue steps above first: the Lambda timeout, async retries and the sche
 
 **Create the table before the code is deployed.** The `Task_Notification` entity is registered with the ORM, and the three new endpoints read the table, so they fail until `task_notification` exists. Run `backend/ORM/migrations/20261020_task_notification.sql` as the `admin` user, one statement at a time, `test` schema first and then `main`. The index on `main.task_notification (user_id)` is created with `CREATE INDEX ASYNC`: run it last, then run the `sys.jobs` query in the same file until the job shows as completed. The rollback file drops the table.
 
+The bell needs the server part to be deployed first. Until then it shows "Couldn't load your notifications."
+
 ## Not built yet
 
 - SMS and push channels, in-app notifications for due soon, reassigned, status-changed and deadline-changed events, quiet hours, daily digests, reminders other than due soon and overdue, retries and a delivery log.
@@ -151,5 +154,5 @@ Do the overdue steps above first: the Lambda timeout, async retries and the sche
 | Data | `backend/functions/property-tasks/data/taskRepository.js` (`getHostSettings`, `getOverdueTasksToNotify`, `claimOverdueNotification`, `getDueSoonTasksToNotify`, `claimDueSoonNotification`), `taskNotificationRepository.js` |
 | Schema | `backend/ORM/models/Property_Task.js`, `backend/ORM/models/Host_Settings.js`, `backend/ORM/migrations/20261019_property_task_overdue_notified.*`, `backend/ORM/migrations/20261023_task_due_soon.*`, `Task_Notification.js`, `backend/ORM/migrations/20261020_task_notification.*` |
 | Schedule | `backend/infrastructure/task-overdue/`, `backend/infrastructure/task-due-soon/` |
-| UI | `frontend/web/src/features/hostdashboard/hosttasks/components/SettingsView.js` |
-| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskOverdueService`, `taskDueSoonService`, `taskRepository.overdue`, `taskRepository.dueSoon`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `controller.notifications`, `taskInAppNotificationService`, `taskNotificationRepository`, `index`) and `SettingsView.test.js` |
+| UI | `frontend/web/src/features/hostdashboard/hosttasks/components/SettingsView.js`, `NotificationBell.js`, `services/notificationService.js` |
+| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskOverdueService`, `taskDueSoonService`, `taskRepository.overdue`, `taskRepository.dueSoon`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `controller.notifications`, `taskInAppNotificationService`, `taskNotificationRepository`, `index`), `SettingsView.test.js`, `NotificationBell.test.js` and `notificationService.test.js` |
