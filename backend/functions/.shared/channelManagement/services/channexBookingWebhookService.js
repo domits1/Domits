@@ -2,6 +2,7 @@ import { CHANNEX_STATUS } from "../channelManagementConstants.js";
 import { hasChannexRequiredCredentialFields } from "../providers/channex/credentialUtils.js";
 import { CHANNEX_BOOKING_POLL_SYNC_TYPE, buildChannexBookingPollConfig } from "../utils/channexBookingPollUtils.js";
 import { classifyWebhookPullResult } from "../utils/channexBookingWebhookClassification.js";
+import { markChannexAccountReconnectRequired } from "../utils/channexReconnectRequired.js";
 
 // API Gateway gives up after 29 seconds; the rest of the feed waits for Channex's retry.
 const WEBHOOK_TIME_BUDGET_MS = 20_000;
@@ -70,6 +71,9 @@ export default class ChannexBookingWebhookService {
 
     const integration = await this.accounts.getById(mapping.integrationAccountId);
     if (!isConnected(integration)) return answer(200, "INTEGRATION_NOT_CONNECTED");
+    // The key is known to be rejected, so calling Channex would only fail again. The bookings stay
+    // unacknowledged in Channex and are imported once a new key is connected (#3572).
+    if (integration.status === CHANNEX_STATUS.RECONNECT_REQUIRED) return answer(200, "RECONNECT_REQUIRED");
 
     const credentials = await this.readChannexSecret(integration, logContext);
     if (credentials.outcome === "CREDENTIALS_UNREADABLE") return answer(503, credentials.outcome);
@@ -103,13 +107,9 @@ export default class ChannexBookingWebhookService {
       };
       if (result.outcome === "FEED_UNAUTHORIZED") {
         // Marking the account is extra: failing to mark it must not turn a permanent 401 into a retried 503.
-        await this.accounts
-          .touchSyncFailure(
-            integration.id,
-            "CHANNEX_BOOKING_FEED_UNAUTHORIZED",
-            "Channex rejected the account's API key on the booking feed."
-          )
-          .catch((error) => logError("CHANNEX_BOOKING_WEBHOOK_ACCOUNT_MARK_FAILED", logContext, error));
+        await markChannexAccountReconnectRequired(this.accounts, integration.id, { source: "BOOKING_WEBHOOK" }).catch(
+          (error) => logError("CHANNEX_BOOKING_WEBHOOK_ACCOUNT_MARK_FAILED", logContext, error)
+        );
       }
     } finally {
       const acknowledgedAny = result.ackedCount > 0;
