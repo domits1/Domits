@@ -84,6 +84,29 @@ notifyTaskDueSoon → recipient's notif_email_due_soon → EmailNotificationServ
 - Escalated tasks are **not** skipped here (they are for overdue). A task can only be escalated once its due date has passed (`computeSlaStatus`), so the two emails do not normally meet. If an escalated task's due date is then moved into the future, it can still get a due soon email.
 - The claim comes before the email, so a failed email is not retried.
 
+### In-app notifications
+
+When an email is sent for a task being assigned, completed or overdue, an **in-app notification** is also stored for the same person who gets the email: the assignee for "assigned", the host for "completed", and the assignee for "overdue", or the host when there is none or the assignee is not an active team member. It is stored whether or not they turned that email off, and it is skipped when they turned in-app notifications off (`notif_inapp_enabled`, on by default).
+
+```
+notifyTaskAssigned / notifyTaskCompleted / notifyTaskOverdue
+        │  read the recipient's host_settings row
+        │  notif_inapp_enabled on (the default) and the recipient has a user id?
+        ▼
+createNotification (INSERT ... ON CONFLICT DO NOTHING)   data/taskNotificationRepository.js
+        │  task_notification row: id = <event>:<task id>:<user id>:<marker>
+        ▼
+GET   ?action=notifications               the 30 newest, with the unread count
+PATCH ?action=notification-read&id=...    one notification
+PATCH ?action=notifications-read-all
+```
+
+- The row id is the primary key and the dedupe key. The marker is the update time for "assigned", the completion time for "completed" and the email number for "overdue" (1 for the first, 2 for the first reminder, and so on). Storing the same event for the same person twice does nothing: `createNotification` answers true when it stored the row and false when it was already there.
+- A failure to store a notification is logged as `Failed to store in-app notification for task <id>` and never stops the email.
+- Someone with no user id yet, such as an invitee who has not accepted, has nobody to show it to, so nothing is stored for them.
+- The endpoints use the signed-in person's own username, never the host id they may be acting for, and every query is limited to that user. A person cannot read or mark anyone else's notifications, and a host and a team member each see their own.
+- This page of the docs covers the server only. Nothing in the web app reads these endpoints yet, and the "Enable notifications" toggle in Settings is still disabled, so until the web part ships nobody can turn in-app notifications off and they are stored for everyone.
+
 ## Failure behaviour
 
 - The task is already saved when the email is sent. A failed lookup or send is logged as `Failed to send task assigned notification for task <id>` (or `task completed`, `task overdue`, `task due soon`) and **never fails the task request**.
@@ -110,19 +133,23 @@ Do the overdue steps above first: the Lambda timeout, async retries and the sche
 3. After deployment, invoke the Lambda once by hand with `{"task":"notify-due-soon-tasks","limit":1}` on an open test task due within 24 hours and check the email and `due_soon_notified_for`.
 4. Enable the schedule.
 
+## Turning on in-app notifications
+
+**Create the table before the code is deployed.** The `Task_Notification` entity is registered with the ORM, and the three new endpoints read the table, so they fail until `task_notification` exists. Run `backend/ORM/migrations/20261020_task_notification.sql` as the `admin` user, one statement at a time, `test` schema first and then `main`. The index on `main.task_notification (user_id)` is created with `CREATE INDEX ASYNC`: run it last, then run the `sys.jobs` query in the same file until the job shows as completed. The rollback file drops the table.
+
 ## Not built yet
 
-- SMS, push and in-app channels, quiet hours, daily digests, reminders other than due soon and overdue, retries and a delivery log.
+- SMS and push channels, in-app notifications for due soon, reassigned, status-changed and deadline-changed events, quiet hours, daily digests, reminders other than due soon and overdue, retries and a delivery log.
 
 ## Where the code is
 
 | Layer | File |
 |---|---|
-| Routing | `backend/functions/property-tasks/index.js` (the scheduled `notify-overdue-tasks` and `notify-due-soon-tasks` events) |
-| Controller | `backend/functions/property-tasks/controller/controller.js` (`updateTask`, `runOverdueSweep`, `runDueSoonSweep`) |
-| Business | `backend/functions/property-tasks/business/service/taskNotificationService.js`, `taskOverdueService.js`, `taskDueSoonService.js`, `taskSweep.js`, `taskService.js` |
-| Data | `backend/functions/property-tasks/data/taskRepository.js` (`getHostSettings`, `getOverdueTasksToNotify`, `claimOverdueNotification`, `getDueSoonTasksToNotify`, `claimDueSoonNotification`) |
-| Schema | `backend/ORM/models/Property_Task.js`, `backend/ORM/models/Host_Settings.js`, `backend/ORM/migrations/20261019_property_task_overdue_notified.*`, `backend/ORM/migrations/20261023_task_due_soon.*` |
+| Routing | `backend/functions/property-tasks/index.js` (the scheduled `notify-overdue-tasks` and `notify-due-soon-tasks` events; the `notifications`, `notification-read` and `notifications-read-all` actions) |
+| Controller | `backend/functions/property-tasks/controller/controller.js` (`updateTask`, `runOverdueSweep`, `runDueSoonSweep`, `getNotifications`, `markNotificationRead`, `markAllNotificationsRead`) |
+| Business | `backend/functions/property-tasks/business/service/taskNotificationService.js`, `taskOverdueService.js`, `taskDueSoonService.js`, `taskSweep.js`, `taskService.js`, `taskInAppNotificationService.js` |
+| Data | `backend/functions/property-tasks/data/taskRepository.js` (`getHostSettings`, `getOverdueTasksToNotify`, `claimOverdueNotification`, `getDueSoonTasksToNotify`, `claimDueSoonNotification`), `taskNotificationRepository.js` |
+| Schema | `backend/ORM/models/Property_Task.js`, `backend/ORM/models/Host_Settings.js`, `backend/ORM/migrations/20261019_property_task_overdue_notified.*`, `backend/ORM/migrations/20261023_task_due_soon.*`, `Task_Notification.js`, `backend/ORM/migrations/20261020_task_notification.*` |
 | Schedule | `backend/infrastructure/task-overdue/`, `backend/infrastructure/task-due-soon/` |
 | UI | `frontend/web/src/features/hostdashboard/hosttasks/components/SettingsView.js` |
-| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskOverdueService`, `taskDueSoonService`, `taskRepository.overdue`, `taskRepository.dueSoon`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `index`) and `SettingsView.test.js` |
+| Tests | `backend/test/property-tasks/` (`taskNotificationService`, `taskOverdueService`, `taskDueSoonService`, `taskRepository.overdue`, `taskRepository.dueSoon`, `taskService.assignment`, `taskService.completionNotification`, `controller.updateTask`, `controller.runOverdueSweep`, `controller.notifications`, `taskInAppNotificationService`, `taskNotificationRepository`, `index`) and `SettingsView.test.js` |
