@@ -185,6 +185,7 @@ export class ReviewService {
     const start = parsePerformanceDate(query.startDate, "startDate");
     const end = parsePerformanceDate(query.endDate, "endDate");
     if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
+    // The exclusive bound includes the entire requested end date in UTC.
     const endExclusive = end + DAY_MS;
     const buckets = generatePerformancePeriods(start, endExclusive, interval);
     const rows = await this.repository.getPropertyReviewPerformance(id, userId, start, endExclusive, interval);

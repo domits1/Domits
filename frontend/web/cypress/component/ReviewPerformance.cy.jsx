@@ -1,5 +1,6 @@
 import React from "react";
 import { mount } from "cypress/react";
+import { Auth } from "aws-amplify";
 import ReviewPerformance from "../../src/features/hostdashboard/ReviewPerformance";
 
 const periods = [
@@ -13,6 +14,9 @@ const selectProperty = () =>
 
 describe("Review performance browser layout", () => {
   beforeEach(() => {
+    cy.stub(Auth, "currentSession").resolves({
+      getIdToken: () => ({ getJwtToken: () => "test-token" }),
+    });
     // Keep date defaults independent of the day the browser checks run.
     cy.clock(Date.UTC(2026, 9, 16), ["Date"]);
     cy.window().then((win) => {

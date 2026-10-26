@@ -146,6 +146,7 @@ export class ReviewRepository {
   }
 
   async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
+    // Fixed expressions keep the requested interval out of SQL interpolation.
     const expressions = {
       week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
       month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
@@ -154,6 +155,7 @@ export class ReviewRepository {
     if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
     const period = expressions[interval];
     const database = await Database.getInstance();
+    // Recheck ownership during aggregation in case the property changed owners.
     return this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
