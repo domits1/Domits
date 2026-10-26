@@ -12,6 +12,7 @@ const mockDeleteChecklistItem = jest.fn();
 const mockInternalCreateTask = jest.fn();
 const mockEscalateTask = jest.fn();
 const mockRunOverdueSweep = jest.fn();
+const mockRunDueSoonSweep = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -29,6 +30,7 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         internalCreateTask: mockInternalCreateTask,
         escalateTask: mockEscalateTask,
         runOverdueSweep: mockRunOverdueSweep,
+        runDueSoonSweep: mockRunDueSoonSweep,
     })),
 }));
 
@@ -45,7 +47,7 @@ describe("property-tasks handler routing", () => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
             mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
-            mockInternalCreateTask, mockEscalateTask, mockRunOverdueSweep]
+            mockInternalCreateTask, mockEscalateTask, mockRunOverdueSweep, mockRunDueSoonSweep]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
     });
 
@@ -67,6 +69,28 @@ describe("property-tasks handler routing", () => {
         await handler({ httpMethod: "GET", task: "notify-overdue-tasks", queryStringParameters: null });
 
         expect(mockRunOverdueSweep).not.toHaveBeenCalled();
+        expect(mockGetTasks).toHaveBeenCalledTimes(1);
+    });
+
+    it("a scheduled event with task=notify-due-soon-tasks routes to runDueSoonSweep, not the overdue sweep", async () => {
+        const event = { task: "notify-due-soon-tasks", limit: 5 };
+
+        await handler(event);
+
+        expect(mockRunDueSoonSweep).toHaveBeenCalledWith(event);
+        expect(mockRunOverdueSweep).not.toHaveBeenCalled();
+    });
+
+    it("a failing scheduled due soon sweep fails the invocation instead of answering 500, so the failure is visible", async () => {
+        mockRunDueSoonSweep.mockRejectedValue(new Error("database down"));
+
+        await expect(handler({ task: "notify-due-soon-tasks", limit: 5 })).rejects.toThrow("database down");
+    });
+
+    it("an HTTP request cannot trigger the due soon sweep, even if it carries the task name", async () => {
+        await handler({ httpMethod: "GET", task: "notify-due-soon-tasks", queryStringParameters: null });
+
+        expect(mockRunDueSoonSweep).not.toHaveBeenCalled();
         expect(mockGetTasks).toHaveBeenCalledTimes(1);
     });
 
