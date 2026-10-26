@@ -1,20 +1,9 @@
 import { getOverdueTasksToNotify, claimOverdueNotification } from "../../functions/property-tasks/data/taskRepository.js";
-import { buildUpdateDataSource } from "./updateQueryBuilderDouble.js";
+import { buildSelectDataSource, buildUpdateDataSource } from "./queryBuilderDoubles.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 describe("getOverdueTasksToNotify", () => {
-    const buildDataSource = (tasks) => {
-        const chain = {
-            where: jest.fn().mockReturnThis(),
-            andWhere: jest.fn().mockReturnThis(),
-            orderBy: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockReturnThis(),
-            getMany: jest.fn().mockResolvedValue(tasks),
-        };
-        return { chain, dataSource: { getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => chain) })) } };
-    };
-
     const conditions = (chain) =>
         [...chain.where.mock.calls, ...chain.andWhere.mock.calls].map(([sql]) => sql).join(" AND ");
 
@@ -22,13 +11,13 @@ describe("getOverdueTasksToNotify", () => {
         chain.andWhere.mock.calls.find(([sql]) => sql.includes("overdue_last_notified_at IS NULL"));
 
     it("returns the tasks the query finds", async () => {
-        const { dataSource } = buildDataSource([{ id: "task-1" }]);
+        const { dataSource } = buildSelectDataSource([{ id: "task-1" }]);
 
         await expect(getOverdueTasksToNotify(dataSource, 5000, 20)).resolves.toEqual([{ id: "task-1" }]);
     });
 
     it("only selects open, past-due tasks that are not escalated and not legacy", async () => {
-        const { dataSource, chain } = buildDataSource([]);
+        const { dataSource, chain } = buildSelectDataSource([]);
 
         await getOverdueTasksToNotify(dataSource, 5000, 20);
 
@@ -41,7 +30,7 @@ describe("getOverdueTasksToNotify", () => {
     });
 
     it("sends the first email only to tasks that went overdue within the last day", async () => {
-        const { dataSource, chain } = buildDataSource([]);
+        const { dataSource, chain } = buildSelectDataSource([]);
 
         await getOverdueTasksToNotify(dataSource, 10 * DAY_MS, 20);
 
@@ -51,7 +40,7 @@ describe("getOverdueTasksToNotify", () => {
     });
 
     it("sends a reminder two days after the last email, until the cap is reached", async () => {
-        const { dataSource, chain } = buildDataSource([]);
+        const { dataSource, chain } = buildSelectDataSource([]);
 
         await getOverdueTasksToNotify(dataSource, 10 * DAY_MS, 20);
 
@@ -63,7 +52,7 @@ describe("getOverdueTasksToNotify", () => {
     });
 
     it("puts tasks that have not been emailed yet first, then the longest-waiting reminders", async () => {
-        const { dataSource, chain } = buildDataSource([]);
+        const { dataSource, chain } = buildSelectDataSource([]);
 
         await getOverdueTasksToNotify(dataSource, 5000, 20);
 
