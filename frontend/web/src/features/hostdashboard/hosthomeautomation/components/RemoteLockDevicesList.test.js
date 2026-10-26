@@ -163,6 +163,31 @@ describe("RemoteLockDevicesList", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("uses the error text it is given instead of the default", () => {
+    renderList({ error: "boom", errorText: "RemoteLock needs to be reconnected." });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("RemoteLock needs to be reconnected.");
+  });
+
+  it("says when the list is cut short, and only then", () => {
+    const { rerender } = renderList({ devices: [device()], truncated: true });
+    expect(screen.getByText("Not all devices are shown.")).toBeInTheDocument();
+
+    rerender(
+      <RemoteLockDevicesList
+        connected
+        devices={[device()]}
+        truncated={false}
+        loading={false}
+        error={null}
+        onRetry={jest.fn()}
+        copy={COPY}
+        language="en"
+      />
+    );
+    expect(screen.queryByText("Not all devices are shown.")).not.toBeInTheDocument();
+  });
+
   it("uses the copy and language it is given", () => {
     renderList({
       copy: nl.settings.homeAutomation.devices,
