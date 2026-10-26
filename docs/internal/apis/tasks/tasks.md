@@ -9,6 +9,8 @@ Email notifications for the host dashboard Tasks module (issue #3510). This page
 | Task assigned | The assignee (a team member) | The assignee's own `notif_email_assigned` | A task is created with an assignee, or an update changes the assignee to someone new |
 | Task completed | The host | The host's own `notif_email_completed` | A **team member** moves a task to Completed. A host who completes their own task is not emailed |
 | Task overdue | The assignee, or the host when there is no assignee or the assignee has left the team | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
+| Task approved | The assignee, or the host when there is no assignee | None. It is always sent, and there is no Settings toggle for it | A host or manager approves a completed task |
+| Task rejected | The assignee, or the host when there is no assignee | None. It is always sent, and there is no Settings toggle for it | A host or manager rejects a completed task, which reopens it as In progress |
 
 Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand is skipped, so nobody gets both.
 
@@ -59,6 +61,14 @@ notifyTaskOverdue → recipient's notif_email_overdue → EmailNotificationServi
 - Tasks that were never emailed are picked before reminders, so a backlog of reminders cannot delay a first email.
 - Reminders go to whoever is the assignee at that moment, so a reassigned task reminds the new assignee.
 - The query covers every host. It is a system job, so there is no token: the caller needs `lambda:InvokeFunction` on the Lambda.
+
+## Approving and rejecting a completed task
+
+- **Who:** the host, an Admin, and the manager roles (General, Reservation, Guest Experience, Financial, Distribution, Revenue and Sales Manager, and Property Operations Manager). Anyone else gets a 401. The role comes from the signed-in user's token, never from the request.
+- **Approve** sets `property_task.approved_at`. **Reject** sets the status to In progress and clears the completed date, so the assignee can complete it again. Both are one `UPDATE ... WHERE status = 'Completed' AND approved_at IS NULL`, so two people deciding at once cannot both succeed, and an approved task cannot be rejected.
+- Moving a task to a different status clears `approved_at`, so completing it again needs a new approval. A normal task update cannot set `approved_at`, so nobody can approve a task by editing it.
+- Each decision is recorded in the `property_task_activity` table (`TASK_APPROVED` or `TASK_REJECTED`, with the person who decided) and emailed to the assignee, or to the host when there is none. There is no reason text yet. If the email cannot be sent, the decision still stands and the failure is logged.
+- **Before deploying:** add the column with `backend/ORM/migrations/20261026_property_task_approved_at.sql`, on `main` and `test`, one statement at a time. The entity reads it, so every task query fails until it exists. The rollback file drops it again.
 
 ## Failure behaviour
 
