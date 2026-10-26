@@ -5,7 +5,7 @@ import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hos
 import { getPropertyReviewPerformance } from "../services/reviewAPI";
 jest.mock("../../hostdashboard/services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
 jest.mock("../services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
-jest.mock("../components/CommonReviewTopics", () => () => null);
+jest.mock("../components/categoryRatings", () => () => null);
 jest.mock("recharts", () => {
   const React = require("react");
   const Container = ({ children }) => <div>{children}</div>;

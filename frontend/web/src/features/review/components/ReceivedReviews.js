@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Search, ChevronDown, Star, MapPin, Building2, MessageSquare, ChevronRight } from "lucide-react";
 import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
 import styles from "../styles/ReceivedReviews.module.css";
-import CommonReviewTopics from "./CommonReviewTopics";
+import CategoryRatings from "./categoryRatings";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);
@@ -288,7 +288,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             </p>
           )}
         </section>
-      <CommonReviewTopics userId={userId} propertyIds={[...Object.keys(properties),
+      <CategoryRatings userId={userId} propertyIds={[...Object.keys(properties),
         ...reviews.map((review) => review.property_id).filter((id) => typeof id === "string" && id.trim())]} />
     </aside>
     </div>

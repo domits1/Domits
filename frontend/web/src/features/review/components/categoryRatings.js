@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { requestReview } from "../services/reviewAPI";
 import styles from "../styles/ReceivedReviews.module.css";
 
-export default function CommonReviewTopics({ userId, propertyIds }) {
+export default function CategoryRatings({ userId, propertyIds }) {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const idsKey = JSON.stringify([...new Set(propertyIds)].sort());
+  const idsKey = JSON.stringify([...new Set(propertyIds)].sort((a, b) => a.localeCompare(b)));
 
   useEffect(() => {
     let active = true;

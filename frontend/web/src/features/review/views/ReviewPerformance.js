@@ -4,7 +4,7 @@ import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hos
 import { getPropertyReviewPerformance } from "../services/reviewAPI";
 import styles from "../styles/ReviewPerformance.module.css";
 import { ChartNoAxesCombined, Clock3, Star } from "lucide-react";
-import CommonReviewTopics from "../components/CommonReviewTopics";
+import CategoryRatings from "../components/categoryRatings";
 const STAR_COLORS = { 1: "#ff6655", 2: "#ffbf43", 3: "#c4e6c9", 4: "#70bd7b", 5: "#009d12" };
 
 const defaults = () => {
@@ -321,7 +321,7 @@ export default function ReviewPerformance({ userId }) {
               </div>
               <div className={styles.categorySummary}>
                 <p className={styles.hint}>All-time category ratings for the selected property</p>
-                <CommonReviewTopics userId={userId} propertyIds={propertyId ? [propertyId] : properties.map((property) => property.value)} />
+                <CategoryRatings userId={userId} propertyIds={propertyId ? [propertyId] : properties.map((property) => property.value)} />
               </div>
             </div>
           </div>
