@@ -109,6 +109,14 @@ describe("IntegrationController uses the logged in user", () => {
 
       expect(mockIntegrationService[method]).toHaveBeenCalledWith({ code: "abc", userId: "host-1" });
     });
+
+    test.each([null, ""])("does not let a body userId of %p replace the logged in user", async (userId) => {
+      mockIntegrationService[method].mockResolvedValue({ statusCode: 200, response: {} });
+
+      await controller[method](buildEvent({ sub: "host-1", body: JSON.stringify({ userId }) }));
+
+      expect(mockIntegrationService[method]).toHaveBeenCalledWith({ userId: "host-1" });
+    });
   });
 
   describe.each([
