@@ -122,19 +122,10 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_RATE_LIMITED", nextAttemptAt: NOW + 60_000 });
   });
 
-  test("marks the rows FAILED when Channex rejects the API key", async () => {
-    const { worker, syncCalendarChange, outbox } = createWorker();
-    syncCalendarChange.mockResolvedValue({
-      statusCode: 500,
-      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
-    });
-
-    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
-    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
-  });
-
   // A 401 means the key itself is rejected: every next call with it would fail too (#3572).
-  test("marks the account RECONNECT_REQUIRED and stops sending after a 401", async () => {
+  // Every change of the property waits the same way, also the one that got the 401: the full
+  // sync after a new key is connected sends the current state of all of them.
+  test("marks the account RECONNECT_REQUIRED, stops sending and skips every change after a 401", async () => {
     const { worker, syncCalendarChange, outbox, accounts, log } = createWorker();
     outbox.claim.mockResolvedValue([
       claimedRow({ id: "row-rates", changeTypes: ["rates"] }),
@@ -146,14 +137,18 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
       response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
     });
 
-    await worker.processProperty("property-1", { runStartedAt: NOW });
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("SKIPPED");
 
     expect(syncCalendarChange).toHaveBeenCalledTimes(1);
     expect(accounts.update).toHaveBeenCalledWith(
       "account-1",
       expect.objectContaining({ status: "RECONNECT_REQUIRED", lastErrorCode: "CHANNEX_API_KEY_REJECTED" })
     );
-    expect(outbox.markSkipped).toHaveBeenCalledWith(expect.any(Array), { now: NOW, failureReason: "RECONNECT_REQUIRED" });
+    expect(outbox.markSkipped).toHaveBeenCalledWith(["row-rates", "row-availability"], {
+      now: NOW,
+      failureReason: "RECONNECT_REQUIRED",
+    });
+    expect(outbox.markFailed).not.toHaveBeenCalled();
     expect(JSON.parse(log.warn.mock.calls[0][0])).toEqual({
       event: "CHANNEX_ACCOUNT_RECONNECT_REQUIRED",
       integrationAccountId: "account-1",
@@ -179,7 +174,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     const { worker, syncCalendarChange, log } = createWorker();
     syncCalendarChange.mockResolvedValue({
       statusCode: 500,
-      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 403, errorCode: "CHANNEX_FORBIDDEN" }] }] },
     });
 
     await worker.processProperty("property-1", { runStartedAt: NOW });
@@ -189,7 +184,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
       event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
       domitsPropertyId: "property-1",
       count: 1,
-      reason: "CHANNEX_UNAUTHORIZED",
+      reason: "CHANNEX_FORBIDDEN",
     });
   });
 
@@ -203,11 +198,11 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     });
     syncCalendarChange.mockResolvedValue({
       statusCode: 500,
-      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 403, errorCode: "CHANNEX_FORBIDDEN" }] }] },
     });
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
-    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_FORBIDDEN" });
     expect(outbox.returnToPending).not.toHaveBeenCalled();
   });
 

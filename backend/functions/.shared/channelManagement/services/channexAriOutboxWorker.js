@@ -110,9 +110,13 @@ export default class ChannexAriOutboxWorker {
         { userId: account.userId, domitsPropertyId, source: "CHANNEX_ARI_OUTBOX", ...group },
         { providerRequestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
       );
-      const result = classifySyncResponse(answer);
+      const classified = classifySyncResponse(answer);
+      if (classified.keyRejected) keyRejected = true;
+      // The call that got the 401 waits like the rest: its cause is the key, not its values.
+      const result = classified.keyRejected
+        ? { outcome: OUTCOME.SKIPPED, reason: "RECONNECT_REQUIRED", taskIds: [] }
+        : classified;
       sends.push({ group, sent: true, result });
-      if (result.keyRejected) keyRejected = true;
       // Only a rate limit or an outage says more calls of this type would fail too; a
       // rejected call (4xx) is about its own values.
       if (result.outcome === OUTCOME.RETRY) {
