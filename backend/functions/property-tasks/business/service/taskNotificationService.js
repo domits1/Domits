@@ -1,6 +1,7 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import Database from "database";
 import * as taskRepository from "../../data/taskRepository.js";
+import { createNotification } from "../../data/taskNotificationRepository.js";
 import { getHostEmailById } from "./taskEscalationService.js";
 
 const lambdaClient = new LambdaClient({ region: "eu-north-1" });
@@ -17,13 +18,30 @@ const sendEmail = async (toEmail, subject, body) => {
 };
 
 // A user without a saved settings row, or one who has not accepted the invite yet
-// and so has no user id, keeps the default (on).
-const isEmailEnabled = async (dataSource, userId, settingKey) => {
-    if (!userId) {
-        return true;
+// and so has no user id, keeps the defaults (everything on).
+const readSettings = async (dataSource, userId) =>
+    userId ? await taskRepository.getHostSettings(dataSource, userId) : null;
+
+const isOn = (settings, settingKey) => settings?.[settingKey] ?? true;
+
+const storeInApp = async (dataSource, settings, userId, { hostId, task, eventType, marker, title, message }) => {
+    if (!userId || !isOn(settings, "notif_inapp_enabled")) {
+        return;
     }
-    const settings = await taskRepository.getHostSettings(dataSource, userId);
-    return settings?.[settingKey] ?? true;
+    try {
+        await createNotification(dataSource, {
+            id: `${eventType}:${task.id}:${userId}:${marker}`,
+            user_id: userId,
+            host_id: hostId,
+            task_id: task.id,
+            event_type: eventType,
+            title,
+            message,
+            created_at: Date.now(),
+        });
+    } catch (error) {
+        console.error(`Failed to store in-app notification for task ${task.id}`, error);
+    }
 };
 
 // The task is already saved when this runs, so a failed email is logged and must not fail the request.
@@ -35,7 +53,16 @@ export const notifyTaskAssigned = async (hostId, task) => {
         if (!teamMember || teamMember.status !== "active") {
             return;
         }
-        if (!(await isEmailEnabled(dataSource, teamMember.member_user_id, "notif_email_assigned"))) {
+        const settings = await readSettings(dataSource, teamMember.member_user_id);
+        await storeInApp(dataSource, settings, teamMember.member_user_id, {
+            hostId,
+            task,
+            eventType: "assigned",
+            marker: task.updated_at,
+            title: "Task assigned",
+            message: `"${task.title}" at ${task.property_snapshot_label} was assigned to you.`,
+        });
+        if (!isOn(settings, "notif_email_assigned")) {
             return;
         }
 
@@ -58,7 +85,16 @@ Open your Domits dashboard to view it.`
 export const notifyTaskCompleted = async (hostId, task) => {
     try {
         const dataSource = await Database.getInstance();
-        if (!(await isEmailEnabled(dataSource, hostId, "notif_email_completed"))) {
+        const settings = await readSettings(dataSource, hostId);
+        await storeInApp(dataSource, settings, hostId, {
+            hostId,
+            task,
+            eventType: "completed",
+            marker: task.completed_date,
+            title: "Task completed",
+            message: `"${task.title}" at ${task.property_snapshot_label} was completed.`,
+        });
+        if (!isOn(settings, "notif_email_completed")) {
             return;
         }
 
@@ -86,11 +122,15 @@ const findActiveAssignee = async (dataSource, task) => {
     return teamMember?.status === "active" ? teamMember : null;
 };
 
-const emailAssigneeOrHost = async (task, settingKey, { subject, body }) => {
+const emailAssigneeOrHost = async (task, settingKey, { subject, body, inApp }) => {
     const dataSource = await Database.getInstance();
     const assignee = await findActiveAssignee(dataSource, task);
     const recipientUserId = assignee ? assignee.member_user_id : task.host_id;
-    if (!(await isEmailEnabled(dataSource, recipientUserId, settingKey))) {
+    const settings = await readSettings(dataSource, recipientUserId);
+    if (inApp) {
+        await storeInApp(dataSource, settings, recipientUserId, { hostId: task.host_id, task, ...inApp });
+    }
+    if (!isOn(settings, settingKey)) {
         return;
     }
 
@@ -99,7 +139,8 @@ const emailAssigneeOrHost = async (task, settingKey, { subject, body }) => {
 };
 
 const buildOverdueMessage = (task) => {
-    const isReminder = Number(task.overdue_notify_count) > 0;
+    const emailsSoFar = Number(task.overdue_notify_count) || 0;
+    const isReminder = emailsSoFar > 0;
     return {
         subject: isReminder ? `Reminder, task still overdue: ${task.title}` : `Task overdue: ${task.title}`,
         body: `The task "${task.title}" (property: ${task.property_snapshot_label}) ${isReminder ? "is still overdue and still" : "is past its due date and"} has not been completed.
@@ -107,6 +148,12 @@ const buildOverdueMessage = (task) => {
 Due: ${new Date(task.due_date).toISOString()}
 
 Open your Domits dashboard to view it.`,
+        inApp: {
+            eventType: "overdue",
+            marker: emailsSoFar + 1,
+            title: isReminder ? "Reminder: task still overdue" : "Task overdue",
+            message: `"${task.title}" at ${task.property_snapshot_label} ${isReminder ? "is still overdue." : "is overdue."}`,
+        },
     };
 };
 

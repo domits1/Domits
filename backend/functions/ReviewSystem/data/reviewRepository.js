@@ -239,6 +239,7 @@ export class ReviewRepository {
         ELSE 'STABLE' END`, "trend_status");
     const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
       .select("trends.*")
+      .addSelect("CASE WHEN trends.trend_status = 'INSUFFICIENT_DATA' THEN NULL ELSE current_average_rating - previous_average_rating END", "rating_change")
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
         boundary: options.threshold * (1 - 1e-12),
@@ -249,6 +250,7 @@ export class ReviewRepository {
     }
     const rows = await page.addOrderBy("trends.property_id", "ASC").offset(options.offset).limit(26).getRawMany();
     return rows.map((row) => ({ ...row,
+      rating_change: row.rating_change == null ? null : Number(row.rating_change),
       previous_average_rating: row.previous_average_rating == null ? null : Number(row.previous_average_rating),
       current_average_rating: row.current_average_rating == null ? null : Number(row.current_average_rating),
       previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));

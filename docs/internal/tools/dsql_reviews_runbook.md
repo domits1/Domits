@@ -103,3 +103,17 @@ WHERE n.nspname IN ('main', 'test')
   AND i.indisunique
 ORDER BY schema_name, table_name, index_name;
 ```
+
+## ReviewSystem runtime settings
+
+Manage these environment variables directly on the ReviewSystem Lambda in each target environment:
+
+| Variable | Purpose | Valid value |
+| --- | --- | --- |
+| `REVIEW_DECLINE_THRESHOLD` | Minimum rating change for declining or improving classification | Number greater than 0 and at most 4 |
+| `REVIEW_TREND_MIN_REVIEWS` | Minimum eligible reviews in each comparison period | Positive safe integer |
+| `REVIEW_EDIT_WINDOW_MS` | Review editing window in milliseconds | Positive safe integer; missing or invalid disables editing |
+
+The deployment workflow updates function code without configuring these environment variables. Configure and verify the trend settings before using the property-trends endpoint; runtime validation rejects missing or invalid policy values. Existing Lambda environment settings remain in place during code deployments.
+
+The removed environment configuration helper no longer adds a requirement for `lambda:GetFunctionConfiguration` or `lambda:UpdateFunctionConfiguration` to the deployment identity. The workflow still requires its existing permissions for checking functions and deploying code.

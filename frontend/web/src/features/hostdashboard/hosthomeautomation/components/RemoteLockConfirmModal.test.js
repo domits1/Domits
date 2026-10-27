@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RemoteLockConfirmModal from "./RemoteLockConfirmModal";
 import {
@@ -112,6 +112,75 @@ describe("RemoteLockConfirmModal", () => {
         renderModal: (onClose) => renderModal(variant, { onClose }),
       })
     );
+  });
+
+  describe("connect and reconnect", () => {
+    const AUTHORIZE_URL = "https://connect.remotelock.com/oauth/authorize?state=s";
+    let originalLocation;
+
+    beforeEach(() => {
+      originalLocation = window.location;
+      delete window.location;
+      window.location = { assign: jest.fn() };
+    });
+
+    afterEach(() => {
+      window.location = originalLocation;
+    });
+
+    it.each([
+      ["connect", "Connect"],
+      ["reconnect", "Reconnect"],
+    ])("%s sends the browser to RemoteLock and stays disabled while it leaves", async (variant, confirmName) => {
+      const user = userEvent.setup();
+      connectRemoteLock.mockResolvedValue({ status: "CONNECTING", authorizeUrl: AUTHORIZE_URL });
+      const onDone = jest.fn();
+      renderModal(variant, { onDone });
+
+      await user.click(screen.getByRole("button", { name: confirmName }));
+
+      await waitFor(() => expect(window.location.assign).toHaveBeenCalledWith(AUTHORIZE_URL));
+      expect(onDone).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    });
+
+    it.each([
+      [true, true],
+      [false, false],
+    ])("pageshow with persisted %s: modal back to normal %s", async (persisted, restored) => {
+      const user = userEvent.setup();
+      connectRemoteLock.mockResolvedValue({ status: "CONNECTING", authorizeUrl: AUTHORIZE_URL });
+      renderModal("connect");
+      await user.click(screen.getByRole("button", { name: "Connect" }));
+      await waitFor(() => expect(window.location.assign).toHaveBeenCalled());
+      const pageShow = new Event("pageshow");
+      Object.defineProperty(pageShow, "persisted", { value: persisted });
+
+      act(() => {
+        window.dispatchEvent(pageShow);
+      });
+
+      expect(screen.getByRole("button", { name: "Cancel" }).disabled).toBe(!restored);
+      expect(screen.getByRole("button", { name: restored ? "Connect" : "Connecting..." })).toBeInTheDocument();
+    });
+
+    it.each([
+      ["ALREADY_CONNECTED", "RemoteLock is already connected."],
+      ["CONFIG_MISSING", "RemoteLock isn't available right now. Please contact support."],
+      ["LEASE_UNAVAILABLE", "RemoteLock is busy. Please try again in a moment."],
+      ["SOMETHING_NEW", "Something went wrong. Please try again."],
+    ])("shows the message for %s and does not navigate", async (code, message) => {
+      const user = userEvent.setup();
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      connectRemoteLock.mockRejectedValue(Object.assign(new Error("x"), { code }));
+      renderModal("connect");
+
+      await user.click(screen.getByRole("button", { name: "Connect" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(message);
+      expect(window.location.assign).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Connect" })).toBeEnabled();
+    });
   });
 
   it("disables both buttons and shows the in-flight label while the request runs", async () => {
