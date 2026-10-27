@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
-import styles from "./styles/ReviewPage.module.css";
-import { createReview, getEditableReview, updateReview } from "./services/reviewAPI";
-import { getGuestBookings } from "../guestdashboard/services/bookingAPI";
+import styles from "../styles/ReviewPage.module.css";
+import { createReview, getEditableReview, updateReview } from "../services/reviewAPI";
+import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 import {
   canLeaveReview,
   getCanonicalBookingId,
   normalizeGuestBookingsResponse,
-} from "../guestdashboard/utils/guestDashboardUtils";
+} from "../../guestdashboard/utils/guestDashboardUtils";
 
 const RATING_LABELS = {
   1: "Horrible",
