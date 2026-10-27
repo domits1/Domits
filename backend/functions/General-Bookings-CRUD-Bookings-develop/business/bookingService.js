@@ -208,8 +208,11 @@ class BookingService {
         return await this.reservationRepository.readByDate(event.event.createdAt, event.event.property_Id);
       }
       case "paymentId": {
-        await this.authManager.authenticateUser(event.Authorization);
-        return await this.reservationRepository.readByPaymentId(event.event.paymentID);
+        const user = await this.authManager.authenticateUser(event.Authorization);
+        if (!user?.sub) {
+          throw new Unauthorized("You must be logged in.");
+        }
+        return await this.reservationRepository.readOwnBookingsByPaymentId(event.event.paymentID, user.sub);
       }
       case "hostId": {
         authToken = await this.authManager.authenticateUser(event.Authorization);

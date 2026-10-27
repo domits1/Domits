@@ -15,6 +15,16 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
+const OWN_BOOKING_PAYMENT_READ_COLUMNS = [
+  "id",
+  "property_id",
+  "guestid",
+  "arrivaldate",
+  "departuredate",
+  "guests",
+  "status",
+];
+
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
@@ -203,6 +213,25 @@ class ReservationRepository {
   // ---------
   // Read bookings by payment_Id (auth)
   // ---------
+
+  async readOwnBookingsByPaymentId(paymentID, userId) {
+    const client = await Database.getInstance();
+    const bookings = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(OWN_BOOKING_PAYMENT_READ_COLUMNS.map((column) => `booking.${column}`))
+      .where("booking.paymentid = :paymentid", { paymentid: paymentID })
+      .andWhere("(booking.guestid = :userId OR booking.hostid = :userId)", { userId })
+      .getMany();
+
+    if (bookings.length < 1) {
+      throw new NotFoundException("No booking found.");
+    }
+    return {
+      response: bookings,
+      statusCode: 200,
+    };
+  }
 
   async readByPaymentId(paymentID) {
     const client = await Database.getInstance();
