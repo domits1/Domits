@@ -145,13 +145,24 @@ describe("reading a booking by payment id", () => {
     expect(query.getParameters()).toMatchObject({ paymentid: "pi_paid' OR '1'='1", userId: "guest-1" });
   });
 
-  test("does not touch the database when the token is missing or invalid", async () => {
+  test.each([
+    ["missing", { event: { readType: "paymentId", paymentID: "pi_paid" } }],
+    ["invalid", readEvent("pi_paid", "expired-token")],
+  ])("does not touch the database when the token is %s", async (_label, event) => {
     const failure = Object.assign(new Error("Invalid Access Token"), { name: "NotAuthorizedException" });
-    const service = buildService(async () => {
+    const authenticateUser = jest.fn(async (authorization) => {
+      if (authorization === "token") {
+        return { sub: "guest-1" };
+      }
       throw failure;
     });
+    const service = new BookingService({
+      reservationRepository: new ReservationRepository(),
+      authManager: { authenticateUser },
+    });
 
-    await expect(service.read(readEvent("pi_paid", undefined))).rejects.toBe(failure);
+    await expect(service.read(event)).rejects.toBe(failure);
+    expect(authenticateUser).toHaveBeenCalledWith(event.Authorization);
     expect(read).not.toHaveBeenCalled();
   });
 
