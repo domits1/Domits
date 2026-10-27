@@ -160,6 +160,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         externalThreadId: t.externalThreadId || null,
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
         unreadCount: t.unreadCount ?? 0,
+        guestName: t.guestName || null,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -250,7 +251,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
     recipientId: partnerId,
     userId: partnerId,
 
-    givenName: resolvedInfoName || contactNameFallback,
+    givenName: contact?.guestName || resolvedInfoName || contactNameFallback,
     profileImage: contact?.profileImage || userInfo?.profileImage || null,
 
     latestMessage,

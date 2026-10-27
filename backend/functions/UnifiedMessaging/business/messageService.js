@@ -652,11 +652,25 @@ class MessageService {
       visible.map((t) => t.id),
       authenticatedUser.userId
     );
+    const guestNames = await this.findChannexGuestNames(visible, authenticatedUser.userId);
 
     return {
       statusCode: 200,
-      response: visible.map((t) => ({ ...t, unreadCount: unreadCounts[t.id] || 0 })),
+      response: visible.map((t) => ({
+        ...t,
+        unreadCount: unreadCounts[t.id] || 0,
+        ...(guestNames[t.bookingId] ? { guestName: guestNames[t.bookingId] } : {}),
+      })),
     };
+  }
+
+  async findChannexGuestNames(threads, hostId) {
+    const bookingIds = threads
+      .filter((t) => t.platform === "CHANNEX" && t.bookingId && idsEqual(t.hostId, hostId))
+      .map((t) => t.bookingId);
+    if (bookingIds.length === 0) return {};
+
+    return (await this.bookingRepository.findGuestNamesForHostBookings({ hostId, bookingIds })) || {};
   }
 
   async getMessages(threadId, authenticatedUser) {

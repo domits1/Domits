@@ -59,6 +59,23 @@ class BookingRepository {
     const count = await client.getRepository(Property).count({ where: { id: propertyId, hostid: hostId } });
     return count === 1;
   }
+
+  async findGuestNamesForHostBookings({ hostId, bookingIds }) {
+    if (!hostId || !Array.isArray(bookingIds) || bookingIds.length === 0) return {};
+
+    const client = await Database.getInstance();
+    const bookings = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(["booking.id", "booking.guestname"])
+      .where("booking.id IN (:...bookingIds)", { bookingIds })
+      .andWhere("booking.hostid = :hostId", { hostId })
+      .getMany();
+
+    return Object.fromEntries(
+      bookings.filter((booking) => booking.guestname).map((booking) => [booking.id, booking.guestname])
+    );
+  }
 }
 
 export default BookingRepository;
