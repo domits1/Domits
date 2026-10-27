@@ -1,4 +1,5 @@
 import { AuthManager } from "../auth/authManager.js";
+import { canReadDomitsFeedbackAsStaff } from "../auth/domitsFeedbackAccess.js";
 import { ReviewService } from "../business/service/reviewService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
@@ -170,6 +171,13 @@ export class Controller {
   async getPrivateFeedback(event) {
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getPrivateFeedback(userId, this.getPathParameter(event, "id"))));
+  }
+
+  async getDomitsPrivateFeedback(event) {
+    return this.executeAuthenticated(event, async (userId) => this.jsonResponse(200,
+      await this.service.getDomitsPrivateFeedback(userId, this.getPathParameter(event, "id"), {
+        isAuthorizedStaff: canReadDomitsFeedbackAsStaff(event),
+      })));
   }
 
   // Create a host response to a review.

@@ -21,6 +21,7 @@ export const Review = new EntitySchema({
         title: { type: "varchar", length: 255, nullable: false },
         public_review: { type: "text", nullable: false },
         private_feedback: { type: "text", nullable: true },
+        domits_private_feedback: { type: "text", nullable: true, select: false },
         verification_status: { type: "varchar", length: 50, nullable: false, default: "UNVERIFIED" },
         publication_status: { type: "varchar", length: 50, nullable: false, default: "UNPUBLISHED" },
         status: { type: "varchar", length: 50, nullable: false, default: "DRAFT" },

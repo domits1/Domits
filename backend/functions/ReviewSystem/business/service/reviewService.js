@@ -501,6 +501,18 @@ export class ReviewService {
 
   // Expose private feedback only to authorized users.
   // This keeps guest notes visible to the right audience without leaking them to the public review feed.
+  async getDomitsPrivateFeedback(userId, reviewId, { isAuthorizedStaff = false } = {}) {
+    this.assertCaller(userId);
+    this.assertId(reviewId, "review ID");
+    const review = await this.repository.findDomitsPrivateFeedbackByReviewId(reviewId.trim());
+    if (!review || ["DELETED", "REJECTED"].includes(review.status)) throw new NotFoundException("Review not found.");
+    if (review.reviewer_user_id !== userId && isAuthorizedStaff !== true) {
+      throw new ForbiddenException("You cannot access this Domits private feedback.");
+    }
+    return { review_id: review.id, booking_id: review.booking_id, property_id: review.property_id,
+      reviewer_user_id: review.reviewer_user_id, domits_private_feedback: review.domits_private_feedback ?? null };
+  }
+
   async getPrivateFeedback(userId, reviewId) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
@@ -619,6 +631,7 @@ export class ReviewService {
       throw new UnauthorizedException("An authenticated caller is required.");
     }
     const publicReview = this.validateReviewPayload(reviewData);
+    const domitsPrivateFeedback = this.normalizeDomitsPrivateFeedback(reviewData.domits_private_feedback);
 
     const bookingId = reviewData.booking_id.trim();
     const booking = await this.repository.findBookingById(bookingId);
@@ -663,6 +676,7 @@ export class ReviewService {
           title: reviewData.title.trim(),
           public_review: publicReview,
           private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+          domits_private_feedback: domitsPrivateFeedback,
           verification_status: "UNVERIFIED",
           publication_status: "UNPUBLISHED",
           status: "DRAFT",
@@ -738,8 +752,20 @@ export class ReviewService {
     return text;
   }
 
-  // Normalize optional private feedback without letting blanks become stored garbage.
-  // This keeps optional feedback consistent while avoiding empty values in the database.
+  // Validate Domits notes separately to preserve existing Host feedback behavior.
+  normalizeDomitsPrivateFeedback(value) {
+    if (value === undefined || value === null) return null;
+    if (typeof value !== "string" || INVALID_TEXT_CONTROLS.test(value)) {
+      throw new BadRequestException("Domits feedback must contain supported plain text.");
+    }
+    const text = this.normalizeOptionalText(value.replace(/\r\n?/g, "\n"));
+    if (text !== null && text.length > REVIEW_MAX_LENGTH) {
+      throw new BadRequestException(`Domits feedback must be ${REVIEW_MAX_LENGTH} characters or fewer.`);
+    }
+    return text;
+  }
+
+  // Keep optional feedback consistent by storing blanks as null.
   normalizeOptionalText(value) {
     if (!value) return null;
 
