@@ -602,6 +602,14 @@ export class ReviewRepository {
     });
   }
 
+  async findDomitsPrivateFeedbackByReviewId(reviewId) {
+    const dataSource = await Database.getInstance();
+    return dataSource.getRepository(Review).createQueryBuilder("review")
+      .select(["review.id", "review.booking_id", "review.property_id", "review.reviewer_user_id", "review.status"])
+      .addSelect("review.domits_private_feedback")
+      .where("review.id = :reviewId", { reviewId }).getOne();
+  }
+
   async findReviewByBookingTypeAndReviewer(key) {
     const dataSource = await Database.getInstance();
 

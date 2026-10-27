@@ -486,7 +486,7 @@ describe('Review workflows', () => {
   const draft = { id: "r1", booking_id: "b1", property_id: "p1", host_id: "host", reviewer_user_id: "guest",
     reviewee_user_id: "host", review_type: "GUEST_TO_PROPERTY", status: "DRAFT", publication_status: "UNPUBLISHED",
     verification_status: "UNVERIFIED", overall_rating: 4, title: "Stay", public_review: "Good",
-    private_feedback: "secret", created_at: now - 10, updated_at: now - 10 };
+    private_feedback: "secret", domits_private_feedback: "Domits secret", created_at: now - 10, updated_at: now - 10 };
   const published = { ...draft, status: "PUBLISHED", publication_status: "PUBLISHED" };
   const event = (userId = "guest", body) => ({ pathParameters: { id: "r1" },
     requestContext: { authorizer: { claims: { sub: userId } } }, body: body === undefined ? undefined : JSON.stringify(body) });

@@ -86,7 +86,7 @@ describe('Review entities and creation persistence', () => {
     expect(metadata.tablePath).toBe("main.review");
     expect(metadata.columns.map((column) => column.databaseName)).toEqual([
       "id", "booking_id", "property_id", "host_id", "reviewer_user_id", "reviewee_user_id", "review_type",
-      "overall_rating", "title", "public_review", "private_feedback", "verification_status", "publication_status",
+      "overall_rating", "title", "public_review", "private_feedback", "domits_private_feedback", "verification_status", "publication_status",
       "status", "created_at", "updated_at",
     ]);
     expect(metadata.findColumnWithPropertyName("id")).toMatchObject({ type: "varchar", isGenerated: false });

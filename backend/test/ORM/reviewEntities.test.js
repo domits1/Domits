@@ -38,15 +38,17 @@ describe.each(entities.map((entity) => [entity.options.tableName, entity]))(
       const source = new DataSource({ type: "postgres", entities: [entity] });
       await source.buildMetadatas();
       const metadata = source.getMetadata(entity);
+      // The Domits feedback column is installed by the later 20261027 migration.
+      const initialColumns = metadata.columns.filter(column => column.databaseName !== "domits_private_feedback");
       expect(metadata.primaryColumns.map((column) => column.databaseName)).toEqual(["id"]);
 
       for (const schema of ["test", "main"]) {
         const block = sql.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${schema}\\.${table} \\(([\\s\\S]*?)\\n\\);`))[1];
         const definitions = block.trim().split(/\n/).map((line) => line.trim().replace(/,$/, ""));
         expect(definitions.map((line) => line.split(" ")[0]).sort()).toEqual(
-          metadata.columns.map((column) => column.databaseName).sort()
+          initialColumns.map((column) => column.databaseName).sort()
         );
-        for (const column of metadata.columns) {
+        for (const column of initialColumns) {
           const definition = definitions.find((line) => line.startsWith(`${column.databaseName} `));
           const type = column.type === "int" ? "INTEGER" : column.type.toUpperCase();
           const parameters = column.length ? `(${column.length})` :
