@@ -208,7 +208,7 @@ function GuestReviews() {
               <Icon size={21} aria-hidden="true" />
             </span>
             <div>
-              <strong>{busy ? "�" : value}</strong>
+              <strong>{busy ? "..." : value}</strong>
               <span>{label}</span>
             </div>
           </div>
@@ -229,14 +229,14 @@ function GuestReviews() {
               aria-pressed={isWritten}
               className={isWritten ? styles.active : ""}
               onClick={() => setActiveTab("written")}>
-              My reviews <span>{isLoading ? "�" : reviews.length}</span>
+              My reviews <span>{isLoading ? "..." : reviews.length}</span>
             </button>
             <button
               type="button"
               aria-pressed={!isWritten}
               className={!isWritten ? styles.active : ""}
               onClick={() => setActiveTab("received")}>
-              Received reviews <span>{isLoading2 ? "�" : receivedReviews.length}</span>
+              Received reviews <span>{isLoading2 ? "..." : receivedReviews.length}</span>
             </button>
           </div>
 

@@ -28,8 +28,8 @@ describe("property review performance controller/service", () => {
   });
   test("uses the selected property, trusted owner and exact inclusive date bounds", async () => {
     await controller.getReviews(event({ propertyId: " property-1 ", hostId: "spoofed" }));
-    expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "host-1");
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "user-sub");
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse("2026-01-15T00:00:00Z"), Date.parse("2026-03-11T00:00:00Z"), "month");
   });
   test("returns null scores and zero counts when there are no reviews", async () => {
@@ -45,7 +45,7 @@ describe("property review performance controller/service", () => {
     const response = await controller.getReviews(event({ startDate: "2024-02-29", endDate: "2024-02-29" }));
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).periods).toHaveLength(1);
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse("2024-02-29T00:00:00Z"), Date.parse("2024-03-01T00:00:00Z"), "month");
   });
   test("fills months across year boundaries", async () => {
@@ -64,7 +64,7 @@ describe("property review performance controller/service", () => {
     expect(result.interval).toBe(interval);
     expect(result.periods.map((point) => point.period)).toEqual(expected);
     expect(result.periods.every((point) => point.average_score === null && point.review_count === 0)).toBe(true);
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse(`${startDate}T00:00:00Z`), Date.parse(`${endDate}T00:00:00Z`) + 86400000, interval);
   });
   test.each([
@@ -118,7 +118,7 @@ describe("property review performance controller/service", () => {
   });
   test("requires a verified manager identity", async () => {
     const request = event();
-    delete request.requestContext.authorizer.claims["cognito:username"];
+    delete request.requestContext.authorizer.claims.sub;
     expect((await controller.getReviews(request)).statusCode).toBe(401);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });

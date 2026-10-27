@@ -30,7 +30,7 @@ describe("homeAutomationConstants", () => {
 
   it.each([
     ["NOT_CONNECTED", "neutral", "notConnected", ["connect"]],
-    ["CONNECTING", "pending", "connecting", []],
+    ["CONNECTING", "pending", "connecting", ["connect"]],
     ["CONNECTED", "success", "connected", ["disconnect"]],
     ["AUTHENTICATION_ERROR", "error", "authenticationError", ["reconnect", "disconnect"]],
     ["CONNECTION_ERROR", "error", "connectionError", ["reconnect", "disconnect"]],

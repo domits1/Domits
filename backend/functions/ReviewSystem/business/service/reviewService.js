@@ -270,8 +270,8 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
-  async authorizeManagedProperty(callerUsername, propertyId) {
-    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
     if (typeof propertyId !== "string" || !propertyId.trim()) {
@@ -279,8 +279,7 @@ export class ReviewService {
     }
     this.assertId(propertyId, "property ID");
     const normalizedPropertyId = propertyId.trim();
-    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
-    // Avoid disclosing whether another manager's property exists.
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
   }
@@ -314,17 +313,11 @@ export class ReviewService {
       properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
   }
 
-  // Return the trusted review score for a manager-owned property.
-  async getPropertyOverallScore(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    return this.repository.getPropertyReviewScore(id, username);
-  }
-
   // Group current eligible scores by review creation period, rather than reconstructing past edits.
   // Exact inclusive UTC dates clip calendar buckets; coverage dates expose partial periods.
   // Week labels identify Mondays. Empty periods retain coverage with null scores and zero counts.
-  async getPropertyReviewPerformance(username, propertyId, query = {}) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
+  async getPropertyReviewPerformance(userId, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     const interval = query.interval === undefined ? "month" : query.interval;
     if (!["week", "month", "year"].includes(interval)) {
       throw new BadRequestException("interval must be week, month, or year.");
@@ -334,8 +327,7 @@ export class ReviewService {
     if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
     const endExclusive = end + DAY_MS;
     const buckets = generatePerformancePeriods(start, endExclusive, interval);
-    // The exclusive bound includes the entire requested end date in UTC.
-    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, endExclusive, interval);
+    const rows = await this.repository.getPropertyReviewPerformance(id, userId, start, endExclusive, interval);
     const byPeriod = new Map(rows.map((row) => [row.period, row]));
     const periods = buckets.map((bucket) => {
       const row = byPeriod.get(bucket.period);
@@ -346,10 +338,9 @@ export class ReviewService {
       end_date: query.endDate, periods };
   }
 
-  // Return category-level review metrics for a property the caller manages.
-  async getPropertyCategoryRatings(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+  async getPropertyCategoryRatings(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
@@ -400,12 +391,7 @@ export class ReviewService {
   }
 
   async getPropertyReviewScore(userId, propertyId) {
-    this.assertCaller(userId);
-    this.assertId(propertyId, "property ID");
-    const id = propertyId.trim();
-    if (!(await this.repository.findManagedProperty(id, userId))) {
-      throw new NotFoundException("Property not found.");
-    }
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     return this.repository.getPropertyReviewScore(id, userId);
   }
 

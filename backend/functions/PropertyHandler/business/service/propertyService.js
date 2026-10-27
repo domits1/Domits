@@ -24,12 +24,18 @@ import { PropertyLateCheckinRepository } from "../../data/repository/propertyLat
 import { PropertyHouseRuleRepository } from "../../data/repository/propertyHouseRuleRepository.js";
 import { PropertyCustomRuleRepository } from "../../data/repository/propertyCustomRuleRepository.js";
 import { PropertyDraftRepository } from "../../data/repository/propertyDraftRepository.js";
+import { DirectBookingWebsiteSiteRepository } from "../../data/repository/directBookingWebsiteSiteRepository.js";
+import { DirectBookingWebsiteDomainRepository } from "../../data/repository/directBookingWebsiteDomainRepository.js";
+import { StaticPageStore } from "../../data/repository/staticPageStore.js";
+import { CloudFrontTenantRepository } from "../../data/repository/cloudFrontTenantRepository.js";
+import { StaticPageWithdrawal } from "./staticPageWithdrawal.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 import { ConflictException } from "../../util/exception/ConflictException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
+import { ServiceUnavailableException } from "../../util/exception/ServiceUnavailableException.js";
 import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
 import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
@@ -76,7 +82,35 @@ export class PropertyService {
     this.propertyHouseRuleRepository = new PropertyHouseRuleRepository(systemManagerRepository);
     this.propertyCustomRuleRepository = new PropertyCustomRuleRepository(systemManagerRepository);
     this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
+    this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
+    this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
     this.destinationMappingService = new DestinationMappingService();
+  }
+
+  createStaticPageWithdrawal() {
+    return new StaticPageWithdrawal({
+      pageStore: new StaticPageStore(),
+      tenantRepository: new CloudFrontTenantRepository(),
+      domainRepository: this.directBookingWebsiteDomainRepository,
+    });
+  }
+
+  async withdrawWebsitePage(propertyId, hostId) {
+    const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+    if (!site) {
+      return;
+    }
+    try {
+      const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+      invalidationErrors.forEach((failure) => {
+        console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+      });
+    } catch (error) {
+      console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the listing was not deleted.`, error);
+      throw new ServiceUnavailableException(
+        "The website of this listing could not be taken offline, so the listing was not deleted. Please try again in a few minutes."
+      );
+    }
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -950,6 +984,7 @@ export class PropertyService {
       };
     }
 
+    await this.withdrawWebsitePage(propertyId, options.actorId);
     await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
     await this.propertyDeletionRepository.deletePropertyById(propertyId);
 
