@@ -143,4 +143,34 @@ describe("ChatScreen reservation messaging", () => {
       expect(screen.getByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument();
     });
   });
+
+  test("keeps a message the server saved as failed and marks it as failed", async () => {
+    mockSendMessage.mockResolvedValue({
+      success: false,
+      error: "UnifiedMessaging /send failed: 502",
+      saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "failed" },
+    });
+
+    renderChatScreen();
+    typeAndSend("Hello host");
+
+    await waitFor(() => {
+      expect(screen.getByText("!", { selector: ".message-status", exact: true })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Hello host", { selector: ".message-text" })).toBeInTheDocument();
+    expect(screen.getByTestId("message-toast")).toBeInTheDocument();
+  });
+
+  test("removes the optimistic message when the server did not save it", async () => {
+    mockSendMessage.mockResolvedValue({ success: false, error: "network error" });
+
+    renderChatScreen();
+    typeAndSend("Hello host");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("message-toast")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Hello host", { selector: ".message-text" })).not.toBeInTheDocument();
+    expect(screen.queryByText("…", { selector: ".message-status", exact: true })).not.toBeInTheDocument();
+  });
 });

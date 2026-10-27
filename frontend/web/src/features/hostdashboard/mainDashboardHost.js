@@ -164,6 +164,7 @@ function MainDashboardHost() {
           <Route path="settings/compliance" element={<HostSettingsCompliance />} />
           <Route path="settings/privacy-security" element={<HostSettingsPrivacySecurity />} />
           <Route path="settings/home-automation" element={<HomeAutomationRoute />} />
+          <Route path="settings/home-automation/callback" element={<HomeAutomationRoute callback />} />
           <Route path="settings/onboarding" element={<HostOnboardingHub />} />
           <Route path="settings/onboarding/enterprise" element={<HostOnboardingEnterprise />} />
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />

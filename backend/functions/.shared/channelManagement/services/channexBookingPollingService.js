@@ -11,7 +11,6 @@ import {
   buildChannexBookingPollConfig,
   buildChannexBookingPollPropertySummary,
   createEmptyChannexBookingPollResponse,
-  hasRequiredChannexBookingPollAllowlists,
   isActiveChannexPropertyMapping,
 } from "../utils/channexBookingPollUtils.js";
 import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
@@ -20,6 +19,17 @@ const nowMs = () => Date.now();
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+// The poll is a backup: a revision it acknowledges is one the webhook should have delivered.
+// One JSON line per property, so a CloudWatch metric filter can alarm on missed webhooks (#3576).
+const logMissedWebhook = (integration, domitsPropertyId, ackedCount) =>
+  console.warn(
+    JSON.stringify({
+      event: "CHANNEX_BOOKING_POLL_IMPORTED_MISSED",
+      integrationAccountId: requireStr(integration?.id),
+      domitsPropertyId,
+      ackedCount,
+    })
+  );
 const describeLocalError = (error) => ({
   code: error?.code || error?.name || "INTERNAL_ERROR",
   message: error?.message || "Unknown error",
@@ -179,6 +189,9 @@ export default class ChannexBookingPollingService {
       });
 
       applyChannexBookingPollPropertyResult(aggregate, propertySummary, propertyResponse);
+      if (propertyResponse.ackedCount > 0) {
+        logMissedWebhook(integration, domitsPropertyId, propertyResponse.ackedCount);
+      }
       if (propertyResponse.overallSuccess) {
         lockStatus = "SUCCESS";
       } else if (propertyResponse.ackedCount > 0) {
@@ -336,20 +349,6 @@ export default class ChannexBookingPollingService {
     }
 
     try {
-      if (!hasRequiredChannexBookingPollAllowlists(config)) {
-        aggregate.overallSuccess = false;
-        aggregate.warnings.push(
-          buildChannexPullIssue(
-            "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED",
-            "Automatic Channex booking polling requires both account and Domits property allowlists before it will call Channex."
-          )
-        );
-        aggregate.notes = [
-          "Set CHANNEX_BOOKING_POLL_ACCOUNT_IDS and CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS before enabling scheduled polling.",
-        ];
-        return ok(aggregate);
-      }
-
       const accounts = await this.accounts.listByChannel(CHANNEL_CHANNEX);
       aggregate.accountsChecked = Array.isArray(accounts) ? accounts.length : 0;
       for (const integration of Array.isArray(accounts) ? accounts : []) {
