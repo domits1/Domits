@@ -125,6 +125,15 @@ describe("reading a booking by payment id", () => {
     await expect(service.read(readEvent("FAILED: "))).rejects.toMatchObject({ statusCode: 404 });
   });
 
+  test("ignores a user id, host id or guest id sent with the request and uses only the token", async () => {
+    const service = buildService(async () => ({ sub: "guest-9" }));
+    const event = readEvent("pi_paid");
+    event.event = { ...event.event, userId: "guest-1", hostId: "host-1", guestId: "guest-1", sub: "guest-1" };
+
+    await expect(service.read(event)).rejects.toMatchObject({ statusCode: 404 });
+    expect(executed[0].getParameters()).toMatchObject({ userId: "guest-9" });
+  });
+
   test("binds the payment id and the caller as parameters and scopes the query to guest or host", async () => {
     const service = buildService(async () => ({ sub: "guest-1" }));
 
