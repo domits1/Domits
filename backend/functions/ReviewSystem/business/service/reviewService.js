@@ -1,4 +1,4 @@
-import { readTrendPolicy, parseTrendQuery, classifyTrend, TREND_PAGE_SIZE } from "../ratingTrends.js";
+import { readTrendPolicy, parseTrendQuery, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -147,7 +147,6 @@ export class ReviewService {
     return normalizedPropertyId;
   }
 
-  // Compare current eligible scores across adjacent UTC windows for owned properties.
   async getPropertyRatingTrends(username, query = {}) {
     if (typeof username !== "string" || !username.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
@@ -156,8 +155,6 @@ export class ReviewService {
     const options = parseTrendQuery(query, this.now());
     const { days, offset, previousStart, currentStart } = options;
     const { threshold, minimumReviews } = policy;
-    // Aggregate both windows and apply status/order before limiting the result.
-    // Ownership and all scores are read in one database statement/snapshot.
     const rows = await this.repository.getPropertyRatingTrendPage(username, { ...options, ...policy });
     const trends = rows.slice(0, TREND_PAGE_SIZE).map((row) => ({
       property_id: row.property_id,
@@ -165,9 +162,8 @@ export class ReviewService {
       previous_average_rating: row.previous_average_rating,
       current_review_count: row.current_review_count,
       previous_review_count: row.previous_review_count,
-      ...classifyTrend(
-        { overall_score: row.previous_average_rating, review_count: row.previous_review_count },
-        { overall_score: row.current_average_rating, review_count: row.current_review_count }, policy),
+      rating_change: row.rating_change,
+      trend_status: row.trend_status,
     }));
     const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
     return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,

@@ -103,3 +103,36 @@ WHERE n.nspname IN ('main', 'test')
   AND i.indisunique
 ORDER BY schema_name, table_name, index_name;
 ```
+
+## ReviewSystem trend deployment approval
+
+Changes to `backend/CD` and `.github/workflows/deploy.yml` require senior developer or DevOps approval before merge. Record the approver and a link to their PR review; tests do not establish this approval.
+
+The configuration helper runs only when ReviewSystem is selected for deployment, including shared-backend rebuilds. It manages `REVIEW_DECLINE_THRESHOLD` and `REVIEW_TREND_MIN_REVIEWS`, preserves other environment settings, and does not configure the review edit window. Both trend values must be valid in GitHub repository variables or the existing Lambda environment.
+
+The owner of the deployment credentials must verify the following permissions against the actual target account and region:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "lambda:GetFunctionConfiguration",
+    "lambda:UpdateFunctionConfiguration"
+  ],
+  "Resource": "arn:aws:lambda:eu-north-1:<account-id>:function:ReviewSystem"
+}
+```
+
+An operator with IAM simulation permission can check the deployment identity without updating Lambda:
+
+```sh
+aws iam simulate-principal-policy \
+  --policy-source-arn <deployment-role-or-user-arn> \
+  --action-names lambda:GetFunctionConfiguration lambda:UpdateFunctionConfiguration \
+  --resource-arns arn:aws:lambda:eu-north-1:<account-id>:function:ReviewSystem \
+  --query 'EvaluationResults[].{Action:EvalActionName,Decision:EvalDecision}'
+```
+
+Confirm both actions are allowed and check applicable permissions boundaries, session policies, and organization policies. Record the principal ARN, target resource, result, and confirmation time with the approval. Successfully reading configuration does not prove update permission.
+
+If configuration validation or AWS access fails, the workflow skips ReviewSystem, continues other selected functions, and reports a failed run at the end. Approval and permission confirmation remain merge prerequisites. This runbook does not grant permissions or record approval on behalf of the team.
