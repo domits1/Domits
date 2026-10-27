@@ -140,4 +140,19 @@ describe("reading a booking by payment id", () => {
     await expect(service.read(readEvent("pi_paid"))).rejects.toMatchObject({ statusCode: 401 });
     expect(read).not.toHaveBeenCalled();
   });
+
+  test.each([
+    ["the host who owns those inquiries", "host-1", "FAILED: "],
+    ["the guest of one of those inquiries", "guest-2", "FAILED: "],
+    ["a caller with a lowercase variant", "guest-2", " failed: "],
+    ["a caller without any payment id", "guest-1", ""],
+  ])("answers 404 for %s without querying the database", async (_label, sub, paymentID) => {
+    const service = buildService(async () => ({ sub }));
+
+    await expect(service.read(readEvent(paymentID))).rejects.toMatchObject({
+      statusCode: 404,
+      message: "No booking found.",
+    });
+    expect(read).not.toHaveBeenCalled();
+  });
 });

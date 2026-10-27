@@ -25,6 +25,14 @@ const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
 const BOOKING_STATUS_INQUIRY = "Inquiry";
 const BOOKING_STATUS_PAID = "Paid";
 const BOOKING_STATUS_CANCELLED = "Cancelled";
+const PLACEHOLDER_PAYMENT_ID_PREFIX = "FAILED";
+
+const isUnreadablePaymentId = (paymentId) => {
+  const normalized = String(paymentId ?? "")
+    .trim()
+    .toUpperCase();
+  return !normalized || normalized.startsWith(PLACEHOLDER_PAYMENT_ID_PREFIX);
+};
 
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
@@ -211,6 +219,9 @@ class BookingService {
         const user = await this.authManager.authenticateUser(event.Authorization);
         if (!user?.sub) {
           throw new Unauthorized("You must be logged in.");
+        }
+        if (isUnreadablePaymentId(event.event.paymentID)) {
+          throw new NotFoundException("No booking found.");
         }
         return await this.reservationRepository.readOwnBookingsByPaymentId(event.event.paymentID, user.sub);
       }
