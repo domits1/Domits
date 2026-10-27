@@ -146,7 +146,6 @@ export class ReviewRepository {
   }
 
   async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
-    // Fixed expressions keep the requested interval out of SQL interpolation.
     const expressions = {
       week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
       month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
@@ -155,7 +154,6 @@ export class ReviewRepository {
     if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
     const period = expressions[interval];
     const database = await Database.getInstance();
-    // Recheck ownership during aggregation in case the property changed owners.
     return this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
@@ -217,17 +215,10 @@ export class ReviewRepository {
     });
   }
 
-  async findManagedProperties(hostId, offset) {
-    const database = await Database.getInstance();
-    return database.getRepository(Property).find({ where: { hostid: hostId }, select: ["id"],
-      order: { id: "ASC" }, skip: offset, take: 26 });
-  }
-
   async getPropertyRatingTrendPage(hostId, options) {
     const database = await Database.getInstance();
     const aggregates = database.getRepository(Property).createQueryBuilder("property")
       .leftJoin(Review, "review", `review.property_id = property.id
-        AND review.verification_status = :verificationStatus
         AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
         AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
         AND review.overall_rating = FLOOR(review.overall_rating)
@@ -250,7 +241,7 @@ export class ReviewRepository {
       .select("trends.*")
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
-        boundary: options.threshold * (1 - 1e-12), verificationStatus: "VERIFIED",
+        boundary: options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
     if (options.sort === "declining-first") {
@@ -263,9 +254,8 @@ export class ReviewRepository {
       previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));
   }
 
-  async getPropertyReviewScore(propertyId, hostId, range) {
+  async getPropertyReviewScore(propertyId, hostId) {
     const dataSource = await Database.getInstance();
-    // Recheck ownership during aggregation in case the property changed owners.
     const query = dataSource.getRepository(Review).createQueryBuilder("review")
       .where("review.property_id = :propertyId", { propertyId })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
@@ -277,10 +267,6 @@ export class ReviewRepository {
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count");
-    if (range) {
-      query.andWhere("review.created_at >= :start", { start: range.start })
-        .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
-    }
     const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
