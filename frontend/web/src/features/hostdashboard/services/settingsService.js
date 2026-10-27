@@ -9,6 +9,7 @@ const getHeaders = () => ({
 
 const toFrontend = (data) => ({
     notifEmailAssigned: data.notif_email_assigned ?? true,
+    notifEmailDueSoon: data.notif_email_due_soon ?? true,
     notifEmailOverdue: data.notif_email_overdue ?? true,
     notifEmailCompleted: data.notif_email_completed ?? true,
     notifSmsUrgent: data.notif_sms_urgent ?? false,
@@ -21,6 +22,7 @@ const toFrontend = (data) => ({
 
 const toBackend = (data) => ({
     notif_email_assigned: data.notifEmailAssigned,
+    notif_email_due_soon: data.notifEmailDueSoon,
     notif_email_overdue: data.notifEmailOverdue,
     notif_email_completed: data.notifEmailCompleted,
     notif_sms_urgent: data.notifSmsUrgent,
