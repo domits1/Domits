@@ -1,6 +1,6 @@
 import React from "react";
 import { mount } from "cypress/react";
-import DecliningPropertyRatings from "../../src/features/review/DecliningPropertyRatings";
+import DecliningPropertyRatings from "../../views/DecliningPropertyRatings";
 
 const property = { property_id: "p1", trend_status: "DECLINING", previous_average_rating: 4.5,
   current_average_rating: 4, rating_change: -0.5, previous_review_count: 3, current_review_count: 4 };

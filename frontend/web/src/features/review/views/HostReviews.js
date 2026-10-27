@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Pages from "./Pages.js";
-import spinner from "../../images/spinnner.gif";
-import deleteIcon from "../../images/icons/cross.png";
-import styles from '../review/styles/HostReviews.module.css';
-import general from './HostDashboard.module.scss'
+import Pages from "../../hostdashboard/Pages.js";
+import spinner from "../../../images/spinnner.gif";
+import deleteIcon from "../../../images/icons/cross.png";
+import styles from '../styles/HostReviews.module.css';
+import general from '../../hostdashboard/HostDashboard.module.scss'
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
-import HostResponseForm from "../review/HostResponseForm";
+import { requestReview } from "../services/reviewAPI";
+import HostResponseForm from "../components/HostResponseForm";
 import ReviewPerformance from "./ReviewPerformance";
-import DecliningPropertyRatings from "../review/DecliningPropertyRatings";
-import reviewStyles from "../review/styles/ReviewPage.module.css";
+import DecliningPropertyRatings from "./DecliningPropertyRatings";
+import reviewStyles from "../styles/ReviewPage.module.css";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);
