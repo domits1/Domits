@@ -1,6 +1,8 @@
 import IntegrationService from "../business/integrationService.js";
 import ChannelManagementController from "../.shared/channelManagement/controller/channelManagementController.js";
 import { extractIntegrationId, safeJson } from "./controllerUtils.js";
+import { getAuthenticatedUser } from "../auth/authContext.js";
+import { forbidden } from "../util/httpErrors.js";
 
 class IntegrationController {
   constructor({
@@ -13,9 +15,16 @@ class IntegrationController {
     this.channelManagementController = channelManagementController;
   }
 
+  assertUserIdMatches(requestedUserId, authenticatedUser) {
+    if (requestedUserId && String(requestedUserId) !== String(authenticatedUser.userId)) {
+      throw forbidden("userId does not match the authenticated user.");
+    }
+  }
+
   async listIntegrations(event) {
-    const userId = event.queryStringParameters?.userId || null;
-    return await this.integrationService.listIntegrations(userId);
+    const authenticatedUser = getAuthenticatedUser(event);
+    this.assertUserIdMatches(event.queryStringParameters?.userId, authenticatedUser);
+    return await this.integrationService.listIntegrations(authenticatedUser.userId);
   }
 
   async getIntegrationLogs(event) {
@@ -49,8 +58,10 @@ class IntegrationController {
   }
 
   async startWhatsAppConnect(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.startWhatsAppConnect(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.startWhatsAppConnect({ ...body, userId: authenticatedUser.userId });
   }
 
   async connectHolidu(event) {
@@ -182,28 +193,38 @@ class IntegrationController {
   }
 
   async completeWhatsAppConnect(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.completeWhatsAppConnect(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.completeWhatsAppConnect({ ...body, userId: authenticatedUser.userId });
   }
 
   async selectWhatsAppNumber(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.selectWhatsAppNumber(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.selectWhatsAppNumber({ ...body, userId: authenticatedUser.userId });
   }
 
   async disconnectWhatsApp(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.disconnectWhatsApp(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.disconnectWhatsApp({ ...body, userId: authenticatedUser.userId });
   }
 
   async checkWhatsAppTokenHealth(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.checkWhatsAppTokenHealth(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.checkWhatsAppTokenHealth({ ...body, userId: authenticatedUser.userId });
   }
 
   async refreshWhatsAppToken(event) {
+    const authenticatedUser = getAuthenticatedUser(event);
     const body = safeJson(event.body) || {};
-    return await this.integrationService.refreshWhatsAppToken(body);
+    this.assertUserIdMatches(body.userId, authenticatedUser);
+    return await this.integrationService.refreshWhatsAppToken({ ...body, userId: authenticatedUser.userId });
   }
 }
 
