@@ -110,4 +110,88 @@ describe("IntegrationController uses the logged in user", () => {
       expect(mockIntegrationService[method]).toHaveBeenCalledWith({ code: "abc", userId: "host-1" });
     });
   });
+
+  describe.each([
+    {
+      method: "getIntegrationLogs",
+      serviceMethod: "getIntegrationLogs",
+      path: "/default/integrations/integration-1/logs",
+      body: "{}",
+      expectedArgs: ["integration-1", 50],
+    },
+    {
+      method: "listIntegrationProperties",
+      serviceMethod: "listIntegrationProperties",
+      path: "/default/integrations/integration-1/properties",
+      body: "{}",
+      expectedArgs: ["integration-1"],
+    },
+    {
+      method: "triggerMessagesSync",
+      serviceMethod: "triggerSync",
+      path: "/default/integrations/integration-1/sync/messages",
+      body: "{}",
+      expectedArgs: ["integration-1", "MESSAGES", {}],
+    },
+    {
+      method: "triggerReservationsSync",
+      serviceMethod: "triggerSync",
+      path: "/default/integrations/integration-1/sync/reservations",
+      body: "{}",
+      expectedArgs: ["integration-1", "RESERVATIONS", {}],
+    },
+    {
+      method: "linkReservation",
+      serviceMethod: "linkReservation",
+      path: "/default/integrations/integration-1/reservations/link",
+      body: JSON.stringify({ channel: "CHANNEX", externalReservationId: "ext-1" }),
+      expectedArgs: ["integration-1", { channel: "CHANNEX", externalReservationId: "ext-1" }],
+    },
+  ])("$method", ({ method, serviceMethod, path, body, expectedArgs }) => {
+    test.each(MISSING_CLAIMS)("answers 401 with %s before loading the integration", async (_label, eventOptions) => {
+      await expect(controller[method](buildEvent({ ...eventOptions, path, body }))).rejects.toMatchObject({
+        statusCode: 401,
+      });
+      expect(mockAccounts.getById).not.toHaveBeenCalled();
+      expect(mockIntegrationService[serviceMethod]).not.toHaveBeenCalled();
+    });
+
+    test("answers 404 when the integration does not exist", async () => {
+      mockAccounts.getById.mockResolvedValue(null);
+
+      await expect(controller[method](buildEvent({ sub: "host-1", path, body }))).rejects.toMatchObject({
+        statusCode: 404,
+        message: "Integration not found.",
+      });
+      expect(mockAccounts.getById).toHaveBeenCalledWith("integration-1");
+      expect(mockIntegrationService[serviceMethod]).not.toHaveBeenCalled();
+    });
+
+    test("answers the same 404 for another host's integration", async () => {
+      mockAccounts.getById.mockResolvedValue({ id: "integration-1", userId: "host-2" });
+
+      await expect(controller[method](buildEvent({ sub: "host-1", path, body }))).rejects.toMatchObject({
+        statusCode: 404,
+        message: "Integration not found.",
+      });
+      expect(mockIntegrationService[serviceMethod]).not.toHaveBeenCalled();
+    });
+
+    test("does not act when the integration cannot be loaded", async () => {
+      const failure = new Error("connection reset");
+      mockAccounts.getById.mockRejectedValue(failure);
+
+      await expect(controller[method](buildEvent({ sub: "host-1", path, body }))).rejects.toBe(failure);
+      expect(mockIntegrationService[serviceMethod]).not.toHaveBeenCalled();
+    });
+
+    test("acts on the logged in user's own integration", async () => {
+      mockAccounts.getById.mockResolvedValue({ id: "integration-1", userId: "host-1" });
+      mockIntegrationService[serviceMethod].mockResolvedValue({ statusCode: 200, response: {} });
+
+      await controller[method](buildEvent({ sub: "host-1", path, body }));
+
+      expect(mockIntegrationService[serviceMethod]).toHaveBeenCalledWith(...expectedArgs);
+    });
+  });
 });
