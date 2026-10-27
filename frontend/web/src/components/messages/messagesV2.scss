@@ -30,6 +30,57 @@
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 }
 
+.messages-v2-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.messages-v2-details > .messages-v2-card {
+  flex-shrink: 0;
+}
+
+.messages-v2-booking:empty {
+  display: none;
+}
+
+.messages-v2-booking .booking-tab {
+  max-height: none;
+  min-width: 0;
+  padding: 16px;
+
+  .chekin-checkout {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    border-top: none;
+    padding-top: 0;
+    text-align: center;
+  }
+
+  p {
+    overflow-wrap: anywhere;
+  }
+}
+
+.messages-v2 .chat-booking-details {
+  border-top: 1px solid var(--border);
+
+  summary {
+    cursor: pointer;
+    padding: 10px 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .booking-tab {
+    max-height: 40vh;
+    padding: 0 16px 12px;
+  }
+}
+
 
 .messages-v2 .messages-v2-contactlist {
   display: flex;

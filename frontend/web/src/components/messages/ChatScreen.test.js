@@ -4,7 +4,7 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChatScreen from "./ChatScreen";
 import { getMessageCapabilities } from "./messageCapabilities";
 
@@ -57,7 +57,7 @@ describe("ChatScreen reservation messaging", () => {
     mockSendMessage.mockResolvedValue({ success: true, saved: { id: "message-1", threadId: "thread-1" } });
   });
 
-  const renderChatScreen = () =>
+  const renderChatScreen = (props = {}) =>
     render(
       <ChatScreen
         userId="guest-1"
@@ -67,8 +67,24 @@ describe("ChatScreen reservation messaging", () => {
         bookingId="booking-1"
         dashboardType="guest"
         capabilities={getMessageCapabilities("guest")}
+        {...props}
       />
     );
+
+  test("keeps the reservation details folded above the input when there is no details panel", () => {
+    renderChatScreen();
+
+    const reservationDetails = screen.getByRole("group");
+    expect(reservationDetails).not.toHaveAttribute("open");
+    expect(within(reservationDetails).getByText("Reservation details")).toBeInTheDocument();
+    expect(within(reservationDetails).getByTestId("booking-tab")).toHaveAttribute("data-booking-id", "booking-1");
+  });
+
+  test("leaves the reservation details out of the chat when the details panel shows them", () => {
+    renderChatScreen({ bookingInDetailsPanel: true });
+
+    expect(screen.queryByTestId("booking-tab")).not.toBeInTheDocument();
+  });
 
   const typeAndSend = (text) => {
     fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: text } });

@@ -12,6 +12,7 @@ import ChatScreen from "./ChatScreen";
 import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import NewContactModal from "./NewContactModal";
 import ListingPanel from "./ListingPanel";
+import BookingTab from "./BookingTab";
 import { getMessageCapabilities } from "./messageCapabilities";
 
 import "./messagesV2.scss";
@@ -528,17 +529,32 @@ const MessagesContent = ({ dashboardType }) => {
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
                     capabilities={capabilities}
+                    bookingInDetailsPanel={showDetailsPanel}
                   />
                 </div>
               )}
 
               {showDetailsPanel && (
-                <ListingPanel
-                  dashboardType={dashboardType}
-                  propertyId={selectedPropertyId}
-                  propertyTitle={selectedPropertyTitle}
-                  accoImage={selectedAccoImage}
-                />
+                <div className="messages-v2-details">
+                  <ListingPanel
+                    dashboardType={dashboardType}
+                    propertyId={selectedPropertyId}
+                    propertyTitle={selectedPropertyTitle}
+                    accoImage={selectedAccoImage}
+                  />
+                  {selectedContactId && capabilities.canViewBookingContext ? (
+                    <div className="messages-v2-card messages-v2-booking">
+                      <BookingTab
+                        userId={userId}
+                        contactId={selectedContactId}
+                        dashboardType={dashboardType}
+                        bookingId={selectedBookingId || null}
+                        propertyId={selectedPropertyId || null}
+                        showAccommodation={false}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               )}
             </div>
           </>
