@@ -104,35 +104,16 @@ WHERE n.nspname IN ('main', 'test')
 ORDER BY schema_name, table_name, index_name;
 ```
 
-## ReviewSystem trend deployment approval
+## ReviewSystem runtime settings
 
-Changes to `backend/CD` and `.github/workflows/deploy.yml` require senior developer or DevOps approval before merge. Record the approver and a link to their PR review; tests do not establish this approval.
+Manage these environment variables directly on the ReviewSystem Lambda in each target environment:
 
-The configuration helper runs only when ReviewSystem is selected for deployment, including shared-backend rebuilds. It manages `REVIEW_DECLINE_THRESHOLD` and `REVIEW_TREND_MIN_REVIEWS`, preserves other environment settings, and does not configure the review edit window. Both trend values must be valid in GitHub repository variables or the existing Lambda environment.
+| Variable | Purpose | Valid value |
+| --- | --- | --- |
+| `REVIEW_DECLINE_THRESHOLD` | Minimum rating change for declining or improving classification | Number greater than 0 and at most 4 |
+| `REVIEW_TREND_MIN_REVIEWS` | Minimum eligible reviews in each comparison period | Positive safe integer |
+| `REVIEW_EDIT_WINDOW_MS` | Review editing window in milliseconds | Positive safe integer; missing or invalid disables editing |
 
-The owner of the deployment credentials must verify the following permissions against the actual target account and region:
+The deployment workflow updates function code without configuring these environment variables. Configure and verify the trend settings before using the property-trends endpoint; runtime validation rejects missing or invalid policy values. Existing Lambda environment settings remain in place during code deployments.
 
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "lambda:GetFunctionConfiguration",
-    "lambda:UpdateFunctionConfiguration"
-  ],
-  "Resource": "arn:aws:lambda:eu-north-1:<account-id>:function:ReviewSystem"
-}
-```
-
-An operator with IAM simulation permission can check the deployment identity without updating Lambda:
-
-```sh
-aws iam simulate-principal-policy \
-  --policy-source-arn <deployment-role-or-user-arn> \
-  --action-names lambda:GetFunctionConfiguration lambda:UpdateFunctionConfiguration \
-  --resource-arns arn:aws:lambda:eu-north-1:<account-id>:function:ReviewSystem \
-  --query 'EvaluationResults[].{Action:EvalActionName,Decision:EvalDecision}'
-```
-
-Confirm both actions are allowed and check applicable permissions boundaries, session policies, and organization policies. Record the principal ARN, target resource, result, and confirmation time with the approval. Successfully reading configuration does not prove update permission.
-
-If configuration validation or AWS access fails, the workflow skips ReviewSystem, continues other selected functions, and reports a failed run at the end. Approval and permission confirmation remain merge prerequisites. This runbook does not grant permissions or record approval on behalf of the team.
+The removed environment configuration helper no longer adds a requirement for `lambda:GetFunctionConfiguration` or `lambda:UpdateFunctionConfiguration` to the deployment identity. The workflow still requires its existing permissions for checking functions and deploying code.

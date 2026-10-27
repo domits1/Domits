@@ -118,9 +118,6 @@ jobs:
           test -s backend/functions/PropertyHandler/generated/staticPageBundle.mjs
 
       - name: Find and deploy modified Lambda functions
-        env:
-          REVIEW_DECLINE_THRESHOLD: ${{ vars.REVIEW_DECLINE_THRESHOLD }}
-          REVIEW_TREND_MIN_REVIEWS: ${{ vars.REVIEW_TREND_MIN_REVIEWS }}
         run: |
           set -euo pipefail  # Fail on errors and undefined variables
           
@@ -171,14 +168,6 @@ jobs:
                 continue
               fi
           
-              if [ "$FUNC_NAME" = "ReviewSystem" ]; then
-                if ! node backend/CD/npm/configureReviewEnvironment.js; then
-                  echo "::error ::ReviewSystem trend policy configuration failed; skipping ReviewSystem deployment."
-                  DEPLOY_ERRORS=1
-                  continue
-                fi
-              fi
-
               echo "Deploying $LAMBDA_FUNC_NAME to AWS Lambda..."
 
               # Create deployment package in a temporary directory
