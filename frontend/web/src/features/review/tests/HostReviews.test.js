@@ -1,83 +1,44 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import HostReviews from "../../hostdashboard/hostreviews";
-import { Auth } from "aws-amplify";
-import { requestReview } from "../services/reviewAPI";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import HostReviews from "../views/HostReviews";
 
-const mockNavigate = jest.fn();
-jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
-jest.mock("aws-amplify", () => ({ Auth: { currentUserInfo: jest.fn() } }));
-jest.mock("../../hostdashboard/pages", () => () => null);
-jest.mock("../../hostdashboard/ReviewPerformance", () => () => null);
-jest.mock("../DecliningPropertyRatings", () => () => null);
-jest.mock("../services/reviewAPI", () => ({ requestReview: jest.fn() }));
-jest.mock("../HostResponseForm", () => ({ review }) =>
-  <button>Respond to {review.id}: {review.response?.message || "new response"}</button>);
+jest.mock("../../../services/hostPropertyService", () => ({
+  fetchHostPropertySelectOptions: async () => [],
+}));
 
-const received = [
-  { id: "eligible", title: "Verified property review" },
-  { id: "unverified", title: "Unverified published review" },
-  { id: "inactive", title: "Inactive listing review" },
-  { id: "guest", title: "Review received as a guest" },
-].map((review) => ({ ...review, content: review.title, date: 1000 }));
-const eligible = [{ ...received[0], response: { message: "Existing reply" } }];
-const response = (data) => ({ ok: true, json: async () => data });
+jest.mock("aws-amplify", () => ({
+  Auth: { currentUserInfo: async () => ({ attributes: { sub: "host" } }) },
+}));
+jest.mock("../services/reviewAPI", () => ({
+  requestReview: async () => ({ ok: true, json: async () => [] }),
+}));
+jest.mock("../views/ReviewPerformance", () => ({ __esModule: true,
+  default: () => <h3>Performance panel</h3>,
+}));
+jest.mock("../views/DecliningPropertyRatings", () => ({ __esModule: true,
+  default: () => <h3>Trends panel</h3>,
+}));
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: "host-sub" } });
-  requestReview.mockImplementation(async (method, { scope }) => {
-    if (scope === "received") return response(received);
-    if (scope === "respondable") return response(eligible);
-    return response([]);
-  });
-});
+test("switches between the three review views and shows only the selected content", async () => {
+  render(<MemoryRouter><HostReviews /></MemoryRouter>);
+  await screen.findByText("Received reviews (0)");
+  expect(screen.queryByText(/My reviews/)).not.toBeInTheDocument();
+  const review = screen.getByRole("button", { name: "Review", exact: true });
+  expect(review).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByText("Performance panel")).not.toBeInTheDocument();
+  expect(screen.queryByText("Trends panel")).not.toBeInTheDocument();
 
-test("keeps the complete received list and shows forms only for server-authorized IDs", async () => {
-  render(<HostReviews />);
-  for (const review of received) expect(await screen.findByRole("heading", { name: review.title })).toBeInTheDocument();
-  expect(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
-  expect(screen.getAllByRole("button", { name: /^Respond to/ })).toHaveLength(1);
-  expect(screen.getByText("Received reviews(4)")).toBeInTheDocument();
-  expect(requestReview).toHaveBeenCalledWith("GET", { scope: "received" });
-  expect(requestReview).toHaveBeenCalledWith("GET", { scope: "respondable" });
-});
+  fireEvent.click(screen.getByRole("button", { name: "Review performance over time" }));
+  expect(await screen.findByText("Performance panel")).toBeInTheDocument();
+  expect(screen.queryByText("Received reviews (0)")).not.toBeInTheDocument();
+  expect(review).toHaveAttribute("aria-pressed", "false");
 
-test.each(["network", "malformed"])("keeps received reviews on %s eligibility failure and retries only eligibility", async (failure) => {
-  let attempts = 0;
-  requestReview.mockImplementation(async (method, { scope }) => {
-    if (scope === "received") return response(received);
-    if (scope === "respondable") {
-      attempts += 1;
-      if (attempts === 1) {
-        if (failure === "network") throw new Error("offline");
-        return response({ reviews: eligible });
-      }
-      return response(eligible);
-    }
-    return response([]);
-  });
-  render(<HostReviews />);
-  expect(await screen.findByRole("alert")).toHaveTextContent("Could not check which reviews");
-  expect(await screen.findByRole("heading", { name: received[3].title })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Retry response eligibility" }));
-  await screen.findByRole("button", { name: "Respond to eligible: Existing reply" });
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  expect(requestReview.mock.calls.filter(([, query]) => query.scope === "received")).toHaveLength(1);
-});
+  fireEvent.click(screen.getByRole("button", { name: "Properties with declining ratings" }));
+  expect(await screen.findByText("Trends panel")).toBeInTheDocument();
+  expect(screen.queryByText("Performance panel")).not.toBeInTheDocument();
 
-test("shows received reviews without waiting for the eligibility request", async () => {
-  let finish;
-  requestReview.mockImplementation(async (method, { scope }) => {
-    if (scope === "received") return response(received);
-    if (scope === "respondable") return new Promise((resolve) => { finish = resolve; });
-    return response([]);
-  });
-  render(<HostReviews />);
-  await screen.findByRole("heading", { name: received[0].title });
-  expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
-  await waitFor(() => expect(finish).toBeDefined());
-  await act(async () => { finish(response(eligible)); });
-  expect(screen.getByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
+  fireEvent.click(review);
+  expect(await screen.findByText("Received reviews (0)")).toBeInTheDocument();
+  expect(screen.queryByText("Trends panel")).not.toBeInTheDocument();
 });

@@ -28,3 +28,8 @@ Use this overview as your roadmap to a successful integration with Domits.
 - [Rates API](./API/rates.md)
 - [iCal overview](./API/ical.md)
 - [Holidu mapping](./integrations/channel_manager/holidu/data_mapping/holidu.md)
+
+## Channel manager
+- [Channex integration](./integrations/channel_manager/channex/README.md) (technical, for Domits developers): how Domits connects listings to OTAs, configuration, operation and known limitations
+- [Booking.com through Channex](./integrations/channel_manager/booking.com/README.md)
+- [Airbnb through Channex](./integrations/channel_manager/airbnb/README.md)

@@ -103,6 +103,7 @@ export const updateReview = async ({
   reviewId,
   rating,
   publicReview,
+  updatedAt,
 }) => {
   const token = await getIdToken();
 
@@ -118,6 +119,7 @@ export const updateReview = async ({
         body: JSON.stringify({
           overall_rating: Number(rating),
           public_review: publicReview,
+          updated_at: updatedAt,
         }),
       }
     )

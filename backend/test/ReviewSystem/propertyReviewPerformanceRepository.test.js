@@ -25,7 +25,8 @@ test.each(["week", "month", "year"])("builds UTC %s averages/counts scoped to th
   expect(sql).toContain("GROUP BY DATE_TRUNC");
   expect(sql).toContain("ORDER BY DATE_TRUNC");
   expect(sql).toContain("ASC");
-  for (const field of ["property_id", "verification_status", "publication_status", "status", "review_type"]) {
+  expect(sql).not.toContain("verification_status");
+  for (const field of ["property_id", "publication_status", "status", "review_type"]) {
     expect(sql).toMatch(new RegExp(`"review"\\."${field}" = \\$\\d+`));
   }
   expect(sql).toMatch(/"property"\."hostid" = \$\d+/);
@@ -33,6 +34,6 @@ test.each(["week", "month", "year"])("builds UTC %s averages/counts scoped to th
   expect(sql).toMatch(/"review"\."created_at" >= \$\d+/);
   expect(sql).toMatch(/"review"\."created_at" < \$\d+/);
   expect(query.getParameters()).toMatchObject({ propertyId: "property-1", hostId: "host-1",
-    start: 1000, endExclusive: 2000, verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED",
+    start: 1000, endExclusive: 2000, publicationStatus: "PUBLISHED",
     status: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", minimum: 1, maximum: 5 });
 });

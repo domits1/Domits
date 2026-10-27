@@ -14,7 +14,7 @@ test.each([{ status: "cancelled", departuredate: 1000 }, { status: "pending", de
   "rejects an ineligible reservation %j", (booking) => {
     expect(completedStayError(booking, 2000)).not.toBeNull();
   });
-test("requires a matching reservation, guest, property, and stored public verification", async () => {
+test("requires a matching reservation, guest, property, without a stored verification filter", async () => {
   const database = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Property, Review] });
   await database.buildMetadatas();
   const query = new ReviewRepository().filteredPublicReviewQuery(database, "p1", { verificationNow: 2000 });
@@ -24,7 +24,8 @@ test("requires a matching reservation, guest, property, and stored public verifi
     expect(sql).toContain(`"stay"."${bookingField}" = "review"."${reviewField}"`);
   }
   expect(sql).toContain("<= :stayNow");
+  expect(sql.split(" WHERE ")[1]).not.toContain("verification_status");
   expect(query.getParameters()).toMatchObject({ propertyId: "p1", propertyStatus: "ACTIVE",
-    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", status: "PUBLISHED",
+    publicationStatus: "PUBLISHED", status: "PUBLISHED",
     reviewType: "GUEST_TO_PROPERTY", stayStatuses: ["paid", "confirmed"], stayNow: 2000 });
 });

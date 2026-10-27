@@ -11,8 +11,8 @@ describe("property review performance controller/service", () => {
   beforeEach(() => {
     repository = { findManagedProperty: jest.fn().mockResolvedValue({ id: "property-1" }),
       getPropertyReviewPerformance: jest.fn().mockResolvedValue([
-        { period: "2026-03-01", average_score: "4", review_count: "1" },
-        { period: "2026-01-01", average_score: "4.5", review_count: "2" },
+        { period: "2026-03-01", average_score: "4", review_count: "1", stars_4: "1" },
+        { period: "2026-01-01", average_score: "4.5", review_count: "2", stars_4: "1", stars_5: "1" },
       ]) };
     controller = new Controller({ service: new ReviewService({ repository }) });
   });
@@ -21,31 +21,31 @@ describe("property review performance controller/service", () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ property_id: "property-1", interval: "month",
       timezone: "UTC", start_date: "2026-01-15", end_date: "2026-03-10", periods: [
-        { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: 4.5, review_count: 2 },
-        { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
-        { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: 4, review_count: 1 },
+        { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: 4.5, review_count: 2, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 1 } },
+        { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+        { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: 4, review_count: 1, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 0 } },
       ] });
   });
   test("uses the selected property, trusted owner and exact inclusive date bounds", async () => {
     await controller.getReviews(event({ propertyId: " property-1 ", hostId: "spoofed" }));
-    expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "host-1");
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "user-sub");
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse("2026-01-15T00:00:00Z"), Date.parse("2026-03-11T00:00:00Z"), "month");
   });
   test("returns null scores and zero counts when there are no reviews", async () => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
     const response = await controller.getReviews(event());
     expect(JSON.parse(response.body).periods).toEqual([
-      { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: null, review_count: 0 },
-      { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
-      { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: null, review_count: 0 },
+      { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+      { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+      { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
     ]);
   });
   test("supports a single-day leap-year range", async () => {
     const response = await controller.getReviews(event({ startDate: "2024-02-29", endDate: "2024-02-29" }));
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).periods).toHaveLength(1);
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse("2024-02-29T00:00:00Z"), Date.parse("2024-03-01T00:00:00Z"), "month");
   });
   test("fills months across year boundaries", async () => {
@@ -64,7 +64,7 @@ describe("property review performance controller/service", () => {
     expect(result.interval).toBe(interval);
     expect(result.periods.map((point) => point.period)).toEqual(expected);
     expect(result.periods.every((point) => point.average_score === null && point.review_count === 0)).toBe(true);
-    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "host-1",
+    expect(repository.getPropertyReviewPerformance).toHaveBeenCalledWith("property-1", "user-sub",
       Date.parse(`${startDate}T00:00:00Z`), Date.parse(`${endDate}T00:00:00Z`) + 86400000, interval);
   });
   test.each([
@@ -88,7 +88,7 @@ describe("property review performance controller/service", () => {
     const response = await controller.getReviews(event({ interval, startDate, endDate }));
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).periods).toEqual(expected.map((bucket) => ({
-      ...bucket, average_score: null, review_count: 0,
+      ...bucket, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     })));
   });
   test("allows exactly 120 periods and rejects the next period", async () => {
@@ -118,7 +118,7 @@ describe("property review performance controller/service", () => {
   });
   test("requires a verified manager identity", async () => {
     const request = event();
-    delete request.requestContext.authorizer.claims["cognito:username"];
+    delete request.requestContext.authorizer.claims.sub;
     expect((await controller.getReviews(request)).statusCode).toBe(401);
     expect(repository.getPropertyReviewPerformance).not.toHaveBeenCalled();
   });

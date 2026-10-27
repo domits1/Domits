@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import HostResponseForm from "../HostResponseForm";
+import HostResponseForm from "../components/HostResponseForm";
 import { saveHostResponse } from "../services/reviewAPI";
 jest.mock("../services/reviewAPI", () => ({ saveHostResponse: jest.fn() }));
 beforeEach(() => jest.clearAllMocks());

@@ -115,7 +115,6 @@ export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
       .where(propertyId === undefined ? "1 = 1" : "review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
@@ -199,7 +198,7 @@ export class ReviewRepository {
     applyCompletedStayConditions(summaryQuery, filters.verificationNow ?? Date.now());
     const summary = await summaryQuery.select("AVG(review.overall_rating)", "score").getRawOne();
     const matching = await eligible().select("COUNT(*)", "count").getRawOne();
-    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
     const recent = !filters.sort || filters.sort === "recent";
     if (filters.sort === "highest" || filters.sort === "lowest") {
       page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
@@ -234,7 +233,7 @@ export class ReviewRepository {
       review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
       next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
-        text: review.public_review, date: Number(review.created_at), verified: true,
+        text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",
         response: responses.filter((response) => response.reviewId === review.id)
           .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
         categories: ratings.filter((rating) => rating.review_id === review.id)
@@ -242,7 +241,6 @@ export class ReviewRepository {
   }
 
   async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
-    // Fixed expressions keep the requested interval out of SQL interpolation.
     const expressions = {
       week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
       month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
@@ -251,7 +249,6 @@ export class ReviewRepository {
     if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
     const period = expressions[interval];
     const database = await Database.getInstance();
-    // Recheck property ownership during aggregation, using the shared eligibility filters.
     return this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
@@ -260,6 +257,11 @@ export class ReviewRepository {
       .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
       .addSelect("AVG(review.overall_rating)", "average_score")
       .addSelect("COUNT(*)", "review_count")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 1 THEN 1 END)", "stars_1")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 2 THEN 1 END)", "stars_2")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 3 THEN 1 END)", "stars_3")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 4 THEN 1 END)", "stars_4")
+      .addSelect("COUNT(CASE WHEN review.overall_rating = 5 THEN 1 END)", "stars_5")
       .groupBy(period).orderBy(period, "ASC").getRawMany();
   }
 
@@ -268,32 +270,37 @@ export class ReviewRepository {
     const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
       .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
       .leftJoin((query) => query
-        .select("rating.category", "category_key")
+        .select("definition.key", "category_key")
         .addSelect("AVG(rating.rating)", "average_rating")
         .addSelect("COUNT(*)", "rating_count")
         .from(Review_Rating, "rating")
+        // Historical ratings store display labels; group both formats under the canonical key.
+        .innerJoin(Review_Category, "definition",
+          `(LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.key))
+            OR LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.label)))
+            AND definition.isActive = :active AND definition.reviewType = :reviewType`)
         .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
-        .andWhere("review.verification_status = :verified")
         .andWhere("review.publication_status = :published")
         .andWhere("review.status = :published")
         .andWhere("review.review_type = :reviewType")
         .andWhere("rating.rating BETWEEN :minimum AND :maximum")
         .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
-        .groupBy("rating.category"),
+        .groupBy("definition.key"),
       "aggregate", "aggregate.category_key = category.key")
       .select("category.key", "category_key")
       .addSelect("category.label", "label")
       .addSelect("aggregate.average_rating", "average_rating")
+      .addSelect("category.sortOrder", "sort_order")
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
-      .setParameters({ propertyId, hostId, verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+      .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
-      .orderBy("category.key", "ASC").getRawMany();
+      .orderBy("category.sortOrder", "ASC").addOrderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
       average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
-      rating_count: Number(row.rating_count) }));
+      rating_count: Number(row.rating_count), sort_order: Number(row.sort_order ?? 0) }));
   }
 
   async findManagedProperty(propertyId, hostId) {
@@ -303,17 +310,10 @@ export class ReviewRepository {
     });
   }
 
-  async findManagedProperties(hostId, offset) {
-    const database = await Database.getInstance();
-    return database.getRepository(Property).find({ where: { hostid: hostId }, select: ["id"],
-      order: { id: "ASC" }, skip: offset, take: 26 });
-  }
-
   async getPropertyRatingTrendPage(hostId, options) {
     const database = await Database.getInstance();
     const aggregates = database.getRepository(Property).createQueryBuilder("property")
       .leftJoin(Review, "review", `review.property_id = property.id
-        AND review.verification_status = :verificationStatus
         AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
         AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
         AND review.overall_rating = FLOOR(review.overall_rating)
@@ -334,9 +334,10 @@ export class ReviewRepository {
         ELSE 'STABLE' END`, "trend_status");
     const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
       .select("trends.*")
+      .addSelect("CASE WHEN trends.trend_status = 'INSUFFICIENT_DATA' THEN NULL ELSE current_average_rating - previous_average_rating END", "rating_change")
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
-        boundary: options.threshold * (1 - 1e-12), verificationStatus: "VERIFIED",
+        boundary: options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
     if (options.sort === "declining-first") {
@@ -344,12 +345,13 @@ export class ReviewRepository {
     }
     const rows = await page.addOrderBy("trends.property_id", "ASC").offset(options.offset).limit(26).getRawMany();
     return rows.map((row) => ({ ...row,
+      rating_change: row.rating_change == null ? null : Number(row.rating_change),
       previous_average_rating: row.previous_average_rating == null ? null : Number(row.previous_average_rating),
       current_average_rating: row.current_average_rating == null ? null : Number(row.current_average_rating),
       previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));
   }
 
-  async getPropertyReviewScore(propertyId, hostId, range) {
+  async getPropertyReviewScore(propertyId, hostId) {
     const dataSource = await Database.getInstance();
     // Recheck ownership during aggregation in case the property changed owners.
     const query = dataSource.getRepository(Review).createQueryBuilder("review")
@@ -363,15 +365,10 @@ export class ReviewRepository {
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
       .addSelect("COUNT(*)", "review_count");
-    if (range) {
-      query.andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
-        .andWhere("review.created_at >= :start", { start: range.start })
-        .andWhere("review.created_at < :endExclusive", { endExclusive: range.endExclusive });
-    }
     const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
-      overall_score: result.overall_score == null ? null : Number(result.overall_score), review_count: reviewCount };
+      overall_score: reviewCount === 0 || result.overall_score == null ? null : Math.round(Number(result.overall_score) * 10) / 10, review_count: reviewCount };
   }
 
   async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
@@ -660,7 +657,19 @@ export class ReviewRepository {
         });
     }
 
-    return query.getMany();
+    const reviews = await query.getMany();
+    if (scope !== "received" || !reviews.length) return reviews;
+    // Match both identities so a mismatched review cannot expose another booking's guest name.
+    const bookings = await dataSource.getRepository(Booking).find({
+      where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+      select: ["id", "guestid", "guestname"],
+    });
+    const byId = new Map(bookings.map((booking) => [booking.id, booking]));
+    return reviews.map((review) => {
+      const booking = byId.get(review.booking_id);
+      return { ...review, guest_name: booking?.guestid === review.reviewer_user_id
+        ? booking.guestname?.trim() || null : null };
+    });
   }
 
   async findReviews(where) {

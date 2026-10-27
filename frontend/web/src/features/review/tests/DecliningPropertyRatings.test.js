@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import DecliningPropertyRatings from "../DecliningPropertyRatings";
+import DecliningPropertyRatings from "../views/DecliningPropertyRatings";
 import { getPropertyRatingTrends } from "../services/reviewAPI";
 import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
 jest.mock("../services/reviewAPI", () => ({ getPropertyRatingTrends: jest.fn() }));
@@ -21,21 +21,17 @@ afterEach(() => { jest.restoreAllMocks(); });
 test("shows declining property names, averages, change, counts, periods and server policy", async () => {
   render(<DecliningPropertyRatings userId="host" />);
   expect(await screen.findByText("Beach house")).toBeInTheDocument();
-  expect(screen.getByRole("table")).toHaveTextContent("4.504.00-0.5034Declining");
+  expect(screen.getByRole("table")).toHaveTextContent("4.004.50-0.504");
   expect(screen.queryByText("p2")).not.toBeInTheDocument();
   expect(screen.getByText(/decrease of at least 0.5/)).toBeInTheDocument();
   expect(screen.getByText(/2026-08-08 to 2026-09-06/)).toBeInTheDocument();
 });
-test("shows all backend statuses without calculating trends in the browser", async () => {
-  getPropertyRatingTrends.mockResolvedValue({ ...result, properties: [property("p1", "DECLINING"),
-    property("p2", "STABLE"), { ...property("p3", "IMPROVING"), rating_change: 0.5 },
-    { ...property("p4", "INSUFFICIENT_DATA"), current_average_rating: null, rating_change: null, current_review_count: 0 }] });
+test("always filters to declining properties and hides the removed checkbox", async () => {
   render(<DecliningPropertyRatings userId="host" />);
   await screen.findByText("Beach house");
-  fireEvent.click(screen.getByRole("checkbox"));
-  for (const label of ["Declining", "Stable", "Improving", "Insufficient data", "No score", "Not enough reviews", "+0.50"]) {
-    expect(await screen.findByText(label)).toBeInTheDocument();
-  }
+  expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  expect(screen.queryByText("p2")).not.toBeInTheDocument();
+  expect(getPropertyRatingTrends).toHaveBeenCalledWith(expect.objectContaining({ status: "DECLINING" }));
 });
 test("requests chosen periods and resets pagination when filters change", async () => {
   getPropertyRatingTrends.mockImplementation(({ offset }) => Promise.resolve({ ...result, next_offset: offset === "0" ? 7 : null }));
@@ -54,7 +50,8 @@ test.each(["0", "367", ""])("rejects invalid days %s without fetching", async (v
   fireEvent.change(screen.getByLabelText("Days per period"), { target: { value } });
   expect(screen.getByRole("alert")).toHaveTextContent("1 and 366");
   expect(getPropertyRatingTrends).not.toHaveBeenCalled();
-  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  expect(screen.getByRole("table")).toBeInTheDocument();
+  expect(screen.queryByText("Beach house")).not.toBeInTheDocument();
 });
 test("shows errors and retries", async () => {
   getPropertyRatingTrends.mockRejectedValueOnce(new Error("Access denied"));
@@ -100,7 +97,7 @@ test.each([
   getPropertyRatingTrends.mockResolvedValueOnce({ ...result, ...malformed });
   render(<DecliningPropertyRatings userId="host" />);
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not load rating trends");
-  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  expect(screen.getByRole("table")).toHaveTextContent("Property comparisons are currently unavailable");
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(await screen.findByText("Beach house")).toBeInTheDocument();
 });
@@ -116,19 +113,6 @@ test("uses server offsets for next, previous and page number", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Previous page" }));
   await screen.findByText("Page 1");
   expect(getPropertyRatingTrends).toHaveBeenLastCalledWith(expect.objectContaining({ offset: "0" }));
-});
-
-test("resets server pagination when the declining filter changes", async () => {
-  getPropertyRatingTrends.mockImplementation(({ offset }) => Promise.resolve({ ...result,
-    next_offset: offset === "0" ? 7 : null }));
-  render(<DecliningPropertyRatings userId="host" />);
-  await screen.findByText("Beach house");
-  expect(getPropertyRatingTrends).toHaveBeenCalledWith(expect.objectContaining({ status: "DECLINING" }));
-  fireEvent.click(screen.getByRole("button", { name: "Next page" }));
-  await screen.findByText("Page 2");
-  fireEvent.click(screen.getByRole("checkbox"));
-  await screen.findByText("Page 1");
-  expect(getPropertyRatingTrends).toHaveBeenLastCalledWith({ endDate: "2026-10-06", days: "30", offset: "0" });
 });
 
 test("debounces days edits into a single request", async () => {

@@ -1,5 +1,5 @@
 import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
-import { readTrendPolicy, parseTrendQuery, classifyTrend, TREND_PAGE_SIZE } from "../ratingTrends.js";
+import { readTrendPolicy, parseTrendQuery, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -270,8 +270,8 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
-  async authorizeManagedProperty(callerUsername, propertyId) {
-    if (typeof callerUsername !== "string" || !callerUsername.trim()) {
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
     }
     if (typeof propertyId !== "string" || !propertyId.trim()) {
@@ -279,13 +279,11 @@ export class ReviewService {
     }
     this.assertId(propertyId, "property ID");
     const normalizedPropertyId = propertyId.trim();
-    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUsername);
-    // Avoid disclosing whether another manager's property exists.
+    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
   }
 
-  // Compare current eligible scores across adjacent UTC windows for owned properties.
   async getPropertyRatingTrends(username, query = {}) {
     if (typeof username !== "string" || !username.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
@@ -294,8 +292,6 @@ export class ReviewService {
     const options = parseTrendQuery(query, this.now());
     const { days, offset, previousStart, currentStart } = options;
     const { threshold, minimumReviews } = policy;
-    // Aggregate both windows and apply status/order before limiting the result.
-    // Ownership and all scores are read in one database statement/snapshot.
     const rows = await this.repository.getPropertyRatingTrendPage(username, { ...options, ...policy });
     const trends = rows.slice(0, TREND_PAGE_SIZE).map((row) => ({
       property_id: row.property_id,
@@ -303,9 +299,8 @@ export class ReviewService {
       previous_average_rating: row.previous_average_rating,
       current_review_count: row.current_review_count,
       previous_review_count: row.previous_review_count,
-      ...classifyTrend(
-        { overall_score: row.previous_average_rating, review_count: row.previous_review_count },
-        { overall_score: row.current_average_rating, review_count: row.current_review_count }, policy),
+      rating_change: row.rating_change,
+      trend_status: row.trend_status,
     }));
     const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
     return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,
@@ -314,17 +309,8 @@ export class ReviewService {
       properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
   }
 
-  // Return the trusted review score for a manager-owned property.
-  async getPropertyOverallScore(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    return this.repository.getPropertyReviewScore(id, username);
-  }
-
-  // Group current eligible scores by review creation period, rather than reconstructing past edits.
-  // Exact inclusive UTC dates clip calendar buckets; coverage dates expose partial periods.
-  // Week labels identify Mondays. Empty periods retain coverage with null scores and zero counts.
-  async getPropertyReviewPerformance(username, propertyId, query = {}) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
+  async getPropertyReviewPerformance(userId, propertyId, query = {}) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     const interval = query.interval === undefined ? "month" : query.interval;
     if (!["week", "month", "year"].includes(interval)) {
       throw new BadRequestException("interval must be week, month, or year.");
@@ -334,22 +320,21 @@ export class ReviewService {
     if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
     const endExclusive = end + DAY_MS;
     const buckets = generatePerformancePeriods(start, endExclusive, interval);
-    // The exclusive bound includes the entire requested end date in UTC.
-    const rows = await this.repository.getPropertyReviewPerformance(id, username, start, endExclusive, interval);
+    const rows = await this.repository.getPropertyReviewPerformance(id, userId, start, endExclusive, interval);
     const byPeriod = new Map(rows.map((row) => [row.period, row]));
     const periods = buckets.map((bucket) => {
       const row = byPeriod.get(bucket.period);
       return { ...bucket, average_score: row ? Number(row.average_score) : null,
-        review_count: row ? Number(row.review_count) : 0 };
+        review_count: row ? Number(row.review_count) : 0,
+        rating_distribution: Object.fromEntries([1, 2, 3, 4, 5].map((stars) => [stars, Number(row?.[`stars_${stars}`] ?? 0)])) };
     });
     return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
       end_date: query.endDate, periods };
   }
 
-  // Return category-level review metrics for a property the caller manages.
-  async getPropertyCategoryRatings(username, propertyId) {
-    const id = await this.authorizeManagedProperty(username, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, username);
+  async getPropertyCategoryRatings(userId, propertyId) {
+    const id = await this.authorizeManagedProperty(userId, propertyId);
+    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
@@ -400,12 +385,7 @@ export class ReviewService {
   }
 
   async getPropertyReviewScore(userId, propertyId) {
-    this.assertCaller(userId);
-    this.assertId(propertyId, "property ID");
-    const id = propertyId.trim();
-    if (!(await this.repository.findManagedProperty(id, userId))) {
-      throw new NotFoundException("Property not found.");
-    }
+    const id = await this.authorizeManagedProperty(userId, propertyId);
     return this.repository.getPropertyReviewScore(id, userId);
   }
 
@@ -421,6 +401,7 @@ export class ReviewService {
       ? String(review.reviewer_user_id) === callerUserId && !["DELETED", "REJECTED"].includes(review.status)
       : String(review.reviewee_user_id) === callerUserId && isPublished(review)).map((review) => ({
         ...toReviewView(review), rating: Number(review.overall_rating), content: review.public_review, date: review.created_at,
+        ...(scope === "received" ? { guest_name: review.guest_name ?? null } : {}),
         can_edit: scope === "written" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
         edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
       }));
