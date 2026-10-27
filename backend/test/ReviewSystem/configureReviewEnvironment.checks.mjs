@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { configureReviewEnvironment } from "../../CD/npm/configureReviewEnvironment.js";
 
 const variables = { REVIEW_DECLINE_THRESHOLD: "0.5", REVIEW_TREND_MIN_REVIEWS: "3",
-  REVIEW_EDIT_WINDOW_MS: "86400000", UNRELATED: "keep" };
+  UNRELATED: "keep" };
 
 test("retains and verifies existing configuration without writing", async () => {
   const commands = [];
@@ -18,7 +18,7 @@ test("retains and verifies existing configuration without writing", async () => 
 
 test("merges overrides, preserves unrelated values, waits and verifies", async () => {
   const commands = [];
-  let saved = { ...variables };
+  let saved = { ...variables, REVIEW_EDIT_WINDOW_MS: "86400000" };
   let waited = false;
   const client = { send: async (command) => {
     commands.push(command);
@@ -29,16 +29,16 @@ test("merges overrides, preserves unrelated values, waits and verifies", async (
     }
     return { RevisionId: "revision-1", Environment: { Variables: saved } };
   } };
-  await configureReviewEnvironment(client, { REVIEW_DECLINE_THRESHOLD: "0.3", REVIEW_TREND_MIN_REVIEWS: "" },
+  await configureReviewEnvironment(client, { REVIEW_DECLINE_THRESHOLD: "0.3", REVIEW_TREND_MIN_REVIEWS: "",
+    REVIEW_EDIT_WINDOW_MS: "123" },
     async () => { waited = true; });
   assert.equal(waited, true);
-  assert.deepEqual(saved, { ...variables, REVIEW_DECLINE_THRESHOLD: "0.3" });
+  assert.deepEqual(saved, { ...variables, REVIEW_DECLINE_THRESHOLD: "0.3", REVIEW_EDIT_WINDOW_MS: "86400000" });
   assert.equal(commands.length, 3);
 });
 
 test("rejects missing or invalid policy before writing", async () => {
-  for (const settings of [{}, { ...variables, REVIEW_TREND_MIN_REVIEWS: "0" },
-    { ...variables, REVIEW_EDIT_WINDOW_MS: "" }]) {
+  for (const settings of [{}, { ...variables, REVIEW_TREND_MIN_REVIEWS: "0" }]) {
     const commands = [];
     const client = { send: async (command) => {
       commands.push(command);

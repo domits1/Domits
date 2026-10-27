@@ -43,13 +43,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
 
-      - name: Configure and verify the ReviewSystem policy and edit window
-        run: node backend/CD/npm/configureReviewEnvironment.js
-        env:
-          REVIEW_DECLINE_THRESHOLD: ${{ vars.REVIEW_DECLINE_THRESHOLD }}
-          REVIEW_TREND_MIN_REVIEWS: ${{ vars.REVIEW_TREND_MIN_REVIEWS }}
-          REVIEW_EDIT_WINDOW_MS: ${{ vars.REVIEW_EDIT_WINDOW_MS }}
-
       # Identify every file changed in this push, including earlier commits in a multi-commit push
       - name: Get changed files
         id: changed-files
@@ -125,6 +118,9 @@ jobs:
           test -s backend/functions/PropertyHandler/generated/staticPageBundle.mjs
 
       - name: Find and deploy modified Lambda functions
+        env:
+          REVIEW_DECLINE_THRESHOLD: ${{ vars.REVIEW_DECLINE_THRESHOLD }}
+          REVIEW_TREND_MIN_REVIEWS: ${{ vars.REVIEW_TREND_MIN_REVIEWS }}
         run: |
           set -euo pipefail  # Fail on errors and undefined variables
           
@@ -175,6 +171,14 @@ jobs:
                 continue
               fi
           
+              if [ "$FUNC_NAME" = "ReviewSystem" ]; then
+                if ! node backend/CD/npm/configureReviewEnvironment.js; then
+                  echo "::error ::ReviewSystem trend policy configuration failed; skipping ReviewSystem deployment."
+                  DEPLOY_ERRORS=1
+                  continue
+                fi
+              fi
+
               echo "Deploying $LAMBDA_FUNC_NAME to AWS Lambda..."
 
               # Create deployment package in a temporary directory
