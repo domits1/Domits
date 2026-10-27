@@ -24,6 +24,7 @@ import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendar
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
@@ -2253,7 +2254,6 @@ export class PropertyController {
             const eventBody = JSON.parse(event.body || "{}");
             const propertyId = eventBody.propertyId || eventBody.property;
             const requestedStatus = typeof eventBody.status === "string" ? eventBody.status.toUpperCase() : null;
-            const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
 
             if (!propertyId || typeof propertyId !== "string") {
                 return {
@@ -2262,7 +2262,7 @@ export class PropertyController {
                     body: JSON.stringify({ message: "Missing propertyId." })
                 };
             }
-            if (requestedStatus && !allowedStatuses.has(requestedStatus)) {
+            if (requestedStatus && !HOST_REQUESTABLE_STATUSES.includes(requestedStatus)) {
                 return {
                     statusCode: 400,
                     headers: responseHeaders,
@@ -2271,14 +2271,12 @@ export class PropertyController {
             }
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            if (requestedStatus) {
-                await this.propertyService.updatePropertyStatus(propertyId, requestedStatus);
-            } else {
-                await this.propertyService.activateProperty(propertyId);
-            }
+            // No status (the legacy body) and ACTIVE both mean "go live", which only submits for review.
+            const property = await this.propertyService.requestHostStatusChange(propertyId, requestedStatus);
             return {
-                statusCode: 204,
-                headers: responseHeaders
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ status: property.status })
             }
         } catch (error) {
             console.error(error);
@@ -2287,6 +2285,62 @@ export class PropertyController {
                 headers: responseHeaders,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
+        }
+    }
+
+    // -------------------------
+    // POST /property/review/approve
+    // -------------------------
+    async approveProperty(event) {
+        return await this.reviewProperty(event, "approve");
+    }
+
+    // -------------------------
+    // POST /property/review/reject
+    // -------------------------
+    async rejectProperty(event) {
+        return await this.reviewProperty(event, "reject");
+    }
+
+    async reviewProperty(event, action) {
+        try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const reviewerId = await this.authManager.authorizeReviewAdminRequest(accessToken);
+
+            let eventBody;
+            try {
+                eventBody = JSON.parse(event.body || "{}");
+            } catch {
+                return this.badRequest("Request body must be valid JSON.");
+            }
+            const propertyId = typeof eventBody?.propertyId === "string" ? eventBody.propertyId.trim() : "";
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const property =
+                action === "approve"
+                    ? await this.propertyService.approveProperty(propertyId)
+                    : await this.propertyService.rejectProperty(propertyId);
+
+            console.info(
+                JSON.stringify({ event: "property_review", action, reviewerId, propertyId, status: property.status })
+            );
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ propertyId, status: property.status }),
+            };
+        } catch (error) {
+            console.error(error);
+            const statusCode = error.statusCode || 500;
+            return {
+                statusCode,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    message: error.statusCode ? error.message : "Something went wrong, please contact support.",
+                }),
+            };
         }
     }
 
