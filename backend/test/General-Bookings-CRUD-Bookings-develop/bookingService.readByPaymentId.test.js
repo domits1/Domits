@@ -1,3 +1,7 @@
+const originalTestEnv = process.env.TEST;
+const hadTestEnv = Object.hasOwn(process.env, "TEST");
+process.env.TEST = "true";
+
 jest.mock("database", () => ({
   __esModule: true,
   default: { getInstance: jest.fn() },
@@ -35,6 +39,14 @@ const ROWS = [
 
 let executed;
 let read;
+
+afterAll(() => {
+  if (hadTestEnv) {
+    process.env.TEST = originalTestEnv;
+  } else {
+    delete process.env.TEST;
+  }
+});
 
 beforeAll(async () => {
   const database = new DataSource({ type: "postgres", schema: "main", entities: [Booking] });
