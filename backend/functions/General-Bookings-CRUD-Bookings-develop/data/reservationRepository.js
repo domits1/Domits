@@ -233,25 +233,6 @@ class ReservationRepository {
     };
   }
 
-  async readByPaymentId(paymentID) {
-    const client = await Database.getInstance();
-    const query = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.paymentid = :paymentid", { paymentid: paymentID })
-      .getMany();
-
-    if (!query) {
-      throw new UnableToSearch();
-    } else if (query.length < 1) {
-      throw new NotFoundException("No booking found.");
-    }
-    return {
-      response: query,
-      statusCode: 200,
-    };
-  }
-
   // ---------
   // Read bookings by HostID
   // ---------
