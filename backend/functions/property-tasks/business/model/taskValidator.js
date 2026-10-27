@@ -2,7 +2,8 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 
 export const VALID_TASK_TYPES = [
     'Cleaning', 'Maintenance', 'Inspection', 'Mid-stay',
-    'Sanitation', 'Check-in', 'Inventory', 'Administration', 'Issue'
+    'Sanitation', 'Check-in', 'Inventory', 'Administration', 'Issue',
+    'Guest Experience', 'Finance', 'Revenue'
 ];
 
 export const VALID_TASK_STATUSES = ['Pending', 'In progress', 'Completed', 'Cancelled'];

@@ -115,7 +115,6 @@ export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
       .where(propertyId === undefined ? "1 = 1" : "review.property_id = :propertyId", { propertyId })
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
@@ -199,7 +198,7 @@ export class ReviewRepository {
     applyCompletedStayConditions(summaryQuery, filters.verificationNow ?? Date.now());
     const summary = await summaryQuery.select("AVG(review.overall_rating)", "score").getRawOne();
     const matching = await eligible().select("COUNT(*)", "count").getRawOne();
-    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
+    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
     const recent = !filters.sort || filters.sort === "recent";
     if (filters.sort === "highest" || filters.sort === "lowest") {
       page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
@@ -234,7 +233,7 @@ export class ReviewRepository {
       review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
       next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
-        text: review.public_review, date: Number(review.created_at), verified: true,
+        text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",
         response: responses.filter((response) => response.reviewId === review.id)
           .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
         categories: ratings.filter((rating) => rating.review_id === review.id)
@@ -242,7 +241,6 @@ export class ReviewRepository {
   }
 
   async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
-    // Fixed expressions keep the requested interval out of SQL interpolation.
     const expressions = {
       week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
       month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
@@ -251,7 +249,6 @@ export class ReviewRepository {
     if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
     const period = expressions[interval];
     const database = await Database.getInstance();
-    // Recheck property ownership during aggregation, using the shared eligibility filters.
     return this.eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
@@ -274,7 +271,6 @@ export class ReviewRepository {
         .from(Review_Rating, "rating")
         .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
-        .andWhere("review.verification_status = :verified")
         .andWhere("review.publication_status = :published")
         .andWhere("review.status = :published")
         .andWhere("review.review_type = :reviewType")
@@ -288,7 +284,7 @@ export class ReviewRepository {
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
-      .setParameters({ propertyId, hostId, verified: "VERIFIED", published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+      .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
       .orderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
@@ -371,7 +367,7 @@ export class ReviewRepository {
     const result = await query.getRawOne();
     const reviewCount = Number(result.review_count);
     return { property_id: propertyId,
-      overall_score: result.overall_score == null ? null : Number(result.overall_score), review_count: reviewCount };
+      overall_score: reviewCount === 0 || result.overall_score == null ? null : Math.round(Number(result.overall_score) * 10) / 10, review_count: reviewCount };
   }
 
   async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {

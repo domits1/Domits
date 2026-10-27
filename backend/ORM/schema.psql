@@ -599,7 +599,7 @@ CREATE TABLE IF NOT EXISTS test.property_custom_rules (
   created_at BIGINT NOT NULL,
   PRIMARY KEY (id)
 );
-CREATE INDEX ASYNC property_custom_rules_property_id_idx_test ON test.property_custom_rules (property_id);
+CREATE INDEX ASYNC IF NOT EXISTS property_custom_rules_property_id_idx_test ON test.property_custom_rules (property_id);
 
 
 -- Review persistence

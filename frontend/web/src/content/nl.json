@@ -1223,6 +1223,7 @@
         "loading": "Je apparaten worden geladen...",
         "loadError": "We konden je apparaten niet laden.",
         "retry": "Probeer opnieuw",
+        "truncated": "Niet alle apparaten worden getoond.",
         "notSupported": "Nog niet ondersteund",
         "columns": {
           "name": "Naam",
@@ -1244,6 +1245,21 @@
           "resortLock": "Resortslot",
           "other": "Ander apparaat"
         }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock moet opnieuw worden gekoppeld.",
+        "alreadyConnected": "RemoteLock is al gekoppeld.",
+        "notConfigured": "RemoteLock is op dit moment niet beschikbaar. Neem contact op met support.",
+        "tryLater": "RemoteLock is bezig. Probeer het zo opnieuw.",
+        "startAgain": "De aanmelding is verlopen of al gebruikt. Begin opnieuw.",
+        "providerError": "RemoteLock meldt een probleem. Probeer het later opnieuw.",
+        "cancelled": "De aanmelding bij RemoteLock is geannuleerd.",
+        "missingParams": "Deze pagina heeft een aanmelding bij RemoteLock nodig. Begin bij Domotica."
+      },
+      "callback": {
+        "title": "RemoteLock koppelen",
+        "working": "De koppeling wordt afgerond...",
+        "back": "Terug naar Domotica"
       },
       "loading": "Je RemoteLock-koppeling wordt geladen...",
       "loadError": "We konden je RemoteLock-koppeling niet laden.",

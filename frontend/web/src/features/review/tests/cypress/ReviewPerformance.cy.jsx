@@ -1,6 +1,6 @@
 import React from "react";
 import { mount } from "cypress/react";
-import ReviewPerformance from "../../src/features/hostdashboard/ReviewPerformance";
+import ReviewPerformance from "../../views/ReviewPerformance";
 
 const periods = [
   { period: "2026-01-01", average_score: 4.5, review_count: 2 },

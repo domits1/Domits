@@ -10,11 +10,11 @@ import {
   Star,
   Lightbulb,
 } from "lucide-react";
-import styles from "../review/styles/GuestReviews.module.css";
+import styles from "../styles/GuestReviews.module.css";
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../review/services/reviewAPI";
+import { requestReview } from "../services/reviewAPI";
 
 function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
   const rating = Number(review.overall_rating ?? review.rating);
@@ -208,7 +208,7 @@ function GuestReviews() {
               <Icon size={21} aria-hidden="true" />
             </span>
             <div>
-              <strong>{busy ? "�" : value}</strong>
+              <strong>{busy ? "..." : value}</strong>
               <span>{label}</span>
             </div>
           </div>
@@ -229,14 +229,14 @@ function GuestReviews() {
               aria-pressed={isWritten}
               className={isWritten ? styles.active : ""}
               onClick={() => setActiveTab("written")}>
-              My reviews <span>{isLoading ? "�" : reviews.length}</span>
+              My reviews <span>{isLoading ? "..." : reviews.length}</span>
             </button>
             <button
               type="button"
               aria-pressed={!isWritten}
               className={!isWritten ? styles.active : ""}
               onClick={() => setActiveTab("received")}>
-              Received reviews <span>{isLoading2 ? "�" : receivedReviews.length}</span>
+              Received reviews <span>{isLoading2 ? "..." : receivedReviews.length}</span>
             </button>
           </div>
 

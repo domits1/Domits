@@ -67,10 +67,10 @@ describe("property score repository", () => {
       property_id: "property-1", overall_score: null, review_count: 0,
     });
   });
-  test("preserves average precision", async () => {
+  test("rounds the average to one decimal", async () => {
     query.getRawOne.mockResolvedValue({ overall_score: "4.333333333333333", review_count: "3" });
     const result = await repository.getPropertyReviewScore("property-1", "host-1");
-    expect(result.overall_score).toBeCloseTo(13 / 3, 12);
+    expect(result.overall_score).toBe(4.3);
     expect(result.review_count).toBe(3);
   });
 });

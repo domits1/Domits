@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { getPropertyRatingTrends } from "./services/reviewAPI";
-import { fetchHostPropertySelectOptions } from "../../services/hostPropertyService";
-import styles from "./styles/ReviewPerformance.module.css";
-import trendStyles from "./styles/DecliningPropertyRatings.module.css";
+import { getPropertyRatingTrends } from "../services/reviewAPI";
+import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
+import styles from "../styles/ReviewPerformance.module.css";
+import trendStyles from "../styles/DecliningPropertyRatings.module.css";
 
 const labels = { DECLINING: "Declining", STABLE: "Stable", IMPROVING: "Improving", INSUFFICIENT_DATA: "Insufficient data" };
 const yesterday = () => new Date(Date.now() - 86400000).toISOString().slice(0, 10);

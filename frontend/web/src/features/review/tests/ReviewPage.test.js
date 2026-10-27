@@ -2,9 +2,9 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
-import ReviewPage from "../ReviewPage";
+import ReviewPage from "../views/ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-import GuestReviews from "../../guestdashboard/GuestReviews";
+import GuestReviews from "../views/GuestReviews";
 import {
   createReview,
   requestReview,
@@ -331,7 +331,7 @@ it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", asy
     const [url, request] = global.fetch.mock.calls[0];
     expect(url).toBe(`${api.API_REVIEW_BASE}/reviews/review-1`);
     expect(request.method).toBe(method);
-    if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated" });
+    if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated", updated_at: 123 });
     expect(request.headers.Authorization).toBe("id-token");
   } finally { global.fetch = originalFetch; }
 });

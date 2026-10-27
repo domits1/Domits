@@ -109,11 +109,11 @@ export class Controller {
       } else if (query.scope === "property-trends") {
         result = await this.service.getPropertyRatingTrends(user.username, query);
       } else if (query.scope === "property-categories") {
-        result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+        result = await this.service.getPropertyCategoryRatings(userId, query.propertyId);
       } else if (query.scope === "property-score") {
-        result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+        result = await this.service.getPropertyReviewScore(userId, query.propertyId);
       } else if (query.scope === "property-performance") {
-        result = await this.service.getPropertyReviewPerformance(user.username, query.propertyId, query);
+        result = await this.service.getPropertyReviewPerformance(userId, query.propertyId, query);
       } else if (query.reviewId !== undefined) {
         result = await this.service.getEditableReview(userId, query.reviewId);
       } else {

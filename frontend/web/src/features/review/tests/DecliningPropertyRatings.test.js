@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import DecliningPropertyRatings from "../DecliningPropertyRatings";
+import DecliningPropertyRatings from "../views/DecliningPropertyRatings";
 import { getPropertyRatingTrends } from "../services/reviewAPI";
 import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
 jest.mock("../services/reviewAPI", () => ({ getPropertyRatingTrends: jest.fn() }));

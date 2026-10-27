@@ -1,7 +1,7 @@
 import React from "react";
 import userEvent from "@testing-library/user-event";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import ReviewPerformance from "../../hostdashboard/ReviewPerformance";
+import ReviewPerformance from "../views/ReviewPerformance";
 import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hostTaskPropertyService";
 import { getPropertyReviewPerformance } from "../services/reviewAPI";
 jest.mock("../../hostdashboard/services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
