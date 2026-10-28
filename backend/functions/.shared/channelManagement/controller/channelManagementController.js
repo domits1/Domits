@@ -3,6 +3,7 @@ import {
   CHANNEX_RESTRICTIONS_SYNC_MODE,
   CHANNEX_RESTRICTIONS_SYNC_VERSION,
 } from "../utils/channexRestrictionsSyncVersion.js";
+import { isInternalTokenValid } from "../utils/channexInternalToken.js";
 
 const CHANNEX_FULL_CERTIFICATION_SYNC_VERSION = "full-sync-v1";
 // Unmapped-room and unmapped-rate events are mapping alerts, not new revisions to import.
@@ -288,10 +289,7 @@ export default class ChannelManagementController {
     );
     const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
 
-    if (
-      !allowWithoutToken &&
-      (!expectedToken || providedToken !== expectedToken)
-    ) {
+    if (!allowWithoutToken && !isInternalTokenValid(expectedToken, providedToken)) {
       return {
         statusCode: 403,
         response: {
@@ -315,10 +313,7 @@ export default class ChannelManagementController {
     );
     const allowWithoutToken = process.env.TEST === "true" && !expectedToken;
 
-    if (
-      !allowWithoutToken &&
-      (!expectedToken || providedToken !== expectedToken)
-    ) {
+    if (!allowWithoutToken && !isInternalTokenValid(expectedToken, providedToken)) {
       return {
         statusCode: 403,
         response: {
