@@ -38,6 +38,12 @@ import { TypeException } from "../../util/exception/TypeException.js";
 import { ServiceUnavailableException } from "../../util/exception/ServiceUnavailableException.js";
 import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
 import {
+  HOST_REQUESTABLE_STATUSES,
+  normalizePropertyStatus,
+  PROPERTY_STATUS,
+  SUBMITTABLE_FOR_REVIEW_STATUSES,
+} from "../../util/propertyStatus.js";
+import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
   MAX_REGISTRATION_NUMBER_LENGTH,
   REGISTRATION_NUMBER_TAKEN_MESSAGE,
@@ -101,9 +107,9 @@ export class PropertyService {
       return;
     }
     try {
-      const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-      invalidationErrors.forEach((failure) => {
-        console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+      const { invalidationErrors, redirectErrors = [] } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+      [...invalidationErrors, ...redirectErrors].forEach((failure) => {
+        console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
       });
     } catch (error) {
       console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the listing was not deleted.`, error);
@@ -137,21 +143,60 @@ export class PropertyService {
     }
   }
 
-  async activateProperty(propertyId) {
-    const property = await this.getBasePropertyInfo(propertyId);
-    if (property.status === "ACTIVE") {
-      throw new DatabaseException("This property is already active.");
+  // A host can never write ACTIVE. Asking for it submits the property for review; an
+  // approved or already submitted property is left exactly as it is.
+  async requestHostStatusChange(propertyId, requestedStatus, metadata = {}) {
+    const status = normalizePropertyStatus(requestedStatus) || PROPERTY_STATUS.ACTIVE;
+    if (!HOST_REQUESTABLE_STATUSES.includes(status)) {
+      throw new TypeException("Invalid property status.");
     }
-    await this.propertyRepository.activateProperty(propertyId, property);
-    const newProperty = await this.getBasePropertyInfo(propertyId);
 
-    if (property === newProperty) {
-      throw new DatabaseException("Something went wrong while updating the activity status");
+    if (status !== PROPERTY_STATUS.ACTIVE) {
+      return await this.updatePropertyStatus(propertyId, status, metadata);
     }
+
+    await this.propertyRepository.transitionStatus(
+      propertyId,
+      SUBMITTABLE_FOR_REVIEW_STATUSES,
+      PROPERTY_STATUS.PENDING_REVIEW
+    );
+    // Re-read instead of trusting the row count: when nothing matched, the current status is the answer.
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    return property;
+  }
+
+  async approveProperty(propertyId) {
+    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.ACTIVE);
+  }
+
+  async rejectProperty(propertyId) {
+    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.REJECTED);
+  }
+
+  async reviewPendingProperty(propertyId, decision) {
+    const changed = await this.propertyRepository.transitionStatus(
+      propertyId,
+      [PROPERTY_STATUS.PENDING_REVIEW],
+      decision
+    );
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    if (changed === 0) {
+      throw new ConflictException(
+        `Property ${propertyId} is ${property.status}; only a ${PROPERTY_STATUS.PENDING_REVIEW} property can be reviewed.`
+      );
+    }
+    return property;
   }
 
   async updatePropertyStatus(propertyId, nextStatus, metadata = {}) {
-    const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+    // Unconditional write, so it must never be able to set ACTIVE: going live is approveProperty only.
+    const allowedStatuses = new Set([PROPERTY_STATUS.INACTIVE, PROPERTY_STATUS.ARCHIVED]);
     const normalizedStatus = String(nextStatus || "").toUpperCase();
     if (!allowedStatuses.has(normalizedStatus)) {
       throw new DatabaseException("Invalid property status update.");

@@ -1,7 +1,7 @@
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 
 export const DESTINATIONS_ROOT_PATH = "/destinations";
-export const DESTINATION_PAGE_CACHE_CONTROL = "public, max-age=60";
+export const DESTINATION_PAGE_CACHE_CONTROL = "public, max-age=300";
 const DEFAULT_SITE_ORIGIN = "https://www.domits.com";
 const DESTINATIONS_ROOT_NAME = "Destinations";
 
@@ -83,6 +83,9 @@ const STYLE =
 
 export const buildDestinationNotFoundPage = ({ siteOrigin = DEFAULT_SITE_ORIGIN } = {}) =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Destination not found | Domits</title><meta name="robots" content="noindex, nofollow"><style>${STYLE}</style></head><body><main><h1>No stays here yet</h1><p>There are no holiday rentals in this destination at the moment.</p><p><a href="${escapeHtml(siteOrigin)}${DESTINATIONS_ROOT_PATH}">All destinations</a></p></main></body></html>\n`;
+
+export const buildDestinationUnavailablePage = () =>
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Destinations unavailable | Domits</title><meta name="robots" content="noindex, nofollow"><style>${STYLE}</style></head><body><main><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main></body></html>\n`;
 
 export const buildDestinationPage = ({
   destination,
