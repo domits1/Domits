@@ -36,7 +36,7 @@ export const normalizeImageUrl = (maybeKeyOrUrl) => {
     return placeholderImage;
   }
 
-  if (isHttpUrl(value)) {
+  if (isHttpUrl(value) || value === placeholderImage) {
     return value;
   }
 

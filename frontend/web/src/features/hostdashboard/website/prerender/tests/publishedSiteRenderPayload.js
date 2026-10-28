@@ -78,8 +78,8 @@ export const buildPublishedSiteRenderPayload = ({
     rules: [{ rule: "smoking", value: false }],
     checkIn: { checkIn: { from: "15:00" }, checkOut: { till: "11:00" } },
     images: [
-      { image_id: "first", sort_order: 0, status: "READY", web_key: "images/property/first/web.jpg" },
-      { image_id: "second", sort_order: 1, status: "READY", web_key: "images/property/second/web.jpg" },
+      { image_id: "00000000-0000-4000-8000-000000000001", sort_order: 0, status: "READY", web_key: "images/ecd926d9-67dc-4d0a-9b40-2884d0838406/00000000-0000-4000-8000-000000000001/web.jpg" },
+      { image_id: "00000000-0000-4000-8000-000000000002", sort_order: 1, status: "READY", web_key: "images/ecd926d9-67dc-4d0a-9b40-2884d0838406/00000000-0000-4000-8000-000000000002/web.jpg" },
     ],
     hostProfile: { givenName: "Amara" },
     ...propertySnapshotOverrides,

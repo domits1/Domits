@@ -1,6 +1,7 @@
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { isReviewAdmin } from "../util/reviewAdminAllowlist.js";
 
 import { CognitoRepository } from "../data/repository/cognitoRepository.js";
 import { PropertyRepository } from "../data/repository/propertyRepository.js";
@@ -39,6 +40,16 @@ export class AuthManager {
         const groupAttribute = user.UserAttributes.find((attribute) => attribute.Name === "custom:group");
         if (groupAttribute.Value !== group) {
             throw new Forbidden(`You must be a ${group}.`);
+        }
+        return user.Username;
+    }
+
+    // Admin status comes from the env allowlist, not from custom:group, so a caller
+    // without that attribute is a plain 403 instead of a TypeError.
+    async authorizeReviewAdminRequest(accessToken) {
+        const user = await this.getAuthorizedUser(accessToken);
+        if (!isReviewAdmin(user?.Username)) {
+            throw new Forbidden("You are not allowed to review properties.");
         }
         return user.Username;
     }

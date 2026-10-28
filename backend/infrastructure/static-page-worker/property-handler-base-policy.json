@@ -16,7 +16,8 @@
         "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/host",
         "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/dbName",
         "arn:aws:ssm:eu-north-1:115462458880:parameter/aurora/dsql/schema",
-        "arn:aws:ssm:eu-north-1:115462458880:parameter/direct-booking-website/quote-token-secret"
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/direct-booking-website/quote-token-secret",
+        "arn:aws:ssm:eu-north-1:115462458880:parameter/destinations/pages/enabled"
       ]
     },
     {
