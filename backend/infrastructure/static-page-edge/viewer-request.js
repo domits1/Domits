@@ -6,7 +6,15 @@ var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
 var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
 var ROBOTS_URI = "/robots.txt";
-var BUILD_ASSET_PATTERN = /\.(?:js|map|css|png|jpe?g|gif|svg|webp|woff2?|ttf|eot|ico|json)$/;
+var BUILD_DIRECTORY = "/static/";
+var BUILD_ROOT_FILES = {
+  "/asset-manifest.json": true,
+  "/favicon.ico": true,
+  "/logo.svg": true,
+  "/logo192.png": true,
+  "/logo512.png": true,
+  "/manifest.json": true,
+};
 var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 
 function normalizeHostName(value) {
@@ -77,8 +85,12 @@ function robotsResponse(host, method) {
   return response;
 }
 
+function isBuildFile(uri) {
+  return uri.indexOf(BUILD_DIRECTORY) === 0 || Object.prototype.hasOwnProperty.call(BUILD_ROOT_FILES, uri);
+}
+
 function mayRedirect(uri) {
-  return typeof uri === "string" && uri.charAt(0) === "/" && !BUILD_ASSET_PATTERN.test(uri);
+  return typeof uri === "string" && uri.charAt(0) === "/" && !isBuildFile(uri);
 }
 
 async function primaryHostFor(host) {
