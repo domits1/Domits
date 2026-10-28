@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import HostResponseForm from "../components/HostResponseForm";
-import { saveHostResponse } from "../services/reviewAPI";
-jest.mock("../services/reviewAPI", () => ({ saveHostResponse: jest.fn() }));
+import { saveHostResponse, deleteHostResponse } from "../services/reviewAPI";
+jest.mock("../services/reviewAPI", () => ({ saveHostResponse: jest.fn(), deleteHostResponse: jest.fn() }));
 beforeEach(() => jest.clearAllMocks());
 test("rejects an empty response", () => {
   render(<HostResponseForm review={{ id: "r1" }} />);
@@ -57,4 +57,46 @@ test("reopens a saved draft for editing without presenting it as public", () => 
   expect(screen.queryByLabelText("Host response")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Save Draft" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+});
+
+afterEach(() => jest.restoreAllMocks());
+test("allows cancelling response deletion", () => {
+  const confirm = jest.spyOn(window, "confirm").mockReturnValue(false);
+  render(<HostResponseForm review={{ id: "r1", response: { status: "published", message: "Thanks" } }} />);
+  fireEvent.click(screen.getByRole("button", { name: "Delete Response" }));
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining("Delete this response?"));
+  expect(deleteHostResponse).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Your response")).toHaveValue("Thanks");
+});
+test("deletes once and clears the response after success", async () => {
+  jest.spyOn(window, "confirm").mockReturnValue(true);
+  let complete;
+  deleteHostResponse.mockImplementationOnce(() => new Promise((resolve) => { complete = resolve; }));
+  const onSaved = jest.fn();
+  render(<HostResponseForm onSaved={onSaved}
+    review={{ id: "r1", response: { status: "published", message: "Thanks" } }} />);
+  const button = screen.getByRole("button", { name: "Delete Response" });
+  fireEvent.click(button); fireEvent.click(button);
+  expect(button).toBeDisabled();
+  expect(screen.getByRole("status")).toHaveTextContent("Deleting response");
+  expect(deleteHostResponse).toHaveBeenCalledTimes(1);
+  expect(deleteHostResponse).toHaveBeenCalledWith("r1");
+  complete();
+  await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Response deleted."));
+  expect(onSaved).toHaveBeenCalledWith(null);
+  expect(screen.queryByLabelText("Host response")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Delete Response" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Your response")).toHaveValue("");
+});
+test("preserves the response and allows retry after failed deletion", async () => {
+  jest.spyOn(window, "confirm").mockReturnValue(true);
+  deleteHostResponse.mockRejectedValueOnce(new Error("Access denied"));
+  const onSaved = jest.fn();
+  render(<HostResponseForm onSaved={onSaved}
+    review={{ id: "r1", response: { status: "draft", message: "Saved reply" } }} />);
+  fireEvent.click(screen.getByRole("button", { name: "Delete Response" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Access denied");
+  expect(screen.getByLabelText("Your response")).toHaveValue("Saved reply");
+  expect(screen.getByRole("button", { name: "Delete Response" })).toBeEnabled();
+  expect(onSaved).not.toHaveBeenCalled();
 });

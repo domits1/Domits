@@ -129,3 +129,33 @@ test("authorized host retrieval opts into drafts", async () => {
   expect(repository.hostResponseQuery).toHaveBeenCalledWith({}, user.username);
   expect(repository.attachPublicDetails).toHaveBeenCalledWith({}, [{ id: "r1" }], true);
 });
+
+test.each(["guest", "other"])("rejects deletion by %s", async (userId) => {
+  const repository = {
+    findById: jest.fn().mockResolvedValue({ id: "r1", host_id: "host", status: "PUBLISHED", publication_status: "PUBLISHED" }),
+    softDeleteResponse: jest.fn(),
+  };
+  await expect(new ReviewService({ repository }).deleteReviewResponse(userId, "r1"))
+    .rejects.toMatchObject({ statusCode: 403 });
+  expect(repository.softDeleteResponse).not.toHaveBeenCalled();
+});
+test("authorized deletion updates status and timestamps without removing records", async () => {
+  const repository = new ReviewRepository();
+  jest.spyOn(repository, "findById").mockResolvedValue({ id: "r1", host_id: "host", status: "PUBLISHED", publication_status: "PUBLISHED" });
+  const responses = { update: jest.fn().mockResolvedValue({ affected: 1 }) };
+  jest.spyOn(repository, "mutateResponse")
+    .mockImplementation(async (_reviewId, _authorId, _timestamp, work) => work(responses));
+  await new ReviewService({ repository, now: () => 2000 }).deleteReviewResponse("host", "r1");
+  expect(repository.mutateResponse).toHaveBeenCalledWith("r1", "host", 2000, expect.any(Function));
+  expect(responses.update).toHaveBeenCalledWith(
+    expect.objectContaining({ reviewId: "r1", authorId: "host", deletedAt: expect.anything() }),
+    { status: "deleted", deletedAt: 2000, updatedAt: 2000 },
+  );
+});
+test("public response retrieval excludes soft-deleted records", async () => {
+  const find = jest.fn().mockResolvedValue([]);
+  await new ReviewRepository().attachPublicDetails({ getRepository: () => ({ find }) }, [{ id: "r1" }]);
+  const { where } = find.mock.calls[1][0];
+  expect(where.status).toBe("published");
+  expect(where.deletedAt.type).toBe("isNull");
+});
