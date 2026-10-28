@@ -9,6 +9,8 @@ import { BookingRepository } from "../data/repository/bookingRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { TeamMemberRepository } from "../data/repository/teamMemberRepository.js";
 
+const REJECTED_TOKEN_ERRORS = new Set(["NotAuthorizedException", "UserNotFoundException"]);
+
 export class AuthManager {
 
     cognitoRepository;
@@ -26,9 +28,15 @@ export class AuthManager {
     }
 
     async getAuthorizedUser(accessToken) {
+        if (!accessToken) {
+            throw new Unauthorized("You must be logged in.");
+        }
         try {
             return await this.cognitoRepository.getUserByAccessToken(accessToken);
         } catch (error) {
+            if (!REJECTED_TOKEN_ERRORS.has(error?.name)) {
+                throw error;
+            }
             const unauthorized = new Unauthorized("You must be logged in.");
             unauthorized.cause = error;
             throw unauthorized;
