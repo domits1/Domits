@@ -11,21 +11,22 @@ const ALIAS = "beautiful-home-amsterdam-6156b005.direct.domits.com";
 const PRIMARY = "www.villasensual.nl";
 const PLAIN_HOST = "villa-loiki-8cf98e11.direct.domits.com";
 
-const countingKeyValueStore = (redirects = {}, { storeFails = false, failingCall = "" } = {}) => {
+const countingKeyValueStore = (redirects = {}, { storeFails = false, failingCall = [] } = {}) => {
   const calls = [];
   const missingKeyReads = [];
   const has = (key) => Object.hasOwn(redirects, key);
+  const fails = (method, key) => failingCall[0] === method && failingCall[1] === key;
   const store = {
     exists: async (key) => {
       calls.push(["exists", key]);
-      if (failingCall === "exists") {
+      if (fails("exists", key)) {
         throw new Error("the key value store did not answer");
       }
       return has(key);
     },
     get: async (key) => {
       calls.push(["get", key]);
-      if (failingCall === "get") {
+      if (fails("get", key)) {
         throw new Error("KeyNotFound");
       }
       if (!has(key)) {
@@ -113,8 +114,9 @@ describe("how the edge function reads the redirect store", () => {
   });
 
   it.each([
-    ["the store does not answer whether the host exists", "exists"],
-    ["the key is gone between the check and the read", "get"],
+    ["the store does not answer whether the host exists", ["exists", ALIAS]],
+    ["the key is gone between the check and the read", ["get", ALIAS]],
+    ["the store does not answer whether the target is a key itself", ["exists", PRIMARY]],
   ])("serves the page as before when %s", async (_name, failingCall) => {
     const store = countingKeyValueStore({ [ALIAS]: PRIMARY }, { failingCall });
     const event = buildEvent({ method: "GET", uri: "/", host: ALIAS });
