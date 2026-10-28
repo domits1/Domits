@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import CategoryRatings from "../components/categoryRatings";
 import { requestReview } from "../services/reviewAPI";
 jest.mock("../services/reviewAPI", () => ({ requestReview: jest.fn() }));
@@ -44,4 +44,25 @@ test("preserves database order and displays the supplied two-review averages", a
     expect(items[index]).toHaveTextContent(label);
     expect(items[index]).toHaveTextContent(`${average.toFixed(2)} / 5`);
   });
+});
+
+test.each(["request", "malformed"])("preserves successful properties on %s failure and can retry", async (failure) => {
+  let recovered = false;
+  requestReview.mockImplementation(async (_, { propertyId }) => {
+    if (propertyId === "p2" && !recovered) {
+      return failure === "request" ? { ok: false } : { ok: true, json: async () => ({ categories: [null] }) };
+    }
+    return { ok: true, json: async () => ({ categories: [
+      { category_key: "clean", label: "Cleanliness", rating_count: 2, average_rating: propertyId === "p1" ? 4 : 5 },
+    ] }) };
+  });
+  render(<CategoryRatings userId="host" propertyIds={["p1", "p2"]} />);
+  expect(await screen.findByText(/Some properties could not be loaded/)).toBeInTheDocument();
+  expect(screen.getByText("4.00 / 5")).toBeInTheDocument();
+  expect(screen.getByText("2 reviews")).toBeInTheDocument();
+  recovered = true;
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("4.50 / 5")).toBeInTheDocument();
+  expect(screen.getByText("4 reviews")).toBeInTheDocument();
+  expect(screen.queryByText(/Some properties could not be loaded/)).not.toBeInTheDocument();
 });

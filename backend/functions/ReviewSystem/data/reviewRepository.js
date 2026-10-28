@@ -180,7 +180,6 @@ export class ReviewRepository {
         .addSelect("AVG(rating.rating)", "average_rating")
         .addSelect("COUNT(*)", "rating_count")
         .from(Review_Rating, "rating")
-        // Historical ratings store display labels; group both formats under the canonical key.
         .innerJoin(Review_Category, "definition",
           `(LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.key))
             OR LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.label)))
@@ -265,7 +264,6 @@ export class ReviewRepository {
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
         boundary: options.threshold * (1 - 1e-12),
-        // Bind the negative value directly: PostgreSQL cannot resolve unary minus on an untyped parameter.
         declineBoundary: -options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
@@ -490,7 +488,6 @@ export class ReviewRepository {
 
     const reviews = await query.getMany();
     if (scope !== "received" || !reviews.length) return reviews;
-    // Match both identities so a mismatched review cannot expose another booking's guest name.
     const bookings = await dataSource.getRepository(Booking).find({
       where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
       select: ["id", "guestid", "guestname"],

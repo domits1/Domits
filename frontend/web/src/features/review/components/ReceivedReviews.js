@@ -59,7 +59,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
       .then((items) => {
         if (active) setProperties(Object.fromEntries(items.map((item) => [item.value, item])));
       })
-      .catch(() => {}); // Review content stays available if listing details cannot load.
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -188,7 +188,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                           <strong>{value.toFixed(1)}</strong>
                         </>
                       )}
-                      {review.verification_status === "VERIFIED" && (
+                      {review.verification_status === "VERIFIED_STAY" && (
                         <span className={styles.verified}>Verified stay</span>
                       )}
                     </div>

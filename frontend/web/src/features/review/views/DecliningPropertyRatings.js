@@ -44,7 +44,7 @@ export default function DecliningPropertyRatings({ userId }) {
     fetchHostPropertySelectOptions(userId).then((items) => {
       if (active) setNames(Object.fromEntries(items.map(({ value, label }) => [value, label])));
       if (active) setListings(Object.fromEntries(items.map((item) => [item.value, item])));
-    }).catch(() => {}); // Property IDs remain usable when listing names are unavailable.
+    }).catch(() => {});
     return () => { active = false; };
   }, [userId]);
 
