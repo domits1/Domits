@@ -167,29 +167,46 @@ class BookingService {
 
   async confirmPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+    if (!booking) {
+      return { paymentConfirmed: false, newlyPaid: false, notificationContext: null };
+    }
+    const notificationContext = {
+      hostId: booking.hostid,
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      paymentId: paymentid,
+    };
     if (booking.status === BOOKING_STATUS_PAID) {
-      return true;
+      return { paymentConfirmed: true, newlyPaid: false, notificationContext };
     }
     const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
     if (paymentIntent.status === "succeeded") {
-      await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
-      return true;
-    } else {
-      return false;
+      const newlyPaid = await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
+      return { paymentConfirmed: true, newlyPaid: newlyPaid === true, notificationContext };
     }
+    return { paymentConfirmed: false, newlyPaid: false, notificationContext };
   }
 
   async failPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+    if (!booking) {
+      return { paymentConfirmed: false, paymentFailed: false, notificationContext: null };
+    }
+    const notificationContext = {
+      hostId: booking.hostid,
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      paymentId: paymentid,
+    };
     if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
-      // A failed payment frees the nights the booking held, so Channex has to reopen them.
       const channexChange = bookingAvailabilityChange(booking.property_id, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
         arrivalMs: Number(booking.arrivaldate),
         departureMs: Number(booking.departuredate),
       });
       await this.reservationRepository.updateBookingStatus(booking.id, "Failed", [channexChange]);
-      return true;
+      return { paymentConfirmed: true, paymentFailed: true, notificationContext };
     }
+    return { paymentConfirmed: false, paymentFailed: false, notificationContext };
   }
 
   async read(event) {

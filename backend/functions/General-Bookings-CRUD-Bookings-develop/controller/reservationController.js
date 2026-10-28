@@ -9,6 +9,7 @@ import NotFoundException from "../util/exception/NotFoundException.js";
 import PublicSiteBookingRequestService from "../business/publicSiteBookingRequestService.js";
 import { PublicBookingRequestError } from "../util/exception/PublicBookingRequestError.js";
 import { randomUUID } from "node:crypto";
+import { sendFinanceNotification } from "../business/financeNotificationService.js";
 
 import responsejson from "../util/const/responseheader.json" with { type: "json" };
 import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
@@ -84,11 +85,21 @@ class ReservationController {
     bookingService = new BookingService(),
     paymentService = new PaymentService(),
     publicSiteBookingRequestService = new PublicSiteBookingRequestService(),
+    financeNotificationSender = sendFinanceNotification,
   } = {}) {
     this.bookingService = bookingService;
     this.paymentSerivce = paymentService;
     this.publicSiteBookingRequestService = publicSiteBookingRequestService;
+    this.financeNotificationSender = financeNotificationSender;
     this.systemManagerRepository = new SystemManagerRepository();
+  }
+
+  async dispatchFinanceNotification(eventType, context) {
+    try {
+      await this.financeNotificationSender(eventType, context);
+    } catch (error) {
+      console.error("Finance notification dispatch failed", { eventType, code: error?.code || error?.name || "DELIVERY_FAILED" });
+    }
   }
 
   async getStripeInstance() {
@@ -295,9 +306,17 @@ class ReservationController {
       throw new Error("Missing paymentid.");
     }
 
-    const confirmed = body?.failedpayment
+    const confirmation = body?.failedpayment
       ? await this.bookingService.failPayment(body.paymentid)
       : await this.bookingService.confirmPayment(body.paymentid);
+    const hasConfirmationOutcome = confirmation !== null && typeof confirmation === "object";
+    const confirmed = hasConfirmationOutcome ? Boolean(confirmation.paymentConfirmed) : Boolean(confirmation);
+
+    if (confirmed && body?.failedpayment && hasConfirmationOutcome && confirmation.paymentFailed && confirmation.notificationContext) {
+      await this.dispatchFinanceNotification("PAYMENT_FAILED", confirmation.notificationContext);
+    } else if (confirmed && !body?.failedpayment && hasConfirmationOutcome && confirmation.newlyPaid && confirmation.notificationContext) {
+      await this.dispatchFinanceNotification("GUEST_PAYMENT_RECEIVED", confirmation.notificationContext);
+    }
 
     return {
       statusCode: 200,
@@ -372,6 +391,17 @@ class ReservationController {
         if (stripeInstance) {
           const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
           stripeRefundId = refund.id;
+          const refundContext = {
+            hostId: booking.hostid,
+            bookingId: booking.id,
+            propertyId: booking.property_id,
+            paymentId: booking.paymentid,
+            refundId: refund.id,
+          };
+          await this.dispatchFinanceNotification("REFUND_INITIATED", refundContext);
+          if (refund.status === "succeeded") {
+            await this.dispatchFinanceNotification("REFUND_COMPLETED", refundContext);
+          }
         }
       }
     } catch (error) {
