@@ -126,6 +126,13 @@ describe("fetchWithWebsiteSession", () => {
       WebsiteSessionExpiredError,
     ],
     ["nobody is signed in any more", () => null, WebsiteSessionExpiredError],
+    [
+      "the stored session cannot be loaded",
+      () => ({
+        getSession: (callback) => Promise.resolve().then(() => callback(new Error("Refresh Token has expired"))),
+      }),
+      WebsiteSessionExpiredError,
+    ],
     ["the refresh gives back the rejected token", () => userRefreshingTo("expiring-token"), WebsiteSessionExpiredError],
     [
       "the network fails during the refresh",
