@@ -649,7 +649,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
-            await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
             return {
@@ -694,7 +694,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
             const channexChanges = this.buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides);
 

@@ -66,21 +66,22 @@ export class AuthManager {
         return user.Username;
     }
 
-    async authorizePropertyCalendarOverrideRequest(accessToken, id) {
+    async isHostOrActiveCoHost(userId, hostId) {
+        if (userId === hostId) {
+            return true;
+        }
+        const membership = await this.teamMemberRepository.findActiveMembershipByMemberAndHost(userId, hostId);
+        return Boolean(membership);
+    }
+
+    async authorizePropertyOwnerOrCoHostRequest(accessToken, id) {
         const user = await this.getAuthorizedUser(accessToken);
         const property = await this.propertyRepository.getPropertyById(id)
         if (!property) {
             throw new NotFoundException("Property not found.")
         }
-        if (property.hostId === user.Username) {
-            return property.hostId;
-        }
-
-        const membership = await this.teamMemberRepository.findActiveMembershipByMemberAndHost(
-            user.Username,
-            property.hostId
-        );
-        if (!membership) {
+        const hasAccess = await this.isHostOrActiveCoHost(user.Username, property.hostId);
+        if (!hasAccess) {
             throw new Forbidden("You must be the owner or an active co-host of the property to access it.")
         }
         return property.hostId;
