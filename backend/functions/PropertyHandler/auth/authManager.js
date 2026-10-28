@@ -86,6 +86,20 @@ export class AuthManager {
         return property.hostId;
     }
 
+    async authorizeHostAccess(username, hostId) {
+        if (!hostId || username !== hostId) {
+            const membership = hostId
+                ? await this.teamMemberRepository.findActiveMembershipByMemberAndHost(username, hostId)
+                : null;
+            if (!membership) {
+                const forbidden = new Forbidden("You must be the owner or an active team member of the host to access it.");
+                forbidden.callerId = username;
+                throw forbidden;
+            }
+        }
+        return username;
+    }
+
     async authorizeDraftOwnerRequest(accessToken, draftId) {
         const user = await this.getAuthorizedUser(accessToken);
         const draft = await this.propertyDraftRepository.getDraftById(draftId);

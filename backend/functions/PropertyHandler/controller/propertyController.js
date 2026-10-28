@@ -2367,13 +2367,21 @@ export class PropertyController {
         }
     }
 
+    warnForbidden(route, error, targetId) {
+        const isForbidden = error.statusCode === 403 && Boolean(error.callerId);
+        if (isForbidden) {
+            console.warn(`${route} forbidden caller=${error.callerId} target=${JSON.stringify(targetId)}`);
+        }
+        return isForbidden;
+    }
+
     // -------------------------
     // GET /property/hostDashboard/byHostId
     // -------------------------
     async getFullOwnedPropertiesByHostId(event) {
         try {
             const accessToken = event.headers.Authorization;
-            await this.authManager.getAuthorizedUser(accessToken);
+            const user = await this.authManager.getAuthorizedUser(accessToken);
             const hostId = event.queryStringParameters?.hostId;
             if (!hostId) {
                 return {
@@ -2382,6 +2390,7 @@ export class PropertyController {
                     body: JSON.stringify("hostId query parameter is required.")
                 };
             }
+            await this.authManager.authorizeHostAccess(user.Username, hostId);
             const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
             return {
                 statusCode: 200,
@@ -2389,6 +2398,9 @@ export class PropertyController {
                 body: JSON.stringify(properties)
             };
         } catch (error) {
+            if (!this.warnForbidden("hostDashboard/byHostId", error, event.queryStringParameters?.hostId)) {
+                console.error(error);
+            }
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,
@@ -2403,7 +2415,13 @@ export class PropertyController {
     async getFullOwnedPropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
-            await this.authManager.getAuthorizedUser(event.headers.Authorization);
+            const accessToken = event.headers.Authorization;
+            const user = await this.authManager.getAuthorizedUser(accessToken);
+            const baseProperty = await this.propertyService.getBasePropertyInfo(propertyId);
+            if (!baseProperty) {
+                throw new NotFoundException(`Property ${propertyId} not found.`);
+            }
+            await this.authManager.authorizeHostAccess(user.Username, baseProperty.hostId);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
@@ -2411,7 +2429,9 @@ export class PropertyController {
                 body: JSON.stringify(property)
             }
         } catch (error) {
-            console.error(error);
+            if (!this.warnForbidden("hostDashboard/single", error, event.queryStringParameters?.property)) {
+                console.error(error);
+            }
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,
