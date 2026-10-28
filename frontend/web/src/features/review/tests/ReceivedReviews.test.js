@@ -1,6 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import ReceivedReviews from "../components/ReceivedReviews";
+import { deleteHostResponse } from "../services/reviewAPI";
+jest.mock("../services/reviewAPI", () => ({ deleteHostResponse: jest.fn(), requestReview: jest.fn().mockRejectedValue(new Error("Unavailable")) }));
 jest.mock("../../../services/hostPropertyService", () => ({
   fetchHostPropertySelectOptions: async () => [{ value: "p1", title: "City studio", location: "Amsterdam" }],
 }));
@@ -41,4 +43,22 @@ test("selects reviews in the response panel and cancels unsaved edits", async ()
   fireEvent.click(screen.getByRole("button", { name: "Quiet room", exact: true }));
   expect(within(panel).getByRole("heading", { name: "Quiet room" })).toBeInTheDocument();
   expect(within(panel).getByLabelText("Your response")).toHaveValue("");
+});
+
+test("deleted response stays cleared when switching reviews", async () => {
+  const confirm = jest.spyOn(window, "confirm").mockReturnValue(true);
+  deleteHostResponse.mockResolvedValueOnce(undefined);
+  try {
+    render(<ReceivedReviews userId="host" reviews={reviews} loading={false} error=""
+      respondableReviews={{ a: { ...reviews[0], response: { status: "published", message: "Old reply" } }, b: reviews[1] }} />);
+    await screen.findByText(/City studio.*Amsterdam/);
+    fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Response" }));
+    await screen.findByText("Response deleted.");
+    fireEvent.click(screen.getByRole("button", { name: "Quiet room", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+    expect(screen.queryByLabelText("Host response")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete Response" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Your response")).toHaveValue("");
+  } finally { confirm.mockRestore(); }
 });

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { saveHostResponse } from "../services/reviewAPI";
+import React, { useRef, useState } from "react";
+import { saveHostResponse, deleteHostResponse } from "../services/reviewAPI";
 import styles from "../styles/ReceivedReviews.module.css";
 
 export default function HostResponseForm({ review, onSaved }) {
@@ -8,8 +8,28 @@ export default function HostResponseForm({ review, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const deleting = useRef(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const remove = async () => {
+    if (busy || deleting.current || !response) return;
+    if (!window.confirm("Delete this response? It will no longer be visible to guests.")) return;
+    deleting.current = true;
+    setIsDeleting(true); setBusy(true); setError(""); setNotice("");
+    try {
+      await deleteHostResponse(review.id);
+      setResponse(null); setMessage("");
+      onSaved?.(null);
+      setNotice("Response deleted.");
+    } catch (error_) {
+      setError(error_ instanceof Error && error_.message
+        ? error_.message : "Could not delete your response. Please try again.");
+    } finally {
+      deleting.current = false;
+      setIsDeleting(false); setBusy(false);
+    }
+  };
   const save = async (action) => {
-    if (busy) return;
+    if (busy || deleting.current) return;
     const text = message.replace(/\r\n?/g, "\n").trim();
     // eslint-disable-next-line no-control-regex
     if (!text || text.length > 500 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(message)) {
@@ -32,7 +52,7 @@ export default function HostResponseForm({ review, onSaved }) {
   };
   let submitLabel = "Publish response";
   if (busy) {
-    submitLabel = "Saving...";
+    submitLabel = isDeleting ? "Deleting..." : "Saving...";
   } else if (response?.status === "draft") {
     submitLabel = "Publish";
   } else if (response) {
@@ -53,9 +73,11 @@ export default function HostResponseForm({ review, onSaved }) {
         onChange={(event) => { setMessage(event.target.value); setError(""); }} />
       <p className={styles.characterCount}>{message.length}/500 characters</p>
       {error && <p id={`response-error-${review.id}`} role="alert">{error}</p>}
+      {isDeleting && <p role="status">Deleting response...</p>}
       {notice && <p role="status">{notice}</p>}
       <div className={styles.responseActions}>
       <button type="button" disabled={busy} onClick={() => { setMessage(response?.message || ""); setError(""); setNotice(""); }}>Cancel</button>
+      {response && <button type="button" disabled={busy} onClick={remove}>Delete Response</button>}
       {(!response || response.status === "draft") &&
         <button type="button" disabled={busy} onClick={() => save(response ? "edit" : "draft")}>Save Draft</button>}
       <button className={styles.publishButton} type="submit" disabled={busy}>{submitLabel}</button>

@@ -233,7 +233,8 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
         <h3>{selected.title || selectedProperty?.title || "Guest review"}</h3>
         <p className={styles.reviewText}>{selected.content ?? selected.public_review}</p>
         {Object.hasOwn(respondableReviews, selected.id) && <HostResponseForm key={`${userId}-${selected.id}`}
-          review={{ ...respondableReviews[selected.id], response: savedResponses[selected.id] ?? respondableReviews[selected.id].response }}
+          review={{ ...respondableReviews[selected.id], response: Object.hasOwn(savedResponses, selected.id)
+            ? savedResponses[selected.id] : respondableReviews[selected.id].response }}
           onSaved={(response) => setSavedResponses((previous) => ({ ...previous, [selected.id]: response }))} />}
       </section>}
       <aside className={styles.sidebar} aria-label="Guest review insights">
