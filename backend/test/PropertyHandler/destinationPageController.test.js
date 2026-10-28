@@ -3,6 +3,24 @@ import { DestinationPageController } from "../../functions/PropertyHandler/contr
 import { handler } from "../../functions/PropertyHandler/index.js";
 import { DestinationTreeService } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
 import { DestinationSwitchRepository } from "../../functions/PropertyHandler/data/repository/destinationSwitchRepository.js";
+import { DestinationPageRepository } from "../../functions/PropertyHandler/data/repository/destinationPageRepository.js";
+
+const treeRow = (path, type, parentId, name, activeListings = 0) => ({
+  id: path,
+  type,
+  parentId,
+  slug: path.split("/").pop(),
+  path,
+  name,
+  countryCode: type === "continent" ? null : "ES",
+  activeListings,
+});
+
+const TREE_ROWS = [
+  treeRow("/destinations/europe", "continent", null, "Europe"),
+  treeRow("/destinations/europe/spain", "country", "/destinations/europe", "Spain"),
+  treeRow("/destinations/europe/spain/marbella", "city", "/destinations/europe/spain", "Marbella", 2),
+];
 
 const controllerAnswering = (outcome) => {
   const destinationPageService = { serve: jest.fn(async () => outcome) };
@@ -133,5 +151,137 @@ describe("a destination request through the property handler", () => {
     expect(madeUp.statusCode).toBe(404);
     expect(switchRead).not.toHaveBeenCalled();
     expect(render).not.toHaveBeenCalled();
+  });
+
+  it("serves the root page on the root resource from the real tree", async () => {
+    jest.useFakeTimers({ now: Date.now() + 480000, doNotFake: ["setTimeout", "clearTimeout"] });
+    jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(true);
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(TREE_ROWS);
+
+    const response = await request("/destinations", "/destinations");
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
+    expect(response.body).toContain('<a href="/destinations/europe/spain">Spain</a>');
+  });
+});
+
+describe("the destination sitemap through the property handler", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  const at = (offsetMs) =>
+    jest.useFakeTimers({ now: Date.now() + offsetMs, doNotFake: ["setTimeout", "clearTimeout"] });
+  const sitemap = (host = "acceptance.domits.com", headers = {}) =>
+    handler({
+      httpMethod: "GET",
+      resource: "/sitemap-destinations.xml",
+      path: "/sitemap-destinations.xml",
+      headers: { "x-forwarded-host": host, ...headers },
+    });
+  const switchOn = (on = true) =>
+    jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(on);
+  const treeRows = (rows) =>
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(rows);
+
+  it("serves only the destinations that have a page, the root page included, as XML for five minutes", async () => {
+    at(600000);
+    switchOn();
+    treeRows(TREE_ROWS);
+
+    const response = await sitemap();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Content-Type"]).toBe("application/xml");
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
+    expect(response.body.match(/<loc>[^<]+<\/loc>/g)).toEqual([
+      "<loc>https://acceptance.domits.com/destinations</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe/spain</loc>",
+      "<loc>https://acceptance.domits.com/destinations/europe/spain/marbella</loc>",
+    ]);
+  });
+
+  it("puts only hosts from the fixed list in the URLs", async () => {
+    at(720000);
+    switchOn();
+    treeRows(TREE_ROWS);
+    const response = await sitemap("evil.example");
+    expect(response.statusCode).toBe(200);
+    expect(response.body).not.toContain("evil.example");
+    expect(response.body).toContain("<loc>https://www.domits.com/destinations</loc>");
+  });
+
+  it("answers 404 instead of an empty sitemap when no destination has a page", async () => {
+    at(840000);
+    switchOn();
+    treeRows(TREE_ROWS.map((row) => ({ ...row, activeListings: 0 })));
+    const response = await sitemap();
+    expect(response.statusCode).toBe(404);
+    expect(response.body).not.toContain("<urlset");
+  });
+
+  it("answers 404 without reading the tree while the switch is off", async () => {
+    at(960000);
+    switchOn(false);
+    const read = treeRows(TREE_ROWS);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(404);
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("answers 503 without caching when the database fails, and logs no request data", async () => {
+    at(1080000);
+    const logs = ["error", "warn", "log", "info"].map((level) =>
+      jest.spyOn(console, level).mockImplementation(() => {})
+    );
+    switchOn();
+    jest
+      .spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings")
+      .mockRejectedValue(new Error("connection refused"));
+    const response = await sitemap("acceptance.domits.com", {
+      Cookie: "session=secret-cookie-value",
+      "X-Forwarded-For": "203.0.113.7",
+    });
+    expect(response.statusCode).toBe(503);
+    expect(response.headers["Cache-Control"]).toBe("no-store");
+    const logged = JSON.stringify(logs.map((spy) => spy.mock.calls));
+    expect(logged).toContain("connection refused");
+    expect(logged).not.toMatch(/secret-cookie-value|203\.0\.113\.7|acceptance\.domits\.com|x-forwarded-host/i);
+  });
+
+  it("answers 503 and names the limit instead of a cut off sitemap when there are more than 50000 destinations", async () => {
+    at(1200000);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    switchOn();
+    const many = Array.from({ length: 50001 }, (_, index) =>
+      treeRow(`/destinations/europe/spain/city-${index}`, "city", "/destinations/europe/spain", `City ${index}`, 1)
+    );
+    treeRows([...TREE_ROWS.slice(0, 2), ...many]);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(503);
+    expect(JSON.stringify(log.mock.calls)).toContain("A sitemap holds at most 50000 entries");
+  });
+
+  it("answers 503 and names the limit when the sitemap is too large for one Lambda response", async () => {
+    at(1440000);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    switchOn();
+    const long = Array.from({ length: 25000 }, (_, index) =>
+      treeRow(
+        `/destinations/europe/spain/city-${index}-${"a".repeat(150)}`,
+        "city",
+        "/destinations/europe/spain",
+        `City ${index}`,
+        1
+      )
+    );
+    treeRows([...TREE_ROWS.slice(0, 2), ...long]);
+    const response = await sitemap();
+    expect(response.statusCode).toBe(503);
+    expect(response.headers["Cache-Control"]).toBe("no-store");
+    expect(JSON.stringify(log.mock.calls)).toContain("larger than 5242880 bytes");
   });
 });

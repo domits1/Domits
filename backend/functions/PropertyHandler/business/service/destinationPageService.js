@@ -7,6 +7,7 @@ import { withinTimeLimit } from "../../util/timeLimit.js";
 
 export const DESTINATION_SWITCH_TTL_MS = 60000;
 export const DESTINATION_RENDER_TIMEOUT_MS = 5000;
+export const DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES = 5 * 1024 * 1024;
 
 class DestinationRenderTimeout extends Error {
   constructor() {
@@ -44,23 +45,47 @@ export class DestinationPageService {
       return notFound;
     }
 
+    return this.answer(
+      () => this.destinationTreeService.renderDestinationPage(request.path, { siteOrigin }),
+      notFound,
+      (page) => ({ kind: "page", html: page.html, cacheControl: page.cacheControl })
+    );
+  }
+
+  async serveSitemap({ forwardedHost } = {}) {
+    const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
+    return this.answer(
+      () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin }),
+      { kind: "not_found", html: buildDestinationNotFoundPage({ siteOrigin }) },
+      (xml) => {
+        if (Buffer.byteLength(xml, "utf8") > DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES) {
+          throw new Error(
+            `The destination sitemap is larger than ${DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES} bytes, split it into a sitemap index.`
+          );
+        }
+        return { kind: "sitemap", xml };
+      }
+    );
+  }
+
+  async answer(render, notFound, found) {
     try {
-      const page = await withinTimeLimit(
-        this.renderWhenSwitchedOn(request.path, siteOrigin),
+      const result = await withinTimeLimit(
+        this.whenSwitchedOn(render),
         this.renderTimeoutMs,
         () => new DestinationRenderTimeout()
       );
-      return page ? { kind: "page", html: page.html, cacheControl: page.cacheControl } : notFound;
+      return result ? found(result) : notFound;
     } catch (error) {
       console.error("Destination page unavailable:", error?.name, error?.message);
       return { kind: "unavailable", html: buildDestinationUnavailablePage() };
     }
   }
 
-  async renderWhenSwitchedOn(path, siteOrigin) {
+  async whenSwitchedOn(render) {
     if (!(await this.readSwitch())) {
       return null;
     }
-    return this.destinationTreeService.renderDestinationPage(path, { siteOrigin });
+    return render();
   }
 }

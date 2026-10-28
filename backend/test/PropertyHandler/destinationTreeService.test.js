@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import fc from "fast-check";
 import {
   DESTINATION_TREE_READ_TIMEOUT_MS,
   DestinationTreeService,
@@ -156,7 +157,8 @@ describe("the destination tree", () => {
       siteOrigin: "https://www.domits.com",
       lastModified: "2026-10-07",
     });
-    expect(xml.match(/<loc>/g)).toHaveLength(4);
+    expect(xml.match(/<loc>/g)).toHaveLength(5);
+    expect(xml).toContain("<loc>https://www.domits.com/destinations</loc>");
     expect(xml).toContain(
       "<loc>https://www.domits.com/destinations/europe/spain/malaga</loc><lastmod>2026-10-07</lastmod>"
     );
@@ -168,6 +170,36 @@ describe("the destination tree", () => {
 
     const empty = buildService({ rows: [] });
     expect(await empty.service.renderDestinationSitemap()).toBeNull();
+  });
+
+  it("leaves a destination out of the sitemap when its path is longer than the page route accepts", async () => {
+    const long = `/destinations/europe/spain/${"a".repeat(231)}`;
+    const rows = [...ROWS, row(long, "city", "/destinations/europe/spain", "A".repeat(231), 1)];
+    const xml = await buildService({ rows }).service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" });
+    expect(long.length).toBeGreaterThan(256);
+    expect(xml).toContain("<loc>https://www.domits.com/destinations/europe/spain/marbella</loc>");
+    expect(xml).not.toContain("a".repeat(231));
+  });
+
+  it("gives every URL in the sitemap a page and puts every page in the sitemap, whatever the tree", async () => {
+    const counts = fc.array(fc.integer({ min: 0, max: 2 }), { minLength: ROWS.length, maxLength: ROWS.length });
+    await fc.assert(
+      fc.asyncProperty(counts, async (activeListings) => {
+        const rows = ROWS.map((destination, index) => ({ ...destination, activeListings: activeListings[index] }));
+        const { service } = buildService({ rows });
+        const xml = (await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })) || "";
+        const inSitemap = [...xml.matchAll(/<loc>https:\/\/www\.domits\.com([^<]+)<\/loc>/g)].map((match) => match[1]);
+        const candidates = ["/destinations", ...rows.map((destination) => destination.path)];
+        const withPage = [];
+        for (const path of candidates) {
+          if (await service.renderDestinationPage(path)) {
+            withPage.push(path);
+          }
+        }
+        expect([...inSitemap].sort()).toEqual([...withPage].sort());
+      }),
+      { numRuns: 60 }
+    );
   });
 
   it("renders a page with its parents and eligible children, and answers null for a destination without a page", async () => {
@@ -188,6 +220,69 @@ describe("the destination tree", () => {
     expect(await service.renderDestinationPage("/destinations/europe/spain/ronda")).toBeNull();
     expect(await service.renderDestinationPage("/destinations/nowhere")).toBeNull();
     expect(repository.listActiveListingsUnderPath).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the root page with the continents and countries that have a page, without reading listings", async () => {
+    const { service, repository } = buildService();
+
+    const page = await service.renderDestinationPage("/destinations", { siteOrigin: "https://acceptance.domits.com/" });
+
+    expect(page).not.toBeNull();
+    expect(page.canonical).toBe("https://acceptance.domits.com/destinations");
+    expect(page.cacheControl).toBe("public, max-age=300");
+    expect(page.html).toContain('<link rel="canonical" href="https://acceptance.domits.com/destinations">');
+    expect(page.html).toContain('<a href="/destinations/europe">Europe</a>');
+    expect(page.html).toContain(
+      '<a href="/destinations/europe/spain">Spain</a> <span class="count">3 holiday rentals</span>'
+    );
+    expect(page.html).not.toMatch(/Portugal|Asia|Marbella|Ronda/);
+    expect(repository.listActiveListingsUnderPath).not.toHaveBeenCalled();
+  });
+
+  it("escapes the names on the root page", async () => {
+    const rows = [
+      row("/destinations/caribbean", "continent", null, "Caribbean <Isles>"),
+      row("/destinations/caribbean/trinidad-and-tobago", "country", "/destinations/caribbean", "Trinidad & Tobago", 1),
+    ];
+    const page = await buildService({ rows }).service.renderDestinationPage("/destinations");
+    expect(page.html).toContain("Caribbean &lt;Isles&gt;");
+    expect(page.html).toContain("Trinidad &amp; Tobago");
+    expect(page.html).not.toContain("Trinidad & Tobago");
+  });
+
+  it("names a continent without its own page on the root page without linking to it", async () => {
+    const rows = [
+      row("/destinations/europe", "continent", null, "Europe"),
+      row("/destinations/europe/spain", "country", "/destinations/europe", "Spain", 2),
+    ];
+    const settings = readDestinationSettings({ DESTINATION_PARENT_FROM_ANY_CHILD: "false" });
+    const page = await buildService({ rows, settings }).service.renderDestinationPage("/destinations");
+    expect(page.html).toContain("<h2>Europe</h2>");
+    expect(page.html).not.toContain('<a href="/destinations/europe">');
+    expect(page.html).toContain('<a href="/destinations/europe/spain">Spain</a>');
+  });
+
+  it("still lists a country on the root page when only a city below it has a page, without linking the country", async () => {
+    const rows = [
+      row("/destinations/europe", "continent", null, "Europe"),
+      row("/destinations/europe/spain", "country", "/destinations/europe", "Spain"),
+      row("/destinations/europe/spain/marbella", "city", "/destinations/europe/spain", "Marbella", 1),
+    ];
+    const settings = readDestinationSettings({ DESTINATION_PARENT_FROM_ANY_CHILD: "false" });
+    const { service } = buildService({ rows, settings });
+    const page = await service.renderDestinationPage("/destinations");
+    expect(page).not.toBeNull();
+    expect(page.html).toContain("<h2>Europe</h2>");
+    expect(page.html).toContain("<li>Spain <span");
+    expect(page.html).not.toContain('<a href="/destinations/europe/spain">');
+    expect(await service.renderDestinationSitemap({ siteOrigin: "https://www.domits.com" })).toContain(
+      "<loc>https://www.domits.com/destinations</loc>"
+    );
+  });
+
+  it("answers null for the root page when no destination has a page, so it is a 404 and never an empty page", async () => {
+    const { service } = buildService({ rows: ROWS.map((destination) => ({ ...destination, activeListings: 0 })) });
+    expect(await service.renderDestinationPage("/destinations")).toBeNull();
   });
 
   it("asks for the first 24 listings and still counts every active listing under the destination", async () => {

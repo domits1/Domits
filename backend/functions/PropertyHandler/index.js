@@ -127,6 +127,9 @@ const handleGet = async (event) => {
   if (isDestinationPageRequest(event)) {
     return destinationPageController.getDestinationPage(event);
   }
+  if (isPath(event, "/sitemap-destinations.xml")) {
+    return destinationPageController.getDestinationSitemap(event);
+  }
   if (isPath(event, "/property/website/public/resolve")) {
     return controller.resolvePublicWebsiteSite(event);
   }

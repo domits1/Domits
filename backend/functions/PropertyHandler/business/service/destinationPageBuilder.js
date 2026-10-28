@@ -16,6 +16,14 @@ const cleanText = (value) =>
     .replaceAll(/\s+/g, " ")
     .trim();
 
+const toSiteOrigin = (siteOrigin) => {
+  let origin = cleanText(siteOrigin);
+  while (origin.endsWith("/")) {
+    origin = origin.slice(0, -1);
+  }
+  return origin || DEFAULT_SITE_ORIGIN;
+};
+
 const pluralListings = (count) => (count === 1 ? "1 holiday rental" : `${count} holiday rentals`);
 
 const describe = (destination, listingCount, children) => {
@@ -87,6 +95,37 @@ export const buildDestinationNotFoundPage = ({ siteOrigin = DEFAULT_SITE_ORIGIN 
 export const buildDestinationUnavailablePage = () =>
   `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Destinations unavailable | Domits</title><meta name="robots" content="noindex, nofollow"><style>${STYLE}</style></head><body><main><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main></body></html>\n`;
 
+const renderRootContinent = (continent) => {
+  const heading = continent.hasPage
+    ? `<a href="${escapeHtml(continent.path)}">${escapeHtml(continent.name)}</a>`
+    : escapeHtml(continent.name);
+  const countries = continent.countries
+    .map(
+      (country) =>
+        `<li>${country.hasPage ? `<a href="${escapeHtml(country.path)}">${escapeHtml(country.name)}</a>` : escapeHtml(country.name)} <span class="count">${pluralListings(country.activeListings)}</span></li>`
+    )
+    .join("");
+  return `<section class="children"><h2>${heading}</h2>${countries ? `<ul>${countries}</ul>` : ""}</section>`;
+};
+
+export const buildDestinationRootPage = ({ continents = [], siteOrigin = DEFAULT_SITE_ORIGIN } = {}) => {
+  if (continents.length === 0) {
+    return null;
+  }
+  const canonical = `${toSiteOrigin(siteOrigin)}${DESTINATIONS_ROOT_PATH}`;
+  const title = "Holiday rentals by destination | Domits";
+  const description = "Find holiday rentals by destination and book directly with the host on Domits.";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:type" content="website"><style>${STYLE}</style></head><body><main><h1>Destinations</h1><p class="intro">${escapeHtml(description)}</p>${continents.map(renderRootContinent).join("")}</main></body></html>\n`;
+  return {
+    html,
+    title,
+    description,
+    canonical,
+    path: DESTINATIONS_ROOT_PATH,
+    cacheControl: DESTINATION_PAGE_CACHE_CONTROL,
+  };
+};
+
 export const buildDestinationPage = ({
   destination,
   parents = [],
@@ -114,11 +153,7 @@ export const buildDestinationPage = ({
     throw new Error(`${destination.path} has no active listings and no destinations below it, so it has no page.`);
   }
 
-  let origin = cleanText(siteOrigin);
-  while (origin.endsWith("/")) {
-    origin = origin.slice(0, -1);
-  }
-  origin ||= DEFAULT_SITE_ORIGIN;
+  const origin = toSiteOrigin(siteOrigin);
   const trail = [{ name: DESTINATIONS_ROOT_NAME, path: DESTINATIONS_ROOT_PATH }, ...parents, destination];
   const breadcrumbs = renderBreadcrumbs(trail, origin);
   const title = `Holiday rentals in ${cleanText(destination.name)} | Domits`;
