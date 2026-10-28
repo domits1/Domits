@@ -227,6 +227,16 @@ describe("which requests look in the redirect store", () => {
     expect(outcomeOf(result, event.request)).toEqual({ location: `https://${PRIMARY}/listing/2` });
   });
 
+  it("never redirects a uri without a leading slash, so nothing can be added to the target host", async () => {
+    const store = countingKeyValueStore({ [ALIAS]: PRIMARY });
+    const event = buildEvent({ method: "GET", uri: "@other.example/", host: ALIAS });
+
+    const result = await loadHandler(store)(event);
+
+    expect(outcomeOf(result, event.request)).toEqual({ uri: "@other.example/" });
+    expect(store.calls).toEqual([]);
+  });
+
   it.each([
     ["a POST", { method: "POST", uri: "/", host: ALIAS }],
     ["an OPTIONS request", { method: "OPTIONS", uri: "/", host: ALIAS }],
