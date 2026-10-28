@@ -3,6 +3,7 @@ import {
   STATIC_PAGE_ATTEMPT_LIMIT,
   STATIC_PAGE_BUILD_LEASE_MS,
 } from "../../data/repository/staticPageOutboxRepository.js";
+import { StaticPageRedirects } from "./staticPageRedirects.js";
 
 const DEFAULT_RUN_LIMIT = 50;
 const MAX_RUN_LIMIT = 200;
@@ -30,20 +31,37 @@ const isStuck = (row, now) =>
 const isWorkingOnItsOwn = (row, now) =>
   Boolean(row) && !isStuck(row, now) && ["PENDING", "BUILDING", "FAILED"].includes(row.status);
 
+const groupBySite = (entries) => {
+  const sites = new Map();
+  for (const entry of entries) {
+    sites.set(entry.siteId, { site: entry.site, domains: [...(sites.get(entry.siteId)?.domains || []), entry] });
+  }
+  return [...sites.values()];
+};
+
 const isTransientConflict = (error) =>
   TRANSIENT_CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
 
 export class StaticPageReconciler {
-  constructor({ pageStore, siteRepository, domainRepository, outboxRepository, withdrawal }) {
+  constructor({
+    pageStore,
+    siteRepository,
+    domainRepository,
+    outboxRepository,
+    withdrawal,
+    redirects = new StaticPageRedirects(),
+  }) {
     this.pageStore = pageStore;
     this.siteRepository = siteRepository;
     this.domainRepository = domainRepository;
     this.outboxRepository = outboxRepository;
     this.withdrawal = withdrawal;
+    this.redirects = redirects;
   }
 
   async run({ limit, now = Date.now() } = {}) {
     const budget = normalizeLimit(limit);
+    const redirectSnapshot = await this.redirects.snapshot().catch((error) => ({ error }));
     const listed = await this.pageStore.listPageHostnames();
     const entries = await this.domainRepository.listDomainsWithSites();
     const expected = entries.filter(isPublishedOnActiveDomain);
@@ -112,6 +130,17 @@ export class StaticPageReconciler {
           summary.errors.push({ siteId, message: error.message });
         }
       }
+    }
+
+    if (redirectSnapshot?.error) {
+      summary.errors.push({ message: `REDIRECT_RECONCILE_FAILED: ${redirectSnapshot.error.message}` });
+    } else if (redirectSnapshot) {
+      summary.redirects = await this.redirects
+        .reconcile({ sites: groupBySite(entries), snapshot: redirectSnapshot })
+        .catch((error) => {
+          summary.errors.push({ message: `REDIRECT_RECONCILE_FAILED: ${error.message}` });
+          return undefined;
+        });
     }
 
     return summary;

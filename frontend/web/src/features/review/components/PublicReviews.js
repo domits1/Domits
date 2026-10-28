@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import ReviewsSection from "./ReviewsSection";
-import { getPublicReviews } from "../../../review/services/reviewAPI";
+import { getPublicReviews } from "../services/reviewAPI";
 
 const PublicReviews = ({ propertyId }) => {
   const [offset, setOffset] = useState(0);

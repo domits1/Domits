@@ -1,3 +1,4 @@
+import { readTrendPolicy, parseTrendQuery, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -144,6 +145,31 @@ export class ReviewService {
     const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
     if (!property) throw new NotFoundException("Property not found or access is denied.");
     return normalizedPropertyId;
+  }
+
+  async getPropertyRatingTrends(username, query = {}) {
+    if (typeof username !== "string" || !username.trim()) {
+      throw new UnauthorizedException("A verified user identity is required.");
+    }
+    const policy = readTrendPolicy();
+    const options = parseTrendQuery(query, this.now());
+    const { days, offset, previousStart, currentStart } = options;
+    const { threshold, minimumReviews } = policy;
+    const rows = await this.repository.getPropertyRatingTrendPage(username, { ...options, ...policy });
+    const trends = rows.slice(0, TREND_PAGE_SIZE).map((row) => ({
+      property_id: row.property_id,
+      current_average_rating: row.current_average_rating,
+      previous_average_rating: row.previous_average_rating,
+      current_review_count: row.current_review_count,
+      previous_review_count: row.previous_review_count,
+      rating_change: row.rating_change,
+      trend_status: row.trend_status,
+    }));
+    const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+    return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,
+      previous_period: { start_date: dateLabel(previousStart), end_date: dateLabel(currentStart - DAY_MS) },
+      current_period: { start_date: dateLabel(currentStart), end_date: query.endDate },
+      properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
   }
 
   async getPropertyReviewPerformance(userId, propertyId, query = {}) {

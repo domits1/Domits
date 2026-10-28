@@ -198,17 +198,17 @@ const ChatScreen = ({
         externalThreadId: externalThreadId || resolvedContactId,
       });
 
-      if (!result?.success) throw new Error(result?.error || "send failed");
-
       const saved = result?.saved || {};
+      if (!result?.success && !saved.id) throw new Error(result?.error || "send failed");
+
       const finalMsg = {
         ...optimistic,
-        id: saved?.id || optimisticId,
-        createdAt: saved?.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
-        threadId: saved?.threadId || optimistic.threadId,
-        bookingId: saved?.bookingId || optimistic.bookingId,
-        platform: saved?.platform || resolvedPlatform,
-        deliveryStatus: saved?.deliveryStatus,
+        id: saved.id || optimisticId,
+        createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
+        threadId: saved.threadId || optimistic.threadId,
+        bookingId: saved.bookingId || optimistic.bookingId,
+        platform: saved.platform || resolvedPlatform,
+        deliveryStatus: result.success ? saved.deliveryStatus : "failed",
       };
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
@@ -217,12 +217,18 @@ const ChatScreen = ({
       setNewMessage("");
       setUploadedFileUrls([]);
       setShowPreviewPopover(false);
+
+      if (!result.success) showSendFailedToast();
     } catch {
       setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-      setError("Failed to send message.");
-      setToastText("Message failed to send");
-      setShowToast(true);
+      showSendFailedToast();
     }
+  };
+
+  const showSendFailedToast = () => {
+    setError("Failed to send message.");
+    setToastText("Message failed to send");
+    setShowToast(true);
   };
 
   const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);

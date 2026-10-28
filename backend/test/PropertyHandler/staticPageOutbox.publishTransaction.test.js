@@ -220,7 +220,9 @@ describe("every site query reports the static page revision", () => {
     });
     await expect(repository.getSiteById("site-1")).resolves.toMatchObject({ staticPageRevision: 7 });
 
-    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) => statement.includes("standalone_site"));
+    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) =>
+      /standalone_site(?!_domain)/.test(statement)
+    );
     expect(siteStatements).toHaveLength(2);
     for (const call of siteStatements) {
       expect(call[0]).toContain("static_page_revision");

@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import ReviewPerformance from "./ReviewPerformance";
-import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
-import { getPropertyReviewPerformance } from "../review/services/reviewAPI";
-jest.mock("./services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
-jest.mock("../review/services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
+import ReviewPerformance from "../views/ReviewPerformance";
+import { fetchHostPropertySelectOptions } from "../../hostdashboard/services/hostTaskPropertyService";
+import { getPropertyReviewPerformance } from "../services/reviewAPI";
+jest.mock("../../hostdashboard/services/hostTaskPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
+jest.mock("../services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
 jest.mock("recharts", () => {
   const React = require("react");
   const Container = ({ children }) => <div>{children}</div>;

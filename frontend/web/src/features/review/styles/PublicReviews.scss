@@ -1,0 +1,216 @@
+.listing-details .reviews-section {
+    margin: 0;
+    padding: 20px;
+    border: 1px solid #d7dde5;
+    border-radius: 8px;
+    background: #fff;
+
+    @media (max-width: 768px) {
+        padding: 20px;
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    &__header-icon {
+        color: #49a35a;
+        font-size: 1.2rem;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    &__overall {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-left: 4px;
+    }
+
+    &__overall-star {
+        color: #f5a623;
+        font-size: 1rem;
+    }
+
+    &__total {
+        font-weight: 400;
+        color: #555;
+    }
+
+    &__categories {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid #e8ecf0;
+    }
+
+    &__category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border: 1px solid #d7dde5;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #333;
+        background: #fafafa;
+    }
+
+    &__category-label {
+        font-weight: 500;
+    }
+
+    &__category-score {
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    &__grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    &__card {
+        padding: 18px;
+        border: 1px solid #e8ecf0;
+        border-radius: 10px;
+        background: #fafafa;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    &__card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    &__card-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+
+        &--placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e0f0e5;
+            color: #1a5c2a;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+    }
+
+    &__card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    &__card-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    &__card-location {
+        font-size: 0.8rem;
+        color: #777;
+    }
+
+    &__card-sub {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 0.78rem;
+        color: #666;
+    }
+
+    &__star-row {
+        display: inline-flex;
+        gap: 1px;
+        font-size: 0.85rem;
+    }
+
+    &__star--filled {
+        color: #f5a623;
+    }
+
+    &__star--empty {
+        color: #ddd;
+    }
+
+    &__card-time {
+        color: #888;
+    }
+
+    &__card-verified {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        color: #49a35a;
+        font-weight: 500;
+
+        svg {
+            font-size: 0.85rem;
+        }
+    }
+
+    &__card-text {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #444;
+        line-height: 1.55;
+    }
+
+    &__show-all-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #d7dde5;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        cursor: pointer;
+        transition: background 0.18s ease;
+
+        &:hover {
+            background: #f5f8fc;
+        }
+    }
+
+    &__empty {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #888;
+    }
+}

@@ -2,9 +2,9 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
-import ReviewPage from "../ReviewPage";
+import ReviewPage from "../views/ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-import GuestReviews from "../../guestdashboard/GuestReviews";
+import GuestReviews from "../views/GuestReviews";
 import {
   createReview,
   requestReview,
