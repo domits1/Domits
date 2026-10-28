@@ -46,6 +46,8 @@ Seen in the sandbox: SiteMinder answers `Success` for an unknown rate plan code 
 
 Anything else is refused with a `SiteMinderMappingError` before a call is made.
 
+Rates go out as `AmountBeforeTax`: the Domits base rate is the net nightly accommodation charge, before VAT and local taxes (confirmed by Stefan on 2026-10-28).
+
 ## Configuration
 
 | Variable | Default | Meaning |

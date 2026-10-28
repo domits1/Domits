@@ -42,7 +42,7 @@ function groupByRoomRate(items) {
 
 const toRate = (rate) =>
   `<Rate CurrencyCode="${rate.currency}" Start="${rate.start}" End="${rate.end}">` +
-  `<BaseByGuestAmts><BaseByGuestAmt AmountAfterTax="${toAmount(rate.amount)}"/></BaseByGuestAmts>` +
+  `<BaseByGuestAmts><BaseByGuestAmt AmountBeforeTax="${toAmount(rate.amount)}"/></BaseByGuestAmts>` +
   "</Rate>";
 
 const toMessage = (group) =>
@@ -51,7 +51,8 @@ const toMessage = (group) =>
   `<Rates>${group.rates.map(toRate).join("")}</Rates>` +
   "</RateAmountMessage>";
 
-// Per Day Pricing: one price per night after tax, per room rate and date range.
+// Per Day Pricing: one price per night before tax (the Domits base rate is net, without VAT or local taxes),
+// per room rate and date range. SiteMinder accepts AmountBeforeTax or AmountAfterTax.
 // items: { roomTypeCode, ratePlanCode, start, end, amount, currency }
 export function buildRatesNotif({ hotelCode, requestorId, items, echoToken, now }) {
   if (!hotelCode) throw new Error("hotelCode is required");

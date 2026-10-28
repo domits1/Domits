@@ -50,6 +50,6 @@ describe("the message builders refuse a date that does not exist", () => {
 
   test("rates round 1.005 up to 1.01", () => {
     const xml = buildRatesNotif({ ...head, items: [{ roomTypeCode: "DORM", ratePlanCode: "BAR1", start: "2026-12-01", end: "2026-12-01", amount: 1.005, currency: "EUR" }] });
-    expect(xml).toContain('AmountAfterTax="1.01"');
+    expect(xml).toContain('AmountBeforeTax="1.01"');
   });
 });
