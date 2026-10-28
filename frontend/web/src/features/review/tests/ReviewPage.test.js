@@ -105,6 +105,7 @@ jest.mock("aws-amplify", () => ({
 }));
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
+  Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>,
   NavLink: ({ children, to, className }) => <a href={to} className={typeof className === "function" ? className({ isActive: false }) : className}>{children}</a>,
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: "/review", search: mockSearch, state: null }),
@@ -136,9 +137,10 @@ it.each([false, true])("prefills editing and preserves changes on failure: %s", 
     public_review: "Original\nreview", updated_at: 123 });
   updateReview.mockImplementation(async () => { if (fails) throw new Error("Editing period ended."); });
   render(<ReviewPage />);
-  const textarea = await screen.findByLabelText("Written review (required)");
+  const textarea = await screen.findByRole("textbox", { name: "Written review (required)" });
   expect(textarea).toHaveValue("Original\nreview");
-  expect(screen.queryByLabelText("Review title (required)")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Private Feedback to Domits")).not.toBeInTheDocument();
+  expect(screen.queryByRole("textbox", { name: "Review title (required)" })).not.toBeInTheDocument();
   expect(screen.getAllByRole("radio", { name: /^[1-5] / })[3]).toBeChecked();
   expect(getGuestBookings).not.toHaveBeenCalled();
   fireEvent.change(textarea, { target: { value: "Updated review" } });
@@ -152,7 +154,7 @@ it.each([false, true])("prefills editing and preserves changes on failure: %s", 
     await screen.findByRole("heading", { name: "Review updated" });
     expect(screen.getByText("Your changes have been saved as a draft for review.")).toBeInTheDocument();
   }
-  expect(screen.queryByLabelText("Written review (required)")?.value).toBe(fails ? "Updated review" : undefined);
+  expect(screen.queryByRole("textbox", { name: "Written review (required)" })?.value).toBe(fails ? "Updated review" : undefined);
   expect(createReview).not.toHaveBeenCalled();
 });
 
@@ -167,8 +169,8 @@ it("shows the server's edit eligibility error", async () => {
 it.each(["", " \n\t ", "x".repeat(501), "Stay\u0000"])(
   "shows a field error for invalid written content: %p", async (value) => {
     render(<ReviewPage />);
-    const textarea = await screen.findByLabelText("Written review (required)");
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+    const textarea = await screen.findByRole("textbox", { name: "Written review (required)" });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
     fireEvent.click(screen.getAllByRole("radio", { name: /^[1-5] / })[4]);
     fireEvent.change(textarea, { target: { value } });
     screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
@@ -183,8 +185,8 @@ it.each(["", " \n\t ", "x".repeat(501), "Stay\u0000"])(
 it.each(["x", "x".repeat(500), "Quiet room.\nBusy street.", "Café 😊 & O'Brien < 10"])(
   "submits valid written content without losing special characters: %p", async (value) => {
     render(<ReviewPage />);
-    const textarea = await screen.findByLabelText("Written review (required)");
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+    const textarea = await screen.findByRole("textbox", { name: "Written review (required)" });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
     fireEvent.click(screen.getAllByRole("radio", { name: /^[1-5] / })[4]);
     fireEvent.change(textarea, { target: { value } });
     screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
@@ -198,8 +200,8 @@ it.each(["x", "x".repeat(500), "Quiet room.\nBusy street.", "Café 😊 & O'Brie
 it("preserves written content when rating validation or submission fails", async () => {
   createReview.mockRejectedValue(new Error("Please try again."));
   render(<ReviewPage />);
-  const textarea = await screen.findByLabelText("Written review (required)");
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+  const textarea = await screen.findByRole("textbox", { name: "Written review (required)" });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
   const value = "Quiet room.\nBusy street.";
   fireEvent.change(textarea, { target: { value } });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
@@ -231,6 +233,7 @@ beforeEach(() => {
   mockSearch = "?bookingId=reservation-1";
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
+  buildPropertySummary.mockResolvedValue({});
   createReview.mockResolvedValue({ id: "review-1" });
   publishReview.mockResolvedValue({ status: "PUBLISHED", publication_status: "PUBLISHED" });
 });
@@ -279,15 +282,89 @@ it("fails closed when the reservation cannot be loaded", async () => {
   expect(screen.queryAllByRole("radio")).toHaveLength(0);
 });
 
-const submitReview = async () => {
+const expectedCategoryRatings = { cleanliness: 4, communication: 4, location: 4, checkIn: 4,
+  comfort: 4, amenities: 4, value: 4, accuracy: 4 };
+const submitReview = async (beforeSubmit = () => {}) => {
   render(<ReviewPage />);
-  const textArea = await screen.findByLabelText("Written review (required)");
+  const textArea = await screen.findByRole("textbox", { name: "Written review (required)" });
   fireEvent.click(screen.getAllByRole("radio", { name: /^[1-5] / })[4]);
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
   fireEvent.change(textArea, { target: { value: "Great stay." } });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
+  beforeSubmit();
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
 };
+
+it("submits optional Domits feedback separately from Host feedback", async () => {
+  await submitReview(() => {
+    const field = screen.getByLabelText("Private Feedback to Domits");
+    expect(field).not.toBeRequired();
+    expect(field).toHaveAttribute("maxLength", "500");
+    expect(field).toHaveAccessibleDescription(/Visible only to you and authorized Domits staff/);
+    fireEvent.change(field, { target: { value: "  Platform\r\nconcern  " } });
+    fireEvent.change(screen.getByLabelText(/Private feedback for your host/), { target: { value: "Host note" } });
+  });
+  await screen.findByRole("heading", { name: "Your review is published" });
+  expect(createReview).toHaveBeenCalledWith(expect.objectContaining({
+    domitsPrivateFeedback: "Platform\nconcern", privateFeedback: "Host note",
+  }));
+  expect(publishReview).toHaveBeenCalledWith("review-1");
+});
+
+it.each(["", " \n\t "])("allows empty optional Domits feedback: %p", async value => {
+  await submitReview(() => fireEvent.change(screen.getByLabelText("Private Feedback to Domits"), {
+    target: { value },
+  }));
+  await screen.findByRole("heading", { name: "Your review is published" });
+  expect(createReview.mock.calls[0][0]).not.toHaveProperty("domitsPrivateFeedback");
+});
+
+it.each(["Concern\u0000", "x".repeat(501)])("rejects invalid Domits feedback and allows correction: %p", async value => {
+  await submitReview(() => fireEvent.change(screen.getByLabelText("Private Feedback to Domits"), {
+    target: { value },
+  }));
+  const field = screen.getByLabelText("Private Feedback to Domits");
+  expect(field).toHaveFocus();
+  expect(field).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  expect(createReview).not.toHaveBeenCalled();
+  expect(publishReview).not.toHaveBeenCalled();
+  fireEvent.change(field, { target: { value: "Corrected concern" } });
+  expect(field).toHaveAttribute("aria-invalid", "false");
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  await screen.findByRole("heading", { name: "Your review is published" });
+});
+
+it("keeps Domits feedback after save failure and disables the field while saving", async () => {
+  createReview.mockRejectedValueOnce(new Error("Save failed"));
+  await submitReview(() => fireEvent.change(screen.getByLabelText("Private Feedback to Domits"), {
+    target: { value: "Platform concern" },
+  }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Save failed");
+  const field = screen.getByLabelText("Private Feedback to Domits");
+  expect(field).toHaveValue("Platform concern");
+  let finishSave;
+  createReview.mockReturnValueOnce(new Promise(resolve => { finishSave = resolve; }));
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+  expect(field).toBeDisabled();
+  finishSave({ id: "review-1" });
+  await screen.findByRole("heading", { name: "Your review is published" });
+});
+
+it("maps Domits and Host feedback to separate authenticated API fields", async () => {
+  const api = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => '{"id":"review-1"}' });
+  try {
+    await api.createReview({ bookingId: booking.id, rating: 5, title: "Stay", publicReview: "Good",
+      privateFeedback: "Host note", domitsPrivateFeedback: "Platform concern" });
+    const [url, request] = global.fetch.mock.calls[0];
+    expect(url).toBe(`${api.API_REVIEW_BASE}/reviews`);
+    expect(request.headers.Authorization).toBe("id-token");
+    expect(JSON.parse(request.body)).toMatchObject({ private_feedback: "Host note",
+      domits_private_feedback: "Platform concern" });
+  } finally { global.fetch = originalFetch; }
+});
 
 it("submits the reservation and shows confirmation", async () => {
   await submitReview();
@@ -298,6 +375,7 @@ it("submits the reservation and shows confirmation", async () => {
     title: "Great stay",
     publicReview: "Great stay.",
     privateFeedback: "",
+    categoryRatings: expectedCategoryRatings,
   });
 });
 
@@ -314,10 +392,10 @@ it.each([
 
 it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selection during editing", async (rating) => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Written review (required)");
+  const text = await screen.findByRole("textbox", { name: "Written review (required)" });
   const radio = screen.getByRole("radio", { name: new RegExp(`^${rating} star`) });
   fireEvent.click(radio);
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
   fireEvent.change(text, { target: { value: "Great stay." } });
   fireEvent.change(screen.getByLabelText(/Private feedback for your host/), { target: { value: "Thanks!" } });
   expect(radio.checked).toBe(true);
@@ -326,12 +404,13 @@ it.each([1, 2, 3, 4, 5])("selects and submits %s stars while retaining the selec
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   await waitFor(() => expect(createReview).toHaveBeenCalledWith({
     bookingId: booking.id, rating, title: "Great stay", publicReview: "Great stay.", privateFeedback: "Thanks!",
+    categoryRatings: expectedCategoryRatings,
   }));
 });
 
 it("shows a required rating error, focuses the input, and clears it after selection", async () => {
   render(<ReviewPage />);
-  await screen.findByLabelText("Written review (required)");
+  await screen.findByRole("textbox", { name: "Written review (required)" });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   const radio = screen.getAllByRole("radio", { name: /^[1-5] / })[0];
@@ -345,11 +424,11 @@ it("shows a required rating error, focuses the input, and clears it after select
 
 it.each(["0", "6", "2.5", "invalid"])("prevents tampered rating %s from submission", async (value) => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Written review (required)");
+  const text = await screen.findByRole("textbox", { name: "Written review (required)" });
   const radio = screen.getAllByRole("radio", { name: /^[1-5] / })[0];
   radio.value = value;
   fireEvent.click(radio);
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Great stay" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Great stay" } });
   fireEvent.change(text, { target: { value: "Great stay." } });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
@@ -406,8 +485,8 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
 
 it("requires a title before submission", async () => {
   render(<ReviewPage />);
-  const text = await screen.findByLabelText("Written review (required)");
-  expect(screen.getAllByLabelText("Review title (required)")).toHaveLength(1);
+  const text = await screen.findByRole("textbox", { name: "Written review (required)" });
+  expect(screen.getAllByRole("textbox", { name: "Review title (required)" })).toHaveLength(1);
   fireEvent.click(screen.getAllByRole("radio", { name: /^[1-5] / })[4]);
   fireEvent.change(text, { target: { value: "Great stay." } });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
@@ -472,7 +551,7 @@ it("never serializes client-supplied identity or status fields", async () => {
 
 it("shows the guest sidebar with Reviews active on the submission page", async () => {
   render(<ReviewPage />);
-  await screen.findByLabelText("Written review (required)");
+  await screen.findByRole("textbox", { name: "Written review (required)" });
   expect(screen.getByRole("navigation", { name: "Guest navigation" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Reviews" })).toHaveClass("active");
   expect(screen.getByRole("textbox", { name: "Review title (required)" })).toHaveAttribute("maxLength", "120");
@@ -484,8 +563,8 @@ it("submits required category ratings with the review", async () => {
   await screen.findByRole("group", { name: "Overall experience (required)" });
   fireEvent.click(screen.getByRole("radio", { name: "Cleanliness: 4 stars" }));
   fireEvent.click(screen.getByRole("radio", { name: /^5 stars:/ }));
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Lovely stay" } });
-  fireEvent.change(screen.getByLabelText("Written review (required)"), { target: { value: "A comfortable apartment." } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Lovely stay" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Written review (required)" }), { target: { value: "A comfortable apartment." } });
   screen.queryAllByRole("radio", { name: /^[A-Za-z-]+: 4 stars$/ }).forEach(radio => fireEvent.click(radio));
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   await waitFor(() => expect(createReview).toHaveBeenCalledWith(expect.objectContaining({ categoryRatings: expect.objectContaining({ cleanliness: 4 }) })));
@@ -496,8 +575,8 @@ it("requires every category before submitting a new review", async () => {
   render(<ReviewPage />);
   await screen.findByRole("group", { name: "Overall experience (required)" });
   fireEvent.click(screen.getByRole("radio", { name: /^5 stars:/ }));
-  fireEvent.change(screen.getByLabelText("Review title (required)"), { target: { value: "Lovely stay" } });
-  fireEvent.change(screen.getByLabelText("Written review (required)"), { target: { value: "A comfortable apartment." } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Review title (required)" }), { target: { value: "Lovely stay" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Written review (required)" }), { target: { value: "A comfortable apartment." } });
   fireEvent.click(screen.getByRole("radio", { name: "Cleanliness: 4 stars" }));
   fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Please rate every category");
