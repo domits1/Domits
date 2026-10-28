@@ -4,6 +4,8 @@ import {
   selectDirectBookingWebsiteMainAddress,
 } from "../../util/directBookingWebsiteRouting.js";
 import { buildStaticSiteSitemap, resolveSitemapPageUrls } from "../../util/staticSiteSitemap.js";
+import { planSiteRedirects } from "./staticPageRedirectPlan.js";
+import { StaticPageRedirects } from "./staticPageRedirects.js";
 
 const DEFAULT_RUN_LIMIT = 20;
 
@@ -24,13 +26,22 @@ const withEffectiveStatus = (site) => (domain) => ({
 });
 
 export class StaticPageWorker {
-  constructor({ outboxRepository, siteRepository, domainRepository, pageStore, renderer, withdrawal }) {
+  constructor({
+    outboxRepository,
+    siteRepository,
+    domainRepository,
+    pageStore,
+    renderer,
+    withdrawal,
+    redirects = new StaticPageRedirects(),
+  }) {
     this.outboxRepository = outboxRepository;
     this.siteRepository = siteRepository;
     this.domainRepository = domainRepository;
     this.pageStore = pageStore;
     this.renderer = renderer;
     this.withdrawal = withdrawal;
+    this.redirects = redirects;
   }
 
   async run({ limit = DEFAULT_RUN_LIMIT } = {}) {
@@ -81,15 +92,23 @@ export class StaticPageWorker {
       return this.#withdrawPage(job, site);
     }
 
+    const errors = [];
     try {
       template ||= await this.pageStore.readAppShell().catch(failWith("SHELL_UNREADABLE"));
       const domains = await this.#loadDomains(site);
       const activeDomains = this.#activeDomains(domains);
       const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
+      const redirects = planSiteRedirects({ site, domains });
+      await this.redirects.remove(redirects.deletes).catch((error) => {
+        errors.push({ siteId: site.id, revision: job.revision, message: `REDIRECT_REMOVE_FAILED: ${error.message}` });
+      });
       const html = await this.renderer
         .render({ template, site, mainAddress, destination: activeDomains[0] })
         .catch(failWith("RENDER_FAILED"));
       await this.#upload({ site, revision: job.revision, domains: activeDomains, html, mainAddress });
+      if (redirects.puts.length > 0 && (await this.#isCurrent(site.id, job.revision))) {
+        await this.redirects.add(redirects.puts).catch(failWith("REDIRECT_ADD_FAILED"));
+      }
     } catch (error) {
       if (!(error instanceof PageBuildFailure)) {
         throw error;
@@ -99,7 +118,7 @@ export class StaticPageWorker {
       );
     }
 
-    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision));
+    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision), errors);
   }
 
   async #withdrawPage(job, site) {
@@ -116,11 +135,14 @@ export class StaticPageWorker {
       );
     }
 
-    const errors = result.invalidationErrors.map((failure) => ({
-      siteId: site.id,
-      revision: job.revision,
-      message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
-    }));
+    const errors = [
+      ...result.invalidationErrors.map((failure) => ({
+        siteId: site.id,
+        revision: job.revision,
+        message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
+      })),
+      ...(result.redirectErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
+    ];
     return this.#record(
       job,
       "withdrawn",
@@ -136,6 +158,11 @@ export class StaticPageWorker {
 
     await this.outboxRepository.requeueNewerRevision(job.siteId, job.revision);
     return { outcome: "superseded", errors };
+  }
+
+  async #isCurrent(siteId, revision) {
+    const latest = await this.siteRepository.getSiteById(siteId);
+    return latest?.status === "PUBLISHED" && latest.staticPageRevision === revision;
   }
 
   async #loadDomains(site) {

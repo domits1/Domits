@@ -1902,9 +1902,9 @@ export class PropertyController {
 
     async withdrawStaticPageSafely(site) {
         try {
-            const { invalidationErrors } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-            invalidationErrors.forEach((failure) => {
-                console.error(`[StaticPage] invalidation after withdrawing site ${site.id} failed:`, failure);
+            const withdrawn = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+            [...withdrawn.invalidationErrors, ...(withdrawn.redirectErrors || [])].forEach((failure) => {
+                console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
             });
         } catch (error) {
             console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the reconciler will remove it.`, error);
@@ -3366,6 +3366,11 @@ export class PropertyController {
             }
 
             const { statusCode, body: responseBody } = await handle({ site, body, requestId });
+            if (event.httpMethod !== "GET") {
+                await this.directBookingWebsiteSiteRepository
+                    .queueStaticPage(site.id, { evenWhileBusy: true })
+                    .catch((error) => console.error(`[StaticPage] queueing site ${site.id} failed:`, error));
+            }
             return {
                 statusCode,
                 headers: draftResponseHeaders,
