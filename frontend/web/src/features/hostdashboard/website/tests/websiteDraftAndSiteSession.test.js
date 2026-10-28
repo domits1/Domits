@@ -7,6 +7,7 @@ import {
 } from "../services/websiteDraftService";
 import { fetchWebsiteSiteByPropertyId, publishWebsiteSite, unpublishWebsiteSite } from "../services/websiteSiteService";
 import { WEBSITE_SESSION_EXPIRED_MESSAGE } from "../services/websiteSession";
+import { fetchWebsiteKpis } from "../kpis/services/websiteKpiService";
 import { getAccessToken } from "../../../../services/getAccessToken";
 
 jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn() } }));
@@ -32,6 +33,7 @@ const CALLS = [
   ["fetchWebsiteSiteByPropertyId", () => fetchWebsiteSiteByPropertyId("p1"), jsonResponse(200, {})],
   ["publishWebsiteSite", () => publishWebsiteSite("p1"), jsonResponse(200, {})],
   ["unpublishWebsiteSite", () => unpublishWebsiteSite("p1"), jsonResponse(200, {})],
+  ["fetchWebsiteKpis", () => fetchWebsiteKpis(), jsonResponse(200, {})],
 ];
 
 describe("website draft and site requests and the login session", () => {

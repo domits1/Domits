@@ -7,11 +7,12 @@ import {
   verifyWebsiteDomain,
 } from "../services/websiteDomainService";
 
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { Auth } from "aws-amplify";
+import { WEBSITE_SESSION_EXPIRED_MESSAGE } from "../services/websiteSession";
 
-jest.mock("../../../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(() => "access-token"),
-}));
+jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn() } }));
+
+const sessionWith = (accessToken) => ({ getAccessToken: () => ({ getJwtToken: () => accessToken }) });
 
 const DOMAIN_VIEW = {
   domain: "www.example.com",
@@ -30,7 +31,8 @@ const jsonResponse = (status, body) => ({
 describe("websiteDomainService", () => {
   beforeEach(() => {
     globalThis.fetch = jest.fn();
-    getAccessToken.mockReturnValue("access-token");
+    Auth.currentSession.mockReset();
+    Auth.currentSession.mockResolvedValue(sessionWith("access-token"));
   });
 
   it("lists domains with siteId in the query and the host's token", async () => {
@@ -132,15 +134,47 @@ describe("websiteDomainService", () => {
     });
   });
 
-  it("reports a missing session as unauthorized without calling the server", async () => {
-    getAccessToken.mockReturnValueOnce(null);
+  it("reports a session that cannot be refreshed as unauthorized without calling the server", async () => {
+    Auth.currentSession.mockRejectedValueOnce("No current user");
 
     await expect(fetchWebsiteDomains("site-1")).rejects.toMatchObject({
       name: "WebsiteDomainError",
       code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNAUTHORIZED,
+      message: WEBSITE_SESSION_EXPIRED_MESSAGE,
       status: 401,
     });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports a network failure while refreshing the session as a network error", async () => {
+    Auth.currentSession.mockRejectedValueOnce(Object.assign(new Error("Network error"), { code: "NetworkError" }));
+
+    await expect(fetchWebsiteDomains("site-1")).rejects.toMatchObject({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.NETWORK_ERROR,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("retries once with the refreshed token when the token expired on the way", async () => {
+    Auth.currentSession
+      .mockResolvedValueOnce(sessionWith("expiring-token"))
+      .mockResolvedValueOnce(sessionWith("refreshed-token"));
+    fetch
+      .mockResolvedValueOnce(jsonResponse(401, { error: { code: "unauthorized", message: "You must be logged in." } }))
+      .mockResolvedValueOnce(jsonResponse(200, { siteId: "site-1", domains: [DOMAIN_VIEW] }));
+
+    await expect(fetchWebsiteDomains("site-1")).resolves.toEqual([DOMAIN_VIEW]);
+    expect(fetch.mock.calls[1][1].headers.Authorization).toBe("refreshed-token");
+  });
+
+  it("reports a 401 that stays as unauthorized with the session expired message", async () => {
+    fetch.mockResolvedValue(jsonResponse(401, { error: { code: "unauthorized", message: "You must be logged in." } }));
+
+    await expect(fetchWebsiteDomains("site-1")).rejects.toMatchObject({
+      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNAUTHORIZED,
+      message: WEBSITE_SESSION_EXPIRED_MESSAGE,
+      status: 401,
+    });
   });
 
   it("reports a non-JSON failure as an unexpected response and a fetch failure as a network error", async () => {

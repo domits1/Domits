@@ -1,4 +1,3 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
 import { fetchWithWebsiteSession } from "./websiteSession";
@@ -7,27 +6,6 @@ const buildWebsiteSiteUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/website/site?property=${encodeURIComponent(propertyId)}`;
 const buildWebsiteSitePublishUrl = () => `${PROPERTY_API_BASE}/website/site/publish`;
 const buildWebsiteSiteUnpublishUrl = () => `${PROPERTY_API_BASE}/website/site/unpublish`;
-
-const getRequiredAccessToken = () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to manage website publishing.");
-  }
-
-  return accessToken;
-};
-
-export const buildAuthorizedHeaders = (contentType = null) => {
-  const headers = {
-    Authorization: getRequiredAccessToken(),
-  };
-
-  if (contentType) {
-    headers["Content-Type"] = contentType;
-  }
-
-  return headers;
-};
 
 const normalizeWebsiteSiteSummary = (payload) => {
   if (!payload || typeof payload !== "object") {
