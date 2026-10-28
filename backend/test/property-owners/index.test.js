@@ -121,6 +121,7 @@ describe("property-owners router", () => {
     ["an unknown action", { action: "archive" }],
     ["an action in another case", { action: "SET-SHARES" }],
     ["an inherited property name as action", { action: "constructor" }],
+    ["a null action", { action: null }],
   ])("returns 405 for PUT with %s without calling the controller", async (_label, query) => {
     const response = await handler(event("PUT", query));
 
@@ -148,6 +149,7 @@ describe("property-owners router", () => {
     ["action archive next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["set-shares next to an id", { action: "set-shares", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["an empty action next to an id", { action: "", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["a null action next to an id", { action: null, id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
   ])("returns 405 for PATCH with %s without calling the controller", async (_label, query) => {
     const response = await handler(event("PATCH", query));
 
