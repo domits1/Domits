@@ -71,7 +71,6 @@ export default function DecliningPropertyRatings({ userId }) {
     return () => { active = false; };
   }, [userId, endDate, debouncedDays, offset, invalid, daysPending, retry]);
 
-  const visible = data?.properties.filter((property) => property.trend_status === "DECLINING") || [];
   const declining = data?.properties.filter((property) => property.trend_status === "DECLINING") || [];
   const totalReviews = declining.reduce((sum, property) => sum + property.current_review_count, 0);
   const previousReviews = declining.reduce((sum, property) => sum + property.previous_review_count, 0);
@@ -124,12 +123,12 @@ export default function DecliningPropertyRatings({ userId }) {
       {!data.properties.length && <div className={styles.empty}><span className={styles.emptyIcon}><TrendingDown size={24} aria-hidden="true" /></span>
         <strong>No declining properties in this period.</strong>
         <p>Adjust the comparison period to explore your portfolio.</p></div>}
-      {!!data.properties.length && !visible.length && <p>No declining properties on this page. Check the next page.</p>}
+      {!!data.properties.length && !declining.length && <p>No declining properties on this page. Check the next page.</p>}
       </>}
       <div className={styles.table} tabIndex={0} role="region" aria-label="Scrollable property rating comparisons"><table><caption>Property rating comparisons</caption>
         <thead><tr>{["Property", "Current rating", "Previous rating", "Change", "Total reviews", "Trend (last 6 periods)"]
           .map((label) => <th scope="col" key={label}>{label}</th>)}</tr></thead>
-        <tbody>{!data && <tr><td colSpan={6}>{loading ? "Loading property comparisons..." : invalid ? "Choose a valid comparison period to load properties." : error ? "Property comparisons are currently unavailable. Please try again." : "Waiting for property comparisons..."}</td></tr>}{visible.map((property) => <tr key={property.property_id}>
+        <tbody>{!data && <tr><td colSpan={6}>{loading ? "Loading property comparisons..." : invalid ? "Choose a valid comparison period to load properties." : error ? "Property comparisons are currently unavailable. Please try again." : "Waiting for property comparisons..."}</td></tr>}{declining.map((property) => <tr key={property.property_id}>
           <th scope="row"><div className={trendStyles.propertyCell}>
             <span className={trendStyles.propertyImage}>{listings[property.property_id]?.previewImages?.[0]
               ? <img src={listings[property.property_id].previewImages[0]} alt="" onError={(event) => { event.currentTarget.style.display = "none"; }} />
@@ -141,7 +140,7 @@ export default function DecliningPropertyRatings({ userId }) {
           <td><span className={`${trendStyles.change} ${trendStyles[property.trend_status] || ""}`}>{property.rating_change == null ? "Not enough reviews" : `${property.rating_change > 0 ? "+" : ""}${property.rating_change.toFixed(2)}`}</span></td>
           <td>{property.current_review_count}<span className={trendStyles.comparisonBadge}>{changeLabel(property.previous_review_count ? (property.current_review_count - property.previous_review_count) / property.previous_review_count * 100 : null, "%")}</span></td>
           <td><div className={trendStyles.trendCell}>
-            <PropertyRatingSparkline propertyId={property.property_id} endDate={endDate} days={Number(debouncedDays)} declining={property.trend_status === "DECLINING"} />
+            <PropertyRatingSparkline history={property.history} declining={property.trend_status === "DECLINING"} />
             <span className={`${trendStyles.badge} ${trendStyles[property.trend_status] || ""}`}>{labels[property.trend_status] || "Unknown"}</span>
           </div></td>
         </tr>)}</tbody>

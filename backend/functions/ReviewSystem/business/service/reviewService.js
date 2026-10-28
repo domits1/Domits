@@ -166,6 +166,28 @@ export class ReviewService {
       trend_status: row.trend_status,
     }));
     const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+    if (trends.length) {
+      try {
+        const historyRows = await this.repository.getPropertyRatingHistory(username, trends.map((property) => property.property_id), options);
+        const historyByProperty = new Map();
+        for (const row of historyRows) {
+          if (!historyByProperty.has(row.property_id)) historyByProperty.set(row.property_id, new Map());
+          historyByProperty.get(row.property_id).set(row.period_index, row);
+        }
+        const periodMs = days * DAY_MS;
+        for (const property of trends) {
+          property.history = Array.from({ length: 6 }, (_, index) => {
+            const start = options.endExclusive - (6 - index) * periodMs;
+            const row = historyByProperty.get(property.property_id)?.get(index);
+            return { start_date: dateLabel(start), end_date: dateLabel(start + periodMs - DAY_MS),
+              average_rating: row?.average_rating ?? null, review_count: row?.review_count ?? 0 };
+          });
+        }
+      } catch (error) {
+        console.error("ReviewSystem rating history failed:", error);
+        for (const property of trends) property.history = null;
+      }
+    }
     return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,
       previous_period: { start_date: dateLabel(previousStart), end_date: dateLabel(currentStart - DAY_MS) },
       current_period: { start_date: dateLabel(currentStart), end_date: query.endDate },

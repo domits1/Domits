@@ -16,7 +16,8 @@ describe("property rating trends", () => {
     originalMinimum = process.env.REVIEW_TREND_MIN_REVIEWS;
     process.env.REVIEW_DECLINE_THRESHOLD = "0.5";
     process.env.REVIEW_TREND_MIN_REVIEWS = "3";
-    repository = { getPropertyRatingTrendPage: jest.fn().mockResolvedValue([]) };
+    repository = { getPropertyRatingTrendPage: jest.fn().mockResolvedValue([]),
+      getPropertyRatingHistory: jest.fn().mockResolvedValue([]) };
     service = new ReviewService({ repository, now: () => Date.parse("2026-10-07T12:00:00Z") });
   });
   afterEach(() => {
@@ -49,6 +50,49 @@ describe("property rating trends", () => {
   });
   test("returns empty results for managers without matching properties", async () => {
     expect((await service.getPropertyRatingTrends("host-1", query)).properties).toEqual([]);
+    expect(repository.getPropertyRatingHistory).not.toHaveBeenCalled();
+  });
+  test.each([7, 30, 366])("returns six exact %s-day windows, half-star averages and empty periods", async (days) => {
+    scores(4.5, 3.5);
+    repository.getPropertyRatingHistory.mockResolvedValue([
+      { property_id: "p1", period_index: 5, average_rating: 3.5, review_count: 4 },
+      { property_id: "p1", period_index: 0, average_rating: 4.5, review_count: 2 },
+    ]);
+    const result = await service.getPropertyRatingTrends("host-1", { ...query, days: String(days) });
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledWith("host-1", ["p1"], expect.objectContaining({ days }));
+    const history = result.properties[0].history;
+    expect(history).toHaveLength(6);
+    expect(history[0]).toMatchObject({ average_rating: 4.5, review_count: 2 });
+    expect(history[1]).toMatchObject({ average_rating: null, review_count: 0 });
+    expect(history[5]).toMatchObject({ end_date: query.endDate, average_rating: 3.5, review_count: 4 });
+    history.forEach((period, index) => {
+      expect(Date.parse(period.end_date) - Date.parse(period.start_date)).toBe((days - 1) * 86400000);
+      if (index) expect(Date.parse(period.start_date) - Date.parse(history[index - 1].end_date)).toBe(86400000);
+    });
+  });
+  test("keeps comparisons available when history fails", async () => {
+    scores(4.5, 3.5);
+    repository.getPropertyRatingHistory.mockRejectedValue(new Error("History query failed"));
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const result = await service.getPropertyRatingTrends("host-1", query);
+      expect(result.properties[0]).toMatchObject({ current_average_rating: 3.5, history: null });
+      expect(log).toHaveBeenCalled();
+    } finally { log.mockRestore(); }
+  });
+  test("keeps each property's history separate in the batched response", async () => {
+    scores(4.5, 3.5);
+    const first = repository.getPropertyRatingTrendPage.getMockImplementation();
+    const [row] = await first();
+    repository.getPropertyRatingTrendPage.mockResolvedValue([row, { ...row, property_id: "p2" }]);
+    repository.getPropertyRatingHistory.mockResolvedValue([
+      { property_id: "p1", period_index: 5, average_rating: 2.5, review_count: 2 },
+      { property_id: "p2", period_index: 5, average_rating: 4.5, review_count: 3 },
+    ]);
+    const result = await service.getPropertyRatingTrends("host-1", query);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledWith("host-1", ["p1", "p2"], expect.any(Object));
+    expect(result.properties.map((property) => property.history[5].average_rating)).toEqual([2.5, 4.5]);
   });
   test("returns a next offset when the filtered query has another result", async () => {
     repository.getPropertyRatingTrendPage.mockResolvedValue(Array.from({ length: 26 }, (_, index) => ({
@@ -59,6 +103,8 @@ describe("property rating trends", () => {
     expect(result.properties).toHaveLength(25);
     expect(result.next_offset).toBe(50);
     expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory.mock.calls[0][1]).toEqual(Array.from({ length: 25 }, (_, index) => `p${index}`));
   });
   test("passes validated filter and ordering into the database page query", async () => {
     await service.getPropertyRatingTrends("host-1", { ...query, status: "DECLINING", sort: "declining-first" });

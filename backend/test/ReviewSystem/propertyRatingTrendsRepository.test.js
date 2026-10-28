@@ -82,3 +82,45 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
     read.mockRestore();
   }
 });
+
+test("batches history for page properties with ownership, eligibility and exact bucket boundaries", async () => {
+  const database = new DataSource({ type: "postgres", schema: "main", entities: [Property, Review] });
+  await database.buildMetadatas();
+  Database.getInstance.mockResolvedValue(database);
+  let executed;
+  const read = jest.spyOn(SelectQueryBuilder.prototype, "getRawMany").mockImplementation(async function () {
+    executed = this;
+    return [{ property_id: "p1", period_index: "5", average_rating: "3.5", review_count: "2" }];
+  });
+  try {
+    const repository = new ReviewRepository();
+    expect(await repository.getPropertyRatingHistory("host-1", [], { days: 7, endExclusive: 4000000000 })).toEqual([]);
+    expect(read).not.toHaveBeenCalled();
+    const rows = await repository.getPropertyRatingHistory("host-1", ["p1", "p2"], { days: 7, endExclusive: 4000000000 });
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(rows).toEqual([{ property_id: "p1", period_index: 5, average_rating: 3.5, review_count: 2 }]);
+    const sql = executed.getQuery();
+    expect(sql).toContain('"review"."property_id" IN (:...propertyIds)');
+    expect(sql).toContain('"property"."hostid" = :hostId');
+    expect(sql).toContain('"review"."overall_rating" * 2 = FLOOR("review"."overall_rating" * 2)');
+    expect(sql).toContain('"review"."created_at" >= :historyStart');
+    expect(sql).toContain('"review"."created_at" < :historyEnd');
+    expect(sql).toContain('GROUP BY "review"."property_id", CASE');
+    const parameters = executed.getParameters();
+    expect(parameters).toMatchObject({ propertyIds: ["p1", "p2"], hostId: "host-1",
+      historyStart: 371200000, historyEnd: 4000000000,
+      status: "PUBLISHED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+    const bucket = sql.match(/CASE WHEN[\s\S]*?ELSE 5 END/)[0];
+    const boundaries = Object.fromEntries(Object.entries(parameters).filter(([key]) => key.startsWith("historyBoundary")));
+    const output = execFileSync(process.execPath, ["--input-type=module", "-e", `
+      import { DatabaseSync } from "node:sqlite";
+      const database = new DatabaseSync(":memory:");
+      const { bucket, boundaries, start } = JSON.parse(process.argv[1]);
+      const statement = database.prepare("WITH review(created_at) AS (VALUES (:timestamp)) SELECT " + bucket + " AS bucket FROM review");
+      const values = [start, ...Object.values(boundaries).flatMap((boundary) => [boundary - 1, boundary])];
+      console.log(JSON.stringify(values.map((timestamp) => statement.get({ ...boundaries, timestamp }).bucket)));
+      database.close();
+    `, JSON.stringify({ bucket, boundaries, start: parameters.historyStart })], { encoding: "utf8" });
+    expect(JSON.parse(output)).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]);
+  } finally { read.mockRestore(); }
+});

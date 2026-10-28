@@ -103,7 +103,8 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
 export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
-      .where("review.property_id = :propertyId", { propertyId })
+      .where(Array.isArray(propertyId) ? "review.property_id IN (:...propertyIds)" : "review.property_id = :propertyId",
+        Array.isArray(propertyId) ? { propertyIds: propertyId } : { propertyId })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
@@ -213,6 +214,27 @@ export class ReviewRepository {
     return dataSource.getRepository(Property).findOne({
       where: { id: propertyId, hostid: hostId }, select: ["id"],
     });
+  }
+
+  async getPropertyRatingHistory(hostId, propertyIds, { endExclusive, days }) {
+    if (!propertyIds.length) return [];
+    const database = await Database.getInstance();
+    const periodMs = days * 86400000;
+    const start = endExclusive - 6 * periodMs;
+    const boundaries = Object.fromEntries([1, 2, 3, 4, 5].map((index) => [`historyBoundary${index}`, start + index * periodMs]));
+    const bucket = `CASE ${[1, 2, 3, 4, 5].map((index) =>
+      `WHEN review.created_at < :historyBoundary${index} THEN ${index - 1}`).join(" ")} ELSE 5 END`;
+    const rows = await this.eligibleReviewQuery(database, propertyIds)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .andWhere("review.created_at >= :historyStart AND review.created_at < :historyEnd", { historyStart: start, historyEnd: endExclusive })
+      .select("review.property_id", "property_id")
+      .addSelect(bucket, "period_index")
+      .addSelect("AVG(review.overall_rating)", "average_rating")
+      .addSelect("COUNT(*)", "review_count")
+      .setParameters(boundaries)
+      .groupBy("review.property_id").addGroupBy(bucket).getRawMany();
+    return rows.map((row) => ({ ...row, period_index: Number(row.period_index),
+      average_rating: Number(row.average_rating), review_count: Number(row.review_count) }));
   }
 
   async getPropertyRatingTrendPage(hostId, options) {

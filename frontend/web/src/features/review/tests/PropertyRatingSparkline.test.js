@@ -1,14 +1,24 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import PropertyRatingSparkline from "../components/PropertyRatingSparkline";
 import { getPropertyReviewPerformance } from "../services/reviewAPI";
 jest.mock("../services/reviewAPI", () => ({ getPropertyReviewPerformance: jest.fn() }));
-test("loads six exact adjacent windows and preserves empty periods", async () => {
-  getPropertyReviewPerformance.mockResolvedValue({ periods: [{ review_count: 2, average_score: 4.5 }] })
-    .mockResolvedValueOnce({ periods: [{ review_count: 0, average_score: null }] });
-  render(<PropertyRatingSparkline propertyId="p1" endDate="2026-10-25" days={30} declining />);
-  await screen.findByRole("img");
-  expect(getPropertyReviewPerformance).toHaveBeenCalledTimes(6);
-  expect(getPropertyReviewPerformance.mock.calls[5][0]).toEqual({ propertyId: "p1", interval: "month", startDate: "2026-09-26", endDate: "2026-10-25" });
-  expect(screen.getByRole("img")).toHaveAttribute("aria-label", expect.stringContaining("no reviews, 4.50"));
+
+test("renders supplied history with gaps and half-star ratings without fetching", () => {
+  const history = [null, 4.5, 3.5, null, 4, 2.5].map((score) => ({
+    average_rating: score, review_count: score === null ? 0 : 2,
+  }));
+  const { container } = render(<PropertyRatingSparkline history={history} declining />);
+  expect(screen.getByRole("img")).toHaveAttribute("aria-label", "Last six periods: no reviews, 4.50, 3.50, no reviews, 4.00, 2.50");
+  expect(container.querySelectorAll("circle")).toHaveLength(4);
+  expect(container.querySelectorAll('path[stroke]')).toHaveLength(2);
+  expect(getPropertyReviewPerformance).not.toHaveBeenCalled();
 });
+
+test.each([undefined, null, [], Array(6).fill({ review_count: 1, average_rating: "bad" })])(
+  "shows unavailable history safely for %j", (history) => {
+    render(<PropertyRatingSparkline history={history} />);
+    expect(screen.getByText("History unavailable")).toBeInTheDocument();
+    expect(getPropertyReviewPerformance).not.toHaveBeenCalled();
+  },
+);
