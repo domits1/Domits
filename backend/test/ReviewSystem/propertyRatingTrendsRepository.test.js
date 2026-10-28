@@ -63,7 +63,7 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
     for (const field of ["publication_status", "status", "review_type"]) {
       expect(sql).toContain(`"review"."${field}" = :`);
     }
-    expect(sql).toContain('"review"."overall_rating" = FLOOR("review"."overall_rating")');
+    expect(sql).toContain('"review"."overall_rating" * 2 = FLOOR("review"."overall_rating" * 2)');
     expect(sql).toContain('"review"."created_at" >= :previousStart');
     expect(sql).toContain('"review"."created_at" < :endExclusive');
     expect(sql).toContain("CASE WHEN");

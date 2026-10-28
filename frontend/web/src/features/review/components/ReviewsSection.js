@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import StarIcon from "@mui/icons-material/Star";
+import StarHalfIcon from "@mui/icons-material/StarHalf";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PeopleIcon from "@mui/icons-material/People";
 
@@ -14,16 +15,17 @@ const CATEGORY_LABELS = [
 ];
 
 const StarRating = ({ value = 0 }) => {
-  const stars = Math.round(value);
+  const stars = Math.floor(value);
   return (
     <span className="reviews-section__star-row" aria-label={`${value} stars`}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <StarIcon
+      {Array.from({ length: 5 }, (_, i) => {
+        const Icon = i === stars && value - stars >= 0.5 ? StarHalfIcon : StarIcon;
+        return <Icon
           key={i}
           fontSize="inherit"
-          className={i < stars ? "reviews-section__star--filled" : "reviews-section__star--empty"}
-        />
-      ))}
+          className={i < value ? "reviews-section__star--filled" : "reviews-section__star--empty"}
+        />;
+      })}
     </span>
   );
 };

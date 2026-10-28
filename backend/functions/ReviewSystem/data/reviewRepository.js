@@ -108,7 +108,7 @@ export class ReviewRepository {
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
+      .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)");
   }
 
 
@@ -162,11 +162,11 @@ export class ReviewRepository {
       .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
       .addSelect("AVG(review.overall_rating)", "average_score")
       .addSelect("COUNT(*)", "review_count")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 1 THEN 1 END)", "stars_1")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 2 THEN 1 END)", "stars_2")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 3 THEN 1 END)", "stars_3")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 4 THEN 1 END)", "stars_4")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 5 THEN 1 END)", "stars_5")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 1 THEN 1 END)", "stars_1")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 2 THEN 1 END)", "stars_2")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 3 THEN 1 END)", "stars_3")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 4 THEN 1 END)", "stars_4")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 5 THEN 1 END)", "stars_5")
       .groupBy(period).orderBy(period, "ASC").getRawMany();
   }
 
@@ -221,7 +221,7 @@ export class ReviewRepository {
       .leftJoin(Review, "review", `review.property_id = property.id
         AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
         AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
-        AND review.overall_rating = FLOOR(review.overall_rating)
+        AND review.overall_rating * 2 = FLOOR(review.overall_rating * 2)
         AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
       .where("property.hostid = :hostId")
       .select("property.id", "property_id")
@@ -266,7 +266,7 @@ export class ReviewRepository {
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
+      .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)")
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")

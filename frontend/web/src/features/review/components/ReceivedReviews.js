@@ -3,6 +3,7 @@ import { Search, ChevronDown, Star, MapPin, Building2, MessageSquare, ChevronRig
 import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
 import styles from "../styles/ReceivedReviews.module.css";
 import CategoryRatings from "./categoryRatings";
+import RatingStars from "./RatingStars";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);
@@ -26,11 +27,7 @@ const dateLabel = (review) =>
 
 function Stars({ value }) {
   return (
-    <span className={styles.stars} aria-label={`${value} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star key={star} size={17} aria-hidden="true" fill={star <= Math.round(value) ? "currentColor" : "none"} />
-      ))}
-    </span>
+    <RatingStars value={value} className={styles.stars} />
   );
 }
 
