@@ -79,6 +79,10 @@ function robotsResponse(host, method) {
 async function primaryHostFor(host) {
   try {
     var store = cf.kvs();
+    var known = await store.exists(host);
+    if (!known) {
+      return "";
+    }
     var value = await store.get(host);
     var target = normalizeHostName(value);
     if (!isHostName(target) || target === host) {
