@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import HostResponseForm from "../components/HostResponseForm";
 import { saveHostResponse } from "../services/reviewAPI";
 jest.mock("../services/reviewAPI", () => ({ saveHostResponse: jest.fn() }));
@@ -26,4 +26,35 @@ test("preserves response text after authorization or server failure", async () =
   fireEvent.click(screen.getByRole("button", { name: "Update public response" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Access denied");
   expect(screen.getByLabelText("Your response")).toHaveValue("Updated");
+});
+
+test("saves, edits and publishes a draft", async () => {
+  saveHostResponse
+    .mockResolvedValueOnce({ id: "d1", status: "draft", message: "Initial" })
+    .mockResolvedValueOnce({ id: "d1", status: "draft", message: "Completed" })
+    .mockResolvedValueOnce({ id: "d1", status: "published", message: "Completed" });
+  render(<HostResponseForm review={{ id: "r1" }} />);
+  fireEvent.change(screen.getByLabelText("Your response"), { target: { value: "Initial" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
+  expect(await screen.findByLabelText("Response draft")).toHaveTextContent("Initial");
+  expect(saveHostResponse).toHaveBeenNthCalledWith(1, "r1", "Initial", "draft");
+  await waitFor(() => expect(screen.getByLabelText("Your response")).toBeEnabled());
+  fireEvent.change(screen.getByLabelText("Your response"), { target: { value: "Completed" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
+  await waitFor(() => expect(screen.getByLabelText("Response draft")).toHaveTextContent("Completed"));
+  expect(saveHostResponse).toHaveBeenNthCalledWith(2, "r1", "Completed", "edit");
+  await waitFor(() => expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+  expect(await screen.findByLabelText("Host response")).toHaveTextContent("Completed");
+  expect(saveHostResponse).toHaveBeenNthCalledWith(3, "r1", "Completed");
+  expect(screen.queryByRole("button", { name: "Save Draft" })).not.toBeInTheDocument();
+});
+
+test("reopens a saved draft for editing without presenting it as public", () => {
+  render(<HostResponseForm review={{ id: "r1", response: { id: "d1", status: "draft", message: "Saved reply" } }} />);
+  expect(screen.getByLabelText("Your response")).toHaveValue("Saved reply");
+  expect(screen.getByLabelText("Response draft")).toHaveTextContent("not publicly visible");
+  expect(screen.queryByLabelText("Host response")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Save Draft" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
 });
