@@ -145,3 +145,86 @@ describe("GET /property/hostDashboard/single", () => {
     expect(listingReads).toEqual([]);
   });
 });
+
+describe("GET /property/hostDashboard/byHostId", () => {
+  const byHostIdEvent = (token, hostId) => ({
+    httpMethod: "GET",
+    headers: token ? { Authorization: token } : {},
+    queryStringParameters: hostId === undefined ? null : { hostId },
+  });
+
+  let controller;
+  let listingReads;
+
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    ({ controller, listingReads } = buildController());
+  });
+
+  const readByHostId = async (token, hostId) =>
+    respond(await controller.getFullOwnedPropertiesByHostId(byHostIdEvent(token, hostId)));
+  const listingIds = (body) => body.map((listing) => listing.property.id);
+
+  it("returns the host's own listings", async () => {
+    const { statusCode, body } = await readByHostId("host-token", "host-1");
+
+    expect(statusCode).toBe(200);
+    expect(listingIds(body)).toEqual(["listing-of-host", "second-listing-of-host"]);
+  });
+
+  it("returns the listings of a host to an active co-host of that host", async () => {
+    const { statusCode, body } = await readByHostId("cohost-token", "host-1");
+
+    expect(statusCode).toBe(200);
+    expect(listingIds(body)).toEqual(["listing-of-host", "second-listing-of-host"]);
+  });
+
+  it("answers 403 for the listings of another host without reading them", async () => {
+    const { statusCode, body } = await readByHostId("other-host-token", "host-1");
+
+    expect(statusCode).toBe(403);
+    expect(body).toBe("You must be this host or an active co-host of this host to access these listings.");
+    expect(listingReads).toEqual([]);
+  });
+
+  it("answers 403 to a co-host for a host they do not work for", async () => {
+    const { statusCode } = await readByHostId("cohost-token", "host-2");
+
+    expect(statusCode).toBe(403);
+    expect(listingReads).toEqual([]);
+  });
+
+  it("answers 401 without a login, before any read", async () => {
+    const { statusCode } = await readByHostId(undefined, "host-1");
+
+    expect(statusCode).toBe(401);
+    expect(listingReads).toEqual([]);
+  });
+
+  it.each([undefined, ""])("answers 400 when the host id is missing (%p)", async (hostId) => {
+    const { statusCode, body } = await readByHostId("cohost-token", hostId);
+
+    expect(statusCode).toBe(400);
+    expect(body).toBe("hostId query parameter is required.");
+    expect(controller.authManager.teamMemberRepository.findActiveMembershipByMemberAndHost).not.toHaveBeenCalled();
+    expect(listingReads).toEqual([]);
+  });
+
+  it("keeps the 404 for a host without listings", async () => {
+    const { statusCode, body } = await readByHostId("host-without-listings-token", "host-3");
+
+    expect(statusCode).toBe(404);
+    expect(body).toBe("No property found.");
+  });
+});
+
+describe("AuthManager.authorizeHostOrCoHostRequest", () => {
+  it.each([undefined, null, ""])("denies an empty host id (%p) without asking for memberships", async (hostId) => {
+    const { authManager } = buildController().controller;
+
+    await expect(authManager.authorizeHostOrCoHostRequest("cohost-token", hostId)).rejects.toMatchObject({
+      statusCode: 403,
+    });
+    expect(authManager.teamMemberRepository.findActiveMembershipByMemberAndHost).not.toHaveBeenCalled();
+  });
+});

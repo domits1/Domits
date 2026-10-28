@@ -67,6 +67,9 @@ export class AuthManager {
     }
 
     async isHostOrActiveCoHost(userId, hostId) {
+        if (!hostId) {
+            return false;
+        }
         if (userId === hostId) {
             return true;
         }
@@ -85,6 +88,15 @@ export class AuthManager {
             throw new Forbidden("You must be the owner or an active co-host of the property to access it.")
         }
         return property.hostId;
+    }
+
+    async authorizeHostOrCoHostRequest(accessToken, hostId) {
+        const user = await this.getAuthorizedUser(accessToken);
+        const hasAccess = await this.isHostOrActiveCoHost(user.Username, hostId);
+        if (!hasAccess) {
+            throw new Forbidden("You must be this host or an active co-host of this host to access these listings.");
+        }
+        return hostId;
     }
 
     async authorizeDraftOwnerRequest(accessToken, draftId) {
