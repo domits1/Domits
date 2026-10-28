@@ -9,10 +9,10 @@ const PROPERTIES = [
 ];
 const ACTIVE_MEMBERSHIPS = [{ member_user_id: "cohost-1", host_id: "host-1" }];
 const USERS_BY_TOKEN = {
-  "host-token": "host-1",
-  "other-host-token": "host-2",
-  "cohost-token": "cohost-1",
-  "host-without-listings-token": "host-3",
+  "host-token": { username: "host-1", group: "Host" },
+  "other-host-token": { username: "host-2", group: "Host" },
+  "cohost-token": { username: "cohost-1", group: "Property Operations Manager" },
+  "host-without-listings-token": { username: "host-3", group: "Host" },
 };
 
 const expiredLogin = () => Object.assign(new Error("Access Token has expired"), { name: "NotAuthorizedException" });
@@ -44,11 +44,11 @@ const buildController = () => {
 
   authManager.cognitoRepository = {
     getUserByAccessToken: jest.fn(async (token) => {
-      const username = USERS_BY_TOKEN[token];
-      if (!username) {
+      const user = USERS_BY_TOKEN[token];
+      if (!user) {
         throw expiredLogin();
       }
-      return { Username: username, UserAttributes: [{ Name: "custom:group", Value: "Host" }] };
+      return { Username: user.username, UserAttributes: [{ Name: "custom:group", Value: user.group }] };
     }),
   };
   authManager.propertyRepository = { getPropertyById: jest.fn(async (id) => findProperty(id)) };
