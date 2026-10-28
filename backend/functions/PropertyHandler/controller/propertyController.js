@@ -27,6 +27,7 @@ import responseHeaders from "../util/constant/responseHeader.json" with { type: 
 import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
+import { Forbidden } from "../util/exception/Forbidden.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
@@ -2163,6 +2164,17 @@ export class PropertyController {
         };
     }
 
+    websiteFailureResponse(error) {
+        if (error instanceof Unauthorized || error instanceof Forbidden) {
+            return {
+                statusCode: error.statusCode,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({ message: error.message }),
+            };
+        }
+        return this.websiteServerError();
+    }
+
     async recordStandaloneWebsiteEventSafely(eventInput) {
         try {
             await this.directBookingWebsiteEventRepository.recordEvent(eventInput);
@@ -2817,7 +2829,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2836,7 +2848,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2869,7 +2881,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2889,7 +2901,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2926,7 +2938,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2977,7 +2989,7 @@ export class PropertyController {
                     body: JSON.stringify({ code: error.code, message: error.message }),
                 };
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3023,7 +3035,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3577,7 +3589,7 @@ export class PropertyController {
                     body: JSON.stringify({ code: error.code, message: error.message }),
                 };
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
