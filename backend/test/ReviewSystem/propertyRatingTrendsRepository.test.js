@@ -23,6 +23,12 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
     });
     expect(read).toHaveBeenCalledTimes(1);
     const sql = executed.getQuery();
+    // The production PostgreSQL parser rejects unary minus on an unknown bind parameter (42725).
+    const [parameterizedSql, parameters] = executed.getQueryAndParameters();
+    expect(parameterizedSql).not.toMatch(/-\s*\$\d+/);
+    const declineParameter = parameterizedSql.match(/<= \$(\d+) THEN 'DECLINING'/);
+    expect(declineParameter).not.toBeNull();
+    expect(parameters[Number(declineParameter[1]) - 1]).toBe(-0.5 * (1 - 1e-12));
     if (status === undefined) {
       const classification = sql.match(/CASE WHEN previous_review_count[\s\S]*?END/)[0];
       const cases = [
@@ -45,7 +51,7 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
         const statement = database.prepare("WITH scores(previous_average_rating, current_average_rating, previous_review_count, current_review_count) AS (VALUES (:previous, :current, :previousCount, :currentCount)) SELECT " + classification + " AS status FROM scores");
         console.log(JSON.stringify(cases.map(([previous, current, previousCount, currentCount, threshold]) =>
           statement.get({ previous, current, previousCount, currentCount, minimumReviews: 3,
-            boundary: threshold * (1 - 1e-12) }).status)));
+            boundary: threshold * (1 - 1e-12), declineBoundary: -threshold * (1 - 1e-12) }).status)));
         database.close();
       `, JSON.stringify({ classification, cases })], { encoding: "utf8" });
       expect(JSON.parse(output)).toEqual(cases.map((row) => row[5]));
@@ -68,7 +74,8 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
       expect(executed.getParameters().trendStatus).toBe(status);
     }
     expect(executed.getParameters()).toMatchObject({ hostId: "host-1", previousStart: 1000,
-      currentStart: 2000, endExclusive: 3000, minimumReviews: 3, boundary: 0.5 * (1 - 1e-12) });
+      currentStart: 2000, endExclusive: 3000, minimumReviews: 3, boundary: 0.5 * (1 - 1e-12),
+      declineBoundary: -0.5 * (1 - 1e-12) });
     expect(rows[0]).toMatchObject({ previous_average_rating: 4.5, current_average_rating: 4,
       previous_review_count: 3, current_review_count: 3, trend_status: "DECLINING", rating_change: -0.5 });
   } finally {

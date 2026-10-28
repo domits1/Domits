@@ -234,7 +234,7 @@ export class ReviewRepository {
       .select("scores.*")
       .addSelect(`CASE WHEN previous_review_count < :minimumReviews OR current_review_count < :minimumReviews
           OR previous_average_rating IS NULL OR current_average_rating IS NULL THEN 'INSUFFICIENT_DATA'
-        WHEN current_average_rating - previous_average_rating <= -:boundary THEN 'DECLINING'
+        WHEN current_average_rating - previous_average_rating <= :declineBoundary THEN 'DECLINING'
         WHEN current_average_rating - previous_average_rating >= :boundary THEN 'IMPROVING'
         ELSE 'STABLE' END`, "trend_status");
     const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
@@ -243,6 +243,8 @@ export class ReviewRepository {
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
         boundary: options.threshold * (1 - 1e-12),
+        // Bind the negative value directly: PostgreSQL cannot resolve unary minus on an untyped parameter.
+        declineBoundary: -options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
     if (options.sort === "declining-first") {
