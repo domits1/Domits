@@ -10,7 +10,7 @@ import { WEBSITE_SESSION_EXPIRED_MESSAGE } from "../services/websiteSession";
 import { fetchWebsiteKpis } from "../kpis/services/websiteKpiService";
 import { getAccessToken } from "../../../../services/getAccessToken";
 
-jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn() } }));
+jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn(), userPool: { getCurrentUser: jest.fn() } } }));
 jest.mock("../../../../services/getAccessToken", () => ({ getAccessToken: jest.fn(() => "stale-local-token") }));
 
 const sessionWith = (accessToken) => ({ getAccessToken: () => ({ getJwtToken: () => accessToken }) });
@@ -70,9 +70,11 @@ describe("website draft and site requests and the login session", () => {
   });
 
   it("saves the draft after one retry when the token expired on the way", async () => {
-    Auth.currentSession
-      .mockResolvedValueOnce(sessionWith("expiring-token"))
-      .mockResolvedValueOnce(sessionWith("refreshed-token"));
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue({
+      getSession: (callback) => callback(null, { getRefreshToken: () => "refresh-token" }),
+      refreshSession: (_refreshToken, callback) => callback(null, sessionWith("refreshed-token")),
+    });
     global.fetch
       .mockResolvedValueOnce(jsonResponse(401, { message: "You must be logged in." }))
       .mockResolvedValueOnce(jsonResponse(200, { id: "draft-1" }));

@@ -10,7 +10,7 @@ import {
 import { Auth } from "aws-amplify";
 import { WEBSITE_SESSION_EXPIRED_MESSAGE } from "../services/websiteSession";
 
-jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn() } }));
+jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn(), userPool: { getCurrentUser: jest.fn() } } }));
 
 const sessionWith = (accessToken) => ({ getAccessToken: () => ({ getJwtToken: () => accessToken }) });
 
@@ -156,9 +156,11 @@ describe("websiteDomainService", () => {
   });
 
   it("retries once with the refreshed token when the token expired on the way", async () => {
-    Auth.currentSession
-      .mockResolvedValueOnce(sessionWith("expiring-token"))
-      .mockResolvedValueOnce(sessionWith("refreshed-token"));
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue({
+      getSession: (callback) => callback(null, { getRefreshToken: () => "refresh-token" }),
+      refreshSession: (_refreshToken, callback) => callback(null, sessionWith("refreshed-token")),
+    });
     fetch
       .mockResolvedValueOnce(jsonResponse(401, { error: { code: "unauthorized", message: "You must be logged in." } }))
       .mockResolvedValueOnce(jsonResponse(200, { siteId: "site-1", domains: [DOMAIN_VIEW] }));

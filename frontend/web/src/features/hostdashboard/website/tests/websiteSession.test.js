@@ -7,11 +7,15 @@ import {
   fetchWithWebsiteSession,
 } from "../services/websiteSession";
 
-jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn() } }));
+jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn(), userPool: { getCurrentUser: jest.fn() } } }));
 
 const URL = "https://api.example.test/property/website/draft";
 const sessionWith = (accessToken) => ({ getAccessToken: () => ({ getJwtToken: () => accessToken }) });
 const response = (status) => ({ ok: status >= 200 && status < 300, status });
+const userRefreshingTo = (accessToken, failure = null) => ({
+  getSession: (callback) => callback(null, { getRefreshToken: () => "refresh-token" }),
+  refreshSession: jest.fn((_refreshToken, callback) => callback(failure, failure ? null : sessionWith(accessToken))),
+});
 
 describe("fetchWithWebsiteSession", () => {
   beforeEach(() => {
@@ -84,34 +88,62 @@ describe("fetchWithWebsiteSession", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("retries once with the new token when the backend rejects a token that expired on the way", async () => {
-    Auth.currentSession
-      .mockResolvedValueOnce(sessionWith("expiring-token"))
-      .mockResolvedValueOnce(sessionWith("refreshed-token"));
+  it("asks Cognito for a new token when the session still gives the token the backend rejected", async () => {
+    const user = userRefreshingTo("refreshed-token");
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue(user);
     global.fetch.mockResolvedValueOnce(response(401)).mockResolvedValueOnce(response(200));
 
     const result = await fetchWithWebsiteSession(URL, { method: "POST", body: '{"propertyId":"p1"}' });
 
     expect(result.status).toBe(200);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(user.refreshSession).toHaveBeenCalledWith("refresh-token", expect.any(Function));
     expect(global.fetch.mock.calls[1]).toEqual([
       URL,
       { method: "POST", body: '{"propertyId":"p1"}', headers: { Authorization: "refreshed-token" } },
     ]);
   });
 
-  it("does not retry when the session still gives the token the backend rejected", async () => {
-    Auth.currentSession.mockResolvedValue(sessionWith("revoked-token"));
+  it("shares one forced refresh between requests that are rejected together", async () => {
+    const user = userRefreshingTo("refreshed-token");
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue(user);
+    global.fetch.mockImplementation(async (_url, init) =>
+      response(init.headers.Authorization === "refreshed-token" ? 200 : 401)
+    );
+
+    await Promise.all([fetchWithWebsiteSession(URL), fetchWithWebsiteSession(URL)]);
+
+    expect(user.refreshSession).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    [
+      "Cognito refuses the refresh",
+      () =>
+        userRefreshingTo("", Object.assign(new Error("Refresh Token has expired"), { code: "NotAuthorizedException" })),
+      WebsiteSessionExpiredError,
+    ],
+    ["nobody is signed in any more", () => null, WebsiteSessionExpiredError],
+    ["the refresh gives back the rejected token", () => userRefreshingTo("expiring-token"), WebsiteSessionExpiredError],
+    [
+      "the network fails during the refresh",
+      () => userRefreshingTo("", Object.assign(new Error("Network error"), { code: "NetworkError" })),
+      WebsiteConnectionError,
+    ],
+  ])("does not retry after a 401 when %s", async (_label, currentUser, expectedError) => {
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue(currentUser());
     global.fetch.mockResolvedValue(response(401));
 
-    await expect(fetchWithWebsiteSession(URL)).rejects.toBeInstanceOf(WebsiteSessionExpiredError);
+    await expect(fetchWithWebsiteSession(URL)).rejects.toBeInstanceOf(expectedError);
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   it("throws the session expired error when the retry is rejected as well", async () => {
-    Auth.currentSession
-      .mockResolvedValueOnce(sessionWith("first-token"))
-      .mockResolvedValueOnce(sessionWith("second-token"));
+    Auth.currentSession.mockResolvedValue(sessionWith("first-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue(userRefreshingTo("second-token"));
     global.fetch.mockResolvedValue(response(401));
 
     await expect(fetchWithWebsiteSession(URL)).rejects.toBeInstanceOf(WebsiteSessionExpiredError);
@@ -127,5 +159,6 @@ describe("fetchWithWebsiteSession", () => {
     expect(result.status).toBe(status);
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(Auth.currentSession).toHaveBeenCalledTimes(1);
+    expect(Auth.userPool.getCurrentUser).not.toHaveBeenCalled();
   });
 });
