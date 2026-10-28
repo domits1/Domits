@@ -278,6 +278,7 @@ const createDeferred = () => {
 const flushPromises = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
 const WHATSAPP_BANNER = "Connect your WhatsApp Business";
+const CONNECTED_WHATSAPP = [{ channel: "WHATSAPP", externalAccountId: "phone-1" }];
 
 describe("Messages integrations request", () => {
   const originalFetch = globalThis.fetch;
@@ -308,6 +309,17 @@ describe("Messages integrations request", () => {
     const [url, options] = globalThis.fetch.mock.calls[0];
     expect(url).toMatch(/\/integrations\?userId=host-1$/);
     expect(options.headers.Authorization).toBe("Bearer id-token-1");
+  });
+
+  test("hides the banner when the request reports a connected WhatsApp account", async () => {
+    getIdToken.mockResolvedValue("id-token-1");
+    globalThis.fetch.mockResolvedValue(mockJsonResponse(CONNECTED_WHATSAPP));
+
+    render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    await flushPromises();
+
+    expect(screen.queryByText(WHATSAPP_BANNER)).not.toBeInTheDocument();
   });
 
   test.each([
@@ -346,7 +358,7 @@ describe("Messages integrations request", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  test("keeps the newer result when an older request answers later", async () => {
+  test("keeps the newer empty result when an older connected answer arrives later", async () => {
     const olderResponse = createDeferred();
     getIdToken.mockResolvedValue("id-token-1");
     globalThis.fetch.mockReturnValueOnce(olderResponse.promise);
@@ -357,9 +369,28 @@ describe("Messages integrations request", () => {
     rerender(hostMessages());
     expect(await screen.findByText(WHATSAPP_BANNER)).toBeInTheDocument();
 
-    olderResponse.resolve(mockJsonResponse([{ channel: "WHATSAPP", externalAccountId: "phone-1" }]));
+    olderResponse.resolve(mockJsonResponse(CONNECTED_WHATSAPP));
     await flushPromises();
 
     expect(screen.getByText(WHATSAPP_BANNER)).toBeInTheDocument();
+  });
+
+  test("keeps the newer connected result when an older request fails later", async () => {
+    const olderResponse = createDeferred();
+    getIdToken.mockResolvedValue("id-token-1");
+    globalThis.fetch.mockReturnValueOnce(olderResponse.promise);
+    const { rerender } = render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    globalThis.fetch.mockResolvedValue(mockJsonResponse(CONNECTED_WHATSAPP));
+    mockAuthState = { userId: "host-2", accessToken: null };
+    rerender(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
+    await flushPromises();
+
+    olderResponse.resolve(mockJsonResponse([], false));
+    await flushPromises();
+
+    expect(screen.queryByText(WHATSAPP_BANNER)).not.toBeInTheDocument();
   });
 });
