@@ -10,9 +10,9 @@ const reviews = [
 ];
 test("searches property metadata, sorts ratings, and keeps the overall summary based on all received reviews", async () => {
   render(<ReceivedReviews userId="host" reviews={reviews} loading={false} error="" onRetry={() => {}} />);
-  await screen.findByText("City studio · Amsterdam");
-  expect(screen.getByText("Sarah Lee")).toBeInTheDocument();
-  expect(screen.getByText("SL")).toBeInTheDocument();
+  await screen.findByText(/City studio.*Amsterdam/);
+  expect(screen.getAllByText("Sarah Lee")[0]).toBeInTheDocument();
+  expect(screen.getAllByText("SL")[0]).toBeInTheDocument();
   const list = screen.getByRole("region", { name: "Received reviews (2)" });
   expect(screen.getByText("4.0")).toBeInTheDocument();
   expect(screen.getByText("Verified stay")).toBeInTheDocument();
@@ -24,4 +24,21 @@ test("searches property metadata, sorts ratings, and keeps the overall summary b
   expect(screen.getByText("4.0")).toBeInTheDocument();
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "missing property" } });
   expect(screen.getByText("No matching reviews")).toBeInTheDocument();
+});
+
+test("selects reviews in the response panel and cancels unsaved edits", async () => {
+  render(<ReceivedReviews userId="host" reviews={reviews} loading={false} error=""
+    respondableReviews={{ a: { ...reviews[0], response: { status: "draft", message: "Saved", updatedAt: 1000 } }, b: reviews[1] }} />);
+  await screen.findByText(/City studio.*Amsterdam/);
+  expect(screen.queryByRole("region", { name: "Selected review" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+  const panel = screen.getByRole("region", { name: "Selected review" });
+  expect(within(panel).getByLabelText("Your response")).toHaveValue("Saved");
+  expect(within(panel).getByText(/Last edited:/)).toBeInTheDocument();
+  fireEvent.change(within(panel).getByLabelText("Your response"), { target: { value: "Unsaved" } });
+  fireEvent.click(within(panel).getByRole("button", { name: "Cancel" }));
+  expect(within(panel).getByLabelText("Your response")).toHaveValue("Saved");
+  fireEvent.click(screen.getByRole("button", { name: "Quiet room", exact: true }));
+  expect(within(panel).getByRole("heading", { name: "Quiet room" })).toBeInTheDocument();
+  expect(within(panel).getByLabelText("Your response")).toHaveValue("");
 });

@@ -136,15 +136,16 @@ export class ReviewRepository {
     const database = await Database.getInstance();
     const reviews = await this.hostResponseQuery(database, username)
       .select(REVIEW_FIELDS.map((field) => `review.${field}`)).orderBy("review.created_at", "DESC").getMany();
-    return this.attachPublicDetails(database, reviews);
+    return this.attachPublicDetails(database, reviews, true);
   }
 
   async saveHostResponse(user, reviewId, message, action, now) {
     try {
       const database = await Database.getInstance();
-      return await database.transaction(async (manager) => {
+      return await retryTransaction(database, async (manager) => {
         const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
         if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
+        await this.touchResponseParent(manager, reviewId, user.userId, now);
         const repository = manager.getRepository(Review_Response);
         const existing = await repository.findOne({ where: { reviewId } });
         if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");
@@ -1125,7 +1126,7 @@ export class ReviewRepository {
 
   // Public review details and summaries
 
-  async attachPublicDetails(dataSource, reviews) {
+  async attachPublicDetails(dataSource, reviews, includeDrafts = false) {
     if (!reviews.length) return reviews;
 
     const reviewIds = reviews.map((review) => review.id);
@@ -1137,7 +1138,7 @@ export class ReviewRepository {
       dataSource.getRepository(Review_Response).find({
         where: {
           reviewId: In(reviewIds),
-          status: "published",
+          status: includeDrafts ? In(["draft", "published"]) : "published",
           deletedAt: IsNull(),
         },
       }),

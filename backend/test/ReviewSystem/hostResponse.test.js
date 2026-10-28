@@ -24,14 +24,17 @@ test.each([
   expect(service.saveHostResponse).toHaveBeenCalledWith(user, "r1", { message: "Thanks" }, action);
 });
 describe("host response", () => {
-  let query, responses, repository, service;
+  let query, responses, repository, service, reviews;
   beforeEach(async () => {
     const database = new DataSource({ type: "postgres", schema: "main", entities: [Review, Property, Team_Member] });
     await database.buildMetadatas();
     query = database.getRepository(Review).createQueryBuilder("review");
     jest.spyOn(query, "getOne").mockResolvedValue({ id: "r1" });
     responses = { findOne: jest.fn().mockResolvedValue(null), save: jest.fn(async (record) => record) };
-    const manager = { getRepository: (entity) => entity === Review_Response ? responses : { createQueryBuilder: () => query } };
+    reviews = { createQueryBuilder: () => query,
+      findOne: jest.fn().mockResolvedValue({ id: "r1", host_id: user.userId, status: "PUBLISHED", publication_status: "PUBLISHED", updated_at: 100 }),
+      update: jest.fn().mockResolvedValue({ affected: 1 }) };
+    const manager = { getRepository: (entity) => entity === Review_Response ? responses : reviews };
     Database.getInstance.mockResolvedValue({ transaction: (work) => work(manager) });
     repository = new ReviewRepository();
     service = new ReviewService({ repository, now: () => 1000 });
@@ -76,4 +79,53 @@ describe("host response", () => {
     responses.findOne.mockResolvedValue({ status: "published" });
     await expect(service.saveHostResponse(user, "r1", { message: "Thanks" }, "draft")).rejects.toMatchObject({ statusCode: 409 });
   });
+  test("creates, edits and publishes the same draft", async () => {
+    let stored = null;
+    responses.findOne.mockImplementation(async () => stored);
+    responses.save.mockImplementation(async (record) => (stored = record));
+    const draft = await service.saveHostResponse(user, "r1", { message: "Initial" }, "draft");
+    expect(draft).toMatchObject({ status: "draft", publishedAt: null });
+    const edited = await service.saveHostResponse(user, "r1", { message: "Completed" }, "edit");
+    expect(edited).toMatchObject({ id: draft.id, status: "draft", message: "Completed", publishedAt: null });
+    const published = await service.saveHostResponse(user, "r1", { message: edited.message }, "publish");
+    expect(published).toMatchObject({ id: draft.id, status: "published", message: "Completed", publishedAt: 1000 });
+  });
+  test.each(["draft", "edit", "publish"])("enforces host ownership for %s", async (action) => {
+    reviews.findOne.mockResolvedValue({ host_id: "other", status: "PUBLISHED", publication_status: "PUBLISHED" });
+    await expect(service.saveHostResponse(user, "r1", { message: "Thanks" }, action))
+      .rejects.toMatchObject({ statusCode: 403 });
+    expect(responses.save).not.toHaveBeenCalled();
+  });
+  test("rejects publishing invalid content without modifying the draft", async () => {
+    responses.findOne.mockResolvedValue({ id: "d1", status: "draft", message: "Saved" });
+    await expect(service.saveHostResponse(user, "r1", { message: " " }, "publish"))
+      .rejects.toMatchObject({ statusCode: 400 });
+    expect(responses.save).not.toHaveBeenCalled();
+  });
+  test("does not save after a concurrent parent mutation", async () => {
+    reviews.update.mockResolvedValue({ affected: 0 });
+    await expect(service.saveHostResponse(user, "r1", { message: "Thanks" }, "draft"))
+      .rejects.toMatchObject({ statusCode: 409 });
+    expect(responses.save).not.toHaveBeenCalled();
+  });
+
+});
+
+test.each([false, true])("draft retrieval requires explicit host scope: %s", async (includeDrafts) => {
+  const find = jest.fn().mockResolvedValue([]);
+  await new ReviewRepository().attachPublicDetails({ getRepository: () => ({ find }) }, [{ id: "r1" }], includeDrafts);
+  const filter = find.mock.calls[1][0].where.status;
+  if (includeDrafts) expect(filter.value).toEqual(["draft", "published"]);
+  else expect(filter).toBe("published");
+});
+test("authorized host retrieval opts into drafts", async () => {
+  const repository = new ReviewRepository();
+  const query = { getMany: async () => [{ id: "r1" }] };
+  for (const method of ["select", "orderBy"]) query[method] = jest.fn(() => query);
+  jest.spyOn(repository, "hostResponseQuery").mockReturnValue(query);
+  jest.spyOn(repository, "attachPublicDetails").mockResolvedValue([]);
+  Database.getInstance.mockResolvedValue({});
+  await repository.findResponseEligibleReviews(user.username);
+  expect(repository.hostResponseQuery).toHaveBeenCalledWith({}, user.username);
+  expect(repository.attachPublicDetails).toHaveBeenCalledWith({}, [{ id: "r1" }], true);
 });
