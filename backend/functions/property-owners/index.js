@@ -4,7 +4,7 @@ import { GENERIC_ERROR_MESSAGE, respond } from "./util/http/response.js";
 
 const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed.";
 
-const NO_ACTION = null;
+const NO_ACTION = Symbol("no-action");
 
 const ROUTES = new Map([
   ["GET", new Map([[NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }]])],
