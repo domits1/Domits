@@ -13,7 +13,8 @@ const URL = "https://api.example.test/property/website/draft";
 const sessionWith = (accessToken) => ({ getAccessToken: () => ({ getJwtToken: () => accessToken }) });
 const response = (status) => ({ ok: status >= 200 && status < 300, status });
 const userRefreshingTo = (accessToken, failure = null) => ({
-  getSession: (callback) => callback(null, { getRefreshToken: () => "refresh-token" }),
+  getSession: (callback) =>
+    callback(null, { ...sessionWith("expiring-token"), getRefreshToken: () => "refresh-token" }),
   refreshSession: jest.fn((_refreshToken, callback) => callback(failure, failure ? null : sessionWith(accessToken))),
 });
 
