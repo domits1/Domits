@@ -346,6 +346,19 @@ describe("Messages integrations request", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  test("sends one request when the effect runs twice while the token is loading", async () => {
+    const token = createDeferred();
+    getIdToken.mockReturnValue(token.promise);
+
+    render(<React.StrictMode>{hostMessages()}</React.StrictMode>);
+    expect(getIdToken).toHaveBeenCalledTimes(2);
+
+    token.resolve("id-token-1");
+    await flushPromises();
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
   test("sends no request when the page unmounts while the token is loading", async () => {
     const token = createDeferred();
     getIdToken.mockReturnValue(token.promise);
