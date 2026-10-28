@@ -414,7 +414,7 @@ export default class ChannelManagementController {
           fullCertificationSyncVersion:
             CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
           stage: "controller_catch",
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode:
             "CHANNEX_CERTIFICATION_FULL_SYNC_CONTROLLER_FAILED",
           errorName: error?.name ?? null,
