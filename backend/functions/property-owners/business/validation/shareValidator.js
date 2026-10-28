@@ -6,6 +6,7 @@ export const TOTAL_BASIS_POINTS = 10000;
 export const MIN_BASIS_POINTS = 1;
 
 const DAY_MS = 86400000;
+const MAX_EFFECTIVE_FROM_DAYS_AHEAD = 1826;
 const BODY_FIELDS = Object.freeze(["property_id", "effective_from", "shares"]);
 const SHARE_FIELDS = Object.freeze(["owner_id", "ownership_basis_points"]);
 
@@ -39,6 +40,9 @@ const assertEffectiveFrom = (effectiveFrom, today) => {
   }
   if (effectiveFrom < today) {
     throw new BadRequestException("effective_from cannot be before today.");
+  }
+  if (effectiveFrom > today + MAX_EFFECTIVE_FROM_DAYS_AHEAD * DAY_MS) {
+    throw new BadRequestException("effective_from cannot be more than 5 years after today.");
   }
   return effectiveFrom;
 };

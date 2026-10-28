@@ -7,6 +7,7 @@ const { BadRequestException } = require("../../functions/property-owners/util/ex
 
 const DAY_MS = 86400000;
 const TODAY = Date.UTC(2026, 9, 22);
+const EFFECTIVE_FROM_LIMIT = TODAY + 1826 * DAY_MS;
 const OWNER_A = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 const OWNER_B = "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f";
 
@@ -69,10 +70,10 @@ describe("validateSetShares accepts", () => {
     expect(validateSetShares(validBody({ effective_from: TODAY }), TODAY).effectiveFrom).toBe(TODAY);
   });
 
-  test("a far-future effective_from", () => {
-    const farFuture = Date.UTC(2126, 0, 1);
-
-    expect(validateSetShares(validBody({ effective_from: farFuture }), TODAY).effectiveFrom).toBe(farFuture);
+  test("an effective_from exactly 5 years after today", () => {
+    expect(validateSetShares(validBody({ effective_from: EFFECTIVE_FROM_LIMIT }), TODAY).effectiveFrom).toBe(
+      EFFECTIVE_FROM_LIMIT
+    );
   });
 
   test("the maximum number of shares", () => {
@@ -162,6 +163,16 @@ describe("validateSetShares rejects effective_from", () => {
     ["a negative midnight", -DAY_MS],
   ])("in the past: %s", (_label, effectiveFrom) => {
     expectRejected(validBody({ effective_from: effectiveFrom }), "effective_from cannot be before today.");
+  });
+
+  test.each([
+    ["one day after the limit", EFFECTIVE_FROM_LIMIT + DAY_MS],
+    ["far in the future", Date.UTC(2126, 0, 1)],
+  ])("more than 5 years after today: %s", (_label, effectiveFrom) => {
+    expectRejected(
+      validBody({ effective_from: effectiveFrom }),
+      "effective_from cannot be more than 5 years after today."
+    );
   });
 });
 
