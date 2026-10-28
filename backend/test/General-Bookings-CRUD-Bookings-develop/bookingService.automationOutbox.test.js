@@ -32,4 +32,27 @@ describe("BookingService booking-paid outbox", () => {
     expect(reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledTimes(1);
     expect(reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
   });
+
+  test("reports a payment transition only to the request that changes the booking", async () => {
+    const reservationRepository = {
+      getBookingByPaymentId: jest.fn().mockResolvedValue({ id: "booking-1", status: "Awaiting Payment" }),
+      markBookingPaidWithOutbox: jest.fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false),
+    };
+    const service = new BookingService({
+      reservationRepository,
+      stripeRepository: { getPaymentIntentByPaymentId: jest.fn(async () => ({ status: "succeeded" })) },
+    });
+
+    const results = await Promise.all([
+      service.confirmPayment("payment-1"),
+      service.confirmPayment("payment-1"),
+    ]);
+
+    expect(reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledTimes(2);
+    expect(results.filter((result) => result.newlyPaid)).toHaveLength(1);
+    expect(results.filter((result) => !result.newlyPaid)).toHaveLength(1);
+    expect(results.every((result) => result.paymentConfirmed)).toBe(true);
+  });
 });
