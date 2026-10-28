@@ -15,7 +15,7 @@ describe("SiteMinderRatesPusher", () => {
 
     const [body, { echoToken }] = client.send.mock.calls[0];
     expect(body).toContain('<RequestorID Type="22" ID="PMSXTEST"/>');
-    expect(body).toContain('AmountAfterTax="150.00"');
+    expect(body).toContain('AmountBeforeTax="150.00"');
     expect(body).toContain(`EchoToken="${echoToken}"`);
     expect(result).toEqual({ success: true, echoToken });
   });

@@ -1,14 +1,14 @@
 import { escapeXml, otaHeaderAttributes } from "./otaXml.js";
+import { isIsoDate, toAmount } from "./otaValues.js";
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const CURRENCY = /^[A-Z]{3}$/;
 
 function validateItem(item, index) {
   const where = `rate item ${index}`;
   if (!item.roomTypeCode) throw new Error(`${where}: roomTypeCode is required`);
   if (!item.ratePlanCode) throw new Error(`${where}: ratePlanCode is required, SiteMinder only takes rates per room rate`);
-  if (!ISO_DATE.test(item.start ?? "") || !ISO_DATE.test(item.end ?? "")) {
-    throw new Error(`${where}: start and end must be yyyy-mm-dd`);
+  if (!isIsoDate(item.start) || !isIsoDate(item.end)) {
+    throw new Error(`${where}: start and end must be real dates as yyyy-mm-dd`);
   }
   if (item.start > item.end) throw new Error(`${where}: start is after end`);
   if (typeof item.amount !== "number" || !Number.isFinite(item.amount) || item.amount <= 0) {
@@ -42,7 +42,7 @@ function groupByRoomRate(items) {
 
 const toRate = (rate) =>
   `<Rate CurrencyCode="${rate.currency}" Start="${rate.start}" End="${rate.end}">` +
-  `<BaseByGuestAmts><BaseByGuestAmt AmountAfterTax="${rate.amount.toFixed(2)}"/></BaseByGuestAmts>` +
+  `<BaseByGuestAmts><BaseByGuestAmt AmountBeforeTax="${toAmount(rate.amount)}"/></BaseByGuestAmts>` +
   "</Rate>";
 
 const toMessage = (group) =>
@@ -51,7 +51,8 @@ const toMessage = (group) =>
   `<Rates>${group.rates.map(toRate).join("")}</Rates>` +
   "</RateAmountMessage>";
 
-// Per Day Pricing: one price per night after tax, per room rate and date range.
+// Per Day Pricing: one price per night before tax (the Domits base rate is net, without VAT or local taxes),
+// per room rate and date range. SiteMinder accepts AmountBeforeTax or AmountAfterTax.
 // items: { roomTypeCode, ratePlanCode, start, end, amount, currency }
 export function buildRatesNotif({ hotelCode, requestorId, items, echoToken, now }) {
   if (!hotelCode) throw new Error("hotelCode is required");

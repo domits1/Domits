@@ -1,12 +1,12 @@
 import { escapeXml, otaHeaderAttributes } from "./otaXml.js";
+import { isIsoDate } from "./otaValues.js";
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function validateItem(item, index) {
   const where = `availability item ${index}`;
   if (!item.roomTypeCode) throw new Error(`${where}: roomTypeCode is required`);
-  if (!ISO_DATE.test(item.start ?? "") || !ISO_DATE.test(item.end ?? "")) {
-    throw new Error(`${where}: start and end must be yyyy-mm-dd`);
+  if (!isIsoDate(item.start) || !isIsoDate(item.end)) {
+    throw new Error(`${where}: start and end must be real dates as yyyy-mm-dd`);
   }
   if (item.start > item.end) throw new Error(`${where}: start is after end`);
   if (!Number.isInteger(item.bookingLimit) || item.bookingLimit < 0) {
