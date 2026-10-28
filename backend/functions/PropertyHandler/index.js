@@ -127,6 +127,15 @@ const handleGet = async (event) => {
   if (isDestinationPageRequest(event)) {
     return destinationPageController.getDestinationPage(event);
   }
+  if (isPath(event, "/property/review/access")) {
+    return controller.getReviewAccess(event);
+  }
+  if (isPath(event, "/property/review/queue")) {
+    return controller.getReviewQueue(event);
+  }
+  if (isPath(event, "/property/review/detail")) {
+    return controller.getReviewDetail(event);
+  }
   if (isPath(event, "/sitemap-destinations.xml")) {
     return destinationPageController.getDestinationSitemap(event);
   }

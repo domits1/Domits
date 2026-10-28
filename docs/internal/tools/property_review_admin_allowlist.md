@@ -21,3 +21,15 @@ On the `PropertyHandler` Lambda in `eu-north-1`. Acceptance and production share
 ## Never commit IDs
 
 Real user ids are set at deploy time only. Code, tests, docs and pull requests use fake ids such as `admin-1`.
+
+## Read routes
+
+Three admin-only `GET` routes on `PropertyHandler` serve the review queue. Responses carry `Cache-Control: no-store`.
+
+| Route | Answer |
+| --- | --- |
+| `/property/review/access` | `200 { allowed }` for any signed-in caller, `401` without a valid token |
+| `/property/review/queue?limit=&cursor=` | `PENDING_REVIEW` cards, oldest first, plus `nextCursor` (`null` on the last page). `limit` defaults to 25, max 50. `403` for non-admins |
+| `/property/review/detail?propertyId=` | Full property with full location, any status. `400` without an id, `404` if missing, `403` for non-admins |
+
+API Gateway has no `{proxy+}`, so each route needs a `GET` method, an `OPTIONS` method for CORS and an API deployment, added by hand after the Lambda is live. Deploying the Lambda alone does not expose them.
