@@ -1,7 +1,7 @@
 import { Auth } from "aws-amplify";
 
 export const WEBSITE_SESSION_EXPIRED_MESSAGE = "Your session has expired. Please log in again.";
-export const WEBSITE_CONNECTION_FAILED_MESSAGE = "We could not reach Domits. Check your connection and try again.";
+export const WEBSITE_CONNECTION_FAILED_MESSAGE = "We could not check your login right now. Please try again.";
 
 export class WebsiteSessionExpiredError extends Error {
   constructor(cause = null) {
@@ -19,10 +19,17 @@ export class WebsiteConnectionError extends Error {
   }
 }
 
-const isNetworkFailure = (error) => error?.code === "NetworkError" || error?.name === "NetworkError";
+const TEMPORARY_FAILURES = new Set([
+  "NetworkError",
+  "TooManyRequestsException",
+  "InternalErrorException",
+  "LimitExceededException",
+]);
+
+const isTemporaryFailure = (error) => TEMPORARY_FAILURES.has(error?.code) || TEMPORARY_FAILURES.has(error?.name);
 
 const toSessionError = (error) =>
-  isNetworkFailure(error) ? new WebsiteConnectionError(error) : new WebsiteSessionExpiredError(error);
+  isTemporaryFailure(error) ? new WebsiteConnectionError(error) : new WebsiteSessionExpiredError(error);
 
 const readAccessToken = async (loadSession) => {
   let session;
@@ -39,7 +46,7 @@ const readAccessToken = async (loadSession) => {
   return accessToken;
 };
 
-const forceSessionRefresh = () =>
+const forceSessionRefresh = (rejectedAccessToken) =>
   new Promise((resolve, reject) => {
     const user = Auth.userPool?.getCurrentUser?.();
     if (!user) {
@@ -51,6 +58,11 @@ const forceSessionRefresh = () =>
         reject(sessionError);
         return;
       }
+      const currentAccessToken = session.getAccessToken?.()?.getJwtToken?.();
+      if (currentAccessToken && currentAccessToken !== rejectedAccessToken) {
+        resolve(session);
+        return;
+      }
       user.refreshSession(session.getRefreshToken(), (refreshError, refreshedSession) =>
         refreshError ? reject(refreshError) : resolve(refreshedSession)
       );
@@ -59,9 +71,9 @@ const forceSessionRefresh = () =>
 
 const shareInFlight = (read) => {
   let pending = null;
-  return () => {
+  return (...args) => {
     if (!pending) {
-      pending = read().finally(() => {
+      pending = read(...args).finally(() => {
         pending = null;
       });
     }
@@ -70,7 +82,9 @@ const shareInFlight = (read) => {
 };
 
 export const getWebsiteAccessToken = shareInFlight(() => readAccessToken(() => Auth.currentSession()));
-const refreshWebsiteAccessToken = shareInFlight(() => readAccessToken(forceSessionRefresh));
+const refreshWebsiteAccessToken = shareInFlight((rejectedAccessToken) =>
+  readAccessToken(() => forceSessionRefresh(rejectedAccessToken))
+);
 
 const sendWithAccessToken = (url, init, accessToken) =>
   fetch(url, { ...init, headers: { ...init.headers, Authorization: accessToken } });
@@ -82,7 +96,7 @@ export const fetchWithWebsiteSession = async (url, init = {}) => {
     return response;
   }
 
-  const retryAccessToken = await refreshWebsiteAccessToken();
+  const retryAccessToken = await refreshWebsiteAccessToken(accessToken);
   if (retryAccessToken === accessToken) {
     throw new WebsiteSessionExpiredError();
   }

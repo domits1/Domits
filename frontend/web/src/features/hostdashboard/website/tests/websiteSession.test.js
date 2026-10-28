@@ -104,6 +104,34 @@ describe("fetchWithWebsiteSession", () => {
     ]);
   });
 
+  it("uses the session that getSession already refreshed instead of refreshing again", async () => {
+    const refreshSession = jest.fn();
+    Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
+    Auth.userPool.getCurrentUser.mockReturnValue({
+      getSession: (callback) => callback(null, sessionWith("refreshed-token")),
+      refreshSession,
+    });
+    global.fetch.mockResolvedValueOnce(response(401)).mockResolvedValueOnce(response(200));
+
+    await expect(fetchWithWebsiteSession(URL)).resolves.toMatchObject({ status: 200 });
+    expect(refreshSession).not.toHaveBeenCalled();
+    expect(global.fetch.mock.calls[1][1].headers.Authorization).toBe("refreshed-token");
+  });
+
+  it.each(["TooManyRequestsException", "InternalErrorException"])(
+    "reports %s from Cognito as a temporary problem, not as an expired session",
+    async (code) => {
+      const failure = Object.assign(new Error(code), { code });
+      Auth.currentSession.mockRejectedValueOnce(failure).mockResolvedValueOnce(sessionWith("expiring-token"));
+      Auth.userPool.getCurrentUser.mockReturnValue(userRefreshingTo("", failure));
+      global.fetch.mockResolvedValue(response(401));
+
+      await expect(fetchWithWebsiteSession(URL)).rejects.toBeInstanceOf(WebsiteConnectionError);
+      await expect(fetchWithWebsiteSession(URL)).rejects.toBeInstanceOf(WebsiteConnectionError);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it("shares one forced refresh between requests that are rejected together", async () => {
     const user = userRefreshingTo("refreshed-token");
     Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
