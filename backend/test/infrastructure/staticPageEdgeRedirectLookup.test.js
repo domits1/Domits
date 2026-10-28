@@ -182,10 +182,12 @@ describe("which requests look in the redirect store", () => {
   it.each(BUILD_ASSETS)("serves the build file %s on an alias as it is, without a lookup", async (uri) => {
     const store = countingKeyValueStore({ [ALIAS]: PRIMARY });
     const event = buildEvent({ method: "GET", uri, host: ALIAS });
+    const original = JSON.parse(JSON.stringify(event.request));
 
     const result = await loadHandler(store)(event);
 
-    expect(outcomeOf(result, event.request)).toEqual({ uri });
+    expect(result).toBe(event.request);
+    expect(event.request).toEqual(original);
     expect(store.calls).toEqual([]);
   });
 
@@ -203,10 +205,12 @@ describe("which requests look in the redirect store", () => {
   ])("serves a build file with %s as it is, without a lookup", async (_name, request) => {
     const store = countingKeyValueStore({ [ALIAS]: PRIMARY, [CUSTOM_ALIAS]: PRIMARY });
     const event = buildEvent(request);
+    const original = JSON.parse(JSON.stringify(event.request));
 
     const result = await loadHandler(store)(event);
 
-    expect(outcomeOf(result, event.request)).toEqual({ uri: request.uri });
+    expect(result).toBe(event.request);
+    expect(event.request).toEqual(original);
     expect(store.calls).toEqual([]);
   });
 
