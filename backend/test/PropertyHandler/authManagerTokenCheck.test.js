@@ -20,6 +20,8 @@ describe("checking the access token", () => {
     ["an expired token", cognitoError("NotAuthorizedException", "Access Token has expired")],
     ["a revoked token", cognitoError("NotAuthorizedException", "Access Token has been revoked")],
     ["a deleted user", cognitoError("UserNotFoundException", "User does not exist.")],
+    ["a user who must reset the password", cognitoError("PasswordResetRequiredException", "Password reset required")],
+    ["an unconfirmed user", cognitoError("UserNotConfirmedException", "User is not confirmed.")],
   ])("rejects %s as a failed login", async (_label, failure) => {
     const { authManager } = buildController(() => Promise.reject(failure));
 

@@ -9,7 +9,12 @@ import { BookingRepository } from "../data/repository/bookingRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { TeamMemberRepository } from "../data/repository/teamMemberRepository.js";
 
-const REJECTED_TOKEN_ERRORS = new Set(["NotAuthorizedException", "UserNotFoundException"]);
+const REJECTED_TOKEN_ERRORS = new Set([
+    "NotAuthorizedException",
+    "UserNotFoundException",
+    "PasswordResetRequiredException",
+    "UserNotConfirmedException",
+]);
 
 export class AuthManager {
 
