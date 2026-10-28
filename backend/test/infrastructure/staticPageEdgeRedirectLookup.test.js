@@ -137,3 +137,109 @@ describe("how the edge function reads the redirect store", () => {
     }
   );
 });
+
+describe("which requests look in the redirect store", () => {
+  const CUSTOM_ALIAS = "booking.villasensual.nl";
+  const BUILD_ASSETS = [
+    "/static/js/main.c8d6f8b3.js",
+    "/static/js/970.753e672b.chunk.js",
+    "/static/js/main.c8d6f8b3.js.map",
+    "/static/css/main.ce53b419.css",
+    "/static/media/hero.4f2a1c9d.png",
+    "/static/media/hero.4f2a1c9d.jpg",
+    "/static/media/hero.4f2a1c9d.jpeg",
+    "/static/media/loader.4f2a1c9d.gif",
+    "/static/media/icon.4f2a1c9d.svg",
+    "/static/media/hero.4f2a1c9d.webp",
+    "/static/media/font.4f2a1c9d.woff",
+    "/static/media/font.4f2a1c9d.woff2",
+    "/static/media/font.4f2a1c9d.ttf",
+    "/static/media/font.4f2a1c9d.eot",
+    "/favicon.ico",
+    "/manifest.json",
+    "/logo192.png",
+  ];
+  const PAGES = [
+    "/",
+    "/index.html",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/listing/2",
+    "/website-preview/draft-1",
+    "/website-live/www.villasensual.nl",
+    "/sitemap",
+    "/INDEX.HTML",
+    "/LOGO192.PNG",
+    "/sitemap.xml/",
+    "/static/",
+    "/static/js/main.c8d6f8b3.js/",
+    "/static.js/listing",
+    "/index%2Ehtml",
+  ];
+
+  it.each(BUILD_ASSETS)("serves the build file %s on an alias as it is, without a lookup", async (uri) => {
+    const store = countingKeyValueStore({ [ALIAS]: PRIMARY });
+    const event = buildEvent({ method: "GET", uri, host: ALIAS });
+
+    const result = await loadHandler(store)(event);
+
+    expect(outcomeOf(result, event.request)).toEqual({ uri });
+    expect(store.calls).toEqual([]);
+  });
+
+  it.each([
+    ["a HEAD request", { method: "HEAD", uri: "/static/css/main.ce53b419.css", host: ALIAS }],
+    [
+      "a query string",
+      { method: "GET", uri: "/static/js/main.c8d6f8b3.js", host: ALIAS, querystring: { v: { value: "2" } } },
+    ],
+    [
+      "an alias in capitals with a port",
+      { method: "GET", uri: "/favicon.ico", host: "Beautiful-Home-Amsterdam-6156b005.Direct.Domits.com:443" },
+    ],
+    ["an alias that is a custom domain", { method: "GET", uri: "/logo192.png", host: CUSTOM_ALIAS }],
+  ])("serves a build file with %s as it is, without a lookup", async (_name, request) => {
+    const store = countingKeyValueStore({ [ALIAS]: PRIMARY, [CUSTOM_ALIAS]: PRIMARY });
+    const event = buildEvent(request);
+
+    const result = await loadHandler(store)(event);
+
+    expect(outcomeOf(result, event.request)).toEqual({ uri: request.uri });
+    expect(store.calls).toEqual([]);
+  });
+
+  it.each(PAGES)("still looks up and redirects %s on an alias", async (uri) => {
+    const store = countingKeyValueStore({ [ALIAS]: PRIMARY });
+    const event = buildEvent({ method: "GET", uri, host: ALIAS });
+
+    const result = await loadHandler(store)(event);
+
+    expect(outcomeOf(result, event.request)).toEqual({ location: `https://${PRIMARY}${uri}` });
+    expect(store.calls).toEqual([["kvs"], ["exists", ALIAS], ["get", ALIAS], ["exists", PRIMARY]]);
+  });
+
+  it("redirects a page of an alias that is a custom domain outside direct.domits.com", async () => {
+    const store = countingKeyValueStore({ [CUSTOM_ALIAS]: PRIMARY });
+    const event = buildEvent({ method: "HEAD", uri: "/listing/2", host: CUSTOM_ALIAS });
+
+    const result = await loadHandler(store)(event);
+
+    expect(outcomeOf(result, event.request)).toEqual({ location: `https://${PRIMARY}/listing/2` });
+  });
+
+  it.each([
+    ["a POST", { method: "POST", uri: "/", host: ALIAS }],
+    ["an OPTIONS request", { method: "OPTIONS", uri: "/", host: ALIAS }],
+    ["no host header", { method: "GET", uri: "/", host: null }],
+    ["a host the store can never hold", { method: "GET", uri: "/", host: "my_villa.direct.domits.com" }],
+    ["a port that is not a number", { method: "GET", uri: "/", host: `${ALIAS}:garbage` }],
+    ["two host values", { method: "GET", uri: "/", host: ALIAS, multiValue: [ALIAS, PRIMARY] }],
+    ["a direct request to a page key", { method: "GET", uri: `/sites/by-host/${PRIMARY}/index.html`, host: ALIAS }],
+  ])("looks nothing up for %s", async (_name, request) => {
+    const store = countingKeyValueStore({ [ALIAS]: PRIMARY, "my_villa.direct.domits.com": PRIMARY });
+
+    await loadHandler(store)(buildEvent(request));
+
+    expect(store.calls).toEqual([]);
+  });
+});

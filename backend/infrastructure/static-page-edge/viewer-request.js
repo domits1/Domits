@@ -6,6 +6,7 @@ var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
 var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
 var ROBOTS_URI = "/robots.txt";
+var BUILD_ASSET_PATTERN = /\.(?:js|map|css|png|jpe?g|gif|svg|webp|woff2?|ttf|eot|ico|json)$/;
 var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 
 function normalizeHostName(value) {
@@ -76,6 +77,10 @@ function robotsResponse(host, method) {
   return response;
 }
 
+function mayRedirect(uri) {
+  return typeof uri === "string" && uri.charAt(0) === "/" && !BUILD_ASSET_PATTERN.test(uri);
+}
+
 async function primaryHostFor(host) {
   try {
     var store = cf.kvs();
@@ -135,7 +140,7 @@ async function handler(event) {
     if (!isHostName(host)) {
       return request;
     }
-    if (typeof request.uri === "string" && request.uri.charAt(0) === "/") {
+    if (mayRedirect(request.uri)) {
       var target = await primaryHostFor(host);
       if (target) {
         return redirectResponse(target, request);
