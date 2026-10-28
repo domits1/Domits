@@ -2402,8 +2402,15 @@ export class PropertyController {
     // -------------------------
     async getFullOwnedPropertyById(event) {
         try {
-            const propertyId = event.queryStringParameters.property;
-            await this.authManager.getAuthorizedUser(event.headers.Authorization);
+            const propertyId = event.queryStringParameters?.property;
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("property query parameter is required."),
+                };
+            }
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(event.headers.Authorization, propertyId);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
