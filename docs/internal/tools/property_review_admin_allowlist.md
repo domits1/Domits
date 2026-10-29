@@ -21,3 +21,6 @@ On the `PropertyHandler` Lambda in `eu-north-1`. Acceptance and production share
 ## Never commit IDs
 
 Real user ids are set at deploy time only. Code, tests, docs and pull requests use fake ids such as `admin-1`.
+
+Guest review moderation also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval leaves reviews unpublished; approved reviews can be published through `POST /reviews/{id}/publish`. The frontend controls are deferred to a separate PR.
