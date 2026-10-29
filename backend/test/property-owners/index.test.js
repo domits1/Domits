@@ -85,6 +85,7 @@ describe("property-owners router", () => {
   test.each([
     ["an action", { action: "archive" }],
     ["an empty action", { action: "" }],
+    ["a null action", { action: null }],
     ["an id", { id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
     ["an empty id", { id: "" }],
     ["an action next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
@@ -108,13 +109,13 @@ describe("property-owners router", () => {
   test.each([
     ["an action", { action: "archive" }],
     ["an empty action", { action: "" }],
+    ["a null action", { action: null }],
     ["an action next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
-  ])("returns 405 for GET with %s", async (_label, query) => {
+  ])("returns 405 for GET with %s without calling the controller", async (_label, query) => {
     const response = await handler(event("GET", query));
 
     expect(response.statusCode).toBe(405);
-    expect(mockController.listOwners).not.toHaveBeenCalled();
-    expect(mockController.getOwner).not.toHaveBeenCalled();
+    expectNoControllerCall();
   });
 
   test("answers OPTIONS with the CORS headers without calling the controller", async () => {
