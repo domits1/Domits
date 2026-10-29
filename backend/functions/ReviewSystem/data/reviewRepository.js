@@ -134,8 +134,7 @@ export class ReviewRepository {
 
   async saveHostResponse(user, reviewId, message, action, now) {
     try {
-      const database = await Database.getInstance();
-      return await database.transaction(async (manager) => {
+      return await this.runTransaction(async (manager) => {
         const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
         if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
         const repository = manager.getRepository(Review_Response);
@@ -161,6 +160,19 @@ export class ReviewRepository {
       }
       throw error;
     }
+  }
+
+  async deleteHostResponse(user, reviewId, deletedAt) {
+    return this.runTransaction(async (manager) => {
+      const review = await this.hostResponseQuery(manager, user.username)
+        .andWhere("review.id = :reviewId", { reviewId }).getOne();
+      if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
+      const result = await manager.getRepository(Review_Response).update(
+        { reviewId, deletedAt: IsNull() },
+        { status: "deleted", deletedAt, updatedAt: deletedAt }
+      );
+      return result.affected === 1;
+    });
   }
 
   async getPublicReviewPage(propertyId, offset) {

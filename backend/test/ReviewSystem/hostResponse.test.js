@@ -24,15 +24,16 @@ test.each([
   expect(service.saveHostResponse).toHaveBeenCalledWith(user, "r1", { message: "Thanks" }, action);
 });
 describe("host response", () => {
-  let query, responses, repository, service;
+  let query, responses, repository, service, transaction;
   beforeEach(async () => {
     const database = new DataSource({ type: "postgres", schema: "main", entities: [Review, Property, Team_Member] });
     await database.buildMetadatas();
     query = database.getRepository(Review).createQueryBuilder("review");
     jest.spyOn(query, "getOne").mockResolvedValue({ id: "r1" });
-    responses = { findOne: jest.fn().mockResolvedValue(null), save: jest.fn(async (record) => record) };
+    responses = { findOne: jest.fn().mockResolvedValue(null), save: jest.fn(async (record) => record), update: jest.fn().mockResolvedValue({ affected: 1 }) };
     const manager = { getRepository: (entity) => entity === Review_Response ? responses : { createQueryBuilder: () => query } };
-    Database.getInstance.mockResolvedValue({ transaction: (work) => work(manager) });
+    transaction = jest.fn((work) => work(manager));
+    Database.getInstance.mockResolvedValue({ transaction });
     repository = new ReviewRepository();
     service = new ReviewService({ repository, now: () => 1000 });
   });
@@ -61,6 +62,7 @@ describe("host response", () => {
   test("converts the live unique constraint race into a conflict", async () => {
     responses.save.mockRejectedValue({ driverError: { code: "23505", constraint: "review_response_review_unique_main" } });
     await expect(service.saveHostResponse(user, "r1", { message: "Thanks" }, "publish")).rejects.toMatchObject({ statusCode: 409 });
+    expect(transaction).toHaveBeenCalledTimes(1);
   });
   test.each(["", " ", null, 42, "x".repeat(501), "bad\u0000text"])("rejects invalid content %j", async (message) => {
     await expect(service.saveHostResponse(user, "r1", { message }, "publish")).rejects.toMatchObject({ statusCode: 400 });
@@ -76,4 +78,60 @@ describe("host response", () => {
     responses.findOne.mockResolvedValue({ status: "published" });
     await expect(service.saveHostResponse(user, "r1", { message: "Thanks" }, "draft")).rejects.toMatchObject({ statusCode: 409 });
   });
+  test.each([
+    [{ userId: "manager-sub", username: "manager-1" }, "host-sub"],
+    [user, "manager-sub"],
+  ])("allows an eligible actor %j to delete another author's response (%s)", async (actor, authorId) => {
+    // Matching the response by review, rather than author, permits both cross-author cases.
+    responses.findOne.mockResolvedValue({ id: "response-1", authorId, status: "published" });
+    await service.deleteReviewResponse(actor, "r1");
+    expect(query.getQuery()).toContain('"property"."hostid" = :username OR "member"."id" IS NOT NULL');
+    expect(query.getParameters()).toMatchObject({ username: actor.username, active: "active",
+      role: "Property Operations Manager", propertyStatus: "ACTIVE", reviewId: "r1" });
+    expect(responses.update).toHaveBeenCalledWith(
+      { reviewId: "r1", deletedAt: expect.anything() },
+      { status: "deleted", deletedAt: 1000, updatedAt: 1000 });
+    expect(responses.update.mock.calls[0][0]).not.toHaveProperty("authorId");
+  });
+  test("delete controller forwards the full trusted identity", async () => {
+    const controller = new Controller({ service, authManager: { getUser: async () => user } });
+    const result = await controller.deleteReviewResponse({ pathParameters: { id: "r1" } });
+    expect(result.statusCode).toBe(204);
+    expect(query.getParameters().username).toBe(user.username);
+  });
+  test.each(["unrelated actor", "inactive manager", "ineligible review"])("denies deletion for %s", async () => {
+    query.getOne.mockResolvedValue(null);
+    await expect(service.deleteReviewResponse(user, "r1")).rejects.toMatchObject({ statusCode: 404 });
+    expect(responses.update).not.toHaveBeenCalled();
+  });
+  test("reports missing or already deleted responses", async () => {
+    responses.update.mockResolvedValue({ affected: 0 });
+    await expect(service.deleteReviewResponse(user, "r1")).rejects.toMatchObject({ statusCode: 404 });
+  });
+  test("validates deletion identity and review ID before storage access", async () => {
+    for (const actor of [{}, { userId: "sub" }, { username: "host" }]) {
+      await expect(service.deleteReviewResponse(actor, "r1")).rejects.toMatchObject({ statusCode: 401 });
+    }
+    for (const id of ["", " ", null, "x".repeat(256)]) {
+      await expect(service.deleteReviewResponse(user, id)).rejects.toMatchObject({ statusCode: 400 });
+    }
+    expect(transaction).not.toHaveBeenCalled();
+  });
+  test.each(["save", "delete"])("retries a DSQL conflict during %s", async (operation) => {
+    const mutation = operation === "save" ? responses.save : responses.update;
+    mutation.mockRejectedValueOnce({ driverError: { code: "40001" } });
+    if (operation === "save") await service.saveHostResponse(user, "r1", { message: "Thanks" }, "publish");
+    else await service.deleteReviewResponse(user, "r1");
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(query.getOne).toHaveBeenCalledTimes(2);
+  });
+  test.each(["save", "delete"])("bounds DSQL retries during %s", async (operation) => {
+    const mutation = operation === "save" ? responses.save : responses.update;
+    mutation.mockRejectedValue({ driverError: { code: "40001" } });
+    const work = operation === "save" ? service.saveHostResponse(user, "r1", { message: "Thanks" }, "publish")
+      : service.deleteReviewResponse(user, "r1");
+    await expect(work).rejects.toMatchObject({ driverError: { code: "40001" } });
+    expect(transaction).toHaveBeenCalledTimes(3);
+  });
+
 });
