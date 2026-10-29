@@ -385,7 +385,7 @@ export class ReviewRepository {
       .andWhere("created_at <= :timestamp AND created_at > :cutoff", {
         timestamp, cutoff: timestamp - editWindowMs,
       })
-      .andWhere("status NOT IN (:...excluded)", { excluded: ["DELETED", "REJECTED"] })
+      .andWhere("status = :draft AND publication_status = :unpublished", { draft: "DRAFT", unpublished: "UNPUBLISHED" })
       .execute();
     return { affected: result.affected, updated_at: updatedAt };
   }
@@ -527,6 +527,14 @@ export class ReviewRepository {
 
   // Load a user's review list for the chosen scope.
   // This gives the profile views a single source of truth for written and received reviews.
+  async findPendingReviews() {
+    const database = await Database.getInstance();
+    return database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" },
+      select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
+    });
+  }
+
   async findForUser(userId, scope) {
     const dataSource = await Database.getInstance();
     const field =
@@ -862,6 +870,7 @@ export class ReviewRepository {
     expectedUpdatedAt,
     updatedAt,
     authorize,
+    from = "APPROVED", to = "PUBLISHED", validate = () => {},
   }) {
     return this.runTransaction(async (manager) => {
       const reviews = manager.getRepository(Review);
@@ -869,10 +878,16 @@ export class ReviewRepository {
         where: { id: reviewId },
       });
 
-      if (!isMatchingDraft(review, expectedUpdatedAt)) {
+      if (!review || review.status !== from || review.publication_status !== "UNPUBLISHED"
+        || review.updated_at !== expectedUpdatedAt) {
         return null;
       }
 
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
+      if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
+        throw new ConflictException("Invalid review transition.");
+      }
+      validate(review);
       await this.assertPublicationAllowed(
         manager,
         review,
@@ -886,15 +901,15 @@ export class ReviewRepository {
       );
 
       const updates = {
-        status: "PUBLISHED",
-        publication_status: "PUBLISHED",
+        status: to,
+        publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED",
         updated_at: timestamp,
       };
 
       const result = await reviews.update(
         {
           id: reviewId,
-          status: "DRAFT",
+          status: from,
           publication_status: "UNPUBLISHED",
           updated_at: expectedUpdatedAt,
         },
@@ -903,7 +918,7 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
-      await this.completeReviewRequest(
+      if (to === "PUBLISHED") await this.completeReviewRequest(
         manager,
         review,
         timestamp

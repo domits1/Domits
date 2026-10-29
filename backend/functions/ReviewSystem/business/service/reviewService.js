@@ -253,6 +253,9 @@ export class ReviewService {
     if (String(review.reviewer_user_id) !== String(callerUserId)) {
       throw new ForbiddenException("You can only edit your own reviews.");
     }
+    if (review.status !== "DRAFT" || review.publication_status !== "UNPUBLISHED") {
+      throw new ConflictException("Only unpublished drafts can be edited.");
+    }
     const timestamp = this.now();
     if (timestamp < Number(review.created_at) || timestamp >= this.editDeadline(review)) {
       throw new ForbiddenException("The review editing period has ended or editing is unavailable.");
@@ -307,7 +310,7 @@ export class ReviewService {
       : String(review.reviewee_user_id) === callerUserId && isPublished(review)).map((review) => ({
         ...toReviewView(review), rating: Number(review.overall_rating), content: review.public_review, date: review.created_at,
         ...(scope === "received" ? { guest_name: review.guest_name ?? null } : {}),
-        can_edit: scope === "written" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
+        can_edit: scope === "written" && review.status === "DRAFT" && review.publication_status === "UNPUBLISHED" && this.now() >= Number(review.created_at) && this.now() < this.editDeadline(review),
         edit_expires_at: scope === "written" ? this.editDeadline(review) : 0,
       }));
   }
@@ -430,22 +433,65 @@ export class ReviewService {
 
   // Publish a draft review when the reservation is still valid.
   // This finalizes the guest review only after the booking checks and authorization rules confirm it is eligible.
-  async publishReview(userId, reviewId) {
+  assertAdministrator(userId, username) {
+    this.assertCaller(userId);
+    const admins = String(process.env.PROPERTY_REVIEW_ADMIN_USER_IDS || "").split(/[,\s;]+/).filter(Boolean);
+    if (typeof username !== "string" || !admins.includes(username.trim())) {
+      throw new ForbiddenException("Administrator access is required.");
+    }
+  }
+
+  async getPendingReviews(userId, username) {
+    this.assertAdministrator(userId, username);
+    return (await this.repository.findPendingReviews()).map(toReviewView);
+  }
+
+  async approveReview(userId, username, reviewId, version) {
+    this.assertAdministrator(userId, username);
+    if (!Number.isSafeInteger(version) || version < 0 || version >= Number.MAX_SAFE_INTEGER) {
+      throw new BadRequestException("A valid review update version is required.");
+    }
+    const review = await this.requireReview(reviewId);
+    return this.changePublicationState(review, "PENDING_APPROVAL", "APPROVED", () => {
+      this.assertAdministrator(userId, username);
+      return true;
+    }, version);
+  }
+
+  async changePublicationState(review, from, to, authorize, version = review.updated_at) {
+    if (review.status !== from || review.publication_status !== "UNPUBLISHED") {
+      throw new ConflictException("Review cannot transition in its current state.");
+    }
+    const validate = (current) => {
+      if (current.review_type !== GUEST_REVIEW_TYPE
+        || !["UNVERIFIED", "VERIFIED", "VERIFIED_STAY"].includes(current.verification_status)) {
+        throw new ConflictException("Review is not eligible for moderation.");
+      }
+      this.validateReviewPayload({ ...current, overall_rating: Number(current.overall_rating) });
+    };
+    validate(review);
+    this.assertPublicationBooking(await this.repository.findBookingById(review.booking_id), review, this.now());
+    const result = await this.repository.publishDraft({ reviewId: review.id,
+      expectedUpdatedAt: version, updatedAt: this.now(), from, to, validate, authorize });
+    if (!result) throw new ConflictException("Review changed. Reload before continuing.");
+    return toReviewView(result);
+  }
+
+  async publishReview(userId, reviewId, username) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
-    if (!(await this.canPublishReview({ userId, review }))) throw new ForbiddenException("You cannot publish this review.");
+    const authorize = (current) => {
+      if (username && current.status === "APPROVED") {
+        try { this.assertAdministrator(userId, username); return true; } catch (error) {
+          if (!(error instanceof ForbiddenException)) throw error;
+        }
+      }
+      return this.canPublishReview({ userId, review: current });
+    };
+    if (!(await authorize(review))) throw new ForbiddenException("You cannot publish this review.");
     if (isPublished(review)) return toReviewView(review);
-    if (review.status !== "DRAFT" || review.publication_status !== "UNPUBLISHED") {
-      throw new ConflictException("Review cannot be published in its current state.");
-    }
-    this.validateReviewPayload({ ...review, overall_rating: Number(review.overall_rating) });
-    const booking = await this.repository.findBookingById(review.booking_id);
-    this.assertPublicationBooking(booking, review, this.now());
-    const published = await this.repository.publishDraft({ reviewId: review.id,
-      expectedUpdatedAt: review.updated_at, updatedAt: this.now(),
-      authorize: (current) => this.canPublishReview({ userId, review: current }) });
-    if (!published) throw new ConflictException("Review changed. Reload it before publishing.");
-    return toReviewView(published);
+    return this.changePublicationState(review, review.status === "DRAFT" ? "DRAFT" : "APPROVED",
+      review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
   }
 
   assertPublicationBooking(booking, review, now) {

@@ -85,7 +85,9 @@ export class Controller {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "respondable") {
+      if (query.scope === "pending-approval") {
+        result = await this.service.getPendingReviews(userId, user.username);
+      } else if (query.scope === "respondable") {
         result = await this.service.getResponseEligibleReviews(user.username);
       } else if (query.scope === "property-trends") {
         result = await this.service.getPropertyRatingTrends(userId, query);
@@ -158,9 +160,18 @@ export class Controller {
 
   // Publish a review draft after validation.
   // This allows the guest to finalize a review only when business rules confirm the reservation still qualifies.
+  async approveReview(event) {
+    return this.executeAuthenticated(event, async (userId, user) => {
+      const body = parseBody(event);
+      if (Object.keys(body).some((key) => key !== "updated_at")) throw new BadRequestException("Only the update version is allowed.");
+      return this.jsonResponse(200, await this.service.approveReview(userId, user.username,
+        this.getPathParameter(event, "id"), body.updated_at));
+    });
+  }
+
   async publishReview(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.publishReview(userId, this.getPathParameter(event, "id"))));
+    return this.executeAuthenticated(event, async (userId, user) =>
+      this.jsonResponse(200, await this.service.publishReview(userId, this.getPathParameter(event, "id"), user.username)));
   }
 
   // Delete a review owned by the caller.

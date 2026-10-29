@@ -11,7 +11,7 @@ describe("Merged review query and edit routes", () => {
   const id = "12345678-1234-1234-1234-123456789abc";
   const timestamp = Date.parse("2026-10-01T12:00:00Z");
   const review = { id, reviewer_user_id: "guest", overall_rating: 4, public_review: "Good",
-    created_at: timestamp - 100, updated_at: timestamp - 50, status: "PUBLISHED" };
+    created_at: timestamp - 100, updated_at: timestamp - 50, status: "DRAFT", publication_status: "UNPUBLISHED" };
   let repository, service, controller;
   const event = (method, query = {}, body) => ({ httpMethod: method, queryStringParameters: query,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -503,7 +503,7 @@ describe('Review workflows', () => {
       findPublicForProperty: jest.fn().mockResolvedValue([published]),
       findBookingById: jest.fn().mockResolvedValue({ id: "b1", guestid: "guest", hostid: "host", property_id: "p1",
         status: "Paid", departuredate: now - 100 }),
-      publishDraft: jest.fn().mockResolvedValue(published),
+      publishDraft: jest.fn().mockImplementation(async ({ to }) => ({ ...draft, status: to, publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED" })),
     };
     service = new ReviewService({ repository, now: () => now });
     controller = new Controller({ service });
@@ -574,6 +574,35 @@ describe('Review workflows', () => {
     expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
   });
 
+  it("authorizes the queue and approval using authenticated usernames", async () => {
+    const previous = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+    process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
+    try {
+      repository.findPendingReviews = jest.fn().mockResolvedValue([draft]);
+      repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
+      const request = { ...event("staff", { updated_at: draft.updated_at }),
+        requestContext: { authorizer: { claims: { sub: "staff", "cognito:username": "admin" } } } };
+      expect((await controller.approveReview(event("guest", { updated_at: draft.updated_at }))).statusCode).toBe(403);
+      expect((await controller.approveReview({})).statusCode).toBe(401);
+      const queue = await controller.getReviews({ ...request, queryStringParameters: { scope: "pending-approval" } });
+      expect(queue.statusCode).toBe(200);
+      expect(queue.body).not.toContain("secret");
+      expect((await controller.approveReview(request)).statusCode).toBe(200);
+      expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "APPROVED" }));
+      for (const status of ["DELETED", "REJECTED", "DRAFT", "APPROVED", "PUBLISHED"]) {
+        repository.findById.mockResolvedValue({ ...draft, status });
+        expect((await controller.approveReview(request)).statusCode).toBe(["DELETED", "REJECTED"].includes(status) ? 404 : 409);
+      }
+      repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
+      expect((await controller.approveReview({ ...request, body: '{"updated_at":"10"}' })).statusCode).toBe(400);
+      repository.publishDraft.mockResolvedValue(null);
+      expect((await controller.approveReview(request)).statusCode).toBe(409);
+    } finally {
+      if (previous === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+      else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = previous;
+    }
+  });
+
   it("denies publishing another user's review", async () => {
     expect((await controller.publishReview(event("host"))).statusCode).toBe(403);
     expect(repository.publishDraft).not.toHaveBeenCalled();
@@ -587,7 +616,7 @@ describe('Review workflows', () => {
       expect(repository.publishDraft).not.toHaveBeenCalled();
       const response = await defaultController.publishReview(event());
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
+      expect(JSON.parse(response.body)).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
       expect(response.body).not.toContain("secret");
       const { authorize } = repository.publishDraft.mock.calls[0][0];
       expect(await authorize(draft)).toBe(true);
