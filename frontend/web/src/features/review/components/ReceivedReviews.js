@@ -4,7 +4,7 @@ import { fetchHostPropertySelectOptions } from "../../../services/hostPropertySe
 import styles from "../styles/ReceivedReviews.module.css";
 import CategoryRatings from "./categoryRatings";
 import RatingStars from "./RatingStars";
-import HostResponseForm from "../HostResponseForm";
+import HostResponseForm from "../views/HostResponseForm";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);

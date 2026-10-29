@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { saveHostResponse, deleteHostResponse } from "./services/reviewAPI";
-import styles from "./styles/HostResponse.module.css";
+import { saveHostResponse, deleteHostResponse } from "../services/reviewAPI";
+import styles from "../styles/HostResponse.module.css";
 
 export default function HostResponseForm({ review, onResponseChange }) {
   const initialResponse = review.response?.status === "deleted" || review.response?.deletedAt != null ? null : review.response;
