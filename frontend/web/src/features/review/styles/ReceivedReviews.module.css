@@ -527,3 +527,7 @@
 
 .withDetail .recentRow .thumbnail { width: 58px; height: 64px; }
 @media (max-width: 640px) { .withDetail .reviewCard { gap: 12px; } .withDetail .thumbnail { width: 64px; height: 78px; } }
+
+/* Extend the native selection button across its review card. */
+.reviewCard { position: relative; }
+.selectReview::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }

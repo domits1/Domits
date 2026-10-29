@@ -12,7 +12,7 @@ jest.mock("aws-amplify", () => ({ Auth: { currentUserInfo: jest.fn() } }));
 jest.mock("../views/ReviewPerformance", () => () => null);
 jest.mock("../views/DecliningPropertyRatings", () => () => null);
 jest.mock("../services/reviewAPI", () => ({ requestReview: jest.fn() }));
-jest.mock("../HostResponseForm", () => ({ review }) =>
+jest.mock("../views/HostResponseForm", () => ({ review }) =>
   <button>Respond to {review.id}: {review.response?.message || "new response"}</button>);
 
 const received = [

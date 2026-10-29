@@ -2,7 +2,7 @@
 .heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
 .heading h3 { margin: 0; font-size: 16px; color: #10172b; }
 .heading small { margin-left: auto; color: #40517b; font-size: 10px; }
-.badge { border-radius: 20px; background: #ddf9e3; color: #008c15; padding: 3px 12px; font-size: 11px; font-weight: 700; }
+.badge { border-radius: 20px; background: #ddf9e3; color: #006f11; padding: 3px 12px; font-size: 11px; font-weight: 700; }
 .surface { padding: 20px 16px 16px; border: 1px solid #e5f1e9; border-radius: 10px; background: #f3faf5; }
 .label { display: block; margin-bottom: 10px; font-size: 12px; color: #30466c; font-weight: 600; }
 .surface textarea { display: block; width: 100%; min-height: 190px; box-sizing: border-box; resize: vertical; border: 1px solid #d4e5da; border-radius: 7px; padding: 12px; background: #fff; color: #35476e; font: inherit; font-size: 13px; line-height: 1.8; }
@@ -11,11 +11,11 @@
 .message { min-height: 150px; color: #35476e; font-size: 13px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .response .actions button { flex: 1; min-height: 42px; padding: 10px 14px; border: 1px solid #d3dfeb; border-radius: 6px; background: #fff; color: #111a32; font-size: 12px; font-weight: 700; cursor: pointer; }
-.response .actions .publish { background: #00a51a; border-color: #00a51a; color: #fff; }
-.response .actions .publish:hover:not(:disabled) { background: #008d16; }
+.response .actions .publish { background: #007d14; border-color: #007d14; color: #fff; }
+.response .actions .publish:hover:not(:disabled) { background: #006b11; }
 .response .actions .danger { border-color: #ff3038; color: #e61b28; }
 .response .actions .danger:hover:not(:disabled) { background: #fff0f1; }
-.response .actions button:disabled { background: #edf0f2; border-color: #dde2e7; color: #7a8794; opacity: .7; cursor: not-allowed; }
+.response .actions button:disabled { background: #edf0f2; border-color: #dde2e7; color: #536170; opacity: 1; cursor: not-allowed; }
 .response form[aria-busy="true"] .actions button:disabled { cursor: wait; }
 .response .actions button:focus-visible { outline: 3px solid #81c98a; outline-offset: 2px; }
 .error { color: #b91c28; font-size: 12px; }
