@@ -1,137 +1,79 @@
-.reviewGrid {
-    display: grid;
-    grid-template-columns: 250px auto;
-    gap: 5%;
+.page {
+  padding-right: 80px;
+  box-sizing: border-box;
+  min-width: 0;
+  color: #101d2e;
 }
-
-.contentContainer {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+.pageHeading h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
 }
-
-.contentContainer .reviewColumn {
-    width: 48%;
-    height: auto;
-    margin: 10px;
-    min-width: 155px;
-    display: flex;
-    flex-direction: column;
+.pageHeading p {
+  margin: 0;
+  color: #516780;
+  font-size: 14px;
+  line-height: 1.6;
 }
-
-.contentContainer .reviewBox {
-    margin-right: 5px;
-    margin-top: 10px;
-    padding: 10px;
-    height: 100%;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    border-radius: 10px;
-    flex-wrap: wrap;
+.viewMenu {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 20px 0 28px;
+  padding: 0;
+  border: 1px solid #deebe2;
+  border-radius: 9px;
+  background: #f3f8f4;
+  box-sizing: border-box;
 }
-
-.contentContainer .reviewBox .reviewTab {
-    display: flex;
-    flex-direction: column;
-    border: 2px;
-    border-radius: 15px;
-    margin: 5%;
-    animation: fade-up 1s;
-    padding: 12px;
+.viewMenu button {
+  position: relative;
+  flex: 1 0 auto;
+  width: auto;
+  min-height: 50px;
+  margin: 0;
+  padding: 15px 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #3d5852;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
 }
-
-.contentContainer .reviewBox .reviewTab .reviewHeader {
-    font-size: 1.5em;
+.viewMenu button + button::before {
+  position: absolute;
+  content: "";
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: #dfebe3;
 }
-
-.contentContainer .reviewBox .reviewTab .reviewContent {
-    text-align: start;
+.viewMenu button:hover {
+  background: #eaf7ed;
 }
-
-.contentContainer .reviewBox .reviewTab .reviewDate {
-    color: #0D9813;
+.viewMenu button[aria-pressed="true"] {
+  color: #104722;
+  background: #e7f6e9;
+  box-shadow: inset 0 -2px #00a414;
 }
-
-.contentContainer .reviewBox .reviewTab .reviewDelete {
-    align-self: end;
-    width: 40px;
-    height: 40px;
-    box-shadow: none;
-    padding: 0;
-    border: none;
-    background-color: white;
+.viewMenu button:focus-visible {
+  outline: 3px solid #92ce9a;
+  outline-offset: -3px;
 }
-
-.contentContainer .reviewBox .reviewTab .reviewDelete:hover {
-    cursor: pointer;
-    transform: scale(1.2);
-}
-
-.contentContainer .reviewBox .reviewTab .reviewAlert {
-    margin: 10%;
-}
-
-.contentContainer .reviewBox .reviewTab:hover {
-    box-shadow: 4px 4px #0D9813;
-    transition: .3s;
-}
-
-.boxText {
-    border: 0.5px solid black;
-    border-radius: 15px;
-    padding: 5px;
-    text-align: center;
-}
-
 @media (max-width: 768px) {
-    .reviewGrid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .contentContainer {
-        flex-direction: column;
-        align-items: center;
-        padding: 0 10px;
-    }
-
-    .contentContainer .reviewColumn {
-        width: 90%;
-    }
-
-    .contentContainer .reviewBox {
-        margin-right: 0;
-        margin-left: 0;
-    }
-
-    .contentContainer .reviewBox .reviewTab {
-        margin: 5% 0;
-    }
+  .page {
+    padding-right: 16px;
+  }
+  .viewMenu button {
+    padding: 13px 16px;
+  }
 }
-
-@media (max-width: 480px) {
-    .contentContainer .reviewColumn {
-        width: 100%;
-        margin: 0;
-    }
-
-    .contentContainer .reviewBox {
-        margin: 10px 0;
-        padding: 8px;
-    }
-
-    .contentContainer .reviewBox .reviewTab .reviewHeader {
-        font-size: 1.1em;
-    }
-
-    .contentContainer .reviewBox .reviewTab {
-        padding: 6px;
-        margin: 3%;
-    }
-
-    .boxText {
-        font-size: 0.85em;
-        padding: 4px;
-    }
-}
+.viewMenu button { transition: background-color 150ms ease, border-color 150ms ease; }
+.viewMenu button[aria-pressed="true"]:hover { background: #eaf7ed; }

@@ -11,8 +11,8 @@ describe("property review performance controller/service", () => {
   beforeEach(() => {
     repository = { findManagedProperty: jest.fn().mockResolvedValue({ id: "property-1" }),
       getPropertyReviewPerformance: jest.fn().mockResolvedValue([
-        { period: "2026-03-01", average_score: "4", review_count: "1" },
-        { period: "2026-01-01", average_score: "4.5", review_count: "2" },
+        { period: "2026-03-01", average_score: "4", review_count: "1", stars_4: "1" },
+        { period: "2026-01-01", average_score: "4.5", review_count: "2", stars_4: "1", stars_5: "1" },
       ]) };
     controller = new Controller({ service: new ReviewService({ repository }) });
   });
@@ -21,9 +21,9 @@ describe("property review performance controller/service", () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({ property_id: "property-1", interval: "month",
       timezone: "UTC", start_date: "2026-01-15", end_date: "2026-03-10", periods: [
-        { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: 4.5, review_count: 2 },
-        { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
-        { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: 4, review_count: 1 },
+        { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: 4.5, review_count: 2, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 1 } },
+        { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+        { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: 4, review_count: 1, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 0 } },
       ] });
   });
   test("uses the selected property, trusted owner and exact inclusive date bounds", async () => {
@@ -36,9 +36,9 @@ describe("property review performance controller/service", () => {
     repository.getPropertyReviewPerformance.mockResolvedValue([]);
     const response = await controller.getReviews(event());
     expect(JSON.parse(response.body).periods).toEqual([
-      { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: null, review_count: 0 },
-      { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0 },
-      { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: null, review_count: 0 },
+      { period: "2026-01-01", coverage_start: "2026-01-15", coverage_end: "2026-01-31", is_partial: true, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+      { period: "2026-02-01", coverage_start: "2026-02-01", coverage_end: "2026-02-28", is_partial: false, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+      { period: "2026-03-01", coverage_start: "2026-03-01", coverage_end: "2026-03-10", is_partial: true, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
     ]);
   });
   test("supports a single-day leap-year range", async () => {
@@ -88,7 +88,7 @@ describe("property review performance controller/service", () => {
     const response = await controller.getReviews(event({ interval, startDate, endDate }));
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).periods).toEqual(expected.map((bucket) => ({
-      ...bucket, average_score: null, review_count: 0,
+      ...bucket, average_score: null, review_count: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     })));
   });
   test("allows exactly 120 periods and rejects the next period", async () => {

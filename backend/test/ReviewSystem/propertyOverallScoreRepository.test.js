@@ -40,7 +40,7 @@ describe("property score repository", () => {
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
       ["review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 }],
-      ["review.overall_rating = FLOOR(review.overall_rating)"],
+      ["review.overall_rating * 2 = FLOOR(review.overall_rating * 2)"],
     ]);
     expect(query.select).toHaveBeenCalledWith("AVG(review.overall_rating)", "overall_score");
     expect(query.addSelect).toHaveBeenCalledWith("COUNT(*)", "review_count");

@@ -103,12 +103,13 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
 export class ReviewRepository {
   eligibleReviewQuery(database, propertyId) {
     return database.getRepository(Review).createQueryBuilder("review")
-      .where("review.property_id = :propertyId", { propertyId })
+      .where(Array.isArray(propertyId) ? "review.property_id IN (:...propertyIds)" : "review.property_id = :propertyId",
+        Array.isArray(propertyId) ? { propertyIds: propertyId } : { propertyId })
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
+      .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)");
   }
 
 
@@ -162,6 +163,11 @@ export class ReviewRepository {
       .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
       .addSelect("AVG(review.overall_rating)", "average_score")
       .addSelect("COUNT(*)", "review_count")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 1 THEN 1 END)", "stars_1")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 2 THEN 1 END)", "stars_2")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 3 THEN 1 END)", "stars_3")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 4 THEN 1 END)", "stars_4")
+      .addSelect("COUNT(CASE WHEN ROUND(review.overall_rating) = 5 THEN 1 END)", "stars_5")
       .groupBy(period).orderBy(period, "ASC").getRawMany();
   }
 
@@ -170,10 +176,14 @@ export class ReviewRepository {
     const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
       .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
       .leftJoin((query) => query
-        .select("rating.category", "category_key")
+        .select("definition.key", "category_key")
         .addSelect("AVG(rating.rating)", "average_rating")
         .addSelect("COUNT(*)", "rating_count")
         .from(Review_Rating, "rating")
+        .innerJoin(Review_Category, "definition",
+          `(LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.key))
+            OR LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.label)))
+            AND definition.isActive = :active AND definition.reviewType = :reviewType`)
         .innerJoin(Review, "review", "review.id = rating.reviewId")
         .where("review.property_id = :propertyId")
         .andWhere("review.publication_status = :published")
@@ -181,20 +191,21 @@ export class ReviewRepository {
         .andWhere("review.review_type = :reviewType")
         .andWhere("rating.rating BETWEEN :minimum AND :maximum")
         .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
-        .groupBy("rating.category"),
+        .groupBy("definition.key"),
       "aggregate", "aggregate.category_key = category.key")
       .select("category.key", "category_key")
       .addSelect("category.label", "label")
       .addSelect("aggregate.average_rating", "average_rating")
+      .addSelect("category.sortOrder", "sort_order")
       .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
       .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
         minimum: 1, maximum: 5, active: true })
-      .orderBy("category.key", "ASC").getRawMany();
+      .orderBy("category.sortOrder", "ASC").addOrderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
       average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
-      rating_count: Number(row.rating_count) }));
+      rating_count: Number(row.rating_count), sort_order: Number(row.sort_order ?? 0) }));
   }
 
   async findManagedProperty(propertyId, hostId) {
@@ -204,13 +215,34 @@ export class ReviewRepository {
     });
   }
 
+  async getPropertyRatingHistory(hostId, propertyIds, { endExclusive, days }) {
+    if (!propertyIds.length) return [];
+    const database = await Database.getInstance();
+    const periodMs = days * 86400000;
+    const start = endExclusive - 6 * periodMs;
+    const boundaries = Object.fromEntries([1, 2, 3, 4, 5].map((index) => [`historyBoundary${index}`, start + index * periodMs]));
+    const bucket = `CASE ${[1, 2, 3, 4, 5].map((index) =>
+      `WHEN review.created_at < :historyBoundary${index} THEN ${index - 1}`).join(" ")} ELSE 5 END`;
+    const rows = await this.eligibleReviewQuery(database, propertyIds)
+      .innerJoin(Property, "property", "property.id = review.property_id AND property.hostid = :hostId", { hostId })
+      .andWhere("review.created_at >= :historyStart AND review.created_at < :historyEnd", { historyStart: start, historyEnd: endExclusive })
+      .select("review.property_id", "property_id")
+      .addSelect(bucket, "period_index")
+      .addSelect("AVG(review.overall_rating)", "average_rating")
+      .addSelect("COUNT(*)", "review_count")
+      .setParameters(boundaries)
+      .groupBy("review.property_id").addGroupBy(bucket).getRawMany();
+    return rows.map((row) => ({ ...row, period_index: Number(row.period_index),
+      average_rating: Number(row.average_rating), review_count: Number(row.review_count) }));
+  }
+
   async getPropertyRatingTrendPage(hostId, options) {
     const database = await Database.getInstance();
     const aggregates = database.getRepository(Property).createQueryBuilder("property")
       .leftJoin(Review, "review", `review.property_id = property.id
         AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
         AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
-        AND review.overall_rating = FLOOR(review.overall_rating)
+        AND review.overall_rating * 2 = FLOOR(review.overall_rating * 2)
         AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
       .where("property.hostid = :hostId")
       .select("property.id", "property_id")
@@ -223,7 +255,7 @@ export class ReviewRepository {
       .select("scores.*")
       .addSelect(`CASE WHEN previous_review_count < :minimumReviews OR current_review_count < :minimumReviews
           OR previous_average_rating IS NULL OR current_average_rating IS NULL THEN 'INSUFFICIENT_DATA'
-        WHEN current_average_rating - previous_average_rating <= -:boundary THEN 'DECLINING'
+        WHEN current_average_rating - previous_average_rating <= :declineBoundary THEN 'DECLINING'
         WHEN current_average_rating - previous_average_rating >= :boundary THEN 'IMPROVING'
         ELSE 'STABLE' END`, "trend_status");
     const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
@@ -232,6 +264,7 @@ export class ReviewRepository {
       .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
         boundary: options.threshold * (1 - 1e-12),
+        declineBoundary: -options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
     if (options.sort === "declining-first") {
@@ -253,7 +286,7 @@ export class ReviewRepository {
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
+      .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)")
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .select("AVG(review.overall_rating)", "overall_score")
@@ -453,7 +486,18 @@ export class ReviewRepository {
         });
     }
 
-    return query.getMany();
+    const reviews = await query.getMany();
+    if (scope !== "received" || !reviews.length) return reviews;
+    const bookings = await dataSource.getRepository(Booking).find({
+      where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+      select: ["id", "guestid", "guestname"],
+    });
+    const byId = new Map(bookings.map((booking) => [booking.id, booking]));
+    return reviews.map((review) => {
+      const booking = byId.get(review.booking_id);
+      return { ...review, guest_name: booking?.guestid === review.reviewer_user_id
+        ? booking.guestname?.trim() || null : null };
+    });
   }
 
   async findReviews(where) {

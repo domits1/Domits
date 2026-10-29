@@ -6,6 +6,7 @@ import HostCalendar from "./hostcalen/HostCalendar";
 import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
+import HostReviews from "../review/views/HostReviews";
 import HostTasks from "./hosttasks/pages/HostTasks";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
@@ -132,6 +133,7 @@ function MainDashboardHost() {
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
           <Route path="revenues" element={<HostReports />} />
+          <Route path="reviews" element={<HostReviews />} />
 
           <Route path="tasks" element={<HostTasks />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
