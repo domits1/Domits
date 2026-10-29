@@ -4,7 +4,6 @@ import { fetchHostPropertySelectOptions } from "../../../services/hostPropertySe
 import styles from "../styles/ReceivedReviews.module.css";
 import CategoryRatings from "./categoryRatings";
 import RatingStars from "./RatingStars";
-import HostResponseForm from "../HostResponseForm";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);
@@ -47,7 +46,7 @@ function PropertyImage({ property }) {
   );
 }
 
-export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {} }) {
+export default function ReceivedReviews({ userId, reviews, loading, error, onRetry }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
@@ -204,7 +203,6 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                         <span className={styles.reservation}>Reservation #{review.booking_id}</span>
                       )}
                     </div>
-                  {respondableReviews[review.id] && <HostResponseForm review={respondableReviews[review.id]} />}
                   </div>
                 </article>
               );

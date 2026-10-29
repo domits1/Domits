@@ -60,8 +60,6 @@ const ReviewCard = ({ review }) => (
       )}
     </div>
     <p className="reviews-section__card-text">{review.text}</p>
-    {review.response && <aside aria-label="Host response"><strong>Host response</strong>
-      <p className="reviews-section__card-text">{review.response.message}</p></aside>}
     <div className="reviews-section__categories">
       {(review.categories || []).map(({ key, label, rating }) => (
         <span key={key} className="reviews-section__category-pill">{label}: {rating.toFixed(1)}/5</span>
@@ -149,7 +147,6 @@ ReviewCard.propTypes = {
     timeAgo: PropTypes.string,
     verified: PropTypes.bool,
     text: PropTypes.string,
-    response: PropTypes.shape({ message: PropTypes.string }),
     categories: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string, label: PropTypes.string, rating: PropTypes.number,
     })),
