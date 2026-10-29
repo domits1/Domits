@@ -1,11 +1,17 @@
 import { describe, expect, it } from "@jest/globals";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { DataSource } from "typeorm";
 import { HomeAutomationDevice } from "database/models/homeAutomation/HomeAutomationDevice";
 import { AccessCredential } from "database/models/homeAutomation/AccessCredential";
 import { ACCESS_CREDENTIAL_STATUS } from "../../functions/.shared/homeAutomation/homeAutomationConstants.js";
 import { Tables } from "../../ORM/util/database/Tables.js";
+import {
+  createTableBlock,
+  loadMetadata,
+  loadMigrationSql as readMigrationSql,
+  smokeBlocks,
+  sqlColumnDefinitions,
+  sqlColumns,
+} from "./support/migrationSqlTestHelpers.js";
 
 const MIGRATION_FILE = "20261008_create_home_automation.sql";
 const SECRET_COLUMN = /(^|_)(pin|code|passcode|secret|token|password|otp)(_|$)/;
@@ -62,47 +68,7 @@ const TABLES = [
   },
 ];
 
-const loadMetadata = async (entity) => {
-  const dataSource = new DataSource({ type: "postgres", entities: [entity] });
-  await dataSource.buildMetadatas();
-  return dataSource.getMetadata(entity);
-};
-
-// Normalised, because a Windows checkout may have converted the file to CRLF.
-const loadMigrationSql = () =>
-  readFileSync(path.join(process.cwd(), "ORM", "migrations", MIGRATION_FILE), "utf8").replaceAll("\r\n", "\n");
-
-const createTableBlock = (sql, qualifiedTable) => {
-  const match = new RegExp(
-    String.raw`CREATE TABLE IF NOT EXISTS ${qualifiedTable.replace(".", String.raw`\.`)} \(([\s\S]*?)\n\);`
-  ).exec(sql);
-  if (!match) throw new Error(`No CREATE TABLE block found for ${qualifiedTable}`);
-  return match[1];
-};
-
-const sqlColumns = (sql, qualifiedTable) =>
-  createTableBlock(sql, qualifiedTable)
-    .split("\n")
-    .map((line) => line.trim().split(/\s+/)[0])
-    .filter(Boolean);
-
-const SQL_TYPES = { varchar: "varchar", text: "text", integer: "int", bigint: "bigint" };
-
-const sqlColumnDefinitions = (sql, qualifiedTable) =>
-  Object.fromEntries(
-    createTableBlock(sql, qualifiedTable)
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const [name, typeToken] = line.split(/\s+/);
-        const [, typeName, length] = /^(\w+)(?:\((\d+)\))?/.exec(typeToken);
-        const nullable = /\bNOT NULL\b/i.test(line) ? false : /\bNULL\b/i.test(line);
-        return [name, [SQL_TYPES[typeName.toLowerCase()], nullable, length ? Number(length) : null]];
-      })
-  );
-
-const smokeBlocks = (sql) => [...sql.matchAll(/BEGIN;([\s\S]*?)ROLLBACK;/g)].map((match) => match[1]);
+const loadMigrationSql = () => readMigrationSql(MIGRATION_FILE);
 
 describe.each(TABLES)("$table", ({ table, entity, columns, indexes }) => {
   it("maps the columns, types, nullability and lengths that the migration declares", async () => {
