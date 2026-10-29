@@ -49,3 +49,8 @@ Three admin-only `GET` routes on `PropertyHandler` serve the review queue. Respo
 | `/property/review/detail?propertyId=` | Full property with full location, any status. `400` without an id, `404` if missing, `403` for non-admins |
 
 API Gateway has no `{proxy+}`, so each route needs a `GET` method, an `OPTIONS` method for CORS and an API deployment, added by hand after the Lambda is live. Deploying the Lambda alone does not expose them.
+
+## Guest review moderation
+
+Guest review moderation also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval leaves reviews unpublished; approved reviews can be published through `POST /reviews/{id}/publish`. The frontend controls are deferred to a separate PR.
