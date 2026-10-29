@@ -50,6 +50,8 @@ function PropertyImage({ property }) {
 export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {} }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const [responseCache, setResponseCache] = useState({});
   const [sort, setSort] = useState("newest");
   const listRef = useRef(null);
   useEffect(() => {
@@ -71,6 +73,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     const needle = query.trim().toLowerCase();
     const results = sorted.filter((review) =>
       [
+        review.guest_name,
         review.title,
         review.content ?? review.public_review,
         properties[review.property_id]?.title,
@@ -87,10 +90,15 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     if (sort === "lowest") results.sort((a, b) => (rating(a) ?? 6) - (rating(b) ?? 6));
     return results;
   }, [sorted, query, sort, properties]);
+  const selected = visible.find((review) => review.id === selectedId);
+  const selectedProperty = selected ? properties[selected.property_id] : null;
+  const selectedName = typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
+  const selectedInitials = selectedName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
   const scores = reviews.map(rating).filter((value) => value !== null);
   const average = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
   const focusReview = (id) => {
     setQuery("");
+    setSelectedId(id);
     requestAnimationFrame(() => {
       const target = Array.from(listRef.current?.querySelectorAll("article") || []).find(
         (item) => item.dataset.reviewId === String(id)
@@ -101,7 +109,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
   };
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${!loading && !error && selected ? styles.withDetail : ""}`}>
       <div className={styles.mainColumn}>
         <div className={styles.toolbar}>
           <label className={styles.search}>
@@ -109,7 +117,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             <input
               type="search"
               aria-label="Search received reviews"
-              placeholder="Search reviews or properties..."
+              placeholder="Search reviews by guest name or property..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -172,10 +180,10 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
               const initials = guestName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
               const value = rating(review);
               return (
-                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={styles.reviewCard}>
+                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`} onClick={() => setSelectedId(review.id)}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
-                    <h4>{review.title || property?.title || "Guest review"}</h4>
+                    <h4><button type="button" className={styles.selectReview} aria-pressed={selected?.id === review.id} aria-controls="selected-review" onClick={() => setSelectedId(review.id)}>{review.title || property?.title || "Guest review"}</button></h4>
                     {property && (
                       <p className={styles.location}>
                         <MapPin size={14} aria-hidden="true" />
@@ -204,13 +212,23 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                         <span className={styles.reservation}>Reservation #{review.booking_id}</span>
                       )}
                     </div>
-                  {respondableReviews[review.id] && <HostResponseForm review={respondableReviews[review.id]} />}
                   </div>
                 </article>
               );
             })}
         </section>
       </div>
+      {!loading && !error && selected && <section id="selected-review" className={styles.detail} aria-label="Selected review">
+        <header className={styles.detailHeader}>
+          <span className={styles.detailAvatar} aria-hidden="true">{selectedInitials}</span>
+          <div><strong>{selectedName}</strong><p>{dateLabel(selected)}{selectedProperty && ` \u00b7 ${selectedProperty.title}`}</p></div>
+          {rating(selected) !== null && <div className={styles.detailRating}><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></div>}
+        </header>
+        <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
+        <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
+        {respondableReviews[selected.id] ? <HostResponseForm key={selected.id} review={{ ...respondableReviews[selected.id], response: responseCache[selected.id] !== undefined ? responseCache[selected.id] : respondableReviews[selected.id].response }} onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))} />
+          : <p className={styles.responseUnavailable}>A response is not available for this review.</p>}
+      </section>}
       <aside className={styles.sidebar} aria-label="Guest review insights">
         <section className={styles.summary}>
           <div>
@@ -259,7 +277,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
           </header>
           {!loading &&
             !error &&
-            sorted.slice(0, 3).map((review) => (
+            sorted.slice(0, 4).map((review) => (
               <button type="button" key={review.id} className={styles.recentRow} onClick={() => focusReview(review.id)}>
                 <PropertyImage property={properties[review.property_id]} />
                 <span>

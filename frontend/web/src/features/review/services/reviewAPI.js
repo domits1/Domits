@@ -14,6 +14,16 @@ export const saveHostResponse = async (reviewId, message) => {
   return payload.response;
 };
 
+export const deleteHostResponse = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response`, {
+    method: "DELETE", headers: { Authorization: await getIdToken() },
+  });
+  if (!response.ok) {
+    const payload = await parseResponse(response);
+    throw new Error(payload?.message || "Could not delete your response. Please try again.");
+  }
+};
+
 export const getPropertyRatingTrends = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-trends" });
   const payload = await parseResponse(response);

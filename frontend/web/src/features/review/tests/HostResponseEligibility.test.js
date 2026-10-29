@@ -37,6 +37,7 @@ beforeEach(() => {
 test("keeps the complete received list and shows forms only for server-authorized IDs", async () => {
   render(<HostReviews />);
   for (const review of received) expect(await screen.findByRole("heading", { name: review.title })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   expect(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: /^Respond to/ })).toHaveLength(1);
   expect(screen.getByText("Received reviews (4)")).toBeInTheDocument();
@@ -62,6 +63,7 @@ test.each(["network", "malformed"])("keeps received reviews on %s eligibility fa
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not check which reviews");
   expect(await screen.findByRole("heading", { name: received[3].title })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   fireEvent.click(screen.getByRole("button", { name: "Retry response eligibility" }));
   await screen.findByRole("button", { name: "Respond to eligible: Existing reply" });
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -79,6 +81,7 @@ test("shows received reviews without waiting for the eligibility request", async
   await screen.findByRole("heading", { name: received[0].title });
   expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
   await waitFor(() => expect(finish).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   await act(async () => { finish(response(eligible)); });
   expect(screen.getByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
 });

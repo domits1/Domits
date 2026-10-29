@@ -94,7 +94,7 @@ export default function HostReviews() {
     <main className={`page-body ${styles.page}`}>
       <header className={styles.pageHeading}>
         <h2>Reviews</h2>
-        <p>Manage guest feedback and track your performance.</p>
+        <p>Manage guest feedback, reply to reviews and track your performance.</p>
       </header>
       <nav className={styles.viewMenu} aria-label="Review views">
         {REVIEW_VIEWS.map(({ key, label }) => (
