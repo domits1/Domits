@@ -47,7 +47,7 @@ A booking that becomes active again after a cancellation keeps its `cancelled_at
 | Pull request | Contents | Notes |
 |---|---|---|
 | 1 | Migration and model | Run the migration on Aurora DSQL before this pull request is merged, and check it with `SELECT cancelled_at FROM main.booking LIMIT 1`. Once the column is in the model, every ORM read of a booking selects it (for example `readByHostId`, `reservationRepository.js:257-267`), so the model must never reach a Lambda before the column exists. A change in `backend/ORM/` starts a deploy of all Lambdas (`deploy.yml:79-82`). |
-| 2 | The three write paths, with tests | |
+| 2 | The three write paths, with tests | Merge after pull request 1 is deployed: this code writes the new column. |
 | 3 | Reservation page and receipt, with tests | Old bookings without a date show no date |
 
 Merge one at a time and wait for each deploy.
