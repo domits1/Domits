@@ -24,15 +24,17 @@ Migration following the existing pattern (for example `20260924_booking_special_
 
 ### 2. Writing it
 
-A booking becomes "Cancelled" in three places. Each sets `cancelled_at` in the same update as the status, and only when it is still empty, so a repeated call keeps the first moment.
+A booking becomes "Cancelled" in three places. Each sets `cancelled_at` in the same update as the status, and only when it is still empty, so a repeated call keeps the first moment. The "only when empty" check is part of that one statement, `cancelled_at = COALESCE(cancelled_at, $time)`, not a read followed by a write: a Channex cancellation and a Domits cancellation arriving at the same moment then cannot overwrite each other's time.
 
 | Place | Who cancels | Time stored |
 |---|---|---|
 | `reservationRepository.js` `updateBookingStatus` (called from `bookingService.js:498`) | Domits, when the status is set to Cancelled | now |
 | `reservationRepository.js:640` (guest cancel) | The guest on Domits | now |
-| `channexExternalBookingImportRepository.js:238` | An OTA, through a Channex cancellation revision | the revision's `inserted_at` from Channex, or now when it is missing |
+| `channexExternalBookingImportRepository.js:238` | An OTA, through a Channex cancellation revision | the revision's `inserted_at` from Channex (an ISO date, converted to epoch milliseconds), or now when it is missing or unreadable |
 
 `updateBookingStatus` also sets other statuses; it only writes `cancelled_at` when the new status is Cancelled.
+
+A booking that becomes active again after a cancellation keeps its `cancelled_at`. The page only shows the date for a cancelled booking, and OTAs normally send a new booking instead of reviving a cancelled one, so this is left as it is.
 
 ### 3. Reading and showing it
 
@@ -44,8 +46,8 @@ A booking becomes "Cancelled" in three places. Each sets `cancelled_at` in the s
 
 | Pull request | Contents | Notes |
 |---|---|---|
-| 1 | Migration and model | Run the migration on Aurora DSQL before any code writes the column. A change in `backend/ORM/` starts a deploy of all Lambdas (`deploy.yml:79-82`). |
-| 2 | The three write paths, with tests | Review by the owner of General-Bookings |
+| 1 | Migration and model | Run the migration on Aurora DSQL before this pull request is merged, and check it with `SELECT cancelled_at FROM main.booking LIMIT 1`. Once the column is in the model, every ORM read of a booking selects it (for example `readByHostId`, `reservationRepository.js:257-267`), so the model must never reach a Lambda before the column exists. A change in `backend/ORM/` starts a deploy of all Lambdas (`deploy.yml:79-82`). |
+| 2 | The three write paths, with tests | |
 | 3 | Reservation page and receipt, with tests | Old bookings without a date show no date |
 
 Merge one at a time and wait for each deploy.
@@ -53,11 +55,7 @@ Merge one at a time and wait for each deploy.
 ## Tests
 
 - Domits cancel and guest cancel set `cancelled_at`; a second cancel keeps the first value; other status changes leave it empty.
-- A Channex cancellation stores the revision time; a repeated revision keeps the first value; a missing revision time falls back to now.
+- The update uses `COALESCE`, so a cancel on a booking that already has a time keeps that time.
+- A Channex cancellation stores the revision time in milliseconds; a repeated revision keeps the first value; a missing or unreadable revision time falls back to now.
 - The reservation page shows the cancel date when present, no date when missing, and the booking date for other statuses.
-
-## Open questions
-
-1. Who owns General-Bookings, to agree and review pull request 2?
-2. Should a cancellation that Channex sends for a booking Domits already cancelled keep the Domits time? The design says yes (first value wins).
-3. Timing: after the interim report (6 November).
+- The receipt has a "Cancelled on" line when the date is set, and none when it is missing.
