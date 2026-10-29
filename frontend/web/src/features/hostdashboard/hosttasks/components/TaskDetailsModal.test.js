@@ -219,4 +219,10 @@ describe('TaskDetailsModal', () => {
 
         expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
     });
+
+    test('disables the Escalate button while the escalation is being sent', () => {
+        render(<TaskDetailsModal {...baseProps} isEscalating viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
+
+        expect(screen.getByRole('button', { name: 'Escalate' })).toBeDisabled();
+    });
 });

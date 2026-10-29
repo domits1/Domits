@@ -44,6 +44,7 @@ const TaskDetailsModal = ({
     onDelete,
     onClose,
     onEscalate,
+    isEscalating = false,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -246,7 +247,7 @@ const TaskDetailsModal = ({
                         <button className="btn-text" onClick={onClose} disabled={isApplyingChecklistTemplate}>Cancel</button>
 
                         {canEscalate && (
-                            <button className="btn-escalate" onClick={onEscalate}>Escalate</button>
+                            <button className="btn-escalate" onClick={onEscalate} disabled={isEscalating}>Escalate</button>
                         )}
 
                         {isUnchanged ? (
@@ -293,6 +294,7 @@ TaskDetailsModal.propTypes = {
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
     onEscalate: PropTypes.func.isRequired,
+    isEscalating: PropTypes.bool,
 };
 
 export default TaskDetailsModal;
