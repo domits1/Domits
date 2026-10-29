@@ -191,6 +191,33 @@ export const claimOverdueNotification = async (dataSource, task, claimedAt) => {
     return Number(result?.affected || 0) === 1;
 };
 
+export const getDueSoonTasksToNotify = async (dataSource, now, limit) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    return await repository.createQueryBuilder("task")
+        .where("task.due_date > :now", { now })
+        .andWhere("task.due_date <= :until", { until: now + DAY_MS })
+        .andWhere("task.status NOT IN (:...resolved)", { resolved: RESOLVED_STATUSES })
+        .andWhere("(task.due_soon_notified_for IS NULL OR task.due_soon_notified_for <> task.due_date)")
+        .andWhere("task.is_legacy = false")
+        .orderBy("task.due_date", "ASC")
+        .limit(limit)
+        .getMany();
+};
+
+export const claimDueSoonNotification = async (dataSource, task) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({ due_soon_notified_for: task.due_date })
+        .where("id = :taskId", { taskId: task.id })
+        .andWhere("due_date = :dueDate", { dueDate: task.due_date })
+        .andWhere("(due_soon_notified_for IS NULL OR due_soon_notified_for <> :dueDate)", { dueDate: task.due_date })
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const getChecklistItemsForTask = async (dataSource, taskId) => {
     const repository = dataSource.getRepository(ChecklistItemEntity);
     return await repository.find({ where: { task_id: taskId }, order: { position: "ASC" } });

@@ -7,6 +7,7 @@ import {
   nextRetryDelayMs,
   worstOutcome,
 } from "../utils/channexAriOutboxPlanning.js";
+import { markChannexAccountReconnectRequired } from "../utils/channexReconnectRequired.js";
 
 const SERIALIZATION_FAILURE = "40001";
 // Channex counts its call limit per minute.
@@ -74,8 +75,16 @@ export default class ChannexAriOutboxWorker {
     const sends = [];
     const pausedBuckets = new Map();
     const callsPerBucket = new Map();
+    let keyRejected = false;
     for (const group of groupChangesForSend(rows)) {
       const buckets = bucketsOf(group.changeTypes);
+
+      // After a 401 every call with this key fails. The rest is skipped, not lost: the full
+      // sync after a new key is connected sends the current state of every date.
+      if (keyRejected) {
+        sends.push({ group, sent: false, result: { outcome: OUTCOME.SKIPPED, reason: "RECONNECT_REQUIRED", taskIds: [] } });
+        continue;
+      }
 
       // After a rate limit or outage, the rest of that call type waits; the other call
       // type has its own Channex limit and still goes out.
@@ -101,7 +110,12 @@ export default class ChannexAriOutboxWorker {
         { userId: account.userId, domitsPropertyId, source: "CHANNEX_ARI_OUTBOX", ...group },
         { providerRequestTimeoutMs: CHANNEX_ARI_OUTBOX_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS }
       );
-      const result = classifySyncResponse(answer);
+      const classified = classifySyncResponse(answer);
+      if (classified.keyRejected) keyRejected = true;
+      // The call that got the 401 waits like the rest: its cause is the key, not its values.
+      const result = classified.keyRejected
+        ? { outcome: OUTCOME.SKIPPED, reason: "RECONNECT_REQUIRED", taskIds: [] }
+        : classified;
       sends.push({ group, sent: true, result });
       // Only a rate limit or an outage says more calls of this type would fail too; a
       // rejected call (4xx) is about its own values.
@@ -151,6 +165,10 @@ export default class ChannexAriOutboxWorker {
       } else {
         recorded.push(...(await this.scheduleRetry(outcomeRows, sends, { now, reason, partlySent })));
       }
+    }
+    // After the rows are recorded, so a failure here cannot leave them unrecorded.
+    if (keyRejected) {
+      await markChannexAccountReconnectRequired(this.accounts, account.id, { source: "ARI_OUTBOX", log: this.log });
     }
     return worstOutcome(recorded);
   }

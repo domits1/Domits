@@ -14,6 +14,10 @@ const mockEscalateTask = jest.fn();
 const mockApproveTask = jest.fn();
 const mockRejectTask = jest.fn();
 const mockRunOverdueSweep = jest.fn();
+const mockRunDueSoonSweep = jest.fn();
+const mockGetNotifications = jest.fn();
+const mockMarkNotificationRead = jest.fn();
+const mockMarkAllNotificationsRead = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -33,6 +37,10 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         approveTask: mockApproveTask,
         rejectTask: mockRejectTask,
         runOverdueSweep: mockRunOverdueSweep,
+        runDueSoonSweep: mockRunDueSoonSweep,
+        getNotifications: mockGetNotifications,
+        markNotificationRead: mockMarkNotificationRead,
+        markAllNotificationsRead: mockMarkAllNotificationsRead,
     })),
 }));
 
@@ -49,8 +57,27 @@ describe("property-tasks handler routing", () => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
             mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
-            mockInternalCreateTask, mockEscalateTask, mockApproveTask, mockRejectTask, mockRunOverdueSweep]
+            mockInternalCreateTask, mockEscalateTask, mockApproveTask, mockRejectTask, mockRunOverdueSweep,
+            mockRunDueSoonSweep, mockGetNotifications, mockMarkNotificationRead, mockMarkAllNotificationsRead]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
+    });
+
+    it("GET with action=notifications routes to getNotifications", async () => {
+        await handler({ httpMethod: "GET", queryStringParameters: { action: "notifications" } });
+        expect(mockGetNotifications).toHaveBeenCalledTimes(1);
+        expect(mockGetTasks).not.toHaveBeenCalled();
+    });
+
+    it("PATCH with action=notification-read routes to markNotificationRead, not updateTask", async () => {
+        await handler({ httpMethod: "PATCH", queryStringParameters: { action: "notification-read", id: "n-1" } });
+        expect(mockMarkNotificationRead).toHaveBeenCalledTimes(1);
+        expect(mockUpdateTask).not.toHaveBeenCalled();
+    });
+
+    it("PATCH with action=notifications-read-all routes to markAllNotificationsRead", async () => {
+        await handler({ httpMethod: "PATCH", queryStringParameters: { action: "notifications-read-all" } });
+        expect(mockMarkAllNotificationsRead).toHaveBeenCalledTimes(1);
+        expect(mockUpdateTask).not.toHaveBeenCalled();
     });
 
     it("a scheduled event with task=notify-overdue-tasks routes to runOverdueSweep", async () => {
@@ -71,6 +98,28 @@ describe("property-tasks handler routing", () => {
         await handler({ httpMethod: "GET", task: "notify-overdue-tasks", queryStringParameters: null });
 
         expect(mockRunOverdueSweep).not.toHaveBeenCalled();
+        expect(mockGetTasks).toHaveBeenCalledTimes(1);
+    });
+
+    it("a scheduled event with task=notify-due-soon-tasks routes to runDueSoonSweep, not the overdue sweep", async () => {
+        const event = { task: "notify-due-soon-tasks", limit: 5 };
+
+        await handler(event);
+
+        expect(mockRunDueSoonSweep).toHaveBeenCalledWith(event);
+        expect(mockRunOverdueSweep).not.toHaveBeenCalled();
+    });
+
+    it("a failing scheduled due soon sweep fails the invocation instead of answering 500, so the failure is visible", async () => {
+        mockRunDueSoonSweep.mockRejectedValue(new Error("database down"));
+
+        await expect(handler({ task: "notify-due-soon-tasks", limit: 5 })).rejects.toThrow("database down");
+    });
+
+    it("an HTTP request cannot trigger the due soon sweep, even if it carries the task name", async () => {
+        await handler({ httpMethod: "GET", task: "notify-due-soon-tasks", queryStringParameters: null });
+
+        expect(mockRunDueSoonSweep).not.toHaveBeenCalled();
         expect(mockGetTasks).toHaveBeenCalledTimes(1);
     });
 

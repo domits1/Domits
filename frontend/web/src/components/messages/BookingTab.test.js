@@ -139,4 +139,31 @@ describe("BookingTab booking details", () => {
     expect(globalThis.fetch.mock.calls[1][0]).toContain("bookingId=booking-2");
     expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
   });
+
+  test.each([
+    ["whole hours", { from: 15, till: 22 }, { from: 8, till: 11 }, "15:00-22:00", "8:00-11:00"],
+    ["time strings", { from: "16:00:00", till: "18:30:00" }, { from: "10:00:00", till: "10:00:00" }, "16:00-18:30", "10:00-10:00"],
+  ])("shows check-in and check-out times stored as %s", async (_label, checkIn, checkOut, checkInText, checkOutText) => {
+    globalThis.fetch
+      .mockResolvedValueOnce(
+        okText([
+          {
+            id: "booking-3",
+            guestid: "guest-1",
+            hostid: "host-1",
+            property_id: "property-3",
+            arrivaldate: "2027-01-28",
+            departuredate: "2027-01-30",
+            guests: 2,
+          },
+        ])
+      )
+      .mockResolvedValueOnce(okText({ ...accommodation("Emerald Estate"), checkIn: { checkIn, checkOut } }));
+
+    render(<BookingTab userId="guest-1" contactId="host-1" dashboardType="guest" bookingId="booking-3" />);
+
+    expect(await screen.findByText("Emerald Estate")).toBeInTheDocument();
+    expect(screen.getByText(checkInText)).toBeInTheDocument();
+    expect(screen.getByText(checkOutText)).toBeInTheDocument();
+  });
 });

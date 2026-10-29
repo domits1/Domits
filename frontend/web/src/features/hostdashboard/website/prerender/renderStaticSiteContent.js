@@ -1,7 +1,11 @@
-import { MODEL_FALLBACK_TITLE, resolveStaticSiteImageUrl } from "./buildStaticSiteMetadata";
+import {
+  MODEL_FALLBACK_TITLE,
+  isStaticSiteSectionVisible,
+  resolveStaticSiteImageUrl,
+  selectStaticSiteAmenities,
+  selectStaticSiteGalleryImages,
+} from "./buildStaticSiteMetadata";
 
-const MAX_CONTENT_IMAGES = 6;
-const VOLATILE_STAT_IDS = new Set(["rate"]);
 const MIRRORED_TEMPLATE_KEYS = new Set(["panorama-landing"]);
 
 const cleanText = (value) => {
@@ -12,8 +16,6 @@ const cleanText = (value) => {
 
   return String(value).replaceAll(/\s+/g, " ").trim();
 };
-
-const toArray = (value) => (Array.isArray(value) ? value : []);
 
 export const canRenderStaticSiteContent = (templateKey) => MIRRORED_TEMPLATE_KEYS.has(cleanText(templateKey));
 
@@ -26,8 +28,6 @@ export const escapeHtml = (value) =>
     .replaceAll("'", "&#39;");
 
 const renderList = (items, renderItem) => items.map(renderItem).join("");
-
-const isSectionVisible = (model, sectionKey) => model?.visibility?.[sectionKey] !== false;
 
 const renderHero = (model, heading, imageAlt) => {
   const eyebrow = cleanText(model?.hero?.eyebrow);
@@ -47,7 +47,7 @@ const renderHero = (model, heading, imageAlt) => {
 };
 
 const renderAmenities = (model) => {
-  const amenities = toArray(model?.amenities?.featured).map((amenity) => cleanText(amenity?.label)).filter(Boolean);
+  const amenities = selectStaticSiteAmenities(model);
   if (amenities.length === 0) {
     return "";
   }
@@ -60,9 +60,7 @@ const renderAmenities = (model) => {
 };
 
 const renderGallery = (model, title) => {
-  const imageUrls = [
-    ...new Set(toArray(model?.media?.galleryImages).map((image) => resolveStaticSiteImageUrl(image)).filter(Boolean)),
-  ].slice(0, MAX_CONTENT_IMAGES);
+  const imageUrls = selectStaticSiteGalleryImages(model);
   if (imageUrls.length === 0) {
     return "";
   }
@@ -104,9 +102,9 @@ export const renderStaticSiteContent = (input) => {
   return [
     '<main class="static-site-content">',
     renderHero(model, heading, resolvedTitle),
-    isSectionVisible(model, "amenitiesPanel") ? renderAmenities(model) : "",
-    isSectionVisible(model, "gallerySection") ? renderGallery(model, resolvedTitle) : "",
-    isSectionVisible(model, "contactSection") ? renderHost(model) : "",
+    isStaticSiteSectionVisible(model, "amenitiesPanel") ? renderAmenities(model) : "",
+    isStaticSiteSectionVisible(model, "gallerySection") ? renderGallery(model, resolvedTitle) : "",
+    isStaticSiteSectionVisible(model, "contactSection") ? renderHost(model) : "",
     "</main>",
   ]
     .filter(Boolean)

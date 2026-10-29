@@ -124,11 +124,8 @@ export const getBookingId = (booking) =>
   booking?.paymentId ??
   null;
 
-export const getReservationNumber = (booking) =>
-  booking?.paymentid ??
-  booking?.paymentId ??
-  getBookingId(booking) ??
-  "-";
+// Unpaid bookings store the placeholder "FAILED: " as paymentid, so the payment id is never a reservation number.
+export const getReservationNumber = (booking) => getCanonicalBookingId(booking) ?? "-";
 
 export const getBookingCreatedAt = (booking) =>
   toDate(booking?.createdat ?? booking?.createdAt ?? booking?.bookedAt ?? booking?.bookingDate);

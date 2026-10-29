@@ -1,5 +1,5 @@
 import { approveCompletedTaskInDb, rejectCompletedTaskInDb } from "../../functions/property-tasks/data/taskRepository.js";
-import { buildUpdateDataSource } from "./updateQueryBuilderDouble.js";
+import { buildUpdateDataSource } from "./queryBuilderDoubles.js";
 
 describe("approveCompletedTaskInDb", () => {
     it("records when the task was approved", async () => {

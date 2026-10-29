@@ -53,7 +53,10 @@ export class DestinationPageRepository {
     return toRows(rows).map(toDestination);
   }
 
-  async listActiveListingsUnderPath(path) {
+  async listActiveListingsUnderPath(path, limit) {
+    if (!Number.isSafeInteger(limit) || limit < 1) {
+      throw new Error("A positive whole listing limit is required.");
+    }
     const normalizedPath = String(path || "").trim();
     if (!normalizedPath) {
       return [];
@@ -76,8 +79,9 @@ export class DestinationPageRepository {
       JOIN ${schemaName}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city
       LEFT JOIN ${schemaName}.property_pricing pr ON pr.property_id = p.id
       WHERE d.path = $2 OR d.path LIKE $3
-      ORDER BY p.createdat DESC, p.id ASC`,
-      ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`]
+      ORDER BY p.createdat DESC, p.id ASC
+      LIMIT $4`,
+      ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`, limit]
     );
 
     return toRows(rows).map((row) => ({
