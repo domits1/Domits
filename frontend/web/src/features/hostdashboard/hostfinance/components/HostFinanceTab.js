@@ -183,8 +183,9 @@ export default function HostFinanceTab() {
     listingsRequest
       .then((listings) => {
         if (isCancelled) return;
+        const hasProperty = listings.length > 0;
         setListingState({
-          hasProperty: listings.length > 0,
+          hasProperty,
           isLive: listings.some(
             (listing) => String(listing?.property?.status || "").toUpperCase() === "ACTIVE"
           ),
@@ -195,6 +196,15 @@ export default function HostFinanceTab() {
       .catch((error) => {
         if (isCancelled) return;
         console.error("Error fetching host listings for finance status:", error);
+        if (error?.message === "Failed to load your properties.") {
+          setListingState({
+            hasProperty: false,
+            isLive: false,
+            loading: false,
+            error: false,
+          });
+          return;
+        }
         setListingState((previous) => ({
           ...previous,
           loading: false,

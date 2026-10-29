@@ -101,6 +101,7 @@ const ElitePlanCard = ({
   busy,
   elitePrice,
   hasConfiguredElitePrice,
+  checkoutEnabled,
   currentPlan,
   eliteIsCurrent,
   eliteDowngradeScheduled,
@@ -133,7 +134,11 @@ const ElitePlanCard = ({
     <button
       className="website-rate-plan-button"
       type="button"
-      disabled={busy || eliteIsCurrent || !hasConfiguredElitePrice}
+      disabled={
+        busy ||
+        eliteIsCurrent ||
+        (currentPlan !== "elite" && (!checkoutEnabled || !hasConfiguredElitePrice))
+      }
       onClick={() => {
         void onPlanChange("elite");
       }}
@@ -162,6 +167,7 @@ const WebsiteRatePlanContent = ({
   redirectingToCheckout,
   elitePrice,
   hasConfiguredElitePrice,
+  checkoutEnabled,
   effectiveUntilMessage,
   notice,
   actionError,
@@ -182,6 +188,7 @@ const WebsiteRatePlanContent = ({
         busy={busy}
         elitePrice={elitePrice}
         hasConfiguredElitePrice={hasConfiguredElitePrice}
+        checkoutEnabled={checkoutEnabled}
         currentPlan={ratePlan.plan === "elite" ? "elite" : "essentials"}
         eliteIsCurrent={eliteIsCurrent}
         eliteDowngradeScheduled={eliteDowngradeScheduled}
@@ -443,6 +450,7 @@ const DirectBookingWebsitePlanSection = ({
           redirectingToCheckout={redirectingToCheckout}
           elitePrice={elitePrice}
           hasConfiguredElitePrice={hasConfiguredElitePrice}
+          checkoutEnabled={ratePlan.checkoutEnabled === true}
           effectiveUntilMessage={effectiveUntilMessage}
           notice={notice}
           actionError={actionError}

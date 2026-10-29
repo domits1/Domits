@@ -37,16 +37,6 @@ export class PropertyRepository {
         return result ? result : null;
     }
 
-    async activateProperty(propertyId) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: "ACTIVE" })
-            .where("id = :id", { id: propertyId })
-            .execute();
-    }
-
     async getArchiveMetadataColumns(client) {
         const result = await client.query(
             `SELECT column_name
@@ -126,6 +116,41 @@ export class PropertyRepository {
             `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
             metadataParams
         );
+    }
+
+    // Compare-and-set: the single UPDATE only matches while the current status is one of fromStatuses,
+    // so a concurrent approval or rejection is never overwritten. Returns the number of rows changed.
+    // Only a move out of ARCHIVED clears the archive metadata; moving into ARCHIVED (which records
+    // who archived) stays with updatePropertyStatus.
+    async transitionStatus(propertyId, fromStatuses, toStatus) {
+        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
+            throw new TypeError("transitionStatus needs at least one from-status.");
+        }
+
+        const client = await Database.getInstance();
+        const now = Date.now();
+        const result = await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({ status: toStatus, updatedat: now })
+            .where("id = :id AND status IN (:...fromStatuses)", { id: propertyId, fromStatuses })
+            .execute();
+
+        const affected = Number(result?.affected) || 0;
+        if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
+            await this.clearArchiveMetadata(client, propertyId, toStatus, now);
+        }
+        return affected;
+    }
+
+    async clearArchiveMetadata(client, propertyId, status, now) {
+        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
+        if (clearClauses.length === 0) {
+            return;
+        }
+
+        await client.query(`UPDATE property SET ${clearClauses.join(", ")} WHERE id = $1`, [propertyId]);
     }
 
     async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {

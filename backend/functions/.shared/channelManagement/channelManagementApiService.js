@@ -7,6 +7,7 @@ import ReservationLinkRepository from "../integrations/repositories/reservationL
 import ChannexBookingAvailabilityBridge, {
   ChannexBookingAvailabilityRepository,
 } from "./channexBookingAvailabilityBridge.js";
+import { CHANNEX_STATUS } from "./channelManagementConstants.js";
 import ChannelManagementService from "./channelManagementService.js";
 import ChannexCredentialStore from "./providers/channex/credentialStore.js";
 import ChannexWebhookSecretVerifier from "./providers/channex/webhookSecretVerifier.js";
@@ -22,6 +23,7 @@ import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRep
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
 import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
+import { CHANNEL_CHANNEX, isActiveChannexPropertyMapping } from "./utils/channexBookingPollUtils.js";
 import ChannexAriSchemaGuard from "./services/channexAriSchemaGuard.js";
 import ChannexAriOrchestrationService from "./services/channexAriOrchestrationService.js";
 import ChannexAriPayloadService from "./services/channexAriPayloadService.js";
@@ -85,6 +87,8 @@ export default class ChannelManagementApiService {
       secretName: CHANNEX_BOOKING_WEBHOOK_SECRET_NAME,
     }),
   } = {}) {
+    this.accounts = accounts;
+    this.props = props;
     this.channexWebhookSecretVerifier = channexWebhookSecretVerifier;
     this.channelManagementService = new ChannelManagementService({
       accounts,
@@ -241,8 +245,30 @@ export default class ChannelManagementApiService {
     return this.channelManagementService.disconnectHolidu(...args);
   }
 
-  async connectChannex(...args) {
-    return this.channelManagementService.connectChannex(...args);
+  // While an account is not connected, the outbox skips its changes instead of sending them. So
+  // when it is connected again, every active mapping starts over with its complete current state
+  // (#3572), the same full sync a newly saved mapping gets (#3282). A first connection has no
+  // mappings yet, and an account that stayed connected missed nothing.
+  async connectChannex(body) {
+    const previous = await this.accounts.findByUserIdAndChannel(body?.userId, CHANNEL_CHANNEX);
+    const result = await this.channelManagementService.connectChannex(body);
+    if (result?.statusCode !== 200) return result;
+
+    const reconnected =
+      Boolean(previous) && previous.status !== CHANNEX_STATUS.CONNECTED && result.response?.connected === true;
+    const fullSyncQueuedCount = reconnected ? await this.queueFullSyncForActiveMappings(previous.id) : 0;
+    return { ...result, response: { ...result.response, fullSyncQueuedCount } };
+  }
+
+  async queueFullSyncForActiveMappings(integrationAccountId) {
+    const mappings = await this.props.listByAccountId(integrationAccountId);
+    const activeMappings = (mappings || []).filter(isActiveChannexPropertyMapping);
+    let queued = 0;
+    // One at a time: each full sync is its own transaction, and a failed one is logged inside.
+    for (const mapping of activeMappings) {
+      if (await this.channexMappingService.queueGoLiveFullSync(mapping.domitsPropertyId)) queued += 1;
+    }
+    return queued;
   }
 
   async checkChannexStatus(...args) {

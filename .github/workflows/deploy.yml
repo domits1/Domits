@@ -7,7 +7,11 @@ on:
       - 'main'
     paths:
       - 'backend/**'
-      - '.github/workflows/deploy.yml'
+      - 'frontend/web/src/features/hostdashboard/website/**'
+      - 'frontend/web/src/store/amenities.js'
+      - 'frontend/web/src/store/iconWrapper.js'
+      - 'frontend/web/src/utils/accommodationImage.js'
+      - 'frontend/web/src/features/hostdashboard/hostproperty/constants.js'
 
 jobs:
   deploy:
@@ -38,13 +42,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
-
-      - name: Configure and verify the ReviewSystem policy and edit window
-        run: node backend/CD/npm/configureReviewEnvironment.js
-        env:
-          REVIEW_DECLINE_THRESHOLD: ${{ vars.REVIEW_DECLINE_THRESHOLD }}
-          REVIEW_TREND_MIN_REVIEWS: ${{ vars.REVIEW_TREND_MIN_REVIEWS }}
-          REVIEW_EDIT_WINDOW_MS: ${{ vars.REVIEW_EDIT_WINDOW_MS }}
 
       # Identify every file changed in this push, including earlier commits in a multi-commit push
       - name: Get changed files
@@ -199,7 +196,7 @@ jobs:
               cd ..
           
               # Deploy to Lambda and track any failures
-              if ! aws lambda update-function-code --function-name="$LAMBDA_FUNC_NAME" --zip-file=fileb://$FUNC_NAME.zip; then
+              if ! aws lambda update-function-code --function-name="$LAMBDA_FUNC_NAME" --zip-file=fileb://$FUNC_NAME.zip --query 'LastUpdateStatus' --output text; then
                 echo "::error ::Failed to deploy $LAMBDA_FUNC_NAME"
                 DEPLOY_ERRORS=1
                 # Clean up temporary files

@@ -16,6 +16,7 @@ const PARAMETERS_THE_CODE_READS = [
   "/aurora/dsql/dbName",
   "/aurora/dsql/schema",
   "/direct-booking-website/quote-token-secret",
+  "/destinations/pages/enabled",
 ].map((name) => `arn:aws:ssm:eu-north-1:${ACCOUNT}:parameter${name}`);
 const FUNCTIONS_THE_CODE_INVOKES = ["PriceLabs-Integration", "UnifiedMessaging"].map(
   (name) => `arn:aws:lambda:eu-north-1:${ACCOUNT}:function:${name}`
@@ -218,5 +219,16 @@ describe("the schedule", () => {
     ).toEqual([["Allow", ["lambda:InvokeFunction"], [PROPERTY_HANDLER]]]);
     expect(trust.Principal).toEqual({ Service: "scheduler.amazonaws.com" });
     expect(trust.Condition).toEqual({ StringEquals: { "aws:SourceAccount": ACCOUNT } });
+  });
+});
+
+describe("the redirect store policy", () => {
+  it("lets PropertyHandler read and update the one redirect store, through a placeholder, and nothing else", () => {
+    const [statement, ...others] = load("static-page-redirects-policy.json").Statement;
+    const actions = ["DescribeKeyValueStore", "ListKeys", "UpdateKeys"].map((n) => `cloudfront-keyvaluestore:${n}`);
+
+    expect(others).toEqual([]);
+    expect(statement).toMatchObject({ Effect: "Allow", Action: actions });
+    expect(statement.Resource).toBe("arn:aws:cloudfront::115462458880:key-value-store/__REDIRECTS_KVS_ID__");
   });
 });
