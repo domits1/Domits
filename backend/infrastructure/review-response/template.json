@@ -1,0 +1,328 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Authenticated ReviewSystem host response routes on an existing REST API. Deploy the target API stage after this stack completes.",
+  "Parameters": {
+    "RestApiId": {
+      "Type": "String",
+      "Description": "Existing ReviewSystem REST API ID"
+    },
+    "ReviewResourceId": {
+      "Type": "String",
+      "Description": "Existing /reviews/{id} resource ID"
+    },
+    "AuthorizerId": {
+      "Type": "String",
+      "Description": "Existing Cognito user pool authorizer used by authenticated review routes"
+    },
+    "ReviewSystemLambdaArn": {
+      "Type": "String",
+      "Description": "Existing ReviewSystem Lambda ARN, including an alias if the API uses one"
+    },
+    "AuthorizationScopes": {
+      "Type": "CommaDelimitedList",
+      "Default": "",
+      "Description": "Copy scopes from an existing authenticated review method; leave empty only if it has none"
+    }
+  },
+  "Conditions": {
+    "HasAuthorizationScopes": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Fn::Join": [
+                ",",
+                {
+                  "Ref": "AuthorizationScopes"
+                }
+              ]
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "ResponseResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ParentId": {
+          "Ref": "ReviewResourceId"
+        },
+        "PathPart": "response"
+      }
+    },
+    "PublishResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ParentId": {
+          "Ref": "ResponseResource"
+        },
+        "PathPart": "publish"
+      }
+    },
+    "SaveDraftMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ResourceId": {
+          "Ref": "ResponseResource"
+        },
+        "HttpMethod": "POST",
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "AuthorizerId"
+        },
+        "AuthorizationScopes": {
+          "Fn::If": [
+            "HasAuthorizationScopes",
+            {
+              "Ref": "AuthorizationScopes"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "ApiKeyRequired": false,
+        "RequestParameters": {
+          "method.request.path.id": true
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReviewSystemLambdaArn}/invocations"
+          }
+        }
+      }
+    },
+    "SaveDraftPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "ReviewSystemLambdaArn"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*/POST/reviews/*/response"
+        }
+      }
+    },
+    "EditResponseMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ResourceId": {
+          "Ref": "ResponseResource"
+        },
+        "HttpMethod": "PATCH",
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "AuthorizerId"
+        },
+        "AuthorizationScopes": {
+          "Fn::If": [
+            "HasAuthorizationScopes",
+            {
+              "Ref": "AuthorizationScopes"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "ApiKeyRequired": false,
+        "RequestParameters": {
+          "method.request.path.id": true
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReviewSystemLambdaArn}/invocations"
+          }
+        }
+      }
+    },
+    "EditResponsePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "ReviewSystemLambdaArn"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*/PATCH/reviews/*/response"
+        }
+      }
+    },
+    "PublishResponseMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ResourceId": {
+          "Ref": "PublishResource"
+        },
+        "HttpMethod": "POST",
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "AuthorizerId"
+        },
+        "AuthorizationScopes": {
+          "Fn::If": [
+            "HasAuthorizationScopes",
+            {
+              "Ref": "AuthorizationScopes"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "ApiKeyRequired": false,
+        "RequestParameters": {
+          "method.request.path.id": true
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReviewSystemLambdaArn}/invocations"
+          }
+        }
+      }
+    },
+    "PublishResponsePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "ReviewSystemLambdaArn"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        },
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*/POST/reviews/*/response/publish"
+        }
+      }
+    },
+    "ResponseOptionsMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ResourceId": {
+          "Ref": "ResponseResource"
+        },
+        "HttpMethod": "OPTIONS",
+        "AuthorizationType": "NONE",
+        "ApiKeyRequired": false,
+        "Integration": {
+          "Type": "MOCK",
+          "PassthroughBehavior": "NEVER",
+          "RequestTemplates": {
+            "application/json": "{\"statusCode\":200}"
+          },
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+                "method.response.header.Access-Control-Allow-Methods": "'POST,PATCH,DELETE,OPTIONS'"
+              }
+            }
+          ]
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            }
+          }
+        ]
+      }
+    },
+    "PublishOptionsMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "RestApiId"
+        },
+        "ResourceId": {
+          "Ref": "PublishResource"
+        },
+        "HttpMethod": "OPTIONS",
+        "AuthorizationType": "NONE",
+        "ApiKeyRequired": false,
+        "Integration": {
+          "Type": "MOCK",
+          "PassthroughBehavior": "NEVER",
+          "RequestTemplates": {
+            "application/json": "{\"statusCode\":200}"
+          },
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+                "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+              }
+            }
+          ]
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ResponseResourceId": {
+      "Value": {
+        "Ref": "ResponseResource"
+      }
+    },
+    "PublishResourceId": {
+      "Value": {
+        "Ref": "PublishResource"
+      }
+    }
+  }
+}

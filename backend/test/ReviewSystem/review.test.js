@@ -503,9 +503,6 @@ describe('Review workflows', () => {
       findPublicForProperty: jest.fn().mockResolvedValue([published]),
       findBookingById: jest.fn().mockResolvedValue({ id: "b1", guestid: "guest", hostid: "host", property_id: "p1",
         status: "Paid", departuredate: now - 100 }),
-      createResponse: jest.fn().mockImplementation(async (record) => record),
-      updateResponse: jest.fn().mockResolvedValue({ id: "response", reviewId: "r1", message: "Updated", status: "published" }),
-      softDeleteResponse: jest.fn().mockResolvedValue(true),
       publishDraft: jest.fn().mockResolvedValue(published),
     };
     service = new ReviewService({ repository, now: () => now });
@@ -577,41 +574,12 @@ describe('Review workflows', () => {
     expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
   });
 
-  it("lets the host create, update and delete a published review response", async () => {
-    repository.findById.mockResolvedValue(published);
-    const response = await controller.createReviewResponse(event("host", { message: " Thanks " }));
-    expect(response.statusCode).toBe(201);
-    expect(repository.createResponse).toHaveBeenCalledWith(expect.objectContaining({ authorId: "host", authorRole: "host",
-      status: "published", message: "Thanks", deletedAt: null }));
-    expect((await controller.updateReviewResponse(event("host", { message: "Updated" }))).statusCode).toBe(200);
-    expect((await controller.deleteReviewResponse(event("host"))).statusCode).toBe(204);
-  });
-
-  it("rejects responses by guests and responses to drafts", async () => {
-    expect((await controller.createReviewResponse(event("guest", { message: "Spoof" }))).statusCode).toBe(403);
-    expect((await controller.createReviewResponse(event("host", { message: "Early" }))).statusCode).toBe(409);
-    expect(repository.createResponse).not.toHaveBeenCalled();
-  });
-
-  it.each([{ message: " " }, { message: "Hi", authorId: "spoof" }, { message: 3 }])("validates response payloads: %p", async (body) => {
-    expect((await controller.createReviewResponse(event("host", body))).statusCode).toBe(400);
-    expect(repository.createResponse).not.toHaveBeenCalled();
-  });
-
-  it("returns 404 for missing response updates and deletes", async () => {
-    repository.findById.mockResolvedValue(published);
-    repository.updateResponse.mockResolvedValue(null);
-    repository.softDeleteResponse.mockResolvedValue(false);
-    expect((await controller.updateReviewResponse(event("host", { message: "Changed" }))).statusCode).toBe(404);
-    expect((await controller.deleteReviewResponse(event("host"))).statusCode).toBe(404);
-  });
-
   it("denies publishing another user's review", async () => {
     expect((await controller.publishReview(event("host"))).statusCode).toBe(403);
     expect(repository.publishDraft).not.toHaveBeenCalled();
   });
 
-  it("publishes and permits a host response through the default controller", async () => {
+  it("publishes through the default controller", async () => {
     ReviewRepository.mockImplementation(() => repository);
     const defaultController = new Controller();
     try {
@@ -624,8 +592,6 @@ describe('Review workflows', () => {
       const { authorize } = repository.publishDraft.mock.calls[0][0];
       expect(await authorize(draft)).toBe(true);
       expect(await authorize({ ...draft, reviewer_user_id: "other" })).toBe(false);
-      repository.findById.mockResolvedValue(published);
-      expect((await defaultController.createReviewResponse(event("host", { message: "Thanks" }))).statusCode).toBe(201);
     } finally {
       ReviewRepository.mockReset();
     }
@@ -668,8 +634,8 @@ describe('Review workflows', () => {
     expect((await controller.publishReview(event())).statusCode).toBe(409);
   });
 
-  it.each(["getReviews", "getReviewById", "updateReview", "getPrivateFeedback", "createReviewResponse",
-    "updateReviewResponse", "deleteReviewResponse", "publishReview"])("authenticates %s before accessing storage", async (action) => {
+  it.each(["getReviews", "getReviewById", "updateReview", "getPrivateFeedback", "saveHostResponse",
+    "deleteReviewResponse", "publishReview"])("authenticates %s before accessing storage", async (action) => {
     expect((await controller[action]({})).statusCode).toBe(401);
     expect(repository.findById).not.toHaveBeenCalled();
     expect(repository.findForUser).not.toHaveBeenCalled();
