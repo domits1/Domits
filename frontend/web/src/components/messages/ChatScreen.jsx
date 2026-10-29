@@ -76,6 +76,11 @@ const ChatScreen = ({
   const resolvedPlatform = String(platform || "DOMITS").toUpperCase();
   const isWhatsApp = resolvedPlatform === "WHATSAPP";
 
+  // An unsent upload belongs to the thread it was attached in; the next thread may not accept attachments.
+  useEffect(() => {
+    setUploadedFileUrls([]);
+  }, [resolvedContactId, threadId]);
+
   useEffect(() => {
     if (!resolvedContactId) {
       setLocalMessages([]);
@@ -313,7 +318,9 @@ const ChatScreen = ({
 
         <div className="chat-input">
           <div className="attachment-area">
-            {capabilities.canUseAttachments ? <ChatUploadAttachment onUploadComplete={handleUploadComplete} /> : null}
+            {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
+              <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+            ) : null}
 
             {uploadedFileUrls.length > 0 && (
               <button
