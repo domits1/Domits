@@ -16,7 +16,7 @@ describe("getOverdueTasksToNotify", () => {
         await expect(getOverdueTasksToNotify(dataSource, 5000, 20)).resolves.toEqual([{ id: "task-1" }]);
     });
 
-    it("only selects open, past-due tasks that are not escalated and not legacy", async () => {
+    it("only selects open, past-due tasks that are not legacy", async () => {
         const { dataSource, chain } = buildSelectDataSource([]);
 
         await getOverdueTasksToNotify(dataSource, 5000, 20);
@@ -24,9 +24,16 @@ describe("getOverdueTasksToNotify", () => {
         const sql = conditions(chain);
         expect(sql).toContain("task.due_date < :now");
         expect(sql).toContain("task.status NOT IN (:...resolved)");
-        expect(sql).toContain("task.escalated_at IS NULL");
         expect(sql).toContain("task.is_legacy = false");
         expect(chain.andWhere).toHaveBeenCalledWith(expect.any(String), { resolved: ["Completed", "Cancelled"] });
+    });
+
+    it("skips a task escalated after its due date, but not one escalated before it went late", async () => {
+        const { dataSource, chain } = buildSelectDataSource([]);
+
+        await getOverdueTasksToNotify(dataSource, 5000, 20);
+
+        expect(conditions(chain)).toContain("(task.escalated_at IS NULL OR task.escalated_at < task.due_date)");
     });
 
     it("sends the first email only to tasks that went overdue within the last day", async () => {

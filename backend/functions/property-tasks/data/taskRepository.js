@@ -139,7 +139,7 @@ export const getOverdueTasksToNotify = async (dataSource, now, limit) => {
                 maxNotifications: MAX_OVERDUE_EMAILS,
             }
         )
-        .andWhere("task.escalated_at IS NULL")
+        .andWhere("(task.escalated_at IS NULL OR task.escalated_at < task.due_date)")
         .andWhere("task.is_legacy = false")
         .orderBy("task.overdue_last_notified_at", "ASC", "NULLS FIRST")
         .limit(limit)
