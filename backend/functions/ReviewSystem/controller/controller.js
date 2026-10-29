@@ -147,25 +147,11 @@ export class Controller {
       this.jsonResponse(200, await this.service.getPrivateFeedback(userId, this.getPathParameter(event, "id"))));
   }
 
-  // Create a host response to a review.
-  // This routes the host reply through the service so permission and validation rules stay in one place.
-  async createReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(201, await this.service.createReviewResponse(userId, this.getPathParameter(event, "id"), parseBody(event))));
-  }
-
-  // Update a host response.
-  // This keeps the response paths predictable while reusing the same service authorization checks.
-  async updateReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.updateReviewResponse(userId, this.getPathParameter(event, "id"), parseBody(event))));
-  }
-
   // Delete a host response.
   // This removes the reply and keeps the controller response format consistent with other idempotent delete routes.
   async deleteReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) => {
-      await this.service.deleteReviewResponse(userId, this.getPathParameter(event, "id"));
+    return this.executeAuthenticated(event, async (userId, user) => {
+      await this.service.deleteReviewResponse(user, this.getPathParameter(event, "id"));
       return { statusCode: 204, headers: responseHeaders, body: "" };
     });
   }

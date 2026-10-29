@@ -6,7 +6,7 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
-import { assertEligibleBooking, assertHostResponseAccess, isPublished } from "../reviewRules.js";
+import { assertEligibleBooking, isPublished } from "../reviewRules.js";
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
@@ -98,7 +98,7 @@ const isDuplicateBookingReviewError = (error) => {
 
 export class ReviewService {
   async saveHostResponse(user, reviewId, body, action) {
-    if (typeof user?.username !== "string" || !user.username.trim() || typeof user.userId !== "string" || !user.userId.trim()) throw new UnauthorizedException("A verified host identity is required.");
+    this.assertHostResponseIdentity(user);
     if (typeof reviewId !== "string" || !reviewId.trim() || reviewId.length > 255) throw new BadRequestException("A valid review ID is required.");
     if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some((key) => key !== "message")) {
       throw new BadRequestException("Only response text may be submitted.");
@@ -415,42 +415,17 @@ export class ReviewService {
     return { review_id: review.id, private_feedback: review.private_feedback };
   }
 
-  // Create a host response for a review.
-  // This supports the public reply flow while enforcing the host-only access rules for the review.
-  async createReviewResponse(userId, reviewId, data) {
-    this.assertCaller(userId);
-    const message = this.validateResponse(data);
-    const review = await this.requireReview(reviewId);
-    assertHostResponseAccess(review, userId);
-    const timestamp = this.now();
-    const response = await this.repository.createResponse({ id: randomUUID(), reviewId: review.id,
-      authorId: userId, authorRole: "host", status: "published", message, createdAt: timestamp,
-      updatedAt: timestamp, publishedAt: timestamp, deletedAt: null });
-    return toResponseView(response);
-  }
-
-  // Update an existing host reply.
-  // This keeps the response editable after publication without allowing unrelated users to change it.
-  async updateReviewResponse(userId, reviewId, data) {
-    this.assertCaller(userId);
-    const message = this.validateResponse(data);
-    const review = await this.requireReview(reviewId);
-    assertHostResponseAccess(review, userId);
-    const response = await this.repository.updateResponse({ reviewId: review.id, authorId: userId,
-      message, updatedAt: this.now() });
-    if (!response) throw new NotFoundException("Review response not found.");
-    return toResponseView(response);
-  }
-
-  // Delete a host response in a controlled way.
-  // This removes the reply while preserving the review history and validating that the host is still authorized.
-  async deleteReviewResponse(userId, reviewId) {
-    this.assertCaller(userId);
-    const review = await this.requireReview(reviewId);
-    assertHostResponseAccess(review, userId);
-    if (!(await this.repository.softDeleteResponse({ reviewId: review.id, authorId: userId, deletedAt: this.now() }))) {
+  // Delete uses the same trusted identity and property access rules as save.
+  async deleteReviewResponse(user, reviewId) {
+    this.assertHostResponseIdentity(user);
+    this.assertId(reviewId, "review ID");
+    if (!(await this.repository.deleteHostResponse(user, reviewId.trim(), this.now()))) {
       throw new NotFoundException("Review response not found.");
     }
+  }
+
+  assertHostResponseIdentity(user) {
+    if (typeof user?.username !== "string" || !user.username.trim() || typeof user.userId !== "string" || !user.userId.trim()) throw new UnauthorizedException("A verified host identity is required.");
   }
 
   // Publish a draft review when the reservation is still valid.
@@ -499,14 +474,6 @@ export class ReviewService {
 
   assertObject(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new BadRequestException("Request body must be a JSON object.");
-  }
-
-  validateResponse(data) {
-    this.assertObject(data);
-    if (Object.keys(data).some((key) => key !== "message") || typeof data.message !== "string" || !data.message.trim()) {
-      throw new BadRequestException("Provide a non-empty message field.");
-    }
-    return data.message.trim();
   }
 
   // Create a new guest review for a completed reservation.
