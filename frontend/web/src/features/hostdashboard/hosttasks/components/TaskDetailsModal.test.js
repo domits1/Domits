@@ -76,6 +76,23 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onSave).toHaveBeenCalledTimes(1);
     });
 
+    test('disables Delete for a completed task and says why, so it cannot be deleted until its status is changed', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status: 'Completed' }} editedTask={{ ...baseTask, status: 'Completed' }} />);
+
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        expect(deleteButton).toBeDisabled();
+        expect(deleteButton).toHaveAttribute('title', 'Change the status of a completed task before deleting it');
+
+        fireEvent.click(deleteButton);
+        expect(baseProps.onDelete).not.toHaveBeenCalled();
+    });
+
+    test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('keeps Delete available for a %s task', (status) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+        expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+    });
+
     test('calls onDelete when Delete is clicked', () => {
         render(<TaskDetailsModal {...baseProps} />);
         fireEvent.click(screen.getByRole('button', { name: 'Delete' }));

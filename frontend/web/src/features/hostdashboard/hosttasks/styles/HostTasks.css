@@ -85,8 +85,13 @@
     transition: background-color 0.2s;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background-color: #b02a37;
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-create-fab {
