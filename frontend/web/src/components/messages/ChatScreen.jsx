@@ -48,6 +48,7 @@ const ChatScreen = ({
   capabilities: providedCapabilities = null,
   handleContactListMessage,
   testMessages = [],
+  bookingInDetailsPanel = false,
 }) => {
   const { accessToken } = useAuth();
   const capabilities = useMemo(
@@ -300,15 +301,18 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        {isWhatsApp || !capabilities.canViewBookingContext ? null : (
-          <BookingTab
-            userId={userId}
-            contactId={resolvedContactId}
-            contactName={headerName}
-            dashboardType={dashboardType}
-            bookingId={bookingId || null}
-            propertyId={propertyId || null}
-          />
+        {isWhatsApp || bookingInDetailsPanel || !capabilities.canViewBookingContext ? null : (
+          <details className="chat-booking-details">
+            <summary>Reservation details</summary>
+            <BookingTab
+              userId={userId}
+              contactId={resolvedContactId}
+              contactName={headerName}
+              dashboardType={dashboardType}
+              bookingId={bookingId || null}
+              propertyId={propertyId || null}
+            />
+          </details>
         )}
 
         <div className="chat-input">
@@ -396,6 +400,7 @@ ChatScreen.propTypes = {
   capabilities: PropTypes.object,
   handleContactListMessage: PropTypes.func,
   testMessages: PropTypes.arrayOf(PropTypes.object),
+  bookingInDetailsPanel: PropTypes.bool,
 };
 
 export default ChatScreen;

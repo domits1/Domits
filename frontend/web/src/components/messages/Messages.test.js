@@ -114,7 +114,7 @@ jest.mock("./ContactList", () => {
 jest.mock("./ChatScreen", () => {
   const PropTypes = require("prop-types");
 
-  function MockChatScreen({ contactId, threadId, bookingId, propertyId }) {
+  function MockChatScreen({ contactId, threadId, bookingId, propertyId, bookingInDetailsPanel }) {
     return (
       <div
         data-testid="chat-screen"
@@ -122,6 +122,7 @@ jest.mock("./ChatScreen", () => {
         data-thread-id={threadId || ""}
         data-booking-id={bookingId || ""}
         data-property-id={propertyId || ""}
+        data-booking-in-details-panel={String(Boolean(bookingInDetailsPanel))}
       />
     );
   }
@@ -131,9 +132,31 @@ jest.mock("./ChatScreen", () => {
     threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    bookingInDetailsPanel: PropTypes.bool,
   };
 
   return MockChatScreen;
+});
+
+jest.mock("./BookingTab", () => {
+  const PropTypes = require("prop-types");
+
+  function MockBookingTab({ bookingId, showAccommodation }) {
+    return (
+      <div
+        data-testid="booking-tab"
+        data-booking-id={bookingId || ""}
+        data-show-accommodation={String(showAccommodation)}
+      />
+    );
+  }
+
+  MockBookingTab.propTypes = {
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    showAccommodation: PropTypes.bool,
+  };
+
+  return MockBookingTab;
 });
 
 jest.mock("./NewContactModal", () => () => null);
@@ -253,5 +276,35 @@ describe("Messages booking URL context", () => {
     const updaterFn = mockSetContacts.mock.calls.at(-1)[0];
     const updatedContacts = updaterFn(mockContacts);
     expect(updatedContacts.find((c) => c.threadId === "thread-1").unreadCount).toBe(0);
+  });
+
+  describe("on a desktop screen", () => {
+    const originalInnerWidth = window.innerWidth;
+
+    beforeEach(() => {
+      window.innerWidth = 1440;
+    });
+
+    afterEach(() => {
+      window.innerWidth = originalInnerWidth;
+    });
+
+    test("shows the reservation under the listing in the details panel instead of in the chat", async () => {
+      renderMessages("/guestdashboard/messages?bookingId=booking-1");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("booking-tab")).toHaveAttribute("data-booking-id", "booking-1");
+      });
+      expect(screen.getByTestId("booking-tab")).toHaveAttribute("data-show-accommodation", "false");
+      expect(screen.getByTestId("listing-panel")).toBeInTheDocument();
+      expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-booking-in-details-panel", "true");
+    });
+  });
+
+  test("leaves the reservation in the chat when the screen is too small for the details panel", () => {
+    renderMessages("/guestdashboard/messages?bookingId=booking-1");
+
+    expect(screen.queryByTestId("booking-tab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-booking-in-details-panel", "false");
   });
 });
