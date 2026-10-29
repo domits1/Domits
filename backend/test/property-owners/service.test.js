@@ -42,6 +42,13 @@ const property = (propertyId, overrides = {}) => ({
   ...overrides,
 });
 
+const VALID_BODY = Object.freeze({
+  first_name: " Anna ",
+  last_name: "de Vries",
+  email: "anna@example.com",
+  owner_type: "individual",
+});
+
 const createService = ({
   owners = [],
   ownerById = null,
@@ -54,6 +61,7 @@ const createService = ({
     findOwnerByIdAndHost: jest.fn(async () => ownerById),
     findAssignmentsByHost: jest.fn(async () => assignments),
     findAssignmentsByOwnerAndHost: jest.fn(async () => ownerAssignments),
+    createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
   };
   return { repository, service: new Service({ repository, clock }) };
 };
@@ -226,5 +234,83 @@ describe("Service.getOwner", () => {
     });
     expect(repository.findOwnerByIdAndHost).toHaveBeenCalledWith(OWNER_A, "host-2");
     expect(repository.findAssignmentsByOwnerAndHost).not.toHaveBeenCalled();
+  });
+});
+
+describe("Service.createOwner", () => {
+  const expectedRecord = {
+    first_name: "Anna",
+    last_name: "de Vries",
+    company_name: null,
+    email: "anna@example.com",
+    phone: null,
+    preferred_language: null,
+    owner_type: "individual",
+    status: "active",
+    notes: null,
+    host_id: "host-1",
+    owner_user_id: null,
+    created_at: CLOCK(),
+    updated_at: CLOCK(),
+  };
+
+  test("saves the validated owner for the caller's host, stamped with the raw clock value", async () => {
+    const { repository, service } = createService();
+
+    await service.createOwner("host-1", VALID_BODY);
+
+    expect(repository.createOwner).toHaveBeenCalledTimes(1);
+    expect(repository.createOwner).toHaveBeenCalledWith(expectedRecord);
+    expect(CLOCK() % DAY_MS).not.toBe(0);
+  });
+
+  test("returns the saved owner with an empty properties list and no property_ids", async () => {
+    const { service } = createService();
+
+    const created = await service.createOwner("host-1", VALID_BODY);
+
+    expect(created).toEqual({ id: OWNER_A, ...expectedRecord, properties: [] });
+    expect(created).not.toHaveProperty("property_ids");
+  });
+
+  test("keeps an explicit non-archived status", async () => {
+    const { repository, service } = createService();
+
+    await service.createOwner("host-1", { ...VALID_BODY, status: "pending" });
+
+    expect(repository.createOwner).toHaveBeenCalledWith({ ...expectedRecord, status: "pending" });
+  });
+
+  test.each([
+    ["host_id", { host_id: "host-2" }],
+    ["owner_user_id", { owner_user_id: "user-2" }],
+    ["id", { id: OWNER_B }],
+    ["created_at", { created_at: 1 }],
+    ["property_ids", { property_ids: ["property-1"] }],
+  ])("rejects a body that sets %s with 400 before any write", async (field, extra) => {
+    const { repository, service } = createService();
+
+    await expect(service.createOwner("host-1", { ...VALID_BODY, ...extra })).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining(field),
+    });
+    expect(repository.createOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["null", null],
+    ["an array", []],
+    ["a string", "owner"],
+    ["a number", 42],
+    ["an empty object", {}],
+    ["an invalid email", { ...VALID_BODY, email: "anna" }],
+    ["an unknown owner type", { ...VALID_BODY, owner_type: "partnership" }],
+    ["a company without a company name", { ...VALID_BODY, owner_type: "company" }],
+    ["the archived status", { ...VALID_BODY, status: "archived" }],
+  ])("rejects %s with 400 and never reaches the repository", async (_label, body) => {
+    const { repository, service } = createService();
+
+    await expect(service.createOwner("host-1", body)).rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.createOwner).not.toHaveBeenCalled();
   });
 });
