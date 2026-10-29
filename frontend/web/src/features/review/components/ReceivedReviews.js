@@ -47,6 +47,25 @@ function PropertyImage({ property }) {
   );
 }
 
+function SelectedReview({ selected, property, respondableReview, response, onResponseChange }) {
+  const selectedProperty = property;
+  const selectedName = typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
+  const selectedInitials = selectedName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+  return (
+    <section id="selected-review" className={styles.detail} aria-label="Selected review">
+        <header className={styles.detailHeader}>
+          <span className={styles.detailAvatar} aria-hidden="true">{selectedInitials}</span>
+          <div><strong>{selectedName}</strong><p>{dateLabel(selected)}{selectedProperty && ` \u00b7 ${selectedProperty.title}`}</p></div>
+          {rating(selected) !== null && <div className={styles.detailRating}><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></div>}
+        </header>
+        <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
+        <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
+        {respondableReview ? <HostResponseForm key={selected.id} review={{ ...respondableReview, response: response !== undefined ? response : respondableReview.response }} onResponseChange={onResponseChange} />
+          : <p className={styles.responseUnavailable}>A response is not available for this review.</p>}
+      </section>
+  );
+}
+
 export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {} }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
@@ -91,9 +110,6 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     return results;
   }, [sorted, query, sort, properties]);
   const selected = visible.find((review) => review.id === selectedId);
-  const selectedProperty = selected ? properties[selected.property_id] : null;
-  const selectedName = typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
-  const selectedInitials = selectedName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
   const scores = reviews.map(rating).filter((value) => value !== null);
   const average = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
   const focusReview = (id) => {
@@ -180,7 +196,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
               const initials = guestName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
               const value = rating(review);
               return (
-                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`} onClick={() => setSelectedId(review.id)}>
+                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
                     <h4><button type="button" className={styles.selectReview} aria-pressed={selected?.id === review.id} aria-controls="selected-review" onClick={() => setSelectedId(review.id)}>{review.title || property?.title || "Guest review"}</button></h4>
@@ -218,17 +234,13 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             })}
         </section>
       </div>
-      {!loading && !error && selected && <section id="selected-review" className={styles.detail} aria-label="Selected review">
-        <header className={styles.detailHeader}>
-          <span className={styles.detailAvatar} aria-hidden="true">{selectedInitials}</span>
-          <div><strong>{selectedName}</strong><p>{dateLabel(selected)}{selectedProperty && ` \u00b7 ${selectedProperty.title}`}</p></div>
-          {rating(selected) !== null && <div className={styles.detailRating}><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></div>}
-        </header>
-        <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
-        <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
-        {respondableReviews[selected.id] ? <HostResponseForm key={selected.id} review={{ ...respondableReviews[selected.id], response: responseCache[selected.id] !== undefined ? responseCache[selected.id] : respondableReviews[selected.id].response }} onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))} />
-          : <p className={styles.responseUnavailable}>A response is not available for this review.</p>}
-      </section>}
+      {!loading && !error && selected && <SelectedReview
+        selected={selected}
+        property={properties[selected.property_id]}
+        respondableReview={respondableReviews[selected.id]}
+        response={responseCache[selected.id]}
+        onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))}
+      />}
       <aside className={styles.sidebar} aria-label="Guest review insights">
         <section className={styles.summary}>
           <div>
