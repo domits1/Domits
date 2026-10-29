@@ -5,6 +5,10 @@ import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/ho
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
+const getGuestCapacity = (generalDetails) => {
+    const guests = (Array.isArray(generalDetails) ? generalDetails : []).find((detail) => detail?.detail === 'Guests');
+    return guests?.value || null;
+};
 
 const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null }) => {
     const isGuest = dashboardType === 'guest';
@@ -28,6 +32,7 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
         return;
     }
 
+    const guestCapacity = getGuestCapacity(accommodation?.generalDetails);
     const firstImage = resolvePrimaryAccommodationImageUrl(accommodation?.images, "thumb");
     const formatHour = (hour) => {
         return `${hour}:00`;
@@ -106,11 +111,11 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
 
                         <div className="house-rules">
                             <h4>House rules</h4>
-                            <p>{accommodation?.Capacity} guests maximum</p>
+                            {guestCapacity ? <p>{guestCapacity} guests maximum</p> : null}
                             {accommodation?.rules?.[0]?.value ? <p>Pets allowed</p> : <p>No pets</p>}
 
-                            {accommodation?.rules[1]?.value ? <p>Parties allowed</p> : <p>No parties</p>}
-                            {accommodation?.rules[2]?.value ? <p>Smoking allowed</p> : <p>No smoking</p>}
+                            {accommodation?.rules?.[1]?.value ? <p>Parties allowed</p> : <p>No parties</p>}
+                            {accommodation?.rules?.[2]?.value ? <p>Smoking allowed</p> : <p>No smoking</p>}
                         </div>
 
                     </div>
