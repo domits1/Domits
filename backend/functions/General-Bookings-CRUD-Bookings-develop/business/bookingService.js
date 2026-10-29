@@ -25,6 +25,14 @@ const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
 const BOOKING_STATUS_INQUIRY = "Inquiry";
 const BOOKING_STATUS_PAID = "Paid";
 const BOOKING_STATUS_CANCELLED = "Cancelled";
+const PLACEHOLDER_PAYMENT_ID_PREFIX = "FAILED";
+
+const isUnreadablePaymentId = (paymentId) => {
+  const normalized = String(paymentId ?? "")
+    .trim()
+    .toUpperCase();
+  return !normalized || normalized.startsWith(PLACEHOLDER_PAYMENT_ID_PREFIX);
+};
 
 const getPropertyId = (booking) =>
   requireStr(booking?.property_id) || requireStr(booking?.propertyId) || requireStr(booking?.domitsPropertyId);
@@ -167,29 +175,46 @@ class BookingService {
 
   async confirmPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+    if (!booking) {
+      return { paymentConfirmed: false, newlyPaid: false, notificationContext: null };
+    }
+    const notificationContext = {
+      hostId: booking.hostid,
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      paymentId: paymentid,
+    };
     if (booking.status === BOOKING_STATUS_PAID) {
-      return true;
+      return { paymentConfirmed: true, newlyPaid: false, notificationContext };
     }
     const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
     if (paymentIntent.status === "succeeded") {
-      await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
-      return true;
-    } else {
-      return false;
+      const newlyPaid = await this.reservationRepository.markBookingPaidWithOutbox(booking.id);
+      return { paymentConfirmed: true, newlyPaid: newlyPaid === true, notificationContext };
     }
+    return { paymentConfirmed: false, newlyPaid: false, notificationContext };
   }
 
   async failPayment(paymentid) {
     const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+    if (!booking) {
+      return { paymentConfirmed: false, paymentFailed: false, notificationContext: null };
+    }
+    const notificationContext = {
+      hostId: booking.hostid,
+      bookingId: booking.id,
+      propertyId: booking.property_id,
+      paymentId: paymentid,
+    };
     if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
-      // A failed payment frees the nights the booking held, so Channex has to reopen them.
       const channexChange = bookingAvailabilityChange(booking.property_id, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
         arrivalMs: Number(booking.arrivaldate),
         departureMs: Number(booking.departuredate),
       });
       await this.reservationRepository.updateBookingStatus(booking.id, "Failed", [channexChange]);
-      return true;
+      return { paymentConfirmed: true, paymentFailed: true, notificationContext };
     }
+    return { paymentConfirmed: false, paymentFailed: false, notificationContext };
   }
 
   async read(event) {
@@ -208,8 +233,14 @@ class BookingService {
         return await this.reservationRepository.readByDate(event.event.createdAt, event.event.property_Id);
       }
       case "paymentId": {
-        await this.authManager.authenticateUser(event.Authorization);
-        return await this.reservationRepository.readByPaymentId(event.event.paymentID);
+        const user = await this.authManager.authenticateUser(event.Authorization);
+        if (!user?.sub) {
+          throw new Unauthorized("You must be logged in.");
+        }
+        if (isUnreadablePaymentId(event.event.paymentID)) {
+          throw new NotFoundException("No booking found.");
+        }
+        return await this.reservationRepository.readOwnBookingsByPaymentId(event.event.paymentID, user.sub);
       }
       case "hostId": {
         authToken = await this.authManager.authenticateUser(event.Authorization);

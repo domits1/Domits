@@ -57,7 +57,7 @@ const normalizeChannexFullSyncDebugStage = (value) => {
 const buildChannexFullSyncErrorDetails = (stage, error) => ({
   stage,
   errorName: error?.name ?? null,
-  errorMessage: error?.message ?? "Unhandled Channex full certification sync error.",
+  errorMessage: error?.message ?? "Unhandled Channex full sync error.",
   details: describeLocalError(error),
   stackSummary: summarizeErrorStack(error),
 });
@@ -988,7 +988,7 @@ export default class ChannexFullSyncService {
     const response = combinedErrors.length
       ? bad(500, {
           ...responseBody,
-          error: "Channex certification full sync provider step failed.",
+          error: "A Channex full sync provider step failed.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_PROVIDER_FAILED",
         })
       : ok(responseBody);
@@ -1326,7 +1326,7 @@ export default class ChannexFullSyncService {
           stage,
           dryRun,
           providerMode,
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
           errorName: errorDetails.errorName,
           errorMessage: errorDetails.errorMessage,
@@ -1343,7 +1343,7 @@ export default class ChannexFullSyncService {
           errors: [
             {
               errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
-              errorMessage: "Failed to run Channex certification full sync.",
+              errorMessage: "Failed to run the Channex full sync.",
               details: errorDetails.details,
               stage,
             },

@@ -7,6 +7,7 @@ import TeamInviteModal from './TeamInviteModal';
 
 const DEFAULT_SETTINGS = {
     notifEmailAssigned: true,
+    notifEmailDueSoon: true,
     notifEmailOverdue: true,
     notifEmailCompleted: true,
     notifSmsUrgent: false,
@@ -181,12 +182,13 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                         <p className="settings-card-subtitle">Customize your app preferences.</p>
                         <p className="settings-group-label">Email notifications</p>
                         {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me')}
+                        {renderSettingsToggle('notifEmailDueSoon', 'Task due soon')}
                         {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
                         {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
                         <p className="settings-group-label">SMS notifications</p>
                         {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
                         <p className="settings-group-label">In-App notifications</p>
-                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
                     </div>
 
                     <div className="settings-card">

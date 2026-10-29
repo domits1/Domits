@@ -16,6 +16,7 @@ export const Host_Settings = new EntitySchema({
         require_photo_proof: { type: "boolean", default: false },
         notif_email_assigned: { type: "boolean", default: true },
         notif_email_overdue: { type: "boolean", default: true },
+        notif_email_due_soon: { type: "boolean", nullable: true },
         notif_email_completed: { type: "boolean", default: true },
         notif_sms_urgent: { type: "boolean", default: false },
         notif_inapp_enabled: { type: "boolean", default: true },

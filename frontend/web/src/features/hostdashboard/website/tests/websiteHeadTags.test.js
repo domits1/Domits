@@ -127,7 +127,7 @@ describe("buildWebsiteHeadTags", () => {
       model: buildModel({ media: { heroImage: NORMALIZED_PLACEHOLDER, galleryImages: [NORMALIZED_PLACEHOLDER] } }),
     });
 
-    expect(NORMALIZED_PLACEHOLDER).toMatch(/^https:\/\//);
+    expect(NORMALIZED_PLACEHOLDER).toBe(placeholderImage);
     expect(tags.metaByProperty["og:image"]).toBeUndefined();
     expect(tags.metaByProperty["og:image:alt"]).toBeUndefined();
     expect(JSON.stringify(tags)).not.toContain("data:");

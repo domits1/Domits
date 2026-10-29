@@ -3,8 +3,11 @@ import { Controller } from "./controller/controller.js";
 let controller = null;
 
 const OVERDUE_SWEEP_TASK = "notify-overdue-tasks";
+const DUE_SOON_SWEEP_TASK = "notify-due-soon-tasks";
 
-const isOverdueSweep = (event) => event?.task === OVERDUE_SWEEP_TASK && !event.httpMethod;
+const isScheduledRun = (event, task) => event?.task === task && !event.httpMethod;
+const isOverdueSweep = (event) => isScheduledRun(event, OVERDUE_SWEEP_TASK);
+const isDueSoonSweep = (event) => isScheduledRun(event, DUE_SOON_SWEEP_TASK);
 
 const INTERNAL_ROUTES = {
     "/internal/create-task": "internalCreateTask",
@@ -16,6 +19,7 @@ const ACTION_ROUTES = {
         'view-url': 'getViewUrl',
         'checklist': 'getChecklistItems',
         'checklist-templates': 'getChecklistTemplates',
+        'notifications': 'getNotifications',
     },
     POST: {
         'checklist': 'createChecklistItem',
@@ -23,6 +27,8 @@ const ACTION_ROUTES = {
     },
     PATCH: {
         'checklist': 'updateChecklistItem',
+        'notification-read': 'markNotificationRead',
+        'notifications-read-all': 'markAllNotificationsRead',
     },
     DELETE: {
         'checklist': 'deleteChecklistItem',
@@ -46,6 +52,10 @@ export const handler = async (event) => {
 
         if (isOverdueSweep(event)) {
             return await controller.runOverdueSweep(event);
+        }
+
+        if (isDueSoonSweep(event)) {
+            return await controller.runDueSoonSweep(event);
         }
 
         const path = event.path || "";
@@ -80,7 +90,7 @@ export const handler = async (event) => {
         return await controller[methodName](event);
     } catch (error) {
         // Nobody reads the answer to a scheduled run, so a failed sweep has to fail the invocation.
-        if (isOverdueSweep(event)) {
+        if (isOverdueSweep(event) || isDueSoonSweep(event)) {
             throw error;
         }
         return {
