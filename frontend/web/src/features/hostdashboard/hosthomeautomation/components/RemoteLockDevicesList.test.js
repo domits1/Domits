@@ -51,6 +51,22 @@ describe("RemoteLockDevicesList", () => {
     expect(screen.getAllByRole("row")).toHaveLength(3);
   });
 
+  it("states the table roles explicitly, because small screens drop the native semantics in Safari", () => {
+    renderList({ devices: [device()] });
+
+    expect(screen.getByRole("table")).toHaveAttribute("role", "table");
+    [
+      ["rowgroup", 2],
+      ["row", 2],
+      ["columnheader", 5],
+      ["cell", 5],
+    ].forEach(([role, count]) => {
+      const elements = screen.getAllByRole(role);
+      expect(elements).toHaveLength(count);
+      elements.forEach((element) => expect(element).toHaveAttribute("role", role));
+    });
+  });
+
   it("shows a device's name, type, status, battery and last seen", () => {
     renderList({ devices: [device({ type: "zwave_lock", status: "OFFLINE", battery: 15 })] });
 
@@ -145,6 +161,31 @@ describe("RemoteLockDevicesList", () => {
     await user.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the error text it is given instead of the default", () => {
+    renderList({ error: "boom", errorText: "RemoteLock needs to be reconnected." });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("RemoteLock needs to be reconnected.");
+  });
+
+  it("says when the list is cut short, and only then", () => {
+    const { rerender } = renderList({ devices: [device()], truncated: true });
+    expect(screen.getByText("Not all devices are shown.")).toBeInTheDocument();
+
+    rerender(
+      <RemoteLockDevicesList
+        connected
+        devices={[device()]}
+        truncated={false}
+        loading={false}
+        error={null}
+        onRetry={jest.fn()}
+        copy={COPY}
+        language="en"
+      />
+    );
+    expect(screen.queryByText("Not all devices are shown.")).not.toBeInTheDocument();
   });
 
   it("uses the copy and language it is given", () => {

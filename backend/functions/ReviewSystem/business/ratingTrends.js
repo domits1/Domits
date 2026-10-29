@@ -46,15 +46,3 @@ export function parseTrendQuery(query, now) {
   return { days, offset, status: query.status, sort, endExclusive, currentStart,
     previousStart: currentStart - days * DAY_MS };
 }
-
-export function classifyTrend(previous, current, { threshold, minimumReviews }) {
-  if (previous.review_count < minimumReviews || current.review_count < minimumReviews
-    || !Number.isFinite(previous.overall_score) || !Number.isFinite(current.overall_score)) {
-    return { rating_change: null, trend_status: "INSUFFICIENT_DATA" };
-  }
-  const change = current.overall_score - previous.overall_score;
-  const boundary = threshold * (1 - 1e-12);
-  if (change <= -boundary) return { rating_change: change, trend_status: "DECLINING" };
-  if (change >= boundary) return { rating_change: change, trend_status: "IMPROVING" };
-  return { rating_change: change, trend_status: "STABLE" };
-}

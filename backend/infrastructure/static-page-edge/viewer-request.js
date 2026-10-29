@@ -1,3 +1,4 @@
+import cf from "cloudfront";
 var LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 var PORT_PATTERN = /^[0-9]{1,5}$/;
 var MAX_HOSTNAME_LENGTH = 253;
@@ -5,6 +6,7 @@ var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
 var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
 var ROBOTS_URI = "/robots.txt";
+var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 
 function normalizeHostName(value) {
   var parts = String(value || "")
@@ -74,7 +76,45 @@ function robotsResponse(host, method) {
   return response;
 }
 
-function handler(event) {
+async function primaryHostFor(host) {
+  try {
+    var store = cf.kvs();
+    var value = await store.get(host);
+    var target = normalizeHostName(value);
+    if (!isHostName(target) || target === host) {
+      return "";
+    }
+    var chained = await store.exists(target);
+    return chained ? "" : target;
+  } catch (error) {
+    return "";
+  }
+}
+
+function queryStringOf(querystring) {
+  var parts = [];
+  for (var name in querystring) {
+    var entry = querystring[name];
+    var values = entry && entry.multiValue ? entry.multiValue : [entry];
+    for (var index = 0; index < values.length; index += 1) {
+      parts.push(name + "=" + String((values[index] && values[index].value) || ""));
+    }
+  }
+  return parts.length > 0 ? "?" + parts.join("&") : "";
+}
+
+function redirectResponse(target, request) {
+  return {
+    statusCode: 301,
+    statusDescription: "Moved Permanently",
+    headers: {
+      location: { value: "https://" + target + request.uri + queryStringOf(request.querystring) },
+      "cache-control": { value: REDIRECT_CACHE_CONTROL },
+    },
+  };
+}
+
+async function handler(event) {
   try {
     var request = event.request;
     if (isPageKeyRequest(request.uri)) {
@@ -83,16 +123,22 @@ function handler(event) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return request;
     }
-    var isRobots = request.uri === ROBOTS_URI;
-    if (!isRobots && !Object.prototype.hasOwnProperty.call(HOST_FILES, request.uri)) {
-      return request;
-    }
     var hostHeader = request.headers.host;
     if (!hostHeader || (hostHeader.multiValue && hostHeader.multiValue.length > 1)) {
       return request;
     }
     var host = normalizeHostName(hostHeader.value);
     if (!isHostName(host)) {
+      return request;
+    }
+    if (typeof request.uri === "string" && request.uri.charAt(0) === "/") {
+      var target = await primaryHostFor(host);
+      if (target) {
+        return redirectResponse(target, request);
+      }
+    }
+    var isRobots = request.uri === ROBOTS_URI;
+    if (!isRobots && !Object.prototype.hasOwnProperty.call(HOST_FILES, request.uri)) {
       return request;
     }
     if (isRobots) {

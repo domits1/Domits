@@ -76,4 +76,147 @@ describe('SettingsView', () => {
         expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ autoAssignCleaning: true }));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled());
     });
+
+    describe('notification toggles', () => {
+        const EMAIL_TOGGLES = [
+            ['Task assigned to me', 'notifEmailAssigned'],
+            ['Task due soon', 'notifEmailDueSoon'],
+            ['Task overdue', 'notifEmailOverdue'],
+            ['Task completed', 'notifEmailCompleted'],
+        ];
+
+        test.each(EMAIL_TOGGLES)('lets the user turn off "%s" emails and saves only that choice', async (label, key) => {
+            fetchSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, notifEmailDueSoon: true });
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await screen.findByText('Team Members');
+
+            const toggle = screen.getByRole('button', { name: label });
+            await waitFor(() => expect(toggle).toHaveClass('on'));
+
+            fireEvent.click(toggle);
+            expect(toggle).not.toHaveClass('on');
+
+            saveSettings.mockResolvedValue();
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            const stillOn = EMAIL_TOGGLES.filter(([, otherKey]) => otherKey !== key).map(([, otherKey]) => otherKey);
+            expect(saveSettings).toHaveBeenCalledWith(
+                expect.objectContaining({ [key]: false, ...Object.fromEntries(stillOn.map(other => [other, true])) })
+            );
+        });
+
+        test('lets the user turn off in-app notifications and saves the choice', async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await screen.findByText('Team Members');
+
+            const inAppToggle = screen.getByRole('button', { name: 'Enable notifications' });
+            await waitFor(() => expect(inAppToggle).toHaveClass('on'));
+
+            fireEvent.click(inAppToggle);
+            expect(inAppToggle).not.toHaveClass('on');
+
+            saveSettings.mockResolvedValue();
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ notifInappEnabled: false }));
+        });
+
+        test.each(['Urgent tasks only'])(
+            'keeps "%s" inert because nothing sends it yet',
+            async (label) => {
+                render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+                await screen.findByText('Team Members');
+
+                const toggle = screen.getByRole('button', { name: label });
+                expect(toggle).toHaveAttribute('aria-disabled', 'true');
+
+                fireEvent.click(toggle);
+                expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+            }
+        );
+    });
+
+    describe('when saving fails', () => {
+        const turnOffAssignedEmails = async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await waitFor(() => expect(screen.getByRole('button', { name: 'Task assigned to me' })).toHaveClass('on'));
+            fireEvent.click(screen.getByRole('button', { name: 'Task assigned to me' }));
+        };
+
+        test('tells the user the settings were not saved, and does not say they were', async () => {
+            saveSettings.mockRejectedValue(new Error('Failed to save settings: 500'));
+            await turnOffAssignedEmails();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(screen.getByRole('alert')).toHaveTextContent("Couldn't save your settings");
+            expect(screen.queryByText('Settings saved successfully.')).not.toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled();
+        });
+
+        test('removes the message once a retry succeeds', async () => {
+            saveSettings.mockRejectedValueOnce(new Error('Failed to save settings: 500')).mockResolvedValueOnce();
+            await turnOffAssignedEmails();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+            expect(screen.getByRole('alert')).toBeInTheDocument();
+
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+            expect(screen.getByText('Settings saved successfully.')).toBeInTheDocument();
+        });
+    });
+
+    describe('when the saved settings are not known', () => {
+        // Saving sends every field, so a save made on top of unloaded defaults
+        // would overwrite a saved opt-out.
+        test('tells the user and blocks saving when the settings failed to load', async () => {
+            fetchSettings.mockRejectedValue(new Error('Failed to fetch settings: 503'));
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+
+            expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load your settings");
+
+            fireEvent.change(screen.getByLabelText('Default task priority'), { target: { value: 'High' } });
+
+            const saveButton = screen.getByRole('button', { name: 'Save changes' });
+            expect(saveButton).toBeDisabled();
+            fireEvent.click(saveButton);
+            expect(saveSettings).not.toHaveBeenCalled();
+        });
+
+        test('blocks saving until the settings have loaded', async () => {
+            let finishLoading;
+            fetchSettings.mockReturnValue(new Promise((resolve) => { finishLoading = resolve; }));
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await screen.findByText('Team Members');
+
+            fireEvent.change(screen.getByLabelText('Default task priority'), { target: { value: 'High' } });
+            expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+
+            await act(async () => {
+                finishLoading(DEFAULT_SETTINGS);
+            });
+            expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        });
+
+        test('allows saving once the settings have loaded', async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await waitFor(() => expect(screen.getByRole('button', { name: 'Task assigned to me' })).toHaveClass('on'));
+
+            fireEvent.change(screen.getByLabelText('Default task priority'), { target: { value: 'High' } });
+
+            expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled();
+        });
+    });
 });

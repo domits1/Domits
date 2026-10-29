@@ -327,6 +327,22 @@ describe("IntegrationService Channex booking pull import", () => {
     );
   });
 
+  test.each([
+    { guestCount: 3, expected: 3 },
+    { guestCount: null, expected: null },
+  ])("passes the revision's guest count $guestCount to the new booking", async ({ guestCount, expected }) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ guestCount })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ guestCount: expected })
+    );
+  });
+
   test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
     const { service, externalBookingImportRepository } = createService({
       feedRevisions: [buildFeedRevision({ amount })],
@@ -641,6 +657,7 @@ describe("IntegrationService Channex booking pull import", () => {
             arrivalDate: "2026-06-02",
             departureDate: "2026-06-04",
             guestName: "Modified Guest",
+            guestCount: 4,
           }),
         ],
         existingRevision: null,
@@ -665,6 +682,7 @@ describe("IntegrationService Channex booking pull import", () => {
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
       totalPrice: 200,
+      guestCount: 4,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
       channexChanges: [
         {
@@ -1038,9 +1056,11 @@ describe("IntegrationService Channex booking polling", () => {
     expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
   });
 
-  test("does not poll when enabled without required allowlists", async () => {
+  // In production every connected host is polled; the allowlists only narrow a test run (#3576).
+  test("polls every connected account and active mapping when no allowlists are set", async () => {
     enablePollingEnv();
-    const { service, accounts, channexProviderClient } = createService({
+    const { service, accounts, props, channexProviderClient } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
     });
@@ -1050,17 +1070,54 @@ describe("IntegrationService Channex booking polling", () => {
     expect(result.statusCode).toBe(200);
     expect(result.response).toMatchObject({
       enabled: true,
-      calledProvider: false,
-      accountsChecked: 0,
-      propertiesChecked: 0,
-      fetchedCount: 0,
-      overallSuccess: false,
+      accountsChecked: 1,
+      propertiesChecked: 1,
+      fetchedCount: 1,
+      ackedCount: 1,
+      overallSuccess: true,
     });
-    expect(result.response.warnings).toEqual([
-      expect.objectContaining({ code: "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED" }),
-    ]);
-    expect(accounts.listByChannel).not.toHaveBeenCalled();
-    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+    expect(result.response.warnings).toEqual([]);
+    expect(accounts.listByChannel).toHaveBeenCalledWith("CHANNEX");
+    expect(props.listByAccountId).toHaveBeenCalledWith("integration-account-1");
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledTimes(1);
+  });
+
+  // A revision the poll acknowledges is one the webhook should have delivered, so it is logged
+  // as one JSON line that a CloudWatch metric filter can alarm on (#3576).
+  test("logs a missed webhook when a poll acknowledges a revision", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    await service.pollLatestChannexBookings(buildEnabledPollOptions());
+
+    const missedLines = warn.mock.calls
+      .map(([line]) => line)
+      .filter((line) => typeof line === "string" && line.includes("CHANNEX_BOOKING_POLL_IMPORTED_MISSED"));
+    expect(missedLines).toHaveLength(1);
+    expect(JSON.parse(missedLines[0])).toEqual({
+      event: "CHANNEX_BOOKING_POLL_IMPORTED_MISSED",
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      ackedCount: 1,
+    });
+  });
+
+  test("logs nothing about missed webhooks when the feed is empty", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
+      feedRevisions: [],
+      existingRevision: null,
+    });
+
+    await service.pollLatestChannexBookings(buildEnabledPollOptions());
+
+    const loggedLines = warn.mock.calls.map(([line]) => String(line));
+    expect(loggedLines.some((line) => line.includes("CHANNEX_BOOKING_POLL_IMPORTED_MISSED"))).toBe(false);
   });
 
   test("polls active Channex mappings through the same import core and writes evidence/logging", async () => {

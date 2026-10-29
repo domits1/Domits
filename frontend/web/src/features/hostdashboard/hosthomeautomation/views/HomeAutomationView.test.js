@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import HomeAutomationView from "./HomeAutomationView";
@@ -16,6 +16,7 @@ jest.mock("../services/remoteLockService");
 
 const CONNECTED = { status: "CONNECTED", lastSyncAt: Date.UTC(2026, 9, 8, 9, 30) };
 const NOT_CONNECTED = { status: "NOT_CONNECTED", lastSyncAt: null };
+const SIGN_IN = { status: "CONNECTING", authorizeUrl: "https://connect.remotelock.com/oauth/authorize?state=s" };
 const DEVICE = { id: "lock-1", name: "Front door", type: "lock", status: "ONLINE", battery: 82, lastSeenAt: null };
 
 const renderView = (language = "en") =>
@@ -28,13 +29,21 @@ const renderView = (language = "en") =>
   );
 
 describe("HomeAutomationView", () => {
+  let originalLocation;
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "error").mockImplementation(() => {});
-    getRemoteLockDevices.mockResolvedValue([DEVICE]);
+    getRemoteLockDevices.mockResolvedValue({ devices: [DEVICE], truncated: false });
+    originalLocation = window.location;
+    delete window.location;
+    window.location = { assign: jest.fn() };
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    window.location = originalLocation;
+    jest.restoreAllMocks();
+  });
 
   it("shows a loading message first", async () => {
     getRemoteLockStatus.mockReturnValue(new Promise(() => {}));
@@ -110,6 +119,24 @@ describe("HomeAutomationView", () => {
       expect(getRemoteLockDevices).toHaveBeenCalledTimes(1);
     });
 
+    it("say when the list is cut short", async () => {
+      getRemoteLockStatus.mockResolvedValue(CONNECTED);
+      getRemoteLockDevices.mockResolvedValue({ devices: [DEVICE], truncated: true });
+
+      renderView();
+
+      expect(await screen.findByText("Not all devices are shown.")).toBeInTheDocument();
+    });
+
+    it("tell the host to reconnect when RemoteLock needs it", async () => {
+      getRemoteLockStatus.mockResolvedValue(CONNECTED);
+      getRemoteLockDevices.mockRejectedValueOnce(Object.assign(new Error("x"), { code: "NEEDS_RECONNECT" }));
+
+      renderView();
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("RemoteLock needs to be reconnected.");
+    });
+
     it("show an error with a retry that loads them", async () => {
       const user = userEvent.setup();
       getRemoteLockStatus.mockResolvedValue(CONNECTED);
@@ -129,24 +156,19 @@ describe("HomeAutomationView", () => {
   });
 
   describe("actions", () => {
-    it("connect: confirming shows Connected and the devices, and closes the modal", async () => {
+    it("connect: confirming sends the browser to RemoteLock and leaves the status as it was", async () => {
       const user = userEvent.setup();
       getRemoteLockStatus.mockResolvedValue(NOT_CONNECTED);
-      connectRemoteLock.mockResolvedValue(CONNECTED);
+      connectRemoteLock.mockResolvedValue(SIGN_IN);
       renderView();
 
       await user.click(await screen.findByRole("button", { name: "Connect" }));
       const dialog = screen.getByRole("dialog", { name: "Connect RemoteLock" });
-      expect(screen.getByText("Connect to see your devices")).toBeInTheDocument();
       await user.click(within(dialog).getByRole("button", { name: "Connect" }));
 
-      expect(await screen.findByRole("cell", { name: "Front door" })).toBeInTheDocument();
-      expect(screen.queryByText("Connect to see your devices")).not.toBeInTheDocument();
-      expect(screen.getByText("Connected")).toBeInTheDocument();
-      expect(screen.getByText(/Last sync:/)).toHaveTextContent("2026");
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Disconnect" })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument();
+      await waitFor(() => expect(window.location.assign).toHaveBeenCalledWith(SIGN_IN.authorizeUrl));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(screen.getByText("Not connected")).toBeInTheDocument();
     });
 
     it("disconnect: confirming shows Disconnected, removes the devices and offers Connect again", async () => {
@@ -167,10 +189,10 @@ describe("HomeAutomationView", () => {
       expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
     });
 
-    it("reconnect: is offered from an error status and ends up connected", async () => {
+    it("reconnect: is offered from an error status and sends the browser to RemoteLock", async () => {
       const user = userEvent.setup();
       getRemoteLockStatus.mockResolvedValue({ status: "EXPIRED_CREDENTIALS", lastSyncAt: null });
-      connectRemoteLock.mockResolvedValue(CONNECTED);
+      connectRemoteLock.mockResolvedValue(SIGN_IN);
       renderView();
 
       await user.click(await screen.findByRole("button", { name: "Reconnect" }));
@@ -178,8 +200,15 @@ describe("HomeAutomationView", () => {
         within(screen.getByRole("dialog", { name: "Reconnect RemoteLock" })).getByRole("button", { name: "Reconnect" })
       );
 
-      expect(await screen.findByText("Connected")).toBeInTheDocument();
-      expect(await screen.findByRole("cell", { name: "Front door" })).toBeInTheDocument();
+      await waitFor(() => expect(window.location.assign).toHaveBeenCalledWith(SIGN_IN.authorizeUrl));
+    });
+
+    it("a host who came back from RemoteLock without finishing can start again", async () => {
+      getRemoteLockStatus.mockResolvedValue({ status: "CONNECTING", lastSyncAt: null });
+
+      renderView();
+
+      expect(await screen.findByRole("button", { name: "Connect" })).toBeInTheDocument();
     });
 
     it("cancelling leaves the status and devices as they were and runs no request", async () => {

@@ -54,16 +54,20 @@ import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbo
 import { HomeAutomationDevice } from "../../models/homeAutomation/HomeAutomationDevice.js";
 import { AccessCredential } from "../../models/homeAutomation/AccessCredential.js";
 import { CredentialLease } from "../../models/homeAutomation/CredentialLease.js";
+import { HomeAutomationDeviceAudit } from "../../models/homeAutomation/HomeAutomationDeviceAudit.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checklist_Item.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
+import { Task_Notification } from "../../models/Task_Notification.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
+import { Property_Owner } from "../../models/Property_Owner.js";
+import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
 import { Invoice } from "../../models/Invoice.js";
 
 import { Review } from "../../models/Review.js";
@@ -71,6 +75,7 @@ import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
 import { Review_Response } from "../../models/Review_Response.js";
+
 
 export const Tables = [
   Amenities,
@@ -126,17 +131,21 @@ export const Tables = [
   HomeAutomationDevice,
   AccessCredential,
   CredentialLease,
+  HomeAutomationDeviceAudit,
 
   User_Table,
   PropertyTask,
   Property_Task_Activity,
   Property_Task_Checklist_Item,
   Host_Settings,
+  Task_Notification,
   Communication_Preferences,
   Company_Profile,
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,
+  Property_Owner,
+  Property_Owner_Property,
   Invoice,
   EnterpriseRatePlan,
   Review,

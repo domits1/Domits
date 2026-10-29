@@ -11,6 +11,15 @@ const normalizeNonNegativeInteger = (value) => {
 const normalizeWarnings = (parsed) => (Array.isArray(parsed?.meta?.warnings) ? parsed.meta.warnings : []);
 const normalizeTaskIds = (parsed) =>
   Array.isArray(parsed?.data) ? parsed.data.map((item) => requireStr(item?.id)).filter(Boolean) : [];
+// Infants are left out: they do not count towards a stay's guest maximum.
+const countGuests = (occupancy) =>
+  (normalizeNonNegativeInteger(occupancy?.adults) ?? 0) + (normalizeNonNegativeInteger(occupancy?.children) ?? 0);
+const resolveGuestCount = (attributes, rooms) => {
+  const guestCount = attributes?.occupancy
+    ? countGuests(attributes.occupancy)
+    : rooms.reduce((total, room) => total + countGuests(room?.occupancy), 0);
+  return guestCount > 0 ? guestCount : null;
+};
 const normalizeChannexBookingRevision = (row) => {
   const revisionId = requireStr(row?.id);
   const attributes = row?.attributes && typeof row.attributes === "object" ? row.attributes : {};
@@ -33,10 +42,9 @@ const normalizeChannexBookingRevision = (row) => {
     amount: attributes?.amount ?? null,
     currency: requireStr(attributes?.currency),
     insertedAt: requireStr(attributes?.inserted_at),
-    guestName:
-      requireStr(customer?.name) ||
-      [requireStr(customer?.first_name), requireStr(customer?.last_name)].filter(Boolean).join(" ") ||
-      null,
+    // Channex sends the first name as customer.name and the last name as customer.surname.
+    guestName: [requireStr(customer?.name), requireStr(customer?.surname)].filter(Boolean).join(" ") || null,
+    guestCount: resolveGuestCount(attributes, rooms),
     rooms: rooms.map((room) => ({
       roomTypeId: requireStr(room?.room_type_id),
       ratePlanId: requireStr(room?.rate_plan_id),

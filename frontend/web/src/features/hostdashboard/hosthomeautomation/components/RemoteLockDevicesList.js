@@ -9,35 +9,56 @@ import { formatDateTime } from "../utils/formatDateTime";
 
 const NO_VALUE = "—";
 
+// Small screens set display: block on these elements, which drops the table semantics in Safari.
 function DevicesTable({ devices, copy, language }) {
   const { columns } = copy;
 
   return (
-    <table className="host-homeauto__table">
-      <thead>
-        <tr>
-          <th scope="col">{columns.name}</th>
-          <th scope="col">{columns.type}</th>
-          <th scope="col">{columns.status}</th>
-          <th scope="col">{columns.battery}</th>
-          <th scope="col">{columns.lastSeen}</th>
+    <table className="host-homeauto__table" role="table">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader">
+            {columns.name}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.type}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.status}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.battery}
+          </th>
+          <th scope="col" role="columnheader">
+            {columns.lastSeen}
+          </th>
         </tr>
       </thead>
-      <tbody>
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <tbody role="rowgroup">
         {devices.map((device) => {
           const lastSeen = device.lastSeenAt ? formatDateTime(device.lastSeenAt, language) : "";
           return (
-            <tr key={device.id}>
-              <td data-label={columns.name}>{device.name}</td>
-              <td data-label={columns.type}>
+            <tr key={device.id} role="row">
+              <td data-label={columns.name} role="cell">
+                {device.name}
+              </td>
+              <td data-label={columns.type} role="cell">
                 {copy.types[getDeviceTypeLabelKey(device.type)]}
                 {UNSUPPORTED_DEVICE_TYPES.includes(device.type) && (
                   <span className="host-homeauto__unsupported">{copy.notSupported}</span>
                 )}
               </td>
-              <td data-label={columns.status}>{copy.statuses[getDeviceStatusLabelKey(device.status)]}</td>
-              <td data-label={columns.battery}>{Number.isFinite(device.battery) ? `${device.battery}%` : NO_VALUE}</td>
-              <td data-label={columns.lastSeen}>{lastSeen || NO_VALUE}</td>
+              <td data-label={columns.status} role="cell">
+                {copy.statuses[getDeviceStatusLabelKey(device.status)]}
+              </td>
+              <td data-label={columns.battery} role="cell">
+                {Number.isFinite(device.battery) ? `${device.battery}%` : NO_VALUE}
+              </td>
+              <td data-label={columns.lastSeen} role="cell">
+                {lastSeen || NO_VALUE}
+              </td>
             </tr>
           );
         })}
@@ -47,13 +68,13 @@ function DevicesTable({ devices, copy, language }) {
 }
 
 // Which of the four states the list is in, so the markup below stays flat.
-function DevicesBody({ connected, devices, loading, error, onRetry, copy, language }) {
+function DevicesBody({ connected, devices, loading, error, errorText, onRetry, copy, language }) {
   if (!connected) return <p className="host-homeauto__message">{copy.notConnected}</p>;
   if (loading) return <output className="host-homeauto__message">{copy.loading}</output>;
   if (error) {
     return (
       <div className="host-homeauto__error" role="alert">
-        <p className="host-homeauto__error-text">{copy.loadError}</p>
+        <p className="host-homeauto__error-text">{errorText || copy.loadError}</p>
         <button type="button" className="host-homeauto__retry" onClick={onRetry}>
           {copy.retry}
         </button>
@@ -64,7 +85,7 @@ function DevicesBody({ connected, devices, loading, error, onRetry, copy, langua
   return <DevicesTable devices={devices} copy={copy} language={language} />;
 }
 
-function RemoteLockDevicesList({ connected, devices, loading, error, onRetry, copy, language }) {
+function RemoteLockDevicesList({ connected, devices, truncated, loading, error, errorText, onRetry, copy, language }) {
   return (
     <section className="host-homeauto__card host-homeauto__devices" aria-label={copy.title}>
       <h2 className="host-homeauto__provider">{copy.title}</h2>
@@ -73,10 +94,12 @@ function RemoteLockDevicesList({ connected, devices, loading, error, onRetry, co
         devices={devices}
         loading={loading}
         error={error}
+        errorText={errorText}
         onRetry={onRetry}
         copy={copy}
         language={language}
       />
+      {truncated && <p className="host-homeauto__message">{copy.truncated}</p>}
     </section>
   );
 }
@@ -88,6 +111,7 @@ const deviceCopy = PropTypes.shape({
   loading: PropTypes.string.isRequired,
   loadError: PropTypes.string.isRequired,
   retry: PropTypes.string.isRequired,
+  truncated: PropTypes.string.isRequired,
   notSupported: PropTypes.string.isRequired,
   columns: PropTypes.objectOf(PropTypes.string).isRequired,
   statuses: PropTypes.objectOf(PropTypes.string).isRequired,
@@ -106,8 +130,10 @@ const devicesListPropTypes = {
       lastSeenAt: PropTypes.number,
     })
   ).isRequired,
+  truncated: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
   error: PropTypes.string,
+  errorText: PropTypes.string,
   onRetry: PropTypes.func.isRequired,
   copy: deviceCopy,
   language: PropTypes.string.isRequired,

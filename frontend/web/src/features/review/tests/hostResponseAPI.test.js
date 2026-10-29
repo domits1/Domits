@@ -1,5 +1,5 @@
 import { saveHostResponse, API_REVIEW_BASE } from "../services/reviewAPI";
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "token" }));
+jest.mock("../../../services/getAccessToken", () => ({ getIdToken: async () => "token" }));
 afterEach(() => { delete global.fetch; });
 test("publishes only response text to the authenticated response endpoint", async () => {
   global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => '{"response":{"message":"Thanks"}}' });

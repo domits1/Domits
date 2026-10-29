@@ -5,17 +5,19 @@ import { Controller } from "../../functions/ReviewSystem/controller/controller.j
 describe("property rating trends", () => {
   let repository, service, originalThreshold, originalMinimum;
   const query = { endDate: "2026-10-06", days: "30" };
-  const scores = (previous, current, previousCount = 3, currentCount = 3) => {
+  const scores = (previous, current, previousCount = 3, currentCount = 3, trendStatus = "DECLINING") => {
     repository.getPropertyRatingTrendPage.mockResolvedValue([{ property_id: "p1",
       previous_average_rating: previous, current_average_rating: current,
-      previous_review_count: previousCount, current_review_count: currentCount }]);
+      previous_review_count: previousCount, current_review_count: currentCount, trend_status: trendStatus,
+      rating_change: trendStatus === "INSUFFICIENT_DATA" ? null : current - previous }]);
   };
   beforeEach(() => {
     originalThreshold = process.env.REVIEW_DECLINE_THRESHOLD;
     originalMinimum = process.env.REVIEW_TREND_MIN_REVIEWS;
     process.env.REVIEW_DECLINE_THRESHOLD = "0.5";
     process.env.REVIEW_TREND_MIN_REVIEWS = "3";
-    repository = { getPropertyRatingTrendPage: jest.fn().mockResolvedValue([]) };
+    repository = { getPropertyRatingTrendPage: jest.fn().mockResolvedValue([]),
+      getPropertyRatingHistory: jest.fn().mockResolvedValue([]) };
     service = new ReviewService({ repository, now: () => Date.parse("2026-10-07T12:00:00Z") });
   });
   afterEach(() => {
@@ -25,8 +27,8 @@ describe("property rating trends", () => {
   });
   test.each([[4.5, 4, "DECLINING", -0.5], [4, 4, "STABLE", 0],
     [4, 3.75, "STABLE", -0.25], [4, 4.5, "IMPROVING", 0.5]])(
-    "classifies %s to %s as %s", async (previous, current, status, change) => {
-      scores(previous, current);
+    "returns database classification %s to %s as %s", async (previous, current, status, change) => {
+      scores(previous, current, 3, 3, status);
       const result = await service.getPropertyRatingTrends("host-1", query);
       expect(result.properties[0]).toMatchObject({ property_id: "p1", previous_average_rating: previous,
         current_average_rating: current, rating_change: change, previous_review_count: 3,
@@ -34,7 +36,7 @@ describe("property rating trends", () => {
     });
   test.each([[null, 4, 0, 3], [4, null, 3, 0], [4.5, 3, 2, 3]])(
     "handles insufficient data", async (previous, current, previousCount, currentCount) => {
-      scores(previous, current, previousCount, currentCount);
+      scores(previous, current, previousCount, currentCount, "INSUFFICIENT_DATA");
       const result = await service.getPropertyRatingTrends("host-1", query);
       expect(result.properties[0]).toMatchObject({ rating_change: null, trend_status: "INSUFFICIENT_DATA" });
     });
@@ -48,6 +50,49 @@ describe("property rating trends", () => {
   });
   test("returns empty results for managers without matching properties", async () => {
     expect((await service.getPropertyRatingTrends("host-1", query)).properties).toEqual([]);
+    expect(repository.getPropertyRatingHistory).not.toHaveBeenCalled();
+  });
+  test.each([7, 30, 366])("returns six exact %s-day windows, half-star averages and empty periods", async (days) => {
+    scores(4.5, 3.5);
+    repository.getPropertyRatingHistory.mockResolvedValue([
+      { property_id: "p1", period_index: 5, average_rating: 3.5, review_count: 4 },
+      { property_id: "p1", period_index: 0, average_rating: 4.5, review_count: 2 },
+    ]);
+    const result = await service.getPropertyRatingTrends("host-1", { ...query, days: String(days) });
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledWith("host-1", ["p1"], expect.objectContaining({ days }));
+    const history = result.properties[0].history;
+    expect(history).toHaveLength(6);
+    expect(history[0]).toMatchObject({ average_rating: 4.5, review_count: 2 });
+    expect(history[1]).toMatchObject({ average_rating: null, review_count: 0 });
+    expect(history[5]).toMatchObject({ end_date: query.endDate, average_rating: 3.5, review_count: 4 });
+    history.forEach((period, index) => {
+      expect(Date.parse(period.end_date) - Date.parse(period.start_date)).toBe((days - 1) * 86400000);
+      if (index) expect(Date.parse(period.start_date) - Date.parse(history[index - 1].end_date)).toBe(86400000);
+    });
+  });
+  test("keeps comparisons available when history fails", async () => {
+    scores(4.5, 3.5);
+    repository.getPropertyRatingHistory.mockRejectedValue(new Error("History query failed"));
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const result = await service.getPropertyRatingTrends("host-1", query);
+      expect(result.properties[0]).toMatchObject({ current_average_rating: 3.5, history: null });
+      expect(log).toHaveBeenCalled();
+    } finally { log.mockRestore(); }
+  });
+  test("keeps each property's history separate in the batched response", async () => {
+    scores(4.5, 3.5);
+    const first = repository.getPropertyRatingTrendPage.getMockImplementation();
+    const [row] = await first();
+    repository.getPropertyRatingTrendPage.mockResolvedValue([row, { ...row, property_id: "p2" }]);
+    repository.getPropertyRatingHistory.mockResolvedValue([
+      { property_id: "p1", period_index: 5, average_rating: 2.5, review_count: 2 },
+      { property_id: "p2", period_index: 5, average_rating: 4.5, review_count: 3 },
+    ]);
+    const result = await service.getPropertyRatingTrends("host-1", query);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledWith("host-1", ["p1", "p2"], expect.any(Object));
+    expect(result.properties.map((property) => property.history[5].average_rating)).toEqual([2.5, 4.5]);
   });
   test("returns a next offset when the filtered query has another result", async () => {
     repository.getPropertyRatingTrendPage.mockResolvedValue(Array.from({ length: 26 }, (_, index) => ({
@@ -58,6 +103,8 @@ describe("property rating trends", () => {
     expect(result.properties).toHaveLength(25);
     expect(result.next_offset).toBe(50);
     expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory).toHaveBeenCalledTimes(1);
+    expect(repository.getPropertyRatingHistory.mock.calls[0][1]).toEqual(Array.from({ length: 25 }, (_, index) => `p${index}`));
   });
   test("passes validated filter and ordering into the database page query", async () => {
     await service.getPropertyRatingTrends("host-1", { ...query, status: "DECLINING", sort: "declining-first" });
@@ -65,10 +112,10 @@ describe("property rating trends", () => {
       status: "DECLINING", sort: "declining-first", offset: 0,
     }));
   });
-  test("handles decimal threshold boundaries", async () => {
+  test("preserves the database decision at decimal threshold boundaries", async () => {
     process.env.REVIEW_DECLINE_THRESHOLD = "0.3";
-    scores(4.3, 4);
-    expect((await service.getPropertyRatingTrends("host-1", query)).properties[0].trend_status).toBe("DECLINING");
+    scores(4.3, 4, 3, 3, "STABLE");
+    expect((await service.getPropertyRatingTrends("host-1", query)).properties[0].trend_status).toBe("STABLE");
   });
   test.each([{ days: "0" }, { days: "367" }, { days: "1.5" }, { offset: "-1" }, { offset: [] },
     { endDate: "2026-02-30" }, { endDate: "2026-10-07" }, { endDate: null }, { status: "unknown" }, { sort: "unknown" }, { status: [] }])("rejects invalid input %j", async (invalid) => {
@@ -84,7 +131,7 @@ describe("property rating trends", () => {
     const controller = new Controller({ service });
     const request = { httpMethod: "GET", resource: "/reviews", queryStringParameters: { scope: "property-trends", ...query } };
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
-    request.requestContext = { authorizer: { claims: { sub: "user-sub" } } };
+    request.requestContext = { authorizer: { claims: { "cognito:username": "host-1" } } };
     expect((await controller.manageReviews(request)).statusCode).toBe(401);
     expect(repository.getPropertyRatingTrendPage).not.toHaveBeenCalled();
   });
@@ -93,6 +140,9 @@ describe("property rating trends", () => {
     const request = { httpMethod: "GET", resource: "/reviews", queryStringParameters: { scope: "property-trends", ...query },
       requestContext: { authorizer: { claims: { sub: "user-sub", "cognito:username": "host-1" } } } };
     scores(4.5, 4);
+    expect((await controller.manageReviews(request)).statusCode).toBe(200);
+    expect(repository.getPropertyRatingTrendPage).toHaveBeenCalledWith("user-sub", expect.any(Object));
+    delete request.requestContext.authorizer.claims["cognito:username"];
     expect((await controller.manageReviews(request)).statusCode).toBe(200);
     delete process.env.REVIEW_DECLINE_THRESHOLD;
     const failure = await controller.manageReviews(request);
