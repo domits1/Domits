@@ -45,8 +45,12 @@ const normalizedPayload = {
   messages: [
     {
       platformMessageId: "channex-msg-1",
+      senderId: "CHANNEX_GUEST:channex-booking-1",
+      recipientId: "host-1",
       content: "Thanks a lot.",
+      externalCreatedAt: 1640304000000,
       direction: "INBOUND",
+      metadata: { channexAttachments: [], channexHaveAttachment: false },
     },
   ],
 };
@@ -79,6 +83,7 @@ const buildService = ({
   findExternalThread = jest.fn().mockResolvedValue(existingThread),
   updateThreadGuestId = jest.fn().mockResolvedValue({ ...existingThread, guestId: "CHANNEX_GUEST:channex-booking-1" }),
   updateThreadBookingId = jest.fn().mockResolvedValue({}),
+  realtimePublisher = jest.fn().mockResolvedValue(undefined),
 } = {}) => {
   const deps = {
     properties: { findByExternalPropertyId },
@@ -86,6 +91,7 @@ const buildService = ({
     ingestionService: { ingestExternalThread },
     normalizeInboundMessage,
     threads: { findExternalThread, updateThreadGuestId, updateThreadBookingId },
+    realtimePublisher,
   };
   return { service: new ChannexWebhookService(deps), deps };
 };
@@ -476,6 +482,106 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
 
       expect(deps.threads.updateThreadBookingId).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("live delivery to the host's open inbox", () => {
+    const publishedMessage = {
+      senderId: "CHANNEX_GUEST:channex-booking-1",
+      userId: "CHANNEX_GUEST:channex-booking-1",
+      recipientId: "host-1",
+      text: "Thanks a lot.",
+      content: "Thanks a lot.",
+      threadId: "thread-xyz",
+      propertyId: "domits-property-1",
+      metadata: { channexAttachments: [], channexHaveAttachment: false },
+      createdAt: 1640304000000,
+      platform: "CHANNEX",
+      integrationAccountId: "integration-1",
+      externalThreadId: "channex-thread-1",
+      type: "message",
+    };
+
+    test("a new guest message is published once to the host, with the thread it was stored in", async () => {
+      const { service, deps } = buildService();
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).toHaveBeenCalledTimes(1);
+      expect(deps.realtimePublisher).toHaveBeenCalledWith(publishedMessage);
+    });
+
+    test("a duplicate delivery (nothing inserted) is not published again", async () => {
+      const ingestExternalThread = jest.fn().mockResolvedValue({
+        statusCode: 200,
+        response: { ok: true, threadId: "thread-xyz", insertedMessages: 0 },
+      });
+      const { service, deps } = buildService({ ingestExternalThread });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+    });
+
+    test("a message the host sent (normalizer returns null) is not published", async () => {
+      const { service, deps } = buildService({ normalizeInboundMessage: jest.fn().mockReturnValue(null) });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+    });
+
+    test("an unmapped property is not published", async () => {
+      jest.spyOn(console, "warn").mockImplementation(() => {});
+      const { service, deps } = buildService({ findByExternalPropertyId: jest.fn().mockResolvedValue([]) });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+      console.warn.mockRestore();
+    });
+
+    test("a failed ingest is not published", async () => {
+      const ingestExternalThread = jest.fn().mockResolvedValue({
+        statusCode: 400,
+        response: { error: "Channex message payload.id is required." },
+      });
+      const { service, deps } = buildService({ ingestExternalThread });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+    });
+
+    test("an ignored event type is not published", async () => {
+      const { service, deps } = buildService();
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent({ event: "ota_ping" }) }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+    });
+
+    test("message_thread_booking_assigned is not published", async () => {
+      const { service, deps } = buildService();
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseBookingAssignedWebhookEvent() }));
+
+      expect(deps.realtimePublisher).not.toHaveBeenCalled();
+    });
+
+    test("a publisher that throws is logged and the webhook still returns the ingest result", async () => {
+      const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const realtimePublisher = jest.fn().mockRejectedValue(new Error("websocket lambda unavailable"));
+      const { service } = buildService({ realtimePublisher });
+
+      const result = await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(result).toEqual({
+        statusCode: 200,
+        response: { ok: true, threadId: "thread-xyz", insertedMessages: 1 },
+      });
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 });

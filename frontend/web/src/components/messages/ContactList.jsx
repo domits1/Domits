@@ -64,6 +64,10 @@ const fetchUserInfo = async (targetUserId) => {
       return { givenName: String(targetUserId), userId: targetUserId, profileImage: null };
     }
 
+    if (String(targetUserId).startsWith("CHANNEX_GUEST")) {
+      return { givenName: "Channex guest", userId: targetUserId, profileImage: null };
+    }
+
     try {
       const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
         method: "POST",

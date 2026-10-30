@@ -4,6 +4,7 @@ import IntegrationAccountRepository from "../.shared/integrations/repositories/i
 import IntegrationPropertyRepository from "../.shared/integrations/repositories/integrationPropertyRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
 import IngestionService from "./ingestionService.js";
+import publishRealtimeMessage from "./publishRealtimeMessage.js";
 import { normalizeChannexInboundMessage } from "./channexMessageNormalizer.js";
 import { CHANNEX_STATUS } from "../.shared/channelManagement/channelManagementConstants.js";
 import { buildDeterministicChannexBookingId } from "../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js";
@@ -36,12 +37,14 @@ export default class ChannexWebhookService {
     ingestionService = new IngestionService(),
     normalizeInboundMessage = normalizeChannexInboundMessage,
     threads = new ThreadRepository(),
+    realtimePublisher = publishRealtimeMessage,
   } = {}) {
     this.properties = properties;
     this.accounts = accounts;
     this.ingestionService = ingestionService;
     this.normalizeInboundMessage = normalizeInboundMessage;
     this.threads = threads;
+    this.realtimePublisher = realtimePublisher;
   }
 
   isSecretValid(event) {
@@ -136,6 +139,32 @@ export default class ChannexWebhookService {
     return ok({ ok: true });
   }
 
+  // The message is already stored; a websocket outage must not fail the webhook, because Channex would
+  // redeliver it, the retry would insert nothing, and the push would never happen anyway.
+  async publishInboundMessages(normalized, threadId) {
+    for (const message of normalized.messages) {
+      try {
+        await this.realtimePublisher({
+          senderId: message.senderId,
+          userId: message.senderId,
+          recipientId: message.recipientId,
+          text: message.content || "",
+          content: message.content || "",
+          threadId,
+          propertyId: normalized.propertyId || null,
+          metadata: message.metadata || {},
+          createdAt: message.externalCreatedAt || Date.now(),
+          platform: normalized.platform,
+          integrationAccountId: normalized.integrationAccountId,
+          externalThreadId: normalized.externalThreadId,
+          type: "message",
+        });
+      } catch (error) {
+        console.error("Channex inbound realtime publish failed", error);
+      }
+    }
+  }
+
   async handleWebhookEvent(event) {
     if (!this.isSecretValid(event)) {
       return forbidden();
@@ -172,6 +201,10 @@ export default class ChannexWebhookService {
         webhookEvent.payload.booking_id
       );
       await this.threads.updateThreadBookingId(result.response.threadId, deterministicBookingId);
+    }
+
+    if (result.statusCode === 200 && result.response?.insertedMessages > 0) {
+      await this.publishInboundMessages(normalized, result.response.threadId);
     }
 
     return result;

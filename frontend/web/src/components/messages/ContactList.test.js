@@ -340,6 +340,40 @@ describe("ContactList realtime unread sync", () => {
     expect(updated[0].latestMessage.text).toBe("Hello, is this available?");
     expect(markThreadRead).not.toHaveBeenCalled();
   });
+
+  test("a live Channex guest message adds the contact as 'Channex guest' with one unread, without a user lookup", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn();
+
+    try {
+      const { setContacts } = renderWithSocket({
+        contacts: [],
+        wsMessage: {
+          userId: "CHANNEX_GUEST:booking-1",
+          senderId: "CHANNEX_GUEST:booking-1",
+          recipientId: "host-1",
+          text: "What time is check-in?",
+          threadId: "thread-channex-1",
+          platform: "CHANNEX",
+          integrationAccountId: "integration-1",
+          externalThreadId: "channex-thread-1",
+          createdAt: "2026-06-01T10:20:00.000Z",
+        },
+        activeThreadId: "thread-1",
+      });
+
+      await waitFor(() => expect(setContacts.mock.calls.length).toBeGreaterThanOrEqual(2));
+      const [contact] = applyQueuedUpdates(setContacts.mock.calls, []);
+
+      expect(contact.givenName).toBe("Channex guest");
+      expect(contact.unreadCount).toBe(1);
+      expect(contact.platform).toBe("CHANNEX");
+      expect(contact.threadId).toBe("thread-channex-1");
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 describe("ContactList manual mark read/unread", () => {
