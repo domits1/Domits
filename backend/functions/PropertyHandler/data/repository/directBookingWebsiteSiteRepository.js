@@ -2,6 +2,7 @@ import Database from "database";
 import { randomUUID } from "node:crypto";
 import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
+import { WebsitePublishNotAllowedError } from "../../util/exception/WebsitePublishNotAllowedError.js";
 import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
@@ -40,6 +41,8 @@ const resolveSchemaName = (client) => {
 };
 
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
+
+const propertyTableName = (schemaName) => `${schemaName}.property`;
 
 const staticPageOutboxTableName = (schemaName) => `${schemaName}.static_page_outbox`;
 
@@ -269,6 +272,18 @@ export class DirectBookingWebsiteSiteRepository {
     const now = Date.now();
 
     return client.transaction(async (manager) => {
+      const activePropertyResult = await manager.queryRunner.query(
+        `UPDATE ${propertyTableName(schemaName)}
+      SET updatedat = $2
+      WHERE id = $1 AND status = 'ACTIVE'
+      RETURNING id`,
+        [propertyId, now],
+        true
+      );
+      if (!activePropertyResult?.records?.length) {
+        throw new WebsitePublishNotAllowedError();
+      }
+
       const siteResult = await manager.queryRunner.query(
         `INSERT INTO ${tableName} (
         id,
@@ -478,6 +493,16 @@ export class DirectBookingWebsiteSiteRepository {
       propertyId,
       hostId,
     ]);
+
+    return mapSiteRow(rows?.[0] || null);
+  }
+
+  async getSiteByPropertyId(propertyId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+
+    const rows = await client.query(buildSiteSelectQuery(tableName, "WHERE property_id = $1"), [propertyId]);
 
     return mapSiteRow(rows?.[0] || null);
   }
