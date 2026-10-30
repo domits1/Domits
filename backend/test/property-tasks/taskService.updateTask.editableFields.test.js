@@ -42,6 +42,7 @@ jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     isPropertyOfHost: (...args) => mockIsPropertyOfHost(...args),
 }));
 
+const Database = require("database").default;
 const { updateTask, deleteTask } = require("../../functions/property-tasks/business/service/taskService.js");
 
 const MEMBER_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -73,14 +74,22 @@ const LOCKED_FIELDS = [
     ["source", "booking"],
     ["created_at", 1],
     ["updated_at", 1],
+    ["sla_status", "BREACHED"],
+    ["column_that_does_not_exist", "x"],
 ];
 
 const nothingWasTouched = () => {
+    expect(Database.getInstance).not.toHaveBeenCalled();
     expect(mockGetTaskById).not.toHaveBeenCalled();
+    expect(mockIsPropertyOfHost).not.toHaveBeenCalled();
+    expect(mockGetTeamMemberById).not.toHaveBeenCalled();
+    expect(mockGetChecklistItemsForTask).not.toHaveBeenCalled();
     expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
     expect(mockUpdateTaskUnlessCompleted).not.toHaveBeenCalled();
     expect(mockSaveActivityToDb).not.toHaveBeenCalled();
     expect(mockS3Send).not.toHaveBeenCalled();
+    expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+    expect(mockNotifyTaskCompleted).not.toHaveBeenCalled();
 };
 
 describe("updateTask: the fields a caller may change", () => {
