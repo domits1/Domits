@@ -33,10 +33,13 @@ const useFetchBookingDetails = (hostId, guestId, {
             return;
         }
         const token = withAuth ? getAccessToken(hostId) : getAccessToken(guestId);
-        
+        let cancelled = false;
+
         const fetchData = async () => {
             setLoading(true);
             setError(null);
+            setBookingDetails(null);
+            setAccommodation(null);
             try {
 
                 const { bookingDetails: bookingData, accommodation: accommodationData } = withAuth
@@ -49,6 +52,7 @@ const useFetchBookingDetails = (hostId, guestId, {
                         accommodationEndpoint,
                     })
                     : await getGuestBookingDetailsByBookingId({ bookingId, guestId, token });
+                if (cancelled) return;
                 const arrivalDate = formatBookingDate(bookingData?.arrivalDate || bookingData?.arrivaldate);
                 const departureDate = formatBookingDate(bookingData?.departureDate || bookingData?.departuredate);
                 const normalizedBookingData = {
@@ -80,15 +84,19 @@ const useFetchBookingDetails = (hostId, guestId, {
                 }
 
             } catch (err) {
+                if (cancelled) return;
                 setError(err.message);
                 setBookingDetails(null);
                 setAccommodation(null);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         fetchData();
+        return () => {
+            cancelled = true;
+        };
     }, [accommodationEndpoint, bookingId, guestId, hostId, propertyId, withAuth]);
 
     return { bookingDetails, accommodation, loading, error };

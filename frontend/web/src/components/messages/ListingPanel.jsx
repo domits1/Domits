@@ -34,6 +34,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
 
       setLoading(true);
       setLoadError(null);
+      setAcco(null);
       try {
         const token = needsAuth ? getAccessToken() : null;
         const data = await getAccommodationByPropertyId(endpoint, propertyId, token);
