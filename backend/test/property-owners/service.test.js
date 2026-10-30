@@ -55,6 +55,7 @@ const createService = ({
   owners = [],
   shareProperty = SHARE_PROPERTY,
   shareOwners = [],
+  changedToday = false,
   savedShares = [],
   ownerById = null,
   assignments = [],
@@ -68,7 +69,7 @@ const createService = ({
     findAssignmentsByOwnerAndHost: jest.fn(async () => ownerAssignments),
     createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
     replacePropertyShares: jest.fn(async ({ assertWritable }) => {
-      assertWritable({ property: shareProperty, owners: shareOwners });
+      assertWritable({ property: shareProperty, owners: shareOwners, changedToday });
       return { property: shareProperty, rows: savedShares };
     }),
   };
@@ -451,6 +452,26 @@ describe("Service.setShares", () => {
     await expect(service.setShares("host-1", sharesBody())).rejects.toMatchObject({
       statusCode: 409,
       message: "Archived owners cannot receive ownership shares.",
+    });
+  });
+
+  test("rejects a change for today with 409 when the ownership already changed today", async () => {
+    const { service } = createService({ shareOwners: activeOwners, changedToday: true });
+
+    await expect(service.setShares("host-1", sharesBody({ effective_from: TODAY }))).rejects.toMatchObject({
+      statusCode: 409,
+      message: "The ownership of this property already changed today. Choose tomorrow or later.",
+    });
+  });
+
+  test("rejects an empty list for today with the same 409 when the ownership already changed today", async () => {
+    const { service } = createService({ shareOwners: [], changedToday: true });
+
+    await expect(
+      service.setShares("host-1", sharesBody({ effective_from: TODAY, shares: [] }))
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "The ownership of this property already changed today. Choose tomorrow or later.",
     });
   });
 

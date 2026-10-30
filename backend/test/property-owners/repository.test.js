@@ -3,7 +3,7 @@ jest.mock("database", () => ({
   default: { getInstance: jest.fn() },
 }));
 
-const { DataSource, FindOperator } = require("typeorm");
+const { DataSource, FindOperator, SelectQueryBuilder } = require("typeorm");
 const Database = require("database").default;
 const { Property_Owner } = require("database/models/Property_Owner");
 const { Property_Owner_Property } = require("database/models/Property_Owner_Property");
@@ -322,7 +322,13 @@ describe("Repository.replacePropertyShares", () => {
     ...overrides,
   });
 
-  const createTransactionalDataSource = ({ property = PROPERTY, owners = OWNERS, savedRows = [], failures = [] } = {}) => {
+  const createTransactionalDataSource = ({
+    property = PROPERTY,
+    owners = OWNERS,
+    savedRows = [],
+    failures = [],
+    rowStartsToday = false,
+  } = {}) => {
     const calls = [];
     const recorder = (name, result) =>
       jest.fn(async (...args) => {
@@ -332,6 +338,7 @@ describe("Repository.replacePropertyShares", () => {
     const propertyRepository = { findOne: recorder("lock property", property) };
     const ownerRepository = { find: recorder("lock owners", owners) };
     const shareRepository = {
+      existsBy: recorder("existsBy", rowStartsToday),
       delete: recorder("delete", { affected: 0 }),
       update: recorder("close", { affected: 0 }),
       insert: recorder("insert", {}),
@@ -412,7 +419,46 @@ describe("Repository.replacePropertyShares", () => {
 
     await new Repository().replacePropertyShares(shareArgs({ assertWritable }));
 
-    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: OWNERS });
+    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: OWNERS, changedToday: false });
+  });
+
+  test("looks for a row that starts today, after the locks and before any write, when effectiveFrom is today", async () => {
+    const dataSource = createTransactionalDataSource();
+    const assertWritable = recordingAssert(dataSource.calls);
+
+    await new Repository().replacePropertyShares(shareArgs({ effectiveFrom: TODAY, assertWritable }));
+
+    expect(dataSource.calls.slice(0, 6)).toEqual([
+      "begin",
+      "lock property",
+      "lock owners",
+      "existsBy",
+      "assertWritable",
+      "delete",
+    ]);
+    expect(dataSource.shareRepository.existsBy).toHaveBeenCalledWith({ ...SCOPE, effective_from: TODAY });
+  });
+
+  test.each([
+    ["a row starts today", true],
+    ["no row starts today", false],
+  ])("hands changedToday to assertWritable when %s", async (_label, rowStartsToday) => {
+    createTransactionalDataSource({ rowStartsToday });
+    const assertWritable = jest.fn();
+
+    await new Repository().replacePropertyShares(shareArgs({ effectiveFrom: TODAY, assertWritable }));
+
+    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: OWNERS, changedToday: rowStartsToday });
+  });
+
+  test("skips the today lookup and reports changedToday false for a future effectiveFrom", async () => {
+    const { shareRepository } = createTransactionalDataSource({ rowStartsToday: true });
+    const assertWritable = jest.fn();
+
+    await new Repository().replacePropertyShares(shareArgs({ assertWritable }));
+
+    expect(shareRepository.existsBy).not.toHaveBeenCalled();
+    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: OWNERS, changedToday: false });
   });
 
   test("deletes every row of the property that starts on or after effective_from", async () => {
@@ -494,7 +540,7 @@ describe("Repository.replacePropertyShares", () => {
     await new Repository().replacePropertyShares(shareArgs({ ownerIds: [], rows: [], assertWritable }));
 
     expect(dataSource.calls).toEqual(["begin", "lock property", "assertWritable", "delete", "close", "close", "read"]);
-    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: [] });
+    expect(assertWritable).toHaveBeenCalledWith({ property: PROPERTY, owners: [], changedToday: false });
   });
 
   test("reruns the whole transaction after a DSQL conflict", async () => {
@@ -552,6 +598,36 @@ describe("Repository.replacePropertyShares", () => {
     expect(sql).toContain('"host_id" = $2');
     expect(sql).toContain('"effective_from" >= $3');
     expect(parameters).toEqual(["property-1", "host-1", EFFECTIVE_FROM]);
+  });
+
+  test("generates SQL for the today lookup with the property, the host and today, without effective_to", async () => {
+    const { shareRepository } = createTransactionalDataSource();
+    const sqlDataSource = new DataSource({ type: "postgres", entities: [Property_Owner_Property] });
+    await sqlDataSource.buildMetadatas();
+    const typeormShares = sqlDataSource.getRepository(Property_Owner_Property);
+    shareRepository.exists = typeormShares.exists.bind(typeormShares);
+    shareRepository.existsBy = typeormShares.existsBy.bind(typeormShares);
+    const lookups = [];
+    const getExists = jest.spyOn(SelectQueryBuilder.prototype, "getExists").mockImplementation(async function () {
+      lookups.push(this.getQueryAndParameters());
+      return false;
+    });
+
+    try {
+      await new Repository().replacePropertyShares(shareArgs({ effectiveFrom: TODAY }));
+    } finally {
+      getExists.mockRestore();
+    }
+
+    expect(lookups).toHaveLength(1);
+    const [[sql, parameters]] = lookups;
+    expect(sql).toMatch(/ WHERE /);
+    const where = sql.slice(sql.indexOf(" WHERE "));
+    expect(where).toMatch(/"property_id" = \$1/);
+    expect(where).toMatch(/"host_id" = \$2/);
+    expect(where).toMatch(/"effective_from" = \$3/);
+    expect(where).not.toContain("effective_to");
+    expect(parameters).toEqual(["property-1", "host-1", TODAY]);
   });
 
   test("generates SQL for both closes with the property, the host and the period", async () => {

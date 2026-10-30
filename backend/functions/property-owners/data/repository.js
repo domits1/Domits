@@ -73,10 +73,11 @@ const writeShares = async (manager, { hostId, propertyId, effectiveFrom, today, 
           where: { id: In(ownerIds), host_id: hostId },
           lock: PESSIMISTIC_WRITE,
         });
-  assertWritable({ property, owners });
-
   const shares = manager.getRepository(Property_Owner_Property);
   const scope = { property_id: propertyId, host_id: hostId };
+  const changedToday = effectiveFrom === today && (await shares.existsBy({ ...scope, effective_from: today }));
+  assertWritable({ property, owners, changedToday });
+
   const closing = { effective_to: effectiveFrom, updated_at: now };
   await shares.delete({ ...scope, effective_from: MoreThanOrEqual(effectiveFrom) });
   await shares.update({ ...scope, effective_from: LessThan(effectiveFrom), effective_to: IsNull() }, closing);
