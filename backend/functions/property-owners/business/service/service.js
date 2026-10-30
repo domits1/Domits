@@ -10,6 +10,7 @@ const PROPERTY_NOT_FOUND_MESSAGE = "Property not found.";
 const ARCHIVED_OWNER_SHARES_MESSAGE = "Archived owners cannot receive ownership shares.";
 const OWNERSHIP_CHANGED_TODAY_MESSAGE =
   "The ownership of this property already changed today. Choose tomorrow or later.";
+const HELD_SHARES_MESSAGE = "This owner still holds ownership shares. Set new shares for these properties first.";
 const DAY_MS = 86400000;
 
 const toShare = ({ owner_id, ownership_basis_points, effective_from, effective_to }) => ({
@@ -35,6 +36,15 @@ const sharesWritableCheck = (ownerIds) => ({ property, owners, changedToday }) =
   }
   if (changedToday) {
     throw new ConflictException(OWNERSHIP_CHANGED_TODAY_MESSAGE);
+  }
+};
+
+const assertArchivable = ({ owner, heldShares }) => {
+  if (!owner) {
+    throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
+  }
+  if (heldShares.length > 0) {
+    throw new ConflictException(HELD_SHARES_MESSAGE);
   }
 };
 
@@ -124,6 +134,12 @@ export class Service {
     if (affected === 0) {
       throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
     }
+    return await this.getOwner(hostId, ownerId);
+  }
+
+  async archiveOwner(hostId, id) {
+    const ownerId = assertOwnerId(id);
+    await this.repository.archiveOwner({ ownerId, hostId, today: this.today(), now: this.clock(), assertArchivable });
     return await this.getOwner(hostId, ownerId);
   }
 

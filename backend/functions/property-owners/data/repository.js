@@ -5,6 +5,7 @@ import { Property_Owner_Property } from "database/models/Property_Owner_Property
 import { In, IsNull, LessThan, LessThanOrEqual, MoreThan, MoreThanOrEqual } from "typeorm";
 import { isDsqlConflict, withDsqlRetry } from "../.shared/dsqlRetry.js";
 import { ConflictException } from "../util/exception/conflictException.js";
+import { ARCHIVED_OWNER_STATUS } from "../util/ownerConstants.js";
 
 const DAY_MS = 86400000;
 const OWNER_ORDER = Object.freeze({ last_name: "ASC", first_name: "ASC" });
@@ -13,6 +14,7 @@ const PESSIMISTIC_WRITE = Object.freeze({ mode: "pessimistic_write" });
 const UNIQUE_VIOLATION_CODE = "23505";
 const READ_ONLY_OWNER_FIELDS = Object.freeze(["id", "host_id", "owner_user_id", "created_at"]);
 const SHARES_CONFLICT_MESSAGE = "The ownership of this property changed at the same time. Reload and try again.";
+const OWNER_CONFLICT_MESSAGE = "This owner changed at the same time. Reload and try again.";
 
 const isNonEmptyString = (value) => typeof value === "string" && value !== "";
 
@@ -48,6 +50,12 @@ const requireOwnerChanges = (changes) => {
 const requireToday = (today) => {
   if (!Number.isSafeInteger(today) || today < 0 || today % DAY_MS !== 0) {
     throw new Error("today must be a UTC midnight in epoch milliseconds.");
+  }
+};
+
+const requireNow = (now) => {
+  if (!Number.isSafeInteger(now)) {
+    throw new TypeError("now must be a safe integer in epoch milliseconds.");
   }
 };
 
@@ -111,6 +119,24 @@ const writeShares = async (manager, { hostId, propertyId, effectiveFrom, today, 
     order: ASSIGNMENT_ORDER,
   });
   return { property, rows: savedRows };
+};
+
+const archiveWhenFree = async (manager, { ownerId, hostId, today, now, assertArchivable }) => {
+  const scope = { id: ownerId, host_id: hostId };
+  const owners = manager.getRepository(Property_Owner);
+  const owner = await owners.findOne({ select: { id: true, status: true }, where: scope, lock: PESSIMISTIC_WRITE });
+  const shareScope = { owner_id: ownerId, host_id: hostId };
+  const heldShares = await manager.getRepository(Property_Owner_Property).find({
+    where: [
+      { ...shareScope, effective_to: IsNull() },
+      { ...shareScope, effective_to: MoreThan(today) },
+    ],
+  });
+  assertArchivable({ owner, heldShares });
+  if (owner.status === ARCHIVED_OWNER_STATUS) {
+    return;
+  }
+  await owners.update(scope, { status: ARCHIVED_OWNER_STATUS, updated_at: now });
 };
 
 const currentAssignmentWhere = (scope, today) => [
@@ -186,6 +212,23 @@ export class Repository {
     const owners = dataSource.getRepository(Property_Owner);
     const result = await withDsqlRetry(() => owners.update({ id: ownerId, host_id: hostId }, changes));
     return result.affected;
+  }
+
+  async archiveOwner(request) {
+    const { ownerId, hostId, today, now } = request;
+    requireOwnerId(ownerId);
+    requireHostId(hostId);
+    requireToday(today);
+    requireNow(now);
+    const dataSource = await Database.getInstance();
+    try {
+      await withDsqlRetry(() => dataSource.transaction((manager) => archiveWhenFree(manager, request)));
+    } catch (error) {
+      if (isDsqlConflict(error)) {
+        throw new ConflictException(OWNER_CONFLICT_MESSAGE);
+      }
+      throw error;
+    }
   }
 
   async replacePropertyShares(request) {

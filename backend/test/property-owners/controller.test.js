@@ -53,6 +53,13 @@ const OPERATIONS = [
       body: JSON.stringify({ first_name: "Bea" }),
     }),
   ],
+  [
+    "archiveOwner",
+    () => ({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: { action: "archive", id: OWNER_ID },
+    }),
+  ],
 ];
 
 const createEvent = (body) => ({ headers: { Authorization: "token-1" }, queryStringParameters: null, body });
@@ -64,6 +71,7 @@ const createController = ({ role = "Host", getUser } = {}) => {
     createOwner: jest.fn(async (_hostId, body) => ({ id: OWNER_ID, ...body, properties: [] })),
     setShares: jest.fn(async () => SHARES_RESPONSE),
     updateOwner: jest.fn(async (_hostId, _id, body) => ({ id: OWNER_ID, ...body, properties: [] })),
+    archiveOwner: jest.fn(async () => ({ id: OWNER_ID, status: "archived", properties: [] })),
   };
   const authManager = {
     getUser: getUser ?? jest.fn(async () => ({ userId: "host-1", email: "host@example.com", role })),
@@ -394,6 +402,85 @@ describe("Controller.updateOwner", () => {
 
     expect(response.statusCode).toBe(404);
     expect(bodyOf(response)).toEqual({ message: "Owner not found." });
+  });
+});
+
+describe("Controller.archiveOwner", () => {
+  const ARCHIVED = Object.freeze({ id: OWNER_ID, status: "archived", properties: [] });
+
+  const archiveEvent = (body, id = OWNER_ID) => ({
+    headers: { Authorization: "token-1" },
+    queryStringParameters: { action: "archive", id },
+    body,
+  });
+
+  test.each(["Property Operations Manager", "Traveler", null])(
+    "rejects a caller whose group is %p with 403 and never calls the service",
+    async (role) => {
+      const { controller, service } = createController({ role });
+
+      const response = await controller.archiveOwner(archiveEvent("{not json"));
+
+      expect(response.statusCode).toBe(403);
+      expect(service.archiveOwner).not.toHaveBeenCalled();
+    }
+  );
+
+  test("rejects a failing getUser with 401 and never calls the service", async () => {
+    const getUser = jest.fn(async () => {
+      throw new UnauthorizedException("Invalid or expired authorization token.");
+    });
+    const { controller, service } = createController({ getUser });
+
+    const response = await controller.archiveOwner(archiveEvent("{not json"));
+
+    expect(response.statusCode).toBe(401);
+    expect(bodyOf(response)).toEqual({ message: "Invalid or expired authorization token." });
+    expect(service.archiveOwner).not.toHaveBeenCalled();
+  });
+
+  test.each(["Host", "Admin"])("lets a %s archive their owner by the raw id and answers 200", async (role) => {
+    const { controller, service } = createController({ role });
+
+    const response = await controller.archiveOwner(archiveEvent(undefined));
+
+    expect(response.statusCode).toBe(200);
+    expect(bodyOf(response)).toEqual(ARCHIVED);
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(service.archiveOwner).toHaveBeenCalledWith("host-1", OWNER_ID);
+  });
+
+  test.each([
+    ["a missing body", undefined],
+    ["an empty body", ""],
+    ["malformed JSON", "{not json"],
+    ["a JSON body", '{"status":"active"}'],
+  ])("ignores %s and still answers 200", async (_label, body) => {
+    const { controller, service } = createController();
+
+    const response = await controller.archiveOwner(archiveEvent(body));
+
+    expect(response.statusCode).toBe(200);
+    expect(service.archiveOwner).toHaveBeenCalledWith("host-1", OWNER_ID);
+  });
+
+  test("passes an empty id through so the service can reject it", async () => {
+    const { controller, service } = createController();
+
+    await controller.archiveOwner(archiveEvent(undefined, ""));
+
+    expect(service.archiveOwner).toHaveBeenCalledWith("host-1", "");
+  });
+
+  test("keeps the message of a 409 from the service", async () => {
+    const message = "This owner still holds ownership shares. Set new shares for these properties first.";
+    const { controller, service } = createController();
+    service.archiveOwner.mockRejectedValue(new ConflictException(message));
+
+    const response = await controller.archiveOwner(archiveEvent(undefined));
+
+    expect(response.statusCode).toBe(409);
+    expect(bodyOf(response)).toEqual({ message });
   });
 });
 

@@ -71,6 +71,8 @@ const createService = ({
   ownerAssignments = [],
   titles = TITLES,
   updatedRows = 1,
+  archiveTarget = owner(OWNER_A),
+  heldShares = [],
   clock = CLOCK,
 } = {}) => {
   const repository = {
@@ -81,6 +83,9 @@ const createService = ({
     findPropertyTitlesByIds: jest.fn(async () => titles),
     createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
     updateOwner: jest.fn(async () => updatedRows),
+    archiveOwner: jest.fn(async ({ assertArchivable }) => {
+      assertArchivable({ owner: archiveTarget, heldShares });
+    }),
     replacePropertyShares: jest.fn(async ({ assertWritable }) => {
       assertWritable({ property: shareProperty, owners: shareOwners, changedToday });
       return { property: shareProperty, rows: savedShares };
@@ -501,6 +506,75 @@ describe("Service.updateOwner", () => {
     expect(result).toEqual({ ...updated, properties: [property("property-1")] });
     expect(result.properties[0].property_title).toBe("Villa Sensual");
     expect(repository.findOwnerByIdAndHost).toHaveBeenCalledTimes(2);
+    expect(repository.findAssignmentsByOwnerAndHost).toHaveBeenCalledWith(OWNER_A, "host-1", TODAY);
+  });
+});
+
+describe("Service.archiveOwner", () => {
+  const HELD_SHARES_MESSAGE = "This owner still holds ownership shares. Set new shares for these properties first.";
+
+  test("passes the owner id, the caller's host, today and the raw clock to the repository", async () => {
+    const { repository, service } = createService({ ownerById: owner(OWNER_A, { status: "archived" }) });
+
+    await service.archiveOwner("host-1", OWNER_A);
+
+    expect(repository.archiveOwner).toHaveBeenCalledTimes(1);
+    const { assertArchivable, ...args } = repository.archiveOwner.mock.calls[0][0];
+    expect(typeof assertArchivable).toBe("function");
+    expect(args).toEqual({ ownerId: OWNER_A, hostId: "host-1", today: TODAY, now: CLOCK() });
+  });
+
+  test.each([undefined, null, "", "owner-1", 42])("rejects the owner id %p with 400 before any query", async (id) => {
+    const { repository, service } = createService();
+
+    await expect(service.archiveOwner("host-1", id)).rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.archiveOwner).not.toHaveBeenCalled();
+    expect(repository.findOwnerByIdAndHost).not.toHaveBeenCalled();
+  });
+
+  test("returns 404 when the owner does not exist or belongs to another host", async () => {
+    const { repository, service } = createService({ archiveTarget: null });
+
+    await expect(service.archiveOwner("host-2", OWNER_A)).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Owner not found.",
+    });
+    expect(repository.findOwnerByIdAndHost).not.toHaveBeenCalled();
+  });
+
+  test("returns 409 while the owner still holds current or upcoming shares", async () => {
+    const { repository, service } = createService({
+      heldShares: [assignment(OWNER_A, "property-1"), assignment(OWNER_A, "property-2", { effective_from: TODAY + DAY_MS })],
+    });
+
+    await expect(service.archiveOwner("host-1", OWNER_A)).rejects.toMatchObject({
+      statusCode: 409,
+      message: HELD_SHARES_MESSAGE,
+    });
+    expect(repository.findOwnerByIdAndHost).not.toHaveBeenCalled();
+  });
+
+  test("accepts an owner without held shares", async () => {
+    const { service } = createService({ ownerById: owner(OWNER_A, { status: "archived" }) });
+
+    await expect(service.archiveOwner("host-1", OWNER_A)).resolves.toMatchObject({ status: "archived" });
+  });
+
+  test("accepts an owner that is already archived", async () => {
+    const archived = owner(OWNER_A, { status: "archived" });
+    const { service } = createService({ archiveTarget: archived, ownerById: archived });
+
+    await expect(service.archiveOwner("host-1", OWNER_A)).resolves.toMatchObject({ status: "archived" });
+  });
+
+  test("answers with the owner as getOwner reads it after the archive", async () => {
+    const archived = owner(OWNER_A, { status: "archived", updated_at: CLOCK() });
+    const { repository, service } = createService({ ownerById: archived });
+
+    const result = await service.archiveOwner("host-1", OWNER_A);
+
+    expect(result).toEqual({ ...archived, properties: [] });
+    expect(repository.findOwnerByIdAndHost).toHaveBeenCalledWith(OWNER_A, "host-1");
     expect(repository.findAssignmentsByOwnerAndHost).toHaveBeenCalledWith(OWNER_A, "host-1", TODAY);
   });
 });
