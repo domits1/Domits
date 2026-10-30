@@ -97,6 +97,11 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
         throw new BadRequestException(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
     }
 
+    const isMovedToAnotherProperty = fieldsToUpdate.property_id !== undefined && fieldsToUpdate.property_id !== oldTask.property_id;
+    if (isMovedToAnotherProperty) {
+        await assertPropertyOfHost(dataSource, hostId, fieldsToUpdate.property_id);
+    }
+
     if (fieldsToUpdate.assignee_team_member_id !== undefined) {
         if (fieldsToUpdate.assignee_team_member_id && !isValidUuid(fieldsToUpdate.assignee_team_member_id)) {
             throw new BadRequestException("assignee_team_member_id must be a valid UUID");
@@ -279,6 +284,14 @@ const resolveParentTaskId = async (dataSource, hostId, parentTaskId) => {
         throw new BadRequestException("parent_task_id does not belong to this host");
     }
     return parentTaskId;
+};
+
+const assertPropertyOfHost = async (dataSource, hostId, propertyId) => {
+    const isPropertyId = typeof propertyId === "string" && propertyId.length > 0;
+    const isOwnProperty = isPropertyId && await taskRepository.isPropertyOfHost(dataSource, propertyId, hostId);
+    if (!isOwnProperty) {
+        throw new BadRequestException("property_id does not belong to this host");
+    }
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {

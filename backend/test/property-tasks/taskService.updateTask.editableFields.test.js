@@ -30,6 +30,7 @@ const mockUpdateTaskUnlessCompleted = jest.fn();
 const mockSaveActivityToDb = jest.fn();
 const mockGetChecklistItemsForTask = jest.fn();
 const mockGetTeamMemberById = jest.fn();
+const mockIsPropertyOfHost = jest.fn();
 
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     getTaskById: (...args) => mockGetTaskById(...args),
@@ -38,6 +39,7 @@ jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
     getChecklistItemsForTask: (...args) => mockGetChecklistItemsForTask(...args),
     getTeamMemberById: (...args) => mockGetTeamMemberById(...args),
+    isPropertyOfHost: (...args) => mockIsPropertyOfHost(...args),
 }));
 
 const { updateTask, deleteTask } = require("../../functions/property-tasks/business/service/taskService.js");
@@ -145,6 +147,52 @@ describe("updateTask: the fields a caller may change", () => {
                 attachments: JSON.stringify(["tasks/host-1/a.png"]),
             });
         });
+    });
+});
+
+describe("updateTask: moving a task to another property", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockGetTaskById.mockResolvedValue(existingTask);
+        mockUpdateTaskInDb.mockResolvedValue();
+        mockSaveActivityToDb.mockResolvedValue();
+        mockS3Send.mockResolvedValue({});
+    });
+
+    it.each(CALLERS)("moves the task when %s picks a property of the task's host", async (callerName, caller) => {
+        mockIsPropertyOfHost.mockResolvedValue(true);
+
+        await updateTask("host-1", "task-1", { property_id: "prop-2" }, caller);
+
+        expect(mockIsPropertyOfHost).toHaveBeenCalledWith(expect.anything(), "prop-2", "host-1");
+        expect(mockUpdateTaskInDb.mock.calls[0][2]).toMatchObject({ property_id: "prop-2" });
+    });
+
+    it("rejects a property of another host with a 400 before an attachment is removed or anything is saved", async () => {
+        mockIsPropertyOfHost.mockResolvedValue(false);
+
+        const error = await updateTask("host-1", "task-1", { property_id: "prop-of-host-2", attachments: [] })
+            .catch((thrown) => thrown);
+
+        expect(error).toMatchObject({ statusCode: 400, message: "property_id does not belong to this host" });
+        expect(mockS3Send).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+        expect(mockSaveActivityToDb).not.toHaveBeenCalled();
+    });
+
+    it.each([null, "", 42])("rejects %p as a property without looking it up", async (propertyId) => {
+        const error = await updateTask("host-1", "task-1", { property_id: propertyId }).catch((thrown) => thrown);
+
+        expect(error).toMatchObject({ statusCode: 400 });
+        expect(mockIsPropertyOfHost).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+    });
+
+    it("does not look the property up again when it stays the same", async () => {
+        await updateTask("host-1", "task-1", { property_id: "prop-1", title: "Renamed" });
+
+        expect(mockIsPropertyOfHost).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb.mock.calls[0][2]).toMatchObject({ property_id: "prop-1", title: "Renamed" });
     });
 });
 
