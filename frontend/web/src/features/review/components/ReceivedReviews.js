@@ -4,6 +4,7 @@ import { fetchHostPropertySelectOptions } from "../../../services/hostPropertySe
 import styles from "../styles/ReceivedReviews.module.css";
 import CategoryRatings from "./categoryRatings";
 import RatingStars from "./RatingStars";
+import HostResponseForm from "../views/HostResponseForm";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);
@@ -46,9 +47,30 @@ function PropertyImage({ property }) {
   );
 }
 
-export default function ReceivedReviews({ userId, reviews, loading, error, onRetry }) {
+function SelectedReview({ selected, property, respondableReview, response, onResponseChange }) {
+  const selectedProperty = property;
+  const selectedName = typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
+  const selectedInitials = selectedName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+  return (
+    <section id="selected-review" className={styles.detail} aria-label="Selected review">
+        <header className={styles.detailHeader}>
+          <span className={styles.detailAvatar} aria-hidden="true">{selectedInitials}</span>
+          <div><strong>{selectedName}</strong><p>{dateLabel(selected)}{selectedProperty && ` \u00b7 ${selectedProperty.title}`}</p></div>
+          {rating(selected) !== null && <div className={styles.detailRating}><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></div>}
+        </header>
+        <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
+        <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
+        {respondableReview ? <HostResponseForm key={selected.id} review={{ ...respondableReview, response: response !== undefined ? response : respondableReview.response }} onResponseChange={onResponseChange} />
+          : <p className={styles.responseUnavailable}>A response is not available for this review.</p>}
+      </section>
+  );
+}
+
+export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {} }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const [responseCache, setResponseCache] = useState({});
   const [sort, setSort] = useState("newest");
   const listRef = useRef(null);
   useEffect(() => {
@@ -70,6 +92,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     const needle = query.trim().toLowerCase();
     const results = sorted.filter((review) =>
       [
+        review.guest_name,
         review.title,
         review.content ?? review.public_review,
         properties[review.property_id]?.title,
@@ -86,10 +109,12 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     if (sort === "lowest") results.sort((a, b) => (rating(a) ?? 6) - (rating(b) ?? 6));
     return results;
   }, [sorted, query, sort, properties]);
+  const selected = visible.find((review) => review.id === selectedId);
   const scores = reviews.map(rating).filter((value) => value !== null);
   const average = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
   const focusReview = (id) => {
     setQuery("");
+    setSelectedId(id);
     requestAnimationFrame(() => {
       const target = Array.from(listRef.current?.querySelectorAll("article") || []).find(
         (item) => item.dataset.reviewId === String(id)
@@ -100,7 +125,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
   };
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${!loading && !error && selected ? styles.withDetail : ""}`}>
       <div className={styles.mainColumn}>
         <div className={styles.toolbar}>
           <label className={styles.search}>
@@ -108,7 +133,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             <input
               type="search"
               aria-label="Search received reviews"
-              placeholder="Search reviews or properties..."
+              placeholder="Search reviews by guest name or property..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -155,7 +180,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
           {!loading && !error && !visible.length && (
             <div className={styles.empty}>
               <MessageSquare size={30} aria-hidden="true" />
-              <strong>{query ? "No matching reviews" : "No guest reviews yet"}</strong>
+              <strong>{query ? "No matching reviews" : "You haven’t received any reviews yet."}</strong>
               <p>
                 {query
                   ? "Try another review title, property or reservation."
@@ -171,10 +196,10 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
               const initials = guestName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
               const value = rating(review);
               return (
-                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={styles.reviewCard}>
+                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
-                    <h4>{review.title || property?.title || "Guest review"}</h4>
+                    <h4><button type="button" className={styles.selectReview} aria-pressed={selected?.id === review.id} aria-controls="selected-review" onClick={() => setSelectedId(review.id)}>{review.title || property?.title || "Guest review"}</button></h4>
                     {property && (
                       <p className={styles.location}>
                         <MapPin size={14} aria-hidden="true" />
@@ -209,6 +234,13 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             })}
         </section>
       </div>
+      {!loading && !error && selected && <SelectedReview
+        selected={selected}
+        property={properties[selected.property_id]}
+        respondableReview={respondableReviews[selected.id]}
+        response={responseCache[selected.id]}
+        onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))}
+      />}
       <aside className={styles.sidebar} aria-label="Guest review insights">
         <section className={styles.summary}>
           <div>
@@ -257,7 +289,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
           </header>
           {!loading &&
             !error &&
-            sorted.slice(0, 3).map((review) => (
+            sorted.slice(0, 4).map((review) => (
               <button type="button" key={review.id} className={styles.recentRow} onClick={() => focusReview(review.id)}>
                 <PropertyImage property={properties[review.property_id]} />
                 <span>
