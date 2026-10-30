@@ -277,6 +277,7 @@ const DirectBookingWebsitePlanSection = ({
     };
 
     const pollForEliteActivation = async () => {
+      let lastFailure = null;
       for (let attempt = 0; attempt < CHECKOUT_POLL_ATTEMPTS; attempt += 1) {
         await delay(CHECKOUT_POLL_INTERVAL_MS);
         if (cancelled) return;
@@ -285,6 +286,7 @@ const DirectBookingWebsitePlanSection = ({
           const refreshedPlan = await getWebsiteRatePlan();
           if (cancelled) return;
 
+          lastFailure = null;
           setRatePlan(refreshedPlan);
           if (refreshedPlan?.plan === "elite") {
             cleanCheckoutQuery();
@@ -299,6 +301,7 @@ const DirectBookingWebsitePlanSection = ({
             setActionError(error.message);
             return;
           }
+          lastFailure = error;
         }
       }
 
@@ -306,6 +309,9 @@ const DirectBookingWebsitePlanSection = ({
         setNotice(
           copyRef.current.checkoutStillPending || copyRef.current.checkoutPending
         );
+        if (isLoginFailure(lastFailure)) {
+          setActionError(lastFailure.message);
+        }
       }
     };
 

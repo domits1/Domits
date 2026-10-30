@@ -416,6 +416,62 @@ describe("DirectBookingWebsitePlanSection", () => {
     }
   });
 
+  test.each([
+    [
+      "shows the connection message",
+      "the last check could not reach Cognito",
+      () => Promise.reject(new WebsiteConnectionError()),
+      WEBSITE_CONNECTION_FAILED_MESSAGE,
+    ],
+    [
+      "shows no alert",
+      "the last check read the plan",
+      () => Promise.resolve(essentialsPlan()),
+      null,
+    ],
+    [
+      "shows no alert",
+      "the last check failed on the server",
+      () => Promise.reject(new Error("Request failed")),
+      null,
+    ],
+  ])("%s next to the pending notice when the checkout stays unconfirmed and %s", async (_outcome, _label, lastCheck, alertMessage) => {
+    jest.useFakeTimers();
+    try {
+      window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+      getWebsiteRatePlan.mockResolvedValueOnce(essentialsPlan());
+      for (let attempt = 0; attempt < 9; attempt += 1) {
+        getWebsiteRatePlan.mockRejectedValueOnce(new WebsiteConnectionError());
+      }
+      getWebsiteRatePlan.mockImplementationOnce(lastCheck);
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        await act(async () => {
+          jest.advanceTimersByTime(1500);
+        });
+      }
+
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(11);
+      expect(
+        screen.getByText("We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.")
+      ).toBeInTheDocument();
+      if (alertMessage) {
+        expect(screen.getByRole("alert")).toHaveTextContent(alertMessage);
+      } else {
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      }
+      expect(screen.getByRole("button", { name: "Processing..." })).toBeDisabled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test("shows a cancellation notice when Stripe returns to the cancel URL", async () => {
     window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=cancelled");
     getWebsiteRatePlan.mockResolvedValue(essentialsPlan());
