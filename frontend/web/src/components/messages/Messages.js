@@ -299,11 +299,15 @@ const MessagesContent = ({ dashboardType }) => {
       setIntegrationsLoading(true);
 
       try {
+        const idToken = await getIdToken();
+        if (cancelled) return;
+        if (!idToken) throw new Error("Missing ID token");
+
         const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            Authorization: `Bearer ${idToken}`,
           },
         });
 
@@ -337,7 +341,7 @@ const MessagesContent = ({ dashboardType }) => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, dashboardType, userId]);
+  }, [dashboardType, userId]);
 
   const handleContactClick = (
     contactId,

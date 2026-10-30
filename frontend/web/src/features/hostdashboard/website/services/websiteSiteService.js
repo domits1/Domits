@@ -1,32 +1,11 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import { fetchWithWebsiteSession } from "./websiteSession";
 
 const buildWebsiteSiteUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/website/site?property=${encodeURIComponent(propertyId)}`;
 const buildWebsiteSitePublishUrl = () => `${PROPERTY_API_BASE}/website/site/publish`;
 const buildWebsiteSiteUnpublishUrl = () => `${PROPERTY_API_BASE}/website/site/unpublish`;
-
-const getRequiredAccessToken = () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to manage website publishing.");
-  }
-
-  return accessToken;
-};
-
-export const buildAuthorizedHeaders = (contentType = null) => {
-  const headers = {
-    Authorization: getRequiredAccessToken(),
-  };
-
-  if (contentType) {
-    headers["Content-Type"] = contentType;
-  }
-
-  return headers;
-};
 
 const normalizeWebsiteSiteSummary = (payload) => {
   if (!payload || typeof payload !== "object") {
@@ -65,10 +44,9 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
     throw new Error("Missing propertyId for website site lookup.");
   }
 
-  const response = await fetch(buildWebsiteSiteUrl(normalizedPropertyId), {
+  const response = await fetchWithWebsiteSession(buildWebsiteSiteUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: buildAuthorizedHeaders(),
   });
 
   if (response.status === 404) {
@@ -92,10 +70,10 @@ export const publishWebsiteSite = async (propertyId) => {
     throw new Error("Missing propertyId for website publish.");
   }
 
-  const response = await fetch(buildWebsiteSitePublishUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteSitePublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedHeaders("application/json"),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),
@@ -123,10 +101,10 @@ export const unpublishWebsiteSite = async (propertyId) => {
     throw new Error("Missing propertyId for website unpublish.");
   }
 
-  const response = await fetch(buildWebsiteSiteUnpublishUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteSiteUnpublishUrl(), {
     method: "POST",
     cache: "no-store",
-    headers: buildAuthorizedHeaders("application/json"),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       propertyId: normalizedPropertyId,
     }),

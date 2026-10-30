@@ -11,7 +11,7 @@ Email notifications for the host dashboard Tasks module (issue #3510). This page
 | Task due soon | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_due_soon` | A scheduled sweep finds an open task that is due within the next 24 hours and has not been emailed about its current due date. One email each time the due date changes |
 | Task overdue | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
 
-Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand is skipped, so nobody gets both.
+Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand after its due date is skipped, so nobody gets both. A task escalated before its due date still gets the overdue emails once it goes late.
 
 ## Settings
 
@@ -44,7 +44,7 @@ EventBridge Scheduler  ── {"task":"notify-overdue-tasks","limit":20} ──�
         │  only events with no httpMethod; API Gateway requests are refused
         ▼
 taskOverdueService.notifyOverdueTasks      business/service/taskOverdueService.js
-        │  getOverdueTasksToNotify: open, past due, not escalated, not legacy, and either
+        │  getOverdueTasksToNotify: open, past due, not escalated after its due date, not legacy, and either
         │     never emailed and due within the last 24 hours (first email), or
         │     last emailed 2+ days ago with fewer than 4 emails so far (reminder)
         │  for each task: claimOverdueNotification (UPDATE ... WHERE overdue_last_notified_at is still the value read)
@@ -81,7 +81,7 @@ notifyTaskDueSoon → recipient's notif_email_due_soon → EmailNotificationServ
 - What is stored is the **due date that was emailed about**, not a time. A task whose due date is moved gets one more email for the new date. Only the latest emailed date is stored, so if the due date goes from A to B and back to A, the task is emailed again for A.
 - "A day early" means the first sweep that runs once the task is within 24 hours of its due date. With the schedule at every 15 minutes, that is between 24 hours and 23 hours 45 minutes before.
 - A task created with a due date less than 24 hours away is emailed on the next sweep, as well as getting its "Task assigned" email.
-- Escalated tasks are **not** skipped here (they are for overdue). A task can only be escalated once its due date has passed (`computeSlaStatus`), so the two emails do not normally meet. If an escalated task's due date is then moved into the future, it can still get a due soon email.
+- Escalated tasks are **not** skipped here. Any open task can be escalated, so a task escalated early can still get a due soon email, and an escalated task whose due date is moved into the future can too.
 - The claim comes before the email, so a failed email is not retried.
 
 ### In-app notifications

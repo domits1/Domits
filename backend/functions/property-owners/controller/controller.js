@@ -66,6 +66,26 @@ export class Controller {
     }
   }
 
+  async setShares(event) {
+    try {
+      const hostId = await this.authorize(event);
+      const body = parseBody(event.body);
+      return respond(200, await this.service.setShares(hostId, body));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async updateOwner(event) {
+    try {
+      const hostId = await this.authorize(event);
+      const body = parseBody(event.body);
+      return respond(200, await this.service.updateOwner(hostId, event.queryStringParameters?.id, body));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   handleError(error) {
     if (isClientError(error)) {
       return respond(error.statusCode, { message: error.message });

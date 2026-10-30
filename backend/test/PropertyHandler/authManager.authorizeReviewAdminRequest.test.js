@@ -77,15 +77,29 @@ describe("AuthManager.authorizeReviewAdminRequest", () => {
     await expect(authManager.authorizeReviewAdminRequest("token")).rejects.toBeInstanceOf(Forbidden);
   });
 
-  it.each([undefined, "", "invalid-token"])("throws Unauthorized with status 401 for the token %j", async (token) => {
-    const cognitoError = new Error("Access Token has expired");
+  it.each([undefined, ""])(
+    "throws Unauthorized with status 401 for the token %j without asking Cognito",
+    async (token) => {
+      const getUserByAccessToken = jest.fn();
+      const authManager = buildAuthManager(getUserByAccessToken);
+
+      const error = await authManager.authorizeReviewAdminRequest(token).catch((caught) => caught);
+
+      expect(error).toBeInstanceOf(Unauthorized);
+      expect(error.statusCode).toBe(401);
+      expect(getUserByAccessToken).not.toHaveBeenCalled();
+    }
+  );
+
+  it("throws Unauthorized with status 401 when Cognito rejects the token", async () => {
+    const cognitoError = Object.assign(new Error("Access Token has expired"), { name: "NotAuthorizedException" });
     const authManager = buildAuthManager(
       jest.fn(async () => {
         throw cognitoError;
       })
     );
 
-    const error = await authManager.authorizeReviewAdminRequest(token).catch((caught) => caught);
+    const error = await authManager.authorizeReviewAdminRequest("invalid-token").catch((caught) => caught);
 
     expect(error).toBeInstanceOf(Unauthorized);
     expect(error.statusCode).toBe(401);

@@ -2,6 +2,8 @@ const mockController = {
   listOwners: jest.fn(),
   getOwner: jest.fn(),
   createOwner: jest.fn(),
+  setShares: jest.fn(),
+  updateOwner: jest.fn(),
 };
 
 jest.mock("../../functions/property-owners/controller/controller.js", () => ({
@@ -22,12 +24,16 @@ beforeEach(() => {
   mockController.listOwners.mockReset().mockResolvedValue({ statusCode: 200, body: "[]" });
   mockController.getOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
   mockController.createOwner.mockReset().mockResolvedValue({ statusCode: 201, body: "{}" });
+  mockController.setShares.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
+  mockController.updateOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
 });
 
 const expectNoControllerCall = () => {
   expect(mockController.listOwners).not.toHaveBeenCalled();
   expect(mockController.getOwner).not.toHaveBeenCalled();
   expect(mockController.createOwner).not.toHaveBeenCalled();
+  expect(mockController.setShares).not.toHaveBeenCalled();
+  expect(mockController.updateOwner).not.toHaveBeenCalled();
 };
 
 afterEach(() => {
@@ -96,7 +102,69 @@ describe("property-owners router", () => {
     expectNoControllerCall();
   });
 
-  test.each(["PUT", "PATCH", "DELETE", "HEAD", "constructor", "__proto__", undefined])(
+  test("routes PUT with action set-shares and no id to setShares with the event", async () => {
+    const request = { ...event("PUT", { action: "set-shares" }), body: "{}" };
+
+    const response = await handler(request);
+
+    expect(response).toEqual({ statusCode: 200, body: "{}" });
+    expect(mockController.setShares).toHaveBeenCalledWith(request);
+    expect(mockController.createOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no action", null],
+    ["no action but an id", { id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["set-shares next to an id", { action: "set-shares", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["set-shares next to an empty id", { action: "set-shares", id: "" }],
+    ["an empty action", { action: "" }],
+    ["an unknown action", { action: "archive" }],
+    ["an action in another case", { action: "SET-SHARES" }],
+    ["an inherited property name as action", { action: "constructor" }],
+    ["a null action", { action: null }],
+  ])("returns 405 for PUT with %s without calling the controller", async (_label, query) => {
+    const response = await handler(event("PUT", query));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
+  test.each([
+    ["a uuid", "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b"],
+    ["an empty value", ""],
+  ])("routes PATCH with an id that is %s and no action to updateOwner with the event", async (_label, id) => {
+    const request = { ...event("PATCH", { id }), body: '{"first_name":"Anna"}' };
+
+    const response = await handler(request);
+
+    expect(response).toEqual({ statusCode: 200, body: "{}" });
+    expect(mockController.updateOwner).toHaveBeenCalledWith(request);
+    expect(mockController.getOwner).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no query", null],
+    ["unrelated query parameters but no id", { page: "1" }],
+    ["action archive and no id", { action: "archive" }],
+    ["action archive next to an id", { action: "archive", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["set-shares next to an id", { action: "set-shares", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["an empty action next to an id", { action: "", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["a null action next to an id", { action: null, id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+  ])("returns 405 for PATCH with %s without calling the controller", async (_label, query) => {
+    const response = await handler(event("PATCH", query));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
+  test.each(["GET", "POST"])("returns 405 for %s with action set-shares", async (method) => {
+    const response = await handler(event(method, { action: "set-shares" }));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
+  test.each(["PATCH", "DELETE", "HEAD", "constructor", "__proto__", undefined])(
     "returns 405 for method %p without calling the controller",
     async (method) => {
       const response = await handler(event(method));
@@ -124,7 +192,7 @@ describe("property-owners router", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers).toEqual({
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type,Authorization",
     });
     expect(mockController.listOwners).not.toHaveBeenCalled();
