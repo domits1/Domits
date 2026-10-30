@@ -43,6 +43,7 @@ import {
   PROPERTY_STATUS,
   SUBMITTABLE_FOR_REVIEW_STATUSES,
 } from "../../util/propertyStatus.js";
+import { isDsqlConflict } from "../../../.shared/dsqlRetry.js";
 import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
   MAX_REGISTRATION_NUMBER_LENGTH,
@@ -60,6 +61,7 @@ import {
 const FULL_PROPERTY_ACCESS_BOOKING_STATUSES = new Set(["paid", "inquiry", "awaiting payment"]);
 const normalizeBookingStatus = (status) => String(status || "").trim().toLowerCase();
 const DRAFT_NUMERIC_FIELDS = ["capacity", "bedrooms", "bathrooms"];
+const MAX_REJECTION_REASON_LENGTH = 500;
 
 
 export class PropertyService {
@@ -145,7 +147,7 @@ export class PropertyService {
 
   // A host can never write ACTIVE. Asking for it submits the property for review; an
   // approved or already submitted property is left exactly as it is.
-  async requestHostStatusChange(propertyId, requestedStatus, metadata = {}) {
+  async requestHostStatusChange(propertyId, requestedStatus, { metadata = {}, actorId } = {}) {
     const status = normalizePropertyStatus(requestedStatus) || PROPERTY_STATUS.ACTIVE;
     if (!HOST_REQUESTABLE_STATUSES.includes(status)) {
       throw new TypeException("Invalid property status.");
@@ -155,12 +157,12 @@ export class PropertyService {
       return await this.updatePropertyStatus(propertyId, status, metadata);
     }
 
-    await this.propertyRepository.transitionStatus(
-      propertyId,
-      SUBMITTABLE_FOR_REVIEW_STATUSES,
-      PROPERTY_STATUS.PENDING_REVIEW
-    );
-    // Re-read instead of trusting the row count: when nothing matched, the current status is the answer.
+    await this.transitionWithEvent(propertyId, {
+      fromStatuses: SUBMITTABLE_FOR_REVIEW_STATUSES,
+      toStatus: PROPERTY_STATUS.PENDING_REVIEW,
+      action: "SUBMITTED",
+      actorId,
+    });
     const property = await this.getBasePropertyInfo(propertyId);
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -168,28 +170,69 @@ export class PropertyService {
     return property;
   }
 
-  async approveProperty(propertyId) {
-    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.ACTIVE);
+  async approveProperty(propertyId, { actorId, expectedUpdatedAt } = {}) {
+    return await this.reviewPendingProperty(propertyId, {
+      toStatus: PROPERTY_STATUS.ACTIVE,
+      action: "APPROVED",
+      actorId,
+      expectedUpdatedAt,
+    });
   }
 
-  async rejectProperty(propertyId) {
-    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.REJECTED);
+  async rejectProperty(propertyId, { actorId, reason, expectedUpdatedAt } = {}) {
+    return await this.reviewPendingProperty(propertyId, {
+      toStatus: PROPERTY_STATUS.REJECTED,
+      action: "REJECTED",
+      actorId,
+      expectedUpdatedAt,
+      reason: this.normalizeRejectionReason(reason),
+    });
   }
 
-  async reviewPendingProperty(propertyId, decision) {
-    const changed = await this.propertyRepository.transitionStatus(
-      propertyId,
-      [PROPERTY_STATUS.PENDING_REVIEW],
-      decision
-    );
+  normalizeRejectionReason(reason) {
+    const trimmed = typeof reason === "string" ? reason.trim() : "";
+    if (trimmed.length < 1 || trimmed.length > MAX_REJECTION_REASON_LENGTH) {
+      throw new TypeException(`A rejection reason of 1 to ${MAX_REJECTION_REASON_LENGTH} characters is required.`);
+    }
+    return trimmed;
+  }
+
+  async transitionWithEvent(propertyId, transition) {
+    try {
+      return await this.propertyRepository.transitionStatusWithEvent(propertyId, transition);
+    } catch (error) {
+      if (isDsqlConflict(error)) {
+        const unavailable = new ServiceUnavailableException("The property is being changed right now. Please try again.");
+        unavailable.cause = error;
+        throw unavailable;
+      }
+      throw error;
+    }
+  }
+
+  async reviewPendingProperty(propertyId, transition) {
+    const result = await this.transitionWithEvent(propertyId, {
+      ...transition,
+      fromStatuses: [PROPERTY_STATUS.PENDING_REVIEW],
+    });
+    if (result.outcome === "not_found") {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    if (result.outcome === "wrong_status") {
+      throw new ConflictException(
+        `Property ${propertyId} is ${result.currentStatus}; only a ${PROPERTY_STATUS.PENDING_REVIEW} property can be reviewed.`,
+        "wrong_status"
+      );
+    }
+    if (result.outcome === "stale") {
+      throw new ConflictException(
+        `Property ${propertyId} changed after it was loaded for review. Reload it and review it again.`,
+        "stale_review"
+      );
+    }
     const property = await this.getBasePropertyInfo(propertyId);
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
-    }
-    if (changed === 0) {
-      throw new ConflictException(
-        `Property ${propertyId} is ${property.status}; only a ${PROPERTY_STATUS.PENDING_REVIEW} property can be reviewed.`
-      );
     }
     return property;
   }

@@ -77,7 +77,8 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 
 // Only genuine availability conflicts count as quote_conflicted in the KPI stream;
 // validation 400s are guest input errors, not conflicts.
-const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
+const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
+const WEBSITE_QUOTE_CONFLICT_ERROR_CODES =new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
@@ -2270,9 +2271,13 @@ export class PropertyController {
                 };
             }
 
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const actorId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             // No status (the legacy body) and ACTIVE both mean "go live", which only submits for review.
-            const property = await this.propertyService.requestHostStatusChange(propertyId, requestedStatus);
+            const property = await this.propertyService.requestHostStatusChange(
+                propertyId,
+                requestedStatus,
+                { actorId }
+            );
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -2283,7 +2288,7 @@ export class PropertyController {
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+                body: JSON.stringify(error.statusCode ? error.message : "Something went wrong, please contact support.")
             }
         }
     }
@@ -2318,10 +2323,19 @@ export class PropertyController {
                 return this.badRequest("Missing propertyId.");
             }
 
+            const updatedAt = eventBody.updatedAt;
+            if (!Number.isSafeInteger(updatedAt) || updatedAt < 0) {
+                return this.badRequest("updatedAt must be the property's last update time in milliseconds.");
+            }
+            if (action === "approve" && Object.hasOwn(eventBody, "reason")) {
+                return this.badRequest("An approval takes no reason.");
+            }
+
+            const review = { actorId: reviewerId, expectedUpdatedAt: updatedAt };
             const property =
                 action === "approve"
-                    ? await this.propertyService.approveProperty(propertyId)
-                    : await this.propertyService.rejectProperty(propertyId);
+                    ? await this.propertyService.approveProperty(propertyId, review)
+                    : await this.propertyService.rejectProperty(propertyId, { ...review, reason: eventBody.reason });
 
             console.info(
                 JSON.stringify({ event: "property_review", action, reviewerId, propertyId, status: property.status })
@@ -2329,16 +2343,17 @@ export class PropertyController {
             return {
                 statusCode: 200,
                 headers: responseHeaders,
-                body: JSON.stringify({ propertyId, status: property.status }),
+                body: JSON.stringify({ propertyId, status: property.status, updatedAt: property.updatedAt }),
             };
         } catch (error) {
             console.error(error);
-            const statusCode = error.statusCode || 500;
+            const hasStatusCode = Boolean(error.statusCode);
             return {
-                statusCode,
+                statusCode: error.statusCode || 500,
                 headers: responseHeaders,
                 body: JSON.stringify({
-                    message: error.statusCode ? error.message : "Something went wrong, please contact support.",
+                    message: hasStatusCode ? error.message : "Something went wrong, please contact support.",
+                    ...(hasStatusCode && PUBLIC_REVIEW_ERROR_CODES.has(error.code) ? { code: error.code } : {}),
                 }),
             };
         }
