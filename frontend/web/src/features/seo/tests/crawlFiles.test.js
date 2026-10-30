@@ -125,10 +125,16 @@ describe("the marketplace robots.txt", () => {
     expect(disallowed).toContain("Disallow: /website-preview/");
   });
 
-  it("lets crawlers reach every destination route and the destination sitemap", () => {
+  it("lets crawlers reach the root, a continent, country and city page, and the destination sitemap", () => {
     DESTINATION_ROUTES.forEach((path) =>
       expect({ path, disallowed: isDisallowed(path) }).toEqual({ path, disallowed: false })
     );
+  });
+
+  it("has no Disallow rule written for a destination page or the destination sitemap", () => {
+    const literalPart = (rule) => rule.split(/[*$]/)[0];
+
+    expect(disallowRules().filter((rule) => /^\/(sitemap-)?destinations/.test(literalPart(rule)))).toEqual([]);
   });
 
   it("still finds the dashboard, auth and preview paths disallowed with the same rule matching", () => {
