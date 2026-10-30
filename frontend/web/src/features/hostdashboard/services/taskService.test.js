@@ -6,7 +6,7 @@ jest.mock('../../../services/getAccessToken', () => ({
     getAccessToken: () => 'Bearer token-1',
 }));
 
-import { updateTask, createTask, fetchTasks, escalateTask } from './taskService';
+import { updateTask, createTask, fetchTasks, escalateTask, approveTask, rejectTask } from './taskService';
 
 describe('createTask', () => {
     afterEach(() => {
@@ -161,5 +161,46 @@ describe('escalateTask', () => {
         });
 
         await expect(escalateTask('task-1')).rejects.toThrow('Failed to escalate task: 500');
+    });
+});
+
+describe.each([
+    ['approveTask', approveTask, 'approve', 'Failed to approve task: 500'],
+    ['rejectTask', rejectTask, 'reject', 'Failed to reject task: 500'],
+])('%s', (_name, call, action, fallbackMessage) => {
+    afterEach(() => {
+        delete globalThis.fetch;
+    });
+
+    test(`posts to the ${action} action with the task id`, async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ message: 'done' }) });
+
+        await expect(call('task-1')).resolves.toEqual({ message: 'done' });
+
+        expect(globalThis.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`action=${action}`),
+            expect.objectContaining({ method: 'POST' })
+        );
+        expect(globalThis.fetch.mock.calls[0][0]).toContain('id=task-1');
+    });
+
+    test('throws the backend message when it fails', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: false,
+            status: 400,
+            json: jest.fn().mockResolvedValue({ message: 'Only a completed task can be reviewed' }),
+        });
+
+        await expect(call('task-1')).rejects.toThrow('Only a completed task can be reviewed');
+    });
+
+    test('falls back to a generic message when the error body has none', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: false,
+            status: 500,
+            json: jest.fn().mockRejectedValue(new Error('not json')),
+        });
+
+        await expect(call('task-1')).rejects.toThrow(fallbackMessage);
     });
 });

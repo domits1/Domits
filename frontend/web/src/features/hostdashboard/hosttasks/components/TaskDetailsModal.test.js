@@ -48,6 +48,8 @@ describe('TaskDetailsModal', () => {
         onDelete: jest.fn(),
         onClose: jest.fn(),
         onEscalate: jest.fn(),
+        onApprove: jest.fn(),
+        onReject: jest.fn(),
     };
 
     beforeEach(() => {
@@ -204,5 +206,35 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Escalate' }));
 
         expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
+    });
+
+    describe('approving or rejecting a completed task', () => {
+        const completedTask = { ...baseTask, status: 'Completed', approved_at: null };
+
+        test('shows Approve and Reject for a completed task nobody has approved yet, and each calls its handler', () => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={completedTask} editedTask={completedTask} />);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+
+            expect(baseProps.onApprove).toHaveBeenCalledTimes(1);
+            expect(baseProps.onReject).toHaveBeenCalledTimes(1);
+        });
+
+        test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('does not show Approve or Reject for a %s task', (status) => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('shows that an approved task is approved, and no longer offers Approve or Reject', () => {
+            const approvedTask = { ...completedTask, approved_at: 1700000000000 };
+            render(<TaskDetailsModal {...baseProps} viewingTask={approvedTask} editedTask={approvedTask} />);
+
+            expect(screen.getByText('Approved')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
     });
 });
