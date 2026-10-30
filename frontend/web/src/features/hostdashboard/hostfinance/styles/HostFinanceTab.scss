@@ -501,9 +501,24 @@ $color-muted: #6b7280;
   }
 }
 
-.invoices-error {
-  color: $color-danger;
-  font-size: 0.9rem;
+.invoices-state {
+  border: 1px solid #dfe1e5;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.invoices-state--error {
+  border-color: #f0caca;
+  border-left: 4px solid $color-danger;
+  background: #fff1f1;
+
+  strong {
+    color: $color-danger;
+  }
+
+  span {
+    color: #7a0c0c;
+  }
 }
 
 .invoice-status {
