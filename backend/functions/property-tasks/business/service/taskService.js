@@ -66,7 +66,7 @@ export const createTask = async (hostId, taskData) => {
     return newTask;
 };
 
-export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
@@ -177,6 +177,9 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
     return { message: "Task updated successfully" };
 };
 
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) =>
+    await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
+
 export const escalateTask = async (hostId, taskId) => {
     if (!taskId) throw new BadRequestException("id is required");
 
@@ -228,7 +231,7 @@ export const deleteTask = async (hostId, taskId) => {
         } catch { }
     }
 
-    return await updateTask(hostId, taskId, { is_legacy: true });
+    return await applyTaskUpdate(hostId, taskId, { is_legacy: true });
 };
 
 export const getUploadUrl = async (hostId, fileName, fileType) => {
