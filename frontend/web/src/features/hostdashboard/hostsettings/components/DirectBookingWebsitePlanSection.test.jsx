@@ -5,6 +5,12 @@ import {
   changeWebsiteRatePlan,
   getWebsiteRatePlan,
 } from "../services/websiteRatePlanService";
+import {
+  WEBSITE_CONNECTION_FAILED_MESSAGE,
+  WEBSITE_SESSION_EXPIRED_MESSAGE,
+  WebsiteConnectionError,
+  WebsiteSessionExpiredError,
+} from "../../website/services/websiteSession";
 
 jest.mock("../services/websiteRatePlanService", () => ({
   changeWebsiteRatePlan: jest.fn(),
@@ -290,6 +296,124 @@ describe("DirectBookingWebsitePlanSection", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load plan");
     expect(window.location.search).toBe("?websiteCheckout=success");
+  });
+
+  test.each([
+    [
+      "the session expired",
+      () => new WebsiteSessionExpiredError(),
+      WEBSITE_SESSION_EXPIRED_MESSAGE,
+    ],
+    [
+      "the login check could not reach Cognito",
+      () => new WebsiteConnectionError(),
+      WEBSITE_CONNECTION_FAILED_MESSAGE,
+    ],
+  ])("shows the login message instead of the load error when %s", async (_label, failure, message) => {
+    getWebsiteRatePlan.mockRejectedValue(failure());
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.queryByText("Could not load plan")).not.toBeInTheDocument();
+  });
+
+  test.each([
+    [
+      "Upgrade to Elite",
+      "an expired session",
+      essentialsPlan(),
+      () => new WebsiteSessionExpiredError(),
+      WEBSITE_SESSION_EXPIRED_MESSAGE,
+      "Could not start checkout",
+    ],
+    [
+      "Upgrade to Elite",
+      "an unreachable login check",
+      essentialsPlan(),
+      () => new WebsiteConnectionError(),
+      WEBSITE_CONNECTION_FAILED_MESSAGE,
+      "Could not start checkout",
+    ],
+    [
+      "Switch to Essentials",
+      "an expired session",
+      essentialsPlan({ plan: "elite", priceCents: 4300 }),
+      () => new WebsiteSessionExpiredError(),
+      WEBSITE_SESSION_EXPIRED_MESSAGE,
+      "Could not change plan",
+    ],
+  ])("shows the login message when %s fails with %s", async (buttonName, _label, plan, failure, message, genericError) => {
+    getWebsiteRatePlan.mockResolvedValue(plan);
+    changeWebsiteRatePlan.mockRejectedValue(failure());
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    fireEvent.click(await screen.findByRole("button", { name: buttonName }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.queryByText(genericError)).not.toBeInTheDocument();
+  });
+
+  test("stops confirming the checkout and shows the session expired message when the session expires", async () => {
+    jest.useFakeTimers();
+    try {
+      window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+      getWebsiteRatePlan
+        .mockResolvedValueOnce(essentialsPlan())
+        .mockRejectedValue(new WebsiteSessionExpiredError());
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        await act(async () => {
+          jest.advanceTimersByTime(1500);
+        });
+      }
+
+      expect(screen.getByRole("alert")).toHaveTextContent(WEBSITE_SESSION_EXPIRED_MESSAGE);
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
+      expect(
+        screen.queryByText("We're confirming your Elite subscription. This can take a few moments.")
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Processing..." })).toBeDisabled();
+      expect(window.location.search).toBe("?websiteCheckout=success");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test("keeps confirming the checkout after the login check could not reach Cognito once", async () => {
+    jest.useFakeTimers();
+    try {
+      window.history.replaceState({}, "", "/hostdashboard/settings/rate-plans/direct-booking-website?websiteCheckout=success");
+      getWebsiteRatePlan
+        .mockResolvedValueOnce(essentialsPlan())
+        .mockRejectedValueOnce(new WebsiteConnectionError())
+        .mockResolvedValue(essentialsPlan({ plan: "elite", priceCents: 4300 }));
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        await act(async () => {
+          jest.advanceTimersByTime(1500);
+        });
+      }
+
+      expect(screen.getByText("Your Elite subscription is active.")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(3);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("shows a cancellation notice when Stripe returns to the cancel URL", async () => {
