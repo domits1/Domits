@@ -433,40 +433,26 @@ const MessagesContent = ({ dashboardType }) => {
             {showWhatsAppBanner ? (
               <div
                 style={{
-                  marginBottom: "18px",
+                  marginBottom: "12px",
                   background: "#ffffff",
                   border: "1px solid #d9e7dd",
-                  borderRadius: "16px",
-                  boxShadow: "0 10px 24px rgba(0,0,0,0.06)",
-                  padding: "20px 22px",
+                  borderRadius: "12px",
+                  padding: "10px 16px",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    gap: "16px",
+                    gap: "12px",
                     alignItems: "center",
                     flexWrap: "wrap",
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        color: "#15803d",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
-                      WhatsApp
-                    </p>
-                    <h3 style={{ margin: "6px 0 4px", fontSize: "22px" }}>Connect your WhatsApp Business</h3>
-                    <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.55, maxWidth: "760px" }}>
-                      Link your WhatsApp Business number so you can receive and reply to WhatsApp messages directly
-                      from your Domits inbox.
+                    <h3 style={{ margin: 0, fontSize: "15px" }}>Connect your WhatsApp Business</h3>
+                    <p style={{ margin: "2px 0 0", color: "#4b5563", fontSize: "13px" }}>
+                      Receive and reply to WhatsApp messages directly from your Domits inbox.
                     </p>
                   </div>
 
@@ -475,8 +461,8 @@ const MessagesContent = ({ dashboardType }) => {
                     onClick={() => navigate("/hostdashboard/integrations-marketplace")}
                     style={{
                       border: 0,
-                      borderRadius: "12px",
-                      padding: "12px 16px",
+                      borderRadius: "10px",
+                      padding: "8px 14px",
                       background: "#15803d",
                       color: "#fff",
                       fontWeight: 700,
