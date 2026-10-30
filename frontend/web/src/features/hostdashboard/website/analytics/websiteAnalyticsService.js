@@ -1,30 +1,25 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
+import { WebsiteSessionExpiredError, fetchWithWebsiteSession } from "../services/websiteSession";
 
 const buildWebsiteAnalyticsUrl = () => `${PROPERTY_API_BASE}/website/event`;
 const TERMINAL_EVENT_RETRY_DELAYS_MS = Object.freeze([0, 250, 1000]);
 
-const getOptionalAccessToken = () => getAccessToken();
 const waitForDelay = (delayMs) =>
   new Promise((resolve) => {
     globalThis.setTimeout(resolve, delayMs);
   });
 
-const postWebsiteAnalyticsEvent = async ({ authorization, body, keepalive = false }) => {
-  const headers = {
-    "Content-Type": "application/json",
-  };
+const sendWithoutSession = (url, init) => fetch(url, init);
 
-  if (authorization) {
-    headers.Authorization = authorization;
-  }
-
-  const response = await fetch(buildWebsiteAnalyticsUrl(), {
+const postWebsiteAnalyticsEvent = async ({ send, body, keepalive = false }) => {
+  const response = await send(buildWebsiteAnalyticsUrl(), {
     method: "POST",
     cache: "no-store",
     mode: "cors",
     keepalive,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
 
@@ -40,13 +35,8 @@ export const recordWebsiteHostAnalyticsEvent = async ({
   payload = {},
   keepalive = false,
 }) => {
-  const authorization = getOptionalAccessToken();
-  if (!authorization) {
-    throw new Error("Missing access token for website analytics event.");
-  }
-
   await postWebsiteAnalyticsEvent({
-    authorization,
+    send: fetchWithWebsiteSession,
     keepalive,
     body: {
       propertyId,
@@ -65,7 +55,7 @@ export const recordPublicWebsiteAnalyticsEvent = async ({
   payload = {},
 }) => {
   await postWebsiteAnalyticsEvent({
-    authorization: "",
+    send: sendWithoutSession,
     keepalive: true,
     body: {
       draftId,
@@ -100,6 +90,9 @@ export const recordWebsiteHostAnalyticsEventWithRetry = async (
       await recordWebsiteHostAnalyticsEvent(eventInput);
       return;
     } catch (error) {
+      if (error instanceof WebsiteSessionExpiredError) {
+        throw error;
+      }
       lastError = error;
     }
   }

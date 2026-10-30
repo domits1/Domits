@@ -1,7 +1,8 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
+import { fetchWithWebsiteSession } from "../../website/services/websiteSession";
 
 const RATE_PLAN_URL = `${PROPERTY_API_BASE}/website/rate-plan`;
+const JSON_HEADERS = Object.freeze({ "Content-Type": "application/json" });
 
 const readResponse = async (response) => {
   let data = null;
@@ -24,23 +25,10 @@ const readResponse = async (response) => {
   return data;
 };
 
-const getAuthorizationHeaders = () => {
-  const token = getAccessToken();
-
-  if (!token) {
-    throw new Error("You must be signed in to manage your website rate plan.");
-  }
-
-  return {
-    Authorization: token,
-    "Content-Type": "application/json",
-  };
-};
-
 export const getWebsiteRatePlan = async () => {
-  const response = await fetch(RATE_PLAN_URL, {
+  const response = await fetchWithWebsiteSession(RATE_PLAN_URL, {
     method: "GET",
-    headers: getAuthorizationHeaders(),
+    headers: JSON_HEADERS,
   });
 
   return readResponse(response);
@@ -51,9 +39,9 @@ export const changeWebsiteRatePlan = async (plan) => {
     throw new Error("Unsupported website rate plan.");
   }
 
-  const response = await fetch(RATE_PLAN_URL, {
+  const response = await fetchWithWebsiteSession(RATE_PLAN_URL, {
     method: "PATCH",
-    headers: getAuthorizationHeaders(),
+    headers: JSON_HEADERS,
     body: JSON.stringify({ plan }),
   });
 

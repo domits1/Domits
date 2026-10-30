@@ -4,6 +4,10 @@ import {
   changeWebsiteRatePlan,
   getWebsiteRatePlan,
 } from "../services/websiteRatePlanService";
+import {
+  WebsiteConnectionError,
+  WebsiteSessionExpiredError,
+} from "../../website/services/websiteSession";
 import { formatCurrency } from "../utils/formatters";
 import "../styles/hostSettings.css";
 
@@ -18,6 +22,13 @@ const getCheckoutStateFromUrl = () => {
 
   return ["success", "cancelled"].includes(checkoutState) ? checkoutState : "";
 };
+
+const isLoginFailure = (error) =>
+  error instanceof WebsiteSessionExpiredError ||
+  error instanceof WebsiteConnectionError;
+
+const describeFailure = (error, fallbackMessage) =>
+  isLoginFailure(error) ? error.message : fallbackMessage;
 
 const getEssentialsButtonLabel = ({
   changingPlan,
@@ -232,7 +243,7 @@ const DirectBookingWebsitePlanSection = ({
   copyRef.current = copy;
   const [ratePlan, setRatePlan] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [loadFailure, setLoadFailure] = useState(null);
   const [changingPlan, setChangingPlan] = useState(null);
   const [redirectingToCheckout, setRedirectingToCheckout] = useState(false);
   const [checkoutState] = useState(() => getCheckoutStateFromUrl());
@@ -266,6 +277,7 @@ const DirectBookingWebsitePlanSection = ({
     };
 
     const pollForEliteActivation = async () => {
+      let lastFailure = null;
       for (let attempt = 0; attempt < CHECKOUT_POLL_ATTEMPTS; attempt += 1) {
         await delay(CHECKOUT_POLL_INTERVAL_MS);
         if (cancelled) return;
@@ -274,6 +286,7 @@ const DirectBookingWebsitePlanSection = ({
           const refreshedPlan = await getWebsiteRatePlan();
           if (cancelled) return;
 
+          lastFailure = null;
           setRatePlan(refreshedPlan);
           if (refreshedPlan?.plan === "elite") {
             cleanCheckoutQuery();
@@ -281,8 +294,14 @@ const DirectBookingWebsitePlanSection = ({
             setNotice(copyRef.current.checkoutSuccess);
             return;
           }
-        } catch {
-          continue;
+        } catch (error) {
+          if (cancelled) return;
+          if (error instanceof WebsiteSessionExpiredError) {
+            setNotice("");
+            setActionError(error.message);
+            return;
+          }
+          lastFailure = error;
         }
       }
 
@@ -290,13 +309,16 @@ const DirectBookingWebsitePlanSection = ({
         setNotice(
           copyRef.current.checkoutStillPending || copyRef.current.checkoutPending
         );
+        if (isLoginFailure(lastFailure)) {
+          setActionError(lastFailure.message);
+        }
       }
     };
 
     const loadRatePlan = async () => {
       try {
         setLoading(true);
-        setLoadError(false);
+        setLoadFailure(null);
 
         const result = await getWebsiteRatePlan();
         if (cancelled) return;
@@ -317,9 +339,9 @@ const DirectBookingWebsitePlanSection = ({
             void pollForEliteActivation();
           }
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setLoadError(true);
+          setLoadFailure({ error });
         }
       } finally {
         if (!cancelled) {
@@ -380,12 +402,12 @@ const DirectBookingWebsitePlanSection = ({
         unchanged: "unchanged",
       };
       setNotice(copy[messageByAction[result?.action]] || copy.unchanged);
-    } catch {
-      setActionError(
+    } catch (error) {
+      const fallbackMessage =
         targetPlan === "elite" && !isReactivation
           ? copy.checkoutError
-          : copy.changeError
-      );
+          : copy.changeError;
+      setActionError(describeFailure(error, fallbackMessage));
     } finally {
       setChangingPlan(null);
     }
@@ -428,16 +450,16 @@ const DirectBookingWebsitePlanSection = ({
         </div>
       )}
 
-      {!loading && loadError && (
+      {!loading && loadFailure && (
         <div
           className="personal-data-card enterprise-rate-plan-error"
           role="alert"
         >
-          {copy.loadError}
+          {describeFailure(loadFailure.error, copy.loadError)}
         </div>
       )}
 
-      {!loading && !loadError && ratePlan && (
+      {!loading && !loadFailure && ratePlan && (
         <WebsiteRatePlanContent
           copy={copy}
           ratePlan={ratePlan}
