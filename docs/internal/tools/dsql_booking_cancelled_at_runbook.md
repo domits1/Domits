@@ -33,4 +33,4 @@ Only drop the column with the `_rollback.sql` file after that revert is deployed
 
 ## Status
 
-Not applied yet.
+Applied on 2026-10-30 to the `test` schema first, then `main`, and verified.
