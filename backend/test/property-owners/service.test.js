@@ -49,8 +49,14 @@ const VALID_BODY = Object.freeze({
   owner_type: "individual",
 });
 
+const SHARE_PROPERTY = Object.freeze({ id: "property-1", title: "Villa Sensual" });
+
 const createService = ({
   owners = [],
+  shareProperty = SHARE_PROPERTY,
+  shareOwners = [],
+  changedToday = false,
+  savedShares = [],
   ownerById = null,
   assignments = [],
   ownerAssignments = [],
@@ -62,6 +68,10 @@ const createService = ({
     findAssignmentsByHost: jest.fn(async () => assignments),
     findAssignmentsByOwnerAndHost: jest.fn(async () => ownerAssignments),
     createOwner: jest.fn(async (record) => ({ id: OWNER_A, ...record })),
+    replacePropertyShares: jest.fn(async ({ assertWritable }) => {
+      assertWritable({ property: shareProperty, owners: shareOwners, changedToday });
+      return { property: shareProperty, rows: savedShares };
+    }),
   };
   return { repository, service: new Service({ repository, clock }) };
 };
@@ -312,5 +322,197 @@ describe("Service.createOwner", () => {
 
     await expect(service.createOwner("host-1", body)).rejects.toMatchObject({ statusCode: 400 });
     expect(repository.createOwner).not.toHaveBeenCalled();
+  });
+});
+
+describe("Service.setShares", () => {
+  const sharesBody = (overrides = {}) => ({
+    property_id: "property-1",
+    effective_from: TODAY,
+    shares: [
+      { owner_id: OWNER_A.toUpperCase(), ownership_basis_points: 6000 },
+      { owner_id: OWNER_B, ownership_basis_points: 4000 },
+    ],
+    ...overrides,
+  });
+
+  const activeOwners = [
+    { id: OWNER_A, status: "active" },
+    { id: OWNER_B, status: "pending" },
+  ];
+
+  const shareRow = (ownerId, overrides = {}) => ({
+    id: `row-${ownerId}`,
+    owner_id: ownerId,
+    property_id: "property-1",
+    host_id: "host-1",
+    ownership_basis_points: 5000,
+    effective_from: TODAY,
+    effective_to: null,
+    created_at: CLOCK(),
+    updated_at: CLOCK(),
+    ...overrides,
+  });
+
+  const replaceArgs = (repository) => repository.replacePropertyShares.mock.calls[0][0];
+
+  test("passes today, one clock value, the owner ids and the rows built from the token's host", async () => {
+    const { repository, service } = createService({ shareOwners: activeOwners });
+
+    await service.setShares("host-1", sharesBody());
+
+    const { assertWritable, ...args } = replaceArgs(repository);
+    expect(typeof assertWritable).toBe("function");
+    expect(args).toEqual({
+      hostId: "host-1",
+      propertyId: "property-1",
+      effectiveFrom: TODAY,
+      today: TODAY,
+      now: CLOCK(),
+      ownerIds: [OWNER_A, OWNER_B],
+      rows: [
+        {
+          owner_id: OWNER_A,
+          property_id: "property-1",
+          host_id: "host-1",
+          ownership_basis_points: 6000,
+          effective_from: TODAY,
+          effective_to: null,
+          created_at: CLOCK(),
+          updated_at: CLOCK(),
+        },
+        {
+          owner_id: OWNER_B,
+          property_id: "property-1",
+          host_id: "host-1",
+          ownership_basis_points: 4000,
+          effective_from: TODAY,
+          effective_to: null,
+          created_at: CLOCK(),
+          updated_at: CLOCK(),
+        },
+      ],
+    });
+  });
+
+  test("passes an empty list as no owner ids and no rows", async () => {
+    const { repository, service } = createService();
+
+    await service.setShares("host-1", sharesBody({ shares: [] }));
+
+    expect(replaceArgs(repository)).toMatchObject({ ownerIds: [], rows: [] });
+  });
+
+  test.each([
+    ["an invalid body", null],
+    ["a past effective_from", sharesBody({ effective_from: TODAY - DAY_MS })],
+    ["a total below 10000", sharesBody({ shares: [{ owner_id: OWNER_A, ownership_basis_points: 9999 }] })],
+    ["a host_id in the body", { ...sharesBody(), host_id: "host-2" }],
+  ])("rejects %s with 400 before any repository call", async (_label, body) => {
+    const { repository, service } = createService();
+
+    await expect(service.setShares("host-1", body)).rejects.toMatchObject({ statusCode: 400 });
+    expect(repository.replacePropertyShares).not.toHaveBeenCalled();
+  });
+
+  test("measures past dates against the UTC day of the clock, not the raw clock value", async () => {
+    const { service } = createService({ shareOwners: activeOwners });
+
+    await expect(service.setShares("host-1", sharesBody({ effective_from: TODAY }))).resolves.toMatchObject({
+      as_of: TODAY,
+    });
+  });
+
+  test("rejects a property that is missing or belongs to another host with 404", async () => {
+    const { service } = createService({ shareProperty: null, shareOwners: activeOwners });
+
+    await expect(service.setShares("host-1", sharesBody())).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Property not found.",
+    });
+  });
+
+  test("rejects an owner that is missing or belongs to another host with 404", async () => {
+    const { service } = createService({ shareOwners: [{ id: OWNER_A, status: "active" }] });
+
+    await expect(service.setShares("host-1", sharesBody())).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Owner not found.",
+    });
+  });
+
+  test("rejects an archived owner with 409", async () => {
+    const { service } = createService({
+      shareOwners: [
+        { id: OWNER_A, status: "active" },
+        { id: OWNER_B, status: "archived" },
+      ],
+    });
+
+    await expect(service.setShares("host-1", sharesBody())).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Archived owners cannot receive ownership shares.",
+    });
+  });
+
+  test("rejects a change for today with 409 when the ownership already changed today", async () => {
+    const { service } = createService({ shareOwners: activeOwners, changedToday: true });
+
+    await expect(service.setShares("host-1", sharesBody({ effective_from: TODAY }))).rejects.toMatchObject({
+      statusCode: 409,
+      message: "The ownership of this property already changed today. Choose tomorrow or later.",
+    });
+  });
+
+  test("rejects an empty list for today with the same 409 when the ownership already changed today", async () => {
+    const { service } = createService({ shareOwners: [], changedToday: true });
+
+    await expect(
+      service.setShares("host-1", sharesBody({ effective_from: TODAY, shares: [] }))
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "The ownership of this property already changed today. Choose tomorrow or later.",
+    });
+  });
+
+  test("checks the property before the owners", async () => {
+    const { service } = createService({ shareProperty: null, shareOwners: [] });
+
+    await expect(service.setShares("host-1", sharesBody())).rejects.toMatchObject({ message: "Property not found." });
+  });
+
+  test("accepts an empty list for an existing property without looking for owners", async () => {
+    const { service } = createService({ shareOwners: [] });
+
+    await expect(service.setShares("host-1", sharesBody({ shares: [] }))).resolves.toMatchObject({
+      current: [],
+      upcoming: [],
+    });
+  });
+
+  test("splits the saved rows into current and upcoming shares relative to today", async () => {
+    const savedShares = [
+      shareRow(OWNER_A, { effective_from: TODAY - 30 * DAY_MS, effective_to: TODAY + 10 * DAY_MS }),
+      shareRow(OWNER_B, { effective_from: TODAY - 30 * DAY_MS, effective_to: TODAY + 10 * DAY_MS }),
+      shareRow(OWNER_A, { effective_from: TODAY + 10 * DAY_MS, ownership_basis_points: 6000 }),
+      shareRow(OWNER_C, { effective_from: TODAY, effective_to: null }),
+    ];
+    const { service } = createService({ shareOwners: activeOwners, savedShares });
+
+    const response = await service.setShares("host-1", sharesBody({ effective_from: TODAY + 10 * DAY_MS }));
+
+    expect(response).toStrictEqual({
+      property_id: "property-1",
+      property_title: "Villa Sensual",
+      as_of: TODAY,
+      current: [
+        { owner_id: OWNER_A, ownership_basis_points: 5000, effective_from: TODAY - 30 * DAY_MS, effective_to: TODAY + 10 * DAY_MS },
+        { owner_id: OWNER_B, ownership_basis_points: 5000, effective_from: TODAY - 30 * DAY_MS, effective_to: TODAY + 10 * DAY_MS },
+        { owner_id: OWNER_C, ownership_basis_points: 5000, effective_from: TODAY, effective_to: null },
+      ],
+      upcoming: [
+        { owner_id: OWNER_A, ownership_basis_points: 6000, effective_from: TODAY + 10 * DAY_MS, effective_to: null },
+      ],
+    });
   });
 });
