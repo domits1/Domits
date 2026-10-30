@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { DataSource } from "typeorm";
 import { Booking } from "database/models/Booking";
-import { extractAddColumnNames, extractCreateTableColumns, loadSchemaSql, sorted } from "./schemaSql";
+import { extractAddColumnNames, extractCreateTableColumns, loadMigrationSql, loadSchemaSql, sorted } from "./schemaSql";
 
 const CATALOG_COLUMNS = [
   "id",
@@ -30,6 +30,7 @@ const CATALOG_COLUMNS = [
   "idempotency_key",
   "checked_out_at",
   "special_request",
+  "cancelled_at",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -92,7 +93,22 @@ describe("Booking entity", () => {
     });
   });
 
+  it("reads cancelled_at as a number and keeps an empty one empty", async () => {
+    const metadata = await loadBookingMetadata();
+    const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
+    expect(transformer.from("1792281600000")).toBe(1792281600000);
+    expect(transformer.from(null)).toBeNull();
+  });
+
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+});
+
+describe("cancelled_at migration", () => {
+  it("adds the column to both schemas, because the entity selects it on every booking read", () => {
+    const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+  });
 });
 
 describe("schema.psql booking blocks", () => {
