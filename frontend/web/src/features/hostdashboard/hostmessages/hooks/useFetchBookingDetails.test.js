@@ -87,6 +87,16 @@ describe("useFetchBookingDetails when the open thread changes", () => {
     expect(result.current.bookingDetails).toBeNull();
   });
 
+  test("a failure for the open thread is reported", async () => {
+    const { result } = renderForThread("guest-1");
+
+    await act(async () => requests["guest-1"].reject(new Error("Failed to fetch accommodation")));
+
+    expect(result.current.error).toBe("Failed to fetch accommodation");
+    expect(result.current.loading).toBe(false);
+    expect(result.current.bookingDetails).toBeNull();
+  });
+
   test("the previous thread's booking is cleared while the next thread loads", async () => {
     const { result, rerender } = renderForThread("guest-1");
     await act(async () => requests["guest-1"].resolve(bookingFor("guest-1")));

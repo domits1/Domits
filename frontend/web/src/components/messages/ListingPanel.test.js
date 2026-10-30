@@ -66,12 +66,18 @@ describe("ListingPanel when the open thread changes", () => {
     getAccessToken.mockReturnValue("access-token-value");
     getAccommodationWithPublicFallback.mockImplementation((_endpoint, propertyId) => {
       let resolve;
-      const promise = new Promise((resolvePromise) => {
+      let reject;
+      const promise = new Promise((resolvePromise, rejectPromise) => {
         resolve = resolvePromise;
+        reject = rejectPromise;
       });
-      requests[propertyId] = { resolve };
+      requests[propertyId] = { resolve, reject };
       return promise;
     });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   test("a late answer for the previous thread does not replace the open listing", async () => {
@@ -94,6 +100,28 @@ describe("ListingPanel when the open thread changes", () => {
 
     expect(screen.queryByText("First Cabin")).not.toBeInTheDocument();
     expect(screen.getByText("Listing #property-2")).toBeInTheDocument();
+  });
+
+  test("a late failure for the previous thread does not show an error on the open listing", async () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { rerender } = render(<ListingPanel dashboardType="host" propertyId="property-1" />);
+    rerender(<ListingPanel dashboardType="host" propertyId="property-2" />);
+
+    await act(async () => requests["property-2"].resolve({ property: { title: "Second Cabin" } }));
+    await act(async () => requests["property-1"].reject(new Error("Failed to fetch accommodation")));
+
+    expect(screen.getByText("Second Cabin")).toBeInTheDocument();
+    expect(screen.queryByText("Failed to load listing details.")).not.toBeInTheDocument();
+  });
+
+  test("the open listing keeps loading when the previous thread finishes first", async () => {
+    const { rerender } = render(<ListingPanel dashboardType="host" propertyId="property-1" />);
+    rerender(<ListingPanel dashboardType="host" propertyId="property-2" />);
+
+    await act(async () => requests["property-1"].resolve({ property: { title: "First Cabin" } }));
+
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    expect(screen.queryByText("First Cabin")).not.toBeInTheDocument();
   });
 });
 
@@ -134,6 +162,29 @@ describe("ListingPanel for a listing the host may not open in the host dashboard
     expect(await screen.findByText("Failed to load listing details.")).toBeInTheDocument();
     expect(screen.getByText("Listing #property-1")).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test("a public answer that arrives after a thread switch does not replace the open listing", async () => {
+    let answerFirstPublicListing;
+    globalThis.fetch.mockImplementation((url) => {
+      if (url.includes("hostDashboard/single?property=property-1")) return Promise.resolve(failed(403));
+      if (url.includes("listingDetails?property=property-1")) {
+        return new Promise((resolve) => {
+          answerFirstPublicListing = () => resolve(listed({ property: { title: "First Cabin" } }));
+        });
+      }
+      return Promise.resolve(listed({ property: { title: "Second Cabin" } }));
+    });
+
+    const { rerender } = render(<ListingPanel dashboardType="host" propertyId="property-1" />);
+    await waitFor(() => expect(answerFirstPublicListing).toBeDefined());
+    rerender(<ListingPanel dashboardType="host" propertyId="property-2" />);
+    expect(await screen.findByText("Second Cabin")).toBeInTheDocument();
+
+    await act(async () => answerFirstPublicListing());
+
+    expect(screen.getByText("Second Cabin")).toBeInTheDocument();
+    expect(screen.queryByText("First Cabin")).not.toBeInTheDocument();
   });
 
   test("says the listing could not be loaded on a 401, without asking the public listing", async () => {
