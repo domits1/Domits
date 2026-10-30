@@ -659,7 +659,7 @@ class MessageService {
       response: visible.map((t) => ({
         ...t,
         unreadCount: unreadCounts[t.id] || 0,
-        ...(guestNames[t.bookingId] ? { guestName: guestNames[t.bookingId] } : {}),
+        ...(t.platform === "CHANNEX" && guestNames[t.bookingId] ? { guestName: guestNames[t.bookingId] } : {}),
       })),
     };
   }

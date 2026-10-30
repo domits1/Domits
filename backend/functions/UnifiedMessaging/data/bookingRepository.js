@@ -2,6 +2,8 @@ import Database from "../.shared/integrations/ORM/index.js";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 
+const GUEST_NAME_CHUNK_SIZE = 100;
+
 const normalizeBooking = (booking) => {
   if (!booking) return null;
 
@@ -64,17 +66,26 @@ class BookingRepository {
     if (!hostId || !Array.isArray(bookingIds) || bookingIds.length === 0) return {};
 
     const client = await Database.getInstance();
-    const bookings = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .select(["booking.id", "booking.guestname"])
-      .where("booking.id IN (:...bookingIds)", { bookingIds })
-      .andWhere("booking.hostid = :hostId", { hostId })
-      .getMany();
+    const repository = client.getRepository(Booking);
+    const uniqueBookingIds = [...new Set(bookingIds)];
+    const names = {};
 
-    return Object.fromEntries(
-      bookings.filter((booking) => booking.guestname).map((booking) => [booking.id, booking.guestname])
-    );
+    // A host with many conversations would otherwise send one very large IN list to the database.
+    for (let start = 0; start < uniqueBookingIds.length; start += GUEST_NAME_CHUNK_SIZE) {
+      const chunk = uniqueBookingIds.slice(start, start + GUEST_NAME_CHUNK_SIZE);
+      const bookings = await repository
+        .createQueryBuilder("booking")
+        .select(["booking.id", "booking.guestname"])
+        .where("booking.id IN (:...bookingIds)", { bookingIds: chunk })
+        .andWhere("booking.hostid = :hostId", { hostId })
+        .getMany();
+
+      for (const booking of bookings) {
+        if (booking.guestname) names[booking.id] = booking.guestname;
+      }
+    }
+
+    return names;
   }
 }
 
