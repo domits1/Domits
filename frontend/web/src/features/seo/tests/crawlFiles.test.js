@@ -145,6 +145,13 @@ describe("the marketplace robots.txt", () => {
   it("points at the production sitemap", () => {
     expect(robotsLines()).toContain("Sitemap: https://www.domits.com/sitemap.xml");
   });
+
+  it("points at the destination sitemap on the production host only", () => {
+    const sitemapLines = robotsLines().filter((line) => /^sitemap\s*:/i.test(line));
+
+    expect(sitemapLines).toContain("Sitemap: https://www.domits.com/sitemap-destinations.xml");
+    sitemapLines.forEach((line) => expect(line).toMatch(/^Sitemap: https:\/\/www\.domits\.com\/[^\s]*$/));
+  });
 });
 
 describe("keeping the marketplace crawl files off the direct booking websites", () => {
