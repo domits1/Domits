@@ -7,6 +7,7 @@ jest.mock("../../website/services/websiteDraftService", () => ({
 }));
 
 jest.mock("../../hostfinance/services/stripeAccountService", () => ({
+  ...jest.requireActual("../../hostfinance/services/stripeAccountService"),
   getStripeAccountDetails: jest.fn(),
 }));
 
@@ -66,6 +67,7 @@ describe("checkPaymentsStatus", () => {
 
   test("is complete only once Stripe onboarding, charges and payouts are all enabled", async () => {
     getStripeAccountDetails.mockResolvedValue({
+      accountId: "acct_test",
       onboardingComplete: true,
       chargesEnabled: true,
       payoutsEnabled: true,
@@ -77,9 +79,10 @@ describe("checkPaymentsStatus", () => {
   });
 
   test.each([
-    ["onboarding isn't finished", { onboardingComplete: false, chargesEnabled: true, payoutsEnabled: true }],
-    ["charges are disabled", { onboardingComplete: true, chargesEnabled: false, payoutsEnabled: true }],
-    ["payouts are disabled", { onboardingComplete: true, chargesEnabled: true, payoutsEnabled: false }],
+    ["onboarding isn't finished", { accountId: "acct_test", onboardingComplete: false, chargesEnabled: true, payoutsEnabled: true }],
+    ["charges are disabled", { accountId: "acct_test", onboardingComplete: true, chargesEnabled: false, payoutsEnabled: true }],
+    ["payouts are disabled", { accountId: "acct_test", onboardingComplete: true, chargesEnabled: true, payoutsEnabled: false }],
+    ["the Stripe account is missing", { onboardingComplete: true, chargesEnabled: true, payoutsEnabled: true }],
   ])("is not complete when %s, even though a Stripe account exists", async (_label, details) => {
     getStripeAccountDetails.mockResolvedValue(details);
 

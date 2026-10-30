@@ -115,16 +115,16 @@ function HostListings() {
   const [activeFilter, setActiveFilter] = useState("ACTIVE");
   const [processingPropertyId, setProcessingPropertyId] = useState("");
   const navigate = useNavigate();
-  const { effectiveHostId: userId, ownId, managedHostId, isPurelyPOM } = useEffectiveHostId();
-  const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchVerificationStatus } =
-    useSetLiveEligibility({ userId: ownId });
+  const { effectiveHostId: userId, managedHostId, isPurelyPOM } = useEffectiveHostId();
+  const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchLiveEligibility } =
+    useSetLiveEligibility();
 
   useEffect(() => {
     if (userId) {
-      fetchVerificationStatus();
+      fetchLiveEligibility();
       fetchAccommodations();
     }
-  }, [fetchVerificationStatus, userId, managedHostId, isPurelyPOM]);
+  }, [fetchLiveEligibility, userId, managedHostId, isPurelyPOM]);
 
   const fetchFromByHostId = async (hostId) => {
     try {
@@ -203,11 +203,15 @@ function HostListings() {
       return false;
     }
     if (liveEligibilityLoading) {
-      toast.info("Checking verification status. Please try again in a moment.");
+      toast.info("Checking Stripe payout setup. Please try again in a moment.");
       return false;
     }
-    if (liveEligibilityError || !liveEligibility) {
-      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+    if (liveEligibilityError) {
+      toast.error("We couldn't verify your Stripe payout status. Please refresh and try again.");
+      return false;
+    }
+    if (!liveEligibility) {
+      toast.error("Your Stripe account must be fully set up and payouts enabled before you can publish this listing. Redirecting to Finance...");
       navigate("/hostdashboard/finance");
       return false;
     }
