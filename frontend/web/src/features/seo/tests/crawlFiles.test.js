@@ -15,6 +15,32 @@ const robotsLines = () =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const DESTINATION_ROUTES = Object.freeze([
+  "/destinations",
+  "/destinations/europe",
+  "/destinations/europe/netherlands",
+  "/destinations/europe/netherlands/amsterdam",
+  "/sitemap-destinations.xml",
+]);
+
+const escapeRegExp = (text) => text.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+
+const toRobotsPattern = (rule) => {
+  const anchored = rule.endsWith("$");
+  const body = anchored ? rule.slice(0, -1) : rule;
+  const source = body.split("*").map(escapeRegExp).join(".*");
+  return new RegExp(`^${source}${anchored ? "$" : ""}`);
+};
+
+const disallowRules = () =>
+  robotsLines()
+    .map((line) => /^disallow\s*:\s*([^#]*)/i.exec(line))
+    .filter(Boolean)
+    .map((match) => match[1].trim())
+    .filter(Boolean);
+
+const isDisallowed = (path) => disallowRules().some((rule) => toRobotsPattern(rule).test(path));
+
 describe("the marketplace sitemap", () => {
   it("lists only absolute production urls", () => {
     const urls = sitemapUrls();
@@ -97,6 +123,23 @@ describe("the marketplace robots.txt", () => {
     const disallowed = robotsLines().filter((line) => line.startsWith("Disallow:"));
 
     expect(disallowed).toContain("Disallow: /website-preview/");
+  });
+
+  it("lets crawlers reach every destination route and the destination sitemap", () => {
+    DESTINATION_ROUTES.forEach((path) =>
+      expect({ path, disallowed: isDisallowed(path) }).toEqual({ path, disallowed: false })
+    );
+  });
+
+  it("still finds the dashboard, auth and preview paths disallowed with the same rule matching", () => {
+    [
+      "/hostdashboard/calendar",
+      "/guestdashboard/bookings",
+      "/admin/users",
+      "/login",
+      "/stripe/return",
+      "/website-preview/abc",
+    ].forEach((path) => expect({ path, disallowed: isDisallowed(path) }).toEqual({ path, disallowed: true }));
   });
 
   it("points at the production sitemap", () => {
