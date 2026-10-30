@@ -196,6 +196,34 @@ describe("updateTask: moving a task to another property", () => {
     });
 });
 
+describe("updateTask: the task that is hit", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockUpdateTaskInDb.mockResolvedValue();
+        mockSaveActivityToDb.mockResolvedValue();
+        mockS3Send.mockResolvedValue({});
+    });
+
+    it.each([undefined, null, ""])("rejects an update without a task id (%p) with a 400 before any task is looked up", async (taskId) => {
+        const error = await updateTask("host-1", taskId, { attachments: [] }).catch((thrown) => thrown);
+
+        expect(error).toMatchObject({ statusCode: 400, message: "id is required" });
+        nothingWasTouched();
+    });
+
+    it("answers 404 when the task is not one of the caller's host, and changes nothing", async () => {
+        mockGetTaskById.mockResolvedValue(null);
+
+        const error = await updateTask("host-1", "task-of-host-2", { attachments: [] }, TEAM_MEMBER).catch((thrown) => thrown);
+
+        expect(error).toMatchObject({ statusCode: 404, message: "Task not found or access denied" });
+        expect(mockGetTaskById).toHaveBeenCalledWith(expect.anything(), "task-of-host-2", "host-1");
+        expect(mockS3Send).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+        expect(mockSaveActivityToDb).not.toHaveBeenCalled();
+    });
+});
+
 describe("deleteTask", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -212,5 +240,14 @@ describe("deleteTask", () => {
             "task-1",
             expect.objectContaining({ is_legacy: true })
         );
+    });
+
+    it("rejects a delete without a task id with a 400 before any task is looked up", async () => {
+        const error = await deleteTask("host-1", undefined).catch((thrown) => thrown);
+
+        expect(error).toMatchObject({ statusCode: 400, message: "id is required" });
+        expect(mockGetTaskById).not.toHaveBeenCalled();
+        expect(mockS3Send).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
     });
 });

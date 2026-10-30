@@ -9,6 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -71,7 +72,7 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
-    if (!oldTask) throw new Error("Task not found or access denied");
+    if (!oldTask) throw new NotFoundException("Task not found or access denied");
 
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
@@ -182,6 +183,7 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
 };
 
 export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+    if (!taskId) throw new BadRequestException("id is required");
     const editorRole = actorIsTeamMember ? TASK_EDITOR_ROLES.TEAM_MEMBER : TASK_EDITOR_ROLES.HOST;
     assertOnlyEditableFields(editorRole, updateData);
     return await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
@@ -223,6 +225,7 @@ export const escalateTask = async (hostId, taskId) => {
 };
 
 export const deleteTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
 
