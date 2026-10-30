@@ -8,6 +8,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } fr
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -75,8 +76,6 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
-
-    delete fieldsToUpdate.escalated_at;
 
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
@@ -177,8 +176,11 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
     return { message: "Task updated successfully" };
 };
 
-export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) =>
-    await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+    const editorRole = actorIsTeamMember ? TASK_EDITOR_ROLES.TEAM_MEMBER : TASK_EDITOR_ROLES.HOST;
+    assertOnlyEditableFields(editorRole, updateData);
+    return await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
+};
 
 export const escalateTask = async (hostId, taskId) => {
     if (!taskId) throw new BadRequestException("id is required");
