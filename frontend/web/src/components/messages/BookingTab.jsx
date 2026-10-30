@@ -91,10 +91,12 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
                             <p>{formatHour(accommodation?.checkIn.checkOut.from)}-{formatHour(accommodation?.checkIn.checkOut.till)}</p>
                         </div>
                     </div>
-                    <div className="street">
-                        <div className="iconHouse"><FaHome />
-                        </div> <p>{accommodation?.location?.street} {accommodation?.location?.houseNumber}{accommodation?.location?.houseNumberExtension} </p>
-                    </div>
+                    {accommodation?.location?.street && (
+                        <div className="street">
+                            <div className="iconHouse"><FaHome />
+                            </div> <p>{accommodation?.location?.street} {accommodation?.location?.houseNumber}{accommodation?.location?.houseNumberExtension} </p>
+                        </div>
+                    )}
                     <div className="reservation-details">
                         <h3>Reservation Details</h3>
                         <div className="guest-amount">
