@@ -32,7 +32,7 @@ The body has exactly these three fields, in any order.
 | Field | Rules |
 | ----- | ----- |
 | `property_id` | String. Trimmed. Not blank, at most 255 characters, no control characters. The trimmed value is used |
-| `effective_from` | Integer, epoch milliseconds at a UTC midnight, not before today (UTC) |
+| `effective_from` | Integer, epoch milliseconds at a UTC midnight, not before today (UTC) and at most 5 years after today (UTC) |
 | `shares` | Array of at most 100 entries. May be empty |
 
 Each entry of `shares` has exactly these two fields:
@@ -53,10 +53,11 @@ In one transaction, rerun as a whole on a DSQL conflict:
 
 1. Lock the property, scoped to the caller's host (`property.hostid`). Not found: `404` `Property not found.`
 2. Lock the owners in the list, scoped to the caller's host. Any one not found: `404` `Owner not found.` Any one archived: `409`. The property check comes first. An empty list skips the owner lookup.
-3. Delete every period of the property, for every owner, that starts on or after `effective_from`. This replaces earlier planned changes from that date.
-4. Close every period of the property that starts before `effective_from` and is open or ends after it. Its `effective_to` becomes `effective_from`.
-5. Insert one open period per entry, starting at `effective_from`.
-6. Read the current and upcoming periods of the property for the response.
+3. When `effective_from` is today and a period of the property, for any owner, already starts today: nothing is written, `409` `The ownership of this property already changed today. Choose tomorrow or later.` This check comes after the property and owner checks.
+4. Delete every period of the property, for every owner, that starts on or after `effective_from`. This replaces earlier planned changes from that date.
+5. Close every period of the property that starts before `effective_from` and is open or ends after it. Its `effective_to` becomes `effective_from`.
+6. Insert one open period per entry, starting at `effective_from`.
+7. Read the current and upcoming periods of the property for the response.
 
 Periods that ended on or before `effective_from` are not touched.
 
@@ -121,6 +122,7 @@ With `effective_from` equal to today, the new periods are in `current`, and `upc
 | 400 | `effective_from must be an integer in epoch milliseconds.` | |
 | 400 | `effective_from must be a UTC midnight.` | |
 | 400 | `effective_from cannot be before today.` | Today is the UTC date of the server clock |
+| 400 | `effective_from cannot be more than 5 years after today.` | |
 | 400 | `shares must be an array.` | |
 | 400 | `shares must contain at most 100 entries.` | |
 | 400 | `Each share must be an object.` | |
@@ -132,5 +134,6 @@ With `effective_from` equal to today, the new periods are in `current`, and `upc
 | 404 | `Property not found.` | No such property for the caller's host |
 | 404 | `Owner not found.` | An owner in the list does not exist for the caller's host |
 | 409 | `Archived owners cannot receive ownership shares.` | An owner in the list is archived |
+| 409 | `The ownership of this property already changed today. Choose tomorrow or later.` | `effective_from` is today and a period of the property already starts today |
 | 409 | `The ownership of this property changed at the same time. Reload and try again.` | A write conflict outlasted the retries, or the database reported a duplicate period |
 | 401, 403, 405, 500 | see the [overview](./property_owners.md#common-responses) | |

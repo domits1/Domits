@@ -17,7 +17,7 @@ All routes are served by one API Gateway resource that integrates the `property-
 
 In this document `{baseUrl}` stands for that invoke URL plus resource path. Every route is selected by the HTTP method and the query parameters `id` and `action`. There are no sub-paths.
 
-A deployed Lambda is not yet a usable endpoint. The resource, its methods (`GET`, `POST`, `PUT`, `PATCH`, `OPTIONS`), CORS and an API deployment to `default` have to be set up in API Gateway by hand, because this repository has no infrastructure as code.
+A deployed Lambda is not yet a usable endpoint. The resource, one `ANY` method with Lambda proxy integration, and an API deployment to `default` have to be set up in API Gateway by hand, because this repository has no infrastructure as code. `ANY` sends every method, including `OPTIONS`, to the Lambda: the router answers unknown methods with `405`, and the Lambda answers the CORS preflight itself. Do not enable CORS on the resource in API Gateway; that adds a separate `OPTIONS` method that takes precedence over `ANY`.
 
 ## Working Endpoints
 
@@ -59,6 +59,8 @@ Each row of `property_owner_property` says that one owner holds one share of one
 - A row is **upcoming** when `effective_from > today`.
 
 Shares are changed only through [set-shares](./property_owners_put_set_shares_format.md). It replaces every share of one property from one date, and closes the periods that ran past that date, so earlier history is kept. The shares in one request add up to exactly 10000, or the list is empty to end all ownership from that date.
+
+The ownership of a property can change at most once per UTC day: when a period of the property already starts today, a second change for today answers `409`, so choose tomorrow or later.
 
 GET responses show only **current** periods. Upcoming periods are returned by set-shares only.
 
@@ -206,7 +208,8 @@ sequenceDiagram
         Repo->>DB: BEGIN
         Repo->>DB: lock property (host-scoped)
         Repo->>DB: lock owners (host-scoped)
-        Repo->>S: assertWritable: 404 / 409
+        Repo->>DB: existsBy period of the property starting today (only when effective_from is today)
+        Repo->>S: assertWritable: 404 / 409 archived / 409 changed today
         Repo->>DB: delete periods from effective_from
         Repo->>DB: close periods that run past effective_from
         Repo->>DB: insert new periods
