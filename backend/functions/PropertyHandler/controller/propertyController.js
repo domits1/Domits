@@ -28,6 +28,7 @@ import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
+import { TypeException } from "../util/exception/TypeException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
@@ -54,6 +55,8 @@ const draftResponseHeaders = {
     Pragma: "no-cache",
     Expires: "0",
 };
+
+const reviewReadResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
 
 const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_BUILD_STARTED",
@@ -2312,6 +2315,52 @@ export class PropertyController {
     // -------------------------
     async rejectProperty(event) {
         return await this.reviewProperty(event, "reject");
+    }
+
+    async getReviewAccess(event) {
+        return await this.respondToReviewRead(async () => ({
+            allowed: await this.authManager.checkReviewAdminAccess(this.getAuthorizationHeader(event)),
+        }));
+    }
+
+    async getReviewQueue(event) {
+        return await this.respondToReviewRead(async () => {
+            await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
+            const query = event.queryStringParameters || {};
+            return await this.propertyService.getReviewQueue({ cursor: query.cursor, limit: query.limit });
+        });
+    }
+
+    async getReviewDetail(event) {
+        return await this.respondToReviewRead(async () => {
+            await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
+            const propertyId = String(event.queryStringParameters?.propertyId ?? "").trim();
+            if (!propertyId) {
+                throw new TypeException("Missing propertyId.");
+            }
+            return await this.propertyService.getFullPropertyForReview(propertyId);
+        });
+    }
+
+    getAuthorizationHeader(event) {
+        return event.headers?.Authorization || event.headers?.authorization;
+    }
+
+    async respondToReviewRead(read) {
+        try {
+            return { statusCode: 200, headers: reviewReadResponseHeaders, body: JSON.stringify(await read()) };
+        } catch (error) {
+            if (error.statusCode !== 401) {
+                console.error(error);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: reviewReadResponseHeaders,
+                body: JSON.stringify({
+                    message: error.statusCode ? error.message : "Something went wrong, please contact support.",
+                }),
+            };
+        }
     }
 
     async reviewProperty(event, action) {

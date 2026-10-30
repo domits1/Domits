@@ -67,6 +67,11 @@ export class AuthManager {
         return user.Username;
     }
 
+    async checkReviewAdminAccess(accessToken) {
+        const user = await this.getAuthorizedUser(accessToken);
+        return isReviewAdmin(user?.Username);
+    }
+
     async authorizeOwnerRequest(accessToken, id) {
         const user = await this.getAuthorizedUser(accessToken);
         const property = await this.propertyRepository.getPropertyById(id)
