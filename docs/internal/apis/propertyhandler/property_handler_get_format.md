@@ -78,3 +78,19 @@ Example of a paginated request url:
     }
 }
 ```
+
+Only the host of the property and the active co-hosts of that host get the property back. A request without a login gets `401`, anyone else gets `403`, a property that does not exist gets `404`, and a request without `property` gets `400`.
+
+## Get all properties of a host (filtered by host id and Authorization header)
+
+`URL: https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/byHostId?hostId=123`
+```json
+{
+    "method": "GET",
+    "headers": {
+        "Authorization": "String"
+    }
+}
+```
+
+Co-hosts use this route to load the listings of the host they work for. Only that host and the active co-hosts of that host get the listings back. A request without a login gets `401`, anyone else gets `403`, a request without `hostId` gets `400`, and a host without listings gets `404` with `"No property found."`.

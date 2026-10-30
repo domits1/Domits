@@ -649,7 +649,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
-            await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
             return {
@@ -694,7 +694,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
             const channexChanges = this.buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides);
 
@@ -2373,7 +2373,6 @@ export class PropertyController {
     async getFullOwnedPropertiesByHostId(event) {
         try {
             const accessToken = event.headers.Authorization;
-            await this.authManager.getAuthorizedUser(accessToken);
             const hostId = event.queryStringParameters?.hostId;
             if (!hostId) {
                 return {
@@ -2382,6 +2381,7 @@ export class PropertyController {
                     body: JSON.stringify("hostId query parameter is required.")
                 };
             }
+            await this.authManager.authorizeHostOrCoHostRequest(accessToken, hostId);
             const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
             return {
                 statusCode: 200,
@@ -2402,8 +2402,15 @@ export class PropertyController {
     // -------------------------
     async getFullOwnedPropertyById(event) {
         try {
-            const propertyId = event.queryStringParameters.property;
-            await this.authManager.getAuthorizedUser(event.headers.Authorization);
+            const propertyId = event.queryStringParameters?.property;
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("property query parameter is required."),
+                };
+            }
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(event.headers.Authorization, propertyId);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
