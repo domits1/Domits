@@ -40,6 +40,7 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
+import { OTA_DISPLAY_NAMES } from "../../utils/otaDisplayName.js";
 import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
 
 const STATUS_CLASS = {
@@ -259,9 +260,6 @@ const buildChannelLabel = (booking) => {
 
   return rawChannel;
 };
-
-// Channex sends some OTA names as codes; the host knows them by their brand name.
-const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
 
 // A Channex booking was paid on the OTA, not by card through Domits (#3483).
 const buildPaymentMethod = (booking) => {
