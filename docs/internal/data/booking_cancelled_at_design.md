@@ -34,6 +34,8 @@ A booking becomes "Cancelled" in three places. Each sets `cancelled_at` in the s
 
 `updateBookingStatus` also sets other statuses; it only writes `cancelled_at` when the new status is Cancelled.
 
+On Aurora DSQL, two writes to the same row at the same time do not wait for each other: one fails at commit with `40001`. `COALESCE` keeps the first time, and the failed write changed nothing. Writes that also queue Channex changes retry through `withDsqlRetry`. If a Channex cancellation still fails, its revision stays unacknowledged in the feed and the next pull imports it again. If a Domits cancellation still fails, the person gets an error and can cancel again.
+
 A booking that becomes active again after a cancellation keeps its `cancelled_at`. The page only shows the date for a cancelled booking, and OTAs normally send a new booking instead of reviving a cancelled one, so this is left as it is.
 
 ### 3. Reading and showing it
@@ -46,7 +48,7 @@ A booking that becomes active again after a cancellation keeps its `cancelled_at
 
 | Pull request | Contents | Notes |
 |---|---|---|
-| 1 | Migration and model | Run the migration on Aurora DSQL before this pull request is merged, and check it with `SELECT cancelled_at FROM main.booking LIMIT 1`. Once the column is in the model, every ORM read of a booking selects it (for example `readByHostId`, `reservationRepository.js:257-267`), so the model must never reach a Lambda before the column exists. A change in `backend/ORM/` starts a deploy of all Lambdas (`deploy.yml:79-82`). |
+| 1 | Migration and model | Run the migration on the `test` and `main` schemas before this pull request is merged, following [the runbook](../tools/dsql_booking_cancelled_at_runbook.md). Once the column is in the model, every ORM read of a booking selects it (for example `readByHostId`, `reservationRepository.js:257-267`), so the model must never reach a Lambda before the column exists. A change in `backend/ORM/` starts a deploy of all Lambdas (`deploy.yml:79-82`). |
 | 2 | The three write paths, with tests | Merge after pull request 1 is deployed: this code writes the new column. |
 | 3 | Reservation page and receipt, with tests | Old bookings without a date show no date |
 
