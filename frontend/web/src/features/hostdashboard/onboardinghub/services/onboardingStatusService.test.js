@@ -7,6 +7,7 @@ jest.mock("../../website/services/websiteDraftService", () => ({
 }));
 
 jest.mock("../../hostfinance/services/stripeAccountService", () => ({
+  ...jest.requireActual("../../hostfinance/services/stripeAccountService"),
   getStripeAccountDetails: jest.fn(),
 }));
 
