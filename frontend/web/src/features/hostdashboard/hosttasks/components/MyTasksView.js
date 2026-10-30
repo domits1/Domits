@@ -72,7 +72,11 @@ const MyTasksView = ({
 }) => {
     const todayStr = new Date().toISOString().split('T')[0];
 
-    let myTasks = tasks.filter(t => t.assignee === currentUser.name && !t.isLegacy);
+    const ownEmail = (currentUser.email || '').toLowerCase();
+    const isAssignedToMe = (task) => task.assignee === currentUser.name
+        || (ownEmail !== '' && (task.assignee || '').toLowerCase() === ownEmail);
+
+    let myTasks = tasks.filter(t => isAssignedToMe(t) && !t.isLegacy);
 
     myTasks = myTasks.filter(task => {
         const matchProperty = filters.property === 'All properties' || task.property === filters.property;
