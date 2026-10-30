@@ -39,7 +39,7 @@ describe("the website editor when a background analytics event fails on the logi
     delete global.fetch;
   });
 
-  it("keeps the editor usable and quiet when the backend rejects the login and it cannot be refreshed", async () => {
+  it("shows no error in the editor when the backend rejects the login and it cannot be refreshed", async () => {
     Auth.currentSession.mockResolvedValue(sessionWith("revoked-token"));
     Auth.userPool.getCurrentUser.mockReturnValue(null);
 
@@ -51,7 +51,7 @@ describe("the website editor when a background analytics event fails on the logi
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("keeps the editor quiet when the login check cannot reach Cognito", async () => {
+  it("shows no error in the editor when the login check cannot reach Cognito", async () => {
     Auth.currentSession.mockRejectedValue(Object.assign(new Error("Network error"), { code: "NetworkError" }));
 
     renderBuilder();

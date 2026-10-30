@@ -137,7 +137,7 @@ describe("websiteRatePlanService", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test("changes the plan once after one retry when the token expired on the way", async () => {
+  test("sends the same plan change once more with the refreshed token after a 401", async () => {
     const result = { action: "downgraded", plan: { plan: "essentials" } };
     Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
     Auth.userPool.getCurrentUser.mockReturnValue(

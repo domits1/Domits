@@ -58,7 +58,7 @@ describe("website analytics events and the login session", () => {
     });
   });
 
-  it("records a host event once after one retry when the token expired on the way", async () => {
+  it("sends the same host event once more with the refreshed token after a 401", async () => {
     Auth.currentSession.mockResolvedValue(sessionWith("expiring-token"));
     Auth.userPool.getCurrentUser.mockReturnValue(userRefreshingTo("refreshed-token"));
     global.fetch.mockResolvedValueOnce(response(401)).mockResolvedValueOnce(response(204));
@@ -120,11 +120,13 @@ describe("website analytics events and the login session", () => {
   });
 
   it("reports the last temporary failure when every attempt fails", async () => {
-    Auth.currentSession.mockRejectedValue(unreachableLogin());
+    const failures = [unreachableLogin(), unreachableLogin(), unreachableLogin()];
+    failures.forEach((failure) => Auth.currentSession.mockRejectedValueOnce(failure));
 
-    await expect(recordWebsiteHostAnalyticsEventWithRetry(HOST_EVENT, NO_DELAYS)).rejects.toBeInstanceOf(
-      WebsiteConnectionError
-    );
+    const error = await recordWebsiteHostAnalyticsEventWithRetry(HOST_EVENT, NO_DELAYS).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(WebsiteConnectionError);
+    expect(error.cause).toBe(failures[2]);
     expect(Auth.currentSession).toHaveBeenCalledTimes(3);
   });
 
