@@ -3,6 +3,7 @@ import { Property_Task_Activity as TaskActivityEntity } from "database/models/Pr
 import { Property_Task_Checklist_Item as ChecklistItemEntity } from "database/models/Property_Task_Checklist_Item";
 import { Team_Member as TeamMemberEntity } from "database/models/Team_Member";
 import { Host_Settings as HostSettingsEntity } from "database/models/Host_Settings";
+import { Property as PropertyEntity } from "database/models/Property";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const repository = dataSource.getRepository(TaskEntity);
@@ -221,6 +222,12 @@ export const deleteChecklistItemFromDb = async (dataSource, itemId) => {
 export const getTeamMemberById = async (dataSource, teamMemberId, hostId) => {
     const repository = dataSource.getRepository(TeamMemberEntity);
     return await repository.findOne({ where: { id: teamMemberId, host_id: hostId } });
+};
+
+export const isPropertyOfHost = async (dataSource, propertyId, hostId) => {
+    const repository = dataSource.getRepository(PropertyEntity);
+    const property = await repository.findOne({ where: { id: propertyId, hostid: hostId }, select: { id: true } });
+    return Boolean(property);
 };
 
 // host-settings stores one row per logged-in user (its host_id is the Cognito username),

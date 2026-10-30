@@ -8,6 +8,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } fr
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -66,17 +68,15 @@ export const createTask = async (hostId, taskData) => {
     return newTask;
 };
 
-export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
-    if (!oldTask) throw new Error("Task not found or access denied");
+    if (!oldTask) throw new NotFoundException("Task not found or access denied");
 
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
-
-    delete fieldsToUpdate.escalated_at;
 
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
@@ -96,6 +96,11 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
 
     if (fieldsToUpdate.type && !VALID_TASK_TYPES.includes(fieldsToUpdate.type)) {
         throw new BadRequestException(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
+    }
+
+    const isMovedToAnotherProperty = fieldsToUpdate.property_id !== undefined && fieldsToUpdate.property_id !== oldTask.property_id;
+    if (isMovedToAnotherProperty) {
+        await assertPropertyOfHost(dataSource, hostId, fieldsToUpdate.property_id);
     }
 
     if (fieldsToUpdate.assignee_team_member_id !== undefined) {
@@ -177,6 +182,13 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
     return { message: "Task updated successfully" };
 };
 
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+    if (!taskId) throw new BadRequestException("id is required");
+    const editorRole = actorIsTeamMember ? TASK_EDITOR_ROLES.TEAM_MEMBER : TASK_EDITOR_ROLES.HOST;
+    assertOnlyEditableFields(editorRole, updateData);
+    return await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
+};
+
 export const escalateTask = async (hostId, taskId) => {
     if (!taskId) throw new BadRequestException("id is required");
 
@@ -213,6 +225,7 @@ export const escalateTask = async (hostId, taskId) => {
 };
 
 export const deleteTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
 
@@ -228,7 +241,7 @@ export const deleteTask = async (hostId, taskId) => {
         } catch { }
     }
 
-    return await updateTask(hostId, taskId, { is_legacy: true });
+    return await applyTaskUpdate(hostId, taskId, { is_legacy: true });
 };
 
 export const getUploadUrl = async (hostId, fileName, fileType) => {
@@ -274,6 +287,14 @@ const resolveParentTaskId = async (dataSource, hostId, parentTaskId) => {
         throw new BadRequestException("parent_task_id does not belong to this host");
     }
     return parentTaskId;
+};
+
+const assertPropertyOfHost = async (dataSource, hostId, propertyId) => {
+    const isPropertyId = typeof propertyId === "string" && propertyId.length > 0;
+    const isOwnProperty = isPropertyId && await taskRepository.isPropertyOfHost(dataSource, propertyId, hostId);
+    if (!isOwnProperty) {
+        throw new BadRequestException("property_id does not belong to this host");
+    }
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {
