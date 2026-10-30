@@ -7,8 +7,7 @@ ORDER BY table_schema ASC;
 
 SELECT job_id, status, job_type, object_name, update_time
 FROM sys.jobs
-WHERE object_name LIKE '%booking%'
-  AND status IN ('submitted', 'processing');
+WHERE status IN ('submitted', 'processing');
 
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;
 

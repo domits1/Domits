@@ -16,7 +16,7 @@ Design: [booking_cancelled_at_design.md](../data/booking_cancelled_at_design.md)
 Run the statements of the `.sql` file one at a time, without `BEGIN`.
 
 1. Column check: expect no rows. Stop if the column already exists.
-2. `sys.jobs` check: expect no running `booking` job.
+2. `sys.jobs` check: expect no running job.
 3. `ALTER TABLE test.booking`, then `ALTER TABLE main.booking`, back to back in a quiet moment. Each one makes warm Lambdas fail their next statement once with `40001` / `OC001`; a retry succeeds.
 4. Column check: expect two rows, `bigint`, `is_nullable` `YES`, no default.
 5. Run both `SELECT cancelled_at` statements: both must run without an error.
