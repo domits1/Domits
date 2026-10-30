@@ -5,8 +5,8 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 
 describe("property overall score controller/service integration", () => {
   let repository, authManager, controller;
-  const event = (query = {}, headers = { Authorization: "token" }) => ({
-    httpMethod: "GET", headers,
+  const event = (query = {}) => ({
+    httpMethod: "GET",
     requestContext: { authorizer: { claims: { sub: "cognito-sub", "cognito:username": "host-1" } } },
     queryStringParameters: { scope: "property-score", propertyId: "property-1", ...query },
   });
@@ -38,6 +38,7 @@ describe("property overall score controller/service integration", () => {
     request.requestContext.authorizer.claims = { sub: "cognito-sub", username: "different-username" };
     expect((await controller.manageReviews(request)).statusCode).toBe(200);
     expect(repository.findManagedProperty).toHaveBeenCalledWith("property-1", "cognito-sub");
+    expect(repository.getPropertyReviewScore).toHaveBeenCalledWith("property-1", "cognito-sub");
   });
   test("fails closed without a verified owner identity", async () => {
     const request = event();

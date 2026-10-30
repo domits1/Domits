@@ -2,6 +2,7 @@ import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import Database from "database";
 import { DirectBookingWebsiteSiteRepository } from "../../functions/PropertyHandler/data/repository/directBookingWebsiteSiteRepository.js";
 import { WebsitePublishConflictError } from "../../functions/PropertyHandler/util/exception/WebsitePublishConflictError.js";
+import { WebsitePublishNotAllowedError } from "../../functions/PropertyHandler/util/exception/WebsitePublishNotAllowedError.js";
 import { SITE_ROW, buildTransactionClient } from "./support/staticPageOutboxTransactionClient.js";
 
 jest.mock("database", () => ({
@@ -23,11 +24,20 @@ const PUBLISH_INPUT = {
   publishedAt: 1757000000000,
 };
 
-const buildClient = ({ siteRecords = [SITE_ROW], outboxRecords = [{ site_id: "site-1", revision: 4 }] } = {}) =>
+const ACTIVE_PROPERTY_RECORDS = [{ id: "property-1" }];
+
+const buildClient = ({
+  siteRecords = [SITE_ROW],
+  outboxRecords = [{ site_id: "site-1", revision: 4 }],
+  propertyRecords = ACTIVE_PROPERTY_RECORDS,
+} = {}) =>
   buildTransactionClient({
     operation: "publish",
     respond: (statement, parameters, useStructuredResult) => {
-      const records = /INSERT INTO \S*static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
+      let records = /INSERT INTO \S*static_page_outbox/.test(statement) ? outboxRecords : siteRecords;
+      if (/UPDATE \S*\.property\s/.test(statement)) {
+        records = propertyRecords;
+      }
       return useStructuredResult ? { records, affected: records.length } : records;
     },
   });
@@ -49,7 +59,7 @@ describe("publishing a site writes its page outbox row in the same transaction",
     const site = await repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT);
 
     expect(client.transaction).toHaveBeenCalledTimes(1);
-    expect(client.statements).toHaveLength(2);
+    expect(client.statements).toHaveLength(3);
     expect(statementFor(client, new RegExp(`INSERT INTO ${SCHEMA}\\.standalone_site`))).toBeDefined();
     expect(statementFor(client, new RegExp(`INSERT INTO ${SCHEMA}\\.static_page_outbox`))).toBeDefined();
     expect(client.committed).toBe(true);
@@ -107,7 +117,37 @@ describe("publishing a site writes its page outbox row in the same transaction",
 
     expect(site.id).toBe("site-1");
     expect(client.statements.filter(({ statement }) => /static_page_outbox/.test(statement))).toHaveLength(2);
-    expect(client.statements).toHaveLength(4);
+    expect(client.statements).toHaveLength(6);
+  });
+
+  it("rejects the publish and writes nothing when the listing is no longer ACTIVE", async () => {
+    const client = buildClient({ propertyRecords: [] });
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await expect(repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT)).rejects.toBeInstanceOf(
+      WebsitePublishNotAllowedError
+    );
+
+    expect(client.statements).toHaveLength(1);
+    expect(client.statements[0].statement).toContain("AND status = 'ACTIVE'");
+    expect(client.statements[0].parameters).toEqual(["property-1", expect.any(Number)]);
+    expect(statementFor(client, /standalone_site|static_page_outbox/)).toBeUndefined();
+    expect(client.rolledBack).toBe(true);
+    expect(client.committed).toBe(false);
+  });
+
+  it("rejects the retry of a publish that lost a conflict to a listing leaving ACTIVE", async () => {
+    const client = buildClient({ propertyRecords: [] });
+    client.transaction.mockRejectedValueOnce(serializationConflict());
+    const repository = new DirectBookingWebsiteSiteRepository();
+
+    await expect(repository.upsertSiteWithStaticPageOutbox(PUBLISH_INPUT)).rejects.toBeInstanceOf(
+      WebsitePublishNotAllowedError
+    );
+
+    expect(client.transaction).toHaveBeenCalledTimes(2);
+    expect(statementFor(client, /standalone_site|static_page_outbox/)).toBeUndefined();
+    expect(client.committed).toBe(false);
   });
 
   it("stops after three conflicts with an error the host can act on, not a raw database failure", async () => {
@@ -220,7 +260,9 @@ describe("every site query reports the static page revision", () => {
     });
     await expect(repository.getSiteById("site-1")).resolves.toMatchObject({ staticPageRevision: 7 });
 
-    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) => statement.includes("standalone_site"));
+    const siteStatements = queryRunner.query.mock.calls.filter(([statement]) =>
+      /standalone_site(?!_domain)/.test(statement)
+    );
     expect(siteStatements).toHaveLength(2);
     for (const call of siteStatements) {
       expect(call[0]).toContain("static_page_revision");

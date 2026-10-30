@@ -3,6 +3,12 @@ import PropTypes from "prop-types";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
 import { TABS } from "../constants";
+import {
+  LISTING_STATUS,
+  getListingStatusLabel,
+  getListingStatusTone,
+  normalizeListingStatus,
+} from "../utils/listingStatus";
 
 const hostPropertyOptionShape = PropTypes.shape({
   id: PropTypes.string.isRequired,
@@ -15,27 +21,39 @@ const deleteReasonShape = PropTypes.shape({
   label: PropTypes.string.isRequired,
 });
 
-const PROPERTY_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "Live" },
-  { value: "INACTIVE", label: "Draft" },
-  { value: "ARCHIVED", label: "Archived" },
+// PENDING_REVIEW and REJECTED are set by moderation, so they are only ever shown as the current value.
+const SELECTABLE_STATUS_LABELS = {
+  [LISTING_STATUS.INACTIVE]: "Draft",
+  [LISTING_STATUS.ARCHIVED]: "Archived",
+};
+
+const STATUS_DOT_CLASSES = {
+  live: styles.statusDotLive,
+  archived: styles.statusDotArchived,
+  pending: styles.statusDotPending,
+  rejected: styles.statusDotRejected,
+};
+
+const resolveStatusDotClass = (status) => STATUS_DOT_CLASSES[getListingStatusTone(status)] || styles.statusDotDraft;
+
+const resolveStatusOptions = (currentStatus) => [
+  {
+    value: LISTING_STATUS.ACTIVE,
+    label: currentStatus === LISTING_STATUS.ACTIVE ? "Live" : "Submit for review",
+  },
+  { value: LISTING_STATUS.INACTIVE, label: SELECTABLE_STATUS_LABELS[LISTING_STATUS.INACTIVE] },
+  { value: LISTING_STATUS.ARCHIVED, label: SELECTABLE_STATUS_LABELS[LISTING_STATUS.ARCHIVED] },
 ];
 
-const resolveStatusDotClass = (status) => {
-  if (status === "ACTIVE") {
-    return styles.statusDotLive;
-  }
-  if (status === "ARCHIVED") {
-    return styles.statusDotArchived;
-  }
-  return styles.statusDotDraft;
-};
+const resolveCurrentStatusLabel = (currentStatus) =>
+  SELECTABLE_STATUS_LABELS[currentStatus] || getListingStatusLabel(currentStatus);
 
 function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const normalizedStatus = String(status || "INACTIVE").toUpperCase();
-  const selectedOption = PROPERTY_STATUS_OPTIONS.find((option) => option.value === normalizedStatus) || PROPERTY_STATUS_OPTIONS[0];
+  const normalizedStatus = normalizeListingStatus(status);
+  const isPendingReview = normalizedStatus === LISTING_STATUS.PENDING_REVIEW;
+  const statusOptions = resolveStatusOptions(normalizedStatus);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -88,7 +106,7 @@ function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
         aria-expanded={menuOpen}
         aria-label="Listing status"
       >
-        <span className={styles.listingStatusValue}>{selectedOption.label}</span>
+        <span className={styles.listingStatusValue}>{resolveCurrentStatusLabel(normalizedStatus)}</span>
         <span className={styles.listingStatusIndicators}>
           <span className={`${styles.statusDot} ${resolveStatusDotClass(normalizedStatus)}`} />
           <span className={styles.listingStatusChevron} aria-hidden="true">
@@ -98,15 +116,16 @@ function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
       </button>
       {menuOpen ? (
         <ul className={styles.listingStatusMenu} aria-label="Select listing status">
-          {PROPERTY_STATUS_OPTIONS.map((option) => {
+          {statusOptions.map((option) => {
             const isSelected = option.value === normalizedStatus;
+            const isAlreadySubmitted = isPendingReview && option.value === LISTING_STATUS.ACTIVE;
             return (
               <li key={option.value}>
                 <button
                   type="button"
                   className={`${styles.listingStatusOption} ${isSelected ? styles.listingStatusOptionActive : ""}`}
                   onClick={() => handleOptionSelect(option.value)}
-                  disabled={saving}
+                  disabled={saving || isAlreadySubmitted}
                 >
                   <span className={styles.listingStatusOptionLabel}>{option.label}</span>
                   <span className={`${styles.statusDot} ${resolveStatusDotClass(option.value)}`} />

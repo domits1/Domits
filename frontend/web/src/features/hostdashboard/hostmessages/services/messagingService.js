@@ -274,6 +274,15 @@ const guessFileType = (url = "") => {
   return "file";
 };
 
+const parseSavedFailedMessage = (text) => {
+  try {
+    const parsed = JSON.parse(text);
+    return parsed?.id && parsed?.deliveryStatus === "failed" ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export async function sendUnifiedMessage({
   senderId,
   recipientId,
@@ -323,7 +332,10 @@ export async function sendUnifiedMessage({
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
+    const error = new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
+    const savedMessage = parseSavedFailedMessage(txt);
+    if (savedMessage) error.savedMessage = savedMessage;
+    throw error;
   }
 
   return res.json();

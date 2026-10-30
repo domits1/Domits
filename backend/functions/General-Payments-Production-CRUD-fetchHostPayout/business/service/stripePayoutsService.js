@@ -6,6 +6,7 @@ import AuthManager from "../../auth/authManager.js";
 
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import { getNextMonthlyPayoutDate } from "./monthlyPayoutDate.js";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
@@ -282,10 +283,8 @@ export default class StripePayoutsService {
       const diff = (target - mondayIndex(nowDate) + 7) % 7 || 7;
       nextDate = new Date(nowDate);
       nextDate.setDate(nowDate.getDate() + diff);
-    } else if (schedule.interval === "monthly" && Number.isInteger(schedule.monthly_anchor)) {
-      const y = nowDate.getFullYear();
-      const m = nowDate.getDate() < schedule.monthly_anchor ? nowDate.getMonth() : nowDate.getMonth() + 1;
-      nextDate = new Date(y, m, schedule.monthly_anchor);
+    } else if (schedule.interval === "monthly") {
+      nextDate = getNextMonthlyPayoutDate(schedule.monthly_anchor, nowDate);
     }
 
     if (!nextDate) return { forecast: null, cutoffTs: null };

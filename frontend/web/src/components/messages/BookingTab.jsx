@@ -6,7 +6,7 @@ import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBoo
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 
-const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null }) => {
+const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null, showAccommodation = true }) => {
     const isGuest = dashboardType === 'guest';
     const hostId = isGuest ? contactId : userId;
     const guestId = isGuest ? userId : contactId;
@@ -24,13 +24,14 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
             propertyId,
         }
     );
-    if (bookingDetails?.message === "No data found for the given hostId and guestId") {
-        return;
+    if (!bookingDetails || !accommodation || bookingDetails.message === "No data found for the given hostId and guestId") {
+        return null;
     }
 
     const firstImage = resolvePrimaryAccommodationImageUrl(accommodation?.images, "thumb");
     const formatHour = (hour) => {
-        return `${hour}:00`;
+        const [hours, minutes = "00"] = String(hour).split(":");
+        return `${hours}:${minutes}`;
     };
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
@@ -41,16 +42,18 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
         <div className="booking-tab-container">
             {bookingDetails && accommodation && (
                 <div className="booking-tab">
-                    <div className="acco-image">
-                        {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
-                        {firstImage && (
-                            <img
-                                src={firstImage}
-                                onClick={() => setModalImage(firstImage)}
-                                alt="Accommodation"
-                            />
-                        )}
-                    </div>
+                    {showAccommodation && (
+                        <div className="acco-image">
+                            {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
+                            {firstImage && (
+                                <img
+                                    src={firstImage}
+                                    onClick={() => setModalImage(firstImage)}
+                                    alt="Accommodation"
+                                />
+                            )}
+                        </div>
+                    )}
                     {bookingDetails?.Status === 'Accepted' && (
                         <div className="booking-status">
                             <h3>Booking Successful</h3>
@@ -159,6 +162,7 @@ BookingTab.propTypes = {
     dashboardType: PropTypes.string,
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    showAccommodation: PropTypes.bool,
 };
 
 export default BookingTab;

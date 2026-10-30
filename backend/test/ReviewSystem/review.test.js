@@ -7,6 +7,66 @@ import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
+describe("Merged review query and edit routes", () => {
+  const id = "12345678-1234-1234-1234-123456789abc";
+  const timestamp = Date.parse("2026-10-01T12:00:00Z");
+  const review = { id, reviewer_user_id: "guest", overall_rating: 4, public_review: "Good",
+    created_at: timestamp - 100, updated_at: timestamp - 50, status: "PUBLISHED" };
+  let repository, service, controller;
+  const event = (method, query = {}, body) => ({ httpMethod: method, queryStringParameters: query,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    requestContext: { authorizer: { claims: { sub: "guest", "cognito:username": "verified-user" } } } });
+  beforeEach(() => {
+    repository = {
+      findReviewById: jest.fn().mockResolvedValue({ ...review }),
+      updateEditableReview: jest.fn().mockResolvedValue({ affected: 1, updated_at: timestamp }),
+      findManagedProperty: jest.fn().mockResolvedValue({ id: "p1" }),
+      getPropertyReviewScore: jest.fn().mockResolvedValue({ property_id: "p1", overall_score: 4, review_count: 1 }),
+      getPropertyCategoryRatings: jest.fn().mockResolvedValue([]),
+    };
+    service = new ReviewService({ repository, now: () => timestamp, editWindowMs: 1000 });
+    controller = new Controller({ service });
+  });
+
+  it("dispatches managed-property scopes using the verified subject", async () => {
+    for (const scope of ["property-score", "property-categories"]) {
+      expect((await controller.getReviews(event("GET", { scope, propertyId: "p1", username: "spoof" }))).statusCode).toBe(200);
+    }
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "guest");
+  });
+
+  it("loads the query-based edit form using the verified subject", async () => {
+    const result = await controller.getReviews(event("GET", { reviewId: id }));
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toMatchObject({ id, updated_at: review.updated_at });
+  });
+
+  it("supports the existing query-based PATCH endpoint with normalized text and client version", async () => {
+    const result = await controller.manageReviews(event("PATCH", { reviewId: id }, {
+      overall_rating: 5, public_review: " Good\r\nStay ", updated_at: review.updated_at,
+    }));
+    expect(result.statusCode).toBe(200);
+    expect(repository.updateEditableReview).toHaveBeenCalledWith(expect.objectContaining({ id, guestId: "guest",
+      previousUpdatedAt: review.updated_at, publicReview: "Good\nStay", editWindowMs: 1000 }));
+  });
+
+  it("rejects stale versions and expired edit windows without saving", async () => {
+    const body = { overall_rating: 5, public_review: "Changed", updated_at: 1 };
+    expect((await controller.updateReview(event("PATCH", { reviewId: id }, body))).statusCode).toBe(409);
+    service.editWindowMs = 10;
+    expect((await controller.getReviews(event("GET", { reviewId: id }))).statusCode).toBe(403);
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+
+  it("does not allow editing a deleted review or conflicting path/query IDs", async () => {
+    repository.findReviewById.mockResolvedValue({ ...review, status: "DELETED" });
+    expect((await controller.getReviews(event("GET", { reviewId: id }))).statusCode).toBe(404);
+    const request = { ...event("PATCH", { reviewId: id }, {}), pathParameters: { id: "different" } };
+    expect((await controller.updateReview(request)).statusCode).toBe(400);
+    expect(repository.updateEditableReview).not.toHaveBeenCalled();
+  });
+});
+
 describe('Review creation and existing operations', () => {
   const now = Date.parse("2026-10-01T12:00:00Z");
   const booking = {
@@ -443,9 +503,6 @@ describe('Review workflows', () => {
       findPublicForProperty: jest.fn().mockResolvedValue([published]),
       findBookingById: jest.fn().mockResolvedValue({ id: "b1", guestid: "guest", hostid: "host", property_id: "p1",
         status: "Paid", departuredate: now - 100 }),
-      createResponse: jest.fn().mockImplementation(async (record) => record),
-      updateResponse: jest.fn().mockResolvedValue({ id: "response", reviewId: "r1", message: "Updated", status: "published" }),
-      softDeleteResponse: jest.fn().mockResolvedValue(true),
       publishDraft: jest.fn().mockResolvedValue(published),
     };
     service = new ReviewService({ repository, now: () => now });
@@ -517,41 +574,12 @@ describe('Review workflows', () => {
     expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
   });
 
-  it("lets the host create, update and delete a published review response", async () => {
-    repository.findById.mockResolvedValue(published);
-    const response = await controller.createReviewResponse(event("host", { message: " Thanks " }));
-    expect(response.statusCode).toBe(201);
-    expect(repository.createResponse).toHaveBeenCalledWith(expect.objectContaining({ authorId: "host", authorRole: "host",
-      status: "published", message: "Thanks", deletedAt: null }));
-    expect((await controller.updateReviewResponse(event("host", { message: "Updated" }))).statusCode).toBe(200);
-    expect((await controller.deleteReviewResponse(event("host"))).statusCode).toBe(204);
-  });
-
-  it("rejects responses by guests and responses to drafts", async () => {
-    expect((await controller.createReviewResponse(event("guest", { message: "Spoof" }))).statusCode).toBe(403);
-    expect((await controller.createReviewResponse(event("host", { message: "Early" }))).statusCode).toBe(409);
-    expect(repository.createResponse).not.toHaveBeenCalled();
-  });
-
-  it.each([{ message: " " }, { message: "Hi", authorId: "spoof" }, { message: 3 }])("validates response payloads: %p", async (body) => {
-    expect((await controller.createReviewResponse(event("host", body))).statusCode).toBe(400);
-    expect(repository.createResponse).not.toHaveBeenCalled();
-  });
-
-  it("returns 404 for missing response updates and deletes", async () => {
-    repository.findById.mockResolvedValue(published);
-    repository.updateResponse.mockResolvedValue(null);
-    repository.softDeleteResponse.mockResolvedValue(false);
-    expect((await controller.updateReviewResponse(event("host", { message: "Changed" }))).statusCode).toBe(404);
-    expect((await controller.deleteReviewResponse(event("host"))).statusCode).toBe(404);
-  });
-
   it("denies publishing another user's review", async () => {
     expect((await controller.publishReview(event("host"))).statusCode).toBe(403);
     expect(repository.publishDraft).not.toHaveBeenCalled();
   });
 
-  it("publishes and permits a host response through the default controller", async () => {
+  it("publishes through the default controller", async () => {
     ReviewRepository.mockImplementation(() => repository);
     const defaultController = new Controller();
     try {
@@ -564,8 +592,6 @@ describe('Review workflows', () => {
       const { authorize } = repository.publishDraft.mock.calls[0][0];
       expect(await authorize(draft)).toBe(true);
       expect(await authorize({ ...draft, reviewer_user_id: "other" })).toBe(false);
-      repository.findById.mockResolvedValue(published);
-      expect((await defaultController.createReviewResponse(event("host", { message: "Thanks" }))).statusCode).toBe(201);
     } finally {
       ReviewRepository.mockReset();
     }
@@ -608,8 +634,8 @@ describe('Review workflows', () => {
     expect((await controller.publishReview(event())).statusCode).toBe(409);
   });
 
-  it.each(["getReviews", "getReviewById", "updateReview", "getPrivateFeedback", "createReviewResponse",
-    "updateReviewResponse", "deleteReviewResponse", "publishReview"])("authenticates %s before accessing storage", async (action) => {
+  it.each(["getReviews", "getReviewById", "updateReview", "getPrivateFeedback", "saveHostResponse",
+    "deleteReviewResponse", "publishReview"])("authenticates %s before accessing storage", async (action) => {
     expect((await controller[action]({})).statusCode).toBe(401);
     expect(repository.findById).not.toHaveBeenCalled();
     expect(repository.findForUser).not.toHaveBeenCalled();

@@ -1223,6 +1223,7 @@
         "loading": "Deine Geräte werden geladen...",
         "loadError": "Wir konnten deine Geräte nicht laden.",
         "retry": "Erneut versuchen",
+        "truncated": "Es werden nicht alle Geräte angezeigt.",
         "notSupported": "Noch nicht unterstützt",
         "columns": {
           "name": "Name",
@@ -1244,6 +1245,21 @@
           "resortLock": "Resort-Schloss",
           "other": "Anderes Gerät"
         }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock muss neu verbunden werden.",
+        "alreadyConnected": "RemoteLock ist bereits verbunden.",
+        "notConfigured": "RemoteLock ist im Moment nicht verfügbar. Bitte wende dich an den Support.",
+        "tryLater": "RemoteLock ist ausgelastet. Bitte versuche es gleich noch einmal.",
+        "startAgain": "Die Anmeldung ist abgelaufen oder wurde bereits verwendet. Bitte starte neu.",
+        "providerError": "RemoteLock meldet ein Problem. Bitte versuche es später erneut.",
+        "cancelled": "Die Anmeldung bei RemoteLock wurde abgebrochen.",
+        "missingParams": "Diese Seite braucht eine Anmeldung bei RemoteLock. Bitte beginne bei Hausautomation."
+      },
+      "callback": {
+        "title": "RemoteLock verbinden",
+        "working": "Die Verbindung wird abgeschlossen...",
+        "back": "Zurück zu Hausautomation"
       },
       "loading": "Deine RemoteLock-Verbindung wird geladen...",
       "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
@@ -1350,6 +1366,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Deine Unterkunft wurde zur Prüfung eingereicht.",
+      "pendingReviewNotice": "Diese Unterkunft wartet auf Prüfung und wird veröffentlicht, sobald sie freigegeben ist.",
       "breadcrumb": "Veröffentlichen",
       "title": "{propertyName} veröffentlichen",
       "subtitle": "Überprüfe die Checkliste unten und veröffentliche anschließend deine Unterkunft.",

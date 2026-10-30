@@ -1223,6 +1223,7 @@
         "loading": "Cargando tus dispositivos...",
         "loadError": "No pudimos cargar tus dispositivos.",
         "retry": "Intentar de nuevo",
+        "truncated": "No se muestran todos los dispositivos.",
         "notSupported": "Aún no compatible",
         "columns": {
           "name": "Nombre",
@@ -1244,6 +1245,21 @@
           "resortLock": "Cerradura de resort",
           "other": "Otro dispositivo"
         }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock debe volver a conectarse.",
+        "alreadyConnected": "RemoteLock ya está conectado.",
+        "notConfigured": "RemoteLock no está disponible en este momento. Ponte en contacto con soporte.",
+        "tryLater": "RemoteLock está ocupado. Inténtalo de nuevo en un momento.",
+        "startAgain": "El inicio de sesión caducó o ya se usó. Empieza de nuevo.",
+        "providerError": "RemoteLock informa de un problema. Inténtalo de nuevo más tarde.",
+        "cancelled": "Se canceló el inicio de sesión en RemoteLock.",
+        "missingParams": "Esta página necesita un inicio de sesión en RemoteLock. Empieza desde Domótica."
+      },
+      "callback": {
+        "title": "Conectar RemoteLock",
+        "working": "Terminando la conexión...",
+        "back": "Volver a Domótica"
       },
       "loading": "Cargando tu conexión con RemoteLock...",
       "loadError": "No pudimos cargar tu conexión con RemoteLock.",
@@ -1350,6 +1366,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Tu alojamiento se ha enviado para su revisión.",
+      "pendingReviewNotice": "Este alojamiento está pendiente de revisión y se publicará en cuanto sea aprobado.",
       "breadcrumb": "Poner en marcha",
       "title": "Poner en marcha {propertyName}",
       "subtitle": "Revisa la siguiente lista y, después, publica tu alojamiento.",

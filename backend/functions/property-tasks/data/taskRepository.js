@@ -2,6 +2,7 @@ import { PropertyTask as TaskEntity } from "database/models/Property_Task";
 import { Property_Task_Activity as TaskActivityEntity } from "database/models/Property_Task_Activity";
 import { Property_Task_Checklist_Item as ChecklistItemEntity } from "database/models/Property_Task_Checklist_Item";
 import { Team_Member as TeamMemberEntity } from "database/models/Team_Member";
+import { Host_Settings as HostSettingsEntity } from "database/models/Host_Settings";
 
 export const getTasksFromDb = async (dataSource, hostId, filters) => {
     const repository = dataSource.getRepository(TaskEntity);
@@ -89,6 +90,21 @@ export const updateTaskInDb = async (dataSource, taskId, updateData) => {
     return await repository.update(taskId, updateData);
 };
 
+// The write only applies while the task is not completed, so when two requests complete the same
+// task at once exactly one of them changes it. Returns false for the one that lost.
+export const updateTaskUnlessCompleted = async (dataSource, taskId, updateData) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set(updateData)
+        .where("id = :taskId", { taskId })
+        .andWhere("status <> :completed", { completed: "Completed" })
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
 export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) => {
     const repository = dataSource.getRepository(TaskEntity);
     const result = await repository
@@ -98,6 +114,80 @@ export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) 
         .where("id = :taskId", { taskId })
         .andWhere("host_id = :hostId", { hostId })
         .andWhere("escalated_at IS NULL")
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
+const RESOLVED_STATUSES = ["Completed", "Cancelled"];
+const DAY_MS = 24 * 60 * 60 * 1000;
+const FIRST_EMAIL_WINDOW_MS = DAY_MS;
+const REMINDER_INTERVAL_MS = 2 * DAY_MS;
+const MAX_OVERDUE_EMAILS = 4;
+
+export const getOverdueTasksToNotify = async (dataSource, now, limit) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    return await repository.createQueryBuilder("task")
+        .where("task.due_date < :now", { now })
+        .andWhere("task.status NOT IN (:...resolved)", { resolved: RESOLVED_STATUSES })
+        .andWhere(
+            "((task.overdue_last_notified_at IS NULL AND task.due_date >= :since)"
+            + " OR (task.overdue_last_notified_at <= :remindBefore AND COALESCE(task.overdue_notify_count, 0) < :maxNotifications))",
+            {
+                since: now - FIRST_EMAIL_WINDOW_MS,
+                remindBefore: now - REMINDER_INTERVAL_MS,
+                maxNotifications: MAX_OVERDUE_EMAILS,
+            }
+        )
+        .andWhere("(task.escalated_at IS NULL OR task.escalated_at < task.due_date)")
+        .andWhere("task.is_legacy = false")
+        .orderBy("task.overdue_last_notified_at", "ASC", "NULLS FIRST")
+        .limit(limit)
+        .getMany();
+};
+
+export const claimOverdueNotification = async (dataSource, task, claimedAt) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const previous = task.overdue_last_notified_at;
+    const query = repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({
+            overdue_last_notified_at: claimedAt,
+            overdue_notify_count: () => "COALESCE(overdue_notify_count, 0) + 1",
+        })
+        .where("id = :taskId", { taskId: task.id });
+
+    const result = await (previous === null || previous === undefined
+        ? query.andWhere("overdue_last_notified_at IS NULL")
+        : query.andWhere("overdue_last_notified_at = :previous", { previous })
+    ).execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
+export const getDueSoonTasksToNotify = async (dataSource, now, limit) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    return await repository.createQueryBuilder("task")
+        .where("task.due_date > :now", { now })
+        .andWhere("task.due_date <= :until", { until: now + DAY_MS })
+        .andWhere("task.status NOT IN (:...resolved)", { resolved: RESOLVED_STATUSES })
+        .andWhere("(task.due_soon_notified_for IS NULL OR task.due_soon_notified_for <> task.due_date)")
+        .andWhere("task.is_legacy = false")
+        .orderBy("task.due_date", "ASC")
+        .limit(limit)
+        .getMany();
+};
+
+export const claimDueSoonNotification = async (dataSource, task) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set({ due_soon_notified_for: task.due_date })
+        .where("id = :taskId", { taskId: task.id })
+        .andWhere("due_date = :dueDate", { dueDate: task.due_date })
+        .andWhere("(due_soon_notified_for IS NULL OR due_soon_notified_for <> :dueDate)", { dueDate: task.due_date })
         .execute();
 
     return Number(result?.affected || 0) === 1;
@@ -131,4 +221,11 @@ export const deleteChecklistItemFromDb = async (dataSource, itemId) => {
 export const getTeamMemberById = async (dataSource, teamMemberId, hostId) => {
     const repository = dataSource.getRepository(TeamMemberEntity);
     return await repository.findOne({ where: { id: teamMemberId, host_id: hostId } });
+};
+
+// host-settings stores one row per logged-in user (its host_id is the Cognito username),
+// so a team member has their own row and is looked up by their own user id.
+export const getHostSettings = async (dataSource, userId) => {
+    const repository = dataSource.getRepository(HostSettingsEntity);
+    return await repository.findOne({ where: { host_id: userId } });
 };

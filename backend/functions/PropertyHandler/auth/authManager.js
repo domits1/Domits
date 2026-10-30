@@ -1,12 +1,20 @@
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
+import { isReviewAdmin } from "../util/reviewAdminAllowlist.js";
 
 import { CognitoRepository } from "../data/repository/cognitoRepository.js";
 import { PropertyRepository } from "../data/repository/propertyRepository.js";
 import { BookingRepository } from "../data/repository/bookingRepository.js";
 import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { TeamMemberRepository } from "../data/repository/teamMemberRepository.js";
+
+const REJECTED_TOKEN_ERRORS = new Set([
+    "NotAuthorizedException",
+    "UserNotFoundException",
+    "PasswordResetRequiredException",
+    "UserNotConfirmedException",
+]);
 
 export class AuthManager {
 
@@ -25,9 +33,15 @@ export class AuthManager {
     }
 
     async getAuthorizedUser(accessToken) {
+        if (!accessToken) {
+            throw new Unauthorized("You must be logged in.");
+        }
         try {
             return await this.cognitoRepository.getUserByAccessToken(accessToken);
         } catch (error) {
+            if (!REJECTED_TOKEN_ERRORS.has(error?.name)) {
+                throw error;
+            }
             const unauthorized = new Unauthorized("You must be logged in.");
             unauthorized.cause = error;
             throw unauthorized;
@@ -39,6 +53,16 @@ export class AuthManager {
         const groupAttribute = user.UserAttributes.find((attribute) => attribute.Name === "custom:group");
         if (groupAttribute.Value !== group) {
             throw new Forbidden(`You must be a ${group}.`);
+        }
+        return user.Username;
+    }
+
+    // Admin status comes from the env allowlist, not from custom:group, so a caller
+    // without that attribute is a plain 403 instead of a TypeError.
+    async authorizeReviewAdminRequest(accessToken) {
+        const user = await this.getAuthorizedUser(accessToken);
+        if (!isReviewAdmin(user?.Username)) {
+            throw new Forbidden("You are not allowed to review properties.");
         }
         return user.Username;
     }
@@ -55,24 +79,37 @@ export class AuthManager {
         return user.Username;
     }
 
-    async authorizePropertyCalendarOverrideRequest(accessToken, id) {
+    async isHostOrActiveCoHost(userId, hostId) {
+        if (!hostId) {
+            return false;
+        }
+        if (userId === hostId) {
+            return true;
+        }
+        const membership = await this.teamMemberRepository.findActiveMembershipByMemberAndHost(userId, hostId);
+        return Boolean(membership);
+    }
+
+    async authorizePropertyOwnerOrCoHostRequest(accessToken, id) {
         const user = await this.getAuthorizedUser(accessToken);
         const property = await this.propertyRepository.getPropertyById(id)
         if (!property) {
             throw new NotFoundException("Property not found.")
         }
-        if (property.hostId === user.Username) {
-            return property.hostId;
-        }
-
-        const membership = await this.teamMemberRepository.findActiveMembershipByMemberAndHost(
-            user.Username,
-            property.hostId
-        );
-        if (!membership) {
+        const hasAccess = await this.isHostOrActiveCoHost(user.Username, property.hostId);
+        if (!hasAccess) {
             throw new Forbidden("You must be the owner or an active co-host of the property to access it.")
         }
         return property.hostId;
+    }
+
+    async authorizeHostOrCoHostRequest(accessToken, hostId) {
+        const user = await this.getAuthorizedUser(accessToken);
+        const hasAccess = await this.isHostOrActiveCoHost(user.Username, hostId);
+        if (!hasAccess) {
+            throw new Forbidden("You must be this host or an active co-host of this host to access these listings.");
+        }
+        return hostId;
     }
 
     async authorizeDraftOwnerRequest(accessToken, draftId) {

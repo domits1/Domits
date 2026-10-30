@@ -77,7 +77,7 @@ export const sendTaskEscalationEmail = async (hostEmail, task) => {
         body: {
             toEmail: hostEmail,
             subject: `Task escalated: ${task.title}`,
-            body: `The task "${task.title}" (property: ${task.property_snapshot_label}) has passed its due date and was escalated.
+            body: `The task "${task.title}" (property: ${task.property_snapshot_label}) was escalated.
 
 Due: ${dueDate}
 

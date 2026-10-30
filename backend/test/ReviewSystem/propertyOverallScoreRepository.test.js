@@ -5,14 +5,17 @@ import { Review } from "database/models/Review";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 
 describe("property score repository", () => {
-  let query, propertyRepository, repository, reviewRepository;
+  let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
     for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
       query[method] = jest.fn(() => query);
     }
-    reviewRepository = { createQueryBuilder: () => query, update: jest.fn().mockResolvedValue({ affected: 1 }) };
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
+    reviewRepository = {
+      createQueryBuilder: () => query,
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
     Database.getInstance.mockResolvedValue({ getRepository: (entity) => {
       if (entity === Property) return propertyRepository;
       if (entity === Review) return reviewRepository;
@@ -37,7 +40,7 @@ describe("property score repository", () => {
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
       ["review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 }],
-      ["review.overall_rating = FLOOR(review.overall_rating)"],
+      ["review.overall_rating * 2 = FLOOR(review.overall_rating * 2)"],
     ]);
     expect(query.select).toHaveBeenCalledWith("AVG(review.overall_rating)", "overall_score");
     expect(query.addSelect).toHaveBeenCalledWith("COUNT(*)", "review_count");

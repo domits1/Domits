@@ -24,13 +24,27 @@ import { PropertyLateCheckinRepository } from "../../data/repository/propertyLat
 import { PropertyHouseRuleRepository } from "../../data/repository/propertyHouseRuleRepository.js";
 import { PropertyCustomRuleRepository } from "../../data/repository/propertyCustomRuleRepository.js";
 import { PropertyDraftRepository } from "../../data/repository/propertyDraftRepository.js";
+import { DirectBookingWebsiteSiteRepository } from "../../data/repository/directBookingWebsiteSiteRepository.js";
+import { DirectBookingWebsiteDomainRepository } from "../../data/repository/directBookingWebsiteDomainRepository.js";
+import { StaticPageStore } from "../../data/repository/staticPageStore.js";
+import { CloudFrontTenantRepository } from "../../data/repository/cloudFrontTenantRepository.js";
+import { StaticPageWithdrawal } from "./staticPageWithdrawal.js";
+import { WebsiteUnpublisher } from "./websiteUnpublisher.js";
+import { DirectBookingWebsiteEventRepository } from "../../data/repository/directBookingWebsiteEventRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 import { ConflictException } from "../../util/exception/ConflictException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
+import { ServiceUnavailableException } from "../../util/exception/ServiceUnavailableException.js";
 import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
+import {
+  HOST_REQUESTABLE_STATUSES,
+  normalizePropertyStatus,
+  PROPERTY_STATUS,
+  SUBMITTABLE_FOR_REVIEW_STATUSES,
+} from "../../util/propertyStatus.js";
 import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
   MAX_REGISTRATION_NUMBER_LENGTH,
@@ -76,7 +90,69 @@ export class PropertyService {
     this.propertyHouseRuleRepository = new PropertyHouseRuleRepository(systemManagerRepository);
     this.propertyCustomRuleRepository = new PropertyCustomRuleRepository(systemManagerRepository);
     this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
+    this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
+    this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+    this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
+    this.websiteUnpublisher = new WebsiteUnpublisher({
+      siteRepository: this.directBookingWebsiteSiteRepository,
+      domainRepository: this.directBookingWebsiteDomainRepository,
+      eventRepository: this.directBookingWebsiteEventRepository,
+    });
     this.destinationMappingService = new DestinationMappingService();
+  }
+
+  createStaticPageWithdrawal() {
+    return new StaticPageWithdrawal({
+      pageStore: new StaticPageStore(),
+      tenantRepository: new CloudFrontTenantRepository(),
+      domainRepository: this.directBookingWebsiteDomainRepository,
+    });
+  }
+
+  async withdrawWebsitePage(propertyId, hostId) {
+    const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyIdAndHostId(propertyId, hostId);
+    if (!site) {
+      return;
+    }
+    try {
+      const { invalidationErrors, redirectErrors = [] } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+      [...invalidationErrors, ...redirectErrors].forEach((failure) => {
+        console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
+      });
+    } catch (error) {
+      console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the listing was not deleted.`, error);
+      throw new ServiceUnavailableException(
+        "The website of this listing could not be taken offline, so the listing was not deleted. Please try again in a few minutes."
+      );
+    }
+  }
+
+  async takeDownWebsiteUnlessActive(propertyId, nextStatus, { statusWritten = false } = {}) {
+    if (nextStatus === "ACTIVE") {
+      return;
+    }
+    try {
+      const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyId(propertyId);
+      if (site?.status !== "PUBLISHED") {
+        return;
+      }
+      await this.websiteUnpublisher.takeDown({
+        site,
+        hostId: site.hostId,
+        propertyId,
+        reason: "property_not_active",
+      });
+    } catch (error) {
+      console.error(
+        `[Website] taking the site of property ${propertyId} offline failed; its status ${statusWritten ? "was already changed" : "was not changed"}.`,
+        error
+      );
+      throw new ServiceUnavailableException(
+        statusWritten
+          ? "The listing status was changed, but its website could not be taken offline yet."
+          : "The website of this listing could not be taken offline, so the listing status was not changed. Please try again in a few minutes."
+      );
+    }
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -103,21 +179,60 @@ export class PropertyService {
     }
   }
 
-  async activateProperty(propertyId) {
-    const property = await this.getBasePropertyInfo(propertyId);
-    if (property.status === "ACTIVE") {
-      throw new DatabaseException("This property is already active.");
+  // A host can never write ACTIVE. Asking for it submits the property for review; an
+  // approved or already submitted property is left exactly as it is.
+  async requestHostStatusChange(propertyId, requestedStatus, metadata = {}) {
+    const status = normalizePropertyStatus(requestedStatus) || PROPERTY_STATUS.ACTIVE;
+    if (!HOST_REQUESTABLE_STATUSES.includes(status)) {
+      throw new TypeException("Invalid property status.");
     }
-    await this.propertyRepository.activateProperty(propertyId, property);
-    const newProperty = await this.getBasePropertyInfo(propertyId);
 
-    if (property === newProperty) {
-      throw new DatabaseException("Something went wrong while updating the activity status");
+    if (status !== PROPERTY_STATUS.ACTIVE) {
+      return await this.updatePropertyStatus(propertyId, status, metadata);
     }
+
+    await this.propertyRepository.transitionStatus(
+      propertyId,
+      SUBMITTABLE_FOR_REVIEW_STATUSES,
+      PROPERTY_STATUS.PENDING_REVIEW
+    );
+    // Re-read instead of trusting the row count: when nothing matched, the current status is the answer.
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    return property;
+  }
+
+  async approveProperty(propertyId) {
+    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.ACTIVE);
+  }
+
+  async rejectProperty(propertyId) {
+    return await this.reviewPendingProperty(propertyId, PROPERTY_STATUS.REJECTED);
+  }
+
+  async reviewPendingProperty(propertyId, decision) {
+    const changed = await this.propertyRepository.transitionStatus(
+      propertyId,
+      [PROPERTY_STATUS.PENDING_REVIEW],
+      decision
+    );
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    if (changed === 0) {
+      throw new ConflictException(
+        `Property ${propertyId} is ${property.status}; only a ${PROPERTY_STATUS.PENDING_REVIEW} property can be reviewed.`
+      );
+    }
+    return property;
   }
 
   async updatePropertyStatus(propertyId, nextStatus, metadata = {}) {
-    const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+    // Unconditional write, so it must never be able to set ACTIVE: going live is approveProperty only.
+    const allowedStatuses = new Set([PROPERTY_STATUS.INACTIVE, PROPERTY_STATUS.ARCHIVED]);
     const normalizedStatus = String(nextStatus || "").toUpperCase();
     if (!allowedStatuses.has(normalizedStatus)) {
       throw new DatabaseException("Invalid property status update.");
@@ -132,7 +247,9 @@ export class PropertyService {
       return property;
     }
 
+    await this.takeDownWebsiteUnlessActive(propertyId, normalizedStatus);
     await this.propertyRepository.updatePropertyStatus(propertyId, normalizedStatus, metadata);
+    await this.takeDownWebsiteUnlessActive(propertyId, normalizedStatus, { statusWritten: true });
     const updatedProperty = await this.getBasePropertyInfo(propertyId);
     if (updatedProperty?.status !== normalizedStatus) {
       throw new DatabaseException("Property status update was not completed.");
@@ -950,6 +1067,7 @@ export class PropertyService {
       };
     }
 
+    await this.withdrawWebsitePage(propertyId, options.actorId);
     await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
     await this.propertyDeletionRepository.deletePropertyById(propertyId);
 

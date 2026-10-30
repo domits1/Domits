@@ -120,4 +120,28 @@ describe("sendTaskEscalationEmail", () => {
 
         await expect(sendTaskEscalationEmail("host@example.com", task)).rejects.toThrow(/Failed to send escalation email/);
     });
+
+    describe("the text of the email", () => {
+        const sentBody = () => JSON.parse(mockSend.mock.calls[0][0].Payload).body.body;
+
+        beforeEach(() => {
+            mockSend.mockResolvedValue({ StatusCode: 200 });
+        });
+
+        it("says the task was escalated and when it is due, without claiming it is late", async () => {
+            const dueDate = Date.now() + 24 * 60 * 60 * 1000;
+
+            await sendTaskEscalationEmail("host@example.com", { ...task, due_date: dueDate });
+
+            expect(sentBody()).toContain('The task "Fix AC" (property: Villa Sunshine) was escalated.');
+            expect(sentBody()).toContain(`Due: ${new Date(dueDate).toISOString()}`);
+            expect(sentBody()).not.toContain("passed its due date");
+        });
+
+        it("says no due date is set when the task has none", async () => {
+            await sendTaskEscalationEmail("host@example.com", { ...task, due_date: null });
+
+            expect(sentBody()).toContain("Due: no due date set");
+        });
+    });
 });
