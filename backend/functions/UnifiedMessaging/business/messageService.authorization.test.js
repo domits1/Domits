@@ -291,7 +291,9 @@ describe("MessageService authorization and booking scoping", () => {
       thread({ id: "channex-thread-without-booking", bookingId: null, guestId: "CHANNEX_GUEST_THREAD:t-2", platform: "CHANNEX" }),
       thread({ id: "domits-thread", bookingId: "booking-2", platform: "DOMITS" }),
     ]);
-    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({ "booking-1": "Tst Domits" });
+    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({
+      "booking-1": { guestName: "Tst Domits", bookingSource: "BookingCom" },
+    });
 
     const result = await service.getThreads(hostAuth);
 
@@ -300,10 +302,14 @@ describe("MessageService authorization and booking scoping", () => {
       bookingIds: ["booking-1"],
     });
     expect(result.response).toEqual([
-      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits" }),
-      expect.not.objectContaining({ guestName: expect.anything() }),
-      expect.not.objectContaining({ guestName: expect.anything() }),
+      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits", bookingSource: "BookingCom" }),
+      expect.any(Object),
+      expect.any(Object),
     ]);
+    for (const other of result.response.slice(1)) {
+      expect(other).not.toHaveProperty("guestName");
+      expect(other).not.toHaveProperty("bookingSource");
+    }
   });
 
   test("adds guestName only to Channex threads, even when another platform shares the bookingId", async () => {
@@ -312,15 +318,21 @@ describe("MessageService authorization and booking scoping", () => {
       thread({ id: "whatsapp-thread", bookingId: "booking-1", platform: "WHATSAPP" }),
       thread({ id: "domits-thread", bookingId: "booking-1", platform: "DOMITS" }),
     ]);
-    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({ "booking-1": "Tst Domits" });
+    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({
+      "booking-1": { guestName: "Tst Domits", bookingSource: "BookingCom" },
+    });
 
     const result = await service.getThreads(hostAuth);
 
     expect(result.response).toEqual([
-      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits" }),
-      expect.not.objectContaining({ guestName: expect.anything() }),
-      expect.not.objectContaining({ guestName: expect.anything() }),
+      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits", bookingSource: "BookingCom" }),
+      expect.any(Object),
+      expect.any(Object),
     ]);
+    for (const other of result.response.slice(1)) {
+      expect(other).not.toHaveProperty("guestName");
+      expect(other).not.toHaveProperty("bookingSource");
+    }
   });
 
   test("does not look up guest names when no host Channex thread has a booking", async () => {

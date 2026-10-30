@@ -95,6 +95,11 @@ const buildStoredMetadata = (payload, providerResult) => {
   });
 };
 
+const channexBookingDetails = (details) => ({
+  ...(details?.guestName ? { guestName: details.guestName } : {}),
+  ...(details?.bookingSource ? { bookingSource: details.bookingSource } : {}),
+});
+
 class MessageService {
   constructor({
     realtimePublisher = publishRealtimeMessage,
@@ -659,7 +664,7 @@ class MessageService {
       response: visible.map((t) => ({
         ...t,
         unreadCount: unreadCounts[t.id] || 0,
-        ...(t.platform === "CHANNEX" && guestNames[t.bookingId] ? { guestName: guestNames[t.bookingId] } : {}),
+        ...(t.platform === "CHANNEX" ? channexBookingDetails(guestNames[t.bookingId]) : {}),
       })),
     };
   }

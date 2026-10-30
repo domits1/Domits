@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { FaEllipsisH } from "react-icons/fa";
 import profileImage from "./domits-logo.jpg";
+import { resolveChannelLabel } from "../../utils/channelLabel";
 
 const formatTime = (v) => {
   if (!v) return "";
@@ -20,12 +21,11 @@ const getDisplayName = (contact) => {
   return first || last || "Unknown";
 };
 
-const getChannelLabel = (contact) => {
-  const raw = String(contact?.channelLabel || contact?.platform || contact?.latestMessage?.platform || "").toUpperCase();
-  if (!raw || raw === "DOMITS") return null;
-  if (raw === "WHATSAPP") return "WhatsApp";
-  return raw;
-};
+const getChannelLabel = (contact) =>
+  resolveChannelLabel({
+    platform: contact?.platform || contact?.channelLabel || contact?.latestMessage?.platform,
+    bookingSource: contact?.bookingSource,
+  });
 
 const ContactItem = ({ contact, selected, onActionsClick }) => {
   const time = useMemo(() => formatTime(contact?.latestMessage?.createdAt), [contact?.latestMessage?.createdAt]);
@@ -121,6 +121,7 @@ ContactItem.propTypes = {
     accoName: PropTypes.string,
     bookingProperty: PropTypes.string,
     channelLabel: PropTypes.string,
+    bookingSource: PropTypes.string,
     platform: PropTypes.string,
     property: PropTypes.shape({
       title: PropTypes.string,

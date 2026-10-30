@@ -5,6 +5,7 @@ import { WebSocketContext } from "../../features/hostdashboard/hostmessages/cont
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 import { getMessageCapabilities } from "./messageCapabilities";
+import { resolveChannelLabel } from "../../utils/channelLabel";
 import {
   markThreadRead,
   markThreadUnread,
@@ -156,7 +157,7 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
       platform: incoming?.platform || "DOMITS",
       integrationAccountId: incoming?.integrationAccountId || null,
       externalThreadId: incoming?.externalThreadId || null,
-      channelLabel: incoming?.platform === "WHATSAPP" ? "WhatsApp" : incoming?.platform || null,
+      channelLabel: resolveChannelLabel({ platform: incoming?.platform }),
       isWhatsApp: String(incoming?.platform || "").toUpperCase() === "WHATSAPP",
       unreadCount: isGenuineIncoming ? 1 : 0,
     });
