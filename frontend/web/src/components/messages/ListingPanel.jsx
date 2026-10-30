@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { getAccommodationByPropertyId } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { getAccommodationWithPublicFallback } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getAccessToken } from "../../services/getAccessToken";
 import {
   normalizeImageUrl,
@@ -37,7 +37,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
       setAcco(null);
       try {
         const token = needsAuth ? getAccessToken() : null;
-        const data = await getAccommodationByPropertyId(endpoint, propertyId, token);
+        const data = await getAccommodationWithPublicFallback(endpoint, propertyId, token);
         if (!cancelled) setAcco(data || null);
       } catch (e) {
         if (!cancelled) {
