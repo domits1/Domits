@@ -1,4 +1,5 @@
 import {
+  getAccommodationByPropertyId,
   getGuestBookingDetailsByBookingId,
   getHostBookingDetails,
   sendUnifiedMessage,
@@ -312,5 +313,32 @@ describe("messagingService unified REST client", () => {
     ).rejects.toThrow("Multiple bookings match this host conversation; bookingId is required.");
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("messagingService accommodation requests", () => {
+  const LISTING = { property: { title: "Sea Cabin" } };
+
+  beforeEach(() => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => LISTING });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("getAccommodationByPropertyId sends the token it is given", async () => {
+    await getAccommodationByPropertyId("hostDashboard/single", "property-1", "host-token-1");
+
+    expect(globalThis.fetch.mock.calls[0][1].headers).toEqual({ Authorization: "host-token-1" });
+  });
+
+  test("getAccommodationByPropertyId sends no Authorization header without a token", async () => {
+    await expect(getAccommodationByPropertyId("bookingEngine/listingDetails", "property-1", null)).resolves.toEqual(
+      LISTING
+    );
+
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
   });
 });

@@ -244,9 +244,7 @@ export async function getAccommodationByBookingId(bookingId, token) {
 export async function getAccommodationByPropertyId(accommodationEndpoint, propertyId, token) {
   const response = await fetch(`${ACCOMMODATION_API_BASE}/${accommodationEndpoint}?property=${propertyId}`, {
     method: "GET",
-    headers: {
-      Authorization: token,
-    },
+    headers: token ? { Authorization: token } : {},
   });
   if (!response.ok) {
     throw new Error("Failed to fetch accommodation");
