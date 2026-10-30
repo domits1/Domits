@@ -243,6 +243,31 @@ describe("Routing unit tests", () => {
     expect(queueAllStaticPages).toHaveBeenCalledWith({ task: "queue-all-static-pages" });
   });
 
+  it("should route the website cleanup task to the controller with its payload", async () => {
+    const unpublishSitesOfInactiveListings = jest
+      .spyOn(PropertyController.prototype, "unpublishSitesOfInactiveListings")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+    const event = { task: "unpublish-sites-of-inactive-listings", apply: true, limit: 7 };
+
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(unpublishSitesOfInactiveListings).toHaveBeenCalledWith(event);
+  });
+
+  it("should not run the website cleanup for an HTTP request that carries the task name", async () => {
+    const unpublishSitesOfInactiveListings = jest.spyOn(
+      PropertyController.prototype,
+      "unpublishSitesOfInactiveListings"
+    );
+    jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });
+
+    const response = await handler({ httpMethod: "POST", task: "unpublish-sites-of-inactive-listings", apply: true });
+
+    expect(response.statusCode).toBe(201);
+    expect(unpublishSitesOfInactiveListings).not.toHaveBeenCalled();
+  });
+
   it("should route an HTTP request that also carries the task name as an HTTP request", async () => {
     const buildStaticPages = jest.spyOn(PropertyController.prototype, "buildStaticPages");
     jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });
