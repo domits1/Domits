@@ -193,8 +193,22 @@ describe('TaskDetailsModal', () => {
         expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
     });
 
-    test('does not show an Escalate button when the task is not breaching its SLA', () => {
-        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
+    test.each([
+        ['on track', { slaStatus: 'ON_TRACK' }],
+        ['at risk', { slaStatus: 'AT_RISK' }],
+        ['without a due date', { slaStatus: null }],
+    ])('shows an Escalate button for an open task that is %s, not only an overdue one', (_label, extra) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status: 'In progress', ...extra }} />);
+        expect(screen.getByRole('button', { name: 'Escalate' })).toBeInTheDocument();
+    });
+
+    test.each(['Completed', 'Cancelled'])('does not show an Escalate button for a %s task', (status) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status, slaStatus: null }} />);
+        expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
+    });
+
+    test('does not show an Escalate button for a task that was already escalated', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'BREACHED', escalated_at: 1700000000000 }} />);
         expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
     });
 
@@ -204,5 +218,11 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Escalate' }));
 
         expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
+    });
+
+    test('disables the Escalate button while the escalation is being sent', () => {
+        render(<TaskDetailsModal {...baseProps} isEscalating viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
+
+        expect(screen.getByRole('button', { name: 'Escalate' })).toBeDisabled();
     });
 });
