@@ -88,6 +88,16 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, newStay);
   });
 
+  test("an imported cancellation keeps a time that is already stored", async () => {
+    const { repository, client } = setup();
+
+    await repository.cancelImportedBooking("booking-1", [], 1792281600000);
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toContain("cancelled_at = COALESCE(cancelled_at, $3)");
+    expect(params).toEqual(["booking-1", "Cancelled", 1792281600000]);
+  });
+
   test("an imported booking stores the OTA amount and the OTA as its source", async () => {
     const { repository, client } = setup();
 

@@ -26,6 +26,14 @@ const OWN_BOOKING_PAYMENT_READ_COLUMNS = [
 ];
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
+const CANCELLED_STATUS = "Cancelled";
+
+// COALESCE in the update itself, not a read before it: a second cancel keeps the first moment,
+// also when two cancels arrive together.
+const cancelledBookingValues = () => ({
+  status: CANCELLED_STATUS,
+  cancelled_at: () => `COALESCE(cancelled_at, ${Date.now()})`,
+});
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
 const SERIALIZATION_FAILURE_SQLSTATE = "40001";
@@ -454,8 +462,9 @@ class ReservationRepository {
   }
 
   async updateBookingStatus(id, status, channexChanges = []) {
+    const values = status === CANCELLED_STATUS ? cancelledBookingValues() : { status: status };
     const query = await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
+      manager.createQueryBuilder().update(Booking).set(values).where("id = :id ", { id: id }).execute()
     );
 
     if (query.length < 1) {
@@ -637,7 +646,7 @@ class ReservationRepository {
     }
 
     await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute()
+      manager.createQueryBuilder().update(Booking).set(cancelledBookingValues()).where("id = :id", { id }).execute()
     );
 
     return { response: await this.#readBooking(client, id), statusCode: 200 };

@@ -223,7 +223,7 @@ class ChannexExternalBookingImportRepository {
     return this.getBookingById(normalizedBookingId);
   }
 
-  async cancelImportedBooking(bookingId, channexChanges = []) {
+  async cancelImportedBooking(bookingId, channexChanges = [], cancelledAtMs = Date.now()) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
@@ -232,10 +232,11 @@ class ChannexExternalBookingImportRepository {
       db.query(
         `
           UPDATE ${qualifyTableName(client, "booking")}
-          SET status = $2
+          SET status = $2,
+              cancelled_at = COALESCE(cancelled_at, $3)
           WHERE id = $1
         `,
-        [normalizedBookingId, BOOKING_STATUS_CANCELLED]
+        [normalizedBookingId, BOOKING_STATUS_CANCELLED, cancelledAtMs]
       )
     );
 
