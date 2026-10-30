@@ -2,7 +2,7 @@ import { Repository } from "../../data/repository.js";
 import { ConflictException } from "../../util/exception/conflictException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { ARCHIVED_OWNER_STATUS } from "../../util/ownerConstants.js";
-import { assertOwnerId, validateCreateOwner } from "../validation/ownerValidator.js";
+import { assertOwnerId, validateCreateOwner, validatePatchOwner } from "../validation/ownerValidator.js";
 import { validateSetShares } from "../validation/shareValidator.js";
 
 const OWNER_NOT_FOUND_MESSAGE = "Owner not found.";
@@ -38,21 +38,23 @@ const sharesWritableCheck = (ownerIds) => ({ property, owners, changedToday }) =
   }
 };
 
-const toProperty = ({ property_id, ownership_basis_points, effective_from, effective_to }) => ({
+const toProperty = (titles) => ({ property_id, ownership_basis_points, effective_from, effective_to }) => ({
   property_id,
+  property_title: titles.get(property_id) ?? null,
   ownership_basis_points,
   effective_from,
   effective_to,
 });
 
-const groupPropertiesByOwner = (assignments) => {
+const groupPropertiesByOwner = (assignments, titles) => {
   const propertiesByOwner = new Map();
+  const toTitledProperty = toProperty(titles);
   for (const assignment of assignments) {
     const properties = propertiesByOwner.get(assignment.owner_id);
     if (properties) {
-      properties.push(toProperty(assignment));
+      properties.push(toTitledProperty(assignment));
     } else {
-      propertiesByOwner.set(assignment.owner_id, [toProperty(assignment)]);
+      propertiesByOwner.set(assignment.owner_id, [toTitledProperty(assignment)]);
     }
   }
   return propertiesByOwner;
@@ -68,12 +70,22 @@ export class Service {
     return Math.floor(this.clock() / DAY_MS) * DAY_MS;
   }
 
+  async propertyTitles(hostId, assignments) {
+    if (assignments.length === 0) {
+      return new Map();
+    }
+    const propertyIds = assignments.map((assignment) => assignment.property_id);
+    const properties = await this.repository.findPropertyTitlesByIds(propertyIds, hostId);
+    return new Map(properties.map(({ id, title }) => [id, title]));
+  }
+
   async listOwners(hostId) {
     const [owners, assignments] = await Promise.all([
       this.repository.findOwnersByHost(hostId),
       this.repository.findAssignmentsByHost(hostId, this.today()),
     ]);
-    const propertiesByOwner = groupPropertiesByOwner(assignments);
+    const titles = await this.propertyTitles(hostId, assignments);
+    const propertiesByOwner = groupPropertiesByOwner(assignments, titles);
     return owners.map((owner) => ({ ...owner, properties: propertiesByOwner.get(owner.id) ?? [] }));
   }
 
@@ -84,7 +96,8 @@ export class Service {
       throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
     }
     const assignments = await this.repository.findAssignmentsByOwnerAndHost(ownerId, hostId, this.today());
-    return { ...owner, properties: assignments.map(toProperty) };
+    const titles = await this.propertyTitles(hostId, assignments);
+    return { ...owner, properties: assignments.map(toProperty(titles)) };
   }
 
   async createOwner(hostId, body) {
@@ -98,6 +111,20 @@ export class Service {
       updated_at: now,
     });
     return { ...saved, properties: [] };
+  }
+
+  async updateOwner(hostId, id, body) {
+    const ownerId = assertOwnerId(id);
+    const owner = await this.repository.findOwnerByIdAndHost(ownerId, hostId);
+    if (!owner) {
+      throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
+    }
+    const changes = validatePatchOwner(body, owner);
+    const affected = await this.repository.updateOwner(ownerId, hostId, { ...changes, updated_at: this.clock() });
+    if (affected === 0) {
+      throw new NotFoundException(OWNER_NOT_FOUND_MESSAGE);
+    }
+    return await this.getOwner(hostId, ownerId);
   }
 
   async setShares(hostId, body) {

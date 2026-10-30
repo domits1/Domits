@@ -16,21 +16,26 @@ const OWNER_ID = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 const DAY_MS = 86400000;
 const TODAY = Date.UTC(2026, 6, 1);
 
-const createDataSource = ({ owners = [], owner = null, assignments = [] } = {}) => {
+const createDataSource = ({ owners = [], owner = null, assignments = [], properties = [], affected = 1 } = {}) => {
   const ownerRepository = {
     find: jest.fn(async () => owners),
     findOne: jest.fn(async () => owner),
     save: jest.fn(async (record) => ({ ...record, id: OWNER_ID })),
+    update: jest.fn(async () => ({ affected, raw: [], generatedMaps: [] })),
   };
   const assignmentRepository = {
     find: jest.fn(async () => assignments),
   };
+  const propertyRepository = {
+    find: jest.fn(async () => properties),
+  };
   const repositories = new Map([
     [Property_Owner, ownerRepository],
     [Property_Owner_Property, assignmentRepository],
+    [Property, propertyRepository],
   ]);
   Database.getInstance.mockResolvedValue({ getRepository: jest.fn((entity) => repositories.get(entity)) });
-  return { ownerRepository, assignmentRepository };
+  return { ownerRepository, assignmentRepository, propertyRepository };
 };
 
 const matchesCondition = (value, condition) => {
@@ -195,6 +200,70 @@ describe("Repository.findAssignmentsByOwnerAndHost", () => {
   });
 });
 
+describe("Repository.findPropertyTitlesByIds", () => {
+  const readOptions = async (propertyIds) => {
+    const { propertyRepository } = createDataSource();
+    await new Repository().findPropertyTitlesByIds(propertyIds, "host-1");
+    return propertyRepository.find.mock.calls[0][0];
+  };
+
+  test("returns the rows the database gives back", async () => {
+    const properties = [{ id: "property-1", title: "Villa Sensual" }];
+    createDataSource({ properties });
+
+    await expect(new Repository().findPropertyTitlesByIds(["property-1"], "host-1")).resolves.toBe(properties);
+  });
+
+  test("reads only the id and title of the caller's properties, once per distinct id", async () => {
+    const { propertyRepository } = createDataSource();
+
+    await new Repository().findPropertyTitlesByIds(["property-1", "property-2", "property-1"], "host-1");
+
+    expect(propertyRepository.find).toHaveBeenCalledTimes(1);
+    const { select, where } = propertyRepository.find.mock.calls[0][0];
+    expect(select).toEqual({ id: true, title: true });
+    expect(Object.keys(where).sort()).toEqual(["hostid", "id"]);
+    expect(where.hostid).toBe("host-1");
+    expect([where.id.type, where.id.value]).toEqual(["in", ["property-1", "property-2"]]);
+  });
+
+  test("answers an empty list without touching the database", async () => {
+    await expect(new Repository().findPropertyTitlesByIds([], "host-1")).resolves.toEqual([]);
+    expect(Database.getInstance).not.toHaveBeenCalled();
+  });
+
+  test("generates SQL with the ids and the caller's host", async () => {
+    const options = await readOptions(["property-1", "property-2"]);
+    const dataSource = new DataSource({ type: "postgres", entities: [Property] });
+    await dataSource.buildMetadatas();
+    const queryBuilder = dataSource.getRepository(Property).createQueryBuilder("property");
+    queryBuilder.setFindOptions(options);
+
+    const [sql, parameters] = queryBuilder.getQueryAndParameters();
+
+    expect(sql).toMatch(/^SELECT "property"\."id" AS "property_id", "property"\."title" AS "property_title" FROM "property"/);
+    expect(sql).toContain('"property"."id" IN ($1, $2)');
+    expect(sql).toContain('"property"."hostid" = $3');
+    expect(parameters).toEqual(["property-1", "property-2", "host-1"]);
+  });
+
+  test.each([undefined, null, "", 42])("refuses a host id %p before touching the database", async (hostId) => {
+    await expect(new Repository().findPropertyTitlesByIds(["property-1"], hostId)).rejects.toThrow(/host id/);
+    await expect(new Repository().findPropertyTitlesByIds([], hostId)).rejects.toThrow(/host id/);
+    expect(Database.getInstance).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["not an array", null],
+    ["holding undefined", ["property-1", undefined]],
+    ["holding an empty string", [""]],
+    ["holding a number", [42]],
+  ])("refuses property ids %s before touching the database", async (_label, propertyIds) => {
+    await expect(new Repository().findPropertyTitlesByIds(propertyIds, "host-1")).rejects.toThrow(/property ids/);
+    expect(Database.getInstance).not.toHaveBeenCalled();
+  });
+});
+
 describe("Repository.createOwner", () => {
   const record = Object.freeze({
     host_id: "host-1",
@@ -234,6 +303,89 @@ describe("Repository.createOwner", () => {
       expect(Database.getInstance).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("Repository.updateOwner", () => {
+  const CHANGES = Object.freeze({ first_name: "Bea", notes: null, updated_at: 1782919800000 });
+
+  test("updates only the row with this id for the caller's host, with exactly the changes", async () => {
+    const { ownerRepository } = createDataSource();
+
+    await new Repository().updateOwner(OWNER_ID, "host-1", { ...CHANGES });
+
+    expect(ownerRepository.update).toHaveBeenCalledTimes(1);
+    expect(ownerRepository.update).toHaveBeenCalledWith({ id: OWNER_ID, host_id: "host-1" }, CHANGES);
+  });
+
+  test.each([1, 0])("returns the affected row count %i", async (affected) => {
+    createDataSource({ affected });
+
+    await expect(new Repository().updateOwner(OWNER_ID, "host-1", { ...CHANGES })).resolves.toBe(affected);
+  });
+
+  test("reruns the update once after a DSQL conflict and then returns its count", async () => {
+    const { ownerRepository } = createDataSource();
+    ownerRepository.update.mockRejectedValueOnce(Object.assign(new Error("conflict"), { code: "40001" }));
+
+    await expect(new Repository().updateOwner(OWNER_ID, "host-1", { ...CHANGES })).resolves.toBe(1);
+    expect(ownerRepository.update).toHaveBeenCalledTimes(2);
+  });
+
+  test("passes any other database error on unchanged", async () => {
+    const { ownerRepository } = createDataSource();
+    const error = new Error("connection reset");
+    ownerRepository.update.mockRejectedValue(error);
+
+    await expect(new Repository().updateOwner(OWNER_ID, "host-1", { ...CHANGES })).rejects.toBe(error);
+    expect(ownerRepository.update).toHaveBeenCalledTimes(1);
+  });
+
+  test("generates SQL with both the id and the caller's host in the WHERE", async () => {
+    const { ownerRepository } = createDataSource();
+    await new Repository().updateOwner(OWNER_ID, "host-1", { ...CHANGES });
+    const [criteria, values] = ownerRepository.update.mock.calls[0];
+    const dataSource = new DataSource({ type: "postgres", entities: [Property_Owner] });
+    await dataSource.buildMetadatas();
+
+    const [sql, parameters] = dataSource
+      .createQueryBuilder()
+      .update(Property_Owner)
+      .set(values)
+      .where(criteria)
+      .getQueryAndParameters();
+
+    expect(sql).toMatch(/^UPDATE "property_owner" SET "first_name" = \$1, "notes" = \$2, "updated_at" = \$3 WHERE/);
+    expect(sql).toContain('"id" = $4');
+    expect(sql).toContain('"host_id" = $5');
+    expect(parameters).toEqual(["Bea", null, 1782919800000, OWNER_ID, "host-1"]);
+  });
+
+  describe("guards", () => {
+    test.each([undefined, null, "", 42])("refuses an owner id %p before touching the database", async (ownerId) => {
+      await expect(new Repository().updateOwner(ownerId, "host-1", { ...CHANGES })).rejects.toThrow(/owner id/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+
+    test.each([undefined, null, "", 42])("refuses a host id %p before touching the database", async (hostId) => {
+      await expect(new Repository().updateOwner(OWNER_ID, hostId, { ...CHANGES })).rejects.toThrow(/host id/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["undefined", undefined],
+      ["null", null],
+      ["an array", [["first_name", "Bea"]]],
+      ["a string", "first_name"],
+      ["an empty object", {}],
+      ["a change to id", { ...CHANGES, id: OWNER_ID }],
+      ["a change to host_id", { ...CHANGES, host_id: "host-2" }],
+      ["a change to owner_user_id", { ...CHANGES, owner_user_id: "user-2" }],
+      ["a change to created_at", { ...CHANGES, created_at: 1 }],
+    ])("refuses changes that are %s before touching the database", async (_label, changes) => {
+      await expect(new Repository().updateOwner(OWNER_ID, "host-1", changes)).rejects.toThrow(/changes/);
+      expect(Database.getInstance).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("Repository scope guards", () => {

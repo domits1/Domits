@@ -11,6 +11,7 @@ const OWNER_ORDER = Object.freeze({ last_name: "ASC", first_name: "ASC" });
 const ASSIGNMENT_ORDER = Object.freeze({ effective_from: "ASC", created_at: "ASC" });
 const PESSIMISTIC_WRITE = Object.freeze({ mode: "pessimistic_write" });
 const UNIQUE_VIOLATION_CODE = "23505";
+const READ_ONLY_OWNER_FIELDS = Object.freeze(["id", "host_id", "owner_user_id", "created_at"]);
 const SHARES_CONFLICT_MESSAGE = "The ownership of this property changed at the same time. Reload and try again.";
 
 const isNonEmptyString = (value) => typeof value === "string" && value !== "";
@@ -24,6 +25,23 @@ const requireHostId = (hostId) => {
 const requireOwnerId = (ownerId) => {
   if (!isNonEmptyString(ownerId)) {
     throw new Error("An owner id is required to read an owner.");
+  }
+};
+
+const requirePropertyIds = (propertyIds) => {
+  if (!Array.isArray(propertyIds) || !propertyIds.every(isNonEmptyString)) {
+    throw new Error("property ids must be an array of non-empty strings.");
+  }
+};
+
+const requireOwnerChanges = (changes) => {
+  const isPlainObject = Object.prototype.toString.call(changes) === "[object Object]";
+  if (!isPlainObject || Object.keys(changes).length === 0) {
+    throw new Error("Owner changes must be a non-empty object.");
+  }
+  const readOnly = Object.keys(changes).filter((field) => READ_ONLY_OWNER_FIELDS.includes(field));
+  if (readOnly.length > 0) {
+    throw new Error(`Owner changes must not set ${readOnly.join(", ")}.`);
   }
 };
 
@@ -140,10 +158,34 @@ export class Repository {
     });
   }
 
+  async findPropertyTitlesByIds(propertyIds, hostId) {
+    requireHostId(hostId);
+    requirePropertyIds(propertyIds);
+    const ids = [...new Set(propertyIds)];
+    if (ids.length === 0) {
+      return [];
+    }
+    const dataSource = await Database.getInstance();
+    return await dataSource.getRepository(Property).find({
+      select: { id: true, title: true },
+      where: { id: In(ids), hostid: hostId },
+    });
+  }
+
   async createOwner(record) {
     requireHostId(record.host_id);
     const dataSource = await Database.getInstance();
     return await dataSource.getRepository(Property_Owner).save(record);
+  }
+
+  async updateOwner(ownerId, hostId, changes) {
+    requireOwnerId(ownerId);
+    requireHostId(hostId);
+    requireOwnerChanges(changes);
+    const dataSource = await Database.getInstance();
+    const owners = dataSource.getRepository(Property_Owner);
+    const result = await withDsqlRetry(() => owners.update({ id: ownerId, host_id: hostId }, changes));
+    return result.affected;
   }
 
   async replacePropertyShares(request) {
