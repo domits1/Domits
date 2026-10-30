@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import { act, renderHook, waitFor } from "@testing-library/react";
 import useFetchBookingDetails from "./useFetchBookingDetails";
 import { getHostBookingDetails } from "../services/messagingService";
