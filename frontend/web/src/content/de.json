@@ -1366,6 +1366,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Deine Unterkunft wurde zur Prüfung eingereicht.",
+      "pendingReviewNotice": "Diese Unterkunft wartet auf Prüfung und wird veröffentlicht, sobald sie freigegeben ist.",
       "breadcrumb": "Veröffentlichen",
       "title": "{propertyName} veröffentlichen",
       "subtitle": "Überprüfe die Checkliste unten und veröffentliche anschließend deine Unterkunft.",

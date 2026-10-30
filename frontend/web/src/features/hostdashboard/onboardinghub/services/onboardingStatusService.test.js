@@ -1,4 +1,9 @@
-import { checkAnyWebsiteStatus, checkPaymentsStatus, computeIsGoLiveReady } from "./onboardingStatusService";
+import {
+  checkAnyWebsiteStatus,
+  checkGoLiveStatus,
+  checkPaymentsStatus,
+  computeIsGoLiveReady,
+} from "./onboardingStatusService";
 import { fetchWebsiteDraftByPropertyId } from "../../website/services/websiteDraftService";
 import { getStripeAccountDetails } from "../../hostfinance/services/stripeAccountService";
 
@@ -94,6 +99,22 @@ describe("checkPaymentsStatus", () => {
     const result = await checkPaymentsStatus();
 
     expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+});
+
+describe("checkGoLiveStatus", () => {
+  test.each([
+    ["ACTIVE", { complete: true, pending: false, rejected: false }],
+    ["pending_review", { complete: false, pending: true, rejected: false }],
+    ["REJECTED", { complete: false, pending: false, rejected: true }],
+    ["INACTIVE", { complete: false, pending: false, rejected: false }],
+    [undefined, { complete: false, pending: false, rejected: false }],
+  ])("reports %s", (status, expected) => {
+    expect(checkGoLiveStatus({ status })).toMatchObject(expected);
+  });
+
+  test("handles a property that has not loaded yet", () => {
+    expect(checkGoLiveStatus(null)).toMatchObject({ complete: false, pending: false, rejected: false });
   });
 });
 

@@ -1366,6 +1366,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Tu alojamiento se ha enviado para su revisión.",
+      "pendingReviewNotice": "Este alojamiento está pendiente de revisión y se publicará en cuanto sea aprobado.",
       "breadcrumb": "Poner en marcha",
       "title": "Poner en marcha {propertyName}",
       "subtitle": "Revisa la siguiente lista y, después, publica tu alojamiento.",

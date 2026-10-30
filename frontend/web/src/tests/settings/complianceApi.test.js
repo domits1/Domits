@@ -79,6 +79,14 @@ describe("complianceApi", () => {
             ]);
         });
 
+        it.each(["PENDING_REVIEW", "REJECTED"])("keeps a %s listing selectable so its registration number can be fixed", async (status) => {
+            const listings = JSON.parse(JSON.stringify(hostDashboardAll));
+            listings[0].property.status = status;
+            global.fetch.mockResolvedValue(okResponse(listings));
+
+            expect(villaOption(await fetchCompliancePropertyOptions())).toMatchObject({ id: VILLA_ID, status });
+        });
+
         it.each([
             ["a real number", "PT-AL-2024-0042"],
             ["the generated placeholder", VILLA_PLACEHOLDER],
