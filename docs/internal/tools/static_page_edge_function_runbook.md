@@ -378,8 +378,10 @@ cat > rollback.sh <<'EOF'
 set -euo pipefail
 FN=domits-static-page-by-host
 etag() { aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text; }
-echo "rollback update: $(aws cloudfront update-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --function-config file://previous-config.json --function-code fileb://previous-live.js --query FunctionSummary.FunctionMetadata.Stage --output text)"
-echo "rollback publish: $(aws cloudfront publish-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text)"
+updated=$(aws cloudfront update-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --function-config file://previous-config.json --function-code fileb://previous-live.js --query FunctionSummary.FunctionMetadata.Stage --output text)
+echo "rollback update: $updated"
+published=$(aws cloudfront publish-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text)
+echo "rollback publish: $published"
 aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 rolled-back.js > /dev/null
 cmp -s rolled-back.js previous-live.js && echo "LIVE is the previous code again"
 EOF
@@ -409,7 +411,7 @@ check() {
   expect "https://$PRIMARY/" 200 || bad=1
   expect "https://$PRIMARY/robots.txt" 200 || bad=1
   expect "https://$PLAIN/" 200 || bad=1
-  errors=$({ metric FunctionExecutionErrors Sum; metric FunctionValidationErrors Sum; } | jq -s '[.[].Datapoints[].Sum] | add // 0')
+  errors=$({ metric FunctionExecutionErrors Sum; metric FunctionValidationErrors Sum; } | jq -s 'if length == 2 then [.[].Datapoints[].Sum] | add // 0 else "unknown" end')
   compute=$(metric FunctionComputeUtilization Maximum | jq --argjson until $((T0 + 600)) \
     '[.Datapoints[] | select((.Timestamp | sub("\\+00:00$"; "Z") | fromdateiso8601) < $until) | .Maximum]')
   highest=$(printf '%s' "$compute" | jq 'max // 0'); minutes=$(printf '%s' "$compute" | jq length)
@@ -442,7 +444,7 @@ aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us
 bash watch.sh "$T0" "$ALIAS" "$PRIMARY" "$PLAIN" "$ASSET"
 ```
 
-Expected: a non-empty `asset:` line and `200` with a JavaScript content type before the publish (without an asset nothing is published and the watch says so); `LIVE`; `LIVE holds the merged code`; then thirteen lines such as `+3m: 301 301 200 200 200 200 | errors 0 | highest compute in the first 10 minutes 31, minutes with data 3`, and `watch done, nothing off`. Without `LIVE holds the merged code`, something else reached DEVELOPMENT between the update and the publish: stop the watch with Ctrl-C and run `bash rollback.sh` at once. The two `301`s go to the primary with the same path; the `200` after them is the build file, served on the alias without a redirect. The watch rolls back by itself, and prints `SOMETHING IS OFF, rolling back` and the rollback's own lines, when a status or a location differs, when an execution or validation error is counted, when the highest compute of any minute in the first ten minutes passes 60, or when CloudWatch still has no compute data five minutes after the publish (a watch without data would otherwise pass). Why 60: the version without a store has stayed at or under 53 since it was first published on 2026-10-16, while both versions that read the store reached 88 to 94 on the first requests after their publish. The first ten minutes are where that showed, and the watch runs thirteen because CloudWatch delivers a minute one to three minutes late. Then read the step 5 metrics once more after ten minutes. A rollback is the same two calls and takes one to two minutes; it ends with `LIVE is the previous code again`. Without that line, run `bash rollback.sh` again before anything else.
+Expected: a non-empty `asset:` line and `200` with a JavaScript content type before the publish (without an asset nothing is published and the watch says so); `LIVE`; `LIVE holds the merged code`; then thirteen lines such as `+3m: 301 301 200 200 200 200 | errors 0 | highest compute in the first 10 minutes 31, minutes with data 3`, and `watch done, nothing off`. Without `LIVE holds the merged code`, something else reached DEVELOPMENT between the update and the publish: stop the watch with Ctrl-C and run `bash rollback.sh` at once. The two `301`s go to the primary with the same path; the `200` after them is the build file, served on the alias without a redirect. The watch rolls back by itself, and prints `SOMETHING IS OFF, rolling back` and the rollback's own lines, when a status or a location differs, when an execution or validation error is counted, when the highest compute of any minute in the first ten minutes passes 60, or when CloudWatch still has no compute data five minutes after the publish or does not answer for the error counts (a watch without data would otherwise pass). Why 60: the version without a store has stayed at or under 53 since it was first published on 2026-10-16, while both versions that read the store reached 88 to 94 on the first requests after their publish. The first ten minutes are where that showed, and the watch runs thirteen because CloudWatch delivers a minute one to three minutes late. Then read the step 5 metrics once more after ten minutes. A rollback is the same two calls and takes one to two minutes; it ends with `LIVE is the previous code again`, and it stops at the first call that fails. Without that line, run `bash rollback.sh` again before anything else.
 
 ## For the pull requests that come after this one
 
