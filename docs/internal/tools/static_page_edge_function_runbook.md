@@ -11,9 +11,9 @@ Run it only after the worker has written at least one page and its sitemap under
 - **A site without a page keeps today's behaviour, without code.** The rewritten key does not exist, S3 answers 403 through the origin access control, and the distribution's existing custom error responses (403 and 404 to `/index.html` with status 200) serve the app shell. The edge caches that miss for `ErrorCachingMinTTL`, 10 seconds on this distribution, so an edge that served the shell asks S3 again at most 10 seconds after the worker wrote the page. A page that was served is cached by the edge and by the browser for its own `Cache-Control: public, max-age=300`; an invalidation clears the edge, never a browser that already holds the page.
 - **`robots.txt` comes from the function, the sitemap from the worker.** A host site's `robots.txt` depends on its hostname only, so the function answers it: `User-agent: *`, `Allow: /` and `Sitemap: https://<hostname>/sitemap.xml`, as `text/plain` with `max-age=300`; a `HEAD` request gets the same headers without a body. It cannot be missing, stale or left behind by a withdrawal, and a host without a page still gets a valid file rather than the shell. The hostname in it is the normalised one that passed the rule above, so nothing from the header reaches the file unchecked. A host header that fails the rule is not answered and keeps the shared `robots.txt` at the bucket root, as today. The sitemap is what the worker wrote next to the page: the main address lists its root, every other host an empty `urlset`, and a withdrawal empties it instead of deleting it. Until the worker wrote it for a host the key does not exist, and the error response serves the shell for `/sitemap.xml` too, cached 10 seconds; that is why this function is attached only after every published site was built once.
 - **The cache cannot hand one site another site's page.** The cache key is the URI after the function ran, and the hostname is part of that URI. The cache policy stays the managed `CachingOptimized`; it does not need the `Host` header in the key, because the path already carries it. Paths that are not rewritten stay shared across hosts, which is right: the assets are the same for every site. The 404 on direct `/sites/by-host/` requests closes the other road to another site's page: the key namespace is reachable only through the rewrite.
-- **A bug in the function would hit every site at once, so the function must not throw.** Everything after the event is read sits in one `try`, and the `catch` returns the request unchanged; a thrown error would otherwise cost the viewer a 503, and a returned request CloudFront cannot validate a 502. The source is under 10 KB, imports only the `cloudfront` module (for the redirect store), uses no network or timers, and awaits only as the whole right side of a variable, because the runtime rejects an `await` inside an argument (the test pins all of this; only the replay in step 2 proves the runtime accepts it), compiles in Node, and the 75 cases in `cases.json` are run in the unit test and again with `test-function` on the real runtime, including the inputs that must leave the request alone, the ones that must be refused and the ones on either side of the 8192 limit, including a repeated query parameter. What that cannot prove: the compute limit under real load, which is why step 5 reads the function's own CloudWatch metrics, including its compute utilization.
+- **A bug in the function would hit every site at once, so the function must not throw.** Everything after the event is read sits in one `try`, and the `catch` returns the request unchanged; a thrown error would otherwise cost the viewer a 503, and a returned request CloudFront cannot validate a 502. The source stays under 10,000 bytes (the stricter reading of the 10 KB limit), is one plain synchronous `function handler` that imports nothing and uses no store, network, timers or promises (the test pins all of this), compiles in Node, and the 75 cases in `cases.json` and the redirect cases that use the alias map the function ships with are run in the unit test and again with `test-function` on the real runtime, including the inputs that must leave the request alone, the ones that must be refused and the ones on either side of the 8192 limit, including a repeated query parameter. What that cannot prove: the compute limit under real load, which is why step 5 reads the function's own CloudWatch metrics, including its compute utilization.
 - **`www.domits.com` and `acceptance.domits.com` are not on this distribution.** They are served by Amplify through another CloudFront distribution; this function is attached to `E18TUBOKUXD9TW` only. The one hand-made tenant on it, `developers-test` (`developers.domits.com`), also gets the rewrite, has no page object, and so keeps getting the shell exactly as today.
-- **Considered and rejected: a KeyValueStore or a per-tenant parameter.** The design document (`SEO phase 2`, point 3) settles on keys by hostname: no lookup, no second source of truth, and a moved domain is owned by whoever wrote the key last. The wildcard tenant holds many sites with one parameter set, so a tenant parameter could not tell them apart.
+- **Considered and rejected: a KeyValueStore or a per-tenant parameter.** The design document (`SEO phase 2`, point 3) settles on keys by hostname: no lookup, no second source of truth, and a moved domain is owned by whoever wrote the key last. The wildcard tenant holds many sites with one parameter set, so a tenant parameter could not tell them apart. The alias redirects tried the key value store `domits-static-page-redirects` and went back to a map in the code; see step 6 and the alias redirects below.
 
 ## What happens if it goes wrong
 
@@ -23,6 +23,9 @@ Run it only after the worker has written at least one page and its sitemap under
 | the rewrite points at a key that does not exist | the app shell, as today, cached 10 seconds | nothing; that is the designed fallback |
 | a host has no sitemap yet | `/sitemap.xml` answers the shell for that host, cached 10 seconds, exactly as before this function | queue a build for the site (republish it, or the reconciler once it is merged); the next run writes the page and the sitemap |
 | a page is wrong | that site shows the wrong page until the worker overwrites the object (`max-age=300`) | fix the worker, or delete the object and invalidate `/sites/by-host/<hostname>/index.html` on the site's tenant: the shell comes back at once, or within 300 seconds without the invalidation |
+| an alias is not in the map yet | the alias serves its own page, as before the redirect existed | step 6 |
+| a primary in the map stopped serving its site (custom domain removed or changed, site unpublished) | the aliases of that site still answer a `301` to the old primary until the next publish, and a browser or edge that saw the `301` keeps it for up to an hour | step 6 the same day the domain or the site changed |
+| a new version of the function is expensive on the first requests after a publish | nothing yet; AWS throttles a function that keeps exceeding its compute limit | the watch in step 6 rolls back when the highest compute of a minute passes 60 in the first ten minutes |
 | the function is attached and everything must go back | nothing new during the minutes the rollback propagates; a browser keeps a page it already holds for up to 300 seconds | step 5's rollback: one `update-distribution` without this association; the keys under `sites/by-host/` are simply not used any more |
 
 ## 0. Preconditions, read-only
@@ -55,27 +58,29 @@ Rollback: `aws cloudfront delete-function --name domits-static-page-by-host --if
 
 ## 2. Replay every case on the real runtime
 
-The unit test ran the source in Node. This runs it in CloudFront's own runtime, one case at a time, and compares the URI it returns with the one the test expected.
+The unit test ran the source in Node. This runs it in CloudFront's own runtime, one case at a time, and compares what it returns with what the test expected: every case in `cases.json`, and every case in `redirect-cases.json` that uses the alias map the function ships with (the ones without their own `aliases`).
 
 ```bash
 cd /path/to/Domits/backend/infrastructure/static-page-edge
 ETAG=$(aws cloudfront describe-function --name domits-static-page-by-host --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text)
+jq -s '.[0] + [.[1][] | select(has("aliases") | not)]' cases.json redirect-cases.json > /tmp/edge-cases.json
+CANONICAL='def canonical: if startswith("location ") and contains("?") then index("?") as $i | .[:$i] + " " + (.[$i + 1:] | split("&") | reduce .[] as $p ([]; if length > 0 and (.[-1][0] | split("=")[0]) == ($p | split("=")[0]) then .[:-1] + [.[-1] + [$p]] else . + [[$p]] end) | map(join("&")) | sort | tojson) else . end;'
 failures=0
-for i in $(seq 0 $(( $(jq length cases.json) - 1 ))); do
-  jq -c ".[$i] | {version:\"1.0\",context:{eventType:\"viewer-request\"},viewer:{ip:\"203.0.113.1\"},request:{method:.method,uri:.uri,querystring:(.querystring // {}),headers:(if .host == null then {} else {host:({value:.host} + (if .multiValue then {multiValue:(.multiValue | map({value:.}))} else {} end))} end),cookies:{}}}" cases.json > /tmp/edge-event.json
-  expected=$(jq -r ".[$i] | if .expectedRobotsFor and .method == \"HEAD\" then \"robots-head\" elif .expectedRobotsFor then \"robots \\(.expectedRobotsFor)\" elif .expectedStatus then \"status \\(.expectedStatus)\" else .expectedUri end" cases.json)
+for i in $(seq 0 $(( $(jq length /tmp/edge-cases.json) - 1 ))); do
+  jq -c ".[$i] | {version:\"1.0\",context:{eventType:\"viewer-request\"},viewer:{ip:\"203.0.113.1\"},request:{method:.method,uri:.uri,querystring:(.querystring // {}),headers:(if .host == null then {} else {host:({value:.host} + (if .multiValue then {multiValue:(.multiValue | map({value:.}))} else {} end))} end),cookies:{}}}" /tmp/edge-cases.json > /tmp/edge-event.json
+  expected=$(jq -r ".[$i] | if .expectedLocation then \"location \\(.expectedLocation)\" elif .expectedRobotsFor and .method == \"HEAD\" then \"robots-head\" elif .expectedRobotsFor then \"robots \\(.expectedRobotsFor)\" elif .expectedStatus then \"status \\(.expectedStatus)\" else .expectedUri end" /tmp/edge-cases.json)
   result=$(aws cloudfront test-function --name domits-static-page-by-host --stage DEVELOPMENT --if-match "$ETAG" --profile domits --region us-east-1 \
     --event-object fileb:///tmp/edge-event.json --query 'TestResult.{output:FunctionOutput,error:FunctionErrorMessage,cpu:ComputeUtilization}' --output json)
-  actual=$(printf '%s\n' "$result" | jq -r '.output | fromjson | if .response.statusCode == 200 and .response.body == null then "robots-head" elif .response.statusCode == 200 then "robots " + ((.response.body.data // .response.body) | capture("Sitemap: https://(?<h>[^/]+)/").h) elif .response then "status \(.response.statusCode)" else .request.uri end')
+  actual=$(printf '%s\n' "$result" | jq -r '.output | fromjson | if .response.statusCode == 301 then "location " + .response.headers.location.value elif .response.statusCode == 200 and .response.body == null then "robots-head" elif .response.statusCode == 200 then "robots " + ((.response.body.data // .response.body) | capture("Sitemap: https://(?<h>[^/]+)/").h) elif .response then "status \(.response.statusCode)" else .request.uri end')
   error=$(printf '%s\n' "$result" | jq -r '.error // empty')
   cpu=$(printf '%s\n' "$result" | jq -r '.cpu')
-  if [ "$actual" != "$expected" ] || [ -n "$error" ]; then failures=$((failures + 1)); echo "FAIL $(jq -r ".[$i].name" cases.json): got '$actual' expected '$expected' error '$error'"; fi
-  echo "$cpu $(jq -r ".[$i].name" cases.json): $actual"
+  if [ "$(jq -rn --arg v "$actual" "$CANONICAL \$v | canonical")" != "$(jq -rn --arg v "$expected" "$CANONICAL \$v | canonical")" ] || [ -n "$error" ]; then failures=$((failures + 1)); echo "FAIL $(jq -r ".[$i].name" /tmp/edge-cases.json): got '$actual' expected '$expected' error '$error'"; fi
+  echo "$cpu $(jq -r ".[$i].name" /tmp/edge-cases.json): $actual"
 done
 echo "failures: $failures"
 ```
 
-Expected: `failures: 0` (a case that expects a refusal prints `status 404` instead of a URI, a `robots.txt` case prints `robots <hostname>`, the host its `Sitemap:` line names, and the `HEAD` case for `robots.txt` prints `robots-head`, a 200 without a body), no `FunctionErrorMessage` on any case, and a compute utilization well under 100 (a one or two digit number; the limit that matters is the runtime's one millisecond, which this function does not come near). Any failure means the runtime behaves differently from Node for that input: stop, fix the function, `update-function` with the new code and the current ETag, and run this step again. What this step does not exercise: the `catch`, because the replay feeds the function well-formed events only, and the validation CloudFront applies to a published function on a real request, which `test-function` does not fully reproduce; that is what the rehearsal is for.
+Expected: `failures: 0` (a case that expects a refusal prints `status 404` instead of a URI, a `robots.txt` case prints `robots <hostname>`, the host its `Sitemap:` line names, the `HEAD` case for `robots.txt` prints `robots-head`, a 200 without a body, and a redirect case prints `location <url>`), no `FunctionErrorMessage` on any case, and a compute utilization well under 100 (a one or two digit number; the limit that matters is the runtime's one millisecond, which this function does not come near). A location is compared with the query names in any order, because the runtime does not keep the order of different names; the scheme, the host, the path, every name and value, and the order of the values of one name must match exactly, the same rule as the unit test. Any failure means the runtime behaves differently from Node for that input: stop, fix the function, `update-function` with the new code and the current ETag, and run this step again. What this step does not exercise: the `catch`, because the replay feeds the function well-formed events only, the redirect cases with their own `aliases`, because the runtime only holds the map that was uploaded, and the validation CloudFront applies to a published function on a real request, which `test-function` does not fully reproduce; that is what the rehearsal is for. A low number here says nothing about the first requests after a publish on LIVE; step 6 watches those.
 
 Rollback: none needed, nothing changed.
 
@@ -322,9 +327,128 @@ aws cloudfront update-distribution --id E18TUBOKUXD9TW --if-match "$(jq -r .ETag
 
 Expected: the one association from this runbook in the first `jq` (if there is another one, it stays: the filter removes only this function's ARN), then `0` and `rolled back`. The wait can return within seconds while an edge still serves the previous configuration for a short while (seen in the step 4 rehearsal on 2026-10-06), so check a site's `/` every ten seconds for two minutes before concluding anything. No invalidation is needed: without the rewrite the cache key for `/` is `/` again, which still holds the shell, and the cached pages under `sites/by-host/` are simply never asked for; a browser that already holds a page keeps it for up to 300 seconds. The 404 on direct `/sites/by-host/` requests goes with the function: after the rollback a page object can again be fetched by its key through any hostname on the distribution, as it can today. The function itself stays published and unused; delete it with step 1's rollback once nothing references it.
 
+## 6. Add or remove an alias, then publish the new version [CHANGES WHAT EVERY HOST SITE SERVES]
+
+The alias map is the one line `var ALIASES = {...};` near the top of `viewer-request.js`: JSON without spaces, sorted by alias, `{"<alias>":"<primary>",...}`, so one list of aliases always gives the same bytes. Nothing else in the file holds aliases. An alias is every active domain of a published site other than its primary, when that primary is an active custom domain, the same rule as `staticPageRedirectPlan.js`. Nothing changes the map on its own. Until a new version is published, a new alias serves its own page, and a primary that stopped serving its site keeps receiving the redirects of its aliases. So run this step the same day a site gets a custom domain as its primary, changes or loses it, or is unpublished or deleted while it has one. Every publish changes the one function that serves every site, which is why each one goes through the replay and the watch below.
+
+Who does what:
+
+1. Karim gives his ok first. Then the alias query runs read-only against the database, and nothing else does. Karim keeps the query; its result is tab separated, with a header row that names at least the columns `alias` and `primary_domain`, and one row per alias. Save it as `aliases.tsv`.
+2. A developer writes the map on a branch from `acceptance`:
+
+   ```bash
+   cd /path/to/Domits/backend
+   node infrastructure/static-page-edge/write-aliases.mjs /path/to/aliases.tsv
+   git diff --stat
+   git fetch -q origin
+   aliases() { sed -n 's/^var ALIASES = \(.*\);$/\1/p' | jq -r 'to_entries[] | "\(.key) -> \(.value)"'; }
+   diff <(git show origin/acceptance:backend/infrastructure/static-page-edge/viewer-request.js | aliases) <(aliases < infrastructure/static-page-edge/viewer-request.js)
+   npm test -- test/infrastructure
+   ```
+
+   Expected: `Aliases written: N. The function is now B bytes.`, with N the number of rows in the result; one changed line in `viewer-request.js` and no other file; a `<` line for every alias removed and a `>` line for every alias added, each as `alias -> primary`; green tests. The script refuses and writes nothing when an alias or a primary is not a lowercase hostname without a port or a trailing dot, when an alias points at itself or is listed twice, when a primary is an alias itself (a chain), or when the function would reach 10,000 bytes. Fix the data, or leave the row out on purpose and say why in the pull request. The cases in `redirect-cases.json` without their own `aliases` run against the map in the code, so a case whose host stopped being an alias, or one in `cases.json` whose host became one, fails: point that case at a host that still has the role the case describes.
+3. A pull request against `acceptance` with the diff, and for each added alias the `301` it will answer. Normal review. Nothing deploys the function on merge.
+4. After the merge, whoever has CloudFront access publishes it with the commands below, from a clean checkout of `origin/acceptance` at the merge, and watches it.
+
+Size: the function must stay under 10,000 bytes, so at most 9,999. With an empty map it is 4,812 bytes, which leaves 5,187. Each alias adds its two hostnames plus 6 bytes (four quotes, a colon and a comma; the first alias has no comma, so n aliases cost their hostnames plus 6n - 1). A fallback hostname is at most 67 characters (a slug of at most 40, a hyphen, 8 characters of the site id, `.direct.domits.com`); today's is 51. A primary such as `www.villasensual.nl` is 19. A typical alias then costs 51 + 19 + 6 = 76 bytes, and 76n - 1 <= 5,187 gives 68 aliases. The longest realistic one, a 67 character alias to a 40 character primary, costs 113 bytes, and 113n - 1 <= 5,187 gives 45. Today the function is 4,887 bytes with one alias. `staticPageEdgeAliasMap.test.js` keeps room for 40 of the longest, and the script refuses a map that would reach 10,000 bytes. Past about 40 aliases the map does not belong in the code any more.
+
+Put the merged code on DEVELOPMENT, keep the code and the configuration that LIVE has now for the rollback, and check that no store is attached:
+
+```bash
+mkdir -p ~/static-page-edge-publish && cd ~/static-page-edge-publish
+FN=domits-static-page-by-host
+cp /path/to/Domits/backend/infrastructure/static-page-edge/viewer-request.js new.js
+aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 previous-live.js > /dev/null
+aws cloudfront describe-function --name $FN --stage LIVE --profile domits --region us-east-1 --query FunctionSummary.FunctionConfig --output json > previous-config.json; cat previous-config.json
+ETAG=$(aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text)
+aws cloudfront update-function --name $FN --if-match "$ETAG" --profile domits --region us-east-1 \
+  --function-config '{"Comment":"Serves the static page, sitemap and robots.txt of the requested hostname","Runtime":"cloudfront-js-2.0"}' \
+  --function-code fileb://new.js --query FunctionSummary.FunctionMetadata.Stage --output text
+aws cloudfront get-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 development.js > /dev/null && cmp new.js development.js && echo "DEVELOPMENT holds the merged code"
+aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query 'length(FunctionSummary.FunctionConfig.KeyValueStoreAssociations.Items || `[]`)' --output text
+```
+
+Expected: the configuration LIVE has now (a `Comment` and the runtime `cloudfront-js-2.0`); `DEVELOPMENT`; `DEVELOPMENT holds the merged code`; `0`, no store attached. Then run step 2 from the same checkout, against DEVELOPMENT: `failures: 0`. Do not publish without it.
+
+Write the rollback and the watch. The rollback puts the saved LIVE code and configuration back on DEVELOPMENT and publishes them, the same two calls as the publish itself:
+
+```bash
+cd ~/static-page-edge-publish
+cat > rollback.sh <<'EOF'
+set -euo pipefail
+FN=domits-static-page-by-host
+etag() { aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text; }
+echo "rollback update: $(aws cloudfront update-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --function-config file://previous-config.json --function-code fileb://previous-live.js --query FunctionSummary.FunctionMetadata.Stage --output text)"
+echo "rollback publish: $(aws cloudfront publish-function --name $FN --if-match "$(etag)" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text)"
+aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 rolled-back.js > /dev/null
+cmp -s rolled-back.js previous-live.js && echo "LIVE is the previous code again"
+EOF
+cat > watch.sh <<'EOF'
+set -uo pipefail
+FN=domits-static-page-by-host
+T0=$1; ALIAS=$2; PRIMARY=$3; PLAIN=$4; ASSET=$5
+[ -n "$T0" ] && [ -n "$ASSET" ] || { echo "not published or no build file to request, not watching"; exit 2; }
+iso() { date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+metric() {
+  aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name "$1" --statistics "$2" --period 60 --profile domits --region us-east-1 \
+    --dimensions Name=DistributionId,Value=E18TUBOKUXD9TW Name=FunctionName,Value=$FN Name=Region,Value=Global \
+    --start-time "$(iso $((T0 - 60)))" --end-time "$(iso "$(date -u +%s)")" --output json
+}
+expect() {
+  local got
+  got=$(curl -s -o /dev/null -m 20 -w '%{http_code} %{redirect_url}' "$1")
+  printf ' %s' "${got%% *}"
+  [ "$got" = "$2 ${3:-}" ]
+}
+check() {
+  local bad=0 errors compute highest minutes
+  printf '+%sm:' "$1"
+  expect "https://$ALIAS/" 301 "https://$PRIMARY/" || bad=1
+  expect "https://$ALIAS/robots.txt" 301 "https://$PRIMARY/robots.txt" || bad=1
+  expect "https://$ALIAS/$ASSET" 200 || bad=1
+  expect "https://$PRIMARY/" 200 || bad=1
+  expect "https://$PRIMARY/robots.txt" 200 || bad=1
+  expect "https://$PLAIN/" 200 || bad=1
+  errors=$({ metric FunctionExecutionErrors Sum; metric FunctionValidationErrors Sum; } | jq -s '[.[].Datapoints[].Sum] | add // 0')
+  compute=$(metric FunctionComputeUtilization Maximum | jq --argjson until $((T0 + 600)) \
+    '[.Datapoints[] | select((.Timestamp | sub("\\+00:00$"; "Z") | fromdateiso8601) < $until) | .Maximum]')
+  highest=$(printf '%s' "$compute" | jq 'max // 0'); minutes=$(printf '%s' "$compute" | jq length)
+  echo " | errors $errors | highest compute in the first 10 minutes $highest, minutes with data $minutes"
+  [ "$(echo "$errors == 0" | bc)" = 1 ] || bad=1
+  [ "$(echo "$highest <= 60" | bc)" = 1 ] || bad=1
+  [ "$1" -lt 5 ] || [ "$minutes" -gt 0 ] || { echo "no compute data after $1 minutes"; bad=1; }
+  return $bad
+}
+for minute in $(seq 1 13); do
+  sleep 60
+  check "$minute" || { echo "SOMETHING IS OFF, rolling back"; bash rollback.sh; exit 1; }
+done
+echo "watch done, nothing off"
+EOF
+```
+
+Then publish and watch. `ALIAS` is one alias of the map (the one just added, if there is one) and `PRIMARY` its primary; `PLAIN` is a fallback hostname that is no alias; the build file is the main bundle the primary's page references, requested on the alias:
+
+```bash
+cd ~/static-page-edge-publish
+FN=domits-static-page-by-host
+ALIAS=beautiful-home-amsterdam-6156b005.direct.domits.com; PRIMARY=www.villasensual.nl; PLAIN=villa-loiki-8cf98e11.direct.domits.com
+ASSET=$(curl -s "https://$PRIMARY/" | grep -o 'static/js/main\.[a-z0-9]*\.js' | head -1); echo "asset: $ASSET"
+curl -s -o /dev/null -w '%{http_code} %{content_type}\n' "https://$ALIAS/$ASSET"
+T0=""; [ -n "$ASSET" ] && ETAG=$(aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text) \
+  && aws cloudfront publish-function --name $FN --if-match "$ETAG" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text \
+  && T0=$(date -u +%s)
+aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 live.js > /dev/null && cmp new.js live.js && echo "LIVE holds the merged code"
+bash watch.sh "$T0" "$ALIAS" "$PRIMARY" "$PLAIN" "$ASSET"
+```
+
+Expected: a non-empty `asset:` line and `200` with a JavaScript content type before the publish (without an asset nothing is published and the watch says so); `LIVE`; `LIVE holds the merged code`; then thirteen lines such as `+3m: 301 301 200 200 200 200 | errors 0 | highest compute in the first 10 minutes 31, minutes with data 3`, and `watch done, nothing off`. Without `LIVE holds the merged code`, something else reached DEVELOPMENT between the update and the publish: stop the watch with Ctrl-C and run `bash rollback.sh` at once. The two `301`s go to the primary with the same path; the `200` after them is the build file, served on the alias without a redirect. The watch rolls back by itself, and prints `SOMETHING IS OFF, rolling back` and the rollback's own lines, when a status or a location differs, when an execution or validation error is counted, when the highest compute of any minute in the first ten minutes passes 60, or when CloudWatch still has no compute data five minutes after the publish (a watch without data would otherwise pass). Why 60: the version without a store has stayed at or under 53 since it was first published on 2026-10-16, while both versions that read the store reached 88 to 94 on the first requests after their publish. The first ten minutes are where that showed, and the watch runs thirteen because CloudWatch delivers a minute one to three minutes late. Then read the step 5 metrics once more after ten minutes. A rollback is the same two calls and takes one to two minutes; it ends with `LIVE is the previous code again`. Without that line, run `bash rollback.sh` again before anything else.
+
 ## For the pull requests that come after this one
 
-- **Alias redirects.** The function now answers every GET and HEAD for a hostname that the key value store `domits-static-page-redirects` maps to a primary domain with a `301` to the same path and query on that domain (`redirect-cases.json`). PropertyHandler keeps the store in step with the pages; the live steps are in the pull request that added it. The unit test compares each location in `redirect-cases.json` with the query names in any order, because the runtime does not keep the order of different names (on 2026-10-28 `test-function` answered `?r=1&r=2&q=villa%20sea` for an event that listed `q` first); the scheme, the host, the path, every name and value, and the order of the values of one name must still match exactly. Step 2 does not replay these cases: a replay writes the keys of each case to the redirect store, and once the function with the store is published those keys reach real visitors (the chain case points `www.villasensual.nl` itself at another host).
+- **Alias redirects.** The function answers every GET and HEAD for a hostname in its alias map (`var ALIASES` in `viewer-request.js`) with a `301` to the same path and query on the primary, cached for an hour (`redirect-cases.json`). Step 6 says how the map is made and published. The function checks every entry again when it runs: the target is normalised and must pass the hostname rule, an alias that points at itself is served its page, and a chain is never followed (the first alias of a chain is served its page). The unit test compares each location in `redirect-cases.json` with the query names in any order, because the runtime does not keep the order of different names (on 2026-10-28 `test-function` answered `?r=1&r=2&q=villa%20sea` for an event that listed `q` first); the scheme, the host, the path, every name and value, and the order of the values of one name must still match exactly. Step 2 replays the redirect cases that use the map the function ships with. The cases with their own `aliases` (the targets the function must ignore or normalise, the chain, the empty map) run in the unit test only, because the runtime only ever holds the map that was uploaded.
+
+  The key value store `domits-static-page-redirects`, the inline policy `static-page-redirects` on the role `domits-property-handler` (`static-page-redirects-policy.json`) and the PropertyHandler code that writes the store (`staticPageRedirects.js` and `staticPageRedirectStore.js`, called by the worker, the withdrawal and the reconciler) stay as they are, and stay inactive: they only act when `STATIC_PAGE_REDIRECTS_KVS_ARN` is set on PropertyHandler, and it is not. Leave it unset. The function does not read the store, so keys written there would change nothing a visitor sees. A follow-up decides between two ways: remove them (the store, the policy, the writer code and its tests, in one pull request with the live steps to delete the store and the policy), or let the reconciler produce the alias map from `staticPageRedirectPlan.js` for step 6, in place of the query.
 - **Invalidating a page.** The cache key of a site's page is the rewritten URI, so the worker or the withdrawal step invalidates `/sites/by-host/<hostname>/index.html` on the tenant that owns the hostname, the way `deploy-direct-booking-sites.yml` already invalidates the shared files. The rehearsal and step 5 check that the rewritten key is the one the edge caches the page under; adding `/` and `/index.html` to the same batch covers the case those checks did not see, at the price of two more paths against the monthly allowance, so send all three, and with them `/sites/by-host/<hostname>/sitemap.xml` and `/sitemap.xml`, because a build or a withdrawal rewrites the sitemap with the page:
 
   ```bash
@@ -336,10 +460,10 @@ Expected: the one association from this runbook in the first `jq` (if there is a
 
   Without any invalidation a new page replaces the old one at the edge within `max-age=300`, and a page for a hostname that had none within 10 seconds; a browser keeps what it holds for its own `max-age=300` either way.
 - **The shell deploy.** `deploy-direct-booking-sites.yml` invalidates `/index.html` and `/` on every tenant; with the function attached those keys only serve sites without a page. Sites with a page keep serving their rendered copy until the worker regenerates it after a frontend deploy (PR 11 in the design), which is the intended behaviour: a rendered page references its own hashed assets, which the deploy leaves in place.
-- **Which requests look in the redirect store.** Only a GET or HEAD on a hostname that passes the hostname rule, for a path that starts with `/` and is not a file of the web build. The files of the build are what `deploy-direct-booking-sites.yml` uploads next to the page and the crawl files: everything under `/static/` (the hashed assets, their source maps and license files) and the root files in `BUILD_ROOT_FILES` (`/asset-manifest.json`, `/favicon.ico`, `/logo.svg`, `/logo192.png`, `/logo512.png`, `/manifest.json`). They are the same for every site and most of the requests of a page view, so on an alias they are served as they are instead of redirected. Every other path still redirects, whatever it ends in: `/`, `/index.html`, robots.txt, sitemap.xml, every app route, and also paths such as `/offers.json` or `/website-live/villasensual.map` (`.map` is a top level domain), because on a site host every path renders the site page. The hostname is not narrowed further: every active domain of a site other than its primary can be an alias (`staticPageRedirectPlan.js`), the fallback suffix is a setting, and only the store knows which hostname is a primary. The function first asks the store whether the hostname is a key (`exists`, which answers without an error) and reads only a key (`get` throws for a missing one). When a file is added to `frontend/web/public`, add it to `BUILD_ROOT_FILES`; until then it costs a store call per request and redirects on an alias, which works but is what the list avoids.
+- **Which requests can redirect.** Only a GET or HEAD on a hostname that passes the hostname rule, for a path that starts with `/` and is not a file of the web build. The files of the build are what `deploy-direct-booking-sites.yml` uploads next to the page and the crawl files: everything under `/static/` (the hashed assets, their source maps and license files) and the root files in `BUILD_ROOT_FILES` (`/asset-manifest.json`, `/favicon.ico`, `/logo.svg`, `/logo192.png`, `/logo512.png`, `/manifest.json`). They are the same for every site and most of the requests of a page view, so on an alias they are served as they are instead of redirected. Every other path still redirects, whatever it ends in: `/`, `/index.html`, robots.txt, sitemap.xml, every app route, and also paths such as `/offers.json` or `/website-live/villasensual.map` (`.map` is a top level domain), because on a site host every path renders the site page. The hostname is not narrowed further: every active domain of a site other than its primary can be an alias (`staticPageRedirectPlan.js`), the fallback suffix is a setting, and only the map knows which hostname is an alias. When a file is added to `frontend/web/public`, add it to `BUILD_ROOT_FILES`; until then it redirects on an alias, which works but is what the list avoids.
 
 ## What it costs
 
-CloudFront Functions bill per invocation, about $0.10 per million, and the function runs on every request CloudFront accepts for any tenant, assets included. Nine sites with a few thousand requests a day each is a few hundred thousand invocations a month: a few cents. Each GET or HEAD that can redirect (see which requests look in the redirect store above) asks the store once whether its hostname is a key, and a redirect then reads the key and checks once that the target is no key itself, three reads in all; the first two million reads a month are free, then $0.03 per million. PropertyHandler adds one or two store calls per page build, four for a site with a redirect, and one to three an hour from the reconciler, at $0.001 per call.
+CloudFront Functions bill per invocation, about $0.10 per million, and the function runs on every request CloudFront accepts for any tenant, assets included. Nine sites with a few thousand requests a day each is a few hundred thousand invocations a month: a few cents. The alias map adds nothing to that: no store and no reads.
 
-The limit that matters is compute, not the bill. AWS warns that when `FunctionComputeUtilization` reaches or nears 100, later requests may be throttled, and it advises a review from 80; one function serves every site, so all of them share that risk. On 2026-10-28 the first version of the redirect, which called `get` for every request (the files of the build included) and caught the error for every hostname without a key, was published to LIVE with an empty store. The distribution then had a steady four requests a minute, each with one `KvsReadErrors`, and the utilization per minute was 66 to 92 from 12:13 to 12:21 UTC and 21 to 43 from 12:22, against about 25 before; it was rolled back at 12:29. So the caught error alone does not explain the rise: the first ten minutes after the publish were expensive, for a reason these metrics do not show. `test-function` does not show the rise either: on DEVELOPMENT that version, the old code without a store and the version that skips the files of the build all answered between 5 and 13, their medians of 30 runs within three points of each other, for pages and build files on an alias, on a site without one and on a primary domain, with the store empty and with one alias in it. So publish the function only while someone reads the compute utilization of step 5 with a period of 60 seconds for the first quarter of an hour, together with `KvsReadErrors`, which stays at 0 now that the function no longer reads a missing key (apart from an entry removed between the check and the read), and roll back when the utilization stays above 80.
+The limit that matters is compute, not the bill. AWS warns that when `FunctionComputeUtilization` reaches or nears 100, later requests may be throttled, and it advises a review from 80; one function serves every site, so all of them share that risk. Two versions that read the alias redirects from the key value store were published to LIVE, on 2026-10-28 (a `get` for every request) and on 2026-11-01 (an `exists` first, and no lookup for the files of the build). Both times the first requests after the publish cost 88 to 94, mixed with warm requests at 19 to 30 like the version without a store, and both were rolled back. `test-function` showed none of it: on DEVELOPMENT all versions answered between 5 and 13. Which part of the store version made the first requests expensive (the attached store, the `cloudfront` import or the async handler) was not isolated, so the map in the code leaves out all three and keeps the shape of the version without a store: one plain synchronous handler that imports nothing. That shape has stayed at or under 53 since 2026-10-16. Publish a new version only with the watch of step 6.
