@@ -107,8 +107,8 @@ export const updateTask = async (taskId, updateData) => {
 export const uploadTaskAttachment = async (file) => {
     const params = new URLSearchParams({
         action: 'upload-url',
-        fileName: file.name,
         fileType: file.type,
+        fileSize: String(file.size),
     });
 
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
@@ -117,16 +117,21 @@ export const uploadTaskAttachment = async (file) => {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to get upload URL: ${response.status}`);
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(`${file.name}: ${errorBody?.message || `Failed to get upload URL: ${response.status}`}`);
     }
 
     const { uploadUrl, key } = await response.json();
 
-    await fetch(uploadUrl, {
+    const upload = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
     });
+
+    if (!upload.ok) {
+        throw new Error(`${file.name} could not be uploaded. Please try again.`);
+    }
 
     return key;
 };

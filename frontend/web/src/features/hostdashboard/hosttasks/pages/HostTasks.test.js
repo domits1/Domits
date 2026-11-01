@@ -333,4 +333,40 @@ describe('HostTasks', () => {
             expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', null);
         });
     });
+
+    describe('a file that cannot be uploaded', () => {
+        const { uploadTaskAttachment, createTask } = jest.requireMock('../../services/taskService');
+        const FILE = new File(['<svg/>'], 'plan.svg', { type: 'image/svg+xml' });
+        const REFUSAL = 'plan.svg: Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached';
+
+        beforeEach(() => {
+            global.URL.createObjectURL = jest.fn(() => 'blob:plan');
+            global.URL.revokeObjectURL = jest.fn();
+            uploadTaskAttachment.mockRejectedValue(new Error(REFUSAL));
+        });
+
+        test('keeps the task form open with the reason, and saves nothing', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            fireEvent.change(document.getElementById('task-attachments-edit'), { target: { files: [FILE] } });
+            fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
+            expect(updateTask).not.toHaveBeenCalled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+        });
+
+        test('keeps the create form open with the reason, and creates nothing', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: '+ Create Task' }));
+            fireEvent.change(document.getElementById('file-upload'), { target: { files: [FILE] } });
+            fireEvent.submit(document.getElementById('file-upload').closest('form'));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
+            expect(createTask).not.toHaveBeenCalled();
+            const submit = document.getElementById('file-upload').closest('form').querySelector('button[type="submit"]');
+            expect(submit).toHaveTextContent('Create Task');
+            expect(submit).toBeEnabled();
+        });
+    });
 });

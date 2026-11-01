@@ -26,7 +26,7 @@ jest.mock("../../functions/property-tasks/auth/authManager.js", () => ({
 }));
 
 const { Controller } = require("../../functions/property-tasks/controller/controller.js");
-const { getViewUrl } = require("../../functions/property-tasks/business/service/taskService.js");
+const { getViewUrl, getUploadUrl } = require("../../functions/property-tasks/business/service/taskService.js");
 const { UnauthorizedException } = require("../../functions/property-tasks/util/exception/unauthorizedException.js");
 
 const viewEvent = (query) => ({
@@ -77,5 +77,38 @@ describe("Controller.getViewUrl", () => {
 
         expect(response.statusCode).toBe(404);
         expect(JSON.parse(response.body)).toEqual({ message: "Attachment not found" });
+    });
+});
+
+describe("Controller.getUploadUrl", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockGetUser.mockResolvedValue({ username: "user-1", role: "Property Operations Manager" });
+        mockResolveEffectiveHostId.mockResolvedValue({ effectiveHostId: "host-1", isPOM: true });
+        getUploadUrl.mockResolvedValue({ uploadUrl: "https://signed.example/upload", key: "tasks/host-1/a.png" });
+    });
+
+    it("asks for an upload into the folder of the host the signed-in user acts for", async () => {
+        const response = await new Controller().getUploadUrl({
+            headers: { Authorization: "token-1" },
+            queryStringParameters: { action: "upload-url", fileName: "../../host-2/x.png", fileType: "image/png", fileSize: "2048" },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body)).toEqual({ uploadUrl: "https://signed.example/upload", key: "tasks/host-1/a.png" });
+        expect(mockResolveEffectiveHostId).toHaveBeenCalledWith("user-1", "Property Operations Manager", null);
+        expect(getUploadUrl).toHaveBeenCalledWith("host-1", "image/png", "2048");
+    });
+
+    it("passes the service's refusal on", async () => {
+        getUploadUrl.mockRejectedValue(Object.assign(new Error("A file can be at most 20 MB"), { statusCode: 400 }));
+
+        const response = await new Controller().getUploadUrl({
+            headers: { Authorization: "token-1" },
+            queryStringParameters: { fileType: "image/png", fileSize: "99999999" },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(JSON.parse(response.body)).toEqual({ message: "A file can be at most 20 MB" });
     });
 });

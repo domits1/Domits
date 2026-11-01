@@ -280,6 +280,15 @@ const HostTasks = () => {
         }
     };
 
+    const uploadAttachmentsOrWarn = async (files) => {
+        try {
+            return await Promise.all(files.map(uploadTaskAttachment));
+        } catch (error) {
+            toast.error(error.message || 'A file could not be uploaded. Please try again.');
+            return null;
+        }
+    };
+
     const handleCreateTask = async (e) => {
         e.preventDefault();
         if (isCreatingTask) return;
@@ -298,10 +307,8 @@ const HostTasks = () => {
                 }]
             }; 
             
-            let attachmentUrls = [];
-            if (newTask.attachments?.length > 0) {
-                attachmentUrls = await Promise.all(newTask.attachments.map(uploadTaskAttachment));
-            }
+            const attachmentUrls = await uploadAttachmentsOrWarn(newTask.attachments || []);
+            if (!attachmentUrls) return;
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
 
@@ -665,7 +672,8 @@ const HostTasks = () => {
         let existingUrls = (editedTask.attachments || []).filter(a => typeof a === 'string');
 
         if (newFiles.length > 0) {
-            const uploaded = await Promise.all(newFiles.map(uploadTaskAttachment));
+            const uploaded = await uploadAttachmentsOrWarn(newFiles);
+            if (!uploaded) return;
             existingUrls = [...existingUrls, ...uploaded];
         }
 

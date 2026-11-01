@@ -5,6 +5,8 @@ import {
     assertAttachmentsOfHost,
     parseStoredAttachments,
     findAttachmentOfTask,
+    newAttachmentFile,
+    MAX_ATTACHMENT_BYTES,
 } from "../../functions/property-tasks/business/model/taskAttachments.js";
 
 const FILE = "0b6c1d2e-3f40-4a5b-9c6d-7e8f9a0b1c2d";
@@ -110,5 +112,59 @@ describe("findAttachmentOfTask", () => {
 
     it("throws a 404 when there is no task", () => {
         expect(() => findAttachmentOfTask("host-1", null, key)).toThrow(expect.objectContaining({ statusCode: 404 }));
+    });
+});
+
+describe("newAttachmentFile", () => {
+    it.each([
+        ["image/jpeg", "jpg"],
+        ["image/png", "png"],
+        ["image/webp", "webp"],
+        ["image/gif", "gif"],
+        ["image/heic", "heic"],
+        ["image/heif", "heif"],
+        ["application/pdf", "pdf"],
+    ])("names a %s file in the host's folder with a new id and the .%s extension", (fileType, extension) => {
+        const file = newAttachmentFile("host-1", fileType, "1024");
+
+        expect(file.key).toMatch(new RegExp(`^tasks/host-1/[0-9a-f-]{36}\\.${extension}$`));
+        expect(isAttachmentOfHost("host-1", file.key)).toBe(true);
+        expect(file).toMatchObject({ contentType: fileType, contentLength: 1024 });
+    });
+
+    it("gives every file its own key", () => {
+        expect(newAttachmentFile("host-1", "image/png", "1").key).not.toBe(newAttachmentFile("host-1", "image/png", "1").key);
+    });
+
+    it.each(["image/svg+xml", "text/html", "application/octet-stream", "", undefined, "toString", "IMAGE/PNG"])(
+        "refuses the file type %p",
+        (fileType) => {
+            expect(() => newAttachmentFile("host-1", fileType, "1024")).toThrow(expect.objectContaining({
+                statusCode: 400,
+                message: "Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached",
+            }));
+        }
+    );
+
+    it.each([undefined, "", "abc", "-1", "1.5", "1e3", " 12", 1024])("refuses the size %p", (fileSize) => {
+        expect(() => newAttachmentFile("host-1", "image/png", fileSize)).toThrow(expect.objectContaining({
+            statusCode: 400,
+            message: "fileSize must be the size of the file in bytes",
+        }));
+    });
+
+    it("refuses an empty file", () => {
+        expect(() => newAttachmentFile("host-1", "image/png", "0")).toThrow(expect.objectContaining({
+            statusCode: 400,
+            message: "An empty file cannot be attached",
+        }));
+    });
+
+    it("accepts a file of exactly 20 MB and refuses one byte more", () => {
+        expect(newAttachmentFile("host-1", "application/pdf", String(MAX_ATTACHMENT_BYTES)).contentLength).toBe(20 * 1024 * 1024);
+        expect(() => newAttachmentFile("host-1", "application/pdf", String(MAX_ATTACHMENT_BYTES + 1))).toThrow(expect.objectContaining({
+            statusCode: 400,
+            message: "A file can be at most 20 MB",
+        }));
     });
 });

@@ -1,7 +1,20 @@
+import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
 const FILE_DIRECTLY_IN_FOLDER = /^[^/]+$/;
+
+export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+
+const EXTENSION_BY_CONTENT_TYPE = Object.freeze({
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/heic": "heic",
+    "image/heif": "heif",
+    "application/pdf": "pdf",
+});
 
 export const attachmentFolderOf = (hostId) => `tasks/${hostId}/`;
 
@@ -10,6 +23,27 @@ export const isAttachmentOfHost = (hostId, key) => {
     if (!isHostId || typeof key !== "string") return false;
     const folder = attachmentFolderOf(hostId);
     return key.startsWith(folder) && FILE_DIRECTLY_IN_FOLDER.test(key.slice(folder.length));
+};
+
+export const newAttachmentFile = (hostId, fileType, fileSize) => {
+    if (!Object.hasOwn(EXTENSION_BY_CONTENT_TYPE, fileType)) {
+        throw new BadRequestException("Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached");
+    }
+    const size = typeof fileSize === "string" && /^\d{1,12}$/.test(fileSize) ? Number(fileSize) : Number.NaN;
+    if (Number.isNaN(size)) {
+        throw new BadRequestException("fileSize must be the size of the file in bytes");
+    }
+    if (size === 0) {
+        throw new BadRequestException("An empty file cannot be attached");
+    }
+    if (size > MAX_ATTACHMENT_BYTES) {
+        throw new BadRequestException("A file can be at most 20 MB");
+    }
+    return {
+        key: `${attachmentFolderOf(hostId)}${randomUUID()}.${EXTENSION_BY_CONTENT_TYPE[fileType]}`,
+        contentType: fileType,
+        contentLength: size,
+    };
 };
 
 export const attachmentsOfHost = (hostId, keys) => keys.filter((key) => isAttachmentOfHost(hostId, key));

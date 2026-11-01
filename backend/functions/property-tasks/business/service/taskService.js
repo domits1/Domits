@@ -6,13 +6,13 @@ import {
     parseStoredAttachments,
     attachmentsOfHost,
     assertAttachmentsOfHost,
+    newAttachmentFile,
 } from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
@@ -229,21 +229,24 @@ export const deleteTask = async (hostId, taskId) => {
     return await updateTask(hostId, taskId, { is_legacy: true });
 };
 
-export const getUploadUrl = async (hostId, fileName, fileType) => {
-    const ext = fileName.split('.').pop();
-    const key = `tasks/${hostId}/${randomUUID()}.${ext}`;
+export const getUploadUrl = async (hostId, fileType, fileSize) => {
+    const file = newAttachmentFile(hostId, fileType, fileSize);
 
     const command = new PutObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
-        ContentType: fileType,
+        Key: file.key,
+        ContentType: file.contentType,
+        ContentLength: file.contentLength,
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    const uploadUrl = await getSignedUrl(s3, command, {
+        expiresIn: 300,
+        signableHeaders: new Set(["content-type", "content-length"]),
+    });
 
     return {
         uploadUrl,
-        key,
+        key: file.key,
     };
 };
 
