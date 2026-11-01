@@ -24,7 +24,7 @@ In this order. Each failure answers with the message shown, and nothing is saved
 | The request has a task id | 400 `id is required` |
 | Every field in the body is one the caller may change. One field outside the list rejects the whole update | 400 `These fields cannot be changed: <fields>` |
 | The task belongs to the host the caller acts for | 404 `Task not found or access denied` |
-| `status`, the Cancelled rule, `due_date` and `type` are valid | 400, as before |
+| `status` is one of the four statuses, a Cancelled task keeps its status, a changed `due_date` is not in the past, and a non-empty `type` is one of the task types. An empty `type` and a `due_date` that is not a date are not rejected here | 400, as before |
 | A changed `property_id` is a property of the same host. An unchanged one is not looked up again | 400 `property_id does not belong to this host` |
 | `assignee_team_member_id` is an active team member and `parent_task_id` a task of the same host | 400, as before |
 
