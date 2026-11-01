@@ -35,7 +35,7 @@ On create and update, `attachments` must be a list (400 `attachments must be a l
 
 ## Removing files
 
-- An update removes the files it took off the task only after the task is saved. A refused or failed update, or a completion that another request already made, removes nothing.
+- An update removes the files it took off the task only after the task is saved. An update that is refused, whose write fails, or that loses to a completion another request already made removes nothing. When the save worked and a later step fails (the activity log), the files are already removed, and the request still answers with an error.
 - Deleting a task removes its files, then marks the task deleted.
 - Only files in the host's own folder are removed from storage.
 - A failed removal is logged as `Failed to remove the attachments of task <id>`, or `Failed to remove <n> attachment(s) of task <id>` for files storage could not remove. It does not fail the request, and those files stay in storage. The bucket keeps earlier versions of removed files.
@@ -45,6 +45,7 @@ On create and update, `attachments` must be a list (400 `attachments must be a l
 - Each save sends the whole list. When two people save the same task's attachments at once, the last save wins, and it can remove a file the other one just added.
 - When marking a task deleted fails after its files were removed, the task stays with missing files.
 - Files uploaded for a task that is then not saved stay in storage.
+- Through the API, the same file can be put on two tasks of one host. Taking it off one of them removes it for both.
 
 ## Where the code is
 

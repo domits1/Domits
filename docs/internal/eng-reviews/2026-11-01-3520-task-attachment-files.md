@@ -14,6 +14,8 @@ Result: no blocking findings
 | P2 (6/10) | taskService.js:244 | The browser has to send exactly the signed type and size. Checked against the real signer in a test, not against the bucket from a browser | Try one upload on acceptance after the deploy |
 | P3 (8/10) | taskService.js:254, taskAttachments.js:32 | A browser on the old bundle sends no task id or size and is refused until it reloads | Accepted |
 | P3 (9/10) | frontend/web/src/features/hostdashboard/hosttasks/pages/HostTasks.js:285 | When one of several files is refused, the files already uploaded stay in storage unused | Accepted |
+| P3 (8/10) | taskService.js:135 | Through the API, the same file can be put on two tasks of one host, and taking it off one removes it for the other | Accepted. The web never does this, since every upload gets a new name |
+| P3 (7/10) | taskService.js:164 | The activity log is written after the files are removed. If it fails, the request answers an error although the task and its files changed | Accepted, existing order of the log. The attachments page says so |
 | P3 (5/10) | backend/functions/property-tasks/business/service/pomService.js:27 | A team member of two hosts may have the upload and the save resolve different hosts, and gets a 400 | Accepted, existing behaviour |
 | P4 (6/10) | frontend/web/src/features/hostdashboard/hosttasks/components/AttachmentThumb.js:31 | An unavailable thumbnail has no retry; reopening the task asks again | Accepted |
 
