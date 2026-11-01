@@ -1,4 +1,3 @@
-import cf from "cloudfront";
 var LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 var PORT_PATTERN = /^[0-9]{1,5}$/;
 var MAX_HOSTNAME_LENGTH = 253;
@@ -16,6 +15,9 @@ var BUILD_ROOT_FILES = {
   "/manifest.json": true,
 };
 var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
+var ALIASES = {
+  "beautiful-home-amsterdam-6156b005.direct.domits.com": "www.villasensual.nl",
+};
 
 function normalizeHostName(value) {
   var parts = String(value || "")
@@ -93,23 +95,19 @@ function mayRedirect(uri) {
   return typeof uri === "string" && uri.charAt(0) === "/" && !isBuildFile(uri);
 }
 
-async function primaryHostFor(host) {
-  try {
-    var store = cf.kvs();
-    var known = await store.exists(host);
-    if (!known) {
-      return "";
-    }
-    var value = await store.get(host);
-    var target = normalizeHostName(value);
-    if (!isHostName(target) || target === host) {
-      return "";
-    }
-    var chained = await store.exists(target);
-    return chained ? "" : target;
-  } catch (error) {
+function isAlias(host) {
+  return Object.prototype.hasOwnProperty.call(ALIASES, host);
+}
+
+function primaryHostFor(host) {
+  if (!isAlias(host)) {
     return "";
   }
+  var target = normalizeHostName(ALIASES[host]);
+  if (!isHostName(target) || target === host || isAlias(target)) {
+    return "";
+  }
+  return target;
 }
 
 function queryStringOf(querystring) {
@@ -135,7 +133,7 @@ function redirectResponse(target, request) {
   };
 }
 
-async function handler(event) {
+function handler(event) {
   try {
     var request = event.request;
     if (isPageKeyRequest(request.uri)) {
@@ -153,7 +151,7 @@ async function handler(event) {
       return request;
     }
     if (mayRedirect(request.uri)) {
-      var target = await primaryHostFor(host);
+      var target = primaryHostFor(host);
       if (target) {
         return redirectResponse(target, request);
       }
