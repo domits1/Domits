@@ -22,7 +22,7 @@ describe("the alias map the edge function ships with", () => {
     expect(aliasProblems(SOURCE, aliasesOf(SOURCE))).toEqual([]);
   });
 
-  it("is written in its one sorted form, one line per alias", () => {
+  it("is written in its one form, sorted JSON on one line, so one alias list always gives the same bytes", () => {
     expect(replaceAliases(SOURCE, aliasesOf(SOURCE))).toBe(SOURCE);
   });
 
@@ -44,12 +44,11 @@ describe("reading and replacing the alias map", () => {
     const written = replaceAliases(SOURCE, pairs);
 
     expect(aliasesOf(written)).toEqual([pairs[1], pairs[0]]);
-    expect(written.replace(/^var ALIASES = \{\n(?: {2}.*\n)*\};$/m, "")).toBe(
-      SOURCE.replace(/^var ALIASES = \{\n(?: {2}.*\n)*\};$/m, "")
-    );
+    expect(written).toContain(`\nvar ALIASES = {"${ALIAS}":"${PRIMARY}","${pairs[0][0]}":"${pairs[0][1]}"};\n`);
+    expect(written.replace(/^var ALIASES = .*$/m, "")).toBe(SOURCE.replace(/^var ALIASES = .*$/m, ""));
   });
 
-  it("writes an empty map on one line and reads it back as empty", () => {
+  it("writes an empty map and reads it back as empty", () => {
     const written = replaceAliases(SOURCE, []);
 
     expect(written).toContain("\nvar ALIASES = {};\n");
@@ -60,20 +59,25 @@ describe("reading and replacing the alias map", () => {
   it.each([
     ["no map", SOURCE.replace(/^var ALIASES = /m, "var OTHER = ")],
     ["two maps", `${SOURCE}\nvar ALIASES = {};\n`],
+    ["the map over several lines", SOURCE.replace(/^var ALIASES = \{(.*)\};$/m, "var ALIASES = {\n  $1,\n};")],
   ])("refuses a function with %s", (_name, source) => {
-    expect(() => aliasesOf(source)).toThrow(/exactly one alias map/);
-    expect(() => replaceAliases(source, [[ALIAS, PRIMARY]])).toThrow(/exactly one alias map/);
+    expect(() => aliasesOf(source)).toThrow(/exactly one alias map line/);
+    expect(() => replaceAliases(source, [[ALIAS, PRIMARY]])).toThrow(/exactly one alias map line/);
   });
 
-  it.each([
-    ["without its comma", `  "${ALIAS}": "${PRIMARY}"`],
-    ["with two aliases", `  "${ALIAS}": "${PRIMARY}", "villasensual.nl": "${PRIMARY}",`],
-    ["with an escaped quote", `  "${ALIAS}": "www.villa\\"sensual.nl",`],
-    ["that is a comment", `  // "${ALIAS}": "${PRIMARY}",`],
-  ])("refuses a line in the map %s", (_name, line) => {
-    const source = SOURCE.replace(/^var ALIASES = \{\n/m, `var ALIASES = {\n${line}\n`);
+  const withMapLine = (value) => SOURCE.replace(/^var ALIASES = .*$/m, `var ALIASES = ${value};`);
 
-    expect(() => aliasesOf(source)).toThrow(/not one alias and its primary/);
+  it.each([
+    ["that is no JSON", `{"${ALIAS}":"${PRIMARY}",}`, /not one line of JSON/],
+    ["that holds something after the map", `{"${ALIAS}":"${PRIMARY}"}; var OTHER = {}`, /not one line of JSON/],
+    ["that is a list", `[["${ALIAS}","${PRIMARY}"]]`, /not an object of aliases/],
+    ["with a primary that is no string", `{"${ALIAS}":1}`, /not an object of aliases/],
+    ["with spaces", `{"${ALIAS}": "${PRIMARY}"}`, /not sorted JSON on one line without spaces/],
+    ["out of order", `{"${ALIAS}":"${PRIMARY}","a.example.com":"${PRIMARY}"}`, /not sorted JSON/],
+    ["with an alias twice", `{"${ALIAS}":"other.example.com","${ALIAS}":"${PRIMARY}"}`, /not sorted JSON/],
+    ["with an escaped letter", `{"${ALIAS}":"www.villasensua\\u006c.nl"}`, /not sorted JSON/],
+  ])("refuses a map line %s", (_name, value, message) => {
+    expect(() => aliasesOf(withMapLine(value))).toThrow(message);
   });
 });
 

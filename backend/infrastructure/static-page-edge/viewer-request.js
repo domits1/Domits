@@ -15,9 +15,7 @@ var BUILD_ROOT_FILES = {
   "/manifest.json": true,
 };
 var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
-var ALIASES = {
-  "beautiful-home-amsterdam-6156b005.direct.domits.com": "www.villasensual.nl",
-};
+var ALIASES = {"beautiful-home-amsterdam-6156b005.direct.domits.com":"www.villasensual.nl"};
 
 function normalizeHostName(value) {
   var parts = String(value || "")

@@ -2,26 +2,14 @@ import vm from "node:vm";
 
 export const FUNCTION_SIZE_LIMIT_BYTES = 10000;
 
-const MAP_BLOCK_PATTERN = /^var ALIASES = \{(\n(?:.*\n)*?)?\};$/gm;
-const ENTRY_PATTERN = /^ {2}"([^"\\]*)": "([^"\\]*)",$/;
+const MAP_LINE_PATTERN = /^var ALIASES = (.*);$/gm;
 
-const findMapBlock = (source) => {
-  const blocks = [...source.matchAll(MAP_BLOCK_PATTERN)];
-  if (blocks.length !== 1) {
-    throw new Error(`The function needs exactly one alias map, found ${blocks.length}.`);
+const findMapLine = (source) => {
+  const lines = [...source.matchAll(MAP_LINE_PATTERN)];
+  if (lines.length !== 1) {
+    throw new Error(`The function needs exactly one alias map line, found ${lines.length}.`);
   }
-  return blocks[0];
-};
-
-export const aliasesOf = (source) => {
-  const lines = (findMapBlock(source)[1] || "").split("\n").filter(Boolean);
-  return lines.map((line) => {
-    const entry = ENTRY_PATTERN.exec(line);
-    if (!entry) {
-      throw new Error(`This line of the alias map is not one alias and its primary: ${line}`);
-    }
-    return [entry[1], entry[2]];
-  });
+  return lines[0];
 };
 
 const byAlias = ([left], [right]) => {
@@ -32,17 +20,36 @@ const byAlias = ([left], [right]) => {
 };
 
 export const renderAliases = (pairs) => {
-  if (pairs.length === 0) {
-    return "var ALIASES = {};";
+  const entryOf = ([alias, primary]) => `${JSON.stringify(alias)}:${JSON.stringify(primary)}`;
+  const entries = [...pairs].sort(byAlias).map(entryOf);
+  return `var ALIASES = {${entries.join(",")}};`;
+};
+
+const parseMap = (line) => {
+  try {
+    return JSON.parse(line[1]);
+  } catch (error) {
+    throw new Error(`The alias map is not one line of JSON: ${line[0]}`, { cause: error });
   }
-  const sorted = [...pairs].sort(byAlias);
-  const lines = sorted.map(([alias, primary]) => `  ${JSON.stringify(alias)}: ${JSON.stringify(primary)},\n`);
-  return `var ALIASES = {\n${lines.join("")}};`;
+};
+
+export const aliasesOf = (source) => {
+  const line = findMapLine(source);
+  const map = parseMap(line);
+  const isObject = map !== null && typeof map === "object" && !Array.isArray(map);
+  if (!isObject || !Object.values(map).every((primary) => typeof primary === "string")) {
+    throw new Error(`The alias map is not an object of aliases and their primaries: ${line[0]}`);
+  }
+  const pairs = Object.entries(map).sort(byAlias);
+  if (renderAliases(pairs) !== line[0]) {
+    throw new Error(`The alias map is not sorted JSON on one line without spaces: ${line[0]}`);
+  }
+  return pairs;
 };
 
 export const replaceAliases = (source, pairs) => {
-  const block = findMapBlock(source);
-  return source.slice(0, block.index) + renderAliases(pairs) + source.slice(block.index + block[0].length);
+  const line = findMapLine(source);
+  return source.slice(0, line.index) + renderAliases(pairs) + source.slice(line.index + line[0].length);
 };
 
 const hostRulesOf = (source) =>
