@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import AttachmentThumb from './AttachmentThumb.js';
 import { getAttachmentViewUrl } from '../../services/taskService';
 
@@ -72,6 +72,33 @@ describe('AttachmentThumb', () => {
         const removeButton = await screen.findByRole('button', { name: 'Remove photo.jpg' });
         fireEvent.click(removeButton);
         expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    test('says the attachment is unavailable when its link is refused, and still lets it be removed', async () => {
+        getAttachmentViewUrl.mockRejectedValue(new Error('Failed to get view URL: 404'));
+        const onRemove = jest.fn();
+
+        const { container } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" onRemove={onRemove} />);
+
+        expect(await screen.findByText('Unavailable')).toHaveAttribute('title', 'photo.jpg could not be loaded');
+        expect(container.querySelector('.attachment-loading')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Remove photo.jpg' }));
+        expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    test('shows the link of the attachment now shown when an earlier link arrives late', async () => {
+        let resolveFirst;
+        getAttachmentViewUrl
+            .mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+            .mockResolvedValueOnce('https://example.com/second.jpg');
+
+        const { rerender } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" />);
+        rerender(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+        expect(await screen.findByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
+
+        await act(async () => { resolveFirst('https://example.com/first.jpg'); });
+        expect(screen.getByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
     });
 
     test('does not render a remove button when onRemove is not provided', async () => {
