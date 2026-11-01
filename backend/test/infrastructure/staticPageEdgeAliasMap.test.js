@@ -71,6 +71,8 @@ describe("reading and replacing the alias map", () => {
     ["that is no JSON", `{"${ALIAS}":"${PRIMARY}",}`, /not one line of JSON/],
     ["that holds something after the map", `{"${ALIAS}":"${PRIMARY}"}; var OTHER = {}`, /not one line of JSON/],
     ["that is a list", `[["${ALIAS}","${PRIMARY}"]]`, /not an object of aliases/],
+    ["that is null", "null", /not an object of aliases/],
+    ["that is a string", `"${ALIAS}"`, /not an object of aliases/],
     ["with a primary that is no string", `{"${ALIAS}":1}`, /not an object of aliases/],
     ["with spaces", `{"${ALIAS}": "${PRIMARY}"}`, /not sorted JSON on one line without spaces/],
     ["out of order", `{"${ALIAS}":"${PRIMARY}","a.example.com":"${PRIMARY}"}`, /not sorted JSON/],
