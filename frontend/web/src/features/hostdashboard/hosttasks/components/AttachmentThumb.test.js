@@ -87,6 +87,17 @@ describe('AttachmentThumb', () => {
         expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
+    test('shows the attachment again when a new link works after a refused one', async () => {
+        getAttachmentViewUrl.mockRejectedValueOnce(new Error('Failed to get view URL: 401')).mockResolvedValueOnce('https://example.com/photo.jpg');
+
+        const { rerender } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" />);
+        await screen.findByText('Unavailable');
+        rerender(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+
+        expect(await screen.findByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/photo.jpg');
+        expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
+    });
+
     test('shows the link of the attachment now shown when an earlier link arrives late', async () => {
         let resolveFirst;
         getAttachmentViewUrl

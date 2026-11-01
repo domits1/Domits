@@ -340,13 +340,17 @@ describe('HostTasks', () => {
             expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', null);
         });
 
-        test('that cannot be uploaded keep the task form open with the reason, and nothing is saved', async () => {
+        test.each([
+            [REFUSAL, REFUSAL],
+            ['', 'A file could not be uploaded. Please try again.'],
+        ])('that cannot be uploaded (%p) keep the task form open with the reason, and nothing is saved', async (reason, shown) => {
+            uploadTaskAttachment.mockRejectedValue(new Error(reason));
             render(<HostTasks />);
             fireEvent.click(await screen.findByText('Clean the villa'));
             addFile('task-attachments-edit');
             fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
 
-            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
             expect(updateTask).not.toHaveBeenCalled();
             expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
         });

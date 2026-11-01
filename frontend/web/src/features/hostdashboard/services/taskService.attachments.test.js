@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 jest.mock('../../../services/getAccessToken', () => ({
     getAccessToken: () => 'Bearer token-1',
 }));
