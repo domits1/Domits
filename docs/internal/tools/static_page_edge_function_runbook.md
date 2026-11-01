@@ -311,7 +311,7 @@ aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name Fu
   --query 'Datapoints[].Average' --output text
 ```
 
-Expected: `FunctionInvocations` with a number above zero (the checks above alone are a dozen requests; without a number here the query is wrong and the next three lines prove nothing), the three error metrics with no datapoint or only `0.0`, and a compute utilization far below 100 (`Average` is the only statistic CloudFront publishes for it; the `test-function` replays answered 5 to 11). Run it again after ten minutes. Any error count above zero is a request the function failed or returned something invalid for: roll back first, then look at `cases.json` for the input that is missing.
+Expected: `FunctionInvocations` with a number above zero (the checks above alone are a dozen requests; without a number here the query is wrong and the next three lines prove nothing), the three error metrics with no datapoint or only `0.0`, and a compute utilization far below 100 (this reads the `Average`; CloudWatch also keeps the `Maximum` of each minute, which the watch in step 6 reads; the `test-function` replays answered 5 to 11). Run it again after ten minutes. Any error count above zero is a request the function failed or returned something invalid for: roll back first, then look at `cases.json` for the input that is missing.
 
 Rollback, one read and one update, then the wait:
 
@@ -346,7 +346,7 @@ Who does what:
    npm test -- test/infrastructure
    ```
 
-   Expected: `Aliases written: N. The function is now B bytes.`, with N the number of rows in the result; one changed line in `viewer-request.js` and no other file; a `<` line for every alias removed and a `>` line for every alias added, each as `alias -> primary`; green tests. The script refuses and writes nothing when an alias or a primary is not a lowercase hostname without a port or a trailing dot, when an alias points at itself or is listed twice, when a primary is an alias itself (a chain), or when the function would reach 10,000 bytes. Fix the data, or leave the row out on purpose and say why in the pull request. The cases in `redirect-cases.json` without their own `aliases` run against the map in the code, so a case whose host stopped being an alias, or one in `cases.json` whose host became one, fails: point that case at a host that still has the role the case describes.
+   Expected: `Aliases written: N. The function is now B bytes.`, with N the number of rows in the result; one changed line in `viewer-request.js` and no other file; a `<` line for every alias removed and a `>` line for every alias added, each as `alias -> primary`; green tests. The script refuses and writes nothing when a row does not have the columns of the header, when the header names `alias` or `primary_domain` twice, when a closing `rows: N` line does not match the number of rows, when an alias or a primary is not a lowercase hostname without a port or a trailing dot, when an alias points at itself or is listed twice, when a primary is an alias itself (a chain), or when the function would reach 10,000 bytes. Fix the data, or leave the row out on purpose and say why in the pull request. The cases in `redirect-cases.json` without their own `aliases` run against the map in the code, so a case whose host stopped being an alias, or one in `cases.json` whose host became one, fails: point that case at a host that still has the role the case describes.
 3. A pull request against `acceptance` with the diff, and for each added alias the `301` it will answer. Normal review. Nothing deploys the function on merge.
 4. After the merge, whoever has CloudFront access publishes it with the commands below, from a clean checkout of `origin/acceptance` at the merge, and watches it.
 
@@ -384,17 +384,20 @@ published=$(aws cloudfront publish-function --name $FN --if-match "$(etag)" --pr
 echo "rollback publish: $published"
 aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 rolled-back.js > /dev/null
 cmp -s rolled-back.js previous-live.js && echo "LIVE is the previous code again"
+live_config=$(aws cloudfront describe-function --name $FN --stage LIVE --profile domits --region us-east-1 --query FunctionSummary.FunctionConfig --output json)
+[ "$(printf '%s' "$live_config" | jq -S -c .)" = "$(jq -S -c . previous-config.json)" ] && echo "LIVE has the previous configuration again"
 EOF
 cat > watch.sh <<'EOF'
 set -uo pipefail
 FN=domits-static-page-by-host
-T0=$1; ALIAS=$2; PRIMARY=$3; PLAIN=$4; ASSET=$5
+T0=$1; ALIAS=$2; PRIMARY=$3; PLAIN=$4; ASSET=$5; ALIAS_STATUS=${6:-301}
 [ -n "$T0" ] && [ -n "$ASSET" ] || { echo "not published or no build file to request, not watching"; exit 2; }
+PUBLISH_MINUTE=$((T0 / 60 * 60))
 iso() { date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
 metric() {
   aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name "$1" --statistics "$2" --period 60 --profile domits --region us-east-1 \
     --dimensions Name=DistributionId,Value=E18TUBOKUXD9TW Name=FunctionName,Value=$FN Name=Region,Value=Global \
-    --start-time "$(iso $((T0 - 60)))" --end-time "$(iso "$(date -u +%s)")" --output json
+    --start-time "$(iso "$3")" --end-time "$(iso "$4")" --output json
 }
 expect() {
   local got
@@ -403,22 +406,28 @@ expect() {
   [ "$got" = "$2 ${3:-}" ]
 }
 check() {
-  local bad=0 errors compute highest minutes
+  local bad=0 now window_end errors highest minutes
+  now=$(date -u +%s); window_end=$(( now < T0 + 600 ? now : T0 + 600 ))
   printf '+%sm:' "$1"
-  expect "https://$ALIAS/" 301 "https://$PRIMARY/" || bad=1
-  expect "https://$ALIAS/robots.txt" 301 "https://$PRIMARY/robots.txt" || bad=1
+  if [ "$ALIAS_STATUS" = 301 ]; then
+    expect "https://$ALIAS/" 301 "https://$PRIMARY/" || bad=1
+    expect "https://$ALIAS/robots.txt" 301 "https://$PRIMARY/robots.txt" || bad=1
+  else
+    expect "https://$ALIAS/" 200 || bad=1
+    expect "https://$ALIAS/robots.txt" 200 || bad=1
+  fi
   expect "https://$ALIAS/$ASSET" 200 || bad=1
   expect "https://$PRIMARY/" 200 || bad=1
   expect "https://$PRIMARY/robots.txt" 200 || bad=1
   expect "https://$PLAIN/" 200 || bad=1
-  errors=$({ metric FunctionExecutionErrors Sum; metric FunctionValidationErrors Sum; } | jq -s 'if length == 2 then [.[].Datapoints[].Sum] | add // 0 else "unknown" end')
-  compute=$(metric FunctionComputeUtilization Maximum | jq --argjson until $((T0 + 600)) \
-    '[.Datapoints[] | select((.Timestamp | sub("\\+00:00$"; "Z") | fromdateiso8601) < $until) | .Maximum]')
-  highest=$(printf '%s' "$compute" | jq 'max // 0'); minutes=$(printf '%s' "$compute" | jq length)
-  echo " | errors $errors | highest compute in the first 10 minutes $highest, minutes with data $minutes"
+  errors=$({ metric FunctionExecutionErrors Sum "$PUBLISH_MINUTE" "$now"; metric FunctionValidationErrors Sum "$PUBLISH_MINUTE" "$now"; } \
+    | jq -s 'if length == 2 then [.[].Datapoints[].Sum] | add // 0 else "unknown" end')
+  highest=$(metric FunctionComputeUtilization Maximum "$PUBLISH_MINUTE" "$window_end" | jq '[.Datapoints[].Maximum] | max // 0')
+  minutes=$(metric FunctionComputeUtilization Maximum $((PUBLISH_MINUTE + 60)) "$window_end" | jq '.Datapoints | length')
+  echo " | errors $errors | highest compute in the first 10 minutes $highest | minutes with data after the publish ${minutes:-none}"
   [ "$(echo "$errors == 0" | bc)" = 1 ] || bad=1
   [ "$(echo "$highest <= 60" | bc)" = 1 ] || bad=1
-  [ "$1" -lt 5 ] || [ "$minutes" -gt 0 ] || { echo "no compute data after $1 minutes"; bad=1; }
+  [ "$1" -lt 5 ] || [ "${minutes:-0}" -gt 0 ] || { echo "no compute data after $1 minutes"; bad=1; }
   return $bad
 }
 for minute in $(seq 1 13); do
@@ -429,7 +438,7 @@ echo "watch done, nothing off"
 EOF
 ```
 
-Then publish and watch. `ALIAS` is one alias of the map (the one just added, if there is one) and `PRIMARY` its primary; `PLAIN` is a fallback hostname that is no alias; the build file is the main bundle the primary's page references, requested on the alias:
+Then publish and watch. `ALIAS` is one alias of the map (the one just added, if there is one) and `PRIMARY` its primary; `PLAIN` is a fallback hostname that is no alias; the build file is the main bundle the primary's page references, requested on the alias. To check an alias the change removes, also when it removes the last one, set `ALIAS` to that alias and `PRIMARY` to its old primary, and add `200` as the last argument of `watch.sh`: the watch then expects the alias's own page and `robots.txt` instead of a `301`.
 
 ```bash
 cd ~/static-page-edge-publish
@@ -437,14 +446,14 @@ FN=domits-static-page-by-host
 ALIAS=beautiful-home-amsterdam-6156b005.direct.domits.com; PRIMARY=www.villasensual.nl; PLAIN=villa-loiki-8cf98e11.direct.domits.com
 ASSET=$(curl -s "https://$PRIMARY/" | grep -o 'static/js/main\.[a-z0-9]*\.js' | head -1); echo "asset: $ASSET"
 curl -s -o /dev/null -w '%{http_code} %{content_type}\n' "https://$ALIAS/$ASSET"
-T0=""; [ -n "$ASSET" ] && ETAG=$(aws cloudfront describe-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text) \
-  && aws cloudfront publish-function --name $FN --if-match "$ETAG" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text \
+T0=""; [ -n "$ASSET" ] && ETAG=$(aws cloudfront get-function --name $FN --stage DEVELOPMENT --profile domits --region us-east-1 --query ETag --output text to-publish.js) \
+  && cmp new.js to-publish.js && aws cloudfront publish-function --name $FN --if-match "$ETAG" --profile domits --region us-east-1 --query FunctionSummary.FunctionMetadata.Stage --output text \
   && T0=$(date -u +%s)
 aws cloudfront get-function --name $FN --stage LIVE --profile domits --region us-east-1 live.js > /dev/null && cmp new.js live.js && echo "LIVE holds the merged code"
 bash watch.sh "$T0" "$ALIAS" "$PRIMARY" "$PLAIN" "$ASSET"
 ```
 
-Expected: a non-empty `asset:` line and `200` with a JavaScript content type before the publish (without an asset nothing is published and the watch says so); `LIVE`; `LIVE holds the merged code`; then thirteen lines such as `+3m: 301 301 200 200 200 200 | errors 0 | highest compute in the first 10 minutes 31, minutes with data 3`, and `watch done, nothing off`. Without `LIVE holds the merged code`, something else reached DEVELOPMENT between the update and the publish: stop the watch with Ctrl-C and run `bash rollback.sh` at once. The two `301`s go to the primary with the same path; the `200` after them is the build file, served on the alias without a redirect. The watch rolls back by itself, and prints `SOMETHING IS OFF, rolling back` and the rollback's own lines, when a status or a location differs, when an execution or validation error is counted, when the highest compute of any minute in the first ten minutes passes 60, or when CloudWatch still has no compute data five minutes after the publish or does not answer for the error counts (a watch without data would otherwise pass). Why 60: the version without a store has stayed at or under 53 since it was first published on 2026-10-16, while both versions that read the store reached 88 to 94 on the first requests after their publish. The first ten minutes are where that showed, and the watch runs thirteen because CloudWatch delivers a minute one to three minutes late. Then read the step 5 metrics once more after ten minutes. A rollback is the same two calls and takes one to two minutes; it ends with `LIVE is the previous code again`, and it stops at the first call that fails. Without that line, run `bash rollback.sh` again before anything else.
+Expected: a non-empty `asset:` line and `200` with a JavaScript content type before the publish; `LIVE`; `LIVE holds the merged code`; then thirteen lines such as `+3m: 301 301 200 200 200 200 | errors 0 | highest compute in the first 10 minutes 31 | minutes with data after the publish 1`, and `watch done, nothing off`. The publish uses the ETag of the code it just compared with `new.js`, so it publishes exactly that code or nothing: without an asset, when DEVELOPMENT no longer holds the merged code, or when DEVELOPMENT changed in between, nothing is published and the watch says `not published`. Without `LIVE holds the merged code` after a publish, stop the watch with Ctrl-C and run `bash rollback.sh` at once. The two `301`s go to the primary with the same path; the `200` after them is the build file, served on the alias without a redirect. The watch rolls back by itself, and prints `SOMETHING IS OFF, rolling back` and the rollback's own lines, when a status or a location differs, when an execution or validation error is counted, when the highest compute of any minute in the first ten minutes passes 60, or when CloudWatch still has no compute data five minutes after the publish or does not answer for the error counts (a watch without data would otherwise pass). Why 60: the version without a store has stayed at or under 53 since it was first published on 2026-10-16, while both versions that read the store reached 88 to 94 on the first requests after their publish. The first ten minutes are where that showed, and the watch runs thirteen because CloudWatch delivers a minute one to three minutes late. Then read the step 5 metrics once more after ten minutes. A rollback is the same two calls and takes one to two minutes; it ends with `LIVE is the previous code again` and `LIVE has the previous configuration again`, and it stops at the first call that fails. Without both lines, run `bash rollback.sh` again before anything else.
 
 ## For the pull requests that come after this one
 
