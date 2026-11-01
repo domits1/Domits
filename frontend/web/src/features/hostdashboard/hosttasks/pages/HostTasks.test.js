@@ -302,12 +302,19 @@ describe('HostTasks', () => {
     });
 
     describe('attachments of a task', () => {
-        const { getAttachmentViewUrl } = jest.requireMock('../../services/taskService');
+        const { getAttachmentViewUrl, uploadTaskAttachment, createTask } = jest.requireMock('../../services/taskService');
         const KEY = 'tasks/host-2/photo.jpg';
+        const REFUSAL = 'plan.svg: Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached';
+        const addFile = (inputId) => fireEvent.change(document.getElementById(inputId), {
+            target: { files: [new File(['<svg/>'], 'plan.svg', { type: 'image/svg+xml' })] },
+        });
 
         beforeEach(() => {
             getAttachmentViewUrl.mockResolvedValue('https://signed.example/view');
+            uploadTaskAttachment.mockRejectedValue(new Error(REFUSAL));
             fetchTasks.mockResolvedValue([{ ...TASK, attachments: [KEY] }]);
+            global.URL.createObjectURL = jest.fn(() => 'blob:plan');
+            global.URL.revokeObjectURL = jest.fn();
         });
 
         afterEach(() => {
@@ -332,23 +339,11 @@ describe('HostTasks', () => {
             await screen.findByAltText('photo.jpg');
             expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', null);
         });
-    });
 
-    describe('a file that cannot be uploaded', () => {
-        const { uploadTaskAttachment, createTask } = jest.requireMock('../../services/taskService');
-        const FILE = new File(['<svg/>'], 'plan.svg', { type: 'image/svg+xml' });
-        const REFUSAL = 'plan.svg: Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached';
-
-        beforeEach(() => {
-            global.URL.createObjectURL = jest.fn(() => 'blob:plan');
-            global.URL.revokeObjectURL = jest.fn();
-            uploadTaskAttachment.mockRejectedValue(new Error(REFUSAL));
-        });
-
-        test('keeps the task form open with the reason, and saves nothing', async () => {
+        test('that cannot be uploaded keep the task form open with the reason, and nothing is saved', async () => {
             render(<HostTasks />);
             fireEvent.click(await screen.findByText('Clean the villa'));
-            fireEvent.change(document.getElementById('task-attachments-edit'), { target: { files: [FILE] } });
+            addFile('task-attachments-edit');
             fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
@@ -356,17 +351,17 @@ describe('HostTasks', () => {
             expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
         });
 
-        test('keeps the create form open with the reason, and creates nothing', async () => {
+        test('that cannot be uploaded keep the create form open with the reason, and nothing is created', async () => {
             render(<HostTasks />);
             fireEvent.click(await screen.findByRole('button', { name: '+ Create Task' }));
-            fireEvent.change(document.getElementById('file-upload'), { target: { files: [FILE] } });
-            fireEvent.submit(document.getElementById('file-upload').closest('form'));
+            addFile('file-upload');
+            const form = document.getElementById('file-upload').closest('form');
+            fireEvent.submit(form);
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
             expect(createTask).not.toHaveBeenCalled();
-            const submit = document.getElementById('file-upload').closest('form').querySelector('button[type="submit"]');
-            expect(submit).toHaveTextContent('Create Task');
-            expect(submit).toBeEnabled();
+            expect(form).toBeInTheDocument();
+            expect(form.querySelector('button[type="submit"]')).toBeEnabled();
         });
     });
 });

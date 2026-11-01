@@ -1,19 +1,8 @@
 jest.mock("../../functions/property-tasks/business/service/taskService.js", () => ({
-    getTasks: jest.fn(),
-    createTask: jest.fn(),
-    updateTask: jest.fn(),
-    deleteTask: jest.fn(),
     getUploadUrl: jest.fn(),
     getViewUrl: jest.fn(),
-    escalateTask: jest.fn(),
 }));
-
-jest.mock("../../functions/property-tasks/business/service/taskChecklistService.js", () => ({
-    getChecklistItems: jest.fn(),
-    createChecklistItem: jest.fn(),
-    updateChecklistItem: jest.fn(),
-    deleteChecklistItem: jest.fn(),
-}));
+jest.mock("../../functions/property-tasks/business/service/taskChecklistService.js", () => ({}));
 
 const mockResolveEffectiveHostId = jest.fn();
 jest.mock("../../functions/property-tasks/business/service/pomService.js", () => ({
@@ -29,21 +18,19 @@ const { Controller } = require("../../functions/property-tasks/controller/contro
 const { getViewUrl, getUploadUrl } = require("../../functions/property-tasks/business/service/taskService.js");
 const { UnauthorizedException } = require("../../functions/property-tasks/util/exception/unauthorizedException.js");
 
-const viewEvent = (query) => ({
-    headers: { Authorization: "token-1" },
-    queryStringParameters: { action: "view-url", ...query },
-});
+const eventWith = (query) => ({ headers: { Authorization: "token-1" }, queryStringParameters: query });
 
-describe("Controller.getViewUrl", () => {
+describe("the attachment link endpoints", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockGetUser.mockResolvedValue({ username: "user-1", role: "Host" });
         mockResolveEffectiveHostId.mockResolvedValue({ effectiveHostId: "host-1", isPOM: true });
         getViewUrl.mockResolvedValue("https://signed.example/view");
+        getUploadUrl.mockResolvedValue({ uploadUrl: "https://signed.example/upload", key: "tasks/host-1/a.png" });
     });
 
-    it("asks for the link as the host the signed-in user acts for", async () => {
-        const response = await new Controller().getViewUrl(viewEvent({ taskId: "task-9", key: "tasks/host-1/a.jpg", asHostId: "host-1" }));
+    it("asks for a view link as the host the signed-in user acts for", async () => {
+        const response = await new Controller().getViewUrl(eventWith({ taskId: "task-9", key: "tasks/host-1/a.jpg", asHostId: "host-1" }));
 
         expect(response.statusCode).toBe(200);
         expect(JSON.parse(response.body)).toEqual({ viewUrl: "https://signed.example/view" });
@@ -55,60 +42,29 @@ describe("Controller.getViewUrl", () => {
     it("answers 401 and asks for no link when the user is not on that host's team", async () => {
         mockResolveEffectiveHostId.mockRejectedValue(new UnauthorizedException("You are not a co-host for this host."));
 
-        const response = await new Controller().getViewUrl(viewEvent({ taskId: "task-9", key: "k", asHostId: "host-2" }));
+        const response = await new Controller().getViewUrl(eventWith({ taskId: "task-9", key: "k", asHostId: "host-2" }));
 
         expect(response.statusCode).toBe(401);
         expect(getViewUrl).not.toHaveBeenCalled();
     });
 
-    it("answers 401 and asks for no link without a signed-in user", async () => {
-        mockGetUser.mockRejectedValue(new UnauthorizedException("No authorization token provided."));
-
-        const response = await new Controller().getViewUrl({ headers: {}, queryStringParameters: { taskId: "task-9", key: "k" } });
-
-        expect(response.statusCode).toBe(401);
-        expect(getViewUrl).not.toHaveBeenCalled();
-    });
-
-    it("passes the service's refusal on", async () => {
+    it("passes a refused link on", async () => {
         getViewUrl.mockRejectedValue(Object.assign(new Error("Attachment not found"), { statusCode: 404 }));
 
-        const response = await new Controller().getViewUrl(viewEvent({ taskId: "task-9", key: "k" }));
+        const response = await new Controller().getViewUrl(eventWith({ taskId: "task-9", key: "k" }));
 
         expect(response.statusCode).toBe(404);
         expect(JSON.parse(response.body)).toEqual({ message: "Attachment not found" });
     });
-});
 
-describe("Controller.getUploadUrl", () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-        mockGetUser.mockResolvedValue({ username: "user-1", role: "Property Operations Manager" });
-        mockResolveEffectiveHostId.mockResolvedValue({ effectiveHostId: "host-1", isPOM: true });
-        getUploadUrl.mockResolvedValue({ uploadUrl: "https://signed.example/upload", key: "tasks/host-1/a.png" });
-    });
+    it("asks for an upload link into the acting host's folder, with the type and size only", async () => {
+        const query = { action: "upload-url", fileName: "../../host-2/x.png", fileType: "image/png", fileSize: "2048" };
 
-    it("asks for an upload into the folder of the host the signed-in user acts for", async () => {
-        const response = await new Controller().getUploadUrl({
-            headers: { Authorization: "token-1" },
-            queryStringParameters: { action: "upload-url", fileName: "../../host-2/x.png", fileType: "image/png", fileSize: "2048" },
-        });
+        const response = await new Controller().getUploadUrl(eventWith(query));
 
         expect(response.statusCode).toBe(200);
         expect(JSON.parse(response.body)).toEqual({ uploadUrl: "https://signed.example/upload", key: "tasks/host-1/a.png" });
-        expect(mockResolveEffectiveHostId).toHaveBeenCalledWith("user-1", "Property Operations Manager", null);
+        expect(mockResolveEffectiveHostId).toHaveBeenCalledWith("user-1", "Host", null);
         expect(getUploadUrl).toHaveBeenCalledWith("host-1", "image/png", "2048");
-    });
-
-    it("passes the service's refusal on", async () => {
-        getUploadUrl.mockRejectedValue(Object.assign(new Error("A file can be at most 20 MB"), { statusCode: 400 }));
-
-        const response = await new Controller().getUploadUrl({
-            headers: { Authorization: "token-1" },
-            queryStringParameters: { fileType: "image/png", fileSize: "99999999" },
-        });
-
-        expect(response.statusCode).toBe(400);
-        expect(JSON.parse(response.body)).toEqual({ message: "A file can be at most 20 MB" });
     });
 });

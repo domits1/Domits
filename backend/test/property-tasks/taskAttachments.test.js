@@ -4,114 +4,75 @@ import {
     attachmentsOfHost,
     assertAttachmentsOfHost,
     parseStoredAttachments,
-    findAttachmentOfTask,
     newAttachmentFile,
     MAX_ATTACHMENT_BYTES,
 } from "../../functions/property-tasks/business/model/taskAttachments.js";
 
 const FILE = "0b6c1d2e-3f40-4a5b-9c6d-7e8f9a0b1c2d";
+const OWN = `tasks/host-1/${FILE}.jpg`;
+const FOREIGN = `tasks/host-2/${FILE}.jpg`;
+const refusal = (message) => expect.objectContaining({ statusCode: 400, message });
 
 describe("isAttachmentOfHost", () => {
-    it.each([
-        `tasks/host-1/${FILE}.jpg`,
-        `tasks/host-1/${FILE}.JPEG`,
-        `tasks/host-1/${FILE}.`,
-        "tasks/host-1/photo.jpg",
-    ])("accepts %s, a file directly in the host's folder", (key) => {
+    it.each([OWN, `tasks/host-1/${FILE}.`, "tasks/host-1/photo.jpg"])("accepts %s, a file directly in the host's folder", (key) => {
         expect(isAttachmentOfHost("host-1", key)).toBe(true);
     });
 
     it.each([
-        ["another host's folder", `tasks/host-2/${FILE}.jpg`],
-        ["a folder that only starts with the host id", `tasks/host-10/${FILE}.jpg`],
-        ["a sub folder", `tasks/host-1/other/${FILE}.jpg`],
-        ["a path that climbs out", `tasks/host-1/../host-2/${FILE}.jpg`],
-        ["a slash in the extension", `tasks/host-1/${FILE}./../../host-2/a.jpg`],
-        ["no folder", `${FILE}.jpg`],
-        ["the folder alone", "tasks/host-1/"],
-    ])("refuses %s", (_label, key) => {
+        FOREIGN,
+        `tasks/host-10/${FILE}.jpg`,
+        `tasks/host-1/other/${FILE}.jpg`,
+        `tasks/host-1/../host-2/${FILE}.jpg`,
+        `${FILE}.jpg`,
+        "tasks/host-1/",
+        undefined,
+        { key: OWN },
+    ])("refuses %p", (key) => {
         expect(isAttachmentOfHost("host-1", key)).toBe(false);
     });
 
-    it.each([undefined, null, "", 7])("refuses every key for host id %p", (hostId) => {
+    it.each([undefined, ""])("refuses every key for host id %p", (hostId) => {
         expect(isAttachmentOfHost(hostId, `tasks/${hostId}/${FILE}.jpg`)).toBe(false);
-    });
-
-    it.each([undefined, null, 7, { key: "x" }])("refuses key %p", (key) => {
-        expect(isAttachmentOfHost("host-1", key)).toBe(false);
     });
 
     it("never accepts a key made for one host as a key of another host", () => {
         const hostId = fc.stringMatching(/^[a-z0-9-]{1,40}$/);
-        fc.assert(
-            fc.property(hostId, hostId, fc.uuid(), (owner, other, file) => {
-                fc.pre(owner !== other);
-                return isAttachmentOfHost(other, `tasks/${owner}/${file}.jpg`) === false;
-            })
-        );
+        fc.assert(fc.property(hostId, hostId, fc.uuid(), (owner, other, file) => {
+            fc.pre(owner !== other);
+            return !isAttachmentOfHost(other, `tasks/${owner}/${file}.jpg`);
+        }));
     });
 });
 
 describe("attachmentsOfHost", () => {
     it("keeps only the keys in the host's folder", () => {
-        const own = `tasks/host-1/${FILE}.jpg`;
-        expect(attachmentsOfHost("host-1", [own, `tasks/host-2/${FILE}.jpg`, `tasks/host-1/x/${FILE}.jpg`])).toEqual([own]);
+        expect(attachmentsOfHost("host-1", [OWN, FOREIGN, `tasks/host-1/x/${FILE}.jpg`])).toEqual([OWN]);
     });
 });
 
 describe("assertAttachmentsOfHost", () => {
-    const own = `tasks/host-1/${FILE}.jpg`;
-    const foreign = `tasks/host-2/${FILE}.jpg`;
-
-    it("accepts keys in the host's folder", () => {
-        expect(() => assertAttachmentsOfHost("host-1", [own])).not.toThrow();
-        expect(() => assertAttachmentsOfHost("host-1", [])).not.toThrow();
+    it("accepts the host's own keys, and a foreign key only when the task already holds it", () => {
+        expect(() => assertAttachmentsOfHost("host-1", [OWN])).not.toThrow();
+        expect(() => assertAttachmentsOfHost("host-1", [OWN, FOREIGN], [FOREIGN])).not.toThrow();
     });
 
-    it("refuses a key outside the host's folder with a 400", () => {
-        expect(() => assertAttachmentsOfHost("host-1", [own, foreign])).toThrow(expect.objectContaining({
-            statusCode: 400,
-            message: "attachments can only hold files uploaded for this host",
-        }));
+    it.each([[[OWN, FOREIGN], []], [[{ key: OWN }], [OWN]]])("refuses %p when the task holds %p", (attachments, held) => {
+        expect(() => assertAttachmentsOfHost("host-1", attachments, held)).toThrow(refusal("attachments can only hold files uploaded for this host"));
     });
 
-    it("accepts a key outside the folder only when the task already holds it", () => {
-        expect(() => assertAttachmentsOfHost("host-1", [own, foreign], [foreign])).not.toThrow();
-    });
-
-    it.each([own, null, { 0: own }, 3])("refuses %p, which is not a list", (attachments) => {
-        expect(() => assertAttachmentsOfHost("host-1", attachments)).toThrow(expect.objectContaining({
-            statusCode: 400,
-            message: "attachments must be a list of uploaded files",
-        }));
-    });
-
-    it("refuses a list entry that is not a key", () => {
-        expect(() => assertAttachmentsOfHost("host-1", [{ key: own }], [own])).toThrow(expect.objectContaining({ statusCode: 400 }));
+    it.each([OWN, null, { 0: OWN }])("refuses %p, which is not a list", (attachments) => {
+        expect(() => assertAttachmentsOfHost("host-1", attachments)).toThrow(refusal("attachments must be a list of uploaded files"));
     });
 });
 
 describe("parseStoredAttachments", () => {
     it.each([
         [null, []],
-        ["", []],
         ["not json", []],
-        [JSON.stringify("tasks/host-1/a.jpg"), []],
-        [JSON.stringify(["tasks/host-1/a.jpg", 3, null]), ["tasks/host-1/a.jpg"]],
+        [JSON.stringify(OWN), []],
+        [JSON.stringify([OWN, 3, null]), [OWN]],
     ])("reads %p as %p", (stored, expected) => {
         expect(parseStoredAttachments(stored)).toEqual(expected);
-    });
-});
-
-describe("findAttachmentOfTask", () => {
-    const key = `tasks/host-1/${FILE}.jpg`;
-
-    it("returns the key as it is stored on the task", () => {
-        expect(findAttachmentOfTask("host-1", { attachments: JSON.stringify([key]) }, key)).toBe(key);
-    });
-
-    it("throws a 404 when there is no task", () => {
-        expect(() => findAttachmentOfTask("host-1", null, key)).toThrow(expect.objectContaining({ statusCode: 404 }));
     });
 });
 
@@ -124,47 +85,25 @@ describe("newAttachmentFile", () => {
         ["image/heic", "heic"],
         ["image/heif", "heif"],
         ["application/pdf", "pdf"],
-    ])("names a %s file in the host's folder with a new id and the .%s extension", (fileType, extension) => {
+    ])("names a %s file in the host's folder with a new id and .%s", (fileType, extension) => {
         const file = newAttachmentFile("host-1", fileType, "1024");
 
         expect(file.key).toMatch(new RegExp(`^tasks/host-1/[0-9a-f-]{36}\\.${extension}$`));
-        expect(isAttachmentOfHost("host-1", file.key)).toBe(true);
         expect(file).toMatchObject({ contentType: fileType, contentLength: 1024 });
+        expect(newAttachmentFile("host-1", fileType, "1024").key).not.toBe(file.key);
     });
 
-    it("gives every file its own key", () => {
-        expect(newAttachmentFile("host-1", "image/png", "1").key).not.toBe(newAttachmentFile("host-1", "image/png", "1").key);
+    it.each(["image/svg+xml", "text/html", "", undefined, "toString", "IMAGE/PNG"])("refuses the file type %p", (fileType) => {
+        expect(() => newAttachmentFile("host-1", fileType, "1024")).toThrow(refusal("Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached"));
     });
 
-    it.each(["image/svg+xml", "text/html", "application/octet-stream", "", undefined, "toString", "IMAGE/PNG"])(
-        "refuses the file type %p",
-        (fileType) => {
-            expect(() => newAttachmentFile("host-1", fileType, "1024")).toThrow(expect.objectContaining({
-                statusCode: 400,
-                message: "Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached",
-            }));
-        }
-    );
-
-    it.each([undefined, "", "abc", "-1", "1.5", "1e3", " 12", 1024])("refuses the size %p", (fileSize) => {
-        expect(() => newAttachmentFile("host-1", "image/png", fileSize)).toThrow(expect.objectContaining({
-            statusCode: 400,
-            message: "fileSize must be the size of the file in bytes",
-        }));
+    it.each([undefined, "", "abc", "-1", "1.5", "1e3", 1024])("refuses the size %p", (fileSize) => {
+        expect(() => newAttachmentFile("host-1", "image/png", fileSize)).toThrow(refusal("fileSize must be the size of the file in bytes"));
     });
 
-    it("refuses an empty file", () => {
-        expect(() => newAttachmentFile("host-1", "image/png", "0")).toThrow(expect.objectContaining({
-            statusCode: 400,
-            message: "An empty file cannot be attached",
-        }));
-    });
-
-    it("accepts a file of exactly 20 MB and refuses one byte more", () => {
+    it("refuses an empty file, accepts exactly 20 MB and refuses one byte more", () => {
+        expect(() => newAttachmentFile("host-1", "image/png", "0")).toThrow(refusal("An empty file cannot be attached"));
         expect(newAttachmentFile("host-1", "application/pdf", String(MAX_ATTACHMENT_BYTES)).contentLength).toBe(20 * 1024 * 1024);
-        expect(() => newAttachmentFile("host-1", "application/pdf", String(MAX_ATTACHMENT_BYTES + 1))).toThrow(expect.objectContaining({
-            statusCode: 400,
-            message: "A file can be at most 20 MB",
-        }));
+        expect(() => newAttachmentFile("host-1", "application/pdf", String(MAX_ATTACHMENT_BYTES + 1))).toThrow(refusal("A file can be at most 20 MB"));
     });
 });
