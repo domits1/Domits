@@ -1,6 +1,7 @@
+import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 
-const SERVER_MADE_FILE_NAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[^/]*$/;
+const FILE_DIRECTLY_IN_FOLDER = /^[^/]+$/;
 
 export const attachmentFolderOf = (hostId) => `tasks/${hostId}/`;
 
@@ -8,7 +9,19 @@ export const isAttachmentOfHost = (hostId, key) => {
     const isHostId = typeof hostId === "string" && hostId.length > 0;
     if (!isHostId || typeof key !== "string") return false;
     const folder = attachmentFolderOf(hostId);
-    return key.startsWith(folder) && SERVER_MADE_FILE_NAME.test(key.slice(folder.length));
+    return key.startsWith(folder) && FILE_DIRECTLY_IN_FOLDER.test(key.slice(folder.length));
+};
+
+export const attachmentsOfHost = (hostId, keys) => keys.filter((key) => isAttachmentOfHost(hostId, key));
+
+export const assertAttachmentsOfHost = (hostId, attachments, keysAlreadyOnTask = []) => {
+    if (!Array.isArray(attachments)) {
+        throw new BadRequestException("attachments must be a list of uploaded files");
+    }
+    const isAccepted = (key) => keysAlreadyOnTask.includes(key) || isAttachmentOfHost(hostId, key);
+    if (!attachments.every(isAccepted)) {
+        throw new BadRequestException("attachments can only hold files uploaded for this host");
+    }
 };
 
 export const parseStoredAttachments = (storedAttachments) => {

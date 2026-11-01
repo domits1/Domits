@@ -1,6 +1,8 @@
 import fc from "fast-check";
 import {
     isAttachmentOfHost,
+    attachmentsOfHost,
+    assertAttachmentsOfHost,
     parseStoredAttachments,
     findAttachmentOfTask,
 } from "../../functions/property-tasks/business/model/taskAttachments.js";
@@ -12,7 +14,8 @@ describe("isAttachmentOfHost", () => {
         `tasks/host-1/${FILE}.jpg`,
         `tasks/host-1/${FILE}.JPEG`,
         `tasks/host-1/${FILE}.`,
-    ])("accepts the server-made key %s in the host's folder", (key) => {
+        "tasks/host-1/photo.jpg",
+    ])("accepts %s, a file directly in the host's folder", (key) => {
         expect(isAttachmentOfHost("host-1", key)).toBe(true);
     });
 
@@ -22,7 +25,6 @@ describe("isAttachmentOfHost", () => {
         ["a sub folder", `tasks/host-1/other/${FILE}.jpg`],
         ["a path that climbs out", `tasks/host-1/../host-2/${FILE}.jpg`],
         ["a slash in the extension", `tasks/host-1/${FILE}./../../host-2/a.jpg`],
-        ["a name the server did not make", "tasks/host-1/photo.jpg"],
         ["no folder", `${FILE}.jpg`],
         ["the folder alone", "tasks/host-1/"],
     ])("refuses %s", (_label, key) => {
@@ -45,6 +47,45 @@ describe("isAttachmentOfHost", () => {
                 return isAttachmentOfHost(other, `tasks/${owner}/${file}.jpg`) === false;
             })
         );
+    });
+});
+
+describe("attachmentsOfHost", () => {
+    it("keeps only the keys in the host's folder", () => {
+        const own = `tasks/host-1/${FILE}.jpg`;
+        expect(attachmentsOfHost("host-1", [own, `tasks/host-2/${FILE}.jpg`, `tasks/host-1/x/${FILE}.jpg`])).toEqual([own]);
+    });
+});
+
+describe("assertAttachmentsOfHost", () => {
+    const own = `tasks/host-1/${FILE}.jpg`;
+    const foreign = `tasks/host-2/${FILE}.jpg`;
+
+    it("accepts keys in the host's folder", () => {
+        expect(() => assertAttachmentsOfHost("host-1", [own])).not.toThrow();
+        expect(() => assertAttachmentsOfHost("host-1", [])).not.toThrow();
+    });
+
+    it("refuses a key outside the host's folder with a 400", () => {
+        expect(() => assertAttachmentsOfHost("host-1", [own, foreign])).toThrow(expect.objectContaining({
+            statusCode: 400,
+            message: "attachments can only hold files uploaded for this host",
+        }));
+    });
+
+    it("accepts a key outside the folder only when the task already holds it", () => {
+        expect(() => assertAttachmentsOfHost("host-1", [own, foreign], [foreign])).not.toThrow();
+    });
+
+    it.each([own, null, { 0: own }, 3])("refuses %p, which is not a list", (attachments) => {
+        expect(() => assertAttachmentsOfHost("host-1", attachments)).toThrow(expect.objectContaining({
+            statusCode: 400,
+            message: "attachments must be a list of uploaded files",
+        }));
+    });
+
+    it("refuses a list entry that is not a key", () => {
+        expect(() => assertAttachmentsOfHost("host-1", [{ key: own }], [own])).toThrow(expect.objectContaining({ statusCode: 400 }));
     });
 });
 

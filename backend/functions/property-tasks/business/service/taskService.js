@@ -1,7 +1,12 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
-import { findAttachmentOfTask } from "../model/taskAttachments.js";
+import {
+    findAttachmentOfTask,
+    parseStoredAttachments,
+    attachmentsOfHost,
+    assertAttachmentsOfHost,
+} from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
@@ -23,6 +28,8 @@ export const createTask = async (hostId, taskData) => {
     const dataSource = await Database.getInstance();
 
     validateTaskPayload(taskData);
+    const attachments = taskData.attachments ?? [];
+    assertAttachmentsOfHost(hostId, attachments);
 
     const assigneeName = taskData.assignee_team_member_id
         ? await resolveAssigneeName(dataSource, hostId, taskData.assignee_team_member_id)
@@ -45,7 +52,7 @@ export const createTask = async (hostId, taskData) => {
         assignee_name: assigneeName,
         assignee_team_member_id: taskData.assignee_team_member_id || null,
         parent_task_id: parentTaskId,
-        attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
+        attachments: attachments.length > 0 ? JSON.stringify(attachments) : null,
         source: taskData.source || null,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -121,9 +128,10 @@ export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember
     }
 
     if (fieldsToUpdate.attachments !== undefined) {
-        const oldKeys = oldTask.attachments ? JSON.parse(oldTask.attachments) : [];
-        const newKeys = Array.isArray(fieldsToUpdate.attachments) ? fieldsToUpdate.attachments : [];
-        const removedKeys = oldKeys.filter(key => !newKeys.includes(key));
+        const oldKeys = parseStoredAttachments(oldTask.attachments);
+        const newKeys = fieldsToUpdate.attachments ?? [];
+        assertAttachmentsOfHost(hostId, newKeys, oldKeys);
+        const removedKeys = attachmentsOfHost(hostId, oldKeys.filter(key => !newKeys.includes(key)));
         if (removedKeys.length > 0) {
             await s3.send(new DeleteObjectsCommand({
                 Bucket: BUCKET_NAME,
@@ -219,7 +227,7 @@ export const deleteTask = async (hostId, taskId) => {
 
     if (task?.attachments) {
         try {
-            const keys = JSON.parse(task.attachments);
+            const keys = attachmentsOfHost(hostId, parseStoredAttachments(task.attachments));
             if (keys.length > 0) {
                 await s3.send(new DeleteObjectsCommand({
                     Bucket: BUCKET_NAME,
