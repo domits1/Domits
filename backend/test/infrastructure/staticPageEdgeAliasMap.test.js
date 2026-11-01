@@ -5,7 +5,9 @@ import {
   FUNCTION_SIZE_LIMIT_BYTES,
   aliasProblems,
   aliasesOf,
+  parseAliasRows,
   replaceAliases,
+  withAliases,
 } from "../../infrastructure/static-page-edge/alias-map.mjs";
 
 const SOURCE = readFileSync(join(process.cwd(), "infrastructure", "static-page-edge", "viewer-request.js"), "utf8");
@@ -134,5 +136,86 @@ describe("the rules every alias in the map follows", () => {
 
     expect(aliasProblems(SOURCE, chain)).toEqual([problem]);
     expect(aliasProblems(SOURCE, [...chain].reverse())).toEqual([problem]);
+  });
+});
+
+describe("reading the result of the alias query", () => {
+  const HEADER = "site_id\talias\talias_type\tprimary_domain";
+  const row = (alias, primary) => `6156b005-88d4-4230-9bf1-2f01214cc1a0\t${alias}\tFALLBACK\t${primary}`;
+
+  it("takes the alias and primary_domain columns by name and skips the lines without a column", () => {
+    const result = [HEADER, row(ALIAS, PRIMARY), row("villasensual.nl", PRIMARY), "rows: 2", ""].join("\n");
+
+    expect(parseAliasRows(result)).toEqual([
+      [ALIAS, PRIMARY],
+      ["villasensual.nl", PRIMARY],
+    ]);
+  });
+
+  it("reads the columns in any order and with Windows line ends", () => {
+    const result = `primary_domain\talias\r\n${PRIMARY}\t${ALIAS}\r\n`;
+
+    expect(parseAliasRows(result)).toEqual([[ALIAS, PRIMARY]]);
+  });
+
+  it("reads a result without rows as an empty map", () => {
+    expect(parseAliasRows(`${HEADER}\nrows: 0\n`)).toEqual([]);
+  });
+
+  it.each([
+    ["nothing at all", "", /no header row/],
+    ["no primary_domain column", "site_id\talias\n1\tx.example.com", /columns alias and primary_domain/],
+    ["no alias column", "site_id\tprimary_domain\n1\tx.example.com", /columns alias and primary_domain/],
+    ["a row with a column too few", `${HEADER}\n1\t${ALIAS}\t${PRIMARY}`, /does not have 4 columns/],
+    ["a row with a column too many", `${HEADER}\n${row(ALIAS, PRIMARY)}\textra`, /does not have 4 columns/],
+  ])("refuses %s", (_name, result, message) => {
+    expect(() => parseAliasRows(result)).toThrow(message);
+  });
+});
+
+describe("writing the alias map into the function", () => {
+  const longestRealisticPairs = (count) =>
+    Array.from({ length: count }, (_, index) => [longestRealisticAlias(index), LONGEST_REALISTIC_PRIMARY]);
+  const paddedTo = (bytes) => {
+    const padding = (length) => `${SOURCE}var PADDING = "${"x".repeat(length)}";\n`;
+    const written = Buffer.byteLength(replaceAliases(padding(0), [[ALIAS, PRIMARY]]), "utf8");
+    return padding(bytes - written);
+  };
+
+  it("writes a map that follows the rules and keeps the rest of the function", () => {
+    const pairs = [
+      ["villasensual.nl", PRIMARY],
+      [ALIAS, PRIMARY],
+    ];
+
+    const written = withAliases(SOURCE, pairs);
+
+    expect(written).toBe(replaceAliases(SOURCE, pairs));
+    expect(aliasesOf(written)).toEqual([pairs[1], pairs[0]]);
+  });
+
+  it("refuses a map that breaks a rule, and names every problem", () => {
+    const pairs = [
+      [ALIAS, ALIAS],
+      ["villasensual.nl", `${PRIMARY}:443`],
+    ];
+
+    expect(() => withAliases(SOURCE, pairs)).toThrow(
+      `The alias map was not written:\n${ALIAS} points at itself\n` +
+        `the primary ${PRIMARY}:443 of villasensual.nl is not a lowercase hostname without a port or a trailing dot`
+    );
+  });
+
+  it("writes 40 aliases of the longest realistic length and refuses 60", () => {
+    expect(() => withAliases(SOURCE, longestRealisticPairs(40))).not.toThrow();
+    expect(() => withAliases(SOURCE, longestRealisticPairs(60))).toThrow(/the limit is 10000/);
+  });
+
+  it("refuses a function that would reach the limit exactly, and writes one a byte under it", () => {
+    const atLimit = paddedTo(FUNCTION_SIZE_LIMIT_BYTES);
+    const underLimit = paddedTo(FUNCTION_SIZE_LIMIT_BYTES - 1);
+
+    expect(() => withAliases(atLimit, [[ALIAS, PRIMARY]])).toThrow(/would be 10000 bytes/);
+    expect(Buffer.byteLength(withAliases(underLimit, [[ALIAS, PRIMARY]]), "utf8")).toBe(FUNCTION_SIZE_LIMIT_BYTES - 1);
   });
 });

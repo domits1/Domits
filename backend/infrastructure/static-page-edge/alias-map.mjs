@@ -75,3 +75,40 @@ export const aliasProblems = (source, pairs) => {
   }
   return problems;
 };
+
+export const parseAliasRows = (text) => {
+  const lines = text
+    .split("\n")
+    .map((line) => line.replace(/\r$/, ""))
+    .filter((line) => line.includes("\t"));
+  if (lines.length === 0) {
+    throw new Error("The query result has no header row with tab separated columns.");
+  }
+  const columns = lines[0].split("\t");
+  const aliasColumn = columns.indexOf("alias");
+  const primaryColumn = columns.indexOf("primary_domain");
+  if (aliasColumn === -1 || primaryColumn === -1) {
+    throw new Error("The query result needs the columns alias and primary_domain.");
+  }
+  return lines.slice(1).map((line) => {
+    const fields = line.split("\t");
+    if (fields.length !== columns.length) {
+      throw new Error(`This row of the query result does not have ${columns.length} columns: ${line}`);
+    }
+    return [fields[aliasColumn], fields[primaryColumn]];
+  });
+};
+
+export const withAliases = (source, pairs) => {
+  const problems = aliasProblems(source, pairs);
+  if (problems.length > 0) {
+    throw new Error(`The alias map was not written:\n${problems.join("\n")}`);
+  }
+  const written = replaceAliases(source, pairs);
+  const bytes = Buffer.byteLength(written, "utf8");
+  if (bytes >= FUNCTION_SIZE_LIMIT_BYTES) {
+    const limit = FUNCTION_SIZE_LIMIT_BYTES;
+    throw new Error(`The alias map was not written: the function would be ${bytes} bytes, the limit is ${limit}.`);
+  }
+  return written;
+};
