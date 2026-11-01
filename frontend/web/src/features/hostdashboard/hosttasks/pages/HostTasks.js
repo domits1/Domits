@@ -1062,6 +1062,7 @@ const HostTasks = () => {
             <TaskDetailsModal
                 viewingTask={viewingTask}
                 editedTask={editedTask}
+                asHostId={asHostId}
                 editPropertyOptions={editPropertyOptions}
                 assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}

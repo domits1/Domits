@@ -1,6 +1,7 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
+import { findAttachmentOfTask } from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
@@ -249,10 +250,17 @@ export const getUploadUrl = async (hostId, fileName, fileType) => {
     };
 };
 
-export const getViewUrl = async (key) => {
+export const getViewUrl = async (hostId, taskId, key) => {
+    if (!isValidUuid(taskId)) throw new BadRequestException("taskId must be the id of a task");
+    if (typeof key !== "string" || key.length === 0) throw new BadRequestException("key is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    const storedKey = findAttachmentOfTask(hostId, task, key);
+
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
+        Key: storedKey,
     });
     return await getSignedUrl(s3, command, { expiresIn: 3600 });
 };

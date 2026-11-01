@@ -23,6 +23,15 @@ describe('AttachmentThumb', () => {
         await waitFor(() => expect(container.querySelector('.attachment-loading')).not.toBeInTheDocument());
     });
 
+    test('asks for the link of this attachment on this task, as the host the user acts for', async () => {
+        getAttachmentViewUrl.mockResolvedValue('https://example.com/photo.jpg');
+
+        render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+
+        await screen.findByAltText('photo.jpg');
+        expect(getAttachmentViewUrl).toHaveBeenCalledWith('tasks/host-1/photo.jpg', 'task-1', 'host-1');
+    });
+
     test('renders an image for a non-PDF attachment once resolved', async () => {
         getAttachmentViewUrl.mockResolvedValue('https://example.com/photo.jpg');
 

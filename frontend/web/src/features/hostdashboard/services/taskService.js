@@ -131,8 +131,9 @@ export const uploadTaskAttachment = async (file) => {
     return key;
 };
 
-export const getAttachmentViewUrl = async (key) => {
-    const params = new URLSearchParams({ action: 'view-url', key });
+export const getAttachmentViewUrl = async (key, taskId, asHostId = null) => {
+    const params = new URLSearchParams({ action: 'view-url', taskId, key });
+    if (asHostId) params.set('asHostId', asHostId);
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "GET",
         headers: getHeaders(),

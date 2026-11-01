@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { LuX } from 'react-icons/lu';
 import { getAttachmentViewUrl } from '../../services/taskService';
 
-const AttachmentThumb = ({ attachment, onRemove }) => {
+const AttachmentThumb = ({ attachment, taskId, asHostId, onRemove }) => {
     const [url, setUrl] = useState(null);
 
     useEffect(() => {
@@ -12,9 +12,9 @@ const AttachmentThumb = ({ attachment, onRemove }) => {
             setUrl(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
         } else {
-            getAttachmentViewUrl(attachment).then(setUrl).catch(() => {});
+            getAttachmentViewUrl(attachment, taskId, asHostId).then(setUrl).catch(() => {});
         }
-    }, [attachment]);
+    }, [attachment, taskId, asHostId]);
 
     if (!url) return <div className="attachment-thumb attachment-loading" />;
 
@@ -42,6 +42,8 @@ const AttachmentThumb = ({ attachment, onRemove }) => {
 
 AttachmentThumb.propTypes = {
     attachment: PropTypes.oneOfType([PropTypes.instanceOf(File), PropTypes.string]).isRequired,
+    taskId: PropTypes.string,
+    asHostId: PropTypes.string,
     onRemove: PropTypes.func,
 };
 

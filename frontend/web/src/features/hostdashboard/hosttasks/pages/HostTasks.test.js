@@ -19,11 +19,8 @@ jest.mock('aws-amplify', () => ({
 
 jest.mock('react-toastify', () => ({ toast: { error: jest.fn(), success: jest.fn() } }));
 
-jest.mock('../../../../hooks/useEffectiveHostId', () => () => ({
-    effectiveHostId: 'host-1',
-    managedHostId: null,
-    isPurelyPOM: false,
-}));
+const mockEffectiveHost = { effectiveHostId: 'host-1', managedHostId: null, isPurelyPOM: false };
+jest.mock('../../../../hooks/useEffectiveHostId', () => () => mockEffectiveHost);
 
 jest.mock('../../services/taskService', () => ({
     fetchTasks: jest.fn(),
@@ -301,6 +298,39 @@ describe('HostTasks', () => {
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Task has already been escalated'));
             expect(screen.getByRole('button', { name: 'Escalate' })).toBeEnabled();
+        });
+    });
+
+    describe('attachments of a task', () => {
+        const { getAttachmentViewUrl } = jest.requireMock('../../services/taskService');
+        const KEY = 'tasks/host-2/photo.jpg';
+
+        beforeEach(() => {
+            getAttachmentViewUrl.mockResolvedValue('https://signed.example/view');
+            fetchTasks.mockResolvedValue([{ ...TASK, attachments: [KEY] }]);
+        });
+
+        afterEach(() => {
+            mockEffectiveHost.managedHostId = null;
+        });
+
+        test('are linked as the co-host the user acts for while showing co-host tasks', async () => {
+            mockEffectiveHost.managedHostId = 'host-2';
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: 'Co-host tasks' }));
+            await waitFor(() => expect(fetchTasks).toHaveBeenLastCalledWith({}, 'host-2'));
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByAltText('photo.jpg');
+            expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', 'host-2');
+        });
+
+        test('are linked as the user themselves on their own tasks', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByAltText('photo.jpg');
+            expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', null);
         });
     });
 });
