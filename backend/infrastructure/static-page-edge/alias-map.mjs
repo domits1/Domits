@@ -52,19 +52,17 @@ export const replaceAliases = (source, pairs) => {
   return source.slice(0, line.index) + renderAliases(pairs) + source.slice(line.index + line[0].length);
 };
 
-const hostRulesOf = (source) =>
-  vm.runInNewContext(`${source}\n({ normalizeHostName: normalizeHostName, isHostName: isHostName })`);
+const hostRuleOf = (source) => vm.runInNewContext(`${source}\nisHostName`);
 
 export const aliasProblems = (source, pairs) => {
-  const { normalizeHostName, isHostName } = hostRulesOf(source);
-  const isNormalHost = (host) => normalizeHostName(host) === host && isHostName(host);
+  const isHostName = hostRuleOf(source);
   const aliases = new Set();
   const problems = [];
   for (const [alias, primary] of pairs) {
-    if (!isNormalHost(alias)) {
+    if (!isHostName(alias)) {
       problems.push(`${alias} is not a lowercase hostname without a port or a trailing dot`);
     }
-    if (!isNormalHost(primary)) {
+    if (!isHostName(primary)) {
       problems.push(`the primary ${primary} of ${alias} is not a lowercase hostname without a port or a trailing dot`);
     }
     if (alias === primary) {
