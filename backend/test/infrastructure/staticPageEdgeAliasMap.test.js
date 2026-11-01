@@ -149,8 +149,8 @@ describe("reading the result of the alias query", () => {
   const HEADER = "site_id\talias\talias_type\tprimary_domain";
   const row = (alias, primary) => `6156b005-88d4-4230-9bf1-2f01214cc1a0\t${alias}\tFALLBACK\t${primary}`;
 
-  it("takes the alias and primary_domain columns by name and skips the lines without a column", () => {
-    const result = [HEADER, row(ALIAS, PRIMARY), row("villasensual.nl", PRIMARY), "rows: 2", ""].join("\n");
+  it("takes the alias and primary_domain columns by name, skips blank lines and checks the closing row count", () => {
+    const result = [HEADER, row(ALIAS, PRIMARY), "", row("villasensual.nl", PRIMARY), "rows: 2", ""].join("\n");
 
     expect(parseAliasRows(result)).toEqual([
       [ALIAS, PRIMARY],
@@ -164,14 +164,26 @@ describe("reading the result of the alias query", () => {
     expect(parseAliasRows(result)).toEqual([[ALIAS, PRIMARY]]);
   });
 
-  it("reads a result without rows as an empty map", () => {
+  it("reads a result without rows as an empty map, with or without a row count", () => {
     expect(parseAliasRows(`${HEADER}\nrows: 0\n`)).toEqual([]);
+    expect(parseAliasRows(`${HEADER}\n`)).toEqual([]);
   });
 
   it.each([
-    ["nothing at all", "", /no header row/],
+    ["nothing at all", "", /needs at least its header row/],
+    ["a header without tabs", "site_id alias alias_type primary_domain", /columns alias and primary_domain/],
     ["no primary_domain column", "site_id\talias\n1\tx.example.com", /columns alias and primary_domain/],
     ["no alias column", "site_id\tprimary_domain\n1\tx.example.com", /columns alias and primary_domain/],
+    ["the alias column twice", `alias\t${HEADER}\nx.example.com\t${row(ALIAS, PRIMARY)}`, /each once/],
+    ["the primary column twice", `${HEADER}\tprimary_domain\n${row(ALIAS, PRIMARY)}\tx.example.com`, /each once/],
+    ["a row that lost its tabs", `${HEADER}\n${row(ALIAS, PRIMARY).replaceAll("\t", " ")}`, /does not have 4 columns/],
+    ["a blank looking row of spaces", `${HEADER}\n${row(ALIAS, PRIMARY)}\n   `, /does not have 4 columns/],
+    ["a row count that does not match", `${HEADER}\n${row(ALIAS, PRIMARY)}\nrows: 2`, /has 2 rows, but holds 1/],
+    [
+      "a row count before the last line",
+      `${HEADER}\n${row(ALIAS, PRIMARY)}\nrows: 1\n${row(PRIMARY, ALIAS)}`,
+      /does not have 4 columns: rows: 1/,
+    ],
     ["a row with a column too few", `${HEADER}\n1\t${ALIAS}\t${PRIMARY}`, /does not have 4 columns/],
     ["a row with a column too many", `${HEADER}\n${row(ALIAS, PRIMARY)}\textra`, /does not have 4 columns/],
   ])("refuses %s", (_name, result, message) => {

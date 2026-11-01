@@ -81,26 +81,35 @@ export const aliasProblems = (source, pairs) => {
   return problems;
 };
 
+const ROW_COUNT_PATTERN = /^rows: (\d+)$/;
+
 export const parseAliasRows = (text) => {
   const lines = text
     .split("\n")
     .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.includes("\t"));
+    .filter((line) => line !== "");
   if (lines.length === 0) {
-    throw new Error("The query result has no header row with tab separated columns.");
+    throw new Error("The query result is empty, it needs at least its header row.");
   }
   const columns = lines[0].split("\t");
-  const aliasColumn = columns.indexOf("alias");
-  const primaryColumn = columns.indexOf("primary_domain");
-  if (aliasColumn === -1 || primaryColumn === -1) {
-    throw new Error("The query result needs the columns alias and primary_domain.");
+  const isOnce = (name) => columns.filter((column) => column === name).length === 1;
+  if (!isOnce("alias") || !isOnce("primary_domain")) {
+    throw new Error("The query result needs the columns alias and primary_domain, each once.");
   }
-  return lines.slice(1).map((line) => {
+  const rows = lines.slice(1);
+  const rowCount = ROW_COUNT_PATTERN.exec(rows.at(-1) || "");
+  if (rowCount) {
+    rows.pop();
+    if (Number(rowCount[1]) !== rows.length) {
+      throw new Error(`The query result says it has ${rowCount[1]} rows, but holds ${rows.length}.`);
+    }
+  }
+  return rows.map((line) => {
     const fields = line.split("\t");
     if (fields.length !== columns.length) {
       throw new Error(`This row of the query result does not have ${columns.length} columns: ${line}`);
     }
-    return [fields[aliasColumn], fields[primaryColumn]];
+    return [fields[columns.indexOf("alias")], fields[columns.indexOf("primary_domain")]];
   });
 };
 
