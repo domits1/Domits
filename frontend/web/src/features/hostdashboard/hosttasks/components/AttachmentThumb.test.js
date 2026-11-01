@@ -98,17 +98,20 @@ describe('AttachmentThumb', () => {
         expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
     });
 
-    test('shows the link of the attachment now shown when an earlier link arrives late', async () => {
-        let resolveFirst;
+    test.each([
+        ['an earlier link arrives late', (settle) => settle.resolve('https://example.com/first.jpg')],
+        ['an earlier link is refused late', (settle) => settle.reject(new Error('Failed to get view URL: 404'))],
+    ])('keeps showing the current link when %s', async (_label, settleFirst) => {
+        const settle = {};
         getAttachmentViewUrl
-            .mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+            .mockReturnValueOnce(new Promise((resolve, reject) => Object.assign(settle, { resolve, reject })))
             .mockResolvedValueOnce('https://example.com/second.jpg');
 
         const { rerender } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" />);
         rerender(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
         expect(await screen.findByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
 
-        await act(async () => { resolveFirst('https://example.com/first.jpg'); });
+        await act(async () => { settleFirst(settle); });
         expect(screen.getByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
     });
 
