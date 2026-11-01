@@ -1,6 +1,6 @@
 # #3520 fix(tasks): only link, accept and remove the files of the caller's own task
 
-Pull request: this pull request
+Pull request: #3751
 Issue: #3520
 Reviewed commit: 3ce8b8fc6
 Result: no blocking findings
