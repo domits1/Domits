@@ -7,8 +7,8 @@ export const DEFAULT_TIMEOUT_MS = 10000;
 const MAX_MESSAGE_LENGTH = 200;
 
 export class SiteMinderApiError extends Error {
-  constructor(status, message, { code = null, traceToken = null } = {}) {
-    super(message);
+  constructor(status, message, { code = null, traceToken = null, cause } = {}) {
+    super(message, { cause });
     this.name = "SiteMinderApiError";
     this.status = status;
     this.code = code;
@@ -61,7 +61,8 @@ export class SiteMinderRestClient {
       if (controller.signal.aborted) {
         throw new SiteMinderApiError(null, `SiteMinder did not answer within ${this.timeoutMs} ms`, { traceToken });
       }
-      throw error;
+      const message = `SiteMinder request failed: ${error?.message || "network error"}`.slice(0, MAX_MESSAGE_LENGTH);
+      throw new SiteMinderApiError(null, message, { traceToken, cause: error });
     } finally {
       clearTimeout(timer);
     }
