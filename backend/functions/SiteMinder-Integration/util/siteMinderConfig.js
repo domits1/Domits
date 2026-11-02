@@ -2,7 +2,6 @@ export const SITEMINDER_CHANNEL = "SITEMINDER";
 
 const CURRENCY = /^[A-Z]{3}$/;
 
-// Domits prices in one currency and SiteMinder neither checks nor converts it, so every rate is sent in this one.
 export const readSiteMinderConfig = (env = process.env) => {
   const pmsCode = String(env.SITEMINDER_PMS_CODE ?? "").trim();
   if (!pmsCode) {

@@ -1,6 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 
-// One PMS-level login for all hotels, kept in Secrets Manager as {"username": "...", "password": "..."}.
 export class SiteMinderSecretRepository {
   constructor({ secretName, client = new SecretsManagerClient({ region: "eu-north-1" }) }) {
     this.secretName = secretName;

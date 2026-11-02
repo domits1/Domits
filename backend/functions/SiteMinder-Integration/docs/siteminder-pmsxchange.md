@@ -59,6 +59,11 @@ Anything else is refused with a `SiteMinderMappingError` before a call is made.
 
 Rates go out as `AmountBeforeTax`: the Domits base rate is the net nightly accommodation charge, before VAT and local taxes (confirmed by Stefan on 2026-10-28).
 
+## Values checked before sending
+
+- Dates are `yyyy-mm-dd` and must be a real calendar day (`isIsoDate` in `util/otaValues.js`), so 2026-02-30 is refused before it reaches SiteMinder.
+- Amounts are sent with two decimals, rounded half up on the decimal value (`toAmount`): 1.005 becomes "1.01", where `(1.005).toFixed(2)` would give "1.00".
+
 ## Configuration
 
 | Variable | Default | Meaning |

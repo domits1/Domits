@@ -20,8 +20,6 @@ const requireText = (value, label) => {
   return value.trim();
 };
 
-// Links a Domits property to a SiteMinder hotel and stores its room types and rate plans, as SiteMinder returns
-// them from Rooms and Rates. Uses the shared channel_integration_* tables, the same ones Channex uses.
 export class SiteMinderMappingService {
   constructor({ restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now = () => Date.now(), newId }) {
     Object.assign(this, { restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now, newId });
@@ -99,7 +97,6 @@ export class SiteMinderMappingService {
     });
   }
 
-  // A SiteMinder hotel code may only feed one Domits property, or two hosts would overwrite each other's inventory.
   async #checkHotelIsFree(hotelCode, accountId, domitsPropertyId) {
     for (const row of await this.props.findByExternalPropertyId(hotelCode)) {
       const owner = await this.accounts.getById(row.integrationAccountId);
@@ -113,7 +110,6 @@ export class SiteMinderMappingService {
     }
   }
 
-  // Room types and rate plans that SiteMinder no longer returns stop being valid targets.
   async #deactivateRemoved(base, rooms) {
     const roomCodes = new Set(rooms.map((room) => room.roomTypeCode));
     const planKeys = new Set(rooms.flatMap((room) => room.ratePlans.map((plan) => `${room.roomTypeCode}\u0000${plan.ratePlanCode}`)));

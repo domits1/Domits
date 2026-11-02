@@ -4,8 +4,6 @@ import { SiteMinderMappingError } from "./siteMinderMappingService.js";
 const isActive = (row) => String(row?.status ?? "").toUpperCase() === "ACTIVE";
 const planKey = (roomTypeCode, ratePlanCode) => `${roomTypeCode}\u0000${ratePlanCode}`;
 
-// SiteMinder answers Success for room types, rate plans and currencies it does not know (seen in the sandbox),
-// so nothing reaches it unless the codes are in the active mapping of the hotel and rates use our currency.
 export class SiteMinderInventoryService {
   constructor({ accounts, props, roomTypes, ratePlans, availabilityPusher, restrictionsPusher, ratesPusher, currency }) {
     Object.assign(this, { accounts, props, roomTypes, ratePlans, availabilityPusher, restrictionsPusher, ratesPusher, currency });
