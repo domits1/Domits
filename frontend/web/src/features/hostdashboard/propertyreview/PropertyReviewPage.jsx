@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { PROPERTY_REVIEW_ACCESS, checkPropertyReviewAccess } from "./propertyReviewAccess";
+import PropertyReviewQueue from "./queue/PropertyReviewQueue";
 import StateCard from "./StateCard";
 import styles from "./PropertyReviewPage.module.css";
 
@@ -42,7 +43,11 @@ function PropertyReviewPage() {
     );
   }
 
-  return <StateCard title="Property review" message="Queue coming soon" />;
+  return (
+    <StateCard title="Property review" message="Listings waiting for review.">
+      <PropertyReviewQueue />
+    </StateCard>
+  );
 }
 
 export default PropertyReviewPage;
