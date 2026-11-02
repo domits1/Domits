@@ -575,6 +575,7 @@ export class PropertyController {
                     checkIn: normalizedOverviewPayload.checkIn,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
+                    cancellationPolicy: normalizedOverviewPayload.cancellationPolicy,
                     bookingType: normalizedOverviewPayload.bookingType,
                     customRules: normalizedOverviewPayload.customRules,
                 }
@@ -804,6 +805,7 @@ export class PropertyController {
             checkIn: body.checkIn,
             amenities: body.amenities,
             rules: body.rules,
+            cancellationPolicy: body.cancellationPolicy,
             bookingType: body.bookingType,
             customRules: body.customRules,
         };
@@ -818,6 +820,7 @@ export class PropertyController {
             this.validateCheckInPayload(payload.checkIn) ||
             this.validateAmenitiesPayload(payload.amenities) ||
             this.validateRulesPayload(payload.rules) ||
+            this.validateCancellationPolicyPayload(payload.cancellationPolicy) ||
             this.validateOverviewTextContent(payload) ||
             this.validateCapacitySpaceType(payload.capacity) ||
             null
@@ -950,6 +953,16 @@ export class PropertyController {
         );
     }
 
+    validateCancellationPolicyPayload(cancellationPolicy) {
+        if (cancellationPolicy === undefined) {
+            return null;
+        }
+        if (typeof cancellationPolicy !== "string" || !cancellationPolicy.trim()) {
+            return "Cancellation policy must be a non-empty string.";
+        }
+        return null;
+    }
+
     validateCheckInPayload(checkIn) {
         if (checkIn === undefined) {
             return null;
@@ -1039,6 +1052,8 @@ export class PropertyController {
                     ).values()
                 )
                 : undefined,
+            cancellationPolicy:
+                typeof payload.cancellationPolicy === "string" ? payload.cancellationPolicy.trim() : undefined,
             bookingType: this.resolveBookingType(payload.bookingType),
         };
     }

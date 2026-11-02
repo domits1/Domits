@@ -162,6 +162,33 @@ const buildRuleValueMap = (rules) =>
       .filter(Boolean)
   );
 
+const normalizePolicyRuleName = (ruleName) => {
+  const normalizedRuleName = String(ruleName || "").trim();
+  if (!normalizedRuleName.startsWith("CancellationPolicy:")) {
+    return normalizedRuleName;
+  }
+
+  const policyId = normalizedRuleName
+    .replace("CancellationPolicy:", "")
+    .trim()
+    .toLowerCase()
+    .replaceAll(/\s+/g, "-")
+    .replaceAll("_", "-");
+
+  const policyRuleNameMap = {
+    flexible: "Flexible",
+    moderate: "Moderate",
+    limited: "Limited",
+    firm: "Firm",
+    "semi-strict": "Semi-strict",
+    strict: "Strict",
+    "super-strict": "Super-strict",
+    "non-refundable": "Non-refundable",
+  };
+
+  return policyRuleNameMap[policyId] ? `CancellationPolicy:${policyRuleNameMap[policyId]}` : normalizedRuleName;
+};
+
 const readRestrictionValue = (restrictionValueMap, restrictionKey, fallbackValue = 0) => {
   if (!restrictionValueMap.has(restrictionKey)) {
     return fallbackValue;
@@ -403,8 +430,18 @@ const buildHouseNumber = (locationData) => {
 
 const mapPropertyRulesToState = (propertyRules) => {
   const nextRules = createInitialPolicyRules();
+  const hasPersistedCancellationPolicy = propertyRules.some((rule) =>
+    String(rule?.rule || "").trim().startsWith("CancellationPolicy:")
+  );
+  if (hasPersistedCancellationPolicy) {
+    Object.keys(nextRules).forEach((ruleName) => {
+      if (ruleName.startsWith("CancellationPolicy:")) {
+        nextRules[ruleName] = false;
+      }
+    });
+  }
   propertyRules.forEach((rule) => {
-    const ruleName = String(rule?.rule || "");
+    const ruleName = normalizePolicyRuleName(rule?.rule);
     if (!Object.hasOwn(nextRules, ruleName)) {
       return;
     }

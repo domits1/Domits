@@ -29,6 +29,7 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
       bookingType: accommodationData.property.bookingType || "direct",
       testStatus: accommodationData.propertyTestStatus.isTest,
       rules: accommodationData.rules || [],
+      cancellationPolicy: accommodationData.cancellationPolicy || accommodationData.property?.cancellationPolicy || null,
     };
   } catch (error) {
     throw new NotFoundException(

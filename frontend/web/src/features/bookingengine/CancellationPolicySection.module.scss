@@ -36,14 +36,34 @@
   color: #6b5200;
 }
 
-.strict {
+.limited {
+  background: #d8f3f7;
+  color: #07505a;
+}
+
+.firm {
+  background: #fff0c2;
+  color: #6f4b00;
+}
+
+.semi_strict {
   background: #ffe5cc;
   color: #8b3500;
 }
 
-.firm {
+.strict {
+  background: #ffe0d5;
+  color: #8a2b12;
+}
+
+.super_strict {
   background: #f8d7da;
   color: #5a0f16;
+}
+
+.non_refundable {
+  background: #eceff1;
+  color: #37474f;
 }
 
 .summary {
