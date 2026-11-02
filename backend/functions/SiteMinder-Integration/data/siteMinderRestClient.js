@@ -29,11 +29,15 @@ const required = (value, label) => {
 };
 
 export class SiteMinderRestClient {
+  #secrets;
+
   constructor({ pmsCode, username, password, baseUrl = SITEMINDER_PREPROD_URL, fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     this.pmsCode = required(pmsCode, "SiteMinder pmsCode");
     required(username, "SiteMinder username");
     required(password, "SiteMinder password");
-    this.authorization = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+    const credentials = Buffer.from(`${username}:${password}`).toString("base64");
+    this.authorization = `Basic ${credentials}`;
+    this.#secrets = [credentials, password];
     this.baseUrl = baseUrl;
     this.fetchImpl = fetchImpl;
     this.timeoutMs = timeoutMs;
@@ -61,7 +65,7 @@ export class SiteMinderRestClient {
       if (controller.signal.aborted) {
         throw new SiteMinderApiError(null, `SiteMinder did not answer within ${this.timeoutMs} ms`, { traceToken });
       }
-      const message = `SiteMinder request failed: ${error?.message || "network error"}`.slice(0, MAX_MESSAGE_LENGTH);
+      const message = this.#redact(`SiteMinder request failed: ${error?.message || "network error"}`);
       throw new SiteMinderApiError(null, message, { traceToken, cause: error });
     } finally {
       clearTimeout(timer);
@@ -76,9 +80,14 @@ export class SiteMinderRestClient {
 
     if (!response.ok) {
       const { code, message } = firstError(data);
-      const shortMessage = String(message || `SiteMinder request failed with status ${response.status}`).slice(0, MAX_MESSAGE_LENGTH);
+      const shortMessage = this.#redact(String(message || `SiteMinder request failed with status ${response.status}`));
       throw new SiteMinderApiError(response.status, shortMessage, { code, traceToken });
     }
     return data;
+  }
+
+  #redact(message) {
+    const redacted = this.#secrets.reduce((text, secret) => text.split(secret).join("***"), message);
+    return redacted.slice(0, MAX_MESSAGE_LENGTH);
   }
 }
