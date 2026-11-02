@@ -7,6 +7,7 @@ import { Booking } from "../../models/Booking.js";
 import { Property_Test_Status } from "../../models/Property_Test_Status.js";
 import { Faq } from "../../models/Faq.js";
 import { EnterpriseRatePlan } from "../../models/EnterpriseRatePlan.js";
+import { DirectBookingWebsiteRatePlan } from "../../models/DirectBookingWebsiteRatePlan.js";
 import { General_Details } from "../../models/General_Details.js";
 import { Guest_Favorite } from "../../models/Guest_Favorite.js";
 import { Standalone_Site_Draft } from "../../models/Standalone_Site_Draft.js";
@@ -25,6 +26,7 @@ import { Property_Image_Variant } from "../../models/Property_Image_Variant.js";
 import { Property_Location } from "../../models/Property_Location.js";
 import { Property_Pricing } from "../../models/Property_Pricing.js";
 import { Property_Calendar_Override } from "../../models/Property_Calendar_Override.js";
+import { Property_CustomRule } from "../../models/Property_CustomRule.js";
 import { Property_Rule } from "../../models/Property_Rule.js";
 import { Property_Technical_Details } from "../../models/Property_Technical_Details.js";
 import { Property_Types } from "../../models/Property_Types.js";
@@ -50,16 +52,31 @@ import { MessageAutomation } from "../../models/automation/MessageAutomation.js"
 import { MessageAutomationDelivery } from "../../models/automation/MessageAutomationDelivery.js";
 import { BookingAutomationOutbox } from "../../models/automation/BookingAutomationOutbox.js";
 import { ChannexAriOutbox } from "../../models/channelManagement/ChannexAriOutbox.js";
+import { HomeAutomationDevice } from "../../models/homeAutomation/HomeAutomationDevice.js";
+import { AccessCredential } from "../../models/homeAutomation/AccessCredential.js";
+import { CredentialLease } from "../../models/homeAutomation/CredentialLease.js";
+import { HomeAutomationDeviceAudit } from "../../models/homeAutomation/HomeAutomationDeviceAudit.js";
 
 import { PropertyTask } from "../../models/Property_Task.js";
 import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
+import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checklist_Item.js";
 import { Host_Settings } from "../../models/Host_Settings.js";
+import { Task_Notification } from "../../models/Task_Notification.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
+import { Property_Owner } from "../../models/Property_Owner.js";
+import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
 import { Invoice } from "../../models/Invoice.js";
+
+import { Review } from "../../models/Review.js";
+import { Review_Rating } from "../../models/Review_Rating.js";
+import { Review_Category } from "../../models/Review_Category.js";
+import { Review_Request } from "../../models/Review_Request.js";
+import { Review_Response } from "../../models/Review_Response.js";
+
 
 export const Tables = [
   Amenities,
@@ -86,6 +103,7 @@ export const Tables = [
   Property_Location,
   Property_Pricing,
   Property_Calendar_Override,
+  Property_CustomRule,
   Property_Rule,
   Property_Technical_Details,
   Property_Test_Status,
@@ -112,16 +130,30 @@ export const Tables = [
   MessageAutomationDelivery,
   BookingAutomationOutbox,
   ChannexAriOutbox,
+  HomeAutomationDevice,
+  AccessCredential,
+  CredentialLease,
+  HomeAutomationDeviceAudit,
 
   User_Table,
   PropertyTask,
   Property_Task_Activity,
+  Property_Task_Checklist_Item,
   Host_Settings,
+  Task_Notification,
   Communication_Preferences,
   Company_Profile,
   Kpi_Snapshot,
   PriceLabs_Connection,
   Team_Member,
+  Property_Owner,
+  Property_Owner_Property,
   Invoice,
   EnterpriseRatePlan,
+  Review,
+  Review_Rating,
+  Review_Category,
+  Review_Request,
+  Review_Response,
+  DirectBookingWebsiteRatePlan,
 ];

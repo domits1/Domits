@@ -46,10 +46,28 @@ InvoicesTableSkeleton.propTypes = {
   rows: PropTypes.number,
 };
 
+function InvoiceState({ title, description, isError = false }) {
+  return (
+    <div
+      className={`finance-empty-state invoices-state${isError ? " invoices-state--error" : ""}`}
+      role={isError ? "alert" : "status"}
+    >
+      <strong>{title}</strong>
+      <span>{description}</span>
+    </div>
+  );
+}
+
+InvoiceState.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  isError: PropTypes.bool,
+};
+
 export default function InvoicesSection() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [autoPrint, setAutoPrint] = useState(false);
@@ -62,8 +80,11 @@ export default function InvoicesSection() {
     }
 
     getInvoices()
-      .then(setInvoices)
-      .catch(() => setError("Failed to load invoices."))
+      .then((result) => {
+        if (!Array.isArray(result)) throw new Error("Invalid invoices response");
+        setInvoices(result);
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -96,10 +117,26 @@ export default function InvoicesSection() {
       </div>
 
       {loading ? <InvoicesTableSkeleton /> : null}
-      {error ? <p className="invoices-error">{error}</p> : null}
+      {error ? (
+        <InvoiceState
+          title="We couldn't load your invoices"
+          description="We couldn't retrieve your invoices right now. Please try again later."
+          isError
+        />
+      ) : null}
 
-      {!loading && !error && filtered.length === 0 ? (
-        <p className="invoices-empty">No invoices found.</p>
+      {!loading && !error && invoices.length === 0 ? (
+        <InvoiceState
+          title="No invoices yet"
+          description="Your invoices will appear here once they're available."
+        />
+      ) : null}
+
+      {!loading && !error && invoices.length > 0 && filtered.length === 0 ? (
+        <InvoiceState
+          title="No invoices found"
+          description="No invoices match the selected filter."
+        />
       ) : null}
 
       {!loading && !error && filtered.length > 0 ? (

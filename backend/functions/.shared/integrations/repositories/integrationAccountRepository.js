@@ -94,6 +94,25 @@ class IntegrationAccountRepository {
     return next;
   }
 
+  // The status check and the write are one statement, so a concurrent disconnect cannot be overwritten.
+  async updateStatusIfCurrent(id, expectedStatus, nextStatus, { lastErrorCode, lastErrorMessage } = {}) {
+    const client = await Database.getInstance();
+
+    const result = await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({
+        status: nextStatus,
+        lastErrorCode: lastErrorCode ?? null,
+        lastErrorMessage: lastErrorMessage ?? null,
+        updatedAt: Date.now(),
+      })
+      .where("id = :id AND status = :expectedStatus", { id, expectedStatus })
+      .execute();
+
+    return result.affected > 0;
+  }
+
   async disconnect(id) {
     const client = await Database.getInstance();
 

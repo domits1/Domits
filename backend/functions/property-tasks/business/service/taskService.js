@@ -1,5 +1,8 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
+import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
+import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
+import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -10,7 +13,9 @@ const BUCKET_NAME = "domits-task-attachments";
 
 export const getTasks = async (hostId, filters) => {
     const dataSource = await Database.getInstance();
-    return await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const tasks = await taskRepository.getTasksFromDb(dataSource, hostId, filters);
+    const now = Date.now();
+    return tasks.map(task => ({ ...task, sla_status: computeSlaStatus(task, now) }));
 };
 
 export const createTask = async (hostId, taskData) => {
@@ -40,6 +45,7 @@ export const createTask = async (hostId, taskData) => {
         assignee_team_member_id: taskData.assignee_team_member_id || null,
         parent_task_id: parentTaskId,
         attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
+        source: taskData.source || null,
         created_at: Date.now(),
         updated_at: Date.now()
     };
@@ -53,10 +59,14 @@ export const createTask = async (hostId, taskData) => {
         newValue: 'Task created'
     });
 
+    if (newTask.assignee_team_member_id) {
+        await notifyTaskAssigned(hostId, newTask);
+    }
+
     return newTask;
 };
 
-export const updateTask = async (hostId, taskId, updateData) => {
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
@@ -65,6 +75,8 @@ export const updateTask = async (hostId, taskId, updateData) => {
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
+
+    delete fieldsToUpdate.escalated_at;
 
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
@@ -120,13 +132,28 @@ export const updateTask = async (hostId, taskId, updateData) => {
         fieldsToUpdate.attachments = newKeys.length > 0 ? JSON.stringify(newKeys) : null;
     }
 
-    if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
+    const isNewlyCompleted = fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed';
+    if (isNewlyCompleted) {
+        const checklistItems = await taskRepository.getChecklistItemsForTask(dataSource, taskId);
+        const hasIncompleteRequiredItems = checklistItems.some(item => item.is_required && !item.is_checked);
+        if (hasIncompleteRequiredItems) {
+            throw new BadRequestException("Cannot complete task: required checklist items are not all checked");
+        }
         fieldsToUpdate.completed_date = Date.now();
     }
 
     fieldsToUpdate.updated_at = Date.now();
 
-    await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    if (isNewlyCompleted) {
+        // Two people can complete a task at the same moment. The write only applies while the task is
+        // not completed, so one of them wins and only that one logs and notifies.
+        const applied = await taskRepository.updateTaskUnlessCompleted(dataSource, taskId, fieldsToUpdate);
+        if (!applied) {
+            return { message: "Task updated successfully" };
+        }
+    } else {
+        await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    }
 
     await logActivity(dataSource, {
         taskId,
@@ -136,7 +163,53 @@ export const updateTask = async (hostId, taskId, updateData) => {
         newValue: JSON.stringify(fieldsToUpdate)
     });
 
+    const isNewAssignee = Boolean(fieldsToUpdate.assignee_team_member_id)
+        && fieldsToUpdate.assignee_team_member_id !== oldTask.assignee_team_member_id;
+    if (isNewAssignee) {
+        await notifyTaskAssigned(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
+
+    // A host who completes their own task already knows, so only a team member's completion is worth an email.
+    if (isNewlyCompleted && actorIsTeamMember) {
+        await notifyTaskCompleted(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
+
     return { message: "Task updated successfully" };
+};
+
+export const escalateTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    if (!task) throw new Error("Task not found or access denied");
+
+    if (task.escalated_at) {
+        throw new BadRequestException("Task has already been escalated");
+    }
+
+    if (RESOLVED_STATUSES.has(task.status)) {
+        throw new BadRequestException("Task is already closed");
+    }
+
+    const escalated_at = Date.now();
+    const claimed = await taskRepository.escalateTaskInDb(dataSource, taskId, hostId, escalated_at);
+    if (!claimed) {
+        throw new BadRequestException("Task has already been escalated");
+    }
+
+    try {
+        const recipientEmail = task.assignee_team_member_id
+            ? await getAssigneeEmailById(task.assignee_team_member_id, hostId)
+            : await getHostEmailById(hostId);
+        await sendTaskEscalationEmail(recipientEmail, task);
+    } catch (emailError) {
+        console.error("[escalateTask] Failed to send the escalation email:", emailError);
+        await taskRepository.updateTaskInDb(dataSource, taskId, { escalated_at: null });
+        throw new Error("Failed to send the escalation email. Please try again or contact support.");
+    }
+
+    return { message: "Task escalated successfully" };
 };
 
 export const deleteTask = async (hostId, taskId) => {
@@ -188,6 +261,9 @@ const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
     const teamMember = await taskRepository.getTeamMemberById(dataSource, teamMemberId, hostId);
     if (!teamMember) {
         throw new BadRequestException("assignee_team_member_id does not belong to this host");
+    }
+    if (teamMember.status !== "active") {
+        throw new BadRequestException("assignee_team_member_id must be an active team member of this host");
     }
     return teamMember.member_email;
 };

@@ -51,7 +51,7 @@ function ChannexCertificationAdminPageInner() {
           <p className="host-integrations-eyebrow">Internal admin</p>
           <h1>Not authorized</h1>
           <p className="host-integrations-muted">
-            This Channex certification workspace is limited to internal allowlisted users.
+            These Channex diagnostics are limited to internal allowlisted users.
           </p>
         </section>
       </main>
@@ -63,10 +63,10 @@ function ChannexCertificationAdminPageInner() {
       <header className="channex-admin-hero">
         <div>
           <p className="host-integrations-eyebrow">Internal admin</p>
-          <h1>Channex Certification</h1>
+          <h1>Channex diagnostics</h1>
           <p>
-            Certification diagnostics for Channex connection health, mappings, ARI previews, sync evidence, booking
-            revisions, and controlled manual actions.
+            Diagnostics for Channex connection health, mappings, ARI previews, sync evidence, booking revisions, and
+            controlled manual actions.
           </p>
         </div>
       </header>

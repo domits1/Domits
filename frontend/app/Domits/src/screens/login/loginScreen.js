@@ -2,18 +2,48 @@ import React, {useState} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {signIn} from '@aws-amplify/auth'; // Correct import for Amplify Auth
+import {useTranslation} from 'react-i18next';
 import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 import {Label} from '@aws-amplify/ui-react-native/src/primitives';
 import LoadingScreen from "../loadingscreen/screens/LoadingScreen";
 import {ACCOUNT_HOME_SCREEN, HOME_SCREEN, REGISTER_SCREEN} from "../../navigation/utils/NavigationNameConstants";
+import useSignInChallenge from '../../features/auth/hooks/useSignInChallenge';
+import MfaCodeView from './views/MfaCodeView';
+
+const TOTP_SIGN_IN_STEP = 'CONFIRM_SIGN_IN_WITH_TOTP_CODE';
+const SESSION_EXPIRED_MESSAGE =
+  'Your sign-in session expired. Please sign in again.';
+const UNSUPPORTED_SIGN_IN_MESSAGE =
+  'This sign-in method is not supported yet. Please contact support.';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
+  const {t} = useTranslation();
   const {checkAuth, isAuthenticated} = useAuth(); // Get the checkAuth method from context
   const [formData, setFormData] = useState({email: '', password: ''});
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const completeSignIn = async () => {
+    await checkAuth();
+    navigation.navigate(HOME_SCREEN);
+  };
+
+  const returnToPasswordForm = message => {
+    setFormData(prevFormData => ({...prevFormData, password: ''}));
+    setErrorMessage(message);
+  };
+
+  const challenge = useSignInChallenge({
+    onSuccess: completeSignIn,
+    onSessionExpired: () => returnToPasswordForm(t(SESSION_EXPIRED_MESSAGE)),
+  });
+
+  const handleBackToLogin = () => {
+    challenge.cancelChallenge();
+    returnToPasswordForm('');
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -35,10 +65,19 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     const {email, password} = formData;
+    setErrorMessage('');
     try {
-      await signIn({username: email, password}); // Ensure the correct parameters
-      checkAuth(); // Update the global auth state
-      navigation.navigate(HOME_SCREEN)
+      const {isSignedIn, nextStep} = await signIn({username: email, password}); // Ensure the correct parameters
+      const signInStep = nextStep?.signInStep;
+      if (isSignedIn || signInStep === 'DONE') {
+        await completeSignIn();
+        return;
+      }
+      if (signInStep === TOTP_SIGN_IN_STEP) {
+        challenge.startChallenge();
+        return;
+      }
+      setErrorMessage(t(UNSUPPORTED_SIGN_IN_MESSAGE));
     } catch (error) {
       setErrorMessage('Invalid username or password. Please try again.');
     }
@@ -51,6 +90,15 @@ const LoginScreen = () => {
   if (loading) {
     return (
       <LoadingScreen/>
+    );
+  } else if (challenge.isChallengePending) {
+    return (
+      <MfaCodeView
+        isSubmitting={challenge.isSubmitting}
+        errorKey={challenge.errorKey}
+        onVerify={challenge.verifyCode}
+        onBack={handleBackToLogin}
+      />
     );
   } else {
     return (

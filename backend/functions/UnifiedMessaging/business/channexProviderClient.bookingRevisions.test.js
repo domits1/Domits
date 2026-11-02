@@ -1,15 +1,7 @@
-const ChannexProviderClient = require("../.shared/channelManagement/providers/channex/providerClient.js").default;
+const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = require("./channexProviderClientTestUtils.js");
 
-const originalFetch = global.fetch;
-const CREDENTIALS = { apiKey: "test-api-key" };
 const PROPERTY_ID = "ext-property-1";
 const REVISION_ID = "revision-1";
-
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(body),
-});
 
 const revisionRow = (overrides = {}) => ({
   id: REVISION_ID,
@@ -64,15 +56,11 @@ const REVISION_METHODS = [
 ];
 
 describe("ChannexProviderClient booking revisions", () => {
+  useMockedFetch();
   let client;
 
   beforeEach(() => {
     client = new ChannexProviderClient();
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
   });
 
   describe("missing apiKey short-circuits before any request", () => {
@@ -173,21 +161,79 @@ describe("ChannexProviderClient booking revisions", () => {
     );
   });
 
+  // The booking webhook retries only temporary failures (429, 5xx, network), so the HTTP status must
+  // survive even when Channex sends its own error code, which replaces the status-based fallback code.
+  describe("feed and acknowledge failures report the HTTP status", () => {
+    const FEED_AND_ACK = REVISION_METHODS.filter(({ method }) => method !== "getBookingRevision");
+
+    it.each(FEED_AND_ACK)("$method reports httpStatus 429 when rate limited", async ({ call }) => {
+      global.fetch.mockResolvedValue(jsonResponse(429, {}));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ success: false, httpStatus: 429 });
+    });
+
+    it.each(FEED_AND_ACK)("$method keeps httpStatus when Channex sends its own error code", async ({ call }) => {
+      global.fetch.mockResolvedValue(jsonResponse(422, { errors: { code: "SOME_CHANNEX_CODE", title: "Rejected." } }));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ errorCode: "SOME_CHANNEX_CODE", httpStatus: 422 });
+    });
+
+    it.each(FEED_AND_ACK)("$method reports a null httpStatus when the request never got a response", async ({ call }) => {
+      global.fetch.mockRejectedValue(new Error("socket hang up"));
+
+      const result = await call(client);
+
+      expect(result).toMatchObject({ success: false, httpStatus: null });
+    });
+  });
+
   describe("listBookingRevisionFeed", () => {
-    test("requests the feed filtered by property and ordered by insertion time", async () => {
+    // The feed is paginated; its meta (total, limit, page) is passed on for the webhook's page reading and log line.
+    test("returns the response meta next to the revisions", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [], meta: { page: 1, total: 12 } }));
+
+      const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+      expect(result.meta).toEqual({ page: 1, total: 12 });
+    });
+
+    test("returns a null meta when the response has none", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
+
+      const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+      expect(result.meta).toBeNull();
+    });
+
+    // Channex list endpoints return 10 items unless asked for more; 100 is the maximum it accepts.
+    test("requests the largest feed page, filtered by property and ordered by insertion time", async () => {
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
 
       await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
 
       const [url, init] = global.fetch.mock.calls[0];
       expect(url.toString()).toBe(
-        "https://staging.channex.io/api/v1/booking_revisions/feed?filter%5Bproperty_id%5D=ext-property-1&order%5Binserted_at%5D=asc"
+        "https://staging.channex.io/api/v1/booking_revisions/feed?filter%5Bproperty_id%5D=ext-property-1&order%5Binserted_at%5D=asc&pagination%5Blimit%5D=100"
       );
       expect(init.method).toBe("GET");
       expect(init.headers).toMatchObject({
         "user-api-key": "test-api-key",
         "Content-Type": "application/json",
       });
+    });
+
+    test("asks for a specific feed page when one is given", async () => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
+
+      await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID, page: 2 });
+
+      const [url] = global.fetch.mock.calls[0];
+      expect(url.searchParams.get("pagination[page]")).toBe("2");
+      expect(url.searchParams.get("pagination[limit]")).toBe("100");
     });
 
     test("maps a revision row onto the normalized shape", async () => {
@@ -214,6 +260,7 @@ describe("ChannexProviderClient booking revisions", () => {
         currency: "EUR",
         insertedAt: "2026-05-20T10:00:00Z",
         guestName: "Ada Lovelace",
+        guestCount: null,
         rooms: [{ roomTypeId: "ext-room-1", ratePlanId: "ext-rate-1" }],
         ratePlanId: "ext-rate-1",
         roomTypeId: "ext-room-1",
@@ -263,19 +310,20 @@ describe("ChannexProviderClient booking revisions", () => {
       });
     });
 
+    // Channex sends the first name as customer.name and the last name as customer.surname.
     describe("guest name resolution", () => {
       it.each([
         {
-          description: "uses customer.name when present",
-          customer: { name: "Ada Lovelace" },
+          description: "joins name and surname",
+          customer: { name: "Ada", surname: "Lovelace" },
           expected: "Ada Lovelace",
         },
+        { description: "uses the name alone when there is no surname", customer: { name: "Ada" }, expected: "Ada" },
         {
-          description: "joins first and last name when name is absent",
-          customer: { first_name: "Ada", last_name: "Lovelace" },
-          expected: "Ada Lovelace",
+          description: "uses the surname alone when there is no name",
+          customer: { surname: "Lovelace" },
+          expected: "Lovelace",
         },
-        { description: "uses first name alone", customer: { first_name: "Ada" }, expected: "Ada" },
         { description: "is null when no name parts exist", customer: {}, expected: null },
       ])("$description", async ({ customer, expected }) => {
         global.fetch.mockResolvedValue(jsonResponse(200, { data: [revisionRow({ customer })] }));
@@ -283,6 +331,53 @@ describe("ChannexProviderClient booking revisions", () => {
         const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
 
         expect(result.revisions[0].guestName).toBe(expected);
+      });
+    });
+
+    // Infants are left out: they do not count towards a stay's guest maximum.
+    describe("guest count resolution", () => {
+      it.each([
+        {
+          description: "counts adults from the booking occupancy",
+          overrides: { occupancy: { adults: 2, children: 0, infants: 0 } },
+          expected: 2,
+        },
+        {
+          description: "adds children and leaves infants out",
+          overrides: { occupancy: { adults: 2, children: 1, infants: 1 } },
+          expected: 3,
+        },
+        {
+          description: "sums the room occupancies when the booking has none",
+          overrides: {
+            rooms: [
+              { room_type_id: "ext-room-1", occupancy: { adults: 2, children: 1 } },
+              { room_type_id: "ext-room-2", occupancy: { adults: 1, children: 0 } },
+            ],
+          },
+          expected: 4,
+        },
+        {
+          description: "is null when no occupancy is given",
+          overrides: {},
+          expected: null,
+        },
+        {
+          description: "is null when the occupancy counts no guests",
+          overrides: { occupancy: { adults: 0, children: 0, infants: 1 } },
+          expected: null,
+        },
+        {
+          description: "ignores counts that are not whole non-negative numbers",
+          overrides: { occupancy: { adults: "2", children: -1 } },
+          expected: 2,
+        },
+      ])("$description", async ({ overrides, expected }) => {
+        global.fetch.mockResolvedValue(jsonResponse(200, { data: [revisionRow(overrides)] }));
+
+        const result = await client.listBookingRevisionFeed(CREDENTIALS, { externalPropertyId: PROPERTY_ID });
+
+        expect(result.revisions[0].guestCount).toBe(expected);
       });
     });
   });

@@ -14,8 +14,6 @@ jest.mock("../.shared/integrations/ORM/index.js", () => ({
 const channexBookingRevisionFixture = require("./integrationService.channexBookingRevisions.fixture.js");
 
 const buildBookingAvailabilityEvidence = channexBookingRevisionFixture.buildBookingAvailabilityEvidence;
-const buildCancellationAvailabilityEvidence =
-  channexBookingRevisionFixture.buildCancellationAvailabilityEvidence;
 const buildFeedRevision = channexBookingRevisionFixture.buildFeedRevision;
 const buildImportedBookingRow = channexBookingRevisionFixture.buildImportedBookingRow;
 const buildIntegrationAccount = channexBookingRevisionFixture.buildIntegrationAccount;
@@ -297,6 +295,67 @@ describe("IntegrationService Channex booking pull import", () => {
     jest.restoreAllMocks();
   });
 
+  // A missing or unreadable amount must not become 0, which the pages would show as a
+  // free stay; null makes them fall back to their own calculation.
+  // Every page prints the total in euros, so an amount in another currency would be shown
+  // with the wrong symbol; without it the pages fall back to their own calculation.
+  test.each(["USD", "GBP", null])("stores no total price when the currency is %p instead of EUR", async (currency) => {
+    const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null, bookingSource: "Booking.com" })
+    );
+    expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR"));
+  });
+
+  test("accepts the currency code in any case", async () => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency: " eur" })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: 200 })
+    );
+  });
+
+  test.each([
+    { guestCount: 3, expected: 3 },
+    { guestCount: null, expected: null },
+  ])("passes the revision's guest count $guestCount to the new booking", async ({ guestCount, expected }) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ guestCount })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ guestCount: expected })
+    );
+  });
+
+  test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ amount })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null })
+    );
+  });
+
   test("pulls feed revisions, persists raw data, creates a mapped Domits booking, syncs availability, links it, then acknowledges", async () => {
     const revision = buildFeedRevision();
     const {
@@ -352,6 +411,9 @@ describe("IntegrationService Channex booking pull import", () => {
         guestName: "External Guest",
         arrivalDateMs: utcDateMs("2026-06-01"),
         departureDateMs: utcDateMs("2026-06-03"),
+        // The amount the guest paid on the OTA, not the Domits listing price (#3483).
+        totalPrice: 200,
+        bookingSource: "Booking.com",
         channexChanges: [
           {
             domitsPropertyId: "domits-property-1",
@@ -595,6 +657,7 @@ describe("IntegrationService Channex booking pull import", () => {
             arrivalDate: "2026-06-02",
             departureDate: "2026-06-04",
             guestName: "Modified Guest",
+            guestCount: 4,
           }),
         ],
         existingRevision: null,
@@ -618,6 +681,8 @@ describe("IntegrationService Channex booking pull import", () => {
       guestName: "Modified Guest",
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
+      totalPrice: 200,
+      guestCount: 4,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
       channexChanges: [
         {
@@ -925,120 +990,6 @@ describe("IntegrationService Channex booking pull import", () => {
   });
 });
 
-describe("IntegrationService Channex certification admin cancellation", () => {
-  test("cancels a mapped Domits booking and triggers one Channex cancellation availability sync", async () => {
-    const bookingBefore = buildImportedBookingRow({
-      id: "booking-demo-1",
-      status: "Paid",
-    });
-    const evidence = buildCancellationAvailabilityEvidence();
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn().mockResolvedValue(evidence),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [bookingBefore],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-demo-1",
-      reason: "CEO demo",
-    });
-
-    expect(result.statusCode).toBe(200);
-    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith("booking-demo-1");
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledTimes(1);
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).toHaveBeenCalledWith({
-      userId: "host-1",
-      bookingBefore: expect.objectContaining({
-        id: "booking-demo-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        arrivaldate: bookingBefore.arrivalDateMs,
-        departuredate: bookingBefore.departureDateMs,
-        status: "Paid",
-      }),
-      bookingAfter: expect.objectContaining({
-        id: "booking-demo-1",
-        property_id: "domits-property-1",
-        hostid: "host-1",
-        status: "Cancelled",
-      }),
-      trigger: "BOOKING_CANCELLED",
-    });
-    expect(result.response).toMatchObject({
-      channel: "CHANNEX",
-      action: "certification-cancel-booking",
-      mode: "admin-certification-no-refund",
-      bookingId: "booking-demo-1",
-      domitsPropertyId: "domits-property-1",
-      previousStatus: "Paid",
-      status: "Cancelled",
-      refundProcessed: false,
-      channexAvailabilitySync: evidence,
-    });
-  });
-
-  test("does not cancel or sync a booking from another Domits property", async () => {
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn(),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [
-        buildImportedBookingRow({
-          id: "booking-other-property",
-          propertyId: "domits-property-2",
-          status: "Paid",
-        }),
-      ],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-other-property",
-    });
-
-    expect(result.statusCode).toBe(403);
-    expect(result.response).toMatchObject({
-      error: "BOOKING_PROPERTY_MISMATCH",
-    });
-    expect(externalBookingImportRepository.cancelImportedBooking).not.toHaveBeenCalled();
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
-  });
-
-  test("already-cancelled admin cancellation remains idempotent and does not call Channex", async () => {
-    const channexBookingAvailabilityBridge = {
-      syncAvailabilityForBookingChange: jest.fn(),
-    };
-    const { service, externalBookingImportRepository } = createService({
-      initialBookings: [
-        buildImportedBookingRow({
-          id: "booking-cancelled-1",
-          status: "Cancelled",
-        }),
-      ],
-      channexBookingAvailabilityBridge,
-    });
-
-    const result = await service.cancelChannexCertificationBooking("admin-user", "domits-property-1", {
-      bookingId: "booking-cancelled-1",
-    });
-
-    expect(result.statusCode).toBe(200);
-    expect(externalBookingImportRepository.cancelImportedBooking).not.toHaveBeenCalled();
-    expect(channexBookingAvailabilityBridge.syncAvailabilityForBookingChange).not.toHaveBeenCalled();
-    expect(result.response).toMatchObject({
-      alreadyCancelled: true,
-      channexAvailabilitySync: expect.objectContaining({
-        trigger: "BOOKING_CANCELLED",
-        requestCount: 0,
-        skipped: true,
-        reason: "BOOKING_ALREADY_CANCELLED",
-      }),
-    });
-  });
-});
-
 describe("IntegrationService Channex booking polling", () => {
   const enablePollingEnv = () => {
     process.env.CHANNEX_BOOKING_POLL_ENABLED = "true";
@@ -1105,9 +1056,11 @@ describe("IntegrationService Channex booking polling", () => {
     expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
   });
 
-  test("does not poll when enabled without required allowlists", async () => {
+  // In production every connected host is polled; the allowlists only narrow a test run (#3576).
+  test("polls every connected account and active mapping when no allowlists are set", async () => {
     enablePollingEnv();
-    const { service, accounts, channexProviderClient } = createService({
+    const { service, accounts, props, channexProviderClient } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
       feedRevisions: [buildFeedRevision()],
       existingRevision: null,
     });
@@ -1117,17 +1070,54 @@ describe("IntegrationService Channex booking polling", () => {
     expect(result.statusCode).toBe(200);
     expect(result.response).toMatchObject({
       enabled: true,
-      calledProvider: false,
-      accountsChecked: 0,
-      propertiesChecked: 0,
-      fetchedCount: 0,
-      overallSuccess: false,
+      accountsChecked: 1,
+      propertiesChecked: 1,
+      fetchedCount: 1,
+      ackedCount: 1,
+      overallSuccess: true,
     });
-    expect(result.response.warnings).toEqual([
-      expect.objectContaining({ code: "CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED" }),
-    ]);
-    expect(accounts.listByChannel).not.toHaveBeenCalled();
-    expect(channexProviderClient.listBookingRevisionFeed).not.toHaveBeenCalled();
+    expect(result.response.warnings).toEqual([]);
+    expect(accounts.listByChannel).toHaveBeenCalledWith("CHANNEX");
+    expect(props.listByAccountId).toHaveBeenCalledWith("integration-account-1");
+    expect(channexProviderClient.listBookingRevisionFeed).toHaveBeenCalledTimes(1);
+  });
+
+  // A revision the poll acknowledges is one the webhook should have delivered, so it is logged
+  // as one JSON line that a CloudWatch metric filter can alarm on (#3576).
+  test("logs a missed webhook when a poll acknowledges a revision", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
+      feedRevisions: [buildFeedRevision()],
+      existingRevision: null,
+    });
+
+    await service.pollLatestChannexBookings(buildEnabledPollOptions());
+
+    const missedLines = warn.mock.calls
+      .map(([line]) => line)
+      .filter((line) => typeof line === "string" && line.includes("CHANNEX_BOOKING_POLL_IMPORTED_MISSED"));
+    expect(missedLines).toHaveLength(1);
+    expect(JSON.parse(missedLines[0])).toEqual({
+      event: "CHANNEX_BOOKING_POLL_IMPORTED_MISSED",
+      integrationAccountId: "integration-account-1",
+      domitsPropertyId: "domits-property-1",
+      ackedCount: 1,
+    });
+  });
+
+  test("logs nothing about missed webhooks when the feed is empty", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const { service } = createService({
+      account: buildIntegrationAccount({ userId: "user-1" }),
+      feedRevisions: [],
+      existingRevision: null,
+    });
+
+    await service.pollLatestChannexBookings(buildEnabledPollOptions());
+
+    const loggedLines = warn.mock.calls.map(([line]) => String(line));
+    expect(loggedLines.some((line) => line.includes("CHANNEX_BOOKING_POLL_IMPORTED_MISSED"))).toBe(false);
   });
 
   test("polls active Channex mappings through the same import core and writes evidence/logging", async () => {

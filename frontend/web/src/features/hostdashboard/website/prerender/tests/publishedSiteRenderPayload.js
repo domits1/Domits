@@ -1,7 +1,6 @@
 const DEFAULT_SITE = Object.freeze({
   id: "bf378265-b563-4406-9c38-5232d8c1f7ae",
   propertyId: "ecd926d9-67dc-4d0a-9b40-2884d0838406",
-  hostId: "dac2b1dc-c8e4-446b-b5d3-4d65646d7ed0",
   siteName: "Wellness Villa Bisous",
   primaryLocale: "en",
   status: "PUBLISHED",
@@ -11,7 +10,6 @@ const DEFAULT_SITE = Object.freeze({
 
 const DEFAULT_DOMAIN = Object.freeze({
   domain: "wellness-villa-bisous-bf378265.direct.domits.com",
-  domainType: "FALLBACK",
   status: "ACTIVE",
   isPrimary: true,
 });
@@ -19,7 +17,6 @@ const DEFAULT_DOMAIN = Object.freeze({
 const buildResolution = (site, domain) => ({
   siteId: site.id,
   propertyId: site.propertyId,
-  hostId: site.hostId,
   templateKey: site.templateKey,
   primaryLocale: site.primaryLocale,
   siteName: site.siteName,
@@ -27,6 +24,14 @@ const buildResolution = (site, domain) => ({
   publishedAt: site.publishedAt,
   isReachable: site.status === "PUBLISHED" && domain.status === "ACTIVE",
   domain,
+});
+
+const toPublicSite = ({ id, siteName, primaryLocale, status, templateKey }) => ({
+  id,
+  siteName,
+  primaryLocale,
+  status,
+  templateKey,
 });
 
 export const buildPublishedSiteRenderPayload = ({
@@ -40,7 +45,7 @@ export const buildPublishedSiteRenderPayload = ({
     { ...DEFAULT_SITE, ...siteOverrides },
     { ...DEFAULT_DOMAIN, ...domainOverrides }
   ),
-  site: { ...DEFAULT_SITE, ...siteOverrides },
+  site: toPublicSite({ ...DEFAULT_SITE, ...siteOverrides }),
   domain: { ...DEFAULT_DOMAIN, ...domainOverrides },
   propertySnapshot: {
     property: {
@@ -73,8 +78,8 @@ export const buildPublishedSiteRenderPayload = ({
     rules: [{ rule: "smoking", value: false }],
     checkIn: { checkIn: { from: "15:00" }, checkOut: { till: "11:00" } },
     images: [
-      { image_id: "first", sort_order: 0, status: "READY", web_key: "images/property/first/web.jpg" },
-      { image_id: "second", sort_order: 1, status: "READY", web_key: "images/property/second/web.jpg" },
+      { image_id: "00000000-0000-4000-8000-000000000001", sort_order: 0, status: "READY", web_key: "images/ecd926d9-67dc-4d0a-9b40-2884d0838406/00000000-0000-4000-8000-000000000001/web.jpg" },
+      { image_id: "00000000-0000-4000-8000-000000000002", sort_order: 1, status: "READY", web_key: "images/ecd926d9-67dc-4d0a-9b40-2884d0838406/00000000-0000-4000-8000-000000000002/web.jpg" },
     ],
     hostProfile: { givenName: "Amara" },
     ...propertySnapshotOverrides,

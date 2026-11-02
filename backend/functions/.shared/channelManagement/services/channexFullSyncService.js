@@ -57,19 +57,19 @@ const normalizeChannexFullSyncDebugStage = (value) => {
 const buildChannexFullSyncErrorDetails = (stage, error) => ({
   stage,
   errorName: error?.name ?? null,
-  errorMessage: error?.message ?? "Unhandled Channex full certification sync error.",
+  errorMessage: error?.message ?? "Unhandled Channex full sync error.",
   details: describeLocalError(error),
   stackSummary: summarizeErrorStack(error),
 });
 const createCertificationFullSyncBaseNotes = (usingDefaultDateRange) => {
   const notes = [
-    "Manual staging certification-prep runner only. This endpoint executes exactly one availability sync request and one restrictions/rates sync request for the selected full range.",
+    "Full sync: one availability request and one restrictions/rates request for the selected range.",
     "Restrictions sync sends rate values and can include mapped stop_sell, closed_to_arrival, closed_to_departure, min_stay_through, and max_stay fields when supported Domits calendar/global restrictions are present.",
     "Domits currently maps minimum stay to Channex min_stay_through only; min_stay_arrival is not claimed by this backend because Domits has no separate safe arrival-based minimum-stay source field.",
   ];
   if (usingDefaultDateRange) {
     notes.push(
-      `No explicit date range was supplied, so the certification full-sync used ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS}-day UTC date range starting from today.`
+      `No explicit date range was supplied, so the full sync used a ${CHANNEX_CERTIFICATION_FULL_SYNC_DAYS}-day UTC date range starting from today.`
     );
   }
   return notes;
@@ -182,14 +182,14 @@ export default class ChannexFullSyncService {
       plan.push({
         step: "availability",
         payloads: availabilityPayloads,
-        emptyReason: "No availability values were generated for the requested certification full-sync range.",
+        emptyReason: "No availability values were generated for the requested full sync range.",
       });
     }
     if (providerMode !== "availabilityOnly") {
       plan.push({
         step: "restrictions",
         payloads: restrictionPayloads,
-        emptyReason: "No rate or supported restriction values were generated for the requested certification full-sync range.",
+        emptyReason: "No rate or supported restriction values were generated for the requested full sync range.",
       });
     }
     return plan;
@@ -365,7 +365,7 @@ export default class ChannexFullSyncService {
   buildChannexFullSyncNotes({ usingDefaultDateRange, dryRun, debugStage, providerMode }) {
     const baseNotes = createCertificationFullSyncBaseNotes(usingDefaultDateRange);
     baseNotes.push(
-      `Full certification sync runtime marker: ${CHANNEX_FULL_SYNC_DEFAULTS.VERSION}.`,
+      `Full sync version: ${CHANNEX_FULL_SYNC_DEFAULTS.VERSION}.`,
       `Real non-debug full sync sends exactly one availability request and one rates/restrictions request to Channex when both payloads contain values.`,
       `Provider requests use a controlled ${CHANNEX_FULL_SYNC_DEFAULTS.PROVIDER_REQUEST_TIMEOUT_MS} ms timeout so slow Channex responses return JSON instead of hanging the API request.`
     );
@@ -988,7 +988,7 @@ export default class ChannexFullSyncService {
     const response = combinedErrors.length
       ? bad(500, {
           ...responseBody,
-          error: "Channex certification full sync provider step failed.",
+          error: "A Channex full sync provider step failed.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_PROVIDER_FAILED",
         })
       : ok(responseBody);
@@ -1326,7 +1326,7 @@ export default class ChannexFullSyncService {
           stage,
           dryRun,
           providerMode,
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
           errorName: errorDetails.errorName,
           errorMessage: errorDetails.errorMessage,
@@ -1343,7 +1343,7 @@ export default class ChannexFullSyncService {
           errors: [
             {
               errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
-              errorMessage: "Failed to run Channex certification full sync.",
+              errorMessage: "Failed to run the Channex full sync.",
               details: errorDetails.details,
               stage,
             },

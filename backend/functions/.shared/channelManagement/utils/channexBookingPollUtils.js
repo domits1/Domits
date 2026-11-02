@@ -32,11 +32,10 @@ const parseCsvAllowlist = (value) => {
   );
 };
 
+// An empty allowlist means every connected account or active mapping: the backup poll covers
+// every host in production, and a list only narrows a test run (#3576).
 export const allowlistIncludes = (allowlist, value) =>
   allowlist.size === 0 || allowlist.has(requireStr(value));
-
-export const hasRequiredChannexBookingPollAllowlists = (config) =>
-  config.accountIds.size > 0 && config.domitsPropertyIds.size > 0;
 
 export const isActiveChannexPropertyMapping = (mapping) =>
   String(mapping?.status || "").toUpperCase() === "ACTIVE";

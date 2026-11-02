@@ -70,6 +70,52 @@ describe("messagingService unified REST client", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  test("sendUnifiedMessage attaches the saved failed message when /send returns 502", async () => {
+    const savedFailedMessage = {
+      id: "message-1",
+      threadId: "thread-1",
+      content: "Hello guest",
+      deliveryStatus: "failed",
+      errorCode: "THREAD_NOT_FOUND",
+    };
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => JSON.stringify(savedFailedMessage),
+    });
+
+    await expect(
+      sendUnifiedMessage({
+        senderId: "host-1",
+        recipientId: "CHANNEX_GUEST:booking-1",
+        content: "Hello guest",
+        platform: "CHANNEX",
+        token: "access-token-1",
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("502"),
+      savedMessage: savedFailedMessage,
+    });
+  });
+
+  test("sendUnifiedMessage does not attach a saved message when the error body is not a failed message", async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => "Bad Gateway",
+    });
+
+    const error = await sendUnifiedMessage({
+      senderId: "host-1",
+      recipientId: "host-2",
+      content: "Hello",
+      token: "access-token-1",
+    }).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.savedMessage).toBeUndefined();
+  });
+
   test("markThreadRead posts to /threads/{id}/read with the Cognito ID token", async () => {
     globalThis.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ threadId: "thread-1", updated: 2 }) });
 

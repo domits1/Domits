@@ -24,7 +24,7 @@ const RatePlanCard = ({ to, title, subtitle, note, linkClassName }) => (
 
 const HostSettingsRatePlans = () => {
   const { t, hub } = useSettingsTrans("ratePlans");
-  const { hostOnlyFee, directBooking, enterprise } = t;
+  const { hostOnlyFee, directBooking, enterprise, websitePlan } = t;
 
   return (
     <SettingsSubPage
@@ -67,6 +67,14 @@ const HostSettingsRatePlans = () => {
             subtitle={enterprise.cardSubtitle}
             note={enterprise.cardNote}
             linkClassName="rate-plan-enterprise-link"
+          />
+
+          <RatePlanCard
+            to="/hostdashboard/settings/rate-plans/direct-booking-website"
+            title={websitePlan.cardTitle}
+            subtitle={websitePlan.cardSubtitle}
+            note={websitePlan.cardNote}
+            linkClassName="rate-plan-website-link"
           />
         </div>
       </section>

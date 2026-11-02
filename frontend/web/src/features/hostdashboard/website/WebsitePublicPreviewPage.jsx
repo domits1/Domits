@@ -76,7 +76,9 @@ function WebsitePublicPreviewPage() {
           return;
         }
 
-        const nextPropertyDetails = await enrichWebsitePropertyDetails(nextPayload.propertyDetails);
+        const nextPropertyDetails = await enrichWebsitePropertyDetails(nextPayload.propertyDetails, null, {
+          hostSession: true,
+        });
         if (!isMounted || nextPropertyDetails === nextPayload.propertyDetails) {
           return;
         }
