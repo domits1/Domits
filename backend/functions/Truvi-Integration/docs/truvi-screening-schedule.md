@@ -16,6 +16,7 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`.
 3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
    The retry sends the same `echoToken`, because it is derived from the booking id. If the first call did reach Truvi, Truvi answers `400 echoToken (...) already exists from a previous request` with the earlier `verificationId`. The run then reads that verification (`GET /v1/verificationRequests/{id}`) and saves its result, so a booking never gets two Truvi verifications. The same happens when the Truvi call worked but saving the result failed.
+   The token is `createEchoToken(bookingId)` in `util/truviMapper.js`: a UUID-shaped sha256 of `domits:truvi:create:<bookingId>`. Only the create uses it. Modify and cancel send a random `echoToken`, because each of those requests is new for Truvi.
 4. Fails the run (so CloudWatch shows an error) when a booking could not be handled at all, for example when the database is down.
 
 ## What One Cancel Run Does

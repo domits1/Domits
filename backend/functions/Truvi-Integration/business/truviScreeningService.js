@@ -2,7 +2,6 @@ import { bookingToCreateRequest, mapCreateResponse } from "../util/truviMapper.j
 
 const ECHO_TOKEN_USED = "already exists from a previous request";
 
-// A retry of a create that already went through: Truvi refuses the reused token and names the first verification.
 export const isEchoTokenReuse = (error) =>
   error?.status === 400 && Boolean(error.verificationId) && String(error.message ?? "").includes(ECHO_TOKEN_USED);
 

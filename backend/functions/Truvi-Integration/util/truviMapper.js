@@ -31,8 +31,6 @@ function toTruviTimestamp(date) {
   return date.toISOString().slice(0, 22);
 }
 
-// Same booking, same token. Truvi refuses a reused token with a 400 that carries the earlier verificationId,
-// so a retry after a timeout or a failed save never creates a second verification.
 export function createEchoToken(bookingId) {
   if (!bookingId) {
     throw new Error("bookingId is required for the Truvi echo token");
