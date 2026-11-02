@@ -126,7 +126,7 @@ describe('HostTasks', () => {
             fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
 
             await waitFor(() => expect(createChecklistItem).toHaveBeenCalledTimes(2));
-            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ type: 'Maintenance' }));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ type: 'Maintenance' }), null);
             expect(deleteChecklistItem).toHaveBeenCalledWith('item-1');
             expect(createChecklistItem).toHaveBeenNthCalledWith(1, 'task-1', { title: 'Check the boiler', isRequired: true });
             expect(createChecklistItem).toHaveBeenNthCalledWith(2, 'task-1', { title: 'Test the smoke alarm', isRequired: false });
@@ -393,6 +393,7 @@ describe('HostTasks', () => {
             getAttachmentViewUrl.mockResolvedValue('https://signed.example/view');
             uploadTaskAttachment.mockRejectedValue(new Error(REFUSAL));
             fetchTasks.mockResolvedValue([{ ...TASK, attachments: [KEY] }]);
+            mockEffectiveHost.managedHostId = 'host-2';
             global.URL.createObjectURL = jest.fn(() => 'blob:plan');
             global.URL.revokeObjectURL = jest.fn();
         });
@@ -401,8 +402,8 @@ describe('HostTasks', () => {
             mockEffectiveHost.managedHostId = null;
         });
 
-        test('are linked as the co-host the user acts for while showing co-host tasks', async () => {
-            mockEffectiveHost.managedHostId = 'host-2';
+        test('are linked, uploaded and saved as the co-host the user acts for while showing co-host tasks', async () => {
+            uploadTaskAttachment.mockResolvedValue('tasks/host-2/new.svg');
             render(<HostTasks />);
             fireEvent.click(await screen.findByRole('button', { name: 'Co-host tasks' }));
             await waitFor(() => expect(fetchTasks).toHaveBeenLastCalledWith({}, 'host-2'));
@@ -410,6 +411,10 @@ describe('HostTasks', () => {
 
             await screen.findByAltText('photo.jpg');
             expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', 'host-2');
+            addFile('task-attachments-edit');
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+            await waitFor(() => expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ attachments: [KEY, 'tasks/host-2/new.svg'] }), 'host-2'));
+            expect(uploadTaskAttachment).toHaveBeenCalledWith(expect.any(File), 'host-2');
         });
 
         test('are linked as the user themselves on their own tasks', async () => {
@@ -431,6 +436,7 @@ describe('HostTasks', () => {
             fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
+            expect(uploadTaskAttachment).toHaveBeenCalledWith(expect.any(File), null);
             expect(updateTask).not.toHaveBeenCalled();
             expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
         });

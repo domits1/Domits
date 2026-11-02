@@ -225,7 +225,7 @@ const HostTasks = () => {
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
 
         try {
-            await updateTask(task.id, { status: newStatus });
+            await updateTask(task.id, { status: newStatus }, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
             alert(error.message || "Error updating task status");
@@ -283,7 +283,7 @@ const HostTasks = () => {
 
     const uploadAttachmentsOrWarn = async (files) => {
         try {
-            return await Promise.all(files.map(uploadTaskAttachment));
+            return await Promise.all(files.map((file) => uploadTaskAttachment(file, asHostId)));
         } catch (error) {
             toast.error(error.message || 'A file could not be uploaded. Please try again.');
             return null;
@@ -311,7 +311,7 @@ const HostTasks = () => {
             const attachmentUrls = await uploadAttachmentsOrWarn(newTask.attachments || []);
             if (!attachmentUrls) return;
 
-            let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls }, asHostId);
 
             await persistDraftChecklist(created.id, newTask.checklistItems);
 
@@ -688,7 +688,7 @@ const HostTasks = () => {
         if (!shouldSwitchChecklist) closeForm();
 
         try {
-            await updateTask(finalTask.id, finalTask);
+            await updateTask(finalTask.id, finalTask, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");

@@ -74,8 +74,9 @@ export const fetchTasks = async (filters = {}, asHostId = null) => {
     return tasks.map(normalizeTask);
 };
 
-export const createTask = async (taskData) => {
-    const response = await fetch(TASKS_API_URL, {
+export const createTask = async (taskData, asHostId = null) => {
+    const url = asHostId ? `${TASKS_API_URL}?${new URLSearchParams({ asHostId })}` : TASKS_API_URL;
+    const response = await fetch(url, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(toBackendPayload(taskData)),
@@ -89,8 +90,10 @@ export const createTask = async (taskData) => {
     return normalizeTask(created);
 };
 
-export const updateTask = async (taskId, updateData) => {
-    const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
+export const updateTask = async (taskId, updateData, asHostId = null) => {
+    const params = new URLSearchParams({ id: taskId });
+    if (asHostId) params.set("asHostId", asHostId);
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "PATCH",
         headers: getHeaders(),
         body: JSON.stringify(toBackendPayload(updateData)),
@@ -104,12 +107,13 @@ export const updateTask = async (taskId, updateData) => {
     return await response.json();
 };
 
-export const uploadTaskAttachment = async (file) => {
+export const uploadTaskAttachment = async (file, asHostId = null) => {
     const params = new URLSearchParams({
         action: 'upload-url',
         fileType: file.type,
         fileSize: String(file.size),
     });
+    if (asHostId) params.set('asHostId', asHostId);
 
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "GET",

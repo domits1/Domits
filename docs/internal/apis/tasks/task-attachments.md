@@ -15,7 +15,7 @@ Every attachment endpoint works for the host the signed-in user acts for, worked
 | The file is not empty | 400 `An empty file cannot be attached` |
 | The file is at most 20 MB | 400 `A file can be at most 20 MB` |
 
-The server names the file `tasks/<host id>/<new id>.<extension of the type>`. `fileName` is not read. The upload link works for 5 minutes, and only for a `PUT` with exactly the signed `Content-Type` and `Content-Length`. The web checks the answer of that `PUT`, so a file that did not arrive is never saved on the task. A refused file shows its reason, and the form stays open.
+The server names the file `tasks/<host id>/<new id>.<extension of the type>`. `fileName` is not read. The upload link works for 5 minutes, and only for a `PUT` with exactly the signed `Content-Type` and `Content-Length`. The web checks the answer of that `PUT`, so a file that did not arrive is never saved on the task. A refused file shows its reason, and the form stays open. In the co-host tasks view the web sends `asHostId`, so the file goes to that host's folder.
 
 ## Showing a file
 
@@ -31,7 +31,7 @@ The link works for 1 hour. The web sends the task id, and `asHostId` in the co-h
 
 ## Saving the list on a task
 
-On create and update, `attachments` must be a list (400 `attachments must be a list of uploaded files`), and every file added must lie directly in the host's folder (400 `attachments can only hold files uploaded for this host`). A file the task already holds is kept as it is. `null` or `[]` clears the list.
+On create and update, `attachments` must be a list (400 `attachments must be a list of uploaded files`), and every file added must lie directly in the host's folder (400 `attachments can only hold files uploaded for this host`). A file the task already holds is kept as it is. `null` or `[]` clears the list. In the co-host tasks view the web sends `asHostId` with the create and the update.
 
 ## Removing files
 
