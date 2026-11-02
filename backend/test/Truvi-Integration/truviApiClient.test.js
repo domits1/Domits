@@ -96,6 +96,23 @@ describe("TruviApiClient", () => {
     expect(error.message).toBe("Truvi did not answer within 20 ms");
   });
 
+  test("stops waiting when the response body does not arrive in time", async () => {
+    const fetchImpl = jest.fn((_url, { signal }) =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(new Error("aborted")))),
+      })
+    );
+    const client = new TruviApiClient({ subscriptionKey: "test-key", fetchImpl, timeoutMs: 20 });
+
+    const error = await client.createVerification(request).catch((e) => e);
+
+    expect(error).toBeInstanceOf(TruviApiError);
+    expect(error.status).toBeNull();
+    expect(error.message).toBe("Truvi did not answer within 20 ms");
+  });
+
   test("still throws a clear error when the error body is not JSON", async () => {
     const fetchImpl = jest.fn().mockResolvedValue({ ok: false, status: 503, text: async () => "Service Unavailable" });
     const client = new TruviApiClient({ subscriptionKey: "test-key", fetchImpl });

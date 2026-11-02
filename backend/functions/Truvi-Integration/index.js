@@ -1,10 +1,12 @@
 import { createTruviScreener } from "./business/createTruviScreener.js";
 import { createTruviCanceller } from "./business/createTruviCanceller.js";
+import { createTruviModifier } from "./business/createTruviModifier.js";
 import { TruviSecretRepository } from "./data/truviSecretRepository.js";
 import { readTruviConfig } from "./util/truviConfig.js";
 
 export const SCREEN_TASK = "screen-pending-bookings";
 export const CANCEL_TASK = "cancel-cancelled-bookings";
+export const MODIFY_TASK = "modify-changed-bookings";
 
 export const isScreeningEnabled = (env = process.env) => String(env.TRUVI_SCREENING_ENABLED ?? "").trim() === "true";
 
@@ -13,18 +15,19 @@ const createSecretRepository = () => new TruviSecretRepository({ secretName: rea
 export const createHandler = ({
   createScreener = createTruviScreener,
   createCanceller = createTruviCanceller,
+  createModifier = createTruviModifier,
   secretRepositoryFactory = createSecretRepository,
   env = process.env,
 } = {}) => {
   let secretRepository = null;
-  const tasks = { [SCREEN_TASK]: createScreener, [CANCEL_TASK]: createCanceller };
+  const tasks = { [SCREEN_TASK]: createScreener, [CANCEL_TASK]: createCanceller, [MODIFY_TASK]: createModifier };
 
   return async (event = {}) => {
     const createRunner = tasks[event?.task];
     if (!createRunner) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: `Unknown task, expected ${SCREEN_TASK} or ${CANCEL_TASK}` }),
+        body: JSON.stringify({ message: `Unknown task, expected ${SCREEN_TASK}, ${CANCEL_TASK} or ${MODIFY_TASK}` }),
       };
     }
 

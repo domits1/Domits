@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { CANCEL_TASK, createHandler, SCREEN_TASK } from "../../functions/Truvi-Integration/index.js";
+import { CANCEL_TASK, createHandler, MODIFY_TASK, SCREEN_TASK } from "../../functions/Truvi-Integration/index.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -116,5 +116,22 @@ describe("Truvi-Integration handler", () => {
     });
 
     await expect(handler({ task: CANCEL_TASK })).rejects.toThrow("Truvi cancel-cancelled-bookings left 1 failures");
+  });
+
+  it("runs the modifier for the modify task", async () => {
+    const modifier = { run: jest.fn(async () => ({ listed: 0, modified: 0, recorded: 0, refused: 0, retryLater: 0, errors: [] })) };
+    const createModifier = jest.fn(async () => modifier);
+    const handler = createHandler({
+      createScreener: jest.fn(),
+      createCanceller: jest.fn(),
+      createModifier,
+      secretRepositoryFactory: () => ({}),
+      env: { TRUVI_SCREENING_ENABLED: "true" },
+    });
+
+    const response = await handler({ task: MODIFY_TASK, limit: 4 });
+
+    expect(modifier.run).toHaveBeenCalledWith({ limit: 4 });
+    expect(response.statusCode).toBe(200);
   });
 });

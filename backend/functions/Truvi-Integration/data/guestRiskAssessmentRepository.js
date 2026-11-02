@@ -1,9 +1,18 @@
 import Database from "database";
 import { GuestRiskAssessment } from "database/models/unified/integrations/GuestRiskAssessment";
+import { withDsqlRetry } from "../.shared/dsqlRetry.js";
+import { randomInt } from "node:crypto";
 
 export const TRUVI_PROVIDER = "truvi";
 
 const assessmentId = (provider, bookingId) => `${provider}:${bookingId}`;
+
+const UNIQUE_VIOLATION = "23505";
+
+const randomJitterMs = () => randomInt(20, 51);
+
+export const withWriteRetry = (work, options = {}) =>
+  withDsqlRetry(work, { jitterMs: randomJitterMs, ...options, retryCodes: [UNIQUE_VIOLATION] });
 
 export class GuestRiskAssessmentRepository {
   async getRepository() {
@@ -11,7 +20,11 @@ export class GuestRiskAssessmentRepository {
     return client.getRepository(GuestRiskAssessment);
   }
 
-  async saveResult({ provider = TRUVI_PROVIDER, bookingId, result, now = Date.now() }) {
+  async saveResult(args) {
+    return withWriteRetry(() => this.#saveResultOnce(args));
+  }
+
+  async #saveResultOnce({ provider = TRUVI_PROVIDER, bookingId, result, arrivalDate, departureDate, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to save a risk assessment");
     }
@@ -28,6 +41,8 @@ export class GuestRiskAssessmentRepository {
       status: result.status,
       flaggedReason: result.flaggedReason ?? null,
       errorMessage: result.error?.message ?? null,
+      arrivalDate: arrivalDate ?? existing?.arrivalDate ?? null,
+      departureDate: departureDate ?? existing?.departureDate ?? null,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -42,6 +57,26 @@ export class GuestRiskAssessmentRepository {
     }
     const repository = await this.getRepository();
     await repository.update({ id: assessmentId(provider, bookingId) }, { status, errorMessage, updatedAt: now });
+  }
+
+  async saveTruviDates({ provider = TRUVI_PROVIDER, bookingId, arrivalDate, departureDate, errorMessage, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to save the Truvi dates");
+    }
+    const changes = { arrivalDate, departureDate, updatedAt: now };
+    if (errorMessage !== undefined) {
+      changes.errorMessage = errorMessage;
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, changes);
+  }
+
+  async markAttempt({ provider = TRUVI_PROVIDER, bookingId, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to mark a Truvi attempt");
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, { updatedAt: now });
   }
 
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {

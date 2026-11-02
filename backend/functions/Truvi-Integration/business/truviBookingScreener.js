@@ -1,5 +1,8 @@
 import { DEFAULT_CHANNEL } from "../util/truviMapper.js";
 
+const sentDates = (booking, result) =>
+  result.providerAssessmentId ? { arrivalDate: booking.arrivaldate, departureDate: booking.departuredate } : {};
+
 const isRetryableError = (error) => !error || error.status === null || error.status === undefined || error.status >= 500;
 
 export class TruviBookingScreener {
@@ -29,7 +32,7 @@ export class TruviBookingScreener {
           continue;
         }
 
-        await this.assessmentRepository.saveResult({ bookingId, result, now });
+        await this.assessmentRepository.saveResult({ bookingId, result, now, ...sentDates(candidate.booking, result) });
         summary.saved += 1;
         if (result.rejectedInput) {
           summary.rejected += 1;

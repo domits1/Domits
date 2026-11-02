@@ -36,11 +36,13 @@ const CATALOG_COLUMNS = [
   "status",
   "flaggedreason",
   "errormessage",
+  "arrivaldate",
+  "departuredate",
   "createdat",
   "updatedat",
 ];
 
-const NULLABLE_COLUMNS = ["providerassessmentid", "flaggedreason", "errormessage"];
+const NULLABLE_COLUMNS = ["providerassessmentid", "flaggedreason", "errormessage", "arrivaldate", "departuredate"];
 
 const loadMetadata = async () => {
   const dataSource = new DataSource({
