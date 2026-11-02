@@ -6,7 +6,7 @@ import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import '../styles/HostTasks.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask } from '../../services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask, approveTask, rejectTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
 import { HOST_ASSIGNEE_ID, resolveAssigneeSelection, resolveAssigneeDisplayName } from '../utils/assigneeSelection';
@@ -74,6 +74,7 @@ const HostTasks = () => {
 
     const [viewingTask, setViewingTask] = useState(null);
     const [isEscalating, setIsEscalating] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
@@ -761,6 +762,41 @@ const HostTasks = () => {
         }
     };
 
+    const reviewViewingTask = async (review, successMessage, changesToTask) => {
+        if (isReviewing) return;
+        const taskId = viewingTask.id;
+        setIsReviewing(true);
+        try {
+            await review(taskId, asHostId);
+        } catch (error) {
+            toast.error(error.message || "Error saving the decision");
+            return;
+        } finally {
+            setIsReviewing(false);
+        }
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...changesToTask } : t));
+        toast.success(successMessage);
+        setViewingTask(null);
+        setEditedTask(null);
+    };
+
+    const ownEmail = currentUser.email.toLowerCase();
+    const isAssignedToCurrentUser = Boolean(viewingTask?.assignee_team_member_id)
+        && ownEmail !== ''
+        && (viewingTask.assignee || '').toLowerCase() === ownEmail;
+
+    const handleApproveTask = () => reviewViewingTask(
+        approveTask,
+        "Task approved. The assignee will receive an email.",
+        { approved_at: Date.now() }
+    );
+
+    const handleRejectTask = () => reviewViewingTask(
+        rejectTask,
+        "Task rejected and reopened. The assignee will receive an email.",
+        { status: 'In progress', completed_date: null, completedAt: null, approved_at: null }
+    );
+
     const handleDeleteSingleTask = () => {
         setConfirmDialog({
             isOpen: true,
@@ -1080,6 +1116,10 @@ const HostTasks = () => {
                 onRemoveChecklistItem={handleRemoveChecklistItem}
                 onRetryChecklistLoad={handleRetryChecklistLoad}
                 onEscalate={handleEscalateTask}
+                onApprove={handleApproveTask}
+                onReject={handleRejectTask}
+                canReview={!isAssignedToCurrentUser}
+                isReviewing={isReviewing}
                 isEscalating={isEscalating}
             />
 

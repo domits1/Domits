@@ -24,6 +24,8 @@ const ACTION_ROUTES = {
     POST: {
         'checklist': 'createChecklistItem',
         'escalate': 'escalateTask',
+        'approve': 'approveTask',
+        'reject': 'rejectTask',
     },
     PATCH: {
         'checklist': 'updateChecklistItem',

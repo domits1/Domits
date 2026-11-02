@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Auth } from 'aws-amplify';
 import { toast } from 'react-toastify';
 import HostTasks from './HostTasks';
-import { updateTask, fetchTasks, escalateTask } from '../../services/taskService';
+import { updateTask, fetchTasks, escalateTask, approveTask, rejectTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
 import {
@@ -32,6 +32,8 @@ jest.mock('../../services/taskService', () => ({
     deleteTask: jest.fn(),
     uploadTaskAttachment: jest.fn(),
     escalateTask: jest.fn(),
+    approveTask: jest.fn(),
+    rejectTask: jest.fn(),
     getAttachmentViewUrl: jest.fn(),
 }));
 
@@ -230,6 +232,84 @@ describe('HostTasks', () => {
                 releaseDelete({});
                 await waitFor(() => expect(screen.queryByLabelText('Type')).not.toBeInTheDocument());
             });
+        });
+    });
+
+    describe('approving or rejecting a completed task', () => {
+        const COMPLETED = { ...TASK, status: 'Completed', completed_date: 1700000000000 };
+
+        const openCompletedTask = async () => {
+            fetchTasks.mockResolvedValue([COMPLETED]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: 'All Tasks' }));
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await screen.findByRole('button', { name: 'Approve' });
+        };
+
+        beforeEach(() => {
+            approveTask.mockResolvedValue({ message: 'Task approved' });
+            rejectTask.mockResolvedValue({ message: 'Task rejected and reopened' });
+        });
+
+        test('approving sends the decision, closes the task, and shows it as approved when reopened', async () => {
+            await openCompletedTask();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+            await waitFor(() => expect(approveTask).toHaveBeenCalledWith('task-1', null));
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument());
+            expect(toast.success).toHaveBeenCalled();
+
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            expect(await screen.findByText('Approved')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+        });
+
+        test('rejecting sends the decision and reopens the task as In progress', async () => {
+            await openCompletedTask();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+
+            await waitFor(() => expect(rejectTask).toHaveBeenCalledWith('task-1', null));
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument());
+
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            expect(await screen.findByRole('button', { name: '● In progress' })).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+        });
+
+        test('a second click while the first decision is still being sent does not send another', async () => {
+            let finishApproval;
+            approveTask.mockReturnValue(new Promise(resolve => { finishApproval = resolve; }));
+            await openCompletedTask();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+            expect(approveTask).toHaveBeenCalledTimes(1);
+            finishApproval({ message: 'Task approved' });
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument());
+        });
+
+        test('the assignee of a completed task is not offered Approve or Reject on their own task', async () => {
+            fetchTasks.mockResolvedValue([{ ...COMPLETED, assignee: 'Alex@Example.com', assignee_team_member_id: 'member-1' }]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: 'All Tasks' }));
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByRole('button', { name: 'Cancel' });
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('keeps the task open and shows why when the decision fails', async () => {
+            approveTask.mockRejectedValue(new Error('Task is no longer waiting for a decision'));
+            await openCompletedTask();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Task is no longer waiting for a decision'));
+            expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
         });
     });
 
