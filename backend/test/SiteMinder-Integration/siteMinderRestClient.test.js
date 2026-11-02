@@ -89,11 +89,46 @@ describe("SiteMinderRestClient", () => {
     expect(error.message).toBe("SiteMinder did not answer within 20 ms");
   });
 
-  test("does not put the password on the error", async () => {
-    const fetchImpl = fakeFetch(401, { errors: [{ code: "UnauthorizedError" }] });
+  test("wraps a network error in a SiteMinderApiError with the trace token", async () => {
+    const networkError = new TypeError("fetch failed");
+    const fetchImpl = jest.fn().mockRejectedValue(networkError);
 
     const error = await client(fetchImpl).getRoomRates("PMSXTEST1").catch((e) => e);
 
-    expect(JSON.stringify({ ...error, message: error.message })).not.toContain("p@ss");
+    expect(error).toBeInstanceOf(SiteMinderApiError);
+    expect(error.status).toBeNull();
+    expect(error.message).toBe("SiteMinder request failed: fetch failed");
+    expect(error.traceToken).toBe(fetchImpl.mock.calls[0][1].headers["X-SM-TRACE-TOKEN"]);
+    expect(error.cause).toBe(networkError);
+  });
+
+  test("wraps an error while reading the body too", async () => {
+    const fetchImpl = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => {
+        throw new Error("socket hang up");
+      },
+    });
+
+    const error = await client(fetchImpl).getRoomRates("PMSXTEST1").catch((e) => e);
+
+    expect(error).toBeInstanceOf(SiteMinderApiError);
+    expect(error.message).toBe("SiteMinder request failed: socket hang up");
+    expect(error.traceToken).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  test("does not put the password on the error, even when SiteMinder echoes it back", async () => {
+    const authorization = Buffer.from("user:p@ss").toString("base64");
+    const fetchImpl = fakeFetch(401, {
+      errors: [{ code: "UnauthorizedError", message: `Invalid password p@ss in Basic ${authorization}` }],
+    });
+
+    const error = await client(fetchImpl).getRoomRates("PMSXTEST1").catch((e) => e);
+
+    const serialized = JSON.stringify({ ...error, message: error.message });
+    expect(serialized).not.toContain("p@ss");
+    expect(serialized).not.toContain(authorization);
+    expect(error.message).toBe("Invalid password *** in Basic ***");
   });
 });

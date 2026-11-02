@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, jest, test } from "@jest/globals";
 import { groupByRoomType, mapRoomRates } from "../../functions/SiteMinder-Integration/util/roomRates.js";
 
 const response = [
@@ -16,8 +16,26 @@ describe("mapRoomRates", () => {
     ]);
   });
 
-  test("skips an entry without a roomTypeCode", () => {
-    expect(mapRoomRates([{ ratePlanCode: "BAR" }])).toEqual([]);
+  test("skips an entry without a roomTypeCode and logs how many were skipped", () => {
+    const logger = { warn: jest.fn() };
+
+    expect(mapRoomRates([{ ratePlanCode: "BAR" }, { roomTypeCode: " " }, response[0]], { logger })).toHaveLength(1);
+
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(logger.warn.mock.calls[0][0])).toEqual({
+      event: "SITEMINDER_ROOM_RATES_SKIPPED",
+      reason: "missing roomTypeCode",
+      skipped: 2,
+      total: 3,
+    });
+  });
+
+  test("logs nothing when every entry has a roomTypeCode", () => {
+    const logger = { warn: jest.fn() };
+
+    mapRoomRates(response, { logger });
+
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   test("refuses a response that is not a list", () => {
