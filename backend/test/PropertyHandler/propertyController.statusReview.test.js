@@ -201,6 +201,7 @@ describe("no direct route to ACTIVE is left", () => {
 
   it.each(["INACTIVE", "ARCHIVED"])("updatePropertyStatus still writes %s, which archive-on-delete needs", async (status) => {
     const service = new PropertyService();
+    service.directBookingWebsiteSiteRepository = { getSiteByPropertyId: jest.fn().mockResolvedValue(null) };
     const metadata = { archivedBy: "host-1" };
     service.propertyRepository = {
       updatePropertyStatus: jest.fn(),

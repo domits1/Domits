@@ -29,6 +29,8 @@ import { DirectBookingWebsiteDomainRepository } from "../../data/repository/dire
 import { StaticPageStore } from "../../data/repository/staticPageStore.js";
 import { CloudFrontTenantRepository } from "../../data/repository/cloudFrontTenantRepository.js";
 import { StaticPageWithdrawal } from "./staticPageWithdrawal.js";
+import { WebsiteUnpublisher } from "./websiteUnpublisher.js";
+import { DirectBookingWebsiteEventRepository } from "../../data/repository/directBookingWebsiteEventRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -90,6 +92,12 @@ export class PropertyService {
     this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
     this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
     this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
+    this.directBookingWebsiteEventRepository = new DirectBookingWebsiteEventRepository(systemManagerRepository);
+    this.websiteUnpublisher = new WebsiteUnpublisher({
+      siteRepository: this.directBookingWebsiteSiteRepository,
+      domainRepository: this.directBookingWebsiteDomainRepository,
+      eventRepository: this.directBookingWebsiteEventRepository,
+    });
     this.destinationMappingService = new DestinationMappingService();
   }
 
@@ -115,6 +123,34 @@ export class PropertyService {
       console.error(`[StaticPage] withdrawing the page of site ${site.id} failed; the listing was not deleted.`, error);
       throw new ServiceUnavailableException(
         "The website of this listing could not be taken offline, so the listing was not deleted. Please try again in a few minutes."
+      );
+    }
+  }
+
+  async takeDownWebsiteUnlessActive(propertyId, nextStatus, { statusWritten = false } = {}) {
+    if (nextStatus === "ACTIVE") {
+      return;
+    }
+    try {
+      const site = await this.directBookingWebsiteSiteRepository.getSiteByPropertyId(propertyId);
+      if (site?.status !== "PUBLISHED") {
+        return;
+      }
+      await this.websiteUnpublisher.takeDown({
+        site,
+        hostId: site.hostId,
+        propertyId,
+        reason: "property_not_active",
+      });
+    } catch (error) {
+      console.error(
+        `[Website] taking the site of property ${propertyId} offline failed; its status ${statusWritten ? "was already changed" : "was not changed"}.`,
+        error
+      );
+      throw new ServiceUnavailableException(
+        statusWritten
+          ? "The listing status was changed, but its website could not be taken offline yet."
+          : "The website of this listing could not be taken offline, so the listing status was not changed. Please try again in a few minutes."
       );
     }
   }
@@ -211,7 +247,9 @@ export class PropertyService {
       return property;
     }
 
+    await this.takeDownWebsiteUnlessActive(propertyId, normalizedStatus);
     await this.propertyRepository.updatePropertyStatus(propertyId, normalizedStatus, metadata);
+    await this.takeDownWebsiteUnlessActive(propertyId, normalizedStatus, { statusWritten: true });
     const updatedProperty = await this.getBasePropertyInfo(propertyId);
     if (updatedProperty?.status !== normalizedStatus) {
       throw new DatabaseException("Property status update was not completed.");

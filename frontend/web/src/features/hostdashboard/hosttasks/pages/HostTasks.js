@@ -73,6 +73,7 @@ const HostTasks = () => {
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
     const [viewingTask, setViewingTask] = useState(null);
+    const [isEscalating, setIsEscalating] = useState(false);
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
@@ -743,13 +744,20 @@ const HostTasks = () => {
     };
 
     const handleEscalateTask = async () => {
+        if (isEscalating) return;
         const taskId = viewingTask.id;
+        setIsEscalating(true);
         try {
             await escalateTask(taskId);
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at: Date.now() } : t));
+            const escalated_at = Date.now();
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at } : t));
+            setViewingTask(prev => (prev?.id === taskId ? { ...prev, escalated_at } : prev));
+            setEditedTask(prev => (prev?.id === taskId ? { ...prev, escalated_at } : prev));
             toast.success("Task escalated. The assignee will receive an email shortly.");
         } catch (error) {
             toast.error(error.message || "Error escalating task");
+        } finally {
+            setIsEscalating(false);
         }
     };
 
@@ -1100,6 +1108,7 @@ const HostTasks = () => {
                 onEscalate={handleEscalateTask}
                 onApprove={handleApproveTask}
                 onReject={handleRejectTask}
+                isEscalating={isEscalating}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />

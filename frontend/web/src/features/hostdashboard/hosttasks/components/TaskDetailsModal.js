@@ -14,6 +14,8 @@ const STATUS_OPTIONS = [
     { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
 ];
 
+const CLOSED_STATUSES = ['Completed', 'Cancelled'];
+
 const PRIORITY_OPTIONS = [
     { value: 'Low',    label: 'Low',    cls: 'priority-low' },
     { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
@@ -44,6 +46,7 @@ const TaskDetailsModal = ({
     onEscalate,
     onApprove,
     onReject,
+    isEscalating = false,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -59,6 +62,7 @@ const TaskDetailsModal = ({
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
     const isApproved = viewingTask.status === 'Completed' && Boolean(viewingTask.approved_at);
     const isWaitingForReview = viewingTask.status === 'Completed' && !viewingTask.approved_at;
+    const canEscalate = !CLOSED_STATUSES.includes(viewingTask.status) && !viewingTask.escalated_at;
     // Nothing happens to the checklist until Save: a different Type here only changes the form.
     const isSwitchingType = editedTask.type !== viewingTask.type;
 
@@ -255,8 +259,8 @@ const TaskDetailsModal = ({
                             </>
                         )}
 
-                        {viewingTask.slaStatus === 'BREACHED' && (
-                            <button className="btn-escalate" onClick={onEscalate}>Escalate</button>
+                        {canEscalate && (
+                            <button className="btn-escalate" onClick={onEscalate} disabled={isEscalating}>Escalate</button>
                         )}
 
                         {isUnchanged ? (
@@ -305,6 +309,7 @@ TaskDetailsModal.propTypes = {
     onEscalate: PropTypes.func.isRequired,
     onApprove: PropTypes.func.isRequired,
     onReject: PropTypes.func.isRequired,
+    isEscalating: PropTypes.bool,
 };
 
 export default TaskDetailsModal;

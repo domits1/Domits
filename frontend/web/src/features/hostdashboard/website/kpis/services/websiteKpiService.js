@@ -1,6 +1,6 @@
-import { getAccessToken } from "../../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../../hostproperty/constants";
 import { getApiErrorMessage } from "../../../hostproperty/utils/hostPropertyUtils";
+import { fetchWithWebsiteSession } from "../../services/websiteSession";
 import {
   EMPTY_WEBSITE_KPIS,
   WEBSITE_KPI_COUNT_FIELD_KEYS,
@@ -8,15 +8,6 @@ import {
 } from "../websiteKpiFields";
 
 const buildWebsiteKpisUrl = () => `${PROPERTY_API_BASE}/website/kpis`;
-
-const getRequiredAccessToken = () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to view website KPIs.");
-  }
-
-  return accessToken;
-};
 
 const normalizeNumericMetric = (value) => {
   const parsedValue = Number(value);
@@ -32,12 +23,9 @@ const normalizeMetricGroup = (parsedBody, fieldKeys, normalizer) =>
   Object.fromEntries(fieldKeys.map((fieldKey) => [fieldKey, normalizer(parsedBody?.[fieldKey])]));
 
 export const fetchWebsiteKpis = async () => {
-  const response = await fetch(buildWebsiteKpisUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteKpisUrl(), {
     method: "GET",
     cache: "no-store",
-    headers: {
-      Authorization: getRequiredAccessToken(),
-    },
   });
 
   if (!response.ok) {

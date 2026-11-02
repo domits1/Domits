@@ -17,6 +17,7 @@ import { StaticPageStore } from "../data/repository/staticPageStore.js";
 import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
+import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
@@ -27,9 +28,11 @@ import responseHeaders from "../util/constant/responseHeader.json" with { type: 
 import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
+import { Forbidden } from "../util/exception/Forbidden.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
+import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -649,7 +652,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
-            await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
 
             const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
             return {
@@ -694,7 +697,7 @@ export class PropertyController {
             }
 
             const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
-            const hostId = await this.authManager.authorizePropertyCalendarOverrideRequest(accessToken, propertyId);
+            const hostId = await this.authManager.authorizePropertyOwnerOrCoHostRequest(accessToken, propertyId);
             const previousOverrides = await this.getPreviousCalendarOverridesForChanges(propertyId, normalizedOverrides);
             const channexChanges = this.buildChannexCalendarChanges(propertyId, previousOverrides, normalizedOverrides);
 
@@ -1665,6 +1668,10 @@ export class PropertyController {
         if (!propertyDetails?.property || this.isPlainObject(propertyDetails.property) === false) {
             throw new TypeError("Listing data could not be loaded for this live site.");
         }
+
+        if (String(propertyDetails.property.status ?? "").trim().toUpperCase() !== "ACTIVE") {
+            throw new WebsitePublishNotAllowedError();
+        }
     }
 
     buildDirectBookingWebsiteSummary(site, domains = []) {
@@ -2097,32 +2104,24 @@ export class PropertyController {
         return this.buildDirectBookingWebsiteSummary(site, liveDomain ? [liveDomain] : []);
     }
 
+    createWebsiteUnpublisher() {
+        return new WebsiteUnpublisher({
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            domainRepository: this.directBookingWebsiteDomainRepository,
+            eventRepository: this.directBookingWebsiteEventRepository,
+        });
+    }
+
     async unpublishDirectBookingWebsiteSummary({ site, draft, hostId, propertyId }) {
-        const nextSite = await this.directBookingWebsiteSiteRepository.updateSiteStatusWithStaticPageOutbox(site.id, "PREVIEW");
-        const liveDomain = await this.directBookingWebsiteDomainRepository.updateFallbackDomainStatus(
-            site.id,
-            "DISABLED",
-            {
-                activationMode: "internal",
-                disabledByHost: true,
-                routingConfigured: false,
-            }
-        );
+        const { site: nextSite, liveDomain } = await this.createWebsiteUnpublisher().takeDown({
+            site,
+            draftId: draft?.id || null,
+            hostId,
+            propertyId,
+        });
         const allDomains = liveDomain
             ? [liveDomain]
             : await this.directBookingWebsiteDomainRepository.listDomainsBySiteId(site.id);
-
-        await this.recordStandaloneWebsiteEventSafely({
-            draftId: draft?.id || null,
-            propertyId,
-            hostId,
-            eventType: "WEBSITE_SITE_UNPUBLISHED",
-            payload: {
-                siteId: site.id,
-                domain: liveDomain?.domain || "",
-                domainStatus: liveDomain?.status || "DISABLED",
-            },
-        });
 
         return this.buildDirectBookingWebsiteSummary(nextSite, allDomains);
     }
@@ -2161,6 +2160,17 @@ export class PropertyController {
             headers: draftResponseHeaders,
             body: JSON.stringify({ message }),
         };
+    }
+
+    websiteFailureResponse(error) {
+        if (error instanceof Unauthorized || error instanceof Forbidden) {
+            return {
+                statusCode: error.statusCode,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({ message: error.message }),
+            };
+        }
+        return this.websiteServerError();
     }
 
     async recordStandaloneWebsiteEventSafely(eventInput) {
@@ -2373,7 +2383,6 @@ export class PropertyController {
     async getFullOwnedPropertiesByHostId(event) {
         try {
             const accessToken = event.headers.Authorization;
-            await this.authManager.getAuthorizedUser(accessToken);
             const hostId = event.queryStringParameters?.hostId;
             if (!hostId) {
                 return {
@@ -2382,6 +2391,7 @@ export class PropertyController {
                     body: JSON.stringify("hostId query parameter is required.")
                 };
             }
+            await this.authManager.authorizeHostOrCoHostRequest(accessToken, hostId);
             const properties = await this.propertyService.getFullPropertiesByHostId(hostId);
             return {
                 statusCode: 200,
@@ -2402,8 +2412,15 @@ export class PropertyController {
     // -------------------------
     async getFullOwnedPropertyById(event) {
         try {
-            const propertyId = event.queryStringParameters.property;
-            await this.authManager.getAuthorizedUser(event.headers.Authorization);
+            const propertyId = event.queryStringParameters?.property;
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify("property query parameter is required."),
+                };
+            }
+            await this.authManager.authorizePropertyOwnerOrCoHostRequest(event.headers.Authorization, propertyId);
             const property = await this.propertyService.getFullPropertyByIdAsHost(propertyId);
             return {
                 statusCode: 200,
@@ -2817,7 +2834,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2836,7 +2853,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2869,7 +2886,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2889,7 +2906,7 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2926,7 +2943,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -2970,14 +2987,14 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            if (error instanceof WebsitePublishConflictError) {
+            if (error instanceof WebsitePublishConflictError || error instanceof WebsitePublishNotAllowedError) {
                 return {
                     statusCode: error.statusCode,
                     headers: draftResponseHeaders,
                     body: JSON.stringify({ code: error.code, message: error.message }),
                 };
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3023,7 +3040,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3577,7 +3594,7 @@ export class PropertyController {
                     body: JSON.stringify({ code: error.code, message: error.message }),
                 };
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 

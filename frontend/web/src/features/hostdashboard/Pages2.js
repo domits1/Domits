@@ -6,6 +6,7 @@ import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
 import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import ShowChartIcon from "@mui/icons-material/BarChart";
+import StarBorderIcon from "@mui/icons-material/StarBorderOutlined";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
@@ -33,6 +34,7 @@ const NAV = [
     to: "integrations-marketplace",
   },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
+  { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
   // { key: "MissedRevenue", label: "Missed revenue", icon: <TrendingDownIcon />, to: "hostinsights/missed-revenue" },
   { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution", internalOnly: true },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
