@@ -11,7 +11,10 @@ const PAGE = {
 
 const buildService = ({ switchOn = async () => true, render = async () => PAGE, clock = { now: 0 } } = {}) => {
   const destinationSwitchRepository = { isDestinationPagesSwitchOn: jest.fn(switchOn) };
-  const destinationTreeService = { renderDestinationPage: jest.fn(render) };
+  const destinationTreeService = {
+    renderDestinationPage: jest.fn(render),
+    renderDestinationSitemap: jest.fn(async () => "<urlset></urlset>"),
+  };
   const service = new DestinationPageService({
     destinationSwitchRepository,
     destinationTreeService,
@@ -28,13 +31,27 @@ describe("the destination page service", () => {
     jest.useRealTimers();
   });
 
-  it("renders a valid path with the www origin", async () => {
+  it("renders a valid path with the www origin, whatever host a caller adds", async () => {
     const { service, destinationTreeService } = buildService();
 
-    const outcome = await service.serve({ path: "/destinations/europe/spain/marbella" });
+    const outcome = await service.serve({
+      path: "/destinations/europe/spain/marbella",
+      forwardedHost: "acceptance.domits.com",
+    });
 
     expect(outcome).toEqual({ kind: "page", html: PAGE.html, cacheControl: PAGE.cacheControl });
     expect(destinationTreeService.renderDestinationPage).toHaveBeenCalledWith("/destinations/europe/spain/marbella", {
+      siteOrigin: "https://www.domits.com",
+    });
+  });
+
+  it("renders the sitemap with the www origin, whatever host a caller adds", async () => {
+    const { service, destinationTreeService } = buildService();
+
+    const outcome = await service.serveSitemap({ forwardedHost: "acceptance.domits.com" });
+
+    expect(outcome).toEqual({ kind: "sitemap", xml: "<urlset></urlset>" });
+    expect(destinationTreeService.renderDestinationSitemap).toHaveBeenCalledWith({
       siteOrigin: "https://www.domits.com",
     });
   });
