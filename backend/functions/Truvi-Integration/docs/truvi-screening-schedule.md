@@ -71,7 +71,7 @@ With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
 3. When the dates differ on the day, sends `PUT /verificationRequests` with both new dates (Truvi only accepts the dates, it does not screen again).
 4. Saves the new dates on a 200, so the booking is not sent again.
 5. When Truvi refuses (check-in or check-out in the past, verification cancelled or unknown), saves the new dates with the reason in `errormessage`, so it is not sent again. Truvi then still has the old dates; a non-empty `errormessage` on the row means the stored dates were refused.
-6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400.
+6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400. In both cases only `updatedat` is set to now, so the row moves to the back of the list (the query sorts on `updatedat` ascending) and a row that keeps failing does not block newer date changes. Truvi's error text is not saved for these rows.
 
 Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
 

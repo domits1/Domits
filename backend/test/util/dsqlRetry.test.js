@@ -35,6 +35,27 @@ describe("withDsqlRetry", () => {
     await expect(withDsqlRetry(work, { attempts: 3, wait: jest.fn() })).rejects.toMatchObject({ code: "40001" });
     expect(work).toHaveBeenCalledTimes(3);
   });
+
+  it("also retries the extra error codes the caller passes in", async () => {
+    const work = jest.fn().mockRejectedValueOnce(conflict("23505")).mockResolvedValue("saved");
+
+    await expect(withDsqlRetry(work, { wait: jest.fn(), retryCodes: ["23505"] })).resolves.toBe("saved");
+    expect(work).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads an extra error code from driverError too", async () => {
+    const work = jest.fn().mockRejectedValueOnce({ driverError: { code: "23505" } }).mockResolvedValue("saved");
+
+    await expect(withDsqlRetry(work, { wait: jest.fn(), retryCodes: ["23505"] })).resolves.toBe("saved");
+    expect(work).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a unique violation unless the caller asks for it", async () => {
+    const work = jest.fn().mockRejectedValue(conflict("23505"));
+
+    await expect(withDsqlRetry(work, { wait: jest.fn() })).rejects.toMatchObject({ code: "23505" });
+    expect(work).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("isDsqlConflict", () => {

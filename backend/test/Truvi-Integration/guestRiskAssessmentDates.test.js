@@ -40,3 +40,17 @@ describe("GuestRiskAssessmentRepository.saveTruviDates", () => {
     await expect(new GuestRiskAssessmentRepository().saveTruviDates({})).rejects.toThrow("bookingId is required");
   });
 });
+
+describe("GuestRiskAssessmentRepository.markAttempt", () => {
+  it("only updates updatedAt, so the row moves to the back of the modify queue", async () => {
+    const update = buildUpdate();
+
+    await new GuestRiskAssessmentRepository().markAttempt({ bookingId: "booking-1", now: 3 });
+
+    expect(update).toHaveBeenCalledWith({ id: "truvi:booking-1" }, { updatedAt: 3 });
+  });
+
+  it("refuses to update without a booking id", async () => {
+    await expect(new GuestRiskAssessmentRepository().markAttempt({})).rejects.toThrow("bookingId is required");
+  });
+});

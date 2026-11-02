@@ -16,7 +16,10 @@ const verification = (overrides = {}) => ({
 const build = ({ verifications = [verification()], modify } = {}) => {
   const bookingRepository = { listVerificationsToModify: jest.fn(async () => verifications) };
   const apiClient = { modifyVerification: jest.fn(modify || (async () => ({ metadata: {} }))) };
-  const assessmentRepository = { saveTruviDates: jest.fn(async () => undefined) };
+  const assessmentRepository = {
+    saveTruviDates: jest.fn(async () => undefined),
+    markAttempt: jest.fn(async () => undefined),
+  };
   const modifier = new TruviBookingModifier({ bookingRepository, apiClient, assessmentRepository });
   return { modifier, bookingRepository, apiClient, assessmentRepository };
 };
@@ -96,7 +99,7 @@ describe("TruviBookingModifier", () => {
     expect(summary.refused).toBe(1);
   });
 
-  it("leaves the booking for the next run on a timeout or a 5xx", async () => {
+  it("moves the booking to the back of the queue on a timeout or a 5xx, without saving the dates", async () => {
     const { modifier, assessmentRepository } = build({
       verifications: [verification(), verification({ bookingId: "booking-2" })],
       modify: jest
@@ -108,15 +111,20 @@ describe("TruviBookingModifier", () => {
     const summary = await modifier.run({ now: NOW });
 
     expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
+    expect(assessmentRepository.markAttempt.mock.calls).toEqual([
+      [{ bookingId: "booking-1", now: NOW }],
+      [{ bookingId: "booking-2", now: NOW }],
+    ]);
     expect(summary.retryLater).toBe(2);
   });
 
-  it("reports an unexpected 400 as an error without saving", async () => {
+  it("reports an unexpected 400 as an error and moves the booking to the back of the queue", async () => {
     const { modifier, assessmentRepository } = build({ modify: failWith(400, "checkIn must be before checkOut.") });
 
     const summary = await modifier.run({ now: NOW });
 
     expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
+    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "checkIn must be before checkOut." }]);
   });
 
@@ -130,6 +138,14 @@ describe("TruviBookingModifier", () => {
 
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "database down" }]);
     expect(summary.modified).toBe(1);
+  });
+
+  it("does not touch a booking that was sent or recorded", async () => {
+    const { modifier, assessmentRepository } = build();
+
+    await modifier.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).not.toHaveBeenCalled();
   });
 });
 

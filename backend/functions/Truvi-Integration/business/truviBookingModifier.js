@@ -36,6 +36,9 @@ export class TruviBookingModifier {
       const { bookingId } = verification;
       try {
         const outcome = await this.#handle(verification, now);
+        if (outcome.retry || outcome.unexpected) {
+          await this.assessmentRepository.markAttempt({ bookingId, now });
+        }
         if (outcome.retry) {
           summary.retryLater += 1;
           continue;

@@ -1,6 +1,6 @@
 import Database from "database";
 import { GuestRiskAssessment } from "database/models/unified/integrations/GuestRiskAssessment";
-import { isDsqlConflict } from "../.shared/dsqlRetry.js";
+import { withDsqlRetry } from "../.shared/dsqlRetry.js";
 import { randomInt } from "node:crypto";
 
 export const TRUVI_PROVIDER = "truvi";
@@ -8,26 +8,11 @@ export const TRUVI_PROVIDER = "truvi";
 const assessmentId = (provider, bookingId) => `${provider}:${bookingId}`;
 
 const UNIQUE_VIOLATION = "23505";
-const SAVE_ATTEMPTS = 3;
 
-const errorCode = (error) => String(error?.code || error?.driverError?.code || "");
-const isRetryableWrite = (error) => isDsqlConflict(error) || errorCode(error) === UNIQUE_VIOLATION;
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const randomJitterMs = () => randomInt(20, 51);
 
-export const withWriteRetry = async (
-  work,
-  { attempts = SAVE_ATTEMPTS, wait = sleep, jitterMs = randomJitterMs } = {},
-  attempt = 1
-) => {
-  try {
-    return await work();
-  } catch (error) {
-    if (!isRetryableWrite(error) || attempt >= attempts) throw error;
-    await wait(jitterMs());
-    return withWriteRetry(work, { attempts, wait, jitterMs }, attempt + 1);
-  }
-};
+export const withWriteRetry = (work, options = {}) =>
+  withDsqlRetry(work, { jitterMs: randomJitterMs, ...options, retryCodes: [UNIQUE_VIOLATION] });
 
 export class GuestRiskAssessmentRepository {
   async getRepository() {
@@ -39,7 +24,6 @@ export class GuestRiskAssessmentRepository {
     return withWriteRetry(() => this.#saveResultOnce(args));
   }
 
-  // arrivalDate and departureDate are the dates sent in the create, so the modify run can compare against them.
   async #saveResultOnce({ provider = TRUVI_PROVIDER, bookingId, result, arrivalDate, departureDate, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to save a risk assessment");
@@ -85,6 +69,14 @@ export class GuestRiskAssessmentRepository {
     }
     const repository = await this.getRepository();
     await repository.update({ id: assessmentId(provider, bookingId) }, changes);
+  }
+
+  async markAttempt({ provider = TRUVI_PROVIDER, bookingId, now = Date.now() }) {
+    if (!bookingId) {
+      throw new Error("bookingId is required to mark a Truvi attempt");
+    }
+    const repository = await this.getRepository();
+    await repository.update({ id: assessmentId(provider, bookingId) }, { updatedAt: now });
   }
 
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {
