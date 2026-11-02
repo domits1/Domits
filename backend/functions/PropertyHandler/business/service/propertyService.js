@@ -678,7 +678,7 @@ export class PropertyService {
     ]);
     const resolvedCheckIn = checkIn || this.buildCheckInFromRules(propertyId, rules);
     const technicalDetails =
-      propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
+      propertyType?.property_type === "Boat" || propertyType?.property_type === "Camper"
         ? await this.getTechnicalDetails(propertyId)
         : null;
     const response = {
