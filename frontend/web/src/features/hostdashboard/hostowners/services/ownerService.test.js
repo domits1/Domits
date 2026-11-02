@@ -205,7 +205,14 @@ describe("errors", () => {
   test.each([null, undefined, ""])("refuses to call the API without an access token (%p)", async (token) => {
     getAccessToken.mockReturnValue(token);
 
-    await expect(listOwners()).rejects.toThrow("We could not read your sign-in. Please sign in again.");
+    const failure = listOwners();
+
+    await expect(failure).rejects.toBeInstanceOf(OwnerApiError);
+    await expect(failure).rejects.toMatchObject({
+      status: 401,
+      serverMessage: null,
+      message: "We could not read your sign-in. Please sign in again.",
+    });
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
