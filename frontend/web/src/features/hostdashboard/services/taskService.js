@@ -143,8 +143,9 @@ export const getAttachmentViewUrl = async (key) => {
     return viewUrl;
 };
 
-const postTaskAction = async (action, taskId) => {
+const postTaskAction = async (action, taskId, asHostId = null) => {
     const params = new URLSearchParams({ action, id: taskId });
+    if (asHostId) params.set("asHostId", asHostId);
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "POST",
         headers: getHeaders(),
@@ -160,9 +161,9 @@ const postTaskAction = async (action, taskId) => {
 
 export const escalateTask = async (taskId) => await postTaskAction('escalate', taskId);
 
-export const approveTask = async (taskId) => await postTaskAction('approve', taskId);
+export const approveTask = async (taskId, asHostId = null) => await postTaskAction('approve', taskId, asHostId);
 
-export const rejectTask = async (taskId) => await postTaskAction('reject', taskId);
+export const rejectTask = async (taskId, asHostId = null) => await postTaskAction('reject', taskId, asHostId);
 
 export const deleteTask = async (taskId) => {
     const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {

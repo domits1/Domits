@@ -184,6 +184,22 @@ describe.each([
         expect(globalThis.fetch.mock.calls[0][0]).toContain('id=task-1');
     });
 
+    test('sends asHostId so a manager reviews the task under the host they are managing', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ message: 'done' }) });
+
+        await call('task-1', 'host-9');
+
+        expect(globalThis.fetch.mock.calls[0][0]).toContain('asHostId=host-9');
+    });
+
+    test('sends no asHostId when the caller is working on their own tasks', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ message: 'done' }) });
+
+        await call('task-1');
+
+        expect(globalThis.fetch.mock.calls[0][0]).not.toContain('asHostId');
+    });
+
     test('throws the backend message when it fails', async () => {
         globalThis.fetch = jest.fn().mockResolvedValue({
             ok: false,

@@ -248,6 +248,20 @@ describe('TaskDetailsModal', () => {
             expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
         });
 
+        test('hides Approve and Reject from someone who may not review this task', () => {
+            render(<TaskDetailsModal {...baseProps} canReview={false} viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('disables Approve and Reject while a decision is being sent', () => {
+            render(<TaskDetailsModal {...baseProps} isReviewing viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Reject' })).toBeDisabled();
+        });
+
         test('shows that an approved task is approved, and no longer offers Approve or Reject', () => {
             const approvedTask = { ...completedTask, approved_at: 1700000000000 };
             render(<TaskDetailsModal {...baseProps} viewingTask={approvedTask} editedTask={approvedTask} />);

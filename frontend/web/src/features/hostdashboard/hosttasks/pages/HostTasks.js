@@ -74,6 +74,7 @@ const HostTasks = () => {
 
     const [viewingTask, setViewingTask] = useState(null);
     const [isEscalating, setIsEscalating] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
@@ -762,18 +763,27 @@ const HostTasks = () => {
     };
 
     const reviewViewingTask = async (review, successMessage, changesToTask) => {
+        if (isReviewing) return;
         const taskId = viewingTask.id;
+        setIsReviewing(true);
         try {
-            await review(taskId);
+            await review(taskId, asHostId);
         } catch (error) {
             toast.error(error.message || "Error saving the decision");
             return;
+        } finally {
+            setIsReviewing(false);
         }
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...changesToTask } : t));
         toast.success(successMessage);
         setViewingTask(null);
         setEditedTask(null);
     };
+
+    const ownEmail = currentUser.email.toLowerCase();
+    const isAssignedToCurrentUser = Boolean(viewingTask?.assignee_team_member_id)
+        && ownEmail !== ''
+        && (viewingTask.assignee || '').toLowerCase() === ownEmail;
 
     const handleApproveTask = () => reviewViewingTask(
         approveTask,
@@ -1108,6 +1118,8 @@ const HostTasks = () => {
                 onEscalate={handleEscalateTask}
                 onApprove={handleApproveTask}
                 onReject={handleRejectTask}
+                canReview={!isAssignedToCurrentUser}
+                isReviewing={isReviewing}
                 isEscalating={isEscalating}
             />
 

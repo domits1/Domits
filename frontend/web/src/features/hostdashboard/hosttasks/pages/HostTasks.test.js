@@ -256,7 +256,7 @@ describe('HostTasks', () => {
 
             fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
 
-            await waitFor(() => expect(approveTask).toHaveBeenCalledWith('task-1'));
+            await waitFor(() => expect(approveTask).toHaveBeenCalledWith('task-1', null));
             await waitFor(() => expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument());
             expect(toast.success).toHaveBeenCalled();
 
@@ -270,12 +270,36 @@ describe('HostTasks', () => {
 
             fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
 
-            await waitFor(() => expect(rejectTask).toHaveBeenCalledWith('task-1'));
+            await waitFor(() => expect(rejectTask).toHaveBeenCalledWith('task-1', null));
             await waitFor(() => expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument());
 
             fireEvent.click(await screen.findByText('Clean the villa'));
             expect(await screen.findByRole('button', { name: '● In progress' })).toBeInTheDocument();
             expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+        });
+
+        test('a second click while the first decision is still being sent does not send another', async () => {
+            let finishApproval;
+            approveTask.mockReturnValue(new Promise(resolve => { finishApproval = resolve; }));
+            await openCompletedTask();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+            expect(approveTask).toHaveBeenCalledTimes(1);
+            finishApproval({ message: 'Task approved' });
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument());
+        });
+
+        test('the assignee of a completed task is not offered Approve or Reject on their own task', async () => {
+            fetchTasks.mockResolvedValue([{ ...COMPLETED, assignee: 'Alex@Example.com', assignee_team_member_id: 'member-1' }]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: 'All Tasks' }));
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByRole('button', { name: 'Cancel' });
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
         });
 
         test('keeps the task open and shows why when the decision fails', async () => {
