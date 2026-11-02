@@ -72,11 +72,15 @@ describe("the destination page service", () => {
     expect(destinationTreeService.renderDestinationPage).not.toHaveBeenCalled();
   });
 
-  it("answers not found when the destination has no page", async () => {
+  it("answers not found with a link to the destinations on the same host when the destination has no page", async () => {
     const { service } = buildService({ render: async () => null });
-    const outcome = await service.serve({ path: "/destinations/europe/spain/ronda", forwardedHost: "www.domits.com" });
+    const outcome = await service.serve({
+      path: "/destinations/europe/spain/ronda",
+      forwardedHost: "acceptance.domits.com",
+    });
     expect(outcome.kind).toBe("not_found");
-    expect(outcome.html).toContain('<a href="https://www.domits.com/destinations">All destinations</a>');
+    expect(outcome.html).toContain('<a href="/destinations">All destinations</a>');
+    expect(outcome.html).not.toContain("domits.com");
   });
 
   it("answers not found without rendering when the switch is off", async () => {

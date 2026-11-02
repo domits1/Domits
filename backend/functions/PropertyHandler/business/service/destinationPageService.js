@@ -40,7 +40,7 @@ export class DestinationPageService {
       return { kind: "redirect", location: request.location };
     }
     const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
-    const notFound = { kind: "not_found", html: buildDestinationNotFoundPage({ siteOrigin }) };
+    const notFound = { kind: "not_found", html: buildDestinationNotFoundPage() };
     if (request.kind !== "page") {
       return notFound;
     }
@@ -56,7 +56,7 @@ export class DestinationPageService {
     const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
     return this.answer(
       () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin }),
-      { kind: "not_found", html: buildDestinationNotFoundPage({ siteOrigin }) },
+      { kind: "not_found", html: buildDestinationNotFoundPage() },
       (xml) => {
         if (Buffer.byteLength(xml, "utf8") > DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES) {
           throw new Error(
