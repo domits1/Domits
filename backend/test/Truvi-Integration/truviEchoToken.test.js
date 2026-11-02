@@ -1,21 +1,7 @@
 import { bookingToCreateRequest, createEchoToken } from "../../functions/Truvi-Integration/util/truviMapper.js";
+import { screeningInput as input } from "./truviScreeningInput.js";
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-
-const input = (bookingId) => ({
-  booking: {
-    id: bookingId,
-    arrivaldate: Date.UTC(2026, 11, 1),
-    departuredate: Date.UTC(2026, 11, 5),
-    createdat: Date.UTC(2026, 9, 6),
-    guestname: "John Doe",
-    guest_email: "john@example.com",
-  },
-  property: { id: "property-1", title: "Villa Zon" },
-  location: { street: "Kinderhuissingel", housenumber: 6, city: "Haarlem", country: "Netherlands", postalcode: "2013AS" },
-  host: { name: "Host BV", email: "host@example.com" },
-  protection: { extendedAmount: 1000 },
-});
 
 describe("createEchoToken", () => {
   test("is a 36 character GUID", () => {
