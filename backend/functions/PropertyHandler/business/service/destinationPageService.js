@@ -1,6 +1,6 @@
 import { DestinationSwitchRepository } from "../../data/repository/destinationSwitchRepository.js";
 import { buildDestinationNotFoundPage, buildDestinationUnavailablePage } from "./destinationPageBuilder.js";
-import { readDestinationRequestPath, resolveDestinationSiteOrigin } from "./destinationPageRequest.js";
+import { DESTINATION_SITE_ORIGIN, readDestinationRequestPath } from "./destinationPageRequest.js";
 import { DestinationTreeService } from "./destinationTreeService.js";
 import { createExpiringRead } from "../../util/expiringRead.js";
 import { withinTimeLimit } from "../../util/timeLimit.js";
@@ -34,28 +34,26 @@ export class DestinationPageService {
     });
   }
 
-  async serve({ path, forwardedHost } = {}) {
+  async serve({ path } = {}) {
     const request = readDestinationRequestPath(path);
     if (request.kind === "redirect") {
       return { kind: "redirect", location: request.location };
     }
-    const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
     const notFound = { kind: "not_found", html: buildDestinationNotFoundPage() };
     if (request.kind !== "page") {
       return notFound;
     }
 
     return this.answer(
-      () => this.destinationTreeService.renderDestinationPage(request.path, { siteOrigin }),
+      () => this.destinationTreeService.renderDestinationPage(request.path, { siteOrigin: DESTINATION_SITE_ORIGIN }),
       notFound,
       (page) => ({ kind: "page", html: page.html, cacheControl: page.cacheControl })
     );
   }
 
-  async serveSitemap({ forwardedHost } = {}) {
-    const siteOrigin = resolveDestinationSiteOrigin(forwardedHost);
+  async serveSitemap() {
     return this.answer(
-      () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin }),
+      () => this.destinationTreeService.renderDestinationSitemap({ siteOrigin: DESTINATION_SITE_ORIGIN }),
       { kind: "not_found", html: buildDestinationNotFoundPage() },
       (xml) => {
         if (Buffer.byteLength(xml, "utf8") > DESTINATION_SITEMAP_RESPONSE_LIMIT_BYTES) {

@@ -6,8 +6,6 @@ const REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 const SITEMAP_CACHE_CONTROL = "public, max-age=300";
 const UNAVAILABLE_RETRY_AFTER_SECONDS = "60";
 
-const readHeader = (headers, name) => Object.entries(headers ?? {}).find(([key]) => key.toLowerCase() === name)?.[1];
-
 const respond = (statusCode, headers, body) => ({
   statusCode,
   headers: { "Content-Type": HTML_CONTENT_TYPE, ...headers },
@@ -20,20 +18,11 @@ export class DestinationPageController {
   }
 
   async getDestinationPage(event) {
-    return this.toResponse(
-      await this.destinationPageService.serve({
-        path: event?.path,
-        forwardedHost: readHeader(event?.headers, "x-forwarded-host"),
-      })
-    );
+    return this.toResponse(await this.destinationPageService.serve({ path: event?.path }));
   }
 
-  async getDestinationSitemap(event) {
-    return this.toResponse(
-      await this.destinationPageService.serveSitemap({
-        forwardedHost: readHeader(event?.headers, "x-forwarded-host"),
-      })
-    );
+  async getDestinationSitemap() {
+    return this.toResponse(await this.destinationPageService.serveSitemap());
   }
 
   toResponse(outcome) {

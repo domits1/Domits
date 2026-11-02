@@ -28,24 +28,13 @@ describe("the destination page service", () => {
     jest.useRealTimers();
   });
 
-  it("renders a valid path with the origin from the fixed host list", async () => {
+  it("renders a valid path with the www origin", async () => {
     const { service, destinationTreeService } = buildService();
 
-    const outcome = await service.serve({
-      path: "/destinations/europe/spain/marbella",
-      forwardedHost: "acceptance.domits.com",
-    });
+    const outcome = await service.serve({ path: "/destinations/europe/spain/marbella" });
 
     expect(outcome).toEqual({ kind: "page", html: PAGE.html, cacheControl: PAGE.cacheControl });
     expect(destinationTreeService.renderDestinationPage).toHaveBeenCalledWith("/destinations/europe/spain/marbella", {
-      siteOrigin: "https://acceptance.domits.com",
-    });
-  });
-
-  it("renders with the www origin when the forwarded host is not on the list", async () => {
-    const { service, destinationTreeService } = buildService();
-    await service.serve({ path: "/destinations/europe", forwardedHost: "evil.example" });
-    expect(destinationTreeService.renderDestinationPage).toHaveBeenCalledWith("/destinations/europe", {
       siteOrigin: "https://www.domits.com",
     });
   });
@@ -53,7 +42,7 @@ describe("the destination page service", () => {
   it("answers not found for an invalid path without reading the switch or the database", async () => {
     const { service, destinationSwitchRepository, destinationTreeService } = buildService();
 
-    const outcome = await service.serve({ path: "/destinations/Europe/../x", forwardedHost: "www.domits.com" });
+    const outcome = await service.serve({ path: "/destinations/Europe/../x" });
 
     expect(outcome.kind).toBe("not_found");
     expect(outcome.html).toContain('<meta name="robots" content="noindex, nofollow">');
@@ -74,10 +63,7 @@ describe("the destination page service", () => {
 
   it("answers not found with a link to the destinations on the same host when the destination has no page", async () => {
     const { service } = buildService({ render: async () => null });
-    const outcome = await service.serve({
-      path: "/destinations/europe/spain/ronda",
-      forwardedHost: "acceptance.domits.com",
-    });
+    const outcome = await service.serve({ path: "/destinations/europe/spain/ronda" });
     expect(outcome.kind).toBe("not_found");
     expect(outcome.html).toContain('<a href="/destinations">All destinations</a>');
     expect(outcome.html).not.toContain("domits.com");
@@ -99,10 +85,7 @@ describe("the destination page service", () => {
       },
     });
 
-    const outcome = await service.serve({
-      path: "/destinations/europe/spain/marbella",
-      forwardedHost: "www.domits.com",
-    });
+    const outcome = await service.serve({ path: "/destinations/europe/spain/marbella" });
 
     expect(outcome.kind).toBe("unavailable");
     expect(outcome.html).toContain("Please try again in a minute.");
