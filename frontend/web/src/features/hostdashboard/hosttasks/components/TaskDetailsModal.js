@@ -45,6 +45,10 @@ const TaskDetailsModal = ({
     onDelete,
     onClose,
     onEscalate,
+    onApprove,
+    onReject,
+    canReview = true,
+    isReviewing = false,
     isEscalating = false,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
@@ -59,6 +63,8 @@ const TaskDetailsModal = ({
     if (!viewingTask || !editedTask) return null;
 
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
+    const isApproved = viewingTask.status === 'Completed' && Boolean(viewingTask.approved_at);
+    const isWaitingForReview = viewingTask.status === 'Completed' && !viewingTask.approved_at && canReview;
     const canEscalate = !CLOSED_STATUSES.includes(viewingTask.status) && !viewingTask.escalated_at;
     // Nothing happens to the checklist until Save: a different Type here only changes the form.
     const isSwitchingType = editedTask.type !== viewingTask.type;
@@ -249,6 +255,15 @@ const TaskDetailsModal = ({
                     <div className="modal-footer details-footer">
                         <button className="btn-text" onClick={onClose} disabled={isApplyingChecklistTemplate}>Cancel</button>
 
+                        {isApproved && <span className="approved-label">Approved</span>}
+
+                        {isWaitingForReview && (
+                            <>
+                                <button className="btn-reject" onClick={onReject} disabled={isReviewing}>Reject</button>
+                                <button className="btn-create-green" onClick={onApprove} disabled={isReviewing}>Approve</button>
+                            </>
+                        )}
+
                         {canEscalate && (
                             <button className="btn-escalate" onClick={onEscalate} disabled={isEscalating}>Escalate</button>
                         )}
@@ -298,6 +313,10 @@ TaskDetailsModal.propTypes = {
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
     onEscalate: PropTypes.func.isRequired,
+    onApprove: PropTypes.func.isRequired,
+    onReject: PropTypes.func.isRequired,
+    canReview: PropTypes.bool,
+    isReviewing: PropTypes.bool,
     isEscalating: PropTypes.bool,
 };
 

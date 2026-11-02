@@ -119,6 +119,31 @@ export const escalateTaskInDb = async (dataSource, taskId, hostId, escalatedAt) 
     return Number(result?.affected || 0) === 1;
 };
 
+const claimCompletedTask = async (dataSource, taskId, hostId, fieldsToSet) => {
+    const repository = dataSource.getRepository(TaskEntity);
+    const result = await repository
+        .createQueryBuilder()
+        .update(TaskEntity)
+        .set(fieldsToSet)
+        .where("id = :taskId", { taskId })
+        .andWhere("host_id = :hostId", { hostId })
+        .andWhere("status = :completed", { completed: "Completed" })
+        .andWhere("approved_at IS NULL")
+        .execute();
+
+    return Number(result?.affected || 0) === 1;
+};
+
+export const approveCompletedTaskInDb = async (dataSource, taskId, hostId, approvedAt) =>
+    await claimCompletedTask(dataSource, taskId, hostId, { approved_at: approvedAt });
+
+export const rejectCompletedTaskInDb = async (dataSource, taskId, hostId, rejectedAt) =>
+    await claimCompletedTask(dataSource, taskId, hostId, {
+        status: "In progress",
+        completed_date: null,
+        updated_at: rejectedAt,
+    });
+
 const RESOLVED_STATUSES = ["Completed", "Cancelled"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FIRST_EMAIL_WINDOW_MS = DAY_MS;

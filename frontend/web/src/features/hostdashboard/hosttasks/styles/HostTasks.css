@@ -73,6 +73,28 @@
     background-color: #218838;
 }
 
+.btn-reject {
+    background-color: white;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-reject:hover {
+    background-color: #fdecee;
+}
+
+.approved-label {
+    color: #1e7e34;
+    font-weight: 600;
+    font-size: 14px;
+    align-self: center;
+}
+
 .btn-danger {
     background-color: #dc3545;
     color: white;
