@@ -11,6 +11,7 @@ jest.mock("../../functions/property-tasks/business/service/taskReviewNotificatio
 
 const {
     mockGetTaskById,
+    mockGetTeamMemberById,
     mockSaveActivityToDb,
     mockApproveCompletedTaskInDb,
     mockRejectCompletedTaskInDb,
@@ -58,6 +59,32 @@ describe.each([
 
         await expect(review("host-1", "task-1", "user-1")).rejects.toThrow(/Task not found/);
         expect(claim()).not.toHaveBeenCalled();
+    });
+
+    it("answers 404 when the task does not belong to this host", async () => {
+        mockGetTaskById.mockResolvedValue(null);
+
+        await expect(review("host-1", "task-1", "user-1")).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it("refuses a manager who is the task's own assignee, so nobody reviews their own work", async () => {
+        mockGetTaskById.mockResolvedValue({ ...completedTask, assignee_team_member_id: "member-1" });
+        mockGetTeamMemberById.mockResolvedValue({ id: "member-1", member_user_id: "manager-1" });
+
+        await expect(review("host-1", "task-1", "manager-1")).rejects.toThrow(/assigned to you/);
+
+        expect(mockGetTeamMemberById).toHaveBeenCalledWith(expect.anything(), "member-1", "host-1");
+        expect(claim()).not.toHaveBeenCalled();
+        expect(notify()).not.toHaveBeenCalled();
+    });
+
+    it("lets a manager review a task that is assigned to someone else", async () => {
+        mockGetTaskById.mockResolvedValue({ ...completedTask, assignee_team_member_id: "member-1" });
+        mockGetTeamMemberById.mockResolvedValue({ id: "member-1", member_user_id: "someone-else" });
+
+        await expect(review("host-1", "task-1", "manager-1")).resolves.toEqual({ message });
+
+        expect(claim()).toHaveBeenCalled();
     });
 
     it.each(["Pending", "In progress", "Cancelled"])("rejects a task that is %s, since only a completed one can be reviewed", async (status) => {

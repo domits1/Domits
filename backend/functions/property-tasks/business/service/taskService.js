@@ -9,6 +9,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } fr
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -223,7 +225,14 @@ const reviewCompletedTask = async ({ hostId, taskId, actorId, claimInDb, actionT
 
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
-    if (!task) throw new Error("Task not found or access denied");
+    if (!task) throw new NotFoundException("Task not found or access denied");
+
+    if (task.assignee_team_member_id) {
+        const assignee = await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, hostId);
+        if (assignee?.member_user_id === actorId) {
+            throw new UnauthorizedException("You cannot approve or reject a task assigned to you.");
+        }
+    }
 
     if (task.status !== "Completed") throw new BadRequestException(messages.notCompleted);
     if (task.approved_at) throw new BadRequestException(messages.alreadyApproved);
