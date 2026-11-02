@@ -1,6 +1,5 @@
 import { DEFAULT_CHANNEL } from "../util/truviMapper.js";
 
-// Only a verification that exists at Truvi has dates there.
 const sentDates = (booking, result) =>
   result.providerAssessmentId ? { arrivalDate: booking.arrivaldate, departureDate: booking.departuredate } : {};
 

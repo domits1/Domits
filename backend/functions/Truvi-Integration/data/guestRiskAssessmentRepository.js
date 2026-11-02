@@ -39,7 +39,6 @@ export class GuestRiskAssessmentRepository {
     return withWriteRetry(() => this.#saveResultOnce(args));
   }
 
-  // arrivalDate and departureDate are the dates sent in the create, so the modify run can compare against them.
   async #saveResultOnce({ provider = TRUVI_PROVIDER, bookingId, result, arrivalDate, departureDate, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to save a risk assessment");
