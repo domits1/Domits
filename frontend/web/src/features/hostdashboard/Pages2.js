@@ -16,6 +16,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HubIcon from "@mui/icons-material/Hub";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   checkChannexCertificationAccess,
@@ -40,6 +42,7 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  { key: "Owners", label: "Owners", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
   { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   {
@@ -57,9 +60,13 @@ function Pages({ onNavigate }) {
   const [canSeeChannexCertification, setCanSeeChannexCertification] = useState(false);
   const location = useLocation();
   const btnRef = useRef(null);
+  const { isPurelyPOM } = useEffectiveHostId();
   const visibleNav = useMemo(
-    () => NAV.filter((item) => !item.internalOnly || canSeeChannexCertification),
-    [canSeeChannexCertification]
+    () =>
+      NAV.filter(
+        (item) => (!item.internalOnly || canSeeChannexCertification) && !(item.hiddenForPurelyPOM && isPurelyPOM)
+      ),
+    [canSeeChannexCertification, isPurelyPOM]
   );
 
   useEffect(() => {
