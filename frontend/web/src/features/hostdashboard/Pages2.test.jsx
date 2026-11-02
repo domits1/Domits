@@ -25,6 +25,7 @@ jest.mock("./hostintegrations/channexApi", () => ({
 
 jest.mock("./propertyreview/propertyReviewAccess", () => ({
   PROPERTY_REVIEW_ADMIN_ROUTE: "admin/property-review",
+  PROPERTY_REVIEW_ACCESS: { ALLOWED: "allowed", DENIED: "denied", UNAVAILABLE: "unavailable" },
   checkPropertyReviewAccess: jest.fn(),
 }));
 
@@ -38,7 +39,7 @@ const renderPages = () =>
 describe("Pages2 missed revenue navigation", () => {
   test("does not show a missed revenue nav link while the tab is hidden", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
-    checkPropertyReviewAccess.mockResolvedValue(false);
+    checkPropertyReviewAccess.mockResolvedValue("denied");
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
 
     renderPages();
@@ -51,6 +52,7 @@ describe("Pages2 missed revenue navigation", () => {
 describe("Pages2 owners navigation", () => {
   beforeEach(() => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
+    checkPropertyReviewAccess.mockResolvedValue("denied");
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
@@ -79,7 +81,7 @@ describe("Pages2 Channex diagnostics navigation", () => {
   beforeEach(() => {
     delete process.env.REACT_APP_CHANNEX_CERTIFICATION_USER_IDS;
     jest.clearAllMocks();
-    checkPropertyReviewAccess.mockResolvedValue(false);
+    checkPropertyReviewAccess.mockResolvedValue("denied");
     Auth.currentAuthenticatedUser.mockResolvedValue({
       attributes: { sub: "allowed-user" },
     });
@@ -117,7 +119,7 @@ describe("Pages2 Channex diagnostics navigation", () => {
 describe("Pages2 Distribution navigation", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    checkPropertyReviewAccess.mockResolvedValue(true);
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
     Auth.currentAuthenticatedUser.mockResolvedValue({
       attributes: { sub: "any-user" },
     });
@@ -146,7 +148,7 @@ describe("Pages2 property review navigation", () => {
   });
 
   test("shows the Property review nav item when the review access check allows the user", async () => {
-    checkPropertyReviewAccess.mockResolvedValue(true);
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
 
     renderPages();
 
@@ -155,7 +157,7 @@ describe("Pages2 property review navigation", () => {
   });
 
   test("hides the Property review nav item when the review access check denies the user", async () => {
-    checkPropertyReviewAccess.mockResolvedValue(false);
+    checkPropertyReviewAccess.mockResolvedValue("denied");
 
     renderPages();
 
@@ -172,6 +174,27 @@ describe("Pages2 property review navigation", () => {
     expect(screen.queryByText("Property review")).toBeNull();
   });
 
+  test("shows the Channex items without waiting for a review access check that never settles", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: true });
+    checkPropertyReviewAccess.mockReturnValue(new Promise(() => {}));
+
+    renderPages();
+
+    expect(await screen.findByText("Channex diagnostics")).toBeTruthy();
+    expect(screen.getByText("Distribution")).toBeTruthy();
+    expect(screen.queryByText("Property review")).toBeNull();
+  });
+
+  test("shows the Property review item without waiting for a Channex access check that never settles", async () => {
+    getChannexAdminAccess.mockReturnValue(new Promise(() => {}));
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
+
+    renderPages();
+
+    expect(await screen.findByText("Property review")).toBeTruthy();
+    expect(screen.queryByText("Channex diagnostics")).toBeNull();
+  });
+
   test("keeps the Channex item visible when the review access check fails", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: true });
     checkPropertyReviewAccess.mockRejectedValue(new Error("access check failed"));
@@ -184,7 +207,7 @@ describe("Pages2 property review navigation", () => {
 
   test("keeps the Property review item visible when the Channex access check fails", async () => {
     getChannexAdminAccess.mockRejectedValue(new Error("access check failed"));
-    checkPropertyReviewAccess.mockResolvedValue(true);
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
 
     renderPages();
 
@@ -194,7 +217,7 @@ describe("Pages2 property review navigation", () => {
 
   test("shows both admin items when both checks allow the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: true });
-    checkPropertyReviewAccess.mockResolvedValue(true);
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
 
     renderPages();
 

@@ -23,11 +23,13 @@ import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   checkChannexCertificationAccess,
 } from "./channexadmin/channexCertificationAccess";
-import { PROPERTY_REVIEW_ADMIN_ROUTE, checkPropertyReviewAccess } from "./propertyreview/propertyReviewAccess";
+import {
+  PROPERTY_REVIEW_ACCESS,
+  PROPERTY_REVIEW_ADMIN_ROUTE,
+  checkPropertyReviewAccess,
+} from "./propertyreview/propertyReviewAccess";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
-
-const isGranted = (result) => result.status === "fulfilled" && result.value === true;
 
 const loadChannexAccess = async () => {
   const user = await Auth.currentAuthenticatedUser();
@@ -90,17 +92,20 @@ function Pages({ onNavigate }) {
   useEffect(() => {
     let mounted = true;
 
-    async function loadAdminAccess() {
-      const [channexResult, propertyReviewResult] = await Promise.allSettled([
-        loadChannexAccess(),
-        checkPropertyReviewAccess(),
-      ]);
-      if (mounted) {
-        setAccess({ channex: isGranted(channexResult), propertyReview: isGranted(propertyReviewResult) });
-      }
+    function grantWhenAllowed(key, check, isAllowed) {
+      void check
+        .then(isAllowed, () => false)
+        .then((granted) => {
+          if (mounted && granted) setAccess((current) => ({ ...current, [key]: true }));
+        });
     }
 
-    void loadAdminAccess();
+    grantWhenAllowed("channex", loadChannexAccess(), (allowed) => allowed === true);
+    grantWhenAllowed(
+      "propertyReview",
+      checkPropertyReviewAccess(),
+      (state) => state === PROPERTY_REVIEW_ACCESS.ALLOWED
+    );
     return () => {
       mounted = false;
     };
@@ -136,8 +141,7 @@ function Pages({ onNavigate }) {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-controls="host-menu"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
+        onClick={() => setOpen((v) => !v)}>
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
@@ -150,11 +154,7 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav
-        className={`sidebar ${open ? "open" : ""}`}
-        aria-label="Host navigation"
-        id="host-menu"
-      >
+      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
@@ -164,8 +164,7 @@ function Pages({ onNavigate }) {
                   to={item.to}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
-                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
-                >
+                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>
                   <span className="icon" aria-hidden="true">
                     {item.icon}
                   </span>
