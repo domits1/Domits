@@ -1937,5 +1937,37 @@
       "contactButton": "Contactar soporte",
       "learnMoreButton": "Más información"
     }
+  },
+  "hostOwners": {
+    "title": "Propietarios",
+    "loading": "Cargando propietarios…",
+    "empty": "Todavía no tienes propietarios.",
+    "allArchived": "Todos tus propietarios están archivados. Activa «Mostrar propietarios archivados» para verlos.",
+    "showArchived": "Mostrar propietarios archivados",
+    "retry": "Reintentar",
+    "errorSignedOut": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+    "errorForbidden": "Solo los hosts pueden gestionar propietarios.",
+    "errorGeneric": "No hemos podido cargar tus propietarios. Inténtalo de nuevo.",
+    "columnName": "Nombre",
+    "columnType": "Tipo",
+    "columnStatus": "Estado",
+    "columnProperties": "Propiedades actuales",
+    "propertyShare": "{title}, {percent} %",
+    "unknownShare": "{title}, participación desconocida",
+    "unknownProperty": "Propiedad desconocida",
+    "noProperties": "Sin propiedades actuales",
+    "ownerTypes": {
+      "individual": "Particular",
+      "company": "Empresa",
+      "trust": "Fideicomiso",
+      "unknown": "Tipo desconocido"
+    },
+    "statuses": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "pending": "Pendiente",
+      "archived": "Archivado",
+      "unknown": "Estado desconocido"
+    }
   }
 }
