@@ -71,7 +71,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
   if (!propertyId) return null;
 
   return (
-    <div className="messages-v2-card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <div className="messages-v2-card" style={{ display: "flex", flexDirection: "column" }}>
       <div
         style={{
           padding: "14px 16px",

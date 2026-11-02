@@ -140,6 +140,32 @@ describe("BookingTab booking details", () => {
     expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
   });
 
+  test("hides the listing title and photo when they are already shown next to it", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce(
+        okText([
+          {
+            id: "booking-3",
+            guestid: "guest-1",
+            hostid: "host-1",
+            property_id: "property-3",
+            arrivaldate: "2027-01-28",
+            departuredate: "2027-01-30",
+            guests: 2,
+          },
+        ])
+      )
+      .mockResolvedValueOnce(okText(accommodation("Emerald Estate")));
+
+    render(
+      <BookingTab userId="guest-1" contactId="host-1" dashboardType="guest" bookingId="booking-3" showAccommodation={false} />
+    );
+
+    expect(await screen.findByText("Booking ID: booking-3")).toBeInTheDocument();
+    expect(screen.queryByText("Emerald Estate")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Accommodation")).not.toBeInTheDocument();
+  });
+
   test.each([
     ["whole hours", { from: 15, till: 22 }, { from: 8, till: 11 }, "15:00-22:00", "8:00-11:00"],
     ["time strings", { from: "16:00:00", till: "18:30:00" }, { from: "10:00:00", till: "10:00:00" }, "16:00-18:30", "10:00-10:00"],

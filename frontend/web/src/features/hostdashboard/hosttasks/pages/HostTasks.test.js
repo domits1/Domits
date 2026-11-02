@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Auth } from 'aws-amplify';
 import { toast } from 'react-toastify';
 import HostTasks from './HostTasks';
-import { updateTask, fetchTasks } from '../../services/taskService';
+import { updateTask, fetchTasks, escalateTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
 import {
@@ -263,6 +263,44 @@ describe('HostTasks', () => {
             render(<HostTasks />);
 
             expect(await screen.findByText('Alex')).toBeInTheDocument();
+        });
+    });
+
+    describe('escalating a task from its open modal', () => {
+        const openTask = async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            return await screen.findByRole('button', { name: 'Escalate' });
+        };
+
+        test('takes the Escalate button away once it worked, so it cannot be clicked a second time', async () => {
+            escalateTask.mockResolvedValue({});
+            fireEvent.click(await openTask());
+
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument());
+            expect(escalateTask).toHaveBeenCalledTimes(1);
+        });
+
+        test('keeps the button disabled while the request runs, so a double click sends one request', async () => {
+            let finish;
+            escalateTask.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+            const button = await openTask();
+
+            fireEvent.click(button);
+            await waitFor(() => expect(button).toBeDisabled());
+            fireEvent.click(button);
+            finish({});
+
+            await waitFor(() => expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument());
+            expect(escalateTask).toHaveBeenCalledTimes(1);
+        });
+
+        test('keeps the button, enabled again, when the escalation failed', async () => {
+            escalateTask.mockRejectedValue(new Error('Task has already been escalated'));
+            fireEvent.click(await openTask());
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Task has already been escalated'));
+            expect(screen.getByRole('button', { name: 'Escalate' })).toBeEnabled();
         });
     });
 });

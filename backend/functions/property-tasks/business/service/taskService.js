@@ -1,6 +1,6 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
-import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
+import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import Database from "database";
@@ -188,8 +188,8 @@ export const escalateTask = async (hostId, taskId) => {
         throw new BadRequestException("Task has already been escalated");
     }
 
-    if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
-        throw new BadRequestException("Task is not breaching its SLA");
+    if (RESOLVED_STATUSES.has(task.status)) {
+        throw new BadRequestException("Task is already closed");
     }
 
     const escalated_at = Date.now();

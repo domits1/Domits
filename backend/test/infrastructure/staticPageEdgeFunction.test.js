@@ -73,6 +73,28 @@ const buildEvent = ({ method, uri, host, multiValue, querystring = {} }) => ({
   },
 });
 
+const queryGroupsOf = (query) => {
+  const groups = [];
+  for (const parameter of query.split("&")) {
+    const name = parameter.split("=")[0];
+    const previous = groups.at(-1);
+    if (previous?.name === name) {
+      previous.parameters.push(parameter);
+    } else {
+      groups.push({ name, parameters: [parameter] });
+    }
+  }
+  return groups.map((group) => group.parameters.join("&")).sort();
+};
+
+const locationParts = (location) => {
+  const queryStart = location.indexOf("?");
+  if (queryStart === -1) {
+    return { beforeQuery: location, queryGroups: null };
+  }
+  return { beforeQuery: location.slice(0, queryStart), queryGroups: queryGroupsOf(location.slice(queryStart + 1)) };
+};
+
 const rewrittenCases = CASES.filter((testCase) => testCase.expectedUri && testCase.expectedUri !== testCase.uri);
 
 describe("the viewer request function source", () => {
@@ -186,6 +208,62 @@ describe("the viewer request function", () => {
   });
 });
 
+describe("comparing a redirect location with the one a case expects", () => {
+  const DEEPER_LOCATION = "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2";
+  const EMPTY_VALUE_LOCATION = "https://www.villasensual.nl/?preview=";
+  const ROOT_LOCATION = "https://www.villasensual.nl/";
+
+  it.each([
+    ["the same location", DEEPER_LOCATION, DEEPER_LOCATION],
+    [
+      "the query names in another order",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=1&r=2&q=villa%20sea",
+    ],
+    ["a name with an empty value", EMPTY_VALUE_LOCATION, EMPTY_VALUE_LOCATION],
+    ["a location without a query", ROOT_LOCATION, ROOT_LOCATION],
+  ])("accepts %s", (_name, expected, actual) => {
+    expect(locationParts(actual)).toEqual(locationParts(expected));
+  });
+
+  it.each([
+    ["another scheme", DEEPER_LOCATION, "http://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2"],
+    ["another host", DEEPER_LOCATION, "https://villasensual.nl/listing/2?q=villa%20sea&r=1&r=2"],
+    ["the host in capitals", DEEPER_LOCATION, "https://WWW.VillaSensual.NL/listing/2?q=villa%20sea&r=1&r=2"],
+    ["another path", DEEPER_LOCATION, "https://www.villasensual.nl/listing/3?q=villa%20sea&r=1&r=2"],
+    ["a trailing slash on the path", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2/?q=villa%20sea&r=1&r=2"],
+    ["a missing name", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?r=1&r=2"],
+    ["a missing repeated value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1"],
+    ["an extra name", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&preview="],
+    ["an extra repeated value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&r=3"],
+    ["a repeated value twice", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&r=2"],
+    ["a changed value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20see&r=1&r=2"],
+    ["a decoded value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa sea&r=1&r=2"],
+    ["the repeated values swapped", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=2&r=1"],
+    [
+      "the names reordered and the repeated values swapped",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=2&r=1&q=villa%20sea",
+    ],
+    [
+      "the repeated values split by another name",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=1&q=villa%20sea&r=2",
+    ],
+    ["no query where one is expected", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2"],
+    ["an empty query where one is expected", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?"],
+    ["a name without the equals sign of its empty value", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?preview"],
+    ["a value where an empty one is expected", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?preview=1"],
+    ["no query where an empty value is expected", EMPTY_VALUE_LOCATION, ROOT_LOCATION],
+    ["an empty query where an empty value is expected", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?"],
+    ["a query where none is expected", ROOT_LOCATION, EMPTY_VALUE_LOCATION],
+    ["an empty query where none is expected", ROOT_LOCATION, "https://www.villasensual.nl/?"],
+    ["the host without its path", ROOT_LOCATION, "https://www.villasensual.nl"],
+  ])("refuses %s", (_name, expected, actual) => {
+    expect(locationParts(actual)).not.toEqual(locationParts(expected));
+  });
+});
+
 describe("the redirect from an alias to its primary domain", () => {
   it.each(REDIRECT_CASES.map((testCase) => [testCase.name, testCase]))("%s", async (_name, testCase) => {
     const handler = loadHandler(testCase.redirects || {}, { storeFails: testCase.storeFails });
@@ -199,10 +277,11 @@ describe("the redirect from an alias to its primary domain", () => {
         statusCode: 301,
         statusDescription: "Moved Permanently",
         headers: {
-          location: { value: testCase.expectedLocation },
+          location: { value: expect.any(String) },
           "cache-control": { value: REDIRECT_CACHE_CONTROL },
         },
       });
+      expect(locationParts(result.headers.location.value)).toEqual(locationParts(testCase.expectedLocation));
       expect(event.request).toEqual(original);
       return;
     }
