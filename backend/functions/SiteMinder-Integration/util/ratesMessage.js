@@ -21,7 +21,6 @@ function validateItem(item, index) {
 
 const roomRateKey = (item) => `${item.roomTypeCode}\u0000${item.ratePlanCode}`;
 
-// One RateAmountMessage per room rate, with one Rate per date range, in the order they were given.
 function groupByRoomRate(items) {
   const groups = new Map();
   for (const item of items) {
@@ -51,9 +50,6 @@ const toMessage = (group) =>
   `<Rates>${group.rates.map(toRate).join("")}</Rates>` +
   "</RateAmountMessage>";
 
-// Per Day Pricing: one price per night before tax (the Domits base rate is net, without VAT or local taxes),
-// per room rate and date range. SiteMinder accepts AmountBeforeTax or AmountAfterTax.
-// items: { roomTypeCode, ratePlanCode, start, end, amount, currency }
 export function buildRatesNotif({ hotelCode, requestorId, items, echoToken, now }) {
   if (!hotelCode) throw new Error("hotelCode is required");
   if (!requestorId) throw new Error("requestorId is required");

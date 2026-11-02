@@ -71,8 +71,6 @@ function lengthsOfStay(item) {
   return stays.length ? `<LengthsOfStay>${stays.join("")}</LengthsOfStay>` : "";
 }
 
-// One AvailStatusMessage holds the stays and the stop sell; CTA and CTD each need their own, because a message
-// carries one RestrictionStatus. Each restriction is independent at SiteMinder, so only the ones set are sent.
 function toMessages(item) {
   const messages = [];
   const stays = lengthsOfStay(item);
@@ -89,8 +87,6 @@ function toMessages(item) {
   return messages;
 }
 
-// items: { roomTypeCode, ratePlanCode, start, end, stopSell?, closedToArrival?, closedToDeparture?, minStay?, maxStay? }
-// maxStay: null removes the maximum stay. A restriction that is left out keeps its current value at SiteMinder.
 export function buildRestrictionsNotif({ hotelCode, requestorId, items, echoToken, now }) {
   if (!hotelCode) throw new Error("hotelCode is required");
   if (!requestorId) throw new Error("requestorId is required");
