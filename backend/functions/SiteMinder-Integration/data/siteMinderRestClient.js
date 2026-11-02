@@ -28,7 +28,6 @@ const required = (value, label) => {
   return value;
 };
 
-// REST part of pmsXchange (JSON over HTTPS, Basic auth with the PMS-level credentials).
 export class SiteMinderRestClient {
   constructor({ pmsCode, username, password, baseUrl = SITEMINDER_PREPROD_URL, fetchImpl = fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     this.pmsCode = required(pmsCode, "SiteMinder pmsCode");

@@ -1,7 +1,5 @@
 const text = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 
-// One entry per room type and rate plan that the hotel mapped to our PMS on the SiteMinder Platform.
-// roomTypeCode is used as both RoomTypeCode and InvTypeCode in the SOAP messages.
 export function mapRoomRates(response) {
   if (!Array.isArray(response)) {
     throw new TypeError("SiteMinder room-rates response is not a list");
@@ -17,7 +15,6 @@ export function mapRoomRates(response) {
     .filter((entry) => entry.roomTypeCode);
 }
 
-// The room types with their rate plans, the shape the mapping screen needs.
 export function groupByRoomType(roomRates) {
   const rooms = new Map();
   for (const rate of roomRates) {
