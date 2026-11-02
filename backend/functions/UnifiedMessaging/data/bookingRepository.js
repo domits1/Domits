@@ -70,7 +70,6 @@ class BookingRepository {
     const uniqueBookingIds = [...new Set(bookingIds)];
     const names = {};
 
-    // A host with many conversations would otherwise send one very large IN list to the database.
     for (let start = 0; start < uniqueBookingIds.length; start += GUEST_NAME_CHUNK_SIZE) {
       const chunk = uniqueBookingIds.slice(start, start + GUEST_NAME_CHUNK_SIZE);
       const bookings = await repository
