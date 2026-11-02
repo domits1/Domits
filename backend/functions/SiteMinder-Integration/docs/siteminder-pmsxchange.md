@@ -18,6 +18,17 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 
 Not built yet: receiving reservations, the Lambda handler and schedule, and the host screen.
 
+## When a send is tried again
+
+`SiteMinderSoapError.retryable` says whether the same message can work on a later try:
+
+| Answer | Retryable | Why |
+| ------ | --------- | --- |
+| Timeout or network error | yes | the message may not have reached SiteMinder |
+| HTTP 5xx without an OTA answer | yes | SiteMinder had a problem, not the message |
+| OTA `Errors` answer | no | SiteMinder refused the message itself |
+| SOAP fault (for example wrong credentials), also with HTTP 500 | no | sending the same message again gives the same fault |
+
 ## Mapping
 
 The mapping uses the shared `channel_integration_*` tables that Channex also uses, so there is no new table or migration.
