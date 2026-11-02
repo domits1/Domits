@@ -1,7 +1,7 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 import { requestPropertyReview } from "./services/propertyReviewApi";
 
-export const PROPERTY_REVIEW_ADMIN_ROUTE = "admin/property-review";
+export { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyReviewPaths";
 
 export const PROPERTY_REVIEW_ACCESS = Object.freeze({
   ALLOWED: "allowed",
