@@ -2,7 +2,7 @@ import { describe, expect, jest, test } from "@jest/globals";
 import { SiteMinderMappingService } from "../../functions/SiteMinder-Integration/business/siteMinderMappingService.js";
 import { fakeTables, PMSXTEST1_ROOM_RATES } from "./siteMinderFakeTables.js";
 
-const build = ({ roomRates = PMSXTEST1_ROOM_RATES, hostId = "host-1", tables = fakeTables() } = {}) => {
+const build = ({ roomRates = PMSXTEST1_ROOM_RATES, hostId = "host-1", tables = fakeTables(), logger = { warn: jest.fn() } } = {}) => {
   const restClient = { getRoomRates: jest.fn(async () => roomRates) };
   const propertyLookup = { getDomitsPropertyContext: jest.fn(async (id) => (id === "missing" ? null : { propertyId: id, hostId })) };
   let n = 0;
@@ -14,8 +14,9 @@ const build = ({ roomRates = PMSXTEST1_ROOM_RATES, hostId = "host-1", tables = f
     credentialsRef: "domits/siteminder/pmsxchange",
     now: () => 1000,
     newId: () => `account-${(n += 1)}`,
+    logger,
   });
-  return { service, tables, restClient };
+  return { service, tables, restClient, logger };
 };
 
 const sync = (service, overrides = {}) => service.syncHotel({ userId: "host-1", domitsPropertyId: "property-1", hotelCode: "PMSXTEST1", ...overrides });
@@ -83,6 +84,14 @@ describe("SiteMinderMappingService.syncHotel", () => {
 
     const second = build({ tables }).service;
     await expect(sync(second, { domitsPropertyId: "property-2" })).rejects.toMatchObject({ code: "SITEMINDER_HOTEL_ALREADY_MAPPED" });
+  });
+
+  test("logs the hotel code when SiteMinder sends room rates without a roomTypeCode", async () => {
+    const { service, logger } = build({ roomRates: [...PMSXTEST1_ROOM_RATES, { ratePlanCode: "BAR" }] });
+
+    await sync(service);
+
+    expect(JSON.parse(logger.warn.mock.calls[0][0])).toMatchObject({ event: "SITEMINDER_ROOM_RATES_SKIPPED", hotelCode: "PMSXTEST1", skipped: 1 });
   });
 
   test("stores nothing when SiteMinder returns no room rates for the hotel", async () => {

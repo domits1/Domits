@@ -21,8 +21,8 @@ const requireText = (value, label) => {
 };
 
 export class SiteMinderMappingService {
-  constructor({ restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now = () => Date.now(), newId }) {
-    Object.assign(this, { restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now, newId });
+  constructor({ restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now = () => Date.now(), newId, logger = console }) {
+    Object.assign(this, { restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now, newId, logger });
   }
 
   async syncHotel({ userId, domitsPropertyId, hotelCode }) {
@@ -34,7 +34,8 @@ export class SiteMinderMappingService {
     const account = await this.#account(owner);
     await this.#checkHotelIsFree(hotel, account.id, propertyId);
 
-    const rooms = groupByRoomType(mapRoomRates(await this.restClient.getRoomRates(hotel)));
+    const roomRates = await this.restClient.getRoomRates(hotel);
+    const rooms = groupByRoomType(mapRoomRates(roomRates, { logger: this.logger, hotelCode: hotel }));
     if (rooms.length === 0) {
       throw new SiteMinderMappingError(
         "SITEMINDER_HOTEL_HAS_NO_ROOM_RATES",
