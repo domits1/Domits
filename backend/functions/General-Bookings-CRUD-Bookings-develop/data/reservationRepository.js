@@ -27,9 +27,8 @@ const OWN_BOOKING_PAYMENT_READ_COLUMNS = [
 
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
 const CANCELLED_STATUS = "Cancelled";
+const ALREADY_CANCELLED_STATUSES = new Set([CANCELLED_STATUS, "Canceled"]);
 
-// COALESCE in the update itself, not a read before it: a second cancel keeps the first moment,
-// also when two cancels arrive together.
 const cancelledBookingValues = () => ({
   status: CANCELLED_STATUS,
   cancelled_at: () => `COALESCE(cancelled_at, ${Date.now()})`,
@@ -643,6 +642,10 @@ class ReservationRepository {
 
     if (existing.guestid !== guestId) {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
+    }
+
+    if (ALREADY_CANCELLED_STATUSES.has(existing.status)) {
+      return { response: existing, statusCode: 200 };
     }
 
     await this.#saveWithOutbox(channexChanges, (manager) =>

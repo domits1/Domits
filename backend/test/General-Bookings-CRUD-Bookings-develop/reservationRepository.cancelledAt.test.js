@@ -20,7 +20,7 @@ const setup = () => {
     getRepository: jest.fn(() => ({ createQueryBuilder: () => read })),
   };
   Database.getInstance.mockResolvedValue(client);
-  return { repository: new ReservationRepository({}), update };
+  return { repository: new ReservationRepository({}), update, read };
 };
 
 const toUpdateSql = (values) => {
@@ -34,8 +34,18 @@ describe("ReservationRepository cancelled_at", () => {
   beforeEach(() => jest.spyOn(Date, "now").mockReturnValue(NOW));
   afterEach(() => jest.restoreAllMocks());
 
-  // The first cancel time must survive a second cancel, inside the one statement, so two cancels
-  // arriving together cannot overwrite each other. This checks the SQL TypeORM really builds.
+  test.each(["Cancelled", "Canceled"])("a guest cancel on a booking already %s does not update it", async (status) => {
+    const { repository, update, read } = setup();
+    read.getOne.mockResolvedValue({ id: "booking-1", guestid: "guest-1", status });
+    const channexChange = { propertyId: "property-1" };
+
+    const result = await repository.cancelBookingByGuest("booking-1", "guest-1", [channexChange]);
+
+    expect(update.set).not.toHaveBeenCalled();
+    expect(update.execute).not.toHaveBeenCalled();
+    expect(result).toEqual({ response: { id: "booking-1", guestid: "guest-1", status }, statusCode: 200 });
+  });
+
   test("a status change to Cancelled keeps a time that is already stored", async () => {
     const { repository, update } = setup();
 
