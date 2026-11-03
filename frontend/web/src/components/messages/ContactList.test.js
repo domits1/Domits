@@ -412,6 +412,47 @@ describe("ContactList realtime unread sync", () => {
       globalThis.fetch = originalFetch;
     }
   });
+
+  test("a fetched real name replaces a different real name already on the conversation", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        body: JSON.stringify([{ Attributes: [{ Name: "given_name", Value: "Mariska de Vries" }] }]),
+      }),
+    });
+    const namedContact = {
+      hostId: "host-1",
+      guestId: "guest-uuid-1",
+      givenName: "Maria Jansen",
+      threadId: "thread-2",
+      unreadCount: 0,
+      latestMessage: { text: "Earlier message", createdAt: "2026-06-01T09:00:00.000Z" },
+    };
+
+    try {
+      const { setContacts } = renderWithSocket({
+        contacts: [namedContact],
+        wsMessage: {
+          userId: "guest-uuid-1",
+          senderId: "guest-uuid-1",
+          recipientId: "host-1",
+          text: "What time is check-in?",
+          threadId: "thread-2",
+          createdAt: "2026-06-01T10:20:00.000Z",
+        },
+        activeThreadId: "thread-1",
+      });
+
+      await waitFor(() => expect(setContacts.mock.calls.length).toBeGreaterThanOrEqual(2));
+      const [contact] = applyQueuedUpdates(setContacts.mock.calls, [namedContact]);
+
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      expect(contact.givenName).toBe("Mariska de Vries");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 describe("ContactList manual mark read/unread", () => {
