@@ -1,6 +1,7 @@
-import vm from "node:vm";
-
 export const FUNCTION_SIZE_LIMIT_BYTES = 10000;
+
+const HOSTNAME_LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const MAX_HOSTNAME_LENGTH = 253;
 
 const MAP_LINE_PATTERN = /^var ALIASES = (.*);$/gm;
 
@@ -52,17 +53,22 @@ export const replaceAliases = (source, pairs) => {
   return source.slice(0, line.index) + renderAliases(pairs) + source.slice(line.index + line[0].length);
 };
 
-const hostRuleOf = (source) => vm.runInNewContext(`${source}\nisHostName`);
+export const isAliasHostName = (host) => {
+  if (typeof host !== "string" || host.length === 0 || host.length > MAX_HOSTNAME_LENGTH) {
+    return false;
+  }
+  const labels = host.split(".");
+  return labels.length >= 2 && labels.every((label) => HOSTNAME_LABEL_PATTERN.test(label));
+};
 
-export const aliasProblems = (source, pairs) => {
-  const isHostName = hostRuleOf(source);
+export const aliasProblems = (pairs) => {
   const aliases = new Set();
   const problems = [];
   for (const [alias, primary] of pairs) {
-    if (!isHostName(alias)) {
+    if (!isAliasHostName(alias)) {
       problems.push(`${alias} is not a lowercase hostname without a port or a trailing dot`);
     }
-    if (!isHostName(primary)) {
+    if (!isAliasHostName(primary)) {
       problems.push(`the primary ${primary} of ${alias} is not a lowercase hostname without a port or a trailing dot`);
     }
     if (alias === primary) {
@@ -114,7 +120,7 @@ export const parseAliasRows = (text) => {
 };
 
 export const withAliases = (source, pairs) => {
-  const problems = aliasProblems(source, pairs);
+  const problems = aliasProblems(pairs);
   if (problems.length > 0) {
     throw new Error(`The alias map was not written:\n${problems.join("\n")}`);
   }

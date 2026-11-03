@@ -1,10 +1,13 @@
 import { describe, it, expect } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import vm from "node:vm";
+import fc from "fast-check";
 import {
   FUNCTION_SIZE_LIMIT_BYTES,
   aliasProblems,
   aliasesOf,
+  isAliasHostName,
   parseAliasRows,
   replaceAliases,
   withAliases,
@@ -15,11 +18,13 @@ const ALIAS = "beautiful-home-amsterdam-6156b005.direct.domits.com";
 const PRIMARY = "www.villasensual.nl";
 const LONGEST_REALISTIC_PRIMARY = `www.${"b".repeat(32)}.com`;
 
+const functionHostRule = vm.runInNewContext(`${SOURCE}\nisHostName`);
+
 const longestRealisticAlias = (index) => `${"a".repeat(40)}-${index.toString(16).padStart(8, "0")}.direct.domits.com`;
 
 describe("the alias map the edge function ships with", () => {
   it("holds only lowercase hostnames, none pointing at itself or at another alias", () => {
-    expect(aliasProblems(SOURCE, aliasesOf(SOURCE))).toEqual([]);
+    expect(aliasProblems(aliasesOf(SOURCE))).toEqual([]);
   });
 
   it("is written in its one form, sorted JSON on one line, so one alias list always gives the same bytes", () => {
@@ -91,7 +96,7 @@ describe("the rules every alias in the map follows", () => {
       ["villa-loiki-8cf98e11.direct.domits.com", "www.villaloiki.com"],
     ];
 
-    expect(aliasProblems(SOURCE, pairs)).toEqual([]);
+    expect(aliasProblems(pairs)).toEqual([]);
   });
 
   const notNormal = (host) => `${host} is not a lowercase hostname without a port or a trailing dot`;
@@ -106,7 +111,7 @@ describe("the rules every alias in the map follows", () => {
     ["an alias of one label", [["localhost", PRIMARY]]],
     ["an alias the function could never match", [["my_villa.direct.domits.com", PRIMARY]]],
   ])("refuses %s", (_name, pairs) => {
-    expect(aliasProblems(SOURCE, pairs)).toEqual([notNormal(pairs[0][0])]);
+    expect(aliasProblems(pairs)).toEqual([notNormal(pairs[0][0])]);
   });
 
   it.each([
@@ -117,16 +122,16 @@ describe("the rules every alias in the map follows", () => {
     ["with a scheme", "https://evil.example"],
     ["that is empty", ""],
   ])("refuses a primary %s", (_name, primary) => {
-    expect(aliasProblems(SOURCE, [[ALIAS, primary]])).toEqual([primaryNotNormal(primary)]);
+    expect(aliasProblems([[ALIAS, primary]])).toEqual([primaryNotNormal(primary)]);
   });
 
   it("refuses an alias that points at itself", () => {
-    expect(aliasProblems(SOURCE, [[ALIAS, ALIAS]])).toEqual([`${ALIAS} points at itself`]);
+    expect(aliasProblems([[ALIAS, ALIAS]])).toEqual([`${ALIAS} points at itself`]);
   });
 
   it("refuses an alias listed twice, also with the same primary", () => {
     expect(
-      aliasProblems(SOURCE, [
+      aliasProblems([
         [ALIAS, PRIMARY],
         [ALIAS, PRIMARY],
       ])
@@ -140,8 +145,8 @@ describe("the rules every alias in the map follows", () => {
     ];
     const problem = `the primary ${PRIMARY} of ${ALIAS} is an alias itself`;
 
-    expect(aliasProblems(SOURCE, chain)).toEqual([problem]);
-    expect(aliasProblems(SOURCE, [...chain].reverse())).toEqual([problem]);
+    expect(aliasProblems(chain)).toEqual([problem]);
+    expect(aliasProblems([...chain].reverse())).toEqual([problem]);
   });
 });
 
@@ -235,5 +240,39 @@ describe("writing the alias map into the function", () => {
 
     expect(() => withAliases(atLimit, [[ALIAS, PRIMARY]])).toThrow(/would be 10000 bytes/);
     expect(Buffer.byteLength(withAliases(underLimit, [[ALIAS, PRIMARY]]), "utf8")).toBe(FUNCTION_SIZE_LIMIT_BYTES - 1);
+  });
+});
+
+describe("the hostname rule of the alias map", () => {
+  it("accepts and refuses exactly the hostnames the edge function does", () => {
+    const samples = [
+      ALIAS,
+      PRIMARY,
+      LONGEST_REALISTIC_PRIMARY,
+      "",
+      "localhost",
+      "a.b",
+      "A.example.com",
+      "www.example.com.",
+      "www.example.com:443",
+      "-bad.example.com",
+      "bad-.example.com",
+      "a..example.com",
+      `${"a".repeat(63)}.com`,
+      `${"a".repeat(64)}.com`,
+      `${"a.".repeat(125)}com`,
+      `${"a.".repeat(125)}coms`,
+    ];
+    for (const host of samples) {
+      expect([host, isAliasHostName(host)]).toEqual([host, functionHostRule(host)]);
+    }
+  });
+
+  it("agrees with the edge function on generated hostnames", () => {
+    const unit = fc.constantFrom("a", "z", "0", "9", "-", ".", "A", ":", "_");
+    fc.assert(
+      fc.property(fc.string({ unit, maxLength: 300 }), (host) => isAliasHostName(host) === functionHostRule(host)),
+      { numRuns: 2000 }
+    );
   });
 });
