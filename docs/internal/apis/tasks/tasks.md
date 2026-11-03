@@ -6,12 +6,14 @@ Email notifications for the host dashboard Tasks module (issue #3510). This page
 
 | Event | Who is emailed | Setting that controls it | Sent when |
 |---|---|---|---|
-| Task assigned | The assignee (a team member) | The assignee's own `notif_email_assigned` | A task is created with an assignee, or an update changes the assignee to someone new |
+| Task assigned | The assignee (a team member), or the signed-in person who assigned the task to themselves | The recipient's own `notif_email_assigned` | A task is created with an assignee, or an update changes the assignee to someone new. For a person assigning to themselves, the page sends `assigned_to_self: true` (see below) |
 | Task completed | The host | The host's own `notif_email_completed` | A **team member** moves a task to Completed. A host who completes their own task is not emailed |
 | Task due soon | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_due_soon` | A scheduled sweep finds an open task that is due within the next 24 hours and has not been emailed about its current due date. One email each time the due date changes |
 | Task overdue | The assignee, or the host when there is no assignee or the assignee cannot be emailed (not an active team member) | The recipient's own `notif_email_overdue` | A scheduled sweep finds an open task that went past its due date in the last 24 hours and was never emailed (the first email), or one that was last emailed 2 or more days ago and has had fewer than 4 overdue emails (a reminder) |
 | Task approved | The assignee, or the host when there is no assignee | None. It is always sent, and there is no Settings toggle for it | A host or manager approves a completed task |
 | Task rejected | The assignee, or the host when there is no assignee | None. It is always sent, and there is no Settings toggle for it | A host or manager rejects a completed task, which reopens it as In progress |
+
+**Assigning a task to yourself.** A host, or a team member acting for a host, who picks themselves as the assignee has no team member behind the choice, so the page sends `assigned_to_self: true` on create, and on update only when the assignee changed to themselves. It is not a task column and is never saved. On an update it also takes the task away from any team member it was assigned to (`assignee_team_member_id` becomes null) and keeps the `assignee_name` that was sent. The person notified is the signed-in user (their own settings and email address), not the host account the task belongs to. It is ignored when a team member is also sent, and when there is no signed-in user behind the request (the internal create route).
 
 Re-saving the same assignee, unassigning, completing an already completed task, and any other status change send nothing. A task gets at most 4 overdue emails: the first one, then a reminder every 2 days, at most 3 reminders. Reminders stop when the task is completed or cancelled, and a task that was escalated by hand after its due date is skipped, so nobody gets both. A task escalated before its due date still gets the overdue emails once it goes late.
 
@@ -29,7 +31,7 @@ Re-saving the same assignee, unassigning, completing an already completed task, 
 createTask / updateTask (property-tasks)
         │  task is saved and the activity is logged first
         ▼
-notifyTaskAssigned / notifyTaskCompleted     business/service/taskNotificationService.js
+notifyTaskAssigned / notifyTaskAssignedToSelf / notifyTaskCompleted     business/service/taskNotificationService.js
         │  read the recipient's host_settings row; opted out → stop
         ▼
 EmailNotificationService (existing Lambda)   payload: { body: { toEmail, subject, body } }
@@ -88,7 +90,7 @@ notifyTaskDueSoon → recipient's notif_email_due_soon → EmailNotificationServ
 
 ### In-app notifications
 
-When an email is sent for a task being assigned, completed or overdue, an **in-app notification** is also stored for the same person who gets the email: the assignee for "assigned", the host for "completed", and the assignee for "overdue", or the host when there is none or the assignee is not an active team member. It is stored whether or not they turned that email off, and it is skipped when they turned in-app notifications off (`notif_inapp_enabled`, on by default).
+When an email is sent for a task being assigned, completed or overdue, an **in-app notification** is also stored for the same person who gets the email: the assignee (or the person who assigned it to themselves) for "assigned", the host for "completed", and the assignee for "overdue", or the host when there is none or the assignee is not an active team member. It is stored whether or not they turned that email off, and it is skipped when they turned in-app notifications off (`notif_inapp_enabled`, on by default).
 
 ```
 notifyTaskAssigned / notifyTaskCompleted / notifyTaskOverdue

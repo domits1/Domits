@@ -9,7 +9,7 @@ import {
     newAttachmentFile,
 } from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
-import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
+import { notifyTaskAssigned, notifyTaskAssignedToSelf, notifyTaskCompleted } from "./taskNotificationService.js";
 import { notifyTaskApproved, notifyTaskRejected } from "./taskReviewNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
@@ -28,7 +28,7 @@ export const getTasks = async (hostId, filters) => {
     return tasks.map(task => ({ ...task, sla_status: computeSlaStatus(task, now) }));
 };
 
-export const createTask = async (hostId, taskData) => {
+export const createTask = async (hostId, taskData, { actorId = null } = {}) => {
     const dataSource = await Database.getInstance();
 
     validateTaskPayload(taskData);
@@ -73,12 +73,14 @@ export const createTask = async (hostId, taskData) => {
 
     if (newTask.assignee_team_member_id) {
         await notifyTaskAssigned(hostId, newTask);
+    } else if (taskData.assigned_to_self === true && actorId) {
+        await notifyTaskAssignedToSelf(actorId, hostId, newTask);
     }
 
     return newTask;
 };
 
-const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember = false, actorId = null, isAssignedToSelf = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
@@ -117,7 +119,10 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
         await assertPropertyOfHost(dataSource, hostId, fieldsToUpdate.property_id);
     }
 
-    if (fieldsToUpdate.assignee_team_member_id !== undefined) {
+    if (isAssignedToSelf) {
+        fieldsToUpdate.assignee_team_member_id = null;
+        fieldsToUpdate.assignee_name ??= null;
+    } else if (fieldsToUpdate.assignee_team_member_id !== undefined) {
         if (fieldsToUpdate.assignee_team_member_id && !isValidUuid(fieldsToUpdate.assignee_team_member_id)) {
             throw new BadRequestException("assignee_team_member_id must be a valid UUID");
         }
@@ -184,6 +189,8 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
         && fieldsToUpdate.assignee_team_member_id !== oldTask.assignee_team_member_id;
     if (isNewAssignee) {
         await notifyTaskAssigned(hostId, { ...oldTask, ...fieldsToUpdate });
+    } else if (isAssignedToSelf && actorId) {
+        await notifyTaskAssignedToSelf(actorId, hostId, { ...oldTask, ...fieldsToUpdate });
     }
 
     // A host who completes their own task already knows, so only a team member's completion is worth an email.
@@ -194,11 +201,16 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
     return { message: "Task updated successfully" };
 };
 
-export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false, actorId = null } = {}) => {
     if (!taskId) throw new BadRequestException("id is required");
     const editorRole = actorIsTeamMember ? TASK_EDITOR_ROLES.TEAM_MEMBER : TASK_EDITOR_ROLES.HOST;
-    assertOnlyEditableFields(editorRole, updateData);
-    return await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
+    const { assigned_to_self: assignedToSelf, ...taskFields } = updateData ?? {};
+    assertOnlyEditableFields(editorRole, taskFields);
+    return await applyTaskUpdate(hostId, taskId, taskFields, {
+        actorIsTeamMember,
+        actorId,
+        isAssignedToSelf: assignedToSelf === true && !taskFields.assignee_team_member_id,
+    });
 };
 
 export const escalateTask = async (hostId, taskId) => {

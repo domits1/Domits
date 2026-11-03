@@ -57,9 +57,9 @@ export class Controller {
 
     async createTask(event) {
         try {
-            const { effectiveHostId } = await this.resolveHost(event);
+            const { effectiveHostId, username } = await this.resolveHost(event);
             const taskData = JSON.parse(event.body);
-            const result = await createTask(effectiveHostId, taskData);
+            const result = await createTask(effectiveHostId, taskData, { actorId: username });
             return { statusCode: 201, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
@@ -68,10 +68,10 @@ export class Controller {
 
     async updateTask(event) {
         try {
-            const { effectiveHostId, isPOM } = await this.resolveHost(event);
+            const { effectiveHostId, isPOM, username } = await this.resolveHost(event);
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
-            const result = await updateTask(effectiveHostId, taskId, updateData, { actorIsTeamMember: isPOM });
+            const result = await updateTask(effectiveHostId, taskId, updateData, { actorIsTeamMember: isPOM, actorId: username });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

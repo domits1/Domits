@@ -2,9 +2,11 @@ jest.mock("database", () => require("./taskRepositoryTestDoubles.js").databaseMo
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => require("./taskRepositoryTestDoubles.js").taskRepositoryMock);
 
 const mockNotifyTaskAssigned = jest.fn();
+const mockNotifyTaskAssignedToSelf = jest.fn();
 
 jest.mock("../../functions/property-tasks/business/service/taskNotificationService.js", () => ({
     notifyTaskAssigned: (...args) => mockNotifyTaskAssigned(...args),
+    notifyTaskAssignedToSelf: (...args) => mockNotifyTaskAssignedToSelf(...args),
 }));
 
 const {
@@ -129,6 +131,58 @@ describe("task assignment", () => {
         });
     });
 
+    describe("createTask assigned to the person creating it", () => {
+        it("notifies that person, under the host's account, with the saved task", async () => {
+            await createTask("host-1", { ...baseTaskData, assignee_name: "Alex", assigned_to_self: true }, { actorId: "user-1" });
+
+            expect(mockNotifyTaskAssignedToSelf).toHaveBeenCalledTimes(1);
+            expect(mockNotifyTaskAssignedToSelf).toHaveBeenCalledWith(
+                "user-1",
+                "host-1",
+                expect.objectContaining({ id: "task-1" })
+            );
+            expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+        });
+
+        it("does not save the flag on the task", async () => {
+            await createTask("host-1", { ...baseTaskData, assigned_to_self: true }, { actorId: "user-1" });
+
+            expect(mockSaveTaskToDb.mock.calls[0][1]).not.toHaveProperty("assigned_to_self");
+        });
+
+        it("does not notify anyone when the flag is not set", async () => {
+            await createTask("host-1", { ...baseTaskData, assignee_name: "Alex" }, { actorId: "user-1" });
+
+            expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+        });
+
+        it("lets a team member win when both are given, so only the team member is notified", async () => {
+            const memberId = "550e8400-e29b-41d4-a716-446655440000";
+            mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", status: "active", member_email: "housekeeper@example.com" });
+
+            await createTask("host-1", { ...baseTaskData, assignee_team_member_id: memberId, assigned_to_self: true }, { actorId: "user-1" });
+
+            expect(mockNotifyTaskAssigned).toHaveBeenCalledTimes(1);
+            expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+        });
+
+        it("does not notify when there is no signed-in person behind the request", async () => {
+            await createTask("host-1", { ...baseTaskData, assigned_to_self: true });
+
+            expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+        });
+
+        it("does not notify when the task could not be saved", async () => {
+            mockSaveTaskToDb.mockRejectedValue(new Error("database down"));
+
+            await expect(
+                createTask("host-1", { ...baseTaskData, assigned_to_self: true }, { actorId: "user-1" })
+            ).rejects.toThrow("database down");
+
+            expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+        });
+    });
+
     describe("updateTask", () => {
         beforeEach(() => {
             mockGetTaskById.mockResolvedValue({
@@ -200,6 +254,95 @@ describe("task assignment", () => {
                 ).rejects.toThrow("database down");
 
                 expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+            });
+        });
+
+        describe("assigned to the person making the change", () => {
+            const memberId = "550e8400-e29b-41d4-a716-446655440000";
+            const assignedToMember = { id: "task-1", host_id: "host-1", status: "Pending", due_date: null, assignee_team_member_id: memberId, assignee_name: "housekeeper@example.com" };
+
+            it("notifies that person with the task as it is after the update", async () => {
+                await updateTask("host-1", "task-1", { assignee_name: "Alex", assigned_to_self: true }, { actorId: "user-1" });
+
+                expect(mockNotifyTaskAssignedToSelf).toHaveBeenCalledTimes(1);
+                expect(mockNotifyTaskAssignedToSelf).toHaveBeenCalledWith(
+                    "user-1",
+                    "host-1",
+                    expect.objectContaining({ id: "task-1", assignee_name: "Alex", assignee_team_member_id: null })
+                );
+                expect(mockNotifyTaskAssigned).not.toHaveBeenCalled();
+            });
+
+            it("takes the task away from the team member it was assigned to, and keeps the name sent", async () => {
+                mockGetTaskById.mockResolvedValue(assignedToMember);
+
+                await updateTask("host-1", "task-1", { assignee_name: "Alex", assigned_to_self: true }, { actorId: "user-1" });
+
+                expect(mockUpdateTaskInDb).toHaveBeenCalledWith(
+                    expect.anything(),
+                    "task-1",
+                    expect.objectContaining({ assignee_team_member_id: null, assignee_name: "Alex" })
+                );
+            });
+
+            it("clears the old name when none was sent, rather than leaving the old member's address", async () => {
+                mockGetTaskById.mockResolvedValue(assignedToMember);
+
+                await updateTask("host-1", "task-1", { assigned_to_self: true }, { actorId: "user-1" });
+
+                expect(mockUpdateTaskInDb).toHaveBeenCalledWith(
+                    expect.anything(),
+                    "task-1",
+                    expect.objectContaining({ assignee_team_member_id: null, assignee_name: null })
+                );
+            });
+
+            it("lets a team member win when both are sent, so the member is assigned and only the member is notified", async () => {
+                mockGetTeamMemberById.mockResolvedValue({ id: memberId, host_id: "host-1", status: "active", member_email: "housekeeper@example.com" });
+
+                await updateTask("host-1", "task-1", { assignee_team_member_id: memberId, assigned_to_self: true }, { actorId: "user-1" });
+
+                expect(mockUpdateTaskInDb).toHaveBeenCalledWith(
+                    expect.anything(),
+                    "task-1",
+                    expect.objectContaining({ assignee_team_member_id: memberId, assignee_name: "housekeeper@example.com" })
+                );
+                expect(mockNotifyTaskAssigned).toHaveBeenCalledTimes(1);
+                expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+            });
+
+            it("does not save the flag on the task", async () => {
+                await updateTask("host-1", "task-1", { assigned_to_self: true }, { actorId: "user-1" });
+
+                expect(mockUpdateTaskInDb.mock.calls[0][2]).not.toHaveProperty("assigned_to_self");
+            });
+
+            it("is not refused as a field that cannot be changed", async () => {
+                await expect(
+                    updateTask("host-1", "task-1", { assigned_to_self: true }, { actorId: "user-1", actorIsTeamMember: true })
+                ).resolves.toEqual({ message: "Task updated successfully" });
+            });
+
+            it("does not notify when the flag is not set", async () => {
+                await updateTask("host-1", "task-1", { assignee_name: "Alex" }, { actorId: "user-1" });
+
+                expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+            });
+
+            it("does not notify when there is no signed-in person behind the request", async () => {
+                await updateTask("host-1", "task-1", { assigned_to_self: true });
+
+                expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
+            });
+
+            it("does not notify when the update could not be saved", async () => {
+                mockUpdateTaskInDb.mockRejectedValue(new Error("database down"));
+
+                await expect(
+                    updateTask("host-1", "task-1", { assigned_to_self: true }, { actorId: "user-1" })
+                ).rejects.toThrow("database down");
+
+                expect(mockNotifyTaskAssignedToSelf).not.toHaveBeenCalled();
             });
         });
 

@@ -30,7 +30,7 @@ jest.mock("../../functions/property-tasks/business/service/taskEscalationService
     getHostEmailById: (...args) => mockGetHostEmailById(...args),
 }));
 
-const { notifyTaskAssigned, notifyTaskCompleted, notifyTaskOverdue, notifyTaskDueSoon } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
+const { notifyTaskAssigned, notifyTaskAssignedToSelf, notifyTaskCompleted, notifyTaskOverdue, notifyTaskDueSoon } = require("../../functions/property-tasks/business/service/taskNotificationService.js");
 
 const TEAM_MEMBER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -632,5 +632,87 @@ describe("in-app notifications", () => {
 
             expect(mockCreateNotification).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe("notifyTaskAssignedToSelf", () => {
+    const savedTask = {
+        id: "task-1",
+        title: "Clean the villa",
+        property_snapshot_label: "Villa Sunshine",
+        due_date: new Date("2030-01-01T10:00:00Z").getTime(),
+        updated_at: 2000,
+    };
+    let consoleErrorSpy;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+        mockGetHostSettings.mockResolvedValue(null);
+        mockGetHostEmailById.mockResolvedValue("manager@example.com");
+        mockSend.mockResolvedValue({ StatusCode: 200 });
+        mockCreateNotification.mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+    });
+
+    it("stores a notification for the person who assigned the task to themselves, under the host's account", async () => {
+        await notifyTaskAssignedToSelf("user-1", "host-1", savedTask);
+
+        expect(mockCreateNotification).toHaveBeenCalledWith(expect.anything(), {
+            id: "assigned:task-1:user-1:2000",
+            user_id: "user-1",
+            host_id: "host-1",
+            task_id: "task-1",
+            event_type: "assigned",
+            title: "Task assigned",
+            message: expect.stringContaining("Clean the villa"),
+            created_at: expect.any(Number),
+        });
+    });
+
+    it("emails the address of that person, not of the host", async () => {
+        await notifyTaskAssignedToSelf("user-1", "host-1", savedTask);
+
+        expect(mockGetHostEmailById).toHaveBeenCalledWith("user-1");
+        const payload = JSON.parse(mockSend.mock.calls[0][0].Payload);
+        expect(payload.body.toEmail).toBe("manager@example.com");
+        expect(payload.body.subject).toContain("Clean the villa");
+    });
+
+    it("reads the settings of that person", async () => {
+        await notifyTaskAssignedToSelf("user-1", "host-1", savedTask);
+
+        expect(mockGetHostSettings).toHaveBeenCalledWith(expect.anything(), "user-1");
+    });
+
+    it("does not look up an address or email when they turned assignment emails off, but still stores it", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_email_assigned: false });
+
+        await notifyTaskAssignedToSelf("user-1", "host-1", savedTask);
+
+        expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+        expect(mockGetHostEmailById).not.toHaveBeenCalled();
+        expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it("does not store one when they turned in-app notifications off, but still emails", async () => {
+        mockGetHostSettings.mockResolvedValue({ notif_inapp_enabled: false });
+
+        await notifyTaskAssignedToSelf("user-1", "host-1", savedTask);
+
+        expect(mockCreateNotification).not.toHaveBeenCalled();
+        expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+
+    it("logs and resolves when the address cannot be fetched", async () => {
+        mockGetHostEmailById.mockRejectedValue(new Error("GetUserInfo returned an error"));
+
+        await expect(notifyTaskAssignedToSelf("user-1", "host-1", savedTask)).resolves.toBeUndefined();
+
+        expect(mockSend).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("task assigned"), expect.any(Error));
     });
 });

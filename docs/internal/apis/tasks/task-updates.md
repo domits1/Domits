@@ -35,6 +35,7 @@ After these checks, a changed `status` clears `approved_at`, so a task that is c
 ## Two updates at the same time
 
 - An update writes only the fields it sends. Two updates of different fields both stick. When both change the same field, the last write wins. The task form sends every field it shows on each save, so between two form saves the last one wins for all of them.
+- `assigned_to_self` is not a task field, so it is read before the list above is checked and is never saved. See [tasks.md](tasks.md).
 - Which fields a caller may change depends only on who they are, not on the state of the task, so a change made at the same moment cannot widen it. `host_id` cannot be changed, so the task found by the host check is the task that is written.
 - When two people complete a task at once, only one write applies, and only that one is logged and emailed. The other request writes nothing, including any other fields it sent, and still answers 200.
 - A status change is checked against the status the request read. When another request changes the status in between, the later write wins.

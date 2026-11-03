@@ -90,6 +90,15 @@ export const notifyTaskAssigned = async (hostId, task) => {
     }
 };
 
+export const notifyTaskAssignedToSelf = async (userId, hostId, task) => {
+    try {
+        const dataSource = await Database.getInstance();
+        await deliverAssigned(dataSource, { hostId, task, userId, getEmail: () => getHostEmailById(userId) });
+    } catch (error) {
+        console.error(`Failed to send task assigned notification for task ${task.id}`, error);
+    }
+};
+
 // Same contract as notifyTaskAssigned: the task is already saved, so a failure is logged, not thrown.
 export const notifyTaskCompleted = async (hostId, task) => {
     try {
