@@ -61,6 +61,9 @@ export const buildDestinationTree = (destinations, settings = readDestinationSet
     .sort(byPath);
 };
 
+const servesPage = (destination) =>
+  destination.eligible && readDestinationRequestPath(destination.path).kind === "page";
+
 const hasPageBelow = (tree, parent) =>
   tree.some(
     (destination) => destination.parentId === parent.id && (destination.eligible || hasPageBelow(tree, destination))
@@ -117,10 +120,7 @@ export class DestinationTreeService {
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
     const tree = await this.readTree();
     const root = buildRootContinents(tree).length > 0 ? [{ path: DESTINATIONS_ROOT_PATH }] : [];
-    const destinations = tree.filter(
-      (destination) => destination.eligible && readDestinationRequestPath(destination.path).kind === "page"
-    );
-    return buildDestinationSitemap([...root, ...destinations], { siteOrigin, lastModified });
+    return buildDestinationSitemap([...root, ...tree.filter(servesPage)], { siteOrigin, lastModified });
   }
 
   async renderDestinationPage(path, { siteOrigin } = {}) {
