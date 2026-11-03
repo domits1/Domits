@@ -25,6 +25,10 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Destinos",
+      "allIn": "Todos los destinos en"
+    },
     "user": {
       "hello": "Hola",
       "profile": "Perfil",
