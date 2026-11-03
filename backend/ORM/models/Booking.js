@@ -141,5 +141,14 @@ export const Booking = new EntitySchema({
       name: "special_request",
       nullable: true,
     },
+    cancelled_at: {
+      type: "bigint",
+      name: "cancelled_at",
+      transformer: {
+        from: (value) => value !== null && value !== undefined ? Number(value) : null,
+        to: (value) => value,
+      },
+      nullable: true,
+    },
   },
 });

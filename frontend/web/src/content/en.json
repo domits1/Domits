@@ -1365,6 +1365,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Your listing has been submitted for review.",
+      "pendingReviewNotice": "This listing is awaiting review and will go live once it is approved.",
       "breadcrumb": "Go Live",
       "title": "Go live with {propertyName}",
       "subtitle": "Review the checklist below, then publish your listing.",

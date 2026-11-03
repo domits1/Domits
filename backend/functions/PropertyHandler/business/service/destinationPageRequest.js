@@ -1,8 +1,7 @@
 import { isDestinationSlug } from "../../util/destination/destinationSlug.js";
 import { DESTINATIONS_ROOT_PATH } from "./destinationPageBuilder.js";
 
-export const DESTINATION_PAGE_HOSTS = Object.freeze(["www.domits.com", "acceptance.domits.com"]);
-export const DESTINATION_PAGE_DEFAULT_ORIGIN = "https://www.domits.com";
+export const DESTINATION_SITE_ORIGIN = "https://www.domits.com";
 export const DESTINATION_PATH_MAX_LENGTH = 256;
 const DESTINATION_PATH_MAX_SEGMENTS = 3;
 const INVALID = Object.freeze({ kind: "invalid" });
@@ -30,9 +29,4 @@ export const readDestinationRequestPath = (path) => {
     return { kind: "redirect", location: withoutSlash };
   }
   return INVALID;
-};
-
-export const resolveDestinationSiteOrigin = (forwardedHost) => {
-  const host = typeof forwardedHost === "string" ? forwardedHost.trim().toLowerCase() : "";
-  return DESTINATION_PAGE_HOSTS.includes(host) ? `https://${host}` : DESTINATION_PAGE_DEFAULT_ORIGIN;
 };

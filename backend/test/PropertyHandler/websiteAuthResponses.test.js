@@ -27,6 +27,8 @@ const HANDLERS = {
   publishWebsiteSite: () => withPropertyBody("POST"),
   unpublishWebsiteSite: () => withPropertyBody("POST"),
   deleteWebsiteDraft: () => withPropertyBody("DELETE"),
+  recordWebsiteAnalyticsEvent: () =>
+    withPropertyBody("POST", { eventType: "WEBSITE_BUILD_STARTED", payload: { attemptId: "attempt-1" } }),
 };
 const OWNER_CHECKED = [
   "upsertWebsiteDraft",
@@ -35,6 +37,7 @@ const OWNER_CHECKED = [
   "publishWebsiteSite",
   "unpublishWebsiteSite",
   "deleteWebsiteDraft",
+  "recordWebsiteAnalyticsEvent",
 ];
 
 const buildController = ({ groupCheck, ownerCheck = () => Promise.resolve(undefined) }) => {

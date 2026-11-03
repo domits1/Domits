@@ -29,8 +29,16 @@ const controllerAnswering = (outcome) => {
 
 const HTML = "text/html; charset=utf-8";
 
+const HOST_HEADERS = [
+  { "X-Forwarded-Host": "acceptance.domits.com" },
+  { "x-forwarded-host": "unknown.example" },
+  { "X-Forwarded-Host": "www.domits.com:443", Host: "acceptance.domits.com" },
+  {},
+  null,
+];
+
 describe("the destination page controller", () => {
-  it("passes the path and the forwarded host, whatever its case, and nothing else", async () => {
+  it("passes only the path to the page service, whatever the headers", async () => {
     const { controller, destinationPageService } = controllerAnswering({ kind: "not_found", html: "x" });
 
     await controller.getDestinationPage({
@@ -38,23 +46,20 @@ describe("the destination page controller", () => {
       headers: { "X-Forwarded-Host": "acceptance.domits.com", Cookie: "session=1", "X-Forwarded-For": "203.0.113.9" },
     });
     await controller.getDestinationPage({ path: "/destinations/asia", headers: null });
-    await controller.getDestinationPage({
-      path: "/destinations/asia",
-      headers: { "x-forwarded-host": "www.domits.com" },
-    });
 
-    expect(destinationPageService.serve).toHaveBeenNthCalledWith(1, {
-      path: "/destinations/europe",
-      forwardedHost: "acceptance.domits.com",
-    });
-    expect(destinationPageService.serve).toHaveBeenNthCalledWith(2, {
-      path: "/destinations/asia",
-      forwardedHost: undefined,
-    });
-    expect(destinationPageService.serve).toHaveBeenNthCalledWith(3, {
-      path: "/destinations/asia",
-      forwardedHost: "www.domits.com",
-    });
+    expect(destinationPageService.serve.mock.calls).toEqual([
+      [{ path: "/destinations/europe" }],
+      [{ path: "/destinations/asia" }],
+    ]);
+  });
+
+  it("asks for the sitemap without any request data", async () => {
+    const destinationPageService = { serveSitemap: jest.fn(async () => ({ kind: "not_found", html: "x" })) };
+    const controller = new DestinationPageController(destinationPageService);
+
+    await controller.getDestinationSitemap({ headers: { "X-Forwarded-Host": "acceptance.domits.com" } });
+
+    expect(destinationPageService.serveSitemap.mock.calls).toEqual([[]]);
   });
 
   it.each([
@@ -106,21 +111,38 @@ describe("a destination request through the property handler", () => {
     jest.useRealTimers();
   });
 
-  const request = (resource, path) =>
-    handler({ httpMethod: "GET", resource, path, headers: { "X-Forwarded-Host": "www.domits.com" } });
+  const request = (resource, path, headers = { "X-Forwarded-Host": "www.domits.com" }) =>
+    handler({ httpMethod: "GET", resource, path, headers });
 
-  it("serves a page on the proxy resource from the tree with the www origin", async () => {
+  it("serves the same page with the www canonical on every host, with links that stay on the host", async () => {
     jest.useFakeTimers({ now: Date.now() + 120000, doNotFake: ["setTimeout", "clearTimeout"] });
     jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(true);
-    const render = jest
-      .spyOn(DestinationTreeService.prototype, "renderDestinationPage")
-      .mockResolvedValue({ html: "<p>Spain</p>", cacheControl: "public, max-age=300" });
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(TREE_ROWS);
+    jest
+      .spyOn(DestinationPageRepository.prototype, "listActiveListingsUnderPath")
+      .mockResolvedValue([
+        { id: "p1", title: "Villa", city: "Marbella", country: "Spain", nightlyRate: 200, imageUrl: "" },
+      ]);
+    const path = "/destinations/europe/spain/marbella";
+    const canonical = `https://www.domits.com${path}`;
 
-    const response = await request("/destinations/{proxy+}", "/destinations/europe/spain");
+    const responses = [];
+    for (const headers of HOST_HEADERS) {
+      responses.push(await request("/destinations/{proxy+}", path, headers));
+    }
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body).toBe("<p>Spain</p>");
-    expect(render).toHaveBeenCalledWith("/destinations/europe/spain", { siteOrigin: "https://www.domits.com" });
+    expect(responses.map((response) => response.statusCode)).toEqual(HOST_HEADERS.map(() => 200));
+    expect(new Set(responses.map((response) => response.body)).size).toBe(1);
+    const body = responses[0].body;
+    expect(body).toContain(`<link rel="canonical" href="${canonical}">`);
+    expect(body).toContain(`<meta property="og:url" content="${canonical}">`);
+    expect(body).toContain('"item":"https://www.domits.com/destinations/europe/spain"');
+    expect([...new Set([...body.matchAll(/https?:\/\/([^/"<\s]+)/g)].map((match) => match[1]))].sort()).toEqual([
+      "schema.org",
+      "www.domits.com",
+    ]);
+    expect(body).toContain('<a href="/destinations/europe/spain">Spain</a>');
+    expect(body).toContain('<a href="/listingdetails?ID=p1">');
   });
 
   it("answers 503 without caching on the root resource when the switch cannot be read", async () => {
@@ -174,19 +196,19 @@ describe("the destination sitemap through the property handler", () => {
 
   const at = (offsetMs) =>
     jest.useFakeTimers({ now: Date.now() + offsetMs, doNotFake: ["setTimeout", "clearTimeout"] });
-  const sitemap = (host = "acceptance.domits.com", headers = {}) =>
+  const sitemap = (headers = { "x-forwarded-host": "acceptance.domits.com" }) =>
     handler({
       httpMethod: "GET",
       resource: "/sitemap-destinations.xml",
       path: "/sitemap-destinations.xml",
-      headers: { "x-forwarded-host": host, ...headers },
+      headers,
     });
   const switchOn = (on = true) =>
     jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(on);
   const treeRows = (rows) =>
     jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(rows);
 
-  it("serves only the destinations that have a page, the root page included, as XML for five minutes", async () => {
+  it("serves the destinations that have a page, the root page included, with www URLs, as XML for five minutes", async () => {
     at(600000);
     switchOn();
     treeRows(TREE_ROWS);
@@ -197,21 +219,26 @@ describe("the destination sitemap through the property handler", () => {
     expect(response.headers["Content-Type"]).toBe("application/xml");
     expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
     expect(response.body.match(/<loc>[^<]+<\/loc>/g)).toEqual([
-      "<loc>https://acceptance.domits.com/destinations</loc>",
-      "<loc>https://acceptance.domits.com/destinations/europe</loc>",
-      "<loc>https://acceptance.domits.com/destinations/europe/spain</loc>",
-      "<loc>https://acceptance.domits.com/destinations/europe/spain/marbella</loc>",
+      "<loc>https://www.domits.com/destinations</loc>",
+      "<loc>https://www.domits.com/destinations/europe</loc>",
+      "<loc>https://www.domits.com/destinations/europe/spain</loc>",
+      "<loc>https://www.domits.com/destinations/europe/spain/marbella</loc>",
     ]);
   });
 
-  it("puts only hosts from the fixed list in the URLs", async () => {
+  it("serves the same sitemap with only www URLs on every host", async () => {
     at(720000);
     switchOn();
     treeRows(TREE_ROWS);
-    const response = await sitemap("evil.example");
-    expect(response.statusCode).toBe(200);
-    expect(response.body).not.toContain("evil.example");
-    expect(response.body).toContain("<loc>https://www.domits.com/destinations</loc>");
+    const responses = [];
+    for (const headers of HOST_HEADERS) {
+      responses.push(await sitemap(headers));
+    }
+    expect(responses.map((response) => response.statusCode)).toEqual(HOST_HEADERS.map(() => 200));
+    expect(new Set(responses.map((response) => response.body)).size).toBe(1);
+    const locations = responses[0].body.match(/<loc>[^<]+<\/loc>/g);
+    expect(locations).toHaveLength(4);
+    expect(locations.every((location) => location.startsWith("<loc>https://www.domits.com/destinations"))).toBe(true);
   });
 
   it("answers 404 instead of an empty sitemap when no destination has a page", async () => {
@@ -241,7 +268,8 @@ describe("the destination sitemap through the property handler", () => {
     jest
       .spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings")
       .mockRejectedValue(new Error("connection refused"));
-    const response = await sitemap("acceptance.domits.com", {
+    const response = await sitemap({
+      "x-forwarded-host": "acceptance.domits.com",
       Cookie: "session=secret-cookie-value",
       "X-Forwarded-For": "203.0.113.7",
     });

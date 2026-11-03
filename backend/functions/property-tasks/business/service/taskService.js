@@ -1,8 +1,9 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
-import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
+import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
+import { notifyTaskApproved, notifyTaskRejected } from "./taskReviewNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -10,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -84,6 +86,10 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
 
     if (oldTask.status === 'Cancelled' && fieldsToUpdate.status !== undefined && fieldsToUpdate.status !== 'Cancelled') {
         throw new BadRequestException("Cancelled tasks cannot change status");
+    }
+
+    if (fieldsToUpdate.status !== undefined && fieldsToUpdate.status !== oldTask.status) {
+        fieldsToUpdate.approved_at = null;
     }
 
     if (fieldsToUpdate.due_date !== undefined) {
@@ -200,8 +206,8 @@ export const escalateTask = async (hostId, taskId) => {
         throw new BadRequestException("Task has already been escalated");
     }
 
-    if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
-        throw new BadRequestException("Task is not breaching its SLA");
+    if (RESOLVED_STATUSES.has(task.status)) {
+        throw new BadRequestException("Task is already closed");
     }
 
     const escalated_at = Date.now();
@@ -223,6 +229,62 @@ export const escalateTask = async (hostId, taskId) => {
 
     return { message: "Task escalated successfully" };
 };
+
+const reviewCompletedTask = async ({ hostId, taskId, actorId, claimInDb, actionType, notify, messages }) => {
+    if (!taskId) throw new BadRequestException("id is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    if (!task) throw new NotFoundException("Task not found or access denied");
+
+    if (task.assignee_team_member_id) {
+        const assignee = await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, hostId);
+        if (assignee?.member_user_id === actorId) {
+            throw new UnauthorizedException("You cannot approve or reject a task assigned to you.");
+        }
+    }
+
+    if (task.status !== "Completed") throw new BadRequestException(messages.notCompleted);
+    if (task.approved_at) throw new BadRequestException(messages.alreadyApproved);
+
+    const claimed = await claimInDb(dataSource, taskId, hostId, Date.now());
+    if (!claimed) throw new BadRequestException("Task is no longer waiting for a decision");
+
+    await logActivity(dataSource, { taskId, userId: actorId, actionType });
+    await notify(task);
+
+    return { message: messages.done };
+};
+
+export const approveTask = async (hostId, taskId, actorId) =>
+    await reviewCompletedTask({
+        hostId,
+        taskId,
+        actorId,
+        claimInDb: (...args) => taskRepository.approveCompletedTaskInDb(...args),
+        actionType: "TASK_APPROVED",
+        notify: notifyTaskApproved,
+        messages: {
+            notCompleted: "Only a completed task can be approved",
+            alreadyApproved: "Task has already been approved",
+            done: "Task approved",
+        },
+    });
+
+export const rejectTask = async (hostId, taskId, actorId) =>
+    await reviewCompletedTask({
+        hostId,
+        taskId,
+        actorId,
+        claimInDb: (...args) => taskRepository.rejectCompletedTaskInDb(...args),
+        actionType: "TASK_REJECTED",
+        notify: notifyTaskRejected,
+        messages: {
+            notCompleted: "Only a completed task can be rejected",
+            alreadyApproved: "An approved task cannot be rejected",
+            done: "Task rejected and reopened",
+        },
+    });
 
 export const deleteTask = async (hostId, taskId) => {
     if (!taskId) throw new BadRequestException("id is required");
