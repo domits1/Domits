@@ -1970,6 +1970,46 @@
       "pending": "Pendiente",
       "archived": "Archivado",
       "unknown": "Estado desconocido"
+    },
+    "addOwner": "Añadir propietario",
+    "editOwner": "Editar",
+    "editOwnerLabel": "Editar a {name}",
+    "columnActions": "Acciones",
+    "form": {
+      "createTitle": "Añadir propietario",
+      "editTitle": "Editar propietario",
+      "labels": {
+        "first_name": "Nombre",
+        "last_name": "Apellidos",
+        "company_name": "Nombre de la empresa",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "preferred_language": "Idioma preferido (como en o nl-NL)",
+        "owner_type": "Tipo de propietario",
+        "status": "Estado",
+        "notes": "Notas"
+      },
+      "chooseOwnerType": "Elige un tipo",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "createdToast": "Se ha añadido a {name}.",
+      "updatedToast": "Se ha actualizado a {name}.",
+      "errorNotFound": "Este propietario ya no existe. Cierra el formulario y vuelve a cargar la página.",
+      "errorGeneric": "No hemos podido guardar el propietario. Inténtalo de nuevo.",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "tooLong": "Usa como máximo {max} caracteres.",
+        "invalidCharacters": "Este campo contiene caracteres no permitidos.",
+        "invalidEmail": "Introduce un correo electrónico válido.",
+        "invalidPhone": "Usa al menos un dígito, y solo dígitos, espacios y + ( ) - .",
+        "invalidLanguage": "Usa un código de idioma como en o nl-NL.",
+        "invalidOwnerType": "Elige un tipo de propietario.",
+        "invalidStatus": "Elige un estado.",
+        "archivedStatus": "Un propietario solo se puede archivar con la acción de archivar.",
+        "companyNameRequired": "El nombre de la empresa es obligatorio para una empresa o un fideicomiso."
+      }
     }
   }
 }
