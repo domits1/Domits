@@ -2,14 +2,13 @@ import { describe, it, expect } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
+import { FUNCTION_SIZE_LIMIT_BYTES, replaceAliases } from "../../infrastructure/static-page-edge/alias-map.mjs";
 
 const DIRECTORY = join(process.cwd(), "infrastructure", "static-page-edge");
 const SOURCE = readFileSync(join(DIRECTORY, "viewer-request.js"), "utf8");
 const CASES = JSON.parse(readFileSync(join(DIRECTORY, "cases.json"), "utf8"));
 const REDIRECT_CASES = JSON.parse(readFileSync(join(DIRECTORY, "redirect-cases.json"), "utf8"));
-const IMPORT_LINE = 'import cf from "cloudfront";\n';
 const REDIRECT_CACHE_CONTROL = "public, max-age=3600";
-const FUNCTION_SIZE_LIMIT_BYTES = 10 * 1024;
 const HOSTNAME_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 const PAGE_KEY_PATTERN = new RegExp(
   `^/sites/by-host/((?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL})/(?:index\\.html|sitemap\\.xml)$`
@@ -33,21 +32,10 @@ const robotsResponseFor = (host, method) => {
   };
 };
 
-const buildKeyValueStore = (redirects, storeFails) => ({
-  kvs: () => {
-    if (storeFails) {
-      throw new Error("no key value store is associated");
-    }
-    const has = (key) => Object.hasOwn(redirects, key);
-    return {
-      get: async (key) => (has(key) ? redirects[key] : Promise.reject(new Error("KeyNotFound"))),
-      exists: async (key) => has(key),
-    };
-  },
-});
-
-const loadHandler = (redirects = {}, { storeFails = false } = {}) =>
-  vm.runInNewContext(`${SOURCE.replace(IMPORT_LINE, "")}\nhandler`, { cf: buildKeyValueStore(redirects, storeFails) });
+const loadHandler = (aliases) => {
+  const source = aliases ? replaceAliases(SOURCE, Object.entries(aliases)) : SOURCE;
+  return vm.runInNewContext(`${source}\nhandler`);
+};
 
 const buildHostHeader = (host, multiValue) => {
   if (host === null) {
@@ -100,21 +88,14 @@ const rewrittenCases = CASES.filter((testCase) => testCase.expectedUri && testCa
 describe("the viewer request function source", () => {
   it("fits the CloudFront Function limit and compiles", () => {
     expect(Buffer.byteLength(SOURCE, "utf8")).toBeLessThan(FUNCTION_SIZE_LIMIT_BYTES);
-    expect(() => new vm.Script(SOURCE.replace(IMPORT_LINE, ""))).not.toThrow();
+    expect(() => new vm.Script(SOURCE)).not.toThrow();
     expect(typeof loadHandler()).toBe("function");
   });
 
-  it("imports nothing but the cloudfront module, and uses no network or timers", () => {
-    expect(SOURCE.match(/^import .*$/gm) || []).toEqual(SOURCE.includes(IMPORT_LINE) ? [IMPORT_LINE.trim()] : []);
-    expect(SOURCE).not.toMatch(/\b(export|require|fetch|setTimeout|setInterval|XMLHttpRequest)\b/);
-  });
-
-  it("awaits only as the whole right side of a variable, the one form the CloudFront runtime accepts", () => {
-    const awaits = SOURCE.split("\n").filter((line) => /\bawait\b/.test(line));
-    expect(awaits.length).toBeGreaterThan(0);
-    for (const line of awaits) {
-      expect(line).toMatch(/^\s*var [A-Za-z]+ = await [A-Za-z.]+\([A-Za-z]*\);$/);
-    }
+  it("is one plain synchronous handler that imports nothing and uses no store, network, timers or promises", () => {
+    expect(SOURCE).toMatch(/^function handler\(event\) \{$/m);
+    expect(SOURCE).not.toMatch(/\b(import|export|require|async|await|Promise|fetch|setTimeout|setInterval)\b/);
+    expect(SOURCE).not.toMatch(/\bcf\b|cloudfront|kvs|XMLHttpRequest/i);
   });
 
   it("carries no comments", () => {
@@ -125,12 +106,12 @@ describe("the viewer request function source", () => {
 });
 
 describe("the viewer request function", () => {
-  it.each(CASES.map((testCase) => [testCase.name, testCase]))("%s", async (_name, testCase) => {
+  it.each(CASES.map((testCase) => [testCase.name, testCase]))("%s", (_name, testCase) => {
     const handler = loadHandler();
     const event = buildEvent(testCase);
     const original = JSON.parse(JSON.stringify(event.request));
 
-    const result = await handler(event);
+    const result = handler(event);
 
     if (testCase.expectedRobotsFor) {
       expect(result).toEqual(robotsResponseFor(testCase.expectedRobotsFor, testCase.method));
@@ -156,11 +137,11 @@ describe("the viewer request function", () => {
     }
   });
 
-  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file", async () => {
+  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file", () => {
     const robotsCases = CASES.filter((testCase) => testCase.expectedRobotsFor && testCase.method === "GET");
     expect(robotsCases.length).toBeGreaterThan(0);
     for (const testCase of robotsCases) {
-      const body = (await loadHandler()(buildEvent(testCase))).body.data;
+      const body = loadHandler()(buildEvent(testCase)).body.data;
       expect(body).toMatch(
         new RegExp(
           `^User-agent: \\*\nAllow: /\nSitemap: https://(?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL}/sitemap\\.xml\n$`
@@ -169,42 +150,42 @@ describe("the viewer request function", () => {
     }
   });
 
-  it("answers a HEAD request for robots.txt with the same headers and no body", async () => {
-    const head = await loadHandler()(buildEvent({ method: "HEAD", uri: "/robots.txt", host: "www.villasensual.nl" }));
-    const get = await loadHandler()(buildEvent({ method: "GET", uri: "/robots.txt", host: "www.villasensual.nl" }));
+  it("answers a HEAD request for robots.txt with the same headers and no body", () => {
+    const head = loadHandler()(buildEvent({ method: "HEAD", uri: "/robots.txt", host: "www.villasensual.nl" }));
+    const get = loadHandler()(buildEvent({ method: "GET", uri: "/robots.txt", host: "www.villasensual.nl" }));
 
     expect(head).not.toHaveProperty("body");
     expect(head.statusCode).toBe(200);
     expect(head.headers).toEqual(get.headers);
   });
 
-  it("returns nothing instead of throwing when there is no event at all", async () => {
-    expect(await loadHandler()(null)).toBeFalsy();
+  it("returns nothing instead of throwing when there is no event at all", () => {
+    expect(loadHandler()(null)).toBeFalsy();
   });
 
-  it("leaves the request alone when the headers are not an object, instead of failing the request", async () => {
+  it("leaves the request alone when the headers are not an object, instead of failing the request", () => {
     const handler = loadHandler();
     const event = buildEvent({ method: "GET", uri: "/", host: null });
     event.request.headers = null;
 
-    expect(await handler(event)).toBe(event.request);
+    expect(handler(event)).toBe(event.request);
     expect(event.request.uri).toBe("/");
   });
 
-  it("leaves the request alone when the uri is missing, instead of failing the request", async () => {
+  it("leaves the request alone when the uri is missing, instead of failing the request", () => {
     const handler = loadHandler({ "www.villasensual.nl": "beautiful-home-amsterdam-6156b005.direct.domits.com" });
     const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
     delete event.request.uri;
 
-    expect(await handler(event)).toBe(event.request);
+    expect(handler(event)).toBe(event.request);
     expect(event.request).not.toHaveProperty("uri");
   });
 
-  it("returns the same request object, so CloudFront keeps the headers and cookies it already parsed", async () => {
+  it("returns the same request object, so CloudFront keeps the headers and cookies it already parsed", () => {
     const handler = loadHandler();
     const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
 
-    expect(await handler(event)).toBe(event.request);
+    expect(handler(event)).toBe(event.request);
   });
 });
 
@@ -265,12 +246,12 @@ describe("comparing a redirect location with the one a case expects", () => {
 });
 
 describe("the redirect from an alias to its primary domain", () => {
-  it.each(REDIRECT_CASES.map((testCase) => [testCase.name, testCase]))("%s", async (_name, testCase) => {
-    const handler = loadHandler(testCase.redirects || {}, { storeFails: testCase.storeFails });
+  it.each(REDIRECT_CASES.map((testCase) => [testCase.name, testCase]))("%s", (_name, testCase) => {
+    const handler = loadHandler(testCase.aliases);
     const event = buildEvent(testCase);
     const original = JSON.parse(JSON.stringify(event.request));
 
-    const result = await handler(event);
+    const result = handler(event);
 
     if (testCase.expectedLocation) {
       expect(result).toEqual({
