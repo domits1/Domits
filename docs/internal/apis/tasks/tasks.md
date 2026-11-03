@@ -1,6 +1,6 @@
 # Tasks: notifications
 
-Email notifications for the host dashboard Tasks module (issue #3510). This page covers notifications only, not the rest of the tasks API.
+Email notifications for the host dashboard Tasks module (issue #3510). This page covers notifications only, not the rest of the tasks API. Which fields a task update may change is in [task-updates.md](task-updates.md).
 
 ## What is sent today
 

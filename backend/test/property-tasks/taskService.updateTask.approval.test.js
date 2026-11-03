@@ -19,11 +19,12 @@ describe("updateTask and approval", () => {
         mockGetTaskById.mockResolvedValue(approvedTask);
     });
 
-    it("ignores an approved_at sent through the generic update, so nobody can approve a task by editing it", async () => {
-        await updateTask("host-1", "task-1", { approved_at: Date.now(), title: "Renamed" });
+    it("refuses an approved_at sent through the generic update with a 400, so nobody can approve a task by editing it", async () => {
+        const error = await updateTask("host-1", "task-1", { approved_at: Date.now(), title: "Renamed" }).catch((thrown) => thrown);
 
-        expect(savedFields()).not.toHaveProperty("approved_at", expect.any(Number));
-        expect(savedFields()).toHaveProperty("title", "Renamed");
+        expect(error).toMatchObject({ statusCode: 400, message: "These fields cannot be changed: approved_at" });
+        expect(mockGetTaskById).not.toHaveBeenCalled();
+        expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
     });
 
     it("keeps the approval when the task stays completed and only something else changes", async () => {
