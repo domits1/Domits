@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { Auth } from 'aws-amplify';
 import { toast } from 'react-toastify';
 import HostTasks from './HostTasks';
-import { updateTask, fetchTasks, escalateTask, approveTask, rejectTask } from '../../services/taskService';
+import { updateTask, createTask, fetchTasks, escalateTask, approveTask, rejectTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
 import {
@@ -340,6 +340,107 @@ describe('HostTasks', () => {
             render(<HostTasks />);
 
             expect(await screen.findByText('Alex')).toBeInTheDocument();
+        });
+    });
+
+    describe('assigning a task to yourself', () => {
+        const MEMBER = { id: 'member-1', status: 'active', member_name: 'Sam', member_email: 'sam@example.com', role: 'Housekeeper' };
+        const TASK_OF_SAM = { ...TASK, assignee: 'Sam', assignee_team_member_id: 'member-1' };
+
+        const chooseAssignee = async (optionName) => {
+            const select = screen.getByLabelText('Assignee');
+            const option = await within(select).findByRole('option', { name: optionName });
+            fireEvent.change(select, { target: { name: 'assignee', value: option.value } });
+        };
+
+        const submitNewTask = () => fireEvent.submit(screen.getByLabelText('Assignee').closest('form'));
+
+        beforeEach(() => {
+            fetchTeamMembers.mockResolvedValue([MEMBER]);
+            createTask.mockResolvedValue({ ...TASK, id: 'task-2', title: 'New task' });
+        });
+
+        test('creating a task for yourself tells the server, so it can notify you', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: '+ Create Task' }));
+            await chooseAssignee(/Alex/);
+
+            submitNewTask();
+
+            await waitFor(() => expect(createTask).toHaveBeenCalledTimes(1));
+            expect(createTask.mock.calls[0][0]).toEqual(expect.objectContaining({ assigned_to_self: true, assignee: 'Alex' }));
+        });
+
+        test('creating a task for a team member does not', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: '+ Create Task' }));
+            await chooseAssignee(/Sam/);
+
+            submitNewTask();
+
+            await waitFor(() => expect(createTask).toHaveBeenCalledTimes(1));
+            expect(createTask.mock.calls[0][0]).toEqual(expect.objectContaining({ assigned_to_self: false, assignee_team_member_id: 'member-1' }));
+        });
+
+        test('moving a team member\'s task to yourself tells the server', async () => {
+            fetchTasks.mockResolvedValue([TASK_OF_SAM]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await chooseAssignee(/Alex/);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ assigned_to_self: true }), null);
+        });
+
+        test('saving a task that is already yours, with another change, does not notify you again', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await screen.findByText('Old checked item');
+            fireEvent.change(screen.getByLabelText('Description'), { target: { name: 'description', value: 'Bring extra towels' } });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ assigned_to_self: false }), null);
+        });
+
+        test('choosing yourself on a task nobody has yet tells the server', async () => {
+            fetchTasks.mockResolvedValue([{ ...TASK, assignee: '', assignee_team_member_id: null }]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await chooseAssignee(/Sam/);
+            await chooseAssignee(/Alex/);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ assigned_to_self: true, assignee: 'Alex' }), null);
+        });
+
+        test('saving another change to a task nobody has yet does not notify you', async () => {
+            fetchTasks.mockResolvedValue([{ ...TASK, assignee: '', assignee_team_member_id: null }]);
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await screen.findByText('Old checked item');
+            fireEvent.change(screen.getByLabelText('Description'), { target: { name: 'description', value: 'Bring extra towels' } });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ assigned_to_self: false }), null);
+        });
+
+        test('moving your task to a team member does not', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            await chooseAssignee(/Sam/);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ assigned_to_self: false, assignee_team_member_id: 'member-1' }), null);
         });
     });
 

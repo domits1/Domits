@@ -311,7 +311,8 @@ const HostTasks = () => {
             const attachmentUrls = await uploadAttachmentsOrWarn(newTask.attachments || []);
             if (!attachmentUrls) return;
 
-            let created = await createTask({ ...taskPayload, attachments: attachmentUrls }, asHostId);
+            const assignedToSelf = newTask.assigneeSelection === HOST_ASSIGNEE_ID;
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls, assigned_to_self: assignedToSelf }, asHostId);
 
             await persistDraftChecklist(created.id, newTask.checklistItems);
 
@@ -688,7 +689,11 @@ const HostTasks = () => {
         if (!shouldSwitchChecklist) closeForm();
 
         try {
-            await updateTask(finalTask.id, finalTask, asHostId);
+            const isOwnHostTask = (task) => Boolean(currentUser.name) && !task.assignee_team_member_id && task.assignee === currentUser.name;
+            const becameAssignedToSelf = editedTask.assigneeSelection === HOST_ASSIGNEE_ID
+                && isOwnHostTask(editedTask)
+                && !isOwnHostTask(viewingTask);
+            await updateTask(finalTask.id, { ...finalTask, assigned_to_self: becameAssignedToSelf }, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");

@@ -49,6 +49,9 @@ const toBackendPayload = (taskData) => {
     if (taskData.attachments !== undefined) {
         payload.attachments = taskData.attachments;
     }
+    if (taskData.assigned_to_self === true) {
+        payload.assigned_to_self = true;
+    }
     return payload;
 };
 

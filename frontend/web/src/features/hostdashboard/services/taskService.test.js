@@ -38,6 +38,22 @@ describe('createTask', () => {
         expect(body).not.toHaveProperty('assignee_team_member_id');
         expect(body.assignee_name).toBe('Alex Host');
     });
+
+    test('sends assigned_to_self when the creator assigns the task to themselves', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ id: 'task-1' }) });
+
+        await createTask({ title: 'Clean', assignee: 'Alex Host', assigned_to_self: true });
+
+        expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body).assigned_to_self).toBe(true);
+    });
+
+    test('leaves assigned_to_self out when it is not true', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ id: 'task-1' }) });
+
+        await createTask({ title: 'Clean', assignee: 'Alex Host', assigned_to_self: false });
+
+        expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).not.toHaveProperty('assigned_to_self');
+    });
 });
 
 describe('updateTask', () => {
@@ -69,6 +85,22 @@ describe('updateTask', () => {
         const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
         expect(body).not.toHaveProperty('assignee_team_member_id');
         expect(body.assignee_name).toBe('Alex Host');
+    });
+
+    test('sends assigned_to_self when the task is reassigned to the person saving it', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ message: 'done' }) });
+
+        await updateTask('task-1', { assignee: 'Alex Host', assigned_to_self: true });
+
+        expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body).assigned_to_self).toBe(true);
+    });
+
+    test('leaves assigned_to_self out when it is not true', async () => {
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: jest.fn().mockResolvedValue({ message: 'done' }) });
+
+        await updateTask('task-1', { priority: 'High', assigned_to_self: false });
+
+        expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).not.toHaveProperty('assigned_to_self');
     });
 
     test('throws the backend-provided message on a failed update', async () => {
