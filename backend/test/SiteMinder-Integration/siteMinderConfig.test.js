@@ -22,6 +22,15 @@ describe("readSiteMinderConfig", () => {
     expect(() => readSiteMinderConfig({})).toThrow("SITEMINDER_PMS_CODE is required");
     expect(() => readSiteMinderConfig({ SITEMINDER_PMS_CODE: "X", SITEMINDER_CURRENCY: "EURO" })).toThrow("3-letter code");
   });
+
+  test.each(["http://tpi-pmsx.preprod.siteminderlabs.com", "tpi-pmsx.preprod.siteminderlabs.com", "ftp://x"])(
+    "refuses the base URL %p because the credentials would not go over https",
+    (baseUrl) => {
+      expect(() => readSiteMinderConfig({ SITEMINDER_PMS_CODE: "X", SITEMINDER_BASE_URL: baseUrl })).toThrow(
+        "SITEMINDER_BASE_URL must use https"
+      );
+    }
+  );
 });
 
 const clientReturning = (secretString) => ({ send: jest.fn(async () => ({ SecretString: secretString })) });

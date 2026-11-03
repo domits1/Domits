@@ -11,10 +11,14 @@ export const readSiteMinderConfig = (env = process.env) => {
   if (!CURRENCY.test(currency)) {
     throw new Error("SITEMINDER_CURRENCY must be a 3-letter code such as EUR");
   }
+  const baseUrl = String(env.SITEMINDER_BASE_URL ?? "").trim() || undefined;
+  if (baseUrl && !baseUrl.startsWith("https://")) {
+    throw new Error("SITEMINDER_BASE_URL must use https");
+  }
   return {
     pmsCode,
     currency,
-    baseUrl: String(env.SITEMINDER_BASE_URL ?? "").trim() || undefined,
+    baseUrl,
     secretName: String(env.SITEMINDER_SECRET_NAME ?? "").trim() || "domits/siteminder/pmsxchange",
   };
 };

@@ -70,7 +70,7 @@ Rates go out as `AmountBeforeTax`: the Domits base rate is the net nightly accom
 | -------- | ------- | ------- |
 | `SITEMINDER_PMS_CODE` | required | Our PMS code (RequestorID) from SiteMinder. The sandbox uses `PMSXTEST` |
 | `SITEMINDER_CURRENCY` | `EUR` | Currency of every rate |
-| `SITEMINDER_BASE_URL` | pre-production | `https://tpi-pmsx.preprod.siteminderlabs.com` until go-live |
+| `SITEMINDER_BASE_URL` | pre-production | `https://tpi-pmsx.preprod.siteminderlabs.com` until go-live. Must start with `https://`, because the Basic and WS-Security credentials go with every request; anything else makes `createSiteMinderServices` throw before the secret is read |
 | `SITEMINDER_SECRET_NAME` | `domits/siteminder/pmsxchange` | Secrets Manager secret (eu-north-1) with `{"username": "...", "password": "..."}` |
 
 One PMS-level login covers all hotels. It never goes into code, logs or errors.
