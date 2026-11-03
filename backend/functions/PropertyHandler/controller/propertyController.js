@@ -2778,7 +2778,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3852,8 +3852,9 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            const isUnauthorizedOutsideLogin = error.statusCode === 401 && !(error instanceof Unauthorized);
             return {
-                statusCode: error.statusCode || 500,
+                statusCode: isUnauthorizedOutsideLogin ? 500 : error.statusCode || 500,
                 headers: responseHeaders,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             };
