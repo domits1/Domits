@@ -118,7 +118,7 @@ describe("the destination menu service", () => {
   });
 
   it.each([
-    ["a 503", () => Promise.resolve(jsonResponse({ message: "later" }, 503))],
+    ["a 503 with a menu in its body", () => Promise.resolve(jsonResponse(PAYLOAD, 503))],
     ["an unexpected shape", () => Promise.resolve(jsonResponse({ message: "unexpected" }))],
     ["a network failure", () => Promise.reject(new TypeError("Failed to fetch"))],
   ])("answers an empty list for %s and asks again only after a pause", async (_, failure) => {
