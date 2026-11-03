@@ -4,6 +4,7 @@ import { PropertyService } from "../../functions/PropertyHandler/business/servic
 import { ConflictException } from "../../functions/PropertyHandler/util/exception/ConflictException.js";
 import { Forbidden } from "../../functions/PropertyHandler/util/exception/Forbidden.js";
 import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
+import { ServiceUnavailableException } from "../../functions/PropertyHandler/util/exception/ServiceUnavailableException.js";
 import { Unauthorized } from "../../functions/PropertyHandler/util/exception/Unauthorized.js";
 
 const buildEvent = (body, headers = { Authorization: "access-token" }) => ({
@@ -18,6 +19,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+const UPDATED_AT = 1_700_000_000_000;
+const NEW_UPDATED_AT = UPDATED_AT + 1;
+const REASON = "Photos are blurry.";
+
 describe("PropertyController review endpoints", () => {
   let controller;
   let infoSpy;
@@ -28,32 +33,102 @@ describe("PropertyController review endpoints", () => {
     controller = new PropertyController();
     controller.authManager = { authorizeReviewAdminRequest: jest.fn().mockResolvedValue("admin-1") };
     controller.propertyService = {
-      approveProperty: jest.fn().mockResolvedValue({ id: "property-1", status: "ACTIVE" }),
-      rejectProperty: jest.fn().mockResolvedValue({ id: "property-1", status: "REJECTED" }),
+      approveProperty: jest.fn().mockResolvedValue({ id: "property-1", status: "ACTIVE", updatedAt: NEW_UPDATED_AT }),
+      rejectProperty: jest.fn().mockResolvedValue({ id: "property-1", status: "REJECTED", updatedAt: NEW_UPDATED_AT }),
     };
+  });
+
+  it("returns 400 and does not call the service when an approval carries a reason", async () => {
+    const response = await controller.approveProperty(
+      buildEvent({ propertyId: "property-1", updatedAt: UPDATED_AT, reason: REASON })
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(controller.propertyService.approveProperty).not.toHaveBeenCalled();
   });
 
   describe.each([
     ["approveProperty", "approve", "approveProperty", "ACTIVE"],
     ["rejectProperty", "reject", "rejectProperty", "REJECTED"],
   ])("%s", (method, action, serviceMethod, resultingStatus) => {
-    it("returns 200 with the property id and its new status", async () => {
-      const response = await controller[method](buildEvent({ propertyId: "property-1" }));
+    const isReject = method === "rejectProperty";
+    const body = (extra = {}) => ({
+      propertyId: "property-1",
+      updatedAt: UPDATED_AT,
+      ...(isReject ? { reason: REASON } : {}),
+      ...extra,
+    });
+
+    it("returns 200 with the property id, its new status and its new updatedAt", async () => {
+      const response = await controller[method](buildEvent(body()));
 
       expect(response.statusCode).toBe(200);
-      expect(parse(response)).toEqual({ propertyId: "property-1", status: resultingStatus });
+      expect(parse(response)).toEqual({ propertyId: "property-1", status: resultingStatus, updatedAt: NEW_UPDATED_AT });
       expect(controller.authManager.authorizeReviewAdminRequest).toHaveBeenCalledWith("access-token");
-      expect(controller.propertyService[serviceMethod]).toHaveBeenCalledWith("property-1");
+    });
+
+    it("passes the admin, the reviewed updatedAt and, for a rejection only, the reason to the service", async () => {
+      await controller[method](buildEvent(body()));
+
+      const expected = { actorId: "admin-1", expectedUpdatedAt: UPDATED_AT, ...(isReject ? { reason: REASON } : {}) };
+      expect(controller.propertyService[serviceMethod]).toHaveBeenCalledWith("property-1", expected);
+      expect(Object.keys(controller.propertyService[serviceMethod].mock.calls[0][1]).includes("reason")).toBe(isReject);
+    });
+
+    it.each([
+      ["missing", undefined],
+      ["negative", -1],
+      ["fractional", 1.5],
+      ["a numeric string", "1700000000000"],
+      ["null", null],
+      ["unsafe", 2 ** 53],
+    ])("returns 400 and does not call the service when updatedAt is %s", async (_label, updatedAt) => {
+      const response = await controller[method](buildEvent(body({ updatedAt })));
+
+      expect(response.statusCode).toBe(400);
+      expect(parse(response).message).toBe("updatedAt must be the property's last update time in milliseconds.");
+      expect(controller.propertyService[serviceMethod]).not.toHaveBeenCalled();
+    });
+
+    it("accepts an updatedAt of 0", async () => {
+      const response = await controller[method](buildEvent(body({ updatedAt: 0 })));
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it.each(["wrong_status", "stale_review"])("includes the code %s in a 409 body", async (code) => {
+      controller.propertyService[serviceMethod].mockRejectedValue(new ConflictException("Changed.", code));
+
+      const response = await controller[method](buildEvent(body()));
+
+      expect(parse(response)).toEqual({ message: "Changed.", code });
+    });
+
+    it("keeps an unlisted code out of a body that has a status code", async () => {
+      controller.propertyService[serviceMethod].mockRejectedValue(new ConflictException("Changed.", "40001"));
+
+      const response = await controller[method](buildEvent(body()));
+
+      expect(parse(response)).toEqual({ message: "Changed." });
+    });
+
+    it("never exposes the code of an unexpected error", async () => {
+      controller.propertyService[serviceMethod].mockRejectedValue(Object.assign(new Error("x"), { code: "40001" }));
+
+      const response = await controller[method](buildEvent(body()));
+
+      expect(response.statusCode).toBe(500);
+      expect(parse(response)).not.toHaveProperty("code");
     });
 
     it("accepts the lowercase authorization header", async () => {
-      await controller[method](buildEvent({ propertyId: "property-1" }, { authorization: "lower-token" }));
+      await controller[method](buildEvent(body(), { authorization: "lower-token" }));
 
       expect(controller.authManager.authorizeReviewAdminRequest).toHaveBeenCalledWith("lower-token");
     });
 
     it("logs reviewer, property and action, and never the token", async () => {
-      await controller[method](buildEvent({ propertyId: "property-1" }));
+      await controller[method](buildEvent(body()));
 
       expect(infoSpy).toHaveBeenCalledTimes(1);
       const logged = infoSpy.mock.calls[0][0];
@@ -70,7 +145,7 @@ describe("PropertyController review endpoints", () => {
     it("returns 401 for a missing or invalid token and touches nothing", async () => {
       controller.authManager.authorizeReviewAdminRequest.mockRejectedValue(new Unauthorized("You must be logged in."));
 
-      const response = await controller[method](buildEvent({ propertyId: "property-1" }, {}));
+      const response = await controller[method](buildEvent(body(), {}));
 
       expect(response.statusCode).toBe(401);
       expect(controller.propertyService[serviceMethod]).not.toHaveBeenCalled();
@@ -81,7 +156,7 @@ describe("PropertyController review endpoints", () => {
         new Forbidden("You are not allowed to review properties.")
       );
 
-      const response = await controller[method](buildEvent({ propertyId: "property-1" }));
+      const response = await controller[method](buildEvent(body()));
 
       expect(response.statusCode).toBe(403);
       expect(controller.propertyService.approveProperty).not.toHaveBeenCalled();
@@ -100,7 +175,7 @@ describe("PropertyController review endpoints", () => {
     it("returns 409 when the property is not pending review", async () => {
       controller.propertyService[serviceMethod].mockRejectedValue(new ConflictException("Property is ACTIVE."));
 
-      const response = await controller[method](buildEvent({ propertyId: "property-1" }));
+      const response = await controller[method](buildEvent(body()));
 
       expect(response.statusCode).toBe(409);
       expect(parse(response).message).toBe("Property is ACTIVE.");
@@ -110,7 +185,7 @@ describe("PropertyController review endpoints", () => {
     it("returns 404 when the property does not exist", async () => {
       controller.propertyService[serviceMethod].mockRejectedValue(new NotFoundException("Property not found."));
 
-      const response = await controller[method](buildEvent({ propertyId: "missing" }));
+      const response = await controller[method](buildEvent(body({ propertyId: "missing" })));
 
       expect(response.statusCode).toBe(404);
     });
@@ -120,7 +195,7 @@ describe("PropertyController review endpoints", () => {
       ["an empty propertyId", { propertyId: "  " }],
       ["a non-string propertyId", { propertyId: 42 }],
     ])("returns 400 for %s", async (_label, body) => {
-      const response = await controller[method](buildEvent(body));
+      const response = await controller[method](buildEvent({ updatedAt: UPDATED_AT, ...body }));
 
       expect(response.statusCode).toBe(400);
       expect(controller.propertyService[serviceMethod]).not.toHaveBeenCalled();
@@ -135,7 +210,7 @@ describe("PropertyController review endpoints", () => {
     it("hides the message of an unexpected error behind a 500", async () => {
       controller.propertyService[serviceMethod].mockRejectedValue(new Error("connection string leaked"));
 
-      const response = await controller[method](buildEvent({ propertyId: "property-1" }));
+      const response = await controller[method](buildEvent(body()));
 
       expect(response.statusCode).toBe(500);
       expect(response.body).not.toContain("connection string leaked");
@@ -162,14 +237,22 @@ describe("PropertyController.activateProperty (host PATCH)", () => {
 
     expect(response.statusCode).toBe(200);
     expect(parse(response)).toEqual({ status: "PENDING_REVIEW" });
-    expect(controller.propertyService.requestHostStatusChange).toHaveBeenCalledWith("property-1", "ACTIVE");
+    expect(controller.propertyService.requestHostStatusChange).toHaveBeenCalledWith(
+      "property-1",
+      "ACTIVE",
+      { actorId: "host-1" }
+    );
   });
 
   it("sends the legacy body without a status (what the mobile app sends) to the same method", async () => {
     const response = await controller.activateProperty(buildPatch({ property: "property-1" }));
 
     expect(response.statusCode).toBe(200);
-    expect(controller.propertyService.requestHostStatusChange).toHaveBeenCalledWith("property-1", null);
+    expect(controller.propertyService.requestHostStatusChange).toHaveBeenCalledWith(
+      "property-1",
+      null,
+      { actorId: "host-1" }
+    );
     expect(parse(response).status).toBe("PENDING_REVIEW");
   });
 
@@ -178,6 +261,28 @@ describe("PropertyController.activateProperty (host PATCH)", () => {
 
     expect(response.statusCode).toBe(400);
     expect(controller.propertyService.requestHostStatusChange).not.toHaveBeenCalled();
+  });
+
+  it("hides the message of an error without a status code behind a generic one", async () => {
+    controller.propertyService.requestHostStatusChange.mockRejectedValue(
+      new Error('relation "property_moderation_event" does not exist')
+    );
+
+    const response = await controller.activateProperty(buildPatch({ propertyId: "property-1", status: "ACTIVE" }));
+
+    expect(response.statusCode).toBe(500);
+    expect(response.body).not.toContain("property_moderation_event");
+  });
+
+  it("keeps the message of an error that has a status code", async () => {
+    controller.propertyService.requestHostStatusChange.mockRejectedValue(
+      new ServiceUnavailableException("Please try again.")
+    );
+
+    const response = await controller.activateProperty(buildPatch({ propertyId: "property-1", status: "ACTIVE" }));
+
+    expect(response.statusCode).toBe(503);
+    expect(parse(response)).toBe("Please try again.");
   });
 
   it("still requires the caller to own the property", async () => {

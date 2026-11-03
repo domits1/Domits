@@ -53,4 +53,4 @@ This change adds the table only. No code writes it yet. History starts when the 
   - Columns: 8, types and nullability as in the migration (`reason` the only nullable column, no defaults).
   - Index `property_moderation_event_property_created_idx_test`: `indisunique = f`, `indisvalid = t` (plus the primary key).
   - Smoke block ran; the query editor shows only the last statement's result, so the two counts were not visible. The follow-up check `smoke_rows_should_be_zero` returned `0`.
-- **main: not applied.** Needs the mentor's OK, and must be applied before the PR that writes the table is merged.
+- **main: applied** on 2026-10-30 by Rakib Sheikh, cluster `domits` (eu-west-2), as `admin` in the DSQL query editor. Pre-flight: table absent in `main`. `CREATE TABLE` succeeded. Index job `t26rothjp5fi7huj6brbhq4uvq` reached `completed` at 2026-10-30 13:34:39 UTC. Columns: 8, as in the migration. Index `property_moderation_event_property_created_idx`: `indisunique = f`, `indisvalid = t` (plus the primary key). No smoke block on `main` (no test rows in production).

@@ -5,8 +5,12 @@ import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
 import Database from "database";
 import {Property} from "database/models/Property";
+import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
+import {randomUUID} from "node:crypto";
+import {withDsqlRetry} from "../../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
+const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
 
 export class PropertyRepository {
 
@@ -141,6 +145,83 @@ export class PropertyRepository {
             await this.clearArchiveMetadata(client, propertyId, toStatus, now);
         }
         return affected;
+    }
+
+    async transitionStatusWithEvent(
+        propertyId,
+        {fromStatuses, toStatus, action, actorId, reason = null, expectedUpdatedAt}
+    ) {
+        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
+            throw new TypeError("transitionStatusWithEvent needs at least one from-status.");
+        }
+        if (!MODERATION_ACTIONS.has(action)) {
+            throw new TypeError("transitionStatusWithEvent needs a moderation action.");
+        }
+        if (typeof actorId !== "string" || actorId === "") {
+            throw new TypeError("transitionStatusWithEvent needs an actor.");
+        }
+
+        const client = await Database.getInstance();
+        const eventId = randomUUID();
+        const now = Date.now();
+
+        return await withDsqlRetry(() =>
+            client.transaction(async (manager) => {
+                const current = await manager
+                    .createQueryBuilder(Property, "property")
+                    .select(["property.status", "property.updatedat"])
+                    .where("property.id = :id", {id: propertyId})
+                    .getOne();
+                if (!current) {
+                    return {outcome: "not_found"};
+                }
+
+                const currentStatus = current.status;
+                const currentUpdatedAt = Number(current.updatedat);
+                if (!fromStatuses.includes(currentStatus)) {
+                    return {outcome: "wrong_status", currentStatus};
+                }
+                if (expectedUpdatedAt !== undefined && expectedUpdatedAt !== currentUpdatedAt) {
+                    return {outcome: "stale", currentUpdatedAt};
+                }
+
+                const result = await manager
+                    .createQueryBuilder()
+                    .update(Property)
+                    .set({status: toStatus, updatedat: now})
+                    .where("id = :id AND status = :fromStatus AND updatedat = :currentUpdatedAt", {
+                        id: propertyId,
+                        fromStatus: currentStatus,
+                        currentUpdatedAt,
+                    })
+                    .execute();
+                if ((Number(result?.affected) || 0) === 0) {
+                    return {outcome: "stale", currentUpdatedAt};
+                }
+
+                if (currentStatus === "ARCHIVED" && toStatus !== "ARCHIVED") {
+                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now);
+                }
+
+                await manager
+                    .createQueryBuilder()
+                    .insert()
+                    .into(Property_Moderation_Event)
+                    .values({
+                        id: eventId,
+                        propertyId,
+                        action,
+                        actorId,
+                        reason,
+                        fromStatus: currentStatus,
+                        toStatus,
+                        createdAt: now,
+                    })
+                    .execute();
+
+                return {outcome: "changed", fromStatus: currentStatus, updatedAt: now};
+            })
+        );
     }
 
     async clearArchiveMetadata(client, propertyId, status, now) {
