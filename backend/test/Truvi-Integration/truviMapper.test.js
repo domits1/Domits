@@ -132,6 +132,18 @@ describe("mapCreateResponse", () => {
     expect(result).toEqual({ providerAssessmentId: "v-1", status: domitsStatus, flaggedReason: null });
   });
 
+  test.each([
+    ["APPROVED", "PASSED"],
+    ["flagged", "FLAGGED"],
+    [" Rejected ", "FAILED"],
+  ])("maps Truvi status %p to %s whatever its case", (truviStatus, domitsStatus) => {
+    expect(mapCreateResponse({ verification: { verificationId: "v-1", status: truviStatus } }).status).toBe(domitsStatus);
+  });
+
+  test.each(["constructor", "toString", 1, null])("returns ERROR for the status %p that is not a Truvi status", (truviStatus) => {
+    expect(mapCreateResponse({ verification: { verificationId: "v-1", status: truviStatus } }).status).toBe("ERROR");
+  });
+
   test("returns ERROR with the unknown status in the message", () => {
     const result = mapCreateResponse({ verification: { verificationId: "v-1", status: "Pending" } });
     expect(result).toEqual({

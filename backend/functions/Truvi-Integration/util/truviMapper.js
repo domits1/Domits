@@ -7,6 +7,10 @@ export const SCREENING_STATUS = {
   Rejected: "FAILED",
 };
 
+const SCREENING_STATUS_BY_NAME = new Map(Object.entries(SCREENING_STATUS).map(([truvi, domits]) => [truvi.toLowerCase(), domits]));
+
+const toDomitsStatus = (status) => (typeof status === "string" ? SCREENING_STATUS_BY_NAME.get(status.trim().toLowerCase()) : undefined);
+
 export const DEFAULT_CHANNEL = "Direct web";
 
 const ALLOWED_EXTENDED_AMOUNTS = [250, 500, 1000, 10000, 50000];
@@ -110,7 +114,7 @@ export function mapCreateResponse(response) {
   }
 
   const { verificationId, status, flaggedReason } = verification;
-  const domitsStatus = SCREENING_STATUS[status];
+  const domitsStatus = toDomitsStatus(status);
   if (!domitsStatus) {
     return { ...errorResult(`Unknown Truvi status: ${status}`), providerAssessmentId: verificationId ?? null };
   }
