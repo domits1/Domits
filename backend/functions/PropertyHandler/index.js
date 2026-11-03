@@ -139,14 +139,14 @@ const handleGet = async (event) => {
   if (isPath(event, "/sitemap-destinations.xml")) {
     return destinationPageController.getDestinationSitemap(event);
   }
+  if (isPath(event, "/property/destinations/menu")) {
+    return destinationPageController.getDestinationMenu();
+  }
   if (isPath(event, "/property/website/public/resolve")) {
     return controller.resolvePublicWebsiteSite(event);
   }
   if (isPath(event, "/property/website/public/render")) {
     return controller.getPublicWebsiteRenderModel(event);
-  }
-  if (isPath(event, "/property/destinations/menu")) {
-    return controller.getDestinationMenu(event);
   }
   if (isPath(event, "/property/website/preview")) {
     return controller.getWebsitePreviewByDraftId(event);

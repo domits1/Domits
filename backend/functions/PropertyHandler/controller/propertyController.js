@@ -25,7 +25,6 @@ import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendar
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
-import { DestinationTreeService } from "../business/service/destinationTreeService.js";
 import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
@@ -51,12 +50,6 @@ import {
     resolveDirectBookingWebsiteFallbackDomainStatus,
     resolveDirectBookingWebsiteRuntimeDomainStatus,
 } from "../util/directBookingWebsiteRouting.js";
-
-const destinationMenuHeaders = {
-    ...responseHeaders,
-    "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=300",
-};
 
 const draftResponseHeaders = {
     ...responseHeaders,
@@ -244,7 +237,6 @@ export class PropertyController {
         this.directBookingWebsiteSiteRepository = new DirectBookingWebsiteSiteRepository(systemManagerRepository);
         this.directBookingWebsiteDomainRepository = new DirectBookingWebsiteDomainRepository(systemManagerRepository);
         this.directBookingWebsiteRatePlanService = new DirectBookingWebsiteRatePlanService();
-        this.destinationTreeService = new DestinationTreeService();
         this.systemManagerRepository = systemManagerRepository;
         this.websiteQuoteService = null;
         this.websiteCustomDomainService = null;
@@ -3098,20 +3090,6 @@ export class PropertyController {
                 return this.badRequest(error.message);
             }
             return this.websiteFailureResponse(error);
-        }
-    }
-
-    async getDestinationMenu() {
-        try {
-            const menu = await this.destinationTreeService.buildDestinationMenu();
-            return { statusCode: 200, headers: destinationMenuHeaders, body: JSON.stringify(menu) };
-        } catch (error) {
-            console.error(error);
-            return {
-                statusCode: 500,
-                headers: { ...destinationMenuHeaders, "Cache-Control": "no-store" },
-                body: JSON.stringify({ message: "Destinations are not available right now." }),
-            };
         }
     }
 

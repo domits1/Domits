@@ -9,11 +9,19 @@ const PAGE = {
   cacheControl: "public, max-age=300",
 };
 
-const buildService = ({ switchOn = async () => true, render = async () => PAGE, clock = { now: 0 } } = {}) => {
+const MENU = { continents: [{ name: "Europe", path: "/destinations/europe", activeListings: 2, countries: [] }] };
+
+const buildService = ({
+  switchOn = async () => true,
+  render = async () => PAGE,
+  menu = async () => MENU,
+  clock = { now: 0 },
+} = {}) => {
   const destinationSwitchRepository = { isDestinationPagesSwitchOn: jest.fn(switchOn) };
   const destinationTreeService = {
     renderDestinationPage: jest.fn(render),
     renderDestinationSitemap: jest.fn(async () => "<urlset></urlset>"),
+    buildDestinationMenu: jest.fn(menu),
   };
   const service = new DestinationPageService({
     destinationSwitchRepository,
@@ -209,5 +217,55 @@ describe("the destination page service", () => {
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("unavailable");
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("page");
     expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers the menu from the tree while the switch is on", async () => {
+    const { service, destinationTreeService } = buildService();
+    expect(await service.serveMenu()).toEqual({ kind: "menu", menu: MENU });
+    expect(destinationTreeService.buildDestinationMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers the menu off without reading the tree while the switch is off", async () => {
+    const { service, destinationTreeService } = buildService({ switchOn: async () => false });
+    expect(await service.serveMenu()).toEqual({ kind: "menu_off" });
+    expect(destinationTreeService.buildDestinationMenu).not.toHaveBeenCalled();
+  });
+
+  it("answers the menu unavailable, as the pages do, without reading the tree when the switch cannot be read", async () => {
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service, destinationTreeService } = buildService({
+      switchOn: async () => {
+        throw awsError("AccessDeniedException");
+      },
+    });
+
+    expect((await service.serveMenu()).kind).toBe("unavailable");
+    expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("unavailable");
+    expect(destinationTreeService.buildDestinationMenu).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      "Destination page unavailable:",
+      "AccessDeniedException",
+      "AccessDeniedException from SSM"
+    );
+  });
+
+  it("answers the menu unavailable within the limit when the tree read hangs", async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service } = buildService({ menu: () => new Promise(() => {}) });
+
+    const pending = service.serveMenu();
+    await jest.advanceTimersByTimeAsync(DESTINATION_RENDER_TIMEOUT_MS);
+
+    expect((await pending).kind).toBe("unavailable");
+  });
+
+  it("reads the switch once for the menu and the pages within the same minute", async () => {
+    const { service, destinationSwitchRepository, clock } = buildService();
+
+    await service.serve({ path: "/destinations/europe" });
+    clock.now = 59999;
+    expect((await service.serveMenu()).kind).toBe("menu");
+    expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(1);
   });
 });

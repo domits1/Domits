@@ -66,6 +66,14 @@ export class DestinationPageService {
     );
   }
 
+  async serveMenu() {
+    return this.answer(
+      () => this.destinationTreeService.buildDestinationMenu(),
+      { kind: "menu_off" },
+      (menu) => ({ kind: "menu", menu })
+    );
+  }
+
   async answer(render, notFound, found) {
     try {
       const result = await withinTimeLimit(
