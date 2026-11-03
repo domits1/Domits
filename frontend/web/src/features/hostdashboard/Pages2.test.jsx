@@ -4,6 +4,13 @@ import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import Pages from "./Pages2";
 import { getChannexAdminAccess } from "./hostintegrations/channexApi";
+import useEffectiveHostId from "../../hooks/useEffectiveHostId";
+
+jest.mock("../../hooks/useEffectiveHostId", () => jest.fn());
+
+beforeEach(() => {
+  useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
+});
 
 jest.mock("aws-amplify", () => ({
   Auth: {
@@ -31,6 +38,33 @@ describe("Pages2 missed revenue navigation", () => {
 
     await screen.findByText("Dashboard");
     expect(screen.queryByRole("link", { name: /missed revenue/i })).toBeNull();
+  });
+});
+
+describe("Pages2 owners navigation", () => {
+  beforeEach(() => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
+  });
+
+  test("shows the Owners link to a host, right after Listings", async () => {
+    useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
+
+    renderPages();
+
+    const ownersLink = await screen.findByRole("link", { name: "Owners" });
+    expect(ownersLink.getAttribute("href")).toBe("/owners");
+    const labels = screen.getAllByRole("link").map((link) => link.textContent);
+    expect(labels.indexOf("Owners")).toBe(labels.indexOf("Listings") + 1);
+  });
+
+  test("hides the Owners link from a team member who acts for another host", async () => {
+    useEffectiveHostId.mockReturnValue({ isPurelyPOM: true });
+
+    renderPages();
+
+    await screen.findByText("Listings");
+    expect(screen.queryByRole("link", { name: "Owners" })).toBeNull();
   });
 });
 

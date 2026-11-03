@@ -1937,5 +1937,37 @@
       "contactButton": "Support kontaktieren",
       "learnMoreButton": "Mehr erfahren"
     }
+  },
+  "hostOwners": {
+    "title": "Eigentümer",
+    "loading": "Eigentümer werden geladen…",
+    "empty": "Du hast noch keine Eigentümer.",
+    "allArchived": "Alle deine Eigentümer sind archiviert. Aktiviere „Archivierte Eigentümer anzeigen“, um sie zu sehen.",
+    "showArchived": "Archivierte Eigentümer anzeigen",
+    "retry": "Erneut versuchen",
+    "errorSignedOut": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+    "errorForbidden": "Nur Hosts können Eigentümer verwalten.",
+    "errorGeneric": "Wir konnten deine Eigentümer nicht laden. Bitte versuche es erneut.",
+    "columnName": "Name",
+    "columnType": "Typ",
+    "columnStatus": "Status",
+    "columnProperties": "Aktuelle Unterkünfte",
+    "propertyShare": "{title}, {percent} %",
+    "unknownShare": "{title}, Anteil unbekannt",
+    "unknownProperty": "Unbekannte Unterkunft",
+    "noProperties": "Keine aktuellen Unterkünfte",
+    "ownerTypes": {
+      "individual": "Privatperson",
+      "company": "Unternehmen",
+      "trust": "Trust",
+      "unknown": "Unbekannter Typ"
+    },
+    "statuses": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "pending": "Ausstehend",
+      "archived": "Archiviert",
+      "unknown": "Unbekannter Status"
+    }
   }
 }

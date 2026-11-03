@@ -1936,5 +1936,37 @@
       "contactButton": "Contact support",
       "learnMoreButton": "Learn more"
     }
+  },
+  "hostOwners": {
+    "title": "Owners",
+    "loading": "Loading owners…",
+    "empty": "You have no owners yet.",
+    "allArchived": "All your owners are archived. Turn on \"Show archived owners\" to see them.",
+    "showArchived": "Show archived owners",
+    "retry": "Retry",
+    "errorSignedOut": "Your session has ended. Please sign in again.",
+    "errorForbidden": "Only hosts can manage owners.",
+    "errorGeneric": "We could not load your owners. Please try again.",
+    "columnName": "Name",
+    "columnType": "Type",
+    "columnStatus": "Status",
+    "columnProperties": "Current properties",
+    "propertyShare": "{title}, {percent}%",
+    "unknownShare": "{title}, share unknown",
+    "unknownProperty": "Unknown property",
+    "noProperties": "No current properties",
+    "ownerTypes": {
+      "individual": "Individual",
+      "company": "Company",
+      "trust": "Trust",
+      "unknown": "Unknown type"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "archived": "Archived",
+      "unknown": "Unknown status"
+    }
   }
 }

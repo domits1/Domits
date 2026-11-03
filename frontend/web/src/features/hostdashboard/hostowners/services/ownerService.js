@@ -3,6 +3,7 @@ import { getOwnerApiUrl } from "./ownerApiConfig";
 
 const SIGNED_OUT_MESSAGE = "We could not read your sign-in. Please sign in again.";
 const INVALID_RESPONSE_MESSAGE = "The property owners service returned an unreadable response.";
+const UNAUTHORIZED_STATUS = 401;
 
 export class OwnerApiError extends Error {
   constructor(message, { status, serverMessage }) {
@@ -41,7 +42,7 @@ const request = async ({ method, query = {}, body }) => {
   const url = buildUrl(query);
   const token = getAccessToken();
   if (!token) {
-    throw new Error(SIGNED_OUT_MESSAGE);
+    throw new OwnerApiError(SIGNED_OUT_MESSAGE, { status: UNAUTHORIZED_STATUS, serverMessage: null });
   }
   const hasBody = body !== undefined;
   const headers = hasBody ? { Authorization: token, "Content-Type": "application/json" } : { Authorization: token };
