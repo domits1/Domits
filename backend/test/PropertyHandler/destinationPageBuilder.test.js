@@ -138,10 +138,11 @@ describe("the destination page", () => {
     expect(readJsonLd(page.html).itemListElement[0].item).toBe("https://acceptance.domits.com/destinations");
   });
 
-  it("renders a not found page that is never indexed and links back to the destinations", () => {
+  it("renders a not found page that is never indexed and links back to the destinations on the same host", () => {
     const html = buildDestinationNotFoundPage();
     expect(html).toContain('<meta name="robots" content="noindex, nofollow">');
-    expect(html).toContain('<a href="https://www.domits.com/destinations">All destinations</a>');
+    expect(html).toContain('<a href="/destinations">All destinations</a>');
+    expect(html).not.toContain("domits.com");
     expect(html).not.toContain("canonical");
   });
 

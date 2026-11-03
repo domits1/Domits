@@ -3,7 +3,6 @@ import fc from "fast-check";
 import {
   DESTINATION_PATH_MAX_LENGTH,
   readDestinationRequestPath,
-  resolveDestinationSiteOrigin,
 } from "../../functions/PropertyHandler/business/service/destinationPageRequest.js";
 
 const slug = fc.stringMatching(/^[a-z0-9]{1,8}(-[a-z0-9]{1,8}){0,2}$/);
@@ -87,31 +86,5 @@ describe("the destination request path", () => {
         }
       )
     );
-  });
-});
-
-describe("the destination site origin", () => {
-  it.each([
-    ["www.domits.com", "https://www.domits.com"],
-    ["acceptance.domits.com", "https://acceptance.domits.com"],
-    ["  ACCEPTANCE.domits.com ", "https://acceptance.domits.com"],
-  ])("uses the forwarded host %p from the fixed list", (host, origin) => {
-    expect(resolveDestinationSiteOrigin(host)).toBe(origin);
-  });
-
-  it.each([
-    undefined,
-    "",
-    "domits.com",
-    "evil.example",
-    "www.domits.com.evil.example",
-    "evil.example, www.domits.com",
-    "www.domits.com:443",
-    "https://www.domits.com",
-    "wkmwpwurbc.execute-api.eu-north-1.amazonaws.com",
-    "main.d34jwd0sihmsus.amplifyapp.com",
-    ["acceptance.domits.com"],
-  ])("falls back to www for the forwarded host %p", (host) => {
-    expect(resolveDestinationSiteOrigin(host)).toBe("https://www.domits.com");
   });
 });

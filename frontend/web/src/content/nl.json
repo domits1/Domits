@@ -1937,5 +1937,37 @@
       "contactButton": "Contact opnemen",
       "learnMoreButton": "Meer weten"
     }
+  },
+  "hostOwners": {
+    "title": "Eigenaren",
+    "loading": "Eigenaren laden…",
+    "empty": "Je hebt nog geen eigenaren.",
+    "allArchived": "Al je eigenaren zijn gearchiveerd. Zet \"Gearchiveerde eigenaren tonen\" aan om ze te zien.",
+    "showArchived": "Gearchiveerde eigenaren tonen",
+    "retry": "Opnieuw proberen",
+    "errorSignedOut": "Je sessie is verlopen. Log opnieuw in.",
+    "errorForbidden": "Alleen hosts kunnen eigenaren beheren.",
+    "errorGeneric": "We konden je eigenaren niet laden. Probeer het opnieuw.",
+    "columnName": "Naam",
+    "columnType": "Type",
+    "columnStatus": "Status",
+    "columnProperties": "Huidige accommodaties",
+    "propertyShare": "{title}, {percent}%",
+    "unknownShare": "{title}, aandeel onbekend",
+    "unknownProperty": "Onbekende accommodatie",
+    "noProperties": "Geen huidige accommodaties",
+    "ownerTypes": {
+      "individual": "Particulier",
+      "company": "Bedrijf",
+      "trust": "Trust",
+      "unknown": "Onbekend type"
+    },
+    "statuses": {
+      "active": "Actief",
+      "inactive": "Inactief",
+      "pending": "In afwachting",
+      "archived": "Gearchiveerd",
+      "unknown": "Onbekende status"
+    }
   }
 }

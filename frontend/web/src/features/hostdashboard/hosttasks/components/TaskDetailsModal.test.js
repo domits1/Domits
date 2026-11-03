@@ -48,6 +48,8 @@ describe('TaskDetailsModal', () => {
         onDelete: jest.fn(),
         onClose: jest.fn(),
         onEscalate: jest.fn(),
+        onApprove: jest.fn(),
+        onReject: jest.fn(),
     };
 
     beforeEach(() => {
@@ -74,6 +76,23 @@ describe('TaskDetailsModal', () => {
         render(<TaskDetailsModal {...baseProps} editedTask={{ ...baseTask, title: 'Changed' }} />);
         fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
         expect(baseProps.onSave).toHaveBeenCalledTimes(1);
+    });
+
+    test('disables Delete for a completed task and says why, so it cannot be deleted until its status is changed', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status: 'Completed' }} editedTask={{ ...baseTask, status: 'Completed' }} />);
+
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        expect(deleteButton).toBeDisabled();
+        expect(deleteButton).toHaveAttribute('title', 'Change the status of a completed task before deleting it');
+
+        fireEvent.click(deleteButton);
+        expect(baseProps.onDelete).not.toHaveBeenCalled();
+    });
+
+    test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('keeps Delete available for a %s task', (status) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+        expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
     });
 
     test('calls onDelete when Delete is clicked', () => {
@@ -122,6 +141,13 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(removeButton);
 
         expect(baseProps.onRemoveAttachment).toHaveBeenCalledWith(0);
+    });
+
+    test('asks for an attachment link of this task, as the host the user acts for', async () => {
+        render(<TaskDetailsModal {...baseProps} asHostId="host-2" editedTask={{ ...baseTask, attachments: ['tasks/host-2/photo.jpg'] }} />);
+
+        await screen.findByAltText('photo.jpg');
+        expect(getAttachmentViewUrl).toHaveBeenCalledWith('tasks/host-2/photo.jpg', 'task-1', 'host-2');
     });
 
     test('renders checklist items and wires toggle/remove through to the parent', () => {
@@ -224,5 +250,49 @@ describe('TaskDetailsModal', () => {
         render(<TaskDetailsModal {...baseProps} isEscalating viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
 
         expect(screen.getByRole('button', { name: 'Escalate' })).toBeDisabled();
+    });
+
+    describe('approving or rejecting a completed task', () => {
+        const completedTask = { ...baseTask, status: 'Completed', approved_at: null };
+
+        test('shows Approve and Reject for a completed task nobody has approved yet, and each calls its handler', () => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={completedTask} editedTask={completedTask} />);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+
+            expect(baseProps.onApprove).toHaveBeenCalledTimes(1);
+            expect(baseProps.onReject).toHaveBeenCalledTimes(1);
+        });
+
+        test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('does not show Approve or Reject for a %s task', (status) => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('hides Approve and Reject from someone who may not review this task', () => {
+            render(<TaskDetailsModal {...baseProps} canReview={false} viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('disables Approve and Reject while a decision is being sent', () => {
+            render(<TaskDetailsModal {...baseProps} isReviewing viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Reject' })).toBeDisabled();
+        });
+
+        test('shows that an approved task is approved, and no longer offers Approve or Reject', () => {
+            const approvedTask = { ...completedTask, approved_at: 1700000000000 };
+            render(<TaskDetailsModal {...baseProps} viewingTask={approvedTask} editedTask={approvedTask} />);
+
+            expect(screen.getByText('Approved')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
     });
 });

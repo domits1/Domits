@@ -6,7 +6,7 @@ import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import '../styles/HostTasks.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask } from '../../services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask, approveTask, rejectTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
 import { fetchTeamMembers } from '../../services/teamService';
 import { HOST_ASSIGNEE_ID, resolveAssigneeSelection, resolveAssigneeDisplayName } from '../utils/assigneeSelection';
@@ -74,6 +74,7 @@ const HostTasks = () => {
 
     const [viewingTask, setViewingTask] = useState(null);
     const [isEscalating, setIsEscalating] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
     const [editedTask, setEditedTask] = useState(null);
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistLoadError, setChecklistLoadError] = useState(null);
@@ -224,7 +225,7 @@ const HostTasks = () => {
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
 
         try {
-            await updateTask(task.id, { status: newStatus });
+            await updateTask(task.id, { status: newStatus }, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
             alert(error.message || "Error updating task status");
@@ -280,6 +281,15 @@ const HostTasks = () => {
         }
     };
 
+    const uploadAttachmentsOrWarn = async (files) => {
+        try {
+            return await Promise.all(files.map((file) => uploadTaskAttachment(file, asHostId)));
+        } catch (error) {
+            toast.error(error.message || 'A file could not be uploaded. Please try again.');
+            return null;
+        }
+    };
+
     const handleCreateTask = async (e) => {
         e.preventDefault();
         if (isCreatingTask) return;
@@ -298,12 +308,10 @@ const HostTasks = () => {
                 }]
             }; 
             
-            let attachmentUrls = [];
-            if (newTask.attachments?.length > 0) {
-                attachmentUrls = await Promise.all(newTask.attachments.map(uploadTaskAttachment));
-            }
+            const attachmentUrls = await uploadAttachmentsOrWarn(newTask.attachments || []);
+            if (!attachmentUrls) return;
 
-            let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls }, asHostId);
 
             await persistDraftChecklist(created.id, newTask.checklistItems);
 
@@ -665,7 +673,8 @@ const HostTasks = () => {
         let existingUrls = (editedTask.attachments || []).filter(a => typeof a === 'string');
 
         if (newFiles.length > 0) {
-            const uploaded = await Promise.all(newFiles.map(uploadTaskAttachment));
+            const uploaded = await uploadAttachmentsOrWarn(newFiles);
+            if (!uploaded) return;
             existingUrls = [...existingUrls, ...uploaded];
         }
 
@@ -679,7 +688,7 @@ const HostTasks = () => {
         if (!shouldSwitchChecklist) closeForm();
 
         try {
-            await updateTask(finalTask.id, finalTask);
+            await updateTask(finalTask.id, finalTask, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");
@@ -760,6 +769,41 @@ const HostTasks = () => {
             setIsEscalating(false);
         }
     };
+
+    const reviewViewingTask = async (review, successMessage, changesToTask) => {
+        if (isReviewing) return;
+        const taskId = viewingTask.id;
+        setIsReviewing(true);
+        try {
+            await review(taskId, asHostId);
+        } catch (error) {
+            toast.error(error.message || "Error saving the decision");
+            return;
+        } finally {
+            setIsReviewing(false);
+        }
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...changesToTask } : t));
+        toast.success(successMessage);
+        setViewingTask(null);
+        setEditedTask(null);
+    };
+
+    const ownEmail = currentUser.email.toLowerCase();
+    const isAssignedToCurrentUser = Boolean(viewingTask?.assignee_team_member_id)
+        && ownEmail !== ''
+        && (viewingTask.assignee || '').toLowerCase() === ownEmail;
+
+    const handleApproveTask = () => reviewViewingTask(
+        approveTask,
+        "Task approved. The assignee will receive an email.",
+        { approved_at: Date.now() }
+    );
+
+    const handleRejectTask = () => reviewViewingTask(
+        rejectTask,
+        "Task rejected and reopened. The assignee will receive an email.",
+        { status: 'In progress', completed_date: null, completedAt: null, approved_at: null }
+    );
 
     const handleDeleteSingleTask = () => {
         setConfirmDialog({
@@ -1062,6 +1106,7 @@ const HostTasks = () => {
             <TaskDetailsModal
                 viewingTask={viewingTask}
                 editedTask={editedTask}
+                asHostId={asHostId}
                 editPropertyOptions={editPropertyOptions}
                 assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}
@@ -1080,6 +1125,10 @@ const HostTasks = () => {
                 onRemoveChecklistItem={handleRemoveChecklistItem}
                 onRetryChecklistLoad={handleRetryChecklistLoad}
                 onEscalate={handleEscalateTask}
+                onApprove={handleApproveTask}
+                onReject={handleRejectTask}
+                canReview={!isAssignedToCurrentUser}
+                isReviewing={isReviewing}
                 isEscalating={isEscalating}
             />
 

@@ -18,6 +18,7 @@ import { StaticPageRenderer } from "../business/service/staticPageRenderer.js";
 import { StaticPageWorker } from "../business/service/staticPageWorker.js";
 import { StaticPageWithdrawal } from "../business/service/staticPageWithdrawal.js";
 import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
+import { WebsiteCleanupService } from "../business/service/websiteCleanupService.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { randomUUID } from "node:crypto";
@@ -29,6 +30,7 @@ import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
+import { TypeException } from "../util/exception/TypeException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
@@ -57,6 +59,8 @@ const draftResponseHeaders = {
     Expires: "0",
 };
 
+const reviewReadResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
+
 const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_BUILD_STARTED",
     "WEBSITE_PREVIEW_READY",
@@ -80,6 +84,7 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 
 // Only genuine availability conflicts count as quote_conflicted in the KPI stream;
 // validation 400s are guest input errors, not conflicts.
+const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
@@ -1907,6 +1912,31 @@ export class PropertyController {
         };
     }
 
+    createWebsiteCleanupService() {
+        return new WebsiteCleanupService({
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            propertyRepository: this.propertyService.propertyRepository,
+            unpublisher: this.createWebsiteUnpublisher(),
+        });
+    }
+
+    async unpublishSitesOfInactiveListings(event) {
+        const summary = await this.createWebsiteCleanupService().unpublishSitesOfInactiveListings({
+            apply: event?.apply,
+            limit: event?.limit,
+        });
+        if (summary.errors.length > 0) {
+            throw new Error(
+                `The website cleanup left ${summary.errors.length} failures: ` + JSON.stringify(summary)
+            );
+        }
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(summary),
+        };
+    }
+
     async withdrawStaticPageSafely(site) {
         try {
             const withdrawn = await this.createStaticPageWithdrawal().withdrawSite(site.id);
@@ -2280,9 +2310,13 @@ export class PropertyController {
                 };
             }
 
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const actorId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             // No status (the legacy body) and ACTIVE both mean "go live", which only submits for review.
-            const property = await this.propertyService.requestHostStatusChange(propertyId, requestedStatus);
+            const property = await this.propertyService.requestHostStatusChange(
+                propertyId,
+                requestedStatus,
+                { actorId }
+            );
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -2293,7 +2327,7 @@ export class PropertyController {
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+                body: JSON.stringify(error.statusCode ? error.message : "Something went wrong, please contact support.")
             }
         }
     }
@@ -2312,6 +2346,52 @@ export class PropertyController {
         return await this.reviewProperty(event, "reject");
     }
 
+    async getReviewAccess(event) {
+        return await this.respondToReviewRead(async () => ({
+            allowed: await this.authManager.checkReviewAdminAccess(this.getAuthorizationHeader(event)),
+        }));
+    }
+
+    async getReviewQueue(event) {
+        return await this.respondToReviewRead(async () => {
+            await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
+            const query = event.queryStringParameters || {};
+            return await this.propertyService.getReviewQueue({ cursor: query.cursor, limit: query.limit });
+        });
+    }
+
+    async getReviewDetail(event) {
+        return await this.respondToReviewRead(async () => {
+            await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
+            const propertyId = String(event.queryStringParameters?.propertyId ?? "").trim();
+            if (!propertyId) {
+                throw new TypeException("Missing propertyId.");
+            }
+            return await this.propertyService.getFullPropertyForReview(propertyId);
+        });
+    }
+
+    getAuthorizationHeader(event) {
+        return event.headers?.Authorization || event.headers?.authorization;
+    }
+
+    async respondToReviewRead(read) {
+        try {
+            return { statusCode: 200, headers: reviewReadResponseHeaders, body: JSON.stringify(await read()) };
+        } catch (error) {
+            if (error.statusCode !== 401) {
+                console.error(error);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: reviewReadResponseHeaders,
+                body: JSON.stringify({
+                    message: error.statusCode ? error.message : "Something went wrong, please contact support.",
+                }),
+            };
+        }
+    }
+
     async reviewProperty(event, action) {
         try {
             const accessToken = event.headers?.Authorization || event.headers?.authorization;
@@ -2328,10 +2408,19 @@ export class PropertyController {
                 return this.badRequest("Missing propertyId.");
             }
 
+            const updatedAt = eventBody.updatedAt;
+            if (!Number.isSafeInteger(updatedAt) || updatedAt < 0) {
+                return this.badRequest("updatedAt must be the property's last update time in milliseconds.");
+            }
+            if (action === "approve" && Object.hasOwn(eventBody, "reason")) {
+                return this.badRequest("An approval takes no reason.");
+            }
+
+            const review = { actorId: reviewerId, expectedUpdatedAt: updatedAt };
             const property =
                 action === "approve"
-                    ? await this.propertyService.approveProperty(propertyId)
-                    : await this.propertyService.rejectProperty(propertyId);
+                    ? await this.propertyService.approveProperty(propertyId, review)
+                    : await this.propertyService.rejectProperty(propertyId, { ...review, reason: eventBody.reason });
 
             console.info(
                 JSON.stringify({ event: "property_review", action, reviewerId, propertyId, status: property.status })
@@ -2339,16 +2428,17 @@ export class PropertyController {
             return {
                 statusCode: 200,
                 headers: responseHeaders,
-                body: JSON.stringify({ propertyId, status: property.status }),
+                body: JSON.stringify({ propertyId, status: property.status, updatedAt: property.updatedAt }),
             };
         } catch (error) {
             console.error(error);
-            const statusCode = error.statusCode || 500;
+            const hasStatusCode = Boolean(error.statusCode);
             return {
-                statusCode,
+                statusCode: error.statusCode || 500,
                 headers: responseHeaders,
                 body: JSON.stringify({
-                    message: error.statusCode ? error.message : "Something went wrong, please contact support.",
+                    message: hasStatusCode ? error.message : "Something went wrong, please contact support.",
+                    ...(hasStatusCode && PUBLIC_REVIEW_ERROR_CODES.has(error.code) ? { code: error.code } : {}),
                 }),
             };
         }
@@ -2729,7 +2819,7 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3803,8 +3893,9 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            const isUnauthorizedOutsideLogin = error.statusCode === 401 && !(error instanceof Unauthorized);
             return {
-                statusCode: error.statusCode || 500,
+                statusCode: isUnauthorizedOutsideLogin ? 500 : error.statusCode || 500,
                 headers: responseHeaders,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             };

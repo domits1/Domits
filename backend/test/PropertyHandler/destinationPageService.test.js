@@ -9,9 +9,20 @@ const PAGE = {
   cacheControl: "public, max-age=300",
 };
 
-const buildService = ({ switchOn = async () => true, render = async () => PAGE, clock = { now: 0 } } = {}) => {
+const MENU = { continents: [{ name: "Europe", path: "/destinations/europe", activeListings: 2, countries: [] }] };
+
+const buildService = ({
+  switchOn = async () => true,
+  render = async () => PAGE,
+  menu = async () => MENU,
+  clock = { now: 0 },
+} = {}) => {
   const destinationSwitchRepository = { isDestinationPagesSwitchOn: jest.fn(switchOn) };
-  const destinationTreeService = { renderDestinationPage: jest.fn(render) };
+  const destinationTreeService = {
+    renderDestinationPage: jest.fn(render),
+    renderDestinationSitemap: jest.fn(async () => "<urlset></urlset>"),
+    buildDestinationMenu: jest.fn(menu),
+  };
   const service = new DestinationPageService({
     destinationSwitchRepository,
     destinationTreeService,
@@ -28,7 +39,7 @@ describe("the destination page service", () => {
     jest.useRealTimers();
   });
 
-  it("renders a valid path with the origin from the fixed host list", async () => {
+  it("renders a valid path with the www origin, whatever host a caller adds", async () => {
     const { service, destinationTreeService } = buildService();
 
     const outcome = await service.serve({
@@ -38,14 +49,17 @@ describe("the destination page service", () => {
 
     expect(outcome).toEqual({ kind: "page", html: PAGE.html, cacheControl: PAGE.cacheControl });
     expect(destinationTreeService.renderDestinationPage).toHaveBeenCalledWith("/destinations/europe/spain/marbella", {
-      siteOrigin: "https://acceptance.domits.com",
+      siteOrigin: "https://www.domits.com",
     });
   });
 
-  it("renders with the www origin when the forwarded host is not on the list", async () => {
+  it("renders the sitemap with the www origin, whatever host a caller adds", async () => {
     const { service, destinationTreeService } = buildService();
-    await service.serve({ path: "/destinations/europe", forwardedHost: "evil.example" });
-    expect(destinationTreeService.renderDestinationPage).toHaveBeenCalledWith("/destinations/europe", {
+
+    const outcome = await service.serveSitemap({ forwardedHost: "acceptance.domits.com" });
+
+    expect(outcome).toEqual({ kind: "sitemap", xml: "<urlset></urlset>" });
+    expect(destinationTreeService.renderDestinationSitemap).toHaveBeenCalledWith({
       siteOrigin: "https://www.domits.com",
     });
   });
@@ -53,7 +67,7 @@ describe("the destination page service", () => {
   it("answers not found for an invalid path without reading the switch or the database", async () => {
     const { service, destinationSwitchRepository, destinationTreeService } = buildService();
 
-    const outcome = await service.serve({ path: "/destinations/Europe/../x", forwardedHost: "www.domits.com" });
+    const outcome = await service.serve({ path: "/destinations/Europe/../x" });
 
     expect(outcome.kind).toBe("not_found");
     expect(outcome.html).toContain('<meta name="robots" content="noindex, nofollow">');
@@ -72,11 +86,12 @@ describe("the destination page service", () => {
     expect(destinationTreeService.renderDestinationPage).not.toHaveBeenCalled();
   });
 
-  it("answers not found when the destination has no page", async () => {
+  it("answers not found with a link to the destinations on the same host when the destination has no page", async () => {
     const { service } = buildService({ render: async () => null });
-    const outcome = await service.serve({ path: "/destinations/europe/spain/ronda", forwardedHost: "www.domits.com" });
+    const outcome = await service.serve({ path: "/destinations/europe/spain/ronda" });
     expect(outcome.kind).toBe("not_found");
-    expect(outcome.html).toContain('<a href="https://www.domits.com/destinations">All destinations</a>');
+    expect(outcome.html).toContain('<a href="/destinations">All destinations</a>');
+    expect(outcome.html).not.toContain("domits.com");
   });
 
   it("answers not found without rendering when the switch is off", async () => {
@@ -95,10 +110,7 @@ describe("the destination page service", () => {
       },
     });
 
-    const outcome = await service.serve({
-      path: "/destinations/europe/spain/marbella",
-      forwardedHost: "www.domits.com",
-    });
+    const outcome = await service.serve({ path: "/destinations/europe/spain/marbella" });
 
     expect(outcome.kind).toBe("unavailable");
     expect(outcome.html).toContain("Please try again in a minute.");
@@ -205,5 +217,55 @@ describe("the destination page service", () => {
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("unavailable");
     expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("page");
     expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers the menu from the tree while the switch is on", async () => {
+    const { service, destinationTreeService } = buildService();
+    expect(await service.serveMenu()).toEqual({ kind: "menu", menu: MENU });
+    expect(destinationTreeService.buildDestinationMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers the menu off without reading the tree while the switch is off", async () => {
+    const { service, destinationTreeService } = buildService({ switchOn: async () => false });
+    expect(await service.serveMenu()).toEqual({ kind: "menu_off" });
+    expect(destinationTreeService.buildDestinationMenu).not.toHaveBeenCalled();
+  });
+
+  it("answers the menu unavailable, as the pages do, without reading the tree when the switch cannot be read", async () => {
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service, destinationTreeService } = buildService({
+      switchOn: async () => {
+        throw awsError("AccessDeniedException");
+      },
+    });
+
+    expect((await service.serveMenu()).kind).toBe("unavailable");
+    expect((await service.serve({ path: "/destinations/europe" })).kind).toBe("unavailable");
+    expect(destinationTreeService.buildDestinationMenu).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+      "Destination page unavailable:",
+      "AccessDeniedException",
+      "AccessDeniedException from SSM"
+    );
+  });
+
+  it("answers the menu unavailable within the limit when the tree read hangs", async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const { service } = buildService({ menu: () => new Promise(() => {}) });
+
+    const pending = service.serveMenu();
+    await jest.advanceTimersByTimeAsync(DESTINATION_RENDER_TIMEOUT_MS);
+
+    expect((await pending).kind).toBe("unavailable");
+  });
+
+  it("reads the switch once for the menu and the pages within the same minute", async () => {
+    const { service, destinationSwitchRepository, clock } = buildService();
+
+    await service.serve({ path: "/destinations/europe" });
+    clock.now = 59999;
+    expect((await service.serveMenu()).kind).toBe("menu");
+    expect(destinationSwitchRepository.isDestinationPagesSwitchOn).toHaveBeenCalledTimes(1);
   });
 });

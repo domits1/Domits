@@ -884,3 +884,38 @@ CREATE TABLE IF NOT EXISTS test.property_destination (
   updated_at BIGINT NOT NULL
 );
 CREATE INDEX ASYNC IF NOT EXISTS property_destination_destination_test ON test.property_destination (destination_id);
+
+-- -----------------------------------------------------
+-- Table main.guest_risk_assessment
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS main.guest_risk_assessment (
+  id VARCHAR(255) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  bookingid VARCHAR(255) NOT NULL,
+  providerassessmentid VARCHAR(255),
+  status VARCHAR(30) NOT NULL,
+  flaggedreason TEXT,
+  errormessage TEXT,
+  arrivaldate BIGINT,
+  departuredate BIGINT,
+  createdat BIGINT NOT NULL,
+  updatedat BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx ON main.guest_risk_assessment (bookingid);
+
+CREATE TABLE IF NOT EXISTS test.guest_risk_assessment (
+  id VARCHAR(255) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  bookingid VARCHAR(255) NOT NULL,
+  providerassessmentid VARCHAR(255),
+  status VARCHAR(30) NOT NULL,
+  flaggedreason TEXT,
+  errormessage TEXT,
+  arrivaldate BIGINT,
+  departuredate BIGINT,
+  createdat BIGINT NOT NULL,
+  updatedat BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx_test ON test.guest_risk_assessment (bookingid);

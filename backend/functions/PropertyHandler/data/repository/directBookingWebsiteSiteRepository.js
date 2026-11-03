@@ -565,4 +565,37 @@ export class DirectBookingWebsiteSiteRepository {
 
     return mapSiteRow(records[0] || null);
   }
+
+  async listPublishedSitesOfInactiveProperties({ limit } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const normalizedLimit = Number(limit);
+    if (!Number.isSafeInteger(normalizedLimit) || normalizedLimit <= 0) {
+      throw new TypeError("limit must be a positive integer.");
+    }
+
+    const rows = await client.query(
+      `SELECT
+        s.id,
+        s.property_id,
+        s.host_id,
+        p.status AS property_status
+      FROM ${siteTableName(schemaName)} s
+      LEFT JOIN ${schemaName}.property p ON p.id = s.property_id
+      WHERE s.status = 'PUBLISHED'
+        AND (p.id IS NULL OR p.status IS DISTINCT FROM 'ACTIVE')
+      ORDER BY s.id ASC
+      LIMIT $1`,
+      [normalizedLimit + 1]
+    );
+
+    const candidates = (rows || []).map((row) => ({
+      id: String(row.id),
+      propertyId: String(row.property_id),
+      hostId: String(row.host_id),
+      propertyStatus: row.property_status ? String(row.property_status) : null,
+    }));
+
+    return { sites: candidates.slice(0, normalizedLimit), truncated: candidates.length > normalizedLimit };
+  }
 }

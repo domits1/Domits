@@ -1,4 +1,7 @@
 import {
+  AccommodationRequestError,
+  getAccommodationByPropertyId,
+  getAccommodationWithPublicFallback,
   getGuestBookingDetailsByBookingId,
   getHostBookingDetails,
   sendUnifiedMessage,
@@ -312,5 +315,119 @@ describe("messagingService unified REST client", () => {
     ).rejects.toThrow("Multiple bookings match this host conversation; bookingId is required.");
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("messagingService accommodation requests", () => {
+  const LISTING = { property: { title: "Sea Cabin" } };
+
+  beforeEach(() => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => LISTING });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("getAccommodationByPropertyId sends the token it is given", async () => {
+    await getAccommodationByPropertyId("hostDashboard/single", "property-1", "host-token-1");
+
+    expect(globalThis.fetch.mock.calls[0][1].headers).toEqual({ Authorization: "host-token-1" });
+  });
+
+  test("getAccommodationByPropertyId sends no Authorization header without a token", async () => {
+    await expect(getAccommodationByPropertyId("bookingEngine/listingDetails", "property-1", null)).resolves.toEqual(
+      LISTING
+    );
+
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  const failed = (status) => ({ ok: false, status, json: async () => "Request failed." });
+  const listed = (payload) => ({ ok: true, status: 200, json: async () => payload });
+  const PUBLIC_LISTING = { property: { title: "Sea Cabin", hostId: "other-host" }, location: { city: "Haarlem" } };
+
+  test("a 403 from the host listing loads the public listing without the token", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403)).mockResolvedValueOnce(listed(PUBLIC_LISTING));
+
+    await expect(
+      getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1")
+    ).resolves.toEqual(PUBLIC_LISTING);
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/hostDashboard/single?property=property-1");
+    expect(globalThis.fetch.mock.calls[0][1].headers).toEqual({ Authorization: "host-token-1" });
+    expect(globalThis.fetch.mock.calls[1][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[1][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  test.each([401, 404, 500, 503])("a %i from the host listing is not retried on the public listing", async (status) => {
+    globalThis.fetch.mockResolvedValueOnce(failed(status));
+
+    const request = getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1");
+
+    await expect(request).rejects.toBeInstanceOf(AccommodationRequestError);
+    await expect(request).rejects.toMatchObject({ status });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("a network error on the host listing is not retried on the public listing", async () => {
+    const networkError = new TypeError("Failed to fetch");
+    globalThis.fetch.mockRejectedValueOnce(networkError);
+
+    const request = getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1");
+
+    await expect(request).rejects.toBe(networkError);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("a 403 from the public listing is not retried", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403));
+
+    await expect(
+      getAccommodationWithPublicFallback("bookingEngine/listingDetails", "property-1", null)
+    ).rejects.toMatchObject({ status: 403 });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("the public listing failure is reported when the fallback fails too", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403)).mockResolvedValueOnce(failed(404));
+
+    await expect(
+      getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1")
+    ).rejects.toMatchObject({ status: 404, message: "Failed to fetch accommodation" });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test("getHostBookingDetails shows the public listing when the host listing answers 403", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () =>
+          JSON.stringify([
+            {
+              id: "property-1",
+              res: {
+                response: [{ id: "booking-1", hostid: "host-1", guestid: "guest-1", property_id: "property-1" }],
+              },
+            },
+          ]),
+      })
+      .mockResolvedValueOnce(failed(403))
+      .mockResolvedValueOnce(listed(PUBLIC_LISTING));
+
+    const result = await getHostBookingDetails({
+      hostId: "host-1",
+      guestId: "guest-1",
+      propertyId: "property-1",
+      token: "host-token-1",
+      accommodationEndpoint: "hostDashboard/single",
+    });
+
+    expect(result.bookingDetails.id).toBe("booking-1");
+    expect(result.accommodation).toEqual(PUBLIC_LISTING);
+    expect(globalThis.fetch.mock.calls[2][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[2][1].headers).not.toHaveProperty("Authorization");
   });
 });

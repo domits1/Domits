@@ -4,6 +4,7 @@ import { DestinationPageController } from "./controller/destinationPageControlle
 const STATIC_PAGE_TASK = "build-static-pages";
 const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
 const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
+const UNPUBLISH_INACTIVE_SITES_TASK = "unpublish-sites-of-inactive-listings";
 
 let controller = new PropertyController();
 const destinationPageController = new DestinationPageController();
@@ -127,8 +128,20 @@ const handleGet = async (event) => {
   if (isDestinationPageRequest(event)) {
     return destinationPageController.getDestinationPage(event);
   }
+  if (isPath(event, "/property/review/access")) {
+    return controller.getReviewAccess(event);
+  }
+  if (isPath(event, "/property/review/queue")) {
+    return controller.getReviewQueue(event);
+  }
+  if (isPath(event, "/property/review/detail")) {
+    return controller.getReviewDetail(event);
+  }
   if (isPath(event, "/sitemap-destinations.xml")) {
     return destinationPageController.getDestinationSitemap(event);
+  }
+  if (isPath(event, "/property/destinations/menu")) {
+    return destinationPageController.getDestinationMenu();
   }
   if (isPath(event, "/property/website/public/resolve")) {
     return controller.resolvePublicWebsiteSite(event);
@@ -227,6 +240,10 @@ export const handler = async (event) => {
 
   if (event?.task === STATIC_PAGE_QUEUE_ALL_TASK && !event.httpMethod) {
     return controller.queueAllStaticPages(event);
+  }
+
+  if (event?.task === UNPUBLISH_INACTIVE_SITES_TASK && !event.httpMethod) {
+    return controller.unpublishSitesOfInactiveListings(event);
   }
 
   try {
