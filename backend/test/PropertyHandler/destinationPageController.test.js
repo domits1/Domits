@@ -105,6 +105,46 @@ describe("the destination page controller", () => {
   });
 });
 
+describe("the destination menu controller", () => {
+  const JSON_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json",
+  };
+  const MENU = { continents: [{ name: "Europe", path: "/destinations/europe", activeListings: 2, countries: [] }] };
+
+  it.each([
+    [
+      "the menu while the switch is on",
+      { kind: "menu", menu: MENU },
+      { statusCode: 200, cacheControl: "public, max-age=300", body: MENU },
+    ],
+    [
+      "an empty menu while the switch is off",
+      { kind: "menu_off" },
+      { statusCode: 200, cacheControl: "public, max-age=60", body: { continents: [] } },
+    ],
+    [
+      "503 without caching when the menu is unavailable",
+      { kind: "unavailable", html: "<p>later</p>" },
+      {
+        statusCode: 503,
+        cacheControl: "no-store",
+        body: { message: "Destinations are not available right now." },
+        retryAfter: "60",
+      },
+    ],
+  ])("answers %s as JSON", async (_, outcome, { statusCode, cacheControl, body, retryAfter }) => {
+    const destinationPageService = { serveMenu: jest.fn(async () => outcome) };
+    const response = await new DestinationPageController(destinationPageService).getDestinationMenu();
+
+    expect(response.statusCode).toBe(statusCode);
+    expect(response.headers).toMatchObject({ ...JSON_HEADERS, "Cache-Control": cacheControl });
+    expect(response.headers["Retry-After"]).toBe(retryAfter);
+    expect(JSON.parse(response.body)).toEqual(body);
+    expect(destinationPageService.serveMenu.mock.calls).toEqual([[]]);
+  });
+});
+
 describe("a destination request through the property handler", () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -311,5 +351,86 @@ describe("the destination sitemap through the property handler", () => {
     expect(response.statusCode).toBe(503);
     expect(response.headers["Cache-Control"]).toBe("no-store");
     expect(JSON.stringify(log.mock.calls)).toContain("larger than 5242880 bytes");
+  });
+});
+
+describe("the destination menu through the property handler", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  const at = (offsetMs) =>
+    jest.useFakeTimers({ now: Date.now() + offsetMs, doNotFake: ["setTimeout", "clearTimeout"] });
+  const menu = () =>
+    handler({
+      httpMethod: "GET",
+      resource: "/property/destinations/menu",
+      path: "/property/destinations/menu",
+      headers: { "X-Forwarded-Host": "acceptance.domits.com" },
+    });
+  const switchOn = (on) =>
+    jest.spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn").mockResolvedValue(on);
+  const treeRows = () =>
+    jest.spyOn(DestinationPageRepository.prototype, "listDestinationsWithActiveListings").mockResolvedValue(TREE_ROWS);
+
+  it("answers an empty list without reading the tree while the switch is off", async () => {
+    at(1560000);
+    switchOn(false);
+    const read = treeRows();
+
+    const response = await menu();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=60");
+    expect(JSON.parse(response.body)).toEqual({ continents: [] });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("answers the destinations with a page, with relative links, while the switch is on", async () => {
+    at(1680000);
+    switchOn(true);
+    treeRows();
+
+    const response = await menu();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Cache-Control"]).toBe("public, max-age=300");
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(JSON.parse(response.body)).toEqual({
+      continents: [
+        {
+          name: "Europe",
+          path: "/destinations/europe",
+          activeListings: 2,
+          countries: [
+            {
+              name: "Spain",
+              path: "/destinations/europe/spain",
+              activeListings: 2,
+              cities: [{ name: "Marbella", path: "/destinations/europe/spain/marbella", activeListings: 2 }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(response.body).not.toMatch(/domits\.com|https?:/);
+  });
+
+  it("answers 503 without caching and without reading the tree when the switch cannot be read", async () => {
+    at(1800000);
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest
+      .spyOn(DestinationSwitchRepository.prototype, "isDestinationPagesSwitchOn")
+      .mockRejectedValue(Object.assign(new Error("denied"), { name: "AccessDeniedException" }));
+    const read = treeRows();
+
+    const response = await menu();
+
+    expect(response.statusCode).toBe(503);
+    expect(response.headers).toMatchObject({ "Cache-Control": "no-store", "Retry-After": "60" });
+    expect(response.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(JSON.parse(response.body)).toEqual({ message: "Destinations are not available right now." });
+    expect(read).not.toHaveBeenCalled();
   });
 });

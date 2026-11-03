@@ -6,6 +6,7 @@ import {
   buildDestinationTree,
 } from "../../functions/PropertyHandler/business/service/destinationTreeService.js";
 import { readDestinationSettings } from "../../functions/PropertyHandler/util/destination/destinationSettings.js";
+import { readDestinationRequestPath } from "../../functions/PropertyHandler/business/service/destinationPageRequest.js";
 
 const row = (path, type, parentId, name, activeListings = 0) => ({
   id: path,
@@ -149,6 +150,54 @@ describe("the destination tree", () => {
       "/destinations/europe/spain/malaga",
       "/destinations/europe/spain/marbella",
     ]);
+  });
+
+  it("builds the menu from the same eligibility as the pages, and lets a repository failure reach the caller", async () => {
+    const { service } = buildService();
+    const menu = await service.buildDestinationMenu();
+    expect(menu.continents.map((continent) => continent.name)).toEqual(["Europe"]);
+    expect(menu.continents[0].countries.map((country) => country.name)).toEqual(["Spain"]);
+    const failing = buildService();
+    failing.repository.listDestinationsWithActiveListings.mockRejectedValue(new Error("timeout"));
+    await expect(failing.service.buildDestinationMenu()).rejects.toThrow("timeout");
+  });
+
+  const REFUSED_ROWS = [
+    row(`/destinations/europe/spain/${"a".repeat(231)}`, "city", "/destinations/europe/spain", "A".repeat(231), 1),
+    row("/destinations/europe/Portugal", "country", "/destinations/europe", "Portugal"),
+    row("/destinations/europe/Portugal/lisbon", "city", "/destinations/europe/Portugal", "Lisbon", 3),
+  ];
+
+  it("leaves a destination out of the menu, with everything below it, when the page route refuses its path", async () => {
+    const menu = await buildService({ rows: [...ROWS, ...REFUSED_ROWS] }).service.buildDestinationMenu();
+
+    const [europe] = menu.continents;
+    expect(europe.countries.map((country) => country.path)).toEqual(["/destinations/europe/spain"]);
+    expect(europe.countries[0].cities.map((city) => city.path)).toEqual([
+      "/destinations/europe/spain/marbella",
+      "/destinations/europe/spain/malaga",
+    ]);
+  });
+
+  it("links the menu only to destinations that render a page, whatever the tree", async () => {
+    const all = [...ROWS, ...REFUSED_ROWS];
+    const counts = fc.array(fc.integer({ min: 0, max: 2 }), { minLength: all.length, maxLength: all.length });
+    await fc.assert(
+      fc.asyncProperty(counts, async (activeListings) => {
+        const rows = all.map((destination, index) => ({ ...destination, activeListings: activeListings[index] }));
+        const { service } = buildService({ rows });
+        const { continents } = await service.buildDestinationMenu();
+        const inMenu = continents.flatMap((continent) => [
+          continent.path,
+          ...continent.countries.flatMap((country) => [country.path, ...country.cities.map((city) => city.path)]),
+        ]);
+        for (const path of inMenu) {
+          expect(readDestinationRequestPath(path)).toEqual({ kind: "page", path });
+          expect(await service.renderDestinationPage(path)).not.toBeNull();
+        }
+      }),
+      { numRuns: 60 }
+    );
   });
 
   it("renders the sitemap from the same eligibility as the pages, so mapping rows without an active property put nothing in it", async () => {
