@@ -44,6 +44,17 @@ export function createEchoToken(bookingId) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
+const text = (value) => String(value ?? "").trim();
+
+function toAddressLine1(location) {
+  const street = text(location.street);
+  if (!street) {
+    throw new Error("Property address needs a street");
+  }
+  const number = `${text(location.housenumber)}${text(location.housenumberextension)}`;
+  return number ? `${street} ${number}` : street;
+}
+
 function splitName(fullName = "") {
   const parts = String(fullName ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length < 2) {
@@ -76,7 +87,7 @@ export function bookingToCreateRequest({
   if (booking.guest_phone) guest.telephoneNumber = booking.guest_phone;
 
   const address = {
-    addressLine1: `${location.street} ${location.housenumber}${location.housenumberextension || ""}`,
+    addressLine1: toAddressLine1(location),
     town: location.city,
     countryIso: toCountryAlpha3(location.country),
     postcode: location.postalcode,

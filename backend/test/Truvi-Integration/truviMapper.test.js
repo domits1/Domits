@@ -42,6 +42,24 @@ describe("bookingToCreateRequest", () => {
     expect(req.protection).toEqual({ type: "Complete Protection", extendedAmount: 1000 });
   });
 
+  test.each([
+    [{ housenumber: null, housenumberextension: null }, "Kinderhuissingel"],
+    [{ housenumber: undefined, housenumberextension: undefined }, "Kinderhuissingel"],
+    [{ housenumber: 6, housenumberextension: null }, "Kinderhuissingel 6"],
+    [{ housenumber: "6", housenumberextension: " " }, "Kinderhuissingel 6"],
+    [{ street: " Kinderhuissingel ", housenumber: 6, housenumberextension: "k" }, "Kinderhuissingel 6k"],
+  ])("never writes null or extra spaces in addressLine1 for %p", (parts, addressLine1) => {
+    const data = input();
+    Object.assign(data.location, parts);
+    expect(bookingToCreateRequest(data).listing.address.addressLine1).toBe(addressLine1);
+  });
+
+  test.each([null, undefined, "  "])("rejects a property address without a street (%p)", (street) => {
+    const data = input();
+    data.location.street = street;
+    expect(() => bookingToCreateRequest(data)).toThrow("Property address needs a street");
+  });
+
   test("sets petsAllowed to true when the PetsAllowed rule is true", () => {
     const data = input();
     data.rules = [{ property_id: "property-1", rule: "PetsAllowed", value: true }];
