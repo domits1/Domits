@@ -359,6 +359,7 @@ describe('HostTasks', () => {
 
             await waitFor(() => expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument());
             expect(escalateTask).toHaveBeenCalledTimes(1);
+            expect(escalateTask).toHaveBeenCalledWith('task-1', null);
         });
 
         test('keeps the button disabled while the request runs, so a double click sends one request', async () => {

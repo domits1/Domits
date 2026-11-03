@@ -749,7 +749,7 @@ const HostTasks = () => {
         const taskId = viewingTask.id;
         setIsEscalating(true);
         try {
-            await escalateTask(taskId);
+            await escalateTask(taskId, asHostId);
             const escalated_at = Date.now();
             setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at } : t));
             setViewingTask(prev => (prev?.id === taskId ? { ...prev, escalated_at } : prev));
