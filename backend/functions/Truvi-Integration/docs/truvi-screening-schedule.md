@@ -21,6 +21,8 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
    The read is the only call under `/v1`. Create, modify and cancel use `/verificationRequests` directly on `TRUVI_BASE_URL`, but Truvi serves the read at `/v1/verificationRequests/{id}`, so `getVerification` in `data/truviApiClient.js` adds `/v1` itself. This path was checked in the sandbox for #3632: the same booking screened twice gave back the same `verificationId` and status.
 4. Fails the run (so CloudWatch shows an error) when a booking could not be handled at all, for example when the database is down.
 
+Truvi gets dates without a time, so the run sends the UTC day of `arrivaldate` and `departuredate`. Bookings made with a date (`2026-12-01`) are stored at UTC midnight, so their day is exact. The booking API also accepts a numeric timestamp (`bookingDateParser.js`, used by `BookingSend.js` in the web app), and a timestamp that is not at UTC midnight, such as a local midnight in the Netherlands, can land on the day before. The run still screens it, because a skipped booking would never be protected, but it counts it in `notUtcMidnight` in the summary and logs `{"event":"TRUVI_DATE_NOT_UTC_MIDNIGHT","bookingId":"..."}`. Check those bookings by hand before turning the schedule on for production.
+
 ## What One Cancel Run Does
 
 With `"task": "cancel-cancelled-bookings"` the same Lambda handles cancelled bookings instead:

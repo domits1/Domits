@@ -27,6 +27,10 @@ function petsAllowedFromRules(rules = []) {
   return rules.some((r) => r?.rule === "PetsAllowed" && r?.value === true);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const isUtcMidnight = (epochMs) => Number.isFinite(Number(epochMs)) && Number(epochMs) % DAY_MS === 0;
+
 function toIsoDate(epochMs) {
   return new Date(Number(epochMs)).toISOString().slice(0, 10);
 }
