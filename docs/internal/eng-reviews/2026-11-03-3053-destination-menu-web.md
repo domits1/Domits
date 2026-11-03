@@ -9,7 +9,7 @@ Result: no blocking findings
 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
-| P2 (9/10) | frontend/web/src/components/base/Header.js:45 | Every page load now asks `GET /property/destinations/menu`. Until that route exists in API Gateway, the answer is a `403` without a CORS header: no menu, one console warning, a pause of 60 seconds. | Accepted, with an order: merge this branch only after the route is live. The header itself never breaks. |
+| P2 (9/10) | frontend/web/src/components/base/Header.js:45 | Every page load now asks `GET /property/destinations/menu`. Until that route exists in API Gateway, the answer is the gateway's `403` (it carries `Access-Control-Allow-Origin: *`, so the browser reads it): no menu, one console warning, a pause of 60 seconds. | Accepted, with an order: merge this branch only after the route is live. The header itself never breaks. |
 | P3 (7/10) | frontend/web/src/components/base/Header.js:393 | The trigger appears once the answer is in, so on desktop the search bar moves sideways once. On mobile the second row already exists, so the height stays the same. | Accepted. Reserving the space would show an empty slot while the switch is off. |
 | P3 (6/10) | frontend/web/src/features/destinations/components/DestinationsMenu.js:70 | `aria-haspopup="true"` announces a menu, while the panel is a disclosure with links. | Accepted for now, unchanged from the earlier version of the menu. |
 | P3 (7/10) | frontend/web/src/features/destinations/services/destinationMenuService.js:1 | The API host is written in the code. | Accepted. The other web services call the same API the same way. |
