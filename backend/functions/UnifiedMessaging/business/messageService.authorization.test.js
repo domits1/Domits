@@ -21,6 +21,7 @@ const mockBookingRepository = {
   findBookingsForGuestHost: jest.fn(),
   findBookingsForGuestHostProperty: jest.fn(),
   hostOwnsProperty: jest.fn(),
+  findGuestNamesForHostBookings: jest.fn(),
 };
 const mockIntegrationAccountRepository = {
   getById: jest.fn(),
@@ -282,6 +283,54 @@ describe("MessageService authorization and booking scoping", () => {
     expect(result.response).toEqual([expect.objectContaining({ id: "thread-1", bookingId: null })]);
     expect(mockBookingRepository.getBookingById).not.toHaveBeenCalled();
     expect(mockBookingRepository.findBookingsForGuestHostProperty).not.toHaveBeenCalled();
+  });
+
+  test("adds the booking guest name to the host's Channex threads in /threads", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "channex-thread", bookingId: "booking-1", guestId: "CHANNEX_GUEST:channex-booking-1", platform: "CHANNEX" }),
+      thread({ id: "channex-thread-without-booking", bookingId: null, guestId: "CHANNEX_GUEST_THREAD:t-2", platform: "CHANNEX" }),
+      thread({ id: "domits-thread", bookingId: "booking-2", platform: "DOMITS" }),
+    ]);
+    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({ "booking-1": "Tst Domits" });
+
+    const result = await service.getThreads(hostAuth);
+
+    expect(mockBookingRepository.findGuestNamesForHostBookings).toHaveBeenCalledWith({
+      hostId: "host-1",
+      bookingIds: ["booking-1"],
+    });
+    expect(result.response).toEqual([
+      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits" }),
+      expect.not.objectContaining({ guestName: expect.anything() }),
+      expect.not.objectContaining({ guestName: expect.anything() }),
+    ]);
+  });
+
+  test("adds guestName only to Channex threads, even when another platform shares the bookingId", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "channex-thread", bookingId: "booking-1", guestId: "CHANNEX_GUEST:channex-booking-1", platform: "CHANNEX" }),
+      thread({ id: "whatsapp-thread", bookingId: "booking-1", platform: "WHATSAPP" }),
+      thread({ id: "domits-thread", bookingId: "booking-1", platform: "DOMITS" }),
+    ]);
+    mockBookingRepository.findGuestNamesForHostBookings.mockResolvedValue({ "booking-1": "Tst Domits" });
+
+    const result = await service.getThreads(hostAuth);
+
+    expect(result.response).toEqual([
+      expect.objectContaining({ id: "channex-thread", guestName: "Tst Domits" }),
+      expect.not.objectContaining({ guestName: expect.anything() }),
+      expect.not.objectContaining({ guestName: expect.anything() }),
+    ]);
+  });
+
+  test("does not look up guest names when no host Channex thread has a booking", async () => {
+    mockThreadRepository.getThreadsForUser.mockResolvedValue([
+      thread({ id: "channex-thread-without-booking", bookingId: null, guestId: "CHANNEX_GUEST_THREAD:t-2", platform: "CHANNEX" }),
+    ]);
+
+    await service.getThreads(hostAuth);
+
+    expect(mockBookingRepository.findGuestNamesForHostBookings).not.toHaveBeenCalled();
   });
 
   test("attaches unreadCount to each visible thread in /threads", async () => {
