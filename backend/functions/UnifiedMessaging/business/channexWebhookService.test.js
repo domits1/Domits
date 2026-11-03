@@ -569,6 +569,17 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       expect(deps.realtimePublisher).not.toHaveBeenCalled();
     });
 
+    test("a failing booking update still leaves the message published", async () => {
+      const updateThreadBookingId = jest.fn().mockRejectedValue(new Error("booking update failed"));
+      const { service, deps } = buildService({ updateThreadBookingId });
+
+      await expect(
+        service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }))
+      ).rejects.toThrow("booking update failed");
+
+      expect(deps.realtimePublisher).toHaveBeenCalledTimes(1);
+    });
+
     test("a publisher that throws is logged and the webhook still returns the ingest result", async () => {
       const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
       const realtimePublisher = jest.fn().mockRejectedValue(new Error("websocket lambda unavailable"));

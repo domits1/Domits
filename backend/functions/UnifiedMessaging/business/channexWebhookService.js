@@ -139,8 +139,6 @@ export default class ChannexWebhookService {
     return ok({ ok: true });
   }
 
-  // The message is already stored; a websocket outage must not fail the webhook, because Channex would
-  // redeliver it, the retry would insert nothing, and the push would never happen anyway.
   async publishInboundMessages(normalized, threadId) {
     for (const message of normalized.messages) {
       try {
@@ -195,16 +193,16 @@ export default class ChannexWebhookService {
 
     const result = await this.ingestionService.ingestExternalThread(normalized);
 
+    if (result.statusCode === 200 && result.response?.insertedMessages > 0) {
+      await this.publishInboundMessages(normalized, result.response.threadId);
+    }
+
     if (result.statusCode === 200 && webhookEvent.payload.booking_id) {
       const deterministicBookingId = buildDeterministicChannexBookingId(
         context.integrationAccountId,
         webhookEvent.payload.booking_id
       );
       await this.threads.updateThreadBookingId(result.response.threadId, deterministicBookingId);
-    }
-
-    if (result.statusCode === 200 && result.response?.insertedMessages > 0) {
-      await this.publishInboundMessages(normalized, result.response.threadId);
     }
 
     return result;
