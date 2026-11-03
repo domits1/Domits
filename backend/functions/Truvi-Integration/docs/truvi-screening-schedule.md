@@ -50,22 +50,22 @@ With `"task": "cancel-cancelled-bookings"` the same Lambda handles cancelled boo
 ```text
 TRUVI_SCREENING_ENABLED=true
 TRUVI_EXTENDED_AMOUNT=<250 | 500 | 1000 | 10000 | 50000>
+TRUVI_BASE_URL=<the production URL from Truvi, or https://developer.api.truvi.com/screen-and-protect-sandbox>
 ```
 
 Optional:
 
 ```text
 TRUVI_SECRET_NAME=domits/truvi/subscription-key
-TRUVI_BASE_URL=https://developer.api.truvi.com/screen-and-protect-sandbox
 ```
 
-Without `TRUVI_BASE_URL` the Lambda uses the Truvi sandbox. Production needs the production URL from Truvi.
+`TRUVI_BASE_URL` has no default. Without it, or without `https://`, every run fails with a clear error once `TRUVI_SCREENING_ENABLED` is `true`, so a production Lambda never screens against the sandbox by accident.
 
 Safety behavior:
 
 - `TRUVI_SCREENING_ENABLED` switches both tasks. If it is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
 - An event with another task than `screen-pending-bookings`, `cancel-cancelled-bookings` or `modify-changed-bookings` returns 400 and does nothing.
-- A missing or invalid `TRUVI_EXTENDED_AMOUNT` or a non-https `TRUVI_BASE_URL` fails the run before any Truvi call.
+- A missing or invalid `TRUVI_EXTENDED_AMOUNT`, or a missing or non-https `TRUVI_BASE_URL`, fails the run before any Truvi call.
 
 ## What One Modify Run Does
 
@@ -182,7 +182,7 @@ Saved results stay in `guest_risk_assessment`. Deleting a row makes the next run
 
 ## What Not To Claim
 
-- Do not claim production screening is enabled; the default is the Truvi sandbox.
+- Do not claim production screening is enabled; it only is when `TRUVI_BASE_URL` is the production URL from Truvi.
 - Do not claim screening happens at booking time; it runs every 15 minutes.
 - Do not claim guest, listing or amount changes are sent to Truvi; Truvi only accepts new dates on a modify.
 - Do not claim a date change is sent at once; it is picked up within 15 minutes.

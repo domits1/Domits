@@ -11,7 +11,7 @@ describe("createTruviCanceller", () => {
   it("builds a canceller with the key from the secret", async () => {
     const secretRepository = { getSubscriptionKey: jest.fn(async () => "key-from-secret") };
 
-    const canceller = await createTruviCanceller({ env: { TRUVI_EXTENDED_AMOUNT: "1000" }, secretRepository });
+    const canceller = await createTruviCanceller({ env: { TRUVI_EXTENDED_AMOUNT: "1000", TRUVI_BASE_URL: "https://truvi.example" }, secretRepository });
 
     expect(canceller).toBeInstanceOf(TruviBookingCanceller);
     expect(canceller.apiClient.subscriptionKey).toBe("key-from-secret");
