@@ -11,6 +11,7 @@ import {
   closeThread,
 } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
+import { CHANNEX_GUEST_DISPLAY_NAME, CHANNEX_GUEST_ID_PREFIX } from "../../utils/channexGuest";
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -64,8 +65,8 @@ const fetchUserInfo = async (targetUserId) => {
       return { givenName: String(targetUserId), userId: targetUserId, profileImage: null };
     }
 
-    if (String(targetUserId).startsWith("CHANNEX_GUEST")) {
-      return { givenName: "Channex guest", userId: targetUserId, profileImage: null };
+    if (String(targetUserId).startsWith(CHANNEX_GUEST_ID_PREFIX)) {
+      return { givenName: CHANNEX_GUEST_DISPLAY_NAME, userId: targetUserId, profileImage: null };
     }
 
     try {
