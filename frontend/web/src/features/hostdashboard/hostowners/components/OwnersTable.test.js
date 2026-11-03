@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import OwnersTable from "./OwnersTable";
@@ -26,8 +26,8 @@ const share = (overrides = {}) => ({
   ...overrides,
 });
 
-const renderTable = (owners, { texts = t, language = "en" } = {}) =>
-  render(<OwnersTable owners={owners} t={texts} language={language} />);
+const renderTable = (owners, { texts = t, language = "en", onEdit = jest.fn() } = {}) =>
+  render(<OwnersTable owners={owners} t={texts} language={language} onEdit={onEdit} />);
 
 const rowFor = (name) => screen.getByRole("row", { name: new RegExp(name) });
 
@@ -36,7 +36,20 @@ describe("OwnersTable", () => {
     renderTable([owner()]);
 
     const headers = screen.getAllByRole("columnheader").map((header) => header.textContent);
-    expect(headers).toEqual([t.columnName, t.columnType, t.columnStatus, t.columnProperties]);
+    expect(headers).toEqual([t.columnName, t.columnType, t.columnStatus, t.columnProperties, t.columnActions]);
+  });
+
+  test("gives every row an Edit button named after the owner that passes the owner on", () => {
+    const onEdit = jest.fn();
+    const second = owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" });
+    renderTable([owner(), second], { onEdit });
+
+    const editButton = screen.getByRole("button", { name: "Edit Bram Jansen" });
+    expect(editButton.textContent).toBe(t.editOwner);
+    fireEvent.click(editButton);
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(second);
   });
 
   test("shows the full name, with the company name below it when present", () => {
@@ -79,7 +92,7 @@ describe("OwnersTable", () => {
     const { rerender } = renderTable([owner({ status: "archived" })]);
     expect(screen.getByText("Archived").className).toBe("host-owners-status host-owners-status--archived");
 
-    rerender(<OwnersTable owners={[owner({ status: "something-new" })]} t={t} language="en" />);
+    rerender(<OwnersTable owners={[owner({ status: "something-new" })]} t={t} language="en" onEdit={jest.fn()} />);
     expect(screen.getByText("Unknown status").className).toBe("host-owners-status");
   });
 

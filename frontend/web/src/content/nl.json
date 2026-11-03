@@ -1970,6 +1970,46 @@
       "pending": "In afwachting",
       "archived": "Gearchiveerd",
       "unknown": "Onbekende status"
+    },
+    "addOwner": "Eigenaar toevoegen",
+    "editOwner": "Bewerken",
+    "editOwnerLabel": "{name} bewerken",
+    "columnActions": "Acties",
+    "form": {
+      "createTitle": "Eigenaar toevoegen",
+      "editTitle": "Eigenaar bewerken",
+      "labels": {
+        "first_name": "Voornaam",
+        "last_name": "Achternaam",
+        "company_name": "Bedrijfsnaam",
+        "email": "E-mail",
+        "phone": "Telefoon",
+        "preferred_language": "Voorkeurstaal (zoals en of nl-NL)",
+        "owner_type": "Type eigenaar",
+        "status": "Status",
+        "notes": "Notities"
+      },
+      "chooseOwnerType": "Kies een type",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "close": "Sluiten",
+      "createdToast": "{name} is toegevoegd.",
+      "updatedToast": "{name} is bijgewerkt.",
+      "errorNotFound": "Deze eigenaar bestaat niet meer. Sluit het formulier en laad de pagina opnieuw.",
+      "errorGeneric": "We konden de eigenaar niet opslaan. Probeer het opnieuw.",
+      "errors": {
+        "required": "Dit veld is verplicht.",
+        "tooLong": "Gebruik maximaal {max} tekens.",
+        "invalidCharacters": "Dit veld bevat tekens die niet zijn toegestaan.",
+        "invalidEmail": "Voer een geldig e-mailadres in.",
+        "invalidPhone": "Gebruik minstens één cijfer, en alleen cijfers, spaties en + ( ) - .",
+        "invalidLanguage": "Gebruik een taalcode zoals en of nl-NL.",
+        "invalidOwnerType": "Kies een type eigenaar.",
+        "invalidStatus": "Kies een status.",
+        "archivedStatus": "Een eigenaar kan alleen via archiveren worden gearchiveerd.",
+        "companyNameRequired": "Een bedrijfsnaam is verplicht voor een bedrijf of trust."
+      }
     }
   }
 }
