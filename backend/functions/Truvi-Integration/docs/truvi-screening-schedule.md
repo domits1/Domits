@@ -13,13 +13,15 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 ## What One Run Does
 
 1. Lists up to `limit` bookings (default 10, max 50) with status `Paid`, an arrival date in the future and no row in `guest_risk_assessment`.
-2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`.
+2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`. A booking Domits cannot send (no property location, no host email, no full guest name, no email or phone, an unknown country or no street) is saved as `SKIPPED` without a Truvi call, so it is not tried every run. `ERROR` is only used for an answer from Truvi, and `FAILED` only when Truvi rejected the guest.
 3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
    The retry sends the same `echoToken`, because it is derived from the booking id. If the first call did reach Truvi, Truvi answers `400 echoToken (...) already exists from a previous request` with the earlier `verificationId`. The run then reads that verification (`GET /v1/verificationRequests/{id}`) and saves its result, so a booking never gets two Truvi verifications. The same happens when the Truvi call worked but saving the result failed.
    The token is `createEchoToken(bookingId)` in `util/truviMapper.js`: a UUID-shaped sha256 of `domits:truvi:create:<bookingId>`. Only the create uses it. Modify and cancel send a random `echoToken`, because each of those requests is new for Truvi.
    This is on purpose: screening the same booking again later also gives back its first verification, not a new one.
    The read is the only call under `/v1`. Create, modify and cancel use `/verificationRequests` directly on `TRUVI_BASE_URL`, but Truvi serves the read at `/v1/verificationRequests/{id}`, so `getVerification` in `data/truviApiClient.js` adds `/v1` itself. This path was checked in the sandbox for #3632: the same booking screened twice gave back the same `verificationId` and status.
 4. Fails the run (so CloudWatch shows an error) when a booking could not be handled at all, for example when the database is down.
+
+Truvi gets dates without a time, so the run sends the UTC day of `arrivaldate` and `departuredate`. Bookings made with a date (`2026-12-01`) are stored at UTC midnight, so their day is exact. The booking API also accepts a numeric timestamp (`bookingDateParser.js`, used by `BookingSend.js` in the web app), and a timestamp that is not at UTC midnight, such as a local midnight in the Netherlands, can land on the day before. The run still screens it, because a skipped booking would never be protected, but it counts it in `notUtcMidnight` in the summary and logs `{"event":"TRUVI_DATE_NOT_UTC_MIDNIGHT","bookingId":"..."}`. Check those bookings by hand before turning the schedule on for production.
 
 ## What One Cancel Run Does
 
@@ -48,22 +50,22 @@ With `"task": "cancel-cancelled-bookings"` the same Lambda handles cancelled boo
 ```text
 TRUVI_SCREENING_ENABLED=true
 TRUVI_EXTENDED_AMOUNT=<250 | 500 | 1000 | 10000 | 50000>
+TRUVI_BASE_URL=<the production URL from Truvi, or https://developer.api.truvi.com/screen-and-protect-sandbox>
 ```
 
 Optional:
 
 ```text
 TRUVI_SECRET_NAME=domits/truvi/subscription-key
-TRUVI_BASE_URL=https://developer.api.truvi.com/screen-and-protect-sandbox
 ```
 
-Without `TRUVI_BASE_URL` the Lambda uses the Truvi sandbox. Production needs the production URL from Truvi.
+`TRUVI_BASE_URL` has no default. Without it, or without `https://`, every run fails with a clear error once `TRUVI_SCREENING_ENABLED` is `true`, so a production Lambda never screens against the sandbox by accident.
 
 Safety behavior:
 
 - `TRUVI_SCREENING_ENABLED` switches both tasks. If it is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
 - An event with another task than `screen-pending-bookings`, `cancel-cancelled-bookings` or `modify-changed-bookings` returns 400 and does nothing.
-- A missing or invalid `TRUVI_EXTENDED_AMOUNT` or a non-https `TRUVI_BASE_URL` fails the run before any Truvi call.
+- A missing or invalid `TRUVI_EXTENDED_AMOUNT`, or a missing or non-https `TRUVI_BASE_URL`, fails the run before any Truvi call.
 
 ## What One Modify Run Does
 
@@ -77,6 +79,19 @@ With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
 6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400. In both cases only `updatedat` is set to now, so the row moves to the back of the list (the query sorts on `updatedat` ascending) and a row that keeps failing does not block newer date changes. Truvi's error text is not saved for these rows.
 
 Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
+
+## What Goes Into `errormessage`
+
+Truvi's error text can repeat what we sent, guest names and contact details included, so it is never saved, and it is not put in the run summary either, because a failed run writes that summary to CloudWatch (`index.js`). `util/truviErrorMessage.js` writes a fixed message instead:
+
+| Truvi answer | Saved message |
+| ------------ | ------------- |
+| No answer (timeout or network error) | `Truvi did not answer` |
+| 5xx | `Truvi failed with status <status>` |
+| 400 with a reason the run knows, such as `can no longer be cancelled` | `Truvi refused: <that reason>` |
+| Any other 4xx | `Truvi refused the request with status <status>` |
+
+The screening run also saves its own messages for bookings it does not send, such as `Property has no location`. These come from our code, not from Truvi.
 
 ## EventBridge Rule
 
@@ -142,10 +157,24 @@ Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day afte
 1. Confirm the Truvi code is deployed to the `Truvi-Integration` Lambda.
 2. Set the environment variables, with `TRUVI_SCREENING_ENABLED=false` first.
 3. Run the manual test event below. Expect `{ "skipped": true, ... }`.
-4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected` and an empty `errors` list.
+4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected`, `notUtcMidnight` and an empty `errors` list.
 5. Check the new rows in `guest_risk_assessment`.
 6. Create the EventBridge rule with the target input from this document, disabled.
 7. Enable the rule and watch the CloudWatch logs of the first runs.
+
+## Switching From Sandbox To Production
+
+The sandbox and production have their own URL and can have their own subscription key. A verification made in the sandbox does not protect anyone, so a booking screened in the sandbox still needs a production screening.
+
+1. Get the production URL and the production subscription key from Truvi.
+2. Store the key in its own secret, for example `domits/truvi/production`, as `{"subscriptionKey": "..."}`. Do not overwrite the sandbox secret, so you can go back.
+3. Disable the EventBridge rule and set `TRUVI_SCREENING_ENABLED=false`.
+4. List the rows in `main.guest_risk_assessment` that the sandbox runs made. Their `providerassessmentid` is a sandbox id, and the modify and cancel runs would send it to production. Save a copy of them, then delete them, so the screening run picks those bookings up again.
+5. Set `TRUVI_BASE_URL` to the production URL and `TRUVI_SECRET_NAME` to the production secret.
+6. Set `TRUVI_SCREENING_ENABLED=true` and run the test event with `"limit": 1`. Check that the row has a new `providerassessmentid`. If Truvi answers `already exists from a previous request`, stop: production knows the `echoToken` of that booking, so ask Truvi before going on.
+7. Enable the rule and watch the first runs.
+
+Rollback: disable the rule, set `TRUVI_SCREENING_ENABLED=false`, and set `TRUVI_BASE_URL` and `TRUVI_SECRET_NAME` back to the sandbox values. Rows made in production stay; do not send them to the sandbox.
 
 ## Manual Lambda Test Event
 
@@ -167,7 +196,7 @@ Saved results stay in `guest_risk_assessment`. Deleting a row makes the next run
 
 ## What Not To Claim
 
-- Do not claim production screening is enabled; the default is the Truvi sandbox.
+- Do not claim production screening is enabled; it only is when `TRUVI_BASE_URL` is the production URL from Truvi.
 - Do not claim screening happens at booking time; it runs every 15 minutes.
 - Do not claim guest, listing or amount changes are sent to Truvi; Truvi only accepts new dates on a modify.
 - Do not claim a date change is sent at once; it is picked up within 15 minutes.

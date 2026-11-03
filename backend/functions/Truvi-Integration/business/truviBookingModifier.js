@@ -1,4 +1,5 @@
 import { sameTruviDates, toModifyRequest } from "../util/truviMapper.js";
+import { truviErrorMessage } from "../util/truviErrorMessage.js";
 
 const REFUSED_MESSAGES = [
   "can no longer be modified",
@@ -16,7 +17,7 @@ export const classifyModifyError = (error) => {
   }
   const message = String(error.message ?? "").toLowerCase();
   if (error.status === 404 || (error.status === 400 && REFUSED_MESSAGES.some((text) => message.includes(text)))) {
-    return { refused: true, errorMessage: String(error.message).slice(0, 200) };
+    return { refused: true, errorMessage: truviErrorMessage(error, REFUSED_MESSAGES) };
   }
   return { unexpected: true };
 };
@@ -86,7 +87,7 @@ export class TruviBookingModifier {
       if (outcome.refused) {
         return { counter: "refused", errorMessage: outcome.errorMessage };
       }
-      return outcome.unexpected ? { unexpected: true, message: String(error.message).slice(0, 200) } : outcome;
+      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
     }
   }
 }

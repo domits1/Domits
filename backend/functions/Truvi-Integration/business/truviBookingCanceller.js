@@ -1,9 +1,12 @@
 import { toCancelRequest } from "../util/truviMapper.js";
+import { truviErrorMessage } from "../util/truviErrorMessage.js";
 
 export const CANCEL_STATUS = {
   CANCELLED: "CANCELLED",
   REFUSED: "CANCEL_REFUSED",
 };
+
+const REFUSED_MESSAGES = ["can no longer be cancelled", "screening only"];
 
 const includes = (error, text) => String(error?.message ?? "").toLowerCase().includes(text);
 
@@ -16,8 +19,8 @@ export const classifyCancelError = (error) => {
   if (error.status === 400 && includes(error, "already cancelled")) {
     return { status: CANCEL_STATUS.CANCELLED };
   }
-  if (error.status === 404 || (error.status === 400 && (includes(error, "can no longer be cancelled") || includes(error, "screening only")))) {
-    return { status: CANCEL_STATUS.REFUSED, errorMessage: String(error.message).slice(0, 200) };
+  if (error.status === 404 || (error.status === 400 && REFUSED_MESSAGES.some((text) => includes(error, text)))) {
+    return { status: CANCEL_STATUS.REFUSED, errorMessage: truviErrorMessage(error, REFUSED_MESSAGES) };
   }
   return { unexpected: true };
 };
@@ -72,7 +75,7 @@ export class TruviBookingCanceller {
       return { status: CANCEL_STATUS.CANCELLED };
     } catch (error) {
       const outcome = classifyCancelError(error);
-      return outcome.unexpected ? { unexpected: true, message: String(error.message).slice(0, 200) } : outcome;
+      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
     }
   }
 }

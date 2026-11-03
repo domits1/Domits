@@ -62,7 +62,7 @@ describe("TruviBookingCanceller", () => {
     expect(assessmentRepository.saveCancellation).toHaveBeenCalledWith({
       bookingId: "booking-1",
       status: CANCEL_STATUS.REFUSED,
-      errorMessage: "checkIn is in the past, and can no longer be cancelled.",
+      errorMessage: "Truvi refused: can no longer be cancelled",
       now: NOW,
     });
     expect(summary.refused).toBe(1);
@@ -92,7 +92,7 @@ describe("TruviBookingCanceller", () => {
     const summary = await canceller.run({ now: NOW });
 
     expect(assessmentRepository.saveCancellation).not.toHaveBeenCalled();
-    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "verificationId must be a valid GUID." }]);
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 
   it("keeps going with the next booking when saving one fails", async () => {

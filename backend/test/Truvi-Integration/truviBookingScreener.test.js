@@ -20,7 +20,13 @@ const candidate = (overrides = {}) => ({
   ...overrides,
 });
 
-const build = ({ candidates = [candidate()], screen, guestEmail = "john@example.com", host = { name: "Host BV", email: "host@example.com" } } = {}) => {
+const build = ({
+  candidates = [candidate()],
+  screen,
+  guestEmail = "john@example.com",
+  host = { name: "Host BV", email: "host@example.com" },
+  logger = { warn: jest.fn() },
+} = {}) => {
   const bookingRepository = { listBookingsToScreen: jest.fn(async () => candidates) };
   const screeningService = {
     screenBooking: jest.fn(screen || (async () => ({ providerAssessmentId: "v-1", status: "PASSED", flaggedReason: null }))),
@@ -33,11 +39,27 @@ const build = ({ candidates = [candidate()], screen, guestEmail = "john@example.
     assessmentRepository,
     contactLookup,
     extendedAmount: 1000,
+    logger,
   });
-  return { screener, bookingRepository, screeningService, assessmentRepository, contactLookup };
+  return { screener, bookingRepository, screeningService, assessmentRepository, contactLookup, logger };
 };
 
 describe("TruviBookingScreener", () => {
+  it("still screens a booking whose dates are not at UTC midnight, but counts and logs it without guest data", async () => {
+    const booking = { ...candidate().booking, arrivaldate: Date.UTC(2026, 10, 30, 23), departuredate: Date.UTC(2026, 11, 5) };
+    const { screener, screeningService, logger } = build({ candidates: [candidate({ booking })] });
+
+    const summary = await screener.run({ now: 1000 });
+
+    expect(screeningService.screenBooking).toHaveBeenCalledTimes(1);
+    expect(summary.saved).toBe(1);
+    expect(summary.notUtcMidnight).toBe(1);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    const logged = logger.warn.mock.calls[0][0];
+    expect(JSON.parse(logged)).toEqual({ event: "TRUVI_DATE_NOT_UTC_MIDNIGHT", bookingId: "booking-1" });
+    expect(logged).not.toMatch(/John|example\.com/);
+  });
+
   it("refuses to start without an extendedAmount", () => {
     expect(() => new TruviBookingScreener({})).toThrow("extendedAmount is required");
   });
@@ -62,7 +84,7 @@ describe("TruviBookingScreener", () => {
       departureDate: Date.UTC(2026, 11, 5),
       now: 1000,
     });
-    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, errors: [] });
+    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, notUtcMidnight: 0, errors: [] });
   });
 
   it("keeps the email from the booking and uses the booking source as channel", async () => {
@@ -112,19 +134,19 @@ describe("TruviBookingScreener", () => {
     expect(summary.saved).toBe(1);
   });
 
-  it("saves an ERROR without calling Truvi when the booking data is not usable", async () => {
+  it("saves SKIPPED without calling Truvi when the booking data is not usable", async () => {
     const { screener, screeningService, assessmentRepository } = build({ candidates: [candidate({ location: null })] });
 
     const summary = await screener.run({ now: 1000 });
 
     expect(screeningService.screenBooking).not.toHaveBeenCalled();
     const saved = assessmentRepository.saveResult.mock.calls[0][0].result;
-    expect(saved.status).toBe("ERROR");
+    expect(saved.status).toBe("SKIPPED");
     expect(saved.error.message).toBe("Property has no location");
-    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 1, errors: [] });
+    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 1, notUtcMidnight: 0, errors: [] });
   });
 
-  it("saves an ERROR when the mapper refuses the booking", async () => {
+  it("saves SKIPPED when the mapper refuses the booking", async () => {
     const { screener, assessmentRepository } = build({
       screen: async () => {
         throw new Error("Guest needs a first and a last name");
@@ -133,16 +155,19 @@ describe("TruviBookingScreener", () => {
 
     const summary = await screener.run({ now: 1000 });
 
-    expect(assessmentRepository.saveResult.mock.calls[0][0].result.error.message).toBe("Guest needs a first and a last name");
+    expect(assessmentRepository.saveResult.mock.calls[0][0].result).toEqual(
+      expect.objectContaining({ status: "SKIPPED", error: { status: null, message: "Guest needs a first and a last name" } })
+    );
     expect(summary.rejected).toBe(1);
   });
 
-  it("saves an ERROR when the host has no email", async () => {
+  it("saves SKIPPED when the host has no email", async () => {
     const { screener, screeningService, assessmentRepository } = build({ host: null });
 
     await screener.run({ now: 1000 });
 
     expect(screeningService.screenBooking).not.toHaveBeenCalled();
+    expect(assessmentRepository.saveResult.mock.calls[0][0].result).toEqual(expect.objectContaining({ status: "SKIPPED" }));
     expect(assessmentRepository.saveResult.mock.calls[0][0].result.error.message).toBe("Host has no email");
   });
 

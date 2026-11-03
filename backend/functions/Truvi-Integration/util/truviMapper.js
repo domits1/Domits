@@ -7,6 +7,10 @@ export const SCREENING_STATUS = {
   Rejected: "FAILED",
 };
 
+const SCREENING_STATUS_BY_NAME = new Map(Object.entries(SCREENING_STATUS).map(([truvi, domits]) => [truvi.toLowerCase(), domits]));
+
+const toDomitsStatus = (status) => (typeof status === "string" ? SCREENING_STATUS_BY_NAME.get(status.trim().toLowerCase()) : undefined);
+
 export const DEFAULT_CHANNEL = "Direct web";
 
 const ALLOWED_EXTENDED_AMOUNTS = [250, 500, 1000, 10000, 50000];
@@ -23,6 +27,10 @@ function petsAllowedFromRules(rules = []) {
   return rules.some((r) => r?.rule === "PetsAllowed" && r?.value === true);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const isUtcMidnight = (epochMs) => Number.isFinite(Number(epochMs)) && Number(epochMs) % DAY_MS === 0;
+
 function toIsoDate(epochMs) {
   return new Date(Number(epochMs)).toISOString().slice(0, 10);
 }
@@ -38,6 +46,17 @@ export function createEchoToken(bookingId) {
   const hex = createHash("sha256").update(`domits:truvi:create:${bookingId}`).digest("hex");
   const variant = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+const text = (value) => String(value ?? "").trim();
+
+function toAddressLine1(location) {
+  const street = text(location.street);
+  if (!street) {
+    throw new Error("Property address needs a street");
+  }
+  const number = `${text(location.housenumber)}${text(location.housenumberextension)}`;
+  return number ? `${street} ${number}` : street;
 }
 
 function splitName(fullName = "") {
@@ -72,7 +91,7 @@ export function bookingToCreateRequest({
   if (booking.guest_phone) guest.telephoneNumber = booking.guest_phone;
 
   const address = {
-    addressLine1: `${location.street} ${location.housenumber}${location.housenumberextension || ""}`,
+    addressLine1: toAddressLine1(location),
     town: location.city,
     countryIso: toCountryAlpha3(location.country),
     postcode: location.postalcode,
@@ -110,7 +129,7 @@ export function mapCreateResponse(response) {
   }
 
   const { verificationId, status, flaggedReason } = verification;
-  const domitsStatus = SCREENING_STATUS[status];
+  const domitsStatus = toDomitsStatus(status);
   if (!domitsStatus) {
     return { ...errorResult(`Unknown Truvi status: ${status}`), providerAssessmentId: verificationId ?? null };
   }
