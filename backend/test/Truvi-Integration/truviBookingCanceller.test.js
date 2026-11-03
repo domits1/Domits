@@ -62,7 +62,7 @@ describe("TruviBookingCanceller", () => {
     expect(assessmentRepository.saveCancellation).toHaveBeenCalledWith({
       bookingId: "booking-1",
       status: CANCEL_STATUS.REFUSED,
-      errorMessage: "checkIn is in the past, and can no longer be cancelled.",
+      errorMessage: "Truvi refused: can no longer be cancelled",
       now: NOW,
     });
     expect(summary.refused).toBe(1);

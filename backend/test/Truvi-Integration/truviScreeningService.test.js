@@ -58,7 +58,7 @@ describe("TruviScreeningService.screenBooking", () => {
       providerAssessmentId: null,
       status: "ERROR",
       flaggedReason: null,
-      error: { status: 400, message: "Check in date is in the past" },
+      error: { status: 400, message: "Truvi refused the request with status 400" },
     });
   });
 
@@ -71,7 +71,7 @@ describe("TruviScreeningService.screenBooking", () => {
     const result = await service.screenBooking(input());
 
     expect(result.status).toBe("ERROR");
-    expect(result.error).toEqual({ status: null, message: "fetch failed" });
+    expect(result.error).toEqual({ status: null, message: "Truvi did not answer" });
   });
 
   test("throws on invalid booking data and does not call Truvi", async () => {

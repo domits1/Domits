@@ -93,7 +93,7 @@ describe("TruviBookingModifier", () => {
       bookingId: "booking-1",
       arrivalDate: Date.UTC(2026, 10, 20),
       departureDate: Date.UTC(2026, 10, 24),
-      errorMessage: "checkIn already in past cannot be modified.",
+      errorMessage: "Truvi refused: cannot be modified",
       now: NOW,
     });
     expect(summary.refused).toBe(1);

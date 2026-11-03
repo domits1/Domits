@@ -78,6 +78,19 @@ With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
 
 Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
 
+## What Goes Into `errormessage`
+
+Truvi's error text can repeat what we sent, guest names and contact details included, so it is never saved. `util/truviErrorMessage.js` writes a fixed message instead:
+
+| Truvi answer | Saved message |
+| ------------ | ------------- |
+| No answer (timeout or network error) | `Truvi did not answer` |
+| 5xx | `Truvi failed with status <status>` |
+| 400 with a reason the run knows, such as `can no longer be cancelled` | `Truvi refused: <that reason>` |
+| Any other 4xx | `Truvi refused the request with status <status>` |
+
+The screening run also saves its own messages for bookings it does not send, such as `Property has no location`. These come from our code, not from Truvi.
+
 ## EventBridge Rule
 
 Suggested rule name:
