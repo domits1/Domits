@@ -7,6 +7,7 @@ import {
   REVIEW_API_ERROR_CODE,
   approveListing,
   fetchReviewDetail,
+  rejectListing,
 } from "../services/propertyReviewApi";
 import PropertyReviewDetailPage from "./PropertyReviewDetailPage";
 
@@ -15,6 +16,7 @@ jest.mock("../services/propertyReviewApi", () => ({
   ...jest.requireActual("../services/propertyReviewApi"),
   fetchReviewDetail: jest.fn(),
   approveListing: jest.fn(),
+  rejectListing: jest.fn(),
 }));
 
 const makeDetail = (status = "PENDING_REVIEW", updatedAt = 1000) => ({
@@ -55,6 +57,7 @@ describe("review actions on the detail page", () => {
     await screen.findByRole("heading", { name: "Canal house" });
 
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject" })).toBeNull();
   });
 
   test("asks for confirmation, focuses Cancel and sends nothing until confirmed", async () => {
@@ -149,5 +152,164 @@ describe("review actions on the detail page", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Confirm approval" }).disabled).toBe(false);
     expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("rejecting a listing on the detail page", () => {
+  const reasonBox = () => screen.getByRole("textbox", { name: "Reason" });
+  const typeReason = (value) => fireEvent.change(reasonBox(), { target: { value } });
+  const submitReject = () => fireEvent.click(screen.getByRole("button", { name: "Reject listing" }));
+  const openReject = async () => {
+    fireEvent.click(await screen.findByRole("button", { name: "Reject" }));
+    return screen.findByRole("dialog");
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    fetchReviewDetail.mockResolvedValue(makeDetail());
+  });
+
+  test("opens with the reason focused, Submit disabled and nothing sent", async () => {
+    renderPage();
+
+    await openReject();
+
+    expect(reasonBox()).toHaveFocus();
+    expect(screen.getByText("0 / 500")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reject listing" }).disabled).toBe(true);
+    expect(rejectListing).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["an empty reason", "", "0 / 500", true],
+    ["a blank reason", "   ", "0 / 500", true],
+    ["a padded reason", "  ok  ", "2 / 500", false],
+    ["the longest reason", "a".repeat(500), "500 / 500", false],
+    ["a reason one too long", "a".repeat(501), "501 / 500", true],
+  ])("handles %s", async (label, value, counter, disabled) => {
+    renderPage();
+    await openReject();
+
+    typeReason(value);
+
+    expect(screen.getByText(counter)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reject listing" }).disabled).toBe(disabled);
+  });
+
+  test("rejects with the loaded updated-at and the trimmed reason, shows a toast and returns to the queue", async () => {
+    rejectListing.mockResolvedValue({ propertyId: "p1", status: "REJECTED", updatedAt: 2000 });
+    renderPage();
+    await openReject();
+    typeReason("  Photos are missing  ");
+
+    submitReject();
+
+    expect(await screen.findByText("Queue page")).toBeTruthy();
+    expect(rejectListing).toHaveBeenCalledWith("p1", 1000, "Photos are missing");
+    expect(toast.success).toHaveBeenCalledWith("Listing rejected.");
+  });
+
+  test("sends one request for a double click and locks the dialog while it runs", async () => {
+    rejectListing.mockReturnValue(new Promise(() => {}));
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+
+    const submitButton = screen.getByRole("button", { name: "Reject listing" });
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(rejectListing).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(reasonBox().disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Rejecting…" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Cancel" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Close" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Close backdrop" }).disabled).toBe(true);
+  });
+
+  test("keeps the reason when the dialog is cancelled and reopened", async () => {
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await openReject();
+
+    expect(reasonBox().value).toBe("Photos are missing");
+  });
+
+  test("on a stale review keeps the reason and reviews the reloaded listing", async () => {
+    rejectListing.mockRejectedValueOnce(apiError(REVIEW_API_ERROR_CODE.STALE_REVIEW));
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+    let finishReload;
+    fetchReviewDetail.mockReturnValueOnce(new Promise((resolve) => (finishReload = resolve)));
+
+    submitReject();
+
+    expect(await screen.findByText("This listing changed since you opened it. Please review it again.")).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Reject" }).disabled).toBe(true);
+    finishReload(makeDetail("PENDING_REVIEW", 3000));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Reject" }).disabled).toBe(false));
+    rejectListing.mockResolvedValue({});
+    await openReject();
+    expect(reasonBox().value).toBe("Photos are missing");
+    submitReject();
+
+    await waitFor(() => expect(rejectListing).toHaveBeenLastCalledWith("p1", 3000, "Photos are missing"));
+  });
+
+  test("on a wrong status shows an info toast, reloads and clears the reason", async () => {
+    rejectListing.mockRejectedValue(apiError(REVIEW_API_ERROR_CODE.WRONG_STATUS));
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+
+    submitReject();
+
+    await waitFor(() => expect(toast.info).toHaveBeenCalledWith("This listing was already reviewed."));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(fetchReviewDetail).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Reject" }).disabled).toBe(false));
+    await openReject();
+    expect(reasonBox().value).toBe("");
+  });
+
+  test("shows the server message for a bad request and keeps the dialog and the reason", async () => {
+    rejectListing.mockRejectedValue(
+      new PropertyReviewApiError(400, REVIEW_API_ERROR_CODE.BAD_REQUEST, "Reason is too long")
+    );
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+
+    submitReject();
+
+    expect(await screen.findByText("Reason is too long")).toBeTruthy();
+    expect(reasonBox().value).toBe("Photos are missing");
+    expect(screen.getByRole("button", { name: "Reject listing" }).disabled).toBe(false);
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [REVIEW_API_ERROR_CODE.UNAUTHENTICATED, "Your session has expired. Please sign in again."],
+    [REVIEW_API_ERROR_CODE.FORBIDDEN, "Not authorized"],
+    [REVIEW_API_ERROR_CODE.UNAVAILABLE, "Could not save. Try again."],
+    [REVIEW_API_ERROR_CODE.SERVER, "Could not save. Try again."],
+  ])("keeps the dialog open with the right message for %s", async (code, message) => {
+    rejectListing.mockRejectedValue(apiError(code));
+    renderPage();
+    await openReject();
+    typeReason("Photos are missing");
+
+    submitReject();
+
+    expect(await screen.findByText(message)).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(reasonBox().value).toBe("Photos are missing");
   });
 });
