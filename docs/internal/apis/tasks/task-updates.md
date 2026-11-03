@@ -13,7 +13,9 @@ Who the caller is, and for which host they act, comes from the signed-in user. N
 
 There is no separate assignee role. An assignee who signs in is a team member of the host and may change the same fields as any other team member. The two lists are kept apart in `business/model/editableTaskFields.js`, so one can be narrowed without touching the other.
 
-Every other column is set by the server: `id`, `host_id`, `completed_date`, `escalated_at`, `overdue_last_notified_at`, `overdue_notify_count`, `due_soon_notified_for`, `is_legacy`, `source`, `created_at` and `updated_at`. `DELETE` is the only way to set `is_legacy`, and `POST ?action=escalate` the only way to set `escalated_at`.
+Every other column is set by the server: `id`, `host_id`, `completed_date`, `escalated_at`, `approved_at`, `overdue_last_notified_at`, `overdue_notify_count`, `due_soon_notified_for`, `is_legacy`, `source`, `created_at` and `updated_at`. `DELETE` is the only way to set `is_legacy`, `POST ?action=escalate` the only way to set `escalated_at`, and `POST ?action=approve` the only way to set `approved_at`.
+
+`DELETE`, `POST ?action=escalate`, `POST ?action=approve` and `POST ?action=reject` are not updates. Each writes only its own columns, so the field check below does not apply to them. Approving and rejecting are described in [tasks.md](tasks.md).
 
 ## What is checked before anything is saved
 
@@ -28,7 +30,7 @@ In this order. Each failure answers with the message shown, and nothing is saved
 | A changed `property_id` is a property of the same host. An unchanged one is not looked up again | 400 `property_id does not belong to this host` |
 | `assignee_team_member_id` is an active team member and `parent_task_id` a task of the same host | 400, as before |
 
-After these checks, attachments that were removed from the task are deleted from storage, then the required checklist items are checked when the task is completed, and then the task is saved. So a completion that is rejected for unchecked required items has already deleted the attachments it removed.
+After these checks, a changed `status` clears `approved_at`, so a task that is completed again needs a new approval. The server sets this itself, so it is not refused as a field the caller may not change. Then attachments that were removed from the task are deleted from storage, then the required checklist items are checked when the task is completed, and then the task is saved. So a completion that is rejected for unchecked required items has already deleted the attachments it removed.
 
 ## Two updates at the same time
 
@@ -36,6 +38,7 @@ After these checks, attachments that were removed from the task are deleted from
 - Which fields a caller may change depends only on who they are, not on the state of the task, so a change made at the same moment cannot widen it. `host_id` cannot be changed, so the task found by the host check is the task that is written.
 - When two people complete a task at once, only one write applies, and only that one is logged and emailed. The other request writes nothing, including any other fields it sent, and still answers 200.
 - A status change is checked against the status the request read. When another request changes the status in between, the later write wins.
+- When a task is approved between the moment a status change reads it and the moment it writes, the status change still clears `approved_at`. When the status change writes first, the approval is refused with a 400, because the task is no longer completed.
 
 ## Where the code is
 
@@ -44,4 +47,4 @@ After these checks, attachments that were removed from the task are deleted from
 | Controller | `backend/functions/property-tasks/controller/controller.js` (`updateTask`, `deleteTask`) |
 | Business | `backend/functions/property-tasks/business/model/editableTaskFields.js`, `business/service/taskService.js` (`updateTask`, `deleteTask`) |
 | Data | `backend/functions/property-tasks/data/taskRepository.js` (`getTaskById`, `isPropertyOfHost`) |
-| Tests | `backend/test/property-tasks/editableTaskFields.test.js`, `taskService.updateTask.editableFields.test.js`, `taskRepository.isPropertyOfHost.test.js` |
+| Tests | `backend/test/property-tasks/editableTaskFields.test.js`, `taskService.updateTask.editableFields.test.js`, `taskService.updateTask.approval.test.js`, `taskRepository.isPropertyOfHost.test.js` |
