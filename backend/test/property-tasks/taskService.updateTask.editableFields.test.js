@@ -66,6 +66,7 @@ const LOCKED_FIELDS = [
     ["host_id", "host-2"],
     ["id", "task-2"],
     ["escalated_at", 1700000000000],
+    ["approved_at", 1700000000000],
     ["completed_date", 1700000000000],
     ["overdue_last_notified_at", 1700000000000],
     ["overdue_notify_count", 0],
