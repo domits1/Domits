@@ -157,10 +157,24 @@ Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day afte
 1. Confirm the Truvi code is deployed to the `Truvi-Integration` Lambda.
 2. Set the environment variables, with `TRUVI_SCREENING_ENABLED=false` first.
 3. Run the manual test event below. Expect `{ "skipped": true, ... }`.
-4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected` and an empty `errors` list.
+4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected`, `notUtcMidnight` and an empty `errors` list.
 5. Check the new rows in `guest_risk_assessment`.
 6. Create the EventBridge rule with the target input from this document, disabled.
 7. Enable the rule and watch the CloudWatch logs of the first runs.
+
+## Switching From Sandbox To Production
+
+The sandbox and production have their own URL and can have their own subscription key. A verification made in the sandbox does not protect anyone, so a booking screened in the sandbox still needs a production screening.
+
+1. Get the production URL and the production subscription key from Truvi.
+2. Store the key in its own secret, for example `domits/truvi/production`, as `{"subscriptionKey": "..."}`. Do not overwrite the sandbox secret, so you can go back.
+3. Disable the EventBridge rule and set `TRUVI_SCREENING_ENABLED=false`.
+4. List the rows in `main.guest_risk_assessment` that the sandbox runs made. Their `providerassessmentid` is a sandbox id, and the modify and cancel runs would send it to production. Save a copy of them, then delete them, so the screening run picks those bookings up again.
+5. Set `TRUVI_BASE_URL` to the production URL and `TRUVI_SECRET_NAME` to the production secret.
+6. Set `TRUVI_SCREENING_ENABLED=true` and run the test event with `"limit": 1`. Check that the row has a new `providerassessmentid`. If Truvi answers `already exists from a previous request`, stop: production knows the `echoToken` of that booking, so ask Truvi before going on.
+7. Enable the rule and watch the first runs.
+
+Rollback: disable the rule, set `TRUVI_SCREENING_ENABLED=false`, and set `TRUVI_BASE_URL` and `TRUVI_SECRET_NAME` back to the sandbox values. Rows made in production stay; do not send them to the sandbox.
 
 ## Manual Lambda Test Event
 
