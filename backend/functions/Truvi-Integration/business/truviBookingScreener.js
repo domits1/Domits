@@ -70,24 +70,24 @@ export class TruviBookingScreener {
 
   async #screen(input) {
     if (!input.location) {
-      return this.#rejected("Property has no location");
+      return this.#skipped("Property has no location");
     }
     if (!input.host.email) {
-      return this.#rejected("Host has no email");
+      return this.#skipped("Host has no email");
     }
     try {
       return await this.screeningService.screenBooking(input);
     } catch (error) {
-      return this.#rejected(error.message);
+      return this.#skipped(error.message);
     }
   }
 
-  #rejected(message) {
+  #skipped(message) {
     return {
       providerAssessmentId: null,
-      status: "ERROR",
+      status: "SKIPPED",
       flaggedReason: null,
-      error: { status: 400, message: String(message).slice(0, 200) },
+      error: { status: null, message: String(message).slice(0, 200) },
       rejectedInput: true,
     };
   }

@@ -13,7 +13,7 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 ## What One Run Does
 
 1. Lists up to `limit` bookings (default 10, max 50) with status `Paid`, an arrival date in the future and no row in `guest_risk_assessment`.
-2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`.
+2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`. A booking Domits cannot send (no property location, no host email, no full guest name, no email or phone, an unknown country or no street) is saved as `SKIPPED` without a Truvi call, so it is not tried every run. `ERROR` is only used for an answer from Truvi, and `FAILED` only when Truvi rejected the guest.
 3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
    The retry sends the same `echoToken`, because it is derived from the booking id. If the first call did reach Truvi, Truvi answers `400 echoToken (...) already exists from a previous request` with the earlier `verificationId`. The run then reads that verification (`GET /v1/verificationRequests/{id}`) and saves its result, so a booking never gets two Truvi verifications. The same happens when the Truvi call worked but saving the result failed.
    The token is `createEchoToken(bookingId)` in `util/truviMapper.js`: a UUID-shaped sha256 of `domits:truvi:create:<bookingId>`. Only the create uses it. Modify and cancel send a random `echoToken`, because each of those requests is new for Truvi.

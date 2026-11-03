@@ -134,19 +134,19 @@ describe("TruviBookingScreener", () => {
     expect(summary.saved).toBe(1);
   });
 
-  it("saves an ERROR without calling Truvi when the booking data is not usable", async () => {
+  it("saves SKIPPED without calling Truvi when the booking data is not usable", async () => {
     const { screener, screeningService, assessmentRepository } = build({ candidates: [candidate({ location: null })] });
 
     const summary = await screener.run({ now: 1000 });
 
     expect(screeningService.screenBooking).not.toHaveBeenCalled();
     const saved = assessmentRepository.saveResult.mock.calls[0][0].result;
-    expect(saved.status).toBe("ERROR");
+    expect(saved.status).toBe("SKIPPED");
     expect(saved.error.message).toBe("Property has no location");
     expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 1, notUtcMidnight: 0, errors: [] });
   });
 
-  it("saves an ERROR when the mapper refuses the booking", async () => {
+  it("saves SKIPPED when the mapper refuses the booking", async () => {
     const { screener, assessmentRepository } = build({
       screen: async () => {
         throw new Error("Guest needs a first and a last name");
@@ -155,16 +155,19 @@ describe("TruviBookingScreener", () => {
 
     const summary = await screener.run({ now: 1000 });
 
-    expect(assessmentRepository.saveResult.mock.calls[0][0].result.error.message).toBe("Guest needs a first and a last name");
+    expect(assessmentRepository.saveResult.mock.calls[0][0].result).toEqual(
+      expect.objectContaining({ status: "SKIPPED", error: { status: null, message: "Guest needs a first and a last name" } })
+    );
     expect(summary.rejected).toBe(1);
   });
 
-  it("saves an ERROR when the host has no email", async () => {
+  it("saves SKIPPED when the host has no email", async () => {
     const { screener, screeningService, assessmentRepository } = build({ host: null });
 
     await screener.run({ now: 1000 });
 
     expect(screeningService.screenBooking).not.toHaveBeenCalled();
+    expect(assessmentRepository.saveResult.mock.calls[0][0].result).toEqual(expect.objectContaining({ status: "SKIPPED" }));
     expect(assessmentRepository.saveResult.mock.calls[0][0].result.error.message).toBe("Host has no email");
   });
 
