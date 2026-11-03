@@ -44,6 +44,32 @@ const storeInApp = async (dataSource, settings, userId, { hostId, task, eventTyp
     }
 };
 
+const deliverAssigned = async (dataSource, { hostId, task, userId, getEmail }) => {
+    const settings = await readSettings(dataSource, userId);
+    await storeInApp(dataSource, settings, userId, {
+        hostId,
+        task,
+        eventType: "assigned",
+        marker: task.updated_at,
+        title: "Task assigned",
+        message: `"${task.title}" at ${task.property_snapshot_label} was assigned to you.`,
+    });
+    if (!isOn(settings, "notif_email_assigned")) {
+        return;
+    }
+
+    const dueDate = task.due_date ? new Date(task.due_date).toISOString() : "no due date set";
+    await sendEmail(
+        await getEmail(),
+        `Task assigned: ${task.title}`,
+        `The task "${task.title}" (property: ${task.property_snapshot_label}) has been assigned to you.
+
+Due: ${dueDate}
+
+Open your Domits dashboard to view it.`
+    );
+};
+
 // The task is already saved when this runs, so a failed email is logged and must not fail the request.
 export const notifyTaskAssigned = async (hostId, task) => {
     try {
@@ -53,29 +79,12 @@ export const notifyTaskAssigned = async (hostId, task) => {
         if (!teamMember || teamMember.status !== "active") {
             return;
         }
-        const settings = await readSettings(dataSource, teamMember.member_user_id);
-        await storeInApp(dataSource, settings, teamMember.member_user_id, {
+        await deliverAssigned(dataSource, {
             hostId,
             task,
-            eventType: "assigned",
-            marker: task.updated_at,
-            title: "Task assigned",
-            message: `"${task.title}" at ${task.property_snapshot_label} was assigned to you.`,
+            userId: teamMember.member_user_id,
+            getEmail: () => teamMember.member_email,
         });
-        if (!isOn(settings, "notif_email_assigned")) {
-            return;
-        }
-
-        const dueDate = task.due_date ? new Date(task.due_date).toISOString() : "no due date set";
-        await sendEmail(
-            teamMember.member_email,
-            `Task assigned: ${task.title}`,
-            `The task "${task.title}" (property: ${task.property_snapshot_label}) has been assigned to you.
-
-Due: ${dueDate}
-
-Open your Domits dashboard to view it.`
-        );
     } catch (error) {
         console.error(`Failed to send task assigned notification for task ${task.id}`, error);
     }
