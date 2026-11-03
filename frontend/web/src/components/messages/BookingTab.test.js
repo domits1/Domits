@@ -193,3 +193,58 @@ describe("BookingTab booking details", () => {
     expect(screen.getByText(checkOutText)).toBeInTheDocument();
   });
 });
+
+describe("BookingTab address", () => {
+  const hostBookings = okText([
+    {
+      id: "property-1",
+      res: {
+        response: [
+          {
+            id: "booking-host-1",
+            hostid: "host-1",
+            guestid: "guest-1",
+            property_id: "property-1",
+            arrivaldate: "2026-07-01",
+            departuredate: "2026-07-04",
+            guests: 2,
+          },
+        ],
+      },
+    },
+  ]);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    globalThis.fetch = jest.fn();
+    getAccessToken.mockReturnValue("host-token-1");
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("shows the street of a listing from the host dashboard", async () => {
+    globalThis.fetch.mockResolvedValueOnce(hostBookings).mockResolvedValueOnce(okJson(accommodation("Host Cabin")));
+
+    render(<BookingTab userId="host-1" contactId="guest-1" dashboardType="host" propertyId="property-1" />);
+
+    expect(await screen.findByText("Main Street 1")).toBeInTheDocument();
+  });
+
+  test("leaves out the address row for a public listing, which has no street", async () => {
+    const publicListing = { ...accommodation("Public Cabin"), location: { country: "Netherlands", city: "Haarlem" } };
+    globalThis.fetch
+      .mockResolvedValueOnce(hostBookings)
+      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => "Forbidden" })
+      .mockResolvedValueOnce(okJson(publicListing));
+
+    const { container } = render(
+      <BookingTab userId="host-1" contactId="guest-1" dashboardType="host" propertyId="property-1" />
+    );
+
+    expect(await screen.findByText("Public Cabin")).toBeInTheDocument();
+    expect(screen.getByText("Booking ID: booking-host-1")).toBeInTheDocument();
+    expect(container.querySelector(".street")).toBeNull();
+  });
+});
