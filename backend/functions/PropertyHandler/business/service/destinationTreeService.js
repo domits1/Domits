@@ -114,7 +114,7 @@ export class DestinationTreeService {
   }
 
   async buildDestinationMenu() {
-    return buildDestinationMenu(await this.listEligibleDestinations(), this.settings);
+    return buildDestinationMenu((await this.readTree()).filter(servesPage), this.settings);
   }
 
   async renderDestinationSitemap({ siteOrigin, lastModified } = {}) {
