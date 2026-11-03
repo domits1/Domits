@@ -74,7 +74,9 @@ const renderSection = (model = MODEL) =>
     />
   );
 
-const waitForCalendar = () => screen.findByRole("button", { name: "Show next months" });
+// The calendar is loaded with React.lazy; the first render waits for that module, which
+// under a full parallel test run can take longer than the default one second.
+const waitForCalendar = () => screen.findByRole("button", { name: "Show next months" }, { timeout: 5000 });
 
 const selectStay = async () => {
   await waitForCalendar();

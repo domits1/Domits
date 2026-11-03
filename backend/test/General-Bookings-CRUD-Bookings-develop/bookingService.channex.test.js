@@ -49,7 +49,7 @@ const buildService = ({
         status: "Awaiting Payment",
       }),
       updateBookingStatus: jest.fn(),
-      markBookingPaidWithOutbox: jest.fn(),
+      markBookingPaidWithOutbox: jest.fn().mockResolvedValue(true),
       getBookingById: jest.fn(),
       updateBookingDates: jest.fn(),
       ...reservationRepository,
@@ -82,6 +82,9 @@ const buildService = ({
     },
     priceLabsBookingNotifier: {
       notifyBookingChange: jest.fn(),
+    },
+    taskAutomationNotifier: {
+      notifyTaskCreation: jest.fn(),
     },
     sendEmailFn: jest.fn(),
     getHostEmailByIdFn: jest.fn().mockResolvedValue("host@example.com"),
@@ -133,6 +136,24 @@ describe("BookingService Channex booking availability hooks", () => {
     expect(storedRequest.general.departureDate).toBe(Date.parse("2026-06-03T00:00:00.000Z"));
     expect(Number.isNaN(storedRequest.general.arrivalDate)).toBe(false);
     expect(Number.isNaN(storedRequest.general.departureDate)).toBe(false);
+  });
+
+  test("direct booking creation notifies task automation with a prepare-for-arrival task", async () => {
+    const { service, dependencies } = buildService();
+
+    await service.create(buildCreateEvent());
+
+    expect(dependencies.taskAutomationNotifier.notifyTaskCreation).toHaveBeenCalledWith(
+      "host-1",
+      expect.objectContaining({
+        title: "Prepare for arrival",
+        type: "Check-in",
+        property_id: "domits-property-1",
+        property_snapshot_label: "Demo Property",
+        due_date: Date.parse("2026-06-01T00:00:00.000Z"),
+        source: "automation",
+      })
+    );
   });
 
   test("converts valid YYYY-MM-DD dates to millisecond timestamps before storing", async () => {
@@ -261,7 +282,7 @@ describe("BookingService Channex booking availability hooks", () => {
   test("payment success writes no second outbox change", async () => {
     const { service, dependencies } = buildService();
 
-    await expect(service.confirmPayment("pi_1")).resolves.toBe(true);
+    await expect(service.confirmPayment("pi_1")).resolves.toMatchObject({ paymentConfirmed: true, newlyPaid: true });
 
     expect(dependencies.reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
   });
@@ -407,6 +428,38 @@ describe("BookingService Channex booking availability hooks", () => {
       "2026-06-06",
       "Bearer host-token"
     );
+  });
+
+  test("mark-checked-out is exposed as a PATCH action", async () => {
+    const markCheckedOut = jest.fn().mockResolvedValue({ bookingId: "booking-1" });
+    const controller = new ReservationController({
+      bookingService: { markCheckedOut },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({ action: "mark-checked-out", bookingId: "booking-1" }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(markCheckedOut).toHaveBeenCalledWith("booking-1", "Bearer host-token");
+  });
+
+  test("mark-checked-out requires a bookingId", async () => {
+    const markCheckedOut = jest.fn();
+    const controller = new ReservationController({
+      bookingService: { markCheckedOut },
+      paymentService: {},
+    });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer host-token" },
+      body: JSON.stringify({ action: "mark-checked-out" }),
+    });
+
+    expect(markCheckedOut).not.toHaveBeenCalled();
+    expect(response.response).toMatch(/Missing bookingId/);
   });
 
   test("modify-booking-dates returns a JSON-safe response after successful side effects", async () => {

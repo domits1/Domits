@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
 import {
-  cancelBooking,
   connectChannex,
   getChannexAriPayloadPreview,
   getChannexAriPreview,
@@ -31,15 +30,6 @@ const SECTION_TABS = [
 ];
 const PAYLOAD_PREVIEW_PAGE_SIZE_DAYS = 30;
 const CHANNEX_CERTIFICATION_MAX_SYNC_DAYS = 500;
-const MODIFY_BOOKING_DEMO_DEFAULTS = {
-  bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-  arrivalDate: "2026-06-04",
-  departureDate: "2026-06-06",
-};
-const CANCEL_BOOKING_DEMO_DEFAULTS = {
-  bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-  reason: "Channex certification demo cancellation",
-};
 const compareAlphabetically = (left, right) => String(left).localeCompare(String(right));
 
 const createRequestState = () => ({
@@ -315,7 +305,7 @@ const validateSelectedDateRange = (startDate, endDate) => {
 
   if (totalDays > CHANNEX_CERTIFICATION_MAX_SYNC_DAYS) {
     return {
-      message: `The selected range is ${totalDays} days. Channex certification syncs support up to ${CHANNEX_CERTIFICATION_MAX_SYNC_DAYS} inclusive days.`,
+      message: `The selected range is ${totalDays} days. Channex syncs support up to ${CHANNEX_CERTIFICATION_MAX_SYNC_DAYS} inclusive days.`,
       totalDays,
     };
   }
@@ -345,16 +335,6 @@ const validateModifyBookingForm = (form) => {
   }
 
   return "";
-};
-
-const normalizeCancelBookingForm = (form) => ({
-  bookingId: String(form?.bookingId || "").trim(),
-  reason: String(form?.reason || "").trim(),
-});
-
-const validateCancelBookingForm = (form) => {
-  const payload = normalizeCancelBookingForm(form);
-  return payload.bookingId ? "" : "Enter the booking ID to cancel.";
 };
 
 const createSetupSelection = () => ({
@@ -395,6 +375,20 @@ const validateSetupMappingPayload = (payload) => {
   if (!payload.externalRoomTypeId) return "Select a Channex room type before saving the mapping.";
   if (!payload.externalRatePlanId) return "Select a Channex rate plan before saving the mapping.";
   return "";
+};
+
+// Saving a ready mapping queues a full sync (#3282). Only a confirmed fullSyncQueued claims one:
+// queueing can fail after a ready save, and the backend then asks for the mapping to be saved again.
+const describeFullSyncQueueResult = (saveResult) => {
+  if (saveResult?.fullSyncQueued === true) {
+    return "Full sync queued. Channex receives all values within a few minutes; see Latest sync evidence.";
+  }
+  if (saveResult?.ready === false) {
+    const missingMappings = saveResult.readiness?.missingMappings ?? [];
+    const reason = missingMappings.length ? ` (${missingMappings.join(", ")})` : "";
+    return `No full sync queued: the mapping is not ready${reason}.`;
+  }
+  return "No full sync queued. Save the mapping again to retry.";
 };
 
 const getPayloadPaginationSummary = (pagination = {}) => {
@@ -1271,20 +1265,20 @@ const ACTION_CONFIG = [
   {
     key: "ari",
     label: "Sync combined ARI",
-    description: "Diagnostic two-step sync. Use Full/certification sync for Channex Full Sync submission.",
+    description: "Diagnostic two-step sync. Use Full sync to send all values.",
     run: syncChannexAri,
     needsDateRange: true,
     confirmMessage: "Run combined Channex ARI sync for this property and date range?",
   },
   {
     key: "full",
-    label: "Full/certification sync",
+    label: "Full sync",
     description: "Heavy action: sends one availability request and one rates/restrictions request for the selected range.",
     run: syncChannexFull,
     needsDateRange: true,
     danger: true,
     confirmMessage:
-      "Run full/certification sync? This can send availability, rates, and restrictions to Channex for the selected date range.",
+      "Run a full sync? This can send availability, rates, and restrictions to Channex for the selected date range.",
   },
 ];
 
@@ -1308,10 +1302,8 @@ function ChannexDiagnosticsPanel({ userId }) {
   const [connectState, setConnectState] = useState(createRequestState);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [actionStates, setActionStates] = useState({});
-  const [modifyBookingForm, setModifyBookingForm] = useState(MODIFY_BOOKING_DEMO_DEFAULTS);
+  const [modifyBookingForm, setModifyBookingForm] = useState({ bookingId: "", arrivalDate: "", departureDate: "" });
   const [modifyBookingState, setModifyBookingState] = useState(createRequestState);
-  const [cancelBookingForm, setCancelBookingForm] = useState(CANCEL_BOOKING_DEMO_DEFAULTS);
-  const [cancelBookingState, setCancelBookingState] = useState(createRequestState);
 
   const hasProperty = Boolean(domitsPropertyId.trim());
   const hasDateRange = hasProperty && Boolean(dateFrom) && Boolean(dateTo);
@@ -1587,13 +1579,6 @@ function ChannexDiagnosticsPanel({ userId }) {
     }));
   };
 
-  const updateCancelBookingForm = (field, value) => {
-    setCancelBookingForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
   const handleModifyBookingDates = async (event) => {
     event.preventDefault();
     const validationMessage = validateModifyBookingForm(modifyBookingForm);
@@ -1627,39 +1612,6 @@ function ChannexDiagnosticsPanel({ userId }) {
     }
   };
 
-  const handleCancelBooking = async (event) => {
-    event.preventDefault();
-    const validationMessage = validateCancelBookingForm(cancelBookingForm);
-    if (validationMessage) {
-      setCancelBookingState({
-        loading: false,
-        error: validationMessage,
-        errorDetails: null,
-        data: null,
-      });
-      return;
-    }
-
-    const payload = normalizeCancelBookingForm(cancelBookingForm);
-    setCancelBookingState({ loading: true, error: "", errorDetails: null, data: null });
-
-    try {
-      const data = await cancelBooking({ ...payload, userId, domitsPropertyId });
-      setCancelBookingState({ loading: false, error: "", errorDetails: null, data });
-      if (userId && hasProperty) {
-        await loadLatestEvidence();
-      }
-    } catch (error) {
-      const errorDetails = normalizeChannexError(error, "Booking cancellation failed.");
-      setCancelBookingState({
-        loading: false,
-        error: errorDetails.message,
-        errorDetails,
-        data: null,
-      });
-    }
-  };
-
   const status = statusState.data || {};
   const connectResult = connectState.data;
   const isConnected = String(status.status || "").toUpperCase() === "CONNECTED";
@@ -1673,7 +1625,7 @@ function ChannexDiagnosticsPanel({ userId }) {
 
   const renderOverview = () => (
     <div className="channex-diagnostics-grid">
-      <SectionCard title="Overview" description="Current certification workspace state.">
+      <SectionCard title="Overview" description="Current Channex connection and mapping state.">
         <DetailGrid
           items={[
             { label: "Domits property ID", value: domitsPropertyId.trim() || "Not selected" },
@@ -1887,6 +1839,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         {setupMappingState.data ? (
           <>
             <p className="host-integrations-success-banner">Single-unit Channex mapping saved.</p>
+            <p className="host-integrations-muted">{describeFullSyncQueueResult(setupMappingState.data)}</p>
             <DetailGrid
               items={[
                 { label: "Integration account", value: setupMappingState.data.integrationAccountId },
@@ -2116,7 +2069,7 @@ function ChannexDiagnosticsPanel({ userId }) {
     <section className="channex-diagnostics-card">
       <div className="channex-diagnostics-card-header">
         <div>
-          <h3>Manual certification actions</h3>
+          <h3>Manual actions</h3>
           <p className="host-integrations-muted">
             These actions contact Channex only after explicit confirmation.
           </p>
@@ -2157,7 +2110,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               </button>
               {config.danger ? (
                 <p className="host-integrations-warning-banner">
-                  Heavy certification action. Verify property, mappings, and date range before running.
+                  Heavy action. Verify property, mappings, and date range before running.
                 </p>
               ) : null}
               {state.success ? <p className="host-integrations-success-banner">{state.success}</p> : null}
@@ -2185,7 +2138,7 @@ function ChannexDiagnosticsPanel({ userId }) {
           <div>
             <h3>Modify booking dates</h3>
             <p className="host-integrations-muted">
-              Internal demo action for changing an existing booking date range and showing Channex availability sync evidence.
+              Support action for changing an existing booking date range and showing Channex availability sync evidence.
             </p>
           </div>
         </div>
@@ -2196,7 +2149,7 @@ function ChannexDiagnosticsPanel({ userId }) {
               <input
                 value={modifyBookingForm.bookingId}
                 onChange={(event) => updateModifyBookingForm("bookingId", event.target.value)}
-                placeholder="7434e9b5-a4d1-4aab-9f8a-27a5a42299b0"
+                placeholder="Booking ID"
                 disabled={modifyBookingState.loading}
               />
             </label>
@@ -2239,56 +2192,6 @@ function ChannexDiagnosticsPanel({ userId }) {
           {modifyBookingState.data ? <JsonBlock title="Modify booking response" value={modifyBookingState.data} /> : null}
         </form>
       </div>
-      <div className="channex-certification-test-section">
-        <div className="channex-diagnostics-card-header">
-          <div>
-            <h3>Cancel booking</h3>
-            <p className="host-integrations-muted">
-              Admin certification action for cancelling a Domits booking without processing refunds and showing the Channex availability restore evidence.
-            </p>
-          </div>
-        </div>
-        <form className="channex-diagnostics-action-card" onSubmit={handleCancelBooking}>
-          <div className="host-integrations-field-grid">
-            <label className="host-integrations-field">
-              <span>Cancel booking ID</span>
-              <input
-                value={cancelBookingForm.bookingId}
-                onChange={(event) => updateCancelBookingForm("bookingId", event.target.value)}
-                placeholder="7434e9b5-a4d1-4aab-9f8a-27a5a42299b0"
-                disabled={cancelBookingState.loading}
-              />
-            </label>
-            <label className="host-integrations-field">
-              <span>Reason</span>
-              <input
-                value={cancelBookingForm.reason}
-                onChange={(event) => updateCancelBookingForm("reason", event.target.value)}
-                placeholder="Channex certification demo cancellation"
-                disabled={cancelBookingState.loading}
-              />
-            </label>
-          </div>
-          <button type="submit" className="host-integrations-primary-btn" disabled={cancelBookingState.loading}>
-            {cancelBookingState.loading ? "Cancelling..." : "Cancel booking"}
-          </button>
-          {cancelBookingState.data ? <p className="host-integrations-success-banner">Booking cancelled.</p> : null}
-          {cancelBookingState.error ? (
-            <ErrorCallout error={cancelBookingState.error} details={cancelBookingState.errorDetails} />
-          ) : null}
-          <IdentifierList title="Channex task IDs" ids={cancelBookingState.data?.channexAvailabilitySync?.taskIds} />
-          {cancelBookingState.data?.channexAvailabilitySync ? (
-            <>
-              <BookingAvailabilitySyncSummary
-                title="Cancellation availability sync summary"
-                evidence={cancelBookingState.data.channexAvailabilitySync}
-              />
-              <JsonBlock title="Channex cancellation availability sync" value={cancelBookingState.data.channexAvailabilitySync} />
-            </>
-          ) : null}
-          {cancelBookingState.data ? <JsonBlock title="Cancel booking response" value={cancelBookingState.data} /> : null}
-        </form>
-      </div>
     </section>
   );
 
@@ -2315,7 +2218,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         </div>
       </div>
 
-      <nav className="channex-diagnostics-tabs" aria-label="Channex certification sections">
+      <nav className="channex-diagnostics-tabs" aria-label="Channex diagnostics sections">
         {SECTION_TABS.map((tab) => (
           <button
             type="button"

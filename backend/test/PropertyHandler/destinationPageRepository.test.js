@@ -62,7 +62,10 @@ describe("the destination page repository", () => {
     expect(destinations[1]).toMatchObject({ parentId: null, countryCode: null, activeListings: 0 });
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
-    expect(statement).toContain("count(p.id) AS active_listings");
+    expect(statement).toContain("count(l.property_id) AS active_listings");
+    expect(statement).toContain(
+      `LEFT JOIN ${SCHEMA}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city`
+    );
     expect(statement).toContain(`LEFT JOIN ${SCHEMA}.property_destination m ON m.destination_id = d.id`);
     expect(statement).not.toContain("count(*)");
     expect(statement).not.toContain("count(m.");
@@ -91,7 +94,10 @@ describe("the destination page repository", () => {
       },
     ]);
 
-    const listings = await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain");
+    const listings = await new DestinationPageRepository().listActiveListingsUnderPath(
+      "/destinations/europe/spain",
+      24
+    );
 
     expect(listings).toEqual([
       {
@@ -116,25 +122,40 @@ describe("the destination page repository", () => {
     const [statement, parameters] = query.mock.calls[0];
     expect(statement).toContain(`JOIN ${SCHEMA}.property p ON p.id = m.property_id AND p.status = $1`);
     expect(statement).not.toContain(`LEFT JOIN ${SCHEMA}.property p`);
+    expect(statement).toContain(
+      `JOIN ${SCHEMA}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city`
+    );
     expect(statement).toContain("WHERE d.path = $2 OR d.path LIKE $3");
     expect(statement).toContain("v.variant = 'web'");
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
     expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS image_key");
     expect(statement).not.toMatch(/street|postal|house|hostid|latitude/i);
-    expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%"]);
+    expect(statement).toContain("ORDER BY p.createdat DESC, p.id ASC\n      LIMIT $4");
+    expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%", 24]);
   });
 
   it("escapes the like wildcards of a path so a sibling with an underscore in its name is not swept in", async () => {
     const query = withRows([]);
-    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/x/y_z%");
-    expect(query.mock.calls[0][1]).toEqual(["ACTIVE", "/destinations/x/y_z%", "/destinations/x/y\\_z\\%/%"]);
+    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/x/y_z%", 24);
+    expect(query.mock.calls[0][1]).toEqual(["ACTIVE", "/destinations/x/y_z%", "/destinations/x/y\\_z\\%/%", 24]);
   });
 
   it("answers an empty list for an empty path without asking the database", async () => {
     const query = withRows([]);
-    expect(await new DestinationPageRepository().listActiveListingsUnderPath("  ")).toEqual([]);
+    expect(await new DestinationPageRepository().listActiveListingsUnderPath("  ", 24)).toEqual([]);
     expect(query).not.toHaveBeenCalled();
   });
+
+  it.each([undefined, 0, -1, 2.5, "24", Number.NaN])(
+    "refuses a listing limit of %p before it asks the database",
+    async (limit) => {
+      const query = withRows([]);
+      await expect(
+        new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain", limit)
+      ).rejects.toThrow("A positive whole listing limit is required.");
+      expect(query).not.toHaveBeenCalled();
+    }
+  );
 
   it("builds image urls from the accommodation bucket and nothing for an empty key", () => {
     expect(buildAccommodationImageUrl("/images/p1/web.jpg")).toBe(

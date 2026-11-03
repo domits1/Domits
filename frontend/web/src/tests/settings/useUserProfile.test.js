@@ -134,6 +134,66 @@ describe("useUserProfile", () => {
     expect(result.current.authStatus.emailVerified).toBe(true);
   });
 
+  test("refreshMfaStatus updates preferredMFA to TOTP when Cognito reports SOFTWARE_TOKEN_MFA", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    Auth.getPreferredMFA.mockResolvedValue("SOFTWARE_TOKEN_MFA");
+
+    await act(async () => {
+      await result.current.refreshMfaStatus();
+    });
+
+    expect(result.current.authStatus).toEqual({ emailVerified: true, phoneVerified: false, preferredMFA: "TOTP" });
+    expect(result.current.mfaStatusError).toBe(false);
+  });
+
+  test("refreshMfaStatus bypasses the Amplify cache for both the user and the MFA preference", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    Auth.currentAuthenticatedUser.mockClear();
+    Auth.getPreferredMFA.mockClear();
+
+    await act(async () => {
+      await result.current.refreshMfaStatus();
+    });
+
+    expect(Auth.currentAuthenticatedUser).toHaveBeenCalledWith({ bypassCache: true });
+    expect(Auth.getPreferredMFA).toHaveBeenCalledWith(MOCK_COGNITO_USER, { bypassCache: true });
+  });
+
+  test("refreshMfaStatus sets mfaStatusError and keeps authStatus when the lookup fails", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    const authStatusBefore = result.current.authStatus;
+    Auth.getPreferredMFA.mockRejectedValue(new Error("MFA lookup failed"));
+
+    await act(async () => {
+      await result.current.refreshMfaStatus();
+    });
+
+    expect(result.current.mfaStatusError).toBe(true);
+    expect(result.current.authStatusError).toBe(false);
+    expect(result.current.authStatus).toEqual(authStatusBefore);
+  });
+
+  test("refreshMfaStatus clears an earlier mfaStatusError once the lookup succeeds", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    Auth.getPreferredMFA.mockRejectedValue(new Error("MFA lookup failed"));
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.mfaStatusError).toBe(true));
+    Auth.getPreferredMFA.mockResolvedValue("SOFTWARE_TOKEN_MFA");
+
+    await act(async () => {
+      await result.current.refreshMfaStatus();
+    });
+
+    expect(result.current.mfaStatusError).toBe(false);
+    expect(result.current.authStatus.preferredMFA).toBe("TOTP");
+  });
+
   // ─── Input handlers ───────────────────────────────────────────────────────
 
   test("onInputChange updates the matching tempUser field", () => {

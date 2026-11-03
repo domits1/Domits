@@ -40,10 +40,11 @@ export class DestinationPageRepository {
 
     const rows = await client.query(
       `SELECT d.id, d.type, d.parent_id, d.slug, d.path, d.display_name, d.country_code,
-        count(p.id) AS active_listings
+        count(l.property_id) AS active_listings
       FROM ${schemaName}.destination d
       LEFT JOIN ${schemaName}.property_destination m ON m.destination_id = d.id
       LEFT JOIN ${schemaName}.property p ON p.id = m.property_id AND p.status = $1
+      LEFT JOIN ${schemaName}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city
       GROUP BY d.id, d.type, d.parent_id, d.slug, d.path, d.display_name, d.country_code
       ORDER BY d.path ASC`,
       ["ACTIVE"]
@@ -52,7 +53,10 @@ export class DestinationPageRepository {
     return toRows(rows).map(toDestination);
   }
 
-  async listActiveListingsUnderPath(path) {
+  async listActiveListingsUnderPath(path, limit) {
+    if (!Number.isSafeInteger(limit) || limit < 1) {
+      throw new Error("A positive whole listing limit is required.");
+    }
     const normalizedPath = String(path || "").trim();
     if (!normalizedPath) {
       return [];
@@ -72,11 +76,12 @@ export class DestinationPageRepository {
       FROM ${schemaName}.property_destination m
       JOIN ${schemaName}.destination d ON d.id = m.destination_id
       JOIN ${schemaName}.property p ON p.id = m.property_id AND p.status = $1
-      JOIN ${schemaName}.property_location l ON l.property_id = p.id
+      JOIN ${schemaName}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city
       LEFT JOIN ${schemaName}.property_pricing pr ON pr.property_id = p.id
       WHERE d.path = $2 OR d.path LIKE $3
-      ORDER BY p.createdat DESC, p.id ASC`,
-      ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`]
+      ORDER BY p.createdat DESC, p.id ASC
+      LIMIT $4`,
+      ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`, limit]
     );
 
     return toRows(rows).map((row) => ({

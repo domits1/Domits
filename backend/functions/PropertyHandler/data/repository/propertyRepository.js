@@ -37,16 +37,6 @@ export class PropertyRepository {
         return result ? result : null;
     }
 
-    async activateProperty(propertyId) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: "ACTIVE" })
-            .where("id = :id", { id: propertyId })
-            .execute();
-    }
-
     async getArchiveMetadataColumns(client) {
         const result = await client.query(
             `SELECT column_name
@@ -128,6 +118,41 @@ export class PropertyRepository {
         );
     }
 
+    // Compare-and-set: the single UPDATE only matches while the current status is one of fromStatuses,
+    // so a concurrent approval or rejection is never overwritten. Returns the number of rows changed.
+    // Only a move out of ARCHIVED clears the archive metadata; moving into ARCHIVED (which records
+    // who archived) stays with updatePropertyStatus.
+    async transitionStatus(propertyId, fromStatuses, toStatus) {
+        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
+            throw new TypeError("transitionStatus needs at least one from-status.");
+        }
+
+        const client = await Database.getInstance();
+        const now = Date.now();
+        const result = await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({ status: toStatus, updatedat: now })
+            .where("id = :id AND status IN (:...fromStatuses)", { id: propertyId, fromStatuses })
+            .execute();
+
+        const affected = Number(result?.affected) || 0;
+        if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
+            await this.clearArchiveMetadata(client, propertyId, toStatus, now);
+        }
+        return affected;
+    }
+
+    async clearArchiveMetadata(client, propertyId, status, now) {
+        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
+        if (clearClauses.length === 0) {
+            return;
+        }
+
+        await client.query(`UPDATE property SET ${clearClauses.join(", ")} WHERE id = $1`, [propertyId]);
+    }
+
     async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {
         const client = await Database.getInstance();
         const updateFields = {
@@ -171,8 +196,6 @@ export class PropertyRepository {
                 .where("id = :id", { id: propertyId })
                 .execute();
         } catch (error) {
-            // Backstop for the race between the service pre-check and this UPDATE. Only registrationnumber
-            // is written here, so any unique violation is that column's index.
             if (error?.code === UNIQUE_VIOLATION_CODE || error?.driverError?.code === UNIQUE_VIOLATION_CODE) {
                 throw new ConflictException(REGISTRATION_NUMBER_TAKEN_MESSAGE);
             }
@@ -228,6 +251,39 @@ export class PropertyRepository {
         }
 
         return PaginatedPropertyMapping.mapDatabaseEntriesToPaginatedIdentifiers(result);
+    }
+
+    async getPropertiesByStatusOldestFirst(status, { after, limit }) {
+        if (!Number.isInteger(limit) || limit < 1) {
+            throw new TypeError("getPropertiesByStatusOldestFirst needs a positive integer limit.");
+        }
+
+        const client = await Database.getInstance();
+        const query = client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.status = :status", { status })
+            .orderBy("property.updatedat", "ASC")
+            .addOrderBy("property.id", "ASC")
+            .limit(limit + 1);
+
+        if (after) {
+            query.andWhere(
+                "(property.updatedat > :updatedAt OR (property.updatedat = :updatedAt AND property.id > :id))",
+                { updatedAt: after.updatedAt, id: after.id }
+            );
+        }
+
+        const rows = await query.getMany();
+        const hasMore = rows.length > limit;
+        const page = hasMore ? rows.slice(0, limit) : rows;
+        const lastRow = page[page.length - 1];
+
+        return {
+            identifiers: page.map(row => row.id),
+            hasMore,
+            lastKey: lastRow ? { updatedAt: lastRow.updatedat, id: lastRow.id } : null,
+        };
     }
 
     async getPropertiesByHostId(hostId) {

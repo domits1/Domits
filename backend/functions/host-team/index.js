@@ -2,6 +2,10 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
+const INTERNAL_ROUTES = {
+    "/internal/team-member": "getTeamMemberInternal",
+};
+
 const OPTIONS_RESPONSE = {
     statusCode: 200,
     headers: {
@@ -19,6 +23,12 @@ export const handler = async (event) => {
 
         const method = event.httpMethod;
         const path = event.path || "";
+
+        for (const [suffix, methodName] of Object.entries(INTERNAL_ROUTES)) {
+            if (path.endsWith(suffix)) {
+                return await controller[methodName](event);
+            }
+        }
 
         if (method === "OPTIONS") return OPTIONS_RESPONSE;
 

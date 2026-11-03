@@ -1,12 +1,22 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Auth } from 'aws-amplify';
+import { toast } from 'react-toastify';
 import useEffectiveHostId from '../../../../hooks/useEffectiveHostId';
 import {
     LuClipboardList, LuCircleAlert, LuRefreshCw, LuCircleCheck
 } from 'react-icons/lu';
 import '../styles/HostTasks.css';
-import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment } from '../../services/taskService';
+import { fetchTasks, createTask, updateTask, deleteTask, uploadTaskAttachment, escalateTask, approveTask, rejectTask } from '../../services/taskService';
 import { fetchHostTaskPropertyOptions } from '../../services/hostTaskPropertyService';
+import { fetchTeamMembers } from '../../services/teamService';
+import { HOST_ASSIGNEE_ID, resolveAssigneeSelection, resolveAssigneeDisplayName } from '../utils/assigneeSelection';
+import {
+    fetchChecklistItems,
+    fetchChecklistTemplates,
+    createChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+} from '../services/taskChecklistService';
 import { DEFAULT_FILTERS, getTodayString, isTaskOverdue, matchesTaskFilters } from '../utils/taskFilters';
 import { sortTasks } from '../utils/taskSort';
 import { getIntervalKey, getSortTimestamp } from '../utils/reportTimeBuckets';
@@ -15,6 +25,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import CreateTaskModal from '../components/CreateTaskModal';
 import TaskDetailsModal from '../components/TaskDetailsModal';
 import SettingsView from '../components/SettingsView';
+import NotificationBell from '../components/NotificationBell';
 import MyTasksView from '../components/MyTasksView';
 import ReportsView from '../components/ReportsView';
 import TableView from '../components/TableView';
@@ -27,9 +38,12 @@ const DEFAULT_NEW_TASK = {
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
+    assigneeSelection: '',
+    assignee_team_member_id: '',
     dueDate: '',
     priority: 'Medium',
     attachments: null,
+    checklistItems: [],
 };
 
 const HostTasks = () => {
@@ -38,9 +52,18 @@ const HostTasks = () => {
     const [taskContext, setTaskContext] = useState('own');
     const asHostId = taskContext === 'managed' ? managedHostId : null;
     const loadRequestRef = useRef(0);
+    const checklistRequestRef = useRef(0);
+    const isApplyingChecklistTemplateRef = useRef(false);
+    const draftChecklistIdRef = useRef(0);
 
     const [activeTab, setActiveTab] = useState('Overview');
-    const [tasks, setTasks] = useState([]);
+    const [loadedTasks, setTasks] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
+    // The server stores a team member's email as assignee_name, so the name shown comes from the team list.
+    const tasks = useMemo(
+        () => loadedTasks.map(task => ({ ...task, assignee: resolveAssigneeDisplayName(task, teamMembers) })),
+        [loadedTasks, teamMembers]
+    );
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +73,15 @@ const HostTasks = () => {
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
     const [viewingTask, setViewingTask] = useState(null);
-    const [editedTask, setEditedTask] = useState(null);  
+    const [isEscalating, setIsEscalating] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
+    const [editedTask, setEditedTask] = useState(null);
+    const [checklistItems, setChecklistItems] = useState([]);
+    const [checklistLoadError, setChecklistLoadError] = useState(null);
+    const [checklistTemplates, setChecklistTemplates] = useState({});
+    const [isApplyingChecklistTemplate, setIsApplyingChecklistTemplate] = useState(false);
+    const [isCreatingTask, setIsCreatingTask] = useState(false);
+    const [isChecklistLoaded, setIsChecklistLoaded] = useState(false);
 
     const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
@@ -79,6 +110,18 @@ const HostTasks = () => {
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [isModalOpen]);
+
+    // Populates the draft checklist for the default/current Type as soon as the
+    // create form opens, rather than waiting for an explicit Type change -- the
+    // Type field already has a value (DEFAULT_NEW_TASK.type) that may have a
+    // template. Only fills while the draft is still empty, so it doesn't
+    // clobber anything the host already built up.
+    useEffect(() => {
+        if (!isModalOpen || newTask.checklistItems.length > 0) return;
+        const draft = buildChecklistDraftForType(newTask.type);
+        if (draft.length > 0) setNewTask(prev => ({ ...prev, checklistItems: draft }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isModalOpen, checklistTemplates]);
 
     const [propertyOptions, setPropertyOptions] = useState([]);
     const [timeView, setTimeView] = useState('Weekly');
@@ -148,6 +191,19 @@ const HostTasks = () => {
         const hostIdForOptions = asHostId ?? effectiveHostId;
         fetchHostTaskPropertyOptions(hostIdForOptions).then(setPropertyOptions);
     }, [asHostId, effectiveHostId]);
+
+    useEffect(() => {
+        fetchTeamMembers().then(setTeamMembers).catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        fetchChecklistTemplates()
+            .then(setChecklistTemplates)
+            .catch((error) => {
+                console.error('[HostTasks] Failed to fetch checklist templates:', error);
+                toast.error('Could not load checklist templates. Checklist auto-fill will be unavailable.');
+            });
+    }, []);
     
     const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -170,8 +226,9 @@ const HostTasks = () => {
 
         try {
             await updateTask(task.id, { status: newStatus });
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
+            alert(error.message || "Error updating task status");
         }
     };
 
@@ -226,6 +283,8 @@ const HostTasks = () => {
 
     const handleCreateTask = async (e) => {
         e.preventDefault();
+        if (isCreatingTask) return;
+        setIsCreatingTask(true);
         try {
             const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             
@@ -246,7 +305,9 @@ const HostTasks = () => {
             }
 
             let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
-            
+
+            await persistDraftChecklist(created.id, newTask.checklistItems);
+
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
                 created = { ...created, status: 'Overdue', priority: 'Urgent' };
@@ -257,12 +318,70 @@ const HostTasks = () => {
             resetForm();
         } catch {
             alert("Error creating task");
+        } finally {
+            setIsCreatingTask(false);
+        }
+    };
+
+    // Persists the local checklist draft built up while creating a task, once
+    // the task itself has a real id. Creates default to unchecked (the backend
+    // ignores is_checked on create), so a locally-checked item needs a
+    // follow-up update. The task is already created at this point, so a
+    // failure here is reported but doesn't roll anything back.
+    const persistDraftChecklist = async (taskId, draftItems) => {
+        if (draftItems.length === 0) return;
+        const failures = [];
+        // Must stay sequential: the backend assigns each item's position as
+        // existingItems.length at creation time, so running these in parallel
+        // would let requests read the same stale count and collide.
+        for (const item of draftItems) {
+            try {
+                const createdItem = await createChecklistItem(taskId, { title: item.title, isRequired: item.isRequired });
+                if (item.isChecked) {
+                    await updateChecklistItem(createdItem.id, { isChecked: true });
+                }
+            } catch (error) {
+                failures.push(item.title);
+            }
+        }
+        if (failures.length > 0) {
+            toast.error(`Task created, but ${failures.length} checklist item(s) could not be saved: ${failures.join(', ')}`);
         }
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'type') {
+            setNewTask(prev => ({ ...prev, type: value, checklistItems: buildChecklistDraftForType(value) }));
+            return;
+        }
         setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddDraftChecklistItem = (itemData) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: [...prev.checklistItems, {
+                id: `draft-${++draftChecklistIdRef.current}`,
+                title: itemData.title,
+                isRequired: itemData.isRequired,
+                isChecked: false,
+            }],
+        }));
+    };
+
+    const handleToggleDraftChecklistItem = (item) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: prev.checklistItems.map(i => i.id === item.id ? { ...i, isChecked: !i.isChecked } : i),
+        }));
+    };
+
+    const handleRemoveDraftChecklistItem = (itemId) => {
+        setNewTask(prev => ({
+            ...prev,
+            checklistItems: prev.checklistItems.filter(i => i.id !== itemId),
+        }));
     };
 
     const handleFileChange = (e) => {
@@ -306,6 +425,26 @@ const HostTasks = () => {
         }));
     };
 
+    const handleAssigneeChange = (e) => {
+        const selected = createAssigneeChoices.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || '',
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || ''),
+            assignee: selected?.name || '',
+        }));
+    };
+
+    const handleEditAssigneeChange = (e) => {
+        const selected = editAssigneeChoices.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            assigneeSelection: selected?.id || prev.assigneeSelection,
+            assignee_team_member_id: selected?.id === HOST_ASSIGNEE_ID ? '' : (selected?.id || prev.assignee_team_member_id),
+            assignee: selected?.name || prev.assignee,
+        }));
+    };
+
     const resetForm = () => {
         setNewTask({ ...DEFAULT_NEW_TASK });
     };
@@ -331,17 +470,116 @@ const HostTasks = () => {
         }
     };
 
-    const openTaskDetails = (task) => {
-        setViewingTask(task);
-        setEditedTask({ ...task }); 
+    // Builds an unsaved, locally-held checklist draft for the create-task form,
+    // where there's no real task id yet to persist items against.
+    const buildChecklistDraftForType = (type) => {
+        const template = checklistTemplates[type] || [];
+        return template.map((item) => ({
+            id: `draft-${++draftChecklistIdRef.current}`,
+            title: item.title,
+            isRequired: item.isRequired,
+            isChecked: false,
+        }));
     };
 
+    // Only called from handleSaveChanges, which holds isApplyingChecklistTemplateRef for the whole save,
+    // so two checklist switches can never overlap.
+    const applyChecklistTemplate = async (taskId, type, existingItems) => {
+        const template = checklistTemplates[type] || [];
+        if (template.length === 0 && existingItems.length === 0) return null;
+
+        // Captured so a stale result (the host switched to a different task while
+        // this was still running) doesn't get applied to, or tracked against, the
+        // task now being viewed.
+        const requestId = checklistRequestRef.current;
+
+        // Runs when the host saves a Type change, after the task itself has been saved. The existing
+        // items are removed first, then the new Type's template is added, if it has one -- if not, the
+        // checklist is simply left empty rather than keeping leftover items from the previous Type.
+        if (existingItems.length > 0) {
+            const deleteResults = await Promise.allSettled(existingItems.map(item => deleteChecklistItem(item.id)));
+            const notDeleted = existingItems.filter((_item, index) => deleteResults[index].status === 'rejected');
+
+            if (notDeleted.length > 0) {
+                toast.error(`Could not switch the template: ${notDeleted.length} existing item(s) could not be removed.`);
+                return requestId === checklistRequestRef.current ? notDeleted : null;
+            }
+        }
+
+        if (template.length === 0) {
+            return requestId === checklistRequestRef.current ? [] : null;
+        }
+
+        const created = [];
+        try {
+            // Must stay sequential: the backend assigns each item's position as
+            // existingItems.length at creation time, so running these in parallel
+            // would let requests read the same stale count and collide.
+            for (const item of template) {
+                const createdItem = await createChecklistItem(taskId, item);
+                created.push(createdItem);
+            }
+        } catch (error) {
+            // Roll back whatever succeeded so a mid-template failure never leaves
+            // a half-filled checklist with no indication of what happened. If a
+            // rollback delete itself fails, that item genuinely still exists, so
+            // it's kept rather than silently losing track of it.
+            const rollbackResults = await Promise.allSettled(created.map(item => deleteChecklistItem(item.id)));
+            const stillPresent = created.filter((_item, index) => rollbackResults[index].status === 'rejected');
+            created.length = 0;
+            created.push(...stillPresent);
+            toast.error(stillPresent.length > 0
+                ? `Error applying the checklist template. ${stillPresent.length} item(s) could not be rolled back.`
+                : "Error applying the checklist template. The checklist is now empty.");
+        }
+        return requestId === checklistRequestRef.current ? created : null;
+    };
+
+    const loadChecklistItems = (taskId) => {
+        const requestId = ++checklistRequestRef.current;
+        setChecklistLoadError(null);
+        setIsChecklistLoaded(false);
+        fetchChecklistItems(taskId)
+            .then(items => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems(items);
+                    setChecklistLoadError(null);
+                    setIsChecklistLoaded(true);
+                }
+            })
+            .catch((error) => {
+                if (requestId === checklistRequestRef.current) {
+                    setChecklistItems([]);
+                    setChecklistLoadError(error.message || "Failed to load checklist items");
+                }
+            });
+    };
+
+    const openTaskDetails = (task) => {
+        if (isApplyingChecklistTemplateRef.current) return;
+        const taskWithAssigneeSelection = {
+            ...task,
+            assigneeSelection: resolveAssigneeSelection(task, currentUser),
+        };
+        setViewingTask(taskWithAssigneeSelection);
+        setEditedTask({ ...taskWithAssigneeSelection });
+        loadChecklistItems(task.id);
+    };
+
+    const handleRetryChecklistLoad = () => {
+        loadChecklistItems(viewingTask.id);
+    };
+
+    // Changing the Type only changes the form. The checklist is replaced when the host saves (see
+    // handleSaveChanges), so Discard has nothing to undo and no saved item is lost on the way.
     const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditedTask(prev => ({ ...prev, [name]: value }));
     };
 
     const closeTaskDetails = () => {
+        if (isApplyingChecklistTemplate) return;
+        checklistRequestRef.current++;
         const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
         if (isEdited) {
             setConfirmDialog({
@@ -353,16 +591,46 @@ const HostTasks = () => {
                 onConfirm: () => {
                     setViewingTask(null);
                     setEditedTask(null);
+                    setChecklistItems([]);
+                    setChecklistLoadError(null);
                     closeConfirmDialog();
                 }
             });
         } else {
             setViewingTask(null);
             setEditedTask(null);
+            setChecklistItems([]);
+            setChecklistLoadError(null);
         }
     };
 
+    // A Type change also replaces the task's checklist, and that takes several requests. The form stays
+    // open and locked until all of them are done, so no other task can be opened or saved in between.
     const handleSaveChanges = async () => {
+        const isTypeChanged = editedTask.type !== viewingTask.type;
+        if (!isTypeChanged) {
+            await saveTaskChanges(false);
+            return;
+        }
+        // Without the saved checklist there is nothing to replace, and saving the new Type anyway
+        // would leave the task with a Type its checklist does not belong to.
+        if (!isChecklistLoaded) {
+            toast.error('The checklist has not loaded, so the Type cannot be changed yet. Retry loading the checklist, then save again.');
+            return;
+        }
+        if (isApplyingChecklistTemplateRef.current) return;
+
+        isApplyingChecklistTemplateRef.current = true;
+        setIsApplyingChecklistTemplate(true);
+        try {
+            await saveTaskChanges(true);
+        } finally {
+            isApplyingChecklistTemplateRef.current = false;
+            setIsApplyingChecklistTemplate(false);
+        }
+    };
+
+    const saveTaskChanges = async (shouldSwitchChecklist) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newLogs = [];
 
@@ -403,15 +671,59 @@ const HostTasks = () => {
         }
 
         const finalTask = { ...updatedTask, attachments: existingUrls };
+        const closeForm = () => {
+            setViewingTask(null);
+            setEditedTask(null);
+        };
 
         setTasks(tasks.map(t => t.id === finalTask.id ? finalTask : t));
-        setViewingTask(null);
-        setEditedTask(null);
+        if (!shouldSwitchChecklist) closeForm();
 
         try {
             await updateTask(finalTask.id, finalTask);
-        } catch {
+        } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+            alert(error.message || "Error saving changes");
+            closeForm();
+            return;
+        }
+
+        // Only once the task itself is saved: if the save had failed the task would still have its old
+        // Type, and its checklist must not have been replaced by the new Type's template.
+        if (shouldSwitchChecklist) {
+            await applyChecklistTemplate(finalTask.id, finalTask.type, checklistItems);
+            closeForm();
+        }
+    };
+
+    const handleAddChecklistItem = async (itemData) => {
+        try {
+            const created = await createChecklistItem(viewingTask.id, itemData);
+            setChecklistItems(prev => [...prev, created]);
+        } catch (error) {
+            alert(error.message || "Error adding checklist item");
+        }
+    };
+
+    const handleToggleChecklistItem = async (item) => {
+        const nextChecked = !item.isChecked;
+        setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: nextChecked } : i));
+        try {
+            await updateChecklistItem(item.id, { isChecked: nextChecked });
+        } catch (error) {
+            setChecklistItems(prev => prev.map(i => i.id === item.id ? { ...i, isChecked: item.isChecked } : i));
+            alert(error.message || "Error updating checklist item");
+        }
+    };
+
+    const handleRemoveChecklistItem = async (itemId) => {
+        const previousItems = checklistItems;
+        setChecklistItems(prev => prev.filter(i => i.id !== itemId));
+        try {
+            await deleteChecklistItem(itemId);
+        } catch (error) {
+            setChecklistItems(previousItems);
+            alert(error.message || "Error removing checklist item");
         }
     };
 
@@ -431,6 +743,59 @@ const HostTasks = () => {
             ));
         }
     };
+
+    const handleEscalateTask = async () => {
+        if (isEscalating) return;
+        const taskId = viewingTask.id;
+        setIsEscalating(true);
+        try {
+            await escalateTask(taskId);
+            const escalated_at = Date.now();
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, escalated_at } : t));
+            setViewingTask(prev => (prev?.id === taskId ? { ...prev, escalated_at } : prev));
+            setEditedTask(prev => (prev?.id === taskId ? { ...prev, escalated_at } : prev));
+            toast.success("Task escalated. The assignee will receive an email shortly.");
+        } catch (error) {
+            toast.error(error.message || "Error escalating task");
+        } finally {
+            setIsEscalating(false);
+        }
+    };
+
+    const reviewViewingTask = async (review, successMessage, changesToTask) => {
+        if (isReviewing) return;
+        const taskId = viewingTask.id;
+        setIsReviewing(true);
+        try {
+            await review(taskId, asHostId);
+        } catch (error) {
+            toast.error(error.message || "Error saving the decision");
+            return;
+        } finally {
+            setIsReviewing(false);
+        }
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...changesToTask } : t));
+        toast.success(successMessage);
+        setViewingTask(null);
+        setEditedTask(null);
+    };
+
+    const ownEmail = currentUser.email.toLowerCase();
+    const isAssignedToCurrentUser = Boolean(viewingTask?.assignee_team_member_id)
+        && ownEmail !== ''
+        && (viewingTask.assignee || '').toLowerCase() === ownEmail;
+
+    const handleApproveTask = () => reviewViewingTask(
+        approveTask,
+        "Task approved. The assignee will receive an email.",
+        { approved_at: Date.now() }
+    );
+
+    const handleRejectTask = () => reviewViewingTask(
+        rejectTask,
+        "Task rejected and reopened. The assignee will receive an email.",
+        { status: 'In progress', completed_date: null, completedAt: null, approved_at: null }
+    );
 
     const handleDeleteSingleTask = () => {
         setConfirmDialog({
@@ -518,6 +883,33 @@ const HostTasks = () => {
         return propertyOptions;
     }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
 
+    const createAssigneeChoices = useMemo(() => {
+        const hostChoice = currentUser.name
+            ? [{ id: HOST_ASSIGNEE_ID, label: `${currentUser.name}${currentUser.group ? ` (${currentUser.group})` : ' (Host)'}`, name: currentUser.name }]
+            : [];
+        const memberChoices = teamMembers
+            .filter(m => m.status === 'active')
+            .map(m => {
+                const displayName = m.member_name || m.member_email;
+                // The dropdown label still shows the email as a fallback, to tell
+                // apart members who share a role and have no name yet. But what
+                // gets saved as the task's assignee falls back to the role instead,
+                // so the table doesn't end up showing a raw email address.
+                const assigneeName = m.member_name || m.role;
+                return { id: m.id, label: `${displayName} (${m.role})`, name: assigneeName };
+            });
+        return [...hostChoice, ...memberChoices];
+    }, [currentUser, teamMembers]);
+
+    const editAssigneeChoices = useMemo(() => {
+        const currentId = editedTask?.assigneeSelection;
+        const currentLabel = String(editedTask?.assignee || "").trim();
+        if (currentId && currentLabel && !createAssigneeChoices.some(o => o.id === currentId)) {
+            return [...createAssigneeChoices, { id: currentId, label: currentLabel, name: currentLabel }];
+        }
+        return createAssigneeChoices;
+    }, [createAssigneeChoices, editedTask?.assigneeSelection, editedTask?.assignee]);
+
     const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
@@ -604,6 +996,7 @@ const HostTasks = () => {
             <div className="top-header">
                 <h2>Tasks</h2>
                 <div className="top-header-actions">
+                    <NotificationBell />
                     {managedHostId && !isPurelyPOM && (
                         <div className="task-context-toggle">
                             <button
@@ -688,26 +1081,46 @@ const HostTasks = () => {
                 isOpen={isModalOpen}
                 newTask={newTask}
                 propertyOptions={createPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={createAssigneeChoices}
+                checklistItems={newTask.checklistItems}
                 onInputChange={handleInputChange}
                 onPropertyChange={handlePropertyChange}
+                onAssigneeChange={handleAssigneeChange}
                 onFileChange={handleFileChange}
                 onSubmit={handleCreateTask}
                 onCancel={handleCancelModal}
+                onAddChecklistItem={handleAddDraftChecklistItem}
+                onToggleChecklistItem={handleToggleDraftChecklistItem}
+                onRemoveChecklistItem={handleRemoveDraftChecklistItem}
+                isSubmitting={isCreatingTask}
             />
 
             <TaskDetailsModal
                 viewingTask={viewingTask}
                 editedTask={editedTask}
                 editPropertyOptions={editPropertyOptions}
-                currentUser={currentUser}
+                assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}
                 onPropertyChange={handleEditPropertyChange}
+                onAssigneeChange={handleEditAssigneeChange}
                 onFileChange={handleEditFileChange}
                 onRemoveAttachment={handleRemoveAttachment}
                 onSave={handleSaveChanges}
                 onDelete={handleDeleteSingleTask}
                 onClose={closeTaskDetails}
+                checklistItems={checklistItems}
+                checklistLoadError={checklistLoadError}
+                isApplyingChecklistTemplate={isApplyingChecklistTemplate}
+                onAddChecklistItem={handleAddChecklistItem}
+                onToggleChecklistItem={handleToggleChecklistItem}
+                onRemoveChecklistItem={handleRemoveChecklistItem}
+                onRetryChecklistLoad={handleRetryChecklistLoad}
+                onEscalate={handleEscalateTask}
+                onApprove={handleApproveTask}
+                onReject={handleRejectTask}
+                canReview={!isAssignedToCurrentUser}
+                isReviewing={isReviewing}
+                isEscalating={isEscalating}
             />
 
             <ConfirmDialog confirmDialog={confirmDialog} onCancel={closeConfirmDialog} />

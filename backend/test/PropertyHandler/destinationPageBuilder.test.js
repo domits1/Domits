@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   buildDestinationNotFoundPage,
   buildDestinationPage,
+  buildDestinationUnavailablePage,
   escapeHtml,
 } from "../../functions/PropertyHandler/business/service/destinationPageBuilder.js";
 import { readDestinationSettings } from "../../functions/PropertyHandler/util/destination/destinationSettings.js";
@@ -29,7 +30,7 @@ describe("the destination page", () => {
     expect(page.title).toBe("Holiday rentals in Marbella | Domits");
     expect(page.canonical).toBe("https://www.domits.com/destinations/europe/spain/marbella");
     expect(page.description).toBe("Book 1 holiday rental in Marbella directly with the host on Domits.");
-    expect(page.cacheControl).toBe("public, max-age=60");
+    expect(page.cacheControl).toBe("public, max-age=300");
     expect(page.html).toContain(
       '<link rel="canonical" href="https://www.domits.com/destinations/europe/spain/marbella">'
     );
@@ -137,10 +138,20 @@ describe("the destination page", () => {
     expect(readJsonLd(page.html).itemListElement[0].item).toBe("https://acceptance.domits.com/destinations");
   });
 
-  it("renders a not found page that is never indexed and links back to the destinations", () => {
+  it("renders a not found page that is never indexed and links back to the destinations on the same host", () => {
     const html = buildDestinationNotFoundPage();
     expect(html).toContain('<meta name="robots" content="noindex, nofollow">');
-    expect(html).toContain('<a href="https://www.domits.com/destinations">All destinations</a>');
+    expect(html).toContain('<a href="/destinations">All destinations</a>');
+    expect(html).not.toContain("domits.com");
     expect(html).not.toContain("canonical");
+  });
+
+  it("renders an unavailable page that is never indexed, asks to try again and names no destination", () => {
+    const html = buildDestinationUnavailablePage();
+    expect(html).toContain('<meta name="robots" content="noindex, nofollow">');
+    expect(html).toContain("<title>Destinations unavailable | Domits</title>");
+    expect(html).toContain("Please try again in a minute.");
+    expect(html).not.toContain("canonical");
+    expect(html).not.toContain("No stays here yet");
   });
 });

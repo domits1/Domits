@@ -144,7 +144,9 @@ function WebsitePublicSitePage() {
           return;
         }
 
-        const nextPropertySnapshot = await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot);
+        const nextPropertySnapshot = await enrichWebsitePropertyDetails(nextRenderPayload.propertySnapshot, null, {
+          host: nextRenderPayload.host,
+        });
         if (!isMounted || nextPropertySnapshot === nextRenderPayload.propertySnapshot) {
           return;
         }

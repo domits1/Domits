@@ -2,68 +2,105 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
-export const handler = async (event) => {
+const OVERDUE_SWEEP_TASK = "notify-overdue-tasks";
+const DUE_SOON_SWEEP_TASK = "notify-due-soon-tasks";
 
+const isScheduledRun = (event, task) => event?.task === task && !event.httpMethod;
+const isOverdueSweep = (event) => isScheduledRun(event, OVERDUE_SWEEP_TASK);
+const isDueSoonSweep = (event) => isScheduledRun(event, DUE_SOON_SWEEP_TASK);
+
+const INTERNAL_ROUTES = {
+    "/internal/create-task": "internalCreateTask",
+};
+
+const ACTION_ROUTES = {
+    GET: {
+        'upload-url': 'getUploadUrl',
+        'view-url': 'getViewUrl',
+        'checklist': 'getChecklistItems',
+        'checklist-templates': 'getChecklistTemplates',
+        'notifications': 'getNotifications',
+    },
+    POST: {
+        'checklist': 'createChecklistItem',
+        'escalate': 'escalateTask',
+        'approve': 'approveTask',
+        'reject': 'rejectTask',
+    },
+    PATCH: {
+        'checklist': 'updateChecklistItem',
+        'notification-read': 'markNotificationRead',
+        'notifications-read-all': 'markAllNotificationsRead',
+    },
+    DELETE: {
+        'checklist': 'deleteChecklistItem',
+    },
+};
+
+const DEFAULT_ROUTES = {
+    GET: 'getTasks',
+    POST: 'createTask',
+    PATCH: 'updateTask',
+    DELETE: 'deleteTask',
+};
+
+const CORS_HEADERS = { "Access-Control-Allow-Origin": "*" };
+
+export const handler = async (event) => {
     try {
         if (!controller) {
             controller = new Controller();
         }
 
-        switch (event.httpMethod) {
-            case "GET":
-                if (event.queryStringParameters?.action === 'upload-url') {
-                    return await controller.getUploadUrl(event);
-                }
-                if (event.queryStringParameters?.action === 'view-url') {
-                    return await controller.getViewUrl(event);
-                }
-                if (event.queryStringParameters?.action === 'checklist') {
-                    return await controller.getChecklistItems(event);
-                }
-                return await controller.getTasks(event);
-
-            case "POST":
-                if (event.queryStringParameters?.action === 'checklist') {
-                    return await controller.createChecklistItem(event);
-                }
-                return await controller.createTask(event);
-
-            case "PATCH":
-                if (event.queryStringParameters?.action === 'checklist') {
-                    return await controller.updateChecklistItem(event);
-                }
-                return await controller.updateTask(event);
-
-            case "DELETE":
-                if (event.queryStringParameters?.action === 'checklist') {
-                    return await controller.deleteChecklistItem(event);
-                }
-                return await controller.deleteTask(event);
-
-            case "OPTIONS":
-                return {
-                    statusCode: 200,
-                    headers: {
-                        "Access-Control-Allow-Origin": "*",
-                        "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
-                        "Access-Control-Allow-Headers": "Content-Type,Authorization"
-                    }
-                };
-
-            default:
-                return {
-                    statusCode: 404,
-                    headers: { "Access-Control-Allow-Origin": "*" },
-                    body: JSON.stringify({ message: `Method ${event.httpMethod} not supported.` })
-                };
+        if (isOverdueSweep(event)) {
+            return await controller.runOverdueSweep(event);
         }
+
+        if (isDueSoonSweep(event)) {
+            return await controller.runDueSoonSweep(event);
+        }
+
+        const path = event.path || "";
+        for (const [suffix, methodName] of Object.entries(INTERNAL_ROUTES)) {
+            if (path.endsWith(suffix)) {
+                return await controller[methodName](event);
+            }
+        }
+
+        if (event.httpMethod === "OPTIONS") {
+            return {
+                statusCode: 200,
+                headers: {
+                    ...CORS_HEADERS,
+                    "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization"
+                }
+            };
+        }
+
+        const methodRoutes = ACTION_ROUTES[event.httpMethod];
+        if (!methodRoutes) {
+            return {
+                statusCode: 404,
+                headers: CORS_HEADERS,
+                body: JSON.stringify({ message: `Method ${event.httpMethod} not supported.` })
+            };
+        }
+
+        const action = event.queryStringParameters?.action;
+        const methodName = methodRoutes[action] || DEFAULT_ROUTES[event.httpMethod];
+        return await controller[methodName](event);
     } catch (error) {
+        // Nobody reads the answer to a scheduled run, so a failed sweep has to fail the invocation.
+        if (isOverdueSweep(event) || isDueSoonSweep(event)) {
+            throw error;
+        }
         return {
             statusCode: 500,
-            headers: { "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ 
+            headers: CORS_HEADERS,
+            body: JSON.stringify({
                 message: "Internal Server Error",
-                error: error.message 
+                error: error.message
             })
         };
     }

@@ -630,3 +630,34 @@
     gap: 16px;
   }
 }
+
+.specialRequestInput {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 84px;
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #111827;
+  resize: vertical;
+}
+
+.specialRequestInput:focus {
+  outline: none;
+  border-color: #166534;
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.15);
+}
+
+.specialRequestInput:disabled {
+  background: #f9fafb;
+  cursor: not-allowed;
+}
+
+.specialRequestSubmitBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

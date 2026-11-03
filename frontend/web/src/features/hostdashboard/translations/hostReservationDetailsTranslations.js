@@ -42,6 +42,7 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     totalPaid: "Total paid",
     method: "Method",
     bookedVia: "Booked via",
+    collectedByChannel: "Collected by the channel",
   },
   loading: {
     status: "Loading status...",
@@ -67,6 +68,7 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     AWAITING_PAYMENT: "Awaiting payment",
     FAILED: "Failed",
     DECLINED: "Declined",
+    CANCELLED: "Cancelled",
     INQUIRY: "Request",
   },
   paymentStatus: {
@@ -85,6 +87,10 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     DECLINED: {
       label: "Declined",
       text: "Payment declined",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      text: "Reservation cancelled",
     },
     INQUIRY: {
       label: "Request",
@@ -108,6 +114,15 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
       "Request accepted. {count} other overlapping requests were automatically declined.",
     declined: "Request declined.",
     updateFailed: "Failed to update request status.",
+  },
+  checkOutAction: {
+    title: "Check out guest",
+    subtitle: "Mark this booking as checked out once the guest has left. This creates a cleaning task.",
+    button: "Check out guest",
+    checkingOut: "Checking out...",
+    confirmMessage: "Mark this booking as checked out? This cannot be undone.",
+    success: "Booking marked as checked out.",
+    failed: "Failed to mark booking as checked out.",
   },
   states: {
     failedToLoad: "Failed to load reservation details.",
@@ -161,6 +176,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
       ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.DECLINED,
       ...translation?.paymentStatus?.DECLINED,
     },
+    CANCELLED: {
+      ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.CANCELLED,
+      ...translation?.paymentStatus?.CANCELLED,
+    },
     INQUIRY: {
       ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus.INQUIRY,
       ...translation?.paymentStatus?.INQUIRY,
@@ -169,6 +188,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
   requestActions: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.requestActions,
     ...translation?.requestActions,
+  },
+  checkOutAction: {
+    ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.checkOutAction,
+    ...translation?.checkOutAction,
   },
   states: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.states,

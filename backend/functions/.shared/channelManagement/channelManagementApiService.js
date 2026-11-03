@@ -7,8 +7,11 @@ import ReservationLinkRepository from "../integrations/repositories/reservationL
 import ChannexBookingAvailabilityBridge, {
   ChannexBookingAvailabilityRepository,
 } from "./channexBookingAvailabilityBridge.js";
+import { CHANNEX_STATUS } from "./channelManagementConstants.js";
 import ChannelManagementService from "./channelManagementService.js";
 import ChannexCredentialStore from "./providers/channex/credentialStore.js";
+import ChannexWebhookSecretVerifier from "./providers/channex/webhookSecretVerifier.js";
+import { createSecretsClient } from "./providers/integrationCredentialStore.js";
 import ChannexProviderClient from "./providers/channex/providerClient.js";
 import HoliduCredentialStore from "./providers/holidu/credentialStore.js";
 import HoliduProviderClient from "./providers/holidu/providerClient.js";
@@ -20,13 +23,14 @@ import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRep
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
 import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
+import { CHANNEL_CHANNEX, isActiveChannexPropertyMapping } from "./utils/channexBookingPollUtils.js";
 import ChannexAriSchemaGuard from "./services/channexAriSchemaGuard.js";
 import ChannexAriOrchestrationService from "./services/channexAriOrchestrationService.js";
 import ChannexAriPayloadService from "./services/channexAriPayloadService.js";
 import ChannexAvailabilitySyncService from "./services/channexAvailabilitySyncService.js";
 import ChannexBookingPollingService from "./services/channexBookingPollingService.js";
 import ChannexBookingRevisionImportService from "./services/channexBookingRevisionImportService.js";
-import ChannexCertificationService from "./services/channexCertificationService.js";
+import ChannexBookingWebhookService from "./services/channexBookingWebhookService.js";
 import ChannexDiagnosticsService from "./services/channexDiagnosticsService.js";
 import ChannexFullSyncService from "./services/channexFullSyncService.js";
 import ChannexMappingService from "./services/channexMappingService.js";
@@ -49,6 +53,8 @@ const appendMissingMappingNotes = (notes, missingMappings) =>
   Array.isArray(missingMappings) && missingMappings.length
     ? [...notes, `Missing mappings: ${missingMappings.join(", ")}`]
     : notes;
+
+const CHANNEX_BOOKING_WEBHOOK_SECRET_NAME = "domits/channex/webhook/bookings";
 
 const describeLocalError = (error) => ({
   code: error?.code || error?.name || "INTERNAL_ERROR",
@@ -76,7 +82,14 @@ export default class ChannelManagementApiService {
     holiduProviderClient = new HoliduProviderClient(),
     channexCredentialStore = new ChannexCredentialStore(),
     channexProviderClient = new ChannexProviderClient(),
+    channexWebhookSecretVerifier = new ChannexWebhookSecretVerifier({
+      secrets: createSecretsClient(process.env.AWS_REGION || "eu-north-1"),
+      secretName: CHANNEX_BOOKING_WEBHOOK_SECRET_NAME,
+    }),
   } = {}) {
+    this.accounts = accounts;
+    this.props = props;
+    this.channexWebhookSecretVerifier = channexWebhookSecretVerifier;
     this.channelManagementService = new ChannelManagementService({
       accounts,
       sync,
@@ -143,10 +156,6 @@ export default class ChannelManagementApiService {
       logChannexFullCertificationSync: (...args) =>
         this.channexDiagnosticsService.logChannexFullCertificationSync(...args),
     });
-    this.channexCertificationService = new ChannexCertificationService({
-      externalBookingImportRepository,
-      channexBookingAvailabilityBridge,
-    });
     this.channexBookingRevisionImportService =
       new ChannexBookingRevisionImportService({
         accounts,
@@ -198,6 +207,14 @@ export default class ChannelManagementApiService {
           ...args
         ),
     });
+    this.channexBookingWebhookService = new ChannexBookingWebhookService({
+      props,
+      accounts,
+      channexCredentialStore,
+      sync,
+      pullLatestChannexBookingsForResolvedContext: (...args) =>
+        this.channexBookingRevisionImportService.pullLatestChannexBookingsForResolvedContext(...args),
+    });
     this.channexAriOutboxWorker = new ChannexAriOutboxWorker({
       outbox: new ChannexAriOutboxRepository(),
       props,
@@ -206,6 +223,14 @@ export default class ChannelManagementApiService {
       schemaGuard: new ChannexAriSchemaGuard(new ChannelManagementSchemaRepository()),
       syncCalendarChange: (...args) => this.syncChannexCalendarChange(...args),
     });
+  }
+
+  async verifyChannexBookingWebhookSecret(headers) {
+    return this.channexWebhookSecretVerifier.verify(headers);
+  }
+
+  async receiveChannexBookingWebhook(...args) {
+    return this.channexBookingWebhookService.receiveBookingEvent(...args);
   }
 
   async connectHolidu(...args) {
@@ -220,8 +245,30 @@ export default class ChannelManagementApiService {
     return this.channelManagementService.disconnectHolidu(...args);
   }
 
-  async connectChannex(...args) {
-    return this.channelManagementService.connectChannex(...args);
+  // While an account is not connected, the outbox skips its changes instead of sending them. So
+  // when it is connected again, every active mapping starts over with its complete current state
+  // (#3572), the same full sync a newly saved mapping gets (#3282). A first connection has no
+  // mappings yet, and an account that stayed connected missed nothing.
+  async connectChannex(body) {
+    const previous = await this.accounts.findByUserIdAndChannel(body?.userId, CHANNEL_CHANNEX);
+    const result = await this.channelManagementService.connectChannex(body);
+    if (result?.statusCode !== 200) return result;
+
+    const reconnected =
+      Boolean(previous) && previous.status !== CHANNEX_STATUS.CONNECTED && result.response?.connected === true;
+    const fullSyncQueuedCount = reconnected ? await this.queueFullSyncForActiveMappings(previous.id) : 0;
+    return { ...result, response: { ...result.response, fullSyncQueuedCount } };
+  }
+
+  async queueFullSyncForActiveMappings(integrationAccountId) {
+    const mappings = await this.props.listByAccountId(integrationAccountId);
+    const activeMappings = (mappings || []).filter(isActiveChannexPropertyMapping);
+    let queued = 0;
+    // One at a time: each full sync is its own transaction, and a failed one is logged inside.
+    for (const mapping of activeMappings) {
+      if (await this.channexMappingService.queueGoLiveFullSync(mapping.domitsPropertyId)) queued += 1;
+    }
+    return queued;
   }
 
   async checkChannexStatus(...args) {
@@ -306,10 +353,6 @@ export default class ChannelManagementApiService {
 
   async listChannexBookingRevisions(...args) {
     return this.channexBookingRevisionImportService.listChannexBookingRevisions(...args);
-  }
-
-  async cancelChannexCertificationBooking(...args) {
-    return this.channexCertificationService.cancelChannexCertificationBooking(...args);
   }
 
   async receiveChannexBookingRevisions(...args) {

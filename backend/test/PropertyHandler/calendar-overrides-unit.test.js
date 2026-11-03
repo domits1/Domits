@@ -23,7 +23,7 @@ const buildCalendarController = ({
 } = {}) => {
   const controller = new PropertyController();
   controller.authManager = {
-    authorizePropertyCalendarOverrideRequest: authorizeError
+    authorizePropertyOwnerOrCoHostRequest: authorizeError
       ? jest.fn().mockRejectedValue(authorizeError)
       : jest.fn().mockResolvedValue(authorizeResult),
   };
@@ -123,9 +123,7 @@ describe("Property calendar override authorization", () => {
       property: { id: "property-1", hostId: "owner-host" },
     });
 
-    await expect(authManager.authorizePropertyCalendarOverrideRequest("token", "property-1")).resolves.toBe(
-      "owner-host"
-    );
+    await expect(authManager.authorizePropertyOwnerOrCoHostRequest("token", "property-1")).resolves.toBe("owner-host");
     expect(authManager.teamMemberRepository.findActiveMembershipByMemberAndHost).not.toHaveBeenCalled();
   });
 
@@ -136,9 +134,7 @@ describe("Property calendar override authorization", () => {
       membership: { id: "membership-1", status: "active" },
     });
 
-    await expect(authManager.authorizePropertyCalendarOverrideRequest("token", "property-1")).resolves.toBe(
-      "owner-host"
-    );
+    await expect(authManager.authorizePropertyOwnerOrCoHostRequest("token", "property-1")).resolves.toBe("owner-host");
     expect(authManager.teamMemberRepository.findActiveMembershipByMemberAndHost).toHaveBeenCalledWith(
       "cohost-user",
       "owner-host"
@@ -151,7 +147,7 @@ describe("Property calendar override authorization", () => {
       property: { id: "property-1", hostId: "owner-host" },
     });
 
-    await expect(authManager.authorizePropertyCalendarOverrideRequest("token", "property-1")).rejects.toThrow(
+    await expect(authManager.authorizePropertyOwnerOrCoHostRequest("token", "property-1")).rejects.toThrow(
       "You must be the owner or an active co-host of the property to access it."
     );
   });
@@ -172,7 +168,7 @@ describe("Property calendar override authorization", () => {
 
     expect(getResponse.statusCode).toBe(200);
     expect(patchResponse.statusCode).toBe(200);
-    expect(controller.authManager.authorizePropertyCalendarOverrideRequest).toHaveBeenCalledTimes(2);
+    expect(controller.authManager.authorizePropertyOwnerOrCoHostRequest).toHaveBeenCalledTimes(2);
     expect(controller.propertyService.updatePropertyCalendarOverrides).toHaveBeenCalledWith(
       "property-1",
       [

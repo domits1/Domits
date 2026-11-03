@@ -317,6 +317,13 @@ export class PropertyDeletionRepository {
 
       await this.deleteRowsByScopedIdsIfExists(
         transactionManager,
+        "static_page_outbox",
+        ["site_id"],
+        standaloneSiteIds
+      );
+
+      await this.deleteRowsByScopedIdsIfExists(
+        transactionManager,
         "standalone_site_domain",
         ["siteid", "site_id", "siteId"],
         standaloneSiteIds

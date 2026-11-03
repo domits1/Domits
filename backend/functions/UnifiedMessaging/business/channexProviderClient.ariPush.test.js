@@ -1,13 +1,4 @@
-const ChannexProviderClient = require("../.shared/channelManagement/providers/channex/providerClient.js").default;
-
-const originalFetch = global.fetch;
-const CREDENTIALS = { apiKey: "test-api-key" };
-
-const jsonResponse = (status, body) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(body),
-});
+const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = require("./channexProviderClientTestUtils.js");
 
 const availabilityGroup = (overrides = {}) => ({
   externalPropertyId: "ext-property-1",
@@ -50,15 +41,11 @@ const PUSH_METHODS = [
 ];
 
 describe("ChannexProviderClient ARI push", () => {
+  useMockedFetch();
   let client;
 
   beforeEach(() => {
     client = new ChannexProviderClient();
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
   });
 
   describe("missing apiKey short-circuits before any request", () => {
@@ -137,6 +124,21 @@ describe("ChannexProviderClient ARI push", () => {
         expect(JSON.parse(init.body)).toEqual({ values: pushed.values });
       }
     );
+
+    // Channex certification feedback (12 Oct): consecutive dates with the same values go out
+    // as one date_from/date_to range.
+    it.each(PUSH_METHODS)("$method sends consecutive equal dates as one range", async ({ call, group }) => {
+      global.fetch.mockResolvedValue(jsonResponse(200, { data: [{ id: "task-1" }] }));
+      const [first] = group().values;
+      const pushed = group({ values: [first, { ...first, date: "2026-06-02" }, { ...first, date: "2026-06-03" }] });
+
+      await call(client, [pushed]);
+
+      const { date, ...rest } = first;
+      expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+        values: [{ ...rest, date_from: "2026-06-01", date_to: "2026-06-03" }],
+      });
+    });
 
     it.each(PUSH_METHODS)("$method reports SYNCED with the first returned task id", async ({ call, group }) => {
       global.fetch.mockResolvedValue(jsonResponse(200, { data: [{ id: "task-1" }, { id: "task-2" }] }));

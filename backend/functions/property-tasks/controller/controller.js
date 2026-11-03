@@ -1,4 +1,5 @@
-import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl, escalateTask, approveTask, rejectTask } from "../business/service/taskService.js";
+import { canReviewCompletedTasks } from "../business/model/reviewRoles.js";
 import {
     getChecklistItems,
     createChecklistItem,
@@ -6,9 +7,21 @@ import {
     deleteChecklistItem,
 } from "../business/service/taskChecklistService.js";
 import { resolveEffectiveHostId } from "../business/service/pomService.js";
+import { notifyOverdueTasks } from "../business/service/taskOverdueService.js";
+import { notifyDueSoonTasks } from "../business/service/taskDueSoonService.js";
+import {
+    listNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+} from "../business/service/taskInAppNotificationService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
+import { isValidInternalSecret } from "../.shared/internalSecretAuth.js";
+import { CHECKLIST_TEMPLATES } from "../business/model/checklistTemplates.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+
+const DEFAULT_SWEEP_LIMIT = 20;
+const MAX_SWEEP_LIMIT = 100;
 
 export class Controller {
     constructor() {
@@ -18,7 +31,16 @@ export class Controller {
     async resolveHost(event) {
         const { username, role } = await this.authManager.getUser(event.headers?.Authorization);
         const asHostId = event.queryStringParameters?.asHostId || null;
-        return await resolveEffectiveHostId(username, role, asHostId);
+        return { ...(await resolveEffectiveHostId(username, role, asHostId)), username, role };
+    }
+
+    async getChecklistTemplates(event) {
+        try {
+            await this.authManager.getUser(event.headers?.Authorization);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(CHECKLIST_TEMPLATES) };
+        } catch (error) {
+            return this.handleError(error);
+        }
     }
 
     async getTasks(event) {
@@ -46,11 +68,28 @@ export class Controller {
 
     async updateTask(event) {
         try {
-            const { effectiveHostId } = await this.resolveHost(event);
+            const { effectiveHostId, isPOM } = await this.resolveHost(event);
             const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
-            const result = await updateTask(effectiveHostId, taskId, updateData);
+            const result = await updateTask(effectiveHostId, taskId, updateData, { actorIsTeamMember: isPOM });
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async internalCreateTask(event) {
+        try {
+            const providedSecret = event.headers?.["x-internal-secret"];
+            if (!isValidInternalSecret(providedSecret, process.env.INTERNAL_TASK_SECRET)) {
+                throw new UnauthorizedException("Invalid internal caller.");
+            }
+            const { hostId, taskData } = JSON.parse(event.body || "{}");
+            if (!hostId) {
+                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "hostId is required" }) };
+            }
+            const result = await createTask(hostId, taskData);
+            return { statusCode: 201, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
         }
@@ -137,6 +176,39 @@ export class Controller {
         }
     }
 
+    async escalateTask(event) {
+        try {
+            const { effectiveHostId } = await this.resolveHost(event);
+            const taskId = event.queryStringParameters?.id;
+            const result = await escalateTask(effectiveHostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async approveTask(event) {
+        return await this.reviewTask(event, approveTask);
+    }
+
+    async rejectTask(event) {
+        return await this.reviewTask(event, rejectTask);
+    }
+
+    async reviewTask(event, review) {
+        try {
+            const { effectiveHostId, username, role } = await this.resolveHost(event);
+            if (!canReviewCompletedTasks(role)) {
+                throw new UnauthorizedException("Only the host or a manager can approve or reject a task.");
+            }
+            const taskId = event.queryStringParameters?.id;
+            const result = await review(effectiveHostId, taskId, username);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
     async deleteChecklistItem(event) {
         try {
             const { effectiveHostId } = await this.resolveHost(event);
@@ -145,6 +217,58 @@ export class Controller {
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
+        }
+    }
+
+    async getNotifications(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await listNotifications(username);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async markNotificationRead(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await markNotificationAsRead(username, event.queryStringParameters?.id);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async markAllNotificationsRead(event) {
+        try {
+            const { username } = await this.authManager.getUser(event.headers?.Authorization);
+            const result = await markAllNotificationsAsRead(username);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async runOverdueSweep(event) {
+        return await this.runSweep(event, notifyOverdueTasks, "overdue");
+    }
+
+    async runDueSoonSweep(event) {
+        return await this.runSweep(event, notifyDueSoonTasks, "due soon");
+    }
+
+    async runSweep(event, sweep, label) {
+        const requested = Number(event.limit);
+        const limit = Number.isInteger(requested) && requested > 0
+            ? Math.min(requested, MAX_SWEEP_LIMIT)
+            : DEFAULT_SWEEP_LIMIT;
+        try {
+            const result = await sweep({ limit });
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            console.error(`The ${label} sweep failed`, error);
+            throw error;
         }
     }
 

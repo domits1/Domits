@@ -22,6 +22,11 @@ const mockBookingRepository = {
   findBookingsForGuestHostProperty: jest.fn(),
   hostOwnsProperty: jest.fn(),
 };
+const mockIntegrationAccountRepository = {
+  getById: jest.fn(),
+};
+const mockWhatsAppAdapterInstance = { sendMessage: jest.fn() };
+const mockChannexAdapterInstance = { sendMessage: jest.fn() };
 
 jest.mock("../data/messageRepository.js", () => ({
   __esModule: true,
@@ -41,9 +46,17 @@ jest.mock("../data/bookingRepository.js", () => ({
 
 jest.mock("./whatsappProviderAdapter.js", () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({
-    sendMessage: jest.fn(),
-  })),
+  default: jest.fn().mockImplementation(() => mockWhatsAppAdapterInstance),
+}));
+
+jest.mock("./channexProviderAdapter.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockChannexAdapterInstance),
+}));
+
+jest.mock("../.shared/integrations/repositories/integrationAccountRepository.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockIntegrationAccountRepository),
 }));
 
 const MessageService = require("./messageService.js").default;
@@ -557,5 +570,66 @@ describe("MessageService authorization and booking scoping", () => {
       "database offline"
     );
     expect(mockMessageRepository.createMessage).not.toHaveBeenCalled();
+  });
+
+  describe("owner check: new conversation on an external provider", () => {
+    const externalConversationPayload = (platform) => ({
+      recipientId: "guest-1",
+      platform,
+      integrationAccountId: "integration-9",
+      externalThreadId: `${platform.toLowerCase()}-thread-9`,
+      content: "hi",
+    });
+
+    beforeEach(() => {
+      mockThreadRepository.upsertExternalThread.mockResolvedValue(
+        thread({ id: "external-thread-9", integrationAccountId: "integration-9" })
+      );
+      mockMessageRepository.createMessage.mockImplementation(async (row) => ({ id: "message-1", ...row }));
+      mockChannexAdapterInstance.sendMessage.mockResolvedValue({ providerMessageId: "msg-1", accepted: true });
+      mockWhatsAppAdapterInstance.sendMessage.mockResolvedValue({ providerMessageId: "wamid-1", accepted: true });
+    });
+
+    test("rejects a new CHANNEX conversation when the integration belongs to a different host", async () => {
+      mockIntegrationAccountRepository.getById.mockResolvedValue({ id: "integration-9", userId: "other-host" });
+
+      await expect(service.sendMessage(externalConversationPayload("CHANNEX"), hostAuth)).rejects.toMatchObject({
+        statusCode: 403,
+        code: "FORBIDDEN",
+      });
+      expect(mockChannexAdapterInstance.sendMessage).not.toHaveBeenCalled();
+    });
+
+    test("rejects a new WHATSAPP conversation when the integration belongs to a different host", async () => {
+      mockIntegrationAccountRepository.getById.mockResolvedValue({ id: "integration-9", userId: "other-host" });
+
+      await expect(service.sendMessage(externalConversationPayload("WHATSAPP"), hostAuth)).rejects.toMatchObject({
+        statusCode: 403,
+        code: "FORBIDDEN",
+      });
+      expect(mockWhatsAppAdapterInstance.sendMessage).not.toHaveBeenCalled();
+    });
+
+    test("allows a new CHANNEX conversation when the integration belongs to the sending host", async () => {
+      mockIntegrationAccountRepository.getById.mockResolvedValue({ id: "integration-9", userId: "host-1" });
+
+      const result = await service.sendMessage(externalConversationPayload("CHANNEX"), hostAuth);
+
+      expect(result.statusCode).toBe(201);
+      expect(mockChannexAdapterInstance.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ integrationAccountId: "integration-9" })
+      );
+    });
+
+    test("allows a new WHATSAPP conversation when the integration belongs to the sending host", async () => {
+      mockIntegrationAccountRepository.getById.mockResolvedValue({ id: "integration-9", userId: "host-1" });
+
+      const result = await service.sendMessage(externalConversationPayload("WHATSAPP"), hostAuth);
+
+      expect(result.statusCode).toBe(201);
+      expect(mockWhatsAppAdapterInstance.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ integrationAccountId: "integration-9" })
+      );
+    });
   });
 });

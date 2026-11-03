@@ -65,6 +65,7 @@ const buildController = ({ rows, siteRepository } = {}) => {
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: async () => {} };
   controller.propertyService = { getPublicCalendarAvailability: async () => ({}) };
+  controller.websitePublicHostService = { loadPublicHost: async () => null };
   return { controller, domainRepository };
 };
 

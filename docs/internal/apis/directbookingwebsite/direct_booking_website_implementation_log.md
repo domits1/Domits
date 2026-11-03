@@ -1171,7 +1171,7 @@ Evidence (commit(s), file(s), docs):
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.jsx`
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteTemplatePreview.module.scss`
   - `frontend/web/src/features/hostdashboard/website/rendering/WebsiteContactWidget.jsx`
-  - `frontend/web/src/features/hostdashboard/website/services/websiteContactService.js`
+  - `frontend/web/src/features/hostdashboard/website/services/websiteContactService.js` (removed on 2026-10-06; the public site contacts the host through WhatsApp)
 - Docs:
   - `direct_booking_website_frontend_status.md`
 

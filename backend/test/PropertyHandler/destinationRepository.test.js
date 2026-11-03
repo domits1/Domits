@@ -22,23 +22,35 @@ const buildClient = ({
   queryRows = [],
   failOn = null,
   conflicts = 0,
+  conflictOn = "property_destination",
+  concurrent = {},
 } = {}) => {
   const statements = [];
+  const names = new Map();
   let remainingConflicts = conflicts;
-  const answer = async (statement, parameters) => {
+  const answer = async (statement, parameters, structured) => {
     statements.push({ statement, parameters });
     if (failOn && statement.includes(failOn)) {
       throw new Error(`failed on ${failOn}`);
     }
-    if (remainingConflicts > 0 && statement.includes("property_destination")) {
+    if (remainingConflicts > 0 && (statement.includes(conflictOn) || parameters?.[1] === conflictOn)) {
       remainingConflicts -= 1;
+      Object.entries(concurrent).forEach(([id, name]) => names.set(id, name));
       throw Object.assign(new Error("OC000 change conflicts with another transaction"), { code: "40001" });
+    }
+    if (statement.trim().startsWith("SELECT display_name")) {
+      const records = names.has(parameters[0]) ? [{ display_name: names.get(parameters[0]) }] : [];
+      return structured ? { records } : records;
+    }
+    if (statement.includes(" AS d (") && (!names.has(parameters[0]) || parameters[8] === true)) {
+      names.set(parameters[0], parameters[5]);
     }
     return { records: statement.includes("property_destination") ? mappingRecords : [] };
   };
   const client = {
     options: { schema: "main" },
     statements,
+    names,
     committed: false,
     rolledBack: false,
     transaction: jest.fn(async (runInTransaction) => {
@@ -75,12 +87,15 @@ describe("the destination repository", () => {
 
     expect(client.committed).toBe(true);
     expect(kinds(client)).toEqual([
+      "SELECT display_name FROM",
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.destination`,
       `INSERT INTO ${SCHEMA}.property_destination`,
     ]);
-    const upserts = client.statements.slice(0, 3);
+    expect(client.statements[0].statement).toBe(`SELECT display_name FROM ${SCHEMA}.destination WHERE id = $1`);
+    expect(client.statements[0].parameters).toEqual([PATHS[2]]);
+    const upserts = client.statements.slice(1, 4);
     expect(upserts.map(({ parameters }) => [parameters[0], parameters[2]])).toEqual([
       [PATHS[0], null],
       [PATHS[1], PATHS[0]],
@@ -95,8 +110,11 @@ describe("the destination repository", () => {
       "Marbella",
       "ES",
     ]);
-    expect(upserts[0].statement).toContain("WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name");
-    const mapping = client.statements[3];
+    expect(upserts.map(({ parameters }) => parameters[8])).toEqual([true, true, true]);
+    expect(upserts[2].statement.replace(/\s+/g, " ")).toBe(
+      `INSERT INTO ${SCHEMA}.destination AS d (id, type, parent_id, slug, path, display_name, country_code, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8) ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = EXCLUDED.updated_at WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name`
+    );
+    const mapping = client.statements[4];
     expect(mapping.statement).toContain(
       `JOIN ${SCHEMA}.property p ON p.id = l.property_id\n      WHERE l.property_id = $1\n        AND l.country = $4\n        AND l.city = $5`
     );
@@ -110,6 +128,26 @@ describe("the destination repository", () => {
     expect(await sync(chain, { sourceCountry: "Spain", sourceCity: " - ", now: 1 })).toBe(true);
     expect(client.statements.map(({ parameters }) => parameters[0])).toEqual([PATHS[0], PATHS[1], "property-1"]);
     expect(client.statements.at(-1).parameters).toEqual(["property-1", PATHS[1], 1, "Spain", " - "]);
+  });
+
+  it("never lets a weaker spelling replace a stored city name, whatever order host saves, backfills and lost conflicts write in", async () => {
+    const amsterdam = "/destinations/europe/netherlands/amsterdam";
+    const cases = [
+      [["Amsterdam", "amsterdam "], "Amsterdam"],
+      [["amsterdam ", "Amsterdam"], "Amsterdam"],
+      [["AMSTERDAM", "Amsterdam", "amsterdam", "AMSTERDAM"], "Amsterdam"],
+      [["amsterdam", "AMSTERDAM", "amsterdam"], "AMSTERDAM"],
+      [["amsterdam "], "amsterdam"],
+      [["Evora", "Évora", "évora", "ÉVORA"], "Évora", {}, "Portugal"],
+      [["amsterdam"], "Amsterdam", { conflicts: 1, conflictOn: "city", concurrent: { [amsterdam]: "Amsterdam" } }],
+    ];
+    for (const [writes, expected, options, country = "Netherlands"] of cases) {
+      const client = buildClient(options);
+      for (const city of writes)
+        await sync(resolveDestinationChain({ country, city }), { sourceCountry: country, sourceCity: city });
+      const { path } = resolveDestinationChain({ country, city: writes[0] }).city;
+      expect([writes, client.names.get(path)]).toEqual([writes, expected]);
+    }
   });
 
   it("binds the exact stored address, and answers false when no location of an existing property carries it any more", async () => {

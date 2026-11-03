@@ -168,9 +168,6 @@ const buildBookingAvailabilityEvidence = (overrides = {}) => ({
   ...overrides,
 });
 
-const buildCancellationAvailabilityEvidence = (overrides = {}) =>
-  buildBookingAvailabilityEvidence({ trigger: "BOOKING_CANCELLED", ...overrides });
-
 const createListByAccountRepository = (rows) => ({
   listByAccountId: jest.fn().mockResolvedValue(rows),
 });
@@ -353,7 +350,6 @@ const createService = ({
 
 module.exports = {
   buildBookingAvailabilityEvidence,
-  buildCancellationAvailabilityEvidence,
   buildFeedRevision,
   buildImportedBookingRow,
   buildIntegrationAccount,

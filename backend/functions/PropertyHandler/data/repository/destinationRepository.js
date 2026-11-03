@@ -61,7 +61,13 @@ const upsertDestinationStatement = (
       DO UPDATE SET
         display_name = EXCLUDED.display_name,
         updated_at = EXCLUDED.updated_at
-      WHERE d.display_name IS DISTINCT FROM EXCLUDED.display_name`;
+      WHERE $9::boolean AND d.display_name IS DISTINCT FROM EXCLUDED.display_name`;
+
+const nameRank = (name) => {
+  const text = String(name ?? "");
+  const hasCapital = text !== text.toLowerCase();
+  return Number(hasCapital) + Number(hasCapital && text !== text.toUpperCase());
+};
 
 const locationMatches = (schemaName) => `SELECT 1
       FROM ${locationTableName(schemaName)} l
@@ -89,6 +95,14 @@ export class DestinationRepository {
           [chain.country, chain.continent.path, chain.country.code],
           ...(chain.city ? [[chain.city, chain.country.path, chain.country.code]] : []),
         ];
+        const stored = chain.city
+          ? await manager.queryRunner.query(
+              `SELECT display_name FROM ${destinationTableName(schemaName)} WHERE id = $1`,
+              [chain.city.path],
+              true
+            )
+          : null;
+        const mayRename = nameRank(chain.city?.name) >= nameRank(stored?.records?.[0]?.display_name);
         for (const [destination, parentId, countryCode] of rows) {
           await manager.queryRunner.query(
             upsertDestinationStatement(destinationTableName(schemaName)),
@@ -101,6 +115,7 @@ export class DestinationRepository {
               destination.name,
               countryCode,
               now,
+              destination !== chain.city || mayRename,
             ],
             true
           );

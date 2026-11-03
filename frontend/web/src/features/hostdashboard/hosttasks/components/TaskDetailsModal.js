@@ -4,6 +4,7 @@ import { LuX } from 'react-icons/lu';
 import { getTodayString } from '../utils/taskFilters';
 import { TASK_TYPE_OPTIONS } from '../utils/taskTypeOptions';
 import AttachmentThumb from './AttachmentThumb';
+import ChecklistSection from './ChecklistSection';
 
 const STATUS_OPTIONS = [
     { value: 'Pending',     label: '● Pending',     cls: 'status-pending' },
@@ -12,6 +13,8 @@ const STATUS_OPTIONS = [
     { value: 'Overdue',     label: '● Overdue',     cls: 'status-overdue' },
     { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
 ];
+
+const CLOSED_STATUSES = ['Completed', 'Cancelled'];
 
 const PRIORITY_OPTIONS = [
     { value: 'Low',    label: 'Low',    cls: 'priority-low' },
@@ -24,14 +27,28 @@ const TaskDetailsModal = ({
     viewingTask,
     editedTask,
     editPropertyOptions,
-    currentUser,
+    assigneeOptions,
+    checklistItems,
+    checklistLoadError,
+    isApplyingChecklistTemplate,
     onEditChange,
     onPropertyChange,
+    onAssigneeChange,
     onFileChange,
     onRemoveAttachment,
+    onAddChecklistItem,
+    onToggleChecklistItem,
+    onRemoveChecklistItem,
+    onRetryChecklistLoad,
     onSave,
     onDelete,
     onClose,
+    onEscalate,
+    onApprove,
+    onReject,
+    canReview = true,
+    isReviewing = false,
+    isEscalating = false,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -45,10 +62,15 @@ const TaskDetailsModal = ({
     if (!viewingTask || !editedTask) return null;
 
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
+    const isApproved = viewingTask.status === 'Completed' && Boolean(viewingTask.approved_at);
+    const isWaitingForReview = viewingTask.status === 'Completed' && !viewingTask.approved_at && canReview;
+    const canEscalate = !CLOSED_STATUSES.includes(viewingTask.status) && !viewingTask.escalated_at;
+    // Nothing happens to the checklist until Save: a different Type here only changes the form.
+    const isSwitchingType = editedTask.type !== viewingTask.type;
 
     return (
         <>
-            <button className="modal-backdrop" onClick={onClose} aria-label="Close modal" />
+            <button className="modal-backdrop" onClick={onClose} aria-label="Close modal" disabled={isApplyingChecklistTemplate} />
             <div className="modal-overlay">
                 <div className="modal-content-large task-details-modal">
                     <div className="modal-header details-header">
@@ -59,7 +81,7 @@ const TaskDetailsModal = ({
                             onChange={onEditChange}
                             placeholder="Task title"
                         />
-                        <button className="close-btn" onClick={onClose}><LuX /></button>
+                        <button className="close-btn" onClick={onClose} disabled={isApplyingChecklistTemplate}><LuX /></button>
                     </div>
 
                     <div className="details-badges-row">
@@ -131,13 +153,15 @@ const TaskDetailsModal = ({
                         <div className="form-row-grid">
                             <div className="form-group">
                                 <label htmlFor='task-assignee'>Assignee</label>
-                                <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={onEditChange}>
-                                    {currentUser.name && <option value={currentUser.name}>{currentUser.name}</option>}
+                                <select id='task-assignee' name="assignee" value={editedTask.assigneeSelection || ''} onChange={onAssigneeChange}>
+                                    {assigneeOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-type'>Type</label>
-                                <select id='task-type' name="type" value={editedTask.type} onChange={onEditChange}>
+                                <select id='task-type' name="type" value={editedTask.type} onChange={onEditChange} disabled={isApplyingChecklistTemplate}>
                                     {TASK_TYPE_OPTIONS.map(option => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
@@ -152,6 +176,23 @@ const TaskDetailsModal = ({
                                 <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={onEditChange} onClick={(e) => e.target.showPicker?.()} />
                             </div>
                         </div>
+
+                        {isSwitchingType && (
+                            <p className="checklist-switch-notice" role="status">
+                                Saving will replace this checklist with the {editedTask.type} checklist.
+                                Existing items, including checked and custom ones, will be removed.
+                            </p>
+                        )}
+
+                        <ChecklistSection
+                            items={checklistItems}
+                            loadError={checklistLoadError}
+                            isApplyingTemplate={isApplyingChecklistTemplate}
+                            onAddItem={onAddChecklistItem}
+                            onToggleChecked={onToggleChecklistItem}
+                            onRemoveItem={onRemoveChecklistItem}
+                            onRetryLoad={onRetryChecklistLoad}
+                        />
 
                         <div className="form-group attachments-section">
                             <div className="attachments-header">
@@ -209,12 +250,25 @@ const TaskDetailsModal = ({
                     </div>
 
                     <div className="modal-footer details-footer">
-                        <button className="btn-text" onClick={onClose}>Cancel</button>
+                        <button className="btn-text" onClick={onClose} disabled={isApplyingChecklistTemplate}>Cancel</button>
+
+                        {isApproved && <span className="approved-label">Approved</span>}
+
+                        {isWaitingForReview && (
+                            <>
+                                <button className="btn-reject" onClick={onReject} disabled={isReviewing}>Reject</button>
+                                <button className="btn-create-green" onClick={onApprove} disabled={isReviewing}>Approve</button>
+                            </>
+                        )}
+
+                        {canEscalate && (
+                            <button className="btn-escalate" onClick={onEscalate} disabled={isEscalating}>Escalate</button>
+                        )}
 
                         {isUnchanged ? (
                             <button className="btn-danger" onClick={onDelete}>Delete</button>
                         ) : (
-                            <button className="btn-create-green" onClick={onSave}>Save Changes</button>
+                            <button className="btn-create-green" onClick={onSave} disabled={isApplyingChecklistTemplate}>Save Changes</button>
                         )}
                     </div>
                 </div>
@@ -230,17 +284,36 @@ TaskDetailsModal.propTypes = {
         id: PropTypes.string,
         label: PropTypes.string,
     })).isRequired,
-    currentUser: PropTypes.shape({
-        name: PropTypes.string,
-        email: PropTypes.string,
-    }).isRequired,
+    assigneeOptions: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+    })).isRequired,
+    checklistItems: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        isRequired: PropTypes.bool,
+        isChecked: PropTypes.bool,
+    })).isRequired,
+    checklistLoadError: PropTypes.string,
+    isApplyingChecklistTemplate: PropTypes.bool,
     onEditChange: PropTypes.func.isRequired,
     onPropertyChange: PropTypes.func.isRequired,
+    onAssigneeChange: PropTypes.func.isRequired,
     onFileChange: PropTypes.func.isRequired,
     onRemoveAttachment: PropTypes.func.isRequired,
+    onAddChecklistItem: PropTypes.func.isRequired,
+    onToggleChecklistItem: PropTypes.func.isRequired,
+    onRetryChecklistLoad: PropTypes.func.isRequired,
+    onRemoveChecklistItem: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
+    onEscalate: PropTypes.func.isRequired,
+    onApprove: PropTypes.func.isRequired,
+    onReject: PropTypes.func.isRequired,
+    canReview: PropTypes.bool,
+    isReviewing: PropTypes.bool,
+    isEscalating: PropTypes.bool,
 };
 
 export default TaskDetailsModal;

@@ -100,6 +100,22 @@ export const toDate = (rawValue) => {
 
 export const getArrivalDate = (booking) => toDate(pickFirst(booking, ARRIVAL_KEYS));
 export const getDepartureDate = (booking) => toDate(pickFirst(booking, DEPARTURE_KEYS));
+export const canLeaveReview = (booking) => {
+  const status = String(booking?.status || "").trim().toLowerCase();
+  const checkoutAt = getDepartureDate(booking)?.getTime();
+
+  return (
+    ["paid", "confirmed"].includes(status) &&
+    Number.isFinite(checkoutAt) &&
+    checkoutAt > 0 &&
+    checkoutAt <= Date.now()
+  );
+};
+
+// Review and booking persistence must never use a payment ID as Booking.id.
+export const getCanonicalBookingId = (booking) =>
+  booking?.id ?? booking?.ID ?? booking?.bookingId ?? null;
+
 export const getBookingId = (booking) =>
   booking?.id ??
   booking?.ID ??
@@ -108,11 +124,8 @@ export const getBookingId = (booking) =>
   booking?.paymentId ??
   null;
 
-export const getReservationNumber = (booking) =>
-  booking?.paymentid ??
-  booking?.paymentId ??
-  getBookingId(booking) ??
-  "-";
+// Unpaid bookings store the placeholder "FAILED: " as paymentid, so the payment id is never a reservation number.
+export const getReservationNumber = (booking) => getCanonicalBookingId(booking) ?? "-";
 
 export const getBookingCreatedAt = (booking) =>
   toDate(booking?.createdat ?? booking?.createdAt ?? booking?.bookedAt ?? booking?.bookingDate);
@@ -263,4 +276,3 @@ export const formatDate = (dateValue) => {
   if (!dateValue) return "-";
   return dateFormatterDD_MM_YYYY(dateValue);
 };
-
