@@ -125,7 +125,7 @@ describe("TruviBookingModifier", () => {
 
     expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
     expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
-    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "checkIn must be before checkOut." }]);
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 
   it("keeps going with the next booking when saving one fails", async () => {

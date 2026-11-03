@@ -87,7 +87,7 @@ export class TruviBookingModifier {
       if (outcome.refused) {
         return { counter: "refused", errorMessage: outcome.errorMessage };
       }
-      return outcome.unexpected ? { unexpected: true, message: String(error.message).slice(0, 200) } : outcome;
+      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
     }
   }
 }

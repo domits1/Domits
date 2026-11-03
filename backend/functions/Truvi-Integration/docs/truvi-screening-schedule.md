@@ -82,7 +82,7 @@ Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (i
 
 ## What Goes Into `errormessage`
 
-Truvi's error text can repeat what we sent, guest names and contact details included, so it is never saved. `util/truviErrorMessage.js` writes a fixed message instead:
+Truvi's error text can repeat what we sent, guest names and contact details included, so it is never saved, and it is not put in the run summary either, because a failed run writes that summary to CloudWatch (`index.js`). `util/truviErrorMessage.js` writes a fixed message instead:
 
 | Truvi answer | Saved message |
 | ------------ | ------------- |

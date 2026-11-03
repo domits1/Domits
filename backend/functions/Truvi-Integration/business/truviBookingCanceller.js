@@ -75,7 +75,7 @@ export class TruviBookingCanceller {
       return { status: CANCEL_STATUS.CANCELLED };
     } catch (error) {
       const outcome = classifyCancelError(error);
-      return outcome.unexpected ? { unexpected: true, message: String(error.message).slice(0, 200) } : outcome;
+      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
     }
   }
 }

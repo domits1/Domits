@@ -92,7 +92,7 @@ describe("TruviBookingCanceller", () => {
     const summary = await canceller.run({ now: NOW });
 
     expect(assessmentRepository.saveCancellation).not.toHaveBeenCalled();
-    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "verificationId must be a valid GUID." }]);
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 
   it("keeps going with the next booking when saving one fails", async () => {
