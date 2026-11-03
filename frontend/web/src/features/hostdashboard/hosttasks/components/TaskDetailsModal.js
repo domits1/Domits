@@ -26,6 +26,7 @@ const PRIORITY_OPTIONS = [
 const TaskDetailsModal = ({
     viewingTask,
     editedTask,
+    asHostId = null,
     editPropertyOptions,
     assigneeOptions,
     checklistItems,
@@ -208,6 +209,8 @@ const TaskDetailsModal = ({
                                             <AttachmentThumb
                                                 key={f instanceof File ? f.name : f}
                                                 attachment={f}
+                                                taskId={editedTask.id}
+                                                asHostId={asHostId}
                                                 onRemove={() => onRemoveAttachment(index)}
                                             />
                                         ))}
@@ -280,6 +283,7 @@ const TaskDetailsModal = ({
 TaskDetailsModal.propTypes = {
     viewingTask: PropTypes.object,
     editedTask: PropTypes.object,
+    asHostId: PropTypes.string,
     editPropertyOptions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string,
         label: PropTypes.string,

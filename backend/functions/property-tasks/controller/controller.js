@@ -109,12 +109,9 @@ export class Controller {
 
     async getViewUrl(event) {
         try {
-            await this.authManager.getHostId(event.headers?.Authorization);
-            const { key } = event.queryStringParameters || {};
-            if (!key) {
-                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "key is required" }) };
-            }
-            const viewUrl = await getViewUrl(key);
+            const { effectiveHostId } = await this.resolveHost(event);
+            const { taskId, key } = event.queryStringParameters || {};
+            const viewUrl = await getViewUrl(effectiveHostId, taskId, key);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ viewUrl }) };
         } catch (error) {
             return this.handleError(error);
@@ -124,11 +121,8 @@ export class Controller {
     async getUploadUrl(event) {
         try {
             const { effectiveHostId } = await this.resolveHost(event);
-            const { fileName, fileType } = event.queryStringParameters || {};
-            if (!fileName || !fileType) {
-                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "fileName and fileType are required" }) };
-            }
-            const result = await getUploadUrl(effectiveHostId, fileName, fileType);
+            const { fileType, fileSize } = event.queryStringParameters || {};
+            const result = await getUploadUrl(effectiveHostId, fileType, fileSize);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

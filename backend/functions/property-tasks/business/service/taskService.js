@@ -1,13 +1,19 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
 import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
+import {
+    findAttachmentOfTask,
+    parseStoredAttachments,
+    attachmentsOfHost,
+    assertAttachmentsOfHost,
+    newAttachmentFile,
+} from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
 import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
 import { notifyTaskApproved, notifyTaskRejected } from "./taskReviewNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
@@ -26,6 +32,8 @@ export const createTask = async (hostId, taskData) => {
     const dataSource = await Database.getInstance();
 
     validateTaskPayload(taskData);
+    const attachments = taskData.attachments ?? [];
+    assertAttachmentsOfHost(hostId, attachments);
 
     const assigneeName = taskData.assignee_team_member_id
         ? await resolveAssigneeName(dataSource, hostId, taskData.assignee_team_member_id)
@@ -48,7 +56,7 @@ export const createTask = async (hostId, taskData) => {
         assignee_name: assigneeName,
         assignee_team_member_id: taskData.assignee_team_member_id || null,
         parent_task_id: parentTaskId,
-        attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
+        attachments: attachments.length > 0 ? JSON.stringify(attachments) : null,
         source: taskData.source || null,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -130,16 +138,12 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
         }
     }
 
+    let removedKeys = [];
     if (fieldsToUpdate.attachments !== undefined) {
-        const oldKeys = oldTask.attachments ? JSON.parse(oldTask.attachments) : [];
-        const newKeys = Array.isArray(fieldsToUpdate.attachments) ? fieldsToUpdate.attachments : [];
-        const removedKeys = oldKeys.filter(key => !newKeys.includes(key));
-        if (removedKeys.length > 0) {
-            await s3.send(new DeleteObjectsCommand({
-                Bucket: BUCKET_NAME,
-                Delete: { Objects: removedKeys.map(key => ({ Key: key })) },
-            }));
-        }
+        const oldKeys = parseStoredAttachments(oldTask.attachments);
+        const newKeys = fieldsToUpdate.attachments ?? [];
+        assertAttachmentsOfHost(hostId, newKeys, oldKeys);
+        removedKeys = attachmentsOfHost(hostId, oldKeys.filter(key => !newKeys.includes(key)));
         fieldsToUpdate.attachments = newKeys.length > 0 ? JSON.stringify(newKeys) : null;
     }
 
@@ -165,6 +169,8 @@ const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember =
     } else {
         await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
     }
+
+    await removeAttachmentsFromStorage(taskId, removedKeys);
 
     await logActivity(dataSource, {
         taskId,
@@ -292,44 +298,61 @@ export const deleteTask = async (hostId, taskId) => {
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
 
     if (task?.attachments) {
-        try {
-            const keys = JSON.parse(task.attachments);
-            if (keys.length > 0) {
-                await s3.send(new DeleteObjectsCommand({
-                    Bucket: BUCKET_NAME,
-                    Delete: { Objects: keys.map(key => ({ Key: key })) },
-                }));
-            }
-        } catch { }
+        await removeAttachmentsFromStorage(taskId, attachmentsOfHost(hostId, parseStoredAttachments(task.attachments)));
     }
 
     return await applyTaskUpdate(hostId, taskId, { is_legacy: true });
 };
 
-export const getUploadUrl = async (hostId, fileName, fileType) => {
-    const ext = fileName.split('.').pop();
-    const key = `tasks/${hostId}/${randomUUID()}.${ext}`;
+export const getUploadUrl = async (hostId, fileType, fileSize) => {
+    const file = newAttachmentFile(hostId, fileType, fileSize);
 
     const command = new PutObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
-        ContentType: fileType,
+        Key: file.key,
+        ContentType: file.contentType,
+        ContentLength: file.contentLength,
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    const uploadUrl = await getSignedUrl(s3, command, {
+        expiresIn: 300,
+        signableHeaders: new Set(["content-type", "content-length"]),
+    });
 
     return {
         uploadUrl,
-        key,
+        key: file.key,
     };
 };
 
-export const getViewUrl = async (key) => {
+export const getViewUrl = async (hostId, taskId, key) => {
+    if (!isValidUuid(taskId)) throw new BadRequestException("taskId must be the id of a task");
+    if (typeof key !== "string" || key.length === 0) throw new BadRequestException("key is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    const storedKey = findAttachmentOfTask(hostId, task, key);
+
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
+        Key: storedKey,
     });
     return await getSignedUrl(s3, command, { expiresIn: 3600 });
+};
+
+const removeAttachmentsFromStorage = async (taskId, keys) => {
+    if (keys.length === 0) return;
+    try {
+        const result = await s3.send(new DeleteObjectsCommand({
+            Bucket: BUCKET_NAME,
+            Delete: { Objects: keys.map(key => ({ Key: key })) },
+        }));
+        if (result?.Errors?.length > 0) {
+            console.error(`Failed to remove ${result.Errors.length} attachment(s) of task ${taskId}`, result.Errors);
+        }
+    } catch (error) {
+        console.error(`Failed to remove the attachments of task ${taskId}`, error);
+    }
 };
 
 const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {

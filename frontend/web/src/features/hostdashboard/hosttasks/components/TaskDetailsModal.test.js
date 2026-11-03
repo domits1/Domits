@@ -126,6 +126,13 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onRemoveAttachment).toHaveBeenCalledWith(0);
     });
 
+    test('asks for an attachment link of this task, as the host the user acts for', async () => {
+        render(<TaskDetailsModal {...baseProps} asHostId="host-2" editedTask={{ ...baseTask, attachments: ['tasks/host-2/photo.jpg'] }} />);
+
+        await screen.findByAltText('photo.jpg');
+        expect(getAttachmentViewUrl).toHaveBeenCalledWith('tasks/host-2/photo.jpg', 'task-1', 'host-2');
+    });
+
     test('renders checklist items and wires toggle/remove through to the parent', () => {
         const item = { id: 'item-1', title: 'Strip beds', isRequired: true, isChecked: false };
         render(<TaskDetailsModal {...baseProps} checklistItems={[item]} />);

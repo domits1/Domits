@@ -225,7 +225,7 @@ const HostTasks = () => {
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
 
         try {
-            await updateTask(task.id, { status: newStatus });
+            await updateTask(task.id, { status: newStatus }, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === task.id ? task : t));
             alert(error.message || "Error updating task status");
@@ -281,6 +281,15 @@ const HostTasks = () => {
         }
     };
 
+    const uploadAttachmentsOrWarn = async (files) => {
+        try {
+            return await Promise.all(files.map((file) => uploadTaskAttachment(file, asHostId)));
+        } catch (error) {
+            toast.error(error.message || 'A file could not be uploaded. Please try again.');
+            return null;
+        }
+    };
+
     const handleCreateTask = async (e) => {
         e.preventDefault();
         if (isCreatingTask) return;
@@ -299,12 +308,10 @@ const HostTasks = () => {
                 }]
             }; 
             
-            let attachmentUrls = [];
-            if (newTask.attachments?.length > 0) {
-                attachmentUrls = await Promise.all(newTask.attachments.map(uploadTaskAttachment));
-            }
+            const attachmentUrls = await uploadAttachmentsOrWarn(newTask.attachments || []);
+            if (!attachmentUrls) return;
 
-            let created = await createTask({ ...taskPayload, attachments: attachmentUrls });
+            let created = await createTask({ ...taskPayload, attachments: attachmentUrls }, asHostId);
 
             await persistDraftChecklist(created.id, newTask.checklistItems);
 
@@ -666,7 +673,8 @@ const HostTasks = () => {
         let existingUrls = (editedTask.attachments || []).filter(a => typeof a === 'string');
 
         if (newFiles.length > 0) {
-            const uploaded = await Promise.all(newFiles.map(uploadTaskAttachment));
+            const uploaded = await uploadAttachmentsOrWarn(newFiles);
+            if (!uploaded) return;
             existingUrls = [...existingUrls, ...uploaded];
         }
 
@@ -680,7 +688,7 @@ const HostTasks = () => {
         if (!shouldSwitchChecklist) closeForm();
 
         try {
-            await updateTask(finalTask.id, finalTask);
+            await updateTask(finalTask.id, finalTask, asHostId);
         } catch (error) {
             setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
             alert(error.message || "Error saving changes");
@@ -1098,6 +1106,7 @@ const HostTasks = () => {
             <TaskDetailsModal
                 viewingTask={viewingTask}
                 editedTask={editedTask}
+                asHostId={asHostId}
                 editPropertyOptions={editPropertyOptions}
                 assigneeOptions={editAssigneeChoices}
                 onEditChange={handleEditChange}

@@ -19,11 +19,8 @@ jest.mock('aws-amplify', () => ({
 
 jest.mock('react-toastify', () => ({ toast: { error: jest.fn(), success: jest.fn() } }));
 
-jest.mock('../../../../hooks/useEffectiveHostId', () => () => ({
-    effectiveHostId: 'host-1',
-    managedHostId: null,
-    isPurelyPOM: false,
-}));
+const mockEffectiveHost = { effectiveHostId: 'host-1', managedHostId: null, isPurelyPOM: false };
+jest.mock('../../../../hooks/useEffectiveHostId', () => () => mockEffectiveHost);
 
 jest.mock('../../services/taskService', () => ({
     fetchTasks: jest.fn(),
@@ -129,7 +126,7 @@ describe('HostTasks', () => {
             fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
 
             await waitFor(() => expect(createChecklistItem).toHaveBeenCalledTimes(2));
-            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ type: 'Maintenance' }));
+            expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ type: 'Maintenance' }), null);
             expect(deleteChecklistItem).toHaveBeenCalledWith('item-1');
             expect(createChecklistItem).toHaveBeenNthCalledWith(1, 'task-1', { title: 'Check the boiler', isRequired: true });
             expect(createChecklistItem).toHaveBeenNthCalledWith(2, 'task-1', { title: 'Test the smoke alarm', isRequired: false });
@@ -381,6 +378,80 @@ describe('HostTasks', () => {
 
             await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Task has already been escalated'));
             expect(screen.getByRole('button', { name: 'Escalate' })).toBeEnabled();
+        });
+    });
+
+    describe('attachments of a task', () => {
+        const { getAttachmentViewUrl, uploadTaskAttachment, createTask } = jest.requireMock('../../services/taskService');
+        const KEY = 'tasks/host-2/photo.jpg';
+        const REFUSAL = 'plan.svg: Only JPG, PNG, WEBP, GIF, HEIC and PDF files can be attached';
+        const addFile = (inputId) => fireEvent.change(document.getElementById(inputId), {
+            target: { files: [new File(['<svg/>'], 'plan.svg', { type: 'image/svg+xml' })] },
+        });
+
+        beforeEach(() => {
+            getAttachmentViewUrl.mockResolvedValue('https://signed.example/view');
+            uploadTaskAttachment.mockRejectedValue(new Error(REFUSAL));
+            fetchTasks.mockResolvedValue([{ ...TASK, attachments: [KEY] }]);
+            mockEffectiveHost.managedHostId = 'host-2';
+            global.URL.createObjectURL = jest.fn(() => 'blob:plan');
+            global.URL.revokeObjectURL = jest.fn();
+        });
+
+        afterEach(() => {
+            mockEffectiveHost.managedHostId = null;
+        });
+
+        test('are linked, uploaded and saved as the co-host the user acts for while showing co-host tasks', async () => {
+            uploadTaskAttachment.mockResolvedValue('tasks/host-2/new.svg');
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: 'Co-host tasks' }));
+            await waitFor(() => expect(fetchTasks).toHaveBeenLastCalledWith({}, 'host-2'));
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByAltText('photo.jpg');
+            expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', 'host-2');
+            addFile('task-attachments-edit');
+            fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+            await waitFor(() => expect(updateTask).toHaveBeenCalledWith('task-1', expect.objectContaining({ attachments: [KEY, 'tasks/host-2/new.svg'] }), 'host-2'));
+            expect(uploadTaskAttachment).toHaveBeenCalledWith(expect.any(File), 'host-2');
+        });
+
+        test('are linked as the user themselves on their own tasks', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+
+            await screen.findByAltText('photo.jpg');
+            expect(getAttachmentViewUrl).toHaveBeenLastCalledWith(KEY, 'task-1', null);
+        });
+
+        test.each([
+            [REFUSAL, REFUSAL],
+            ['', 'A file could not be uploaded. Please try again.'],
+        ])('that cannot be uploaded (%p) keep the task form open with the reason, and nothing is saved', async (reason, shown) => {
+            uploadTaskAttachment.mockRejectedValue(new Error(reason));
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByText('Clean the villa'));
+            addFile('task-attachments-edit');
+            fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
+            expect(uploadTaskAttachment).toHaveBeenCalledWith(expect.any(File), null);
+            expect(updateTask).not.toHaveBeenCalled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+        });
+
+        test('that cannot be uploaded keep the create form open with the reason, and nothing is created', async () => {
+            render(<HostTasks />);
+            fireEvent.click(await screen.findByRole('button', { name: '+ Create Task' }));
+            addFile('file-upload');
+            const form = document.getElementById('file-upload').closest('form');
+            fireEvent.submit(form);
+
+            await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REFUSAL));
+            expect(createTask).not.toHaveBeenCalled();
+            expect(form).toBeInTheDocument();
+            expect(form.querySelector('button[type="submit"]')).toBeEnabled();
         });
     });
 });
