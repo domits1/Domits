@@ -3,7 +3,7 @@ const STATUS_UNAUTHORIZED = 401;
 const STATUS_FORBIDDEN = 403;
 const STATUS_NOT_FOUND = 404;
 
-export const hasOwnKey = (object, key) => typeof key === "string" && Object.prototype.hasOwnProperty.call(object, key);
+export const hasOwnKey = (object, key) => typeof key === "string" && Object.hasOwn(object, key);
 
 export const labelFor = (labels, value) => (hasOwnKey(labels, value) ? labels[value] : labels.unknown);
 

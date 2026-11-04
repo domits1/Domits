@@ -18,6 +18,7 @@ import {
   toFormValues,
   validateOwnerChanges,
 } from "./ownerFormRules";
+import cases from "./ownerFormRules.cases.json";
 
 const OWNER_CONSTANTS_FILE = "backend/functions/property-owners/util/ownerConstants.js";
 const OWNER_VALIDATOR_FILE = "backend/functions/property-owners/business/validation/ownerValidator.js";
@@ -72,7 +73,21 @@ const frontendAcceptsCreate = (values) => Object.keys(validateOwnerChanges(build
 
 const frontendAcceptsUpdate = (changes, stored) => Object.keys(validateOwnerChanges(changes, stored)).length === 0;
 
-const repeat = (length, character = "a") => character.repeat(length);
+const expandValue = (value) =>
+  value !== null && typeof value === "object"
+    ? `${value.prefix ?? ""}${value.char.repeat(value.repeat)}${value.suffix ?? ""}`
+    : value;
+
+const CREATE_CASES = cases.create.map(([field, value, accepted]) => [field, expandValue(value), accepted]);
+
+const UPDATE_CASES = cases.update.map(([label, storedOverride, changes, accepted]) => [
+  label,
+  { ...STORED_OWNER, ...storedOverride },
+  changes,
+  accepted,
+]);
+
+const FIELD_ERROR_CASES = cases.fieldError.map(([field, value, expected]) => [field, expandValue(value), expected]);
 
 describe("the rules match the backend values", () => {
   test(`max lengths match OWNER_FIELD_MAX_LENGTHS in ${OWNER_CONSTANTS_FILE}`, () => {
@@ -99,138 +114,22 @@ describe("the rules match the backend values", () => {
     expect(LANGUAGE_PATTERN.source).toBe(BACKEND_LANGUAGE_PATTERN);
   });
 
-  test.each([
-    ["first_name", "Anna", true],
-    ["first_name", "", false],
-    ["first_name", "   ", false],
-    ["first_name", " Anna ", true],
-    ["first_name", repeat(100), true],
-    ["first_name", repeat(101), false],
-    ["first_name", `  ${repeat(100)}  `, true],
-    ["first_name", "An\u0007na", false],
-    ["first_name", "An\nna", false],
-    ["last_name", repeat(100), true],
-    ["last_name", repeat(101), false],
-    ["last_name", "", false],
-    ["company_name", repeat(200), true],
-    ["company_name", repeat(201), false],
-    ["email", "anna@example.com", true],
-    ["email", "a@b.c", true],
-    ["email", "  anna@example.com  ", true],
-    ["email", "a@b", false],
-    ["email", "a b@c.de", false],
-    ["email", "a@b.c.", false],
-    ["email", "a@b.c.d", true],
-    ["email", "@b.cd", false],
-    ["email", "a@@b.cd", false],
-    ["email", `${repeat(248)}@b.com`, true],
-    ["email", `${repeat(249)}@b.com`, false],
-    ["email", "", false],
-    ["phone", "+31 6 12345678", true],
-    ["phone", "(020) 123-45.67", true],
-    ["phone", "1", true],
-    ["phone", "+", false],
-    ["phone", "() -.", false],
-    ["phone", "12a", false],
-    ["phone", "06/12345678", false],
-    ["phone", repeat(50, "1"), true],
-    ["phone", repeat(51, "1"), false],
-    ["phone", "", true],
-    ["preferred_language", "en", true],
-    ["preferred_language", "nl-NL", true],
-    ["preferred_language", "EN", false],
-    ["preferred_language", "nl-nl", false],
-    ["preferred_language", "nl_NL", false],
-    ["preferred_language", "nld", false],
-    ["preferred_language", "n", false],
-    ["preferred_language", "nl-NLD", false],
-    ["preferred_language", "", true],
-    ["owner_type", "individual", true],
-    ["owner_type", "company", true],
-    ["owner_type", "trust", true],
-    ["owner_type", "Company", false],
-    ["owner_type", "person", false],
-    ["owner_type", "", false],
-    ["status", "active", true],
-    ["status", "inactive", true],
-    ["status", "pending", true],
-    ["status", "archived", false],
-    ["status", "Active", false],
-    ["status", "deleted", false],
-    ["status", "", true],
-    ["notes", "Line one\nLine two\twith a tab\r\n", true],
-    ["notes", repeat(2000), true],
-    ["notes", repeat(2001), false],
-    ["notes", "Bell \u0007", false],
-    ["notes", "Delete \u007f", false],
-    ["notes", "", true],
-  ])(`create with %s = %p is accepted: %p, as validateCreateOwner in ${OWNER_VALIDATOR_FILE} returned`, (field, value, accepted) => {
+  test.each(CREATE_CASES)(`create with %s = %p is accepted: %p, as validateCreateOwner in ${OWNER_VALIDATOR_FILE} returned`, (field, value, accepted) => {
     expect(frontendAcceptsCreate({ ...VALID_VALUES, [field]: value })).toBe(accepted);
   });
 
-  test.each([
-    ["company with a company name", { owner_type: "company", company_name: "De Vries Holding" }, true],
-    ["company without a company name", { owner_type: "company", company_name: "" }, false],
-    ["trust with a company name", { owner_type: "trust", company_name: "Family Trust" }, true],
-    ["trust without a company name", { owner_type: "trust", company_name: "   " }, false],
-    ["individual without a company name", { owner_type: "individual", company_name: "" }, true],
-  ])(`create for a %s is accepted: %p, as validateCreateOwner in ${OWNER_VALIDATOR_FILE} returned`, (_label, override, accepted) => {
+  test.each(cases.createCompany)(`create for a %s is accepted: %p, as validateCreateOwner in ${OWNER_VALIDATOR_FILE} returned`, (_label, override, accepted) => {
     expect(frontendAcceptsCreate({ ...VALID_VALUES, ...override })).toBe(accepted);
   });
 
-  test.each([
-    ["an individual becoming a company without a name", STORED_OWNER, { owner_type: "company" }, false],
-    ["an individual becoming a company with a name", STORED_OWNER, { owner_type: "company", company_name: "AV BV" }, true],
-    ["a company clearing its name", { ...STORED_OWNER, owner_type: "company", company_name: "AV BV" }, { company_name: null }, false],
-    ["a company becoming a trust", { ...STORED_OWNER, owner_type: "company", company_name: "AV BV" }, { owner_type: "trust" }, true],
-    [
-      "a company becoming an individual and clearing its name",
-      { ...STORED_OWNER, owner_type: "company", company_name: "AV BV" },
-      { owner_type: "individual", company_name: null },
-      true,
-    ],
-    ["an archived owner changing a name", { ...STORED_OWNER, status: "archived" }, { first_name: "Anne" }, true],
-    ["an archived owner being restored", { ...STORED_OWNER, status: "archived" }, { status: "active" }, true],
-    ["an owner being archived", STORED_OWNER, { status: "archived" }, false],
-    ["clearing a required field", STORED_OWNER, { email: null }, false],
-    ["clearing an optional field", STORED_OWNER, { phone: null }, true],
-  ])(`update for %s is accepted: %p, as validatePatchOwner in ${OWNER_VALIDATOR_FILE} returned`, (_label, stored, changes, accepted) => {
+  test.each(UPDATE_CASES)(`update for %s is accepted: %p, as validatePatchOwner in ${OWNER_VALIDATOR_FILE} returned`, (_label, stored, changes, accepted) => {
     expect(frontendAcceptsUpdate(changes, stored)).toBe(accepted);
   });
 });
 
 
 describe("fieldError", () => {
-  test.each([
-    ["first_name", null, "required"],
-    ["last_name", null, "required"],
-    ["email", null, "required"],
-    ["owner_type", null, "required"],
-    ["status", null, "required"],
-    ["company_name", null, null],
-    ["phone", null, null],
-    ["preferred_language", null, null],
-    ["notes", null, null],
-    ["first_name", "a".repeat(100), null],
-    ["first_name", "a".repeat(101), "tooLong"],
-    ["last_name", "a".repeat(101), "tooLong"],
-    ["company_name", "a".repeat(201), "tooLong"],
-    ["email", `${"a".repeat(249)}@b.com`, "tooLong"],
-    ["phone", "1".repeat(51), "tooLong"],
-    ["preferred_language", "nl-NL-abcde", "tooLong"],
-    ["notes", "a".repeat(2000), null],
-    ["notes", "a".repeat(2001), "tooLong"],
-    ["first_name", "An\tna", "invalidCharacters"],
-    ["notes", "Tab\tand\nnew line", null],
-    ["notes", "Null \u0000", "invalidCharacters"],
-    ["email", "anna@example", "invalidEmail"],
-    ["phone", "no digits", "invalidPhone"],
-    ["phone", "+", "invalidPhone"],
-    ["preferred_language", "dutch", "invalidLanguage"],
-    ["owner_type", "partnership", "invalidOwnerType"],
-    ["status", "deleted", "invalidStatus"],
-    ["status", "archived", "archivedStatus"],
-  ])("%s = %p gives %p", (field, value, expected) => {
+  test.each(FIELD_ERROR_CASES)("%s = %p gives %p", (field, value, expected) => {
     expect(fieldError(field, value)).toBe(expected);
   });
 
