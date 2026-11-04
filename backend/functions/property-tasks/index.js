@@ -19,13 +19,18 @@ const ACTION_ROUTES = {
         'view-url': 'getViewUrl',
         'checklist': 'getChecklistItems',
         'checklist-templates': 'getChecklistTemplates',
+        'notifications': 'getNotifications',
     },
     POST: {
         'checklist': 'createChecklistItem',
         'escalate': 'escalateTask',
+        'approve': 'approveTask',
+        'reject': 'rejectTask',
     },
     PATCH: {
         'checklist': 'updateChecklistItem',
+        'notification-read': 'markNotificationRead',
+        'notifications-read-all': 'markAllNotificationsRead',
     },
     DELETE: {
         'checklist': 'deleteChecklistItem',

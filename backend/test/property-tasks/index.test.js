@@ -11,8 +11,13 @@ const mockUpdateChecklistItem = jest.fn();
 const mockDeleteChecklistItem = jest.fn();
 const mockInternalCreateTask = jest.fn();
 const mockEscalateTask = jest.fn();
+const mockApproveTask = jest.fn();
+const mockRejectTask = jest.fn();
 const mockRunOverdueSweep = jest.fn();
 const mockRunDueSoonSweep = jest.fn();
+const mockGetNotifications = jest.fn();
+const mockMarkNotificationRead = jest.fn();
+const mockMarkAllNotificationsRead = jest.fn();
 
 jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
     Controller: jest.fn().mockImplementation(() => ({
@@ -29,8 +34,13 @@ jest.mock("../../functions/property-tasks/controller/controller.js", () => ({
         deleteChecklistItem: mockDeleteChecklistItem,
         internalCreateTask: mockInternalCreateTask,
         escalateTask: mockEscalateTask,
+        approveTask: mockApproveTask,
+        rejectTask: mockRejectTask,
         runOverdueSweep: mockRunOverdueSweep,
         runDueSoonSweep: mockRunDueSoonSweep,
+        getNotifications: mockGetNotifications,
+        markNotificationRead: mockMarkNotificationRead,
+        markAllNotificationsRead: mockMarkAllNotificationsRead,
     })),
 }));
 
@@ -47,8 +57,27 @@ describe("property-tasks handler routing", () => {
         jest.clearAllMocks();
         [mockGetTasks, mockCreateTask, mockUpdateTask, mockDeleteTask, mockGetUploadUrl, mockGetViewUrl,
             mockGetChecklistItems, mockGetChecklistTemplates, mockCreateChecklistItem, mockUpdateChecklistItem, mockDeleteChecklistItem,
-            mockInternalCreateTask, mockEscalateTask, mockRunOverdueSweep, mockRunDueSoonSweep]
+            mockInternalCreateTask, mockEscalateTask, mockApproveTask, mockRejectTask, mockRunOverdueSweep,
+            mockRunDueSoonSweep, mockGetNotifications, mockMarkNotificationRead, mockMarkAllNotificationsRead]
             .forEach(fn => fn.mockResolvedValue(fakeResponse));
+    });
+
+    it("GET with action=notifications routes to getNotifications", async () => {
+        await handler({ httpMethod: "GET", queryStringParameters: { action: "notifications" } });
+        expect(mockGetNotifications).toHaveBeenCalledTimes(1);
+        expect(mockGetTasks).not.toHaveBeenCalled();
+    });
+
+    it("PATCH with action=notification-read routes to markNotificationRead, not updateTask", async () => {
+        await handler({ httpMethod: "PATCH", queryStringParameters: { action: "notification-read", id: "n-1" } });
+        expect(mockMarkNotificationRead).toHaveBeenCalledTimes(1);
+        expect(mockUpdateTask).not.toHaveBeenCalled();
+    });
+
+    it("PATCH with action=notifications-read-all routes to markAllNotificationsRead", async () => {
+        await handler({ httpMethod: "PATCH", queryStringParameters: { action: "notifications-read-all" } });
+        expect(mockMarkAllNotificationsRead).toHaveBeenCalledTimes(1);
+        expect(mockUpdateTask).not.toHaveBeenCalled();
     });
 
     it("a scheduled event with task=notify-overdue-tasks routes to runOverdueSweep", async () => {
@@ -135,6 +164,18 @@ describe("property-tasks handler routing", () => {
     it("POST with action=escalate routes to escalateTask", async () => {
         await handler({ httpMethod: "POST", queryStringParameters: { action: "escalate" } });
         expect(mockEscalateTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("POST with action=approve routes to approveTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "approve" } });
+        expect(mockApproveTask).toHaveBeenCalledTimes(1);
+        expect(mockCreateTask).not.toHaveBeenCalled();
+    });
+
+    it("POST with action=reject routes to rejectTask", async () => {
+        await handler({ httpMethod: "POST", queryStringParameters: { action: "reject" } });
+        expect(mockRejectTask).toHaveBeenCalledTimes(1);
         expect(mockCreateTask).not.toHaveBeenCalled();
     });
 

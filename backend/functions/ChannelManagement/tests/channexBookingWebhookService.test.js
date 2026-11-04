@@ -13,7 +13,7 @@ const pullResult = (overrides = {}) => ({
 const buildService = ({ mapping = MAPPING, integration = INTEGRATION, secret = CHANNEX_SECRET, pull = pullResult() } = {}) => {
   const deps = {
     props: { findActiveChannexMappingByExternalPropertyId: jest.fn(async () => mapping) },
-    accounts: { getById: jest.fn(async () => integration), touchSyncFailure: jest.fn(async () => null) },
+    accounts: { getById: jest.fn(async () => integration), update: jest.fn(async () => null) },
     channexCredentialStore: { readSecretOrNull: jest.fn(async () => secret) },
     sync: {
       tryAcquireLock: jest.fn(async () => ({ acquired: true })),
@@ -74,6 +74,18 @@ describe("ChannexBookingWebhookService", () => {
     const { service, pullLatestChannexBookingsForResolvedContext } = buildService({ integration });
 
     await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "INTEGRATION_NOT_CONNECTED" });
+    expect(pullLatestChannexBookingsForResolvedContext).not.toHaveBeenCalled();
+  });
+
+  // The key is known to be rejected: calling Channex again only fails again. The bookings stay
+  // unacknowledged in Channex and are imported after a new key is connected (#3572).
+  test("answers 200 RECONNECT_REQUIRED without calling Channex when the account needs a new key", async () => {
+    const { service, channexCredentialStore, pullLatestChannexBookingsForResolvedContext } = buildService({
+      integration: { ...INTEGRATION, status: "RECONNECT_REQUIRED" },
+    });
+
+    await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "RECONNECT_REQUIRED" });
+    expect(channexCredentialStore.readSecretOrNull).not.toHaveBeenCalled();
     expect(pullLatestChannexBookingsForResolvedContext).not.toHaveBeenCalled();
   });
 
@@ -222,17 +234,22 @@ describe("ChannexBookingWebhookService", () => {
   });
 
   // Without this, nobody notices that bookings stopped arriving because the key was revoked.
-  test("marks the account when Channex rejects its key on the feed", async () => {
+  test("marks the account RECONNECT_REQUIRED when Channex rejects its key on the feed", async () => {
+    const warnLog = jest.spyOn(console, "warn").mockImplementation(() => {});
     const { service, accounts } = buildService({
       pull: { statusCode: 502, response: { httpStatus: 401, providerStatus: "UNAUTHORIZED" } },
     });
 
     await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "FEED_UNAUTHORIZED" });
-    expect(accounts.touchSyncFailure).toHaveBeenCalledWith(
+    expect(accounts.update).toHaveBeenCalledWith(
       "account-1",
-      "CHANNEX_BOOKING_FEED_UNAUTHORIZED",
-      expect.any(String)
+      expect.objectContaining({ status: "RECONNECT_REQUIRED", lastErrorCode: "CHANNEX_API_KEY_REJECTED" })
     );
+    expect(JSON.parse(warnLog.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_ACCOUNT_RECONNECT_REQUIRED",
+      integrationAccountId: "account-1",
+      source: "BOOKING_WEBHOOK",
+    });
   });
 
   // Marking the account is extra; failing to mark it must not turn a permanent 401 into a retried 503.
@@ -240,7 +257,7 @@ describe("ChannexBookingWebhookService", () => {
     const { service, accounts, sync } = buildService({
       pull: { statusCode: 502, response: { httpStatus: 401, providerStatus: "UNAUTHORIZED" } },
     });
-    accounts.touchSyncFailure.mockRejectedValue(new Error("database unavailable"));
+    accounts.update.mockRejectedValue(new Error("database unavailable"));
 
     await expect(receive(service)).resolves.toMatchObject({ statusCode: 200, outcome: "FEED_UNAUTHORIZED" });
     expect(sync.releaseLock).toHaveBeenCalled();

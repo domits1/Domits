@@ -48,6 +48,7 @@ import {
   resolveDeletePhotoErrorMessage,
   resolveSaveErrorMessage,
 } from "../utils/hostPropertyUtils";
+import { getStatusChangeMessage, normalizeListingStatus } from "../utils/listingStatus";
 
 const DELETE_PROPERTY_REASONS = [
   { id: "cannot-host", label: "I am no longer able to host." },
@@ -855,21 +856,16 @@ export default function HostProperty() {
     setStatusUpdating(true);
     setError("");
     try {
-      await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
-      setStatus(nextStatus);
+      const result = await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
+      const returnedStatus = normalizeListingStatus(result?.status || nextStatus);
+      setStatus(returnedStatus);
       setHostProperties((previous) =>
         previous.map((accommodation) =>
-          accommodation.id === propertyId ? { ...accommodation, status: nextStatus } : accommodation
+          accommodation.id === propertyId ? { ...accommodation, status: returnedStatus } : accommodation
         )
       );
 
-      if (nextStatus === "ACTIVE") {
-        toast.success("Listing moved to Live.");
-      } else if (nextStatus === "ARCHIVED") {
-        toast.success("Listing moved to Archived.");
-      } else {
-        toast.success("Listing moved to Draft.");
-      }
+      toast.success(getStatusChangeMessage(returnedStatus));
     } catch (statusUpdateError) {
       console.error(statusUpdateError);
       const statusErrorMessage = statusUpdateError?.message || "Failed to update listing status.";

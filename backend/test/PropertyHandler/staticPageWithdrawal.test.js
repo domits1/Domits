@@ -1,6 +1,9 @@
 import { describe, it, expect, jest } from "@jest/globals";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
+import { StaticPageRedirects } from "../../functions/PropertyHandler/business/service/staticPageRedirects.js";
+import { StaticPageRedirectStore } from "../../functions/PropertyHandler/data/repository/staticPageRedirectStore.js";
+import { buildFakeKeyValueStoreClient } from "./fakeKeyValueStoreClient.js";
 
 const FALLBACK = { domain: "cliff-house-site-1.direct.domits.com", domainType: "FALLBACK", status: "DISABLED" };
 const CUSTOM = { domain: "www.cliffhouse.nl", domainType: "CUSTOM", status: "ACTIVE" };
@@ -20,15 +23,21 @@ const buildWithdrawal = ({
   tenantByDomain = { [CUSTOM.domain]: { id: "dt_custom" } },
   domains = [FALLBACK, CUSTOM],
   distributionId = "E18DIST",
+  redirects = undefined,
+  log = [],
 } = {}) => {
-  const pageStore = { deletePage: jest.fn(async () => undefined), putSitemap: jest.fn(async () => undefined) };
+  const pageStore = {
+    deletePage: jest.fn(async ({ hostname }) => log.push(`delete:${hostname}`)),
+    putSitemap: jest.fn(async () => undefined),
+  };
   const tenantRepository = {
     listTenantsForDistribution: jest.fn(async () => tenants),
     getTenantByDomain: jest.fn(async (domain) => tenantByDomain[domain] || null),
     createInvalidation: jest.fn(async () => "I1"),
   };
   const domainRepository = { listDomainsBySiteId: jest.fn(async () => domains) };
-  const withdrawal = new StaticPageWithdrawal({ pageStore, tenantRepository, domainRepository, distributionId });
+  const deps = { pageStore, tenantRepository, domainRepository, distributionId, redirects };
+  const withdrawal = new StaticPageWithdrawal(deps);
   return { withdrawal, pageStore, tenantRepository, domainRepository };
 };
 
@@ -44,7 +53,42 @@ describe("StaticPageWithdrawal", () => {
       ["dt_wildcard", withdrawnPaths(FALLBACK.domain)],
       ["dt_custom", withdrawnPaths(CUSTOM.domain)],
     ]);
-    expect(result).toEqual({ siteId: "site-1", hostnames: [FALLBACK.domain, CUSTOM.domain], invalidationErrors: [] });
+    expect(result).toEqual({
+      siteId: "site-1",
+      hostnames: [FALLBACK.domain, CUSTOM.domain],
+      invalidationErrors: [],
+      redirectErrors: [],
+    });
+  });
+
+  const withRedirects = (keys) => {
+    const log = [];
+    const client = buildFakeKeyValueStoreClient({ keys, log });
+    const store = new StaticPageRedirectStore({ kvsArn: "arn:aws:cloudfront::1:key-value-store/redirects", client });
+    return { log, client, redirects: new StaticPageRedirects({ store }) };
+  };
+
+  it("removes the redirects of every hostname of the site before it takes the first page offline", async () => {
+    const { log, client, redirects } = withRedirects({ [FALLBACK.domain]: CUSTOM.domain, "x.domits.com": "x.nl" });
+    const { withdrawal } = buildWithdrawal({ redirects, log });
+
+    const result = await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] });
+
+    expect(Object.fromEntries(client.state.keys)).toEqual({ "x.domits.com": "x.nl" });
+    expect(log.indexOf("kvs:UpdateKeysCommand")).toBeLessThan(log.indexOf(`delete:${FALLBACK.domain}`));
+    expect(result.redirectErrors).toEqual([]);
+  });
+
+  it("still takes the pages offline when the redirects cannot be removed, and reports it", async () => {
+    const { log, client, redirects } = withRedirects({ [FALLBACK.domain]: CUSTOM.domain });
+    client.failNextCall(undefined);
+    client.failNextCall(new Error("store unavailable"));
+    const { withdrawal } = buildWithdrawal({ redirects, log });
+
+    const result = await withdrawal.withdraw({ siteId: "site-1", domains: [FALLBACK, CUSTOM] });
+
+    expect(log.filter((entry) => entry.startsWith("delete:"))).toHaveLength(2);
+    expect(result.redirectErrors).toEqual([{ siteId: "site-1", message: "REDIRECT_REMOVE_FAILED: store unavailable" }]);
   });
 
   it("replaces the sitemap of every host with an empty one right after its page, so it lists nothing and stays valid", async () => {

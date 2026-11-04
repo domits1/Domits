@@ -5,8 +5,12 @@ import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
 import Database from "database";
 import {Property} from "database/models/Property";
+import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
+import {randomUUID} from "node:crypto";
+import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
+const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
 
 export class PropertyRepository {
 
@@ -35,16 +39,6 @@ export class PropertyRepository {
             .execute();
         const result = await this.getPropertyById(property.id);
         return result ? result : null;
-    }
-
-    async activateProperty(propertyId) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: "ACTIVE" })
-            .where("id = :id", { id: propertyId })
-            .execute();
     }
 
     async getArchiveMetadataColumns(client) {
@@ -126,6 +120,118 @@ export class PropertyRepository {
             `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
             metadataParams
         );
+    }
+
+    // Compare-and-set: the single UPDATE only matches while the current status is one of fromStatuses,
+    // so a concurrent approval or rejection is never overwritten. Returns the number of rows changed.
+    // Only a move out of ARCHIVED clears the archive metadata; moving into ARCHIVED (which records
+    // who archived) stays with updatePropertyStatus.
+    async transitionStatus(propertyId, fromStatuses, toStatus) {
+        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
+            throw new TypeError("transitionStatus needs at least one from-status.");
+        }
+
+        const client = await Database.getInstance();
+        const now = Date.now();
+        const result = await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({ status: toStatus, updatedat: now })
+            .where("id = :id AND status IN (:...fromStatuses)", { id: propertyId, fromStatuses })
+            .execute();
+
+        const affected = Number(result?.affected) || 0;
+        if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
+            await this.clearArchiveMetadata(client, propertyId, toStatus, now);
+        }
+        return affected;
+    }
+
+    async transitionStatusWithEvent(
+        propertyId,
+        {fromStatuses, toStatus, action, actorId, reason = null, expectedUpdatedAt}
+    ) {
+        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
+            throw new TypeError("transitionStatusWithEvent needs at least one from-status.");
+        }
+        if (!MODERATION_ACTIONS.has(action)) {
+            throw new TypeError("transitionStatusWithEvent needs a moderation action.");
+        }
+        if (typeof actorId !== "string" || actorId === "") {
+            throw new TypeError("transitionStatusWithEvent needs an actor.");
+        }
+
+        const client = await Database.getInstance();
+        const eventId = randomUUID();
+        const now = Date.now();
+
+        return await withDsqlRetry(() =>
+            client.transaction(async (manager) => {
+                const current = await manager
+                    .createQueryBuilder(Property, "property")
+                    .select(["property.status", "property.updatedat"])
+                    .where("property.id = :id", {id: propertyId})
+                    .getOne();
+                if (!current) {
+                    return {outcome: "not_found"};
+                }
+
+                const currentStatus = current.status;
+                const currentUpdatedAt = Number(current.updatedat);
+                if (!fromStatuses.includes(currentStatus)) {
+                    return {outcome: "wrong_status", currentStatus};
+                }
+                if (expectedUpdatedAt !== undefined && expectedUpdatedAt !== currentUpdatedAt) {
+                    return {outcome: "stale", currentUpdatedAt};
+                }
+
+                const result = await manager
+                    .createQueryBuilder()
+                    .update(Property)
+                    .set({status: toStatus, updatedat: now})
+                    .where("id = :id AND status = :fromStatus AND updatedat = :currentUpdatedAt", {
+                        id: propertyId,
+                        fromStatus: currentStatus,
+                        currentUpdatedAt,
+                    })
+                    .execute();
+                if ((Number(result?.affected) || 0) === 0) {
+                    return {outcome: "stale", currentUpdatedAt};
+                }
+
+                if (currentStatus === "ARCHIVED" && toStatus !== "ARCHIVED") {
+                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now);
+                }
+
+                await manager
+                    .createQueryBuilder()
+                    .insert()
+                    .into(Property_Moderation_Event)
+                    .values({
+                        id: eventId,
+                        propertyId,
+                        action,
+                        actorId,
+                        reason,
+                        fromStatus: currentStatus,
+                        toStatus,
+                        createdAt: now,
+                    })
+                    .execute();
+
+                return {outcome: "changed", fromStatus: currentStatus, updatedAt: now};
+            })
+        );
+    }
+
+    async clearArchiveMetadata(client, propertyId, status, now) {
+        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
+        if (clearClauses.length === 0) {
+            return;
+        }
+
+        await client.query(`UPDATE property SET ${clearClauses.join(", ")} WHERE id = $1`, [propertyId]);
     }
 
     async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {
@@ -226,6 +332,39 @@ export class PropertyRepository {
         }
 
         return PaginatedPropertyMapping.mapDatabaseEntriesToPaginatedIdentifiers(result);
+    }
+
+    async getPropertiesByStatusOldestFirst(status, { after, limit }) {
+        if (!Number.isInteger(limit) || limit < 1) {
+            throw new TypeError("getPropertiesByStatusOldestFirst needs a positive integer limit.");
+        }
+
+        const client = await Database.getInstance();
+        const query = client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.status = :status", { status })
+            .orderBy("property.updatedat", "ASC")
+            .addOrderBy("property.id", "ASC")
+            .limit(limit + 1);
+
+        if (after) {
+            query.andWhere(
+                "(property.updatedat > :updatedAt OR (property.updatedat = :updatedAt AND property.id > :id))",
+                { updatedAt: after.updatedAt, id: after.id }
+            );
+        }
+
+        const rows = await query.getMany();
+        const hasMore = rows.length > limit;
+        const page = hasMore ? rows.slice(0, limit) : rows;
+        const lastRow = page[page.length - 1];
+
+        return {
+            identifiers: page.map(row => row.id),
+            hasMore,
+            lastKey: lastRow ? { updatedAt: lastRow.updatedat, id: lastRow.id } : null,
+        };
     }
 
     async getPropertiesByHostId(hostId) {

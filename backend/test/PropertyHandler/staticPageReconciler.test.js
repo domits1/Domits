@@ -1,5 +1,8 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import { StaticPageReconciler } from "../../functions/PropertyHandler/business/service/staticPageReconciler.js";
+import { StaticPageRedirects } from "../../functions/PropertyHandler/business/service/staticPageRedirects.js";
+import { StaticPageRedirectStore } from "../../functions/PropertyHandler/data/repository/staticPageRedirectStore.js";
+import { buildFakeKeyValueStoreClient } from "./fakeKeyValueStoreClient.js";
 
 const PUBLISHED = { id: "site-1", status: "PUBLISHED", staticPageRevision: 4 };
 const UNPUBLISHED = { id: "site-2", status: "PREVIEW", staticPageRevision: 2 };
@@ -24,7 +27,7 @@ const row = (siteId, status, attemptCount = 0, updatedAt = NOW) => ({
   failureReason: "",
 });
 
-const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null } = {}) => {
+const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null, redirects } = {}) => {
   const deps = {
     pageStore: { listPageHostnames: jest.fn(async () => ({ hostnames: stored, etags: { x: '"e"' }, rejected })) },
     siteRepository: { queueStaticPage: jest.fn(async () => true) },
@@ -47,6 +50,7 @@ const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], 
         return { removed, kept, failures: [], invalidationErrors: [] };
       }),
     },
+    redirects,
   };
   const run = (options = {}) => deps.reconciler.run({ now: NOW, ...options });
   deps.reconciler = new StaticPageReconciler(deps);
@@ -244,5 +248,79 @@ describe("StaticPageReconciler", () => {
         { siteId: "site-1", message: "connection lost" },
       ],
     });
+  });
+});
+
+describe("repairing the redirects of every site", () => {
+  const ALIAS = "beautiful-home-amsterdam-6156b005.direct.domits.com";
+  const PRIMARY = "www.villasensual.nl";
+  const SITE_ENTRIES = [entry(ALIAS, PUBLISHED, { isPrimary: false }), entry(PRIMARY, PUBLISHED)];
+  const reconcileWith = ({ keys = {}, entries = SITE_ENTRIES } = {}) => {
+    const log = [];
+    const client = buildFakeKeyValueStoreClient({ keys, log });
+    const store = new StaticPageRedirectStore({ kvsArn: "arn:aws:cloudfront::1:key-value-store/redirects", client });
+    const redirects = new StaticPageRedirects({ store });
+    const stored = entries.map((candidate) => candidate.domain);
+    const built = buildReconciler({ stored, entries, rows: [row("site-1", "ACTIVE")], redirects });
+    built.domainRepository.listDomainsWithSites.mockImplementation(async () => log.push("db:list") && entries);
+    return { log, client, ...built };
+  };
+
+  beforeEach(() => {
+    process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE = "true";
+  });
+
+  afterEach(() => {
+    delete process.env.DIRECT_BOOKING_WEBSITE_FALLBACK_ROUTING_ACTIVE;
+  });
+
+  it("repairs missing and stale redirects, after reading the version of the store first", async () => {
+    const { reconciler, client, log } = reconcileWith({
+      keys: { "gone.direct.domits.com": "www.gone.nl", [ALIAS]: "www.old-primary.nl" },
+    });
+
+    const summary = await reconciler.run();
+
+    expect(Object.fromEntries(client.state.keys)).toEqual({ [ALIAS]: PRIMARY });
+    expect(summary.redirects).toEqual({ put: 1, deleted: 1 });
+    expect(summary.errors).toEqual([]);
+    expect(log.indexOf("kvs:DescribeKeyValueStoreCommand")).toBeLessThan(log.indexOf("db:list"));
+  });
+
+  it("skips the round, without an error, when someone else writes the store during the run", async () => {
+    const { reconciler, client } = reconcileWith();
+    client.writeBeforeNextUpdate();
+
+    const summary = await reconciler.run();
+
+    expect(summary.redirects).toEqual({ put: 0, deleted: 0, conflict: true });
+    expect(summary.errors).toEqual([]);
+    expect(client.state.keys.has(ALIAS)).toBe(false);
+  });
+
+  it("never empties the store when the database lists no domain at all", async () => {
+    const { reconciler, client } = reconcileWith({ keys: { [ALIAS]: PRIMARY }, entries: [] });
+
+    await reconciler.run();
+
+    expect(client.state.keys.get(ALIAS)).toBe(PRIMARY);
+  });
+
+  it("only reads the version of the store when no redirect is expected and none is stored", async () => {
+    const { reconciler, client } = reconcileWith({ entries: [entry("a.direct.domits.com", PUBLISHED)] });
+
+    await reconciler.run();
+
+    expect(client.calls.map((call) => call.name)).toEqual(["DescribeKeyValueStoreCommand"]);
+  });
+
+  it("reports a store it cannot read, and still repairs the pages", async () => {
+    const { reconciler, client, siteRepository } = reconcileWith();
+    client.failNextCall(new Error("store unavailable"));
+
+    const summary = await reconciler.run();
+
+    expect(summary.errors).toEqual([{ message: "REDIRECT_RECONCILE_FAILED: store unavailable" }]);
+    expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
   });
 });

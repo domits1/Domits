@@ -196,7 +196,7 @@ jobs:
               cd ..
           
               # Deploy to Lambda and track any failures
-              if ! aws lambda update-function-code --function-name="$LAMBDA_FUNC_NAME" --zip-file=fileb://$FUNC_NAME.zip; then
+              if ! aws lambda update-function-code --function-name="$LAMBDA_FUNC_NAME" --zip-file=fileb://$FUNC_NAME.zip --query 'LastUpdateStatus' --output text; then
                 echo "::error ::Failed to deploy $LAMBDA_FUNC_NAME"
                 DEPLOY_ERRORS=1
                 # Clean up temporary files

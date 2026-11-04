@@ -377,6 +377,20 @@ const validateSetupMappingPayload = (payload) => {
   return "";
 };
 
+// Saving a ready mapping queues a full sync (#3282). Only a confirmed fullSyncQueued claims one:
+// queueing can fail after a ready save, and the backend then asks for the mapping to be saved again.
+const describeFullSyncQueueResult = (saveResult) => {
+  if (saveResult?.fullSyncQueued === true) {
+    return "Full sync queued. Channex receives all values within a few minutes; see Latest sync evidence.";
+  }
+  if (saveResult?.ready === false) {
+    const missingMappings = saveResult.readiness?.missingMappings ?? [];
+    const reason = missingMappings.length ? ` (${missingMappings.join(", ")})` : "";
+    return `No full sync queued: the mapping is not ready${reason}.`;
+  }
+  return "No full sync queued. Save the mapping again to retry.";
+};
+
 const getPayloadPaginationSummary = (pagination = {}) => {
   const pageSizeDays = Number(pagination.pageSizeDays) || PAYLOAD_PREVIEW_PAGE_SIZE_DAYS;
   const totalRequestedDays = Number(pagination.totalRequestedDays) || null;
@@ -1825,6 +1839,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         {setupMappingState.data ? (
           <>
             <p className="host-integrations-success-banner">Single-unit Channex mapping saved.</p>
+            <p className="host-integrations-muted">{describeFullSyncQueueResult(setupMappingState.data)}</p>
             <DetailGrid
               items={[
                 { label: "Integration account", value: setupMappingState.data.integrationAccountId },

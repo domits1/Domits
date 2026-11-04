@@ -107,7 +107,25 @@ describe('SettingsView', () => {
             );
         });
 
-        test.each(['Urgent tasks only', 'Enable notifications'])(
+        test('lets the user turn off in-app notifications and saves the choice', async () => {
+            render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
+            await screen.findByText('Team Members');
+
+            const inAppToggle = screen.getByRole('button', { name: 'Enable notifications' });
+            await waitFor(() => expect(inAppToggle).toHaveClass('on'));
+
+            fireEvent.click(inAppToggle);
+            expect(inAppToggle).not.toHaveClass('on');
+
+            saveSettings.mockResolvedValue();
+            await act(async () => {
+                fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+            });
+
+            expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ notifInappEnabled: false }));
+        });
+
+        test.each(['Urgent tasks only'])(
             'keeps "%s" inert because nothing sends it yet',
             async (label) => {
                 render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);

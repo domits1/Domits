@@ -17,6 +17,7 @@ import { IntegrationSyncState } from "database/models/unified/sync/IntegrationSy
 import { IntegrationSyncLog } from "database/models/unified/sync/IntegrationSyncLog";
 import { ChannexSyncEvidence } from "database/models/unified/sync/ChannexSyncEvidence";
 import { ChannexAriOutbox } from "database/models/channelManagement/ChannexAriOutbox";
+import { HomeAutomationDeviceAudit } from "database/models/homeAutomation/HomeAutomationDeviceAudit";
 
 export const Tables = [
 
@@ -39,4 +40,5 @@ export const Tables = [
   IntegrationSyncLog,
   ChannexSyncEvidence,
   ChannexAriOutbox,
+  HomeAutomationDeviceAudit,
 ];

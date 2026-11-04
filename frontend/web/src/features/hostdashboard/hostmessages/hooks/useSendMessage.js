@@ -109,7 +109,7 @@ export const useSendMessage = (userId, accessToken = null) => {
       };
     } catch (err) {
       setError(err);
-      return { success: false, error: err?.message || String(err) };
+      return { success: false, error: err?.message || String(err), saved: err?.savedMessage ?? null };
     } finally {
       setSending(false);
     }
