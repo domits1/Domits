@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   buildDestinationNotFoundPage,
   buildDestinationPage,
+  buildDestinationRootPage,
   buildDestinationUnavailablePage,
   escapeHtml,
 } from "../../functions/PropertyHandler/business/service/destinationPageBuilder.js";
@@ -220,5 +221,38 @@ describe("the stay cards", () => {
     });
     expect(readTitle(html)).toBe("\u0634\u0642\u0629 \u0639\u0644\u0649 \u0627\u0644\u0628\u062D\u0631");
     expect(readPlace(html)).toBe("\u05EA\u05DC \u05D0\u05D1\u05D9\u05D1, Spain");
+  });
+});
+
+describe("the destination links", () => {
+  it.each([
+    "//other.example/destinations/europe",
+    "https://other.example/destinations/europe",
+    "/\\other.example/destinations/europe",
+    "javascript:alert(1)",
+    " /destinations/europe",
+    "/destinations//europe",
+    "/destinations/Europe",
+    "/destinations/europe?from=menu",
+    "/",
+    undefined,
+  ])("names a destination at %j without a link, below a page, in the breadcrumbs and on the root page", (path) => {
+    const page = buildDestinationPage({
+      destination: { type: "country", name: "Spain", path: "/destinations/europe/spain" },
+      parents: [{ name: "Europe", path }],
+      children: [{ name: "Marbella", path, activeListings: 2 }],
+      listings: [LISTING],
+      activeListings: 2,
+    }).html;
+    const root = buildDestinationRootPage({
+      continents: [
+        { name: "Europe", path, hasPage: true, countries: [{ name: "Spain", path, hasPage: true, activeListings: 2 }] },
+      ],
+    }).html;
+
+    expect(page).toContain('<ol class="breadcrumbs"><li><a href="/destinations">Destinations</a></li><li>Europe</li>');
+    expect(page).toContain('<li>Marbella <span class="count">2 holiday rentals</span></li>');
+    expect(root).toContain('<h2>Europe</h2><ul><li>Spain <span class="count">2 holiday rentals</span></li>');
+    expect(`${page}${root}`).not.toMatch(/>(Europe|Spain|Marbella)<\/a>/);
   });
 });

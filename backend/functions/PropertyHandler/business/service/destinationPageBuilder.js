@@ -1,5 +1,6 @@
 import { ACCOMMODATION_IMAGE_BASE_URL } from "../../util/destination/accommodationImage.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
+import { isDestinationSlug } from "../../util/destination/destinationSlug.js";
 import { renderDestinationDocument } from "./destinationPageLayout.js";
 
 export const DESTINATIONS_ROOT_PATH = "/destinations";
@@ -26,6 +27,12 @@ const toSiteOrigin = (siteOrigin) => {
   return origin || DEFAULT_SITE_ORIGIN;
 };
 
+const isSameSitePath = (path) =>
+  typeof path === "string" && path.startsWith("/") && path.slice(1).split("/").every(isDestinationSlug);
+
+const renderDestinationLink = ({ name, path }) =>
+  isSameSitePath(path) ? `<a href="${escapeHtml(path)}">${escapeHtml(name)}</a>` : escapeHtml(name);
+
 const pluralListings = (count) => (count === 1 ? "1 holiday rental" : `${count} holiday rentals`);
 
 const describe = (destination, listingCount, children) => {
@@ -45,7 +52,7 @@ const renderBreadcrumbs = (trail, origin) => {
     .map((crumb, index) =>
       index === trail.length - 1
         ? `<li aria-current="page">${escapeHtml(crumb.name)}</li>`
-        : `<li><a href="${escapeHtml(crumb.path)}">${escapeHtml(crumb.name)}</a></li>`
+        : `<li>${renderDestinationLink(crumb)}</li>`
     )
     .join("");
   return {
@@ -65,7 +72,7 @@ const renderChildren = (children) => {
   const items = children
     .map(
       (child) =>
-        `<li><a href="${escapeHtml(child.path)}">${escapeHtml(child.name)}</a> <span class="count">${pluralListings(child.activeListings)}</span></li>`
+        `<li>${renderDestinationLink(child)} <span class="count">${pluralListings(child.activeListings)}</span></li>`
     )
     .join("");
   return `<section class="children"><h2>Destinations</h2><ul>${items}</ul></section>`;
@@ -128,13 +135,11 @@ export const buildDestinationUnavailablePage = () =>
   });
 
 const renderRootContinent = (continent) => {
-  const heading = continent.hasPage
-    ? `<a href="${escapeHtml(continent.path)}">${escapeHtml(continent.name)}</a>`
-    : escapeHtml(continent.name);
+  const heading = continent.hasPage ? renderDestinationLink(continent) : escapeHtml(continent.name);
   const countries = continent.countries
     .map(
       (country) =>
-        `<li>${country.hasPage ? `<a href="${escapeHtml(country.path)}">${escapeHtml(country.name)}</a>` : escapeHtml(country.name)} <span class="count">${pluralListings(country.activeListings)}</span></li>`
+        `<li>${country.hasPage ? renderDestinationLink(country) : escapeHtml(country.name)} <span class="count">${pluralListings(country.activeListings)}</span></li>`
     )
     .join("");
   return `<section class="children"><h2>${heading}</h2>${countries ? `<ul>${countries}</ul>` : ""}</section>`;
