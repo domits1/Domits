@@ -1,7 +1,45 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Helpdesk from "../pages/helpdesk/Helpdesk";
 import Faq from '../pages/landingpage/Faq';
+
+describe('Faq helpdesk buttons', () => {
+  let originalLocation;
+
+  beforeEach(() => {
+    originalLocation = window.location;
+    delete window.location;
+    window.location = { assign: jest.fn() };
+  });
+
+  afterEach(() => {
+    window.location = originalLocation;
+  });
+
+  const renderFaq = () =>
+    render(
+      <MemoryRouter>
+        <Faq />
+      </MemoryRouter>
+    );
+
+  test('the Host button opens the host FAQ on bookdomits.com', () => {
+    renderFaq();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Host' }));
+
+    expect(window.location.assign).toHaveBeenCalledWith('https://bookdomits.com/host-faq-frequently-asked-questions/');
+  });
+
+  test('the Guest button opens the guest FAQ on bookdomits.com', () => {
+    renderFaq();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guest' }));
+
+    expect(window.location.assign).toHaveBeenCalledWith('https://bookdomits.com/guest-faq-frequently-asked-questions/');
+  });
+});
 
 test.skip('shows search input and button', () => {
     render(<Helpdesk category="guest" />);
