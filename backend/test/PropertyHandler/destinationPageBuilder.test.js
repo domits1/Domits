@@ -231,6 +231,7 @@ describe("the destination links", () => {
     "/\\other.example/destinations/europe",
     "javascript:alert(1)",
     " /destinations/europe",
+    "destinations/europe",
     "/destinations//europe",
     "/destinations/Europe",
     "/destinations/europe?from=menu",
