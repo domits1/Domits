@@ -40,6 +40,7 @@ export class TruviBookingCanceller {
       try {
         const outcome = await this.#cancel({ bookingId, verificationId, now });
         if (outcome.retry) {
+          await this.assessmentRepository.markAttempt({ bookingId, now });
           summary.retryLater += 1;
           continue;
         }

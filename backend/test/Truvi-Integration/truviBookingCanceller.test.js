@@ -11,7 +11,10 @@ const NOW = Date.UTC(2026, 9, 19, 10, 0, 0);
 const build = ({ verifications = [{ bookingId: "booking-1", verificationId: "9c1f7a20-5b84-4d6e-8a13-7f0c2b95e4d1" }], cancel } = {}) => {
   const bookingRepository = { listVerificationsToCancel: jest.fn(async () => verifications) };
   const apiClient = { cancelVerification: jest.fn(cancel || (async () => ({ metadata: {} }))) };
-  const assessmentRepository = { saveCancellation: jest.fn(async () => undefined) };
+  const assessmentRepository = {
+    saveCancellation: jest.fn(async () => undefined),
+    markAttempt: jest.fn(async () => undefined),
+  };
   const canceller = new TruviBookingCanceller({ bookingRepository, apiClient, assessmentRepository });
   return { canceller, bookingRepository, apiClient, assessmentRepository };
 };
@@ -68,7 +71,7 @@ describe("TruviBookingCanceller", () => {
     expect(summary.refused).toBe(1);
   });
 
-  it("leaves the booking for the next run on a timeout or a 5xx", async () => {
+  it("leaves the booking for the next run on a timeout or a 5xx, at the back of the queue", async () => {
     const { canceller, assessmentRepository } = build({
       verifications: [
         { bookingId: "booking-1", verificationId: "9c1f7a20-5b84-4d6e-8a13-7f0c2b95e4d1" },
@@ -83,6 +86,10 @@ describe("TruviBookingCanceller", () => {
     const summary = await canceller.run({ now: NOW });
 
     expect(assessmentRepository.saveCancellation).not.toHaveBeenCalled();
+    expect(assessmentRepository.markAttempt.mock.calls).toEqual([
+      [{ bookingId: "booking-1", now: NOW }],
+      [{ bookingId: "booking-2", now: NOW }],
+    ]);
     expect(summary).toEqual({ listed: 2, cancelled: 0, refused: 0, retryLater: 2, errors: [] });
   });
 
