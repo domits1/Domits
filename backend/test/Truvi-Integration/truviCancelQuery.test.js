@@ -9,13 +9,20 @@ jest.mock("database", () => ({
 
 describe("TruviBookingRepository.listVerificationsToCancel", () => {
   it("lists Truvi verifications of cancelled bookings that are not cancelled or refused yet", async () => {
-    const query = jest.fn(async () => [{ bookingid: "booking-1", providerassessmentid: "v-1" }]);
+    const query = jest.fn(async () => [
+      { bookingid: "booking-1", providerassessmentid: "v-1", failedattempts: null },
+      { bookingid: "booking-2", providerassessmentid: "v-2", failedattempts: 1 },
+    ]);
     Database.getInstance.mockResolvedValue({ query, options: {} });
 
     const result = await new TruviBookingRepository().listVerificationsToCancel({ limit: 5 });
 
-    expect(result).toEqual([{ bookingId: "booking-1", verificationId: "v-1" }]);
+    expect(result).toEqual([
+      { bookingId: "booking-1", verificationId: "v-1", failedAttempts: null },
+      { bookingId: "booking-2", verificationId: "v-2", failedAttempts: 1 },
+    ]);
     const [sql, params] = query.mock.calls[0];
+    expect(sql).toContain("g.failedattempts");
     expect(sql).toContain("test.guest_risk_assessment g");
     expect(sql).toContain("JOIN test.booking b ON b.id = g.bookingid");
     expect(sql).toContain("g.providerassessmentid IS NOT NULL");

@@ -14,12 +14,15 @@ const buildUpdate = () => {
 };
 
 describe("GuestRiskAssessmentRepository.saveTruviDates", () => {
-  it("updates the dates and updatedAt, and the error message only when given", async () => {
+  it("updates the dates and updatedAt, clears the failed attempts, and sets the error message only when given", async () => {
     const update = buildUpdate();
 
     await new GuestRiskAssessmentRepository().saveTruviDates({ bookingId: "booking-1", arrivalDate: 1, departureDate: 2, now: 3 });
 
-    expect(update).toHaveBeenCalledWith({ id: "truvi:booking-1" }, { arrivalDate: 1, departureDate: 2, updatedAt: 3 });
+    expect(update).toHaveBeenCalledWith(
+      { id: "truvi:booking-1" },
+      { arrivalDate: 1, departureDate: 2, failedAttempts: null, updatedAt: 3 }
+    );
   });
 
   it("clears or sets the error message when it is passed", async () => {
@@ -33,7 +36,13 @@ describe("GuestRiskAssessmentRepository.saveTruviDates", () => {
       now: 3,
     });
 
-    expect(update.mock.calls[0][1]).toEqual({ arrivalDate: 1, departureDate: 2, updatedAt: 3, errorMessage: null });
+    expect(update.mock.calls[0][1]).toEqual({
+      arrivalDate: 1,
+      departureDate: 2,
+      failedAttempts: null,
+      updatedAt: 3,
+      errorMessage: null,
+    });
   });
 
   it("refuses to save without a booking id", async () => {
@@ -48,6 +57,14 @@ describe("GuestRiskAssessmentRepository.markAttempt", () => {
     await new GuestRiskAssessmentRepository().markAttempt({ bookingId: "booking-1", now: 3 });
 
     expect(update).toHaveBeenCalledWith({ id: "truvi:booking-1" }, { updatedAt: 3 });
+  });
+
+  it("also saves the number of failed attempts when it is given", async () => {
+    const update = buildUpdate();
+
+    await new GuestRiskAssessmentRepository().markAttempt({ bookingId: "booking-1", failedAttempts: 2, now: 3 });
+
+    expect(update).toHaveBeenCalledWith({ id: "truvi:booking-1" }, { failedAttempts: 2, updatedAt: 3 });
   });
 
   it("refuses to update without a booking id", async () => {

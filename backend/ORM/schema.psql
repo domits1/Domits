@@ -530,6 +530,7 @@ CREATE TABLE IF NOT EXISTS main.guest_risk_assessment (
   departuredate BIGINT,
   createdat BIGINT NOT NULL,
   updatedat BIGINT NOT NULL,
+  failedattempts INTEGER,
   PRIMARY KEY (id)
 );
 CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx ON main.guest_risk_assessment (bookingid);
@@ -546,6 +547,7 @@ CREATE TABLE IF NOT EXISTS test.guest_risk_assessment (
   departuredate BIGINT,
   createdat BIGINT NOT NULL,
   updatedat BIGINT NOT NULL,
+  failedattempts INTEGER,
   PRIMARY KEY (id)
 );
 CREATE INDEX ASYNC guest_risk_assessment_bookingid_idx_test ON test.guest_risk_assessment (bookingid);

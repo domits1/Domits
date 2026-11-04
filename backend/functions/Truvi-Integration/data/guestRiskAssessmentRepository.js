@@ -56,14 +56,17 @@ export class GuestRiskAssessmentRepository {
       throw new Error("bookingId is required to save a cancellation");
     }
     const repository = await this.getRepository();
-    await repository.update({ id: assessmentId(provider, bookingId) }, { status, errorMessage, updatedAt: now });
+    await repository.update(
+      { id: assessmentId(provider, bookingId) },
+      { status, errorMessage, failedAttempts: null, updatedAt: now }
+    );
   }
 
   async saveTruviDates({ provider = TRUVI_PROVIDER, bookingId, arrivalDate, departureDate, errorMessage, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to save the Truvi dates");
     }
-    const changes = { arrivalDate, departureDate, updatedAt: now };
+    const changes = { arrivalDate, departureDate, failedAttempts: null, updatedAt: now };
     if (errorMessage !== undefined) {
       changes.errorMessage = errorMessage;
     }
@@ -71,12 +74,13 @@ export class GuestRiskAssessmentRepository {
     await repository.update({ id: assessmentId(provider, bookingId) }, changes);
   }
 
-  async markAttempt({ provider = TRUVI_PROVIDER, bookingId, now = Date.now() }) {
+  async markAttempt({ provider = TRUVI_PROVIDER, bookingId, failedAttempts, now = Date.now() }) {
     if (!bookingId) {
       throw new Error("bookingId is required to mark a Truvi attempt");
     }
+    const changes = failedAttempts === undefined ? { updatedAt: now } : { failedAttempts, updatedAt: now };
     const repository = await this.getRepository();
-    await repository.update({ id: assessmentId(provider, bookingId) }, { updatedAt: now });
+    await repository.update({ id: assessmentId(provider, bookingId) }, changes);
   }
 
   async findByBooking({ provider = TRUVI_PROVIDER, bookingId }) {
