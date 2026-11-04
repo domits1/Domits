@@ -30,7 +30,7 @@ Checked on 2026-10-19: `information_schema.columns` returned no rows for `guest_
 | departuredate | BIGINT | yes | Check-out (epoch ms) last sent to Truvi, same rules as `arrivaldate` |
 | createdat | BIGINT | no | Epoch ms |
 | updatedat | BIGINT | no | Epoch ms |
-| failedattempts | INTEGER | yes | Unexpected Truvi answers in a row for the current modify or cancel request. Empty after every saved result. Added by `20261104_guest_risk_assessment_failed_attempts.sql` |
+| failedattempts | INTEGER | yes | Unexpected Truvi 400 answers since the last saved result of a modify or cancel run. Other 4xx, 5xx and timeouts do not count. After 3 the run gives up, see "Failed Attempts" in `truvi-screening-schedule.md`. Added by `20261104_guest_risk_assessment_failed_attempts.sql` |
 
 Index: `guest_risk_assessment_bookingid_idx` (main) and `guest_risk_assessment_bookingid_idx_test` (test) on `bookingid`, created with `CREATE INDEX ASYNC`.
 

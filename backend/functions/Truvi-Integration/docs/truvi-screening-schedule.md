@@ -31,12 +31,12 @@ With `"task": "cancel-cancelled-bookings"` the same Lambda handles cancelled boo
 2. Sends `PUT /verificationRequests/cancel` with the verification id and the booking id as reservation id.
 3. Saves `CANCELLED` on a 200, and also on `already cancelled` (a retry of a request that went through).
 4. Saves `CANCEL_REFUSED` with the reason when Truvi cannot cancel anymore: the check-in has passed, the verification is screening only, or Truvi does not know it. These rows are not tried again.
-5. Leaves the row for the next run on a timeout or a 5xx.
-6. Fails the run on any other 400, without saving, because that means the request itself is wrong.
+5. Leaves the row for the next run on a timeout or a 5xx, and sets only `updatedat`, so the row moves to the back of the list (the query sorts on `updatedat` ascending).
+6. Fails the run on any other 4xx, because then the request or the key is wrong, and moves the row to the back of the list. The row keeps its status. A 400 also raises `failedattempts` by one. After the third 400 for the same booking, the run stops: it saves `CANCEL_REFUSED` with `Truvi refused the request with status <status>` and counts it in `gaveUp`. Truvi did not cancel that verification, so check those rows by hand (see "Failed Attempts" below).
 
 ## Prerequisites
 
-- The `guest_risk_assessment` migration has run in the target database.
+- The `guest_risk_assessment` migrations have run in the target database: `20261012_create_guest_risk_assessment.sql` and `20261104_guest_risk_assessment_failed_attempts.sql`. The entity reads `failedattempts`, so every Truvi run fails until the second one has run.
 - A Lambda named `Truvi-Integration` exists (Node.js 22, ESM) with the `database` layer, like the other DSQL Lambdas.
 - The Lambda role can:
   - `secretsmanager:GetSecretValue` on `domits/truvi/subscription-key` (eu-north-1)
@@ -76,7 +76,8 @@ With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
 3. When the dates differ on the day, sends `PUT /verificationRequests` with both new dates (Truvi only accepts the dates, it does not screen again).
 4. Saves the new dates on a 200, so the booking is not sent again.
 5. When Truvi refuses (check-in or check-out in the past, verification cancelled or unknown), saves the new dates with the reason in `errormessage`, so it is not sent again. Truvi then still has the old dates; a non-empty `errormessage` on the row means the stored dates were refused.
-6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400. In both cases only `updatedat` is set to now, so the row moves to the back of the list (the query sorts on `updatedat` ascending) and a row that keeps failing does not block newer date changes. Truvi's error text is not saved for these rows.
+6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 4xx. In both cases `updatedat` is set to now, so the row moves to the back of the list (the query sorts on `updatedat` ascending) and a row that keeps failing does not block newer date changes. Truvi's error text is not saved for these rows.
+7. Counts an unexpected 400 in `failedattempts`. After the third one for the same date change, the run stops sending it: it saves the new dates with `Truvi refused the request with status <status>` in `errormessage`, like a refusal, and counts it in `gaveUp`. Truvi still has the old dates. A later date change of the booking is sent again.
 
 Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
 
@@ -92,6 +93,27 @@ Truvi's error text can repeat what we sent, guest names and contact details incl
 | Any other 4xx | `Truvi refused the request with status <status>` |
 
 The screening run also saves its own messages for bookings it does not send, such as `Property has no location`. These come from our code, not from Truvi.
+
+## Failed Attempts
+
+`failedattempts` counts the unexpected 400 answers (a 400 the run does not know as a refusal) since the last saved result of a modify or cancel run. Every saved result empties it. Only a 400 counts, because only a 400 is about this one request. A 401, 403 or 429 is about the key or the rate limit and would hit every row, so it fails every run and shows in CloudWatch without giving up on any row. A timeout or a 5xx is Truvi's problem and is counted in `retryLater`. All of these rows stay in the list and are tried again in the next runs.
+
+After 3 unexpected 400 answers the run gives up on that request, so the same wrong request is not sent every 15 minutes:
+
+| Run | What is saved | Summary |
+| --- | ------------- | ------- |
+| Modify | the new dates, `errormessage` = `Truvi refused the request with status <status>` | `gaveUp` |
+| Cancel | status `CANCEL_REFUSED`, the same `errormessage` | `gaveUp` |
+
+The run still fails that last time, so it is visible in CloudWatch. To find these rows (a screening `ERROR` can carry the same message, so it is left out):
+
+```sql
+SELECT id, status, errormessage, updatedat
+FROM main.guest_risk_assessment
+WHERE provider = 'truvi' AND status <> 'ERROR' AND errormessage LIKE 'Truvi refused the request with status%';
+```
+
+Look up the booking in Truvi with its `bookingId`. To try a cancel again after the cause is fixed, set its `status` back to the screening status it had (`PASSED`, `FLAGGED` or `FAILED`); to try a date change again, set `arrivaldate` and `departuredate` back to the dates Truvi still has. Do not set them to `NULL`: the modify run then only saves the booking dates, without calling Truvi.
 
 ## EventBridge Rule
 
