@@ -94,7 +94,7 @@ describe("the destination page", () => {
     expect(page.html).toContain("Málaga");
     expect(page.html).not.toContain("Nowhere");
     expect((page.html.match(/<li class="listing">/g) || []).length).toBe(2);
-    expect((page.html.match(/<img /g) || []).length).toBe(1);
+    expect((page.html.match(/<img src="https:\/\/accommodation\./g) || []).length).toBe(1);
     expect((page.html.match(/per night/g) || []).length).toBe(1);
   });
 

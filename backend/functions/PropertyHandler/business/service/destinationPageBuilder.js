@@ -95,13 +95,13 @@ const renderSocialHead = ({ title, description, canonical }) =>
 export const buildDestinationNotFoundPage = () =>
   renderDestinationDocument({
     head: `<title>Destination not found | Domits</title>${NOT_INDEXED}`,
-    main: `<main><h1>No stays here yet</h1><p>There are no holiday rentals in this destination at the moment.</p><p><a href="${DESTINATIONS_ROOT_PATH}">All destinations</a></p></main>`,
+    main: `<main class="notice"><h1>No stays here yet</h1><p>There are no holiday rentals in this destination at the moment.</p><p><a href="${DESTINATIONS_ROOT_PATH}">All destinations</a></p></main>`,
   });
 
 export const buildDestinationUnavailablePage = () =>
   renderDestinationDocument({
     head: `<title>Destinations unavailable | Domits</title>${NOT_INDEXED}`,
-    main: "<main><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main>",
+    main: '<main class="notice"><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main>',
   });
 
 const renderRootContinent = (continent) => {
