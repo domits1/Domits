@@ -7,7 +7,7 @@ import Database from "database";
 import {Property} from "database/models/Property";
 import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
 import {randomUUID} from "node:crypto";
-import {withDsqlRetry} from "../../../.shared/dsqlRetry.js";
+import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
