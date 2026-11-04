@@ -47,7 +47,7 @@ import {
 } from "../../util/propertyStatus.js";
 import { decodeReviewQueueCursor, encodeReviewQueueCursor } from "../../util/reviewQueueCursor.js";
 import { normalizeReviewQueueLimit } from "../../util/reviewQueueLimit.js";
-import { isDsqlConflict } from "../../../.shared/dsqlRetry.js";
+import { isDsqlConflict } from "../../.shared/dsqlRetry.js";
 import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
   MAX_REGISTRATION_NUMBER_LENGTH,
