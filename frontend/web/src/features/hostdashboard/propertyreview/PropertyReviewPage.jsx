@@ -1,68 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { checkPropertyReviewAccess } from "./propertyReviewAccess";
-import "../hostintegrations/HostIntegrations.scss";
+import { PROPERTY_REVIEW_ACCESS, checkPropertyReviewAccess } from "./propertyReviewAccess";
+import StateCard from "./StateCard";
+import styles from "./PropertyReviewPage.module.css";
 
-const ACCESS_STATE = Object.freeze({
-  CHECKING: "checking",
-  ALLOWED: "allowed",
-  DENIED: "denied",
-});
+const CHECKING = "checking";
 
 function PropertyReviewPage() {
-  const [accessState, setAccessState] = useState(ACCESS_STATE.CHECKING);
+  const [accessState, setAccessState] = useState(CHECKING);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    setAccessState(CHECKING);
 
-    async function loadAccess() {
-      let allowed = false;
-      try {
-        allowed = await checkPropertyReviewAccess();
-      } catch {
-        allowed = false;
-      }
-      if (mounted) setAccessState(allowed ? ACCESS_STATE.ALLOWED : ACCESS_STATE.DENIED);
-    }
+    void checkPropertyReviewAccess()
+      .catch(() => PROPERTY_REVIEW_ACCESS.UNAVAILABLE)
+      .then((state) => {
+        if (mounted) setAccessState(state);
+      });
 
-    void loadAccess();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [attempt]);
 
-  if (accessState === ACCESS_STATE.CHECKING) {
+  if (accessState === CHECKING) {
+    return <StateCard title="Checking access" message="Validating your signed-in Domits account." />;
+  }
+
+  if (accessState === PROPERTY_REVIEW_ACCESS.DENIED) {
+    return <StateCard title="Not authorized" message="Property review is limited to internal Domits admins." />;
+  }
+
+  if (accessState === PROPERTY_REVIEW_ACCESS.UNAVAILABLE) {
     return (
-      <main className="channex-admin-page">
-        <section className="channex-admin-access-card">
-          <p className="host-integrations-eyebrow">Internal admin</p>
-          <h1>Checking access</h1>
-          <p className="host-integrations-muted">Validating your signed-in Domits account.</p>
-        </section>
-      </main>
+      <StateCard title="Property review" message="Could not check your access. Try again.">
+        <button type="button" className={styles.retryButton} onClick={() => setAttempt((current) => current + 1)}>
+          Retry
+        </button>
+      </StateCard>
     );
   }
 
-  if (accessState === ACCESS_STATE.DENIED) {
-    return (
-      <main className="channex-admin-page">
-        <section className="channex-admin-access-card">
-          <p className="host-integrations-eyebrow">Internal admin</p>
-          <h1>Not authorized</h1>
-          <p className="host-integrations-muted">Property review is limited to internal Domits admins.</p>
-        </section>
-      </main>
-    );
-  }
-
-  return (
-    <main className="channex-admin-page">
-      <section className="channex-admin-access-card">
-        <p className="host-integrations-eyebrow">Internal admin</p>
-        <h1>Property review</h1>
-        <p className="host-integrations-muted">Queue coming soon</p>
-      </section>
-    </main>
-  );
+  return <StateCard title="Property review" message="Queue coming soon" />;
 }
 
 export default PropertyReviewPage;
