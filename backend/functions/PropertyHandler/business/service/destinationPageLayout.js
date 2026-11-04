@@ -22,7 +22,7 @@ const STYLE = [
   `.breadcrumbs a,h2 a{color:${GREEN};text-decoration:none}`,
   ".breadcrumbs a:hover,h2 a:hover{text-decoration:underline}",
   ".children ul,.listings ul{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr))}",
-  ".children li{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.25rem .75rem;padding:.875rem 1rem;border:1px solid #e5e7eb;border-radius:12px}",
+  ".children li{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;align-content:center;gap:.25rem .75rem;padding:.875rem 1rem;border:1px solid #e5e7eb;border-radius:12px}",
   ".children li a{font-weight:500;text-decoration:none}",
   ".children li a::after{content:'';position:absolute;inset:-1px;border-radius:12px}",
   `.children li a:hover::after{box-shadow:inset 0 0 0 2px ${GREEN};background:rgba(13,152,19,.09)}`,
