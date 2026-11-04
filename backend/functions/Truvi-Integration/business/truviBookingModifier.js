@@ -1,6 +1,6 @@
 import { sameTruviDates, toModifyRequest } from "../util/truviMapper.js";
 import { truviErrorMessage } from "../util/truviErrorMessage.js";
-import { MAX_FAILED_ATTEMPTS, nextFailedAttempts } from "../util/truviFailedAttempts.js";
+import { countsAsFailedAttempt, nextFailedAttempt } from "../util/truviFailedAttempts.js";
 
 const REFUSED_MESSAGES = [
   "can no longer be modified",
@@ -52,7 +52,7 @@ export class TruviBookingModifier {
           continue;
         }
         if (outcome.unexpected) {
-          await this.#recordFailure(verification, outcome.message, now, summary);
+          await this.#recordFailure(verification, outcome, now, summary);
           summary.errors.push({ bookingId, message: outcome.message });
           continue;
         }
@@ -73,10 +73,10 @@ export class TruviBookingModifier {
     return summary;
   }
 
-  async #recordFailure({ bookingId, current, failedAttempts }, message, now, summary) {
-    const attempts = nextFailedAttempts(failedAttempts);
-    if (attempts < MAX_FAILED_ATTEMPTS) {
-      await this.assessmentRepository.markAttempt({ bookingId, failedAttempts: attempts, now });
+  async #recordFailure({ bookingId, current, failedAttempts }, { counts, message }, now, summary) {
+    const next = nextFailedAttempt({ counts, failedAttempts });
+    if (!next.giveUp) {
+      await this.assessmentRepository.markAttempt({ bookingId, ...next.changes, now });
       return;
     }
     await this.assessmentRepository.saveTruviDates({
@@ -111,7 +111,10 @@ export class TruviBookingModifier {
       if (outcome.refused) {
         return { counter: "refused", errorMessage: outcome.errorMessage };
       }
-      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
+      if (!outcome.unexpected) {
+        return outcome;
+      }
+      return { unexpected: true, counts: countsAsFailedAttempt(error), message: truviErrorMessage(error) };
     }
   }
 }

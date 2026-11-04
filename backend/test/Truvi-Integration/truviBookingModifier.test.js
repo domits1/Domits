@@ -159,6 +159,20 @@ describe("TruviBookingModifier", () => {
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 
+  it.each([401, 403, 429])("does not count a %p as a failed attempt, because it is not about this request", async (status) => {
+    const { modifier, assessmentRepository } = build({
+      verifications: [verification({ failedAttempts: 2 })],
+      modify: failWith(status, "Not allowed"),
+    });
+
+    const summary = await modifier.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
+    expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ gaveUp: 0 });
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: `Truvi refused the request with status ${status}` }]);
+  });
+
   it("does not count a timeout or a 5xx as a failed attempt", async () => {
     const { modifier, assessmentRepository } = build({
       verifications: [verification({ failedAttempts: 2 })],

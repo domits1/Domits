@@ -1,6 +1,6 @@
 import { toCancelRequest } from "../util/truviMapper.js";
 import { truviErrorMessage } from "../util/truviErrorMessage.js";
-import { MAX_FAILED_ATTEMPTS, nextFailedAttempts } from "../util/truviFailedAttempts.js";
+import { countsAsFailedAttempt, nextFailedAttempt } from "../util/truviFailedAttempts.js";
 
 export const CANCEL_STATUS = {
   CANCELLED: "CANCELLED",
@@ -46,7 +46,7 @@ export class TruviBookingCanceller {
           continue;
         }
         if (outcome.unexpected) {
-          await this.#recordFailure({ bookingId, failedAttempts }, outcome.message, now, summary);
+          await this.#recordFailure({ bookingId, failedAttempts }, outcome, now, summary);
           summary.errors.push({ bookingId, message: outcome.message });
           continue;
         }
@@ -70,10 +70,10 @@ export class TruviBookingCanceller {
     return summary;
   }
 
-  async #recordFailure({ bookingId, failedAttempts }, message, now, summary) {
-    const attempts = nextFailedAttempts(failedAttempts);
-    if (attempts < MAX_FAILED_ATTEMPTS) {
-      await this.assessmentRepository.markAttempt({ bookingId, failedAttempts: attempts, now });
+  async #recordFailure({ bookingId, failedAttempts }, { counts, message }, now, summary) {
+    const next = nextFailedAttempt({ counts, failedAttempts });
+    if (!next.giveUp) {
+      await this.assessmentRepository.markAttempt({ bookingId, ...next.changes, now });
       return;
     }
     await this.assessmentRepository.saveCancellation({
@@ -93,7 +93,10 @@ export class TruviBookingCanceller {
       return { status: CANCEL_STATUS.CANCELLED };
     } catch (error) {
       const outcome = classifyCancelError(error);
-      return outcome.unexpected ? { unexpected: true, message: truviErrorMessage(error) } : outcome;
+      if (!outcome.unexpected) {
+        return outcome;
+      }
+      return { unexpected: true, counts: countsAsFailedAttempt(error), message: truviErrorMessage(error) };
     }
   }
 }

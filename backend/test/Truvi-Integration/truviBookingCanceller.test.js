@@ -134,6 +134,20 @@ describe("TruviBookingCanceller", () => {
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 
+  it.each([401, 403, 429])("does not count a %p as a failed attempt, because it is not about this request", async (status) => {
+    const { canceller, assessmentRepository } = build({
+      verifications: [{ bookingId: "booking-1", verificationId: "9c1f7a20-5b84-4d6e-8a13-7f0c2b95e4d1", failedAttempts: 2 }],
+      cancel: failWith(status, "Not allowed"),
+    });
+
+    const summary = await canceller.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
+    expect(assessmentRepository.saveCancellation).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ gaveUp: 0 });
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: `Truvi refused the request with status ${status}` }]);
+  });
+
   it("keeps going with the next booking when saving one fails", async () => {
     const { canceller, assessmentRepository } = build({
       verifications: [
