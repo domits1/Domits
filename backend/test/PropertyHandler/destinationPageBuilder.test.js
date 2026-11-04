@@ -155,3 +155,51 @@ describe("the destination page", () => {
     expect(html).not.toContain("No stays here yet");
   });
 });
+
+describe("the stay cards", () => {
+  const renderStay = (overrides) =>
+    buildDestinationPage({ destination: MARBELLA, parents: PARENTS, listings: [{ ...LISTING, ...overrides }] }).html;
+  const readCard = (html) => /<li class="listing">.*?<\/li>/.exec(html)[0];
+  const readTitle = (html) => /<h3 dir="auto">([^<]*)<\/h3>/.exec(html)[1];
+  const readPlace = (html) => /<p class="place" dir="auto">([^<]*)<\/p>/.exec(html)?.[1];
+
+  it("renders a stay as one link around the photo, title, place and price", () => {
+    const title = "Villa &lt;Sol&gt; &amp; &quot;Mar&quot;";
+    expect(readCard(renderStay({}))).toBe(
+      `<li class="listing"><a href="/listingdetails?ID=${LISTING.id}"><img src="${LISTING.imageUrl}" alt="${title}" loading="lazy"><h3 dir="auto">${title}</h3><p class="place" dir="auto">Marbella, Spain</p><p class="price">From &euro;240 per night</p></a></li>`
+    );
+  });
+
+  it("shows a placeholder without a photo, leaves out a missing price and place, and names an untitled stay", () => {
+    const card = readCard(
+      renderStay({ title: " \n ", city: "", country: "  ", imageUrl: "", nightlyRate: Number.NaN })
+    );
+    expect(card).toBe(
+      `<li class="listing"><a href="/listingdetails?ID=${LISTING.id}"><span class="photo"></span><h3 dir="auto">Holiday rental</h3></a></li>`
+    );
+  });
+
+  it("names the place from the parts it has", () => {
+    expect(readPlace(renderStay({ country: "" }))).toBe("Marbella");
+    expect(readPlace(renderStay({ city: " " }))).toBe("Spain");
+  });
+
+  it("keeps a very long title and place to 120 characters without splitting an emoji or an escaped character", () => {
+    const palm = "\u{1F334}";
+    const html = renderStay({ title: palm.repeat(300), city: "&".repeat(300), country: "" });
+
+    expect(readTitle(html)).toBe(`${palm.repeat(119)}\u2026`);
+    expect(readPlace(html)).toBe(`${"&amp;".repeat(119)}\u2026`);
+    expect(html).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+    expect(readTitle(renderStay({ title: "a".repeat(120) }))).toBe("a".repeat(120));
+  });
+
+  it("keeps right to left text as it is and lets the browser set its direction per title and place", () => {
+    const html = renderStay({
+      title: "\u0634\u0642\u0629 \u0639\u0644\u0649 \u0627\u0644\u0628\u062D\u0631",
+      city: "\u05EA\u05DC \u05D0\u05D1\u05D9\u05D1",
+    });
+    expect(readTitle(html)).toBe("\u0634\u0642\u0629 \u0639\u0644\u0649 \u0627\u0644\u0628\u062D\u0631");
+    expect(readPlace(html)).toBe("\u05EA\u05DC \u05D0\u05D1\u05D9\u05D1, Spain");
+  });
+});

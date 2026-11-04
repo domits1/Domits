@@ -127,4 +127,18 @@ describe("the shared layout of the destination pages", () => {
       expect(canonical.every((value) => value.startsWith("https://www.domits.com/destinations"))).toBe(true);
     }
   );
+
+  it("keeps a page with 24 stays of the longest titles and places under 64 KiB, and the notices under 6 KiB", () => {
+    const longest = { title: "&".repeat(5000), city: "<".repeat(5000), country: '"'.repeat(5000) };
+    const page = buildDestinationPage({
+      destination: { type: "city", name: "Marbella", path: "/destinations/europe/spain/marbella" },
+      parents: [EUROPE, SPAIN],
+      listings: Array.from({ length: 24 }, (_, index) => stay(index, longest)),
+    });
+
+    expect(page.html.match(/<li class="listing">/g)).toHaveLength(24);
+    expect(Buffer.byteLength(page.html, "utf8")).toBeLessThanOrEqual(64 * 1024);
+    expect(Buffer.byteLength(buildDestinationNotFoundPage(), "utf8")).toBeLessThanOrEqual(6 * 1024);
+    expect(Buffer.byteLength(buildDestinationUnavailablePage(), "utf8")).toBeLessThanOrEqual(6 * 1024);
+  });
 });

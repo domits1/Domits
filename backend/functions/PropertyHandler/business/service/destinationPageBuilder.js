@@ -70,16 +70,33 @@ const renderChildren = (children) => {
   return `<section class="children"><h2>Destinations</h2><ul>${items}</ul></section>`;
 };
 
+const LISTING_TEXT_MAX_LENGTH = 120;
+const LISTING_TITLE_FALLBACK = "Holiday rental";
+
+const shorten = (value) => {
+  const characters = Array.from(cleanText(value));
+  if (characters.length <= LISTING_TEXT_MAX_LENGTH) {
+    return characters.join("");
+  }
+  return `${characters
+    .slice(0, LISTING_TEXT_MAX_LENGTH - 1)
+    .join("")
+    .trimEnd()}\u2026`;
+};
+
 const renderListing = (listing) => {
   const href = `/listingdetails?ID=${encodeURIComponent(listing.id)}`;
-  const image = listing.imageUrl
-    ? `<img src="${escapeHtml(listing.imageUrl)}" alt="${escapeHtml(listing.title)}" loading="lazy">`
-    : "";
+  const title = escapeHtml(shorten(listing.title) || LISTING_TITLE_FALLBACK);
+  const place = escapeHtml(shorten([cleanText(listing.city), cleanText(listing.country)].filter(Boolean).join(", ")));
+  const photo = listing.imageUrl
+    ? `<img src="${escapeHtml(listing.imageUrl)}" alt="${title}" loading="lazy">`
+    : '<span class="photo"></span>';
+  const placeLine = place ? `<p class="place" dir="auto">${place}</p>` : "";
   const price =
     Number.isFinite(listing.nightlyRate) && listing.nightlyRate > 0
       ? `<p class="price">From &euro;${Math.trunc(listing.nightlyRate)} per night</p>`
       : "";
-  return `<li class="listing"><a href="${href}">${image}<h3>${escapeHtml(listing.title)}</h3></a><p class="place">${escapeHtml(listing.city)}, ${escapeHtml(listing.country)}</p>${price}</li>`;
+  return `<li class="listing"><a href="${href}">${photo}<h3 dir="auto">${title}</h3>${placeLine}${price}</a></li>`;
 };
 
 const renderListings = (listings) =>
