@@ -49,6 +49,11 @@ const HostSettingsRatePlans = () => {
         <h2 className="personal-data-section-title">{t.ratePlansSection}</h2>
         <div className="host-settings-cards-grid rate-plan-cards-grid">
           <RatePlanCard
+            title={hostOnlyFee.title}
+            subtitle={hostOnlyFee.sub}
+            note={hostOnlyFee.note}
+          />
+          <RatePlanCard
             to="/hostdashboard/settings/rate-plans/direct-booking-website"
             title={websitePlan.cardTitle}
             subtitle={websitePlan.cardSubtitle}
@@ -61,11 +66,6 @@ const HostSettingsRatePlans = () => {
             subtitle={directBooking.cardSubtitle}
             note={directBooking.cardNote}
             linkClassName="rate-plan-direct-booking-link"
-          />
-          <RatePlanCard
-            title={hostOnlyFee.title}
-            subtitle={hostOnlyFee.sub}
-            note={hostOnlyFee.note}
           />
           <RatePlanCard
             to="/hostdashboard/settings/rate-plans/enterprise"
