@@ -1,5 +1,6 @@
 import { sameTruviDates, toModifyRequest } from "../util/truviMapper.js";
 import { truviErrorMessage } from "../util/truviErrorMessage.js";
+import { MAX_FAILED_ATTEMPTS, nextFailedAttempts } from "../util/truviFailedAttempts.js";
 
 const REFUSED_MESSAGES = [
   "can no longer be modified",
@@ -31,20 +32,27 @@ export class TruviBookingModifier {
 
   async run({ limit, now = Date.now() } = {}) {
     const verifications = await this.bookingRepository.listVerificationsToModify({ now, limit });
-    const summary = { listed: verifications.length, modified: 0, recorded: 0, refused: 0, retryLater: 0, errors: [] };
+    const summary = {
+      listed: verifications.length,
+      modified: 0,
+      recorded: 0,
+      refused: 0,
+      retryLater: 0,
+      gaveUp: 0,
+      errors: [],
+    };
 
     for (const verification of verifications) {
       const { bookingId } = verification;
       try {
         const outcome = await this.#handle(verification, now);
-        if (outcome.retry || outcome.unexpected) {
-          await this.assessmentRepository.markAttempt({ bookingId, now });
-        }
         if (outcome.retry) {
+          await this.assessmentRepository.markAttempt({ bookingId, now });
           summary.retryLater += 1;
           continue;
         }
         if (outcome.unexpected) {
+          await this.#recordFailure(verification, outcome.message, now, summary);
           summary.errors.push({ bookingId, message: outcome.message });
           continue;
         }
@@ -63,6 +71,22 @@ export class TruviBookingModifier {
     }
 
     return summary;
+  }
+
+  async #recordFailure({ bookingId, current, failedAttempts }, message, now, summary) {
+    const attempts = nextFailedAttempts(failedAttempts);
+    if (attempts < MAX_FAILED_ATTEMPTS) {
+      await this.assessmentRepository.markAttempt({ bookingId, failedAttempts: attempts, now });
+      return;
+    }
+    await this.assessmentRepository.saveTruviDates({
+      bookingId,
+      arrivalDate: current.arrivaldate,
+      departureDate: current.departuredate,
+      errorMessage: message,
+      now,
+    });
+    summary.gaveUp += 1;
   }
 
   async #handle({ bookingId, verificationId, sent, current }, now) {
