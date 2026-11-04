@@ -41,7 +41,7 @@ describe("TruviBookingCanceller", () => {
       errorMessage: null,
       now: NOW,
     });
-    expect(summary).toEqual({ listed: 1, cancelled: 1, refused: 0, retryLater: 0, errors: [] });
+    expect(summary).toEqual({ listed: 1, cancelled: 1, refused: 0, retryLater: 0, gaveUp: 0, errors: [] });
   });
 
   it("treats an already cancelled verification as cancelled", async () => {
@@ -90,15 +90,47 @@ describe("TruviBookingCanceller", () => {
       [{ bookingId: "booking-1", now: NOW }],
       [{ bookingId: "booking-2", now: NOW }],
     ]);
-    expect(summary).toEqual({ listed: 2, cancelled: 0, refused: 0, retryLater: 2, errors: [] });
+    expect(summary).toEqual({ listed: 2, cancelled: 0, refused: 0, retryLater: 2, gaveUp: 0, errors: [] });
   });
 
-  it("reports an unexpected 400 as an error without saving, so the run fails and someone looks", async () => {
-    const { canceller, assessmentRepository } = build({ cancel: failWith(400, "verificationId must be a valid GUID.") });
+  it("reports an unexpected 400 as an error and counts it, so the run fails and someone looks", async () => {
+    const { canceller, assessmentRepository } = build({
+      verifications: [
+        { bookingId: "booking-1", verificationId: "9c1f7a20-5b84-4d6e-8a13-7f0c2b95e4d1", failedAttempts: null },
+        { bookingId: "booking-2", verificationId: "4a7e2d90-8f51-4c63-b28a-9d6f1750e3c8", failedAttempts: 1 },
+      ],
+      cancel: failWith(400, "verificationId must be a valid GUID."),
+    });
 
     const summary = await canceller.run({ now: NOW });
 
     expect(assessmentRepository.saveCancellation).not.toHaveBeenCalled();
+    expect(assessmentRepository.markAttempt.mock.calls).toEqual([
+      [{ bookingId: "booking-1", failedAttempts: 1, now: NOW }],
+      [{ bookingId: "booking-2", failedAttempts: 2, now: NOW }],
+    ]);
+    expect(summary.errors).toEqual([
+      { bookingId: "booking-1", message: "Truvi refused the request with status 400" },
+      { bookingId: "booking-2", message: "Truvi refused the request with status 400" },
+    ]);
+  });
+
+  it("saves CANCEL_REFUSED with the fixed message after the third unexpected answer, so it is not sent again", async () => {
+    const { canceller, assessmentRepository } = build({
+      verifications: [{ bookingId: "booking-1", verificationId: "9c1f7a20-5b84-4d6e-8a13-7f0c2b95e4d1", failedAttempts: 2 }],
+      cancel: failWith(400, "Guest Jane Doe jane@example.com is not valid."),
+    });
+
+    const summary = await canceller.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).not.toHaveBeenCalled();
+    expect(assessmentRepository.saveCancellation).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      status: CANCEL_STATUS.REFUSED,
+      errorMessage: "Truvi refused the request with status 400",
+      now: NOW,
+    });
+    expect(summary).toMatchObject({ refused: 0, gaveUp: 1 });
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
   });
 

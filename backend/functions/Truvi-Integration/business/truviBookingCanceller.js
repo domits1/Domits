@@ -1,5 +1,6 @@
 import { toCancelRequest } from "../util/truviMapper.js";
 import { truviErrorMessage } from "../util/truviErrorMessage.js";
+import { MAX_FAILED_ATTEMPTS, nextFailedAttempts } from "../util/truviFailedAttempts.js";
 
 export const CANCEL_STATUS = {
   CANCELLED: "CANCELLED",
@@ -34,9 +35,9 @@ export class TruviBookingCanceller {
 
   async run({ limit, now = Date.now() } = {}) {
     const verifications = await this.bookingRepository.listVerificationsToCancel({ limit });
-    const summary = { listed: verifications.length, cancelled: 0, refused: 0, retryLater: 0, errors: [] };
+    const summary = { listed: verifications.length, cancelled: 0, refused: 0, retryLater: 0, gaveUp: 0, errors: [] };
 
-    for (const { bookingId, verificationId } of verifications) {
+    for (const { bookingId, verificationId, failedAttempts } of verifications) {
       try {
         const outcome = await this.#cancel({ bookingId, verificationId, now });
         if (outcome.retry) {
@@ -45,6 +46,7 @@ export class TruviBookingCanceller {
           continue;
         }
         if (outcome.unexpected) {
+          await this.#recordFailure({ bookingId, failedAttempts }, outcome.message, now, summary);
           summary.errors.push({ bookingId, message: outcome.message });
           continue;
         }
@@ -66,6 +68,21 @@ export class TruviBookingCanceller {
     }
 
     return summary;
+  }
+
+  async #recordFailure({ bookingId, failedAttempts }, message, now, summary) {
+    const attempts = nextFailedAttempts(failedAttempts);
+    if (attempts < MAX_FAILED_ATTEMPTS) {
+      await this.assessmentRepository.markAttempt({ bookingId, failedAttempts: attempts, now });
+      return;
+    }
+    await this.assessmentRepository.saveCancellation({
+      bookingId,
+      status: CANCEL_STATUS.REFUSED,
+      errorMessage: message,
+      now,
+    });
+    summary.gaveUp += 1;
   }
 
   async #cancel({ bookingId, verificationId, now }) {
