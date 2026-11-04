@@ -1,4 +1,5 @@
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
+import { renderDestinationDocument } from "./destinationPageLayout.js";
 
 export const DESTINATIONS_ROOT_PATH = "/destinations";
 export const DESTINATION_PAGE_CACHE_CONTROL = "public, max-age=300";
@@ -86,14 +87,22 @@ const renderListings = (listings) =>
     ? ""
     : `<section class="listings"><h2>Stays</h2><ul>${listings.map(renderListing).join("")}</ul></section>`;
 
-const STYLE =
-  "body{margin:0;font-family:system-ui,sans-serif;color:#1f2933;background:#fff}main{max-width:72rem;margin:0 auto;padding:clamp(1rem,4vw,3rem)}.breadcrumbs{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;padding:0;margin:0 0 1.5rem}.breadcrumbs li+li::before{content:'/';margin-right:.5rem;color:#9aa5b1}ul{list-style:none;padding:0}.children ul,.listings ul{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))}.listing img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:.75rem}.listing a{color:inherit;text-decoration:none}.count,.place{color:#52606d}";
+const NOT_INDEXED = '<meta name="robots" content="noindex, nofollow">';
+
+const renderSocialHead = ({ title, description, canonical }) =>
+  `<title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:type" content="website">`;
 
 export const buildDestinationNotFoundPage = () =>
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Destination not found | Domits</title><meta name="robots" content="noindex, nofollow"><style>${STYLE}</style></head><body><main><h1>No stays here yet</h1><p>There are no holiday rentals in this destination at the moment.</p><p><a href="${DESTINATIONS_ROOT_PATH}">All destinations</a></p></main></body></html>\n`;
+  renderDestinationDocument({
+    head: `<title>Destination not found | Domits</title>${NOT_INDEXED}`,
+    main: `<main><h1>No stays here yet</h1><p>There are no holiday rentals in this destination at the moment.</p><p><a href="${DESTINATIONS_ROOT_PATH}">All destinations</a></p></main>`,
+  });
 
 export const buildDestinationUnavailablePage = () =>
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Destinations unavailable | Domits</title><meta name="robots" content="noindex, nofollow"><style>${STYLE}</style></head><body><main><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main></body></html>\n`;
+  renderDestinationDocument({
+    head: `<title>Destinations unavailable | Domits</title>${NOT_INDEXED}`,
+    main: "<main><h1>Destinations are unavailable</h1><p>Please try again in a minute.</p></main>",
+  });
 
 const renderRootContinent = (continent) => {
   const heading = continent.hasPage
@@ -115,7 +124,10 @@ export const buildDestinationRootPage = ({ continents = [], siteOrigin = DEFAULT
   const canonical = `${toSiteOrigin(siteOrigin)}${DESTINATIONS_ROOT_PATH}`;
   const title = "Holiday rentals by destination | Domits";
   const description = "Find holiday rentals by destination and book directly with the host on Domits.";
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:type" content="website"><style>${STYLE}</style></head><body><main><h1>Destinations</h1><p class="intro">${escapeHtml(description)}</p>${continents.map(renderRootContinent).join("")}</main></body></html>\n`;
+  const html = renderDestinationDocument({
+    head: renderSocialHead({ title, description, canonical }),
+    main: `<main><h1>Destinations</h1><p class="intro">${escapeHtml(description)}</p>${continents.map(renderRootContinent).join("")}</main>`,
+  });
   return {
     html,
     title,
@@ -160,7 +172,10 @@ export const buildDestinationPage = ({
   const description = describe(destination, listingCount, eligibleChildren);
   const canonical = `${origin}${destination.path}`;
 
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(canonical)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}"><meta property="og:type" content="website">${breadcrumbs.jsonLd}<style>${STYLE}</style></head><body><main>${breadcrumbs.nav}<h1>Holiday rentals in ${escapeHtml(destination.name)}</h1><p class="intro">${escapeHtml(description)}</p>${renderChildren(eligibleChildren)}${renderListings(listings)}</main></body></html>\n`;
+  const html = renderDestinationDocument({
+    head: `${renderSocialHead({ title, description, canonical })}${breadcrumbs.jsonLd}`,
+    main: `<main>${breadcrumbs.nav}<h1>Holiday rentals in ${escapeHtml(destination.name)}</h1><p class="intro">${escapeHtml(description)}</p>${renderChildren(eligibleChildren)}${renderListings(listings)}</main>`,
+  });
 
   return { html, title, description, canonical, path: destination.path, cacheControl: DESTINATION_PAGE_CACHE_CONTROL };
 };
