@@ -1,3 +1,4 @@
+import { ACCOMMODATION_IMAGE_BASE_URL } from "../../util/destination/accommodationImage.js";
 import { isDestinationEligible, readDestinationSettings } from "../../util/destination/destinationSettings.js";
 import { renderDestinationDocument } from "./destinationPageLayout.js";
 
@@ -84,11 +85,16 @@ const shorten = (value) => {
     .trimEnd()}\u2026`;
 };
 
+const isAccommodationPhoto = (value) =>
+  typeof value === "string" &&
+  value.length > ACCOMMODATION_IMAGE_BASE_URL.length &&
+  value.startsWith(ACCOMMODATION_IMAGE_BASE_URL);
+
 const renderListing = (listing) => {
   const href = `/listingdetails?ID=${encodeURIComponent(listing.id)}`;
   const title = escapeHtml(shorten(listing.title) || LISTING_TITLE_FALLBACK);
   const place = escapeHtml(shorten([cleanText(listing.city), cleanText(listing.country)].filter(Boolean).join(", ")));
-  const photo = listing.imageUrl
+  const photo = isAccommodationPhoto(listing.imageUrl)
     ? `<img src="${escapeHtml(listing.imageUrl)}" alt="${title}" loading="lazy">`
     : '<span class="photo"></span>';
   const placeLine = place ? `<p class="place" dir="auto">${place}</p>` : "";

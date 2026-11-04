@@ -5,6 +5,7 @@ import {
   buildDestinationUnavailablePage,
   escapeHtml,
 } from "../../functions/PropertyHandler/business/service/destinationPageBuilder.js";
+import { ACCOMMODATION_IMAGE_BASE_URL } from "../../functions/PropertyHandler/util/destination/accommodationImage.js";
 import { readDestinationSettings } from "../../functions/PropertyHandler/util/destination/destinationSettings.js";
 
 const MARBELLA = { type: "city", name: "Marbella", path: "/destinations/europe/spain/marbella" };
@@ -61,13 +62,13 @@ describe("the destination page", () => {
     const page = buildDestinationPage({
       destination: { ...MARBELLA, name: 'Marbella <script>alert("x")</script>' },
       parents: PARENTS,
-      listings: [{ ...LISTING, imageUrl: 'https://x/"onerror="alert(1)' }],
+      listings: [{ ...LISTING, imageUrl: `${ACCOMMODATION_IMAGE_BASE_URL}images/"onerror="alert(1)` }],
     });
 
     expect(page.html).not.toContain("<script>alert");
     expect(page.html).toContain("Marbella &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;");
     expect(page.html).toContain("Villa &lt;Sol&gt; &amp; &quot;Mar&quot;");
-    expect(page.html).toContain('src="https://x/&quot;onerror=&quot;alert(1)"');
+    expect(page.html).toContain(`src="${ACCOMMODATION_IMAGE_BASE_URL}images/&quot;onerror=&quot;alert(1)"`);
     expect(readJsonLd(page.html).itemListElement[3].name).toBe('Marbella <script>alert("x")</script>');
     expect(escapeHtml("a&b<c>'d'")).toBe("a&amp;b&lt;c&gt;&#39;d&#39;");
   });
@@ -177,6 +178,24 @@ describe("the stay cards", () => {
     expect(card).toBe(
       `<li class="listing"><a href="/listingdetails?ID=${LISTING.id}"><span class="photo"></span><h3 dir="auto">Holiday rental</h3></a></li>`
     );
+  });
+
+  it.each([
+    ["plain http", "http://accommodation.s3.eu-north-1.amazonaws.com/images/p1/web.jpg"],
+    [
+      "another host that starts with the same name",
+      "https://accommodation.s3.eu-north-1.amazonaws.com.example.com/p1.jpg",
+    ],
+    ["a protocol relative URL", "//accommodation.s3.eu-north-1.amazonaws.com/images/p1/web.jpg"],
+    ["another host", "https://images.example.com/p1.jpg"],
+    ["a script URL", "javascript:alert(1)"],
+    ["a data URL", "data:image/png;base64,iVBORw0KGgo="],
+    ["the image host without a file", ACCOMMODATION_IMAGE_BASE_URL],
+    ["no URL at all", undefined],
+  ])("shows the placeholder instead of a photo from %s", (_, imageUrl) => {
+    const card = readCard(renderStay({ imageUrl }));
+    expect(card).toContain('<span class="photo"></span>');
+    expect(card).not.toContain("<img");
   });
 
   it("names the place from the parts it has", () => {
