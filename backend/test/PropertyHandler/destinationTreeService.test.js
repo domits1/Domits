@@ -108,7 +108,7 @@ describe("the destination tree", () => {
 
     const page = await service.renderDestinationPage("/destinations/europe/spain/marbella");
 
-    expect(page.html).toContain('<a href="/destinations">Destinations</a>');
+    expect(page.html).toContain('<ol class="breadcrumbs"><li><a href="/destinations">Destinations</a></li>');
     expect(page.html).not.toContain('href="/destinations/europe"');
     expect(page.html).not.toContain('href="/destinations/europe/spain"');
     expect(page.html).toContain('<li aria-current="page">Marbella</li>');
