@@ -9,6 +9,8 @@ import HostReports from "./HostPayments";
 import HostReviews from "../review/views/HostReviews";
 import HostTasks from "./hosttasks/pages/HostTasks";
 import HostOwners from "./hostowners/pages/HostOwners";
+import OwnerManagementLayout from "./hostowners/pages/OwnerManagementLayout";
+import HostOwnerStatements from "./hostowners/pages/HostOwnerStatements";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
@@ -146,7 +148,10 @@ function MainDashboardHost() {
           <Route path="pricelabs" element={<HostPriceLabs />} />
           <Route path="distribution" element={<HostChannelDistribution />} />
           <Route path="listings" element={<HostListings />} />
-          <Route path="owners" element={<HostOwners />} />
+          <Route path="owners" element={<OwnerManagementLayout />}>
+            <Route index element={<HostOwners />} />
+            <Route path="statements" element={<HostOwnerStatements />} />
+          </Route>
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />

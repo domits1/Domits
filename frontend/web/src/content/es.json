@@ -1971,5 +1971,8 @@
       "archived": "Archivado",
       "unknown": "Estado desconocido"
     }
-  }
+  },
+  "ownerManagementNavigation": {"label":"Gestión de propietarios","owners":"Propietarios","statements":"Extractos"},
+  "hostOwnerStatements": {"title":"Extractos de propietarios","description":"Genera y revisa extractos financieros de los propietarios y alojamientos que gestionas.","emptyTitle":"Todavía no se han generado extractos","emptyDescription":"Cuando esté disponible la generación de extractos, aquí se mostrarán por propietario el período, los ingresos, las deducciones, las ganancias netas y el saldo pendiente.","payoutNote":"Un extracto muestra cuánto se debe a un propietario. No inicia una transferencia bancaria ni sustituye los pagos registrados."}
+
 }
