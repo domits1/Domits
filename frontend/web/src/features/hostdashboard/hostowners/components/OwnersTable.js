@@ -1,14 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { basisPointsToPercent } from "../utils/basisPoints";
-
-const hasOwnKey = (object, key) => typeof key === "string" && Object.prototype.hasOwnProperty.call(object, key);
-
-const labelFor = (labels, value) => (hasOwnKey(labels, value) ? labels[value] : labels.unknown);
-
-const fillTemplate = (template, values) => template.replace(/\{(\w+)\}/g, (match, key) => (hasOwnKey(values, key) ? values[key] : match));
-
-const ownerName = (owner) => [owner.first_name, owner.last_name].filter(Boolean).join(" ");
+import { fillTemplate, hasOwnKey, labelFor, ownerName } from "../utils/ownerText";
 
 const statusClassName = (status, statuses) =>
   hasOwnKey(statuses, status) ? `host-owners-status host-owners-status--${status}` : "host-owners-status";
