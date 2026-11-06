@@ -2,7 +2,7 @@
 
 Pull request: to be opened
 Issue: #3585
-Reviewed: the staged diff on `fix/3585-cancelled-at-read`, and the receipt fix on top of it
+Reviewed: the staged diff on `fix/3585-cancelled-at-read`, the receipt fix on top of it, and commit 8ce01ea84
 Result: no blocking findings
 
 ## Findings
@@ -10,7 +10,7 @@ Result: no blocking findings
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P3 (7/10), found in review | frontend/web/src/features/hostdashboard/HostReservationDetails.js:777 | The receipt PDF printed "Reservation cancelled" with the booking date as its payment date, the same bug as the page. | Fixed. The page and the receipt share `resolvePaymentDate`: the cancel date for a cancelled reservation, the booking date otherwise. |
-| P4 (5/10) | frontend/web/src/features/hostdashboard/HostReservationDetails.cancelledAt.test.js:47 | The test reads the date from the span right after the status text, so a layout change breaks it. | Accepted. A layout change makes it fail, never pass wrongly. |
+| P4 (5/10) | frontend/web/src/features/hostdashboard/HostReservationDetails.cancelledAt.test.js:48 | The test reads the date from the span right after the status text, so a layout change breaks it. | Accepted. A layout change makes it fail, never pass wrongly. |
 
 ## Checked
 
