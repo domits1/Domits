@@ -1,4 +1,3 @@
-import cf from "cloudfront";
 var LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 var PORT_PATTERN = /^[0-9]{1,5}$/;
 var MAX_HOSTNAME_LENGTH = 253;
@@ -6,7 +5,17 @@ var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
 var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
 var ROBOTS_URI = "/robots.txt";
+var BUILD_DIRECTORY = "/static/";
+var BUILD_ROOT_FILES = {
+  "/asset-manifest.json": true,
+  "/favicon.ico": true,
+  "/logo.svg": true,
+  "/logo192.png": true,
+  "/logo512.png": true,
+  "/manifest.json": true,
+};
 var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
+var ALIASES = {"beautiful-home-amsterdam-6156b005.direct.domits.com":"www.villasensual.nl"};
 
 function normalizeHostName(value) {
   var parts = String(value || "")
@@ -76,19 +85,27 @@ function robotsResponse(host, method) {
   return response;
 }
 
-async function primaryHostFor(host) {
-  try {
-    var store = cf.kvs();
-    var value = await store.get(host);
-    var target = normalizeHostName(value);
-    if (!isHostName(target) || target === host) {
-      return "";
-    }
-    var chained = await store.exists(target);
-    return chained ? "" : target;
-  } catch (error) {
+function isBuildFile(uri) {
+  return uri.indexOf(BUILD_DIRECTORY) === 0 || Object.prototype.hasOwnProperty.call(BUILD_ROOT_FILES, uri);
+}
+
+function mayRedirect(uri) {
+  return typeof uri === "string" && uri.charAt(0) === "/" && !isBuildFile(uri);
+}
+
+function isAlias(host) {
+  return Object.prototype.hasOwnProperty.call(ALIASES, host);
+}
+
+function primaryHostFor(host) {
+  if (!isAlias(host)) {
     return "";
   }
+  var target = normalizeHostName(ALIASES[host]);
+  if (!isHostName(target) || target === host || isAlias(target)) {
+    return "";
+  }
+  return target;
 }
 
 function queryStringOf(querystring) {
@@ -114,7 +131,7 @@ function redirectResponse(target, request) {
   };
 }
 
-async function handler(event) {
+function handler(event) {
   try {
     var request = event.request;
     if (isPageKeyRequest(request.uri)) {
@@ -131,8 +148,8 @@ async function handler(event) {
     if (!isHostName(host)) {
       return request;
     }
-    if (typeof request.uri === "string" && request.uri.charAt(0) === "/") {
-      var target = await primaryHostFor(host);
+    if (mayRedirect(request.uri)) {
+      var target = primaryHostFor(host);
       if (target) {
         return redirectResponse(target, request);
       }

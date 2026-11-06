@@ -4,7 +4,7 @@ export const SLA_STATUS = {
     BREACHED: "BREACHED",
 };
 
-const RESOLVED_STATUSES = new Set(["Completed", "Cancelled"]);
+export const RESOLVED_STATUSES = new Set(["Completed", "Cancelled"]);
 const AT_RISK_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 export const computeSlaStatus = (task, now = Date.now()) => {

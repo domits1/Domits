@@ -74,8 +74,9 @@ export const fetchTasks = async (filters = {}, asHostId = null) => {
     return tasks.map(normalizeTask);
 };
 
-export const createTask = async (taskData) => {
-    const response = await fetch(TASKS_API_URL, {
+export const createTask = async (taskData, asHostId = null) => {
+    const url = asHostId ? `${TASKS_API_URL}?${new URLSearchParams({ asHostId })}` : TASKS_API_URL;
+    const response = await fetch(url, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(toBackendPayload(taskData)),
@@ -89,8 +90,10 @@ export const createTask = async (taskData) => {
     return normalizeTask(created);
 };
 
-export const updateTask = async (taskId, updateData) => {
-    const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
+export const updateTask = async (taskId, updateData, asHostId = null) => {
+    const params = new URLSearchParams({ id: taskId });
+    if (asHostId) params.set("asHostId", asHostId);
+    const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "PATCH",
         headers: getHeaders(),
         body: JSON.stringify(toBackendPayload(updateData)),
@@ -104,12 +107,13 @@ export const updateTask = async (taskId, updateData) => {
     return await response.json();
 };
 
-export const uploadTaskAttachment = async (file) => {
+export const uploadTaskAttachment = async (file, asHostId = null) => {
     const params = new URLSearchParams({
         action: 'upload-url',
-        fileName: file.name,
         fileType: file.type,
+        fileSize: String(file.size),
     });
+    if (asHostId) params.set('asHostId', asHostId);
 
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "GET",
@@ -117,22 +121,28 @@ export const uploadTaskAttachment = async (file) => {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to get upload URL: ${response.status}`);
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(`${file.name}: ${errorBody?.message || `Failed to get upload URL: ${response.status}`}`);
     }
 
     const { uploadUrl, key } = await response.json();
 
-    await fetch(uploadUrl, {
+    const upload = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
     });
 
+    if (!upload.ok) {
+        throw new Error(`${file.name} could not be uploaded. Please try again.`);
+    }
+
     return key;
 };
 
-export const getAttachmentViewUrl = async (key) => {
-    const params = new URLSearchParams({ action: 'view-url', key });
+export const getAttachmentViewUrl = async (key, taskId, asHostId = null) => {
+    const params = new URLSearchParams({ action: 'view-url', taskId, key });
+    if (asHostId) params.set('asHostId', asHostId);
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "GET",
         headers: getHeaders(),
@@ -143,8 +153,9 @@ export const getAttachmentViewUrl = async (key) => {
     return viewUrl;
 };
 
-export const escalateTask = async (taskId) => {
-    const params = new URLSearchParams({ action: 'escalate', id: taskId });
+const postTaskAction = async (action, taskId, asHostId = null) => {
+    const params = new URLSearchParams({ action, id: taskId });
+    if (asHostId) params.set("asHostId", asHostId);
     const response = await fetch(`${TASKS_API_URL}?${params}`, {
         method: "POST",
         headers: getHeaders(),
@@ -152,11 +163,17 @@ export const escalateTask = async (taskId) => {
 
     if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.message || `Failed to escalate task: ${response.status}`);
+        throw new Error(errorBody?.message || `Failed to ${action} task: ${response.status}`);
     }
 
     return await response.json();
 };
+
+export const escalateTask = async (taskId) => await postTaskAction('escalate', taskId);
+
+export const approveTask = async (taskId, asHostId = null) => await postTaskAction('approve', taskId, asHostId);
+
+export const rejectTask = async (taskId, asHostId = null) => await postTaskAction('reject', taskId, asHostId);
 
 export const deleteTask = async (taskId) => {
     const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {

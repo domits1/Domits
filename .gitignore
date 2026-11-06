@@ -12,6 +12,7 @@ package-lock.json
 *.env
 
 # IDE and Editor
+*.iml
 .idea/
 .idea/*
 .idea/sonarlint/

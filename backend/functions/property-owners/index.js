@@ -9,6 +9,14 @@ const NO_ACTION = Symbol("no-action");
 const ROUTES = new Map([
   ["GET", new Map([[NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }]])],
   ["POST", new Map([[NO_ACTION, { withId: null, withoutId: "createOwner" }]])],
+  ["PUT", new Map([["set-shares", { withId: null, withoutId: "setShares" }]])],
+  [
+    "PATCH",
+    new Map([
+      [NO_ACTION, { withId: "updateOwner", withoutId: null }],
+      ["archive", { withId: "archiveOwner", withoutId: null }],
+    ]),
+  ],
 ]);
 
 let controller = null;

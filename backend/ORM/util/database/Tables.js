@@ -42,6 +42,7 @@ import { ChannelIntegrationProperty } from "../../models/unified/integrations/Ch
 import { ChannelIntegrationRatePlan } from "../../models/unified/integrations/ChannelIntegrationRatePlan.js";
 import { ChannelIntegrationRoomType } from "../../models/unified/integrations/ChannelIntegrationRoomType.js";
 import { ChannelReservationLink } from "../../models/unified/integrations/ChannelReservationLink.js";
+import { GuestRiskAssessment } from "../../models/unified/integrations/GuestRiskAssessment.js";
 import { ChannexBookingRevision } from "../../models/unified/integrations/ChannexBookingRevision.js";
 import { ChannexSyncEvidence } from "../../models/unified/sync/ChannexSyncEvidence.js";
 import { IntegrationSyncState } from "../../models/unified/sync/IntegrationSyncState.js";
@@ -68,6 +69,7 @@ import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
 import { Property_Owner } from "../../models/Property_Owner.js";
 import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
+import { Property_Moderation_Event } from "../../models/Property_Moderation_Event.js";
 import { Invoice } from "../../models/Invoice.js";
 
 import { Review } from "../../models/Review.js";
@@ -119,6 +121,7 @@ export const Tables = [
   ChannelIntegrationRatePlan,
   ChannelIntegrationRoomType,
   ChannelReservationLink,
+  GuestRiskAssessment,
   ChannexBookingRevision,
   ChannexSyncEvidence,
   IntegrationSyncState,
@@ -146,6 +149,7 @@ export const Tables = [
   Team_Member,
   Property_Owner,
   Property_Owner_Property,
+  Property_Moderation_Event,
   Invoice,
   EnterpriseRatePlan,
   Review,

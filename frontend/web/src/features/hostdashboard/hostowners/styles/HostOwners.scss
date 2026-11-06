@@ -1,0 +1,198 @@
+@use "../../../../styles/sass/variables" as *;
+
+.host-owners {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  width: 100%;
+  box-sizing: border-box;
+  color: $text;
+}
+
+.host-owners-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+}
+
+.host-owners-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  color: $muted;
+
+  p {
+    margin: 0;
+  }
+}
+
+.host-owners-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid $green;
+  border-radius: 0.5rem;
+  background: $green;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  cursor: pointer;
+
+  input {
+    accent-color: $green;
+  }
+}
+
+.host-owners-card {
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.host-owners-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    border-bottom: 1px solid $border;
+    color: $muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  tbody tr + tr {
+    border-top: 1px solid $border;
+  }
+
+  tbody th {
+    font-weight: normal;
+  }
+}
+
+.host-owners-name {
+  display: block;
+  font-weight: 600;
+}
+
+.host-owners-company {
+  display: block;
+  margin-top: 0.125rem;
+}
+
+.host-owners-company,
+.host-owners-muted {
+  color: $muted;
+  font-size: 0.875rem;
+}
+
+.host-owners-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.host-owners-status {
+  display: inline-block;
+  padding: 0.125rem 0.625rem;
+  border: 1px solid $border;
+  border-radius: 999px;
+  color: $muted;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.host-owners-status--active {
+  border-color: $green-light;
+  background: $green-light;
+  color: $green-dark;
+}
+
+.host-owners-status--pending {
+  border-style: dashed;
+  color: $text;
+}
+
+.host-owners-status--archived {
+  background: $border;
+}
+
+@media (max-width: 768px) {
+  .host-owners-card {
+    border: none;
+    overflow: visible;
+  }
+
+  .host-owners-table {
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    tbody,
+    tr,
+    th,
+    td {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    tbody tr {
+      margin-bottom: 0.75rem;
+      border: 1px solid $border;
+      border-radius: 0.75rem;
+    }
+
+    tbody tr + tr {
+      border-top: 1px solid $border;
+    }
+
+    th,
+    td {
+      padding: 0.5rem 1rem;
+    }
+
+    td::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.25rem;
+      color: $muted;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+
+  .host-owners-name-cell {
+    padding-top: 0.75rem;
+  }
+}

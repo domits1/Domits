@@ -16,10 +16,25 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HubIcon from "@mui/icons-material/Hub";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   checkChannexCertificationAccess,
 } from "./channexadmin/channexCertificationAccess";
+import {
+  PROPERTY_REVIEW_ACCESS,
+  PROPERTY_REVIEW_ADMIN_ROUTE,
+  checkPropertyReviewAccess,
+} from "./propertyreview/propertyReviewAccess";
+
+const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
+
+const loadChannexAccess = async () => {
+  const user = await Auth.currentAuthenticatedUser();
+  return checkChannexCertificationAccess(user?.attributes?.sub);
+};
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
@@ -36,10 +51,11 @@ const NAV = [
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
   // { key: "MissedRevenue", label: "Missed revenue", icon: <TrendingDownIcon />, to: "hostinsights/missed-revenue" },
-  { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution", internalOnly: true },
+  { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution", internalOnly: "channex" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  { key: "Owners", label: "Owners", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
   { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   {
@@ -47,36 +63,49 @@ const NAV = [
     label: "Channex diagnostics",
     icon: <AdminPanelSettingsIcon />,
     to: CHANNEX_CERTIFICATION_ADMIN_ROUTE,
-    internalOnly: true,
+    internalOnly: "channex",
+  },
+  {
+    key: "PropertyReview",
+    label: "Property review",
+    icon: <FactCheckOutlinedIcon />,
+    to: PROPERTY_REVIEW_ADMIN_ROUTE,
+    internalOnly: "propertyReview",
   },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
 function Pages({ onNavigate }) {
   const [open, setOpen] = useState(false);
-  const [canSeeChannexCertification, setCanSeeChannexCertification] = useState(false);
+  const [access, setAccess] = useState(NO_ADMIN_ACCESS);
   const location = useLocation();
   const btnRef = useRef(null);
+  const { isPurelyPOM } = useEffectiveHostId();
   const visibleNav = useMemo(
-    () => NAV.filter((item) => !item.internalOnly || canSeeChannexCertification),
-    [canSeeChannexCertification]
+    () =>
+      NAV.filter(
+        (item) => (!item.internalOnly || access[item.internalOnly]) && !(item.hiddenForPurelyPOM && isPurelyPOM)
+      ),
+    [access, isPurelyPOM]
   );
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadChannexCertificationAccess() {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const userId = user?.attributes?.sub;
-        const isAllowed = await checkChannexCertificationAccess(userId);
-        if (mounted) setCanSeeChannexCertification(isAllowed);
-      } catch {
-        if (mounted) setCanSeeChannexCertification(false);
-      }
+    function grantWhenAllowed(key, check, isAllowed) {
+      void check
+        .then(isAllowed, () => false)
+        .then((granted) => {
+          if (mounted && granted) setAccess((current) => ({ ...current, [key]: true }));
+        });
     }
 
-    loadChannexCertificationAccess();
+    grantWhenAllowed("channex", loadChannexAccess(), (allowed) => allowed === true);
+    grantWhenAllowed(
+      "propertyReview",
+      checkPropertyReviewAccess(),
+      (state) => state === PROPERTY_REVIEW_ACCESS.ALLOWED
+    );
     return () => {
       mounted = false;
     };
@@ -112,8 +141,7 @@ function Pages({ onNavigate }) {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-controls="host-menu"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
+        onClick={() => setOpen((v) => !v)}>
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
@@ -126,11 +154,7 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav
-        className={`sidebar ${open ? "open" : ""}`}
-        aria-label="Host navigation"
-        id="host-menu"
-      >
+      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
@@ -140,8 +164,7 @@ function Pages({ onNavigate }) {
                   to={item.to}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
-                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
-                >
+                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>
                   <span className="icon" aria-hidden="true">
                     {item.icon}
                   </span>

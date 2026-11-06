@@ -14,6 +14,8 @@ const STATUS_OPTIONS = [
     { value: 'Cancelled',   label: '● Cancelled',   cls: 'status-cancelled' },
 ];
 
+const CLOSED_STATUSES = ['Completed', 'Cancelled'];
+
 const PRIORITY_OPTIONS = [
     { value: 'Low',    label: 'Low',    cls: 'priority-low' },
     { value: 'Medium', label: 'Medium', cls: 'priority-medium' },
@@ -24,6 +26,7 @@ const PRIORITY_OPTIONS = [
 const TaskDetailsModal = ({
     viewingTask,
     editedTask,
+    asHostId = null,
     editPropertyOptions,
     assigneeOptions,
     checklistItems,
@@ -42,6 +45,11 @@ const TaskDetailsModal = ({
     onDelete,
     onClose,
     onEscalate,
+    onApprove,
+    onReject,
+    canReview = true,
+    isReviewing = false,
+    isEscalating = false,
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -55,6 +63,10 @@ const TaskDetailsModal = ({
     if (!viewingTask || !editedTask) return null;
 
     const isUnchanged = JSON.stringify(viewingTask) === JSON.stringify(editedTask);
+    const isCompleted = viewingTask.status === 'Completed';
+    const isApproved = viewingTask.status === 'Completed' && Boolean(viewingTask.approved_at);
+    const isWaitingForReview = viewingTask.status === 'Completed' && !viewingTask.approved_at && canReview;
+    const canEscalate = !CLOSED_STATUSES.includes(viewingTask.status) && !viewingTask.escalated_at;
     // Nothing happens to the checklist until Save: a different Type here only changes the form.
     const isSwitchingType = editedTask.type !== viewingTask.type;
 
@@ -198,6 +210,8 @@ const TaskDetailsModal = ({
                                             <AttachmentThumb
                                                 key={f instanceof File ? f.name : f}
                                                 attachment={f}
+                                                taskId={editedTask.id}
+                                                asHostId={asHostId}
                                                 onRemove={() => onRemoveAttachment(index)}
                                             />
                                         ))}
@@ -242,12 +256,28 @@ const TaskDetailsModal = ({
                     <div className="modal-footer details-footer">
                         <button className="btn-text" onClick={onClose} disabled={isApplyingChecklistTemplate}>Cancel</button>
 
-                        {viewingTask.slaStatus === 'BREACHED' && (
-                            <button className="btn-escalate" onClick={onEscalate}>Escalate</button>
+                        {isApproved && <span className="approved-label">Approved</span>}
+
+                        {isWaitingForReview && (
+                            <>
+                                <button className="btn-reject" onClick={onReject} disabled={isReviewing}>Reject</button>
+                                <button className="btn-create-green" onClick={onApprove} disabled={isReviewing}>Approve</button>
+                            </>
+                        )}
+
+                        {canEscalate && (
+                            <button className="btn-escalate" onClick={onEscalate} disabled={isEscalating}>Escalate</button>
                         )}
 
                         {isUnchanged ? (
-                            <button className="btn-danger" onClick={onDelete}>Delete</button>
+                            <button
+                                className="btn-danger"
+                                onClick={onDelete}
+                                disabled={isCompleted}
+                                title={isCompleted ? 'Change the status of a completed task before deleting it' : undefined}
+                            >
+                                Delete
+                            </button>
                         ) : (
                             <button className="btn-create-green" onClick={onSave} disabled={isApplyingChecklistTemplate}>Save Changes</button>
                         )}
@@ -261,6 +291,7 @@ const TaskDetailsModal = ({
 TaskDetailsModal.propTypes = {
     viewingTask: PropTypes.object,
     editedTask: PropTypes.object,
+    asHostId: PropTypes.string,
     editPropertyOptions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string,
         label: PropTypes.string,
@@ -290,6 +321,11 @@ TaskDetailsModal.propTypes = {
     onDelete: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
     onEscalate: PropTypes.func.isRequired,
+    onApprove: PropTypes.func.isRequired,
+    onReject: PropTypes.func.isRequired,
+    canReview: PropTypes.bool,
+    isReviewing: PropTypes.bool,
+    isEscalating: PropTypes.bool,
 };
 
 export default TaskDetailsModal;

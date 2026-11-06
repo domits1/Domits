@@ -20,9 +20,4 @@ export class AuthManager {
             throw new UnauthorizedException("Invalid or expired authorization token.");
         }
     }
-
-    async getHostId(accessToken) {
-        const { username } = await this.getUser(accessToken);
-        return username;
-    }
 }

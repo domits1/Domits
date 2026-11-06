@@ -3,7 +3,7 @@ import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { fetchListingsFromHostDashboard } from "../../services/hostTaskPropertyService";
 import { isRegistrationNumberMissing } from "../utils/registrationNumber";
 
-const SELECTABLE_STATUSES = new Set(["ACTIVE", "INACTIVE"]);
+const SELECTABLE_STATUSES = new Set(["ACTIVE", "INACTIVE", "PENDING_REVIEW", "REJECTED"]);
 const HTTP_NOT_FOUND = 404;
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
