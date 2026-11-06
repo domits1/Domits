@@ -1,10 +1,11 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { toast } from "react-toastify";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import { getAccessToken } from "../../../../services/getAccessToken";
-import { OwnerApiError, listOwners } from "../services/ownerService";
+import { OwnerApiError, createOwner, listOwners, updateOwner } from "../services/ownerService";
 import HostOwners from "./HostOwners";
 
 jest.mock("../../../../services/getAccessToken", () => ({
@@ -19,8 +20,15 @@ jest.mock("aws-amplify", () => ({
 
 jest.mock("../services/ownerService", () => {
   const actual = jest.requireActual("../services/ownerService");
-  return { OwnerApiError: actual.OwnerApiError, listOwners: jest.fn() };
+  return {
+    OwnerApiError: actual.OwnerApiError,
+    listOwners: jest.fn(),
+    createOwner: jest.fn(),
+    updateOwner: jest.fn(),
+  };
 });
+
+jest.mock("react-toastify", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 const t = en.hostOwners;
 
@@ -182,13 +190,90 @@ describe("HostOwners", () => {
     expect(screen.getByRole("rowheader", { name: "Bram Jansen" })).toBeTruthy();
   });
 
-  test("offers no write actions yet", async () => {
+  test("offers Add owner and one Edit per row, and nothing else", async () => {
     listOwners.mockResolvedValue([owner()]);
 
     renderPage();
 
     await screen.findByRole("table");
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    const buttons = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
+    expect(buttons).toEqual([t.addOwner, "Edit Anna de Vries"]);
+  });
+
+  test("offers Add owner on the empty page too", async () => {
+    listOwners.mockResolvedValue([]);
+
+    renderPage();
+
+    await screen.findByText(t.empty);
+    expect(screen.getByRole("button", { name: t.addOwner })).toBeTruthy();
+  });
+
+  test("does not offer Add owner while loading or after a load error", async () => {
+    listOwners.mockRejectedValue(apiError(500));
+
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: t.addOwner })).toBeNull();
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: t.addOwner })).toBeNull();
+  });
+
+  test("Add owner opens the empty form, and the new owner appears after saving", async () => {
+    const created = owner({ id: "owner-3", first_name: "Carla", last_name: "Bakker", properties: [] });
+    listOwners.mockResolvedValue([owner()]);
+    createOwner.mockResolvedValue(created);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: t.addOwner }));
+
+    const dialog = screen.getByRole("dialog", { name: t.form.createTitle });
+    expect(within(dialog).getByLabelText(t.form.labels.first_name).value).toBe("");
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.first_name), { target: { value: "Carla" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.last_name), { target: { value: "Bakker" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.email), { target: { value: "carla@example.com" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.owner_type), { target: { value: "individual" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t.form.save }));
+
+    expect(await screen.findByRole("rowheader", { name: "Carla Bakker" })).toBeTruthy();
+    expect(screen.getByRole("rowheader", { name: "Anna de Vries" })).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith("Carla Bakker was added.");
+    expect(listOwners).toHaveBeenCalledTimes(1);
+  });
+
+  test("Edit opens the form prefilled, and the row updates after saving", async () => {
+    const second = owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" });
+    listOwners.mockResolvedValue([owner(), second]);
+    updateOwner.mockResolvedValue({ ...second, first_name: "Bram", last_name: "Janssen" });
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Bram Jansen" }));
+
+    const dialog = screen.getByRole("dialog", { name: t.form.editTitle });
+    const lastName = within(dialog).getByLabelText(t.form.labels.last_name);
+    expect(lastName.value).toBe("Jansen");
+    fireEvent.change(lastName, { target: { value: "Janssen" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t.form.save }));
+
+    expect(await screen.findByRole("rowheader", { name: "Bram Janssen" })).toBeTruthy();
+    expect(screen.queryByRole("rowheader", { name: "Bram Jansen" })).toBeNull();
+    expect(screen.getAllByRole("rowheader").map((cell) => cell.textContent)).toEqual(["Anna de Vries", "Bram Janssen"]);
+    expect(updateOwner).toHaveBeenCalledWith("owner-2", { last_name: "Janssen" });
+    expect(toast.success).toHaveBeenCalledWith("Bram Janssen was updated.");
+    expect(listOwners).toHaveBeenCalledTimes(1);
+  });
+
+  test("closing the form changes nothing and shows no toast", async () => {
+    listOwners.mockResolvedValue([owner()]);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Anna de Vries" }));
+    fireEvent.click(screen.getByRole("button", { name: t.form.cancel }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("rowheader", { name: "Anna de Vries" })).toBeTruthy();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   test("uses the selected language", async () => {

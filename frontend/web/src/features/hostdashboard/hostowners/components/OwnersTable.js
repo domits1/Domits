@@ -28,7 +28,7 @@ const OwnerProperties = ({ properties, t, formatPercent }) => {
   );
 };
 
-const OwnersTable = ({ owners, t, language, labelledBy }) => {
+const OwnersTable = ({ owners, t, language, labelledBy, onEdit }) => {
   const percentFormat = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
   const formatPercent = (percent) => percentFormat.format(percent);
 
@@ -40,6 +40,7 @@ const OwnersTable = ({ owners, t, language, labelledBy }) => {
           <th scope="col">{t.columnType}</th>
           <th scope="col">{t.columnStatus}</th>
           <th scope="col">{t.columnProperties}</th>
+          <th scope="col">{t.columnActions}</th>
         </tr>
       </thead>
       <tbody>
@@ -56,6 +57,15 @@ const OwnersTable = ({ owners, t, language, labelledBy }) => {
             <td data-label={t.columnProperties}>
               <OwnerProperties properties={owner.properties} t={t} formatPercent={formatPercent} />
             </td>
+            <td data-label={t.columnActions}>
+              <button
+                type="button"
+                className="host-owners-link-button"
+                aria-label={fillTemplate(t.editOwnerLabel, { name: ownerName(owner) })}
+                onClick={() => onEdit(owner)}>
+                {t.editOwner}
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -68,6 +78,7 @@ OwnersTable.propTypes = {
   t: PropTypes.object.isRequired,
   language: PropTypes.string.isRequired,
   labelledBy: PropTypes.string,
+  onEdit: PropTypes.func.isRequired,
 };
 
 export default OwnersTable;

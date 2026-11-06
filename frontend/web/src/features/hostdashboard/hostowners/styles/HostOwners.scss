@@ -1,10 +1,14 @@
 @use "../../../../styles/sass/variables" as *;
 
+$host-owners-error: #c0392b;
+$host-owners-error-bg: #fff5f5;
+
 .host-owners {
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
+  padding: 16px;
   box-sizing: border-box;
   color: $text;
 }
@@ -195,4 +199,197 @@
   .host-owners-name-cell {
     padding-top: 0.75rem;
   }
+}
+
+.host-owners-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.host-owners-button:disabled,
+.host-owners-button-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.host-owners-button-secondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid $border;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: $text;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: $green-dark;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 3vw, 1.5rem);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.host-owners-modal {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 36rem);
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  color: $text;
+}
+
+.host-owners-modal-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 3vw, 1.5rem) 1rem;
+  border-bottom: 1px solid $border;
+}
+
+.host-owners-modal-title {
+  margin: 0;
+  font-size: clamp(1.125rem, 2.5vw, 1.25rem);
+}
+
+.host-owners-close-button {
+  flex: none;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: $muted;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: $text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.host-owners-form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.host-owners-form-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.875rem;
+  min-height: 0;
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+  overflow-y: auto;
+}
+
+.host-owners-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid $border;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    color: $text;
+    font: inherit;
+
+    &:focus-visible {
+      outline: 2px solid $green;
+      outline-offset: 1px;
+    }
+
+    &[aria-invalid="true"] {
+      border-width: 2px;
+      border-color: $host-owners-error;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.host-owners-field-error,
+.host-owners-form-error {
+  margin: 0;
+  color: $host-owners-error;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.host-owners-form-error {
+  padding: 0.75rem;
+  border: 1px solid $host-owners-error;
+  border-radius: 0.5rem;
+  background: $host-owners-error-bg;
+}
+
+.host-owners-modal-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+  border-top: 1px solid $border;
 }

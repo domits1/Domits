@@ -1970,6 +1970,46 @@
       "pending": "Ausstehend",
       "archived": "Archiviert",
       "unknown": "Unbekannter Status"
+    },
+    "addOwner": "Eigentümer hinzufügen",
+    "editOwner": "Bearbeiten",
+    "editOwnerLabel": "{name} bearbeiten",
+    "columnActions": "Aktionen",
+    "form": {
+      "createTitle": "Eigentümer hinzufügen",
+      "editTitle": "Eigentümer bearbeiten",
+      "labels": {
+        "first_name": "Vorname",
+        "last_name": "Nachname",
+        "company_name": "Firmenname",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "preferred_language": "Bevorzugte Sprache (z. B. en oder nl-NL)",
+        "owner_type": "Eigentümertyp",
+        "status": "Status",
+        "notes": "Notizen"
+      },
+      "chooseOwnerType": "Typ auswählen",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "createdToast": "{name} wurde hinzugefügt.",
+      "updatedToast": "{name} wurde aktualisiert.",
+      "errorNotFound": "Dieser Eigentümer existiert nicht mehr. Schließe das Formular und lade die Seite neu.",
+      "errorGeneric": "Wir konnten den Eigentümer nicht speichern. Bitte versuche es erneut.",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich.",
+        "tooLong": "Verwende höchstens {max} Zeichen.",
+        "invalidCharacters": "Dieses Feld enthält unzulässige Zeichen.",
+        "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "invalidPhone": "Verwende mindestens eine Ziffer, und nur Ziffern, Leerzeichen und + ( ) - .",
+        "invalidLanguage": "Verwende einen Sprachcode wie en oder nl-NL.",
+        "invalidOwnerType": "Wähle einen Eigentümertyp.",
+        "invalidStatus": "Wähle einen Status.",
+        "archivedStatus": "Ein Eigentümer kann nur über die Archivierung archiviert werden.",
+        "companyNameRequired": "Für ein Unternehmen oder einen Trust ist ein Firmenname erforderlich."
+      }
     }
   }
 }
