@@ -1,6 +1,6 @@
 # #3585 fix(hostdashboard): show the cancel date of a cancelled reservation
 
-Pull request: to be opened
+Pull request: #3800
 Issue: #3585
 Reviewed: the staged diff on `fix/3585-cancelled-at-read`, the receipt fix on top of it, and commit 8ce01ea84
 Result: no blocking findings
