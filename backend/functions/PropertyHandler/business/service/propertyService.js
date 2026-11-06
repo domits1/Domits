@@ -624,7 +624,11 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
+    const [full, history] = await Promise.all([
+      this.getFullPropertyAttributesWithFullLocation(propertyId),
+      this.propertyRepository.getModerationEventsByPropertyId(propertyId),
+    ]);
+    return { ...full, history };
   }
 
   async getFullPropertiesByHostId(hostId) {
