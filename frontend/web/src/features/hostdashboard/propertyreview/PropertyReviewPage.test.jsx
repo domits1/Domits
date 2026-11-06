@@ -8,6 +8,8 @@ jest.mock("./propertyReviewAccess", () => ({
   checkPropertyReviewAccess: jest.fn(),
 }));
 
+jest.mock("./queue/PropertyReviewQueue", () => () => <div>Queue stub</div>);
+
 describe("PropertyReviewPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,13 +23,13 @@ describe("PropertyReviewPage", () => {
     expect(screen.getByText("Checking access")).toBeTruthy();
   });
 
-  test("shows the placeholder when access is allowed", async () => {
+  test("shows the review queue when access is allowed", async () => {
     checkPropertyReviewAccess.mockResolvedValue("allowed");
 
     render(<PropertyReviewPage />);
 
     expect(await screen.findByRole("heading", { name: "Property review" })).toBeTruthy();
-    expect(screen.getByText("Queue coming soon")).toBeTruthy();
+    expect(screen.getByText("Queue stub")).toBeTruthy();
     expect(screen.queryByText("Not authorized")).toBeNull();
   });
 
@@ -37,7 +39,7 @@ describe("PropertyReviewPage", () => {
     render(<PropertyReviewPage />);
 
     expect(await screen.findByText("Not authorized")).toBeTruthy();
-    expect(screen.queryByText("Queue coming soon")).toBeNull();
+    expect(screen.queryByText("Queue stub")).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
@@ -65,7 +67,7 @@ describe("PropertyReviewPage", () => {
     render(<PropertyReviewPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
 
-    expect(await screen.findByText("Queue coming soon")).toBeTruthy();
+    expect(await screen.findByText("Queue stub")).toBeTruthy();
     expect(checkPropertyReviewAccess).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,0 +1,106 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: clamp(12px, 2vw, 20px);
+  margin: clamp(16px, 3vw, 24px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gridItem {
+  min-width: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: clamp(12px, 2vw, 16px);
+}
+
+.photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: clamp(12px, 2vw, 16px);
+}
+
+.cardTitle,
+.detail,
+.price,
+.meta {
+  margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.cardTitle {
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+  -webkit-line-clamp: 2;
+}
+
+.detail {
+  color: #4b5563;
+}
+
+.price {
+  font-weight: 700;
+  color: var(--secondary-color);
+}
+
+.meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.badge {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--secondary-color);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusText,
+.error {
+  margin: clamp(16px, 3vw, 24px) 0 0;
+  color: #4b5563;
+}
+
+.errorMessage {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.button {
+  min-height: 44px;
+  margin-top: clamp(12px, 2vw, 16px);
+  padding: 10px clamp(16px, 3vw, 24px);
+  border: 0;
+  border-radius: 999px;
+  background: var(--secondary-color);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

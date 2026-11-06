@@ -15,10 +15,11 @@ const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
 const UNAVAILABLE_STATUSES = new Set([429, 502, 503, 504]);
 const NO_RESPONSE_STATUS = 0;
+const REQUEST_TIMEOUT_MS = 15000;
 
 export class PropertyReviewApiError extends Error {
-  constructor(status, code, message) {
-    super(message);
+  constructor(status, code, message, options) {
+    super(message, options);
     this.name = "PropertyReviewApiError";
     this.status = status;
     this.code = code;
@@ -44,16 +45,39 @@ const readJson = async (response) => {
 const failureMessage = (body, status) =>
   typeof body?.message === "string" ? body.message : `Property review request failed with status ${status}`;
 
-const sendRequest = async (path, accessToken, signal) => {
+const timeoutError = () =>
+  new PropertyReviewApiError(NO_RESPONSE_STATUS, REVIEW_API_ERROR_CODE.UNAVAILABLE, "The request timed out.");
+
+const requestJson = async (path, accessToken, callerSignal) => {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+  const forwardAbort = () => controller.abort();
+  if (callerSignal?.aborted) controller.abort();
+  callerSignal?.addEventListener("abort", forwardAbort);
+
   try {
-    return await fetch(`${PROPERTY_API_BASE}${path}`, {
+    const response = await fetch(`${PROPERTY_API_BASE}${path}`, {
       method: "GET",
       headers: { Authorization: accessToken },
-      signal,
+      signal: controller.signal,
     });
+    const body = await readJson(response);
+    if (timedOut) throw timeoutError();
+    return { response, body };
   } catch (error) {
+    if (error instanceof PropertyReviewApiError) throw error;
+    if (timedOut) throw timeoutError();
     if (error?.name === "AbortError") throw error;
-    throw new PropertyReviewApiError(NO_RESPONSE_STATUS, REVIEW_API_ERROR_CODE.NETWORK, "Could not reach the server.");
+    throw new PropertyReviewApiError(NO_RESPONSE_STATUS, REVIEW_API_ERROR_CODE.NETWORK, "Could not reach the server.", {
+      cause: error,
+    });
+  } finally {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", forwardAbort);
   }
 };
 
@@ -67,8 +91,7 @@ export const requestPropertyReview = async (path, { signal } = {}) => {
     );
   }
 
-  const response = await sendRequest(path, accessToken, signal);
-  const body = await readJson(response);
+  const { response, body } = await requestJson(path, accessToken, signal);
   if (!response.ok) {
     throw new PropertyReviewApiError(
       response.status,
