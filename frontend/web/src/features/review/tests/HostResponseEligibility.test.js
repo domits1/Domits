@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import HostReviews from "../views/HostReviews";
 import { Auth } from "aws-amplify";
 import { requestReview } from "../services/reviewAPI";
@@ -39,13 +39,19 @@ test("keeps the complete received list and shows forms only for server-authorize
   for (const review of received) expect(await screen.findByRole("heading", { name: review.title })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   expect(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
-  expect(screen.getAllByRole("button", { name: /^Respond to/ })).toHaveLength(1);
+  for (const review of received.slice(1)) {
+    fireEvent.click(screen.getByRole("button", { name: review.title, exact: true }));
+    const detail = screen.getByRole("region", { name: "Selected review" });
+    expect(within(detail).getByText(review.title, { selector: "strong" })).toBeInTheDocument();
+    expect(within(detail).getByText("A response is not available for this review.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
+  }
   expect(screen.getByText("Received reviews (4)")).toBeInTheDocument();
   expect(requestReview).toHaveBeenCalledWith("GET", { scope: "received" });
   expect(requestReview).toHaveBeenCalledWith("GET", { scope: "respondable" });
 });
 
-test.each(["network", "malformed"])("keeps received reviews on %s eligibility failure and retries only eligibility", async (failure) => {
+test.each(["network", "malformed", "rejected"])("keeps received reviews on %s eligibility failure and retries only eligibility", async (failure) => {
   let attempts = 0;
   requestReview.mockImplementation(async (method, { scope }) => {
     if (scope === "received") return response(received);
@@ -53,6 +59,7 @@ test.each(["network", "malformed"])("keeps received reviews on %s eligibility fa
       attempts += 1;
       if (attempts === 1) {
         if (failure === "network") throw new Error("offline");
+        if (failure === "rejected") return { ok: false, json: async () => eligible };
         return response({ reviews: eligible });
       }
       return response(eligible);
