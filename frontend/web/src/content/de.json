@@ -1971,5 +1971,8 @@
       "archived": "Archiviert",
       "unknown": "Unbekannter Status"
     }
-  }
+  },
+  "ownerManagementNavigation": {"label":"Eigentümerverwaltung","owners":"Eigentümer","statements":"Abrechnungen"},
+  "hostOwnerStatements": {"title":"Eigentümerabrechnungen","description":"Erstelle und überprüfe Finanzabrechnungen für die Eigentümer und Unterkünfte, die du verwaltest.","emptyTitle":"Noch keine Abrechnungen erstellt","emptyDescription":"Sobald die Erstellung von Abrechnungen verfügbar ist, werden hier je Eigentümer der Berichtszeitraum, Einnahmen, Abzüge, Nettoerlöse und offene Beträge angezeigt.","payoutNote":"Eine Abrechnung zeigt, welchen Betrag ein Eigentümer erhalten soll. Sie löst keine Banküberweisung aus und ersetzt keine erfassten Auszahlungen."}
+
 }

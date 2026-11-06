@@ -1971,5 +1971,8 @@
       "archived": "Gearchiveerd",
       "unknown": "Onbekende status"
     }
-  }
+  },
+  "ownerManagementNavigation": {"label":"Eigenaarbeheer","owners":"Eigenaren","statements":"Overzichten"},
+  "hostOwnerStatements": {"title":"Eigenaarsoverzichten","description":"Genereer en bekijk financiële overzichten voor de eigenaren en accommodaties die je beheert.","emptyTitle":"Er zijn nog geen overzichten gegenereerd","emptyDescription":"Zodra het genereren van overzichten beschikbaar is, zie je hier per eigenaar de verslagperiode, inkomsten, inhoudingen, netto-opbrengst en het openstaande saldo.","payoutNote":"Een overzicht laat zien welk bedrag een eigenaar tegoed heeft. Het start geen bankoverschrijving en vervangt geen geregistreerde uitbetalingen."}
+
 }

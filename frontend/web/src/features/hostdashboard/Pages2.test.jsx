@@ -56,18 +56,18 @@ describe("Pages2 owners navigation", () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
-  test("shows the Owners link to a host, right after Listings", async () => {
+  test("shows the Owner Management link to a host, right after Listings", async () => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
 
     renderPages();
 
-    const ownersLink = await screen.findByRole("link", { name: "Owners" });
+    const ownersLink = await screen.findByRole("link", { name: "Owner Management" });
     expect(ownersLink.getAttribute("href")).toBe("/owners");
     const labels = screen.getAllByRole("link").map((link) => link.textContent);
-    expect(labels.indexOf("Owners")).toBe(labels.indexOf("Listings") + 1);
+    expect(labels.indexOf("Owner Management")).toBe(labels.indexOf("Listings") + 1);
   });
 
-  test("hides the Owners link from a team member who acts for another host", async () => {
+  test("hides the Owner Management link from a team member who acts for another host", async () => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: true });
 
     renderPages();

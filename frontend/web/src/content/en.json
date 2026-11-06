@@ -1970,5 +1970,8 @@
       "archived": "Archived",
       "unknown": "Unknown status"
     }
-  }
+  },
+  "ownerManagementNavigation": {"label":"Owner Management","owners":"Owners","statements":"Statements"},
+  "hostOwnerStatements": {"title":"Owner Statements","description":"Generate and review financial statements for the owners and properties you manage.","emptyTitle":"No statements generated yet","emptyDescription":"Once statement generation is available, this area will show each owner's reporting period, income, deductions, net earnings and outstanding balance.","payoutNote":"A statement shows what an owner is owed. It does not initiate a bank transfer or replace recorded payout transactions."}
+
 }
