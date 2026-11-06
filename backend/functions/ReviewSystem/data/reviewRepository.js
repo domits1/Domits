@@ -525,6 +525,17 @@ export class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
+  async hasActiveReviewApproverRole(username, roles, manager) {
+    const database = manager ?? await Database.getInstance();
+
+    return database.getRepository(Team_Member)
+      .createQueryBuilder("member")
+      .where("member.member_user_id = :username", { username })
+      .andWhere("member.status = :status", { status: "active" })
+      .andWhere("member.role IN (:...roles)", { roles })
+      .getExists();
+  }
+
   // Load a user's review list for the chosen scope.
   // This gives the profile views a single source of truth for written and received reviews.
   async findPendingReviews() {
@@ -883,7 +894,8 @@ export class ReviewRepository {
         return null;
       }
 
-      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
+      // Approval publishes directly. APPROVED only remains for reviews approved before that change.
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "PUBLISHED", APPROVED: "PUBLISHED" };
       if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
         throw new ConflictException("Invalid review transition.");
       }
@@ -936,7 +948,7 @@ export class ReviewRepository {
   ) {
     if (
       typeof authorize !== "function" ||
-      !(await authorize(review))
+      !(await authorize(review, manager))
     ) {
       throw new ForbiddenException(
         "You cannot publish this review."

@@ -72,6 +72,12 @@ const REVIEW_MAX_LENGTH = 500;
 const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
+const REVIEW_APPROVER_ROLES = [
+  "Guest Experience Manager",
+  "Property Operations Manager",
+  "Reservation Manager",
+  "General Manager",
+];
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
 const toReviewView = (review) => ({
   id: review.id, booking_id: review.booking_id, property_id: review.property_id,
@@ -441,19 +447,29 @@ export class ReviewService {
     }
   }
 
-  async getPendingReviews(userId, username) {
+  // Any host can create team_member rows, so a role alone does not prove Domits staff.
+  // The allowlist establishes that; the role narrows which staff may approve.
+  async assertReviewApprover(userId, username, manager) {
     this.assertAdministrator(userId, username);
+
+    if (!(await this.repository.hasActiveReviewApproverRole(username, REVIEW_APPROVER_ROLES, manager))) {
+      throw new ForbiddenException("An active review approver role is required.");
+    }
+  }
+
+  async getPendingReviews(userId, username) {
+    await this.assertReviewApprover(userId, username);
     return (await this.repository.findPendingReviews()).map(toReviewView);
   }
 
   async approveReview(userId, username, reviewId, version) {
-    this.assertAdministrator(userId, username);
+    await this.assertReviewApprover(userId, username);
     if (!Number.isSafeInteger(version) || version < 0 || version >= Number.MAX_SAFE_INTEGER) {
       throw new BadRequestException("A valid review update version is required.");
     }
     const review = await this.requireReview(reviewId);
-    return this.changePublicationState(review, "PENDING_APPROVAL", "APPROVED", () => {
-      this.assertAdministrator(userId, username);
+    return this.changePublicationState(review, "PENDING_APPROVAL", "PUBLISHED", async (_current, manager) => {
+      await this.assertReviewApprover(userId, username, manager);
       return true;
     }, version);
   }
@@ -480,11 +496,10 @@ export class ReviewService {
   async publishReview(userId, reviewId, username) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
-    const authorize = (current) => {
-      if (username && current.status === "APPROVED") {
-        try { this.assertAdministrator(userId, username); return true; } catch (error) {
-          if (!(error instanceof ForbiddenException)) throw error;
-        }
+    const authorize = async (current, manager) => {
+      if (current.status === "APPROVED") {
+        await this.assertReviewApprover(userId, username, manager);
+        return true;
       }
       return this.canPublishReview({ userId, review: current });
     };
