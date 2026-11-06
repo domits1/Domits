@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
 import { Unauthorized } from "../../functions/PropertyHandler/util/exception/Unauthorized.js";
+import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
 
 const cognitoError = (name, message) => Object.assign(new Error(message), { name });
 const HOST_USER = { Username: "host-1", UserAttributes: [{ Name: "custom:group", Value: "Host" }] };
@@ -22,6 +23,7 @@ describe("checking the access token", () => {
     ["a deleted user", cognitoError("UserNotFoundException", "User does not exist.")],
     ["a user who must reset the password", cognitoError("PasswordResetRequiredException", "Password reset required")],
     ["an unconfirmed user", cognitoError("UserNotConfirmedException", "User is not confirmed.")],
+    ["a token Cognito returns without a user", new NotFoundException("User not found.")],
   ])("rejects %s as a failed login", async (_label, failure) => {
     const { authManager } = buildController(() => Promise.reject(failure));
 
