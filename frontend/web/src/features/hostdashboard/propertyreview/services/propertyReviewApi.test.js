@@ -3,6 +3,7 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 import {
   PropertyReviewApiError,
   REVIEW_API_ERROR_CODE,
+  fetchReviewDetail,
   fetchReviewQueue,
   requestPropertyReview,
 } from "./propertyReviewApi";
@@ -178,6 +179,25 @@ describe("propertyReviewApi", () => {
       global.fetch.mockResolvedValue(respondWith(200, {}));
 
       expect(await fetchReviewQueue()).toEqual({ properties: [], nextCursor: null });
+    });
+  });
+
+  describe("fetchReviewDetail", () => {
+    test("encodes the property id and returns the body", async () => {
+      const detail = { property: { id: "a/b" } };
+      global.fetch.mockResolvedValue(respondWith(200, detail));
+
+      expect(await fetchReviewDetail("a/b", { signal: new AbortController().signal })).toEqual(detail);
+      expect(global.fetch.mock.calls[0][0]).toBe(`${PROPERTY_API_BASE}/review/detail?propertyId=a%2Fb`);
+    });
+
+    test("maps a 404 to NOT_FOUND", async () => {
+      global.fetch.mockResolvedValue(respondWith(404, { message: "Not found" }));
+
+      const error = await captureError(() => fetchReviewDetail("p1"));
+
+      expect(error.code).toBe(REVIEW_API_ERROR_CODE.NOT_FOUND);
+      expect(error.status).toBe(404);
     });
   });
 });

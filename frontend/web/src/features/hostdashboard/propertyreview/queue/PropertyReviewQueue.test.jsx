@@ -1,4 +1,5 @@
 import React from "react";
+import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PropertyReviewApiError, REVIEW_API_ERROR_CODE, fetchReviewQueue } from "../services/propertyReviewApi";
 import { S3_ACCOMMODATION_URL, placeholderImage } from "../../../../utils/accommodationImage";
@@ -27,7 +28,7 @@ const apiError = (code) => new PropertyReviewApiError(0, code, "x");
 
 const renderLoaded = async (firstPage) => {
   fetchReviewQueue.mockResolvedValueOnce(firstPage);
-  render(<PropertyReviewQueue />);
+  render(<PropertyReviewQueue />, { wrapper: MemoryRouter });
   await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
 };
 
@@ -39,9 +40,17 @@ describe("PropertyReviewQueue", () => {
   test("shows a loading state while the first page loads", () => {
     fetchReviewQueue.mockReturnValue(new Promise(() => {}));
 
-    render(<PropertyReviewQueue />);
+    render(<PropertyReviewQueue />, { wrapper: MemoryRouter });
 
     expect(screen.getByRole("status").textContent).toContain("Loading");
+  });
+
+  test("links each card to its detail page with an encoded id", async () => {
+    await renderLoaded(page([makeCard("a/b")]));
+
+    expect(screen.getByRole("link", { name: "Title a/b" }).getAttribute("href")).toBe(
+      "/hostdashboard/admin/property-review/a%2Fb"
+    );
   });
 
   test("shows the empty state only when there are no cards and no next cursor", async () => {
@@ -70,7 +79,7 @@ describe("PropertyReviewQueue", () => {
     expect(within(card).getByText("Updated 30 Oct 2026")).toBeTruthy();
     expect(within(card).getByRole("presentation").getAttribute("src")).toBe(`${S3_ACCOMMODATION_URL}images/p1/thumb.jpg`);
     expect(within(card).queryByText("Test listing")).toBeNull();
-    expect(within(card).queryByRole("link")).toBeNull();
+    expect(within(card).getByRole("link", { name: "Title p1" })).toBeTruthy();
   });
 
   test("marks a test listing with a badge", async () => {
@@ -124,7 +133,7 @@ describe("PropertyReviewQueue", () => {
     fetchReviewQueue
       .mockRejectedValueOnce(apiError(REVIEW_API_ERROR_CODE.SERVER))
       .mockResolvedValueOnce(page([makeCard("p1")]));
-    render(<PropertyReviewQueue />);
+    render(<PropertyReviewQueue />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("Could not load the queue.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -138,7 +147,7 @@ describe("PropertyReviewQueue", () => {
     [REVIEW_API_ERROR_CODE.FORBIDDEN, "Not authorized"],
   ])("shows %s without a Retry button", async (code, message) => {
     fetchReviewQueue.mockRejectedValue(apiError(code));
-    render(<PropertyReviewQueue />);
+    render(<PropertyReviewQueue />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText(message)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();

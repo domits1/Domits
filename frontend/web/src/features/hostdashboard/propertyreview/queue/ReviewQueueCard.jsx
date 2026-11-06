@@ -1,5 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { resolvePrimaryAccommodationImageUrl } from "../../../guestdashboard/utils/image";
+import { propertyReviewDetailPath } from "../propertyReviewPaths";
 import {
   EMPTY_VALUE,
   formatReviewLocation,
@@ -24,7 +26,11 @@ function ReviewQueueCard({ card }) {
         loading="lazy"
       />
       <div className={styles.body}>
-        <h2 className={styles.cardTitle}>{title}</h2>
+        <h2 className={styles.cardTitle}>
+          <Link className={styles.cardLink} to={propertyReviewDetailPath(property?.id)}>
+            {title}
+          </Link>
+        </h2>
         <p className={styles.detail}>{formatReviewLocation(propertyLocation)}</p>
         <p className={styles.detail}>{formatReviewType(propertyType)}</p>
         <p className={styles.price}>{formatReviewPrice(propertyPricing)}</p>
