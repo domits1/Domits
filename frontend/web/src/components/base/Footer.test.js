@@ -15,20 +15,19 @@ const renderFooter = () =>
   );
 
 describe("Footer helpdesk links", () => {
-  test("sends guests to the guest FAQ on bookdomits.com in the same tab", () => {
+  test.each([
+    ["Helpdesk for guests", "https://bookdomits.com/guest-faq-frequently-asked-questions/"],
+    ["Helpdesk for hosts", "https://bookdomits.com/host-faq-frequently-asked-questions/"],
+  ])("%s links to %s in the same tab", (linkName, expectedUrl) => {
     renderFooter();
 
-    const guestHelpdesk = screen.getByRole("link", { name: "Helpdesk for guests" });
-    expect(guestHelpdesk).toHaveAttribute("href", "https://bookdomits.com/guest-faq-frequently-asked-questions/");
-    expect(guestHelpdesk).not.toHaveAttribute("target", "_blank");
+    const helpdeskLink = screen.getByRole("link", { name: linkName });
+    expect(helpdeskLink).toHaveAttribute("href", expectedUrl);
+    expect(helpdeskLink).not.toHaveAttribute("target", "_blank");
   });
 
-  test("sends hosts to the host FAQ on bookdomits.com in the same tab, right after Become a host", () => {
+  test("Helpdesk for hosts comes directly after Become a host", () => {
     renderFooter();
-
-    const hostHelpdesk = screen.getByRole("link", { name: "Helpdesk for hosts" });
-    expect(hostHelpdesk).toHaveAttribute("href", "https://bookdomits.com/host-faq-frequently-asked-questions/");
-    expect(hostHelpdesk).not.toHaveAttribute("target", "_blank");
 
     const footerLinks = screen.getAllByRole("link").map((link) => link.textContent);
     expect(footerLinks.indexOf("Helpdesk for hosts")).toBe(footerLinks.indexOf("Become a host") + 1);

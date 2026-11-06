@@ -1,6 +1,5 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import Helpdesk from "../pages/helpdesk/Helpdesk";
 import Faq from '../pages/landingpage/Faq';
 
@@ -17,27 +16,15 @@ describe('Faq helpdesk buttons', () => {
     window.location = originalLocation;
   });
 
-  const renderFaq = () =>
-    render(
-      <MemoryRouter>
-        <Faq />
-      </MemoryRouter>
-    );
+  test.each([
+    ['Host', 'https://bookdomits.com/host-faq-frequently-asked-questions/'],
+    ['Guest', 'https://bookdomits.com/guest-faq-frequently-asked-questions/'],
+  ])('the %s button opens %s', (buttonName, expectedUrl) => {
+    render(<Faq />);
 
-  test('the Host button opens the host FAQ on bookdomits.com', () => {
-    renderFaq();
+    fireEvent.click(screen.getByRole('button', { name: buttonName }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Host' }));
-
-    expect(window.location.assign).toHaveBeenCalledWith('https://bookdomits.com/host-faq-frequently-asked-questions/');
-  });
-
-  test('the Guest button opens the guest FAQ on bookdomits.com', () => {
-    renderFaq();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Guest' }));
-
-    expect(window.location.assign).toHaveBeenCalledWith('https://bookdomits.com/guest-faq-frequently-asked-questions/');
+    expect(window.location.assign).toHaveBeenCalledWith(expectedUrl);
   });
 });
 
