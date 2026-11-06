@@ -412,4 +412,17 @@ export class PropertyRepository {
         return result ? PropertyBaseInfoMapping.mapDatabaseEntryToPropertyBaseInfo(result) : null;
     }
 
+    async getLatestRejection(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .createQueryBuilder(Property_Moderation_Event, "event")
+                .select(["event.reason", "event.createdAt"])
+                .where("event.propertyId = :propertyId AND event.action = :action", {propertyId, action: "REJECTED"})
+                .orderBy("event.createdAt", "DESC")
+                .limit(1)
+                .getOne()
+        );
+    }
+
 }

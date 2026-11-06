@@ -566,9 +566,17 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId, {
+    const property = await this.getFullPropertyAttributesWithFullLocation(propertyId, {
       includeCalendarAvailability: true,
     });
+    const latestRejection =
+      basePropertyInfo.status === PROPERTY_STATUS.REJECTED ? await this.getLatestRejection(propertyId) : null;
+    return { ...property, latestRejection };
+  }
+
+  async getLatestRejection(propertyId) {
+    const rejection = await this.propertyRepository.getLatestRejection(propertyId);
+    return rejection ? { reason: rejection.reason, rejectedAt: rejection.createdAt } : null;
   }
 
   async getFullPropertyByBookingId(bookingId) {
