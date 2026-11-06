@@ -6,12 +6,13 @@ import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+import { Team_Member } from "database/models/Team_Member";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import { assertEligibleBooking } from "../business/model/reviewRules.js";
 import { HostReviewRepository } from "./hostReviewRepository.js";
 import { PublicReviewRepository } from "./publicReviewRepository.js";
-import { nextTimestamp, runTransaction } from "./reviewRepositoryShared.js";
+import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
 
 const REVIEW_REQUEST_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -233,6 +234,17 @@ export class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
+  async hasActiveReviewApproverRole(username, roles, manager) {
+    const database = manager ?? await Database.getInstance();
+
+    return database.getRepository(Team_Member)
+      .createQueryBuilder("member")
+      .where("member.member_user_id = :username", { username })
+      .andWhere("member.status = :status", { status: "active" })
+      .andWhere("member.role IN (:...roles)", { roles })
+      .getExists();
+  }
+
   // Load a user's review list for the chosen scope.
   // This gives the profile views a single source of truth for written and received reviews.
   async findPendingReviews() {
@@ -430,7 +442,8 @@ export class ReviewRepository {
         return null;
       }
 
-      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
+      // Approval publishes directly. APPROVED only remains for reviews approved before that change.
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "PUBLISHED", APPROVED: "PUBLISHED" };
       if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
         throw new ConflictException("Invalid review transition.");
       }
@@ -483,7 +496,7 @@ export class ReviewRepository {
   ) {
     if (
       typeof authorize !== "function" ||
-      !(await authorize(review))
+      !(await authorize(review, manager))
     ) {
       throw new ForbiddenException(
         "You cannot publish this review."

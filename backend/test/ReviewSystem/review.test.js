@@ -6,6 +6,7 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
+import { ForbiddenException } from "../../functions/ReviewSystem/util/exception/forbiddenException.js";
 
 describe("Merged review query and edit routes", () => {
   const id = "12345678-1234-1234-1234-123456789abc";
@@ -574,10 +575,21 @@ describe('Review workflows', () => {
     expect(JSON.parse(response.body)).toEqual({ review_id: "r1", private_feedback: "secret" });
   });
 
-  it("authorizes the queue and approval using authenticated usernames", async () => {
+  it.each([
+    ["Guest Experience Manager", "active", true, 200],
+    ["Property Operations Manager", "active", true, 200],
+    ["Reservation Manager", "active", true, 200],
+    ["General Manager", "active", true, 200],
+    ["Financial Manager", "active", true, 403],
+    ["General Manager", "pending", true, 403],
+    [null, null, true, 403],
+    ["General Manager", "active", false, 403],
+  ])("checks queue and approval access for role %s, status %s, allowlisted %s", async (role, status, allowlisted, expectedStatus) => {
     const previous = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
-    process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
+    process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = allowlisted ? "admin" : "other";
     try {
+      repository.hasActiveReviewApproverRole = jest.fn(async (username, roles) =>
+        username === "admin" && status === "active" && roles.includes(role));
       repository.findPendingReviews = jest.fn().mockResolvedValue([draft]);
       repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
       const request = { ...event("staff", { updated_at: draft.updated_at }),
@@ -585,10 +597,19 @@ describe('Review workflows', () => {
       expect((await controller.approveReview(event("guest", { updated_at: draft.updated_at }))).statusCode).toBe(403);
       expect((await controller.approveReview({})).statusCode).toBe(401);
       const queue = await controller.getReviews({ ...request, queryStringParameters: { scope: "pending-approval" } });
-      expect(queue.statusCode).toBe(200);
+      expect(queue.statusCode).toBe(expectedStatus);
+      const approval = await controller.approveReview(request);
+      expect(approval.statusCode).toBe(expectedStatus);
+      if (expectedStatus === 403) {
+        expect(repository.findPendingReviews).not.toHaveBeenCalled();
+        expect(repository.findById).not.toHaveBeenCalled();
+        expect(repository.publishDraft).not.toHaveBeenCalled();
+        return;
+      }
+
       expect(queue.body).not.toContain("secret");
-      expect((await controller.approveReview(request)).statusCode).toBe(200);
-      expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "APPROVED" }));
+      expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "PUBLISHED" }));
+      expect(JSON.parse(approval.body)).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
       for (const status of ["DELETED", "REJECTED", "DRAFT", "APPROVED", "PUBLISHED"]) {
         repository.findById.mockResolvedValue({ ...draft, status });
         expect((await controller.approveReview(request)).statusCode).toBe(["DELETED", "REJECTED"].includes(status) ? 404 : 409);
@@ -601,6 +622,67 @@ describe('Review workflows', () => {
       if (previous === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
       else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = previous;
     }
+  });
+
+  it("re-checks the approver role inside the approval transaction", async () => {
+    const previous = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+    process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
+    try {
+      const manager = { id: "transaction-manager" };
+      repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
+      repository.publishDraft.mockImplementationOnce(async ({ authorize }) => authorize(draft, manager));
+      const request = { ...event("staff", { updated_at: draft.updated_at }),
+        requestContext: { authorizer: { claims: { sub: "staff", "cognito:username": "admin" } } } };
+
+      expect((await controller.approveReview(request)).statusCode).toBe(403);
+      expect(repository.hasActiveReviewApproverRole).toHaveBeenLastCalledWith("admin", expect.any(Array), manager);
+    } finally {
+      if (previous === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+      else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = previous;
+    }
+  });
+
+  describe("publishing an approved review", () => {
+    const previous = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+    const request = (sub, username) => ({ ...event(sub),
+      requestContext: { authorizer: { claims: { sub, "cognito:username": username } } } });
+
+    beforeEach(() => {
+      process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
+      repository.findById.mockResolvedValue({ ...draft, status: "APPROVED" });
+    });
+
+    afterEach(() => {
+      if (previous === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+      else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = previous;
+    });
+
+    it.each([
+      ["allowlisted staff with an authorized role", "staff", "admin", true, 200],
+      ["allowlisted staff without an authorized role", "staff", "admin", false, 403],
+      ["staff with a role who are not allowlisted", "staff", "outsider", true, 403],
+      ["the review's author", "guest", "guest-name", false, 403],
+      ["the review's author with no username claim", "guest", undefined, false, 403],
+    ])("for %s", async (_label, sub, username, hasRole, expectedStatus) => {
+      repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValue(hasRole);
+
+      expect((await controller.publishReview(request(sub, username))).statusCode).toBe(expectedStatus);
+
+      if (expectedStatus === 403) expect(repository.publishDraft).not.toHaveBeenCalled();
+      else expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "APPROVED", to: "PUBLISHED" }));
+    });
+
+    it("re-checks the approver role inside the publish transaction", async () => {
+      const manager = { id: "transaction-manager" };
+      repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      repository.publishDraft.mockImplementationOnce(async ({ authorize }) => {
+        if (!(await authorize({ ...draft, status: "APPROVED" }, manager))) throw new ForbiddenException("denied");
+      });
+
+      expect((await controller.publishReview(request("staff", "admin"))).statusCode).toBe(403);
+      expect(repository.hasActiveReviewApproverRole).toHaveBeenLastCalledWith("admin", expect.any(Array), manager);
+    });
   });
 
   it("denies publishing another user's review", async () => {
