@@ -2,7 +2,7 @@ import { getAccessToken, getCognitoUserId } from "../../../../services/getAccess
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { fetchWebsiteDraftByPropertyId } from "../../website/services/websiteDraftService";
 import { getChannexStatus, getChannexAriTargets } from "../../hostintegrations/channexApi";
-import { getStripeAccountDetails } from "../../hostfinance/services/stripeAccountService";
+import { getStripeAccountDetails, isStripePayoutSetupComplete } from "../../hostfinance/services/stripeAccountService";
 import { getPriceLabsStatus } from "../../hostpricelabs/services/priceLabsService";
 import { fetchTeamMembers } from "../../services/teamService";
 import { fetchCompanyProfile } from "../../../../components/settings/api/companyProfile";
@@ -82,10 +82,7 @@ export const checkChannelsStatus = async (propertyId) => {
 export const checkPaymentsStatus = async () => {
   try {
     const stripeDetails = await getStripeAccountDetails();
-    const complete = Boolean(
-      stripeDetails?.onboardingComplete && stripeDetails?.chargesEnabled && stripeDetails?.payoutsEnabled
-    );
-    return { complete, scope: "account" };
+    return { complete: isStripePayoutSetupComplete(stripeDetails), scope: "account" };
   } catch {
     return { complete: false, scope: "account", unknown: true };
   }

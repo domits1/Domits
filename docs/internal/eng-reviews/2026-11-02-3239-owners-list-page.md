@@ -1,6 +1,6 @@
 # feat(property-owners): add the owners list page
 
-Pull request: (to be opened)
+Pull request: #3764
 Issue: #3239
 Reviewed commit: uncommitted changes on top of f1ecc9e1a
 Result: no blocking findings

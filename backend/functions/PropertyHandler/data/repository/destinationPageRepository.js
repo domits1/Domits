@@ -1,6 +1,5 @@
 import Database from "database";
-
-export const ACCOMMODATION_IMAGE_BASE_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+import { ACCOMMODATION_IMAGE_BASE_URL } from "../../util/destination/accommodationImage.js";
 
 const resolveSchemaName = (client) => {
   if (process.env.TEST === "true") {

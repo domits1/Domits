@@ -25,6 +25,10 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Reiseziele",
+      "allIn": "Alle Reiseziele in"
+    },
     "user": {
       "hello": "Hallo",
       "profile": "Profil",
@@ -1618,18 +1622,16 @@
       "breadcrumb": "Tarifpläne",
       "title": "Tarifpläne",
       "subtitle": "Verwalte deine Tarifpläne.",
-      "standardSection": "Standard-Tarifplan",
-      "additionalSection": "Weitere Pläne",
-      "additionalSubtitle": "Weitere Preisoptionen für Direktbuchungen.",
+      "ratePlansSection": "Tarifpläne",
       "hostOnlyFee": {
-        "title": "Host-exklusive Gebühr",
-        "sub": "10% der Buchungen werden vom Host bezahlt",
+        "title": "Domits.com-Buchungskanal",
+        "sub": "10 % Host-Gebühr auf Buchungen über Domits.com",
         "note": "Ermöglicht Domits den 24/7-Betrieb der Plattform"
       },
       "directBooking": {
-        "cardTitle": "Direct-Booking-Tarifplan",
-        "cardSubtitle": "4,9% pro Reservierung, vom Host bezahlt",
-        "cardNote": "Keine Monats- oder Gebühr pro Unterkunft; Gäste zahlen €0 Domits-Gebühr.",
+        "cardTitle": "Direct-Booking-Website (% pro Reservierung)",
+        "cardSubtitle": "All-inclusive-Reservierungsgebühr",
+        "cardNote": "Keine zusätzlichen Transaktionsgebühren",
         "breadcrumb": "Direct-Booking-Tarifplan",
         "title": "Direct-Booking-Tarifplan",
         "subtitle": "Leistungsbasierte Preise für Reservierungen über deine Direct-Booking-Website.",
@@ -1708,17 +1710,17 @@
         "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
         "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
         "checkoutStillPending": "Wir haben noch keine Bestätigung erhalten. Deine Zahlung wird möglicherweise noch verarbeitet. Aktualisiere die Seite in einem Moment und starte keinen weiteren Checkout.",
-        "cardTitle": "Direct-Booking-Website-Tarif",
-        "cardSubtitle": "Essentials ist kostenlos; Elite bietet erweiterte Website-Funktionen.",
-        "cardNote": "Wähle und verwalte das Abonnement deiner Website.",
+        "cardTitle": "Direct-Booking-Website (monatlich)",
+        "cardSubtitle": "Kostenlos starten",
+        "cardNote": "Mit einer Elite-Website wachsen",
         "breadcrumb": "Direct-Booking-Website-Tarif",
         "pageTitle": "Direct-Booking-Website-Tarif",
         "pageSubtitle": "Verwalte das Abonnement für deine Direct-Booking-Website."
       },
       "enterprise": {
-        "cardTitle": "Enterprise-Tarifplan",
-        "cardSubtitle": "Preis pro aktiver Unterkunft und Monat.",
-        "cardNote": "Skaliert automatisch mit der Anzahl deiner aktiven Unterkünfte.",
+        "cardTitle": "Enterprise-Plan",
+        "cardSubtitle": "Preis pro Unterkunft und Monat",
+        "cardNote": "Wächst mit deinem Portfolio",
         "breadcrumb": "Enterprise-Tarifplan",
         "title": "Enterprise-Tarifplan",
         "subtitle": "Einfache Preise, die mit deinem aktiven Unterkunftsportfolio wachsen.",
