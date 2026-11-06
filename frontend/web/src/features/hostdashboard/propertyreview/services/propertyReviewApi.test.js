@@ -21,6 +21,13 @@ const respondWithHtml = (status) => ({
   },
 });
 
+const pendingUntilAborted = (url, { signal }) =>
+  new Promise((resolve, reject) => {
+    const abort = () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+    if (signal.aborted) abort();
+    signal.addEventListener("abort", abort);
+  });
+
 const captureError = async (request) => {
   try {
     await request();
@@ -39,17 +46,52 @@ describe("propertyReviewApi", () => {
 
   describe("requestPropertyReview", () => {
     test("sends a GET with the raw access token and the abort signal", async () => {
-      const { signal } = new AbortController();
+      const caller = new AbortController();
       global.fetch.mockResolvedValue(respondWith(200, { ok: true }));
 
-      const body = await requestPropertyReview("/review/access", { signal });
+      const body = await requestPropertyReview("/review/access", { signal: caller.signal });
 
       expect(body).toEqual({ ok: true });
       expect(global.fetch).toHaveBeenCalledWith(`${PROPERTY_API_BASE}/review/access`, {
         method: "GET",
         headers: { Authorization: "raw-access-token" },
-        signal,
+        signal: expect.any(AbortSignal),
       });
+    });
+
+    test("aborts the request when the caller aborts", async () => {
+      const caller = new AbortController();
+      global.fetch.mockImplementation(pendingUntilAborted);
+
+      const request = captureError(() => requestPropertyReview("/review/queue", { signal: caller.signal }));
+      caller.abort();
+
+      expect((await request).name).toBe("AbortError");
+    });
+
+    test("fails as unavailable when the request takes longer than 15 seconds", async () => {
+      jest.useFakeTimers();
+      global.fetch.mockImplementation(pendingUntilAborted);
+
+      const request = captureError(() => requestPropertyReview("/review/queue"));
+      jest.advanceTimersByTime(15000);
+      const error = await request;
+      jest.useRealTimers();
+
+      expect(error).toBeInstanceOf(PropertyReviewApiError);
+      expect(error).toMatchObject({ status: 0, code: REVIEW_API_ERROR_CODE.UNAVAILABLE });
+    });
+
+    test("leaves no timer running once a request settles", async () => {
+      jest.useFakeTimers();
+      global.fetch.mockResolvedValue(respondWith(200, { ok: true }));
+
+      const body = await requestPropertyReview("/review/queue");
+      const pendingTimers = jest.getTimerCount();
+      jest.useRealTimers();
+
+      expect(body).toEqual({ ok: true });
+      expect(pendingTimers).toBe(0);
     });
 
     test.each([
@@ -88,11 +130,13 @@ describe("propertyReviewApi", () => {
     });
 
     test("wraps a network failure without leaking the raw error", async () => {
-      global.fetch.mockRejectedValue(new TypeError("Failed to fetch"));
+      const original = new TypeError("Failed to fetch");
+      global.fetch.mockRejectedValue(original);
 
       const error = await captureError(() => requestPropertyReview("/review/queue"));
 
       expect(error).toMatchObject({ status: 0, code: REVIEW_API_ERROR_CODE.NETWORK });
+      expect(error.cause).toBe(original);
       expect(error.message).not.toContain("Failed to fetch");
     });
 
