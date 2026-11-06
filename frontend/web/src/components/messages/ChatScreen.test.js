@@ -33,9 +33,23 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", ()
   }),
 }));
 
-jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttachment", () => () => (
-  <button type="button">Attach</button>
-));
+jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttachment", () => {
+  const PropTypes = require("prop-types");
+
+  function MockChatUploadAttachment({ onUploadComplete }) {
+    return (
+      <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
+        Attach
+      </button>
+    );
+  }
+
+  MockChatUploadAttachment.propTypes = {
+    onUploadComplete: PropTypes.func.isRequired,
+  };
+
+  return MockChatUploadAttachment;
+});
 
 jest.mock("./BookingTab", () => {
   const PropTypes = require("prop-types");
@@ -188,5 +202,46 @@ describe("ChatScreen reservation messaging", () => {
     });
     expect(screen.queryByText("Hello host", { selector: ".message-text" })).not.toBeInTheDocument();
     expect(screen.queryByText("…", { selector: ".message-status", exact: true })).not.toBeInTheDocument();
+  });
+
+  describe("attach button per channel", () => {
+    const hostChat = ({ platform = "DOMITS", contactId = "guest-1", threadId = "thread-1" } = {}) => (
+      <ChatScreen
+        userId="host-1"
+        contactId={contactId}
+        contactName="Guest"
+        propertyId="property-1"
+        threadId={threadId}
+        platform={platform}
+        dashboardType="host"
+        capabilities={getMessageCapabilities("host")}
+      />
+    );
+    const renderHostChat = (platform) => render(hostChat({ platform }));
+
+    test("drops an unsent attachment, but keeps the typed text, when the host opens another thread", () => {
+      const { rerender } = render(hostChat());
+
+      fireEvent.click(screen.getByRole("button", { name: "Attach" }));
+      fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Draft reply" } });
+      expect(screen.getByAltText("First attachment preview")).toBeInTheDocument();
+
+      rerender(hostChat({ platform: "CHANNEX", contactId: "guest-2", threadId: "thread-2" }));
+
+      expect(screen.queryByAltText("First attachment preview")).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Type a message")).toHaveValue("Draft reply");
+    });
+
+    test("does not offer attachments on a Channex thread, which only supports text replies", () => {
+      renderHostChat("CHANNEX");
+
+      expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
+    });
+
+    test("still offers attachments on a Domits thread", () => {
+      renderHostChat("DOMITS");
+
+      expect(screen.getByRole("button", { name: "Attach" })).toBeInTheDocument();
+    });
   });
 });

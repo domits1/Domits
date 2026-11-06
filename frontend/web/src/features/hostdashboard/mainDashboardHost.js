@@ -8,6 +8,7 @@ import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
 import HostReviews from "../review/views/HostReviews";
 import HostTasks from "./hosttasks/pages/HostTasks";
+import HostOwners from "./hostowners/pages/HostOwners";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
@@ -36,6 +37,8 @@ import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE,
 } from "./channexadmin/channexCertificationAccess";
+import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
+import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewAccess";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -132,6 +135,7 @@ function MainDashboardHost() {
             path={CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE}
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
+          <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
 
@@ -142,6 +146,7 @@ function MainDashboardHost() {
           <Route path="pricelabs" element={<HostPriceLabs />} />
           <Route path="distribution" element={<HostChannelDistribution />} />
           <Route path="listings" element={<HostListings />} />
+          <Route path="owners" element={<HostOwners />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />

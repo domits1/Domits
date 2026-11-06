@@ -13,7 +13,7 @@ Runbook for the live steps after the serving PRs: the destination pages (`/desti
 | The same path with one trailing slash | `301` to the path without it, `public, max-age=3600` |
 | The switch or the database slow (5 s for both together) or down, or a sitemap over 50,000 URLs or 5 MiB | `503`, `no-store`, `Retry-After: 60` |
 
-The host in canonicals and sitemap URLs comes from `X-Forwarded-Host`, but only `www.domits.com` and `acceptance.domits.com` are used; anything else becomes `www.domits.com`. The sitemap only lists paths the page route accepts, so every URL in it is a page.
+The canonical, `og:url`, the breadcrumb data and every sitemap URL use `https://www.domits.com` on every host, the same as the rest of the app (`frontend/web/src/features/seo/marketplaceCanonical.js`). The request host is not read, so `www.domits.com`, `acceptance.domits.com` and any other host get the same page and the same sitemap, whatever a cache keys on. Links inside the pages, the `404` included, are relative, so a visitor stays on the host they came in on. On `acceptance.domits.com` the sitemap lists `www.domits.com` URLs; crawlers skip URLs on another host than the sitemap, so only the `www.domits.com` sitemap counts. The sitemap only lists paths the page route accepts, so every URL in it is a page.
 
 Timing, so a check does not fail for the wrong reason:
 
@@ -129,7 +129,7 @@ Rollback: `aws apigateway update-stage --rest-api-id $API --stage-name default -
 
 As on 21 October 2026: a temporary Amplify app with a one-file site and the same rewrite rules as step 7, pointing at the routes of step 3. Set the switch to `true` only for this check, then back to `false`.
 
-Check through the temporary app: the `200`, `404`, `301` and `503` above arrive unchanged with their `Cache-Control`, the sitemap arrives as `application/xml`, and the visitor host arrives in `X-Forwarded-Host`.
+Check through the temporary app: the `200`, `404`, `301` and `503` above arrive unchanged with their `Cache-Control`, the sitemap arrives as `application/xml`, and the canonical and the sitemap URLs use `https://www.domits.com` although the temporary app has its own host.
 Rollback: delete the temporary app and set the switch back to `false`.
 
 ## 5. Release to main
@@ -161,7 +161,7 @@ In a copy, add these three rules before the rule that rewrites the app routes to
 
 Read the live list again, make sure it still equals `rules-before.json`, then `aws amplify update-app --app-id d34jwd0sihmsus --custom-rules file://rules-new.json`.
 
-Check on `www.domits.com` and `acceptance.domits.com`, with the switch still off: `/destinations/europe` answers the `404` of the Lambda (with `noindex`, not the app shell), `/destinations/europe/` a `301` to the path without the slash; and `/`, `/about`, a `/listingdetails?ID=...` link, a dashboard route, a static asset, `/robots.txt`, `/sitemap.xml` and `domits.com` to `www` behave as before.
+Check on `www.domits.com` and `acceptance.domits.com`, with the switch still off: `/destinations/europe` answers the `404` of the Lambda (with `noindex` and an `All destinations` link that stays on the same host; it has the Domits header and footer, but it is not the app shell: its source has no `<div id="root">`), `/destinations/europe/` a `301` to the path without the slash; and `/`, `/about`, a `/listingdetails?ID=...` link, a dashboard route, a static asset, `/robots.txt`, `/sitemap.xml` and `domits.com` to `www` behave as before.
 Rollback: read the live list, compare it with the one you wrote, and write `rules-before.json` back.
 
 ## 8. Switch on
@@ -191,6 +191,20 @@ while read -r u; do
 done < urls.txt
 [ "$failed" -eq 0 ] || { echo "STOP: $failed of $(wc -l < urls.txt | tr -d ' ') URLs are wrong"; exit 1; }
 echo "OK: the sitemap and all $(wc -l < urls.txt | tr -d ' ') URLs in it answer 200 with their own canonical"
+CHECK
+```
+
+Stop on anything but the `OK` line. Then check `acceptance.domits.com`: the root page carries the `www.domits.com` canonical, and the sitemap lists only `www.domits.com` URLs. It prints `OK` only when both hold:
+
+```bash
+bash -euo pipefail <<'CHECK'
+curl -sS --max-time 30 -o acceptance-root.html https://acceptance.domits.com/destinations || { echo "STOP: the acceptance root page download failed"; exit 1; }
+grep -F -q '<link rel="canonical" href="https://www.domits.com/destinations">' acceptance-root.html || { echo "STOP: the acceptance root page does not carry the www canonical"; exit 1; }
+curl -sS --max-time 30 -o acceptance-sitemap.xml https://acceptance.domits.com/sitemap-destinations.xml || { echo "STOP: the acceptance sitemap download failed"; exit 1; }
+{ grep -o '<loc>[^<]*' acceptance-sitemap.xml || true; } | cut -c6- > acceptance-urls.txt
+[ -s acceptance-urls.txt ] || { echo "STOP: the acceptance sitemap lists no URL"; exit 1; }
+if grep -v -q '^https://www\.domits\.com/destinations' acceptance-urls.txt; then echo "STOP: the acceptance sitemap lists URLs outside www.domits.com/destinations"; exit 1; fi
+echo "OK: acceptance carries the www canonical and its sitemap lists only www URLs"
 CHECK
 ```
 

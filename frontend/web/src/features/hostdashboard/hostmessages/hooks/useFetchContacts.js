@@ -5,6 +5,7 @@ import {
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
 import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
+import { CHANNEX_GUEST_DISPLAY_NAME, CHANNEX_GUEST_ID_PREFIX } from "../../../../utils/channexGuest";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -47,9 +48,6 @@ const looksLikePhoneIdentifier = (value) => {
   if (!raw) return false;
   return /^[\d+\-\s()]+$/.test(raw);
 };
-
-const CHANNEX_GUEST_ID_PREFIX = "CHANNEX_GUEST";
-const CHANNEX_GUEST_DISPLAY_NAME = "Channex guest";
 
 const resolveExternalGuestName = (value) => {
   if (looksLikePhoneIdentifier(value)) return normalizePhoneDisplay(value);
@@ -160,6 +158,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         externalThreadId: t.externalThreadId || null,
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
         unreadCount: t.unreadCount ?? 0,
+        guestName: t.guestName || null,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -250,7 +249,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
     recipientId: partnerId,
     userId: partnerId,
 
-    givenName: resolvedInfoName || contactNameFallback,
+    givenName: contact?.guestName || resolvedInfoName || contactNameFallback,
     profileImage: contact?.profileImage || userInfo?.profileImage || null,
 
     latestMessage,

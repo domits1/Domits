@@ -168,7 +168,10 @@ describe("useFetchContacts history merging", () => {
     );
   });
 
-  test("shows a Channex guest with a name label instead of formatting the guest id as a phone number", async () => {
+  test.each([
+    ["the booking guest name when the thread has one", { guestName: "Tst Domits" }, "Tst Domits"],
+    ["a name label when the thread has no guest name", {}, "Channex guest"],
+  ])("shows a Channex guest with %s, not the guest id as a phone number", async (_label, threadPatch, expectedName) => {
     const channexGuestId = "CHANNEX_GUEST:e8731e65-851c-41ec-b786-4d604d8d7f67";
     const fetchUnifiedData = globalThis.fetch.getMockImplementation();
     globalThis.fetch.mockImplementation(async (url) => {
@@ -184,6 +187,7 @@ describe("useFetchContacts history merging", () => {
             externalThreadId: "channex-message-thread-1",
             integrationAccountId: "integration-2",
             unreadCount: 1,
+            ...threadPatch,
           },
         ]);
       }
@@ -193,7 +197,7 @@ describe("useFetchContacts history merging", () => {
     render(<NamesHarness />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("names")).toHaveTextContent(`${channexGuestId}=Channex guest`);
+      expect(screen.getByTestId("names")).toHaveTextContent(`${channexGuestId}=${expectedName}`);
     });
     expect(screen.getByTestId("names")).not.toHaveTextContent("+8731658514178646048767");
     expect(fetchUserProfileById).not.toHaveBeenCalledWith(channexGuestId);

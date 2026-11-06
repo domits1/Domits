@@ -27,9 +27,7 @@ const dateLabel = (review) =>
     : "Date unavailable";
 
 function Stars({ value }) {
-  return (
-    <RatingStars value={value} className={styles.stars} />
-  );
+  return <RatingStars value={value} className={styles.stars} />;
 }
 
 function PropertyImage({ property }) {
@@ -49,20 +47,46 @@ function PropertyImage({ property }) {
 
 function SelectedReview({ selected, property, respondableReview, response, onResponseChange }) {
   const selectedProperty = property;
-  const selectedName = typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
-  const selectedInitials = selectedName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+  const selectedName =
+    typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
+  const selectedInitials = selectedName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((name) => name[0])
+    .join("")
+    .toUpperCase();
   return (
     <section id="selected-review" className={styles.detail} aria-label="Selected review">
-        <header className={styles.detailHeader}>
-          <span className={styles.detailAvatar} aria-hidden="true">{selectedInitials}</span>
-          <div><strong>{selectedName}</strong><p>{dateLabel(selected)}{selectedProperty && ` \u00b7 ${selectedProperty.title}`}</p></div>
-          {rating(selected) !== null && <div className={styles.detailRating}><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></div>}
-        </header>
-        <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
-        <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
-        {respondableReview ? <HostResponseForm key={selected.id} review={{ ...respondableReview, response: response !== undefined ? response : respondableReview.response }} onResponseChange={onResponseChange} />
-          : <p className={styles.responseUnavailable}>A response is not available for this review.</p>}
-      </section>
+      <header className={styles.detailHeader}>
+        <span className={styles.detailAvatar} aria-hidden="true">
+          {selectedInitials}
+        </span>
+        <div>
+          <strong>{selectedName}</strong>
+          <p>
+            {dateLabel(selected)}
+            {selectedProperty && ` \u00b7 ${selectedProperty.title}`}
+          </p>
+        </div>
+        {rating(selected) !== null && (
+          <div className={styles.detailRating}>
+            <Stars value={rating(selected)} />
+            <strong>{rating(selected).toFixed(1)}</strong>
+          </div>
+        )}
+      </header>
+      <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
+      <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
+      {respondableReview ? (
+        <HostResponseForm
+          key={selected.id}
+          review={{ ...respondableReview, response: response !== undefined ? response : respondableReview.response }}
+          onResponseChange={onResponseChange}
+        />
+      ) : (
+        <p className={styles.responseUnavailable}>A response is not available for this review.</p>
+      )}
+    </section>
   );
 }
 
@@ -138,26 +162,44 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
-          <details className={styles.sort} onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
-          }} onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.currentTarget.open = false;
-              event.currentTarget.querySelector("summary").focus();
-            }
-          }}>
+          <details
+            className={styles.sort}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.currentTarget.open = false;
+                event.currentTarget.querySelector("summary").focus();
+              }
+            }}>
             <summary aria-label="Sort received reviews">
-              {{ newest: "Newest first", oldest: "Oldest first", highest: "Highest rating", lowest: "Lowest rating" }[sort]}
+              {
+                { newest: "Newest first", oldest: "Oldest first", highest: "Highest rating", lowest: "Lowest rating" }[
+                  sort
+                ]
+              }
               <ChevronDown size={16} aria-hidden="true" />
             </summary>
             <div className={styles.sortOptions} role="group" aria-label="Sort order">
-              {[["newest", "Newest first"], ["oldest", "Oldest first"], ["highest", "Highest rating"], ["lowest", "Lowest rating"]].map(([value, label]) => (
-                <button key={value} type="button" aria-pressed={sort === value} onClick={(event) => {
-                  setSort(value);
-                  const dropdown = event.currentTarget.closest("details");
-                  dropdown.open = false;
-                  dropdown.querySelector("summary").focus();
-                }}>{label}</button>
+              {[
+                ["newest", "Newest first"],
+                ["oldest", "Oldest first"],
+                ["highest", "Highest rating"],
+                ["lowest", "Lowest rating"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={sort === value}
+                  onClick={(event) => {
+                    setSort(value);
+                    const dropdown = event.currentTarget.closest("details");
+                    dropdown.open = false;
+                    dropdown.querySelector("summary").focus();
+                  }}>
+                  {label}
+                </button>
               ))}
             </div>
           </details>
@@ -192,14 +234,33 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             !error &&
             visible.map((review) => {
               const property = properties[review.property_id];
-              const guestName = typeof review.guest_name === "string" && review.guest_name.trim() ? review.guest_name.trim() : "Guest";
-              const initials = guestName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+              const guestName =
+                typeof review.guest_name === "string" && review.guest_name.trim() ? review.guest_name.trim() : "Guest";
+              const initials = guestName
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((name) => name[0])
+                .join("")
+                .toUpperCase();
               const value = rating(review);
               return (
-                <article key={review.id} data-review-id={review.id} tabIndex={-1} className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
+                <article
+                  key={review.id}
+                  data-review-id={review.id}
+                  tabIndex={-1}
+                  className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
-                    <h4><button type="button" className={styles.selectReview} aria-pressed={selected?.id === review.id} aria-controls="selected-review" onClick={() => setSelectedId(review.id)}>{review.title || property?.title || "Guest review"}</button></h4>
+                    <h4>
+                      <button
+                        type="button"
+                        className={styles.selectReview}
+                        aria-pressed={selected?.id === review.id}
+                        aria-controls="selected-review"
+                        onClick={() => setSelectedId(review.id)}>
+                        {review.title || property?.title || "Guest review"}
+                      </button>
+                    </h4>
                     {property && (
                       <p className={styles.location}>
                         <MapPin size={14} aria-hidden="true" />
@@ -234,13 +295,15 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             })}
         </section>
       </div>
-      {!loading && !error && selected && <SelectedReview
-        selected={selected}
-        property={properties[selected.property_id]}
-        respondableReview={respondableReviews[selected.id]}
-        response={responseCache[selected.id]}
-        onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))}
-      />}
+      {!loading && !error && selected && (
+        <SelectedReview
+          selected={selected}
+          property={properties[selected.property_id]}
+          respondableReview={respondableReviews[selected.id]}
+          response={responseCache[selected.id]}
+          onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))}
+        />
+      )}
       <aside className={styles.sidebar} aria-label="Guest review insights">
         <section className={styles.summary}>
           <div>
@@ -317,9 +380,14 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             </p>
           )}
         </section>
-      <CategoryRatings userId={userId} propertyIds={[...Object.keys(properties),
-        ...reviews.map((review) => review.property_id).filter((id) => typeof id === "string" && id.trim())]} />
-    </aside>
+        <CategoryRatings
+          userId={userId}
+          propertyIds={[
+            ...Object.keys(properties),
+            ...reviews.map((review) => review.property_id).filter((id) => typeof id === "string" && id.trim()),
+          ]}
+        />
+      </aside>
     </div>
   );
 }

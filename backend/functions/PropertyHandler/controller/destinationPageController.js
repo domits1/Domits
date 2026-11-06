@@ -1,17 +1,26 @@
 import { DestinationPageService } from "../business/service/destinationPageService.js";
+import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
 const NOT_FOUND_CACHE_CONTROL = "public, max-age=60";
 const REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 const SITEMAP_CACHE_CONTROL = "public, max-age=300";
 const UNAVAILABLE_RETRY_AFTER_SECONDS = "60";
-
-const readHeader = (headers, name) => Object.entries(headers ?? {}).find(([key]) => key.toLowerCase() === name)?.[1];
+const MENU_CACHE_CONTROL = "public, max-age=300";
+const MENU_OFF_CACHE_CONTROL = "public, max-age=60";
+const EMPTY_MENU = { continents: [] };
+const UNAVAILABLE_MENU = { message: "Destinations are not available right now." };
 
 const respond = (statusCode, headers, body) => ({
   statusCode,
   headers: { "Content-Type": HTML_CONTENT_TYPE, ...headers },
   body,
+});
+
+const respondJson = (statusCode, cacheControl, body, headers = {}) => ({
+  statusCode,
+  headers: { ...responseHeaders, "Content-Type": "application/json", "Cache-Control": cacheControl, ...headers },
+  body: JSON.stringify(body),
 });
 
 export class DestinationPageController {
@@ -20,20 +29,23 @@ export class DestinationPageController {
   }
 
   async getDestinationPage(event) {
-    return this.toResponse(
-      await this.destinationPageService.serve({
-        path: event?.path,
-        forwardedHost: readHeader(event?.headers, "x-forwarded-host"),
-      })
-    );
+    return this.toResponse(await this.destinationPageService.serve({ path: event?.path }));
   }
 
-  async getDestinationSitemap(event) {
-    return this.toResponse(
-      await this.destinationPageService.serveSitemap({
-        forwardedHost: readHeader(event?.headers, "x-forwarded-host"),
-      })
-    );
+  async getDestinationSitemap() {
+    return this.toResponse(await this.destinationPageService.serveSitemap());
+  }
+
+  async getDestinationMenu() {
+    const outcome = await this.destinationPageService.serveMenu();
+    switch (outcome.kind) {
+      case "menu":
+        return respondJson(200, MENU_CACHE_CONTROL, outcome.menu);
+      case "menu_off":
+        return respondJson(200, MENU_OFF_CACHE_CONTROL, EMPTY_MENU);
+      default:
+        return respondJson(503, "no-store", UNAVAILABLE_MENU, { "Retry-After": UNAVAILABLE_RETRY_AFTER_SECONDS });
+    }
   }
 
   toResponse(outcome) {

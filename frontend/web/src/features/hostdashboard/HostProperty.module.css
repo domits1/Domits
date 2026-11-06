@@ -259,6 +259,14 @@
   background-color: #777777;
 }
 
+.statusDotPending {
+  background-color: #b45309;
+}
+
+.statusDotRejected {
+  background-color: #b91c1c;
+}
+
 .card {
   border: 1px solid #e1e1e1;
   border-radius: 8px;

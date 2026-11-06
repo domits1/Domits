@@ -73,6 +73,28 @@
     background-color: #218838;
 }
 
+.btn-reject {
+    background-color: white;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-reject:hover {
+    background-color: #fdecee;
+}
+
+.approved-label {
+    color: #1e7e34;
+    font-weight: 600;
+    font-size: 14px;
+    align-self: center;
+}
+
 .btn-danger {
     background-color: #dc3545;
     color: white;
@@ -85,8 +107,13 @@
     transition: background-color 0.2s;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background-color: #b02a37;
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-create-fab {
@@ -1035,6 +1062,16 @@
 
 .attachment-loading {
     background-color: #f3f4f6;
+}
+
+.attachment-unavailable {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .attachment-pdf-icon {
