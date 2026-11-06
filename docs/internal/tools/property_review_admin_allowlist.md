@@ -38,6 +38,11 @@ On the `PropertyHandler` Lambda in `eu-north-1`. Acceptance and production share
 
 Real user ids are set at deploy time only. Code, tests, docs and pull requests use fake ids such as `admin-1`.
 
+## Guest review approval
+
+Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing. The frontend controls are deferred to a separate PR.
+
 ## Read routes
 
 Three admin-only `GET` routes on `PropertyHandler` serve the review queue. Responses carry `Cache-Control: no-store`.
