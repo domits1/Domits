@@ -74,6 +74,16 @@ test("only enables publishing changed, valid text for a published response", () 
   fireEvent.change(textbox, { target: { value: "Updated reply" } });
   expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
 });
+test.each([0, 8, 11, 12, 14, 31, 127])("blocks publishing text containing control code %i", (code) => {
+  render(<HostResponseForm review={{ id: "r1" }} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: `bad${String.fromCharCode(code)}text` } });
+  expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
+});
+test.each([9, 10, 13])("allows publishing text containing whitespace control code %i", (code) => {
+  render(<HostResponseForm review={{ id: "r1" }} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: `good${String.fromCharCode(code)}text` } });
+  expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+});
 test("allows an unchanged saved draft to be published", () => {
   render(<HostResponseForm review={{ id: "r1", response: { status: "draft", message: "Draft reply" } }} />);
   expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();

@@ -494,7 +494,6 @@
 .layout button { transition: background-color 150ms ease, border-color 150ms ease; }
 .layout button:hover:not(:disabled) { background: #eaf7ed; }
 
-/* Review selection and response workspace. */
 .withDetail { grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr) minmax(270px, .77fr); gap: 20px; }
 .withDetail .thumbnail { width: 86px; height: 92px; }
 .withDetail .reviewCard { gap: 16px; padding: 15px; border-radius: 8px; margin-bottom: 0; cursor: pointer; }
@@ -528,6 +527,5 @@
 .withDetail .recentRow .thumbnail { width: 58px; height: 64px; }
 @media (max-width: 640px) { .withDetail .reviewCard { gap: 12px; } .withDetail .thumbnail { width: 64px; height: 78px; } }
 
-/* Extend the native selection button across its review card. */
 .reviewCard { position: relative; }
 .selectReview::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }

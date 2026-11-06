@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import { saveHostResponse, deleteHostResponse } from "../services/reviewAPI";
 import styles from "../styles/HostResponse.module.css";
 
+const ALLOWED_CONTROL_CODES = new Set([9, 10, 13]);
+const LAST_C0_CONTROL_CODE = 31;
+const DELETE_CONTROL_CODE = 127;
+const isUnsupportedControlCode = (code) =>
+  (code <= LAST_C0_CONTROL_CODE && !ALLOWED_CONTROL_CODES.has(code)) || code === DELETE_CONTROL_CODE;
+const hasUnsupportedControlCharacter = (text) =>
+  Array.from(text).some((character) => isUnsupportedControlCode(character.charCodeAt(0)));
+
 export default function HostResponseForm({ review, onResponseChange }) {
   const initialResponse = review.response?.status === "deleted" || review.response?.deletedAt != null ? null : review.response;
   const [response, setResponse] = useState(initialResponse);
@@ -12,8 +20,7 @@ export default function HostResponseForm({ review, onResponseChange }) {
   const [error, setError] = useState("");
   const published = Boolean(response && response.status !== "draft");
   const normalizedMessage = message.replace(/\r\n?/g, "\n").trim();
-  // eslint-disable-next-line no-control-regex
-  const validMessage = normalizedMessage.length > 0 && normalizedMessage.length <= 500 && !/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(message);
+  const validMessage = normalizedMessage.length > 0 && normalizedMessage.length <= 500 && !hasUnsupportedControlCharacter(message);
   const changed = normalizedMessage !== (response?.message || "").replace(/\r\n?/g, "\n").trim();
   const canPublish = !busy && !confirmDelete && editing && validMessage && (!published || changed);
   const canDelete = Boolean(response) && !busy;

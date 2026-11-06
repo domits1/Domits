@@ -42,7 +42,6 @@ export default function HostReviews() {
                     if (active) setEligibilityError("Could not check which reviews you can respond to. Your received reviews are still available.");
                 }
             };
-            // Eligibility failures are handled inside this task without hiding received reviews.
             void retrieveEligibility();
         }
         return () => { active = false; };
