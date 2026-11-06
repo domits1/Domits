@@ -6,17 +6,22 @@ const UNSETTLED = Object.freeze({ propertyId: null, detail: null, error: null })
 function usePropertyReviewDetail(propertyId) {
   const [result, setResult] = useState(UNSETTLED);
   const [attempt, setAttempt] = useState(0);
+  const [reloading, setReloading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    fetchReviewDetail(propertyId, { signal })
+    void fetchReviewDetail(propertyId, { signal })
       .then((detail) => {
-        if (!signal.aborted) setResult({ propertyId, detail, error: null });
+        if (signal.aborted) return;
+        setResult({ propertyId, detail, error: null });
+        setReloading(false);
       })
       .catch((error) => {
-        if (!signal.aborted) setResult({ propertyId, detail: null, error });
+        if (signal.aborted) return;
+        setResult({ propertyId, detail: null, error });
+        setReloading(false);
       });
 
     return () => controller.abort();
@@ -27,12 +32,19 @@ function usePropertyReviewDetail(propertyId) {
     setAttempt((current) => current + 1);
   }, []);
 
+  const reload = useCallback(() => {
+    setReloading(true);
+    setAttempt((current) => current + 1);
+  }, []);
+
   const settled = result.propertyId === propertyId;
   return {
     detail: settled ? result.detail : null,
     error: settled ? result.error : null,
     loading: !settled,
+    reloading,
     retry,
+    reload,
   };
 }
 
