@@ -39,6 +39,8 @@ import {
 } from "./channexadmin/channexCertificationAccess";
 import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
 import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewAccess";
+import ReviewApprovalPage from "../review/views/ReviewApprovalPage";
+import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -136,6 +138,7 @@ function MainDashboardHost() {
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
           <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
+          <Route path={REVIEW_APPROVAL_ADMIN_ROUTE} element={<ReviewApprovalPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
 

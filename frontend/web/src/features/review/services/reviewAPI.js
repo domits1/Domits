@@ -24,6 +24,29 @@ export const deleteHostResponse = async (reviewId) => {
   }
 };
 
+// The status lets the admin page tell "no approver role" apart from a failed request.
+const reviewApprovalError = (response, payload, fallback) =>
+  Object.assign(new Error(payload?.message || fallback), { status: response.status });
+
+export const getPendingApprovalReviews = async () => {
+  const response = await requestReview("GET", { scope: "pending-approval" });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews waiting for approval.");
+  return Array.isArray(payload) ? payload : [];
+};
+
+// updatedAt is the version the admin saw; the backend refuses the approval if the review changed since.
+export const approveReview = async (reviewId, updatedAt) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/approve`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ updated_at: updatedAt }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not approve this review. Please try again.");
+  return payload;
+};
+
 export const getPropertyRatingTrends = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-trends" });
   const payload = await parseResponse(response);
