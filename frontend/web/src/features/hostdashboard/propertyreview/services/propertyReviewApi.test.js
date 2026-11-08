@@ -3,6 +3,7 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 import {
   PropertyReviewApiError,
   REVIEW_API_ERROR_CODE,
+  fetchReviewDetail,
   fetchReviewQueue,
   requestPropertyReview,
 } from "./propertyReviewApi";
@@ -20,6 +21,13 @@ const respondWithHtml = (status) => ({
     throw new SyntaxError("Unexpected token <");
   },
 });
+
+const pendingUntilAborted = (url, { signal }) =>
+  new Promise((resolve, reject) => {
+    const abort = () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+    if (signal.aborted) abort();
+    signal.addEventListener("abort", abort);
+  });
 
 const captureError = async (request) => {
   try {
@@ -39,17 +47,52 @@ describe("propertyReviewApi", () => {
 
   describe("requestPropertyReview", () => {
     test("sends a GET with the raw access token and the abort signal", async () => {
-      const { signal } = new AbortController();
+      const caller = new AbortController();
       global.fetch.mockResolvedValue(respondWith(200, { ok: true }));
 
-      const body = await requestPropertyReview("/review/access", { signal });
+      const body = await requestPropertyReview("/review/access", { signal: caller.signal });
 
       expect(body).toEqual({ ok: true });
       expect(global.fetch).toHaveBeenCalledWith(`${PROPERTY_API_BASE}/review/access`, {
         method: "GET",
         headers: { Authorization: "raw-access-token" },
-        signal,
+        signal: expect.any(AbortSignal),
       });
+    });
+
+    test("aborts the request when the caller aborts", async () => {
+      const caller = new AbortController();
+      global.fetch.mockImplementation(pendingUntilAborted);
+
+      const request = captureError(() => requestPropertyReview("/review/queue", { signal: caller.signal }));
+      caller.abort();
+
+      expect((await request).name).toBe("AbortError");
+    });
+
+    test("fails as unavailable when the request takes longer than 15 seconds", async () => {
+      jest.useFakeTimers();
+      global.fetch.mockImplementation(pendingUntilAborted);
+
+      const request = captureError(() => requestPropertyReview("/review/queue"));
+      jest.advanceTimersByTime(15000);
+      const error = await request;
+      jest.useRealTimers();
+
+      expect(error).toBeInstanceOf(PropertyReviewApiError);
+      expect(error).toMatchObject({ status: 0, code: REVIEW_API_ERROR_CODE.UNAVAILABLE });
+    });
+
+    test("leaves no timer running once a request settles", async () => {
+      jest.useFakeTimers();
+      global.fetch.mockResolvedValue(respondWith(200, { ok: true }));
+
+      const body = await requestPropertyReview("/review/queue");
+      const pendingTimers = jest.getTimerCount();
+      jest.useRealTimers();
+
+      expect(body).toEqual({ ok: true });
+      expect(pendingTimers).toBe(0);
     });
 
     test.each([
@@ -88,11 +131,13 @@ describe("propertyReviewApi", () => {
     });
 
     test("wraps a network failure without leaking the raw error", async () => {
-      global.fetch.mockRejectedValue(new TypeError("Failed to fetch"));
+      const original = new TypeError("Failed to fetch");
+      global.fetch.mockRejectedValue(original);
 
       const error = await captureError(() => requestPropertyReview("/review/queue"));
 
       expect(error).toMatchObject({ status: 0, code: REVIEW_API_ERROR_CODE.NETWORK });
+      expect(error.cause).toBe(original);
       expect(error.message).not.toContain("Failed to fetch");
     });
 
@@ -134,6 +179,25 @@ describe("propertyReviewApi", () => {
       global.fetch.mockResolvedValue(respondWith(200, {}));
 
       expect(await fetchReviewQueue()).toEqual({ properties: [], nextCursor: null });
+    });
+  });
+
+  describe("fetchReviewDetail", () => {
+    test("encodes the property id and returns the body", async () => {
+      const detail = { property: { id: "a/b" } };
+      global.fetch.mockResolvedValue(respondWith(200, detail));
+
+      expect(await fetchReviewDetail("a/b", { signal: new AbortController().signal })).toEqual(detail);
+      expect(global.fetch.mock.calls[0][0]).toBe(`${PROPERTY_API_BASE}/review/detail?propertyId=a%2Fb`);
+    });
+
+    test("maps a 404 to NOT_FOUND", async () => {
+      global.fetch.mockResolvedValue(respondWith(404, { message: "Not found" }));
+
+      const error = await captureError(() => fetchReviewDetail("p1"));
+
+      expect(error.code).toBe(REVIEW_API_ERROR_CODE.NOT_FOUND);
+      expect(error.status).toBe(404);
     });
   });
 });
