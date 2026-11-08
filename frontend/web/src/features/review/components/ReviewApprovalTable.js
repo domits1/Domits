@@ -4,12 +4,20 @@ import { normalizeImageUrl } from "../../../utils/accommodationImage";
 import { formatPropertyLocation, formatSubmittedAt, getGuestInitials } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
-function ReviewApprovalRow({ review, selected, approving, onApprove, onView }) {
+function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onClose }) {
   const submitted = formatSubmittedAt(review.created_at);
   const rowClassName = selected ? styles.selectedRow : undefined;
 
   return (
     <tr className={rowClassName} aria-selected={selected}>
+      <td className={styles.selection}>
+        <input
+          type="checkbox"
+          aria-label={`Show review details for ${review.title}`}
+          checked={selected}
+          onChange={(event) => (event.target.checked ? onView(review.id) : onClose())}
+        />
+      </td>
       <td>
         <div className={styles.reviewCell}>
           <img className={styles.thumb} src={normalizeImageUrl(review.property_image_key)} alt="" loading="lazy" />
@@ -59,11 +67,12 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onView }) {
   );
 }
 
-export default function ReviewApprovalTable({ reviews, selectedId, approvingIds, onApprove, onView }) {
+export default function ReviewApprovalTable({ reviews, selectedId, approvingIds, onApprove, onView, onClose }) {
   return (
     <table className={styles.table} aria-label="Reviews pending approval">
       <thead>
         <tr>
+          <th scope="col" aria-label="Show details" className={styles.selection} />
           <th scope="col">Review</th>
           <th scope="col">Property</th>
           <th scope="col">Guest</th>
@@ -82,6 +91,7 @@ export default function ReviewApprovalTable({ reviews, selectedId, approvingIds,
             approving={approvingIds.has(review.id)}
             onApprove={onApprove}
             onView={onView}
+            onClose={onClose}
           />
         ))}
       </tbody>

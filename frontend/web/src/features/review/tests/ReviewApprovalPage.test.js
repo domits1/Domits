@@ -95,6 +95,22 @@ describe("ReviewApprovalPage", () => {
     expect(screen.queryByRole("complementary", { name: "Review details" })).toBeNull();
   });
 
+  test("uses the row selector to show one review at a time and close its details", async () => {
+    render(<ReviewApprovalPage />);
+    const first = await screen.findByRole("checkbox", { name: "Show review details for Great stay!" });
+    const second = screen.getByRole("checkbox", { name: "Show review details for Good location" });
+
+    expect(first).toBeChecked();
+    fireEvent.click(second);
+    expect(first).not.toBeChecked();
+    expect(second).toBeChecked();
+    expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
+
+    fireEvent.click(second);
+    expect(second).not.toBeChecked();
+    expect(screen.queryByRole("complementary", { name: "Review details" })).toBeNull();
+  });
+
   test("approves a review with its version, removes it and opens the next one", async () => {
     approveReview.mockResolvedValue({ ...pendingReview(), status: "PUBLISHED" });
     render(<ReviewApprovalPage />);
@@ -162,6 +178,7 @@ describe("ReviewApprovalPage", () => {
     render(<ReviewApprovalPage />);
     await waitFor(() => rowFor("Great stay!"));
 
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Rating" }), { target: { value: "3" } });
 
     expect(within(table()).queryByText("Great stay!")).toBeNull();
@@ -178,10 +195,12 @@ describe("ReviewApprovalPage", () => {
     await waitFor(() => rowFor("Review 1"));
 
     expect(screen.getByText("Showing 1–8 of 9 reviews")).toBeInTheDocument();
+    fireEvent.click(within(rowFor("Review 2")).getByRole("button", { name: "View" }));
     expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
 
     expect(rowFor("Review 9")).toBeInTheDocument();
+    expect(within(details()).getAllByText("Review 9")).toHaveLength(2);
     expect(within(table()).queryByText("Review 1")).toBeNull();
     expect(screen.getByText("Showing 9–9 of 9 reviews")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();

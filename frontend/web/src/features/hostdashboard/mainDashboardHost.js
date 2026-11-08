@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useMatch } from "react-router-dom";
 
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
@@ -40,6 +40,7 @@ import {
 import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
 import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewAccess";
 import ReviewApprovalPage from "../review/views/ReviewApprovalPage";
+import ReviewApprovalNavigation from "../review/components/ReviewApprovalNavigation";
 import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -65,6 +66,16 @@ import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettings
 import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
 function MainDashboardHost() {
+  const isReviewApproval = useMatch(`/hostdashboard/${REVIEW_APPROVAL_ADMIN_ROUTE}`);
+
+  if (isReviewApproval) {
+    return (
+      <ReviewApprovalNavigation>
+        <ReviewApprovalPage />
+      </ReviewApprovalNavigation>
+    );
+  }
+
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
@@ -138,7 +149,6 @@ function MainDashboardHost() {
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
           <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
-          <Route path={REVIEW_APPROVAL_ADMIN_ROUTE} element={<ReviewApprovalPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
 

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListFilter, Search } from "lucide-react";
 import ReviewApprovalTable from "../components/ReviewApprovalTable";
 import ReviewApprovalDetails from "../components/ReviewApprovalDetails";
 import useReviewApprovalQueue, { QUEUE_STATE } from "../hooks/useReviewApprovalQueue";
@@ -63,6 +63,7 @@ export default function ReviewApprovalPage() {
   const { reviews, queueState, loadError, retry, approve, approvingIds, notice } = useReviewApprovalQueue();
   const [query, setQuery] = useState("");
   const [rating, setRating] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(FOLLOW_FIRST);
 
@@ -77,7 +78,7 @@ export default function ReviewApprovalPage() {
   const isPanelClosed = selectedId === CLOSED;
   const selectedReview = isPanelClosed
     ? null
-    : (visibleReviews.find((review) => review.id === selectedId) ?? pageReviews[0] ?? null);
+    : (pageReviews.find((review) => review.id === selectedId) ?? pageReviews[0] ?? null);
 
   if (queueState === QUEUE_STATE.LOADING) {
     return <StateMessage title="Reviews" message="Loading reviews waiting for approval…" />;
@@ -108,6 +109,7 @@ export default function ReviewApprovalPage() {
     ? "No pending reviews match your search."
     : "No reviews are waiting for approval.";
   const layoutClassName = selectedReview ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
+  const closeDetails = () => setSelectedId(CLOSED);
 
   return (
     <main className={styles.page}>
@@ -129,31 +131,30 @@ export default function ReviewApprovalPage() {
               onChange={changeFilter(setQuery)}
             />
           </label>
-          <label className={styles.filter}>
-            <span>Rating</span>
-            <select value={rating} onChange={changeFilter(setRating)}>
-              <option value="">All</option>
-              {RATING_OPTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {`${value} star${value === "1" ? "" : "s"}`}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className={styles.filter}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              aria-expanded={filtersOpen}
+              aria-controls="review-rating-filter"
+              onClick={() => setFiltersOpen(!filtersOpen)}>
+              <ListFilter size={17} aria-hidden="true" />
+              {rating ? "Filters (1)" : "Filters"}
+            </button>
+            <div className={styles.filterPanel} id="review-rating-filter" hidden={!filtersOpen}>
+              <label htmlFor="review-rating">Rating</label>
+              <select id="review-rating" value={rating} onChange={changeFilter(setRating)}>
+                <option value="">All ratings</option>
+                {RATING_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {`${value} star${value === "1" ? "" : "s"}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       </header>
-
-      <div className={styles.tabs} role="tablist" aria-label="Review status">
-        <button
-          type="button"
-          role="tab"
-          id="pending-tab"
-          aria-selected="true"
-          aria-controls="pending-panel"
-          className={styles.tab}>
-          {`Pending approval (${reviews.length})`}
-        </button>
-      </div>
 
       {notice && (
         <p
@@ -164,31 +165,62 @@ export default function ReviewApprovalPage() {
       )}
 
       <div className={layoutClassName}>
-        <section id="pending-panel" role="tabpanel" aria-labelledby="pending-tab" className={styles.listColumn}>
-          {pageReviews.length ? (
-            <>
-              <div className={styles.tableCard}>
-                <ReviewApprovalTable
-                  reviews={pageReviews}
-                  selectedId={selectedReview?.id}
-                  approvingIds={approvingIds}
-                  onApprove={approve}
-                  onView={setSelectedId}
+        <div className={styles.listColumn}>
+          <div className={styles.tabs} role="tablist" aria-label="Review status">
+            <button
+              type="button"
+              role="tab"
+              id="pending-tab"
+              aria-selected="true"
+              aria-controls="pending-panel"
+              className={styles.tab}>
+              {`Pending approval (${reviews.length})`}
+            </button>
+            {["Published", "Rejected", "All reviews"].map((label) => (
+              <button
+                type="button"
+                key={label}
+                role="tab"
+                aria-selected="false"
+                title="This review list is unavailable"
+                className={styles.tab}
+                disabled>
+                {label}
+              </button>
+            ))}
+          </div>
+          <section id="pending-panel" role="tabpanel" aria-labelledby="pending-tab">
+            {pageReviews.length ? (
+              <>
+                <div className={styles.tableCard}>
+                  <ReviewApprovalTable
+                    reviews={pageReviews}
+                    selectedId={selectedReview?.id}
+                    approvingIds={approvingIds}
+                    onApprove={approve}
+                    onView={setSelectedId}
+                    onClose={closeDetails}
+                  />
+                </div>
+                <Pagination
+                  page={currentPage}
+                  pageCount={pageCount}
+                  total={visibleReviews.length}
+                  onChange={setPage}
                 />
-              </div>
-              <Pagination page={currentPage} pageCount={pageCount} total={visibleReviews.length} onChange={setPage} />
-            </>
-          ) : (
-            <p className={styles.emptyState}>{emptyMessage}</p>
-          )}
-        </section>
+              </>
+            ) : (
+              <p className={styles.emptyState}>{emptyMessage}</p>
+            )}
+          </section>
+        </div>
 
         {selectedReview && (
           <ReviewApprovalDetails
             review={selectedReview}
             approving={approvingIds.has(selectedReview.id)}
             onApprove={approve}
-            onClose={() => setSelectedId(CLOSED)}
+            onClose={closeDetails}
           />
         )}
       </div>
