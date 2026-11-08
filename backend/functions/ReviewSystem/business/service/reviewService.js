@@ -87,6 +87,11 @@ const toReviewView = (review) => ({
   verification_status: review.verification_status, publication_status: review.publication_status,
   status: review.status, created_at: review.created_at, updated_at: review.updated_at,
 });
+const toPendingReviewView = (review) => ({
+  ...toReviewView(review), property_title: review.property_title ?? null,
+  property_city: review.property_city ?? null, property_country: review.property_country ?? null,
+  property_image_key: review.property_image_key ?? null, guest_name: review.guest_name ?? null,
+});
 const toResponseView = (response) => ({
   id: response.id, reviewId: response.reviewId, authorRole: response.authorRole,
   status: response.status, message: response.message, createdAt: response.createdAt,
@@ -459,7 +464,7 @@ export class ReviewService {
 
   async getPendingReviews(userId, username) {
     await this.assertReviewApprover(userId, username);
-    return (await this.repository.findPendingReviews()).map(toReviewView);
+    return (await this.repository.findPendingReviews()).map(toPendingReviewView);
   }
 
   async approveReview(userId, username, reviewId, version) {
