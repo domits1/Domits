@@ -342,10 +342,7 @@ export class ReviewService {
     if (result.affected !== 1) throw new NotFoundException("Review not found.");
   }
 
-  // Return the published review feed for a property.
-  // This powers the public listing page without exposing private feedback or unreleased drafts.
-  async getPublicPropertyReviews(propertyId, query = {}) {
-    this.assertId(propertyId, "property ID");
+  parseReviewPagination(query) {
     for (const key of ["limit", "offset"]) {
       if (query[key] !== undefined && (typeof query[key] !== "string" || !/^\d+$/.test(query[key]))) {
         throw new BadRequestException("Pagination values must be integers.");
@@ -357,7 +354,13 @@ export class ReviewService {
         !Number.isSafeInteger(offset) || offset < 0) {
       throw new BadRequestException("limit must be between 1 and 100; offset must be a non-negative integer.");
     }
-    const reviews = await this.repository.findPublicForProperty(propertyId.trim(), { limit, offset });
+    return { limit, offset };
+  }
+
+  // Return the published review feed without exposing private feedback or unreleased drafts.
+  async getPublicPropertyReviews(propertyId, query = {}) {
+    this.assertId(propertyId, "property ID");
+    const reviews = await this.repository.findPublicForProperty(propertyId.trim(), this.parseReviewPagination(query));
     return reviews.map((review) => ({
       id: review.id, property_id: review.property_id, overall_rating: Number(review.overall_rating),
       title: review.title, public_review: review.public_review, created_at: review.created_at,
@@ -465,6 +468,37 @@ export class ReviewService {
   async getPendingReviews(userId, username) {
     await this.assertReviewApprover(userId, username);
     return (await this.repository.findPendingReviews()).map(toPendingReviewView);
+  }
+
+  async flagReview(userId, username, { review_id: reviewId, reason, notes }) {
+    await this.assertReviewApprover(userId, username);
+    this.assertId(reviewId, "review ID");
+    if (!["INAPPROPRIATE_CONTENT", "SUSPICIOUS_REVIEW", "SPAM", "POLICY_VIOLATION", "OTHER"].includes(reason)) {
+      throw new BadRequestException("A valid flag reason is required.");
+    }
+    if (notes != null && (typeof notes !== "string" || notes.length > 2000 || INVALID_TEXT_CONTROLS.test(notes))) {
+      throw new BadRequestException("Flag notes must be plain text of at most 2000 characters.");
+    }
+    const now = this.now();
+    return this.repository.createReviewFlag({
+      id: randomUUID(), review_id: reviewId.trim(), flagged_by: userId, reason,
+      notes: this.normalizeOptionalText(notes), status: "PENDING", created_at: now, updated_at: now, resolved_by: null,
+    });
+  }
+
+  async getModerationQueue(userId, username, query) {
+    await this.assertReviewApprover(userId, username);
+    const { status = "PENDING" } = query;
+    if (!["PENDING", "RESOLVED"].includes(status)) throw new BadRequestException("Invalid flag status.");
+    const { limit, offset } = this.parseReviewPagination(query);
+    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset });
+    return { flags: rows.slice(0, limit), next_offset: rows.length > limit ? offset + limit : null };
+  }
+
+  async resolveReviewFlag(userId, username, flagId) {
+    await this.assertReviewApprover(userId, username);
+    this.assertId(flagId, "flag ID");
+    return this.repository.resolveReviewFlag(flagId.trim(), userId, this.now());
   }
 
   async approveReview(userId, username, reviewId, version) {
