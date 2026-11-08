@@ -41,7 +41,17 @@ Real user ids are set at deploy time only. Code, tests, docs and pull requests u
 ## Guest review approval
 
 Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
-Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing. The frontend controls are deferred to a separate PR.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing.
+
+### Approval page
+
+The web app serves the queue at `/hostdashboard/admin/review-approval`. It reads `GET /reviews?scope=pending-approval` and approves with `POST /reviews/{id}/approve`, sending `{ "updated_at" }` from the queue row. A `409` means the review changed after the queue loaded; reload the page.
+
+Each queue item also carries `property_title`, `property_city`, `property_country`, `property_image_key` (thumb variant of the first `READY` image, else web) and `guest_name`. These are `null` when the record is missing. `guest_name` is the booking's guest name, and only when that booking was made by the reviewer. `host_id` and `private_feedback` are never in the payload.
+
+The nav link appears for users who pass the PropertyHandler admin check (`/property/review/access`). That list is separate from this Lambda's. Someone on one list but not the other sees the link and then "Not authorized", so the ReviewSystem check is the one that counts.
+
+The page approves only. Rejecting or deleting a review, the published and rejected lists, and admin access to private feedback have no endpoint yet.
 
 ## Read routes
 
