@@ -27,6 +27,7 @@ describe("checkPropertyReviewAccess", () => {
     expect(global.fetch).toHaveBeenCalledWith(`${PROPERTY_API_BASE}/review/access`, {
       method: "GET",
       headers: { Authorization: "raw-access-token" },
+      signal: expect.any(AbortSignal),
     });
   });
 

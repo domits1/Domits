@@ -38,7 +38,8 @@ import {
   CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE,
 } from "./channexadmin/channexCertificationAccess";
 import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
-import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewAccess";
+import PropertyReviewDetailPage from "./propertyreview/detail/PropertyReviewDetailPage";
+import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewPaths";
 import ReviewApprovalPage from "../review/views/ReviewApprovalPage";
 import ReviewApprovalNavigation from "../review/components/ReviewApprovalNavigation";
 import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
@@ -149,6 +150,7 @@ function MainDashboardHost() {
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
           <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
+          <Route path={`${PROPERTY_REVIEW_ADMIN_ROUTE}/:propertyId`} element={<PropertyReviewDetailPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
 
