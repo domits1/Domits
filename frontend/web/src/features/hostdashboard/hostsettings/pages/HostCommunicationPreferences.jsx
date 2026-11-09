@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import NotificationPreferencesForm from "../../../../components/settings/NotificationPreferencesForm";
 import useCommunicationPreferences from "../../../../hooks/useCommunicationPreferences";
+import HostNotificationMatrix from "./HostNotificationMatrix";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import de from "../../../../content/de.json";
@@ -31,6 +32,7 @@ const HostCommunicationPreferences = () => {
                 <p className="personal-data-subtitle">{t.subtitle}</p>
             </div>
 
+            <HostNotificationMatrix />
             <NotificationPreferencesForm labels={t} {...communicationPreferences} />
         </div>
     );
