@@ -87,7 +87,7 @@ describe("HostNotificationMatrix", () => {
         fireEvent.click(checkbox);
 
         expect(checkbox).not.toBeChecked();
-        const saveButton = screen.getByRole("button", { name: "Save changes" });
+        const saveButton = screen.getByRole("button", { name: "Save notification choices" });
         expect(saveButton).toBeEnabled();
         fireEvent.click(saveButton);
 
@@ -120,7 +120,7 @@ describe("HostNotificationMatrix", () => {
         renderMatrix();
 
         await waitFor(() => expect(screen.getByText("We could not load your notification preferences. Please try again.")).toBeInTheDocument());
-        expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "Save notification choices" })).toBeDisabled();
         expect(screen.getByRole("checkbox", { name: "New reservation notifications" })).toBeDisabled();
     });
 });
