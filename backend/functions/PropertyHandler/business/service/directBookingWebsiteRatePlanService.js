@@ -1,5 +1,7 @@
 import { DirectBookingWebsiteRatePlanRepository } from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
 import { DirectBookingWebsiteStripeRepository } from "../../data/repository/directBookingWebsiteStripeRepository.js";
+import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
+import { readWebsitePlanGrantRequest } from "./websitePlanGrantRequest.js";
 
 export const WEBSITE_PLAN_NAMES = Object.freeze({
   ESSENTIALS: "essentials",
@@ -36,6 +38,8 @@ export const WEBSITE_PLAN_ENTITLEMENTS = Object.freeze({
 const ACTIVE_PLAN_STATUSES = new Set(["ACTIVE", "PAST_DUE", "TRIALING"]);
 const DEFAULT_CURRENCY = "EUR";
 const DEFAULT_BILLING_FREQUENCY = "monthly";
+const MISSING_USER_ERRORS = new Set(["UserNotFoundException", "NotFoundException"]);
+const HOST_GROUP = "Host";
 
 export const getConfiguredElitePriceCents = () => {
   const rawValue = String(process.env.DIRECT_BOOKING_WEBSITE_ELITE_PRICE_CENTS || "").trim();
@@ -98,6 +102,11 @@ const ratePlanTableUnavailableError = () =>
     503
   );
 
+const isRunningElite = (plan, nowMs) =>
+  plan.plan === WEBSITE_PLAN_NAMES.ELITE &&
+  new Date(plan.effective_from).getTime() <= nowMs &&
+  (!plan.effective_until || new Date(plan.effective_until).getTime() > nowMs);
+
 const fromUnix = (value) =>
   Number.isFinite(Number(value)) ? new Date(Number(value) * 1000) : null;
 
@@ -144,10 +153,14 @@ const toView = (plan) => ({
 export class DirectBookingWebsiteRatePlanService {
   constructor(
     repository = new DirectBookingWebsiteRatePlanRepository(),
-    stripeRepository = new DirectBookingWebsiteStripeRepository()
+    stripeRepository = new DirectBookingWebsiteStripeRepository(),
+    cognitoRepository = new CognitoRepository(),
+    now = () => Date.now()
   ) {
     this.repository = repository;
     this.stripeRepository = stripeRepository;
+    this.cognitoRepository = cognitoRepository;
+    this.now = now;
   }
 
   async getCurrentPlan(accountId) {
@@ -201,6 +214,39 @@ export class DirectBookingWebsiteRatePlanService {
       `Your current direct booking website plan does not include "${entitlement}".`,
       403
     );
+  }
+
+  async grantElite(request) {
+    const nowMs = this.now();
+    const grant = readWebsitePlanGrantRequest(request, nowMs);
+    if (grant.actorId === grant.accountId) {
+      throw serviceError("A website plan cannot be granted to your own account.", 403);
+    }
+    await this.requireHostAccount(grant.accountId);
+
+    try {
+      const { plan, replacedPlans } = await this.repository.grantElitePlan(grant);
+      const extended = replacedPlans.some((replaced) => isRunningElite(replaced, nowMs));
+      return { action: extended ? "extended" : "granted", plan: toView(plan) };
+    } catch (error) {
+      if (isRatePlanTableUnavailableError(error)) {
+        throw ratePlanTableUnavailableError();
+      }
+      throw error;
+    }
+  }
+
+  async requireHostAccount(accountId) {
+    let user = null;
+    try {
+      user = await this.cognitoRepository.getUserById(accountId);
+    } catch (error) {
+      if (!MISSING_USER_ERRORS.has(error?.name)) throw error;
+    }
+    const group = user?.UserAttributes?.find((attribute) => attribute?.Name === "custom:group")?.Value;
+    if (user?.Username !== accountId || group !== HOST_GROUP) {
+      throw serviceError("No host account exists with this id.", 404);
+    }
   }
 
   async changePlan({ accountId, targetPlan, customerEmail }) {
