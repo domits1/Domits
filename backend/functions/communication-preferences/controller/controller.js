@@ -1,5 +1,6 @@
 import { getAuthenticatedUser } from "../auth/authContext.js";
 import { CommunicationPreferencesService, normalizePersona } from "../business/service/service.js";
+import { HostNotificationPreferencesService } from "../business/service/hostNotificationPreferencesService.js";
 import { badRequest } from "../util/httpErrors.js";
 
 const USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
@@ -28,8 +29,12 @@ const getPersonaFromQuery = (event) => {
 };
 
 export class CommunicationPreferencesController {
-  constructor({ service = new CommunicationPreferencesService() } = {}) {
+  constructor({
+    service = new CommunicationPreferencesService(),
+    hostNotificationPreferencesService = new HostNotificationPreferencesService(),
+  } = {}) {
     this.service = service;
+    this.hostNotificationPreferencesService = hostNotificationPreferencesService;
   }
 
   async getPreferences(event) {
@@ -42,6 +47,12 @@ export class CommunicationPreferencesController {
 
     const persona = getPersonaFromQuery(event);
     const authenticatedUser = getAuthenticatedUser(event);
+    if (event?.queryStringParameters?.scope === "matrix") {
+      if (persona !== "HOST") throw badRequest("Notification matrix preferences are only available for the host persona.");
+      const matrix = await this.hostNotificationPreferencesService.getPreferences(authenticatedUser.userId, authenticatedUser.claims);
+      return { statusCode: 200, response: matrix };
+    }
+    if (event?.queryStringParameters?.scope) throw badRequest("Unsupported communication preferences scope.");
     const preferences = await this.service.getPreferences(authenticatedUser.userId, persona);
     return { statusCode: 200, response: preferences };
   }
@@ -57,6 +68,12 @@ export class CommunicationPreferencesController {
     const persona = getPersonaFromQuery(event);
     const authenticatedUser = getAuthenticatedUser(event);
     const body = parseBody(event);
+    if (event?.queryStringParameters?.scope === "matrix") {
+      if (persona !== "HOST") throw badRequest("Notification matrix preferences are only available for the host persona.");
+      const matrix = await this.hostNotificationPreferencesService.savePreferences(authenticatedUser.userId, authenticatedUser.claims, body);
+      return { statusCode: 200, response: matrix };
+    }
+    if (event?.queryStringParameters?.scope) throw badRequest("Unsupported communication preferences scope.");
     const preferences = await this.service.savePreferences(authenticatedUser.userId, persona, body);
     return { statusCode: 200, response: preferences };
   }
