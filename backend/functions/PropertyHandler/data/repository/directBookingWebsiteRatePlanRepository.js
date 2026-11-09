@@ -3,7 +3,11 @@ import { randomUUID } from "node:crypto";
 import { DirectBookingWebsiteRatePlan } from "database/models/DirectBookingWebsiteRatePlan";
 import { Standalone_Site_Event } from "database/models/Standalone_Site_Event";
 import { isDsqlConflict, withDsqlRetry } from "../../.shared/dsqlRetry.js";
-import { WEBSITE_PLAN_GRANT_ERROR_CODES, WebsitePlanGrantError } from "../../util/exception/WebsitePlanGrantError.js";
+import {
+  WEBSITE_PLAN_GRANT_ERROR_CODES,
+  WebsitePlanGrantError,
+  WebsitePlanRevokeError,
+} from "../../util/exception/WebsitePlanGrantError.js";
 
 const CURRENT_STATUSES = ["ACTIVE", "PAST_DUE", "TRIALING"];
 const UNIQUE_VIOLATION_CODE = "23505";
@@ -19,7 +23,19 @@ const GRANTED_PLAN_VALUES = Object.freeze({
   stripe_subscription_id: null,
 });
 
+const ESSENTIALS_PLAN_VALUES = Object.freeze({
+  plan: "essentials",
+  price_cents: 0,
+  currency: "EUR",
+  billing_frequency: "monthly",
+  status: "ACTIVE",
+  effective_until: null,
+  stripe_customer_id: null,
+  stripe_subscription_id: null,
+});
+
 export const WEBSITE_PLAN_GRANTED_EVENT = "WEBSITE_PLAN_GRANTED";
+export const WEBSITE_PLAN_GRANT_REVOKED_EVENT = "WEBSITE_PLAN_GRANT_REVOKED";
 
 const isUniqueViolation = (error) =>
   [error?.code, error?.driverError?.code].includes(UNIQUE_VIOLATION_CODE);
@@ -114,6 +130,43 @@ const applyCurrentScope = (queryBuilder) =>
     .andWhere("plan.status IN (:...statuses)", { statuses: CURRENT_STATUSES })
     .andWhere("plan.effective_from <= CURRENT_TIMESTAMP")
     .andWhere("(plan.effective_until IS NULL OR plan.effective_until > CURRENT_TIMESTAMP)");
+
+const readCurrentPlans = (manager, accountId) =>
+  applyCurrentScope(
+    manager.getRepository(DirectBookingWebsiteRatePlan)
+      .createQueryBuilder("plan")
+      .where("plan.account_id = :accountId", { accountId })
+  );
+
+const isGrantedElite = (plan) => plan.plan === GRANTED_PLAN_VALUES.plan && !plan.stripe_subscription_id;
+
+const revokeInTransaction = async (manager, { accountId, actorId, reason }) => {
+  const currentPlans = await readCurrentPlans(manager, accountId).getMany();
+  if (currentPlans.some((plan) => plan.stripe_subscription_id)) {
+    throw new WebsitePlanRevokeError(WEBSITE_PLAN_GRANT_ERROR_CODES.PAID_PLAN_ACTIVE);
+  }
+  const revokedPlan = currentPlans.find(isGrantedElite);
+  if (!revokedPlan) {
+    throw new WebsitePlanRevokeError(WEBSITE_PLAN_GRANT_ERROR_CODES.NOT_GRANTED);
+  }
+
+  await endCurrentStatusPlans(manager, accountId);
+  const plan = await insertPlan(manager, { id: randomUUID(), account_id: accountId, ...ESSENTIALS_PLAN_VALUES });
+
+  await insertPlanEvent(manager, {
+    accountId,
+    eventType: WEBSITE_PLAN_GRANT_REVOKED_EVENT,
+    payload: {
+      actorId,
+      planId: revokedPlan.id,
+      essentialsPlanId: plan.id,
+      effectiveUntil: revokedPlan.effective_until ? new Date(revokedPlan.effective_until).toISOString() : null,
+      reason,
+    },
+  });
+
+  return { plan, revokedPlan };
+};
 
 export class DirectBookingWebsiteRatePlanRepository {
   async findCurrentByAccountId(accountId) {
@@ -238,6 +291,13 @@ export class DirectBookingWebsiteRatePlanRepository {
     return runPlanChange(
       (manager) => grantInTransaction(manager, grant),
       (cause) => new WebsitePlanGrantError(WEBSITE_PLAN_GRANT_ERROR_CODES.CONFLICT, { cause })
+    );
+  }
+
+  async revokeElitePlanGrant(revoke) {
+    return runPlanChange(
+      (manager) => revokeInTransaction(manager, revoke),
+      (cause) => new WebsitePlanRevokeError(WEBSITE_PLAN_GRANT_ERROR_CODES.CONFLICT, { cause })
     );
   }
 }

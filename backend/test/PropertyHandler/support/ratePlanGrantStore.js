@@ -5,6 +5,23 @@ import { Standalone_Site_Event } from "database/models/Standalone_Site_Event";
 
 export const DB_NOW = new Date("2026-11-09T12:00:00.000Z");
 
+export const ratePlanRow = (overrides = {}) => ({
+  id: "plan-essentials",
+  account_id: "host-1",
+  plan: "essentials",
+  price_cents: 0,
+  currency: "EUR",
+  billing_frequency: "monthly",
+  status: "ACTIVE",
+  effective_from: new Date("2026-10-01T00:00:00.000Z"),
+  effective_until: null,
+  stripe_customer_id: null,
+  stripe_subscription_id: null,
+  created_at: new Date("2026-10-01T00:00:00.000Z"),
+  updated_at: new Date("2026-10-01T00:00:00.000Z"),
+  ...overrides,
+});
+
 export const conflictError = (shape = { code: "40001" }) =>
   Object.assign(new Error("change conflicts with another transaction, please retry: (OC000)"), shape);
 
@@ -19,6 +36,9 @@ const TIMESTAMP_DEFAULTS = ["effective_from", "created_at", "updated_at"];
 const CONDITIONS = {
   "account_id = :accountId": (row, params) => row.account_id === params.accountId,
   "status IN (:...statuses)": (row, params) => params.statuses.includes(row.status),
+  "effective_from <= CURRENT_TIMESTAMP": (row) => row.effective_from <= DB_NOW,
+  "(effective_until IS NULL OR effective_until > CURRENT_TIMESTAMP)": (row) =>
+    row.effective_until === null || row.effective_until > DB_NOW,
 };
 
 const RAW_VALUES = {
@@ -29,7 +49,7 @@ const RAW_VALUES = {
 
 const matches = (row, conditions) =>
   conditions.every(([condition, params]) => {
-    const check = CONDITIONS[condition.replace(/^plan\./, "")];
+    const check = CONDITIONS[condition.replaceAll("plan.", "")];
     if (!check) throw new Error(`unexpected condition: ${condition}`);
     return check(row, params);
   });
