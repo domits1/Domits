@@ -11,7 +11,6 @@ import {
     fetchHostNotificationEventPreferences,
     saveHostNotificationEventPreferences,
 } from "../../components/settings/api/communicationPreferences";
-import { DEFAULT_HOST_NOTIFICATION_PREFERENCES } from "../../components/settings/hostNotificationMatrixConfig";
 
 jest.mock("../../components/settings/api/communicationPreferences", () => ({
     fetchCommunicationPreferences: jest.fn(),
@@ -25,6 +24,15 @@ const guestPreferences = {
     cancellation: { email: true, sms: true, push: false },
     messages: { email: true, sms: false, push: true },
 };
+const hostCategories = [{
+    key: "propertyManager",
+    labelKey: "propertyManager",
+    events: [{ key: "manager_new_booking", event: "New booking" }],
+}];
+const hostPreferences = {
+    manager_new_booking: { inApp: true, email: true, sms: false },
+};
+const hostCatalog = { categories: hostCategories, preferences: hostPreferences };
 
 const renderWithLanguage = (ui) => render(
     <LanguageContext.Provider value={{ language: "en" }}>
@@ -33,10 +41,10 @@ const renderWithLanguage = (ui) => render(
 );
 
 const getGuestToggle = (eventName, channelName) =>
-    screen.getByRole("switch", { name: `${eventName} ${channelName} notifications` });
+    screen.getByRole("switch", { name: eventName + " " + channelName + " notifications" });
 
 const getHostToggle = (eventName, channelName) =>
-    screen.getByRole("checkbox", { name: `${eventName} - ${channelName}` });
+    screen.getByRole("checkbox", { name: eventName + " - " + channelName });
 
 const waitForLoadedGuestPreferences = async () => {
     await waitFor(() => expect(fetchCommunicationPreferences).toHaveBeenCalled());
@@ -53,7 +61,7 @@ describe("Communication Preferences pages", () => {
         jest.clearAllMocks();
         fetchCommunicationPreferences.mockResolvedValue(guestPreferences);
         saveCommunicationPreferences.mockResolvedValue(guestPreferences);
-        fetchHostNotificationEventPreferences.mockResolvedValue(DEFAULT_HOST_NOTIFICATION_PREFERENCES);
+        fetchHostNotificationEventPreferences.mockResolvedValue(hostCatalog);
         saveHostNotificationEventPreferences.mockImplementation(async (preferences) => preferences);
     });
 
@@ -78,11 +86,7 @@ describe("Communication Preferences pages", () => {
         fireEvent.click(screen.getByRole("button", { name: /save preferences/i }));
 
         await waitFor(() => expect(saveHostNotificationEventPreferences).toHaveBeenCalledWith({
-            ...DEFAULT_HOST_NOTIFICATION_PREFERENCES,
-            manager_new_booking: {
-                ...DEFAULT_HOST_NOTIFICATION_PREFERENCES.manager_new_booking,
-                email: false,
-            },
+            manager_new_booking: { inApp: true, email: false, sms: false },
         }));
         expect(await screen.findByText("Notification preferences saved.")).toBeInTheDocument();
     });

@@ -7,10 +7,11 @@
 - `GET /user/communication-preferences?persona=guest` returns the authenticated user's saved Guest channel preferences, or product defaults when no Guest row exists.
 - `PUT /user/communication-preferences?persona=host` saves the complete Host channel preference matrix.
 - `PUT /user/communication-preferences?persona=guest` saves the complete Guest channel preference matrix.
-- `GET /user/communication-preferences?persona=host&view=host-events` returns the authenticated host's event-level notification preferences.
+- `GET /user/communication-preferences?persona=host&view=host-events` returns the canonical host event catalog and that host's saved event-level preferences.
 - `PUT /user/communication-preferences?persona=host&view=host-events` saves the complete event-level matrix for the authenticated host.
+- The backend owns the canonical host event catalog, including category labels and event names. The frontend renders the catalog returned by GET and does not maintain a duplicate event-key list.
 - Each host event stores three channel choices: `inApp`, `email` and `sms`. New records default to In-app and Email enabled, with SMS disabled.
-- The backend validates the complete event-key and channel allowlists. The frontend catalog composes the same event identifiers from category prefixes and suffixes; keep the two definitions aligned.
+- The backend validates the complete event-key and channel allowlists.
 - Legacy boolean values are normalized when read: `true` maps to the new In-app/Email defaults and `false` disables all three channels.
 - These preferences are persisted settings. Notification producers and delivery workers still need to enforce them before sending notifications; this change does not modify delivery behavior.
 

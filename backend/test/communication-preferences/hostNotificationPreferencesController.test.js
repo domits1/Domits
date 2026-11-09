@@ -1,5 +1,8 @@
 const { CommunicationPreferencesController } = require("../../functions/communication-preferences/controller/controller.js");
-const { DEFAULT_HOST_NOTIFICATION_PREFERENCES } = require("../../functions/communication-preferences/business/hostNotificationMatrixConfig.js");
+const {
+  HOST_NOTIFICATION_CATEGORIES,
+  DEFAULT_HOST_NOTIFICATION_PREFERENCES,
+} = require("../../functions/communication-preferences/business/hostNotificationMatrixConfig.js");
 
 const event = (patch = {}) => ({
   requestContext: { authorizer: { claims: { sub: "host-1", "custom:group": "Host" } } },
@@ -17,12 +20,15 @@ describe("CommunicationPreferencesController host event matrix", () => {
     return { controller: new CommunicationPreferencesController({ service }), service };
   };
 
-  test("GET reads event preferences for the authenticated host", async () => {
+  test("GET returns the canonical event catalog and preferences for the authenticated host", async () => {
     const { controller, service } = createController();
 
     await expect(controller.getPreferences(event())).resolves.toEqual({
       statusCode: 200,
-      response: DEFAULT_HOST_NOTIFICATION_PREFERENCES,
+      response: {
+        categories: HOST_NOTIFICATION_CATEGORIES,
+        preferences: DEFAULT_HOST_NOTIFICATION_PREFERENCES,
+      },
     });
     expect(service.getHostNotificationPreferences).toHaveBeenCalledWith("host-1");
   });

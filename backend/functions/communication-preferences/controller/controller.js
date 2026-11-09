@@ -1,5 +1,6 @@
 import { getAuthenticatedUser } from "../auth/authContext.js";
 import { CommunicationPreferencesService, normalizePersona } from "../business/service/service.js";
+import { HOST_NOTIFICATION_CATEGORIES } from "../business/hostNotificationMatrixConfig.js";
 import { badRequest } from "../util/httpErrors.js";
 
 const USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
@@ -45,7 +46,10 @@ export class CommunicationPreferencesController {
     if (event?.queryStringParameters?.view === "host-events") {
       if (persona !== "HOST") throw badRequest("Host notification preferences require the host persona.");
       const preferences = await this.service.getHostNotificationPreferences(authenticatedUser.userId);
-      return { statusCode: 200, response: preferences };
+      return {
+        statusCode: 200,
+        response: { categories: HOST_NOTIFICATION_CATEGORIES, preferences },
+      };
     }
     if (event?.queryStringParameters?.view) throw badRequest("Unsupported communication preferences view.");
     const preferences = await this.service.getPreferences(authenticatedUser.userId, persona);

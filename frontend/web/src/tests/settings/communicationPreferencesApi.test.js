@@ -120,13 +120,17 @@ describe("host notification event preferences API", () => {
         manager_new_booking: { inApp: true, email: false, sms: true },
         finance_chargeback: { inApp: false, email: true, sms: false },
     };
+    const hostEventCatalog = {
+        categories: [{ key: "propertyManager", labelKey: "propertyManager", events: [{ key: "manager_new_booking", event: "New booking" }] }],
+        preferences: hostEventPreferences,
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();
         mockSession();
         global.fetch = jest.fn(async () => ({
             ok: true,
-            json: async () => hostEventPreferences,
+            json: async () => hostEventCatalog,
         }));
     });
 
@@ -136,13 +140,13 @@ describe("host notification event preferences API", () => {
         );
     });
 
-    test("GET reads host event preferences using the authenticated endpoint", async () => {
+    test("GET reads the event catalog and preferences using the authenticated endpoint", async () => {
         global.fetch.mockResolvedValueOnce({
             ok: true,
-            json: async () => hostEventPreferences,
+            json: async () => hostEventCatalog,
         });
 
-        await expect(fetchHostNotificationEventPreferences()).resolves.toEqual(hostEventPreferences);
+        await expect(fetchHostNotificationEventPreferences()).resolves.toEqual(hostEventCatalog);
 
         expect(global.fetch).toHaveBeenCalledWith(
             `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`,

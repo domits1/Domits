@@ -1,15 +1,12 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-    HOST_NOTIFICATION_CATEGORIES,
-    HOST_NOTIFICATION_EVENT_KEYS,
-} from "../../../../components/settings/hostNotificationMatrixConfig";
 import "../styles/hostNotificationMatrix.css";
 
 const CHANNELS = ["inApp", "email", "sms"];
 
 const HostNotificationMatrixForm = ({
     labels,
+    categories,
     preferences,
     updatePreference,
     isLoading,
@@ -21,13 +18,14 @@ const HostNotificationMatrixForm = ({
     onSave,
     onRetry,
 }) => {
-    const [activeCategory, setActiveCategory] = useState(HOST_NOTIFICATION_CATEGORIES[0].key);
-    const category = HOST_NOTIFICATION_CATEGORIES.find((item) => item.key === activeCategory) || HOST_NOTIFICATION_CATEGORIES[0];
+    const [activeCategory, setActiveCategory] = useState("");
+    const category = categories.find((item) => item.key === activeCategory) || categories[0];
+    const eventKeys = categories.flatMap((item) => item.events.map((event) => event.key));
     const disabled = isLoading || isSaving || Boolean(loadError);
-    const allEmailDisabled = HOST_NOTIFICATION_EVENT_KEYS.every((eventKey) => !preferences[eventKey]?.email);
+    const allEmailDisabled = eventKeys.length > 0 && eventKeys.every((eventKey) => !preferences[eventKey]?.email);
 
     const toggleAllEmail = () => {
-        HOST_NOTIFICATION_EVENT_KEYS.forEach((eventKey) => updatePreference(eventKey, "email", allEmailDisabled));
+        eventKeys.forEach((eventKey) => updatePreference(eventKey, "email", allEmailDisabled));
     };
 
     return (
@@ -45,12 +43,12 @@ const HostNotificationMatrixForm = ({
             </button>
 
             <div className="host-notification-tabs" role="tablist" aria-label={labels.title}>
-                {HOST_NOTIFICATION_CATEGORIES.map((item) => (
+                {categories.map((item) => (
                     <button
                         type="button"
                         role="tab"
-                        aria-selected={activeCategory === item.key}
-                        className={activeCategory === item.key ? "host-notification-tab is-active" : "host-notification-tab"}
+                        aria-selected={category?.key === item.key}
+                        className={category?.key === item.key ? "host-notification-tab is-active" : "host-notification-tab"}
                         key={item.key}
                         onClick={() => setActiveCategory(item.key)}
                     >
@@ -80,7 +78,7 @@ const HostNotificationMatrixForm = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {category.events.map((event) => (
+                            {category?.events.map((event) => (
                                 <tr key={event.key}>
                                     <td className="host-notification-event">{event.event}</td>
                                     {CHANNELS.map((channel) => (
@@ -88,7 +86,7 @@ const HostNotificationMatrixForm = ({
                                             <label className="host-notification-checkbox-label">
                                                 <input
                                                     type="checkbox"
-                                                    aria-label={`${event.event} - ${labels.channels[channel]}`}
+                                                    aria-label={event.event + " - " + labels.channels[channel]}
                                                     checked={Boolean(preferences[event.key]?.[channel])}
                                                     disabled={disabled}
                                                     onChange={(change) => updatePreference(event.key, channel, change.target.checked)}
@@ -131,6 +129,7 @@ HostNotificationMatrixForm.propTypes = {
         tabs: PropTypes.object.isRequired,
         channels: PropTypes.object.isRequired,
     }).isRequired,
+    categories: PropTypes.array.isRequired,
     preferences: PropTypes.object.isRequired,
     updatePreference: PropTypes.func.isRequired,
     isLoading: PropTypes.bool.isRequired,

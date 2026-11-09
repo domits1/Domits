@@ -3,28 +3,18 @@ import {
     fetchHostNotificationEventPreferences,
     saveHostNotificationEventPreferences,
 } from "../components/settings/api/communicationPreferences";
-import { DEFAULT_HOST_NOTIFICATION_PREFERENCES } from "../components/settings/hostNotificationMatrixConfig";
 
-const cloneDefaults = () => Object.fromEntries(
-    Object.entries(DEFAULT_HOST_NOTIFICATION_PREFERENCES).map(([eventKey, channels]) => [
+const clonePreferences = (preferences) => Object.fromEntries(
+    Object.entries(preferences).map(([eventKey, channels]) => [
         eventKey,
         { ...channels },
     ])
 );
 
-const normalizePreferences = (saved = {}) => Object.fromEntries(
-    Object.entries(DEFAULT_HOST_NOTIFICATION_PREFERENCES).map(([eventKey, defaultChannels]) => [
-        eventKey,
-        {
-            ...defaultChannels,
-            ...(saved[eventKey] && typeof saved[eventKey] === "object" ? saved[eventKey] : {}),
-        },
-    ])
-);
-
 export default function useHostNotificationEventPreferences() {
-    const [preferences, setPreferences] = useState(cloneDefaults);
-    const [baseline, setBaseline] = useState(cloneDefaults);
+    const [categories, setCategories] = useState([]);
+    const [preferences, setPreferences] = useState({});
+    const [baseline, setBaseline] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [loadError, setLoadError] = useState("");
@@ -41,11 +31,15 @@ export default function useHostNotificationEventPreferences() {
             setError("");
             setSaveSuccess(false);
             try {
-                const saved = await fetchHostNotificationEventPreferences();
+                const result = await fetchHostNotificationEventPreferences();
+                if (!Array.isArray(result?.categories) || !result?.preferences) {
+                    throw new Error("Invalid host notification preferences response.");
+                }
                 if (!isMounted) return;
-                const normalized = normalizePreferences(saved);
-                setPreferences(normalized);
-                setBaseline(normalized);
+                const loadedPreferences = clonePreferences(result.preferences);
+                setCategories(result.categories);
+                setPreferences(loadedPreferences);
+                setBaseline(loadedPreferences);
             } catch {
                 if (isMounted) setLoadError("We could not load your notification choices. Retry before making changes.");
             } finally {
@@ -80,7 +74,7 @@ export default function useHostNotificationEventPreferences() {
         setSaveSuccess(false);
         try {
             const saved = await saveHostNotificationEventPreferences(preferences);
-            const normalized = normalizePreferences(saved);
+            const normalized = clonePreferences(saved);
             setPreferences(normalized);
             setBaseline(normalized);
             setSaveSuccess(true);
@@ -94,6 +88,7 @@ export default function useHostNotificationEventPreferences() {
     const retry = useCallback(() => setRetryCount((count) => count + 1), []);
 
     return {
+        categories,
         preferences,
         updatePreference,
         isLoading,
