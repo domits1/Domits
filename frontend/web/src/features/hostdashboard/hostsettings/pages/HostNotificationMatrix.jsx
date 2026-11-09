@@ -22,6 +22,7 @@ const copyByLanguage = {
         tabs: {
             bookings: "Bookings",
             propertyManager: "Property Manager",
+            staff: "Staff & Tasks",
             propertyOwner: "Property Owner",
             finance: "Finance",
             distribution: "Distribution",
@@ -50,6 +51,7 @@ const copyByLanguage = {
         tabs: {
             bookings: "Boekingen",
             propertyManager: "Property Manager",
+            staff: "Medewerkers & taken",
             propertyOwner: "Property Owner",
             finance: "Financiën",
             distribution: "Distributie",
@@ -78,6 +80,7 @@ const copyByLanguage = {
         tabs: {
             bookings: "Buchungen",
             propertyManager: "Property Manager",
+            staff: "Mitarbeiter & Aufgaben",
             propertyOwner: "Property Owner",
             finance: "Finanzen",
             distribution: "Vertrieb",
@@ -106,6 +109,7 @@ const copyByLanguage = {
         tabs: {
             bookings: "Reservas",
             propertyManager: "Property Manager",
+            staff: "Personal y tareas",
             propertyOwner: "Propietario",
             finance: "Finanzas",
             distribution: "Distribución",
