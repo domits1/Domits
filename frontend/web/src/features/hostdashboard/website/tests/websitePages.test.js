@@ -31,13 +31,14 @@ const ALL_ENABLED = {
 
 const readAppSource = () => fs.readFileSync(path.resolve(__dirname, "../../../../App.js"), "utf8");
 
-const readAppRouteSegments = () => {
-  const appSource = readAppSource();
-  const routePaths = [...appSource.matchAll(/path="(\/[^"]*)"/g)].map((match) => match[1]);
-  return [...new Set(routePaths.map((routePath) => routePath.split("/")[1].toLowerCase()))].filter(
+const readAppRoutePaths = () => [...readAppSource().matchAll(/\bpath="(\/[^"]*)"/g)].map((match) => match[1]);
+
+const countAppPathAttributes = () => (readAppSource().match(/\bpath\s*=/g) || []).length;
+
+const readAppRouteSegments = () =>
+  [...new Set(readAppRoutePaths().map((routePath) => routePath.split("/")[1].toLowerCase()))].filter(
     (segment) => segment !== "" && segment !== "*"
   );
-};
 
 const buildEnabledCombinations = () =>
   CONFIGURABLE_PAGE_KEYS.reduce(
@@ -55,6 +56,18 @@ const withPage = (overrides) =>
 describe("site page table", () => {
   it("has no problems", () => {
     expect(findSitePageTableProblems(SITE_PAGE_DEFINITIONS)).toEqual([]);
+  });
+
+  it("cannot be changed by the code that reads it", () => {
+    const frozenParts = [
+      SITE_PAGE_DEFINITIONS,
+      ...SITE_PAGE_DEFINITIONS,
+      ...SITE_PAGE_DEFINITIONS.map((page) => page.sections),
+      PANORAMA_PAGE_SECTION_ORDER,
+      RESERVED_SITE_PATH_SEGMENTS,
+    ];
+
+    expect(frozenParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
   });
 
   it("offers Main, Gallery, Accommodation and Contact Us on fixed slugs", () => {
@@ -158,8 +171,7 @@ describe("reserved site paths", () => {
   it("lists every top-level route the app serves before a site page", () => {
     const routeSegments = readAppRouteSegments();
 
-    expect(readAppSource()).not.toMatch(/path=\{/);
-
+    expect(readAppRoutePaths()).toHaveLength(countAppPathAttributes());
     expect(routeSegments.length).toBeGreaterThan(30);
     expect(routeSegments.filter((segment) => !RESERVED_SITE_PATH_SEGMENTS.includes(segment))).toEqual([]);
   });
@@ -170,6 +182,10 @@ describe("reserved site paths", () => {
       expect(isReservedSitePath(segment)).toBe(true);
     }
   );
+
+  it.each([[undefined], [null], [7]])("does not reserve %p", (segment) => {
+    expect(isReservedSitePath(segment)).toBe(false);
+  });
 
   it("keeps every page slug free", () => {
     expect(SITE_PAGE_DEFINITIONS.filter((page) => page.slug && isReservedSitePath(page.slug))).toEqual([]);
@@ -184,9 +200,13 @@ describe("normalizeSitePageNavLabel", () => {
     ["keeps an ampersand and quotes", 'Wine & "Dine"', 'Wine & "Dine"'],
     ["drops a label over the maximum", "x".repeat(41), ""],
     ["drops an opening tag", "<script>alert(1)</script>", ""],
+    ["drops an opening angle bracket", "Gallery <", ""],
     ["drops a closing angle bracket", "Gallery >", ""],
     ["drops a control character", "Gal\u0007lery", ""],
     ["drops a text direction override", "Gallery\u202E", ""],
+    ["drops a text direction isolate", "Gallery\u2068", ""],
+    ["drops a right-to-left mark", "\u200FGallery", ""],
+    ["drops an Arabic letter mark", "Gallery\u061C", ""],
     ["drops whitespace only", "   ", ""],
     ["drops a zero width space only", "\u200B", ""],
     ["drops a word joiner and a zero width space only", " \u2060\u200B ", ""],
@@ -199,7 +219,7 @@ describe("normalizeSitePageNavLabel", () => {
 });
 
 describe("normalizeSitePages", () => {
-  it.each([undefined, null, "gallery", 7, true, [], [{ enabled: true }]])(
+  it.each([[undefined], [null], ["gallery"], [7], [true], [[]], [[{ enabled: true }]]])(
     "gives every page switched off for %p",
     (value) => {
       expect(normalizeSitePages(value)).toEqual(DEFAULT_SITE_PAGES);
@@ -237,7 +257,7 @@ describe("normalizeSitePages", () => {
     expect(normalizeSitePages({ gallery: { enabled } }).gallery.enabled).toBe(false);
   });
 
-  it.each([true, "on", ["enabled"], null])("treats a page entry %p as switched off", (entry) => {
+  it.each([[true], ["on"], [["enabled"]], [null]])("treats a page entry %p as switched off", (entry) => {
     expect(normalizeSitePages({ gallery: entry }).gallery).toEqual({ enabled: false, navLabel: "Gallery" });
   });
 
@@ -402,6 +422,14 @@ describe("resolvePanoramaPageSections", () => {
       );
     }
   );
+
+  it("gives the caller its own list of sections", () => {
+    const sections = resolvePanoramaPageSections(ALL_ENABLED, "accommodation");
+
+    sections.push("contact");
+
+    expect(resolvePanoramaPageSections(ALL_ENABLED, "accommodation")).toEqual(["residence", "amenities"]);
+  });
 
   it("shows every section exactly once across the pages, with availability on main", () => {
     const combinations = buildEnabledCombinations();

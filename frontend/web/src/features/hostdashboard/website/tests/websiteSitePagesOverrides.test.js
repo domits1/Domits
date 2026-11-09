@@ -48,10 +48,19 @@ describe("site page settings in the template model", () => {
     });
   });
 
-  it("switches every page off for page settings that are not an object", () => {
-    const model = applyWebsiteDraftContentOverrides(buildModel(), { sitePages: "gallery" }, TEMPLATE_KEY);
+  it.each([["gallery"], [null], [false], [""], [[]]])(
+    "switches every page off for page settings %p that are not an object",
+    (sitePages) => {
+      const model = applyWebsiteDraftContentOverrides(buildModel(), { sitePages }, TEMPLATE_KEY);
 
-    expect(Object.values(model.sitePages).map((page) => page.enabled)).toEqual([false, false, false]);
+      expect(Object.values(model.sitePages).map((page) => page.enabled)).toEqual([false, false, false]);
+    }
+  );
+
+  it("adds no page field for page settings the overrides only inherit", () => {
+    const overrides = Object.create({ sitePages: { gallery: { enabled: true } } });
+
+    expect(applyWebsiteDraftContentOverrides(buildModel(), overrides, TEMPLATE_KEY)).not.toHaveProperty("sitePages");
   });
 });
 
