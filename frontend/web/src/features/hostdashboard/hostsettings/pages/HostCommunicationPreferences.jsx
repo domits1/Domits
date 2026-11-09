@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
+import { getHostNotificationMatrixLabels } from "../../../../content/hostNotificationMatrixLabels";
 import useHostNotificationEventPreferences from "../../../../hooks/useHostNotificationEventPreferences";
 import HostNotificationMatrixForm from "./HostNotificationMatrixForm";
 import en from "../../../../content/en.json";
@@ -17,6 +18,7 @@ const HostCommunicationPreferences = () => {
     const settingsContent = contentByLanguage[language]?.settings ?? contentByLanguage.en.settings;
     const t = settingsContent.communicationPreferences;
     const eventPreferences = useHostNotificationEventPreferences();
+    const matrixLabels = getHostNotificationMatrixLabels(language);
 
     return (
         <div className="personal-data-page">
@@ -31,7 +33,7 @@ const HostCommunicationPreferences = () => {
                 <p className="personal-data-subtitle">{t.subtitle}</p>
             </div>
 
-            <HostNotificationMatrixForm labels={t.notificationMatrix} {...eventPreferences} />
+            <HostNotificationMatrixForm labels={matrixLabels} {...eventPreferences} />
 
         </div>
     );

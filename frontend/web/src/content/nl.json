@@ -433,50 +433,22 @@
         "subtitle": "Gepassioneerde reizigers en tech-innovators die de toekomst van gastvrijheid bouwen",
         "moreMembers": "+32 leden",
         "members": [
-          {
-            "name": "Stefan Hopman",
-            "role": "Oprichter"
-          },
-          {
-            "name": "Robert Hopman",
-            "role": "Engineering Manager"
-          },
-          {
-            "name": "Chiel van Heerwaarden",
-            "role": "Ontwikkelaar"
-          }
+          { "name": "Stefan Hopman", "role": "Oprichter" },
+          { "name": "Robert Hopman", "role": "Engineering Manager" },
+          { "name": "Chiel van Heerwaarden", "role": "Ontwikkelaar" }
         ]
       },
       "stats": [
-        {
-          "icon": "globe",
-          "value": "+10",
-          "label": "Nationaliteiten"
-        },
-        {
-          "icon": "users",
-          "value": "+35",
-          "label": "Teamleden"
-        },
-        {
-          "icon": "laptop",
-          "value": "Remote-first",
-          "label": "Werk van overal"
-        },
-        {
-          "icon": "handHeart",
-          "value": "People-first",
-          "label": "Cultuur die geeft om mensen"
-        }
+        { "icon": "globe", "value": "+10", "label": "Nationaliteiten" },
+        { "icon": "users", "value": "+35", "label": "Teamleden" },
+        { "icon": "laptop", "value": "Remote-first", "label": "Werk van overal" },
+        { "icon": "handHeart", "value": "People-first", "label": "Cultuur die geeft om mensen" }
       ],
       "cards": {
         "featured": {
           "title": "De toekomst van reizen bouwen",
           "description": "We bedenken opnieuw hoe mensen reizen ontdekken, boeken en beleven. Doe met ons mee in het creëren van technologie die de wereld dichter bij elkaar brengt.",
-          "tags": [
-            "Wereldwijde impact",
-            "Innovatie voorop"
-          ]
+          "tags": ["Wereldwijde impact", "Innovatie voorop"]
         },
         "partnerSuccess": {
           "title": "Succes voor partners",
@@ -486,20 +458,12 @@
         "culture": {
           "title": "Cultuur die geeft om mensen",
           "description": "Remote-first, inclusief en menselijk. Wij geven prioriteit aan werk-privébalans en betekenisvolle impact.",
-          "tags": [
-            "Remote",
-            "Flexibel",
-            "Wereldwijd"
-          ]
+          "tags": ["Remote", "Flexibel", "Wereldwijd"]
         },
         "openPositions": {
           "title": "Openstaande functies",
           "description": "We nemen mensen aan binnen engineering, product, design en partnerschappen.",
-          "tags": [
-            "Senior Engineer",
-            "Product Designer",
-            "Partnership Manager"
-          ]
+          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
         }
       },
       "join": {
@@ -752,36 +716,18 @@
         "eyebrow": "Voor gasten",
         "heading": "Vind je perfecte verblijf in 3 eenvoudige stappen",
         "steps": [
-          {
-            "title": "Zoek je bestemming",
-            "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen."
-          },
-          {
-            "title": "Boek je verblijf",
-            "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken."
-          },
-          {
-            "title": "Beleef Domits",
-            "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning."
-          }
+          { "title": "Zoek je bestemming", "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen." },
+          { "title": "Boek je verblijf", "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken." },
+          { "title": "Beleef Domits", "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning." }
         ]
       },
       "hosts": {
         "eyebrow": "Voor hosts",
         "heading": "Laat je verhuurbedrijf moeiteloos groeien",
         "steps": [
-          {
-            "title": "Plaats je accommodatie",
-            "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in."
-          },
-          {
-            "title": "Beheer boekingen",
-            "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten."
-          },
-          {
-            "title": "Word veilig betaald",
-            "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime."
-          }
+          { "title": "Plaats je accommodatie", "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in." },
+          { "title": "Beheer boekingen", "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten." },
+          { "title": "Word veilig betaald", "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime." }
         ]
       }
     },
@@ -1596,32 +1542,6 @@
       },
       "actions": {
         "saveChanges": "Wijzigingen opslaan"
-      },
-      "notificationMatrix": {
-        "title": "Meldingen",
-        "description": "Kies hoe je elke melding wilt ontvangen.",
-        "event": "Melding",
-        "disableAllEmail": "Alle e-mailmeldingen uitzetten",
-        "enableAllEmail": "Alle e-mailmeldingen aanzetten",
-        "channels": {
-          "inApp": "In-app",
-          "email": "E-mail",
-          "sms": "Sms"
-        },
-        "loading": "Meldingvoorkeuren laden...",
-        "retry": "Opnieuw proberen",
-        "saved": "Meldingvoorkeuren opgeslagen.",
-        "saving": "Opslaan...",
-        "save": "Voorkeuren opslaan",
-        "tabs": {
-          "propertyManager": "Property Manager",
-          "bookings": "Boekingen & reserveringen",
-          "propertyOwner": "Woning eigenaar",
-          "finance": "Financiën",
-          "distribution": "Distributie",
-          "compliance": "Compliance",
-          "tasks": "Taken"
-        }
       }
     },
     "company": {

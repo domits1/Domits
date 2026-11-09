@@ -2,9 +2,9 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HostNotificationMatrixForm from "../../features/hostdashboard/hostsettings/pages/HostNotificationMatrixForm";
-import en from "../../content/en.json";
+import { getHostNotificationMatrixLabels } from "../../content/hostNotificationMatrixLabels";
 
-const labels = en.settings.communicationPreferences.notificationMatrix;
+const labels = getHostNotificationMatrixLabels("en");
 const updatePreference = jest.fn();
 const createCategory = (key, labelKey, prefix, events) => ({
     key,
