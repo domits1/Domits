@@ -405,7 +405,7 @@ describe('HostTasks', () => {
         test('are linked, uploaded and saved as the co-host the user acts for while showing co-host tasks', async () => {
             uploadTaskAttachment.mockResolvedValue('tasks/host-2/new.svg');
             render(<HostTasks />);
-            fireEvent.click(await screen.findByRole('button', { name: 'Co-host tasks' }));
+            fireEvent.click(await screen.findByRole('button', { name: 'Management tasks' }));
             await waitFor(() => expect(fetchTasks).toHaveBeenLastCalledWith({}, 'host-2'));
             fireEvent.click(await screen.findByText('Clean the villa'));
 
