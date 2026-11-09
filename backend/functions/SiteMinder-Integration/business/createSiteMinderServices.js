@@ -13,6 +13,7 @@ import { SiteMinderRestrictionsPusher } from "./siteMinderRestrictionsPusher.js"
 import { SiteMinderRatesPusher } from "./siteMinderRatesPusher.js";
 import { SiteMinderMappingService } from "./siteMinderMappingService.js";
 import { SiteMinderInventoryService } from "./siteMinderInventoryService.js";
+import { SiteMinderReservationsReader } from "./siteMinderReservationsReader.js";
 
 export const createSiteMinderServices = async ({ env = process.env, secretRepository } = {}) => {
   const config = readSiteMinderConfig(env);
@@ -44,6 +45,7 @@ export const createSiteMinderServices = async ({ env = process.env, secretReposi
       ratesPusher: new SiteMinderRatesPusher({ soapClient }),
       currency: config.currency,
     }),
+    reservations: new SiteMinderReservationsReader({ soapClient }),
   };
 };
 
