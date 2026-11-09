@@ -142,14 +142,15 @@ export const buildRatePlanStore = ({ plans = [], commitFailures = [], ...options
   let heldCommits = 0;
   let waiting = [];
 
-  const awaitCommitTurn = () => {
+  const awaitCommitTurn = (attempt) => {
     if (heldCommits === 0) return Promise.resolve();
     return new Promise((resolve) => {
-      waiting.push(resolve);
+      waiting.push({ attempt, release: resolve });
       if (waiting.length === heldCommits) {
+        const inStartOrder = waiting.sort((first, second) => first.attempt - second.attempt);
         heldCommits = 0;
-        waiting.forEach((release) => release());
         waiting = [];
+        queueMicrotask(() => inStartOrder.forEach(({ release }) => release()));
       }
     });
   };
@@ -186,7 +187,7 @@ export const buildRatePlanStore = ({ plans = [], commitFailures = [], ...options
       const attempt = store.attempts.length;
       store.attempts.push(transaction.operations);
       const result = await work(buildManager(transaction, options));
-      await awaitCommitTurn();
+      await awaitCommitTurn(attempt);
       if (commitFailures[attempt]) throw commitFailures[attempt];
       commit(transaction);
       return result;
