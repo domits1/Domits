@@ -5,6 +5,7 @@ import {
   EXISTING_SITE_RENDER_BODY,
   buildExistingSiteController,
   buildRatePlanRepository,
+  expectOnlyCurrentPlanRead,
   ratePlanRow,
   renderEvent,
 } from "./support/existingSiteRender.js";
@@ -91,7 +92,7 @@ const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   const render = await controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
   const preview = await controller.getWebsitePreviewByDraftId(renderEvent({ draft: "draft-1" }));
 
-  return { saved, published, render, preview, store, planReadsBeforeServing };
+  return { saved, published, render, preview, store, planReadsBeforeServing, ratePlanRepository };
 };
 
 beforeEach(() => {
@@ -114,10 +115,13 @@ describe("an Essentials host who sends page settings through the existing editor
   });
 
   it("gets the live site byte for byte as an existing site without page settings", async () => {
+    const consoleError = jest.spyOn(console, "error");
     const flow = await saveAndPublishThroughTheEditorApi(OVERRIDES_WITH_PAGES);
 
     expect(flow.render.statusCode).toBe(200);
     expect(flow.render.body).toBe(EXISTING_SITE_RENDER_BODY);
+    expectOnlyCurrentPlanRead(flow.ratePlanRepository);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it("gets the same preview as a host who never sent page settings", async () => {

@@ -8,9 +8,11 @@ import {
   buildExistingSiteController,
   buildRatePlanRepository,
   expectNoPlanRead,
+  expectOnlyCurrentPlanRead,
   ratePlanRow,
   renderEvent,
 } from "./support/existingSiteRender.js";
+import { WebsiteElitePageSettings } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
 
 const SITE_PAGES = { gallery: { enabled: true, navLabel: "Gallery" }, contact: { enabled: false } };
 
@@ -65,13 +67,15 @@ describe("the public render of a site with page settings", () => {
     ["an Essentials plan", ratePlanRow()],
     ["no plan row", null],
   ])("answers the site of a host with %s byte for byte as it was without page settings", async (_label, row) => {
+    const consoleError = jest.spyOn(console, "error");
     const ratePlanRepository = buildRatePlanRepository(row);
 
     const response = await renderSite(ratePlanRepository, { domain: EXISTING_DOMAIN.domain });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toBe(EXISTING_SITE_RENDER_BODY);
-    expect(ratePlanRepository.createPlan).not.toHaveBeenCalled();
+    expectOnlyCurrentPlanRead(ratePlanRepository);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it("answers the site without page settings, not an error, when the plan cannot be read", async () => {
@@ -84,5 +88,20 @@ describe("the public render of a site with page settings", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toBe(EXISTING_SITE_RENDER_BODY);
     expect(consoleError).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers the site without page settings once the time limit passes on a plan read that does not answer", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const ratePlanRepository = buildRatePlanRepository();
+    ratePlanRepository.findCurrentByAccountId.mockReturnValue(new Promise(() => undefined));
+    const controller = buildExistingSiteController({ site: SITE_WITH_PAGES, ratePlanRepository });
+    controller.websiteElitePageSettings = new WebsiteElitePageSettings(controller.directBookingWebsiteRatePlanService, {
+      planReadTimeoutMs: 20,
+    });
+
+    const response = await controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe(EXISTING_SITE_RENDER_BODY);
   });
 });
