@@ -80,6 +80,7 @@ describe("Pages2 menu order", () => {
 
   beforeEach(() => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
+    checkPropertyReviewAccess.mockResolvedValue("denied");
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
