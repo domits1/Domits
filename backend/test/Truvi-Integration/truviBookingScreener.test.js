@@ -63,6 +63,14 @@ describe("TruviBookingScreener", () => {
     expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, errors: [] });
   });
 
+  it("sends Truvi the same time as the run, so one run uses one clock", async () => {
+    const { screener, screeningService } = build();
+
+    await screener.run({ now: Date.UTC(2026, 10, 9, 10, 0, 0) });
+
+    expect(screeningService.screenBooking.mock.calls[0][0].now).toEqual(new Date(Date.UTC(2026, 10, 9, 10, 0, 0)));
+  });
+
   it("keeps the email from the booking and uses the booking source as channel", async () => {
     const withEmail = candidate({ bookingSource: "Airbnb" });
     withEmail.booking.guest_email = "guest@example.com";

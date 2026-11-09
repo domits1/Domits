@@ -27,7 +27,7 @@ export class TruviBookingScreener {
     for (const candidate of bookings) {
       const bookingId = candidate.booking.id;
       try {
-        const input = await this.#buildInput(candidate);
+        const input = await this.#buildInput(candidate, now);
         const result = await this.#screen(input);
 
         if (result.status === "ERROR" && isRetryableError(result.error)) {
@@ -48,7 +48,7 @@ export class TruviBookingScreener {
     return summary;
   }
 
-  async #buildInput(candidate) {
+  async #buildInput(candidate, now) {
     const guestEmail = candidate.booking.guest_email || (await this.contactLookup.getGuestEmail(candidate.guestId));
     const host = await this.contactLookup.getHost(candidate.hostId);
 
@@ -60,7 +60,7 @@ export class TruviBookingScreener {
       host: { name: host?.name || candidate.hostName, email: host?.email },
       protection: { extendedAmount: this.extendedAmount },
       channel: candidate.bookingSource || DEFAULT_CHANNEL,
-      now: new Date(),
+      now: new Date(now),
     };
   }
 
