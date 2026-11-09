@@ -465,7 +465,7 @@ Elite websites can have more than one page. The page settings live in the conten
 - The check runs only when the key is present. Overrides without `sitePages` are returned as they are and no plan is read, so existing sites answer exactly as before.
 - The host comes from the site or draft row, never from the request.
 - The plan is read with `getCurrentEntitlements` in `directBookingWebsiteRatePlanService.js`, which never writes: no current row, or a row whose end date has passed, reads as Essentials.
-- A failed plan read drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
+- A failed plan read, or one that does not answer within 3 seconds (`WEBSITE_PLAN_READ_TIMEOUT_MS`), drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
 - When Elite ends, the next request no longer serves the key.
 
 `GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil, granted }` for the host in the token, read only. `granted` is true for an Elite plan without a Stripe subscription. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
