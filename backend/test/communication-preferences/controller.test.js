@@ -198,7 +198,7 @@ describe("CommunicationPreferencesController host notification matrix scope", ()
 
     expect(hostNotificationPreferencesService.getPreferences).toHaveBeenCalledWith("user-1", {
       sub: "user-1",
-      "custom:group": "Guest",
+      "custom:group": "Host",
     });
     expect(service.getPreferences).not.toHaveBeenCalled();
   });
