@@ -79,6 +79,8 @@ import {
 import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
+import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
+import { omitSitePages } from "./editor/websiteEditorSitePages";
 import {
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
@@ -276,6 +278,7 @@ function WebsiteEditorPage() {
     setImagePickerState,
     setPreviewTargetId,
   });
+  const { isEliteHost } = useWebsiteEditorSitePages();
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -313,8 +316,9 @@ function WebsiteEditorPage() {
     }
 
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
-    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides, draftTemplateKey);
-  }, [baseModel, draftTemplateKey, mergedContentOverrides, mergedThemeOverrides]);
+    const previewContentOverrides = isEliteHost ? mergedContentOverrides : omitSitePages(mergedContentOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, previewContentOverrides, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, isEliteHost, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
