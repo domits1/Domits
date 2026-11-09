@@ -1,7 +1,10 @@
 import { getAuthenticatedUser } from "../auth/authContext.js";
 import { CommunicationPreferencesService, normalizePersona } from "../business/service/service.js";
-import { HostNotificationPreferencesService } from "../business/service/hostNotificationPreferencesService.js";
-import { badRequest } from "../util/httpErrors.js";
+import {
+  HostNotificationPreferencesService,
+  hasHostNotificationAccess,
+} from "../business/service/hostNotificationPreferencesService.js";
+import { HttpError, badRequest } from "../util/httpErrors.js";
 
 const USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
 
@@ -49,6 +52,9 @@ export class CommunicationPreferencesController {
     const authenticatedUser = getAuthenticatedUser(event);
     if (event?.queryStringParameters?.scope === "matrix") {
       if (persona !== "HOST") throw badRequest("Notification matrix preferences are only available for the host persona.");
+      if (!hasHostNotificationAccess(authenticatedUser.claims)) {
+        throw new HttpError(403, "Host notification preferences are not available for this account.", "FORBIDDEN");
+      }
       const matrix = await this.hostNotificationPreferencesService.getPreferences(authenticatedUser.userId, authenticatedUser.claims);
       return { statusCode: 200, response: matrix };
     }
@@ -70,6 +76,9 @@ export class CommunicationPreferencesController {
     const body = parseBody(event);
     if (event?.queryStringParameters?.scope === "matrix") {
       if (persona !== "HOST") throw badRequest("Notification matrix preferences are only available for the host persona.");
+      if (!hasHostNotificationAccess(authenticatedUser.claims)) {
+        throw new HttpError(403, "Host notification preferences are not available for this account.", "FORBIDDEN");
+      }
       const matrix = await this.hostNotificationPreferencesService.savePreferences(authenticatedUser.userId, authenticatedUser.claims, body);
       return { statusCode: 200, response: matrix };
     }
