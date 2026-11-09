@@ -1,6 +1,6 @@
 # docs(channelmanagement): design note for the Channex health dashboard
 
-Pull request: #<number>
+Pull request: #3819
 Issue: #2869
 Reviewed commit: staged diff on `docs/2869-health-dashboard-design`, before the first commit
 Result: no blocking findings; 3 design findings, all applied in the note
