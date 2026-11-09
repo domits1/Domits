@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { DirectBookingWebsiteRatePlanService } from "../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
-import { WebsiteElitePageSettings } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
+import {
+  WEBSITE_PLAN_READ_TIMEOUT_MS,
+  WebsiteElitePageSettings,
+} from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
 import {
   PAID_ELITE_ROW,
   buildRatePlanRepository,
@@ -20,6 +23,7 @@ const buildPageSettings = (ratePlanRepository) =>
   new WebsiteElitePageSettings(new DirectBookingWebsiteRatePlanService(ratePlanRepository, {}));
 
 afterEach(() => {
+  jest.useRealTimers();
   jest.restoreAllMocks();
 });
 
@@ -132,6 +136,7 @@ describe("serving page settings in a draft preview", () => {
   ])(
     "drops page settings in %s for an Essentials host with one plan read of the draft's own host",
     async (_label, fields) => {
+      const consoleError = jest.spyOn(console, "error");
       const ratePlanRepository = buildRatePlanRepository(ratePlanRow());
       const storedDraft = draft(fields);
 
@@ -141,8 +146,25 @@ describe("serving page settings in a draft preview", () => {
       expect(storedDraft).toEqual(draft(fields));
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(HOST_ID);
+      expectOnlyCurrentPlanRead(ratePlanRepository);
+      expect(consoleError).not.toHaveBeenCalled();
     }
   );
+
+  it("drops page settings in a draft of a host without a plan row by reading only the current plan", async () => {
+    const consoleError = jest.spyOn(console, "error");
+    const ratePlanRepository = buildRatePlanRepository(null);
+    const storedDraft = draft({
+      contentOverrides: { heroTitle: "Draft villa", sitePages: SITE_PAGES },
+      publishedContentOverrides: { heroTitle: "Live villa", sitePages: SITE_PAGES },
+    });
+
+    const served = await buildPageSettings(ratePlanRepository).servePageSettingsOnDraft(storedDraft);
+
+    expect(JSON.stringify(served)).toBe(JSON.stringify(draft()));
+    expectOnlyCurrentPlanRead(ratePlanRepository);
+    expect(consoleError).not.toHaveBeenCalled();
+  });
 
   it("keeps page settings in a draft of an Elite host", async () => {
     const storedDraft = draft({
@@ -155,5 +177,64 @@ describe("serving page settings in a draft preview", () => {
     );
 
     expect(served).toBe(storedDraft);
+  });
+});
+
+describe("a plan read that does not answer", () => {
+  const unansweredRepository = () => {
+    const ratePlanRepository = buildRatePlanRepository();
+    ratePlanRepository.findCurrentByAccountId.mockReturnValue(new Promise(() => undefined));
+    return ratePlanRepository;
+  };
+
+  it("drops the page settings of a site and of a draft and logs, once the time limit has passed", async () => {
+    jest.useFakeTimers();
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const pageSettings = new WebsiteElitePageSettings(
+      new DirectBookingWebsiteRatePlanService(unansweredRepository(), {}),
+      { planReadTimeoutMs: 20 }
+    );
+    const served = [];
+
+    pageSettings
+      .servePageSettingsForHost({ hostId: HOST_ID, overrides: overridesWithPages() })
+      .then((value) => served.push(value));
+    pageSettings
+      .servePageSettingsOnDraft({
+        id: "draft-1",
+        hostId: HOST_ID,
+        contentOverrides: overridesWithPages(),
+        publishedContentOverrides: overridesWithPages(),
+      })
+      .then((value) => served.push(value));
+    await jest.advanceTimersByTimeAsync(20);
+
+    expect(served).toEqual([
+      { heroTitle: "Villa", ctaLabel: "Book" },
+      {
+        id: "draft-1",
+        hostId: HOST_ID,
+        contentOverrides: { heroTitle: "Villa", ctaLabel: "Book" },
+        publishedContentOverrides: { heroTitle: "Villa", ctaLabel: "Book" },
+      },
+    ]);
+    expect(consoleError).toHaveBeenCalledTimes(2);
+  });
+
+  it("waits for the default time limit and not longer", async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const pageSettings = buildPageSettings(unansweredRepository());
+    let served;
+
+    pageSettings.servePageSettingsForHost({ hostId: HOST_ID, overrides: overridesWithPages() }).then((value) => {
+      served = value;
+    });
+    await jest.advanceTimersByTimeAsync(WEBSITE_PLAN_READ_TIMEOUT_MS - 1);
+    expect(served).toBeUndefined();
+    await jest.advanceTimersByTimeAsync(1);
+
+    expect(served).toEqual({ heroTitle: "Villa", ctaLabel: "Book" });
+    expect(WEBSITE_PLAN_READ_TIMEOUT_MS).toBeLessThanOrEqual(5000);
   });
 });
