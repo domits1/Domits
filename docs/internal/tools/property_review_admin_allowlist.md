@@ -2,6 +2,8 @@
 
 `PROPERTY_REVIEW_ADMIN_USER_IDS` decides who may approve or reject a property that a host submitted for review (#3302). The endpoints are `POST /property/review/approve` and `POST /property/review/reject` on `PropertyHandler`.
 
+The same list decides who may grant the Elite website plan (#3099), see [direct_booking_website_elite_grant.md](direct_booking_website_elite_grant.md).
+
 ## Request and response
 
 Both endpoints take a JSON body and return `{ "propertyId", "status", "updatedAt" }` on success.
