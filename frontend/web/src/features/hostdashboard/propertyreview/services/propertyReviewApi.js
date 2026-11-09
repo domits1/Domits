@@ -4,6 +4,7 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 export const REVIEW_API_ERROR_CODE = Object.freeze({
   UNAUTHENTICATED: "UNAUTHENTICATED",
   FORBIDDEN: "FORBIDDEN",
+  NOT_FOUND: "NOT_FOUND",
   INVALID_CURSOR: "INVALID_CURSOR",
   UNAVAILABLE: "UNAVAILABLE",
   SERVER: "SERVER",
@@ -13,6 +14,7 @@ export const REVIEW_API_ERROR_CODE = Object.freeze({
 const HTTP_BAD_REQUEST = 400;
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
 const UNAVAILABLE_STATUSES = new Set([429, 502, 503, 504]);
 const NO_RESPONSE_STATUS = 0;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -29,6 +31,7 @@ export class PropertyReviewApiError extends Error {
 const codeForStatus = (status) => {
   if (status === HTTP_UNAUTHORIZED) return REVIEW_API_ERROR_CODE.UNAUTHENTICATED;
   if (status === HTTP_FORBIDDEN) return REVIEW_API_ERROR_CODE.FORBIDDEN;
+  if (status === HTTP_NOT_FOUND) return REVIEW_API_ERROR_CODE.NOT_FOUND;
   if (status === HTTP_BAD_REQUEST) return REVIEW_API_ERROR_CODE.INVALID_CURSOR;
   if (UNAVAILABLE_STATUSES.has(status)) return REVIEW_API_ERROR_CODE.UNAVAILABLE;
   return REVIEW_API_ERROR_CODE.SERVER;
@@ -121,3 +124,6 @@ export const fetchReviewQueue = async ({ cursor, limit, signal } = {}) => {
     nextCursor: body.nextCursor ?? null,
   };
 };
+
+export const fetchReviewDetail = (propertyId, { signal } = {}) =>
+  requestPropertyReview(`/review/detail?propertyId=${encodeURIComponent(propertyId)}`, { signal });

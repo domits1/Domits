@@ -15,8 +15,8 @@ export class SiteMinderSoapError extends Error {
     this.status = status;
     this.errors = errors.map((error) => ({ ...error, message: String(error.message ?? "").slice(0, MAX_MESSAGE_LENGTH) }));
     this.echoToken = echoToken;
-    // A timeout, a network error or a 5xx can work on a later try. An OTA error answer means the message itself was refused.
-    this.retryable = status === null || status >= 500;
+    const soapFault = this.errors.some((error) => error.type === "SoapFault");
+    this.retryable = !soapFault && (status === null || status >= 500);
   }
 }
 
