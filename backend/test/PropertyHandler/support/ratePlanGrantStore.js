@@ -17,8 +17,6 @@ const PLAN_DEFAULTS = { currency: "EUR", billing_frequency: "monthly", status: "
 const TIMESTAMP_DEFAULTS = ["effective_from", "created_at", "updated_at"];
 
 const CONDITIONS = {
-  "plan.account_id = :accountId": (row, params) => row.account_id === params.accountId,
-  "plan.status IN (:...statuses)": (row, params) => params.statuses.includes(row.status),
   "account_id = :accountId": (row, params) => row.account_id === params.accountId,
   "status IN (:...statuses)": (row, params) => params.statuses.includes(row.status),
 };
@@ -31,8 +29,9 @@ const RAW_VALUES = {
 
 const matches = (row, conditions) =>
   conditions.every(([condition, params]) => {
-    if (!CONDITIONS[condition]) throw new Error(`unexpected condition: ${condition}`);
-    return CONDITIONS[condition](row, params);
+    const check = CONDITIONS[condition.replace(/^plan\./, "")];
+    if (!check) throw new Error(`unexpected condition: ${condition}`);
+    return check(row, params);
   });
 
 const resolveValue = (row, value) => {
@@ -42,21 +41,14 @@ const resolveValue = (row, value) => {
   return RAW_VALUES[expression](row);
 };
 
-const withPlanDefaults = (values) => {
-  const row = { ...values };
-  Object.entries(PLAN_DEFAULTS).forEach(([column, fallback]) => {
-    if (row[column] === undefined) row[column] = fallback;
-  });
-  TIMESTAMP_DEFAULTS.forEach((column) => {
-    if (row[column] === undefined) row[column] = DB_NOW;
-  });
-  return row;
-};
+const withPlanDefaults = (values) => ({
+  ...PLAN_DEFAULTS,
+  ...Object.fromEntries(TIMESTAMP_DEFAULTS.map((column) => [column, DB_NOW])),
+  ...Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)),
+});
 
-const pickReturning = (row, returning) => {
-  if (returning === "*") return { ...row };
-  return Object.fromEntries(TIMESTAMP_DEFAULTS.map((column) => [column, row[column]]));
-};
+const pickReturning = (row, returning) =>
+  returning === "*" ? { ...row } : Object.fromEntries(TIMESTAMP_DEFAULTS.map((column) => [column, row[column]]));
 
 const buildManager = (transaction, options) => {
   const run = async (operation) => {
@@ -110,10 +102,19 @@ const buildManager = (transaction, options) => {
   };
 
   return {
-    getRepository: (entity) => ({ createQueryBuilder: () => builder(entity) }),
+    getRepository: (entity) => ({
+      createQueryBuilder: () => builder(entity),
+      create: (values) => ({ ...values }),
+      save: async (values) => (await run({ entity, kind: "insert", values, returning: "*" })).raw[0],
+    }),
     createQueryBuilder: () => builder(null),
   };
 };
+
+const outsideTransaction = () =>
+  jest.fn(() => {
+    throw new Error("a plan write must run inside its transaction");
+  });
 
 export const buildRatePlanStore = ({ plans = [], commitFailures = [], ...options } = {}) => {
   const store = { plans: plans.map((row) => ({ ...row })), events: [], attempts: [], version: 0 };
@@ -170,15 +171,9 @@ export const buildRatePlanStore = ({ plans = [], commitFailures = [], ...options
       commit(transaction);
       return result;
     }),
-    query: jest.fn(async () => {
-      throw new Error("a grant must not write outside its transaction");
-    }),
-    getRepository: jest.fn(() => {
-      throw new Error("a grant must not read outside its transaction");
-    }),
-    createQueryBuilder: jest.fn(() => {
-      throw new Error("a grant must not write outside its transaction");
-    }),
+    query: outsideTransaction(),
+    getRepository: outsideTransaction(),
+    createQueryBuilder: outsideTransaction(),
   };
 
   store.holdCommitsUntil = (count) => {

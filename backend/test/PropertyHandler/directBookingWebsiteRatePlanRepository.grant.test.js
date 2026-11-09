@@ -55,13 +55,15 @@ describe("DirectBookingWebsiteRatePlanRepository.grantElitePlan", () => {
 
   it("replaces the current plan with the grant and writes the audit row in the same transaction", async () => {
     const otherHost = planRow({ id: "plan-other", account_id: "host-2", plan: "elite", stripe_subscription_id: "sub_2" });
-    const store = buildRatePlanStore({ plans: [planRow(), otherHost] });
+    const history = planRow({ id: "plan-history", status: "CANCELLED" });
+    const store = buildRatePlanStore({ plans: [planRow(), otherHost, history] });
 
     const result = await repository.grantElitePlan(GRANT);
 
     expect(store.attempts).toHaveLength(1);
-    const [expired, untouched, granted] = store.plans;
-    expect(untouched).toEqual(otherHost);
+    const [expired, untouchedHost, untouchedHistory, granted] = store.plans;
+    expect(untouchedHost).toEqual(otherHost);
+    expect(untouchedHistory).toEqual(history);
     expect(expired).toMatchObject({ id: "plan-essentials", status: "EXPIRED", effective_until: DB_NOW, updated_at: DB_NOW });
     expect(granted).toMatchObject({
       account_id: "host-1",
@@ -165,6 +167,32 @@ describe("DirectBookingWebsiteRatePlanRepository.grantElitePlan", () => {
     expect(second.replacedPlans.map((plan) => plan.id)).toEqual([first.plan.id]);
     expect(store.plans.find((row) => row.id === first.plan.id)).toMatchObject({ status: "EXPIRED" });
     expect(store.events.map((event) => JSON.parse(event.payload_json).actorId)).toEqual(["admin-1", "admin-2"]);
+  });
+
+  it("refuses on the retry when a paid plan is activated at the same time", async () => {
+    const store = buildRatePlanStore({ plans: [planRow()] });
+    store.holdCommitsUntil(2);
+    const paid = {
+      accountId: "host-1",
+      plan: "elite",
+      priceCents: 4300,
+      currency: "EUR",
+      billingFrequency: "monthly",
+      status: "ACTIVE",
+      effectiveFrom: DB_NOW,
+      stripeSubscriptionId: "sub_1",
+    };
+
+    const [activation, grant] = await Promise.allSettled([
+      repository.activatePaidPlan(paid),
+      repository.grantElitePlan(GRANT),
+    ]);
+
+    expect(activation.status).toBe("fulfilled");
+    expect(grant.reason).toMatchObject({ code: "paid_plan_active" });
+    expect(store.attempts).toHaveLength(3);
+    expect(currentRowsOf(store)).toEqual([expect.objectContaining({ stripe_subscription_id: "sub_1" })]);
+    expect(store.events).toEqual([]);
   });
 
   it("answers conflict to the loser when the database reports the race as a unique violation", async () => {

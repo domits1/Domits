@@ -17,10 +17,7 @@ const request = (overrides = {}) => ({
 
 const cognitoUser = (username, group = "Host") => ({
   Username: username,
-  UserAttributes: [
-    { Name: "sub", Value: "sub-1" },
-    { Name: "custom:group", Value: group },
-  ],
+  UserAttributes: [{ Name: "custom:group", Value: group }],
 });
 
 const grantedRow = {
@@ -109,6 +106,7 @@ describe("DirectBookingWebsiteRatePlanService.grantElite", () => {
   it.each([
     ["no actor", { actorId: undefined }],
     ["a blank actor", { actorId: "   " }],
+    ["an actor id of 256 characters", { actorId: "a".repeat(256) }],
     ["no account id", { accountId: undefined }],
     ["a number as account id", { accountId: 42 }],
     ["an account id of 256 characters", { accountId: "h".repeat(256) }],
