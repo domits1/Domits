@@ -3,11 +3,7 @@ import { DirectBookingWebsiteRatePlanService } from "./directBookingWebsiteRateP
 export const SITE_PAGES_OVERRIDE_KEY = "sitePages";
 export const SITE_PAGES_ENTITLEMENT = "website.unlimited_pages";
 
-const hasSitePages = (overrides) =>
-  Boolean(overrides) &&
-  typeof overrides === "object" &&
-  !Array.isArray(overrides) &&
-  Object.hasOwn(overrides, SITE_PAGES_OVERRIDE_KEY);
+const hasSitePages = (overrides) => Boolean(overrides) && Object.hasOwn(overrides, SITE_PAGES_OVERRIDE_KEY);
 
 const withoutSitePages = (overrides) =>
   hasSitePages(overrides)
