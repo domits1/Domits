@@ -21,6 +21,7 @@ import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
 import { WebsiteCleanupService } from "../business/service/websiteCleanupService.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
+import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -1734,7 +1735,8 @@ export class PropertyController {
         domain,
         propertySnapshot = undefined,
         primaryDomain = null,
-        host = null
+        host = null,
+        contentOverrides = site?.publishedContentOverrides
     ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
@@ -1752,7 +1754,7 @@ export class PropertyController {
                     ? propertySnapshot
                     : site.publishedPropertySnapshot || {}
             ),
-            contentOverrides: site.publishedContentOverrides || {},
+            contentOverrides: contentOverrides || {},
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
@@ -3226,10 +3228,14 @@ export class PropertyController {
                 },
             });
 
-            const [propertySnapshot, primaryDomain, host] = await Promise.all([
+            const [propertySnapshot, primaryDomain, host, contentOverrides] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
                 this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
                 this.loadPublicWebsiteHostSafely(resolutionResult.site),
+                this.getWebsiteElitePageSettings().servePageSettingsForHost({
+                    hostId: resolutionResult.site.hostId,
+                    overrides: resolutionResult.site.publishedContentOverrides,
+                }),
             ]);
 
             return {
@@ -3240,7 +3246,8 @@ export class PropertyController {
                     resolutionResult.domain,
                     propertySnapshot,
                     primaryDomain,
-                    host
+                    host,
+                    contentOverrides
                 )),
             };
         } catch (error) {
@@ -3525,6 +3532,11 @@ export class PropertyController {
         return this.websitePublicHostService;
     }
 
+    getWebsiteElitePageSettings() {
+        this.websiteElitePageSettings ??= new WebsiteElitePageSettings(this.directBookingWebsiteRatePlanService);
+        return this.websiteElitePageSettings;
+    }
+
     async loadPublicWebsiteHostSafely(site) {
         try {
             return await this.getWebsitePublicHostService().loadPublicHost(site?.hostId);
@@ -3596,10 +3608,13 @@ export class PropertyController {
                 };
             }
 
-            const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
-                draft.propertyId,
-                { includeCalendarAvailability: true }
-            );
+            const [propertyDetails, servedDraft] = await Promise.all([
+                this.propertyService.getFullPropertyAttributesWithFullLocation(
+                    draft.propertyId,
+                    { includeCalendarAvailability: true }
+                ),
+                this.getWebsiteElitePageSettings().servePageSettingsOnDraft(draft),
+            ]);
 
             await this.recordStandaloneWebsiteEventSafely({
                 draftId: draft.id,
@@ -3615,7 +3630,7 @@ export class PropertyController {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify({
-                    draft,
+                    draft: servedDraft,
                     propertyDetails,
                 }),
             };
