@@ -3,6 +3,14 @@ const VERIFICATION_LABELS = Object.freeze({
   VERIFIED_STAY: "Verified stay",
 });
 
+export const FLAG_REASONS = {
+  INAPPROPRIATE_CONTENT: "Inappropriate content",
+  SUSPICIOUS_REVIEW: "Suspicious or potentially fraudulent review",
+  SPAM: "Spam",
+  POLICY_VIOLATION: "Policy violation",
+  OTHER: "Other",
+};
+
 export const getGuestInitials = (name) => {
   const parts = String(name ?? "")
     .trim()

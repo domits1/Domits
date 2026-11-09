@@ -11,7 +11,7 @@ import {
 } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
-export default function ReviewApprovalDetails({ review, approving, onApprove, onClose }) {
+export default function ReviewApprovalDetails({ review, approving, onApprove, onClose, onFlag }) {
   const submitted = formatSubmittedAt(review.created_at);
   const location = formatPropertyLocation(review);
   const verificationClassName = isVerifiedStatus(review.verification_status) ? styles.pillVerified : styles.pillNeutral;
@@ -86,6 +86,9 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
       </dl>
 
       <div className={styles.detailsActions}>
+        <button type="button" className={styles.secondaryButton} disabled={approving} onClick={() => onFlag(review)}>
+          Flag for review
+        </button>
         <button
           type="button"
           className={`${styles.approveButton} ${styles.approveButtonLarge}`}

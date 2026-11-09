@@ -199,11 +199,16 @@
   cursor: default;
 }
 
-.tab:disabled {
+.tab[aria-selected="false"] {
   border-bottom-color: transparent;
   color: var(--approval-muted);
   font-weight: 500;
+  cursor: pointer;
+}
+
+.tab:disabled {
   opacity: 0.7;
+  cursor: default;
 }
 
 .notice {
@@ -620,9 +625,42 @@
 }
 
 .detailsActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: 12px;
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--approval-border);
+}
+
+.flagDialog {
+  width: min(440px, calc(100% - 32px));
+  padding: 24px;
+  border: 1px solid var(--approval-border);
+  border-radius: var(--approval-radius);
+  color: var(--approval-text);
+}
+
+.flagDialog::backdrop {
+  background: rgb(16 20 38 / 50%);
+}
+
+.flagDialog label,
+.flagStatus {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  font-weight: 600;
+}
+
+.flagStatus {
+  width: max-content;
+}
+
+.moderationTable details {
+  max-width: 44ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .stateCard {

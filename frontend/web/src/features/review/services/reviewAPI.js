@@ -35,6 +35,22 @@ export const getPendingApprovalReviews = async () => {
   return Array.isArray(payload) ? payload : [];
 };
 
+const requestModeration = async (method, fallback, query = {}, body) => {
+  const response = await requestReview(method, { ...query, scope: "moderation" }, body);
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, fallback);
+  return payload;
+};
+
+export const getReviewFlags = (query) =>
+  requestModeration("GET", "Could not load the moderation queue.", query);
+
+export const flagReview = (reviewId, reason, notes) =>
+  requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });
+
+export const resolveReviewFlag = (flagId) =>
+  requestModeration("PATCH", "Could not resolve this flag.", {}, { flag_id: flagId });
+
 // updatedAt is the version the admin saw; the backend refuses the approval if the review changed since.
 export const approveReview = async (reviewId, updatedAt) => {
   const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/approve`, {
@@ -156,7 +172,7 @@ export const updateReview = async ({
 };
 
 // Fetch written or received reviews
-export const requestReview = async (method = "GET", query = {}) => {
+export const requestReview = async (method = "GET", query = {}, body) => {
   const token = await getIdToken();
 
   const { reviewId, ...parameters } = query;
@@ -174,7 +190,9 @@ export const requestReview = async (method = "GET", query = {}) => {
       method,
       headers: {
         Authorization: token,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }
   );
 };

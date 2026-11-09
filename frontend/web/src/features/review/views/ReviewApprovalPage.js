@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ListFilter, Search } from "lucide-react";
 import ReviewApprovalTable from "../components/ReviewApprovalTable";
 import ReviewApprovalDetails from "../components/ReviewApprovalDetails";
+import ReviewFlagDialog from "../components/ReviewFlagDialog";
+import ReviewModerationQueue from "../components/ReviewModerationQueue";
 import useReviewApprovalQueue, { QUEUE_STATE } from "../hooks/useReviewApprovalQueue";
 import { matchesReviewSearch } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
@@ -66,6 +68,9 @@ export default function ReviewApprovalPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(FOLLOW_FIRST);
+  const [showModeration, setShowModeration] = useState(false);
+  const [flagTarget, setFlagTarget] = useState(null);
+  const [flagNotice, setFlagNotice] = useState("");
 
   const visibleReviews = useMemo(
     () => reviews.filter((review) => matchesReviewSearch(review, query) && matchesRating(review, rating)),
@@ -108,7 +113,7 @@ export default function ReviewApprovalPage() {
   const emptyMessage = reviews.length
     ? "No pending reviews match your search."
     : "No reviews are waiting for approval.";
-  const layoutClassName = selectedReview ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
+  const layoutClassName = selectedReview && !showModeration ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
   const closeDetails = () => setSelectedId(CLOSED);
 
   return (
@@ -120,7 +125,7 @@ export default function ReviewApprovalPage() {
             Manage guest reviews, approve eligible reviews and ensure quality content on Domits.
           </p>
         </div>
-        <div className={styles.toolbar}>
+        {!showModeration && <div className={styles.toolbar}>
           <label className={styles.search}>
             <Search size={18} aria-hidden="true" />
             <input
@@ -153,7 +158,7 @@ export default function ReviewApprovalPage() {
               </select>
             </div>
           </div>
-        </div>
+        </div>}
       </header>
 
       {notice && (
@@ -171,9 +176,15 @@ export default function ReviewApprovalPage() {
               type="button"
               role="tab"
               id="pending-tab"
-              aria-selected="true"
+              aria-selected={!showModeration}
               aria-controls="pending-panel"
-              className={styles.tab}>
+              className={styles.tab}
+              onClick={() => {
+                if (!showModeration) return;
+                setShowModeration(false);
+                setFlagNotice("");
+                retry();
+              }}>
               {`Pending approval (${reviews.length})`}
             </button>
             {["Published", "Rejected", "All reviews"].map((label) => (
@@ -188,8 +199,15 @@ export default function ReviewApprovalPage() {
                 {label}
               </button>
             ))}
+            <button type="button" role="tab" id="moderation-tab" aria-selected={showModeration}
+              aria-controls="moderation-panel" className={styles.tab} onClick={() => setShowModeration(true)}>
+              Moderation queue
+            </button>
           </div>
-          <section id="pending-panel" role="tabpanel" aria-labelledby="pending-tab">
+          {showModeration ? <>
+            {flagNotice && <p role="status" className={`${styles.notice} ${styles.noticeSuccess}`}>{flagNotice}</p>}
+            <ReviewModerationQueue />
+          </> : <section id="pending-panel" role="tabpanel" aria-labelledby="pending-tab">
             {pageReviews.length ? (
               <>
                 <div className={styles.tableCard}>
@@ -212,18 +230,25 @@ export default function ReviewApprovalPage() {
             ) : (
               <p className={styles.emptyState}>{emptyMessage}</p>
             )}
-          </section>
+          </section>}
         </div>
 
-        {selectedReview && (
+        {selectedReview && !showModeration && (
           <ReviewApprovalDetails
             review={selectedReview}
             approving={approvingIds.has(selectedReview.id)}
             onApprove={approve}
+            onFlag={setFlagTarget}
             onClose={closeDetails}
           />
         )}
       </div>
+      {flagTarget && <ReviewFlagDialog review={flagTarget} onClose={() => setFlagTarget(null)}
+        onFlagged={(review) => {
+          setFlagTarget(null);
+          setFlagNotice(`“${review.title}” was flagged for manual review.`);
+          setShowModeration(true);
+        }} />}
     </main>
   );
 }
