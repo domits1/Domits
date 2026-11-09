@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { Auth } from "aws-amplify";
-import { LanguageContext } from "../../../../../context/LanguageContext";
+import { LanguageContext } from "../../../../context/LanguageContext";
 import HostNotificationMatrix from "./HostNotificationMatrix";
 import {
     cloneDefaultHostNotificationPreferences,
@@ -12,7 +12,7 @@ import {
 import {
     fetchHostNotificationPreferences,
     saveHostNotificationPreferences,
-} from "../../../../../components/settings/api/communicationPreferences";
+} from "../../../../components/settings/api/communicationPreferences";
 
 jest.mock("aws-amplify", () => ({
     Auth: {
@@ -20,7 +20,7 @@ jest.mock("aws-amplify", () => ({
     },
 }));
 
-jest.mock("../../../../../components/settings/api/communicationPreferences", () => ({
+jest.mock("../../../../components/settings/api/communicationPreferences", () => ({
     fetchHostNotificationPreferences: jest.fn(),
     saveHostNotificationPreferences: jest.fn(),
 }));
