@@ -183,7 +183,8 @@ const HostNotificationMatrix = () => {
     const [canAccessEngineering, setCanAccessEngineering] = useState(false);
     const [engineeringAccessChecked, setEngineeringAccessChecked] = useState(false);
 
-    const language = copyByLanguage[selectedLanguage] ? selectedLanguage : "en";
+    const normalizedLanguage = String(selectedLanguage || "en").slice(0, 2).toLowerCase();
+    const language = copyByLanguage[normalizedLanguage] ? normalizedLanguage : "en";
     const t = copyByLanguage[language];
 
     const activePath = location.pathname.startsWith(BASE_PATH)
