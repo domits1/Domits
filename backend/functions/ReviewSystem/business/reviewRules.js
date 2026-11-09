@@ -1,8 +1,7 @@
-import { BadRequestException } from "../../util/exception/badRequestException.js";
-import { ForbiddenException } from "../../util/exception/forbiddenException.js";
-import { NotFoundException } from "../../util/exception/notFoundException.js";
-import { ConflictException } from "../../util/exception/conflictException.js";
-import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
+import { ForbiddenException } from "../util/exception/forbiddenException.js";
+import { NotFoundException } from "../util/exception/notFoundException.js";
+import { ConflictException } from "../util/exception/conflictException.js";
 
 export const isPublished = (review) => review.status === "PUBLISHED" && review.publication_status === "PUBLISHED";
 
@@ -36,24 +35,3 @@ export const assertHostResponseAccess = (review, userId) => {
   }
   if (!isPublished(review)) throw new ConflictException("Responses require a published review.");
 };
-
-// eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
-export const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
-
-export function assertCaller(userId) {
-  if (typeof userId !== "string" || !userId.trim()) throw new UnauthorizedException("An authenticated caller is required.");
-}
-
-export function assertId(value, name) {
-  if (typeof value !== "string" || !value.trim() || value.trim().length > 255) {
-    throw new BadRequestException(`A valid ${name} is required.`);
-  }
-}
-
-
-export async function requireReview(repository, reviewId) {
-  assertId(reviewId, "review ID");
-  const review = await repository.findById(reviewId.trim());
-  if (!review || ["DELETED", "REJECTED"].includes(review.status)) throw new NotFoundException("Review not found.");
-  return review;
-}
