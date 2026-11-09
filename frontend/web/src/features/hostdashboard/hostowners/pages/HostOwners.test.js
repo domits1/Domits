@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { toast } from "react-toastify";
+import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
@@ -65,9 +66,11 @@ const deferred = () => {
 
 const renderPage = (language = "en") =>
   render(
-    <LanguageContext.Provider value={{ language, setLanguage: jest.fn() }}>
-      <HostOwners />
-    </LanguageContext.Provider>
+    <MemoryRouter>
+      <LanguageContext.Provider value={{ language, setLanguage: jest.fn() }}>
+        <HostOwners />
+      </LanguageContext.Provider>
+    </MemoryRouter>
   );
 
 describe("HostOwners", () => {

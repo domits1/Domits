@@ -393,3 +393,142 @@ $host-owners-error-bg: #fff5f5;
   padding: 1rem clamp(1rem, 3vw, 1.5rem);
   border-top: 1px solid $border;
 }
+
+.host-owners-name {
+  color: inherit;
+  text-decoration: underline;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-back-link {
+  align-self: flex-start;
+  color: $green-dark;
+  font-weight: 600;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owner-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.host-owner-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.host-owner-detail-heading {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+}
+
+.host-owner-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.host-owner-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+
+  dt {
+    color: $muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.host-owner-detail-notes {
+  white-space: pre-wrap;
+}
+
+.host-owner-detail .confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 3vw, 1.5rem);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.host-owner-detail .confirm-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(100%, 26rem);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  background: #fff;
+  color: $text;
+  text-align: center;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  p {
+    color: $muted;
+  }
+}
+
+.host-owner-detail .confirm-modal-icon {
+  color: $host-owners-error;
+  font-size: 2rem;
+}
+
+.host-owner-detail .confirm-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+
+  button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $green-dark;
+      outline-offset: 2px;
+    }
+  }
+
+  .btn-text {
+    border: 1px solid $border;
+    background: transparent;
+    color: $text;
+  }
+
+  .btn-danger {
+    border: 1px solid $host-owners-error;
+    background: $host-owners-error;
+    color: #fff;
+  }
+}

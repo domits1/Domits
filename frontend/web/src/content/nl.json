@@ -2010,6 +2010,27 @@
         "archivedStatus": "Een eigenaar kan alleen via archiveren worden gearchiveerd.",
         "companyNameRequired": "Een bedrijfsnaam is verplicht voor een bedrijf of trust."
       }
+    },
+    "detail": {
+      "backToOwners": "Terug naar eigenaren",
+      "loading": "Eigenaar laden…",
+      "errorNotFound": "Deze eigenaar bestaat niet of is niet een van jouw eigenaren.",
+      "errorGeneric": "We konden deze eigenaar niet laden. Probeer het opnieuw.",
+      "detailsTitle": "Gegevens",
+      "notProvided": "Niet ingevuld",
+      "labels": {
+        "created_at": "Aangemaakt",
+        "updated_at": "Laatst gewijzigd"
+      },
+      "archive": "Archiveren",
+      "archiving": "Archiveren…",
+      "restore": "Herstellen",
+      "restoring": "Herstellen…",
+      "archiveConfirmTitle": "Deze eigenaar archiveren?",
+      "archiveConfirmMessage": "{name} wordt verborgen in je lijst met eigenaren. Je kunt deze eigenaar later herstellen.",
+      "archivedToast": "{name} is gearchiveerd.",
+      "restoredToast": "{name} is hersteld.",
+      "archiveBlocked": "{name} kan nog niet worden gearchiveerd, omdat deze eigenaar nog huidige of toekomstige eigendomsaandelen heeft. Haal {name} eerst uit de aandelen van die accommodaties en archiveer daarna opnieuw."
     }
   }
 }

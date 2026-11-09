@@ -2010,6 +2010,27 @@
         "archivedStatus": "Un propietario solo se puede archivar con la acción de archivar.",
         "companyNameRequired": "El nombre de la empresa es obligatorio para una empresa o un fideicomiso."
       }
+    },
+    "detail": {
+      "backToOwners": "Volver a propietarios",
+      "loading": "Cargando propietario…",
+      "errorNotFound": "Este propietario no existe o no es uno de tus propietarios.",
+      "errorGeneric": "No pudimos cargar este propietario. Inténtalo de nuevo.",
+      "detailsTitle": "Datos",
+      "notProvided": "Sin indicar",
+      "labels": {
+        "created_at": "Creado",
+        "updated_at": "Última modificación"
+      },
+      "archive": "Archivar",
+      "archiving": "Archivando…",
+      "restore": "Restaurar",
+      "restoring": "Restaurando…",
+      "archiveConfirmTitle": "¿Archivar este propietario?",
+      "archiveConfirmMessage": "{name} se ocultará de tu lista de propietarios. Puedes restaurar este propietario más adelante.",
+      "archivedToast": "{name} se ha archivado.",
+      "restoredToast": "{name} se ha restaurado.",
+      "archiveBlocked": "{name} todavía no se puede archivar, porque este propietario aún tiene participaciones de propiedad actuales o futuras. Primero quita a {name} de las participaciones de esos alojamientos y después vuelve a archivar."
     }
   }
 }
