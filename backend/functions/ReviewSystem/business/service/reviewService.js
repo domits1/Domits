@@ -48,6 +48,7 @@ export class ReviewService {
   #hostReviewService;
   #domitsAdminReviewService;
 
+  // Return a paginated public review summary for a property.
   async getPublicReviews(propertyId, offset = "0") {
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       throw new BadRequestException("A property ID is required.");
@@ -81,46 +82,57 @@ export class ReviewService {
         : 0;
   }
 
+  // Create, edit, or publish a host response through the host review service.
   async saveHostResponse(user, reviewId, body, action) {
     return this.#hostReviewService.saveHostResponse(user, reviewId, body, action);
   }
 
+  // List reviews for which the identified host may submit a response.
   async getResponseEligibleReviews(username) {
     return this.#hostReviewService.getResponseEligibleReviews(username);
   }
 
+  // Verify access to a managed property before returning host-only data.
   async authorizeManagedProperty(callerUserId, propertyId) {
     return this.#hostReviewService.authorizeManagedProperty(callerUserId, propertyId);
   }
 
+  // Return rating trends and history for the identified host's properties.
   async getPropertyRatingTrends(username, query) {
     return this.#hostReviewService.getPropertyRatingTrends(username, query);
   }
 
+  // Return review performance metrics for a managed property and date range.
   async getPropertyReviewPerformance(userId, propertyId, query) {
     return this.#hostReviewService.getPropertyReviewPerformance(userId, propertyId, query);
   }
 
+  // Return category-level review ratings for a managed property.
   async getPropertyCategoryRatings(userId, propertyId) {
     return this.#hostReviewService.getPropertyCategoryRatings(userId, propertyId);
   }
 
+  // Return the aggregate review score for a managed property.
   async getPropertyReviewScore(userId, propertyId) {
     return this.#hostReviewService.getPropertyReviewScore(userId, propertyId);
   }
 
+  // Remove a host response while enforcing the host identity and review access rules.
   async deleteReviewResponse(user, reviewId) {
     return this.#hostReviewService.deleteReviewResponse(user, reviewId);
   }
 
+  // Validate that the caller has the verified host identity required for response actions.
   assertHostResponseIdentity(user) {
     return this.#hostReviewService.assertHostResponseIdentity(user);
   }
 
+  // Return private feedback only when the configured access policy allows it.
   async getPrivateFeedback(userId, reviewId) {
     return this.#domitsAdminReviewService.getPrivateFeedback(userId, reviewId);
   }
 
+  // Calculate the edit-window deadline for a review, or zero when editing is unavailable.
   editDeadline(review) {
     const createdAt = Number(review.created_at);
     const deadline = createdAt + this.editWindowMs;
@@ -128,6 +140,7 @@ export class ReviewService {
       && Number.isSafeInteger(deadline) ? deadline : 0;
   }
 
+  // Load a review that the caller may still edit within the configured edit window.
   async getEditableReview(callerUserId, reviewId) {
     this.assertCaller(callerUserId);
     if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
@@ -149,6 +162,7 @@ export class ReviewService {
       public_review: review.public_review, updated_at: Number(review.updated_at) };
   }
 
+  // Update an unpublished review using its version to reject stale edits.
   async updateEditableReview(callerUserId, reviewId, data) {
     const review = await this.getEditableReview(callerUserId, reviewId);
     const allowed = new Set(["overall_rating", "public_review", "updated_at"]);
@@ -195,8 +209,7 @@ export class ReviewService {
       }));
   }
 
-  // Remove a review only when it still belongs to the caller.
-  // This prevents accidental deletion of someone else's record while preserving the soft-delete audit trail.
+  // Remove a review only when it still belongs to the caller, preserving the soft-delete audit trail.
   async deleteReview(callerUserId, reviewId) {
     this.assertCaller(callerUserId);
     this.assertId(reviewId, "review ID");
@@ -211,8 +224,7 @@ export class ReviewService {
     if (result.affected !== 1) throw new NotFoundException("Review not found.");
   }
 
-  // Return the published review feed for a property.
-  // This powers the public listing page without exposing private feedback or unreleased drafts.
+  // Return published reviews and published host responses for a property.
   async getPublicPropertyReviews(propertyId, query = {}) {
     this.assertId(propertyId, "property ID");
     for (const key of ["limit", "offset"]) {
@@ -236,8 +248,7 @@ export class ReviewService {
     }));
   }
 
-  // Fetch one review with the required visibility rules.
-  // This lets the caller read their own review or a published review without revealing hidden content.
+  // Fetch one review while hiding unpublished reviews from users who did not write them.
   async getReviewById(userId, reviewId) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
@@ -247,8 +258,7 @@ export class ReviewService {
     return toReviewView(review);
   }
 
-  // Update an unpublished draft review safely.
-  // This lets the guest refine their draft while preventing edits after publication or conflicting changes.
+  // Update allowed fields on the caller's unpublished draft and reject stale edits.
   async updateReview(userId, reviewId, changes) {
     this.assertCaller(userId);
     this.assertObject(changes);
@@ -287,8 +297,7 @@ export class ReviewService {
     return toReviewView(updated);
   }
 
-  // Publish a draft review when the reservation is still valid.
-  // This finalizes the guest review only after the booking checks and authorization rules confirm it is eligible.
+  // Require the caller to be an allowlisted administrator.
   assertAdministrator(userId, username) {
     this.assertCaller(userId);
     const admins = String(process.env.PROPERTY_REVIEW_ADMIN_USER_IDS || "").split(/[,\s;]+/).filter(Boolean);
@@ -297,6 +306,7 @@ export class ReviewService {
     }
   }
 
+  // Require both an allowlisted administrator identity and an active review-approver role.
   // Any host can create team_member rows, so a role alone does not prove Domits staff.
   // The allowlist establishes that; the role narrows which staff may approve.
   async assertReviewApprover(userId, username, manager) {
@@ -307,11 +317,13 @@ export class ReviewService {
     }
   }
 
+  // List unpublished reviews awaiting moderation for an authorized approver.
   async getPendingReviews(userId, username) {
     await this.assertReviewApprover(userId, username);
     return (await this.repository.findPendingReviews()).map(toReviewView);
   }
 
+  // Approve a pending review only if its version and booking eligibility remain valid.
   async approveReview(userId, username, reviewId, version) {
     await this.assertReviewApprover(userId, username);
     if (!Number.isSafeInteger(version) || version < 0 || version >= Number.MAX_SAFE_INTEGER) {
@@ -324,6 +336,7 @@ export class ReviewService {
     }, version);
   }
 
+  // Validate and persist an authorized transition in a review's publication state.
   async changePublicationState(review, from, to, authorize, version = review.updated_at) {
     if (review.status !== from || review.publication_status !== "UNPUBLISHED") {
       throw new ConflictException("Review cannot transition in its current state.");
@@ -343,6 +356,7 @@ export class ReviewService {
     return toReviewView(result);
   }
 
+  // Submit a guest draft for moderation or publish an approved review.
   async publishReview(userId, reviewId, username) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
@@ -359,6 +373,7 @@ export class ReviewService {
       review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
   }
 
+  // Ensure the booking still matches the review and is eligible for publication.
   assertPublicationBooking(booking, review, now) {
     assertEligibleBooking(booking, review.reviewer_user_id, now);
     if (String(booking.property_id) !== String(review.property_id) || String(booking.hostid) !== String(review.host_id)) {
@@ -366,24 +381,27 @@ export class ReviewService {
     }
   }
 
+  // Load a review by ID, raising the standard not-found error when absent.
   async requireReview(reviewId) {
     return requireReview(this.repository, reviewId);
   }
 
+  // Validate that a user ID is present and usable for a caller-facing operation.
   assertCaller(userId) {
     assertCaller(userId);
   }
 
+  // Validate an identifier using the shared review rules.
   assertId(value, name) {
     assertId(value, name);
   }
 
+  // Require request data to be a non-array JSON object.
   assertObject(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new BadRequestException("Request body must be a JSON object.");
   }
 
-  // Create a new guest review for a completed reservation.
-  // This enforces booking eligibility and prevents duplicate or invalid review submissions.
+  // Create a guest review after verifying reservation ownership, checkout, and review eligibility.
   async createReview(callerUserId, reviewData) {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("An authenticated caller is required.");
@@ -462,6 +480,7 @@ export class ReviewService {
     }
   }
 
+  // Validate review fields and return the normalized public review text.
   validateReviewPayload(reviewData) {
     if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
       throw new BadRequestException("Request body must be a review object");
