@@ -73,6 +73,7 @@ const getClaimRoles = (claims = {}) => [
 export const hasHostNotificationAccess = (claims = {}) => {
   const allowedRoles = [
     "host",
+    "staff",
     "admin",
     "engineer",
     "general manager",
