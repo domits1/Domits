@@ -15,12 +15,12 @@ The most important finding is the direction of the calls. Per SiteMinder's docum
 
 | Data | Direction in SiteConnect | Direction in Channex | Direction in pmsXchange (built) |
 |---|---|---|---|
-| Rooms and rates (what the channel sells) | SiteMinder retrieves them from Domits (who starts the call is not stated) | Domits sends | not used |
+| Rooms and rates (what the channel sells) | SiteMinder calls Domits for them, and does so first (quick start, step 3) | Domits sends | not used |
 | Availability and restrictions | SiteMinder pushes to Domits | Domits pushes | Domits pushes |
 | Rates | SiteMinder pushes to Domits | Domits pushes | not built |
 | Reservations (new, modified, cancelled) | Domits pushes to SiteMinder | Channex sends, Domits pulls | not built |
 
-So in SiteConnect Domits has to run a SOAP endpoint that SiteMinder calls, and it sends reservations out. The issue text says the opposite in sections 6.4 and 6.5 ("transmit rates and availability from Domits to SiteMinder", "receive reservations"). The issue should be corrected after SiteMinder confirms the flow.
+So in SiteConnect Domits has to run a SOAP endpoint that SiteMinder calls, and it sends reservations out. The issue text says the opposite in sections 6.4 and 6.5 ("transmit rates and availability from Domits to SiteMinder", "receive reservations"). SiteMinder's quick start agrees with the direction above: the channel builds a Rooms and Rates endpoint and the inventory operations, and pushes reservations to SiteMinder's reservation endpoint. The issue should be corrected once SiteMinder's Partner Integrations team confirms it for Domits.
 
 ## 2. What SiteMinder requires (from their public guides)
 
@@ -103,13 +103,14 @@ For the Domits team:
 
 ## 6. Proposed order of work
 
-1. Contact SiteMinder's Partner Integrations team with the questions in section 4. This has the longest lead time and gates everything else.
-2. Correct the issue text for the flow direction once SiteMinder answers.
-3. Decision records for the four Domits-side questions in section 4.
-4. A thin end-to-end slice, riskiest part first: the endpoint accepts a signed `OTA_HotelAvailNotifRQ`, validates it, answers `<Success/>`, and queues the work. No calendar writes yet.
-5. Mapping and the calendar write path.
-6. Reservation push, modifications and cancellations.
-7. Monitoring, load test, certification.
+1. Apply to SiteMinder (`siteminder.com/integrations/apply-now`) and send them the questions in section 4. This has the longest lead time and gates the test account.
+2. Correct the issue text for the flow direction once SiteMinder confirms it.
+3. Decision records for the four Domits-side questions in section 4, and the rule that turns one property into two room types with two rate plans each (SiteMinder question 1 and the matching Domits decision). Step 4 waits for this rule.
+4. The Rooms and Rates endpoint first, because SiteMinder calls it first: SOAP 1.1, WS-Security UsernameToken check (error 448), `HotelCode` check (error 392), and two room types with two rate plans each. Build it against the WSDL linked from the quick start and check it with SiteMinder's Postman collection, before the test account exists. Confirm that both links open before relying on them.
+5. Inbound availability, restrictions and rates: authenticate, validate, answer `<Success/>` at once, queue the work. No calendar writes yet.
+6. The calendar write path and the mapping.
+7. Reservation push, modifications and cancellations (scenario 5).
+8. Error handling (scenario 6), monitoring, load test if required, then certification.
 
 ## 7. Not in scope here
 
