@@ -90,6 +90,7 @@ const RESERVED_SITE_PATH_SEGMENT_SET = new Set(RESERVED_SITE_PATH_SEGMENTS);
 const SITE_PAGE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const UNSAFE_NAV_LABEL_PATTERN = /[<>\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
 const WHITESPACE_RUN_PATTERN = /\s+/g;
+const SAFE_BASE_PATH_SEGMENT_PATTERN = /^[\w.~%-]+$/;
 
 const CONFIGURABLE_SITE_PAGES = SITE_PAGE_DEFINITIONS.filter((page) => page.key !== MAIN_SITE_PAGE_KEY);
 
@@ -150,7 +151,9 @@ export const resolveSitePageFromPath = (pathname, sitePages) => {
 
 export const buildSitePageHref = (basePath, pageKey) => {
   const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
-  const segments = splitPathSegments(basePath);
+  const baseSegments = splitPathSegments(basePath);
+  const isSafeBasePath = baseSegments.every((segment) => SAFE_BASE_PATH_SEGMENT_PATTERN.test(segment));
+  const segments = isSafeBasePath ? baseSegments : [];
   return `/${(page ? [...segments, page.slug] : segments).join("/")}`;
 };
 

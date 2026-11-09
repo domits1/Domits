@@ -325,11 +325,26 @@ describe("buildSitePageHref", () => {
     ["/website-live/example.com", "accommodation", "/website-live/example.com/accommodation"],
     ["/website-live/example.com/", "main", "/website-live/example.com"],
     ["//example.org", "gallery", "/example.org/gallery"],
+    ["\\evil.example", "gallery", "/gallery"],
+    ["/\\evil.example/", "main", "/"],
+    ["\t/evil.example", "gallery", "/gallery"],
+    ["/website-live/\nevil.example", "contact", "/contact-us"],
+    ["/website-live/a b", "gallery", "/gallery"],
     ["", "experiences", "/"],
     ["", "constructor", "/"],
     [undefined, "gallery", "/gallery"],
   ])("builds the link from %p for %s as %s", (basePath, pageKey, href) => {
     expect(buildSitePageHref(basePath, pageKey)).toBe(href);
+  });
+
+  it("never builds a link that leaves the site", () => {
+    ["\\evil.example", "\t/evil.example", "/\n/evil.example", "//evil.example", "/website-live/\\evil.example"].forEach(
+      (basePath) => {
+        const href = buildSitePageHref(basePath, "gallery");
+
+        expect(new URL(href, "https://villa.example").origin).toBe("https://villa.example");
+      }
+    );
   });
 
   it("builds a link that opens the same page again", () => {
