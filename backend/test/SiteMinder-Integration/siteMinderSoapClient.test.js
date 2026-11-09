@@ -54,6 +54,13 @@ describe("SiteMinderSoapClient", () => {
     expect(error.message).toBe("Authentication failed");
   });
 
+  test("does not retry a SOAP fault, even when it comes with status 500", async () => {
+    const error = await client(answer(500, FAULT)).send("<X/>").catch((e) => e);
+
+    expect(error.errors[0].type).toBe("SoapFault");
+    expect(error.retryable).toBe(false);
+  });
+
   test("marks a 5xx without an OTA answer as retryable", async () => {
     const error = await client(answer(503, "Service Unavailable")).send("<X/>").catch((e) => e);
 

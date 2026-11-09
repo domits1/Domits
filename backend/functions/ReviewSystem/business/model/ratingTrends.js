@@ -1,4 +1,4 @@
-import { BadRequestException } from "../util/exception/badRequestException.js";
+import { BadRequestException } from "../../util/exception/badRequestException.js";
 
 export const TREND_PAGE_SIZE = 25;
 const DAY_MS = 86_400_000;
