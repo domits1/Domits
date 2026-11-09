@@ -35,6 +35,7 @@ import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
+import { WebsitePlanGrantError } from "../util/exception/WebsitePlanGrantError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -60,6 +61,7 @@ const draftResponseHeaders = {
 };
 
 const reviewReadResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
+const websitePlanAdminResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
 
 const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_BUILD_STARTED",
@@ -3925,6 +3927,69 @@ export class PropertyController {
                 body: JSON.stringify({ message: error.message || "Unable to process Stripe webhook." }),
             };
         }
+    }
+
+    async grantWebsiteRatePlan(event) {
+        try {
+            const actorId = await this.authorizeWebsitePlanAdmin(event);
+            const body = this.readWebsitePlanAdminBody(event);
+            const result = await this.directBookingWebsiteRatePlanService.grantElite({
+                actorId,
+                accountId: body.accountId,
+                effectiveUntil: body.effectiveUntil,
+                reason: body.reason,
+            });
+            console.info(
+                JSON.stringify({
+                    event: "website_plan_grant",
+                    action: result.action,
+                    actorId,
+                    accountId: result.plan.accountId,
+                    planId: result.plan.id,
+                    effectiveUntil: result.plan.effectiveUntil,
+                })
+            );
+            return { statusCode: 200, headers: websitePlanAdminResponseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.websitePlanAdminErrorResponse(error);
+        }
+    }
+
+    async authorizeWebsitePlanAdmin(event) {
+        try {
+            return await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
+        } catch (error) {
+            if (error instanceof Forbidden) {
+                throw new Forbidden("You are not allowed to grant website plans.");
+            }
+            throw error;
+        }
+    }
+
+    readWebsitePlanAdminBody(event) {
+        let body;
+        try {
+            body = JSON.parse(event.body || "{}");
+        } catch {
+            throw new TypeException("Request body must be valid JSON.");
+        }
+        if (!isPlainObject(body)) {
+            throw new TypeException("Request body must be a JSON object.");
+        }
+        return body;
+    }
+
+    websitePlanAdminErrorResponse(error) {
+        console.error(error);
+        const hasStatusCode = Boolean(error?.statusCode);
+        return {
+            statusCode: hasStatusCode ? error.statusCode : 500,
+            headers: websitePlanAdminResponseHeaders,
+            body: JSON.stringify({
+                message: hasStatusCode ? error.message : "Something went wrong, please contact support.",
+                ...(error instanceof WebsitePlanGrantError ? { code: error.code } : {}),
+            }),
+        };
     }
 
 
