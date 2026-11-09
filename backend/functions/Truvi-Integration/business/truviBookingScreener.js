@@ -1,6 +1,9 @@
 import { DEFAULT_CHANNEL } from "../util/truviMapper.js";
 
-const isRetryableError = (error) => !error || error.status === null || error.status === undefined || error.status >= 500;
+const RETRYABLE_CLIENT_STATUSES = new Set([401, 403, 408, 429]);
+
+const isRetryableError = (error) =>
+  !error || error.status === null || error.status === undefined || error.status >= 500 || RETRYABLE_CLIENT_STATUSES.has(error.status);
 
 export class TruviBookingScreener {
   constructor({ bookingRepository, screeningService, assessmentRepository, contactLookup, extendedAmount }) {

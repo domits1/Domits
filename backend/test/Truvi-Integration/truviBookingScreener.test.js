@@ -97,6 +97,20 @@ describe("TruviBookingScreener", () => {
     expect(summary.retryLater).toBe(1);
   });
 
+  it.each([401, 403, 408, 429])(
+    "does not save a %p, because it is about the key, the time or the rate limit and not about this booking",
+    async (status) => {
+      const { screener, assessmentRepository } = build({
+        screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status, message: "no" } }),
+      });
+
+      const summary = await screener.run({ now: 1000 });
+
+      expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
+      expect(summary.retryLater).toBe(1);
+    }
+  );
+
   it("saves an ERROR when Truvi rejects the request, so it is not sent again every run", async () => {
     const { screener, assessmentRepository } = build({
       screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status: 400, message: "bad" } }),
