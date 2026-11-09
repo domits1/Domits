@@ -3849,7 +3849,10 @@ export class PropertyController {
         try {
             const accessToken = event.headers?.Authorization || event.headers?.authorization;
             const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
-            const plan = await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
+            const wantsEntitlementsOnly = event.queryStringParameters?.view === "entitlements";
+            const plan = wantsEntitlementsOnly
+                ? await this.directBookingWebsiteRatePlanService.getCurrentEntitlements(hostId)
+                : await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
             return {
                 statusCode: 200,
                 headers: responseHeaders,
