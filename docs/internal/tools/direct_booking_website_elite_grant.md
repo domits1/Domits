@@ -15,7 +15,7 @@ The route is reachable only after the API Gateway steps at the end of this page.
 
 ## Request
 
-Headers: `Authorization` with the admin's Cognito access token (the same value the host dashboard sends), and `Content-Type: application/json`.
+Headers: `Authorization` with the admin's Cognito access token as it is, without `Bearer ` (the same value the host dashboard sends), and `Content-Type: application/json`. A value that Cognito cannot read as a token answers `500` instead of `401`.
 
 | Field | Rule |
 | --- | --- |
@@ -27,7 +27,7 @@ Other fields are ignored.
 
 ## Answers
 
-Every answer is JSON with `Cache-Control: no-store`.
+Every answer to this POST is JSON with `Cache-Control: no-store`.
 
 | Status | Body | When |
 | --- | --- | --- |
@@ -50,9 +50,9 @@ One database transaction:
 2. a new row: `elite`, price 0, `ACTIVE`, no Stripe ids, ending at `effectiveUntil`;
 3. one `standalone_site_event` row of type `WEBSITE_PLAN_GRANTED` for the host, with the admin, the new plan id, the replaced plan ids, the end date and the reason.
 
-If any step fails, nothing is written. A grant for a host who already has a grant replaces it, and the new end date holds, also when it is earlier. The Lambda logs one `website_plan_grant` line with the admin, the host, the plan id and the end date; the reason stays in the audit row only.
+If any step fails, nothing is written. A grant for a host who already has a grant replaces it, and the new end date holds, also when it is earlier. The Lambda logs one `website_plan_grant` line with the admin, the host, the plan id and the end date, without the reason. A failed database write can log the query with its values, the reason included, so keep personal details out of the reason.
 
-If the call times out or answers `500` after it reached the database, the grant may be in. Granting again is safe: it answers `extended` and writes a second audit row.
+If the call times out or answers `500` after it reached the database, the grant may be in. Sending the same call again is safe: it answers `extended` and writes a second audit row if the first grant went in, and `granted` if it did not. Either way the host has one current plan.
 
 ## When a grant ends
 
@@ -103,10 +103,10 @@ export AWS_PROFILE=domits AWS_REGION=eu-north-1 API=wkmwpwurbc
    aws apigateway get-integration-response --rest-api-id $API --resource-id $PARENT --http-method OPTIONS --status-code 200 > rate-plan-options-integration-response.json
    URI=$(aws apigateway get-integration --rest-api-id $API --resource-id $PARENT --http-method PATCH --query uri --output text)
    echo "$PARENT"; echo "$URI"; jq -r '.authorizationType, .apiKeyRequired' rate-plan-patch-method.json
-   jq -r '.type, (.requestTemplates // {} | keys | join(","))' rate-plan-options-integration.json
+   jq -r '.type, (.contentHandling // "none"), (.requestTemplates // {} | keys | join(","))' rate-plan-options-integration.json
    ```
 
-   Stop unless `PARENT` is one id, `URI` ends in `:function:PropertyHandler/invocations` with no alias, the authorization type is `NONE`, `apiKeyRequired` is `false`, and the `OPTIONS` integration is `MOCK` with at least one request template.
+   Stop unless `PARENT` is one id, `URI` ends in `:function:PropertyHandler/invocations` with no alias, the authorization type is `NONE`, `apiKeyRequired` is `false`, and the `OPTIONS` integration is `MOCK` with no content handling (`none`) and at least one request template.
 
 4. Create the resource and the `POST` method. POST only, never `ANY`, `PATCH` or `DELETE`:
 
