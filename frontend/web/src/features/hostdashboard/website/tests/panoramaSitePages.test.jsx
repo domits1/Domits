@@ -143,6 +143,15 @@ describe("Panorama without site pages", () => {
   ])("renders exactly as today with %s", (_, overrides, props) => {
     expect(renderHtml(buildModel(overrides), props)).toBe(renderHtml(buildModel()));
   });
+
+  it.each([
+    ["text", "gallery"],
+    ["a list", [{ enabled: true }]],
+    ["a page that is on only as text", { gallery: { enabled: "true" } }],
+    ["an inherited page", Object.create({ gallery: { enabled: true } })],
+  ])("renders exactly as today when the model itself holds %s as site pages", (_, sitePages) => {
+    expect(renderHtml({ ...buildModel(), sitePages }, { activePageKey: "gallery" })).toBe(renderHtml(buildModel()));
+  });
 });
 
 describe("Panorama site page menu", () => {
@@ -230,6 +239,17 @@ describe("Panorama site page menu", () => {
     expect(container.querySelectorAll("script")).toHaveLength(0);
   });
 
+  it("falls back to the default label for an unusable label in the raw model", () => {
+    const model = {
+      ...buildModel(),
+      sitePages: { gallery: { enabled: true, navLabel: "<img src=x onerror=alert(1)>" } },
+    };
+    const { container } = renderTemplate(model);
+
+    expect(readMenu(getTopMenu(container)).map(([label]) => label)).toEqual(["Home", "Gallery", "Book"]);
+    expect(getTopMenu(container).querySelectorAll("img")).toHaveLength(0);
+  });
+
   it("shows the menu as text with the current page in the editor preview", () => {
     const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), {
       activePageKey: "gallery",
@@ -310,6 +330,17 @@ describe("Panorama page changes", () => {
     await act(async () => {});
 
     expect(screen.queryByTestId("photo-browser")).toBeNull();
+  });
+
+  it("mounts availability and the quote panel again when the guest returns to Main", async () => {
+    const model = buildModel({ sitePages: ALL_PAGES_ON });
+    const { container, rerender } = render(templateAt(model, { activePageKey: "gallery" }));
+    expect(screen.queryByTestId("quote-availability")).toBeNull();
+
+    rerender(templateAt(model, { activePageKey: "main" }));
+
+    expect(listSectionIds(container)).toEqual(["overview", "lifestyle", "availability"]);
+    expect(await screen.findByTestId("quote-availability")).toHaveAttribute("data-site-id", "site-1");
   });
 
   it("opens the gallery browser on the gallery page", async () => {
