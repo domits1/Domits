@@ -92,6 +92,12 @@ const isRatePlanTableUnavailableError = (error) => {
       /(does not exist|doesn't exist|undefined table|unknown table|table not found|relation not found)/.test(message));
 };
 
+const ratePlanTableUnavailableError = () =>
+  serviceError(
+    "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+    503
+  );
+
 const fromUnix = (value) =>
   Number.isFinite(Number(value)) ? new Date(Number(value) * 1000) : null;
 
@@ -182,10 +188,7 @@ export class DirectBookingWebsiteRatePlanService {
       }
     } catch (error) {
       if (isRatePlanTableUnavailableError(error)) {
-        throw serviceError(
-          "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
-          503
-        );
+        throw ratePlanTableUnavailableError();
       }
       throw error;
     }
