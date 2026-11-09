@@ -4,6 +4,9 @@ import {
     fetchCommunicationPreferences,
     normalizeCommunicationPreferencesPersona,
     saveCommunicationPreferences,
+    buildHostNotificationPreferencesUrl,
+    fetchHostNotificationEventPreferences,
+    saveHostNotificationEventPreferences,
 } from "../../components/settings/api/communicationPreferences";
 import { Auth } from "aws-amplify";
 
@@ -108,5 +111,63 @@ describe("communicationPreferences API", () => {
         await expect(fetchCommunicationPreferences("host")).rejects.toThrow(
             "We could not load your communication preferences. Please try again."
         );
+    });
+});
+
+
+describe("host notification event preferences API", () => {
+    const hostEventPreferences = {
+        manager_new_booking: { inApp: true, email: false, sms: true },
+        finance_chargeback: { inApp: false, email: true, sms: false },
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockSession();
+        global.fetch = jest.fn(async () => ({
+            ok: true,
+            json: async () => hostEventPreferences,
+        }));
+    });
+
+    test("builds the host-only event preferences URL", () => {
+        expect(buildHostNotificationPreferencesUrl()).toBe(
+            `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`
+        );
+    });
+
+    test("GET reads host event preferences using the authenticated endpoint", async () => {
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => hostEventPreferences,
+        });
+
+        await expect(fetchHostNotificationEventPreferences()).resolves.toEqual(hostEventPreferences);
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`,
+            expect.objectContaining({
+                method: "GET",
+                cache: "no-store",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer id-token-1",
+                },
+            })
+        );
+    });
+
+    test("PUT saves the complete host event preferences matrix", async () => {
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => hostEventPreferences,
+        });
+
+        await saveHostNotificationEventPreferences(hostEventPreferences);
+
+        const [url, request] = global.fetch.mock.calls[0];
+        expect(url).toBe(`${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`);
+        expect(request.method).toBe("PUT");
+        expect(JSON.parse(request.body)).toEqual(hostEventPreferences);
     });
 });
