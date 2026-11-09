@@ -1,5 +1,6 @@
 import { Auth } from "aws-amplify";
-import { getWebsiteEntitlements } from "../services/websitePlanService";
+import { WEBSITE_ENTITLEMENT_UNLIMITED_PAGES, getWebsiteEntitlements } from "../services/websitePlanService";
+import { WEBSITE_SESSION_EXPIRED_MESSAGE } from "../services/websiteSession";
 
 jest.mock("aws-amplify", () => ({ Auth: { currentSession: jest.fn(), userPool: { getCurrentUser: jest.fn() } } }));
 
@@ -46,12 +47,17 @@ describe("getWebsiteEntitlements", () => {
     await expect(getWebsiteEntitlements()).resolves.toEqual(["website.basic"]);
   });
 
-  it("keeps only the text entries of the list", async () => {
-    fetch.mockResolvedValue(
-      jsonResponse(200, { entitlements: ["website.basic", 7, null, { name: "website.unlimited_pages" }] })
-    );
+  it("rejects when the request does not reach the server", async () => {
+    fetch.mockRejectedValue(new TypeError("Failed to fetch"));
 
-    await expect(getWebsiteEntitlements()).resolves.toEqual(["website.basic"]);
+    await expect(getWebsiteEntitlements()).rejects.toThrow("Failed to fetch");
+  });
+
+  it("rejects without a request when the session cannot be read", async () => {
+    Auth.currentSession.mockRejectedValue(new Error("No current user"));
+
+    await expect(getWebsiteEntitlements()).rejects.toThrow(WEBSITE_SESSION_EXPIRED_MESSAGE);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("rejects when the server does not answer with success", async () => {
@@ -64,6 +70,8 @@ describe("getWebsiteEntitlements", () => {
     ["no body", null],
     ["no list", { plan: "elite" }],
     ["a list that is not an array", { entitlements: "website.unlimited_pages" }],
+    ["an entry that is not text next to an Elite entry", { entitlements: [WEBSITE_ENTITLEMENT_UNLIMITED_PAGES, null] }],
+    ["an object entry", { entitlements: ["website.basic", { name: WEBSITE_ENTITLEMENT_UNLIMITED_PAGES }] }],
   ])("rejects an answer with %s", async (_label, body) => {
     fetch.mockResolvedValue(jsonResponse(200, body));
 

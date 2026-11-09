@@ -15,8 +15,11 @@ export const getWebsiteEntitlements = async () => {
   }
 
   const payload = await response.json();
-  if (!Array.isArray(payload?.entitlements)) {
+  const entitlements = payload?.entitlements;
+  const isEntitlementList =
+    Array.isArray(entitlements) && entitlements.every((entitlement) => typeof entitlement === "string");
+  if (!isEntitlementList) {
     throw new Error("Website entitlements response has no entitlement list.");
   }
-  return payload.entitlements.filter((entitlement) => typeof entitlement === "string");
+  return entitlements;
 };
