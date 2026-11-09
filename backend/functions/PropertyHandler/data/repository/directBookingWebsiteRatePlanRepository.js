@@ -24,34 +24,33 @@ export const WEBSITE_PLAN_GRANTED_EVENT = "WEBSITE_PLAN_GRANTED";
 const isUniqueViolation = (error) =>
   [error?.code, error?.driverError?.code].includes(UNIQUE_VIOLATION_CODE);
 
-const grantInTransaction = async (manager, { accountId, effectiveUntil, actorId, reason }) => {
-  const replacedPlans = await manager.getRepository(DirectBookingWebsiteRatePlan)
+const readCurrentStatusPlans = (manager, accountId) =>
+  manager.getRepository(DirectBookingWebsiteRatePlan)
     .createQueryBuilder("plan")
     .where("plan.account_id = :accountId", { accountId })
     .andWhere("plan.status IN (:...statuses)", { statuses: CURRENT_STATUSES })
     .getMany();
-  if (replacedPlans.some((plan) => plan.stripe_subscription_id)) {
-    throw new WebsitePlanGrantError(WEBSITE_PLAN_GRANT_ERROR_CODES.PAID_PLAN_ACTIVE);
-  }
 
-  if (replacedPlans.length > 0) {
-    await manager.createQueryBuilder()
-      .update(DirectBookingWebsiteRatePlan)
-      .set({ status: "EXPIRED", effective_until: () => END_CURRENT_PERIOD_NOW, updated_at: () => "CURRENT_TIMESTAMP" })
-      .where("account_id = :accountId", { accountId })
-      .andWhere("status IN (:...statuses)", { statuses: CURRENT_STATUSES })
-      .execute();
-  }
+const endCurrentStatusPlans = (manager, accountId) =>
+  manager.createQueryBuilder()
+    .update(DirectBookingWebsiteRatePlan)
+    .set({ status: "EXPIRED", effective_until: () => END_CURRENT_PERIOD_NOW, updated_at: () => "CURRENT_TIMESTAMP" })
+    .where("account_id = :accountId", { accountId })
+    .andWhere("status IN (:...statuses)", { statuses: CURRENT_STATUSES })
+    .execute();
 
-  const planId = randomUUID();
+const insertPlan = async (manager, values) => {
   const inserted = await manager.createQueryBuilder()
     .insert()
     .into(DirectBookingWebsiteRatePlan)
-    .values({ id: planId, account_id: accountId, ...GRANTED_PLAN_VALUES, effective_until: effectiveUntil })
+    .values(values)
     .returning("*")
     .execute();
+  return inserted.raw[0];
+};
 
-  await manager.createQueryBuilder()
+const insertPlanEvent = (manager, { accountId, eventType, payload }) =>
+  manager.createQueryBuilder()
     .insert()
     .into(Standalone_Site_Event)
     .values({
@@ -59,19 +58,55 @@ const grantInTransaction = async (manager, { accountId, effectiveUntil, actorId,
       draft_id: null,
       property_id: null,
       host_id: accountId,
-      event_type: WEBSITE_PLAN_GRANTED_EVENT,
-      payload_json: JSON.stringify({
-        actorId,
-        planId,
-        replacedPlanIds: replacedPlans.map((plan) => plan.id),
-        effectiveUntil: effectiveUntil.toISOString(),
-        reason,
-      }),
+      event_type: eventType,
+      payload_json: JSON.stringify(payload),
       occurred_at: Date.now(),
     })
     .execute();
 
-  return { plan: inserted.raw[0], replacedPlans };
+const runPlanChange = async (work, toConflictError) => {
+  const client = await Database.getInstance();
+  try {
+    return await withDsqlRetry(() => client.transaction(work));
+  } catch (error) {
+    if (isDsqlConflict(error) || isUniqueViolation(error)) {
+      throw toConflictError(error);
+    }
+    throw error;
+  }
+};
+
+const grantInTransaction = async (manager, { accountId, effectiveUntil, actorId, reason }) => {
+  const replacedPlans = await readCurrentStatusPlans(manager, accountId);
+  if (replacedPlans.some((plan) => plan.stripe_subscription_id)) {
+    throw new WebsitePlanGrantError(WEBSITE_PLAN_GRANT_ERROR_CODES.PAID_PLAN_ACTIVE);
+  }
+
+  if (replacedPlans.length > 0) {
+    await endCurrentStatusPlans(manager, accountId);
+  }
+
+  const planId = randomUUID();
+  const plan = await insertPlan(manager, {
+    id: planId,
+    account_id: accountId,
+    ...GRANTED_PLAN_VALUES,
+    effective_until: effectiveUntil,
+  });
+
+  await insertPlanEvent(manager, {
+    accountId,
+    eventType: WEBSITE_PLAN_GRANTED_EVENT,
+    payload: {
+      actorId,
+      planId,
+      replacedPlanIds: replacedPlans.map((plan) => plan.id),
+      effectiveUntil: effectiveUntil.toISOString(),
+      reason,
+    },
+  });
+
+  return { plan, replacedPlans };
 };
 
 const applyCurrentScope = (queryBuilder) =>
@@ -200,14 +235,9 @@ export class DirectBookingWebsiteRatePlanRepository {
   }
 
   async grantElitePlan(grant) {
-    const client = await Database.getInstance();
-    try {
-      return await withDsqlRetry(() => client.transaction((manager) => grantInTransaction(manager, grant)));
-    } catch (error) {
-      if (isDsqlConflict(error) || isUniqueViolation(error)) {
-        throw new WebsitePlanGrantError(WEBSITE_PLAN_GRANT_ERROR_CODES.CONFLICT, { cause: error });
-      }
-      throw error;
-    }
+    return runPlanChange(
+      (manager) => grantInTransaction(manager, grant),
+      (cause) => new WebsitePlanGrantError(WEBSITE_PLAN_GRANT_ERROR_CODES.CONFLICT, { cause })
+    );
   }
 }

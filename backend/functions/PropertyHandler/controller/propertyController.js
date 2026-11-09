@@ -62,6 +62,9 @@ const draftResponseHeaders = {
 
 const reviewReadResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
 const websitePlanAdminResponseHeaders = { ...responseHeaders, "Cache-Control": "no-store" };
+const WEBSITE_PLAN_ADMIN_REFUSALS = Object.freeze({
+    grant: "You are not allowed to grant website plans.",
+});
 
 const WEBSITE_HOST_ANALYTICS_EVENT_TYPES = new Set([
     "WEBSITE_BUILD_STARTED",
@@ -3931,7 +3934,7 @@ export class PropertyController {
 
     async grantWebsiteRatePlan(event) {
         try {
-            const actorId = await this.authorizeWebsitePlanAdmin(event);
+            const actorId = await this.authorizeWebsitePlanAdmin(event, WEBSITE_PLAN_ADMIN_REFUSALS.grant);
             const body = this.readWebsitePlanAdminBody(event);
             const result = await this.directBookingWebsiteRatePlanService.grantElite({
                 actorId,
@@ -3955,12 +3958,12 @@ export class PropertyController {
         }
     }
 
-    async authorizeWebsitePlanAdmin(event) {
+    async authorizeWebsitePlanAdmin(event, refusalMessage) {
         try {
             return await this.authManager.authorizeReviewAdminRequest(this.getAuthorizationHeader(event));
         } catch (error) {
             if (error instanceof Forbidden) {
-                throw new Forbidden("You are not allowed to grant website plans.");
+                throw new Forbidden(refusalMessage);
             }
             throw error;
         }

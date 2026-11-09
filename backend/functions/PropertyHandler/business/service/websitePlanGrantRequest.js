@@ -32,14 +32,29 @@ const readEffectiveUntil = (value, nowMs) => {
   return new Date(untilMs);
 };
 
+const readActorId = (value) => {
+  const actor = readText(value, ACCOUNT_ID_MAX_LENGTH);
+  if (!actor) throw invalidGrant("actorId is required.");
+  return actor;
+};
+
+const readAccountId = (value) => {
+  const account = readText(value, ACCOUNT_ID_MAX_LENGTH);
+  if (!account) throw invalidGrant(`accountId must be 1 to ${ACCOUNT_ID_MAX_LENGTH} characters.`);
+  return account;
+};
+
+const readReason = (value) => {
+  const reason = readText(value, REASON_MAX_LENGTH);
+  if (!reason) throw invalidGrant(`reason must be 1 to ${REASON_MAX_LENGTH} characters.`);
+  return reason;
+};
+
 export const readWebsitePlanGrantRequest = (request, nowMs) => {
   const { actorId, accountId, effectiveUntil, reason } = request ?? {};
-  const actor = readText(actorId, ACCOUNT_ID_MAX_LENGTH);
-  if (!actor) throw invalidGrant("actorId is required.");
-  const account = readText(accountId, ACCOUNT_ID_MAX_LENGTH);
-  if (!account) throw invalidGrant(`accountId must be 1 to ${ACCOUNT_ID_MAX_LENGTH} characters.`);
-  const grantReason = readText(reason, REASON_MAX_LENGTH);
-  if (!grantReason) throw invalidGrant(`reason must be 1 to ${REASON_MAX_LENGTH} characters.`);
+  const actor = readActorId(actorId);
+  const account = readAccountId(accountId);
+  const grantReason = readReason(reason);
   return {
     actorId: actor,
     accountId: account,

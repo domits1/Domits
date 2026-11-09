@@ -102,6 +102,17 @@ const ratePlanTableUnavailableError = () =>
     503
   );
 
+const withRatePlanTable = async (work) => {
+  try {
+    return await work();
+  } catch (error) {
+    if (isRatePlanTableUnavailableError(error)) {
+      throw ratePlanTableUnavailableError();
+    }
+    throw error;
+  }
+};
+
 const isRunningElite = (plan, nowMs) =>
   plan.plan === WEBSITE_PLAN_NAMES.ELITE &&
   new Date(plan.effective_from).getTime() <= nowMs &&
@@ -224,16 +235,9 @@ export class DirectBookingWebsiteRatePlanService {
     }
     await this.requireHostAccount(grant.accountId);
 
-    try {
-      const { plan, replacedPlans } = await this.repository.grantElitePlan(grant);
-      const extended = replacedPlans.some((replaced) => isRunningElite(replaced, nowMs));
-      return { action: extended ? "extended" : "granted", plan: toView(plan) };
-    } catch (error) {
-      if (isRatePlanTableUnavailableError(error)) {
-        throw ratePlanTableUnavailableError();
-      }
-      throw error;
-    }
+    const { plan, replacedPlans } = await withRatePlanTable(() => this.repository.grantElitePlan(grant));
+    const extended = replacedPlans.some((replaced) => isRunningElite(replaced, nowMs));
+    return { action: extended ? "extended" : "granted", plan: toView(plan) };
   }
 
   async requireHostAccount(accountId) {
