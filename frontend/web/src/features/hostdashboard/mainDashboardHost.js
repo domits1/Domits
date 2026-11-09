@@ -158,6 +158,7 @@ function MainDashboardHost() {
           <Route path="settings" element={<HostSettingsHub />} />
           <Route path="settings/personal-data" element={<HostSettingsPersonalData />} />
           <Route path="settings/communication-preferences" element={<HostCommunicationPreferences />} />
+          <Route path="settings/communication-preferences/:tab" element={<HostCommunicationPreferences />} />
           <Route path="settings/team" element={<HostTeam />} />
           <Route path="settings/company" element={<HostSettingsCompany />} />
           <Route path="settings/rate-plans" element={<HostSettingsRatePlans />} />
