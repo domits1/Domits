@@ -16,6 +16,11 @@ export const HOST_NOTIFICATION_EVENT_KEYS = Object.freeze({
     "maintenanceIssue", "checkInIssue", "reviewReceived", "lowReview", "payoutGenerated",
     "payoutFailed", "kycRequired", "propertyUnpublished",
   ]),
+  staff: Object.freeze([
+    "staffNewBooking", "cleaningRequired", "cleaningAssigned", "cleaningOverdue",
+    "staffMaintenanceIssue", "guestArrival", "guestDeparture", "guestRequest",
+    "emergencyPropertyIssue", "taskCompleted",
+  ]),
   propertyOwner: Object.freeze([
     "ownerNewBooking", "ownerBookingCancelled", "revenueReceived", "ownerPayoutGenerated",
     "payoutCompleted", "ownerPayoutFailed", "propertyUnavailable", "majorMaintenance",
