@@ -14,6 +14,7 @@ import {
   TemplateImageSlotVisual,
   TemplateTopBar,
 } from "./templateSharedSections";
+import PanoramaPageHeader from "./PanoramaPageHeader";
 import {
   amenityPropType,
   amenitiesSectionPropType,
@@ -28,6 +29,7 @@ import {
   hostPropType,
   mediaPropType,
   residenceSectionPropType,
+  sitePagesPropType,
   sitePropType,
   templateInteractionPropTypes,
   visibilityPropType,
@@ -53,6 +55,12 @@ import {
   resolveWebsiteAmenityIconColor,
 } from "../../config/websiteAmenitiesConfig";
 import { resolveWebsiteHeroContentAlignment } from "../../config/websiteHeroSectionConfig";
+import {
+  MAIN_SITE_PAGE_KEY,
+  hasActiveSitePages,
+  listSitePageMenuItems,
+  resolvePanoramaPageSections,
+} from "../websitePages";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
@@ -256,7 +264,7 @@ const buildPanoramaViewState = (model) => {
   };
 };
 
-const usePanoramaTopBarSolidState = (enabled) => {
+const usePanoramaTopBarSolidState = (enabled, pageKey) => {
   const heroSectionRef = useRef(null);
   const [isTopBarSolid, setIsTopBarSolid] = useState(false);
 
@@ -308,11 +316,27 @@ const usePanoramaTopBarSolidState = (enabled) => {
       globalThis.removeEventListener("scroll", queueTopBarStateUpdate);
       globalThis.removeEventListener("resize", queueTopBarStateUpdate);
     };
-  }, [enabled]);
+  }, [enabled, pageKey]);
 
   return {
     heroSectionRef,
     isTopBarSolid,
+  };
+};
+
+const buildPanoramaPageState = (sitePages, activePageKey) => {
+  if (!hasActiveSitePages(sitePages)) {
+    return null;
+  }
+
+  const menuItems = listSitePageMenuItems(sitePages);
+  const currentPage =
+    menuItems.find((item) => item.key === activePageKey) || menuItems.find((item) => item.key === MAIN_SITE_PAGE_KEY);
+
+  return {
+    menuItems,
+    currentPage,
+    sections: resolvePanoramaPageSections(sitePages, currentPage.key),
   };
 };
 
@@ -1191,8 +1215,19 @@ const renderPanoramaContactSection = ({
   );
 };
 
-export default function PanoramaLandingTemplate({ model, onSelectTarget, activeTargetId, quoteContext = null }) {
+export default function PanoramaLandingTemplate({
+  model,
+  onSelectTarget,
+  activeTargetId,
+  quoteContext = null,
+  activePageKey = MAIN_SITE_PAGE_KEY,
+}) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
+  const pageState = useMemo(
+    () => buildPanoramaPageState(model.sitePages, activePageKey),
+    [model.sitePages, activePageKey]
+  );
+  const showsPageSection = (section) => !pageState || pageState.sections.includes(section);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
@@ -1201,7 +1236,10 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
   const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
-  const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar);
+  const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(
+    viewState.showTopBar,
+    pageState?.currentPage.key
+  );
   const navItems = buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
@@ -1288,23 +1326,34 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               onCloseNavDrawer: () => setIsNavDrawerOpen(false),
             })
           : null}
-        {renderPanoramaHeroSection({
-          model,
-          onSelectTarget,
-          activeTargetId,
-          heroSectionRef,
-          showTopBar: viewState.showTopBar,
-          showCallToAction: viewState.showCallToAction,
-          showTrustCards: viewState.showTrustCards,
-          featuredTrustCards: viewState.featuredTrustCards,
-        })}
-        {renderPanoramaResidenceSection({
-          model,
-          onSelectTarget,
-          activeTargetId,
-          residenceCards: viewState.residenceCards,
-        })}
-        {viewState.showGallerySection
+        {showsPageSection("hero") ? (
+          renderPanoramaHeroSection({
+            model,
+            onSelectTarget,
+            activeTargetId,
+            heroSectionRef,
+            showTopBar: viewState.showTopBar,
+            showCallToAction: viewState.showCallToAction,
+            showTrustCards: viewState.showTrustCards,
+            featuredTrustCards: viewState.featuredTrustCards,
+          })
+        ) : (
+          <PanoramaPageHeader
+            title={pageState.currentPage.navLabel}
+            siteTitle={model.site.title}
+            headerRef={heroSectionRef}
+            showTopBar={viewState.showTopBar}
+          />
+        )}
+        {showsPageSection("residence")
+          ? renderPanoramaResidenceSection({
+              model,
+              onSelectTarget,
+              activeTargetId,
+              residenceCards: viewState.residenceCards,
+            })
+          : null}
+        {viewState.showGallerySection && showsPageSection("gallery")
           ? renderPanoramaGallerySection({
               model,
               gallerySlots: viewState.gallerySlots,
@@ -1315,18 +1364,20 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
-        {renderPanoramaDetailsSection({
-          showAmenitiesPanel: viewState.showAmenitiesPanel,
-          amenitiesSection: model.amenitiesSection,
-          featuredAmenities: viewState.featuredAmenities,
-          allAmenities: viewState.allAmenities,
-          amenityIconColor: viewState.amenityIconColor,
-          onSelectTarget,
-          activeTargetId,
-          onShowAllAmenities: () => setShowAmenitiesModal(true),
-          shouldDeferContent: shouldDeferBelowFoldSections,
-        })}
-        {viewState.showJourneyStops
+        {showsPageSection("amenities")
+          ? renderPanoramaDetailsSection({
+              showAmenitiesPanel: viewState.showAmenitiesPanel,
+              amenitiesSection: model.amenitiesSection,
+              featuredAmenities: viewState.featuredAmenities,
+              allAmenities: viewState.allAmenities,
+              amenityIconColor: viewState.amenityIconColor,
+              onSelectTarget,
+              activeTargetId,
+              onShowAllAmenities: () => setShowAmenitiesModal(true),
+              shouldDeferContent: shouldDeferBelowFoldSections,
+            })
+          : null}
+        {viewState.showJourneyStops && showsPageSection("journeyStops")
           ? renderPanoramaJourneySection({
               featuredJourneyStops: viewState.featuredJourneyStops,
               onSelectTarget,
@@ -1334,7 +1385,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
               shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
-        {viewState.showAvailabilityCalendar ? (
+        {viewState.showAvailabilityCalendar && showsPageSection("availability") ? (
           <section
             id={PANORAMA_AVAILABILITY_SECTION_ID}
             aria-label="Availability"
@@ -1348,7 +1399,7 @@ export default function PanoramaLandingTemplate({ model, onSelectTarget, activeT
           </section>
         ) : null}
 
-        {viewState.showContactSection
+        {viewState.showContactSection && showsPageSection("contact")
           ? renderPanoramaContactSection({
               model,
               onSelectTarget,
@@ -1427,7 +1478,9 @@ PanoramaLandingTemplate.propTypes = {
     visibility: visibilityPropType.isRequired,
     host: hostPropType.isRequired,
     contactSection: contactSectionPropType.isRequired,
+    sitePages: sitePagesPropType,
   }).isRequired,
   ...templateInteractionPropTypes,
   quoteContext: quoteContextPropType,
+  activePageKey: PropTypes.string,
 };
