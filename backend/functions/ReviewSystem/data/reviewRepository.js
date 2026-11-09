@@ -245,10 +245,10 @@ export class ReviewRepository {
       .getExists();
   }
 
-  async findPendingReviews() {
+  async findUnpublishedReviews(status) {
     const database = await Database.getInstance();
     return database.getRepository(Review).find({
-      where: { review_type: "GUEST_TO_PROPERTY", status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" },
+      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
   }
@@ -440,8 +440,7 @@ export class ReviewRepository {
         return null;
       }
 
-      // Approval publishes directly. APPROVED only remains for reviews approved before that change.
-      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "PUBLISHED", APPROVED: "PUBLISHED" };
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
       if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
         throw new ConflictException("Invalid review transition.");
       }

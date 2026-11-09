@@ -388,12 +388,14 @@ describe('Review transactional writes', () => {
     const empty = { property_id: "p1", overall_score: null, review_count: 0 };
     expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
     await service.publishReview("guest", review.id);
-    committed.get(Review).find((item) => item.id === review.id).status = "APPROVED";
-    await expect(service.publishReview("guest", review.id)).rejects.toMatchObject({ statusCode: 403 });
     const previousAllowlist = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
     process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
     repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValue(true);
     try {
+      const pending = committed.get(Review).find((item) => item.id === review.id);
+      await expect(service.approveReview("staff", "admin", review.id, pending.updated_at))
+        .resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+      await expect(service.publishReview("guest", review.id)).rejects.toMatchObject({ statusCode: 403 });
       await service.publishReview("staff", review.id, "admin");
     } finally {
       if (previousAllowlist === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
@@ -484,7 +486,7 @@ describe('Review transactional writes', () => {
     committed.get(Review)[0].status = "PENDING_APPROVAL";
     repositories.get(Review).update.mockResolvedValueOnce({ affected: 0 });
     expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).toBeNull();
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).toBeNull();
     expect(repositories.get(Review).update).toHaveBeenCalledWith({
       id: "r1",
       status: "PENDING_APPROVAL",
@@ -496,27 +498,27 @@ describe('Review transactional writes', () => {
     expect(repositories.get(Review_Request).update).not.toHaveBeenCalled();
     committed.get(Booking)[0].status = "Cancelled";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it("no longer leaves an approved review waiting to be published", async () => {
+  it("rejects publication that bypasses approval", async () => {
     committed.get(Review)[0].status = "PENDING_APPROVAL";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 409 });
+      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 409 });
     expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
   });
 
-  it("keeps a review pending if request completion fails during approval", async () => {
+  it("keeps a review approved and unpublished if request completion fails during publication", async () => {
     repositories.get(Review_Request).update.mockRejectedValue(new Error("Request failure"));
-    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    committed.get(Review)[0].status = "APPROVED";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toThrow("Request failure");
-    expect(committed.get(Review)[0]).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
+      updatedAt: now, from: "APPROVED", to: "PUBLISHED", authorize: async () => true })).rejects.toThrow("Request failure");
+    expect(committed.get(Review)[0]).toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
   });
 
-  it("submits, publishes on approval, and rejects duplicate approval transactionally", async () => {
+  it("submits, approves, and publishes separately with version checks", async () => {
     let current = committed.get(Review)[0];
-    for (const [from, to] of [["DRAFT", "PENDING_APPROVAL"], ["PENDING_APPROVAL", "PUBLISHED"]]) {
+    for (const [from, to] of [["DRAFT", "PENDING_APPROVAL"], ["PENDING_APPROVAL", "APPROVED"], ["APPROVED", "PUBLISHED"]]) {
       const version = current.updated_at;
       const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
         updatedAt: now, from, to, authorize: async () => true });

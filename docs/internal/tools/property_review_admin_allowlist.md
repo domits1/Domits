@@ -41,7 +41,13 @@ Real user ids are set at deploy time only. Code, tests, docs and pull requests u
 ## Guest review approval
 
 Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
-Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing. The frontend controls are deferred to a separate PR.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route.
+
+- Guests use `POST /reviews/{id}/publish` to submit a draft for approval.
+- Authorized approvers list pending reviews with `GET /reviews?scope=pending-approval` and approve them with `POST /reviews/{id}/approve`. Approval sets the status to `APPROVED` and leaves the review unpublished.
+- Authorized approvers list approved reviews with `GET /reviews?scope=approved` and publish them with `POST /reviews/{id}/publish`. Publication makes the review public and completes the review request.
+
+The frontend controls are deferred to a separate PR.
 
 ## Read routes
 
@@ -54,8 +60,3 @@ Three admin-only `GET` routes on `PropertyHandler` serve the review queue. Respo
 | `/property/review/detail?propertyId=` | Full property with full location, any status. `400` without an id, `404` if missing, `403` for non-admins |
 
 API Gateway has no `{proxy+}`, so each route needs a `GET` method, an `OPTIONS` method for CORS and an API deployment, added by hand after the Lambda is live. Deploying the Lambda alone does not expose them.
-
-## Guest review moderation
-
-Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
-Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing. The frontend controls are deferred to a separate PR.

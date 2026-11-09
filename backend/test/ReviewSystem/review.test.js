@@ -590,7 +590,7 @@ describe('Review workflows', () => {
     try {
       repository.hasActiveReviewApproverRole = jest.fn(async (username, roles) =>
         username === "admin" && status === "active" && roles.includes(role));
-      repository.findPendingReviews = jest.fn().mockResolvedValue([draft]);
+      repository.findUnpublishedReviews = jest.fn().mockResolvedValue([draft]);
       repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
       const request = { ...event("staff", { updated_at: draft.updated_at }),
         requestContext: { authorizer: { claims: { sub: "staff", "cognito:username": "admin" } } } };
@@ -598,18 +598,23 @@ describe('Review workflows', () => {
       expect((await controller.approveReview({})).statusCode).toBe(401);
       const queue = await controller.getReviews({ ...request, queryStringParameters: { scope: "pending-approval" } });
       expect(queue.statusCode).toBe(expectedStatus);
+      const approvedQueue = await controller.getReviews({ ...request, queryStringParameters: { scope: "approved" } });
+      expect(approvedQueue.statusCode).toBe(expectedStatus);
       const approval = await controller.approveReview(request);
       expect(approval.statusCode).toBe(expectedStatus);
       if (expectedStatus === 403) {
-        expect(repository.findPendingReviews).not.toHaveBeenCalled();
+        expect(repository.findUnpublishedReviews).not.toHaveBeenCalled();
         expect(repository.findById).not.toHaveBeenCalled();
         expect(repository.publishDraft).not.toHaveBeenCalled();
         return;
       }
 
       expect(queue.body).not.toContain("secret");
-      expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "PUBLISHED" }));
-      expect(JSON.parse(approval.body)).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
+      expect(approvedQueue.body).not.toContain("secret");
+      expect(repository.findUnpublishedReviews).toHaveBeenNthCalledWith(1, "PENDING_APPROVAL");
+      expect(repository.findUnpublishedReviews).toHaveBeenNthCalledWith(2, "APPROVED");
+      expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "APPROVED" }));
+      expect(JSON.parse(approval.body)).toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
       for (const status of ["DELETED", "REJECTED", "DRAFT", "APPROVED", "PUBLISHED"]) {
         repository.findById.mockResolvedValue({ ...draft, status });
         expect((await controller.approveReview(request)).statusCode).toBe(["DELETED", "REJECTED"].includes(status) ? 404 : 409);

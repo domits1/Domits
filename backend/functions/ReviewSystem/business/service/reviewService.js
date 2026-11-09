@@ -317,10 +317,9 @@ export class ReviewService {
     }
   }
 
-  // List unpublished reviews awaiting moderation for an authorized approver.
-  async getPendingReviews(userId, username) {
+  async getReviewApprovalQueue(userId, username, status) {
     await this.assertReviewApprover(userId, username);
-    return (await this.repository.findPendingReviews()).map(toReviewView);
+    return (await this.repository.findUnpublishedReviews(status)).map(toReviewView);
   }
 
   // Approve a pending review only if its version and booking eligibility remain valid.
@@ -330,7 +329,7 @@ export class ReviewService {
       throw new BadRequestException("A valid review update version is required.");
     }
     const review = await this.requireReview(reviewId);
-    return this.changePublicationState(review, "PENDING_APPROVAL", "PUBLISHED", async (_current, manager) => {
+    return this.changePublicationState(review, "PENDING_APPROVAL", "APPROVED", async (_current, manager) => {
       await this.assertReviewApprover(userId, username, manager);
       return true;
     }, version);

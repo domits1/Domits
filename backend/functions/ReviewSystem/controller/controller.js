@@ -85,8 +85,9 @@ export class Controller {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "pending-approval") {
-        result = await this.service.getPendingReviews(userId, user.username);
+      if (query.scope === "pending-approval" || query.scope === "approved") {
+        const status = query.scope === "approved" ? "APPROVED" : "PENDING_APPROVAL";
+        result = await this.service.getReviewApprovalQueue(userId, user.username, status);
       } else if (query.scope === "respondable") {
         result = await this.service.getResponseEligibleReviews(user.username);
       } else if (query.scope === "property-trends") {
