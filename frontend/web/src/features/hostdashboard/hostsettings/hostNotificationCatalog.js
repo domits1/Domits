@@ -108,6 +108,8 @@ export const HOST_NOTIFICATION_SECTIONS = [
             createEvent("reservationSyncFailed", "Reservation sync failed", "P0", ["Manager", "Domits Ops", "Developer"]),
             createEvent("duplicateReservationDetected", "Duplicate reservation detected", "P0", ["Manager", "Domits Ops", "Developer"]),
             createEvent("inventoryMismatch", "Inventory mismatch", "P0", ["Manager", "Domits Ops", "Developer"]),
+            createEvent("webhookFailed", "Webhook failed", "P1", ["Domits Ops", "Developer"]),
+            createEvent("webhookDelayed", "Webhook delayed", "P1", ["Domits Ops", "Developer"]),
             createEvent("channelApiOutage", "Channel API outage", "P1", ["Manager", "Domits Ops", "Developer", "Channel/OTA"]),
         ],
     },
