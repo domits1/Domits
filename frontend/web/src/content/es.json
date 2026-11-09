@@ -1543,7 +1543,40 @@
       "actions": {
         "saveChanges": "Guardar cambios"
       }
-    },
+    ,
+      "notificationMatrix":       {
+        "title": "Tipos de notificación",
+        "description": "Elige para qué eventos quieres recibir notificaciones. Tus preferencias se guardan en tu cuenta de anfitrión.",
+        "loading": "Cargando preferencias de notificación...",
+        "retry": "Reintentar",
+        "saved": "Preferencias de notificación guardadas.",
+        "saving": "Guardando...",
+        "save": "Guardar preferencias",
+        "enabled": "Activado",
+        "disabled": "Desactivado",
+        "deliveryChannelsTitle": "Canales de entrega",
+        "deliveryChannelsDescription": "Elige qué canales se utilizan para las notificaciones existentes de reservas, cancelaciones y mensajes.",
+        "channelPreferencesTitle": "Preferencias de canales de entrega",
+        "tabs": {
+          "propertyManager": "Property Manager",
+          "bookings": "Reservas",
+          "propertyOwner": "Propietario",
+          "finance": "Finanzas",
+          "distribution": "Distribución",
+          "compliance": "Cumplimiento",
+          "tasks": "Tareas"
+        },
+        "columns": {
+          "event": "Evento",
+          "notification": "Notificación",
+          "channel": "Canal",
+          "action": "Acción",
+          "priority": "Prioridad",
+          "recipients": "Destinatarios",
+          "enabled": "Activado"
+        }
+      }
+},
     "company": {
       "breadcrumb": "Empresa",
       "title": "Empresa",

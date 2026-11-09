@@ -42,6 +42,12 @@ export class CommunicationPreferencesController {
 
     const persona = getPersonaFromQuery(event);
     const authenticatedUser = getAuthenticatedUser(event);
+    if (event?.queryStringParameters?.view === "host-events") {
+      if (persona !== "HOST") throw badRequest("Host notification preferences require the host persona.");
+      const preferences = await this.service.getHostNotificationPreferences(authenticatedUser.userId);
+      return { statusCode: 200, response: preferences };
+    }
+    if (event?.queryStringParameters?.view) throw badRequest("Unsupported communication preferences view.");
     const preferences = await this.service.getPreferences(authenticatedUser.userId, persona);
     return { statusCode: 200, response: preferences };
   }
@@ -57,6 +63,12 @@ export class CommunicationPreferencesController {
     const persona = getPersonaFromQuery(event);
     const authenticatedUser = getAuthenticatedUser(event);
     const body = parseBody(event);
+    if (event?.queryStringParameters?.view === "host-events") {
+      if (persona !== "HOST") throw badRequest("Host notification preferences require the host persona.");
+      const preferences = await this.service.saveHostNotificationPreferences(authenticatedUser.userId, body);
+      return { statusCode: 200, response: preferences };
+    }
+    if (event?.queryStringParameters?.view) throw badRequest("Unsupported communication preferences view.");
     const preferences = await this.service.savePreferences(authenticatedUser.userId, persona, body);
     return { statusCode: 200, response: preferences };
   }

@@ -1,4 +1,6 @@
 import { CommunicationPreferencesRepository } from "../../data/repository.js";
+import { HostNotificationPreferencesRepository } from "../../data/hostNotificationPreferencesRepository.js";
+import { DEFAULT_HOST_NOTIFICATION_PREFERENCES, HOST_NOTIFICATION_EVENT_KEYS } from "../hostNotificationMatrixConfig.js";
 import { badRequest } from "../../util/httpErrors.js";
 
 export const DEFAULT_COMMUNICATION_PREFERENCES = Object.freeze({
@@ -42,8 +44,9 @@ export const normalizePersona = (persona) => {
 };
 
 export class CommunicationPreferencesService {
-  constructor({ repository = new CommunicationPreferencesRepository(), now = () => Date.now() } = {}) {
+  constructor({ repository = new CommunicationPreferencesRepository(), hostNotificationRepository = new HostNotificationPreferencesRepository(), now = () => Date.now() } = {}) {
     this.repository = repository;
+    this.hostNotificationRepository = hostNotificationRepository;
     this.now = now;
   }
 
@@ -69,6 +72,65 @@ export class CommunicationPreferencesService {
 
     await this.repository.save(record);
     return this.toApi(record);
+  }
+
+  async getHostNotificationPreferences(userId) {
+    const record = await this.hostNotificationRepository.findByUserId(userId);
+    if (!record) return { ...DEFAULT_HOST_NOTIFICATION_PREFERENCES };
+
+    let stored;
+    try {
+      stored = JSON.parse(record.preferences || "{}");
+    } catch {
+      throw new Error("Stored host notification preferences are invalid.");
+    }
+
+    return Object.fromEntries(
+      HOST_NOTIFICATION_EVENT_KEYS.map((eventKey) => [
+        eventKey,
+        typeof stored?.[eventKey] === "boolean" ? stored[eventKey] : true,
+      ])
+    );
+  }
+
+  async saveHostNotificationPreferences(userId, payload) {
+    const preferences = this.validateHostNotificationPreferences(payload);
+    const existing = await this.hostNotificationRepository.findByUserId(userId);
+    const now = this.now();
+
+    await this.hostNotificationRepository.save({
+      user_id: userId,
+      preferences: JSON.stringify(preferences),
+      created_at: existing?.created_at ?? now,
+      updated_at: now,
+    });
+
+    return preferences;
+  }
+
+  validateHostNotificationPreferences(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw badRequest("Request body must be a host notification preferences object.");
+    }
+
+    for (const key of Object.keys(payload)) {
+      if (!HOST_NOTIFICATION_EVENT_KEYS.includes(key)) {
+        throw badRequest(`Unknown host notification preference: ${key}.`);
+      }
+    }
+
+    const preferences = {};
+    for (const eventKey of HOST_NOTIFICATION_EVENT_KEYS) {
+      if (!hasOwn(payload, eventKey)) {
+        throw badRequest(`Host notification preference ${eventKey} is required.`);
+      }
+      if (typeof payload[eventKey] !== "boolean") {
+        throw badRequest(`Host notification preference ${eventKey} must be a boolean.`);
+      }
+      preferences[eventKey] = payload[eventKey];
+    }
+
+    return preferences;
   }
 
   validateCompleteMatrix(payload) {

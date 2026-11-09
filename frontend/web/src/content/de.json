@@ -1543,7 +1543,40 @@
       "actions": {
         "saveChanges": "Änderungen speichern"
       }
-    },
+    ,
+      "notificationMatrix":       {
+        "title": "Benachrichtigungstypen",
+        "description": "Wähle aus, für welche Ereignisse du Benachrichtigungen erhalten möchtest. Deine Auswahl wird in deinem Host-Konto gespeichert.",
+        "loading": "Benachrichtigungsauswahl wird geladen...",
+        "retry": "Erneut versuchen",
+        "saved": "Benachrichtigungsauswahl gespeichert.",
+        "saving": "Speichern...",
+        "save": "Auswahl speichern",
+        "enabled": "Aktiviert",
+        "disabled": "Deaktiviert",
+        "deliveryChannelsTitle": "Zustellkanäle",
+        "deliveryChannelsDescription": "Wähle die Zustellkanäle für bestehende Reservierungs-, Stornierungs- und Nachrichtenbenachrichtigungen.",
+        "channelPreferencesTitle": "Einstellungen der Zustellkanäle",
+        "tabs": {
+          "propertyManager": "Property Manager",
+          "bookings": "Buchungen & Reservierungen",
+          "propertyOwner": "Immobilieneigentümer",
+          "finance": "Finanzen",
+          "distribution": "Vertrieb",
+          "compliance": "Compliance",
+          "tasks": "Aufgaben"
+        },
+        "columns": {
+          "event": "Ereignis",
+          "notification": "Benachrichtigung",
+          "channel": "Kanal",
+          "action": "Aktion",
+          "priority": "Priorität",
+          "recipients": "Empfänger",
+          "enabled": "Aktiviert"
+        }
+      }
+},
     "company": {
       "breadcrumb": "Unternehmen",
       "title": "Unternehmen",

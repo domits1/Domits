@@ -29,3 +29,18 @@
 
 - The `main.communication_preferences` migration must be applied through the approved Domits database process before enabling the endpoint.
 - This function does not run migrations at runtime.
+
+## Host Notification Matrix
+
+- `GET /user/communication-preferences?persona=host&view=host-events` returns the authenticated host's event-level notification preferences.
+- `PUT /user/communication-preferences?persona=host&view=host-events` saves the complete event-level matrix for the authenticated host.
+- The matrix contains 87 host-facing event preferences across Property Manager, Booking & Reservation, Property Owner, Finance, Distribution, Compliance and Tasks.
+- New host preference records default every listed event to enabled. Saving choices creates or updates the authenticated user's row.
+- The event keys are maintained in the frontend display configuration and backend validation configuration; keep both lists aligned.
+- These preferences are persisted settings. Notification producers and delivery workers still need to enforce them before sending notifications; this change does not modify delivery behavior.
+
+## Host Matrix Database Prerequisite
+
+- The `main.host_notification_preferences` migration (`20261109_host_notification_preferences.js`) must be applied through the approved Domits database process before enabling the host event matrix.
+- The table stores one JSON preference document per authenticated host.
+- This function does not run migrations at runtime.

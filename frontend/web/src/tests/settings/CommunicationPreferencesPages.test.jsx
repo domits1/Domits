@@ -8,11 +8,16 @@ import GuestCommunicationPreferences from "../../features/guestdashboard/GuestCo
 import {
     fetchCommunicationPreferences,
     saveCommunicationPreferences,
+    fetchHostNotificationEventPreferences,
+    saveHostNotificationEventPreferences,
 } from "../../components/settings/api/communicationPreferences";
+import { DEFAULT_HOST_NOTIFICATION_PREFERENCES } from "../../components/settings/hostNotificationMatrixConfig";
 
 jest.mock("../../components/settings/api/communicationPreferences", () => ({
     fetchCommunicationPreferences: jest.fn(),
     saveCommunicationPreferences: jest.fn(),
+    fetchHostNotificationEventPreferences: jest.fn(),
+    saveHostNotificationEventPreferences: jest.fn(),
 }));
 
 const hostPreferences = {
@@ -47,11 +52,19 @@ const waitForLoadedPreferences = async () => {
     await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
 };
 
+const waitForLoadedHostPreferences = async () => {
+    await waitFor(() => expect(fetchCommunicationPreferences).toHaveBeenCalled());
+    await waitFor(() => expect(fetchHostNotificationEventPreferences).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
+};
+
 describe("Communication Preferences pages", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         fetchCommunicationPreferences.mockResolvedValue(defaults);
         saveCommunicationPreferences.mockResolvedValue(defaults);
+        fetchHostNotificationEventPreferences.mockResolvedValue({ ...DEFAULT_HOST_NOTIFICATION_PREFERENCES });
+        saveHostNotificationEventPreferences.mockResolvedValue({ ...DEFAULT_HOST_NOTIFICATION_PREFERENCES });
     });
 
     test("Host page GET uses persona=host and populates saved preferences", async () => {
@@ -59,8 +72,9 @@ describe("Communication Preferences pages", () => {
 
         renderWithLanguage(<HostCommunicationPreferences />);
 
-        expect(screen.getByRole("status")).toHaveTextContent("Loading communication preferences");
-        await waitForLoadedPreferences();
+        expect(screen.getByText("Loading communication preferences...")).toBeInTheDocument();
+        expect(screen.getByText("Loading notification choices...")).toBeInTheDocument();
+        await waitForLoadedHostPreferences();
 
         expect(fetchCommunicationPreferences).toHaveBeenCalledWith("host");
         expect(getToggle("Reservation", "SMS")).toHaveAttribute("aria-checked", "true");
@@ -85,7 +99,7 @@ describe("Communication Preferences pages", () => {
 
     test("editing enables Save and successful Host PUT sends persona plus exact complete matrix", async () => {
         renderWithLanguage(<HostCommunicationPreferences />);
-        await waitForLoadedPreferences();
+        await waitForLoadedHostPreferences();
 
         const reservationSms = getToggle("Reservation", "SMS");
         const saveButton = screen.getByRole("button", { name: /save changes/i });
@@ -118,7 +132,7 @@ describe("Communication Preferences pages", () => {
         });
 
         renderWithLanguage(<HostCommunicationPreferences />);
-        await waitForLoadedPreferences();
+        await waitForLoadedHostPreferences();
 
         expect(getToggle("Reservation", "Email")).toBeDisabled();
         expect(getToggle("Reservation", "Email")).toHaveAttribute("aria-checked", "true");
@@ -147,7 +161,7 @@ describe("Communication Preferences pages", () => {
     test("Host and Guest page states are independent", async () => {
         fetchCommunicationPreferences.mockResolvedValueOnce(hostPreferences);
         const { unmount } = renderWithLanguage(<HostCommunicationPreferences />);
-        await waitForLoadedPreferences();
+        await waitForLoadedHostPreferences();
         expect(getToggle("Reservation", "SMS")).toHaveAttribute("aria-checked", "true");
         expect(getToggle("Messages", "Email")).toHaveAttribute("aria-checked", "false");
         unmount();
@@ -164,7 +178,7 @@ describe("Communication Preferences pages", () => {
 
     test("Host and Guest save through the same API contract with different personas", async () => {
         const { unmount } = renderWithLanguage(<HostCommunicationPreferences />);
-        await waitForLoadedPreferences();
+        await waitForLoadedHostPreferences();
         fireEvent.click(getToggle("Messages", "SMS"));
         fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
         await waitFor(() => expect(saveCommunicationPreferences).toHaveBeenCalledTimes(1));
@@ -181,5 +195,34 @@ describe("Communication Preferences pages", () => {
         expect(saveCommunicationPreferences.mock.calls[0][0]).toBe("host");
         expect(saveCommunicationPreferences.mock.calls[1][0]).toBe("guest");
         expect(saveCommunicationPreferences.mock.calls[0][1]).toEqual(saveCommunicationPreferences.mock.calls[1][1]);
+    });
+});
+
+
+describe("Host notification matrix on the Host Dashboard page", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        fetchCommunicationPreferences.mockResolvedValue(defaults);
+        saveCommunicationPreferences.mockResolvedValue(defaults);
+        fetchHostNotificationEventPreferences.mockResolvedValue({ ...DEFAULT_HOST_NOTIFICATION_PREFERENCES });
+        saveHostNotificationEventPreferences.mockResolvedValue({ ...DEFAULT_HOST_NOTIFICATION_PREFERENCES });
+    });
+
+    test("loads host event preferences and saves an individual notification choice", async () => {
+        renderWithLanguage(<HostCommunicationPreferences />);
+        await waitForLoadedHostPreferences();
+
+        expect(fetchHostNotificationEventPreferences).toHaveBeenCalledTimes(1);
+        const newBooking = screen.getByRole("checkbox", { name: "New booking notifications" });
+        expect(newBooking).toBeChecked();
+
+        fireEvent.click(newBooking);
+        fireEvent.click(screen.getByRole("button", { name: /save notification choices/i }));
+
+        await waitFor(() => expect(saveHostNotificationEventPreferences).toHaveBeenCalledWith({
+            ...DEFAULT_HOST_NOTIFICATION_PREFERENCES,
+            manager_new_booking: false,
+        }));
+        expect(screen.getByText("Notification choices saved.")).toBeInTheDocument();
     });
 });

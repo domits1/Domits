@@ -1543,7 +1543,40 @@
       "actions": {
         "saveChanges": "Wijzigingen opslaan"
       }
-    },
+    ,
+      "notificationMatrix":       {
+        "title": "Notificatietypen",
+        "description": "Kies voor welke gebeurtenissen je meldingen wilt ontvangen. Je keuzes worden opgeslagen bij je hostaccount.",
+        "loading": "Notificatiekeuzes laden...",
+        "retry": "Opnieuw proberen",
+        "saved": "Notificatiekeuzes opgeslagen.",
+        "saving": "Opslaan...",
+        "save": "Notificatiekeuzes opslaan",
+        "enabled": "Ingeschakeld",
+        "disabled": "Uitgeschakeld",
+        "deliveryChannelsTitle": "Bezorgkanalen",
+        "deliveryChannelsDescription": "Kies welke kanalen worden gebruikt voor de bestaande reserverings-, annulerings- en berichtenmeldingen.",
+        "channelPreferencesTitle": "Voorkeuren voor bezorgkanalen",
+        "tabs": {
+          "propertyManager": "Property Manager",
+          "bookings": "Boekingen & reserveringen",
+          "propertyOwner": "Woning eigenaar",
+          "finance": "Financiën",
+          "distribution": "Distributie",
+          "compliance": "Compliance",
+          "tasks": "Taken"
+        },
+        "columns": {
+          "event": "Gebeurtenis",
+          "notification": "Melding",
+          "channel": "Kanaal",
+          "action": "Actie",
+          "priority": "Prioriteit",
+          "recipients": "Ontvangers",
+          "enabled": "Ingeschakeld"
+        }
+      }
+},
     "company": {
       "breadcrumb": "Bedrijf",
       "title": "Bedrijf",

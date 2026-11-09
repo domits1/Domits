@@ -1542,7 +1542,40 @@
       "actions": {
         "saveChanges": "Save changes"
       }
-    },
+    ,
+      "notificationMatrix":       {
+        "title": "Notification types",
+        "description": "Choose which events you want to receive notifications about. Your choices are saved to your host account.",
+        "loading": "Loading notification choices...",
+        "retry": "Retry",
+        "saved": "Notification choices saved.",
+        "saving": "Saving...",
+        "save": "Save notification choices",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "deliveryChannelsTitle": "Delivery channels",
+        "deliveryChannelsDescription": "Choose which delivery channels are enabled for the existing reservation, cancellation and message notifications.",
+        "channelPreferencesTitle": "Delivery channel preferences",
+        "tabs": {
+          "propertyManager": "Property Manager",
+          "bookings": "Bookings & Reservations",
+          "propertyOwner": "Property Owner",
+          "finance": "Finance",
+          "distribution": "Distribution",
+          "compliance": "Compliance",
+          "tasks": "Tasks"
+        },
+        "columns": {
+          "event": "Event",
+          "notification": "Notification",
+          "channel": "Channel",
+          "action": "Action",
+          "priority": "Priority",
+          "recipients": "Recipients",
+          "enabled": "Enabled"
+        }
+      }
+},
     "company": {
       "breadcrumb": "Company",
       "title": "Company",
