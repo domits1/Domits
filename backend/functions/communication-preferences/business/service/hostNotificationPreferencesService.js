@@ -70,6 +70,26 @@ const getClaimRoles = (claims = {}) => [
   .map((value) => String(value).trim().toLowerCase())
   .filter(Boolean);
 
+export const hasHostNotificationAccess = (claims = {}) => {
+  const allowedRoles = [
+    "host",
+    "admin",
+    "engineer",
+    "general manager",
+    "reservation manager",
+    "guest experience manager",
+    "financial manager",
+    "distribution manager",
+    "revenue manager",
+    "sales manager",
+    "property operations manager",
+    "housekeeping",
+    "maintenance",
+    "guest services",
+  ];
+  return getClaimRoles(claims).some((role) => allowedRoles.includes(role));
+};
+
 export const hasHostNotificationEngineeringAccess = (claims = {}) => {
   const roles = getClaimRoles(claims);
   return roles.includes("admin") || roles.includes("engineer");
