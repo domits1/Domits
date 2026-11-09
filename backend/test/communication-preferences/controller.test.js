@@ -193,6 +193,7 @@ describe("CommunicationPreferencesController host notification matrix scope", ()
 
     await expect(controller.getPreferences(authenticatedEvent({
       queryStringParameters: { persona: "host", scope: "matrix" },
+      requestContext: { authorizer: { claims: { sub: "user-1", "custom:group": "Host" } } },
     }))).resolves.toEqual({ statusCode: 200, response: matrix });
 
     expect(hostNotificationPreferencesService.getPreferences).toHaveBeenCalledWith("user-1", {
@@ -208,11 +209,12 @@ describe("CommunicationPreferencesController host notification matrix scope", ()
     await expect(controller.updatePreferences(authenticatedEvent({
       queryStringParameters: { persona: "host", scope: "matrix" },
       body: JSON.stringify(matrix),
+      requestContext: { authorizer: { claims: { sub: "user-1", "custom:group": "Host" } } },
     }))).resolves.toEqual({ statusCode: 200, response: matrix });
 
     expect(hostNotificationPreferencesService.savePreferences).toHaveBeenCalledWith(
       "user-1",
-      { sub: "user-1", "custom:group": "Guest" },
+      { sub: "user-1", "custom:group": "Host" },
       matrix
     );
     expect(service.savePreferences).not.toHaveBeenCalled();
@@ -237,4 +239,22 @@ describe("CommunicationPreferencesController host notification matrix scope", ()
 
     expect(service.getPreferences).not.toHaveBeenCalled();
   });
+});
+
+
+test("matrix scope rejects accounts outside the Host Dashboard roles", async () => {
+  const hostNotificationPreferencesService = {
+    getPreferences: jest.fn(),
+    savePreferences: jest.fn(),
+  };
+  const controller = new CommunicationPreferencesController({
+    service: { getPreferences: jest.fn(), savePreferences: jest.fn() },
+    hostNotificationPreferencesService,
+  });
+
+  await expect(controller.getPreferences(authenticatedEvent({
+    queryStringParameters: { persona: "host", scope: "matrix" },
+  }))).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+
+  expect(hostNotificationPreferencesService.getPreferences).not.toHaveBeenCalled();
 });
