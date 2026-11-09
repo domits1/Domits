@@ -6,6 +6,7 @@ import {
   approveListing,
   fetchReviewDetail,
   fetchReviewQueue,
+  rejectListing,
   requestPropertyReview,
 } from "./propertyReviewApi";
 
@@ -244,6 +245,23 @@ describe("propertyReviewApi", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         `${PROPERTY_API_BASE}/review/approve`,
         expect.objectContaining({ method: "POST", body: JSON.stringify({ propertyId: "p1", updatedAt: 1 }) })
+      );
+    });
+  });
+
+  describe("rejectListing", () => {
+    test("posts the property id, the loaded updated-at and the reason", async () => {
+      global.fetch.mockResolvedValue(respondWith(200, { propertyId: "p1", status: "REJECTED", updatedAt: 2 }));
+
+      const body = await rejectListing("p1", 1, "Photos are missing");
+
+      expect(body).toEqual({ propertyId: "p1", status: "REJECTED", updatedAt: 2 });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${PROPERTY_API_BASE}/review/reject`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ propertyId: "p1", updatedAt: 1, reason: "Photos are missing" }),
+        })
       );
     });
   });
