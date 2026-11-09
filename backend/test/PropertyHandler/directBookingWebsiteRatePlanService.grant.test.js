@@ -97,6 +97,7 @@ describe("DirectBookingWebsiteRatePlanService.grantElite", () => {
     ["exactly 366 days ahead", { effectiveUntil: isoAt(NOW + 366 * DAY_MS) }],
     ["a time zone offset", { effectiveUntil: "2027-05-01T02:00:00+02:00" }],
     ["milliseconds", { effectiveUntil: "2027-05-01T00:00:00.250Z" }],
+    ["microseconds", { effectiveUntil: "2027-05-01T00:00:00.123456Z" }],
     ["a reason of 500 characters", { reason: "r".repeat(500) }],
     ["an account id of 255 characters", { accountId: "h".repeat(255) }],
   ])("accepts %s", async (_label, overrides) => {
@@ -129,6 +130,12 @@ describe("DirectBookingWebsiteRatePlanService.grantElite", () => {
     await expect(service.grantElite(request(overrides))).rejects.toMatchObject({ statusCode: 400 });
 
     expect(cognitoRepository.getUserById).not.toHaveBeenCalled();
+    expectNothingWritten();
+  });
+
+  it("refuses a missing request with a 400", async () => {
+    await expect(service.grantElite(null)).rejects.toMatchObject({ statusCode: 400 });
+
     expectNothingWritten();
   });
 

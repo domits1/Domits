@@ -3,7 +3,7 @@ const MAX_GRANT_MS = WEBSITE_PLAN_GRANT_MAX_DAYS * 24 * 60 * 60 * 1000;
 const ACCOUNT_ID_MAX_LENGTH = 255;
 const REASON_MAX_LENGTH = 500;
 const ISO_DATE_TIME =
-  /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
+  /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
 
 const invalidGrant = (message) => Object.assign(new Error(message), { statusCode: 400 });
 
@@ -32,7 +32,8 @@ const readEffectiveUntil = (value, nowMs) => {
   return new Date(untilMs);
 };
 
-export const readWebsitePlanGrantRequest = ({ actorId, accountId, effectiveUntil, reason } = {}, nowMs) => {
+export const readWebsitePlanGrantRequest = (request, nowMs) => {
+  const { actorId, accountId, effectiveUntil, reason } = request ?? {};
   const actor = readText(actorId, ACCOUNT_ID_MAX_LENGTH);
   if (!actor) throw invalidGrant("actorId is required.");
   const account = readText(accountId, ACCOUNT_ID_MAX_LENGTH);
