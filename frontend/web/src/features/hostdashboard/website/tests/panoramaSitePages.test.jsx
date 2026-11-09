@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
@@ -10,6 +10,13 @@ jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
   __esModule: true,
   default: function QuoteAvailabilitySectionStub({ siteId }) {
     return <div data-testid="quote-availability" data-site-id={siteId} />;
+  },
+}));
+
+jest.mock("../../../../components/gallery/PhotoBrowserOverlay", () => ({
+  __esModule: true,
+  default: function PhotoBrowserOverlayStub() {
+    return <div data-testid="photo-browser" />;
   },
 }));
 
@@ -26,12 +33,13 @@ const buildModel = (overrides = {}) =>
     "panorama-landing"
   );
 
-const renderTemplate = (model, props = {}) =>
-  render(
-    <MemoryRouter>
-      <PanoramaLandingTemplate model={model} quoteContext={{ siteId: "site-1" }} {...props} />
-    </MemoryRouter>
-  );
+const templateAt = (model, props = {}) => (
+  <MemoryRouter>
+    <PanoramaLandingTemplate model={model} quoteContext={{ siteId: "site-1" }} {...props} />
+  </MemoryRouter>
+);
+
+const renderTemplate = (model, props = {}) => render(templateAt(model, props));
 
 const listSectionIds = (container) =>
   Array.from(container.querySelectorAll("article > section[id]")).map((section) => section.id);
@@ -279,5 +287,36 @@ describe("Panorama site page menu", () => {
       ["Contact us", "/contact-us", null],
       ["Book", "/#availability", null],
     ]);
+  });
+});
+
+describe("Panorama page changes", () => {
+  it("closes the menu drawer, the amenities panel and the gallery browser when the page changes", async () => {
+    const model = buildModel({ sitePages: ALL_PAGES_ON });
+    const { rerender } = render(templateAt(model, { activePageKey: "accommodation" }));
+    const menuButton = screen.getByRole("button", { name: "Open section menu" });
+    fireEvent.click(menuButton);
+    fireEvent.click(screen.getByRole("button", { name: "Show all" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    rerender(templateAt(model, { activePageKey: "gallery" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Browse" }));
+    rerender(templateAt(model, { activePageKey: "accommodation" }));
+    rerender(templateAt(model, { activePageKey: "contact" }));
+    await act(async () => {});
+
+    expect(screen.queryByTestId("photo-browser")).toBeNull();
+  });
+
+  it("opens the gallery browser on the gallery page", async () => {
+    render(templateAt(buildModel({ sitePages: ALL_PAGES_ON }), { activePageKey: "gallery" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Browse" }));
+
+    expect(await screen.findByTestId("photo-browser")).toBeInTheDocument();
   });
 });

@@ -1290,6 +1290,7 @@ export default function PanoramaLandingTemplate({
     () => buildPanoramaPageState(model.sitePages, activePageKey),
     [model.sitePages, activePageKey]
   );
+  const currentPageKey = pageState?.currentPage.key;
   const showsPageSection = (section) => !pageState || pageState.sections.includes(section);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
@@ -1299,10 +1300,7 @@ export default function PanoramaLandingTemplate({
   const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
-  const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(
-    viewState.showTopBar,
-    pageState?.currentPage.key
-  );
+  const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar, currentPageKey);
   const navItems = pageState
     ? buildPanoramaPageNavItems(pageState, pageBasePath, viewState)
     : buildPanoramaNavItems(model, viewState);
@@ -1334,6 +1332,12 @@ export default function PanoramaLandingTemplate({
       globalThis.document?.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    setShowAmenitiesModal(false);
+    setIsGalleryBrowserOpen(false);
+    setIsNavDrawerOpen(false);
+  }, [currentPageKey]);
 
   useEffect(() => {
     if (!isNavDrawerOpen) {
