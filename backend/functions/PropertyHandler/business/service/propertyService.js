@@ -9,6 +9,7 @@ import { PropertyCheckInRepository } from "../../data/repository/propertyCheckIn
 import { PropertyGeneralDetailRepository } from "../../data/repository/propertyGeneralDetailRepository.js";
 import { PropertyLocationRepository } from "../../data/repository/propertyLocationRepository.js";
 import { DestinationMappingService } from "./destinationMappingService.js";
+import { ListingReviewNotifier } from "./listingReviewNotifier.js";
 import { PropertyPricingRepository } from "../../data/repository/propertyPricingRepository.js";
 import { PropertyRuleRepository } from "../../data/repository/propertyRuleRepository.js";
 import { PropertyTechnicalDetailRepository } from "../../data/repository/propertyTechnicalDetailRepository.js";
@@ -47,7 +48,7 @@ import {
 } from "../../util/propertyStatus.js";
 import { decodeReviewQueueCursor, encodeReviewQueueCursor } from "../../util/reviewQueueCursor.js";
 import { normalizeReviewQueueLimit } from "../../util/reviewQueueLimit.js";
-import { isDsqlConflict } from "../../../.shared/dsqlRetry.js";
+import { isDsqlConflict } from "../../.shared/dsqlRetry.js";
 import {
   AUTO_REGISTRATION_NUMBER_PATTERN,
   MAX_REGISTRATION_NUMBER_LENGTH,
@@ -104,6 +105,7 @@ export class PropertyService {
       eventRepository: this.directBookingWebsiteEventRepository,
     });
     this.destinationMappingService = new DestinationMappingService();
+    this.listingReviewNotifier = new ListingReviewNotifier();
   }
 
   createStaticPageWithdrawal() {
@@ -273,6 +275,13 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
+    await this.listingReviewNotifier.notifyDecision({
+      hostId: property.hostId,
+      propertyId,
+      title: property.title,
+      outcome: transition.action,
+      reason: transition.reason,
+    });
     return property;
   }
 
@@ -566,9 +575,17 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId, {
+    const property = await this.getFullPropertyAttributesWithFullLocation(propertyId, {
       includeCalendarAvailability: true,
     });
+    const latestRejection =
+      basePropertyInfo.status === PROPERTY_STATUS.REJECTED ? await this.getLatestRejection(propertyId) : null;
+    return { ...property, latestRejection };
+  }
+
+  async getLatestRejection(propertyId) {
+    const rejection = await this.propertyRepository.getLatestRejection(propertyId);
+    return rejection ? { reason: rejection.reason, rejectedAt: rejection.createdAt } : null;
   }
 
   async getFullPropertyByBookingId(bookingId) {

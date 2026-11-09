@@ -3,6 +3,31 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import Helpdesk from "../pages/helpdesk/Helpdesk";
 import Faq from '../pages/landingpage/Faq';
 
+describe('Faq helpdesk buttons', () => {
+  let originalLocation;
+
+  beforeEach(() => {
+    originalLocation = window.location;
+    delete window.location;
+    window.location = { assign: jest.fn() };
+  });
+
+  afterEach(() => {
+    window.location = originalLocation;
+  });
+
+  test.each([
+    ['Host', 'https://bookdomits.com/host-faq-frequently-asked-questions/'],
+    ['Guest', 'https://bookdomits.com/guest-faq-frequently-asked-questions/'],
+  ])('the %s button opens %s', (buttonName, expectedUrl) => {
+    render(<Faq />);
+
+    fireEvent.click(screen.getByRole('button', { name: buttonName }));
+
+    expect(window.location.assign).toHaveBeenCalledWith(expectedUrl);
+  });
+});
+
 test.skip('shows search input and button', () => {
     render(<Helpdesk category="guest" />);
     screen.getByPlaceholderText(/What do you need help with?/i);

@@ -1,4 +1,3 @@
-import { readTrendPolicy, parseTrendQuery, TREND_PAGE_SIZE } from "../ratingTrends.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -6,71 +5,14 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
-import { assertEligibleBooking, isPublished } from "../reviewRules.js";
+import { assertCaller, assertEligibleBooking, assertId, INVALID_TEXT_CONTROLS, isPublished, requireReview } from "../model/reviewRules.js";
+import { DomitsAdminReviewService } from "./domitsAdminReviewService.js";
+import { HostReviewService } from "./hostReviewService.js";
 
 const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
 
-const DAY_MS = 86_400_000;
-const MAX_PERFORMANCE_PERIODS = 120;
-const formatPerformanceDate = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
-
-function parsePerformanceDate(value, name) {
-  if (typeof value !== "string" || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
-    throw new BadRequestException(`${name} must be YYYY-MM-DD.`);
-  }
-  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
-  if (!Number.isFinite(timestamp) || formatPerformanceDate(timestamp) !== value) {
-    throw new BadRequestException(`${name} must be a valid date.`);
-  }
-  return timestamp;
-}
-
-function getPerformancePeriodStart(timestamp, interval) {
-  const date = new Date(timestamp);
-  if (interval === "week") {
-    date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
-  } else {
-    date.setUTCDate(1);
-    if (interval === "year") date.setUTCMonth(0);
-  }
-  return date.getTime();
-}
-
-function getNextPerformancePeriod(timestamp, interval) {
-  const date = new Date(timestamp);
-  switch (interval) {
-    case "week": date.setUTCDate(date.getUTCDate() + 7); break;
-    case "month": date.setUTCMonth(date.getUTCMonth() + 1); break;
-    case "year": date.setUTCFullYear(date.getUTCFullYear() + 1); break;
-  }
-  return date.getTime();
-}
-
-function generatePerformancePeriods(start, endExclusive, interval) {
-  const periods = [];
-  for (let periodStart = getPerformancePeriodStart(start, interval); periodStart < endExclusive;) {
-    if (periods.length >= MAX_PERFORMANCE_PERIODS) {
-      throw new BadRequestException("Select a range covering at most 120 periods.");
-    }
-    const nextPeriod = getNextPerformancePeriod(periodStart, interval);
-    const coverageStart = Math.max(start, periodStart);
-    const coverageEndExclusive = Math.min(endExclusive, nextPeriod);
-    periods.push({
-      period: formatPerformanceDate(periodStart),
-      coverage_start: formatPerformanceDate(coverageStart),
-      coverage_end: formatPerformanceDate(coverageEndExclusive - DAY_MS),
-      is_partial: coverageStart !== periodStart || coverageEndExclusive !== nextPeriod,
-    });
-    periodStart = nextPeriod;
-  }
-  return periods;
-}
-
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
-// eslint-disable-next-line no-control-regex -- Reject controls while allowing tabs and line breaks.
-const INVALID_TEXT_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
-
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
 const toReviewView = (review) => ({
@@ -97,25 +39,8 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
-  async saveHostResponse(user, reviewId, body, action) {
-    this.assertHostResponseIdentity(user);
-    if (typeof reviewId !== "string" || !reviewId.trim() || reviewId.length > 255) throw new BadRequestException("A valid review ID is required.");
-    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some((key) => key !== "message")) {
-      throw new BadRequestException("Only response text may be submitted.");
-    }
-    if (!["draft", "edit", "publish"].includes(action) || typeof body.message !== "string" || INVALID_TEXT_CONTROLS.test(body.message)) {
-      throw new BadRequestException("Response must contain supported plain text.");
-    }
-    const message = body.message.replace(/\r\n?/g, "\n").trim();
-    if (!message || message.length > 500) throw new BadRequestException("Write a response between 1 and 500 characters.");
-    return this.repository.saveHostResponse(user, reviewId.trim(), message, action, this.now());
-  }
-
-  async getResponseEligibleReviews(username) {
-    if (typeof username !== "string" || !username.trim()) throw new UnauthorizedException("A verified host identity is required.");
-    const reviews = await this.repository.findResponseEligibleReviews(username);
-    return reviews.map((review) => ({ ...review, content: review.public_review, date: review.created_at }));
-  }
+  #hostReviewService;
+  #domitsAdminReviewService;
 
   async getPublicReviews(propertyId, offset = "0") {
     if (typeof propertyId !== "string" || !propertyId.trim()) {
@@ -130,7 +55,6 @@ export class ReviewService {
     return result;
   }
 
-
   constructor({ repository = new ReviewRepository(), now = () => Date.now(),
     canReadPrivateFeedback = async ({ userId, review }) =>
       review.reviewer_user_id === userId || review.host_id === userId,
@@ -140,10 +64,55 @@ export class ReviewService {
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
+    this.#hostReviewService = new HostReviewService({ repository, now: () => this.now() });
+    this.#domitsAdminReviewService = new DomitsAdminReviewService({
+      repository,
+      canReadPrivateFeedback: (context) => this.canReadPrivateFeedback(context),
+    });
     this.editWindowMs =
       Number.isSafeInteger(editWindowMs) && editWindowMs > 0
         ? editWindowMs
         : 0;
+  }
+
+  async saveHostResponse(user, reviewId, body, action) {
+    return this.#hostReviewService.saveHostResponse(user, reviewId, body, action);
+  }
+
+  async getResponseEligibleReviews(username) {
+    return this.#hostReviewService.getResponseEligibleReviews(username);
+  }
+
+  async authorizeManagedProperty(callerUserId, propertyId) {
+    return this.#hostReviewService.authorizeManagedProperty(callerUserId, propertyId);
+  }
+
+  async getPropertyRatingTrends(username, query) {
+    return this.#hostReviewService.getPropertyRatingTrends(username, query);
+  }
+
+  async getPropertyReviewPerformance(userId, propertyId, query) {
+    return this.#hostReviewService.getPropertyReviewPerformance(userId, propertyId, query);
+  }
+
+  async getPropertyCategoryRatings(userId, propertyId) {
+    return this.#hostReviewService.getPropertyCategoryRatings(userId, propertyId);
+  }
+
+  async getPropertyReviewScore(userId, propertyId) {
+    return this.#hostReviewService.getPropertyReviewScore(userId, propertyId);
+  }
+
+  async deleteReviewResponse(user, reviewId) {
+    return this.#hostReviewService.deleteReviewResponse(user, reviewId);
+  }
+
+  assertHostResponseIdentity(user) {
+    return this.#hostReviewService.assertHostResponseIdentity(user);
+  }
+
+  async getPrivateFeedback(userId, reviewId) {
+    return this.#domitsAdminReviewService.getPrivateFeedback(userId, reviewId);
   }
 
   editDeadline(review) {
@@ -151,96 +120,6 @@ export class ReviewService {
     const deadline = createdAt + this.editWindowMs;
     return this.editWindowMs && Number.isSafeInteger(createdAt) && createdAt > 0
       && Number.isSafeInteger(deadline) ? deadline : 0;
-  }
-
-  async authorizeManagedProperty(callerUserId, propertyId) {
-    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
-      throw new UnauthorizedException("A verified user identity is required.");
-    }
-    if (typeof propertyId !== "string" || !propertyId.trim()) {
-      throw new BadRequestException("A property ID is required.");
-    }
-    this.assertId(propertyId, "property ID");
-    const normalizedPropertyId = propertyId.trim();
-    const property = await this.repository.findManagedProperty(normalizedPropertyId, callerUserId);
-    if (!property) throw new NotFoundException("Property not found or access is denied.");
-    return normalizedPropertyId;
-  }
-
-  async getPropertyRatingTrends(username, query = {}) {
-    if (typeof username !== "string" || !username.trim()) {
-      throw new UnauthorizedException("A verified user identity is required.");
-    }
-    const policy = readTrendPolicy();
-    const options = parseTrendQuery(query, this.now());
-    const { days, offset, previousStart, currentStart } = options;
-    const { threshold, minimumReviews } = policy;
-    const rows = await this.repository.getPropertyRatingTrendPage(username, { ...options, ...policy });
-    const trends = rows.slice(0, TREND_PAGE_SIZE).map((row) => ({
-      property_id: row.property_id,
-      current_average_rating: row.current_average_rating,
-      previous_average_rating: row.previous_average_rating,
-      current_review_count: row.current_review_count,
-      previous_review_count: row.previous_review_count,
-      rating_change: row.rating_change,
-      trend_status: row.trend_status,
-    }));
-    const dateLabel = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
-    if (trends.length) {
-      try {
-        const historyRows = await this.repository.getPropertyRatingHistory(username, trends.map((property) => property.property_id), options);
-        const historyByProperty = new Map();
-        for (const row of historyRows) {
-          if (!historyByProperty.has(row.property_id)) historyByProperty.set(row.property_id, new Map());
-          historyByProperty.get(row.property_id).set(row.period_index, row);
-        }
-        const periodMs = days * DAY_MS;
-        for (const property of trends) {
-          property.history = Array.from({ length: 6 }, (_, index) => {
-            const start = options.endExclusive - (6 - index) * periodMs;
-            const row = historyByProperty.get(property.property_id)?.get(index);
-            return { start_date: dateLabel(start), end_date: dateLabel(start + periodMs - DAY_MS),
-              average_rating: row?.average_rating ?? null, review_count: row?.review_count ?? 0 };
-          });
-        }
-      } catch (error) {
-        console.error("ReviewSystem rating history failed:", error);
-        for (const property of trends) property.history = null;
-      }
-    }
-    return { timezone: "UTC", days, decline_threshold: threshold, minimum_reviews_per_period: minimumReviews,
-      previous_period: { start_date: dateLabel(previousStart), end_date: dateLabel(currentStart - DAY_MS) },
-      current_period: { start_date: dateLabel(currentStart), end_date: query.endDate },
-      properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
-  }
-
-  async getPropertyReviewPerformance(userId, propertyId, query = {}) {
-    const id = await this.authorizeManagedProperty(userId, propertyId);
-    const interval = query.interval === undefined ? "month" : query.interval;
-    if (!["week", "month", "year"].includes(interval)) {
-      throw new BadRequestException("interval must be week, month, or year.");
-    }
-    const start = parsePerformanceDate(query.startDate, "startDate");
-    const end = parsePerformanceDate(query.endDate, "endDate");
-    if (start > end) throw new BadRequestException("startDate must not exceed endDate.");
-    const endExclusive = end + DAY_MS;
-    const buckets = generatePerformancePeriods(start, endExclusive, interval);
-    const rows = await this.repository.getPropertyReviewPerformance(id, userId, start, endExclusive, interval);
-    const byPeriod = new Map(rows.map((row) => [row.period, row]));
-    const periods = buckets.map((bucket) => {
-      const row = byPeriod.get(bucket.period);
-      return { ...bucket, average_score: row ? Number(row.average_score) : null,
-        review_count: row ? Number(row.review_count) : 0,
-        rating_distribution: Object.fromEntries([1, 2, 3, 4, 5].map((stars) => [stars, Number(row?.[`stars_${stars}`] ?? 0)])) };
-    });
-    return { property_id: id, interval, timezone: "UTC", start_date: query.startDate,
-      end_date: query.endDate, periods };
-  }
-
-  async getPropertyCategoryRatings(userId, propertyId) {
-    const id = await this.authorizeManagedProperty(userId, propertyId);
-    const categories = await this.repository.getPropertyCategoryRatings(id, userId);
-    return { property_id: id, categories };
   }
 
   async getEditableReview(callerUserId, reviewId) {
@@ -287,11 +166,6 @@ export class ReviewService {
     }
     return { id: reviewId, overall_rating: data.overall_rating,
       public_review: publicReview, updated_at: result.updated_at };
-  }
-
-  async getPropertyReviewScore(userId, propertyId) {
-    const id = await this.authorizeManagedProperty(userId, propertyId);
-    return this.repository.getPropertyReviewScore(id, userId);
   }
 
   // Fetch the caller's reviews by scope.
@@ -404,30 +278,6 @@ export class ReviewService {
     return toReviewView(updated);
   }
 
-  // Expose private feedback only to authorized users.
-  // This keeps guest notes visible to the right audience without leaking them to the public review feed.
-  async getPrivateFeedback(userId, reviewId) {
-    this.assertCaller(userId);
-    const review = await this.requireReview(reviewId);
-    if (!(await this.canReadPrivateFeedback({ userId, review }))) {
-      throw new ForbiddenException("You cannot access this private feedback.");
-    }
-    return { review_id: review.id, private_feedback: review.private_feedback };
-  }
-
-  // Delete uses the same trusted identity and property access rules as save.
-  async deleteReviewResponse(user, reviewId) {
-    this.assertHostResponseIdentity(user);
-    this.assertId(reviewId, "review ID");
-    if (!(await this.repository.deleteHostResponse(user, reviewId.trim(), this.now()))) {
-      throw new NotFoundException("Review response not found.");
-    }
-  }
-
-  assertHostResponseIdentity(user) {
-    if (typeof user?.username !== "string" || !user.username.trim() || typeof user.userId !== "string" || !user.userId.trim()) throw new UnauthorizedException("A verified host identity is required.");
-  }
-
   // Publish a draft review when the reservation is still valid.
   // This finalizes the guest review only after the booking checks and authorization rules confirm it is eligible.
   async publishReview(userId, reviewId) {
@@ -456,20 +306,15 @@ export class ReviewService {
   }
 
   async requireReview(reviewId) {
-    this.assertId(reviewId, "review ID");
-    const review = await this.repository.findById(reviewId.trim());
-    if (!review || ["DELETED", "REJECTED"].includes(review.status)) throw new NotFoundException("Review not found.");
-    return review;
+    return requireReview(this.repository, reviewId);
   }
 
   assertCaller(userId) {
-    if (typeof userId !== "string" || !userId.trim()) throw new UnauthorizedException("An authenticated caller is required.");
+    assertCaller(userId);
   }
 
   assertId(value, name) {
-    if (typeof value !== "string" || !value.trim() || value.trim().length > 255) {
-      throw new BadRequestException(`A valid ${name} is required.`);
-    }
+    assertId(value, name);
   }
 
   assertObject(value) {

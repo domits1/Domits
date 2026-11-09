@@ -41,6 +41,7 @@
 		"@aws-sdk/dsql-signer": "^3.821.0",
 		"@aws-sdk/util-dynamodb": "3.817.0",
 		"database": "file:./ORM",
+		"fast-xml-parser": "~5.11.2",
 		"pg": "^8.16.0",
 		"reflect-metadata": "^0.2.2",
 		"sharp": "^0.33.5",

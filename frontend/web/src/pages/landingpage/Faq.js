@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Helpdesk from '../helpdesk/Helpdesk';
-import { useNavigate } from 'react-router-dom';
+import { GUEST_FAQ_URL, HOST_FAQ_URL } from '../../constants/externalLinks';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
@@ -533,15 +533,13 @@ Object.keys(faqs).forEach((subcategory) => {
   }
 });
 
-    const navigate = useNavigate();
-
     const handleNavigation = (category) => {
       if (category === 'host') {
         setCategory('host');
-        navigate('/helpdesk-host');
+        window.location.assign(HOST_FAQ_URL);
       } else if (category === 'guest') {
         setCategory('guest');
-        navigate('/helpdesk-guest');
+        window.location.assign(GUEST_FAQ_URL);
       }
     };
 

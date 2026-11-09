@@ -490,6 +490,7 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     arrivaldate: firstDefined(booking?.arrivaldate, booking?.arrivalDate),
     departuredate: firstDefined(booking?.departuredate, booking?.departureDate),
     bookedOn: firstDefined(booking?.bookedOn, booking?.createdAt, booking?.createdat),
+    cancelledAt: firstDefined(booking?.cancelledAt, booking?.cancelled_at),
     guests: firstDefined(booking?.guests, booking?.guestCount, 0),
     guestname: normalizeStringValue(firstDefined(booking?.guestname, booking?.guestName, guestProfile?.givenName)),
     guestProfileImage: resolveGuestProfileImage({ booking, guestProfile }),
@@ -540,6 +541,7 @@ const EMPTY_RESERVATION_DETAILS = Object.freeze({
   arrivaldate: "",
   departuredate: "",
   bookedOn: "",
+  cancelledAt: null,
   guests: 0,
   guestname: "",
   guestProfileImage: "",
@@ -639,6 +641,24 @@ const buildBookedOnText = (bookedOn, isShellLoading, t) => {
   return `${t.labels.bookedOn} ${value}`;
 };
 
+// Next to "Reservation cancelled" the date must be the cancel date. Cancellations from
+// before the cancel time was stored have none; the booking date there would be wrong (#3585).
+const resolvePaymentDate = (reservation) =>
+  reservation.status === "CANCELLED" ? reservation.cancelledAt : reservation.bookedOn;
+
+const buildPaymentDateText = (reservation, isShellLoading, t) => {
+  if (reservation.status === "CANCELLED") {
+    return formatShortDate(resolvePaymentDate(reservation));
+  }
+
+  return buildLoadingAwareText(
+    formatShortDate(reservation.bookedOn),
+    isShellLoading,
+    t.labels.loadingValue,
+    t.labels.unavailable
+  );
+};
+
 const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoading, t }) => {
   const statusConfig = getStatusConfig(t);
   const paymentStatusConfig = getPaymentStatusConfig(t);
@@ -682,12 +702,7 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
       t.labels.unavailable
     ),
     bookedOnText: buildBookedOnText(reservation.bookedOn, isShellLoading, t),
-    paymentDateText: buildLoadingAwareText(
-      formatShortDate(reservation.bookedOn),
-      isShellLoading,
-      t.labels.loadingValue,
-      t.labels.unavailable
-    ),
+    paymentDateText: buildPaymentDateText(reservation, isShellLoading, t),
     paymentMethodLabel: hasReservationData ? buildMaskedPaymentMethodLabel(reservation) : t.labels.loadingValue,
     reservationIdText: buildLoadingAwareText(
       reservation.reservationId,
@@ -759,7 +774,7 @@ const buildReservationReceiptPayload = (reservation) => {
     paymentStatusLabel: isPaidOnChannel
       ? CHANNEL_PAYMENT_STATUS_TEXT
       : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
-    paymentDate: reservation.bookedOn,
+    paymentDate: resolvePaymentDate(reservation),
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
     cancellationType: reservation.cancellationType || "Not specified",
     cancellationPolicy: reservation.cancellationPolicy || "No cancellation policy selected.",

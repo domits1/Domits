@@ -161,7 +161,7 @@ In a copy, add these three rules before the rule that rewrites the app routes to
 
 Read the live list again, make sure it still equals `rules-before.json`, then `aws amplify update-app --app-id d34jwd0sihmsus --custom-rules file://rules-new.json`.
 
-Check on `www.domits.com` and `acceptance.domits.com`, with the switch still off: `/destinations/europe` answers the `404` of the Lambda (with `noindex`, not the app shell, and an `All destinations` link that stays on the same host), `/destinations/europe/` a `301` to the path without the slash; and `/`, `/about`, a `/listingdetails?ID=...` link, a dashboard route, a static asset, `/robots.txt`, `/sitemap.xml` and `domits.com` to `www` behave as before.
+Check on `www.domits.com` and `acceptance.domits.com`, with the switch still off: `/destinations/europe` answers the `404` of the Lambda (with `noindex` and an `All destinations` link that stays on the same host; it has the Domits header and footer, but it is not the app shell: its source has no `<div id="root">`), `/destinations/europe/` a `301` to the path without the slash; and `/`, `/about`, a `/listingdetails?ID=...` link, a dashboard route, a static asset, `/robots.txt`, `/sitemap.xml` and `domits.com` to `www` behave as before.
 Rollback: read the live list, compare it with the one you wrote, and write `rules-before.json` back.
 
 ## 8. Switch on
