@@ -80,7 +80,7 @@ The first row that matches wins.
 | Status | When |
 |---|---|
 | Down | A critical alarm is in ALARM |
-| Degraded | A warning alarm is in ALARM, or a failed outbox change in the last 7 days, or the oldest waiting change is older than 7 minutes, or an account is `RECONNECT_REQUIRED`, or the last polling run ended `FAILED`, or the alarms could not be read |
+| Degraded | A warning alarm is in ALARM, or a failed outbox change in the last 24 hours, or the oldest waiting change is older than 7 minutes, or an account is `RECONNECT_REQUIRED`, or the last polling run ended `FAILED`, or the alarms could not be read |
 | Healthy | None of the above |
 
 Alarms are split by what they mean, so a probe on the webhook URL does not turn the page to Down:
@@ -99,7 +99,9 @@ Alarms are split by what they mean, so a probe on the webhook URL does not turn 
 
 **D6. Missed webhooks come from the alarm.** Polling logs `CHANNEX_BOOKING_POLL_IMPORTED_MISSED` but does not store a count. The `channex-webhook-missed` alarm state is enough for this slice; a stored count is a follow-up if the alarm ever fires.
 
-**D7. Read-only, bounded queries.** Every query is a `SELECT` with a filter or `LIMIT`, so it takes no lock and cannot cause an optimistic-concurrency conflict with the worker.
+A failed change counts for the status for 24 hours, while the card keeps the 7-day count. A FAILED row is never retried (the fix is to save the dates again, which queues a new change), so a 7-day window would keep the page Degraded for a week after one failure that was already handled.
+
+**D7. Read-only, bounded queries.** Every query is a `SELECT` with a filter, a `LIMIT` or a single aggregate, so it takes no lock and cannot cause an optimistic-concurrency conflict with the worker.
 
 ## 6. Response
 
@@ -133,7 +135,13 @@ No guest data, no credentials, no raw provider payloads. Account ids and propert
 
 ## 7. Queries
 
-All on `main`. Outbox columns are lowercase without separators.
+All on `main`. Column names differ per table, so the implementation follows each table's own convention:
+
+- `channex_ari_outbox` has lowercase columns without separators (`createdat`), so raw SQL uses them unquoted, as `ChannexAriOutboxRepository` already does.
+- `channex_booking_revision` was created with quoted camelCase columns (`"createdAt"`, `UnifiedMessaging/migrations/004_add_channex_booking_revision.sql`). Unquoted `createdAt` resolves to `createdat` and fails.
+- `integration_sync_state`, `channel_integration_account` and `channel_integration_property` have no create script in the repo. These are read through the TypeORM query builder on their entities (`IntegrationSyncState`, `ChannelIntegrationAccount`, `ChannelIntegrationProperty`), which quotes columns from the entity metadata, as `IntegrationSyncRepository` and `ChannexAriOutboxWriter.isMappedToChannex` do.
+
+The queries below show what is read; for the last three tables they are the query builder's output, not hand-written SQL. Each is run once against DSQL before the PR.
 
 | Field | Query |
 |---|---|
@@ -141,8 +149,8 @@ All on `main`. Outbox columns are lowercase without separators.
 | oldestPendingCreatedAt | `SELECT min(createdat) FROM channex_ari_outbox WHERE status = 'PENDING'` |
 | failed / processed, 7 days | `SELECT status, count(*) FROM channex_ari_outbox WHERE status IN ('FAILED','PROCESSED') AND updatedat >= $1 GROUP BY status` |
 | recentFailures | `… WHERE status = 'FAILED' ORDER BY updatedat DESC LIMIT 10` |
-| lastRevisionAt | `SELECT max(createdAt) FROM channex_booking_revision` |
-| lastPollAt, lastPollStatus | `SELECT lastSyncedAt, status FROM integration_sync_state WHERE syncType LIKE 'booking_poll:%' ORDER BY lastSyncedAt DESC LIMIT 1` |
+| lastRevisionAt | `SELECT max("createdAt") FROM channex_booking_revision` |
+| lastPollAt, lastPollStatus | `IntegrationSyncState`: `syncType LIKE 'booking_poll:%'`, newest `lastSyncedAt`, `LIMIT 1` |
 | accounts | `IntegrationAccountRepository.listByChannel('CHANNEX')`, plus a count per account from `channel_integration_property` |
 
 `lastSyncedAt` is set when a run takes the lock, before it finishes (`integrationSyncRepository.js`, `tryAcquireLock`), so it is the start of the last attempt. `status` says how that run ended: `SUCCESS`, `PARTIAL` or `FAILED`, or `RUNNING` while it is still going. The card shows both, for example "6 min ago · failed".
@@ -151,7 +159,7 @@ The 7-day counts stay correct because cleanup deletes PROCESSED rows after 30 da
 
 ## 8. Platform limits
 
-- **Lambda:** ChannelManagement has reserved concurrency 5, shared with the booking webhook and the outbox worker. One page load is one invocation with a few short queries and one CloudWatch call. No auto-refresh, so the page cannot crowd out the webhook.
+- **Lambda:** ChannelManagement has reserved concurrency 5 (set by hand in AWS on 7 October 2026, not in the repo), shared with the booking webhook and the outbox worker. One page load is one invocation with a few short queries and one CloudWatch call. No auto-refresh, so the page cannot crowd out the webhook.
 - **CloudWatch:** one `DescribeAlarms` call with the seven alarm names (the API accepts up to 100). The names are fixed in code, so the endpoint cannot be used to read other alarms.
 - **DSQL:** read-only, no transaction needed (D7).
 
