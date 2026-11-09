@@ -25,9 +25,18 @@ describe("mapRoomRates", () => {
     expect(JSON.parse(logger.warn.mock.calls[0][0])).toEqual({
       event: "SITEMINDER_ROOM_RATES_SKIPPED",
       reason: "missing roomTypeCode",
+      hotelCode: null,
       skipped: 2,
       total: 3,
     });
+  });
+
+  test("puts the hotel code in the skipped log when it is given", () => {
+    const logger = { warn: jest.fn() };
+
+    mapRoomRates([{ ratePlanCode: "BAR" }], { logger, hotelCode: "PMSXTEST1" });
+
+    expect(JSON.parse(logger.warn.mock.calls[0][0])).toMatchObject({ hotelCode: "PMSXTEST1", skipped: 1 });
   });
 
   test("logs nothing when every entry has a roomTypeCode", () => {
