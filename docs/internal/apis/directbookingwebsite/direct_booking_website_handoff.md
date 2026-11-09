@@ -456,6 +456,24 @@ Important rules:
 
 Do not collapse draft state and published state back into one model.
 
+## Site page settings and the Elite plan
+
+Elite websites can have more than one page. The page settings live in the content overrides under one key, `sitePages`, in the draft (`contentOverrides`, `publishedContentOverrides`) and in the published site (`publishedContentOverrides`). No migration is needed.
+
+- Saving a draft accepts the key like any other override and never reads the plan. A host whose Elite has ended can still save, and his settings stay in the draft.
+- `GET /property/website/public/render` and `GET /property/website/preview` serve the key only when the site's own host has the `website.unlimited_pages` entitlement. For every other host the key is removed from the response and everything else is unchanged.
+- The check runs only when the key is present. Overrides without `sitePages` are returned as they are and no plan is read, so existing sites answer exactly as before.
+- The host comes from the site or draft row, never from the request.
+- The plan is read with `getCurrentEntitlements` in `directBookingWebsiteRatePlanService.js`, which never writes: no current row, or a row whose end date has passed, reads as Essentials.
+- A failed plan read drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
+- When Elite ends, the next request no longer serves the key.
+
+`GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil, granted }` for the host in the token, read only. `granted` is true for an Elite plan without a Stripe subscription. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
+
+Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
+
+`backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
+
 ## Environment and runtime assumptions
 
 Current Direct Booking Website config depends on these active env names:
@@ -560,6 +578,7 @@ The most realistic next-step roadmap for this feature is:
 - Do not assume all real-rendered templates are currently builder-enabled.
 - Do not treat KPI labels as proof that every research KPI is fully instrumented; some are still proxy or not-yet-instrumented states.
 - Do not forget that the KPI page is currently platform-wide, so host-specific product decisions should not be made from it without further filtering.
+- Do not use `requireEntitlement` or `getCurrentPlan` on a public or unauthenticated path: both create an Essentials plan row when none exists. Use `getCurrentEntitlements`.
 
 ## Related docs
 
