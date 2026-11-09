@@ -138,14 +138,12 @@ const readCurrentPlans = (manager, accountId) =>
       .where("plan.account_id = :accountId", { accountId })
   );
 
-const isGrantedElite = (plan) => plan.plan === GRANTED_PLAN_VALUES.plan && !plan.stripe_subscription_id;
-
 const revokeInTransaction = async (manager, { accountId, actorId, reason }) => {
   const currentPlans = await readCurrentPlans(manager, accountId).getMany();
   if (currentPlans.some((plan) => plan.stripe_subscription_id)) {
     throw new WebsitePlanRevokeError(WEBSITE_PLAN_GRANT_ERROR_CODES.PAID_PLAN_ACTIVE);
   }
-  const revokedPlan = currentPlans.find(isGrantedElite);
+  const revokedPlan = currentPlans.find((plan) => plan.plan === GRANTED_PLAN_VALUES.plan);
   if (!revokedPlan) {
     throw new WebsitePlanRevokeError(WEBSITE_PLAN_GRANT_ERROR_CODES.NOT_GRANTED);
   }
