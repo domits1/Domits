@@ -15,17 +15,17 @@ describe("buildRatesNotif", () => {
     expect(xml).not.toContain("\n");
   });
 
-  test("sends one nightly price after tax per room rate and date range, with the currency", () => {
+  test("sends one nightly price before tax per room rate and date range, with the currency", () => {
     expect(build([base])).toContain(
       '<RateAmountMessage><StatusApplicationControl InvTypeCode="DORM" RatePlanCode="BAR1"/><Rates>' +
-        '<Rate CurrencyCode="EUR" Start="2026-12-01" End="2026-12-03"><BaseByGuestAmts><BaseByGuestAmt AmountAfterTax="150.00"/></BaseByGuestAmts></Rate>' +
+        '<Rate CurrencyCode="EUR" Start="2026-12-01" End="2026-12-03"><BaseByGuestAmts><BaseByGuestAmt AmountBeforeTax="150.00"/></BaseByGuestAmts></Rate>' +
         "</Rates></RateAmountMessage>"
     );
   });
 
   test("rounds the amount to 2 decimals", () => {
-    expect(build([{ ...base, amount: 99.999 }])).toContain('AmountAfterTax="100.00"');
-    expect(build([{ ...base, amount: 120.5 }])).toContain('AmountAfterTax="120.50"');
+    expect(build([{ ...base, amount: 99.999 }])).toContain('AmountBeforeTax="100.00"');
+    expect(build([{ ...base, amount: 120.5 }])).toContain('AmountBeforeTax="120.50"');
   });
 
   test("puts several date ranges of the same room rate in one message", () => {
