@@ -132,6 +132,7 @@ describe("serving page settings in a draft preview", () => {
   ])(
     "drops page settings in %s for an Essentials host with one plan read of the draft's own host",
     async (_label, fields) => {
+      const consoleError = jest.spyOn(console, "error");
       const ratePlanRepository = buildRatePlanRepository(ratePlanRow());
       const storedDraft = draft(fields);
 
@@ -141,8 +142,25 @@ describe("serving page settings in a draft preview", () => {
       expect(storedDraft).toEqual(draft(fields));
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(HOST_ID);
+      expectOnlyCurrentPlanRead(ratePlanRepository);
+      expect(consoleError).not.toHaveBeenCalled();
     }
   );
+
+  it("drops page settings in a draft of a host without a plan row by reading only the current plan", async () => {
+    const consoleError = jest.spyOn(console, "error");
+    const ratePlanRepository = buildRatePlanRepository(null);
+    const storedDraft = draft({
+      contentOverrides: { heroTitle: "Draft villa", sitePages: SITE_PAGES },
+      publishedContentOverrides: { heroTitle: "Live villa", sitePages: SITE_PAGES },
+    });
+
+    const served = await buildPageSettings(ratePlanRepository).servePageSettingsOnDraft(storedDraft);
+
+    expect(JSON.stringify(served)).toBe(JSON.stringify(draft()));
+    expectOnlyCurrentPlanRead(ratePlanRepository);
+    expect(consoleError).not.toHaveBeenCalled();
+  });
 
   it("keeps page settings in a draft of an Elite host", async () => {
     const storedDraft = draft({
