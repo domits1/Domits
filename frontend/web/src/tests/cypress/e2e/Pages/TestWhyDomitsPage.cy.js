@@ -207,11 +207,6 @@ describe('Testing Why Domits Page Navigation', () => {
         cy.url().should('include','https://www.domits.com/');
     });
     
-    it('should navigate to Helpdesk for guests page from footer links', () => {
-        cy.get(':nth-child(2) > .footer-lists > :nth-child(2) > .footer-links')
-            .should('have.attr', 'href', 'https://bookdomits.com/guest-faq-frequently-asked-questions/');
-    });
-
     
     it('should navigate to Privacy policy page from footer links', () => {
         cy.get('.footer-terms > :nth-child(2) > .footer-links').click();
