@@ -2,6 +2,9 @@ import { DEFAULT_CHANNEL } from "../util/truviMapper.js";
 
 const RETRYABLE_CLIENT_STATUSES = new Set([401, 403, 408, 429]);
 
+const isProgrammingError = (error) =>
+  error instanceof TypeError || error instanceof ReferenceError || error instanceof SyntaxError;
+
 const isRetryableError = (error) =>
   !error || error.status === null || error.status === undefined || error.status >= 500 || RETRYABLE_CLIENT_STATUSES.has(error.status);
 
@@ -71,6 +74,9 @@ export class TruviBookingScreener {
     try {
       return await this.screeningService.screenBooking(input);
     } catch (error) {
+      if (isProgrammingError(error)) {
+        throw error;
+      }
       return this.#rejected(error.message);
     }
   }

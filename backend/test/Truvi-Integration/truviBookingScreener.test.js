@@ -149,6 +149,22 @@ describe("TruviBookingScreener", () => {
     expect(summary.rejected).toBe(1);
   });
 
+  it.each([new TypeError("Cannot read properties of undefined"), new ReferenceError("x is not defined")])(
+    "does not save a programming error like %p, but reports it so the run fails and the booking is tried again",
+    async (bug) => {
+      const { screener, assessmentRepository } = build({
+        screen: async () => {
+          throw bug;
+        },
+      });
+
+      const summary = await screener.run({ now: 1000 });
+
+      expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
+      expect(summary.errors).toEqual([{ bookingId: "booking-1", message: bug.message }]);
+    }
+  );
+
   it("saves an ERROR when the host has no email", async () => {
     const { screener, screeningService, assessmentRepository } = build({ host: null });
 
