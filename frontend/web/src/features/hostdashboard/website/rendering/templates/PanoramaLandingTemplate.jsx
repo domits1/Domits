@@ -88,20 +88,7 @@ const hexToRgbChannels = (hexColor) => {
   return `${redChannel} ${greenChannel} ${blueChannel}`;
 };
 
-const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
-  const normalizedHref = String(href || "").trim();
-  if (!normalizedHref.startsWith("#")) {
-    return;
-  }
-
-  const targetId = normalizedHref.slice(1);
-  const targetElement = globalThis.document?.getElementById(targetId);
-  if (!targetElement) {
-    return;
-  }
-
-  event.preventDefault();
-
+const scrollToPanoramaTarget = (targetElement) => {
   revealDeferredSections(
     globalThis.document,
     styles.panoramaDeferredRenderSection,
@@ -121,15 +108,31 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
     topBarHeight -
     PANORAMA_TOP_BAR_SCROLL_OFFSET_PX;
 
-  if (globalThis.history && typeof globalThis.history.replaceState === "function") {
-    globalThis.history.replaceState(globalThis.history.state, "", normalizedHref);
-  }
-
   globalThis.scrollTo({
     top: Math.max(0, nextScrollTop),
     behavior: prefersReducedMotion ? "auto" : "smooth",
   });
+};
 
+const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
+  const normalizedHref = String(href || "").trim();
+  if (!normalizedHref.startsWith("#")) {
+    return;
+  }
+
+  const targetId = normalizedHref.slice(1);
+  const targetElement = globalThis.document?.getElementById(targetId);
+  if (!targetElement) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (globalThis.history && typeof globalThis.history.replaceState === "function") {
+    globalThis.history.replaceState(globalThis.history.state, "", normalizedHref);
+  }
+
+  scrollToPanoramaTarget(targetElement);
   onAfterNavigate?.();
 };
 
