@@ -296,7 +296,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
         value={selectedDayRange}
         onChange={setSelectedDayRange}
         minimumDate={utils("en").getToday()}
-        shouldHighlightWeekends
         format="MMM DD, YYYY"
         calendarClassName="responsive-calendar"
         renderInput={({ ref }) => (
