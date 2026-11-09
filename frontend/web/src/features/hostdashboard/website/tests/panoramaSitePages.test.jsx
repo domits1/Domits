@@ -1,6 +1,6 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
@@ -134,5 +134,150 @@ describe("Panorama without site pages", () => {
     ["stored pages that are not an object", { sitePages: "gallery" }, { activePageKey: "gallery" }],
   ])("renders exactly as today with %s", (_, overrides, props) => {
     expect(renderHtml(buildModel(overrides), props)).toBe(renderHtml(buildModel()));
+  });
+});
+
+describe("Panorama site page menu", () => {
+  const SITE_ORIGIN = "https://villa.example";
+
+  const readMenu = (nav) =>
+    Array.from(nav.children).map((item) => [
+      item.textContent,
+      item.getAttribute("href"),
+      item.getAttribute("aria-current"),
+    ]);
+
+  const getTopMenu = (container) => container.querySelector(".templateTopBarNav");
+  const getDrawerMenu = (container) => container.querySelector(".panoramaTopBarDrawerNav");
+
+  function LocationProbe() {
+    const location = useLocation();
+    return <output data-testid="location">{`${location.pathname}${location.hash}`}</output>;
+  }
+
+  it("lists Home, the pages that are on and Book in both menus on Main", () => {
+    const { container } = renderTemplate(buildModel({ sitePages: { ...ALL_PAGES_ON, contact: { enabled: false } } }));
+    const expectedMenu = [
+      ["Home", "/", "page"],
+      ["Gallery", "/gallery", null],
+      ["The villa", "/accommodation", null],
+      ["Book", "#availability", null],
+    ];
+
+    expect(readMenu(getTopMenu(container))).toEqual(expectedMenu);
+    expect(readMenu(getDrawerMenu(container))).toEqual(expectedMenu);
+  });
+
+  it("marks the current page and sends Book to availability on Main under the base path", () => {
+    const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), {
+      activePageKey: "contact",
+      pageBasePath: "/website-live/villa.example",
+    });
+
+    expect(readMenu(getTopMenu(container))).toEqual([
+      ["Home", "/website-live/villa.example", null],
+      ["Gallery", "/website-live/villa.example/gallery", null],
+      ["The villa", "/website-live/villa.example/accommodation", null],
+      ["Contact us", "/website-live/villa.example/contact-us", "page"],
+      ["Book", "/website-live/villa.example#availability", null],
+    ]);
+  });
+
+  it.each(["/\\evil.example", "/x\t/evil.example", "/x\n", "https://evil.example/x", '/"><img src=x>'])(
+    "keeps every menu link on the site for the base path %p",
+    (pageBasePath) => {
+      const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), {
+        activePageKey: "gallery",
+        pageBasePath,
+      });
+
+      const hrefs = readMenu(getTopMenu(container)).map(([, href]) => href);
+      expect(hrefs).toEqual(["/", "/gallery", "/accommodation", "/contact-us", "/#availability"]);
+      expect(hrefs.map((href) => new URL(href, SITE_ORIGIN).origin)).toEqual(hrefs.map(() => SITE_ORIGIN));
+    }
+  );
+
+  it("leaves Book out when the availability calendar is hidden", () => {
+    const { container } = renderTemplate(
+      buildModel({ sitePages: ALL_PAGES_ON, visibility: { availabilityCalendar: false } }),
+      { activePageKey: "gallery" }
+    );
+
+    expect(readMenu(getTopMenu(container)).map(([label]) => label)).toEqual([
+      "Home",
+      "Gallery",
+      "The villa",
+      "Contact us",
+    ]);
+  });
+
+  it.each([
+    ['Rooms & "suites"', 'Rooms & "suites"'],
+    ["<script>alert(1)</script>", "Gallery"],
+  ])("writes the menu label %p as text", (navLabel, label) => {
+    const { container } = renderTemplate(buildModel({ sitePages: { gallery: { enabled: true, navLabel } } }));
+
+    const link = within(getTopMenu(container)).getByRole("link", { name: label });
+    expect(link.children).toHaveLength(0);
+    expect(container.querySelectorAll("script")).toHaveLength(0);
+  });
+
+  it("shows the menu as text with the current page in the editor preview", () => {
+    const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), {
+      activePageKey: "gallery",
+      onSelectTarget: jest.fn(),
+    });
+
+    expect(getTopMenu(container).querySelectorAll("a")).toHaveLength(0);
+    expect(readMenu(getTopMenu(container))).toEqual([
+      ["Home", null, null],
+      ["Gallery", null, "page"],
+      ["The villa", null, null],
+      ["Contact us", null, null],
+      ["Book", null, null],
+    ]);
+  });
+
+  it("opens a page through the router and closes the menu drawer", () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <PanoramaLandingTemplate model={buildModel({ sitePages: ALL_PAGES_ON })} />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+    const menuButton = screen.getByRole("button", { name: "Open section menu" });
+    fireEvent.click(menuButton);
+
+    fireEvent.click(within(getDrawerMenu(container)).getByRole("link", { name: "The villa" }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/accommodation$/);
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("sends Book from a page to availability on Main through the router", () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/gallery"]}>
+        <PanoramaLandingTemplate model={buildModel({ sitePages: ALL_PAGES_ON })} activePageKey="gallery" />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(within(getTopMenu(container)).getByRole("link", { name: "Book" }));
+
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/#availability$/);
+  });
+
+  it("uses plain links when the template is rendered outside a router", () => {
+    const { container } = render(
+      <PanoramaLandingTemplate model={buildModel({ sitePages: ALL_PAGES_ON })} activePageKey="gallery" />
+    );
+
+    expect(readMenu(getTopMenu(container))).toEqual([
+      ["Home", "/", null],
+      ["Gallery", "/gallery", "page"],
+      ["The villa", "/accommodation", null],
+      ["Contact us", "/contact-us", null],
+      ["Book", "/#availability", null],
+    ]);
   });
 });

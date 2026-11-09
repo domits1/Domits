@@ -856,6 +856,16 @@
   box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.18);
 }
 
+.panoramaTopBarShell .templateTopBarNav [aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.45em;
+}
+
+.panoramaTopBarDrawerNav [aria-current="page"] {
+  box-shadow: inset 0 0 0 2px rgba(31, 78, 121, 0.36);
+}
+
 .panoramaTopBarShellTransparent .templateTopBar {
   background: transparent;
   box-shadow: none;

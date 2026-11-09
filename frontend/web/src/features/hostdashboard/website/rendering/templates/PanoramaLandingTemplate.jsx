@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import { Link, useInRouterContext } from "react-router-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
@@ -57,6 +58,7 @@ import {
 import { resolveWebsiteHeroContentAlignment } from "../../config/websiteHeroSectionConfig";
 import {
   MAIN_SITE_PAGE_KEY,
+  buildSitePageHref,
   hasActiveSitePages,
   listSitePageMenuItems,
   resolvePanoramaPageSections,
@@ -74,6 +76,7 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
 });
 const PANORAMA_RESIDENCE_SECTION_LABEL = "The residence";
 const PANORAMA_JOURNEY_SECTION_LABEL = "The stay";
+const PANORAMA_BOOK_NAV_LABEL = "Book";
 const loadPhotoBrowserOverlay = () => import("../../../../../components/gallery/PhotoBrowserOverlay");
 const LazyPhotoBrowserOverlay = lazy(loadPhotoBrowserOverlay);
 
@@ -130,9 +133,50 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   onAfterNavigate?.();
 };
 
-const renderPanoramaNavItem = ({ href, label }, isInteractivePreview, onAfterNavigate = undefined) => {
+function PanoramaPageLink({ href, ariaCurrent, onNavigate, children }) {
+  const isInRouter = useInRouterContext();
+  if (!isInRouter) {
+    return (
+      <a href={href} aria-current={ariaCurrent}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link to={href} aria-current={ariaCurrent} onClick={onNavigate}>
+      {children}
+    </Link>
+  );
+}
+
+PanoramaPageLink.propTypes = {
+  href: PropTypes.string.isRequired,
+  ariaCurrent: PropTypes.oneOf(["page"]),
+  onNavigate: PropTypes.func,
+  children: PropTypes.node.isRequired,
+};
+
+const renderPanoramaNavItem = (
+  { href, label, isPageLink = false, isCurrentPage = false },
+  isInteractivePreview,
+  onAfterNavigate = undefined
+) => {
+  const ariaCurrent = isCurrentPage ? "page" : undefined;
   if (isInteractivePreview) {
-    return <span key={href}>{label}</span>;
+    return (
+      <span key={href} aria-current={ariaCurrent}>
+        {label}
+      </span>
+    );
+  }
+
+  if (isPageLink) {
+    return (
+      <PanoramaPageLink key={href} href={href} ariaCurrent={ariaCurrent} onNavigate={onAfterNavigate}>
+        {label}
+      </PanoramaPageLink>
+    );
   }
 
   return (
@@ -338,6 +382,24 @@ const buildPanoramaPageState = (sitePages, activePageKey) => {
     currentPage,
     sections: resolvePanoramaPageSections(sitePages, currentPage.key),
   };
+};
+
+const buildPanoramaPageNavItems = (pageState, pageBasePath, viewState) => {
+  const isMainPage = pageState.currentPage.key === MAIN_SITE_PAGE_KEY;
+  const mainPageHref = buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY);
+  const bookHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
+
+  return [
+    ...pageState.menuItems.map((item) => ({
+      href: buildSitePageHref(pageBasePath, item.key),
+      label: item.navLabel,
+      isPageLink: true,
+      isCurrentPage: item.key === pageState.currentPage.key,
+    })),
+    ...(viewState.showAvailabilityCalendar
+      ? [{ href: bookHref, label: PANORAMA_BOOK_NAV_LABEL, isPageLink: !isMainPage }]
+      : []),
+  ];
 };
 
 const buildPanoramaNavItems = (model, viewState) =>
@@ -1221,6 +1283,7 @@ export default function PanoramaLandingTemplate({
   activeTargetId,
   quoteContext = null,
   activePageKey = MAIN_SITE_PAGE_KEY,
+  pageBasePath = "",
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
@@ -1240,7 +1303,9 @@ export default function PanoramaLandingTemplate({
     viewState.showTopBar,
     pageState?.currentPage.key
   );
-  const navItems = buildPanoramaNavItems(model, viewState);
+  const navItems = pageState
+    ? buildPanoramaPageNavItems(pageState, pageBasePath, viewState)
+    : buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
       return;
@@ -1483,4 +1548,5 @@ PanoramaLandingTemplate.propTypes = {
   ...templateInteractionPropTypes,
   quoteContext: quoteContextPropType,
   activePageKey: PropTypes.string,
+  pageBasePath: PropTypes.string,
 };
