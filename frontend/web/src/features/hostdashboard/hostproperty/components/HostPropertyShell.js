@@ -394,6 +394,32 @@ export function HostPropertyListingSummary({
   );
 }
 
+const REJECTION_DATE_FORMAT = { day: "numeric", month: "long", year: "numeric" };
+
+export function HostPropertyRejectionBanner({ status, latestRejection = null }) {
+  const isRejected = normalizeListingStatus(status) === LISTING_STATUS.REJECTED;
+  if (!isRejected) {
+    return null;
+  }
+
+  const reason = latestRejection?.reason || "No reason was given.";
+  const hasRejectedAt = Boolean(latestRejection?.rejectedAt);
+  const rejectedOn = hasRejectedAt
+    ? new Date(latestRejection.rejectedAt).toLocaleDateString("en-GB", REJECTION_DATE_FORMAT)
+    : "";
+
+  return (
+    <section className={styles.rejectionBanner} role="status">
+      <h4 className={styles.rejectionBannerTitle}>Your listing was not approved</h4>
+      <p className={styles.rejectionBannerReason}>{reason}</p>
+      {hasRejectedAt ? <p className={styles.rejectionBannerMeta}>Rejected on {rejectedOn}</p> : null}
+      <p className={styles.rejectionBannerMeta}>
+        Update your listing, then choose Submit for review in the status menu to send it again.
+      </p>
+    </section>
+  );
+}
+
 export function HostPropertyPlaceholderTab({ selectedTab }) {
   return (
     <section className={`${styles.card} ${styles.placeholderCard}`}>
@@ -458,6 +484,14 @@ HostPropertyListingSummary.propTypes = {
   onPropertyChange: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyRejectionBanner.propTypes = {
+  status: PropTypes.string.isRequired,
+  latestRejection: PropTypes.shape({
+    reason: PropTypes.string,
+    rejectedAt: PropTypes.number,
+  }),
 };
 
 HostPropertyPlaceholderTab.propTypes = {
