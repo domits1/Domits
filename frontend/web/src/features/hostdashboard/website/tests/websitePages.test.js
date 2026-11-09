@@ -188,6 +188,8 @@ describe("normalizeSitePageNavLabel", () => {
     ["drops a control character", "Gal\u0007lery", ""],
     ["drops a text direction override", "Gallery\u202E", ""],
     ["drops whitespace only", "   ", ""],
+    ["drops a zero width space only", "\u200B", ""],
+    ["drops a word joiner and a zero width space only", " \u2060\u200B ", ""],
     ["drops a number", 42, ""],
     ["drops an object", { label: "Gallery" }, ""],
     ["drops a missing value", undefined, ""],

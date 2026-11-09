@@ -90,6 +90,7 @@ const RESERVED_SITE_PATH_SEGMENT_SET = new Set(RESERVED_SITE_PATH_SEGMENTS);
 const SITE_PAGE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const UNSAFE_NAV_LABEL_PATTERN = /[<>\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u;
 const WHITESPACE_RUN_PATTERN = /\s+/g;
+const VISIBLE_CHARACTER_PATTERN = /[\p{L}\p{N}\p{P}\p{S}]/u;
 const SAFE_BASE_PATH_SEGMENT_PATTERN = /^[\w.~%-]+$/;
 
 const CONFIGURABLE_SITE_PAGES = SITE_PAGE_DEFINITIONS.filter((page) => page.key !== MAIN_SITE_PAGE_KEY);
@@ -109,8 +110,9 @@ export const normalizeSitePageNavLabel = (value) => {
 
   const label = value.replace(WHITESPACE_RUN_PATTERN, " ").trim();
   const isTooLong = Array.from(label).length > MAX_SITE_PAGE_NAV_LABEL_LENGTH;
+  const isUsable = !isTooLong && VISIBLE_CHARACTER_PATTERN.test(label) && !UNSAFE_NAV_LABEL_PATTERN.test(label);
 
-  return isTooLong || UNSAFE_NAV_LABEL_PATTERN.test(label) ? "" : label;
+  return isUsable ? label : "";
 };
 
 export const normalizeSitePages = (value) => {
