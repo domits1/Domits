@@ -58,6 +58,22 @@ export const HOST_NOTIFICATION_SECTIONS = [
         ],
     },
     {
+        key: "staff",
+        path: "tasks",
+        events: [
+            createEvent("staffNewBooking", "New booking", "—", ["Housekeeping"], "Push"),
+            createEvent("cleaningRequired", "Cleaning required", "—", ["Housekeeping"], "Push"),
+            createEvent("cleaningAssigned", "Cleaning assigned", "—", ["Housekeeping"], "Push"),
+            createEvent("cleaningOverdue", "Cleaning overdue", "—", ["Housekeeping"], "Push + escalation"),
+            createEvent("staffMaintenanceIssue", "Maintenance issue", "—", ["Maintenance", "Guest Services"], "Push"),
+            createEvent("guestArrival", "Guest arrival", "—", ["Housekeeping", "Guest Services"], "Push"),
+            createEvent("guestDeparture", "Guest departure", "—", ["Housekeeping", "Guest Services"], "Push"),
+            createEvent("guestRequest", "Guest request", "—", ["Maintenance", "Guest Services"], "Push"),
+            createEvent("emergencyPropertyIssue", "Emergency property issue", "—", ["Housekeeping", "Maintenance", "Guest Services"], "SMS + Push"),
+            createEvent("taskCompleted", "Task completed", "—", ["Housekeeping", "Maintenance", "Guest Services"], "In-app"),
+        ],
+    },
+    {
         key: "propertyOwner",
         path: "property-owner",
         events: [
