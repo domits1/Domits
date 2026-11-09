@@ -7,6 +7,13 @@ const TERMINAL_MESSAGES = Object.freeze({
   [REVIEW_API_ERROR_CODE.NOT_FOUND]: "This listing no longer exists.",
 });
 
+const ACTION_MESSAGES = Object.freeze({
+  [REVIEW_API_ERROR_CODE.UNAUTHENTICATED]: TERMINAL_MESSAGES[REVIEW_API_ERROR_CODE.UNAUTHENTICATED],
+  [REVIEW_API_ERROR_CODE.FORBIDDEN]: TERMINAL_MESSAGES[REVIEW_API_ERROR_CODE.FORBIDDEN],
+});
+
+const ACTION_FAILED_MESSAGE = "Could not save. Try again.";
+
 const toText = (value) => (value === null || value === undefined ? "" : String(value).trim());
 
 const compact = (parts, separator) => parts.map(toText).filter(Boolean).join(separator);
@@ -31,3 +38,5 @@ export const describeDetailError = (error) => {
   if (terminalMessage) return { message: terminalMessage, canRetry: false };
   return { message: "Could not load this listing.", canRetry: true };
 };
+
+export const describeActionError = (error) => ACTION_MESSAGES[error?.code] ?? ACTION_FAILED_MESSAGE;

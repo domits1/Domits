@@ -45,7 +45,7 @@ function PropertyImage({ property }) {
   );
 }
 
-function SelectedReview({ selected, property, respondableReview, response, onResponseChange }) {
+function SelectedReview({ selected, property, respondableReview, onResponseChange }) {
   const selectedProperty = property;
   const selectedName =
     typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
@@ -80,7 +80,7 @@ function SelectedReview({ selected, property, respondableReview, response, onRes
       {respondableReview ? (
         <HostResponseForm
           key={selected.id}
-          review={{ ...respondableReview, response: response !== undefined ? response : respondableReview.response }}
+          review={respondableReview}
           onResponseChange={onResponseChange}
         />
       ) : (
@@ -90,11 +90,10 @@ function SelectedReview({ selected, property, respondableReview, response, onRes
   );
 }
 
-export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {} }) {
+export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {}, onResponseChange }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  const [responseCache, setResponseCache] = useState({});
   const [sort, setSort] = useState("newest");
   const listRef = useRef(null);
   useEffect(() => {
@@ -300,8 +299,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
           selected={selected}
           property={properties[selected.property_id]}
           respondableReview={respondableReviews[selected.id]}
-          response={responseCache[selected.id]}
-          onResponseChange={(response) => setResponseCache((cache) => ({ ...cache, [selected.id]: response }))}
+          onResponseChange={(response) => onResponseChange?.(selected.id, response)}
         />
       )}
       <aside className={styles.sidebar} aria-label="Guest review insights">

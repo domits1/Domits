@@ -41,3 +41,8 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

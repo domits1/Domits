@@ -7,7 +7,7 @@ import HostListings from "./HostListings";
 import { updatePropertyLifecycleStatus } from "./hostproperty/services/hostPropertyApi";
 
 const mockNavigate = jest.fn();
-const mockFetchLiveEligibility = jest.fn();
+const mockFetchVerificationStatus = jest.fn();
 let mockLiveEligibility = true;
 
 jest.mock("react-router-dom", () => ({
@@ -28,7 +28,7 @@ jest.mock("./hooks/useSetLiveEligibility", () => ({
     liveEligibility: mockLiveEligibility,
     liveEligibilityError: "",
     liveEligibilityLoading: false,
-    fetchLiveEligibility: mockFetchLiveEligibility,
+    fetchLiveEligibility: mockFetchVerificationStatus,
   }),
 }));
 

@@ -86,7 +86,6 @@ export class ReviewService {
         : 0;
   }
 
-  // Keep the service interface used by the controller and existing callers.
   async saveHostResponse(user, reviewId, body, action) {
     return this.#hostReviewService.saveHostResponse(user, reviewId, body, action);
   }
