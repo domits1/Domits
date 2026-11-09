@@ -245,8 +245,6 @@ export class ReviewRepository {
       .getExists();
   }
 
-  // Load a user's review list for the chosen scope.
-  // This gives the profile views a single source of truth for written and received reviews.
   async findPendingReviews() {
     const database = await Database.getInstance();
     return database.getRepository(Review).find({

@@ -485,7 +485,15 @@ describe('Review transactional writes', () => {
     repositories.get(Review).update.mockResolvedValueOnce({ affected: 0 });
     expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).toBeNull();
+    expect(repositories.get(Review).update).toHaveBeenCalledWith({
+      id: "r1",
+      status: "PENDING_APPROVAL",
+      publication_status: "UNPUBLISHED",
+      updated_at: draft.updated_at,
+    }, expect.any(Object));
     expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
+    expect(committed.get(Review_Request)[0].status).toBe("OPEN");
+    expect(repositories.get(Review_Request).update).not.toHaveBeenCalled();
     committed.get(Booking)[0].status = "Cancelled";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });

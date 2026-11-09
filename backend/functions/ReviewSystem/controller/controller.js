@@ -158,8 +158,6 @@ export class Controller {
     });
   }
 
-  // Publish a review draft after validation.
-  // This allows the guest to finalize a review only when business rules confirm the reservation still qualifies.
   async approveReview(event) {
     return this.executeAuthenticated(event, async (userId, user) => {
       const body = parseBody(event);

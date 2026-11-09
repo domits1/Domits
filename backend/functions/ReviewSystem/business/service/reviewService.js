@@ -360,6 +360,13 @@ export class ReviewService {
   async publishReview(userId, reviewId, username) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
+    if (isPublished(review)) {
+      if (!(await this.canPublishReview({ userId, review }))) {
+        await this.assertReviewApprover(userId, username);
+      }
+      return toReviewView(review);
+    }
+
     const authorize = async (current, manager) => {
       if (current.status === "APPROVED") {
         await this.assertReviewApprover(userId, username, manager);
@@ -368,7 +375,6 @@ export class ReviewService {
       return this.canPublishReview({ userId, review: current });
     };
     if (!(await authorize(review))) throw new ForbiddenException("You cannot publish this review.");
-    if (isPublished(review)) return toReviewView(review);
     return this.changePublicationState(review, review.status === "DRAFT" ? "DRAFT" : "APPROVED",
       review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
   }

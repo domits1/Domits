@@ -673,6 +673,26 @@ describe('Review workflows', () => {
       else expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "APPROVED", to: "PUBLISHED" }));
     });
 
+    it.each([
+      ["authorized approver", "staff", "admin", true, 200],
+      ["allowlisted caller without an approver role", "staff", "admin", false, 403],
+      ["non-allowlisted caller with an approver role", "staff", "outsider", true, 403],
+      ["review author", "guest", undefined, false, 200],
+    ])("handles repeat publish by the %s without writing", async (_label, sub, username, hasRole, expectedStatus) => {
+      repository.findById.mockResolvedValue({ ...draft, status: "PUBLISHED", publication_status: "PUBLISHED" });
+      repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValue(hasRole);
+
+      const response = await controller.publishReview(request(sub, username));
+
+      expect(response.statusCode).toBe(expectedStatus);
+      if (expectedStatus === 200) {
+        expect(JSON.parse(response.body)).toMatchObject({
+          id: draft.id, status: "PUBLISHED", publication_status: "PUBLISHED",
+        });
+      }
+      expect(repository.publishDraft).not.toHaveBeenCalled();
+    });
+
     it("re-checks the approver role inside the publish transaction", async () => {
       const manager = { id: "transaction-manager" };
       repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
