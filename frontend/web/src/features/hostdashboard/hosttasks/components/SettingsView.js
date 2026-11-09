@@ -95,15 +95,13 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
         return rows;
     }, [currentUser, teamMembers, teamMemberships, taskContext, managedHostId]);
 
-    const renderSettingsToggle = (key, label, disabled = false) => (
+    const renderSettingsToggle = (key, label) => (
         <div key={key} className="settings-toggle-row">
             <span className="settings-toggle-label">{label}</span>
-            {disabled && <span className="settings-coming-soon">Coming soon</span>}
             <button
-                className={`settings-toggle ${!disabled && settingsDraft[key] ? 'on' : ''} ${disabled ? 'disabled' : ''}`}
-                onClick={() => !disabled && handleSettingChange(key, !settingsDraft[key])}
+                className={`settings-toggle ${settingsDraft[key] ? 'on' : ''}`}
+                onClick={() => handleSettingChange(key, !settingsDraft[key])}
                 aria-label={label}
-                aria-disabled={disabled}
             >
                 <span className="settings-toggle-knob" />
             </button>
@@ -185,8 +183,6 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                         {renderSettingsToggle('notifEmailDueSoon', 'Task due soon')}
                         {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
                         {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
-                        <p className="settings-group-label">SMS notifications</p>
-                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
                         <p className="settings-group-label">In-App notifications</p>
                         {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
                     </div>

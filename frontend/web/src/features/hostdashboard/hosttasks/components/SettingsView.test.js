@@ -125,17 +125,13 @@ describe('SettingsView', () => {
             expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ notifInappEnabled: false }));
         });
 
-        test.each(['Urgent tasks only'])(
-            'keeps "%s" inert because nothing sends it yet',
-            async (label) => {
+        test.each(['SMS notifications', 'Urgent tasks only'])(
+            'does not show "%s", because nothing sends it yet',
+            async (text) => {
                 render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
                 await screen.findByText('Team Members');
 
-                const toggle = screen.getByRole('button', { name: label });
-                expect(toggle).toHaveAttribute('aria-disabled', 'true');
-
-                fireEvent.click(toggle);
-                expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+                expect(screen.queryByText(text)).not.toBeInTheDocument();
             }
         );
     });
