@@ -46,12 +46,14 @@ const getEliteButtonLabel = ({
   changingPlan,
   eliteDowngradeScheduled,
   eliteIsCurrent,
+  eliteGranted,
   checkoutPending,
   redirectingToCheckout,
   copy,
 }) => {
   if (checkoutPending) return copy.processing;
   if (redirectingToCheckout || changingPlan === "elite") return copy.processing;
+  if (eliteGranted) return copy.currentPlan;
   if (eliteDowngradeScheduled) return copy.restoreElite;
   if (eliteIsCurrent) return copy.currentPlan;
   return copy.upgrade;
@@ -115,6 +117,7 @@ const ElitePlanCard = ({
   checkoutEnabled,
   currentPlan,
   eliteIsCurrent,
+  eliteGranted,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -129,8 +132,14 @@ const ElitePlanCard = ({
       )}
     </div>
     <div className="website-rate-plan-price">
-      <strong>{elitePrice}</strong>
-      <span>{copy.perMonth}</span>
+      {eliteGranted ? (
+        <strong>{copy.granted}</strong>
+      ) : (
+        <>
+          <strong>{elitePrice}</strong>
+          <span>{copy.perMonth}</span>
+        </>
+      )}
     </div>
     <p className="website-rate-plan-description">{copy.eliteDescription}</p>
     <h4 className="website-rate-plan-feature-title">
@@ -148,6 +157,7 @@ const ElitePlanCard = ({
       disabled={
         busy ||
         eliteIsCurrent ||
+        eliteGranted ||
         (currentPlan !== "elite" && (!checkoutEnabled || !hasConfiguredElitePrice))
       }
       onClick={() => {
@@ -158,6 +168,7 @@ const ElitePlanCard = ({
         changingPlan,
         eliteDowngradeScheduled,
         eliteIsCurrent,
+        eliteGranted,
         checkoutPending,
         redirectingToCheckout,
         copy,
@@ -172,6 +183,7 @@ const WebsiteRatePlanContent = ({
   busy,
   essentialsIsCurrent,
   eliteIsCurrent,
+  eliteGranted,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -202,6 +214,7 @@ const WebsiteRatePlanContent = ({
         checkoutEnabled={checkoutEnabled}
         currentPlan={ratePlan.plan === "elite" ? "elite" : "essentials"}
         eliteIsCurrent={eliteIsCurrent}
+        eliteGranted={eliteGranted}
         eliteDowngradeScheduled={eliteDowngradeScheduled}
         changingPlan={changingPlan}
         checkoutPending={checkoutPending}
@@ -254,6 +267,8 @@ const DirectBookingWebsitePlanSection = ({
   const [notice, setNotice] = useState("");
 
   const currentPlan = ratePlan?.plan === "elite" ? "elite" : "essentials";
+  const eliteGranted =
+    currentPlan === "elite" && ratePlan?.stripeSubscriptionId === null;
   const eliteDowngradeScheduled =
     currentPlan === "elite" && Boolean(ratePlan?.effectiveUntil);
 
@@ -466,6 +481,7 @@ const DirectBookingWebsitePlanSection = ({
           busy={busy}
           essentialsIsCurrent={essentialsIsCurrent}
           eliteIsCurrent={eliteIsCurrent}
+          eliteGranted={eliteGranted}
           eliteDowngradeScheduled={eliteDowngradeScheduled}
           changingPlan={changingPlan}
           checkoutPending={checkoutPending}

@@ -60,6 +60,7 @@ jest.mock("../hooks/useSettingsTrans", () => ({
         restoreSuccess: "Elite subscription restored",
         unchanged: "Plan unchanged",
         effectiveUntil: "Elite remains active until {date}.",
+        granted: "Granted by Domits",
       },
     },
   }),
@@ -482,5 +483,70 @@ describe("DirectBookingWebsitePlanSection", () => {
       await screen.findByText("Checkout was cancelled. Your plan has not changed.")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Upgrade to Elite" })).toBeEnabled();
+  });
+
+  test("shows an Elite plan granted until an end date as the current plan, not as a plan to reactivate", async () => {
+    const grantEnd = "2026-12-15T12:00:00.000Z";
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
+      plan: "elite",
+      priceCents: 0,
+      effectiveUntil: grantEnd,
+      stripeSubscriptionId: null,
+    }));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    const eliteButton = await screen.findByRole("button", { name: "Current plan" });
+    expect(eliteButton).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Reactivate Elite" })).not.toBeInTheDocument();
+    expect(screen.getByText("Granted by Domits")).toBeInTheDocument();
+    expect(screen.queryByText("€43.00")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(`Elite remains active until ${new Date(grantEnd).toLocaleDateString("en")}.`)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scheduled" })).toBeDisabled();
+
+    fireEvent.click(eliteButton);
+    expect(changeWebsiteRatePlan).not.toHaveBeenCalled();
+  });
+
+  test("still offers to reactivate a paid Elite subscription whose downgrade is scheduled", async () => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
+      plan: "elite",
+      priceCents: 4300,
+      effectiveUntil: "2026-12-15T12:00:00.000Z",
+      stripeSubscriptionId: "sub_paid",
+    }));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    expect(await screen.findByRole("button", { name: "Reactivate Elite" })).toBeEnabled();
+    expect(screen.getByText("€43.00")).toBeInTheDocument();
+    expect(screen.queryByText("Granted by Domits")).not.toBeInTheDocument();
+  });
+
+  test.each([
+    ["an Essentials plan", { stripeSubscriptionId: null }, "Upgrade to Elite"],
+    ["an Essentials plan read without a subscription field", {}, "Upgrade to Elite"],
+    ["a paid Elite plan", { plan: "elite", priceCents: 4300, stripeSubscriptionId: "sub_paid" }, "Current plan"],
+    [
+      "a paid Elite plan with a scheduled downgrade",
+      { plan: "elite", priceCents: 4300, effectiveUntil: "2026-12-15T12:00:00.000Z", stripeSubscriptionId: "sub_paid" },
+      "Reactivate Elite",
+    ],
+    [
+      "an Elite plan read without a subscription field",
+      { plan: "elite", priceCents: 4300, effectiveUntil: "2026-12-15T12:00:00.000Z" },
+      "Reactivate Elite",
+    ],
+  ])("shows the Elite price and no grant for %s", async (_label, overrides, eliteButtonName) => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan(overrides));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    expect(await screen.findByText("€43.00")).toBeInTheDocument();
+    expect(screen.getAllByText("per month")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: eliteButtonName })).toBeInTheDocument();
+    expect(screen.queryByText("Granted by Domits")).not.toBeInTheDocument();
   });
 });

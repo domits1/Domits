@@ -1706,6 +1706,7 @@
         "unchanged": "Tu plan del sitio web ya está actualizado.",
         "effectiveUntil": "Elite seguirá activo hasta el {date}.",
         "priceUnavailable": "Precio no disponible",
+        "granted": "Concedido por Domits",
         "checkoutPending": "Estamos confirmando tu suscripción Elite. Puede tardar unos momentos.",
         "checkoutSuccess": "Tu suscripción Elite está activa.",
         "checkoutCancelled": "Se canceló el pago. Tu plan no ha cambiado.",
