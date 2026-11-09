@@ -156,8 +156,14 @@ const normalizePreferences = (value) => {
 const hasEngineeringAccess = async () => {
     try {
         const user = await Auth.currentAuthenticatedUser();
-        const group = String(user?.attributes?.["custom:group"] || "").trim().toLowerCase();
-        return group === "admin" || group === "engineer";
+        const groups = [
+            user?.attributes?.["custom:group"],
+            user?.attributes?.["custom:role"],
+            user?.signInUserSession?.idToken?.payload?.["cognito:groups"],
+            user?.signInUserSession?.accessToken?.payload?.["cognito:groups"],
+        ].flatMap((value) => Array.isArray(value) ? value : value ? [value] : [])
+            .map((value) => String(value).trim().toLowerCase());
+        return groups.includes("admin") || groups.includes("engineer");
     } catch {
         return false;
     }
