@@ -402,6 +402,87 @@ describe("DirectBookingWebsiteRatePlanService", () => {
     );
   });
 
+  describe("getCurrentEntitlements", () => {
+    const ESSENTIALS_VIEW = {
+      plan: "essentials",
+      entitlements: getWebsiteEntitlements("essentials"),
+      effectiveUntil: null,
+      granted: false,
+    };
+
+    const expectNothingWritten = () => {
+      expect(repository.findLatestByAccountId).not.toHaveBeenCalled();
+      expect(repository.createPlan).not.toHaveBeenCalled();
+      expect(repository.updatePlanById).not.toHaveBeenCalled();
+      expect(repository.activatePaidPlan).not.toHaveBeenCalled();
+    };
+
+    it("reads Essentials for a host without a current plan and writes no plan row", async () => {
+      repository.findCurrentByAccountId.mockResolvedValue(null);
+
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual(ESSENTIALS_VIEW);
+      expect(repository.findCurrentByAccountId).toHaveBeenCalledWith("host-1");
+      expectNothingWritten();
+    });
+
+    it("reads a plan whose end date has passed as Essentials without expiring it", async () => {
+      repository.findCurrentByAccountId.mockResolvedValue(plan({
+        plan: "elite", effective_until: new Date(Date.now() - 60_000),
+      }));
+
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual(ESSENTIALS_VIEW);
+      expectNothingWritten();
+    });
+
+    it("reads a paid Elite plan with its entitlements and not as granted", async () => {
+      repository.findCurrentByAccountId.mockResolvedValue(plan({
+        plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1",
+      }));
+
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual({
+        plan: "elite",
+        entitlements: getWebsiteEntitlements("elite"),
+        effectiveUntil: null,
+        granted: false,
+      });
+      expectNothingWritten();
+    });
+
+    it("reads an Elite plan without a subscription as granted, with its end date", async () => {
+      const effectiveUntil = new Date(Date.now() + 86_400_000);
+      repository.findCurrentByAccountId.mockResolvedValue(plan({ plan: "elite", effective_until: effectiveUntil }));
+
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toMatchObject({
+        plan: "elite",
+        effectiveUntil,
+        granted: true,
+      });
+    });
+
+    it("reads an Essentials row without a subscription as not granted", async () => {
+      repository.findCurrentByAccountId.mockResolvedValue(plan());
+
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual(ESSENTIALS_VIEW);
+    });
+
+    it("refuses a missing account id without reading a plan", async () => {
+      await expect(service.getCurrentEntitlements("")).rejects.toMatchObject({ statusCode: 400 });
+      expect(repository.findCurrentByAccountId).not.toHaveBeenCalled();
+    });
+
+    it("answers 503 when the rate plan table is missing and passes other read failures on", async () => {
+      repository.findCurrentByAccountId.mockRejectedValueOnce(Object.assign(
+        new Error('relation "main.direct_booking_website_rate_plans" does not exist'),
+        { code: "42P01" }
+      ));
+      const timeout = new Error("connection timed out");
+      repository.findCurrentByAccountId.mockRejectedValueOnce(timeout);
+
+      await expect(service.getCurrentEntitlements("host-1")).rejects.toMatchObject({ statusCode: 503 });
+      await expect(service.getCurrentEntitlements("host-1")).rejects.toBe(timeout);
+    });
+  });
+
   it("rejects unsupported plans", async () => {
     await expect(service.changePlan({
       accountId: "host-1", targetPlan: "enterprise"

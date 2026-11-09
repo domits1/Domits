@@ -146,6 +146,13 @@ const toView = (plan) => ({
   entitlements: getWebsiteEntitlements(plan.plan),
 });
 
+const toEntitlementsView = (plan) => ({
+  plan: plan.plan,
+  entitlements: getWebsiteEntitlements(plan.plan),
+  effectiveUntil: plan.effective_until ?? null,
+  granted: plan.plan === WEBSITE_PLAN_NAMES.ELITE && !plan.stripe_subscription_id,
+});
+
 export class DirectBookingWebsiteRatePlanService {
   constructor(
     repository = new DirectBookingWebsiteRatePlanRepository(),
@@ -186,6 +193,18 @@ export class DirectBookingWebsiteRatePlanService {
         }
         throw error;
       }
+    } catch (error) {
+      throw toRatePlanReadError(error);
+    }
+  }
+
+  async getCurrentEntitlements(accountId) {
+    if (!accountId) throw serviceError("accountId is required.");
+
+    try {
+      const current = await this.repository.findCurrentByAccountId(accountId);
+      const servedPlan = current && !hasPlanEnded(current) ? current : { plan: WEBSITE_PLAN_NAMES.ESSENTIALS };
+      return toEntitlementsView(servedPlan);
     } catch (error) {
       throw toRatePlanReadError(error);
     }
