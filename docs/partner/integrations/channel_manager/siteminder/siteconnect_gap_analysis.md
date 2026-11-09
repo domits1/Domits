@@ -76,13 +76,12 @@ What exists in `backend/functions/SiteMinder-Integration/` today (pmsXchange, Do
 
 For SiteMinder:
 
-1. Is a whole-property vacation rental accepted as a "room type" with quantity 1? How do they treat one property sold as one unit?
-2. Which flow applies to us: do they push availability, restrictions and rates to Domits, and do we push reservations to them? This is how the public guides read, and the issue says the opposite.
-3. The reservation reference: message types, the acknowledgement format, the global endpoint, and whether modifications and cancellations use the same message.
-4. The mandatory certification scenarios and the Postman collections.
-5. Sandbox and credentials, and how a new channel applies.
-6. Commission, payment collection and tax responsibility.
-7. Whether occupancy based pricing is required or per day pricing is enough.
+1. The Rooms and Rates endpoint must return at least two room types, each with at least two rate plans. A whole-property vacation rental is one unit. May Domits publish virtual room types and rate plans for one property, and how does SiteMinder treat a property sold as one unit?
+2. Does the flow in section 1 (SiteMinder pushes availability, restrictions and rates to Domits, and Domits pushes reservations) apply to Domits as a vacation rental channel? The public guides read that way, and the issue says the opposite.
+3. The reservation reference: message types, the acknowledgement format, the endpoint, and whether modifications and cancellations use the same message.
+4. Is a load test required, and what is the production go-live process?
+5. Commission, payment collection and tax responsibility.
+6. Is per day pricing (PDP) enough? Domits has a nightly price and date overrides, and the Channex integration does not synchronise occupancy based pricing.
 
 For the Domits team:
 
@@ -95,11 +94,11 @@ For the Domits team:
 
 | Risk | Why it matters | Mitigation |
 |---|---|---|
-| The room model does not fit | Everything in 6.3 to 6.7 depends on it | Ask first (question 1), build nothing before the answer |
+| The room model does not fit | The Rooms and Rates answer needs two room types with two rate plans each, and everything in 6.3 to 6.7 depends on it | Ask first (SiteMinder question 1). Build the Rooms and Rates endpoint against the public WSDL only after the mapping rule is decided |
 | The issue describes the flow in the wrong direction | A plan built on it would build the wrong half | Confirm with SiteMinder and correct the issue |
 | Response time of about 1 second | An endpoint that writes a year of calendar rows synchronously will not meet it | Answer `<Success/>` at once, queue the work, write in a worker |
 | A critical issue can suspend the channel | Production incidents have a contractual cost | Alarms on queue age before go-live |
-| Domits is not the source of truth | A host edit in Domits could be overwritten by SiteMinder, or the other way round | Decide question 1 before building the endpoint |
+| Domits is not the source of truth | A host edit in Domits could be overwritten by SiteMinder, or the other way round | Decide Domits question 1 before building the endpoint |
 
 ## 6. Proposed order of work
 
