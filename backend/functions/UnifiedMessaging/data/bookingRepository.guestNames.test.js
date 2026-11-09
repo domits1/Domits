@@ -22,10 +22,10 @@ describe("BookingRepository.findGuestNamesForHostBookings", () => {
     });
   });
 
-  test("returns guest names by booking id, only for bookings of that host", async () => {
+  test("returns guest name and booking source by booking id, only for bookings of that host", async () => {
     queryBuilder.getMany.mockResolvedValue([
-      { id: "booking-1", guestname: "Tst Domits" },
-      { id: "booking-2", guestname: null },
+      { id: "booking-1", guestname: "Tst Domits", booking_source: "BookingCom" },
+      { id: "booking-2", guestname: null, booking_source: null },
     ]);
 
     const names = await new BookingRepository().findGuestNamesForHostBookings({
@@ -33,19 +33,31 @@ describe("BookingRepository.findGuestNamesForHostBookings", () => {
       bookingIds: ["booking-1", "booking-2"],
     });
 
-    expect(names).toEqual({ "booking-1": "Tst Domits" });
+    expect(names).toEqual({ "booking-1": { guestName: "Tst Domits", bookingSource: "BookingCom" } });
+    expect(queryBuilder.select).toHaveBeenCalledWith(["booking.id", "booking.guestname", "booking.booking_source"]);
     expect(queryBuilder.where).toHaveBeenCalledWith("booking.id IN (:...bookingIds)", {
       bookingIds: ["booking-1", "booking-2"],
     });
     expect(queryBuilder.andWhere).toHaveBeenCalledWith("booking.hostid = :hostId", { hostId: "host-1" });
   });
 
+  test("still returns the booking source when the guest name is null", async () => {
+    queryBuilder.getMany.mockResolvedValue([{ id: "booking-1", guestname: null, booking_source: "BookingCom" }]);
+
+    const names = await new BookingRepository().findGuestNamesForHostBookings({
+      hostId: "host-1",
+      bookingIds: ["booking-1"],
+    });
+
+    expect(names).toEqual({ "booking-1": { guestName: null, bookingSource: "BookingCom" } });
+  });
+
   test("queries in chunks of 100, keeps the host filter on every chunk and merges the results", async () => {
     const bookingIds = Array.from({ length: 250 }, (_, i) => `booking-${i}`);
     queryBuilder.getMany
-      .mockResolvedValueOnce([{ id: "booking-0", guestname: "First Guest" }])
-      .mockResolvedValueOnce([{ id: "booking-150", guestname: "Second Guest" }])
-      .mockResolvedValueOnce([{ id: "booking-249", guestname: "Third Guest" }]);
+      .mockResolvedValueOnce([{ id: "booking-0", guestname: "First Guest", booking_source: "BookingCom" }])
+      .mockResolvedValueOnce([{ id: "booking-150", guestname: "Second Guest", booking_source: "Airbnb" }])
+      .mockResolvedValueOnce([{ id: "booking-249", guestname: "Third Guest", booking_source: null }]);
 
     const names = await new BookingRepository().findGuestNamesForHostBookings({ hostId: "host-1", bookingIds });
 
@@ -56,9 +68,9 @@ describe("BookingRepository.findGuestNamesForHostBookings", () => {
       expect(call).toEqual(["booking.hostid = :hostId", { hostId: "host-1" }]);
     }
     expect(names).toEqual({
-      "booking-0": "First Guest",
-      "booking-150": "Second Guest",
-      "booking-249": "Third Guest",
+      "booking-0": { guestName: "First Guest", bookingSource: "BookingCom" },
+      "booking-150": { guestName: "Second Guest", bookingSource: "Airbnb" },
+      "booking-249": { guestName: "Third Guest", bookingSource: null },
     });
   });
 
