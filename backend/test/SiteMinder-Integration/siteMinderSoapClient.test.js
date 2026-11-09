@@ -34,7 +34,7 @@ describe("SiteMinderSoapClient", () => {
     expect(options.body).toContain("<wsse:Username>user</wsse:Username>");
     expect(options.body).toContain("<SOAP-ENV:Body><OTA_HotelAvailNotifRQ/></SOAP-ENV:Body>");
     expect(options.body).not.toContain("\n");
-    expect(result).toEqual({ success: true, echoToken: "e1" });
+    expect(result).toEqual({ success: true, echoToken: "e1", xml: SUCCESS });
   });
 
   test("throws a non-retryable error with every OTA error when SiteMinder refuses the message", async () => {
