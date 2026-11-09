@@ -1705,6 +1705,7 @@
         "unchanged": "Your website plan is already up to date.",
         "effectiveUntil": "Elite remains active until {date}.",
         "priceUnavailable": "Price unavailable",
+        "granted": "Granted by Domits",
         "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
         "checkoutSuccess": "Your Elite subscription is active.",
         "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
