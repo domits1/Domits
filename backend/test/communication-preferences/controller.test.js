@@ -160,3 +160,81 @@ describe("CommunicationPreferencesController", () => {
     expect(service.savePreferences).not.toHaveBeenCalled();
   });
 });
+
+
+describe("CommunicationPreferencesController host notification matrix scope", () => {
+  const matrix = {
+    bookings: { bookingCreated: true },
+    propertyManager: { newBooking: false },
+    propertyOwner: { ownerNewBooking: true },
+    finance: { guestPaymentReceived: true },
+    distribution: { listingPublished: false },
+    compliance: { kycRequested: true },
+  };
+
+  const createMatrixController = () => {
+    const hostNotificationPreferencesService = {
+      getPreferences: jest.fn(async () => matrix),
+      savePreferences: jest.fn(async () => matrix),
+    };
+    const service = {
+      getPreferences: jest.fn(async () => validPreferences),
+      savePreferences: jest.fn(async () => validPreferences),
+    };
+    return {
+      hostNotificationPreferencesService,
+      service,
+      controller: new CommunicationPreferencesController({ service, hostNotificationPreferencesService }),
+    };
+  };
+
+  test("GET scope=matrix loads the host event preferences using authenticated claims", async () => {
+    const { controller, hostNotificationPreferencesService, service } = createMatrixController();
+
+    await expect(controller.getPreferences(authenticatedEvent({
+      queryStringParameters: { persona: "host", scope: "matrix" },
+    }))).resolves.toEqual({ statusCode: 200, response: matrix });
+
+    expect(hostNotificationPreferencesService.getPreferences).toHaveBeenCalledWith("user-1", {
+      sub: "user-1",
+      "custom:group": "Guest",
+    });
+    expect(service.getPreferences).not.toHaveBeenCalled();
+  });
+
+  test("PUT scope=matrix saves the host event preferences", async () => {
+    const { controller, hostNotificationPreferencesService, service } = createMatrixController();
+
+    await expect(controller.updatePreferences(authenticatedEvent({
+      queryStringParameters: { persona: "host", scope: "matrix" },
+      body: JSON.stringify(matrix),
+    }))).resolves.toEqual({ statusCode: 200, response: matrix });
+
+    expect(hostNotificationPreferencesService.savePreferences).toHaveBeenCalledWith(
+      "user-1",
+      { sub: "user-1", "custom:group": "Guest" },
+      matrix
+    );
+    expect(service.savePreferences).not.toHaveBeenCalled();
+  });
+
+  test("matrix scope rejects the guest persona", async () => {
+    const { controller, hostNotificationPreferencesService } = createMatrixController();
+
+    await expect(controller.getPreferences(authenticatedEvent({
+      queryStringParameters: { persona: "guest", scope: "matrix" },
+    }))).rejects.toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
+
+    expect(hostNotificationPreferencesService.getPreferences).not.toHaveBeenCalled();
+  });
+
+  test("unknown preference scopes are rejected", async () => {
+    const { controller, service } = createMatrixController();
+
+    await expect(controller.getPreferences(authenticatedEvent({
+      queryStringParameters: { persona: "host", scope: "other" },
+    }))).rejects.toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
+
+    expect(service.getPreferences).not.toHaveBeenCalled();
+  });
+});
