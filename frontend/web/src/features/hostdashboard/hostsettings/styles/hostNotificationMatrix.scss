@@ -1,0 +1,326 @@
+.host-notification-matrix {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 auto 32px;
+    color: #111827;
+}
+
+.host-notification-matrix-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.host-notification-matrix-heading h2 {
+    margin: 0 0 6px;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.host-notification-matrix-heading p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.host-notification-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 0 12px;
+    border-bottom: 1px solid #e5e7eb;
+    scrollbar-width: thin;
+}
+
+.host-notification-tab {
+    flex: 0 0 auto;
+    padding: 9px 13px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #4b5563;
+    background: #fff;
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.host-notification-tab:hover {
+    background: #f9fafb;
+    color: #111827;
+}
+
+.host-notification-tab.active {
+    border-color: #15803d;
+    color: #166534;
+    background: #f0fdf4;
+}
+
+.host-notification-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 22px 0 12px;
+}
+
+.host-notification-section-heading h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.host-notification-section-heading span {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.host-notification-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.host-notification-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.86rem;
+}
+
+.host-notification-table th {
+    padding: 13px 14px;
+    color: #6b7280;
+    background: #f9fafb;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.host-notification-table td {
+    padding: 13px 14px;
+    border-top: 1px solid #f3f4f6;
+    vertical-align: middle;
+    color: #374151;
+}
+
+.host-notification-table th:last-child,
+.host-notification-table td:last-child {
+    width: 90px;
+    text-align: center;
+}
+
+.host-notification-event-name {
+    display: block;
+    min-width: 165px;
+    color: #111827;
+    font-weight: 600;
+}
+
+.host-notification-recipients {
+    display: block;
+    margin-top: 4px;
+    color: #9ca3af;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.host-notification-priority {
+    display: inline-flex;
+    align-items: center;
+    min-width: 38px;
+    justify-content: center;
+    padding: 4px 7px;
+    border-radius: 6px;
+    color: #4b5563;
+    background: #f3f4f6;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.host-notification-priority--p0,
+.host-notification-priority--p0-p1 {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.host-notification-priority--p1 {
+    color: #9a3412;
+    background: #fff7ed;
+}
+
+.host-notification-priority--p2 {
+    color: #854d0e;
+    background: #fefce8;
+}
+
+.host-notification-priority--p3,
+.host-notification-priority--p4 {
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.host-notification-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #15803d;
+    cursor: pointer;
+}
+
+.host-notification-checkbox:disabled {
+    cursor: wait;
+}
+
+.host-notification-footnote {
+    margin: 10px 14px 12px;
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+.host-notification-matrix-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 20px;
+    margin-top: 16px;
+}
+
+.host-notification-matrix-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.host-notification-matrix-feedback {
+    min-height: 20px;
+    color: #6b7280;
+    font-size: 0.82rem;
+}
+
+.host-notification-error {
+    color: #b91c1c;
+}
+
+.host-notification-success {
+    color: #166534;
+}
+
+.host-notification-save {
+    justify-self: end;
+    padding: 10px 17px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: #15803d;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.host-notification-save:hover:not(:disabled) {
+    background: #166534;
+}
+
+.host-notification-save:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.host-notification-matrix-status {
+    padding: 24px;
+    color: #6b7280;
+}
+
+@media (max-width: 760px) {
+    .host-notification-table,
+    .host-notification-table tbody,
+    .host-notification-table tr,
+    .host-notification-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .host-notification-table thead {
+        display: none;
+    }
+
+    .host-notification-table tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 76px;
+        gap: 8px 12px;
+        padding: 13px;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .host-notification-table tr:first-child {
+        border-top: 0;
+    }
+
+    .host-notification-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0;
+        border: 0;
+        font-size: 0.82rem;
+        text-align: right;
+    }
+
+    .host-notification-table td::before {
+        content: attr(data-label);
+        color: #9ca3af;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-align: left;
+    }
+
+    .host-notification-table td:first-child {
+        grid-column: 1 / -1;
+        display: block;
+        text-align: left;
+    }
+
+    .host-notification-table td:first-child::before {
+        display: none;
+    }
+
+    .host-notification-table td:last-child {
+        grid-column: 2;
+        grid-row: 2;
+        justify-content: flex-end;
+        width: auto;
+    }
+
+    .host-notification-table td:nth-child(2),
+    .host-notification-table td:nth-child(3),
+    .host-notification-table td:nth-child(4) {
+        grid-column: 1;
+        justify-content: flex-start;
+    }
+
+    .host-notification-event-name {
+        min-width: 0;
+    }
+
+    .host-notification-matrix-footer {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .host-notification-save {
+        width: 100%;
+        justify-self: stretch;
+    }
+}
