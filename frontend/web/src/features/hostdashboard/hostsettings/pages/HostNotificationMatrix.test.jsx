@@ -66,6 +66,20 @@ describe("HostNotificationMatrix", () => {
         expect(screen.getByText("Accounting export failed")).toBeInTheDocument();
     });
 
+
+    test("shows the staff task notifications in their own tab", async () => {
+        renderMatrix();
+
+        fireEvent.click(await screen.findByRole("link", { name: "Staff & Tasks" }));
+
+        expect(await screen.findByRole("heading", { name: "Staff & Tasks" })).toBeInTheDocument();
+        expect(screen.getByText("Cleaning required")).toBeInTheDocument();
+        expect(screen.getByText("Emergency property issue")).toBeInTheDocument();
+        expect(screen.getAllByRole("checkbox")).toHaveLength(
+            HOST_NOTIFICATION_SECTIONS.find((section) => section.key === "staff").events.length
+        );
+    });
+
     test("updates and saves an individual event preference", async () => {
         renderMatrix();
 
