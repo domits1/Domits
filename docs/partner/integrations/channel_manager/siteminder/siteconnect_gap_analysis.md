@@ -5,7 +5,7 @@
 | Issue | #638 (related: #635, #3380, #603) |
 | Author | Nishchal Bhujel |
 | Status | Draft, before any SiteConnect code. Nothing here is agreed with SiteMinder yet. |
-| Sources | `developer.siteminder.com/siteconnect-api` (overview, integration requirements), the Channex design notes in `../channex/`, and the file names in `backend/functions/.shared/channelManagement/` and `backend/functions/SiteMinder-Integration/`. The Channex verdicts come from its design notes and file names. The Channex source was not read, so check them against the code before building on them. The SiteMinder facts come from a summary of the pages that a tool produced, not from the raw pages, so check them there too. |
+| Sources | `developer.siteminder.com/siteconnect-api` (overview, integration requirements, API overview, quick start) and the SiteConnect testing and certification guide, the Channex design notes in `../channex/`, and the file names in `backend/functions/.shared/channelManagement/` and `backend/functions/SiteMinder-Integration/`. The Channex verdicts come from its design notes and file names. The Channex source was not read, so check them against the code before building on them. The SiteMinder facts come from a summary of the pages that a tool produced, not from the raw pages, so check them there too. |
 
 ## 1. Summary
 
@@ -32,10 +32,23 @@ So in SiteConnect Domits has to run a SOAP endpoint that SiteMinder calls, and i
 - Response time: ideally under 1 second, 20 seconds is a failsafe. Answer with `<Success/>` or `<Errors>` at once and do the work asynchronously.
 - Capacity: 750 days of initial inventory, 365 days of ongoing updates, about 50% headroom.
 - Mandatory: schema validation with SOAP faults, a persistent queue that prevents duplicate processing and shows depth and age, retry with exponential backoff (suggested 0, 5, 15, 30, 60 seconds), time zone and DST handling.
-- Certification: all mandatory test scenarios, the Postman collections, load testing at production volume, failover and recovery tests. 90 days to fix non-compliance after notification, and a critical production issue can suspend the channel at once.
-- Restrictions covered: stop sell, min and max stay on arrival, min and max stay through, CTA, CTD. Pricing: per day pricing and occupancy based pricing.
+- Certification: all mandatory test scenarios, the Postman collections, load testing at production volume, failover and recovery tests. The integration requirements page lists load testing, but the testing and certification guide does not mention it, so ask SiteMinder. 90 days to fix non-compliance after notification, and a critical production issue can suspend the channel at once.
+- Restrictions covered: stop sell, min and max stay on arrival, min and max stay through, CTA, CTD. Pricing: per day pricing (PDP) and occupancy based pricing (OBP). A channel certifies one pricing model, and it applies to all its properties.
 
-Not stated in the public pages and needed from SiteMinder: the full reservation reference, acknowledgement behaviour, WSDL or endpoint details, the mandatory test scenario list, and how a new channel applies.
+How a channel gets started (quick start, condensed from its 9 steps):
+
+1. Become a SiteMinder partner. A partnership agreement comes first, applied for at `siteminder.com/integrations/apply-now`.
+2. SiteMinder's Partner Integrations team sends an initiation email asking for the Inventory SOAP endpoint, credentials, `HotelCode` and pricing model.
+3. Build the Rooms and Rates endpoint. SiteMinder calls it first, and it must be live before they set up the test environment. It must check the `wsse:UsernameToken` (error 448 on a mismatch), check the `HotelCode` (error 392 if not found), and return at least two room types, each with at least two rate plans.
+4. Build the inventory and reservation operations (availability, restrictions, rates, reservations push).
+5. Reply to the initiation email with the endpoint, credentials, `HotelCode` and pricing model. SiteMinder then sets up a test account with a `RequestorID`, a reservation endpoint, pre-configured room types and rate plans, an inventory simulator and a way to check pushed reservations.
+6. Test with SiteMinder's Postman collections, then run the certification scenarios.
+
+Public certification scenarios (the guide skips number 3): 1 retrieve rooms and rates, 2 bulk update over the full period (for example 750 days), 4 targeted update, 5 reservations (six blocked bookings, daily rates, multi-room, modifications, cancellations), 6 error handling (their error collection with a 2000 ms delay). The two room types with two rate plans each give four room rates to map. When all scenarios pass, Domits tells the Partner Integrations team, who review the results before formal certification.
+
+WSDL: `siteconnect_v1.1.0.wsdl` (and an inlined version for .NET), linked from the quick start. The WSDL link and the Postman workspace were not opened for this review.
+
+Not found in the pages read, and needed from SiteMinder: the full reservation reference including the acknowledgement behaviour, the production go-live process, whether load testing is required, and the commercial terms.
 
 ## 3. Coverage of #638, section by section
 
@@ -43,7 +56,7 @@ Verdicts: **Reuse** (use as is), **Pattern** (copy the design, new code), **New*
 
 | #638 section | What exists | Verdict | Notes |
 |---|---|---|---|
-| 6.1 Discovery and partnership | nothing in code | Blocked | Spec, sandbox, commercial terms and the room-model answer all come from SiteMinder |
+| 6.1 Discovery and partnership | nothing in code | Blocked | The certification scenarios are public, and the quick start links the WSDL and the Postman collections. The partnership agreement, the test account, the commercial terms and the room-model answer come from SiteMinder |
 | 6.2 Adapter, idempotency, retries, correlation ids | Channex: deterministic booking id from the reservation, per-revision error isolation, `integration_sync_state` locks, `ChannexSyncEvidence`. SiteMinder: `siteMinderSoapClient.js` (sends only), `otaXml.js` | Pattern | The new part is an inbound SOAP 1.1 server with WS-Security and schema validation. The existing client sends and cannot receive |
 | 6.3 Property onboarding and mapping | Generic tables with a `channel` column: `ChannelIntegrationAccount`, `ChannelIntegrationProperty`, `ChannelIntegrationRoomType`, `ChannelIntegrationRatePlan`, `ChannelReservationLink`. Channex mapping logic in `channexMappingService.js` | Reuse (tables), Pattern (service) | `channel = 'SITEMINDER'` fits. The mapping rules differ: SiteMinder calls Domits with a `HotelCode` and room and rate codes that Domits must have published first |
 | 6.4 Rates and availability | Channex outbox sends them. pmsXchange builders send availability and restrictions to SiteMinder | New (inbound) | In SiteConnect Domits receives them. The existing builders only help as examples of the XML shape. Open model question: see section 4 |
@@ -53,8 +66,8 @@ Verdicts: **Reuse** (use as is), **Pattern** (copy the design, new code), **New*
 | 6.8 Pricing, commission | nothing | Blocked | Commercial terms |
 | 6.9 Security and data protection | Secrets Manager credential store, webhook secret check | Pattern | New: WS-Security UsernameToken validation, password policy (12 to 50 characters), optional IP allowlist, a WAF note for SiteMinder's fixed User-Agent |
 | 6.10 Monitoring | Sync evidence, diagnostics service, the alarms in the Channex production switch runbook | Pattern | Queue depth and age are an explicit SiteMinder requirement |
-| 6.11 Partner onboarding | Channex connect and map flow, host integrations page | Pattern | SiteMinder's flow starts on their side (the hotel enables the channel) |
-| 6.12 Testing and certification | Channex certification (admin page and runbook) | Pattern | Needs SiteMinder's scenario list, the Postman collections and a load test |
+| 6.11 Partner onboarding | Channex connect and map flow, host integrations page | Pattern | The channel's own onboarding is the partner steps in section 2: agreement, initiation email, test account. How a hotel then enables Domits on its SiteMinder account is not in the public pages |
+| 6.12 Testing and certification | Channex certification (admin page and runbook) | Pattern | Scenarios 1, 2, 4, 5 and 6 are public, and the quick start links the Postman collections. A load test is possibly needed (see section 2) |
 | 6.13 Documentation | Channex doc set in `../channex/` | Pattern | This document is the first part |
 
 What exists in `backend/functions/SiteMinder-Integration/` today (pmsXchange, Domits as the PMS): availability and restrictions message builders, an OTA XML helper, a SOAP client, and tests. Nothing calls the pushers, and the function has a `.deployment-disabled` file. It belongs to a different integration (see the issue's "Key architectural distinction") and is only a source of XML helpers here.
