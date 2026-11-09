@@ -4,6 +4,9 @@ import {
     fetchCommunicationPreferences,
     normalizeCommunicationPreferencesPersona,
     saveCommunicationPreferences,
+    buildHostNotificationPreferencesUrl,
+    fetchHostNotificationPreferences,
+    saveHostNotificationPreferences,
 } from "../../components/settings/api/communicationPreferences";
 import { Auth } from "aws-amplify";
 
@@ -107,6 +110,66 @@ describe("communicationPreferences API", () => {
 
         await expect(fetchCommunicationPreferences("host")).rejects.toThrow(
             "We could not load your communication preferences. Please try again."
+        );
+    });
+});
+
+
+describe("host notification matrix API", () => {
+    const matrix = {
+        bookings: { bookingCreated: true },
+        propertyManager: { newBooking: false },
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockSession();
+        global.fetch = jest.fn(async () => ({
+            ok: true,
+            json: async () => matrix,
+        }));
+    });
+
+    test("builds the dedicated host matrix scope URL", () => {
+        expect(buildHostNotificationPreferencesUrl()).toBe(
+            `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&scope=matrix`
+        );
+    });
+
+    test("GET loads the current host event preferences", async () => {
+        await expect(fetchHostNotificationPreferences()).resolves.toEqual(matrix);
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            buildHostNotificationPreferencesUrl(),
+            expect.objectContaining({
+                method: "GET",
+                cache: "no-store",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer id-token-1",
+                },
+            })
+        );
+    });
+
+    test("PUT persists the host event matrix without adding a user identity", async () => {
+        await saveHostNotificationPreferences(matrix);
+
+        const [url, request] = global.fetch.mock.calls[0];
+        expect(url).toBe(buildHostNotificationPreferencesUrl());
+        expect(request.method).toBe("PUT");
+        expect(JSON.parse(request.body)).toEqual(matrix);
+        expect(JSON.parse(request.body).userId).toBeUndefined();
+    });
+
+    test("failed matrix requests return a user-facing error", async () => {
+        global.fetch.mockResolvedValueOnce({
+            ok: false,
+            json: async () => ({ message: "Could not persist preferences." }),
+        });
+
+        await expect(fetchHostNotificationPreferences()).rejects.toThrow(
+            "Could not persist preferences."
         );
     });
 });
