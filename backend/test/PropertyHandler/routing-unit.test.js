@@ -4,6 +4,7 @@ import { PropertyController } from "../../functions/PropertyHandler/controller/p
 
 const HOST_DASHBOARD_RESOURCE = "/property/hostDashboard/{subResource}";
 const BOOKING_ENGINE_RESOURCE = "/property/bookingEngine/{subResource}";
+const WEBSITE_RATE_PLAN_GRANT_PATH = "/property/website/rate-plan/grant";
 
 const withHttpMethod = (httpMethod, overrides = {}) => ({ httpMethod, ...overrides });
 
@@ -60,6 +61,7 @@ const directRouteSpecs = [
   ["GET website rate plan request", "getWebsiteRatePlan", "GET", "/property/website/rate-plan", 200],
   ["PATCH website rate plan request", "changeWebsiteRatePlan", "PATCH", "/property/website/rate-plan", 200],
   ["POST website rate plan webhook request", "handleWebsiteRatePlanWebhook", "POST", "/property/website/rate-plan/webhook", 200],
+  ["POST website rate plan grant request", "grantWebsiteRatePlan", "POST", "/property/website/rate-plan/grant", 200],
   ["GET website drafts request", "getWebsiteDrafts", "GET", "/property/website/drafts", 200],
   ["GET website draft by property request", "getWebsiteDraftByPropertyId", "GET", "/property/website/draft", 200],
   ["DELETE website draft request", "deleteWebsiteDraft", "DELETE", "/property/website/draft", 204],
@@ -286,4 +288,66 @@ describe("Routing unit tests", () => {
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(expectedBody);
   });
+});
+
+describe("Routing of the website rate plan grant", () => {
+  const routedElsewhere = [
+    "create",
+    "delete",
+    "activateProperty",
+    "getWebsiteRatePlan",
+    "changeWebsiteRatePlan",
+    "handleWebsiteRatePlanWebhook",
+  ];
+
+  const spyOnHandlers = (names) =>
+    Object.fromEntries(
+      names.map((name) => [
+        name,
+        jest.spyOn(PropertyController.prototype, name).mockResolvedValue({ statusCode: 299, body: name }),
+      ])
+    );
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it.each([
+    ["its resource", { resource: WEBSITE_RATE_PLAN_GRANT_PATH }],
+    ["its path", { path: WEBSITE_RATE_PLAN_GRANT_PATH }],
+  ])("sends a POST to the grant by %s, never to property create", async (_label, location) => {
+    const spies = spyOnHandlers(["grantWebsiteRatePlan", ...routedElsewhere]);
+    const event = withHttpMethod("POST", location);
+
+    const response = await handler(event);
+
+    expect(response).toEqual({ statusCode: 299, body: "grantWebsiteRatePlan" });
+    expect(spies.grantWebsiteRatePlan).toHaveBeenCalledWith(event);
+    routedElsewhere.forEach((name) => expect(spies[name]).not.toHaveBeenCalled());
+  });
+
+  it.each([
+    ["PATCH", "Method not found."],
+    ["DELETE", "Method not found."],
+    ["GET", "Path not found."],
+  ])("answers 404 to a %s on the grant path without reaching any handler", async (httpMethod, body) => {
+    const spies = spyOnHandlers(["grantWebsiteRatePlan", ...routedElsewhere]);
+
+    const response = await handler(withHttpMethod(httpMethod, { resource: WEBSITE_RATE_PLAN_GRANT_PATH }));
+
+    expect(response).toEqual({ statusCode: 404, body });
+    Object.values(spies).forEach((spy) => expect(spy).not.toHaveBeenCalled());
+  });
+
+  it.each(routeCases.filter(({ controllerMethod }) => controllerMethod !== "grantWebsiteRatePlan"))(
+    "keeps $name away from the grant",
+    async ({ controllerMethod, event, mockResponse }) => {
+      jest.spyOn(PropertyController.prototype, controllerMethod).mockResolvedValue(mockResponse);
+      const grant = jest.spyOn(PropertyController.prototype, "grantWebsiteRatePlan");
+
+      await handler(event);
+
+      expect(grant).not.toHaveBeenCalled();
+    }
+  );
 });

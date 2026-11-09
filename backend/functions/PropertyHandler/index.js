@@ -5,6 +5,7 @@ const STATIC_PAGE_TASK = "build-static-pages";
 const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
 const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
 const UNPUBLISH_INACTIVE_SITES_TASK = "unpublish-sites-of-inactive-listings";
+const WEBSITE_RATE_PLAN_GRANT_PATH = "/property/website/rate-plan/grant";
 
 let controller = new PropertyController();
 const destinationPageController = new DestinationPageController();
@@ -73,6 +74,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/rate-plan/webhook")) {
     return controller.handleWebsiteRatePlanWebhook(event);
   }
+  if (isPath(event, WEBSITE_RATE_PLAN_GRANT_PATH)) {
+    return controller.grantWebsiteRatePlan(event);
+  }
   if (isPath(event, "/property/website/draft")) {
     return controller.upsertWebsiteDraft(event);
   }
@@ -85,6 +89,9 @@ const handlePost = async (event) => {
 const DRAFT_ID_RESOURCE = "/property/draft/{id}";
 
 const handlePatch = async (event) => {
+  if (isPath(event, WEBSITE_RATE_PLAN_GRANT_PATH)) {
+    return notFound("Method not found.");
+  }
   if (isPath(event, "/property/images/order")) {
     return controller.updateImageOrder(event);
   }
@@ -203,6 +210,9 @@ const handleGet = async (event) => {
 };
 
 const handleDelete = async (event) => {
+  if (isPath(event, WEBSITE_RATE_PLAN_GRANT_PATH)) {
+    return notFound("Method not found.");
+  }
   if (isPath(event, "/property/images")) {
     return controller.deletePropertyImage(event);
   }
