@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { escapeXml, otaHeaderAttributes } from "./otaXml.js";
 
 const LIST_ELEMENTS = new Set([
   "HotelReservation",
@@ -121,4 +122,14 @@ export function readReservations(xml) {
   }
   const response = parser.parse(source)?.Envelope?.Body?.OTA_ResRetrieveRS;
   return list(response?.ReservationsList?.HotelReservation).map(toReservation);
+}
+
+export function buildReservationsRead({ requestorId, echoToken, now }) {
+  if (!requestorId) throw new Error("requestorId is required");
+  return (
+    `<OTA_ReadRQ ${otaHeaderAttributes({ echoToken, now })}>` +
+    `<POS><Source><RequestorID Type="22" ID="${escapeXml(requestorId)}"/></Source></POS>` +
+    '<ReadRequests><HotelReadRequest><SelectionCriteria SelectionType="Undelivered"/></HotelReadRequest></ReadRequests>' +
+    "</OTA_ReadRQ>"
+  );
 }

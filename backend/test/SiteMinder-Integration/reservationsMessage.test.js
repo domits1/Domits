@@ -1,5 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
-import { readReservations } from "../../functions/SiteMinder-Integration/util/reservationsMessage.js";
+import {
+  buildReservationsRead,
+  readReservations,
+} from "../../functions/SiteMinder-Integration/util/reservationsMessage.js";
 
 const envelope = (body) =>
   `<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Header/><SOAP-ENV:Body>` +
@@ -166,5 +169,28 @@ describe("readReservations", () => {
     const xml = withReservations(hotelReservation({ id: "", messageId: "" }));
 
     expect(() => readReservations(xml)).toThrow("SiteMinder reservation is missing its id or message id");
+  });
+});
+
+const NOW = new Date("2026-11-09T10:00:00.000Z");
+
+describe("buildReservationsRead", () => {
+  test("asks SiteMinder for every undelivered reservation of the PMS", () => {
+    const xml = buildReservationsRead({ requestorId: "PMSXTEST", echoToken: "e1", now: NOW });
+
+    expect(xml).toBe(
+      '<OTA_ReadRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0" TimeStamp="2026-11-09T10:00:00.000Z" EchoToken="e1">' +
+        '<POS><Source><RequestorID Type="22" ID="PMSXTEST"/></Source></POS>' +
+        '<ReadRequests><HotelReadRequest><SelectionCriteria SelectionType="Undelivered"/></HotelReadRequest></ReadRequests>' +
+        "</OTA_ReadRQ>"
+    );
+  });
+
+  test("escapes the requestor id", () => {
+    expect(buildReservationsRead({ requestorId: 'A"&B', echoToken: "e1", now: NOW })).toContain('ID="A&quot;&amp;B"');
+  });
+
+  test("refuses to build without a requestor id", () => {
+    expect(() => buildReservationsRead({ requestorId: "", echoToken: "e1", now: NOW })).toThrow("requestorId is required");
   });
 });
