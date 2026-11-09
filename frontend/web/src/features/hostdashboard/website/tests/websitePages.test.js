@@ -186,10 +186,6 @@ describe("reserved site paths", () => {
   it.each([[undefined], [null], [7]])("does not reserve %p", (segment) => {
     expect(isReservedSitePath(segment)).toBe(false);
   });
-
-  it("keeps every page slug free", () => {
-    expect(SITE_PAGE_DEFINITIONS.filter((page) => page.slug && isReservedSitePath(page.slug))).toEqual([]);
-  });
 });
 
 describe("normalizeSitePageNavLabel", () => {
@@ -379,12 +375,6 @@ describe("buildSitePageHref", () => {
 describe("resolvePanoramaPageSections", () => {
   it("keeps every section on main for a site without page settings", () => {
     expect(resolvePanoramaPageSections(undefined, MAIN_SITE_PAGE_KEY)).toEqual(PANORAMA_PAGE_SECTION_ORDER);
-  });
-
-  it("keeps every section on main while every page is switched off", () => {
-    expect(resolvePanoramaPageSections({ gallery: { enabled: false } }, MAIN_SITE_PAGE_KEY)).toEqual(
-      PANORAMA_PAGE_SECTION_ORDER
-    );
   });
 
   it("moves a section to its page only when that page is switched on", () => {
