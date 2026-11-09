@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
+import { useContext } from "react";
+import { LanguageContext } from "../../../../context/LanguageContext";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
     cloneDefaultHostNotificationPreferences,
@@ -160,6 +162,7 @@ const hasEngineeringAccess = async () => {
 const HostNotificationMatrix = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { language: selectedLanguage } = useContext(LanguageContext);
     const [preferences, setPreferences] = useState(cloneDefaultHostNotificationPreferences);
     const [savedPreferences, setSavedPreferences] = useState(cloneDefaultHostNotificationPreferences);
     const [isLoading, setIsLoading] = useState(true);
@@ -170,10 +173,7 @@ const HostNotificationMatrix = () => {
     const [canAccessEngineering, setCanAccessEngineering] = useState(false);
     const [engineeringAccessChecked, setEngineeringAccessChecked] = useState(false);
 
-    const language = (() => {
-        const selected = document.documentElement.lang?.slice(0, 2).toLowerCase();
-        return copyByLanguage[selected] ? selected : "en";
-    })();
+    const language = copyByLanguage[selectedLanguage] ? selectedLanguage : "en";
     const t = copyByLanguage[language];
 
     const activePath = location.pathname.startsWith(BASE_PATH)
@@ -336,7 +336,7 @@ const HostNotificationMatrix = () => {
                                         className="host-notification-checkbox"
                                         aria-label={`${event.name} notifications`}
                                         checked={Boolean(preferences[activeSection.key]?.[event.key])}
-                                        disabled={isLoading || isSaving}
+                                        disabled={!hasLoaded || isLoading || isSaving}
                                         onChange={(change) => toggleEvent(activeSection.key, event.key, change.target.checked)}
                                     />
                                 </td>
