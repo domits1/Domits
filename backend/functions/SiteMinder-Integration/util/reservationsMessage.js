@@ -133,3 +133,52 @@ export function buildReservationsRead({ requestorId, echoToken, now }) {
     "</OTA_ReadRQ>"
   );
 }
+
+const RES_STATUSES = new Set(["Book", "Modify", "Cancel"]);
+const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+const MAX_ERROR_MESSAGE_LENGTH = 200;
+
+function reservationElement({ status, messageId, processedAt }, inner = "") {
+  if (!RES_STATUSES.has(status)) throw new Error("status must be Book, Modify or Cancel");
+  if (!messageId) throw new Error("messageId is required");
+  if (!ISO_DATE_TIME.test(String(processedAt ?? "")) || Number.isNaN(Date.parse(processedAt))) {
+    throw new Error("processedAt must be an ISO date and time");
+  }
+  const timeAttribute = status === "Book" ? "CreateDateTime" : "LastModifyDateTime";
+  return (
+    `<HotelReservation ${timeAttribute}="${processedAt}" ResStatus="${status}">` +
+    `<UniqueID Type="16" ID="${escapeXml(messageId)}"/>${inner}</HotelReservation>`
+  );
+}
+
+const notifReport = (outcome, reservationsXml, { echoToken, now }) =>
+  `<OTA_NotifReportRQ ${otaHeaderAttributes({ echoToken, now })}>${outcome}` +
+  `<NotifDetails><HotelNotifReport><HotelReservations>${reservationsXml}</HotelReservations></HotelNotifReport></NotifDetails>` +
+  "</OTA_NotifReportRQ>";
+
+export function buildReservationsConfirmation({ reservations, echoToken, now }) {
+  if (!Array.isArray(reservations) || reservations.length === 0)
+    throw new Error("at least one reservation is required");
+  const reservationsXml = reservations
+    .map((reservation) => {
+      if (!reservation.bookingId) throw new Error("bookingId is required");
+      return reservationElement(
+        reservation,
+        `<ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Type="14" ResID_Value="${escapeXml(reservation.bookingId)}"/>` +
+          "</HotelReservationIDs></ResGlobalInfo>"
+      );
+    })
+    .join("");
+  return notifReport("<Success/>", reservationsXml, { echoToken, now });
+}
+
+export function buildReservationFailure({ reservation, error, echoToken, now }) {
+  if (!Number.isInteger(error?.type)) throw new Error("error type must be a whole number");
+  const message = String(error.message ?? "")
+    .trim()
+    .slice(0, MAX_ERROR_MESSAGE_LENGTH);
+  if (!message) throw new Error("error message is required");
+  const code = Number.isInteger(error.code) ? ` Code="${error.code}"` : "";
+  const errors = `<Errors><Error Type="${error.type}"${code}>${escapeXml(message)}</Error></Errors>`;
+  return notifReport(errors, reservationElement(reservation), { echoToken, now });
+}
