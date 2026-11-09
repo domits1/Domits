@@ -33,7 +33,6 @@ export class ReviewRepository {
   #hostReviews = new HostReviewRepository();
   #publicReviews = new PublicReviewRepository();
 
-  // Preserve the repository interface used by the review services and existing callers.
   async findResponseEligibleReviews(username) {
     return this.#hostReviews.findResponseEligibleReviews(username);
   }
