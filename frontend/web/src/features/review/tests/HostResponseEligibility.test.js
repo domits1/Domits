@@ -12,8 +12,11 @@ jest.mock("aws-amplify", () => ({ Auth: { currentUserInfo: jest.fn() } }));
 jest.mock("../views/ReviewPerformance", () => () => null);
 jest.mock("../views/DecliningPropertyRatings", () => () => null);
 jest.mock("../services/reviewAPI", () => ({ requestReview: jest.fn() }));
-jest.mock("../views/HostResponseForm", () => ({ review }) =>
-  <button>Respond to {review.id}: {review.response?.message || "new response"}</button>);
+jest.mock("../views/HostResponseForm", () => ({ review, onResponseChange }) => (
+  <button type="button" onClick={() => onResponseChange({ status: "published", message: "Updated reply" })}>
+    Respond to {review.id}: {review.response?.message || "new response"}
+  </button>
+));
 
 const received = [
   { id: "eligible", title: "Verified property review" },
@@ -49,6 +52,25 @@ test("keeps the complete received list and shows forms only for server-authorize
   expect(screen.getByText("Received reviews (4)")).toBeInTheDocument();
   expect(requestReview).toHaveBeenCalledWith("GET", { scope: "received" });
   expect(requestReview).toHaveBeenCalledWith("GET", { scope: "respondable" });
+});
+
+test("keeps a published reply after switching reviews and visiting Performance", async () => {
+  render(<HostReviews />);
+  const review = await screen.findByRole("button", { name: received[0].title, exact: true });
+  fireEvent.click(review);
+  fireEvent.click(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" }));
+
+  fireEvent.click(screen.getByRole("button", { name: received[1].title, exact: true }));
+  fireEvent.click(review);
+  expect(screen.getByRole("button", { name: "Respond to eligible: Updated reply" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Review performance over time" }));
+  expect(screen.queryByRole("button", { name: "Respond to eligible: Updated reply" })).not.toBeInTheDocument();
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Review", exact: true }));
+  });
+  fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
+  expect(screen.getByRole("button", { name: "Respond to eligible: Updated reply" })).toBeInTheDocument();
 });
 
 test.each(["network", "malformed", "rejected"])("keeps received reviews on %s eligibility failure and retries only eligibility", async (failure) => {

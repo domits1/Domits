@@ -24,6 +24,14 @@ export default function HostReviews() {
   const [eligibilityError, setEligibilityError] = useState("");
   const [eligibilityRetry, setEligibilityRetry] = useState(0);
   const navigate = useNavigate();
+
+  function updateReviewResponse(reviewId, response) {
+    setRespondableReviews((reviews) => {
+      const review = reviews[reviewId];
+      return review ? { ...reviews, [reviewId]: { ...review, response } } : reviews;
+    });
+  }
+
   useEffect(() => {
     let active = true;
     setRespondableReviews({});
@@ -126,6 +134,7 @@ export default function HostReviews() {
             )}
             <ReceivedReviews
               respondableReviews={respondableReviews}
+              onResponseChange={updateReviewResponse}
               userId={userId}
               reviews={receivedReviews}
               loading={loading}
