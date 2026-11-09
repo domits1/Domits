@@ -76,6 +76,7 @@ describe("PropertyController.grantWebsiteRatePlan", () => {
     infoSpy = jest.spyOn(console, "info").mockImplementation(() => undefined);
 
     tokenLookup = jest.fn(async (token) => {
+      if (token === "expired-token") throw cognitoError("NotAuthorizedException", "Access Token has expired");
       if (!USERS_BY_TOKEN[token]) throw cognitoError("NotAuthorizedException", "Invalid Access Token");
       return USERS_BY_TOKEN[token];
     });
@@ -153,6 +154,23 @@ describe("PropertyController.grantWebsiteRatePlan", () => {
 
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(store.events[0].payload_json).actorId).toBe("admin-1");
+  });
+
+  it("passes only the three grant fields of the body to the service", async () => {
+    useStore();
+    const grantElite = jest.spyOn(controller.directBookingWebsiteRatePlanService, "grantElite");
+
+    await controller.grantWebsiteRatePlan(
+      grantEvent({ body: { actorId: "host-1", plan: "elite", priceCents: 0, accountId: " host-1 " } })
+    );
+
+    expect(grantElite).toHaveBeenCalledTimes(1);
+    expect(grantElite.mock.calls[0][0]).toStrictEqual({
+      actorId: "admin-1",
+      accountId: " host-1 ",
+      effectiveUntil: END_DATE,
+      reason: REASON,
+    });
   });
 
   it.each([
@@ -294,7 +312,10 @@ describe("PropertyController.grantWebsiteRatePlan", () => {
     const response = await controller.grantWebsiteRatePlan(grantEvent());
 
     expect(response.statusCode).toBe(503);
-    expect(Object.keys(parse(response))).toEqual(["message"]);
+    expect(parse(response)).toEqual({
+      message:
+        "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+    });
   });
 
   it.each([
