@@ -1,7 +1,7 @@
 import { DirectBookingWebsiteRatePlanRepository } from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
 import { DirectBookingWebsiteStripeRepository } from "../../data/repository/directBookingWebsiteStripeRepository.js";
 import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
-import { readWebsitePlanGrantRequest } from "./websitePlanGrantRequest.js";
+import { readWebsitePlanGrantRequest, readWebsitePlanRevokeRequest } from "./websitePlanGrantRequest.js";
 
 export const WEBSITE_PLAN_NAMES = Object.freeze({
   ESSENTIALS: "essentials",
@@ -238,6 +238,12 @@ export class DirectBookingWebsiteRatePlanService {
     const { plan, replacedPlans } = await withRatePlanTable(() => this.repository.grantElitePlan(grant));
     const extended = replacedPlans.some((replaced) => isRunningElite(replaced, nowMs));
     return { action: extended ? "extended" : "granted", plan: toView(plan) };
+  }
+
+  async revokeElite(request) {
+    const revoke = readWebsitePlanRevokeRequest(request);
+    const { plan, revokedPlan } = await withRatePlanTable(() => this.repository.revokeElitePlanGrant(revoke));
+    return { action: "revoked", revokedPlanId: revokedPlan.id, plan: toView(plan) };
   }
 
   async requireHostAccount(accountId) {

@@ -62,3 +62,10 @@ export const readWebsitePlanGrantRequest = (request, nowMs) => {
     reason: grantReason,
   };
 };
+
+export const readWebsitePlanRevokeRequest = (request) => {
+  const { actorId, accountId, reason } = request ?? {};
+  const actor = readActorId(actorId);
+  const account = readAccountId(accountId);
+  return { actorId: actor, accountId: account, reason: readReason(reason) };
+};
