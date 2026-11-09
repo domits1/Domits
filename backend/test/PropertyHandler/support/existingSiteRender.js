@@ -64,13 +64,39 @@ export const buildRatePlanRepository = (currentRow = null) => ({
   expireSubscriptionAndCreateEssentials: refuseCall("expireSubscriptionAndCreateEssentials"),
 });
 
+export const ratePlanRow = (overrides = {}) => ({
+  id: "plan-1",
+  account_id: EXISTING_SITE.hostId,
+  plan: "essentials",
+  price_cents: 0,
+  currency: "EUR",
+  billing_frequency: "monthly",
+  status: "ACTIVE",
+  effective_from: new Date("2026-10-06T08:00:00.000Z"),
+  effective_until: null,
+  stripe_customer_id: null,
+  stripe_subscription_id: null,
+  ...overrides,
+});
+
+export const PAID_ELITE_ROW = ratePlanRow({ plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1" });
+
 export const expectNoPlanRead = (ratePlanRepository) => {
   for (const method of Object.values(ratePlanRepository)) {
     expect(method).not.toHaveBeenCalled();
   }
 };
 
-export const buildExistingSiteController = ({ site = EXISTING_SITE, ratePlanRepository = buildRatePlanRepository() } = {}) => {
+export const expectOnlyCurrentPlanRead = (ratePlanRepository) => {
+  for (const [name, method] of Object.entries(ratePlanRepository)) {
+    if (name !== "findCurrentByAccountId") expect(method).not.toHaveBeenCalled();
+  }
+};
+
+export const buildExistingSiteController = ({
+  site = EXISTING_SITE,
+  ratePlanRepository = buildRatePlanRepository(),
+} = {}) => {
   const controller = new PropertyController();
   controller.directBookingWebsiteSiteRepository = { getSiteById: jest.fn(async () => site) };
   controller.directBookingWebsiteDomainRepository = {
