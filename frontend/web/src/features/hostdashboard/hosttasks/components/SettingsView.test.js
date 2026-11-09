@@ -125,8 +125,8 @@ describe('SettingsView', () => {
             expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ notifInappEnabled: false }));
         });
 
-        test.each(['SMS notifications', 'Urgent tasks only'])(
-            'does not show "%s", because nothing sends it yet',
+        test.each(['SMS notifications', 'Urgent tasks only', 'Integrations'])(
+            'does not show "%s", because nothing sends or connects it yet',
             async (text) => {
                 render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
                 await screen.findByText('Team Members');

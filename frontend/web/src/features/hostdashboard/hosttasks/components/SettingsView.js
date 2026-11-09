@@ -18,12 +18,6 @@ const DEFAULT_SETTINGS = {
     requirePhotoProof: false,
 };
 
-const INTEGRATIONS = [
-    { name: 'Airbnb', logo: '🏠', connected: false },
-    { name: 'Booking.com', logo: '🔵', connected: false },
-    { name: 'Vrbo', logo: '🏡', connected: false },
-];
-
 const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
     const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
     const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
@@ -145,30 +139,6 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-
-                    <div className="settings-card">
-                        <div className="settings-card-header">
-                            <h3 className="settings-card-title">Integrations</h3>
-                            <span className="settings-coming-soon">Coming soon</span>
-                        </div>
-                        <div className="settings-integrations-grid">
-                            {INTEGRATIONS.map(integration => (
-                                <div key={integration.name} className="settings-integration-card">
-                                    <div className="settings-integration-top">
-                                        <span className="settings-integration-logo">{integration.logo}</span>
-                                        <span className="settings-integration-name">{integration.name}</span>
-                                    </div>
-                                    {integration.connected ? (
-                                        <button className="settings-integration-btn disconnect">
-                                            ✓ Disconnect
-                                        </button>
-                                    ) : (
-                                        <span className="settings-integration-status disconnected">Not Connected</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
