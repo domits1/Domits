@@ -77,10 +77,14 @@ Target input:
 
 ## Enablement Steps
 
+Before you start, this must be done:
+
+- [ ] Bookings that keep getting an answer the run tries again (a timeout, a 5xx, or a 401, 403, 408 or 429) are capped: they get a `RETRY` row with an attempt count, so they move to the back of the list and stop after a limit. Without it, ten such bookings block every later booking, because the list is sorted on `arrivaldate` with `limit` 10. Not built yet (review of #3587). Do not enable the schedule without it.
+
 1. Confirm the Truvi code is deployed to the `Truvi-Integration` Lambda.
 2. Set the environment variables, with `TRUVI_SCREENING_ENABLED=false` first.
 3. Run the manual test event below. Expect `{ "skipped": true, ... }`.
-4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected` and an empty `errors` list.
+4. Set `TRUVI_SCREENING_ENABLED=true` and run the test event again. Expect a summary with `listed`, `saved`, `retryLater`, `rejected` and an empty `errors` list. `retryLater` must be 0: anything else means Truvi refused the key (401, 403), limited the rate (429) or did not answer, so stop and check before going on.
 5. Check the new rows in `guest_risk_assessment`.
 6. Create the EventBridge rule with the target input from this document, disabled.
 7. Enable the rule and watch the CloudWatch logs of the first runs.
