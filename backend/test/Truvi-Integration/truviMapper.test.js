@@ -1,4 +1,9 @@
-import { bookingToCreateRequest, mapCreateResponse, toCountryAlpha3 } from "../../functions/Truvi-Integration/util/truviMapper.js";
+import {
+  TruviInputError,
+  bookingToCreateRequest,
+  mapCreateResponse,
+  toCountryAlpha3,
+} from "../../functions/Truvi-Integration/util/truviMapper.js";
 
 const input = () => ({
   booking: {
@@ -184,5 +189,31 @@ describe("mapCreateResponse", () => {
   test("keeps the flagged reason", () => {
     const result = mapCreateResponse({ verification: { verificationId: "v-1", status: "Flagged", flaggedReason: "Invalid Email" } });
     expect(result.flaggedReason).toBe("Invalid Email");
+  });
+});
+
+describe("TruviInputError", () => {
+  const thrownBy = (change) => {
+    const data = input();
+    change(data);
+    try {
+      bookingToCreateRequest(data);
+    } catch (error) {
+      return error;
+    }
+    throw new Error("expected bookingToCreateRequest to throw");
+  };
+
+  test.each([
+    ["an unknown country", (data) => (data.location.country = "Atlantis")],
+    ["no street", (data) => (data.location.street = " ")],
+    ["no last name", (data) => (data.booking.guestname = "John")],
+    ["no email and no phone", (data) => delete data.booking.guest_email],
+  ])("marks a booking with %s as input Truvi cannot take", (_label, change) => {
+    expect(thrownBy(change)).toBeInstanceOf(TruviInputError);
+  });
+
+  test("does not mark a wrong extendedAmount as booking input, because it is a setting for every booking", () => {
+    expect(thrownBy((data) => (data.protection.extendedAmount = 123))).not.toBeInstanceOf(TruviInputError);
   });
 });

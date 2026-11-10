@@ -1,4 +1,4 @@
-import { DEFAULT_CHANNEL, isUtcMidnight } from "../util/truviMapper.js";
+import { DEFAULT_CHANNEL, TruviInputError, isUtcMidnight } from "../util/truviMapper.js";
 
 const sentDates = (booking, result) =>
   result.providerAssessmentId ? { arrivalDate: booking.arrivaldate, departureDate: booking.departuredate } : {};
@@ -6,9 +6,6 @@ const sentDates = (booking, result) =>
 const hasUtcMidnightDates = (booking) => isUtcMidnight(booking.arrivaldate) && isUtcMidnight(booking.departuredate);
 
 const RETRYABLE_CLIENT_STATUSES = new Set([401, 403, 408, 429]);
-
-const isProgrammingError = (error) =>
-  error instanceof TypeError || error instanceof ReferenceError || error instanceof SyntaxError;
 
 const isRetryableError = (error) =>
   !error || error.status === null || error.status === undefined || error.status >= 500 || RETRYABLE_CLIENT_STATUSES.has(error.status);
@@ -84,7 +81,7 @@ export class TruviBookingScreener {
     try {
       return await this.screeningService.screenBooking(input);
     } catch (error) {
-      if (isProgrammingError(error)) {
+      if (!(error instanceof TruviInputError)) {
         throw error;
       }
       return this.#skipped(error.message);

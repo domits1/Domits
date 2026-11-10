@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { TruviBookingScreener } from "../../functions/Truvi-Integration/business/truviBookingScreener.js";
+import { TruviInputError } from "../../functions/Truvi-Integration/util/truviMapper.js";
 
 const candidate = (overrides = {}) => ({
   booking: {
@@ -171,7 +172,7 @@ describe("TruviBookingScreener", () => {
   it("saves SKIPPED when the mapper refuses the booking", async () => {
     const { screener, assessmentRepository } = build({
       screen: async () => {
-        throw new Error("Guest needs a first and a last name");
+        throw new TruviInputError("Guest needs a first and a last name");
       },
     });
 
@@ -198,6 +199,19 @@ describe("TruviBookingScreener", () => {
       expect(summary.errors).toEqual([{ bookingId: "booking-1", message: bug.message }]);
     }
   );
+
+  it("does not save any other error, like a failed secret read, but reports it so the booking is tried again", async () => {
+    const { screener, assessmentRepository } = build({
+      screen: async () => {
+        throw new Error("The Truvi secret could not be read");
+      },
+    });
+
+    const summary = await screener.run({ now: 1000 });
+
+    expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "The Truvi secret could not be read" }]);
+  });
 
   it("saves SKIPPED when the host has no email", async () => {
     const { screener, screeningService, assessmentRepository } = build({ host: null });

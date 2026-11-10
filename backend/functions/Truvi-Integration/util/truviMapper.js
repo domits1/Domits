@@ -15,10 +15,17 @@ export const DEFAULT_CHANNEL = "Direct web";
 
 const ALLOWED_EXTENDED_AMOUNTS = [250, 500, 1000, 10000, 50000];
 
+export class TruviInputError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "TruviInputError";
+  }
+}
+
 export function toCountryAlpha3(country) {
   const code = findCountryAlpha3(country);
   if (!code) {
-    throw new Error(`Unsupported country for Truvi: ${country}`);
+    throw new TruviInputError(`Unsupported country for Truvi: ${country}`);
   }
   return code;
 }
@@ -53,7 +60,7 @@ const text = (value) => String(value ?? "").trim();
 function toAddressLine1(location) {
   const street = text(location.street);
   if (!street) {
-    throw new Error("Property address needs a street");
+    throw new TruviInputError("Property address needs a street");
   }
   const number = `${text(location.housenumber)}${text(location.housenumberextension)}`;
   return number ? `${street} ${number}` : street;
@@ -62,7 +69,7 @@ function toAddressLine1(location) {
 function splitName(fullName = "") {
   const parts = String(fullName ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length < 2) {
-    throw new Error("Guest needs a first and a last name");
+    throw new TruviInputError("Guest needs a first and a last name");
   }
   const firstName = parts.shift();
   return { firstName, lastName: parts.join(" ") };
@@ -82,7 +89,7 @@ export function bookingToCreateRequest({
     throw new Error(`extendedAmount must be one of ${ALLOWED_EXTENDED_AMOUNTS.join(", ")}`);
   }
   if (!booking.guest_email && !booking.guest_phone) {
-    throw new Error("Guest needs an email or a phone number");
+    throw new TruviInputError("Guest needs an email or a phone number");
   }
 
   const { firstName, lastName } = splitName(booking.guestname);
