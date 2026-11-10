@@ -661,4 +661,27 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(await screen.findByText("Downgrade complete")).toBeInTheDocument();
     expect(renderedCards()).toEqual([ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD]);
   });
+
+  test("keeps an Elite plan without a subscription and shows the change error when the switch to Essentials fails", async () => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
+      plan: "elite",
+      priceCents: 0,
+      effectiveUntil: null,
+      stripeSubscriptionId: null,
+    }));
+    changeWebsiteRatePlan.mockRejectedValue(new Error("Request failed"));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Switch to Essentials" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
+    expect(renderedCards()).toEqual([
+      ESSENTIALS_SWITCH_CARD,
+      {
+        texts: ["Elite", "Current plan", "No payment needed", ...ELITE_FEATURES, "Current plan"],
+        buttonDisabled: true,
+      },
+    ]);
+  });
 });
