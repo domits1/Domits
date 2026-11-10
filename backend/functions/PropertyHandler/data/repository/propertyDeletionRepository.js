@@ -261,6 +261,7 @@ export class PropertyDeletionRepository {
         { tableName: "property_checkin", propertyColumns: ["property_id"] },
         { tableName: "property_generaldetail", propertyColumns: ["property_id"] },
         { tableName: "property_location", propertyColumns: ["property_id"] },
+        { tableName: "property_destination", propertyColumns: ["property_id"] },
         { tableName: "property_pricing", propertyColumns: ["property_id"] },
         { tableName: "property_rule", propertyColumns: ["property_id"] },
         { tableName: "property_technicaldetails", propertyColumns: ["property_id"] },
@@ -312,6 +313,13 @@ export class PropertyDeletionRepository {
         "standalone_site_draft",
         ["propertyid", "property_id", "propertyId"],
         propertyId
+      );
+
+      await this.deleteRowsByScopedIdsIfExists(
+        transactionManager,
+        "static_page_outbox",
+        ["site_id"],
+        standaloneSiteIds
       );
 
       await this.deleteRowsByScopedIdsIfExists(

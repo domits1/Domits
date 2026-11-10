@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   REMOTELOCK_UI_ENABLED,
   STATUS_PRESENTATION,
@@ -5,14 +7,30 @@ import {
   getStatusPresentation,
 } from "./homeAutomationConstants";
 
+const sourceFilesIn = (directory) =>
+  fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return sourceFilesIn(entryPath);
+    return /\.jsx?$/.test(entry.name) && !/\.test\.jsx?$/.test(entry.name) ? [entryPath] : [];
+  });
+
 describe("homeAutomationConstants", () => {
+  // CRA does not polyfill Object.hasOwn, so Safari before 15.4 throws on it.
+  it("does not use Object.hasOwn anywhere in the feature", () => {
+    const offenders = sourceFilesIn(path.resolve(__dirname, "..")).filter((file) =>
+      /Object\s*\.\s*hasOwn\b/.test(fs.readFileSync(file, "utf8"))
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
   it("ships switched off", () => {
     expect(REMOTELOCK_UI_ENABLED).toBe(false);
   });
 
   it.each([
     ["NOT_CONNECTED", "neutral", "notConnected", ["connect"]],
-    ["CONNECTING", "pending", "connecting", []],
+    ["CONNECTING", "pending", "connecting", ["connect"]],
     ["CONNECTED", "success", "connected", ["disconnect"]],
     ["AUTHENTICATION_ERROR", "error", "authenticationError", ["reconnect", "disconnect"]],
     ["CONNECTION_ERROR", "error", "connectionError", ["reconnect", "disconnect"]],

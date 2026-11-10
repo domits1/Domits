@@ -2,11 +2,13 @@ import { describe, it, expect } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
+import { FUNCTION_SIZE_LIMIT_BYTES, replaceAliases } from "../../infrastructure/static-page-edge/alias-map.mjs";
 
 const DIRECTORY = join(process.cwd(), "infrastructure", "static-page-edge");
 const SOURCE = readFileSync(join(DIRECTORY, "viewer-request.js"), "utf8");
 const CASES = JSON.parse(readFileSync(join(DIRECTORY, "cases.json"), "utf8"));
-const FUNCTION_SIZE_LIMIT_BYTES = 10 * 1024;
+const REDIRECT_CASES = JSON.parse(readFileSync(join(DIRECTORY, "redirect-cases.json"), "utf8"));
+const REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 const HOSTNAME_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 const PAGE_KEY_PATTERN = new RegExp(
   `^/sites/by-host/((?:${HOSTNAME_LABEL}\\.)+${HOSTNAME_LABEL})/(?:index\\.html|sitemap\\.xml)$`
@@ -30,7 +32,10 @@ const robotsResponseFor = (host, method) => {
   };
 };
 
-const loadHandler = () => vm.runInNewContext(`${SOURCE}\nhandler`, {});
+const loadHandler = (aliases) => {
+  const source = aliases ? replaceAliases(SOURCE, Object.entries(aliases)) : SOURCE;
+  return vm.runInNewContext(`${source}\nhandler`);
+};
 
 const buildHostHeader = (host, multiValue) => {
   if (host === null) {
@@ -56,6 +61,28 @@ const buildEvent = ({ method, uri, host, multiValue, querystring = {} }) => ({
   },
 });
 
+const queryGroupsOf = (query) => {
+  const groups = [];
+  for (const parameter of query.split("&")) {
+    const name = parameter.split("=")[0];
+    const previous = groups.at(-1);
+    if (previous?.name === name) {
+      previous.parameters.push(parameter);
+    } else {
+      groups.push({ name, parameters: [parameter] });
+    }
+  }
+  return groups.map((group) => group.parameters.join("&")).sort();
+};
+
+const locationParts = (location) => {
+  const queryStart = location.indexOf("?");
+  if (queryStart === -1) {
+    return { beforeQuery: location, queryGroups: null };
+  }
+  return { beforeQuery: location.slice(0, queryStart), queryGroups: queryGroupsOf(location.slice(queryStart + 1)) };
+};
+
 const rewrittenCases = CASES.filter((testCase) => testCase.expectedUri && testCase.expectedUri !== testCase.uri);
 
 describe("the viewer request function source", () => {
@@ -65,8 +92,10 @@ describe("the viewer request function source", () => {
     expect(typeof loadHandler()).toBe("function");
   });
 
-  it("keeps to plain synchronous code, with no modules, network or timers", () => {
-    expect(SOURCE).not.toMatch(/\b(import|export|require|async|await|fetch|setTimeout|setInterval|XMLHttpRequest)\b/);
+  it("is one plain synchronous handler that imports nothing and uses no store, network, timers or promises", () => {
+    expect(SOURCE).toMatch(/^function handler\(event\) \{$/m);
+    expect(SOURCE).not.toMatch(/\b(import|export|require|async|await|Promise|fetch|setTimeout|setInterval)\b/);
+    expect(SOURCE).not.toMatch(/\bcf\b|cloudfront|kvs|XMLHttpRequest/i);
   });
 
   it("carries no comments", () => {
@@ -108,7 +137,7 @@ describe("the viewer request function", () => {
     }
   });
 
-  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file unchecked", () => {
+  it("answers robots.txt only with the normalised hostname, so nothing from the header reaches the file", () => {
     const robotsCases = CASES.filter((testCase) => testCase.expectedRobotsFor && testCase.method === "GET");
     expect(robotsCases.length).toBeGreaterThan(0);
     for (const testCase of robotsCases) {
@@ -144,7 +173,7 @@ describe("the viewer request function", () => {
   });
 
   it("leaves the request alone when the uri is missing, instead of failing the request", () => {
-    const handler = loadHandler();
+    const handler = loadHandler({ "www.villasensual.nl": "beautiful-home-amsterdam-6156b005.direct.domits.com" });
     const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
     delete event.request.uri;
 
@@ -157,5 +186,91 @@ describe("the viewer request function", () => {
     const event = buildEvent({ method: "GET", uri: "/", host: "www.villasensual.nl" });
 
     expect(handler(event)).toBe(event.request);
+  });
+});
+
+describe("comparing a redirect location with the one a case expects", () => {
+  const DEEPER_LOCATION = "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2";
+  const EMPTY_VALUE_LOCATION = "https://www.villasensual.nl/?preview=";
+  const ROOT_LOCATION = "https://www.villasensual.nl/";
+
+  it.each([
+    ["the same location", DEEPER_LOCATION, DEEPER_LOCATION],
+    [
+      "the query names in another order",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=1&r=2&q=villa%20sea",
+    ],
+    ["a name with an empty value", EMPTY_VALUE_LOCATION, EMPTY_VALUE_LOCATION],
+    ["a location without a query", ROOT_LOCATION, ROOT_LOCATION],
+  ])("accepts %s", (_name, expected, actual) => {
+    expect(locationParts(actual)).toEqual(locationParts(expected));
+  });
+
+  it.each([
+    ["another scheme", DEEPER_LOCATION, "http://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2"],
+    ["another host", DEEPER_LOCATION, "https://villasensual.nl/listing/2?q=villa%20sea&r=1&r=2"],
+    ["the host in capitals", DEEPER_LOCATION, "https://WWW.VillaSensual.NL/listing/2?q=villa%20sea&r=1&r=2"],
+    ["another path", DEEPER_LOCATION, "https://www.villasensual.nl/listing/3?q=villa%20sea&r=1&r=2"],
+    ["a trailing slash on the path", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2/?q=villa%20sea&r=1&r=2"],
+    ["a missing name", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?r=1&r=2"],
+    ["a missing repeated value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1"],
+    ["an extra name", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&preview="],
+    ["an extra repeated value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&r=3"],
+    ["a repeated value twice", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=1&r=2&r=2"],
+    ["a changed value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20see&r=1&r=2"],
+    ["a decoded value", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa sea&r=1&r=2"],
+    ["the repeated values swapped", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?q=villa%20sea&r=2&r=1"],
+    [
+      "the names reordered and the repeated values swapped",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=2&r=1&q=villa%20sea",
+    ],
+    [
+      "the repeated values split by another name",
+      DEEPER_LOCATION,
+      "https://www.villasensual.nl/listing/2?r=1&q=villa%20sea&r=2",
+    ],
+    ["no query where one is expected", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2"],
+    ["an empty query where one is expected", DEEPER_LOCATION, "https://www.villasensual.nl/listing/2?"],
+    ["a name without the equals sign of its empty value", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?preview"],
+    ["a value where an empty one is expected", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?preview=1"],
+    ["no query where an empty value is expected", EMPTY_VALUE_LOCATION, ROOT_LOCATION],
+    ["an empty query where an empty value is expected", EMPTY_VALUE_LOCATION, "https://www.villasensual.nl/?"],
+    ["a query where none is expected", ROOT_LOCATION, EMPTY_VALUE_LOCATION],
+    ["an empty query where none is expected", ROOT_LOCATION, "https://www.villasensual.nl/?"],
+    ["the host without its path", ROOT_LOCATION, "https://www.villasensual.nl"],
+  ])("refuses %s", (_name, expected, actual) => {
+    expect(locationParts(actual)).not.toEqual(locationParts(expected));
+  });
+});
+
+describe("the redirect from an alias to its primary domain", () => {
+  it.each(REDIRECT_CASES.map((testCase) => [testCase.name, testCase]))("%s", (_name, testCase) => {
+    const handler = loadHandler(testCase.aliases);
+    const event = buildEvent(testCase);
+    const original = JSON.parse(JSON.stringify(event.request));
+
+    const result = handler(event);
+
+    if (testCase.expectedLocation) {
+      expect(result).toEqual({
+        statusCode: 301,
+        statusDescription: "Moved Permanently",
+        headers: {
+          location: { value: expect.any(String) },
+          "cache-control": { value: REDIRECT_CACHE_CONTROL },
+        },
+      });
+      expect(locationParts(result.headers.location.value)).toEqual(locationParts(testCase.expectedLocation));
+      expect(event.request).toEqual(original);
+      return;
+    }
+    if (testCase.expectedStatus) {
+      expect(result).toEqual({ statusCode: testCase.expectedStatus, statusDescription: "Not Found" });
+      return;
+    }
+    expect(result).toBe(event.request);
+    expect(result.uri).toBe(testCase.expectedUri);
   });
 });

@@ -1,4 +1,5 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+import { findCountryAlpha3 } from "./truviCountries.js";
 
 export const SCREENING_STATUS = {
   Approved: "PASSED",
@@ -6,26 +7,12 @@ export const SCREENING_STATUS = {
   Rejected: "FAILED",
 };
 
+export const DEFAULT_CHANNEL = "Direct web";
+
 const ALLOWED_EXTENDED_AMOUNTS = [250, 500, 1000, 10000, 50000];
 
-const COUNTRY_TO_ALPHA3 = {
-  netherlands: "NLD", nederland: "NLD",
-  germany: "DEU", duitsland: "DEU", deutschland: "DEU",
-  belgium: "BEL", "belgië": "BEL", belgie: "BEL",
-  france: "FRA", frankrijk: "FRA",
-  spain: "ESP", spanje: "ESP",
-  italy: "ITA", "italië": "ITA", italie: "ITA",
-  "united kingdom": "GBR", "verenigd koninkrijk": "GBR",
-  austria: "AUT", oostenrijk: "AUT",
-  switzerland: "CHE", zwitserland: "CHE",
-  portugal: "PRT",
-  greece: "GRC", griekenland: "GRC",
-  turkey: "TUR", turkije: "TUR",
-  "united states": "USA", "verenigde staten": "USA",
-};
-
 export function toCountryAlpha3(country) {
-  const code = COUNTRY_TO_ALPHA3[String(country ?? "").trim().toLowerCase()];
+  const code = findCountryAlpha3(country);
   if (!code) {
     throw new Error(`Unsupported country for Truvi: ${country}`);
   }
@@ -45,12 +32,24 @@ function toTruviTimestamp(date) {
 }
 
 function splitName(fullName = "") {
-  const parts = fullName.trim().split(/\s+/);
-  const firstName = parts.shift() || "";
+  const parts = String(fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) {
+    throw new Error("Guest needs a first and a last name");
+  }
+  const firstName = parts.shift();
   return { firstName, lastName: parts.join(" ") };
 }
 
-export function bookingToCreateRequest({ booking, property, location, rules = [], host, protection, now = new Date() }) {
+export function bookingToCreateRequest({
+  booking,
+  property,
+  location,
+  rules = [],
+  host,
+  protection,
+  channel = DEFAULT_CHANNEL,
+  now = new Date(),
+}) {
   if (!ALLOWED_EXTENDED_AMOUNTS.includes(protection.extendedAmount)) {
     throw new Error(`extendedAmount must be one of ${ALLOWED_EXTENDED_AMOUNTS.join(", ")}`);
   }
@@ -83,7 +82,7 @@ export function bookingToCreateRequest({ booking, property, location, rules = []
       reservationId: booking.id,
       checkIn: toIsoDate(booking.arrivaldate),
       checkOut: toIsoDate(booking.departuredate),
-      channel: "Direct web",
+      channel,
       creationDate: toIsoDate(booking.createdat),
     },
     guest,
@@ -91,11 +90,25 @@ export function bookingToCreateRequest({ booking, property, location, rules = []
   };
 }
 
+function errorResult(message) {
+  return { providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status: null, message } };
+}
+
 export function mapCreateResponse(response) {
-  const { verificationId, status, flaggedReason } = response.verification;
+  const verification = response?.verification;
+  if (!verification) {
+    return errorResult("Truvi response has no verification");
+  }
+
+  const { verificationId, status, flaggedReason } = verification;
+  const domitsStatus = SCREENING_STATUS[status];
+  if (!domitsStatus) {
+    return { ...errorResult(`Unknown Truvi status: ${status}`), providerAssessmentId: verificationId ?? null };
+  }
+
   return {
     providerAssessmentId: verificationId,
-    status: SCREENING_STATUS[status] ?? "ERROR",
+    status: domitsStatus,
     flaggedReason: flaggedReason ?? null,
   };
 }

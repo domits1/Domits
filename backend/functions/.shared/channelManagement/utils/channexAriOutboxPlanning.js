@@ -97,7 +97,15 @@ export const classifySyncResponse = (result) => {
 
   if (failed.length) {
     const auth = failed.find((item) => item.httpStatus === 401 || item.httpStatus === 403);
-    if (auth) return { outcome: OUTCOME.FAILED, reason: auth.errorCode || "CHANNEX_UNAUTHORIZED", taskIds: [] };
+    if (auth) {
+      // Only a 401 rejects the key itself; a 403 can be about this one property (#3572).
+      return {
+        outcome: OUTCOME.FAILED,
+        reason: auth.errorCode || "CHANNEX_UNAUTHORIZED",
+        taskIds: [],
+        keyRejected: failed.some((item) => item.httpStatus === 401),
+      };
+    }
 
     const temporary = failed.filter((item) => isTemporary(item.httpStatus));
     if (temporary.length) {

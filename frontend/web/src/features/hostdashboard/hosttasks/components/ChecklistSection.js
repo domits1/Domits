@@ -9,13 +9,20 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
     const requiredItems = items.filter(i => i.isRequired);
     const requiredDoneCount = requiredItems.filter(i => i.isChecked).length;
 
-    const handleAdd = (e) => {
-        e.preventDefault();
+    const handleAdd = () => {
         const title = newItemTitle.trim();
         if (!title) return;
         onAddItem({ title, isRequired: newItemRequired });
         setNewItemTitle('');
         setNewItemRequired(true);
+    };
+
+    // This section sits inside the Create Task form, and a form inside a form is not valid. So it has
+    // no form of its own: Enter is caught here, and kept from submitting the surrounding form.
+    const handleTitleKeyDown = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        handleAdd();
     };
 
     return (
@@ -24,7 +31,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                 <label>Checklist</label>
                 {isApplyingTemplate && (
                     <span className="checklist-template-loading">
-                        <LuRefreshCw className="checklist-template-spinner" /> Applying template...
+                        <LuRefreshCw className="checklist-template-spinner" /> Loading checklist...
                     </span>
                 )}
                 {!isApplyingTemplate && !loadError && requiredItems.length > 0 && (
@@ -66,16 +73,17 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
             )}
 
             {!loadError && (
-                <form className="checklist-add-form" onSubmit={handleAdd}>
+                <div className="checklist-add-form">
                     <div className="checklist-add-row">
                         <input
                             type="text"
                             value={newItemTitle}
                             onChange={(e) => setNewItemTitle(e.target.value)}
+                            onKeyDown={handleTitleKeyDown}
                             placeholder="Add checklist item..."
                             aria-label="New checklist item title"
                         />
-                        <button type="submit" className="checklist-add-btn">Add</button>
+                        <button type="button" className="checklist-add-btn" onClick={handleAdd}>Add</button>
                     </div>
                     <label className="checklist-required-toggle">
                         <input
@@ -85,7 +93,7 @@ const ChecklistSection = ({ items, loadError, onAddItem, onToggleChecked, onRemo
                         />
                         Required
                     </label>
-                </form>
+                </div>
             )}
         </div>
     );

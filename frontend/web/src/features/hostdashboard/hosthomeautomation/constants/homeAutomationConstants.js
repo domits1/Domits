@@ -7,12 +7,17 @@
 //   - updating the "ships switched off" test in homeAutomationConstants.test.js.
 export const REMOTELOCK_UI_ENABLED = false;
 
+export const HOME_AUTOMATION_PATH = "/hostdashboard/settings/home-automation";
+// The redirect URI registered at RemoteLock; the host dashboard route and the backend setting must match it.
+export const HOME_AUTOMATION_CALLBACK_PATH = `${HOME_AUTOMATION_PATH}/callback`;
+
 // Tone picks the badge colour, labelKey is the key under settings.homeAutomation.statuses in the content
 // files, and actions are what the host may do from that status (each is a button on the status card and a key
 // under settings.homeAutomation.actions).
 export const STATUS_PRESENTATION = Object.freeze({
   NOT_CONNECTED: { tone: "neutral", labelKey: "notConnected", actions: ["connect"] },
-  CONNECTING: { tone: "pending", labelKey: "connecting", actions: [] },
+  // Connect stays available: a host who pressed Back at RemoteLock would otherwise wait out the pending window.
+  CONNECTING: { tone: "pending", labelKey: "connecting", actions: ["connect"] },
   CONNECTED: { tone: "success", labelKey: "connected", actions: ["disconnect"] },
   AUTHENTICATION_ERROR: { tone: "error", labelKey: "authenticationError", actions: ["reconnect", "disconnect"] },
   CONNECTION_ERROR: { tone: "error", labelKey: "connectionError", actions: ["reconnect", "disconnect"] },
@@ -43,7 +48,8 @@ const DEVICE_STATUS_LABEL_KEYS = Object.freeze({ ONLINE: "online", OFFLINE: "off
 // Device types the page lists but cannot manage yet.
 export const UNSUPPORTED_DEVICE_TYPES = Object.freeze(["resort_lock"]);
 
-const labelKeyOf = (labelKeys, value, fallback) => (Object.hasOwn(labelKeys, value) ? labelKeys[value] : fallback);
+const labelKeyOf = (labelKeys, value, fallback) =>
+  Object.prototype.hasOwnProperty.call(labelKeys, value) ? labelKeys[value] : fallback;
 
 export const getDeviceTypeLabelKey = (type) => labelKeyOf(DEVICE_TYPE_LABEL_KEYS, type, "other");
 

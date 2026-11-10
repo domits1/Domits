@@ -4,6 +4,7 @@ jest.mock("../../functions/property-tasks/data/taskRepository.js", () => require
 const {
     mockGetTaskById,
     mockUpdateTaskInDb,
+    mockUpdateTaskUnlessCompleted,
     resetTaskRepositoryMocks,
 } = require("./taskRepositoryTestDoubles.js");
 
@@ -59,7 +60,9 @@ describe("task lifecycle", () => {
 
         await updateTask("host-1", "task-1", { status: nextStatus });
 
-        expect(mockUpdateTaskInDb).toHaveBeenCalledWith(
+        // Completing goes through the write that only applies while the task is not completed yet.
+        const write = nextStatus === "Completed" ? mockUpdateTaskUnlessCompleted : mockUpdateTaskInDb;
+        expect(write).toHaveBeenCalledWith(
             expect.anything(), "task-1", expect.objectContaining({ status: nextStatus })
         );
     });

@@ -11,6 +11,10 @@ import {
   closeThread,
 } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { getIdToken } from "../../services/getAccessToken";
+import { CHANNEX_GUEST_DISPLAY_NAME, CHANNEX_GUEST_ID_PREFIX } from "../../utils/channexGuest";
+
+const NEW_CONTACT_PLACEHOLDER_NAME = "New message";
+const PLACEHOLDER_NAMES = ["Unknown", NEW_CONTACT_PLACEHOLDER_NAME, CHANNEX_GUEST_DISPLAY_NAME];
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -62,6 +66,10 @@ const fetchUserInfo = async (targetUserId) => {
     const isLikelyPhone = /^[\d+\-\s()]+$/.test(String(targetUserId));
     if (isLikelyPhone) {
       return { givenName: String(targetUserId), userId: targetUserId, profileImage: null };
+    }
+
+    if (String(targetUserId).startsWith(CHANNEX_GUEST_ID_PREFIX)) {
+      return { givenName: CHANNEX_GUEST_DISPLAY_NAME, userId: targetUserId, profileImage: null };
     }
 
     try {
@@ -149,7 +157,7 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
       propertyId: incoming?.propertyId || null,
       propertyTitle: null,
       accoImage: null,
-      givenName: "New message",
+      givenName: NEW_CONTACT_PLACEHOLDER_NAME,
       profileImage: null,
       latestMessage: { ...incoming, text: displayText },
       isFromRealtime: true,
@@ -192,8 +200,10 @@ const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) 
     if (idx === -1) return updated;
 
     const existingName = resolveContactName(updated[idx]);
-    const resolvedInfoName =
-      info?.givenName && info.givenName !== "Unknown" && info.givenName.trim().length > 0 ? info.givenName : null;
+    const hasRealExistingName = !PLACEHOLDER_NAMES.includes(existingName);
+    const isUsableInfoName = info?.givenName && info.givenName !== "Unknown" && info.givenName.trim().length > 0;
+    const isPlaceholderOverRealName = hasRealExistingName && info?.givenName === CHANNEX_GUEST_DISPLAY_NAME;
+    const resolvedInfoName = isUsableInfoName && !isPlaceholderOverRealName ? info.givenName : null;
     updated[idx] = {
       ...updated[idx],
       givenName: resolvedInfoName || existingName || "Unknown",

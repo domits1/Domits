@@ -15,7 +15,24 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
+const OWN_BOOKING_PAYMENT_READ_COLUMNS = [
+  "id",
+  "property_id",
+  "guestid",
+  "arrivaldate",
+  "departuredate",
+  "guests",
+  "status",
+];
+
 const NON_BLOCKING_BOOKING_STATUSES = ["Failed", "Declined", "Inquiry", "Cancelled", "Canceled"];
+const CANCELLED_STATUS = "Cancelled";
+const ALREADY_CANCELLED_STATUSES = new Set([CANCELLED_STATUS, "Canceled"]);
+
+const cancelledBookingValues = () => ({
+  status: CANCELLED_STATUS,
+  cancelled_at: () => `COALESCE(cancelled_at, ${Date.now()})`,
+});
 const MIN_CHECK_IN_OUT_GAP_MS = 60 * 60 * 1000;
 const ACCEPT_INQUIRY_MAX_ATTEMPTS = 3;
 const SERIALIZATION_FAILURE_SQLSTATE = "40001";
@@ -204,21 +221,21 @@ class ReservationRepository {
   // Read bookings by payment_Id (auth)
   // ---------
 
-  async readByPaymentId(paymentID) {
+  async readOwnBookingsByPaymentId(paymentID, userId) {
     const client = await Database.getInstance();
-    const query = await client
+    const bookings = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select(OWN_BOOKING_PAYMENT_READ_COLUMNS.map((column) => `booking.${column}`))
       .where("booking.paymentid = :paymentid", { paymentid: paymentID })
+      .andWhere("(booking.guestid = :userId OR booking.hostid = :userId)", { userId })
       .getMany();
 
-    if (!query) {
-      throw new UnableToSearch();
-    } else if (query.length < 1) {
+    if (bookings.length < 1) {
       throw new NotFoundException("No booking found.");
     }
     return {
-      response: query,
+      response: bookings,
       statusCode: 200,
     };
   }
@@ -381,6 +398,7 @@ class ReservationRepository {
         "booking.refunded_amount",
         "booking.stripe_refund_id",
         "booking.refund_error",
+        "booking.refund_status",
         "booking.booking_source",
         "booking.site_id",
         "booking.guest_email",
@@ -444,8 +462,9 @@ class ReservationRepository {
   }
 
   async updateBookingStatus(id, status, channexChanges = []) {
+    const values = status === CANCELLED_STATUS ? cancelledBookingValues() : { status: status };
     const query = await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager.createQueryBuilder().update(Booking).set({ status: status }).where("id = :id ", { id: id }).execute()
+      manager.createQueryBuilder().update(Booking).set(values).where("id = :id ", { id: id }).execute()
     );
 
     if (query.length < 1) {
@@ -626,8 +645,12 @@ class ReservationRepository {
       throw new Forbidden("Only the guest of this booking may cancel this booking.");
     }
 
+    if (ALREADY_CANCELLED_STATUSES.has(existing.status)) {
+      return { response: existing, statusCode: 200 };
+    }
+
     await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager.createQueryBuilder().update(Booking).set({ status: "Cancelled" }).where("id = :id", { id }).execute()
+      manager.createQueryBuilder().update(Booking).set(cancelledBookingValues()).where("id = :id", { id }).execute()
     );
 
     return { response: await this.#readBooking(client, id), statusCode: 200 };
@@ -644,8 +667,11 @@ class ReservationRepository {
     if (refundInfo.stripeRefundId) {
       updateData.stripe_refund_id = refundInfo.stripeRefundId;
     }
-    if (refundInfo.refundError) {
+    if (refundInfo.refundError !== undefined) {
       updateData.refund_error = refundInfo.refundError;
+    }
+    if (refundInfo.refundStatus !== undefined) {
+      updateData.refund_status = refundInfo.refundStatus;
     }
     if (Object.keys(updateData).length) {
       await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();

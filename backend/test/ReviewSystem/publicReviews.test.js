@@ -16,7 +16,7 @@ describe("public review retrieval", () => {
     property = { id: "p1" };
     summary = { score: "4", count: "11" };
     reviews = [{ id: "r1", overall_rating: 4, public_review: "Good stay", created_at: 1000,
-      private_feedback: "secret", reviewer_user_id: "private" }];
+      verification_status: "VERIFIED", private_feedback: "secret", reviewer_user_id: "private" }];
     query = { getRawOne: jest.fn(async () => summary), getMany: jest.fn(async () => reviews),
       getRawMany: jest.fn(async () => [{ review_id: "r1", key: "comfort", label: "Comfort", rating: "4.5" }]) };
     for (const method of ["where", "andWhere", "innerJoin", "select", "addSelect", "orderBy", "addOrderBy", "offset", "limit"]) {
@@ -167,7 +167,7 @@ test("keeps review publication and property visibility parameters independent in
   await new ReviewRepository().getPublicReviewPage("p1", 0, { minRating: 4, maxRating: 5, start: 1000, endExclusive: 2000,
     cursor: { date: 1500, id: "r2" } });
   expect(query.getParameters()).toMatchObject({ status: "PUBLISHED", propertyStatus: "ACTIVE",
-    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
+    publicationStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
     propertyId: "p1", filterMinimum: 4, filterMaximum: 5, filterStart: 1000, filterEnd: 2000 });
   expect(query.getQuery()).toContain(">= :filterStart");
   expect(query.getQuery()).toContain("< :filterEnd");

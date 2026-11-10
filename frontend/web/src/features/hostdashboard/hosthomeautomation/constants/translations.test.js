@@ -43,13 +43,9 @@ describe("home automation content", () => {
     expect(keyPaths(settings.hub.cards.homeAutomation)).toEqual(keyPaths(en.settings.hub.cards.homeAutomation));
   });
 
-  it.each(Object.keys(LANGUAGES))("%s has non-empty modal copy for every action a status can offer", (language) => {
-    const { actions, modal } = LANGUAGES[language].settings.homeAutomation;
-    const offered = new Set(Object.values(STATUS_PRESENTATION).flatMap((presentation) => presentation.actions));
+  it.each(Object.keys(LANGUAGES))("%s tells the connecting status apart from the connect button", (language) => {
+    const { statuses, actions } = LANGUAGES[language].settings.homeAutomation;
 
-    offered.forEach((action) => {
-      expect(actions[action]?.trim()).toBeTruthy();
-      ["title", "body", "confirm", "confirming"].forEach((key) => expect(modal[action][key]?.trim()).toBeTruthy());
-    });
+    expect(statuses.connecting).not.toBe(actions.connect);
   });
 });

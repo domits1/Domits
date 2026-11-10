@@ -88,6 +88,16 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(channexAriOutboxWriter.enqueueChannexAriChange).toHaveBeenCalledWith(manager, newStay);
   });
 
+  test("an imported cancellation keeps a time that is already stored", async () => {
+    const { repository, client } = setup();
+
+    await repository.cancelImportedBooking("booking-1", [], 1792281600000);
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toContain("cancelled_at = COALESCE(cancelled_at, $3)");
+    expect(params).toEqual(["booking-1", "Cancelled", 1792281600000]);
+  });
+
   test("an imported booking stores the OTA amount and the OTA as its source", async () => {
     const { repository, client } = setup();
 
@@ -97,6 +107,44 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(sql).toContain("total_price");
     expect(sql).toContain("booking_source");
     expect(params).toEqual(expect.arrayContaining([300, "Booking.com"]));
+  });
+
+  test("an imported booking stores the guest count from Channex", async () => {
+    const { repository, client } = setup();
+
+    await repository.createExternalBooking({ ...booking, guestCount: 3 });
+
+    const [, params] = client.query.mock.calls[0];
+    expect(params[5]).toBe(3);
+  });
+
+  test("an imported booking without a guest count stores one guest", async () => {
+    const { repository, client } = setup();
+
+    await repository.createExternalBooking(booking);
+
+    const [, params] = client.query.mock.calls[0];
+    expect(params[5]).toBe(1);
+  });
+
+  // Like the amount: a revision without occupancy keeps the stored count instead of erasing it.
+  test("a modification updates the guest count only when Channex sends one", async () => {
+    const { repository, manager } = setup();
+
+    await repository.updateImportedBooking({ ...booking, guestCount: 4, channexChanges: [change] });
+
+    const [sql, params] = manager.query.mock.calls[0];
+    expect(sql).toContain("guests = COALESCE($7, guests)");
+    expect(params[6]).toBe(4);
+  });
+
+  test("a modification without a guest count keeps the stored one", async () => {
+    const { repository, manager } = setup();
+
+    await repository.updateImportedBooking({ ...booking, channexChanges: [change] });
+
+    const [, params] = manager.query.mock.calls[0];
+    expect(params[6]).toBeNull();
   });
 
   // A modification without an amount keeps the stored one instead of erasing it.

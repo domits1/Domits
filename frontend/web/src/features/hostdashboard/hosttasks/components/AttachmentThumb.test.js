@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import AttachmentThumb from './AttachmentThumb.js';
 import { getAttachmentViewUrl } from '../../services/taskService';
 
@@ -21,6 +21,15 @@ describe('AttachmentThumb', () => {
 
         resolveUrl('https://example.com/photo.jpg');
         await waitFor(() => expect(container.querySelector('.attachment-loading')).not.toBeInTheDocument());
+    });
+
+    test('asks for the link of this attachment on this task, as the host the user acts for', async () => {
+        getAttachmentViewUrl.mockResolvedValue('https://example.com/photo.jpg');
+
+        render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+
+        await screen.findByAltText('photo.jpg');
+        expect(getAttachmentViewUrl).toHaveBeenCalledWith('tasks/host-1/photo.jpg', 'task-1', 'host-1');
     });
 
     test('renders an image for a non-PDF attachment once resolved', async () => {
@@ -63,6 +72,47 @@ describe('AttachmentThumb', () => {
         const removeButton = await screen.findByRole('button', { name: 'Remove photo.jpg' });
         fireEvent.click(removeButton);
         expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    test('says the attachment is unavailable when its link is refused, and still lets it be removed', async () => {
+        getAttachmentViewUrl.mockRejectedValue(new Error('Failed to get view URL: 404'));
+        const onRemove = jest.fn();
+
+        const { container } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" onRemove={onRemove} />);
+
+        expect(await screen.findByText('Unavailable')).toHaveAttribute('title', 'photo.jpg could not be loaded');
+        expect(container.querySelector('.attachment-loading')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Remove photo.jpg' }));
+        expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    test('shows the attachment again when a new link works after a refused one', async () => {
+        getAttachmentViewUrl.mockRejectedValueOnce(new Error('Failed to get view URL: 401')).mockResolvedValueOnce('https://example.com/photo.jpg');
+
+        const { rerender } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" />);
+        await screen.findByText('Unavailable');
+        rerender(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+
+        expect(await screen.findByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/photo.jpg');
+        expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
+    });
+
+    test.each([
+        ['an earlier link arrives late', (settle) => settle.resolve('https://example.com/first.jpg')],
+        ['an earlier link is refused late', (settle) => settle.reject(new Error('Failed to get view URL: 404'))],
+    ])('keeps showing the current link when %s', async (_label, settleFirst) => {
+        const settle = {};
+        getAttachmentViewUrl
+            .mockReturnValueOnce(new Promise((resolve, reject) => Object.assign(settle, { resolve, reject })))
+            .mockResolvedValueOnce('https://example.com/second.jpg');
+
+        const { rerender } = render(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" />);
+        rerender(<AttachmentThumb attachment="tasks/host-1/photo.jpg" taskId="task-1" asHostId="host-1" />);
+        expect(await screen.findByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
+
+        await act(async () => { settleFirst(settle); });
+        expect(screen.getByAltText('photo.jpg')).toHaveAttribute('src', 'https://example.com/second.jpg');
     });
 
     test('does not render a remove button when onRemove is not provided', async () => {

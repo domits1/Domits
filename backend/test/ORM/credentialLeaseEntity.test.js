@@ -20,6 +20,9 @@ const COLUMNS = {
 const SMOKE_CHECKS = [
   "free_acquire_owner_should_be_a",
   "held_acquire_should_return_no_row",
+  "owner_with_margin_should_return_one_row",
+  "margin_above_remaining_should_return_no_row",
+  "other_owner_should_return_no_row",
   "expired_takeover_owner_should_be_b",
   "wrong_owner_release_should_return_no_row",
   "owner_release_should_return_b",
@@ -104,7 +107,7 @@ describe("home_automation_credential_lease", () => {
     const sql = sqlOf(MIGRATION_FILE);
     const finalCheck = sql.slice(sql.lastIndexOf("ROLLBACK;"));
     const insertedIds = smokeBlocks(sql).flatMap((block) =>
-      [...block.matchAll(/INSERT INTO \w+\.\w+ AS lease \([^)]*\)\s*VALUES \('([^']+)'/g)].map((match) => match[1])
+      [...block.matchAll(/INSERT INTO \w+\.\w+ AS lease \([^)]*\)\s*SELECT '([^']+)'/g)].map((match) => match[1])
     );
 
     expect(finalCheck.match(/count\(\*\)/g)).toHaveLength(2);
