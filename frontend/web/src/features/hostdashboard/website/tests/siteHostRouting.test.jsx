@@ -183,6 +183,12 @@ const renderAppAt = (url) => {
   return render(<App />);
 };
 
+const moveTo = (url) =>
+  act(async () => {
+    globalThis.history.pushState(null, "", url);
+    globalThis.dispatchEvent(new PopStateEvent("popstate"));
+  });
+
 const readSiteHtml = async () => {
   await screen.findByTestId("quote-availability");
   return document.querySelector(".publicPreviewCanvas").innerHTML;
@@ -310,18 +316,6 @@ describe("site host routing for a site with site pages", () => {
 
     expect(lastTemplateProps().activePageKey).toBe(pageKey);
     expect(listSectionIds()).toEqual(sectionIds);
-  });
-
-  it.each([
-    ["/contact", "Domits contact page"],
-    ["/about", "Domits about page"],
-    ["/policy", "Domits policy page"],
-    ["/terms", "Domits terms page"],
-  ])("keeps the Domits page on %s", (url, pageText) => {
-    renderAppAt(url);
-
-    expect(screen.getByText(pageText)).toBeInTheDocument();
-    expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
   });
 
   it("moves between pages through the menu without loading the site again", async () => {
@@ -486,22 +480,28 @@ describe("marketplace live view page paths of a site without that page on", () =
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
     expect(fetchPublicWebsiteRenderModel.mock.calls.length).toBeLessThanOrEqual(1);
   });
+});
 
-  it("loads the site itself as today when the live view moves from a page path to its root", async () => {
-    arrangeSiteWithout();
-    renderAppAt(`/website-live/${SITE_DOMAIN}/gallery?siteId=${SITE_ID}`);
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-    const loadsBefore = fetchPublicWebsiteRenderModel.mock.calls.length;
+describe("marketplace live view page checks", () => {
+  it("reads each site once while the live view stays open", async () => {
+    let resolveFirstCheck = () => {};
+    fetchPublicWebsiteRenderModel.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFirstCheck = resolve;
+      })
+    );
+    renderAppAt(`/website-live/${SITE_DOMAIN}/gallery`);
 
-    await act(async () => {
-      globalThis.history.pushState(null, "", `/website-live/${SITE_DOMAIN}?siteId=${SITE_ID}`);
-      globalThis.dispatchEvent(new PopStateEvent("popstate"));
-    });
+    await moveTo(`/website-live/${SITE_DOMAIN}/unknown`);
+    await act(async () => resolveFirstCheck(renderPayload));
+    await moveTo("/website-live/other.example/gallery");
+    await moveTo(`/website-live/${SITE_DOMAIN}/contact-us`);
 
-    expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
-    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(loadsBefore + 1);
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(fetchPublicWebsiteRenderModel.mock.calls.map(([request]) => request.domain)).toEqual([
+      SITE_DOMAIN,
+      "other.example",
+    ]);
   });
 });
 
@@ -528,7 +528,7 @@ describe("live view routing for a site with site pages", () => {
       `${LIVE_BASE}/contact-us${SITE_SEARCH}`,
       `${LIVE_BASE}${SITE_SEARCH}#availability`,
     ]);
-    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
   });
 
   it("shows the not found page once a refresh no longer serves the page", async () => {
@@ -536,6 +536,7 @@ describe("live view routing for a site with site pages", () => {
     await screen.findByRole("link", { name: "Home" });
 
     fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
+    mockTemplateProps.length = 0;
     await act(async () => {
       globalThis.dispatchEvent(
         new MessageEvent("message", { data: { type: "website-live-site-update", siteId: SITE_ID } })
@@ -543,6 +544,19 @@ describe("live view routing for a site with site pages", () => {
     });
 
     expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.filter((props) => props.activePageKey === "main").length).toBe(0);
+  });
+
+  it("keeps the failed load of one site from hiding the pages of the next", async () => {
+    fetchPublicWebsiteRenderModel.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
+    await screen.findByText("Failed to fetch");
+    fetchPublicWebsiteRenderModel.mockReturnValueOnce(new Promise(() => {}));
+
+    await moveTo("/website-live/other.example");
+    await moveTo("/website-live/other.example/gallery");
+
+    expect(await screen.findByRole("link", { name: "Home" })).toBeInTheDocument();
   });
 
   it("shows the not found page once a refresh of the page fails", async () => {

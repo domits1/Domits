@@ -19,7 +19,8 @@ import {
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
-import { resolveSitePageFromPath, resolveSitePageTitle } from "./rendering/websitePages";
+import { MAIN_SITE_PAGE_KEY, resolveSitePageFromPath, resolveSitePageTitle } from "./rendering/websitePages";
+import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
@@ -97,7 +98,7 @@ const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDo
   return formatWebsiteTitleFromDomain(requestedDomain) || "Published website unavailable";
 };
 
-function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload = null }) {
+function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = false }) {
   const { domain: routeDomain = "", "*": routeSitePath = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
@@ -106,7 +107,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
   const [isMissingPublishedWebsite, setIsMissingPublishedWebsite] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refreshRetryIntervalRef = useRef(null);
-  const initialRenderPayloadRef = useRef(initialRenderPayload);
+  const settledRequestKeyRef = useRef("");
   const refreshRetryTimeoutRef = useRef(null);
   const hasPendingRefreshHintRef = useRef(false);
 
@@ -119,6 +120,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
     return normalizeWebsiteDomain(globalThis.location?.host || "");
   }, [routeDomain]);
   const requestedSiteId = String(new URLSearchParams(globalThis.location?.search || "").get("siteId") || "").trim();
+  const requestKey = JSON.stringify([requestedDomain, requestedSiteId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -129,20 +131,17 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
       setIsMissingPublishedWebsite(false);
 
       try {
-        const preloadedRenderPayload = initialRenderPayloadRef.current;
-        initialRenderPayloadRef.current = null;
-        const nextRenderPayload =
-          preloadedRenderPayload ||
-          (await fetchPublicWebsiteRenderModel({
-            siteId: requestedSiteId,
-            domain: requestedDomain,
-          }));
+        const nextRenderPayload = await fetchPublicWebsiteRenderModel({
+          siteId: requestedSiteId,
+          domain: requestedDomain,
+        });
         const nextResolution = nextRenderPayload?.resolution || null;
 
         if (!isMounted) {
           return;
         }
 
+        settledRequestKeyRef.current = JSON.stringify([requestedDomain, requestedSiteId]);
         setResolution(nextResolution);
         setRenderPayload(nextRenderPayload);
         setIsLoading(false);
@@ -171,6 +170,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
           return;
         }
 
+        settledRequestKeyRef.current = JSON.stringify([requestedDomain, requestedSiteId]);
         setResolution(null);
         setRenderPayload(null);
         setLoadError(error?.message || "We could not load this published website.");
@@ -205,6 +205,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
   }, [renderPayload, resolution?.templateKey]);
 
   const activePageKey = resolveSitePageFromPath(routeSitePath, publicModel?.sitePages);
+  const isMissingRequiredPage = requiresActivePage && !isLoading && activePageKey === MAIN_SITE_PAGE_KEY;
   const activePageTitle = resolveSitePageTitle(publicModel?.sitePages, activePageKey);
   const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
   const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
@@ -285,19 +286,16 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
     unavailableWebsiteTitle,
   ]);
 
-  useWebsiteHeadTags({ key: requestedSiteKey, tags: websiteHeadTags });
+  useWebsiteHeadTags({
+    key: isMissingRequiredPage ? "" : requestedSiteKey,
+    tags: isMissingRequiredPage ? null : websiteHeadTags,
+  });
 
   useEffect(() => {
-    if (!onSitePagesLoaded || isLoading) {
-      return;
+    if (onSitePagesLoaded && !isLoading && settledRequestKeyRef.current === requestKey) {
+      onSitePagesLoaded(publicModel?.sitePages);
     }
-
-    if (!publicModel) {
-      onSitePagesLoaded(undefined);
-    } else if (isRequestedSiteLoaded) {
-      onSitePagesLoaded(publicModel.sitePages);
-    }
-  }, [isLoading, isRequestedSiteLoaded, onSitePagesLoaded, publicModel]);
+  }, [isLoading, onSitePagesLoaded, publicModel, requestKey]);
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
@@ -388,7 +386,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
 
   useEffect(() => {
     const publishedSiteId = String(renderPayload?.site?.id || "").trim();
-    if (!canRenderPublishedSite || !publishedSiteId) {
+    if (!canRenderPublishedSite || !publishedSiteId || isMissingRequiredPage) {
       return undefined;
     }
 
@@ -409,7 +407,11 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
         });
       },
     });
-  }, [canRenderPublishedSite, renderPayload, requestedDomain, refreshVersion]);
+  }, [canRenderPublishedSite, isMissingRequiredPage, renderPayload, requestedDomain, refreshVersion]);
+
+  if (isMissingRequiredPage) {
+    return <PageNotFound />;
+  }
 
   if (isLoading) {
     return (
@@ -475,7 +477,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload 
 
 WebsitePublicSitePage.propTypes = {
   onSitePagesLoaded: PropTypes.func,
-  initialRenderPayload: PropTypes.object,
+  requiresActivePage: PropTypes.bool,
 };
 
 export default WebsitePublicSitePage;
