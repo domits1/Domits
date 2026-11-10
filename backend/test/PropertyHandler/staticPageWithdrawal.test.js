@@ -27,6 +27,7 @@ const buildWithdrawal = ({
   log = [],
 } = {}) => {
   const pageStore = {
+    listSitePages: jest.fn(async () => ({})),
     deletePage: jest.fn(async ({ hostname }) => log.push(`delete:${hostname}`)),
     putSitemap: jest.fn(async () => undefined),
   };

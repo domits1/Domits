@@ -6,14 +6,18 @@ import { StaticPageStore } from "../../functions/PropertyHandler/data/repository
 const HOST = "finca-los-olivos-1a2b3c4d.direct.domits.com";
 const PAGE_KEY = `sites/by-host/${HOST}/index.html`;
 const SITEMAP_KEY = `sites/by-host/${HOST}/sitemap.xml`;
-const WITHDRAWN = [`DeleteObjectCommand ${PAGE_KEY}`, `PutObjectCommand ${SITEMAP_KEY}`];
+const WITHDRAWN = [
+  `ListObjectsV2Command sites/by-host/${HOST}/pages/`,
+  `DeleteObjectCommand ${PAGE_KEY}`,
+  `PutObjectCommand ${SITEMAP_KEY}`,
+];
 const DELETED = [...WITHDRAWN, "invalidate", "delete images", "delete rows"];
 
 const buildS3 = (calls, { failSitemapWrites = 0 } = {}) => {
   let remainingFailures = failSitemapWrites;
   return {
     send: jest.fn(async (command) => {
-      calls.push(`${command.constructor.name} ${command.input.Key}`);
+      calls.push(`${command.constructor.name} ${command.input.Key ?? command.input.Prefix}`);
       if (command.constructor.name === "PutObjectCommand" && remainingFailures > 0) {
         remainingFailures -= 1;
         throw new Error("S3 is unavailable");
@@ -94,7 +98,7 @@ describe("deleting a listing takes its static page offline first", () => {
     const retry = await remove();
 
     expect(retry.statusCode).toBe(204);
-    expect(calls.slice(2)).toEqual(DELETED);
+    expect(calls.slice(WITHDRAWN.length)).toEqual(DELETED);
   });
 
   it("deletes a listing without a website without touching the bucket", async () => {

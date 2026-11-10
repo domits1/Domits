@@ -148,6 +148,87 @@ describe("the static page jobs on one bucket", () => {
     ]);
   });
 
+  it("withdraws the site pages of a host before its sitemap, and invalidates their paths with the page", async () => {
+    const { client, tenantRepository, withdrawal } = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(FALLBACK),
+      ...sitePagesOf(FALLBACK, ["gallery", "contact-us"]),
+      ...pageOf(CUSTOM),
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+    });
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }, { domain: CUSTOM }] });
+
+    expect(client.writes()).toEqual([
+      `delete ${pageKey(FALLBACK)}`,
+      `delete ${buildStaticSitePageKey(FALLBACK, "contact-us")}`,
+      `delete ${buildStaticSitePageKey(FALLBACK, "gallery")}`,
+      `put ${sitemapKey(FALLBACK)}`,
+      `delete ${pageKey(CUSTOM)}`,
+      `put ${sitemapKey(CUSTOM)}`,
+    ]);
+    expect(client.objects()).toEqual({
+      "index.html": SHELL,
+      [sitemapKey(FALLBACK)]: EMPTY_SITEMAP,
+      [sitemapKey(CUSTOM)]: EMPTY_SITEMAP,
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+    });
+    expect(invalidations(tenantRepository)).toEqual([
+      [
+        "dt_wildcard",
+        [
+          ...withdrawnPaths(FALLBACK),
+          `/${buildStaticSitePageKey(FALLBACK, "contact-us")}`,
+          "/contact-us",
+          `/${buildStaticSitePageKey(FALLBACK, "gallery")}`,
+          "/gallery",
+        ],
+      ],
+      ["dt_custom", withdrawnPaths(CUSTOM)],
+    ]);
+  });
+
+  it("changes nothing on a host whose site pages cannot be listed, and the retry withdraws them", async () => {
+    const before = { "index.html": SHELL, ...pageOf(FALLBACK), ...sitePagesOf(FALLBACK, ["gallery"]) };
+    const { client, tenantRepository, withdrawal } = buildBucket(before);
+    client.failNext("ListObjectsV2Command", `sites/by-host/${FALLBACK}/pages/`, new Error("AccessDenied"));
+
+    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] })).rejects.toThrow(
+      "AccessDenied"
+    );
+    expect(client.objects()).toEqual(before);
+    expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
+
+    expect(client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
+  });
+
+  it("stops at a site page that cannot be deleted, invalidates nothing, and the retry removes what is left", async () => {
+    const gallery = buildStaticSitePageKey(FALLBACK, "gallery");
+    const { client, tenantRepository, withdrawal } = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(FALLBACK),
+      ...sitePagesOf(FALLBACK, ["gallery", "contact-us"]),
+    });
+    client.failNext("DeleteObjectCommand", gallery, new Error("SlowDown"));
+
+    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] })).rejects.toThrow(
+      "SlowDown"
+    );
+    expect(Object.keys(client.objects())).toEqual(["index.html", sitemapKey(FALLBACK), gallery]);
+    expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
+
+    expect(client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
+    expect(invalidations(tenantRepository)).toEqual([
+      ["dt_wildcard", [...withdrawnPaths(FALLBACK), `/${gallery}`, "/gallery"]],
+    ]);
+  });
+
   it("builds a published site on every active host, then withdraws it when it is unpublished", async () => {
     const bucket = buildBucket({ "index.html": SHELL, ...pageOf(OTHER) });
     const site = { id: "site-1", status: "PUBLISHED", staticPageRevision: 4 };

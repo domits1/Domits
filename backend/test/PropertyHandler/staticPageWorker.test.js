@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
@@ -564,6 +564,10 @@ const buildBucket = (objects = {}) => {
       if (command instanceof DeleteObjectCommand) {
         bucket.objects.delete(Key);
         return {};
+      }
+      if (command instanceof ListObjectsV2Command) {
+        const keys = [...bucket.objects.keys()].filter((key) => key.startsWith(command.input.Prefix));
+        return { Contents: keys.map((key) => ({ Key: key })), IsTruncated: false };
       }
       throw new Error(`unexpected ${command.constructor.name}`);
     }),
