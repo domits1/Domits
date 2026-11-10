@@ -40,7 +40,7 @@ describe("TruviBookingRepository.listBookingsToScreen", () => {
     jest.clearAllMocks();
   });
 
-  it("only asks for paid upcoming bookings without a Truvi result", async () => {
+  it("asks for paid upcoming bookings without a Truvi result or waiting for another try, new ones first", async () => {
     const query = mockClient([]);
 
     const result = await new TruviBookingRepository().listBookingsToScreen({ now: 1000, limit: 5 });
@@ -49,8 +49,10 @@ describe("TruviBookingRepository.listBookingsToScreen", () => {
     expect(sql).toContain("b.status = $1");
     expect(sql).toContain("b.arrivaldate > $2");
     expect(sql).toContain("'truvi:' || b.id");
-    expect(sql).toContain("g.id IS NULL");
-    expect(params).toEqual(["Paid", 1000, 5]);
+    expect(sql).toContain("(g.id IS NULL OR g.status = $3)");
+    expect(sql).toContain("ORDER BY COALESCE(g.updatedat, 0) ASC, b.arrivaldate ASC");
+    expect(sql).toContain("g.failedattempts");
+    expect(params).toEqual(["Paid", 1000, "RETRY", 5]);
     expect(result).toEqual([]);
     expect(query).toHaveBeenCalledTimes(1);
   });
@@ -66,11 +68,11 @@ describe("TruviBookingRepository.listBookingsToScreen", () => {
   it("caps the limit and falls back to the default for nonsense", async () => {
     const query = mockClient([]);
     await new TruviBookingRepository().listBookingsToScreen({ now: 1, limit: 500 });
-    expect(query.mock.calls[0][1][2]).toBe(50);
+    expect(query.mock.calls[0][1][3]).toBe(50);
 
     const second = mockClient([]);
     await new TruviBookingRepository().listBookingsToScreen({ now: 1, limit: "abc" });
-    expect(second.mock.calls[0][1][2]).toBe(10);
+    expect(second.mock.calls[0][1][3]).toBe(10);
   });
 
   it("returns the booking shaped for the Truvi mapper with its PetsAllowed rule", async () => {
@@ -102,7 +104,16 @@ describe("TruviBookingRepository.listBookingsToScreen", () => {
       hostId: "host-1",
       hostName: "Host BV",
       bookingSource: null,
+      failedAttempts: null,
     });
+  });
+
+  it("returns how many times a booking waiting for another try already failed", async () => {
+    mockClient([bookingRow({ failedattempts: 2 })]);
+
+    const [input] = await new TruviBookingRepository().listBookingsToScreen({ now: 1000 });
+
+    expect(input.failedAttempts).toBe(2);
   });
 
   it("gives no location when the property has no location row", async () => {

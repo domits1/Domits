@@ -1,6 +1,7 @@
 import Database from "database";
 
 const PAID_STATUS = "Paid";
+export const RETRY_STATUS = "RETRY";
 export const CANCELLED_BOOKING_STATUSES = ["Cancelled", "Canceled"];
 export const FINAL_CANCEL_STATUSES = ["CANCELLED", "CANCEL_REFUSED"];
 export const MODIFIABLE_STATUSES = ["PASSED", "FLAGGED", "FAILED"];
@@ -54,6 +55,7 @@ const toScreeningInput = (row, rules) => ({
   hostId: row.hostid,
   hostName: row.hostname,
   bookingSource: row.booking_source || null,
+  failedAttempts: toNumber(row.failedattempts),
 });
 
 export class TruviBookingRepository {
@@ -65,15 +67,16 @@ export class TruviBookingRepository {
       `SELECT b.id, b.arrivaldate, b.departuredate, b.createdat, b.guestid, b.guestname, b.guest_email,
         b.hostid, b.hostname, b.property_id, b.booking_source,
         p.title,
-        l.street, l.housenumber, l.housenumberextension, l.city, l.country, l.postalcode
+        l.street, l.housenumber, l.housenumberextension, l.city, l.country, l.postalcode,
+        g.failedattempts
       FROM ${schema}.booking b
       JOIN ${schema}.property p ON p.id = b.property_id
       LEFT JOIN ${schema}.property_location l ON l.property_id = b.property_id
       LEFT JOIN ${schema}.guest_risk_assessment g ON g.id = 'truvi:' || b.id
-      WHERE b.status = $1 AND b.arrivaldate > $2 AND g.id IS NULL
-      ORDER BY b.arrivaldate ASC
-      LIMIT $3`,
-      [PAID_STATUS, now, normalizeLimit(limit)]
+      WHERE b.status = $1 AND b.arrivaldate > $2 AND (g.id IS NULL OR g.status = $3)
+      ORDER BY COALESCE(g.updatedat, 0) ASC, b.arrivaldate ASC
+      LIMIT $4`,
+      [PAID_STATUS, now, RETRY_STATUS, normalizeLimit(limit)]
     );
     const bookings = Array.isArray(rows) ? rows : [];
     if (bookings.length === 0) {

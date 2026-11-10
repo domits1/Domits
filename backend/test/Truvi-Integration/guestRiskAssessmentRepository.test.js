@@ -41,7 +41,21 @@ describe("GuestRiskAssessmentRepository.saveResult", () => {
       departureDate: null,
       createdAt: 1000,
       updatedAt: 1000,
+      failedAttempts: null,
     });
+  });
+
+  it("saves the number of failed tries of a booking that waits for another try", async () => {
+    const { repository, save } = buildRepository();
+
+    await repository.saveResult({
+      bookingId: "booking-1",
+      result: { providerAssessmentId: null, status: "RETRY", flaggedReason: null, error: { status: 503, message: "Truvi failed with status 503" } },
+      failedAttempts: 2,
+      now: 1000,
+    });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ status: "RETRY", failedAttempts: 2 }));
   });
 
   it("keeps the original createdAt when the same booking is saved again", async () => {
