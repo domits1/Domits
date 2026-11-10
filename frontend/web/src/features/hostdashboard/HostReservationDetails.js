@@ -670,9 +670,8 @@ const buildBookedOnText = (bookedOn, isShellLoading, t) => {
 // before the cancel time was stored have none; the booking date there would be wrong (#3585).
 const resolvePaymentDate = (reservation) =>
   reservation.status === "CANCELLED" ? reservation.cancelledAt : reservation.bookedOn;
-// That date is the cancel date for a cancelled reservation, so the receipt must not call it a payment date (#3834).
-const resolvePaymentDateLabel = (reservation) =>
-  reservation.status === "CANCELLED" ? "Cancelled on" : "Payment date";
+const resolvePaymentDateLabel = (reservation, t) =>
+  reservation.status === "CANCELLED" ? t.labels.cancelledOn : t.labels.paymentDate;
 
 const buildPaymentDateText = (reservation, isShellLoading, t) => {
   if (reservation.status === "CANCELLED") {
@@ -807,7 +806,7 @@ const buildReservationReceiptPayload = (reservation, t) => {
       ? CHANNEL_PAYMENT_STATUS_TEXT
       : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
     paymentDate: resolvePaymentDate(reservation),
-    paymentDateLabel: resolvePaymentDateLabel(reservation),
+    paymentDateLabel: resolvePaymentDateLabel(reservation, t),
     refundStatusLabel: refundStatus ? t.refundStatus.label : null,
     refundStatusText: refundStatus ? t.refundStatus[refundStatus] : null,
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
@@ -847,6 +846,8 @@ const reservationTranslationShape = PropTypes.shape({
     collectedByChannel: PropTypes.string.isRequired,
     checkIn: PropTypes.string.isRequired,
     bookedOn: PropTypes.string.isRequired,
+    paymentDate: PropTypes.string.isRequired,
+    cancelledOn: PropTypes.string.isRequired,
     reservationId: PropTypes.string.isRequired,
     confirmation: PropTypes.string.isRequired,
     cleaningFee: PropTypes.string.isRequired,

@@ -5,6 +5,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { LanguageContext } from "../../context/LanguageContext";
 import HostReservationDetails from "./HostReservationDetails";
 import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 
@@ -35,17 +36,19 @@ const booking = {
   cancelled_at: CANCELLED_AT,
 };
 
-const renderDetailsFor = (reservation) =>
+const renderDetailsFor = (reservation, language = "en") =>
   render(
-    <MemoryRouter initialEntries={[{ pathname: `/reservations/${reservation.id}`, state: { booking: reservation } }]}>
-      <Routes>
-        <Route path="/reservations/:id" element={<HostReservationDetails />} />
-      </Routes>
-    </MemoryRouter>
+    <LanguageContext.Provider value={{ language }}>
+      <MemoryRouter initialEntries={[{ pathname: `/reservations/${reservation.id}`, state: { booking: reservation } }]}>
+        <Routes>
+          <Route path="/reservations/:id" element={<HostReservationDetails />} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageContext.Provider>
   );
 
-const downloadReceiptFor = async (reservation) => {
-  renderDetailsFor(reservation);
+const downloadReceiptFor = async (reservation, language = "en") => {
+  renderDetailsFor(reservation, language);
   const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
   await waitFor(() => expect(downloadButton.disabled).toBe(false));
   fireEvent.click(downloadButton);
@@ -131,6 +134,36 @@ describe("HostReservationDetails cancel date (#3585)", () => {
           refundStatusLabel: "Refund status",
           refundStatusText: "Refunded",
         })
+      )
+    );
+  });
+
+  test.each([
+    ["en", "Cancelled on"],
+    ["nl", "Geannuleerd op"],
+    ["de", "Storniert am"],
+    ["es", "Fecha de cancelación"],
+  ])("the cancelled receipt date label is localized in %s", async (language, expectedLabel) => {
+    await downloadReceiptFor(booking, language);
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentDateLabel: expectedLabel })
+      )
+    );
+  });
+
+  test.each([
+    ["en", "Payment date"],
+    ["nl", "Betaaldatum"],
+    ["de", "Zahlungsdatum"],
+    ["es", "Fecha de pago"],
+  ])("the payment receipt date label is localized in %s", async (language, expectedLabel) => {
+    await downloadReceiptFor({ ...booking, status: "Paid", cancelled_at: null }, language);
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentDateLabel: expectedLabel })
       )
     );
   });

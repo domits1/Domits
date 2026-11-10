@@ -71,7 +71,6 @@ describe("downloadReservationReceiptPdf payment section", () => {
     expect(writtenTexts).toContain("Cleaning fee:");
   });
 
-  // On a cancelled reservation the date is the cancel date, so "Payment date" would mislabel it (#3834).
   test("labels the date with the label the receipt carries", async () => {
     await downloadReservationReceiptPdf({ ...receipt, paymentDateLabel: "Cancelled on" });
 

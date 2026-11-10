@@ -10,6 +10,13 @@ const REFUND_STATUS_TRANSLATIONS = Object.freeze({
   es: { label: "Estado del reembolso", refunded: "Reembolsado", not_refunded: "No reembolsado", unknown: "Desconocido" },
 });
 
+const RECEIPT_DATE_LABEL_TRANSLATIONS = Object.freeze({
+  en: { paymentDate: "Payment date", cancelledOn: "Cancelled on" },
+  nl: { paymentDate: "Betaaldatum", cancelledOn: "Geannuleerd op" },
+  de: { paymentDate: "Zahlungsdatum", cancelledOn: "Storniert am" },
+  es: { paymentDate: "Fecha de pago", cancelledOn: "Fecha de cancelación" },
+});
+
 const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
   pageTitle: "Reservation details",
   buttons: {
@@ -36,6 +43,8 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     loadingValue: "Loading...",
     unavailable: "Unavailable",
     bookedOn: "Booked on",
+    paymentDate: "Payment date",
+    cancelledOn: "Cancelled on",
     guestFallbackName: "Guest",
     night: "night",
     nights: "nights",
@@ -150,6 +159,7 @@ const mergeReservationDetailsTranslation = (translation = {}, locale = "en") => 
   },
   labels: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.labels,
+    ...RECEIPT_DATE_LABEL_TRANSLATIONS[locale],
     ...translation?.labels,
   },
   loading: {
