@@ -53,7 +53,7 @@ export default function useReviewApprovalQueue() {
     try {
       await approveReview(review.id, review.updated_at);
       setReviews((current) => current.filter((entry) => entry.id !== review.id));
-      setNotice({ type: "success", message: `“${review.title}” is approved and published.` });
+      setNotice({ type: "success", message: `“${review.title}” is approved and awaiting publication.` });
     } catch (error) {
       setNotice({ type: "error", message: error?.message || "Could not approve this review. Please try again." });
     } finally {

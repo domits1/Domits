@@ -56,15 +56,13 @@ describe("Pages2 owners navigation", () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
-  test("shows the Owners link to a host, right after Listings", async () => {
+  test("shows the Owners link to a host", async () => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
 
     renderPages();
 
     const ownersLink = await screen.findByRole("link", { name: "Owners" });
     expect(ownersLink.getAttribute("href")).toBe("/owners");
-    const labels = screen.getAllByRole("link").map((link) => link.textContent);
-    expect(labels.indexOf("Owners")).toBe(labels.indexOf("Listings") + 1);
   });
 
   test("hides the Owners link from a team member who acts for another host", async () => {
@@ -74,6 +72,38 @@ describe("Pages2 owners navigation", () => {
 
     await screen.findByText("Listings");
     expect(screen.queryByRole("link", { name: "Owners" })).toBeNull();
+  });
+});
+
+describe("Pages2 menu order", () => {
+  const visibleLabels = () => screen.getAllByRole("link").map((link) => link.textContent);
+
+  beforeEach(() => {
+    useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
+    checkPropertyReviewAccess.mockResolvedValue("denied");
+    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
+  });
+
+  test("puts Reviews directly before Owners and Marketplace directly before Settings for a host", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+
+    renderPages();
+
+    await waitFor(() => expect(getChannexAdminAccess).toHaveBeenCalled());
+    await screen.findByRole("link", { name: "Owners" });
+    const labels = visibleLabels();
+    expect(labels.indexOf("Owners")).toBe(labels.indexOf("Reviews") + 1);
+    expect(labels.indexOf("Settings")).toBe(labels.indexOf("Marketplace") + 1);
+  });
+
+  test("keeps Marketplace directly before Settings when Channex diagnostics is visible", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: true });
+
+    renderPages();
+
+    await screen.findByRole("link", { name: "Channex diagnostics" });
+    const labels = visibleLabels();
+    expect(labels.indexOf("Settings")).toBe(labels.indexOf("Marketplace") + 1);
   });
 });
 

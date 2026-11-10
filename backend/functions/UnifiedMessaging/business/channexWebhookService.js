@@ -139,10 +139,14 @@ export default class ChannexWebhookService {
     return ok({ ok: true });
   }
 
-  async publishInboundMessages(normalized, threadId) {
+  async publishInboundMessages(normalized, threadId, insertedMessageIds = {}) {
     for (const message of normalized.messages) {
+      const storedId = insertedMessageIds[message.platformMessageId];
+      if (!storedId) continue;
+
       try {
         await this.realtimePublisher({
+          id: storedId,
           senderId: message.senderId,
           userId: message.senderId,
           recipientId: message.recipientId,
@@ -194,7 +198,7 @@ export default class ChannexWebhookService {
     const result = await this.ingestionService.ingestExternalThread(normalized);
 
     if (result.statusCode === 200 && result.response?.insertedMessages > 0) {
-      await this.publishInboundMessages(normalized, result.response.threadId);
+      await this.publishInboundMessages(normalized, result.response.threadId, result.response.insertedMessageIds);
     }
 
     if (result.statusCode === 200 && webhookEvent.payload.booking_id) {

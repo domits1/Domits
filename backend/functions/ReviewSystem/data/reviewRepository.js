@@ -249,15 +249,13 @@ export class ReviewRepository {
       .getExists();
   }
 
-  // Load a user's review list for the chosen scope.
-  // This gives the profile views a single source of truth for written and received reviews.
-  async findPendingReviews() {
+  async findUnpublishedReviews(status) {
     const database = await Database.getInstance();
     const reviews = await database.getRepository(Review).find({
-      where: { review_type: "GUEST_TO_PROPERTY", status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" },
+      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
-    if (!reviews.length) return reviews;
+    if (status !== "PENDING_APPROVAL" || !reviews.length) return reviews;
 
     const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
     const [properties, locations, imageKeys, bookings] = await Promise.all([
@@ -493,8 +491,7 @@ export class ReviewRepository {
         return null;
       }
 
-      // Approval publishes directly. APPROVED only remains for reviews approved before that change.
-      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "PUBLISHED", APPROVED: "PUBLISHED" };
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
       if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
         throw new ConflictException("Invalid review transition.");
       }

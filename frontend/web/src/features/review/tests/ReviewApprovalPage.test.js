@@ -112,14 +112,14 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("approves a review with its version, removes it and opens the next one", async () => {
-    approveReview.mockResolvedValue({ ...pendingReview(), status: "PUBLISHED" });
+    approveReview.mockResolvedValue({ ...pendingReview(), status: "APPROVED" });
     render(<ReviewApprovalPage />);
     await waitFor(() => rowFor("Great stay!"));
 
     fireEvent.click(within(rowFor("Great stay!")).getByRole("button", { name: "Approve" }));
 
     expect(approveReview).toHaveBeenCalledWith("r1", 1790000000000);
-    expect(await screen.findByText("“Great stay!” is approved and published.")).toBeInTheDocument();
+    expect(await screen.findByText("“Great stay!” is approved and awaiting publication.")).toBeInTheDocument();
     expect(within(table()).queryByText("Great stay!")).toBeNull();
     expect(screen.getByRole("tab", { name: "Pending approval (1)" })).toBeInTheDocument();
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
