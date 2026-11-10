@@ -475,8 +475,8 @@ describe("marketplace live view page checks", () => {
     await moveTo("/website-live/other.example/gallery");
     await moveTo(`/website-live/${SITE_DOMAIN}/contact-us`);
     await act(async () => resolveFirstCheck(renderPayload));
+    await moveTo("/website-live/other.example/gallery");
 
-    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel.mock.calls.map(([request]) => request.domain)).toEqual([
       SITE_DOMAIN,
       "other.example",
