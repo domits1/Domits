@@ -10,6 +10,7 @@ import {
   HostPropertyDeleteConfirmModal,
   HostPropertyDeleteReasonsModal,
   HostPropertyListingSummary,
+  HostPropertyRejectionBanner,
   HostPropertyLoadingView,
   HostPropertyTabs,
   HostPropertyUnsavedChangesModal,
@@ -92,6 +93,7 @@ export default function HostProperty() {
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("INACTIVE");
+  const [latestRejection, setLatestRejection] = useState(null);
   const [bookingType, setBookingType] = useState("direct");
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
@@ -255,6 +257,7 @@ export default function HostProperty() {
         }
         const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
         setStatus(fetchedPropertyData.status);
+        setLatestRejection(fetchedPropertyData.latestRejection);
         setBookingType(fetchedPropertyData.bookingType || "direct");
         setForm(fetchedPropertyData.form);
         setCapacity(fetchedPropertyData.capacity);
@@ -905,6 +908,7 @@ export default function HostProperty() {
             onStatusChange={handleStatusChange}
             saving={isBusy}
           />
+          <HostPropertyRejectionBanner status={status} latestRejection={latestRejection} />
 
           <HostPropertyTabContent
             selectedTab={selectedTab}

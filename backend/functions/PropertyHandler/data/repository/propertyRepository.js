@@ -11,6 +11,7 @@ import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
+const MODERATION_HISTORY_LIMIT = 50;
 
 const isValidSchemaName = (value) => typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
 
@@ -240,6 +241,29 @@ export class PropertyRepository {
 
                 return {outcome: "changed", fromStatus: currentStatus, updatedAt: now};
             })
+        );
+    }
+
+    async getModerationEventsByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .getRepository(Property_Moderation_Event)
+                .createQueryBuilder("event")
+                .select([
+                    "event.id",
+                    "event.action",
+                    "event.fromStatus",
+                    "event.toStatus",
+                    "event.reason",
+                    "event.actorId",
+                    "event.createdAt",
+                ])
+                .where("event.propertyId = :propertyId", {propertyId})
+                .orderBy("event.createdAt", "DESC")
+                .addOrderBy("event.id", "DESC")
+                .limit(MODERATION_HISTORY_LIMIT)
+                .getMany()
         );
     }
 
