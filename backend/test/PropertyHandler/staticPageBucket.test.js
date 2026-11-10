@@ -1,5 +1,9 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
+import {
+  STATIC_SITE_PAGE_SLUGS,
+  StaticPageStore,
+  buildStaticSitePageKey,
+} from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageReconciler } from "../../functions/PropertyHandler/business/service/staticPageReconciler.js";
@@ -28,6 +32,9 @@ const pageOf = (hostname) => ({
   [pageKey(hostname)]: `<html>${hostname}</html>`,
   [sitemapKey(hostname)]: EMPTY_SITEMAP,
 });
+
+const sitePagesOf = (hostname, slugs) =>
+  Object.fromEntries(slugs.map((slug) => [buildStaticSitePageKey(hostname, slug), `<html>${hostname} ${slug}</html>`]));
 
 const buildTenants = () => ({
   listTenantsForDistribution: jest.fn(async () => [{ id: "dt_wildcard", domains: ["*.direct.domits.com"] }]),
@@ -222,6 +229,34 @@ describe("the static page jobs on one bucket", () => {
     });
     expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-3", { evenWhileBusy: false });
     expect(invalidations(bucket.tenantRepository)).toEqual([["dt_wildcard", withdrawnPaths(GONE)]]);
+  });
+
+  it("leaves the site pages of a published site alone and reports none of them, but still any other stray key", async () => {
+    const stray = `sites/by-host/${OTHER}/pages/old.html`;
+    const before = {
+      "index.html": SHELL,
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+      [stray]: "<html>old</html>",
+    };
+    const bucket = buildBucket(before, { pageSize: 2 });
+    const { reconciler, siteRepository } = buildReconciler(bucket, [
+      domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" }),
+    ]);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toEqual({
+      stored: 1,
+      expected: 1,
+      removed: 0,
+      queued: 0,
+      stuck: [],
+      errors: [{ key: stray, message: "not a page key" }],
+    });
+    expect(bucket.client.writes()).toEqual([]);
+    expect(bucket.client.objects()).toEqual(before);
+    expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
   });
 
   it("keeps a page that a build rewrote between the listing and the delete", async () => {
