@@ -70,4 +70,35 @@ describe("downloadReservationReceiptPdf payment section", () => {
     expect(writtenTexts).toContain("Rate per night:");
     expect(writtenTexts).toContain("Cleaning fee:");
   });
+
+  // On a cancelled reservation the date is the cancel date, so "Payment date" would mislabel it (#3834).
+  test("labels the date with the label the receipt carries", async () => {
+    await downloadReservationReceiptPdf({ ...receipt, paymentDateLabel: "Cancelled on" });
+
+    expect(writtenTexts).toContain("Cancelled on:");
+    expect(writtenTexts).not.toContain("Payment date:");
+  });
+
+  test("includes refund status when the receipt has one", async () => {
+    await downloadReservationReceiptPdf({
+      ...receipt,
+      refundStatusLabel: "Refund status",
+      refundStatusText: "Partially refunded",
+    });
+
+    expect(writtenTexts).toContain("Refund status:");
+    expect(writtenTexts).toContain("Partially refunded");
+  });
+
+  test("omits refund status when the receipt has none", async () => {
+    await downloadReservationReceiptPdf(receipt);
+
+    expect(writtenTexts).not.toContain("Refund status:");
+  });
+
+  test("falls back to the payment date label", async () => {
+    await downloadReservationReceiptPdf(receipt);
+
+    expect(writtenTexts).toContain("Payment date:");
+  });
 });

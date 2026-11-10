@@ -172,6 +172,11 @@ describe("Refund Logic - 10 Test Scenarios", () => {
             amount: 5000,
             status: "succeeded",
           }),
+          retrieve: jest.fn().mockResolvedValue({
+            id: "re_existing_123",
+            amount: 10000,
+            status: "succeeded",
+          }),
         },
       };
 
@@ -275,6 +280,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 5000,
         stripeRefundId: "re_test_123456",
         refundError: null,
+        refundStatus: "refunded",
       });
 
       expect(result.statusCode).toBe(200);
@@ -298,6 +304,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 10000,
         stripeRefundId: "re_existing_123",
         refundError: null,
+        refundStatus: "refunded",
       });
       expect(result.statusCode).toBe(200);
     });
@@ -318,6 +325,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 10000,
         stripeRefundId: null,
         refundError: "Cannot refund usd PaymentIntent pi_test_usd; expected eur.",
+        refundStatus: "unknown",
       });
       expect(result.statusCode).toBe(200);
     });
@@ -326,6 +334,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const bookingId = "booking_flexible_12h";
       mockBooking({
         id: bookingId,
+        status: "Paid",
         arrivaldate: arrivalDateHoursFromNow(12),
         paymentid: "pi_test_789012",
       });
@@ -337,6 +346,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 0,
         stripeRefundId: null,
         refundError: null,
+        refundStatus: "not_refunded",
       });
 
       expect(result.statusCode).toBe(200);
@@ -353,6 +363,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 10000,
         stripeRefundId: null,
         refundError: "Card declined",
+        refundStatus: "unknown",
       });
 
       expect(result.statusCode).toBe(200);
@@ -371,6 +382,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 10000,
         stripeRefundId: null,
         refundError: null,
+        refundStatus: "unknown",
       });
 
       expect(result.statusCode).toBe(200);
@@ -383,8 +395,52 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: null,
+        refundError: null,
+        refundStatus: null,
+      });
 
       expect(result.statusCode).toBe(200);
+    });
+
+    it("keeps a pending Stripe refund in the unknown state", async () => {
+      const bookingId = "booking_refund_pending";
+      mockBooking({ id: bookingId, paymentid: "pi_pending" });
+      mockStripe.refunds.create.mockResolvedValue({
+        id: "re_pending",
+        amount: 10000,
+        status: "pending",
+      });
+
+      await controller.cancelBooking(bookingId, authEvent);
+
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: "re_pending",
+        refundError: null,
+        refundStatus: "unknown",
+      });
+    });
+
+    it("marks a failed Stripe refund as not refunded", async () => {
+      const bookingId = "booking_refund_failed";
+      mockBooking({ id: bookingId, paymentid: "pi_failed" });
+      mockStripe.refunds.create.mockResolvedValue({
+        id: "re_failed",
+        amount: 10000,
+        status: "failed",
+      });
+
+      await controller.cancelBooking(bookingId, authEvent);
+
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: "re_failed",
+        refundError: null,
+        refundStatus: "not_refunded",
+      });
     });
 
     it("should correctly round refund amounts in cents", async () => {

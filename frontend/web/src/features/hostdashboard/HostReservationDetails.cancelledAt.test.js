@@ -44,6 +44,13 @@ const renderDetailsFor = (reservation) =>
     </MemoryRouter>
   );
 
+const downloadReceiptFor = async (reservation) => {
+  renderDetailsFor(reservation);
+  const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
+  await waitFor(() => expect(downloadButton.disabled).toBe(false));
+  fireEvent.click(downloadButton);
+};
+
 // The date sits in the span right after the payment status text.
 const paymentDateNextTo = (statusText) => screen.getByText(statusText).nextElementSibling.textContent;
 
@@ -69,16 +76,71 @@ describe("HostReservationDetails cancel date (#3585)", () => {
     expect(paymentDateNextTo("Payment received")).toBe("13 Oct");
   });
 
-  test("the receipt of a cancelled reservation carries the cancel date, not the booking date", async () => {
-    renderDetailsFor(booking);
-
-    const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
-    await waitFor(() => expect(downloadButton.disabled).toBe(false));
-    fireEvent.click(downloadButton);
+  test("the receipt of a cancelled reservation carries the cancel date, labelled as such (#3834)", async () => {
+    await downloadReceiptFor(booking);
 
     await waitFor(() =>
       expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
-        expect.objectContaining({ paymentStatusLabel: "Reservation cancelled", paymentDate: CANCELLED_AT })
+        expect.objectContaining({
+          paymentStatusLabel: "Reservation cancelled",
+          paymentDate: CANCELLED_AT,
+          paymentDateLabel: "Cancelled on",
+        })
+      )
+    );
+  });
+
+  test("a cancelled paid booking shows the stored refund status", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid", refund_status: "refunded" });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText("Refund status")).toBeTruthy();
+    expect(screen.getByText("Refunded")).toBeTruthy();
+  });
+
+  test.each([
+    ["not_refunded", "Not refunded"],
+    ["unknown", "Unknown"],
+  ])("a cancelled paid booking can show %s", async (refundStatus, expectedText) => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid", refund_status: refundStatus });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText(expectedText)).toBeTruthy();
+  });
+
+  test("a legacy cancelled paid booking without a stored refund status is shown as unknown", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid" });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText("Unknown")).toBeTruthy();
+  });
+
+  test("a cancelled booking without payment evidence does not show a refund status", async () => {
+    renderDetailsFor(booking);
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.queryByText("Refund status")).toBeNull();
+  });
+
+  test("the receipt of a cancelled paid booking includes its refund status", async () => {
+    await downloadReceiptFor({ ...booking, paymentid: "pi_paid", refund_status: "refunded" });
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          refundStatusLabel: "Refund status",
+          refundStatusText: "Refunded",
+        })
+      )
+    );
+  });
+
+  test("the receipt of a paid reservation keeps the payment date label", async () => {
+    await downloadReceiptFor({ ...booking, status: "Paid", cancelled_at: null });
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentStatusLabel: "Payment received", paymentDateLabel: "Payment date" })
       )
     );
   });
