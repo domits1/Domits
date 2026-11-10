@@ -403,13 +403,15 @@ export function HostPropertyRejectionBanner({ status, latestRejection = null }) 
   }
 
   const reason = latestRejection?.reason || "No reason was given.";
-  const hasRejectedAt = Boolean(latestRejection?.rejectedAt);
-  const rejectedOn = hasRejectedAt
-    ? new Date(latestRejection.rejectedAt).toLocaleDateString("en-GB", REJECTION_DATE_FORMAT)
-    : "";
+  const rejectedAt = latestRejection?.rejectedAt;
+  const hasRejectedAt = Boolean(rejectedAt);
+  const rejectedOn = hasRejectedAt ? new Date(rejectedAt).toLocaleDateString("en-GB", REJECTION_DATE_FORMAT) : "";
 
   return (
-    <section className={styles.rejectionBanner} role="status">
+    <section
+      className={styles.rejectionBanner}
+      role="status"
+    >{/* NOSONAR: role="status" kept; <output> is phrasing-only, this holds h4/p. */}
       <h4 className={styles.rejectionBannerTitle}>Your listing was not approved</h4>
       <p className={styles.rejectionBannerReason}>{reason}</p>
       {hasRejectedAt ? <p className={styles.rejectionBannerMeta}>Rejected on {rejectedOn}</p> : null}
