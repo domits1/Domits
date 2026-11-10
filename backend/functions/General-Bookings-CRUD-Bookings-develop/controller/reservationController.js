@@ -399,7 +399,12 @@ class ReservationController {
     const paymentId = String(booking.paymentid || "").trim();
     const hasStripePaymentIntent = Boolean(paymentId) && !paymentId.startsWith("FAILED");
     let refundStatus =
-      hasStripePaymentIntent || booking.stripe_refund_id || Number(booking.refunded_amount) > 0 ? "unknown" : null;
+      normalizeBookingStatus(booking.status) === "paid" ||
+      hasStripePaymentIntent ||
+      booking.stripe_refund_id ||
+      Number(booking.refunded_amount) > 0
+        ? "unknown"
+        : null;
 
     try {
       const totalPriceCents = Math.round((booking.total_price || 0) * 100);

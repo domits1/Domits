@@ -405,6 +405,22 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       expect(result.statusCode).toBe(200);
     });
 
+    it("keeps the refund outcome unknown for a paid booking without a Stripe PaymentIntent", async () => {
+      const bookingId = "booking_paid_without_payment_id";
+      mockBooking({ id: bookingId, status: "Paid", paymentid: null });
+
+      const result = await controller.cancelBooking(bookingId, authEvent);
+
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectCancelRecord(bookingId, {
+        refundedAmount: 10000,
+        stripeRefundId: null,
+        refundError: null,
+        refundStatus: "unknown",
+      });
+      expect(result.statusCode).toBe(200);
+    });
+
     it("keeps a pending Stripe refund in the unknown state", async () => {
       const bookingId = "booking_refund_pending";
       mockBooking({ id: bookingId, paymentid: "pi_pending" });
