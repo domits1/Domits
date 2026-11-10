@@ -97,7 +97,7 @@ const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDo
   return formatWebsiteTitleFromDomain(requestedDomain) || "Published website unavailable";
 };
 
-function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
+function WebsitePublicSitePage({ onSitePagesLoaded = null, initialRenderPayload = null }) {
   const { domain: routeDomain = "", "*": routeSitePath = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
@@ -106,6 +106,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
   const [isMissingPublishedWebsite, setIsMissingPublishedWebsite] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refreshRetryIntervalRef = useRef(null);
+  const initialRenderPayloadRef = useRef(initialRenderPayload);
   const refreshRetryTimeoutRef = useRef(null);
   const hasPendingRefreshHintRef = useRef(false);
 
@@ -128,10 +129,14 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
       setIsMissingPublishedWebsite(false);
 
       try {
-        const nextRenderPayload = await fetchPublicWebsiteRenderModel({
-          siteId: requestedSiteId,
-          domain: requestedDomain,
-        });
+        const preloadedRenderPayload = initialRenderPayloadRef.current;
+        initialRenderPayloadRef.current = null;
+        const nextRenderPayload =
+          preloadedRenderPayload ||
+          (await fetchPublicWebsiteRenderModel({
+            siteId: requestedSiteId,
+            domain: requestedDomain,
+          }));
         const nextResolution = nextRenderPayload?.resolution || null;
 
         if (!isMounted) {
@@ -283,10 +288,16 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
   useWebsiteHeadTags({ key: requestedSiteKey, tags: websiteHeadTags });
 
   useEffect(() => {
-    if (onSitePagesLoaded && publicModel && isRequestedSiteLoaded) {
+    if (!onSitePagesLoaded || isLoading) {
+      return;
+    }
+
+    if (!publicModel) {
+      onSitePagesLoaded(undefined);
+    } else if (isRequestedSiteLoaded) {
       onSitePagesLoaded(publicModel.sitePages);
     }
-  }, [isRequestedSiteLoaded, onSitePagesLoaded, publicModel]);
+  }, [isLoading, isRequestedSiteLoaded, onSitePagesLoaded, publicModel]);
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
@@ -464,6 +475,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
 
 WebsitePublicSitePage.propTypes = {
   onSitePagesLoaded: PropTypes.func,
+  initialRenderPayload: PropTypes.object,
 };
 
 export default WebsitePublicSitePage;

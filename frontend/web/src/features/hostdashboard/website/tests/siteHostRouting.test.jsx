@@ -260,6 +260,26 @@ describe("site host routing for a site without site pages", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: "", domain: SITE_DOMAIN });
   });
 
+  it.each(["/website-live/localhost", "/website-live?siteId="])(
+    "keeps the loaded site when the guest moves to %s and back",
+    async (url) => {
+      renderAppAt("/");
+      await screen.findByTestId("quote-availability");
+
+      await act(async () => {
+        globalThis.history.pushState(null, "", url);
+        globalThis.dispatchEvent(new PopStateEvent("popstate"));
+      });
+      await act(async () => {
+        globalThis.history.back();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(screen.getByTestId("quote-availability")).toBeInTheDocument();
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it("does not scroll when the site is opened at the availability anchor", async () => {
     placeAvailabilityAt(900);
 
@@ -464,6 +484,7 @@ describe("marketplace live view page paths of a site without that page on", () =
     expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
     expect(document.title).toBe("Domits");
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(fetchPublicWebsiteRenderModel.mock.calls.length).toBeLessThanOrEqual(1);
   });
 });
 
@@ -490,7 +511,7 @@ describe("live view routing for a site with site pages", () => {
       `${LIVE_BASE}/contact-us${SITE_SEARCH}`,
       `${LIVE_BASE}${SITE_SEARCH}#availability`,
     ]);
-    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
   });
 
   it("shows the not found page once a refresh no longer serves the page", async () => {
@@ -505,6 +526,21 @@ describe("live view routing for a site with site pages", () => {
     });
 
     expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+  });
+
+  it("shows the not found page once a refresh of the page fails", async () => {
+    renderAppAt(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+    await screen.findByRole("link", { name: "Home" });
+
+    fetchPublicWebsiteRenderModel.mockRejectedValue(new TypeError("Failed to fetch"));
+    await act(async () => {
+      globalThis.dispatchEvent(
+        new MessageEvent("message", { data: { type: "website-live-site-update", siteId: SITE_ID } })
+      );
+    });
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
   });
 
   it("encodes the domain of the live view in the page links", async () => {
