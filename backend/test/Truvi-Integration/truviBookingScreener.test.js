@@ -85,7 +85,7 @@ describe("TruviBookingScreener", () => {
       departureDate: Date.UTC(2026, 11, 5),
       now: 1000,
     });
-    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, notUtcMidnight: 0, errors: [] });
+    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, notUtcMidnight: 0, gaveUp: 0, errors: [] });
   });
 
   it("sends Truvi the same time as the run, so one run uses one clock", async () => {
@@ -108,39 +108,70 @@ describe("TruviBookingScreener", () => {
     expect(screeningService.screenBooking.mock.calls[0][0].channel).toBe("Airbnb");
   });
 
-  it("does not save when Truvi is down, so the next run tries again", async () => {
+  const truviError = (status, message = "no") => async () => ({
+    providerAssessmentId: null,
+    status: "ERROR",
+    flaggedReason: null,
+    error: { status, message },
+  });
+
+  it.each([503, null, 408, 429])(
+    "saves a RETRY row with one failed try after a %p, so the booking waits behind new ones and is tried again",
+    async (status) => {
+      const { screener, assessmentRepository } = build({ screen: truviError(status, "Truvi did not answer") });
+
+      const summary = await screener.run({ now: 1000 });
+
+      expect(assessmentRepository.saveResult).toHaveBeenCalledWith({
+        bookingId: "booking-1",
+        result: { providerAssessmentId: null, status: "RETRY", flaggedReason: null, error: { status, message: "Truvi did not answer" } },
+        failedAttempts: 1,
+        now: 1000,
+      });
+      expect(summary).toMatchObject({ saved: 0, retryLater: 1, gaveUp: 0 });
+    }
+  );
+
+  it("counts up the failed tries of a booking that already waits for another try", async () => {
     const { screener, assessmentRepository } = build({
-      screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status: 503, message: "down" } }),
+      candidates: [candidate({ failedAttempts: 3 })],
+      screen: truviError(503),
+    });
+
+    await screener.run({ now: 1000 });
+
+    expect(assessmentRepository.saveResult.mock.calls[0][0]).toMatchObject({ result: { status: "RETRY" }, failedAttempts: 4 });
+  });
+
+  it("gives up after the fifth failed try and saves an ERROR, so the booking stops coming back", async () => {
+    const { screener, assessmentRepository } = build({
+      candidates: [candidate({ failedAttempts: 4 })],
+      screen: truviError(503, "Truvi failed with status 503"),
     });
 
     const summary = await screener.run({ now: 1000 });
 
-    expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
-    expect(summary.retryLater).toBe(1);
-  });
-
-  it("does not save after a timeout, which has no status", async () => {
-    const { screener, assessmentRepository } = build({
-      screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status: null, message: "timeout" } }),
+    expect(assessmentRepository.saveResult).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      result: { providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status: 503, message: "Truvi failed with status 503" } },
+      now: 1000,
     });
-
-    const summary = await screener.run({ now: 1000 });
-
-    expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
-    expect(summary.retryLater).toBe(1);
+    expect(summary).toMatchObject({ saved: 0, retryLater: 0, gaveUp: 1 });
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi failed with status 503" }]);
   });
 
-  it.each([401, 403, 408, 429])(
-    "does not save a %p, because it is about the key, the time or the rate limit and not about this booking",
+  it.each([401, 403])(
+    "does not save or count a %p, because a wrong key would otherwise give every booking an ERROR",
     async (status) => {
       const { screener, assessmentRepository } = build({
-        screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status, message: "no" } }),
+        candidates: [candidate({ failedAttempts: 4 })],
+        screen: truviError(status),
       });
 
       const summary = await screener.run({ now: 1000 });
 
       expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
-      expect(summary.retryLater).toBe(1);
+      expect(summary).toMatchObject({ retryLater: 1, gaveUp: 0 });
     }
   );
 
@@ -166,7 +197,7 @@ describe("TruviBookingScreener", () => {
     const saved = assessmentRepository.saveResult.mock.calls[0][0].result;
     expect(saved.status).toBe("SKIPPED");
     expect(saved.error.message).toBe("Property has no location");
-    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 1, notUtcMidnight: 0, errors: [] });
+    expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 1, notUtcMidnight: 0, gaveUp: 0, errors: [] });
   });
 
   it("saves SKIPPED when the mapper refuses the booking", async () => {
