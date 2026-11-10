@@ -16,7 +16,7 @@ Missing or empty means off for everyone. The plan answer then has `eliteSelfSele
 - Only while his current plan has no Stripe subscription; with one, the request answers `409` without any Stripe call. The plan answer then says `eliteSelfSelectAvailable: false`.
 - `PATCH {"plan":"elite","withoutPayment":true}`: the current plan ends and an Elite plan at price 0 starts, in one transaction, without any Stripe call. Answer `upgraded`.
 - `PATCH {"plan":"essentials","withoutPayment":true}`: the Elite plan ends and Essentials starts, in one transaction. Answer `downgraded`. The Elite features end with it; site settings are not touched.
-- Choosing the plan he is on changes nothing (`unchanged`). Two requests at the same moment leave one current plan. A change that keeps conflicting with another request answers `409`, and so does a paid plan that started in between. A failed write leaves the plan as it was.
+- Choosing the plan he is on changes nothing (`unchanged`). Two requests at the same moment leave one current plan. A change that keeps conflicting with another request answers `409`, and so does a paid plan that started in between. A failed write leaves the plan as it was; only the Essentials row that a first plan read creates for a host without any plan stays, as with the `GET`.
 - The account always comes from the token, never from the request body.
 - Taking an id off the list stops new choices only. An Elite chosen before stays until the host switches back to Essentials, which also works with the list empty.
 
