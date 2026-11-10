@@ -13,7 +13,9 @@ const outboxSummary = {
   recentFailures: [],
 };
 const alarmItems = [{ name: "channex-outbox-rows-failed", state: "OK", updatedAt: NOW - 1000 }];
-const accounts = [{ id: "account-1", displayName: "Villa host", status: "CONNECTED", lastErrorCode: null, mappedProperties: 1 }];
+const accounts = [
+  { id: "account-1", displayName: "Villa host", status: "CONNECTED", lastErrorCode: null, mappedProperties: 1 },
+];
 
 const buildService = ({ readAlarms = async () => alarmItems, log = { warn: jest.fn() } } = {}) => {
   const service = new ChannexHealthService({

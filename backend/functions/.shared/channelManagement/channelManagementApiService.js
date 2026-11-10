@@ -19,10 +19,10 @@ import ChannexAriOutboxRepository from "./repositories/channexAriOutboxRepositor
 import ChannexBookingRevisionRepository from "./repositories/channexBookingRevisionRepository.js";
 import ChannelManagementSchemaRepository from "./repositories/channelManagementSchemaRepository.js";
 import ChannexExternalBookingImportRepository from "./repositories/channexExternalBookingImportRepository.js";
+import ChannexHealthRepository from "./repositories/channexHealthRepository.js";
 import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRepository.js";
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
-import ChannexHealthRepository from "./repositories/channexHealthRepository.js";
 import ChannexHealthService from "./services/channexHealthService.js";
 import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
 import { CHANNEL_CHANNEX, isActiveChannexPropertyMapping } from "./utils/channexBookingPollUtils.js";

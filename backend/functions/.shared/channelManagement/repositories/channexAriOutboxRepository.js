@@ -373,7 +373,7 @@ export default class ChannexAriOutboxRepository {
         dateFrom: Number(row.datefrom),
         dateTo: Number(row.dateto),
         failureReason: row.failurereason ?? null,
-        updatedAt: Number(row.updatedat),
+        updatedAt: toTimeOrNull(row.updatedat),
       })),
     };
   }

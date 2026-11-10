@@ -65,6 +65,18 @@ Result: no blocking findings so far
 | Checked | `channelManagementHandler.js` | The route is in the admin allowlist; tests cover 200 for an allowlisted admin, 403 for another signed-in user and 401 without claims, and the controller is not called in the last two. | No change. |
 | Checked | `channelManagementApiService.js` | The health service reuses the API service's account repository; every Lambda that builds the API service now also creates a CloudWatch client, which makes no call until the route is used. | No change. |
 
+### Commit 10 (refactor): clean-up before the PR
+
+A read of the whole branch diff before opening the PR. No behaviour change; all tests unchanged and green.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (7/10) | `cloudwatchAlarmReader.js`, `channexHealthStatus.js` | `"MISSING"` was a constant in the reader but a loose string in the rule, as was `"ALARM"`. | Fixed: one exported `ALARM_STATE` used by both. |
+| P3 (7/10) | `channexHealthStatus.js`, `accountReasons` | `"RECONNECT_REQUIRED"` written out while `CHANNEX_STATUS.RECONNECT_REQUIRED` exists. | Fixed: uses the constant. |
+| P3 (5/10) | `channexAriOutboxRepository.js`, `recentFailures` | `updatedAt` used `Number()` while `toTimeOrNull` exists for this. | Fixed. |
+| P3 (4/10) | `channelManagementApiService.js` | The repository import sat among the service imports. | Moved next to the other repositories. |
+| P3 (4/10) | `events/ChannelManagement/health.js`, `channexHealthService.test.js` | Not Prettier-formatted. | Formatted. Other files Prettier flags were already unformatted on acceptance, or differ only in line endings, and are left alone so the diff stays readable. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.

@@ -1,3 +1,4 @@
+import { CHANNEX_STATUS } from "../channelManagementConstants.js";
 import { CHANNEX_ARI_OUTBOX_DEFAULTS } from "./channexAriOutboxConstants.js";
 
 // The health rule of the Channex health view (design note D5,
@@ -18,6 +19,14 @@ export const HEALTH_REASON = Object.freeze({
   STUCK_QUEUE: "STUCK_QUEUE",
   RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
   POLL_FAILED: "POLL_FAILED",
+});
+
+// CloudWatch's own states, plus MISSING for an alarm on the list that CloudWatch no
+// longer has. The reader sets MISSING and the rule reads it, so both use this one value.
+export const ALARM_STATE = Object.freeze({
+  OK: "OK",
+  ALARM: "ALARM",
+  MISSING: "MISSING",
 });
 
 export const ALARM_SEVERITY = Object.freeze({
@@ -53,8 +62,8 @@ const alarmReasons = (alarms) => {
 
   return (alarms.items || []).flatMap((alarm) => {
     // A deleted alarm cannot fire any more, so its failure would go unnoticed.
-    if (alarm.state === "MISSING") return [{ code: HEALTH_REASON.ALARM_MISSING, alarm: alarm.name }];
-    if (alarm.state !== "ALARM") return [];
+    if (alarm.state === ALARM_STATE.MISSING) return [{ code: HEALTH_REASON.ALARM_MISSING, alarm: alarm.name }];
+    if (alarm.state !== ALARM_STATE.ALARM) return [];
     const code = CRITICAL_ALARMS.has(alarm.name) ? HEALTH_REASON.CRITICAL_ALARM : HEALTH_REASON.WARNING_ALARM;
     return [{ code, alarm: alarm.name }];
   });
@@ -76,7 +85,7 @@ const outboxReasons = (outbox, now) => {
 };
 
 const accountReasons = (accounts) => {
-  const count = accounts.filter((account) => account.status === "RECONNECT_REQUIRED").length;
+  const count = accounts.filter((account) => account.status === CHANNEX_STATUS.RECONNECT_REQUIRED).length;
   return count > 0 ? [{ code: HEALTH_REASON.RECONNECT_REQUIRED, count }] : [];
 };
 

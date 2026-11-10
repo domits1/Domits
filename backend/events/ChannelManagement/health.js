@@ -11,9 +11,8 @@
 // Set before the service is loaded: the AWS clients read the region when they are created.
 process.env.AWS_REGION ||= "eu-north-1";
 
-const { default: ChannexHealthService } = await import(
-  "../../functions/.shared/channelManagement/services/channexHealthService.js"
-);
+const { default: ChannexHealthService } =
+  await import("../../functions/.shared/channelManagement/services/channexHealthService.js");
 
 const startedAt = Date.now();
 try {
