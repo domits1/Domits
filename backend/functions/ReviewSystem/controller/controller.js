@@ -84,6 +84,8 @@ export class Controller {
       if (query.scope === "pending-approval" || query.scope === "approved") {
         const status = query.scope === "approved" ? "APPROVED" : "PENDING_APPROVAL";
         result = await this.service.getReviewApprovalQueue(userId, user.username, status);
+      } else if (["admin-published", "admin-rejected", "admin-all"].includes(query.scope)) {
+        result = await this.service.getModeratedReviews(userId, user.username, query.scope);
       } else if (query.scope === "respondable") {
         result = await this.service.getResponseEligibleReviews(user.username);
       } else if (query.scope === "property-trends") {
