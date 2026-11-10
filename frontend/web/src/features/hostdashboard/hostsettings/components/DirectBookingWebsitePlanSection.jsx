@@ -396,12 +396,18 @@ const DirectBookingWebsitePlanSection = ({
   const formatMoney = (amountCents, currency = "EUR") =>
     formatCurrency(Number(amountCents || 0) / 100, currency, language);
 
-  const showServerPlanAfterFailedChange = async (failureMessage) => {
-    const serverPlan = await getWebsiteRatePlan().catch(() => null);
-    if (serverPlan) {
-      setRatePlan(serverPlan);
+  const showServerPlan = async (isCurrentChange, showMessage) => {
+    try {
+      const serverPlan = await getWebsiteRatePlan();
+      if (isCurrentChange()) {
+        setRatePlan(serverPlan);
+        showMessage();
+      }
+    } catch (readError) {
+      if (isCurrentChange()) {
+        setLoadFailure({ error: readError });
+      }
     }
-    setActionError(failureMessage);
   };
 
   const choosePlanWithoutPayment = async (targetPlan) => {
@@ -421,17 +427,22 @@ const DirectBookingWebsitePlanSection = ({
         return;
       }
       if (result?.action === "checkout_required") {
-        await showServerPlanAfterFailedChange(copy.changeError);
+        await showServerPlan(isCurrentChange, () => setActionError(copy.changeError));
         return;
       }
 
-      setRatePlan(result?.plan || (await getWebsiteRatePlan()));
-      setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
+      const showNotice = () => setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
+      if (result?.plan) {
+        setRatePlan(result.plan);
+        showNotice();
+        return;
+      }
+      await showServerPlan(isCurrentChange, showNotice);
     } catch (error) {
       if (!isCurrentChange()) {
         return;
       }
-      await showServerPlanAfterFailedChange(describeFailure(error, copy.changeError));
+      await showServerPlan(isCurrentChange, () => setActionError(describeFailure(error, copy.changeError)));
     } finally {
       if (isCurrentChange()) {
         planChangeRef.current = null;

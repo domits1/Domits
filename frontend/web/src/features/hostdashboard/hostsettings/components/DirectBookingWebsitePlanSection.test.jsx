@@ -844,17 +844,10 @@ describe("DirectBookingWebsitePlanSection", () => {
         [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD],
       ],
       [
-        "the change fails and the plan cannot be read again",
-        () => Promise.reject(new Error("Request failed")),
-        () => Promise.reject(new Error("Request failed")),
-        "Could not change plan",
-        [ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD],
-      ],
-      [
-        "the session expired",
-        () => Promise.reject(new WebsiteSessionExpiredError()),
-        () => Promise.reject(new WebsiteSessionExpiredError()),
-        WEBSITE_SESSION_EXPIRED_MESSAGE,
+        "the login check could not reach Cognito",
+        () => Promise.reject(new WebsiteConnectionError()),
+        () => Promise.resolve(selfSelectPlan()),
+        WEBSITE_CONNECTION_FAILED_MESSAGE,
         [ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD],
       ],
     ])(
@@ -876,6 +869,83 @@ describe("DirectBookingWebsitePlanSection", () => {
         expect(redirectToCheckout).not.toHaveBeenCalled();
       }
     );
+
+    test.each([
+      [
+        "the change fails",
+        () => Promise.reject(new Error("Request failed")),
+        () => Promise.reject(new Error("Request failed")),
+        "Could not load plan",
+      ],
+      [
+        "the change fails and the session expires before the plan is read again",
+        () => Promise.reject(new Error("Request failed")),
+        () => Promise.reject(new WebsiteSessionExpiredError()),
+        WEBSITE_SESSION_EXPIRED_MESSAGE,
+      ],
+      [
+        "the session expired",
+        () => Promise.reject(new WebsiteSessionExpiredError()),
+        () => Promise.reject(new WebsiteSessionExpiredError()),
+        WEBSITE_SESSION_EXPIRED_MESSAGE,
+      ],
+      [
+        "the answer has no plan",
+        () => Promise.resolve({ action: "upgraded" }),
+        () => Promise.reject(new Error("Request failed")),
+        "Could not load plan",
+      ],
+      [
+        "the answer asks for a checkout",
+        () => Promise.resolve({ action: "checkout_required", checkoutUrl: CHECKOUT_URL }),
+        () => Promise.reject(new Error("Request failed")),
+        "Could not load plan",
+      ],
+    ])(
+      "shows no plan and one message when %s and the plan cannot be read again",
+      async (_label, change, readAgain, alertMessage) => {
+        const redirectToCheckout = jest.fn();
+        getWebsiteRatePlan.mockResolvedValueOnce(selfSelectPlan()).mockImplementationOnce(readAgain);
+        changeWebsiteRatePlan.mockImplementation(change);
+
+        render(<DirectBookingWebsitePlanSection redirectToCheckout={redirectToCheckout} />);
+
+        fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(alertMessage);
+        expect(screen.getAllByRole("alert")).toHaveLength(1);
+        expect(screen.queryAllByRole("article")).toHaveLength(0);
+        expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
+        expect(screen.queryByText("Your website plan is now Elite")).not.toBeInTheDocument();
+        expect(redirectToCheckout).not.toHaveBeenCalled();
+      }
+    );
+
+    test("keeps the Elite plan and shows the change error when the switch back to Essentials fails", async () => {
+      getWebsiteRatePlan.mockResolvedValue(selfSelectedElitePlan());
+      changeWebsiteRatePlan.mockRejectedValue(new Error("Request failed"));
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Switch to Essentials" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["essentials"]]);
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+    });
+
+    test("shows the unchanged notice when the server already holds Elite", async () => {
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
+      changeWebsiteRatePlan.mockResolvedValue({ action: "unchanged", plan: selfSelectedElitePlan() });
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+
+      expect(await screen.findByText("Plan unchanged")).toBeInTheDocument();
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+    });
 
     test("clears the message of a failed change when the next change works", async () => {
       getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
