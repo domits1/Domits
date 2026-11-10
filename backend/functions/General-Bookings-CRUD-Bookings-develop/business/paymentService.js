@@ -2,11 +2,11 @@ import stripeRepository from "../data/stripeRepository.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 class PaymentService {
-  constructor() {
-    this.stripeRepository = new stripeRepository();
+  constructor({ stripeRepository: repository = new stripeRepository() } = {}) {
+    this.stripeRepository = repository;
   }
 
-  async create(hostId, bookingId, propertyId, dates) {
+  async create(hostId, bookingId, propertyId, dates, commission = null) {
     if (!hostId || !bookingId || !propertyId || !dates) {
       throw new NotFoundException("Missing required parameters: hostId, bookingId, propertyId, or dates.");
     }
@@ -18,7 +18,8 @@ class PaymentService {
       propertyId,
       dates,
       bookingId,
-      hostId
+      hostId,
+      commission
     );
 
     const totalCents = paymentData?.breakdown?.customerPays ?? null;

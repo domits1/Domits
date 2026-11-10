@@ -284,16 +284,18 @@ class ReservationController {
   async acceptInquiry(bookingId, authToken) {
     const result = await this.bookingService.acceptInquiry(bookingId, authToken);
     try {
+      const { commission, ...acceptedBooking } = result;
       const paymentData = await this.paymentSerivce.create(
         result.hostId,
         result.bookingId,
         result.propertyId,
-        result.dates
+        result.dates,
+        commission
       );
       return {
         statusCode: 200,
         headers: responseHeaderJSON,
-        response: { ...result, stripeClientSecret: paymentData.stripeClientSecret },
+        response: { ...acceptedBooking, stripeClientSecret: paymentData.stripeClientSecret },
       };
     } catch (stripeError) {
       console.error("Stripe payment intent creation failed after accept:", stripeError);

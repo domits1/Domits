@@ -24,14 +24,18 @@ const BOOKING = {
   status: "Inquiry",
 };
 
-const buildService = ({ getBookingByIdResult = { response: BOOKING }, acceptResult = { accepted: true, declinedCount: 0 } } = {}) => {
+const buildService = ({
+  getBookingByIdResult = { response: BOOKING },
+  acceptResult = { accepted: true, declinedCount: 0 },
+  stripeRepository = { getDirectBookingCommission: jest.fn(async () => null) },
+} = {}) => {
   const reservationRepository = {
     getBookingById: jest.fn(async () => getBookingByIdResult),
     acceptInquiryWithOverlapDecline: jest.fn(async () => acceptResult),
   };
   const authManager = { authenticateUser: jest.fn(async () => ({ sub: "host-1" })) };
-  const service = new BookingService({ reservationRepository, authManager });
-  return { service, reservationRepository, authManager };
+  const service = new BookingService({ reservationRepository, authManager, stripeRepository });
+  return { service, reservationRepository, authManager, stripeRepository };
 };
 
 describe("BookingService.acceptInquiry", () => {
@@ -54,6 +58,47 @@ describe("BookingService.acceptInquiry", () => {
       declinedCount: 2,
       dates: { arrivalDate: 1000, departureDate: 2000 },
     });
+  });
+
+  test("checks the Enterprise tier before changing a Standalone Site inquiry and reuses the quote", async () => {
+    const commission = {
+      rate: 0.045,
+      commissionAmountCents: 450,
+      annualRevenueCents: 25_010_000,
+      year: 2026,
+      commissionableAccommodationCents: 10_000,
+    };
+    const { service, reservationRepository, stripeRepository } = buildService({
+      getBookingByIdResult: { response: { ...BOOKING, booking_source: "STANDALONE_SITE" } },
+      stripeRepository: { getDirectBookingCommission: jest.fn(async () => commission) },
+    });
+
+    const result = await service.acceptInquiry("booking-1", "token-1");
+
+    expect(stripeRepository.getDirectBookingCommission).toHaveBeenCalledWith("booking-1", "host-1");
+    expect(stripeRepository.getDirectBookingCommission.mock.invocationCallOrder[0]).toBeLessThan(
+      reservationRepository.acceptInquiryWithOverlapDecline.mock.invocationCallOrder[0]
+    );
+    expect(result.commission).toEqual(commission);
+  });
+
+  test("does not accept or decline overlapping inquiries when an Enterprise rate is missing", async () => {
+    const enterpriseError = Object.assign(new Error("Enterprise rate required."), {
+      code: "DIRECT_BOOKING_ENTERPRISE_RATE_REQUIRED",
+      statusCode: 409,
+    });
+    const { service, reservationRepository } = buildService({
+      getBookingByIdResult: { response: { ...BOOKING, booking_source: "STANDALONE_SITE" } },
+      stripeRepository: {
+        getDirectBookingCommission: jest.fn().mockRejectedValue(enterpriseError),
+      },
+    });
+
+    await expect(service.acceptInquiry("booking-1", "token-1")).rejects.toMatchObject({
+      code: "DIRECT_BOOKING_ENTERPRISE_RATE_REQUIRED",
+      statusCode: 409,
+    });
+    expect(reservationRepository.acceptInquiryWithOverlapDecline).not.toHaveBeenCalled();
   });
 
   test("throws NotFoundException when the booking does not exist", async () => {

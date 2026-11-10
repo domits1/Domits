@@ -19,6 +19,7 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
+import { STANDALONE_SITE_BOOKING_SOURCE } from "../util/directBookingCommission.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
@@ -302,6 +303,11 @@ class BookingService {
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== BOOKING_STATUS_INQUIRY) throw new BadRequestException("Booking is not in Inquiry status.");
 
+    const commission =
+      booking.booking_source === STANDALONE_SITE_BOOKING_SOURCE
+        ? await this.stripeRepository.getDirectBookingCommission(bookingId, booking.hostid)
+        : null;
+
     const result = await this.reservationRepository.acceptInquiryWithOverlapDecline({
       bookingId,
       propertyId: booking.property_id,
@@ -326,6 +332,7 @@ class BookingService {
         arrivalDate: booking.arrivaldate,
         departureDate: booking.departuredate,
       },
+      ...(commission ? { commission } : {}),
     };
   }
 
