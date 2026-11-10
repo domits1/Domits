@@ -304,6 +304,16 @@ export class ReviewService {
     return reviews.map(status === "PENDING_APPROVAL" ? toPendingReviewView : toReviewView);
   }
 
+  async getModeratedReviews(userId, username, scope) {
+    await this.assertReviewApprover(userId, username);
+    const statuses = {
+      "admin-published": ["PUBLISHED"],
+      "admin-rejected": ["REJECTED"],
+      "admin-all": ["PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED"],
+    };
+    return (await this.repository.findModeratedReviews(statuses[scope])).map(toPendingReviewView);
+  }
+
   async approveReview(userId, username, reviewId, version) {
     await this.assertReviewApprover(userId, username);
     if (!Number.isSafeInteger(version) || version < 0 || version >= Number.MAX_SAFE_INTEGER) {
@@ -342,6 +352,10 @@ export class ReviewService {
       if (!(await this.canPublishReview({ userId, review }))) {
         await this.assertReviewApprover(userId, username);
       }
+      return toReviewView(review);
+    }
+
+    if (review.status === "PENDING_APPROVAL" && await this.canPublishReview({ userId, review })) {
       return toReviewView(review);
     }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { approveReview, getPendingApprovalReviews } from "../services/reviewAPI";
+import { approveReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
 
 export const QUEUE_STATE = Object.freeze({
   LOADING: "loading",
@@ -8,8 +8,10 @@ export const QUEUE_STATE = Object.freeze({
   FAILED: "failed",
 });
 
-export default function useReviewApprovalQueue() {
-  const [reviews, setReviews] = useState([]);
+export default function useReviewApprovalQueue(scope) {
+  const [result, setResult] = useState({ scope, reviews: [] });
+  const pending = scope === "pending-approval";
+  const reviews = result.scope === scope ? result.reviews : [];
   const [queueState, setQueueState] = useState(QUEUE_STATE.LOADING);
   const [loadError, setLoadError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -22,23 +24,24 @@ export default function useReviewApprovalQueue() {
     let mounted = true;
     setQueueState(QUEUE_STATE.LOADING);
 
-    getPendingApprovalReviews()
-      .then((pending) => {
+    (pending ? getPendingApprovalReviews() : getAdminReviews(scope))
+      .then((reviews) => {
         if (!mounted) return;
-        setReviews(pending);
+        setResult({ scope, reviews });
         setQueueState(QUEUE_STATE.READY);
       })
       .catch((error) => {
         if (!mounted) return;
         const denied = error?.status === 401 || error?.status === 403;
-        setLoadError(error?.message || "Could not load reviews waiting for approval.");
+        setResult({ scope, reviews: [] });
+        setLoadError(error?.message || "Could not load reviews.");
         setQueueState(denied ? QUEUE_STATE.DENIED : QUEUE_STATE.FAILED);
       });
 
     return () => {
       mounted = false;
     };
-  }, [attempt]);
+  }, [attempt, pending, scope]);
 
   const setApproving = (reviewId, approving) => {
     if (approving) inFlight.current.add(reviewId);
@@ -51,8 +54,13 @@ export default function useReviewApprovalQueue() {
     setApproving(review.id, true);
     setNotice(null);
     try {
-      await approveReview(review.id, review.updated_at);
-      setReviews((current) => current.filter((entry) => entry.id !== review.id));
+      const approved = await approveReview(review.id, review.updated_at);
+      setResult((current) => ({
+        ...current,
+        reviews: current.scope === "pending-approval"
+          ? current.reviews.filter((entry) => entry.id !== review.id)
+          : current.reviews.map((entry) => entry.id === review.id ? { ...entry, ...approved } : entry),
+      }));
       setNotice({ type: "success", message: `“${review.title}” is approved and awaiting publication.` });
     } catch (error) {
       setNotice({ type: "error", message: error?.message || "Could not approve this review. Please try again." });
@@ -63,5 +71,8 @@ export default function useReviewApprovalQueue() {
 
   const retry = useCallback(() => setAttempt((current) => current + 1), []);
 
-  return { reviews, queueState, loadError, retry, approve, approvingIds, notice };
+  return {
+    reviews, queueState: result.scope === scope ? queueState : QUEUE_STATE.LOADING,
+    loadError, retry, approve, approvingIds, notice,
+  };
 }

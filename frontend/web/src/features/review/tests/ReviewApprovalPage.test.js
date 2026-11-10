@@ -1,11 +1,12 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ReviewApprovalPage from "../views/ReviewApprovalPage";
-import { approveReview, getPendingApprovalReviews } from "../services/reviewAPI";
+import { approveReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
 
 jest.mock("../services/reviewAPI", () => ({
   approveReview: jest.fn(),
   getPendingApprovalReviews: jest.fn(),
+  getAdminReviews: jest.fn(),
 }));
 
 const pendingReview = (overrides = {}) => ({
@@ -65,6 +66,29 @@ describe("ReviewApprovalPage", () => {
     expect(within(row).getByText("21 Jul 2026")).toBeInTheDocument();
     expect(within(row).getByText("Pending")).toBeInTheDocument();
     expect(screen.getByText("Showing 1–2 of 2 reviews")).toBeInTheDocument();
+  });
+
+  test("loads status tabs and keeps historical reviews read-only", async () => {
+    getAdminReviews.mockImplementation(async (scope) => scope === "admin-rejected" ? [] : [
+      pendingReview({ title: "Published stay", status: "PUBLISHED", publication_status: "PUBLISHED" }),
+    ]);
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+
+    const published = screen.getByRole("tab", { name: "Published" });
+    fireEvent.click(published);
+    const publishedTable = await screen.findByRole("table", { name: "Published reviews" });
+    expect(within(publishedTable).getByText("Published stay")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+    expect(published).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(published, { key: "ArrowRight" });
+    expect(await screen.findByText("No rejected reviews.")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Rejected" })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole("tab", { name: "All reviews" }));
+    expect(await screen.findByRole("table", { name: "All reviews" })).toBeInTheDocument();
+    expect(getAdminReviews.mock.calls).toEqual([["admin-published"], ["admin-rejected"], ["admin-all"]]);
   });
 
   test("opens the first review in the details panel and switches on View", async () => {

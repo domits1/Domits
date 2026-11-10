@@ -255,7 +255,20 @@ export class ReviewRepository {
       where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
-    if (status !== "PENDING_APPROVAL" || !reviews.length) return reviews;
+    return status === "PENDING_APPROVAL" ? this.addModerationDetails(database, reviews) : reviews;
+  }
+
+  async findModeratedReviews(statuses) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async addModerationDetails(database, reviews) {
+    if (!reviews.length) return reviews;
 
     const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
     const [properties, locations, imageKeys, bookings] = await Promise.all([

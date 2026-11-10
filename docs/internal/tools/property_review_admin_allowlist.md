@@ -55,7 +55,9 @@ Each queue item also carries `property_title`, `property_city`, `property_countr
 
 The nav link appears for users who pass the PropertyHandler admin check (`/property/review/access`). That list is separate from this Lambda's. Someone on one list but not the other sees the link and then "Not authorized", so the ReviewSystem check is the one that counts.
 
-The page handles approval. Use the approved queue and publication endpoint above to publish reviews.
+The Published, Rejected, and All reviews tabs use the `admin-published`, `admin-rejected`, and `admin-all` scopes on `GET /reviews`. These scopes require the same approver access and return up to 100 guest-to-property reviews each. All reviews includes pending, approved, published, and rejected reviews.
+
+Use the approved queue and publication endpoint above to publish reviews.
 
 ## Read routes
 

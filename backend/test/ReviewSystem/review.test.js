@@ -591,6 +591,7 @@ describe('Review workflows', () => {
       repository.hasActiveReviewApproverRole = jest.fn(async (username, roles) =>
         username === "admin" && status === "active" && roles.includes(role));
       repository.findUnpublishedReviews = jest.fn().mockResolvedValue([draft]);
+      repository.findModeratedReviews = jest.fn().mockResolvedValue([draft]);
       repository.findById.mockResolvedValue({ ...draft, status: "PENDING_APPROVAL" });
       const request = { ...event("staff", { updated_at: draft.updated_at }),
         requestContext: { authorizer: { claims: { sub: "staff", "cognito:username": "admin" } } } };
@@ -600,10 +601,16 @@ describe('Review workflows', () => {
       expect(queue.statusCode).toBe(expectedStatus);
       const approvedQueue = await controller.getReviews({ ...request, queryStringParameters: { scope: "approved" } });
       expect(approvedQueue.statusCode).toBe(expectedStatus);
+      for (const scope of ["admin-published", "admin-rejected", "admin-all"]) {
+        const result = await controller.getReviews({ ...request, queryStringParameters: { scope } });
+        expect(result.statusCode).toBe(expectedStatus);
+        expect(result.body).not.toContain("secret");
+      }
       const approval = await controller.approveReview(request);
       expect(approval.statusCode).toBe(expectedStatus);
       if (expectedStatus === 403) {
         expect(repository.findUnpublishedReviews).not.toHaveBeenCalled();
+        expect(repository.findModeratedReviews).not.toHaveBeenCalled();
         expect(repository.findById).not.toHaveBeenCalled();
         expect(repository.publishDraft).not.toHaveBeenCalled();
         return;
@@ -613,6 +620,11 @@ describe('Review workflows', () => {
       expect(approvedQueue.body).not.toContain("secret");
       expect(repository.findUnpublishedReviews).toHaveBeenNthCalledWith(1, "PENDING_APPROVAL");
       expect(repository.findUnpublishedReviews).toHaveBeenNthCalledWith(2, "APPROVED");
+      expect(repository.findModeratedReviews.mock.calls).toEqual([
+        [["PUBLISHED"]],
+        [["REJECTED"]],
+        [["PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED"]],
+      ]);
       expect(repository.publishDraft).toHaveBeenCalledWith(expect.objectContaining({ from: "PENDING_APPROVAL", to: "APPROVED" }));
       expect(JSON.parse(approval.body)).toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
       for (const status of ["DELETED", "REJECTED", "DRAFT", "APPROVED", "PUBLISHED"]) {
