@@ -117,6 +117,85 @@ const ELITE_REACTIVATE_CARD = {
   texts: ["Elite", "Current plan", "€43.00", "per month", ...ELITE_FEATURES, "Reactivate Elite"],
   buttonDisabled: false,
 };
+const ELITE_UPGRADE_UNAVAILABLE_CARD = { ...ELITE_UPGRADE_CARD, buttonDisabled: true };
+const ELITE_PRICE_UNAVAILABLE_CARD = {
+  texts: ["Elite", "Price unavailable", "per month", ...ELITE_FEATURES, "Upgrade to Elite"],
+  buttonDisabled: true,
+};
+const ELITE_WITHOUT_SUBSCRIPTION_CARD = {
+  texts: ["Elite", "Current plan", "No payment needed", ...ELITE_FEATURES, "Current plan"],
+  buttonDisabled: true,
+};
+
+const PLAN_SHAPES = [
+  ["an Essentials plan", { stripeSubscriptionId: null }, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
+  ["an Essentials plan read without a subscription field", {}, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
+  [
+    "an Essentials plan while checkout is off",
+    { checkoutEnabled: false },
+    [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_UNAVAILABLE_CARD],
+    [],
+  ],
+  [
+    "an Essentials plan without an Elite price",
+    { elitePriceCents: null },
+    [ESSENTIALS_CURRENT_CARD, ELITE_PRICE_UNAVAILABLE_CARD],
+    [],
+  ],
+  [
+    "a paid Elite plan",
+    { plan: "elite", priceCents: 4300, stripeSubscriptionId: "sub_paid" },
+    [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
+    [],
+  ],
+  [
+    "an Elite plan read without a subscription field",
+    { plan: "elite", priceCents: 4300 },
+    [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
+    [],
+  ],
+  [
+    "a paid Elite plan with a scheduled downgrade",
+    { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END, stripeSubscriptionId: "sub_paid" },
+    [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
+    [SCHEDULED_END_LINE],
+  ],
+  [
+    "an Elite plan with a scheduled downgrade read without a subscription field",
+    { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END },
+    [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
+    [SCHEDULED_END_LINE],
+  ],
+  [
+    "an Elite plan without a subscription",
+    { plan: "elite", priceCents: 0, stripeSubscriptionId: null },
+    [ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD],
+    [],
+  ],
+  [
+    "an Elite plan without a subscription that has an end date",
+    { plan: "elite", priceCents: 0, effectiveUntil: SCHEDULED_END, stripeSubscriptionId: null },
+    [ESSENTIALS_SCHEDULED_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD],
+    [SCHEDULED_END_LINE],
+  ],
+];
+
+const SELF_SELECT_OFF_FIELDS = [
+  ["without eliteSelfSelectAvailable", {}],
+  ["with eliteSelfSelectAvailable false", { eliteSelfSelectAvailable: false }],
+  ["with eliteSelfSelectAvailable null", { eliteSelfSelectAvailable: null }],
+  ["with eliteSelfSelectAvailable as the text true", { eliteSelfSelectAvailable: "true" }],
+  ["with eliteSelfSelectAvailable 1", { eliteSelfSelectAvailable: 1 }],
+];
+
+const PLAN_SHAPES_WITHOUT_SELF_SELECT = SELF_SELECT_OFF_FIELDS.flatMap(([fieldLabel, field]) =>
+  PLAN_SHAPES.map(([label, overrides, cards, endLines]) => [
+    `${label} ${fieldLabel}`,
+    { ...overrides, ...field },
+    cards,
+    endLines,
+  ])
+);
 
 const renderedCards = () =>
   screen.getAllByRole("article").map((card) => ({
@@ -593,45 +672,41 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(screen.queryByText("No payment needed")).not.toBeInTheDocument();
   });
 
-  test.each([
-    ["an Essentials plan", { stripeSubscriptionId: null }, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
-    ["an Essentials plan read without a subscription field", {}, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
-    [
-      "a paid Elite plan",
-      { plan: "elite", priceCents: 4300, stripeSubscriptionId: "sub_paid" },
-      [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
-      [],
-    ],
-    [
-      "an Elite plan read without a subscription field",
-      { plan: "elite", priceCents: 4300 },
-      [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
-      [],
-    ],
-    [
-      "a paid Elite plan with a scheduled downgrade",
-      { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END, stripeSubscriptionId: "sub_paid" },
-      [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
-      [SCHEDULED_END_LINE],
-    ],
-    [
-      "an Elite plan with a scheduled downgrade read without a subscription field",
-      { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END },
-      [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
-      [SCHEDULED_END_LINE],
-    ],
-  ])("renders both cards of %s as before", async (_label, overrides, expectedCards, expectedEndLines) => {
-    getWebsiteRatePlan.mockResolvedValue(essentialsPlan(overrides));
+  test.each(PLAN_SHAPES_WITHOUT_SELF_SELECT)(
+    "renders both cards of %s as before",
+    async (_label, overrides, expectedCards, expectedEndLines) => {
+      getWebsiteRatePlan.mockResolvedValue(essentialsPlan(overrides));
 
-    render(<DirectBookingWebsitePlanSection />);
+      render(<DirectBookingWebsitePlanSection />);
 
-    await screen.findAllByRole("article");
-    expect(renderedCards()).toEqual(expectedCards);
-    expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.queryAllByText(/^Elite remains active until /).map((line) => line.textContent)).toEqual(
-      expectedEndLines
-    );
-  });
+      await screen.findAllByRole("article");
+      expect(renderedCards()).toEqual(expectedCards);
+      expect(screen.getByText("Choose a plan")).toBeInTheDocument();
+      expect(screen.getByText("Active")).toBeInTheDocument();
+      expect(screen.queryAllByText(/^Elite remains active until /).map((line) => line.textContent)).toEqual(
+        expectedEndLines
+      );
+    }
+  );
+
+  test.each(SELF_SELECT_OFF_FIELDS)(
+    "still sends an Essentials plan %s to Stripe checkout",
+    async (_label, field) => {
+      const checkoutUrl = "https://checkout.stripe.com/cs_test";
+      const redirectToCheckout = jest.fn();
+      getWebsiteRatePlan.mockResolvedValue(essentialsPlan(field));
+      changeWebsiteRatePlan.mockResolvedValue({ action: "checkout_required", checkoutUrl });
+
+      render(<DirectBookingWebsitePlanSection redirectToCheckout={redirectToCheckout} />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+
+      await waitFor(() => {
+        expect(redirectToCheckout).toHaveBeenCalledWith(checkoutUrl);
+      });
+      expect(changeWebsiteRatePlan).toHaveBeenCalledWith("elite");
+    }
+  );
 
   test("shows an Elite plan without a subscription or an end date as the current plan without a price, and offers Essentials", async () => {
     getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
@@ -647,10 +722,7 @@ describe("DirectBookingWebsitePlanSection", () => {
     await screen.findAllByRole("article");
     expect(renderedCards()).toEqual([
       ESSENTIALS_SWITCH_CARD,
-      {
-        texts: ["Elite", "Current plan", "No payment needed", ...ELITE_FEATURES, "Current plan"],
-        buttonDisabled: true,
-      },
+      ELITE_WITHOUT_SUBSCRIPTION_CARD,
     ]);
     expect(screen.queryByRole("button", { name: "Reactivate Elite" })).not.toBeInTheDocument();
     expect(screen.queryAllByText(/^Elite remains active until /)).toHaveLength(0);
@@ -678,10 +750,7 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
     expect(renderedCards()).toEqual([
       ESSENTIALS_SWITCH_CARD,
-      {
-        texts: ["Elite", "Current plan", "No payment needed", ...ELITE_FEATURES, "Current plan"],
-        buttonDisabled: true,
-      },
+      ELITE_WITHOUT_SUBSCRIPTION_CARD,
     ]);
   });
 });
