@@ -1,8 +1,13 @@
 const s3Error = (name, httpStatusCode) => Object.assign(new Error(name), { name, $metadata: { httpStatusCode } });
 
+const byKeyOrder = (left, right) => Number(left > right) - Number(left < right);
+
 export const buildFakeSitesBucketClient = ({ objects = {}, pageSize = 1000 } = {}) => {
   let version = 0;
-  const nextEtag = () => `"v${(version += 1)}"`;
+  const nextEtag = () => {
+    version += 1;
+    return `"v${version}"`;
+  };
   const stored = new Map(Object.entries(objects).map(([key, body]) => [key, { body, etag: nextEtag() }]));
   const failures = [];
   const before = [];
@@ -29,7 +34,7 @@ export const buildFakeSitesBucketClient = ({ objects = {}, pageSize = 1000 } = {
       return {};
     },
     ListObjectsV2Command: ({ Prefix = "", ContinuationToken }) => {
-      const keys = [...stored.keys()].filter((key) => key.startsWith(Prefix)).sort();
+      const keys = [...stored.keys()].filter((key) => key.startsWith(Prefix)).sort(byKeyOrder);
       const start = Number(ContinuationToken || 0);
       const page = keys.slice(start, start + pageSize).map((Key) => ({ Key, ETag: stored.get(Key).etag }));
       const truncated = start + pageSize < keys.length;
