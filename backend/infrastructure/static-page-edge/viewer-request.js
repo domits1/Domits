@@ -5,6 +5,17 @@ var MAX_URI_LENGTH = 8192;
 var PAGE_KEY_PREFIX = "/sites/by-host/";
 var HOST_FILES = { "/": "index.html", "/index.html": "index.html", "/sitemap.xml": "sitemap.xml" };
 var ROBOTS_URI = "/robots.txt";
+var BUILD_DIRECTORY = "/static/";
+var BUILD_ROOT_FILES = {
+  "/asset-manifest.json": true,
+  "/favicon.ico": true,
+  "/logo.svg": true,
+  "/logo192.png": true,
+  "/logo512.png": true,
+  "/manifest.json": true,
+};
+var REDIRECT_CACHE_CONTROL = "public, max-age=3600";
+var ALIASES = {"beautiful-home-amsterdam-6156b005.direct.domits.com":"www.villasensual.nl"};
 
 function normalizeHostName(value) {
   var parts = String(value || "")
@@ -74,6 +85,52 @@ function robotsResponse(host, method) {
   return response;
 }
 
+function isBuildFile(uri) {
+  return uri.indexOf(BUILD_DIRECTORY) === 0 || Object.prototype.hasOwnProperty.call(BUILD_ROOT_FILES, uri);
+}
+
+function mayRedirect(uri) {
+  return typeof uri === "string" && uri.charAt(0) === "/" && !isBuildFile(uri);
+}
+
+function isAlias(host) {
+  return Object.prototype.hasOwnProperty.call(ALIASES, host);
+}
+
+function primaryHostFor(host) {
+  if (!isAlias(host)) {
+    return "";
+  }
+  var target = normalizeHostName(ALIASES[host]);
+  if (!isHostName(target) || target === host || isAlias(target)) {
+    return "";
+  }
+  return target;
+}
+
+function queryStringOf(querystring) {
+  var parts = [];
+  for (var name in querystring) {
+    var entry = querystring[name];
+    var values = entry && entry.multiValue ? entry.multiValue : [entry];
+    for (var index = 0; index < values.length; index += 1) {
+      parts.push(name + "=" + String((values[index] && values[index].value) || ""));
+    }
+  }
+  return parts.length > 0 ? "?" + parts.join("&") : "";
+}
+
+function redirectResponse(target, request) {
+  return {
+    statusCode: 301,
+    statusDescription: "Moved Permanently",
+    headers: {
+      location: { value: "https://" + target + request.uri + queryStringOf(request.querystring) },
+      "cache-control": { value: REDIRECT_CACHE_CONTROL },
+    },
+  };
+}
+
 function handler(event) {
   try {
     var request = event.request;
@@ -83,16 +140,22 @@ function handler(event) {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return request;
     }
-    var isRobots = request.uri === ROBOTS_URI;
-    if (!isRobots && !Object.prototype.hasOwnProperty.call(HOST_FILES, request.uri)) {
-      return request;
-    }
     var hostHeader = request.headers.host;
     if (!hostHeader || (hostHeader.multiValue && hostHeader.multiValue.length > 1)) {
       return request;
     }
     var host = normalizeHostName(hostHeader.value);
     if (!isHostName(host)) {
+      return request;
+    }
+    if (mayRedirect(request.uri)) {
+      var target = primaryHostFor(host);
+      if (target) {
+        return redirectResponse(target, request);
+      }
+    }
+    var isRobots = request.uri === ROBOTS_URI;
+    if (!isRobots && !Object.prototype.hasOwnProperty.call(HOST_FILES, request.uri)) {
       return request;
     }
     if (isRobots) {

@@ -25,6 +25,10 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Destinations",
+      "allIn": "All destinations in"
+    },
     "user": {
       "hello": "Hello",
       "profile": "Profile",
@@ -1222,6 +1226,7 @@
         "loading": "Loading your devices...",
         "loadError": "We couldn't load your devices.",
         "retry": "Try again",
+        "truncated": "Not all devices are shown.",
         "notSupported": "Not supported yet",
         "columns": {
           "name": "Name",
@@ -1243,6 +1248,21 @@
           "resortLock": "Resort lock",
           "other": "Other device"
         }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock needs to be reconnected.",
+        "alreadyConnected": "RemoteLock is already connected.",
+        "notConfigured": "RemoteLock isn't available right now. Please contact support.",
+        "tryLater": "RemoteLock is busy. Please try again in a moment.",
+        "startAgain": "The sign-in expired or was already used. Please start again.",
+        "providerError": "RemoteLock reported a problem. Please try again later.",
+        "cancelled": "The RemoteLock sign-in was cancelled.",
+        "missingParams": "This page needs a RemoteLock sign-in. Please start from Home automation."
+      },
+      "callback": {
+        "title": "Connecting RemoteLock",
+        "working": "Finishing the connection...",
+        "back": "Back to Home automation"
       },
       "loading": "Loading your RemoteLock connection...",
       "loadError": "We couldn't load your RemoteLock connection.",
@@ -1349,6 +1369,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Your listing has been submitted for review.",
+      "pendingReviewNotice": "This listing is awaiting review and will go live once it is approved.",
       "breadcrumb": "Go Live",
       "title": "Go live with {propertyName}",
       "subtitle": "Review the checklist below, then publish your listing.",
@@ -1599,18 +1621,16 @@
       "breadcrumb": "Rate Plans",
       "title": "Rate Plans",
       "subtitle": "Manage your rate plans.",
-      "standardSection": "Standard Rate Plan",
-      "additionalSection": "Additional Plans",
-      "additionalSubtitle": "Additional pricing options for direct bookings.",
+      "ratePlansSection": "Rate Plans",
       "hostOnlyFee": {
-        "title": "Host Only Fee",
-        "sub": "10% of bookings paid by host",
+        "title": "Domits.com Booking Channel",
+        "sub": "10% Host-only fee on bookings via Domits.com",
         "note": "Allows Domits to run the platform 24/7"
       },
       "directBooking": {
-        "cardTitle": "Direct Booking Rate Plan",
-        "cardSubtitle": "4.9% per reservation paid by host",
-        "cardNote": "No monthly or per-property fee; guests pay €0 Domits fee.",
+        "cardTitle": "Direct Booking Website (% Per Reservation)",
+        "cardSubtitle": "All-in reservation fee",
+        "cardNote": "No additional transaction fee",
         "breadcrumb": "Direct Booking Rate Plan",
         "title": "Direct Booking Rate Plan",
         "subtitle": "Performance-based pricing for reservations made through your Direct Booking website.",
@@ -1685,21 +1705,22 @@
         "unchanged": "Your website plan is already up to date.",
         "effectiveUntil": "Elite remains active until {date}.",
         "priceUnavailable": "Price unavailable",
+        "withoutPayment": "No payment needed",
         "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
         "checkoutSuccess": "Your Elite subscription is active.",
         "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
         "checkoutStillPending": "We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.",
-        "cardTitle": "Direct Booking Website Plan",
-        "cardSubtitle": "Essentials is free; Elite includes advanced website tools.",
-        "cardNote": "Choose and manage your website subscription.",
+        "cardTitle": "Direct Booking Website (Monthly)",
+        "cardSubtitle": "Start for free",
+        "cardNote": "Accelerate with Elite website",
         "breadcrumb": "Direct Booking Website Plan",
         "pageTitle": "Direct Booking Website Plan",
         "pageSubtitle": "Manage the subscription for your Direct Booking website."
       },
       "enterprise": {
-        "cardTitle": "Enterprise Rate Plan",
-        "cardSubtitle": "Pricing per active property per month.",
-        "cardNote": "Scales automatically with your active property count.",
+        "cardTitle": "Enterprise Plan",
+        "cardSubtitle": "Pricing per property per month",
+        "cardNote": "Scales with your portfolio",
         "breadcrumb": "Enterprise Rate Plan",
         "title": "Enterprise Rate Plan",
         "subtitle": "Simple pricing that scales with your active property portfolio.",
@@ -1917,6 +1938,99 @@
       "title": "Questions about security?",
       "contactButton": "Contact support",
       "learnMoreButton": "Learn more"
+    }
+  },
+  "hostOwners": {
+    "title": "Owners",
+    "loading": "Loading owners…",
+    "empty": "You have no owners yet.",
+    "allArchived": "All your owners are archived. Turn on \"Show archived owners\" to see them.",
+    "showArchived": "Show archived owners",
+    "retry": "Retry",
+    "errorSignedOut": "Your session has ended. Please sign in again.",
+    "errorForbidden": "Only hosts can manage owners.",
+    "errorGeneric": "We could not load your owners. Please try again.",
+    "columnName": "Name",
+    "columnType": "Type",
+    "columnStatus": "Status",
+    "columnProperties": "Current properties",
+    "propertyShare": "{title}, {percent}%",
+    "unknownShare": "{title}, share unknown",
+    "unknownProperty": "Unknown property",
+    "noProperties": "No current properties",
+    "ownerTypes": {
+      "individual": "Individual",
+      "company": "Company",
+      "trust": "Trust",
+      "unknown": "Unknown type"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "archived": "Archived",
+      "unknown": "Unknown status"
+    },
+    "addOwner": "Add owner",
+    "editOwner": "Edit",
+    "editOwnerLabel": "Edit {name}",
+    "columnActions": "Actions",
+    "form": {
+      "createTitle": "Add owner",
+      "editTitle": "Edit owner",
+      "labels": {
+        "first_name": "First name",
+        "last_name": "Last name",
+        "company_name": "Company name",
+        "email": "Email",
+        "phone": "Phone",
+        "preferred_language": "Preferred language (such as en or nl-NL)",
+        "owner_type": "Owner type",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "chooseOwnerType": "Choose a type",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "close": "Close",
+      "createdToast": "{name} was added.",
+      "updatedToast": "{name} was updated.",
+      "errorNotFound": "This owner no longer exists. Close the form and reload the page.",
+      "errorGeneric": "We could not save the owner. Please try again.",
+      "errors": {
+        "required": "This field is required.",
+        "tooLong": "Use at most {max} characters.",
+        "invalidCharacters": "This field contains characters that are not allowed.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidPhone": "Use at least one digit, and only digits, spaces and + ( ) - .",
+        "invalidLanguage": "Use a language code such as en or nl-NL.",
+        "invalidOwnerType": "Choose an owner type.",
+        "invalidStatus": "Choose a status.",
+        "archivedStatus": "An owner can only be archived with the archive action.",
+        "companyNameRequired": "A company name is required for a company or trust."
+      }
+    },
+    "detail": {
+      "backToOwners": "Back to owners",
+      "loading": "Loading owner…",
+      "errorNotFound": "This owner does not exist or is not one of your owners.",
+      "errorGeneric": "We could not load this owner. Please try again.",
+      "detailsTitle": "Details",
+      "notProvided": "Not provided",
+      "labels": {
+        "created_at": "Created",
+        "updated_at": "Last updated"
+      },
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "restore": "Restore",
+      "restoring": "Restoring…",
+      "archiveConfirmTitle": "Archive this owner?",
+      "archiveConfirmMessage": "{name} will be hidden from your owners list. You can restore this owner later.",
+      "archivedToast": "{name} was archived.",
+      "restoredToast": "{name} was restored.",
+      "archiveBlocked": "{name} cannot be archived yet, because this owner still has current or upcoming ownership shares. First remove {name} from the shares of those properties, then archive again."
     }
   }
 }

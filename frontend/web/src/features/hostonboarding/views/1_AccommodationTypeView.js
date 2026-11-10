@@ -27,7 +27,7 @@ export default function AccommodationTypeView() {
           What best describes your accommodation?
         </h2>
         <AccommodationTypeSelector
-          options={accommodationData.accommodation.types}
+          options={accommodationData.accommodation.visibleTypes}
           icons={accommodationData.accommodation.icons}
           selectedType={selectedAccommodationType}
           onSelectType={setAccommodationType}

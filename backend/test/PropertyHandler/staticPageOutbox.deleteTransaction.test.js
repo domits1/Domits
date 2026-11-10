@@ -9,7 +9,7 @@ jest.mock("database", () => ({
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 
-const buildClient = ({ siteRecords = [SITE_ROW], outboxFailure = null } = {}) =>
+const buildClient = ({ siteRecords = [SITE_ROW], outboxFailure = null, domainFailure = null } = {}) =>
   buildTransactionClient({
     operation: "delete",
     respond: (statement) => {
@@ -19,16 +19,22 @@ const buildClient = ({ siteRecords = [SITE_ROW], outboxFailure = null } = {}) =>
         }
         return { records: [], affected: 1 };
       }
+      if (/standalone_site_domain/.test(statement)) {
+        if (domainFailure) {
+          throw domainFailure;
+        }
+        return { records: [], affected: 2 };
+      }
       return { records: siteRecords, affected: siteRecords.length };
     },
   });
 
-describe("deleting a website site removes its static page outbox row in the same transaction", () => {
+describe("deleting a website site removes its static page outbox row and its domain rows in the same transaction", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("deletes the site row and the outbox row of a site with a queued page, then commits", async () => {
+  it("deletes the site row, its outbox row and its domain rows in one transaction, then commits", async () => {
     const client = buildClient();
 
     const site = await new DirectBookingWebsiteSiteRepository().deleteSiteByPropertyIdAndHostId("property-1", "host-1");
@@ -37,10 +43,13 @@ describe("deleting a website site removes its static page outbox row in the same
     expect(client.statements.map(({ statement }) => statement.trim().split(/\s+/).slice(0, 3).join(" "))).toEqual([
       `DELETE FROM ${SCHEMA}.standalone_site`,
       `DELETE FROM ${SCHEMA}.static_page_outbox`,
+      `DELETE FROM ${SCHEMA}.standalone_site_domain`,
     ]);
     expect(client.statements[0].parameters).toEqual(["property-1", "host-1"]);
     expect(client.statements[1].statement).toContain("WHERE site_id = $1");
     expect(client.statements[1].parameters).toEqual(["site-1"]);
+    expect(client.statements[2].statement).toContain("WHERE site_id = $1");
+    expect(client.statements[2].parameters).toEqual(["site-1"]);
     expect(client.committed).toBe(true);
     expect(client.rolledBack).toBe(false);
     expect(client.transactionRunner.release).not.toHaveBeenCalled();
@@ -58,6 +67,19 @@ describe("deleting a website site removes its static page outbox row in the same
     expect(client.committed).toBe(false);
     expect(client.rolledBack).toBe(true);
     expect(client.transactionRunner.release).not.toHaveBeenCalled();
+  });
+
+  it("keeps the site and its outbox row when the domain delete fails, so no site is left without its domains", async () => {
+    const failure = Object.assign(new Error("connection terminated"), { code: "57P01" });
+    const client = buildClient({ domainFailure: failure });
+
+    await expect(
+      new DirectBookingWebsiteSiteRepository().deleteSiteByPropertyIdAndHostId("property-1", "host-1")
+    ).rejects.toBe(failure);
+
+    expect(client.statements).toHaveLength(3);
+    expect(client.committed).toBe(false);
+    expect(client.rolledBack).toBe(true);
   });
 
   it("touches the outbox only when a site was deleted", async () => {

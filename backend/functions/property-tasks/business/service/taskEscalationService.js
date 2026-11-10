@@ -29,14 +29,14 @@ export const getHostEmailById = async (hostId) => {
     return email;
 };
 
-export const getAssigneeEmailById = async (assigneeTeamMemberId) => {
+export const getAssigneeEmailById = async (assigneeTeamMemberId, hostId) => {
     const response = await lambdaClient.send(new InvokeCommand({
         FunctionName: "host-team",
         Payload: JSON.stringify({
             httpMethod: "GET",
             path: "/internal/team-member",
             headers: { "x-internal-secret": process.env.INTERNAL_TASK_SECRET },
-            queryStringParameters: { id: assigneeTeamMemberId },
+            queryStringParameters: { id: assigneeTeamMemberId, hostId },
         }),
     }));
 
@@ -77,7 +77,7 @@ export const sendTaskEscalationEmail = async (hostEmail, task) => {
         body: {
             toEmail: hostEmail,
             subject: `Task escalated: ${task.title}`,
-            body: `The task "${task.title}" (property: ${task.property_snapshot_label}) has passed its due date and was escalated.
+            body: `The task "${task.title}" (property: ${task.property_snapshot_label}) was escalated.
 
 Due: ${dueDate}
 
