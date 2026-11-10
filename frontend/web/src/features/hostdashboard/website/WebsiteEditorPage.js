@@ -80,7 +80,7 @@ import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTarget
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
 import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
-import { omitSitePages } from "./editor/websiteEditorSitePages";
+import { applySitePagesEdit, omitSitePages } from "./editor/websiteEditorSitePages";
 import {
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
@@ -278,7 +278,11 @@ function WebsiteEditorPage() {
     setImagePickerState,
     setPreviewTargetId,
   });
-  const { isEliteHost } = useWebsiteEditorSitePages();
+  const sitePagesEditor = useWebsiteEditorSitePages({
+    draftTemplateKey,
+    workingOverrides: getDraftWorkingContentOverrides(draftRecord),
+  });
+  const { isEliteHost, resetSitePagesEdit, sitePagesEdit } = sitePagesEditor;
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -289,8 +293,16 @@ function WebsiteEditorPage() {
   }, [baseModel, draftTemplateKey, editorValues]);
 
   const mergedContentOverrides = useMemo(
-    () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
-    [contentOverridePatch, draftRecord]
+    () =>
+      mergeWebsiteDraftContentOverrides(
+        applySitePagesEdit(
+          getDraftWorkingContentOverrides(draftRecord),
+          sitePagesEdit,
+          getDraftPublishedContentOverrides(draftRecord)
+        ),
+        contentOverridePatch
+      ),
+    [contentOverridePatch, draftRecord, sitePagesEdit]
   );
 
   const publishedContentOverrides = useMemo(
@@ -835,6 +847,7 @@ function WebsiteEditorPage() {
     const nextTemplateKey = String(persistedDraft.templateKey || draftTemplateKey).trim();
 
     setDraftRecord(persistedDraft);
+    resetSitePagesEdit();
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, nextTemplateKey));
     }
@@ -1267,6 +1280,7 @@ function WebsiteEditorPage() {
               setSectionRef={setSectionRef}
               setTargetRef={setTargetRef}
               showWhatsAppSetupHint={showWhatsAppSetupHint}
+              sitePagesEditor={sitePagesEditor}
               standaloneVisibilityFields={standaloneVisibilityFields}
               themeValues={themeValues}
               toggleSection={toggleSection}

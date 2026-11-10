@@ -1,10 +1,10 @@
 import React from "react";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import WebsiteEditorPage from "../WebsiteEditorPage";
 import { fetchWebsiteDraftByPropertyId, upsertWebsiteDraft } from "../services/websiteDraftService";
-import { fetchWebsiteSiteByPropertyId } from "../services/websiteSiteService";
+import { fetchWebsiteSiteByPropertyId, publishWebsiteSite } from "../services/websiteSiteService";
 import { fetchWebsitePropertyDetails } from "../services/websitePropertyService";
 import { WEBSITE_ENTITLEMENT_UNLIMITED_PAGES, getWebsiteEntitlements } from "../services/websitePlanService";
 
@@ -31,10 +31,10 @@ jest.mock("../services/websitePlanService", () => ({
   ...jest.requireActual("../services/websitePlanService"),
   getWebsiteEntitlements: jest.fn(),
 }));
-jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
+jest.mock("../rendering/WebsiteTemplatePreview", () => ({
   __esModule: true,
-  default: function QuoteAvailabilitySectionStub() {
-    return <div data-testid="quote-availability" />;
+  default: function WebsiteTemplatePreviewStub({ model }) {
+    return <output data-testid="editor-preview" data-site-pages={JSON.stringify(model.sitePages ?? null)} />;
   },
 }));
 
@@ -43,6 +43,13 @@ const ESSENTIALS = ["website.basic", "website.booking"];
 const STORED_SITE_PAGES = {
   contact: { navLabel: "Contact us", enabled: false },
   gallery: { navLabel: "Photos", enabled: true },
+};
+
+const ELITE = () => Promise.resolve([...ESSENTIALS, WEBSITE_ENTITLEMENT_UNLIMITED_PAGES]);
+const DEFAULT_SITE_PAGES = {
+  gallery: { enabled: false, navLabel: "Gallery" },
+  accommodation: { enabled: false, navLabel: "Accommodation" },
+  contact: { enabled: false, navLabel: "Contact us" },
 };
 
 const NON_ELITE_READS = [
@@ -62,7 +69,7 @@ const buildDraft = (contentOverrides, publishedContentOverrides = contentOverrid
   publishedThemeOverrides: renderPayload.themeOverrides,
 });
 
-const previewPanel = () => screen.getByRole("heading", { name: "Website preview" }).closest("section");
+const previewSitePages = () => JSON.parse(screen.getByTestId("editor-preview").dataset.sitePages);
 
 const renderEditor = async (draft, readEntitlements) => {
   fetchWebsiteDraftByPropertyId.mockResolvedValue(draft);
@@ -74,7 +81,7 @@ const renderEditor = async (draft, readEntitlements) => {
       </Routes>
     </MemoryRouter>
   );
-  await waitFor(() => expect(previewPanel().querySelector("[data-preview-target-id]")).not.toBeNull());
+  await screen.findByTestId("editor-preview");
   await act(async () => {});
 };
 
@@ -85,9 +92,25 @@ const saveAfterTitleEdit = async () => {
   return upsertWebsiteDraft.mock.calls[0][0];
 };
 
+const openPagesSection = () => {
+  fireEvent.click(screen.getByRole("button", { name: /^Pages/ }));
+};
+
+const switchPage = (name) => {
+  fireEvent.click(screen.getByRole("checkbox", { name: `${name} page` }));
+};
+
+const saveButton = () => screen.getByRole("button", { name: "Save changes" });
+
+const saveChanges = async () => {
+  fireEvent.click(saveButton());
+  await waitFor(() => expect(upsertWebsiteDraft).toHaveBeenCalledTimes(1));
+  return upsertWebsiteDraft.mock.calls[0][0];
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.spyOn(globalThis, "scrollBy").mockImplementation(() => {});
+  jest.spyOn(globalThis, "confirm").mockReturnValue(true);
   fetchWebsitePropertyDetails.mockResolvedValue(renderPayload.propertySnapshot);
   fetchWebsiteSiteByPropertyId.mockResolvedValue(null);
   upsertWebsiteDraft.mockImplementation((payload) =>
@@ -103,10 +126,7 @@ describe.each(NON_ELITE_READS)("website editor for a host with %s", (_name, read
   it("shows the stored site pages nowhere in the preview", async () => {
     await renderEditor(buildDraft({ ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES }), readEntitlements);
 
-    const preview = within(previewPanel());
-    expect(preview.getAllByText("Overview").length).toBeGreaterThan(0);
-    expect(preview.queryAllByText("Photos")).toHaveLength(0);
-    expect(previewPanel().querySelector("[data-panorama-page-header]")).toBeNull();
+    expect(previewSitePages()).toBeNull();
   });
 
   it("saves the stored site pages as they are and adds none", async () => {
@@ -130,23 +150,116 @@ describe.each(NON_ELITE_READS)("website editor for a host with %s", (_name, read
     );
   });
 
-  it("writes nothing while it loads", async () => {
+  it("shows no page controls and writes nothing while it loads", async () => {
     await renderEditor(buildDraft(renderPayload.contentOverrides), readEntitlements);
 
+    expect(screen.queryByRole("heading", { name: "Pages", hidden: true })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Gallery page", hidden: true })).toBeNull();
     expect(getWebsiteEntitlements).toHaveBeenCalledTimes(1);
     expect(upsertWebsiteDraft).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
   });
 });
 
-describe("website editor preview for an Elite host", () => {
-  it("shows the stored site pages", async () => {
-    await renderEditor(buildDraft({ ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES }), () =>
-      Promise.resolve([...ESSENTIALS, WEBSITE_ENTITLEMENT_UNLIMITED_PAGES])
-    );
+describe("website editor for an Elite host", () => {
+  it("shows the stored site pages in the preview", async () => {
+    await renderEditor(buildDraft({ ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES }), ELITE);
 
-    const preview = within(previewPanel());
-    await waitFor(() => expect(preview.getAllByText("Photos").length).toBeGreaterThan(0));
-    expect(preview.queryAllByText("Overview")).toHaveLength(0);
+    expect(previewSitePages()).toEqual({ ...DEFAULT_SITE_PAGES, gallery: { enabled: true, navLabel: "Photos" } });
+  });
+
+  it("saves switched-on pages and their menu labels", async () => {
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+
+    switchPage("Gallery");
+    switchPage("Accommodation");
+    fireEvent.change(screen.getByLabelText("Accommodation menu label"), { target: { value: "  The   villa " } });
+    expect(previewSitePages().accommodation).toEqual({ enabled: true, navLabel: "The villa" });
+    const payload = await saveChanges();
+
+    expect(JSON.stringify(payload.contentOverrides)).toBe(
+      JSON.stringify({
+        sitePages: {
+          ...DEFAULT_SITE_PAGES,
+          gallery: { enabled: true, navLabel: "Gallery" },
+          accommodation: { enabled: true, navLabel: "The villa" },
+        },
+        ...renderPayload.contentOverrides,
+      })
+    );
+    expect(payload.publishedContentOverrides).toEqual(renderPayload.contentOverrides);
+    await waitFor(() => expect(saveButton()).toBeDisabled());
+  });
+
+  it("saves the default label for a label that cannot be used", async () => {
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+
+    switchPage("Contact us");
+    fireEvent.change(screen.getByLabelText("Contact us menu label"), { target: { value: "<b>Call</b>" } });
+
+    expect(screen.getByText(/This label cannot be used/)).toHaveTextContent("Contact us");
+    const payload = await saveChanges();
+    expect(payload.contentOverrides.sitePages.contact).toEqual({ enabled: true, navLabel: "Contact us" });
+  });
+
+  it("caps a menu label at the length the site menu accepts", async () => {
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+    switchPage("Gallery");
+
+    expect(screen.getByLabelText("Gallery menu label")).toHaveAttribute("maxLength", "40");
+  });
+
+  it("reports no unsaved change for stored pages in another field order", async () => {
+    await renderEditor(buildDraft({ sitePages: STORED_SITE_PAGES, ...renderPayload.contentOverrides }), ELITE);
+    openPagesSection();
+
+    expect(saveButton()).toBeDisabled();
+    switchPage("Contact us");
+    expect(saveButton()).toBeEnabled();
+    switchPage("Contact us");
+    expect(saveButton()).toBeDisabled();
+  });
+
+  it("keeps the page switches when the save fails", async () => {
+    upsertWebsiteDraft.mockRejectedValue(new Error("We could not save your website changes."));
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+
+    switchPage("Gallery");
+    await saveChanges();
+
+    await waitFor(() => expect(saveButton()).toBeEnabled());
+    expect(screen.getByRole("checkbox", { name: "Gallery page" })).toBeChecked();
+  });
+
+  it("publishes the page settings with the live site", async () => {
+    publishWebsiteSite.mockResolvedValue({ site: { id: "site-1", status: "PUBLISHED" }, domains: [] });
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+
+    switchPage("Gallery");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Publish live site", hidden: true }));
+
+    await waitFor(() => expect(publishWebsiteSite).toHaveBeenCalledWith(PROPERTY_ID));
+    const payload = upsertWebsiteDraft.mock.calls[0][0];
+    expect(payload.publishedContentOverrides).toEqual(payload.contentOverrides);
+    expect(payload.contentOverrides.sitePages.gallery).toEqual({ enabled: true, navLabel: "Gallery" });
+  });
+
+  it("returns the page settings to the published version on discard", async () => {
+    const published = { ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES };
+    const working = { ...renderPayload.contentOverrides, sitePages: { contact: { enabled: true } } };
+    await renderEditor(buildDraft(working, published), ELITE);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Discard all changes", hidden: true }));
+
+    await waitFor(() => expect(upsertWebsiteDraft).toHaveBeenCalledTimes(1));
+    expect(upsertWebsiteDraft.mock.calls[0][0].contentOverrides).toBe(published);
+    openPagesSection();
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: "Gallery page" })).toBeChecked());
+    expect(screen.getByRole("checkbox", { name: "Contact us page" })).not.toBeChecked();
   });
 });
