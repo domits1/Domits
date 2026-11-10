@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import OwnersTable from "./OwnersTable";
@@ -26,8 +27,16 @@ const share = (overrides = {}) => ({
   ...overrides,
 });
 
+const OwnersRoute = ({ children }) => (
+  <MemoryRouter initialEntries={["/hostdashboard/owners"]}>
+    <Routes>
+      <Route path="/hostdashboard/owners" element={children} />
+    </Routes>
+  </MemoryRouter>
+);
+
 const renderTable = (owners, { texts = t, language = "en", onEdit = jest.fn() } = {}) =>
-  render(<OwnersTable owners={owners} t={texts} language={language} onEdit={onEdit} />);
+  render(<OwnersTable owners={owners} t={texts} language={language} onEdit={onEdit} />, { wrapper: OwnersRoute });
 
 const rowFor = (name) => screen.getByRole("row", { name: new RegExp(name) });
 
@@ -50,6 +59,15 @@ describe("OwnersTable", () => {
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(second);
+  });
+
+  test("links each owner's name to that owner's detail page", () => {
+    renderTable([owner(), owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" })]);
+
+    const hrefOf = (name) => screen.getByRole("link", { name }).getAttribute("href");
+    expect(hrefOf("Anna de Vries")).toBe("/hostdashboard/owners/owner-1");
+    expect(hrefOf("Bram Jansen")).toBe("/hostdashboard/owners/owner-2");
+    expect(screen.getByRole("button", { name: "Edit Bram Jansen" })).toBeTruthy();
   });
 
   test("shows the full name, with the company name below it when present", () => {

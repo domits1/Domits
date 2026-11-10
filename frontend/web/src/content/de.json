@@ -2011,6 +2011,27 @@
         "archivedStatus": "Ein Eigentümer kann nur über die Archivierung archiviert werden.",
         "companyNameRequired": "Für ein Unternehmen oder einen Trust ist ein Firmenname erforderlich."
       }
+    },
+    "detail": {
+      "backToOwners": "Zurück zu den Eigentümern",
+      "loading": "Eigentümer wird geladen…",
+      "errorNotFound": "Dieser Eigentümer existiert nicht oder gehört nicht zu deinen Eigentümern.",
+      "errorGeneric": "Wir konnten diesen Eigentümer nicht laden. Bitte versuche es erneut.",
+      "detailsTitle": "Angaben",
+      "notProvided": "Nicht angegeben",
+      "labels": {
+        "created_at": "Erstellt",
+        "updated_at": "Zuletzt geändert"
+      },
+      "archive": "Archivieren",
+      "archiving": "Wird archiviert…",
+      "restore": "Wiederherstellen",
+      "restoring": "Wird wiederhergestellt…",
+      "archiveConfirmTitle": "Diesen Eigentümer archivieren?",
+      "archiveConfirmMessage": "{name} wird in deiner Eigentümerliste ausgeblendet. Du kannst diesen Eigentümer später wiederherstellen.",
+      "archivedToast": "{name} wurde archiviert.",
+      "restoredToast": "{name} wurde wiederhergestellt.",
+      "archiveBlocked": "{name} kann noch nicht archiviert werden, weil dieser Eigentümer noch aktuelle oder künftige Eigentumsanteile hat. Entferne {name} zuerst aus den Anteilen dieser Unterkünfte und archiviere dann erneut."
     }
   }
 }

@@ -2,22 +2,15 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { LanguageContext } from "../../../../context/LanguageContext";
-import en from "../../../../content/en.json";
-import nl from "../../../../content/nl.json";
-import de from "../../../../content/de.json";
-import es from "../../../../content/es.json";
 import { listOwners } from "../services/ownerService";
 import OwnersTable from "../components/OwnersTable";
 import OwnerFormModal from "../components/OwnerFormModal";
+import { resolveOwnerContent } from "../utils/ownerContent";
 import { ARCHIVED_OWNER_STATUS } from "../utils/ownerFormRules";
 import { fillTemplate, loadErrorText, ownerName } from "../utils/ownerText";
 import "../styles/HostOwners.scss";
 
-const contentByLanguage = { en, nl, de, es };
-const DEFAULT_LANGUAGE = "en";
 const TITLE_ID = "host-owners-title";
-
-const resolveLanguage = (language) => (contentByLanguage[language]?.hostOwners ? language : DEFAULT_LANGUAGE);
 
 const upsertOwner = (owners, saved) =>
   owners.some((owner) => owner.id === saved.id)
@@ -26,8 +19,7 @@ const upsertOwner = (owners, saved) =>
 
 const HostOwners = () => {
   const { language } = useContext(LanguageContext);
-  const activeLanguage = resolveLanguage(language);
-  const t = contentByLanguage[activeLanguage].hostOwners;
+  const { activeLanguage, t } = resolveOwnerContent(language);
 
   const [loadState, setLoadState] = useState({ status: "loading" });
   const [showArchived, setShowArchived] = useState(false);

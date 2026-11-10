@@ -2010,6 +2010,27 @@
         "archivedStatus": "An owner can only be archived with the archive action.",
         "companyNameRequired": "A company name is required for a company or trust."
       }
+    },
+    "detail": {
+      "backToOwners": "Back to owners",
+      "loading": "Loading owner…",
+      "errorNotFound": "This owner does not exist or is not one of your owners.",
+      "errorGeneric": "We could not load this owner. Please try again.",
+      "detailsTitle": "Details",
+      "notProvided": "Not provided",
+      "labels": {
+        "created_at": "Created",
+        "updated_at": "Last updated"
+      },
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "restore": "Restore",
+      "restoring": "Restoring…",
+      "archiveConfirmTitle": "Archive this owner?",
+      "archiveConfirmMessage": "{name} will be hidden from your owners list. You can restore this owner later.",
+      "archivedToast": "{name} was archived.",
+      "restoredToast": "{name} was restored.",
+      "archiveBlocked": "{name} cannot be archived yet, because this owner still has current or upcoming ownership shares. First remove {name} from the shares of those properties, then archive again."
     }
   }
 }
