@@ -4,10 +4,16 @@ import Database from "../../integrations/ORM/index.js";
 import { withDsqlRetry } from "../../dsqlRetry.js";
 import ChannexAriOutboxWriter from "../services/channexAriOutboxWriter.js";
 
-const CHANNEL_CHANNEX = "CHANNEX";
+export const CHANNEX_BOOKING_PROFILE = Object.freeze({
+  channel: "CHANNEX",
+  guestIdPrefix: "CHANNEX_GUEST",
+  paymentIdPrefix: "CHANNEX",
+  hostName: "Channex",
+  bookingType: "channex",
+  fallbackGuestName: "Channex guest",
+});
 const BOOKING_STATUS_PAID = "Paid";
 const BOOKING_STATUS_CANCELLED = "Cancelled";
-const BOOKING_TYPE_CHANNEX = "channex";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
@@ -23,7 +29,7 @@ const qualifyTableName = (client, tableName) =>
   `${quoteIdentifier(resolveDatabaseSchemaName(client))}.${quoteIdentifier(tableName)}`;
 
 export const buildDeterministicChannexBookingId = (integrationAccountId, externalReservationId) => {
-  const seed = `${CHANNEL_CHANNEX}:${requireStr(integrationAccountId) || ""}:${requireStr(externalReservationId) || ""}`;
+  const seed = `${CHANNEX_BOOKING_PROFILE.channel}:${requireStr(integrationAccountId) || ""}:${requireStr(externalReservationId) || ""}`;
   const hex = createHash("sha256").update(seed).digest("hex");
   const variant = ((Number.parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, "0");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
@@ -131,18 +137,18 @@ class ChannexExternalBookingImportRepository {
       arrivaldate: Math.trunc(Number(arrivalDateMs)),
       departuredate: Math.trunc(Number(departureDateMs)),
       createdat: now,
-      guestid: `CHANNEX_GUEST:${normalizedExternalReservationId}`,
+      guestid: `${CHANNEX_BOOKING_PROFILE.guestIdPrefix}:${normalizedExternalReservationId}`,
       // One guest when Channex sends no occupancy, so a booking never counts zero guests.
       guests: guestCount ?? 1,
       hostid: requireStr(hostId),
       latepayment: false,
-      paymentid: `CHANNEX:${normalizedExternalReservationId}`,
+      paymentid: `${CHANNEX_BOOKING_PROFILE.paymentIdPrefix}:${normalizedExternalReservationId}`,
       property_id: requireStr(propertyId),
       status: BOOKING_STATUS_PAID,
-      guestname: requireStr(guestName) || "Channex guest",
-      hostname: "Channex",
+      guestname: requireStr(guestName) || CHANNEX_BOOKING_PROFILE.fallbackGuestName,
+      hostname: CHANNEX_BOOKING_PROFILE.hostName,
       cancellation_policy: null,
-      bookingtype: BOOKING_TYPE_CHANNEX,
+      bookingtype: CHANNEX_BOOKING_PROFILE.bookingType,
       // What the guest paid on the OTA, and which OTA; the pages show these instead of
       // the Domits listing price and a card payment (#3483).
       total_price: totalPrice,
@@ -212,7 +218,7 @@ class ChannexExternalBookingImportRepository {
           normalizedBookingId,
           Math.trunc(Number(arrivalDateMs)),
           Math.trunc(Number(departureDateMs)),
-          requireStr(guestName) || "Channex guest",
+          requireStr(guestName) || CHANNEX_BOOKING_PROFILE.fallbackGuestName,
           BOOKING_STATUS_PAID,
           totalPrice,
           guestCount,
