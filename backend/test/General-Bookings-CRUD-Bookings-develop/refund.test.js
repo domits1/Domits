@@ -229,7 +229,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
     const expectRefundRecord = (bookingId, overrides = {}) => {
       expectCancelRecord(bookingId, {
-        refundedAmount: totalPriceCents,
+        refundedAmount: Math.round(bookingDefaults.total_price * 100),
         stripeRefundId: null,
         refundError: null,
         refundStatus: null,
