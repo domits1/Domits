@@ -445,12 +445,12 @@ class ReservationController {
       }
 
       if (refundAmountCents === 0) {
-        const refundStatus =
-          normalizeBookingStatus(booking.status) === "paid" && hasStripePaymentIntent
-            ? REFUND_STATUS.NOT_REFUNDED
-            : hasRefundEvidence
-              ? REFUND_STATUS.UNKNOWN
-              : null;
+        let refundStatus = null;
+        if (normalizeBookingStatus(booking.status) === "paid" && hasStripePaymentIntent) {
+          refundStatus = REFUND_STATUS.NOT_REFUNDED;
+        } else if (hasRefundEvidence) {
+          refundStatus = REFUND_STATUS.UNKNOWN;
+        }
 
         return {
           refundedAmount: refundAmountCents,
