@@ -1,10 +1,11 @@
 import React from "react";
 import RatingStars from "./RatingStars";
 import { normalizeImageUrl } from "../../../utils/accommodationImage";
-import { formatPropertyLocation, formatSubmittedAt, getGuestInitials } from "../utils/reviewApprovalFormat";
+import { formatPropertyLocation, formatSubmittedAt, getGuestInitials, getReviewStatusLabel } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
 function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onClose }) {
+  const pending = review.status === "PENDING_APPROVAL";
   const submitted = formatSubmittedAt(review.created_at);
   const rowClassName = selected ? styles.selectedRow : undefined;
 
@@ -51,13 +52,17 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onC
         <p className={styles.muted}>{submitted.time}</p>
       </td>
       <td>
-        <span className={`${styles.pill} ${styles.pillPending}`}>Pending</span>
+        <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
+          {pending ? "Pending" : getReviewStatusLabel(review.status)}
+        </span>
       </td>
       <td>
         <div className={styles.rowActions}>
-          <button type="button" className={styles.approveButton} disabled={approving} onClick={() => onApprove(review)}>
-            {approving ? "Approving…" : "Approve"}
-          </button>
+          {pending && (
+            <button type="button" className={styles.approveButton} disabled={approving} onClick={() => onApprove(review)}>
+              {approving ? "Approving…" : "Approve"}
+            </button>
+          )}
           <button type="button" className={styles.secondaryButton} onClick={() => onView(review.id)}>
             View
           </button>
@@ -67,9 +72,9 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onC
   );
 }
 
-export default function ReviewApprovalTable({ reviews, selectedId, approvingIds, onApprove, onView, onClose }) {
+export default function ReviewApprovalTable({ label, reviews, selectedId, approvingIds, onApprove, onView, onClose }) {
   return (
-    <table className={styles.table} aria-label="Reviews pending approval">
+    <table className={styles.table} aria-label={label}>
       <thead>
         <tr>
           <th scope="col" aria-label="Show details" className={styles.selection} />

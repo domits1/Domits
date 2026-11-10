@@ -251,14 +251,25 @@ export class ReviewRepository {
       .getExists();
   }
 
-  // Load a user's review list for the chosen scope.
-  // This gives the profile views a single source of truth for written and received reviews.
-  async findPendingReviews() {
+  async findUnpublishedReviews(status) {
     const database = await Database.getInstance();
     const reviews = await database.getRepository(Review).find({
-      where: { review_type: "GUEST_TO_PROPERTY", status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" },
+      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
+    return status === "PENDING_APPROVAL" ? this.addModerationDetails(database, reviews) : reviews;
+  }
+
+  async findModeratedReviews(statuses) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async addModerationDetails(database, reviews) {
     if (!reviews.length) return reviews;
 
     const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
@@ -548,8 +559,7 @@ export class ReviewRepository {
         return null;
       }
 
-      // Approval publishes directly. APPROVED only remains for reviews approved before that change.
-      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "PUBLISHED", APPROVED: "PUBLISHED" };
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
       if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
         throw new ConflictException("Invalid review transition.");
       }
@@ -560,8 +570,10 @@ export class ReviewRepository {
         updatedAt,
         authorize
       );
-      if (to === "PUBLISHED" && await manager.getRepository(Review_Flag).findOneBy({ review_id: reviewId, status: "PENDING" })) {
-        throw new ConflictException("Resolve the pending review flag before approving this review.");
+      if ((to === "APPROVED" || to === "PUBLISHED") &&
+          await manager.getRepository(Review_Flag).findOneBy({ review_id: reviewId, status: "PENDING" })) {
+        const action = to === "APPROVED" ? "approving" : "publishing";
+        throw new ConflictException(`Resolve the pending review flag before ${action} this review.`);
       }
 
       const timestamp = nextTimestamp(

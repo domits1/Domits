@@ -181,7 +181,6 @@ export class HostReviewService {
     return this.repository.getPropertyReviewScore(id, userId);
   }
 
-  // Delete uses the same trusted identity and property access rules as save.
   async deleteReviewResponse(user, reviewId) {
     this.assertHostResponseIdentity(user);
     assertId(reviewId, "review ID");

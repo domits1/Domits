@@ -189,26 +189,29 @@
 .tab {
   padding: 15px clamp(14px, 2vw, 24px);
   border: 0;
-  border-bottom: 2px solid var(--approval-green);
+  border-bottom: 2px solid transparent;
   background: none;
-  color: var(--approval-green);
+  color: var(--approval-muted);
   font: inherit;
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
-  cursor: default;
-}
-
-.tab[aria-selected="false"] {
-  border-bottom-color: transparent;
-  color: var(--approval-muted);
-  font-weight: 500;
   cursor: pointer;
 }
 
-.tab:disabled {
-  opacity: 0.7;
-  cursor: default;
+.tab:hover {
+  background: var(--approval-selected);
+  color: var(--approval-green);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--approval-green);
+  color: var(--approval-green);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--approval-green);
+  outline-offset: -3px;
 }
 
 .notice {

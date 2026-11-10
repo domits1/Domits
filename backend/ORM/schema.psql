@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS main.booking (
   refunded_amount BIGINT,
   stripe_refund_id VARCHAR(255),
   refund_error TEXT,
+  refund_status VARCHAR(32),
   total_price DOUBLE PRECISION,
   booking_source VARCHAR(255),
   site_id VARCHAR(255),
@@ -616,6 +617,7 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS bookingtype VARCHAR;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refunded_amount BIGINT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS stripe_refund_id VARCHAR(255);
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_error TEXT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS total_price DOUBLE PRECISION;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS booking_source VARCHAR(255);
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS site_id VARCHAR(255);

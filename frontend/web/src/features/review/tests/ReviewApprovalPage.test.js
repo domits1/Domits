@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ReviewApprovalPage from "../views/ReviewApprovalPage";
-import { approveReview, flagReview, getPendingApprovalReviews, getReviewFlags, resolveReviewFlag } from "../services/reviewAPI";
+import { approveReview, flagReview, getAdminReviews, getPendingApprovalReviews, getReviewFlags, resolveReviewFlag } from "../services/reviewAPI";
 
 jest.mock("../services/reviewAPI", () => ({
   approveReview: jest.fn(),
@@ -9,6 +9,7 @@ jest.mock("../services/reviewAPI", () => ({
   flagReview: jest.fn(),
   getReviewFlags: jest.fn(),
   resolveReviewFlag: jest.fn(),
+  getAdminReviews: jest.fn(),
 }));
 
 const pendingReview = (overrides = {}) => ({
@@ -94,6 +95,29 @@ describe("ReviewApprovalPage", () => {
     expect(screen.getByText("Showing 1–2 of 2 reviews")).toBeInTheDocument();
   });
 
+  test("loads status tabs and keeps historical reviews read-only", async () => {
+    getAdminReviews.mockImplementation(async (scope) => scope === "admin-rejected" ? [] : [
+      pendingReview({ title: "Published stay", status: "PUBLISHED", publication_status: "PUBLISHED" }),
+    ]);
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+
+    const published = screen.getByRole("tab", { name: "Published" });
+    fireEvent.click(published);
+    const publishedTable = await screen.findByRole("table", { name: "Published reviews" });
+    expect(within(publishedTable).getByText("Published stay")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+    expect(published).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(published, { key: "ArrowRight" });
+    expect(await screen.findByText("No rejected reviews.")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Rejected" })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole("tab", { name: "All reviews" }));
+    expect(await screen.findByRole("table", { name: "All reviews" })).toBeInTheDocument();
+    expect(getAdminReviews.mock.calls).toEqual([["admin-published"], ["admin-rejected"], ["admin-all"]]);
+  });
+
   test("opens the first review in the details panel and switches on View", async () => {
     render(<ReviewApprovalPage />);
 
@@ -139,14 +163,14 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("approves a review with its version, removes it and opens the next one", async () => {
-    approveReview.mockResolvedValue({ ...pendingReview(), status: "PUBLISHED" });
+    approveReview.mockResolvedValue({ ...pendingReview(), status: "APPROVED" });
     render(<ReviewApprovalPage />);
     await waitFor(() => rowFor("Great stay!"));
 
     fireEvent.click(within(rowFor("Great stay!")).getByRole("button", { name: "Approve" }));
 
     expect(approveReview).toHaveBeenCalledWith("r1", 1790000000000);
-    expect(await screen.findByText("“Great stay!” is approved and published.")).toBeInTheDocument();
+    expect(await screen.findByText("“Great stay!” is approved and awaiting publication.")).toBeInTheDocument();
     expect(within(table()).queryByText("Great stay!")).toBeNull();
     expect(screen.getByRole("tab", { name: "Pending approval (1)" })).toBeInTheDocument();
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();

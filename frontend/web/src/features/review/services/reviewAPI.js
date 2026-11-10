@@ -28,10 +28,10 @@ export const deleteHostResponse = async (reviewId) => {
 const reviewApprovalError = (response, payload, fallback) =>
   Object.assign(new Error(payload?.message || fallback), { status: response.status });
 
-export const getPendingApprovalReviews = async () => {
-  const response = await requestReview("GET", { scope: "pending-approval" });
+export const getAdminReviews = async (scope) => {
+  const response = await requestReview("GET", { scope });
   const payload = await parseResponse(response);
-  if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews waiting for approval.");
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews.");
   return Array.isArray(payload) ? payload : [];
 };
 
@@ -50,6 +50,18 @@ export const flagReview = (reviewId, reason, notes) =>
 
 export const resolveReviewFlag = (flagId) =>
   requestModeration("PATCH", "Could not resolve this flag.", {}, { flag_id: flagId });
+
+export const getPendingApprovalReviews = () => getAdminReviews("pending-approval");
+
+export const hasReviewApprovalAccess = async () => {
+  try {
+    await getPendingApprovalReviews();
+    return true;
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) return false;
+    return null;
+  }
+};
 
 // updatedAt is the version the admin saw; the backend refuses the approval if the review changed since.
 export const approveReview = async (reviewId, updatedAt) => {
@@ -195,6 +207,16 @@ export const requestReview = async (method = "GET", query = {}, body) => {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }
   );
+};
+
+export const submitReviewForApproval = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(getReviewErrorMessage(response.status, payload));
+  return payload;
 };
 
 // Create a new review

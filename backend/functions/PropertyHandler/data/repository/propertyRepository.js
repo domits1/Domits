@@ -11,6 +11,23 @@ import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
+const MODERATION_HISTORY_LIMIT = 50;
+
+const isValidSchemaName = (value) => typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
+const resolveSchemaName = (client) => {
+    if (process.env.TEST === "true") {
+        return "test";
+    }
+    const schema = client?.options?.schema;
+    if (isValidSchemaName(schema)) {
+        const normalized = schema.trim().toLowerCase();
+        return normalized === "public" ? "main" : normalized;
+    }
+    return "main";
+};
+
+const qualifiedPropertyTable = (schemaName) => `"${schemaName}"."property"`;
 
 export class PropertyRepository {
 
@@ -41,13 +58,14 @@ export class PropertyRepository {
         return result ? result : null;
     }
 
-    async getArchiveMetadataColumns(client) {
+    async getArchiveMetadataColumns(client, schemaName) {
         const result = await client.query(
             `SELECT column_name
              FROM information_schema.columns
-             WHERE table_schema = current_schema()
+             WHERE table_schema = $1
                AND table_name = 'property'
-               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`
+               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`,
+            [schemaName]
         );
         const columns = new Set();
         (Array.isArray(result) ? result : []).forEach((row) => {
@@ -96,7 +114,8 @@ export class PropertyRepository {
             .where("id = :id", { id: propertyId })
             .execute();
 
-        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        const schemaName = resolveSchemaName(client);
+        const archiveColumns = await this.getArchiveMetadataColumns(client, schemaName);
         if (archiveColumns.size === 0) {
             return;
         }
@@ -117,7 +136,7 @@ export class PropertyRepository {
         metadataParams.push(propertyId);
 
         await client.query(
-            `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
+            `UPDATE ${qualifiedPropertyTable(schemaName)} SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
             metadataParams
         );
     }
@@ -142,7 +161,7 @@ export class PropertyRepository {
 
         const affected = Number(result?.affected) || 0;
         if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
-            await this.clearArchiveMetadata(client, propertyId, toStatus, now);
+            await this.clearArchiveMetadata(client, propertyId, toStatus, now, resolveSchemaName(client));
         }
         return affected;
     }
@@ -162,6 +181,7 @@ export class PropertyRepository {
         }
 
         const client = await Database.getInstance();
+        const schemaName = resolveSchemaName(client);
         const eventId = randomUUID();
         const now = Date.now();
 
@@ -200,7 +220,7 @@ export class PropertyRepository {
                 }
 
                 if (currentStatus === "ARCHIVED" && toStatus !== "ARCHIVED") {
-                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now);
+                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now, schemaName);
                 }
 
                 await manager
@@ -224,14 +244,39 @@ export class PropertyRepository {
         );
     }
 
-    async clearArchiveMetadata(client, propertyId, status, now) {
-        const archiveColumns = await this.getArchiveMetadataColumns(client);
+    async getModerationEventsByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .getRepository(Property_Moderation_Event)
+                .createQueryBuilder("event")
+                .select([
+                    "event.id",
+                    "event.action",
+                    "event.fromStatus",
+                    "event.toStatus",
+                    "event.reason",
+                    "event.actorId",
+                    "event.createdAt",
+                ])
+                .where("event.propertyId = :propertyId", {propertyId})
+                .orderBy("event.createdAt", "DESC")
+                .addOrderBy("event.id", "DESC")
+                .limit(MODERATION_HISTORY_LIMIT)
+                .getMany()
+        );
+    }
+
+    async clearArchiveMetadata(client, propertyId, status, now, schemaName) {
+        const archiveColumns = await this.getArchiveMetadataColumns(client, schemaName);
         const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
         if (clearClauses.length === 0) {
             return;
         }
 
-        await client.query(`UPDATE property SET ${clearClauses.join(", ")} WHERE id = $1`, [propertyId]);
+        await client.query(`UPDATE ${qualifiedPropertyTable(schemaName)} SET ${clearClauses.join(", ")} WHERE id = $1`, [
+            propertyId,
+        ]);
     }
 
     async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {
@@ -410,6 +455,19 @@ export class PropertyRepository {
             .getOne();
 
         return result ? PropertyBaseInfoMapping.mapDatabaseEntryToPropertyBaseInfo(result) : null;
+    }
+
+    async getLatestRejection(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .createQueryBuilder(Property_Moderation_Event, "event")
+                .select(["event.reason", "event.createdAt"])
+                .where("event.propertyId = :propertyId AND event.action = :action", {propertyId, action: "REJECTED"})
+                .orderBy("event.createdAt", "DESC")
+                .limit(1)
+                .getOne()
+        );
     }
 
 }

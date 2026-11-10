@@ -1,40 +1,41 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../../components/loaders/PulseBarsLoader";
 import { LanguageContext } from "../../../../context/LanguageContext";
-import en from "../../../../content/en.json";
-import nl from "../../../../content/nl.json";
-import de from "../../../../content/de.json";
-import es from "../../../../content/es.json";
 import { listOwners } from "../services/ownerService";
 import OwnersTable from "../components/OwnersTable";
+import OwnerFormModal from "../components/OwnerFormModal";
+import { resolveOwnerContent } from "../utils/ownerContent";
+import { ARCHIVED_OWNER_STATUS } from "../utils/ownerFormRules";
+import { fillTemplate, loadErrorText, ownerName } from "../utils/ownerText";
 import "../styles/HostOwners.scss";
 
-const contentByLanguage = { en, nl, de, es };
-const DEFAULT_LANGUAGE = "en";
 const TITLE_ID = "host-owners-title";
-const STATUS_UNAUTHORIZED = 401;
-const STATUS_FORBIDDEN = 403;
-const ARCHIVED_STATUS = "archived";
 
-const resolveLanguage = (language) => (contentByLanguage[language]?.hostOwners ? language : DEFAULT_LANGUAGE);
-
-const errorTextFor = (error, t) => {
-  if (error?.status === STATUS_UNAUTHORIZED) {
-    return t.errorSignedOut;
-  }
-  if (error?.status === STATUS_FORBIDDEN) {
-    return t.errorForbidden;
-  }
-  return t.errorGeneric;
-};
+const upsertOwner = (owners, saved) =>
+  owners.some((owner) => owner.id === saved.id)
+    ? owners.map((owner) => (owner.id === saved.id ? saved : owner))
+    : [...owners, saved];
 
 const HostOwners = () => {
   const { language } = useContext(LanguageContext);
-  const activeLanguage = resolveLanguage(language);
-  const t = contentByLanguage[activeLanguage].hostOwners;
+  const { activeLanguage, t } = resolveOwnerContent(language);
 
   const [loadState, setLoadState] = useState({ status: "loading" });
   const [showArchived, setShowArchived] = useState(false);
+  const [editor, setEditor] = useState(null);
+
+  const closeEditor = useCallback(() => setEditor(null), []);
+
+  const handleSaved = (saved) => {
+    const template = editor?.owner ? t.form.updatedToast : t.form.createdToast;
+    setLoadState((previous) =>
+      previous.status === "ready" ? { ...previous, owners: upsertOwner(previous.owners, saved) } : previous
+    );
+    setEditor(null);
+    toast.success(fillTemplate(template, { name: ownerName(saved) }));
+  };
+
   const loadOwners = useCallback(async () => {
     setLoadState({ status: "loading" });
     try {
@@ -57,7 +58,7 @@ const HostOwners = () => {
     if (loadState.status === "error") {
       return (
         <div className="host-owners-message" role="alert">
-          <p>{errorTextFor(loadState.error, t)}</p>
+          <p>{loadErrorText(loadState.error, t)}</p>
           <button type="button" className="host-owners-button" onClick={loadOwners}>
             {t.retry}
           </button>
@@ -74,7 +75,7 @@ const HostOwners = () => {
       );
     }
 
-    const visibleOwners = showArchived ? owners : owners.filter((owner) => owner.status !== ARCHIVED_STATUS);
+    const visibleOwners = showArchived ? owners : owners.filter((owner) => owner.status !== ARCHIVED_OWNER_STATUS);
 
     return (
       <>
@@ -88,7 +89,13 @@ const HostOwners = () => {
           </div>
         ) : (
           <div className="host-owners-card">
-            <OwnersTable owners={visibleOwners} t={t} language={activeLanguage} labelledBy={TITLE_ID} />
+            <OwnersTable
+              owners={visibleOwners}
+              t={t}
+              language={activeLanguage}
+              labelledBy={TITLE_ID}
+              onEdit={(owner) => setEditor({ owner })}
+            />
           </div>
         )}
       </>
@@ -97,10 +104,18 @@ const HostOwners = () => {
 
   return (
     <div className="page-body host-owners">
-      <h2 id={TITLE_ID} className="host-owners-title">
-        {t.title}
-      </h2>
+      <div className="host-owners-header">
+        <h2 id={TITLE_ID} className="host-owners-title">
+          {t.title}
+        </h2>
+        {loadState.status === "ready" ? (
+          <button type="button" className="host-owners-button" onClick={() => setEditor({ owner: null })}>
+            {t.addOwner}
+          </button>
+        ) : null}
+      </div>
       {renderContent()}
+      {editor ? <OwnerFormModal owner={editor.owner} t={t} onClose={closeEditor} onSaved={handleSaved} /> : null}
     </div>
   );
 };

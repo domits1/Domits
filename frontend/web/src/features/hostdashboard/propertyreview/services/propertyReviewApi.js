@@ -147,3 +147,6 @@ export const fetchReviewDetail = (propertyId, { signal } = {}) =>
 
 export const approveListing = (propertyId, updatedAt) =>
   requestPropertyReview("/review/approve", { method: "POST", body: { propertyId, updatedAt } });
+
+export const rejectListing = (propertyId, updatedAt, reason) =>
+  requestPropertyReview("/review/reject", { method: "POST", body: { propertyId, updatedAt, reason } });

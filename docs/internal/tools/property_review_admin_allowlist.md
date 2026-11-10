@@ -41,7 +41,11 @@ Real user ids are set at deploy time only. Code, tests, docs and pull requests u
 ## Guest review approval
 
 Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
-Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route. Approval publishes the review in one transaction, so a review is never left approved but unpublished. Guests use `POST /reviews/{id}/publish` only to submit a draft for approval. Staff with an authorized role use it only for reviews that were already in `APPROVED` status before approval started publishing.
+Deploy the updated review-response infrastructure stack and redeploy the API stage to expose the authenticated approval route.
+
+- Guests use `POST /reviews/{id}/publish` to submit a draft for approval.
+- Authorized approvers list pending reviews with `GET /reviews?scope=pending-approval` and approve them with `POST /reviews/{id}/approve`. Approval sets the status to `APPROVED` and leaves the review unpublished.
+- Authorized approvers list approved reviews with `GET /reviews?scope=approved` and publish them with `POST /reviews/{id}/publish`. Publication makes the review public and completes the review request.
 
 ### Approval page
 
@@ -51,7 +55,9 @@ Each queue item also carries `property_title`, `property_city`, `property_countr
 
 The nav link appears for users who pass the PropertyHandler admin check (`/property/review/access`). That list is separate from this Lambda's. Someone on one list but not the other sees the link and then "Not authorized", so the ReviewSystem check is the one that counts.
 
-The page approves only. Rejecting or deleting a review, the published and rejected lists, and admin access to private feedback have no endpoint yet.
+The Published, Rejected, and All reviews tabs use the `admin-published`, `admin-rejected`, and `admin-all` scopes on `GET /reviews`. These scopes require the same approver access and return up to 100 guest-to-property reviews each. All reviews includes pending, approved, published, and rejected reviews.
+
+Use the approved queue and publication endpoint above to publish reviews.
 
 ## Read routes
 

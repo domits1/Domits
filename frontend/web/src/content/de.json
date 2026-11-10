@@ -1706,6 +1706,7 @@
         "unchanged": "Dein Website-Tarif ist bereits aktuell.",
         "effectiveUntil": "Elite bleibt bis zum {date} aktiv.",
         "priceUnavailable": "Preis nicht verfügbar",
+        "withoutPayment": "Keine Zahlung nötig",
         "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
         "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
         "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
@@ -1970,6 +1971,67 @@
       "pending": "Ausstehend",
       "archived": "Archiviert",
       "unknown": "Unbekannter Status"
+    },
+    "addOwner": "Eigentümer hinzufügen",
+    "editOwner": "Bearbeiten",
+    "editOwnerLabel": "{name} bearbeiten",
+    "columnActions": "Aktionen",
+    "form": {
+      "createTitle": "Eigentümer hinzufügen",
+      "editTitle": "Eigentümer bearbeiten",
+      "labels": {
+        "first_name": "Vorname",
+        "last_name": "Nachname",
+        "company_name": "Firmenname",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "preferred_language": "Bevorzugte Sprache (z. B. en oder nl-NL)",
+        "owner_type": "Eigentümertyp",
+        "status": "Status",
+        "notes": "Notizen"
+      },
+      "chooseOwnerType": "Typ auswählen",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "createdToast": "{name} wurde hinzugefügt.",
+      "updatedToast": "{name} wurde aktualisiert.",
+      "errorNotFound": "Dieser Eigentümer existiert nicht mehr. Schließe das Formular und lade die Seite neu.",
+      "errorGeneric": "Wir konnten den Eigentümer nicht speichern. Bitte versuche es erneut.",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich.",
+        "tooLong": "Verwende höchstens {max} Zeichen.",
+        "invalidCharacters": "Dieses Feld enthält unzulässige Zeichen.",
+        "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "invalidPhone": "Verwende mindestens eine Ziffer, und nur Ziffern, Leerzeichen und + ( ) - .",
+        "invalidLanguage": "Verwende einen Sprachcode wie en oder nl-NL.",
+        "invalidOwnerType": "Wähle einen Eigentümertyp.",
+        "invalidStatus": "Wähle einen Status.",
+        "archivedStatus": "Ein Eigentümer kann nur über die Archivierung archiviert werden.",
+        "companyNameRequired": "Für ein Unternehmen oder einen Trust ist ein Firmenname erforderlich."
+      }
+    },
+    "detail": {
+      "backToOwners": "Zurück zu den Eigentümern",
+      "loading": "Eigentümer wird geladen…",
+      "errorNotFound": "Dieser Eigentümer existiert nicht oder gehört nicht zu deinen Eigentümern.",
+      "errorGeneric": "Wir konnten diesen Eigentümer nicht laden. Bitte versuche es erneut.",
+      "detailsTitle": "Angaben",
+      "notProvided": "Nicht angegeben",
+      "labels": {
+        "created_at": "Erstellt",
+        "updated_at": "Zuletzt geändert"
+      },
+      "archive": "Archivieren",
+      "archiving": "Wird archiviert…",
+      "restore": "Wiederherstellen",
+      "restoring": "Wird wiederhergestellt…",
+      "archiveConfirmTitle": "Diesen Eigentümer archivieren?",
+      "archiveConfirmMessage": "{name} wird in deiner Eigentümerliste ausgeblendet. Du kannst diesen Eigentümer später wiederherstellen.",
+      "archivedToast": "{name} wurde archiviert.",
+      "restoredToast": "{name} wurde wiederhergestellt.",
+      "archiveBlocked": "{name} kann noch nicht archiviert werden, weil dieser Eigentümer noch aktuelle oder künftige Eigentumsanteile hat. Entferne {name} zuerst aus den Anteilen dieser Unterkünfte und archiviere dann erneut."
     }
   }
 }

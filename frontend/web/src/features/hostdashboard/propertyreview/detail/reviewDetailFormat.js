@@ -39,4 +39,7 @@ export const describeDetailError = (error) => {
   return { message: "Could not load this listing.", canRetry: true };
 };
 
-export const describeActionError = (error) => ACTION_MESSAGES[error?.code] ?? ACTION_FAILED_MESSAGE;
+export const describeActionError = (error) => {
+  if (error?.code === REVIEW_API_ERROR_CODE.BAD_REQUEST) return error.message;
+  return ACTION_MESSAGES[error?.code] ?? ACTION_FAILED_MESSAGE;
+};

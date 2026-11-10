@@ -75,13 +75,11 @@ class MessageRepository {
     }
 
     try {
-      await this.createMessage(data);
+      return await this.createMessage(data);
     } catch (error) {
       if (isPlatformMessageUniqueError(error)) return false;
       throw error;
     }
-
-    return true;
   }
 
   async findByPlatformMessageId(platformMessageId) {
