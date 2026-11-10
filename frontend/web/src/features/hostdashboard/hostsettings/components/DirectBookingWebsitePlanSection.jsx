@@ -277,6 +277,7 @@ const DirectBookingWebsitePlanSection = ({
   );
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
+  const planChangeRef = useRef(null);
 
   const currentPlan = ratePlan?.plan === "elite" ? "elite" : "essentials";
   const eliteWithoutSubscription =
@@ -385,6 +386,13 @@ const DirectBookingWebsitePlanSection = ({
     };
   }, [checkoutState]);
 
+  useEffect(
+    () => () => {
+      planChangeRef.current = null;
+    },
+    []
+  );
+
   const formatMoney = (amountCents, currency = "EUR") =>
     formatCurrency(Number(amountCents || 0) / 100, currency, language);
 
@@ -397,12 +405,21 @@ const DirectBookingWebsitePlanSection = ({
   };
 
   const choosePlanWithoutPayment = async (targetPlan) => {
+    if (planChangeRef.current) {
+      return;
+    }
+    const change = { targetPlan };
+    planChangeRef.current = change;
+    const isCurrentChange = () => planChangeRef.current === change;
     setChangingPlan(targetPlan);
     setActionError("");
     setNotice("");
 
     try {
       const result = await changeWebsiteRatePlan(targetPlan);
+      if (!isCurrentChange()) {
+        return;
+      }
       if (result?.action === "checkout_required") {
         await showServerPlanAfterFailedChange(copy.changeError);
         return;
@@ -411,9 +428,15 @@ const DirectBookingWebsitePlanSection = ({
       setRatePlan(result?.plan || (await getWebsiteRatePlan()));
       setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
     } catch (error) {
+      if (!isCurrentChange()) {
+        return;
+      }
       await showServerPlanAfterFailedChange(describeFailure(error, copy.changeError));
     } finally {
-      setChangingPlan(null);
+      if (isCurrentChange()) {
+        planChangeRef.current = null;
+        setChangingPlan(null);
+      }
     }
   };
 

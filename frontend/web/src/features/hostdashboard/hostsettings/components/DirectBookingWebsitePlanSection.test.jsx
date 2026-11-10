@@ -876,5 +876,80 @@ describe("DirectBookingWebsitePlanSection", () => {
         expect(redirectToCheckout).not.toHaveBeenCalled();
       }
     );
+
+    test("clears the message of a failed change when the next change works", async () => {
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
+      changeWebsiteRatePlan
+        .mockRejectedValueOnce(new Error("Request failed"))
+        .mockResolvedValueOnce({ action: "upgraded", plan: selfSelectedElitePlan() });
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Upgrade to Elite" })).toBeEnabled();
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Upgrade to Elite" }));
+
+      expect(await screen.findByText("Your website plan is now Elite")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"], ["elite"]]);
+    });
+
+    test("sends one change when Elite is clicked twice at once, and keeps both buttons disabled while it runs", async () => {
+      let answerChange;
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
+      changeWebsiteRatePlan.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            answerChange = resolve;
+          })
+      );
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      const eliteButton = await screen.findByRole("button", { name: "Upgrade to Elite" });
+      act(() => {
+        eliteButton.click();
+        eliteButton.click();
+      });
+
+      expect(changeWebsiteRatePlan).toHaveBeenCalledTimes(1);
+      expect(renderedCards().map((card) => card.buttonDisabled)).toEqual([true, true]);
+      expect(screen.getByRole("button", { name: "Processing..." })).toBeDisabled();
+
+      await act(async () => {
+        answerChange({ action: "upgraded", plan: selfSelectedElitePlan() });
+      });
+
+      expect(screen.getByText("Your website plan is now Elite")).toBeInTheDocument();
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+      expect(changeWebsiteRatePlan).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+      ["fails", (change) => change.reject(new Error("Request failed"))],
+      ["answers without a plan", (change) => change.resolve({ action: "upgraded" })],
+    ])("reads nothing more when the change %s after the card is gone", async (_label, settle) => {
+      let pendingChange;
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
+      changeWebsiteRatePlan.mockImplementation(
+        () =>
+          new Promise((resolve, reject) => {
+            pendingChange = { resolve, reject };
+          })
+      );
+
+      const { unmount } = render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+      unmount();
+      settle(pendingChange);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(changeWebsiteRatePlan).toHaveBeenCalledTimes(1);
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(1);
+    });
   });
 });
