@@ -22,6 +22,20 @@ Result: no blocking findings so far
 | P3 (5/10) | `channexAriOutboxRepository.js`, two queries | The counts and the failure list are read in two queries without a transaction, so a row can fail between them. | Accepted: a display that is one row off for one refresh does no harm; a transaction would only add a DSQL conflict risk. |
 | Checked | `failureReason` | The worker writes reason codes (`NOT_MAPPED`, `CHANNEX_CALL_LIMIT`, the classified outcome), not provider bodies or guest data. | No change; the endpoint is admin-only. |
 
+### Commit 3 (refactor): shared `toCount` / `toTimeOrNull`
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (8/10) | `channexHealthRepository.js` and `channexAriOutboxRepository.js` | The same "Postgres string to number" helper appeared in both repositories (CLAUDE.md: extract a shared helper when normalization appears more than once). | Fixed: moved to `utils/dbValues.js` with its own test, in a separate no-behaviour-change commit before the health repository. |
+
+### Commit 4: other reads (`ChannexHealthRepository`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `channexHealthRepository.js` | All reads go through the query builder on the entities, so columns are quoted from the entity metadata. The quoted SQL was run on Aurora DSQL on 10 Nov: last revision 27 Oct, last poll SUCCESS a few minutes earlier, mapping counts per account. | No change. |
+| Checked | `accounts()` | The account row holds `credentialsRef` and `userId`; only id, display name, status, last error code and the mapping count are returned (tested). Mapping counts are one grouped query, not one per account. | No change. |
+| P3 (6/10) | `accounts()` | The old staging account (DISCONNECTED) still has 3 ACTIVE mappings, so the page will show "Disconnected, 3 properties". The data is correct; it may confuse. | Follow-up, not in this PR: hide disconnected accounts on the page, or deactivate mappings on disconnect. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.
