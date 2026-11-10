@@ -4,6 +4,7 @@ import {
   EXISTING_SITE,
   EXISTING_SITE_RENDER_BODY,
   EXISTING_SITE_RENDER_QUERIES,
+  ELITE_WITHOUT_SUBSCRIPTION_ROW,
   PAID_ELITE_ROW,
   buildExistingSiteController,
   buildRatePlanRepository,
@@ -62,6 +63,16 @@ describe("the public render of a site with page settings", () => {
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(EXISTING_SITE.hostId);
     }
   );
+
+  it("serves the page settings of a host with an Elite plan without a subscription or an end date", async () => {
+    const ratePlanRepository = buildRatePlanRepository(ELITE_WITHOUT_SUBSCRIPTION_ROW);
+
+    const response = await renderSite(ratePlanRepository, { domain: EXISTING_DOMAIN.domain });
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body).contentOverrides).toEqual(SITE_WITH_PAGES.publishedContentOverrides);
+    expectOnlyCurrentPlanRead(ratePlanRepository);
+  });
 
   it.each([
     ["an Essentials plan", ratePlanRow()],

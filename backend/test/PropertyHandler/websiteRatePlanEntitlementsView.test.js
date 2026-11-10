@@ -5,7 +5,12 @@ import {
   getWebsiteEntitlements,
 } from "../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
 import { Unauthorized } from "../../functions/PropertyHandler/util/exception/Unauthorized.js";
-import { buildRatePlanRepository, expectNoPlanRead, ratePlanRow } from "./support/existingSiteRender.js";
+import {
+  ELITE_WITHOUT_SUBSCRIPTION_ROW,
+  buildRatePlanRepository,
+  expectNoPlanRead,
+  ratePlanRow,
+} from "./support/existingSiteRender.js";
 
 const TOKEN_HOST_ID = "host-from-token";
 
@@ -43,6 +48,20 @@ describe("GET /property/website/rate-plan?view=entitlements", () => {
     });
     expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(TOKEN_HOST_ID);
     expect(ratePlanRepository.createPlan).not.toHaveBeenCalled();
+  });
+
+  it("answers an Elite plan without a subscription or an end date with the Elite entitlements and no end date", async () => {
+    const ratePlanRepository = buildRatePlanRepository(ELITE_WITHOUT_SUBSCRIPTION_ROW);
+
+    const response = await buildController(ratePlanRepository).getWebsiteRatePlan(getEvent({ view: "entitlements" }));
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({
+      plan: "elite",
+      entitlements: getWebsiteEntitlements("elite"),
+      effectiveUntil: null,
+    });
+    expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(TOKEN_HOST_ID);
   });
 
   it("answers an Elite plan whose end date is still ahead with its end date", async () => {

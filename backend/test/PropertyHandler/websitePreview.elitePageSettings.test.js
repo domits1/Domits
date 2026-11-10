@@ -3,6 +3,7 @@ import { PropertyController } from "../../functions/PropertyHandler/controller/p
 import { DirectBookingWebsiteRatePlanService } from "../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
 import {
+  ELITE_WITHOUT_SUBSCRIPTION_ROW,
   PAID_ELITE_ROW,
   buildRatePlanRepository,
   expectNoPlanRead,
@@ -80,8 +81,11 @@ describe("the public preview of a draft and its page settings", () => {
     expect(consoleError).not.toHaveBeenCalled();
   });
 
-  it("answers the page settings of an Elite host, read for the draft's own host", async () => {
-    const ratePlanRepository = buildRatePlanRepository(PAID_ELITE_ROW);
+  it.each([
+    ["a paid Elite plan", PAID_ELITE_ROW],
+    ["an Elite plan without a subscription or an end date", ELITE_WITHOUT_SUBSCRIPTION_ROW],
+  ])("answers the page settings of a host with %s, read for the draft's own host", async (_label, row) => {
+    const ratePlanRepository = buildRatePlanRepository(row);
 
     const response = await openPreview(DRAFT_WITH_PAGES, ratePlanRepository, { hostId: "host-from-request" });
 
