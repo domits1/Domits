@@ -353,23 +353,16 @@ describe("Panorama page changes", () => {
 });
 
 describe("Panorama scroll to availability", () => {
-  const placeAt = (element, top, height = 0) => {
-    element.getBoundingClientRect = () => ({ top, height });
-  };
-
-  beforeEach(() => {
-    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
     globalThis.history.replaceState(null, "", "/");
   });
 
   it("scrolls the call to action to availability below the top bar and keeps the anchor", () => {
+    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
     const { container } = renderTemplate(buildModel());
-    placeAt(container.querySelector("[data-panorama-top-bar-inner]"), 0, 64);
-    placeAt(container.querySelector("#availability"), 900);
+    container.querySelector("[data-panorama-top-bar-inner]").getBoundingClientRect = () => ({ top: 0, height: 64 });
+    container.querySelector("#availability").getBoundingClientRect = () => ({ top: 900, height: 0 });
 
     fireEvent.click(container.querySelector('[data-preview-target-id="common.ctaLabel"]'));
 

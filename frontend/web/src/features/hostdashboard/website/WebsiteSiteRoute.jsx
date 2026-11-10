@@ -31,7 +31,8 @@ export default function WebsiteSiteRoute() {
   const needsPageCheck = isLiveViewPagePath && !servedSite;
 
   const rememberSitePages = useCallback(
-    (key, sitePages) => setServedSites((current) => new Map(current).set(key, { sitePages })),
+    (key, sitePages, isCheck = false) =>
+      setServedSites((current) => (isCheck && current.has(key) ? current : new Map(current).set(key, { sitePages }))),
     []
   );
   const rememberCurrentSitePages = useCallback(
@@ -55,7 +56,7 @@ export default function WebsiteSiteRoute() {
     readServedSitePages({ siteId, domain }).then((sitePages) => {
       pendingSiteKeysRef.current.delete(siteKey);
       if (isMountedRef.current) {
-        rememberSitePages(siteKey, sitePages);
+        rememberSitePages(siteKey, sitePages, true);
       }
     });
   }, [domain, needsPageCheck, rememberSitePages, siteId, siteKey]);

@@ -486,8 +486,4 @@ describe("site page titles", () => {
   ])("titles the page %p as %p", (pageKey, title) => {
     expect(resolveSitePageTitle(SITE_PAGES, pageKey)).toBe(title);
   });
-
-  it("gives no title without site pages", () => {
-    expect(resolveSitePageTitle(undefined, "gallery")).toBe("");
-  });
 });

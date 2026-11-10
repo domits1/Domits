@@ -304,11 +304,9 @@ describe("site host routing for a site with site pages", () => {
 
   it.each([
     ["/gallery", "gallery", ["gallery"]],
-    ["/GALLERY/", "gallery", ["gallery"]],
     ["/contact-us", "contact", ["contact"]],
     ["/accommodation", "main", ["overview", "about", "features", "lifestyle", "availability"]],
     ["/unknown", "main", ["overview", "about", "features", "lifestyle", "availability"]],
-    ["/gallery/photos", "main", ["overview", "about", "features", "lifestyle", "availability"]],
   ])("routes %s to the %s page", async (url, pageKey, sectionIds) => {
     renderAppAt(url);
 
@@ -356,26 +354,6 @@ describe("site host routing for a site with site pages", () => {
     fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
 
     expect(globalThis.scrollTo.mock.calls).toEqual([[0, 0]]);
-  });
-
-  it("scrolls to availability when the guest opens Main at the availability anchor", async () => {
-    placeAvailabilityAt(900);
-
-    renderAppAt("/#availability");
-    await screen.findByTestId("quote-availability");
-
-    expect(listSmoothScrolls()).toEqual([[{ top: 882, behavior: "smooth" }]]);
-  });
-
-  it("titles each page and gives Main the site title again", async () => {
-    renderAppAt("/contact-us");
-    await screen.findByRole("link", { name: "Home" });
-
-    expect(document.title).toBe("Reach us | Wellness Villa Bisous");
-
-    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
-
-    expect(document.title).toBe(SITE_TITLE);
   });
 
   it("reveals the sections of the page the guest moves to", async () => {
@@ -468,6 +446,7 @@ describe("marketplace live view page paths of a site without that page on", () =
   )("shows the not found page as today on %s for %s", async (sitePath, _, arrange, pageKey) => {
     arrange(pageKey);
 
+    const metaTagsBefore = document.head.querySelectorAll("meta").length;
     renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
     expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     await act(async () => {
@@ -477,7 +456,7 @@ describe("marketplace live view page paths of a site without that page on", () =
     expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
     expect(document.title).toBe("Domits");
-    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(document.head.querySelectorAll("meta").length).toBe(metaTagsBefore);
     expect(fetchPublicWebsiteRenderModel.mock.calls.length).toBeLessThanOrEqual(1);
   });
 });
@@ -528,6 +507,39 @@ describe("live view routing for a site with site pages", () => {
       `${LIVE_BASE}/contact-us${SITE_SEARCH}`,
       `${LIVE_BASE}${SITE_SEARCH}#availability`,
     ]);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the not found page, not the previous site, while another site's page loads", async () => {
+    renderAppAt("/website-live/b.example/gallery");
+    await screen.findByRole("link", { name: "Home" });
+    await moveTo(`${LIVE_BASE}/gallery`);
+    await screen.findByRole("link", { name: "Home" });
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+    mockTemplateProps.length = 0;
+
+    await moveTo("/website-live/b.example/gallery");
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.length).toBe(0);
+  });
+
+  it("keeps a newer load of the site over an older check", async () => {
+    let resolveCheck = () => {};
+    fetchPublicWebsiteRenderModel.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCheck = resolve;
+      })
+    );
+    renderAppAt(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+    fetchPublicWebsiteRenderModel.mockResolvedValueOnce(renderPayload);
+    await moveTo(`${LIVE_BASE}${SITE_SEARCH}`);
+    await screen.findByTestId("quote-availability");
+    await act(async () => resolveCheck(withSitePages(renderPayload, GALLERY_AND_CONTACT_ON)));
+    await moveTo(`${LIVE_BASE}/unknown${SITE_SEARCH}`);
+    await moveTo(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
   });
 

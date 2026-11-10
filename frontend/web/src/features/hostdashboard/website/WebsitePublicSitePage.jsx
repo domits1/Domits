@@ -204,8 +204,10 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     );
   }, [renderPayload, resolution?.templateKey]);
 
-  const activePageKey = resolveSitePageFromPath(routeSitePath, publicModel?.sitePages);
-  const isMissingRequiredPage = requiresActivePage && !isLoading && activePageKey === MAIN_SITE_PAGE_KEY;
+  const isCurrentRequestSettled = settledRequestKeyRef.current === requestKey;
+  const activePageKey = resolveSitePageFromPath(routeSitePath, isCurrentRequestSettled ? publicModel?.sitePages : null);
+  const isMissingRequiredPage =
+    requiresActivePage && (!isCurrentRequestSettled || (!isLoading && activePageKey === MAIN_SITE_PAGE_KEY));
   const activePageTitle = resolveSitePageTitle(publicModel?.sitePages, activePageKey);
   const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
   const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
@@ -292,10 +294,10 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
   });
 
   useEffect(() => {
-    if (onSitePagesLoaded && !isLoading && settledRequestKeyRef.current === requestKey) {
+    if (onSitePagesLoaded && !isLoading && isCurrentRequestSettled) {
       onSitePagesLoaded(publicModel?.sitePages);
     }
-  }, [isLoading, onSitePagesLoaded, publicModel, requestKey]);
+  }, [isCurrentRequestSettled, isLoading, onSitePagesLoaded, publicModel]);
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
