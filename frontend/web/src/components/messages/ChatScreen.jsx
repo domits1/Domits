@@ -31,6 +31,19 @@ const getMessageKey = (message) => {
   return `${sender}-${recipient}-${time}-${text}`;
 };
 
+const buildSettledMessage = (pending, result, fallbackPlatform) => {
+  const saved = result?.saved || {};
+  return {
+    ...pending,
+    id: saved.id || pending.id,
+    createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : pending.createdAt,
+    threadId: saved.threadId || pending.threadId,
+    bookingId: saved.bookingId || pending.bookingId,
+    platform: saved.platform || fallbackPlatform,
+    deliveryStatus: result.success ? saved.deliveryStatus : "failed",
+  };
+};
+
 const ChatScreen = ({
   userId,
   contactId,
@@ -206,15 +219,7 @@ const ChatScreen = ({
       const saved = result?.saved || {};
       if (!result?.success && !saved.id) throw new Error(result?.error || "send failed");
 
-      const finalMsg = {
-        ...optimistic,
-        id: saved.id || optimisticId,
-        createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
-        threadId: saved.threadId || optimistic.threadId,
-        bookingId: saved.bookingId || optimistic.bookingId,
-        platform: saved.platform || resolvedPlatform,
-        deliveryStatus: result.success ? saved.deliveryStatus : "failed",
-      };
+      const finalMsg = buildSettledMessage(optimistic, result, resolvedPlatform);
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
       handleContactListMessage?.(finalMsg);

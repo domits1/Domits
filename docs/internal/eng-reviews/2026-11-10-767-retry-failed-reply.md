@@ -11,6 +11,7 @@ Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before
 | feat(messages): retry a failed provider reply through POST /send | 1 P2 fixed before the commit, see Findings |
 | refactor(messages): extract postToSend | no findings; the diff moves the fetch and error handling unchanged, full web suite green |
 | feat(messages): retry service, hook and Retry button | no blocking finding; one P3 below |
+| refactor(messages): extract buildSettledMessage | no findings; fallbacks `nowIso` and `optimisticId` equal the optimistic message's own `createdAt` and `id`, full web suite green |
 
 ## Findings
 
