@@ -1,4 +1,7 @@
-import { DirectBookingWebsiteRatePlanRepository } from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
+import {
+  DirectBookingWebsiteRatePlanRepository,
+  UNPAID_PLAN_CHANGE_OUTCOMES,
+} from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
 import { DirectBookingWebsiteStripeRepository } from "../../data/repository/directBookingWebsiteStripeRepository.js";
 import { isEliteSelfSelectOnFor } from "../../util/websiteEliteSelfSelect.js";
 
@@ -213,6 +216,10 @@ export class DirectBookingWebsiteRatePlanService {
 
     const current = await this.getCurrentPlan(accountId);
 
+    if (canChoosePlanWithoutPayment(accountId, current.stripeSubscriptionId)) {
+      return this.changePlanWithoutPayment(accountId, current, targetPlan);
+    }
+
     if (current.plan === targetPlan) {
       if (targetPlan === WEBSITE_PLAN_NAMES.ELITE && current.effectiveUntil && current.stripeSubscriptionId) {
         await this.stripeRepository.resumeSubscription(current.stripeSubscriptionId);
@@ -281,6 +288,23 @@ export class DirectBookingWebsiteRatePlanService {
       stripe_subscription_id: null,
     });
     return { action: "downgraded", plan: toView(essentials) };
+  }
+
+  async changePlanWithoutPayment(accountId, current, targetPlan) {
+    if (current.plan === targetPlan) return { action: "unchanged", plan: current };
+
+    const result = await this.repository.replaceUnpaidPlan({ accountId, targetPlan });
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.PAID_PLAN_ACTIVE) {
+      throw serviceError("This website plan has a paid subscription, so it cannot be changed without payment.", 409);
+    }
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.CONFLICT) {
+      throw serviceError("The website plan changed at the same time. Reload the page and try again.", 409);
+    }
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.UNCHANGED) {
+      return { action: "unchanged", plan: toView(result.plan) };
+    }
+    const action = targetPlan === WEBSITE_PLAN_NAMES.ELITE ? "upgraded" : "downgraded";
+    return { action, plan: toView(result.plan) };
   }
 
   async handleCheckoutSessionCompleted(object) {

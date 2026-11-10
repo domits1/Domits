@@ -178,6 +178,9 @@ export const buildRatePlanStore = ({ plans = [], failInsert = null, commitFailur
   const client = {
     ...buildContext(store.plans, { onUpdate: bump, onInsert: bump }),
     transaction: jest.fn(async (work) => {
+      const beforeTransaction = store.beforeNextTransaction;
+      store.beforeNextTransaction = null;
+      if (beforeTransaction) beforeTransaction(store.plans);
       const attempt = store.transactions.length;
       const transaction = {
         startVersion: store.version,
