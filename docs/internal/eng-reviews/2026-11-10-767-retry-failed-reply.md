@@ -4,6 +4,13 @@ Branch: feat/767-retry-failed-reply
 Issue: #767
 Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before the commit. The gate runs again on each later commit; this record is extended with them.
 
+## Commits reviewed
+
+| Commit | Result |
+|---|---|
+| feat(messages): retry a failed provider reply through POST /send | 1 P2 fixed before the commit, see Findings |
+| refactor(messages): extract postToSend | no findings; the diff moves the fetch and error handling unchanged, full web suite green |
+
 ## Findings
 
 | Severity | Where | Finding | Decision |
