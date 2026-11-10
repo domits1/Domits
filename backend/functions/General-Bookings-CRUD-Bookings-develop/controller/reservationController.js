@@ -425,11 +425,8 @@ class ReservationController {
   async processCancellationRefund(booking) {
     const paymentId = String(booking.paymentid || "").trim();
     const hasStripePaymentIntent = Boolean(paymentId) && !paymentId.startsWith("FAILED");
-    const hasRefundEvidence =
-      normalizeBookingStatus(booking.status) === "paid" ||
-      hasStripePaymentIntent ||
-      booking.stripe_refund_id ||
-      Number(booking.refunded_amount) > 0;
+    const isPaidBooking = normalizeBookingStatus(booking.status) === "paid";
+    let paymentIntentStatus = null;
     let refundAmountCents = 0;
 
     try {
@@ -444,9 +441,39 @@ class ReservationController {
         return await this.resolveExistingCancellationRefund(booking, refundAmountCents);
       }
 
+      if (hasStripePaymentIntent && !isPaidBooking) {
+        const stripeInstance = await this.getStripeInstance();
+        const paymentIntent = await stripeInstance?.paymentIntents?.retrieve?.(paymentId);
+        paymentIntentStatus = String(paymentIntent?.status || "").trim().toLowerCase() || null;
+
+        if (paymentIntentStatus && paymentIntentStatus !== "succeeded") {
+          const knownUnpaidStatuses = new Set([
+            "requires_payment_method",
+            "requires_confirmation",
+            "requires_action",
+            "canceled",
+          ]);
+
+          return {
+            refundedAmount: refundAmountCents,
+            stripeRefundId: null,
+            refundError: null,
+            refundStatus: knownUnpaidStatuses.has(paymentIntentStatus) ? null : REFUND_STATUS.UNKNOWN,
+          };
+        }
+      }
+
+      const hasConfirmedPayment = isPaidBooking || paymentIntentStatus === "succeeded";
+      const hasRefundEvidence =
+        hasConfirmedPayment ||
+        booking.stripe_refund_id ||
+        Number(booking.refunded_amount) > 0 ||
+        Boolean(booking.refund_error) ||
+        (hasStripePaymentIntent && !paymentIntentStatus);
+
       if (refundAmountCents === 0) {
         let refundStatus = null;
-        if (normalizeBookingStatus(booking.status) === "paid" && hasStripePaymentIntent) {
+        if (hasConfirmedPayment) {
           refundStatus = REFUND_STATUS.NOT_REFUNDED;
         } else if (hasRefundEvidence) {
           refundStatus = REFUND_STATUS.UNKNOWN;
@@ -460,7 +487,7 @@ class ReservationController {
         };
       }
 
-      if (!hasStripePaymentIntent) {
+      if (!hasStripePaymentIntent || !hasConfirmedPayment) {
         return {
           refundedAmount: refundAmountCents,
           stripeRefundId: null,

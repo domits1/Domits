@@ -398,6 +398,28 @@ describe("Refund Logic - 10 Test Scenarios", () => {
     });
 
     it.each([
+      { stripeStatus: "requires_payment_method", refundStatus: null },
+      { stripeStatus: "requires_action", refundStatus: null },
+      { stripeStatus: "canceled", refundStatus: null },
+      { stripeStatus: "processing", refundStatus: "unknown" },
+    ])("does not create a refund for an unpaid $stripeStatus PaymentIntent", async ({ stripeStatus, refundStatus }) => {
+      const bookingId = `booking_unpaid_${stripeStatus}`;
+      mockBooking({ id: bookingId, status: "Awaiting Payment", paymentid: `pi_${stripeStatus}` });
+      mockStripe.paymentIntents.retrieve.mockResolvedValue({
+        id: `pi_${stripeStatus}`,
+        currency: "eur",
+        status: stripeStatus,
+      });
+
+      const result = await controller.cancelBooking(bookingId, authEvent);
+
+      expect(mockStripe.paymentIntents.retrieve).toHaveBeenCalledWith(`pi_${stripeStatus}`);
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectRefundRecord(bookingId, { refundStatus });
+      expect(result.statusCode).toBe(200);
+    });
+
+    it.each([
       { stripeStatus: "pending", refundStatus: "unknown" },
       { stripeStatus: "failed", refundStatus: "not_refunded" },
     ])("maps a Stripe $stripeStatus refund to the expected state", async ({ stripeStatus, refundStatus }) => {

@@ -50,7 +50,24 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);
 ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);
 ```
 
-5. Backfill historical cancelled bookings in the test schema:
+5. Count the test-schema rows that the backfill will update:
+
+```sql
+SELECT COUNT(*) AS rows_to_backfill
+FROM test.booking
+WHERE LOWER(status) IN ('cancelled', 'canceled')
+  AND refund_status IS NULL
+  AND (
+    (NULLIF(TRIM(paymentid), '') IS NOT NULL AND paymentid NOT LIKE 'FAILED%')
+    OR stripe_refund_id IS NOT NULL
+    OR COALESCE(refunded_amount, 0) > 0
+    OR refund_error IS NOT NULL
+  );
+```
+
+Review the count before running the matching UPDATE. Aurora DSQL allows at most 3,000 rows to be affected in one transaction. If the count exceeds 3,000, do not run the full UPDATE as one statement; split the backfill into separate transactions that each affect no more than 3,000 rows.
+
+6. Backfill historical cancelled bookings in the test schema:
 
 ```sql
 UPDATE test.booking
@@ -65,7 +82,24 @@ WHERE LOWER(status) IN ('cancelled', 'canceled')
   );
 ```
 
-6. Backfill historical cancelled bookings in the main schema:
+7. Count the main-schema rows that the backfill will update:
+
+```sql
+SELECT COUNT(*) AS rows_to_backfill
+FROM main.booking
+WHERE LOWER(status) IN ('cancelled', 'canceled')
+  AND refund_status IS NULL
+  AND (
+    (NULLIF(TRIM(paymentid), '') IS NOT NULL AND paymentid NOT LIKE 'FAILED%')
+    OR stripe_refund_id IS NOT NULL
+    OR COALESCE(refunded_amount, 0) > 0
+    OR refund_error IS NOT NULL
+  );
+```
+
+Review the count before running the matching UPDATE. Aurora DSQL allows at most 3,000 rows to be affected in one transaction. If the count exceeds 3,000, do not run the full UPDATE as one statement; split the backfill into separate transactions that each affect no more than 3,000 rows.
+
+8. Backfill historical cancelled bookings in the main schema:
 
 ```sql
 UPDATE main.booking
@@ -80,7 +114,7 @@ WHERE LOWER(status) IN ('cancelled', 'canceled')
   );
 ```
 
-7. Verify that both nullable columns exist:
+9. Verify that both nullable columns exist:
 
 ```sql
 SELECT table_schema, column_name, data_type, is_nullable, column_default
@@ -91,7 +125,7 @@ WHERE table_name = 'booking'
 ORDER BY table_schema ASC;
 ```
 
-8. Check that no migration job remains submitted or processing:
+10. Check that no migration job remains submitted or processing:
 
 ```sql
 SELECT job_id, status, job_type, object_name, update_time

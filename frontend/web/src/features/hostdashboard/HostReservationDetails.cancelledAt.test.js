@@ -125,6 +125,13 @@ describe("HostReservationDetails cancel date (#3585)", () => {
     expect(screen.queryByText("Refund status")).toBeNull();
   });
 
+  test("a cancelled booking with an unpaid PaymentIntent and an empty stored status does not show a refund status", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_unpaid", refund_status: null });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.queryByText("Refund status")).toBeNull();
+  });
+
   test("the receipt of a cancelled paid booking includes its refund status", async () => {
     await downloadReceiptFor({ ...booking, paymentid: "pi_paid", refund_status: "refunded" });
 

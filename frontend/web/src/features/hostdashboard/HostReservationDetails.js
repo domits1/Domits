@@ -234,24 +234,26 @@ const resolveRefundStatus = (reservation) => {
     return null;
   }
 
-  const storedStatus = normalizeStringValue(
-    firstDefined(reservation.refund_status, reservation.refundStatus)
-  ).toLowerCase();
-  if (["refunded", "not_refunded", "unknown"].includes(storedStatus)) {
-    return storedStatus;
+  const hasStoredRefundStatus =
+    Object.prototype.hasOwnProperty.call(reservation, "refund_status") ||
+    Object.prototype.hasOwnProperty.call(reservation, "refundStatus");
+  if (hasStoredRefundStatus) {
+    const storedStatus = normalizeStringValue(
+      firstDefined(reservation.refund_status, reservation.refundStatus)
+    ).toLowerCase();
+    return ["refunded", "not_refunded", "unknown"].includes(storedStatus) ? storedStatus : null;
   }
 
   const paymentId = normalizeStringValue(firstDefined(reservation.paymentid, reservation.paymentId));
   const refundId = normalizeStringValue(firstDefined(reservation.stripe_refund_id, reservation.stripeRefundId));
   const refundedAmount = Number(firstDefined(reservation.refunded_amount, reservation.refundedAmount, 0));
   const hasRefundEvidence =
-    Boolean(refundId) || (Number.isFinite(refundedAmount) && refundedAmount > 0) || Boolean(reservation.refund_error);
+    (paymentId && !paymentId.startsWith("FAILED")) ||
+    Boolean(refundId) ||
+    (Number.isFinite(refundedAmount) && refundedAmount > 0) ||
+    Boolean(reservation.refund_error);
 
-  if ((paymentId && !paymentId.startsWith("FAILED")) || hasRefundEvidence) {
-    return "unknown";
-  }
-
-  return null;
+  return hasRefundEvidence ? "unknown" : null;
 };
 
 const toDisplayValue = (value, fallback = "") => {
