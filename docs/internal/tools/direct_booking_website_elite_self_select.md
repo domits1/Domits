@@ -8,17 +8,17 @@ Cognito `Username` values (the id PropertyHandler uses as the host id), separate
 
 ## Off by default
 
-Missing or empty means off for everyone. The plan answer then has `eliteSelfSelectAvailable: false`, and a plan change works as before: Elite goes through the Stripe checkout, which answers `503` while checkout is off.
+Missing or empty means off for everyone. The plan answer then has `eliteSelfSelectAvailable: false`, and a `PATCH` with `withoutPayment: true` answers `409` without writing anything.
 
 ## What it changes for a listed host
 
-- Only while his current plan has no Stripe subscription. A paid Elite keeps the Stripe paths, and the plan answer says `eliteSelfSelectAvailable: false`.
-- `PATCH {"plan":"elite"}`: the current plan ends and an Elite plan at price 0 starts, in one transaction, without any Stripe call. Answer `upgraded`.
-- `PATCH {"plan":"essentials"}`: the Elite plan ends and Essentials starts, in one transaction. Answer `downgraded`. The Elite features end with it; site settings are not touched.
+- Only when the `PATCH` body has `"withoutPayment": true`. Without the field, or with `false`, the request runs the existing code, also for a listed host: Elite goes through the Stripe checkout, which answers `503` while checkout is off. Any other value answers `400`.
+- Only while his current plan has no Stripe subscription; with one, the request answers `409` without any Stripe call. The plan answer then says `eliteSelfSelectAvailable: false`.
+- `PATCH {"plan":"elite","withoutPayment":true}`: the current plan ends and an Elite plan at price 0 starts, in one transaction, without any Stripe call. Answer `upgraded`.
+- `PATCH {"plan":"essentials","withoutPayment":true}`: the Elite plan ends and Essentials starts, in one transaction. Answer `downgraded`. The Elite features end with it; site settings are not touched.
 - Choosing the plan he is on changes nothing (`unchanged`). Two requests at the same moment leave one current plan. A change that keeps conflicting with another request answers `409`, and so does a paid plan that started in between. A failed write leaves the plan as it was.
 - The account always comes from the token, never from the request body.
 - Taking an id off the list stops new choices only. An Elite chosen before stays until the host switches back to Essentials, which also works with the list empty.
-- The plan card does not offer this option yet. Until it does, use the list only while checkout is off: with checkout on, the card's Elite button can be clicked under the paid price, and a listed host would get Elite without payment.
 
 ## Where it is set
 
