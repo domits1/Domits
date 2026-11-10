@@ -107,7 +107,10 @@ const buildContext = (rows, { onUpdate, onInsert, failInsert }) => {
     const chain = {
       where: (condition, params) => operation.conditions.push([condition, params]) && chain,
       andWhere: (condition, params) => operation.conditions.push([condition, params]) && chain,
-      orderBy: () => Object.assign(operation, { orderBy: true }) && chain,
+      orderBy: (column, order) => {
+        if (column !== "plan.effective_from" || order !== "DESC") throw new Error(`unexpected order: ${column} ${order}`);
+        return Object.assign(operation, { orderBy: true }) && chain;
+      },
       update: (target) => Object.assign(operation, { kind: "update", entity: target }) && chain,
       set: (values) => Object.assign(operation, { values }) && chain,
       insert: () => Object.assign(operation, { kind: "insert" }) && chain,
