@@ -70,6 +70,16 @@ const toRow = (row) => ({
   attemptCount: Number(row.attemptcount ?? 0),
 });
 
+const HEALTH_WINDOW = Object.freeze({
+  DAY_MS: 24 * 60 * 60 * 1000,
+  WEEK_MS: 7 * 24 * 60 * 60 * 1000,
+  RECENT_FAILURES: 10,
+});
+
+// Postgres returns count() and a bigint min() as strings.
+const toCount = (value) => Number(value ?? 0);
+const toTimeOrNull = (value) => (value === null || value === undefined ? null : Number(value));
+
 // For UPDATE and DELETE, TypeORM's raw query returns [rows, rowCount] instead of the
 // rows, which is why those methods destructure the first element.
 export default class ChannexAriOutboxRepository {
@@ -323,5 +333,51 @@ export default class ChannexAriOutboxRepository {
     );
 
     return Array.isArray(rows) ? rows.length : 0;
+  }
+
+  // Read-only numbers for the health view (#2869, design note section 7). The table stays
+  // small because cleanup removes sent rows after 30 days and failed rows after 90.
+  async healthSummary({ now = Date.now() } = {}) {
+    const { client, table } = await this.table();
+    const { PENDING, PROCESSING, FAILED, PROCESSED } = CHANNEX_ARI_OUTBOX_STATUS;
+
+    // count(CASE ...) instead of count(*) FILTER, which plain Postgres has but we have
+    // not checked on Aurora DSQL.
+    const [counts = {}] = await client.query(
+      `SELECT count(CASE WHEN status = $1 THEN 1 END) AS pending,
+              count(CASE WHEN status = $2 THEN 1 END) AS processing,
+              min(CASE WHEN status = $1 THEN createdat END) AS oldestpendingcreatedat,
+              count(CASE WHEN status = $3 AND updatedat >= $4 THEN 1 END) AS failedlast24hours,
+              count(CASE WHEN status = $3 AND updatedat >= $5 THEN 1 END) AS failedlast7days,
+              count(CASE WHEN status = $6 AND updatedat >= $5 THEN 1 END) AS processedlast7days
+         FROM ${table}`,
+      [PENDING, PROCESSING, FAILED, now - HEALTH_WINDOW.DAY_MS, now - HEALTH_WINDOW.WEEK_MS, PROCESSED]
+    );
+
+    const failures = await client.query(
+      `SELECT id, domitspropertyid, datefrom, dateto, failurereason, updatedat
+         FROM ${table}
+        WHERE status = $1
+        ORDER BY updatedat DESC
+        LIMIT $2`,
+      [FAILED, HEALTH_WINDOW.RECENT_FAILURES]
+    );
+
+    return {
+      pending: toCount(counts.pending),
+      processing: toCount(counts.processing),
+      oldestPendingCreatedAt: toTimeOrNull(counts.oldestpendingcreatedat),
+      failedLast24Hours: toCount(counts.failedlast24hours),
+      failedLast7Days: toCount(counts.failedlast7days),
+      processedLast7Days: toCount(counts.processedlast7days),
+      recentFailures: (failures || []).map((row) => ({
+        id: row.id,
+        domitsPropertyId: row.domitspropertyid,
+        dateFrom: Number(row.datefrom),
+        dateTo: Number(row.dateto),
+        failureReason: row.failurereason ?? null,
+        updatedAt: Number(row.updatedat),
+      })),
+    };
   }
 }

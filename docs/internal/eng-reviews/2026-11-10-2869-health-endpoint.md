@@ -14,6 +14,14 @@ Result: no blocking findings so far
 | P2 (8/10) | `channexHealthStatus.js`, alarm severity list | The rule kept its own list of critical alarm names, while the CloudWatch reader (next commit) needs the same seven names; two lists would drift apart. | Fixed: one exported `CHANNEX_HEALTH_ALARMS` list with name and severity; the rule derives the critical set from it, and a test pins the seven entries. |
 | P3 (7/10) | `channexHealthStatus.js`, `outboxReasons` | `oldestPendingCreatedAt === null` let an `undefined` value through; `now - undefined` is `NaN`, which silently compares as "not stuck". | Fixed: a waiting change needs a finite time (`Number.isFinite`), with a test for a missing value. `== null` was avoided because SonarCloud flags loose equality. |
 
+### Commit 2: outbox read (`ChannexAriOutboxRepository.healthSummary`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `channexAriOutboxRepository.js`, `healthSummary` | Both queries are `SELECT` only, so they take no lock and cannot conflict with the worker; the counts query has no `LIMIT` but is one aggregate row over a table that cleanup keeps small (181 rows on 10 Nov). | No change. Both queries were run on Aurora DSQL on 10 Nov: `count(CASE ...)`, `min(CASE ...)` and the bigint windows work; 0 sent in 7 days matched the newest sent row (27 Oct). |
+| P3 (5/10) | `channexAriOutboxRepository.js`, two queries | The counts and the failure list are read in two queries without a transaction, so a row can fail between them. | Accepted: a display that is one row off for one refresh does no harm; a transaction would only add a DSQL conflict risk. |
+| Checked | `failureReason` | The worker writes reason codes (`NOT_MAPPED`, `CHANNEX_CALL_LIMIT`, the classified outcome), not provider bodies or guest data. | No change; the endpoint is admin-only. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.
