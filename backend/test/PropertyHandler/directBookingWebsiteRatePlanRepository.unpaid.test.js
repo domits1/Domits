@@ -100,6 +100,23 @@ describe("DirectBookingWebsiteRatePlanRepository.replaceUnpaidPlan", () => {
     }
   );
 
+  it("does not count an ended paid plan in the history as a paid plan", async () => {
+    const endedPaid = planRow({
+      id: "plan-ended-paid",
+      plan: "elite",
+      price_cents: 4300,
+      status: "CANCELLED",
+      effective_until: new Date("2026-09-01T00:00:00.000Z"),
+      stripe_subscription_id: "sub_old",
+    });
+    const store = buildRatePlanStore({ plans: [endedPaid, planRow()] });
+
+    const result = await repository.replaceUnpaidPlan(TO_ELITE);
+
+    expect(result.outcome).toBe("changed");
+    expect(store.plans[0]).toEqual(endedPaid);
+  });
+
   it("leaves the plans untouched when the new plan cannot be written", async () => {
     const failure = new Error("insert failed");
     const store = buildRatePlanStore({ plans: [planRow(), OTHER_HOST_PAID], failInsert: failure });
