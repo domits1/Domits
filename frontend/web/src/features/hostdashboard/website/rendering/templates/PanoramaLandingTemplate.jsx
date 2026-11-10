@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
-import { Link, useInRouterContext } from "react-router-dom";
+import { Link, useInRouterContext, useLocation } from "react-router-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
@@ -152,6 +152,27 @@ function PanoramaPageLink({ href, ariaCurrent, onNavigate, children }) {
     </Link>
   );
 }
+
+function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (pageKey !== MAIN_SITE_PAGE_KEY || hash !== PANORAMA_AVAILABILITY_ANCHOR) {
+      return;
+    }
+
+    const availabilityElement = globalThis.document?.getElementById(PANORAMA_AVAILABILITY_SECTION_ID);
+    if (availabilityElement) {
+      scrollToPanoramaTarget(availabilityElement);
+    }
+  }, [pageKey, hash]);
+
+  return null;
+}
+
+PanoramaAvailabilityScrollAfterPageChange.propTypes = {
+  pageKey: PropTypes.string.isRequired,
+};
 
 PanoramaPageLink.propTypes = {
   href: PropTypes.string.isRequired,
@@ -1303,6 +1324,8 @@ export default function PanoramaLandingTemplate({
   const isInteractivePreview = Boolean(onSelectTarget);
   const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
+  const isInRouter = useInRouterContext();
+  const canScrollAfterPageChange = Boolean(pageState) && isInRouter && !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar, currentPageKey);
   const navItems = pageState
@@ -1481,6 +1504,7 @@ export default function PanoramaLandingTemplate({
             })
           : null}
       </article>
+      {canScrollAfterPageChange ? <PanoramaAvailabilityScrollAfterPageChange pageKey={currentPageKey} /> : null}
 
       {isGalleryBrowserOpen ? (
         <Suspense fallback={null}>

@@ -138,6 +138,13 @@ const listSectionIds = () =>
 
 const getTopMenu = () => document.querySelector(".templateTopBarNav");
 
+const placeAvailabilityAt = (top) =>
+  jest.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function placeElement() {
+    return { top: this.id === "availability" ? top : 0, height: 0 };
+  });
+
+const listSmoothScrolls = () => globalThis.scrollTo.mock.calls.filter(([options]) => typeof options === "object");
+
 const buildModel = (payload) =>
   applyWebsiteDraftContentOverrides(
     applyWebsiteDraftThemeOverrides(
@@ -230,6 +237,15 @@ describe("site host routing for a site without site pages", () => {
     expect(screen.getByText(pageText)).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
   });
+
+  it("does not scroll when the site is opened at the availability anchor", async () => {
+    placeAvailabilityAt(900);
+
+    renderAppAt("/#availability");
+    await readSiteHtml();
+
+    expect(listSmoothScrolls()).toEqual([]);
+  });
 });
 
 describe("site host routing for a site with site pages", () => {
@@ -281,6 +297,38 @@ describe("site host routing for a site with site pages", () => {
     expect(globalThis.location.pathname).toBe("/");
     expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("scrolls to availability after the top scroll when Book leaves a page", async () => {
+    placeAvailabilityAt(900);
+    renderAppAt("/gallery");
+    await screen.findByRole("link", { name: "Home" });
+    globalThis.scrollTo.mockClear();
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Book" }));
+
+    expect(`${globalThis.location.pathname}${globalThis.location.hash}`).toBe("/#availability");
+    expect(globalThis.scrollTo.mock.calls).toEqual([[0, 0], [{ top: 882, behavior: "smooth" }]]);
+  });
+
+  it("stays at the top when Home leaves a page", async () => {
+    placeAvailabilityAt(900);
+    renderAppAt("/gallery");
+    await screen.findByRole("link", { name: "Home" });
+    globalThis.scrollTo.mockClear();
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
+
+    expect(globalThis.scrollTo.mock.calls).toEqual([[0, 0]]);
+  });
+
+  it("scrolls to availability when the guest opens Main at the availability anchor", async () => {
+    placeAvailabilityAt(900);
+
+    renderAppAt("/#availability");
+    await screen.findByTestId("quote-availability");
+
+    expect(listSmoothScrolls()).toEqual([[{ top: 882, behavior: "smooth" }]]);
   });
 
   it("reveals the sections of the page the guest moves to", async () => {
