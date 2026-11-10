@@ -23,6 +23,12 @@ const CATALOG_COLUMNS = [
   "stripe_refund_id",
   "refund_error",
   "total_price",
+  "paid_at",
+  "commissionable_amount_cents",
+  "domits_commission_rate_bps",
+  "domits_commission_amount_cents",
+  "domits_commission_annual_revenue_cents",
+  "domits_commission_period_start",
   "booking_source",
   "site_id",
   "guest_email",
@@ -93,6 +99,24 @@ describe("Booking entity", () => {
     });
   });
 
+  it("maps commission fields as nullable booking snapshots", async () => {
+    const metadata = await loadBookingMetadata();
+    const expectedTypes = {
+      paid_at: "bigint",
+      commissionable_amount_cents: "bigint",
+      domits_commission_rate_bps: "integer",
+      domits_commission_amount_cents: "bigint",
+      domits_commission_annual_revenue_cents: "bigint",
+      domits_commission_period_start: "bigint",
+    };
+    Object.entries(expectedTypes).forEach(([name, type]) => {
+      const column = metadata.findColumnWithDatabaseName(name);
+      expect(column).toBeDefined();
+      expect(column.type).toBe(type);
+      expect(column.isNullable).toBe(true);
+    });
+  });
+
   it("reads cancelled_at as a number and keeps an empty one empty", async () => {
     const metadata = await loadBookingMetadata();
     const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
@@ -108,6 +132,23 @@ describe("cancelled_at migration", () => {
     const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
     expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
     expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+  });
+});
+
+describe("direct booking commission migration", () => {
+  it("adds the commission snapshot columns to both schemas", () => {
+    const sql = loadMigrationSql("20261110_direct_booking_commission.sql");
+    [
+      "paid_at BIGINT",
+      "commissionable_amount_cents BIGINT",
+      "domits_commission_rate_bps INTEGER",
+      "domits_commission_amount_cents BIGINT",
+      "domits_commission_annual_revenue_cents BIGINT",
+      "domits_commission_period_start BIGINT",
+    ].forEach((column) => {
+      expect(sql).toContain(`ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS ${column};`);
+      expect(sql).toContain(`ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS ${column};`);
+    });
   });
 });
 

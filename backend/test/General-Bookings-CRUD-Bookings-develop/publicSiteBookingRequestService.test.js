@@ -123,6 +123,7 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
         arrivaldate: ARRIVAL_MS,
         departuredate: DEPARTURE_MS,
         total_price: 810,
+        commissionable_amount_cents: 76000,
         cancellation_policy: "flexible",
         paymentid: "FAILED: ",
         latepayment: false,

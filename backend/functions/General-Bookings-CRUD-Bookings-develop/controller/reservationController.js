@@ -282,13 +282,29 @@ class ReservationController {
   }
 
   async acceptInquiry(bookingId, authToken) {
+    const authenticatedHost = await this.bookingService.authManager.authenticateUser(authToken);
+    let commissionSnapshot;
+    try {
+      commissionSnapshot = await this.paymentSerivce.prepareCommission(authenticatedHost.sub, bookingId);
+    } catch (error) {
+      if (error?.code === "DIRECT_BOOKING_ENTERPRISE_TIER_REQUIRED") {
+        return {
+          statusCode: error.statusCode || 409,
+          headers: responseHeaderJSON,
+          response: { message: error.message, code: error.code },
+        };
+      }
+      throw error;
+    }
+
     const result = await this.bookingService.acceptInquiry(bookingId, authToken);
     try {
       const paymentData = await this.paymentSerivce.create(
         result.hostId,
         result.bookingId,
         result.propertyId,
-        result.dates
+        result.dates,
+        commissionSnapshot
       );
       return {
         statusCode: 200,
@@ -297,6 +313,13 @@ class ReservationController {
       };
     } catch (stripeError) {
       console.error("Stripe payment intent creation failed after accept:", stripeError);
+      if (stripeError?.code === "DIRECT_BOOKING_ENTERPRISE_TIER_REQUIRED") {
+        return {
+          statusCode: stripeError.statusCode || 409,
+          headers: responseHeaderJSON,
+          response: { ...result, message: stripeError.message, code: stripeError.code },
+        };
+      }
       return { statusCode: 200, headers: responseHeaderJSON, response: result };
     }
   }

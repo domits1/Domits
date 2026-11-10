@@ -35,6 +35,9 @@ describe("ReservationRepository booking-paid outbox transaction", () => {
 
     expect(transaction).toHaveBeenCalledTimes(2);
     expect(firstUpdate.andWhere).toHaveBeenCalledWith("status != :paidStatus", { paidStatus: "Paid" });
+    expect(firstUpdate.set).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "Paid", paid_at: expect.any(Number) })
+    );
     expect(insert.values).toHaveBeenCalledWith(expect.objectContaining({
       bookingId: "booking-1",
       eventType: "BOOKING_PAID",

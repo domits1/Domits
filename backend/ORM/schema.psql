@@ -110,6 +110,12 @@ CREATE TABLE IF NOT EXISTS main.booking (
   stripe_refund_id VARCHAR(255),
   refund_error TEXT,
   total_price DOUBLE PRECISION,
+  paid_at BIGINT,
+  commissionable_amount_cents BIGINT,
+  domits_commission_rate_bps INTEGER,
+  domits_commission_amount_cents BIGINT,
+  domits_commission_annual_revenue_cents BIGINT,
+  domits_commission_period_start BIGINT,
   booking_source VARCHAR(255),
   site_id VARCHAR(255),
   guest_email VARCHAR(255),
@@ -625,6 +631,12 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255);
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS checked_out_at BIGINT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS special_request TEXT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS paid_at BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS commissionable_amount_cents BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS domits_commission_rate_bps INTEGER;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS domits_commission_amount_cents BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS domits_commission_annual_revenue_cents BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS domits_commission_period_start BIGINT;
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
 

@@ -105,7 +105,7 @@ class PublicSiteBookingRequestService {
       }
 
       const site = await this.loadPublishedSite(normalizedSiteId, stay.propertyId);
-      const total = await this.confirmLivePrice({ stay, sessionId, requestId });
+      const livePrice = await this.confirmLivePrice({ stay, sessionId, requestId });
       await this.assertDatesStillAvailable(stay);
 
       const hostContact = await this.lookupHostContact(site.hostId);
@@ -118,7 +118,8 @@ class PublicSiteBookingRequestService {
         contact,
         hostContact,
         cancellationPolicy,
-        total,
+        total: livePrice.total,
+        commissionableAmountCents: livePrice.commissionableAmountCents,
         idempotencyKey: normalizedIdempotencyKey,
       });
       if (booking.replayed) {
@@ -128,7 +129,7 @@ class PublicSiteBookingRequestService {
       await this.recordRequestedEvent({ site, stay, sessionId, requestId, publicBookingRef: booking.publicBookingRef });
       await this.notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef: booking.publicBookingRef });
 
-      return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total });
+      return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total: livePrice.total });
     } catch (error) {
       if (error instanceof PublicBookingRequestError) {
         throw error;
@@ -191,6 +192,7 @@ class PublicSiteBookingRequestService {
 
     const guests = Number(payload.guests);
     const quotedTotal = Number(payload.priceBreakdown?.total);
+    const commissionableAmountCents = Number(payload.priceBreakdown?.nightlyBaseTotal);
     let arrivalDateMs;
     let departureDateMs;
     try {
@@ -199,7 +201,15 @@ class PublicSiteBookingRequestService {
     } catch (error) {
       throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
     }
-    if (!Number.isInteger(guests) || guests < 1 || !Number.isFinite(quotedTotal)) {
+    if (
+      !Number.isInteger(guests) ||
+      guests < 1 ||
+      !Number.isSafeInteger(quotedTotal) ||
+      quotedTotal <= 0 ||
+      !Number.isSafeInteger(commissionableAmountCents) ||
+      commissionableAmountCents <= 0 ||
+      commissionableAmountCents > quotedTotal
+    ) {
       throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
     }
 
@@ -213,6 +223,7 @@ class PublicSiteBookingRequestService {
       departureDateMs,
       guests,
       quotedTotal,
+      commissionableAmountCents,
     };
   }
 
@@ -246,11 +257,21 @@ class PublicSiteBookingRequestService {
       throw publicBookingRequestErrorFromQuoteError({ code: requote.code, message: requote.message });
     }
 
-    const liveTotal = Number(requote.quote?.priceBreakdown?.total);
-    if (!Number.isFinite(liveTotal) || liveTotal !== stay.quotedTotal) {
+    const liveBreakdown = requote.quote?.priceBreakdown;
+    const liveTotal = Number(liveBreakdown?.total);
+    const liveCommissionableAmountCents = Number(liveBreakdown?.nightlyBaseTotal);
+    if (
+      !Number.isSafeInteger(liveTotal) ||
+      liveTotal !== stay.quotedTotal ||
+      !Number.isSafeInteger(liveCommissionableAmountCents) ||
+      liveCommissionableAmountCents !== stay.commissionableAmountCents
+    ) {
       throw new PublicBookingRequestError(CODES.QUOTE_EXPIRED, MESSAGES.priceChanged);
     }
-    return liveTotal;
+    return {
+      total: liveTotal,
+      commissionableAmountCents: liveCommissionableAmountCents,
+    };
   }
 
   async assertDatesStillAvailable(stay) {
@@ -300,7 +321,7 @@ class PublicSiteBookingRequestService {
     }
   }
 
-  buildInsertValues({ stay, site, contact, hostContact, cancellationPolicy, total, idempotencyKey, publicBookingRef }) {
+  buildInsertValues({ stay, site, contact, hostContact, cancellationPolicy, total, commissionableAmountCents, idempotencyKey, publicBookingRef }) {
     return {
       id: randomUUID(),
       arrivaldate: stay.arrivalDateMs,
@@ -316,6 +337,7 @@ class PublicSiteBookingRequestService {
       guestname: contact.name,
       hostname: hostContact.name || HOSTNAME_FALLBACK,
       total_price: total / 100,
+      commissionable_amount_cents: commissionableAmountCents,
       cancellation_policy: cancellationPolicy,
       bookingtype: BOOKING_TYPE_INQUIRY,
       booking_source: BOOKING_SOURCE_STANDALONE_SITE,
@@ -326,7 +348,7 @@ class PublicSiteBookingRequestService {
     };
   }
 
-  async insertBookingRequest({ stay, site, contact, hostContact, cancellationPolicy, total, idempotencyKey }) {
+  async insertBookingRequest({ stay, site, contact, hostContact, cancellationPolicy, total, commissionableAmountCents, idempotencyKey }) {
     let publicBookingRef = this.generatePublicBookingRef();
 
     for (let attempt = 1; attempt <= MAX_INSERT_ATTEMPTS; attempt += 1) {
@@ -339,6 +361,7 @@ class PublicSiteBookingRequestService {
             hostContact,
             cancellationPolicy,
             total,
+            commissionableAmountCents,
             idempotencyKey,
             publicBookingRef,
           })

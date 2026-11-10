@@ -499,7 +499,7 @@ class ReservationRepository {
       const updateResult = await manager
         .createQueryBuilder()
         .update(Booking)
-        .set({ status: "Paid" })
+        .set({ status: "Paid", paid_at: transitionedAt })
         .where("id = :id", { id })
         .andWhere("status != :paidStatus", { paidStatus: "Paid" })
         .execute();
