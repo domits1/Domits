@@ -25,14 +25,16 @@ export class SiteMinderMappingService {
     Object.assign(this, { restClient, accounts, props, roomTypes, ratePlans, propertyLookup, pmsCode, credentialsRef, now, newId, logger });
   }
 
-  async syncHotel({ userId, domitsPropertyId, hotelCode }) {
+  async syncRoomType({ userId, domitsPropertyId, hotelCode, roomTypeCode }) {
     const owner = requireText(userId, "userId");
     const propertyId = requireText(domitsPropertyId, "domitsPropertyId");
     const hotel = requireText(hotelCode, "hotelCode");
+    const roomCode = requireText(roomTypeCode, "roomTypeCode");
 
     await this.#checkOwner(owner, propertyId);
     const account = await this.#account(owner);
-    await this.#checkHotelIsFree(hotel, account.id, propertyId);
+    await this.#checkHotelIsFree(hotel, account.id);
+    await this.#checkRoomIsFree({ accountId: account.id, hotel, roomCode, propertyId });
 
     const roomRates = await this.restClient.getRoomRates(hotel);
     const rooms = groupByRoomType(mapRoomRates(roomRates, { logger: this.logger, hotelCode: hotel }));
@@ -42,27 +44,32 @@ export class SiteMinderMappingService {
         `SiteMinder has no room rates mapped to our PMS for hotel ${hotel}`
       );
     }
+    const room = rooms.find((candidate) => candidate.roomTypeCode === roomCode);
+    if (!room) {
+      throw new SiteMinderMappingError("SITEMINDER_ROOM_TYPE_NOT_FOUND", `SiteMinder hotel ${hotel} has no room type ${roomCode}`);
+    }
 
     const base = { integrationAccountId: account.id, domitsPropertyId: propertyId, externalPropertyId: hotel };
-    await this.props.upsert({ integrationAccountId: account.id, domitsPropertyId: propertyId, externalPropertyId: hotel, status: ACTIVE });
-
-    let ratePlanCount = 0;
-    for (const room of rooms) {
-      await this.roomTypes.upsert({ ...base, externalRoomTypeId: room.roomTypeCode, externalRoomTypeName: room.roomTypeName, status: ACTIVE });
-      for (const plan of room.ratePlans) {
-        await this.ratePlans.upsert({
-          ...base,
-          externalRoomTypeId: room.roomTypeCode,
-          externalRatePlanId: plan.ratePlanCode,
-          externalRatePlanName: plan.ratePlanName,
-          status: ACTIVE,
-        });
-        ratePlanCount += 1;
-      }
+    await this.props.upsert({ ...base, status: ACTIVE });
+    await this.roomTypes.upsert({ ...base, externalRoomTypeId: room.roomTypeCode, externalRoomTypeName: room.roomTypeName, status: ACTIVE });
+    for (const plan of room.ratePlans) {
+      await this.ratePlans.upsert({
+        ...base,
+        externalRoomTypeId: room.roomTypeCode,
+        externalRatePlanId: plan.ratePlanCode,
+        externalRatePlanName: plan.ratePlanName,
+        status: ACTIVE,
+      });
     }
-    const deactivated = await this.#deactivateRemoved(base, rooms);
+    const deactivated = await this.#deactivateRemoved(base, [room]);
 
-    return { hotelCode: hotel, integrationAccountId: account.id, roomTypes: rooms.length, ratePlans: ratePlanCount, deactivated };
+    return {
+      hotelCode: hotel,
+      roomTypeCode: room.roomTypeCode,
+      integrationAccountId: account.id,
+      ratePlans: room.ratePlans.length,
+      deactivated,
+    };
   }
 
   async #checkOwner(userId, domitsPropertyId) {
@@ -98,16 +105,24 @@ export class SiteMinderMappingService {
     });
   }
 
-  async #checkHotelIsFree(hotelCode, accountId, domitsPropertyId) {
+  async #checkHotelIsFree(hotelCode, accountId) {
     for (const row of await this.props.findByExternalPropertyId(hotelCode)) {
       const owner = await this.accounts.getById(row.integrationAccountId);
-      const sameMapping = row.integrationAccountId === accountId && row.domitsPropertyId === domitsPropertyId;
-      if (owner?.channel === SITEMINDER_CHANNEL && !sameMapping) {
-        throw new SiteMinderMappingError(
-          "SITEMINDER_HOTEL_ALREADY_MAPPED",
-          `SiteMinder hotel ${hotelCode} is already mapped to another Domits property`
-        );
+      if (owner?.channel === SITEMINDER_CHANNEL && row.integrationAccountId !== accountId) {
+        throw new SiteMinderMappingError("SITEMINDER_HOTEL_ALREADY_MAPPED", `SiteMinder hotel ${hotelCode} belongs to another Domits host`);
       }
+    }
+  }
+
+  async #checkRoomIsFree({ accountId, hotel, roomCode, propertyId }) {
+    const taken = (await this.roomTypes.listByAccountId(accountId)).find(
+      (row) => row.externalPropertyId === hotel && row.externalRoomTypeId === roomCode && row.domitsPropertyId !== propertyId && isActive(row)
+    );
+    if (taken) {
+      throw new SiteMinderMappingError(
+        "SITEMINDER_ROOM_TYPE_ALREADY_MAPPED",
+        `SiteMinder room type ${roomCode} of hotel ${hotel} is already linked to another Domits property`
+      );
     }
   }
 

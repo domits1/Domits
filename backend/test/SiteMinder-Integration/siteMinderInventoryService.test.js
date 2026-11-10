@@ -8,7 +8,7 @@ const DATES = { start: "2026-12-01", end: "2026-12-03" };
 const build = async ({ mapped = true } = {}) => {
   const tables = fakeTables();
   if (mapped) {
-    await new SiteMinderMappingService({
+    const mapping = new SiteMinderMappingService({
       ...tables,
       restClient: { getRoomRates: async () => PMSXTEST1_ROOM_RATES },
       propertyLookup: { getDomitsPropertyContext: async (id) => ({ propertyId: id, hostId: "host-1" }) },
@@ -16,7 +16,9 @@ const build = async ({ mapped = true } = {}) => {
       credentialsRef: "secret",
       now: () => 1,
       newId: () => "account-1",
-    }).syncHotel({ userId: "host-1", domitsPropertyId: "property-1", hotelCode: "PMSXTEST1" });
+    });
+    await mapping.syncRoomType({ userId: "host-1", domitsPropertyId: "property-1", hotelCode: "PMSXTEST1", roomTypeCode: "DORM" });
+    await mapping.syncRoomType({ userId: "host-1", domitsPropertyId: "property-2", hotelCode: "PMSXTEST1", roomTypeCode: "FAM" });
   }
   const pusher = () => ({ push: jest.fn(async () => ({ success: true, echoToken: "e1" })) });
   const pushers = { availabilityPusher: pusher(), restrictionsPusher: pusher(), ratesPusher: pusher() };
