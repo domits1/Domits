@@ -23,6 +23,11 @@ const CATALOG_COLUMNS = [
   "stripe_refund_id",
   "refund_error",
   "total_price",
+  "commissionable_accommodation_cents",
+  "commission_rate",
+  "commission_amount_cents",
+  "commission_annual_revenue_cents",
+  "commission_year",
   "booking_source",
   "site_id",
   "guest_email",
@@ -50,6 +55,13 @@ const CATALOG_NOT_NULL_COLUMNS = [
 ];
 
 const DIRECT_BOOKING_WEBSITE_COLUMNS = ["booking_source", "site_id", "guest_email", "public_booking_ref", "idempotency_key"];
+const DIRECT_BOOKING_COMMISSION_COLUMNS = [
+  "commissionable_accommodation_cents",
+  "commission_rate",
+  "commission_amount_cents",
+  "commission_annual_revenue_cents",
+  "commission_year",
+];
 
 const loadBookingMetadata = async () => {
   const dataSource = new DataSource({
@@ -93,6 +105,17 @@ describe("Booking entity", () => {
     });
   });
 
+  it("maps direct booking commission audit columns as nullable", async () => {
+    const metadata = await loadBookingMetadata();
+    DIRECT_BOOKING_COMMISSION_COLUMNS.forEach((columnName) => {
+      const column = metadata.findColumnWithDatabaseName(columnName);
+      expect(column).toBeDefined();
+      expect(column.isNullable).toBe(true);
+    });
+    expect(metadata.findColumnWithDatabaseName("commission_rate").type).toBe("numeric");
+    expect(metadata.findColumnWithDatabaseName("commission_year").type).toBe("integer");
+  });
+
   it("reads cancelled_at as a number and keeps an empty one empty", async () => {
     const metadata = await loadBookingMetadata();
     const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
@@ -101,6 +124,22 @@ describe("Booking entity", () => {
   });
 
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+});
+
+describe("direct booking commission migration", () => {
+  it("adds commission fields to both booking schemas", () => {
+    const sql = loadMigrationSql("20261110_direct_booking_commission.sql");
+    [
+      "commissionable_accommodation_cents BIGINT",
+      "commission_rate NUMERIC(5, 4)",
+      "commission_amount_cents BIGINT",
+      "commission_annual_revenue_cents BIGINT",
+      "commission_year INTEGER",
+    ].forEach((column) => {
+      expect(sql).toContain(`ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS ${column};`);
+      expect(sql).toContain(`ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS ${column};`);
+    });
+  });
 });
 
 describe("cancelled_at migration", () => {

@@ -13,10 +13,21 @@ class PaymentService {
 
     const account_Id = await this.stripeRepository.getStripeAccountId(hostId);
 
-    const paymentData = await this.stripeRepository.createPaymentIntent(account_Id, propertyId, dates, bookingId);
+    const paymentData = await this.stripeRepository.createPaymentIntent(
+      account_Id,
+      propertyId,
+      dates,
+      bookingId,
+      hostId
+    );
 
     const totalCents = paymentData?.breakdown?.customerPays ?? null;
-    await this.stripeRepository.updatePaymentId(bookingId, paymentData.stripePaymentId, totalCents);
+    await this.stripeRepository.updatePaymentId(
+      bookingId,
+      paymentData.stripePaymentId,
+      totalCents,
+      paymentData.commission || null
+    );
 
     await this.stripeRepository.addPaymentToTable(paymentData);
 

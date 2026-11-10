@@ -4,6 +4,10 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import SystemManagerRepository from "./systemManagerRepository.js";
 import CalculateTotalRate from "../util/calcuateTotalRate.js";
+import {
+  calculateDirectBookingCommission,
+  STANDALONE_SITE_BOOKING_SOURCE,
+} from "../util/directBookingCommission.js";
 import { Payment } from "database/models/Payment";
 import Database from "database";
 import { Booking } from "database/models/Booking";
@@ -40,18 +44,97 @@ class StripeRepository {
     return stripePromise;
   }
 
-  async createPaymentIntent(account_id, propertyId, dates, bookingId) {
+  async createPaymentIntent(account_id, propertyId, dates, bookingId, hostId) {
     try {
-      if (!account_id || !propertyId || !dates) {
-        console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
+      if (!account_id || !propertyId || !dates || !bookingId) {
         throw new NotFoundException(
-          "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.",
+          "account_id, propertyId, dates, or bookingId is missing. This information is needed to create a PaymentIntent."
         );
       }
 
       const stripe = await stripePromise;
+      const client = await Database.getInstance();
+      const booking = await client.getRepository(Booking).findOneBy({ id: bookingId });
+      if (!booking) {
+        throw new NotFoundException("Booking not found.");
+      }
+      if (hostId && booking.hostid !== hostId) {
+        throw new NotFoundException("Booking host does not match the payment host.");
+      }
 
-      const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
+      let hostCents;
+      let platformCents;
+      let totalCents;
+      let commission = null;
+      const metadata = { propertyId, dates: JSON.stringify(dates), bookingId };
+
+      const commissionableAccommodationCents = Number(booking.commissionable_accommodation_cents);
+      if (
+        booking.booking_source === STANDALONE_SITE_BOOKING_SOURCE &&
+        Number.isSafeInteger(commissionableAccommodationCents) &&
+        commissionableAccommodationCents > 0
+      ) {
+        totalCents = Math.round(Number(booking.total_price) * 100);
+        if (
+          !Number.isSafeInteger(totalCents) ||
+          totalCents <= 0 ||
+          totalCents < commissionableAccommodationCents
+        ) {
+          throw new Error("Direct booking website booking has an invalid quoted total.");
+        }
+
+        const year = new Date().getUTCFullYear();
+        const yearStart = Date.UTC(year, 0, 1);
+        const nextYearStart = Date.UTC(year + 1, 0, 1);
+        const revenueResult = await client
+          .getRepository(Booking)
+          .createQueryBuilder("booking")
+          .select(
+            "COALESCE(SUM(booking.commissionable_accommodation_cents), 0)",
+            "annual_revenue_cents"
+          )
+          .where("booking.hostid = :hostId", { hostId: booking.hostid })
+          .andWhere("booking.booking_source = :bookingSource", {
+            bookingSource: STANDALONE_SITE_BOOKING_SOURCE,
+          })
+          .andWhere("booking.status = :status", { status: "Paid" })
+          .andWhere("booking.createdat >= :yearStart", { yearStart })
+          .andWhere("booking.createdat < :nextYearStart", { nextYearStart })
+          .andWhere("booking.id <> :bookingId", { bookingId })
+          .andWhere("booking.commissionable_accommodation_cents IS NOT NULL")
+          .getRawOne();
+
+        const annualRevenueBeforeBookingCents = Math.max(
+          0,
+          Math.round(Number(revenueResult?.annual_revenue_cents) || 0)
+        );
+        const commissionResult = calculateDirectBookingCommission({
+          annualRevenueBeforeBookingCents,
+          commissionableAccommodationCents,
+        });
+
+        platformCents = commissionResult.commissionAmountCents;
+        hostCents = totalCents - platformCents;
+        commission = {
+          rate: commissionResult.rate,
+          amountCents: commissionResult.commissionAmountCents,
+          annualRevenueCents: commissionResult.annualRevenueCents,
+          year,
+        };
+        Object.assign(metadata, {
+          bookingSource: STANDALONE_SITE_BOOKING_SOURCE,
+          commissionRate: String(commission.rate),
+          commissionAmountCents: String(commission.amountCents),
+          commissionableAccommodationCents: String(commissionableAccommodationCents),
+          annualRevenueCents: String(commission.annualRevenueCents),
+          commissionYear: String(year),
+        });
+      } else {
+        const legacyBreakdown = await CalculateTotalRate(propertyId, dates);
+        hostCents = legacyBreakdown.hostCents;
+        platformCents = legacyBreakdown.platformCents;
+        totalCents = legacyBreakdown.totalCents;
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(totalCents),
@@ -61,11 +144,7 @@ class StripeRepository {
           destination: account_id,
         },
         application_fee_amount: Math.round(platformCents),
-        metadata: {
-          propertyId,
-          dates: JSON.stringify(dates),
-          bookingId,
-        },
+        metadata,
       });
 
       return {
@@ -76,13 +155,19 @@ class StripeRepository {
           hostReceives: hostCents,
           platformFeeGross: platformCents,
         },
+        commission,
       };
     } catch (error) {
       console.error("Error creating payment intent:", error);
+      if (
+        error?.code === "DIRECT_BOOKING_ENTERPRISE_RATE_REQUIRED" ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       throw new Error("Failed to create payment intent.");
     }
   }
-
   // --------
   // Query table "stripe-connected-accounts" and find their respective
   // stripe account_id, and give it back.
@@ -149,12 +234,19 @@ class StripeRepository {
     }
   }
 
-  async updatePaymentId(bookingId, stripePaymentId, totalCents = null) {
+  async updatePaymentId(bookingId, stripePaymentId, totalCents = null, commission = null) {
     const client = await Database.getInstance();
     const updateObject = { paymentid: stripePaymentId };
 
     if (typeof totalCents === "number" && Number.isFinite(totalCents)) {
       updateObject.total_price = Math.round(totalCents) / 100;
+    }
+
+    if (commission) {
+      updateObject.commission_rate = commission.rate;
+      updateObject.commission_amount_cents = commission.amountCents;
+      updateObject.commission_annual_revenue_cents = commission.annualRevenueCents;
+      updateObject.commission_year = commission.year;
     }
 
     await client.createQueryBuilder().update(Booking).set(updateObject).where("id = :id", { id: bookingId }).execute();
