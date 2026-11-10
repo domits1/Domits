@@ -438,6 +438,13 @@ describe("live view routing for a site with site pages", () => {
     ]);
   });
 
+  it("encodes the domain of the live view in the page links", async () => {
+    renderAppAt(`/website-live/${encodeURIComponent("Villa Bisous.example")}/gallery${SITE_SEARCH}`);
+    await screen.findByRole("link", { name: "Home" });
+
+    expect(readMenuHrefs()[1]).toBe(`/website-live/villa%20bisous.example/gallery${SITE_SEARCH}`);
+  });
+
   it("moves between pages under the live view without loading the site again", async () => {
     renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
     await screen.findByTestId("quote-availability");
