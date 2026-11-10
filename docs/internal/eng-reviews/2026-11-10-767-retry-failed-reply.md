@@ -13,6 +13,7 @@ Result: 1 blocking finding (P1, ChatScreen), reported alone and fixed before its
 | feat(messages): retry service, hook and Retry button | no blocking finding; one P3 below |
 | refactor(messages): extract buildSettledMessage | no findings; fallbacks `nowIso` and `optimisticId` equal the optimistic message's own `createdAt` and `id`, full web suite green |
 | feat(messages): retry in ChatScreen | 1 P1 (wrong recipient on retry), fixed before the commit; 1 P3 accepted |
+| docs(messages): document the retry contract | no findings; status codes and the `retryMessageId` dispatch checked against `messageService.js` and `messageController.js` |
 
 ## Findings
 
