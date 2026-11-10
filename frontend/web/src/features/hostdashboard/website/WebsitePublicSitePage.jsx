@@ -199,6 +199,8 @@ function WebsitePublicSitePage() {
   }, [renderPayload, resolution?.templateKey]);
 
   const activePageKey = resolveSitePageFromPath(routeSitePath, publicModel?.sitePages);
+  const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
+  const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
@@ -417,6 +419,8 @@ function WebsitePublicSitePage() {
             enableScrollReveal={isPanoramaTemplate}
             quoteContext={renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null}
             activePageKey={activePageKey}
+            pageBasePath={pageBasePath}
+            pageSearch={pageSearch}
           />
         </div>
       </main>

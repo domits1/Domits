@@ -92,6 +92,7 @@ const UNSAFE_NAV_LABEL_PATTERN = /[<>\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066
 const WHITESPACE_RUN_PATTERN = /\s+/g;
 const VISIBLE_CHARACTER_PATTERN = /[\p{L}\p{N}\p{P}\p{S}]/u;
 const SAFE_BASE_PATH_SEGMENT_PATTERN = /^[\w.~%-]+$/;
+const SAFE_SEARCH_PATTERN = /^\?[\w.~%=&!*'()-]+$/;
 
 const CONFIGURABLE_SITE_PAGES = SITE_PAGE_DEFINITIONS.filter((page) => page.key !== MAIN_SITE_PAGE_KEY);
 
@@ -164,12 +165,23 @@ export const resolveSitePageFromPath = (pathname, sitePages) => {
   return page ? page.key : MAIN_SITE_PAGE_KEY;
 };
 
-export const buildSitePageHref = (basePath, pageKey) => {
+export const isSitePagePath = (pathname) => {
+  const segments = splitPathSegments(pathname);
+  if (segments.length === 0) {
+    return true;
+  }
+
+  const slug = segments[0].toLowerCase();
+  return segments.length === 1 && CONFIGURABLE_SITE_PAGES.some((page) => page.slug === slug);
+};
+
+export const buildSitePageHref = (basePath, pageKey, search = "") => {
   const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
   const baseSegments = splitPathSegments(basePath);
   const isSafeBasePath = baseSegments.every((segment) => SAFE_BASE_PATH_SEGMENT_PATTERN.test(segment));
   const segments = isSafeBasePath ? baseSegments : [];
-  return `/${(page ? [...segments, page.slug] : segments).join("/")}`;
+  const safeSearch = typeof search === "string" && SAFE_SEARCH_PATTERN.test(search) ? search : "";
+  return `/${(page ? [...segments, page.slug] : segments).join("/")}${safeSearch}`;
 };
 
 export const resolvePanoramaPageSections = (sitePages, pageKey) => {

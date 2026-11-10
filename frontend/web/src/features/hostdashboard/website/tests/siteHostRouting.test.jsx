@@ -330,7 +330,21 @@ describe("marketplace routing for site paths", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
   });
 
-  it.each(["gallery", "accommodation", "contact-us", "unknown", "gallery/photos"])(
+  it.each(["gallery", "accommodation", "contact-us", "Gallery/"])(
+    "shows the site as today under the live view on the page path %s",
+    async (sitePath) => {
+      const todaysHtml = await renderTodaysSiteHtml();
+
+      renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+
+      expect(await readSiteHtml()).toBe(todaysHtml);
+      expect(lastTemplateProps().activePageKey).toBe("main");
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
+    }
+  );
+
+  it.each(["unknown", "gallery/photos", "contact", "main"])(
     "shows the not found page under the live view on %s",
     (sitePath) => {
       renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
@@ -339,4 +353,54 @@ describe("marketplace routing for site paths", () => {
       expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("live view routing for a site with site pages", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+
+  const readMenuHrefs = () => Array.from(getTopMenu().children).map((item) => item.getAttribute("href"));
+
+  beforeEach(() => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSitePages(renderPayload, GALLERY_AND_CONTACT_ON));
+  });
+
+  it("links every page under the live view and keeps the site id", async () => {
+    renderAppAt(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+    await screen.findByRole("link", { name: "Home" });
+
+    expect(listSectionIds()).toEqual(["gallery"]);
+    expect(readMenuHrefs()).toEqual([
+      `${LIVE_BASE}${SITE_SEARCH}`,
+      `${LIVE_BASE}/gallery${SITE_SEARCH}`,
+      `${LIVE_BASE}/contact-us${SITE_SEARCH}`,
+      `${LIVE_BASE}${SITE_SEARCH}#availability`,
+    ]);
+  });
+
+  it("moves between pages under the live view without loading the site again", async () => {
+    renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
+    await screen.findByTestId("quote-availability");
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Reach us" }));
+
+    expect(`${globalThis.location.pathname}${globalThis.location.search}`).toBe(
+      `${LIVE_BASE}/contact-us${SITE_SEARCH}`
+    );
+    expect(listSectionIds()).toEqual(["contact"]);
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
+
+    expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
+  });
+
+  it("shows Main under the live view for a page that is off", async () => {
+    renderAppAt(`${LIVE_BASE}/accommodation${SITE_SEARCH}`);
+    await screen.findByTestId("quote-availability");
+
+    expect(lastTemplateProps().activePageKey).toBe("main");
+    expect(listSectionIds()).toEqual(["overview", "about", "features", "lifestyle", "availability"]);
+  });
 });

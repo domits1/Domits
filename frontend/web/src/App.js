@@ -61,6 +61,7 @@ import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
 import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
+import WebsiteLiveSiteRoute from "./features/hostdashboard/website/WebsiteLiveSiteRoute.jsx";
 import { resolveDirectBookingWebsiteSurface } from "./features/hostdashboard/website/directBookingWebsiteSurface";
 import MarketplaceCanonicalLink from "./features/seo/MarketplaceCanonicalLink";
 import { isWebsitePublicSitePageActive } from "./features/hostdashboard/website/seo/websiteHeadTagsRegistry";
@@ -217,7 +218,7 @@ function App() {
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
                   <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
-                  <Route path="/website-live/:domain" element={<WebsitePublicSitePage />} />
+                  <Route path="/website-live/:domain/*" element={<WebsiteLiveSiteRoute />} />
                   <Route path="/website-live" element={<WebsitePublicSitePage />} />
 
                   {/* Chat */}
