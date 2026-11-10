@@ -18,7 +18,7 @@ Deploy the updated Booking entity and booking Lambda only after the migration co
 
 Run the metadata query in the migration SQL and confirm one nullable `refund_status` VARCHAR(32) row for each schema. Check that no migration job remains submitted or processing.
 
-The migration reports the number of historical cancelled bookings whose refund outcome is unknown. This is expected for records that predate persisted Stripe refund statuses. The migration deliberately does not infer a successful refund from `refunded_amount` or `stripe_refund_id`.
+Historical cancelled bookings with payment/refund evidence are backfilled to `unknown`, because their outcome predates persisted Stripe refund statuses. The migration deliberately does not infer a successful refund from `refunded_amount` or `stripe_refund_id`. The SQL file does not include per-schema count queries; check the affected row count in the database migration output if your migration runner provides it.
 
 ## Status values
 

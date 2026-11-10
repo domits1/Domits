@@ -388,9 +388,11 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       expect(result.statusCode).toBe(200);
     });
 
-    it("should handle booking without payment ID", async () => {
-      const bookingId = "booking_no_payment";
-      mockBooking({ id: bookingId, paymentid: null });
+    it.each([
+      { bookingId: "booking_no_payment", status: "Confirmed", refundStatus: null },
+      { bookingId: "booking_paid_without_payment_id", status: "Paid", refundStatus: "unknown" },
+    ])("handles a booking without a Stripe PaymentIntent: $bookingId", async ({ bookingId, status, refundStatus }) => {
+      mockBooking({ id: bookingId, status, paymentid: null });
 
       const result = await controller.cancelBooking(bookingId, authEvent);
 
@@ -399,63 +401,31 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         refundedAmount: 10000,
         stripeRefundId: null,
         refundError: null,
-        refundStatus: null,
-      });
-
-      expect(result.statusCode).toBe(200);
-    });
-
-    it("keeps the refund outcome unknown for a paid booking without a Stripe PaymentIntent", async () => {
-      const bookingId = "booking_paid_without_payment_id";
-      mockBooking({ id: bookingId, status: "Paid", paymentid: null });
-
-      const result = await controller.cancelBooking(bookingId, authEvent);
-
-      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: null,
-        refundError: null,
-        refundStatus: "unknown",
+        refundStatus,
       });
       expect(result.statusCode).toBe(200);
     });
 
-    it("keeps a pending Stripe refund in the unknown state", async () => {
-      const bookingId = "booking_refund_pending";
-      mockBooking({ id: bookingId, paymentid: "pi_pending" });
+    it.each([
+      { stripeStatus: "pending", refundStatus: "unknown" },
+      { stripeStatus: "failed", refundStatus: "not_refunded" },
+    ])("maps a Stripe $stripeStatus refund to the expected state", async ({ stripeStatus, refundStatus }) => {
+      const bookingId = `booking_refund_${stripeStatus}`;
+      const stripeRefundId = `re_${stripeStatus}`;
+      mockBooking({ id: bookingId, paymentid: `pi_${stripeStatus}` });
       mockStripe.refunds.create.mockResolvedValue({
-        id: "re_pending",
+        id: stripeRefundId,
         amount: 10000,
-        status: "pending",
+        status: stripeStatus,
       });
 
       await controller.cancelBooking(bookingId, authEvent);
 
       expectCancelRecord(bookingId, {
         refundedAmount: 10000,
-        stripeRefundId: "re_pending",
+        stripeRefundId,
         refundError: null,
-        refundStatus: "unknown",
-      });
-    });
-
-    it("marks a failed Stripe refund as not refunded", async () => {
-      const bookingId = "booking_refund_failed";
-      mockBooking({ id: bookingId, paymentid: "pi_failed" });
-      mockStripe.refunds.create.mockResolvedValue({
-        id: "re_failed",
-        amount: 10000,
-        status: "failed",
-      });
-
-      await controller.cancelBooking(bookingId, authEvent);
-
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: "re_failed",
-        refundError: null,
-        refundStatus: "not_refunded",
+        refundStatus,
       });
     });
 

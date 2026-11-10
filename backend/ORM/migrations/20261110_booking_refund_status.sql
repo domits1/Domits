@@ -41,10 +41,3 @@ WHERE table_name = 'booking'
   AND column_name = 'refund_status'
 ORDER BY table_schema ASC;
 
-SELECT COUNT(*) AS legacy_canceled_with_unknown_refund
-FROM test.booking
-WHERE LOWER(status) IN ('cancelled', 'canceled') AND refund_status = 'unknown';
-
-SELECT COUNT(*) AS legacy_canceled_with_unknown_refund
-FROM main.booking
-WHERE LOWER(status) IN ('cancelled', 'canceled') AND refund_status = 'unknown';
