@@ -16,7 +16,7 @@ export class BookingRefundStatus20261110 {
       WHERE LOWER(status) IN ('cancelled', 'canceled')
         AND refund_status IS NULL
         AND (
-          (paymentid IS NOT NULL AND TRIM(paymentid) <> '' AND paymentid NOT LIKE 'FAILED%')
+          (NULLIF(TRIM(paymentid), '') IS NOT NULL AND paymentid NOT LIKE 'FAILED%')
           OR stripe_refund_id IS NOT NULL
           OR COALESCE(refunded_amount, 0) > 0
           OR refund_error IS NOT NULL
@@ -29,7 +29,7 @@ export class BookingRefundStatus20261110 {
       WHERE LOWER(status) IN ('cancelled', 'canceled')
         AND refund_status IS NULL
         AND (
-          (paymentid IS NOT NULL AND TRIM(paymentid) <> '' AND paymentid NOT LIKE 'FAILED%')
+          (NULLIF(TRIM(paymentid), '') IS NOT NULL AND paymentid NOT LIKE 'FAILED%')
           OR stripe_refund_id IS NOT NULL
           OR COALESCE(refunded_amount, 0) > 0
           OR refund_error IS NOT NULL
