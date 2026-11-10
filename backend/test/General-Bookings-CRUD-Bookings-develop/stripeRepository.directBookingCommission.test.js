@@ -1,6 +1,13 @@
+const originalTestEnv = process.env.TEST;
+const hadTestEnv = Object.hasOwn(process.env, "TEST");
 process.env.TEST = "true";
 
 const StripeRepository = require("../../functions/General-Bookings-CRUD-Bookings-develop/data/stripeRepository.js").default;
+
+afterAll(() => {
+  if (hadTestEnv) process.env.TEST = originalTestEnv;
+  else delete process.env.TEST;
+});
 
 const BOOKING = {
   id: "booking-1",
