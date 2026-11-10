@@ -28,3 +28,22 @@ At or above €5,000,000 annual revenue, the configured table marks the account 
 ## Rollback
 
 Revert the code and entity mapping first and deploy it. Only then consider dropping the five columns, because removing them while a Lambda still has the new Booking entity will break Booking reads. The columns are nullable and harmless to leave unused.
+
+## Post-deployment verification (test environment)
+
+Complete these checks in the test environment after the schema migration and Lambda deployment, before promoting the change to production:
+
+1. Confirm the booking Lambda is running with `STRIPE_MODE=test` and that the existing `/stripe/keys/secret/test` parameter resolves to the test-mode platform secret. Use a host with a connected Stripe test account.
+2. Submit and accept a new Standalone Site booking with a known quote breakdown. Confirm the booking stores `commissionable_accommodation_cents` from the revalidated accommodation subtotal, not the guest total.
+3. Complete the test payment. Confirm Stripe's PaymentIntent amount equals the guest quote total, its destination is the host's connected account, and its application fee equals the rounded tier percentage multiplied by the accommodation-only amount.
+4. Confirm the booking stores the applied commission rate, amount, annual revenue snapshot and commission year. Confirm the booking is counted in the following tier calculation only after its status becomes `Paid`.
+5. Run a partial and a full refund in test mode. Verify the guest refund, connected-account transfer reversal and proportional application-fee refund in Stripe.
+6. Create a normal marketplace booking and verify it still follows the pre-existing payment calculation.
+
+Do not use live Stripe keys or real guest payments for this verification. The production rollout requires the same schema smoke checks on `main.booking`, successful CI, and an approved test-environment result.
+
+## Operating assumptions to confirm with Product/Finance
+
+- Annual volume is grouped by the UTC year of booking creation, while only bookings in `Paid` status contribute to the revenue sum.
+- Historical bookings with no stored accommodation-only cents remain excluded from new-tier aggregation. Do not substitute `total_price`, because it can contain cleaning, taxes or other non-commissionable amounts.
+- At €5,000,000 and above the current implementation blocks acceptance until an Enterprise commission rate is supplied. Confirm the intended rate/configuration path before a host reaches that volume.
