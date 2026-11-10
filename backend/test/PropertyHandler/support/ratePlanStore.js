@@ -99,13 +99,14 @@ const buildContext = (rows, { onUpdate, onInsert, failInsert }) => {
     }
     rows.push(row);
     onInsert(row);
-    return { raw: [{ ...row }], identifiers: [{ id: row.id }] };
+    const returned = operation.returning === "*" ? { ...row } : { id: row.id };
+    return { raw: [returned], identifiers: [{ id: row.id }] };
   };
 
   const builder = (entity) => {
     const operation = { entity, kind: "read", conditions: [] };
     const chain = {
-      where: (condition, params) => operation.conditions.push([condition, params]) && chain,
+      where: (condition, params) => Object.assign(operation, { conditions: [[condition, params]] }) && chain,
       andWhere: (condition, params) => operation.conditions.push([condition, params]) && chain,
       orderBy: (column, order) => {
         if (column !== "plan.effective_from" || order !== "DESC") throw new Error(`unexpected order: ${column} ${order}`);
@@ -116,7 +117,7 @@ const buildContext = (rows, { onUpdate, onInsert, failInsert }) => {
       insert: () => Object.assign(operation, { kind: "insert" }) && chain,
       into: (target) => Object.assign(operation, { entity: target }) && chain,
       values: (values) => Object.assign(operation, { values }) && chain,
-      returning: () => chain,
+      returning: (columns) => Object.assign(operation, { returning: columns }) && chain,
       getMany: () => run(operation),
       getOne: async () => (await run(operation))[0] ?? null,
       execute: () => run(operation),
@@ -129,7 +130,7 @@ const buildContext = (rows, { onUpdate, onInsert, failInsert }) => {
     getRepository: (entity) => ({
       createQueryBuilder: () => builder(entity),
       create: (values) => ({ ...values }),
-      save: async (values) => (await run({ entity, kind: "insert", values })).raw[0],
+      save: async (values) => (await run({ entity, kind: "insert", values, returning: "*" })).raw[0],
       update: (criteria, values) =>
         run({ entity, kind: "update", conditions: [["id = :id", { id: criteria.id }]], values }),
       findOneBy: async ({ id }) => (await builder(entity).where("id = :id", { id }).getOne()),

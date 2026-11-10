@@ -137,6 +137,21 @@ describe("DirectBookingWebsiteRatePlanRepository.replaceUnpaidPlan", () => {
     expect(currentRowsOf(store, "host-1")).toEqual([expect.objectContaining({ plan: "elite" })]);
   });
 
+  it("refuses on its retry when a paid activation commits first, and keeps the paid plan", async () => {
+    const store = buildRatePlanStore({ plans: [planRow()] });
+    store.holdCommitsUntil(2);
+    const paid = { accountId: "host-1", plan: "elite", priceCents: 4300, currency: "EUR", billingFrequency: "monthly" };
+
+    const [, result] = await Promise.all([
+      repository.activatePaidPlan({ ...paid, status: "ACTIVE", effectiveFrom: new Date(), stripeSubscriptionId: "sub_1" }),
+      repository.replaceUnpaidPlan(TO_ELITE),
+    ]);
+
+    expect(result).toEqual({ outcome: "paid_plan_active" });
+    expect(store.transactions).toHaveLength(3);
+    expect(currentRowsOf(store, "host-1")).toEqual([expect.objectContaining({ stripe_subscription_id: "sub_1" })]);
+  });
+
   it("answers conflict and changes nothing when the conflict outlives the retries", async () => {
     const store = buildRatePlanStore({
       plans: [planRow()],
