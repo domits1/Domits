@@ -14,6 +14,12 @@ import "../styles/hostSettings.css";
 const CHECKOUT_STATUS_PARAM = "websiteCheckout";
 const CHECKOUT_POLL_ATTEMPTS = 10;
 const CHECKOUT_POLL_INTERVAL_MS = 1500;
+const PLAN_CHANGE_NOTICES = Object.freeze({
+  downgrade_scheduled: "downgradeScheduled",
+  downgraded: "downgradeSuccess",
+  upgrade_restored: "restoreSuccess",
+  unchanged: "unchanged",
+});
 
 const getCheckoutStateFromUrl = () => {
   const checkoutState = new URLSearchParams(window.location.search).get(
@@ -410,13 +416,7 @@ const DirectBookingWebsitePlanSection = ({
         setRatePlan(await getWebsiteRatePlan());
       }
 
-      const messageByAction = {
-        downgrade_scheduled: "downgradeScheduled",
-        downgraded: "downgradeSuccess",
-        upgrade_restored: "restoreSuccess",
-        unchanged: "unchanged",
-      };
-      setNotice(copy[messageByAction[result?.action]] || copy.unchanged);
+      setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
     } catch (error) {
       const fallbackMessage =
         targetPlan === "elite" && !isReactivation
