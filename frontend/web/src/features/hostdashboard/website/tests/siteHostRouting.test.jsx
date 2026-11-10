@@ -493,9 +493,9 @@ describe("marketplace live view page checks", () => {
     renderAppAt(`/website-live/${SITE_DOMAIN}/gallery`);
 
     await moveTo(`/website-live/${SITE_DOMAIN}/unknown`);
-    await act(async () => resolveFirstCheck(renderPayload));
     await moveTo("/website-live/other.example/gallery");
     await moveTo(`/website-live/${SITE_DOMAIN}/contact-us`);
+    await act(async () => resolveFirstCheck(renderPayload));
 
     expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel.mock.calls.map(([request]) => request.domain)).toEqual([
