@@ -973,6 +973,23 @@ describe("DirectBookingWebsitePlanSection", () => {
       ]);
     });
 
+    test("clears the upgraded notice when the next change fails", async () => {
+      getWebsiteRatePlan.mockResolvedValueOnce(selfSelectPlan()).mockResolvedValue(selfSelectedElitePlan());
+      changeWebsiteRatePlan
+        .mockResolvedValueOnce({ action: "upgraded", plan: selfSelectedElitePlan() })
+        .mockRejectedValueOnce(new Error("Request failed"));
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+      await screen.findByText("Your website plan is now Elite");
+      fireEvent.click(screen.getByRole("button", { name: "Switch to Essentials" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
+      expect(screen.queryByText("Your website plan is now Elite")).not.toBeInTheDocument();
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+    });
+
     test("sends one change when Elite is clicked twice at once, and keeps both buttons disabled while it runs", async () => {
       let answerChange;
       getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
