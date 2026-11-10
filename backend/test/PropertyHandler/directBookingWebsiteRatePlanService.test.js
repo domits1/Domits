@@ -407,7 +407,6 @@ describe("DirectBookingWebsiteRatePlanService", () => {
       plan: "essentials",
       entitlements: getWebsiteEntitlements("essentials"),
       effectiveUntil: null,
-      granted: false,
     };
 
     const expectNothingWritten = () => {
@@ -434,32 +433,32 @@ describe("DirectBookingWebsiteRatePlanService", () => {
       expectNothingWritten();
     });
 
-    it("reads a paid Elite plan with its entitlements and not as granted", async () => {
-      repository.findCurrentByAccountId.mockResolvedValue(plan({
-        plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1",
-      }));
+    it.each([
+      ["a paid Elite plan", { price_cents: 4300, stripe_subscription_id: "sub_1" }],
+      ["an Elite plan without a subscription or an end date", { stripe_subscription_id: null, effective_until: null }],
+    ])("reads %s with the Elite entitlements and no end date", async (_label, fields) => {
+      repository.findCurrentByAccountId.mockResolvedValue(plan({ plan: "elite", ...fields }));
 
       await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual({
         plan: "elite",
         entitlements: getWebsiteEntitlements("elite"),
         effectiveUntil: null,
-        granted: false,
       });
       expectNothingWritten();
     });
 
-    it("reads an Elite plan without a subscription as granted, with its end date", async () => {
+    it("reads an Elite plan whose end date is still ahead with its entitlements and its end date", async () => {
       const effectiveUntil = new Date(Date.now() + 86_400_000);
       repository.findCurrentByAccountId.mockResolvedValue(plan({ plan: "elite", effective_until: effectiveUntil }));
 
-      await expect(service.getCurrentEntitlements("host-1")).resolves.toMatchObject({
+      await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual({
         plan: "elite",
+        entitlements: getWebsiteEntitlements("elite"),
         effectiveUntil,
-        granted: true,
       });
     });
 
-    it("reads an Essentials row without a subscription as not granted", async () => {
+    it("reads a current Essentials row as Essentials", async () => {
       repository.findCurrentByAccountId.mockResolvedValue(plan());
 
       await expect(service.getCurrentEntitlements("host-1")).resolves.toEqual(ESSENTIALS_VIEW);

@@ -81,6 +81,8 @@ export const ratePlanRow = (overrides = {}) => ({
 
 export const PAID_ELITE_ROW = ratePlanRow({ plan: "elite", price_cents: 4300, stripe_subscription_id: "sub_1" });
 
+export const ELITE_WITHOUT_SUBSCRIPTION_ROW = ratePlanRow({ plan: "elite" });
+
 export const expectNoPlanRead = (ratePlanRepository) => {
   for (const method of Object.values(ratePlanRepository)) {
     expect(method).not.toHaveBeenCalled();
