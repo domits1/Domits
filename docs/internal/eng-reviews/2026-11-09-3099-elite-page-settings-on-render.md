@@ -1,8 +1,8 @@
 # #3099 Serve website page settings only to Elite hosts
 
 Issue: #3099
-Reviewed: the staged diff of each commit on `elite-page-settings-on-render` after b79a59405, and the whole branch diff before opening
-Result: 0 blocking, 4 fixed
+Reviewed: the staged diff of each commit on `elite-page-settings-on-render` after b79a59405, and the whole branch diff before opening; on 10 November the merge 7fd138158 and the commits after it
+Result: 0 blocking, 5 fixed
 
 ## Findings
 
@@ -13,6 +13,7 @@ Result: 0 blocking, 4 fixed
 | P3 (9/10) | propertyController.js, `buildPublicDirectBookingWebsiteRenderPayload` | The new default `contentOverrides = site.publishedContentOverrides` was evaluated before the null site guard, so a call with a null site would throw instead of returning null. No caller reached it. | Fixed: `site?.publishedContentOverrides`. |
 | P3 (9/10) | websiteElitePageSettings.js, `hasSitePages` | The mutation check showed the array and `typeof` guards were redundant: `Object.hasOwn` already answers false for arrays and strings parsed from JSON. | Fixed in a refactor commit; the null guard stays and is tested. |
 | P4 (5/10) | websiteElitePageSettings.js, `hasSitePages` | Replacing `Object.hasOwn` with `in` survives the tests. | Accepted: the overrides come from `JSON.parse`, which creates only own properties. |
+| P3 (9/10) | direct_booking_website_handoff.md, rate plan view | After the merge 7fd138158 the handoff still named a `granted` field that the view no longer answers. | Fixed in the documentation commit after the merge. |
 
 ## Decisions
 
@@ -20,6 +21,7 @@ Result: 0 blocking, 4 fixed
 - The plan read runs in the existing `Promise.all` of the render and never rejects, so a failure cannot turn a render into a 500.
 - `view=entitlements` is a query parameter on the existing route, so no API Gateway change. Without it the route answers as before, including the Essentials row it creates for a new host.
 - Saving and publishing never read the plan, so the editor flow is unchanged and a host whose Elite has ended can still save.
+- `view=entitlements` does not say how Elite was obtained. A host can choose Elite himself without payment, so an Elite plan without a Stripe subscription or an end date gets the page settings and the Elite entitlements like a paid one. The merge 7fd138158 brings the removal of the `granted` field from `elite-page-settings-check`, with the matching change to `websiteRatePlanEntitlementsView.test.js`, so the merge itself is green.
 
 ## Not in scope
 
@@ -31,3 +33,5 @@ Result: 0 blocking, 4 fixed
 ## Mutation check
 
 Run on a copy outside the worktree, one mutant at a time, 30 mutants over both pull requests. Caught: the check made to run always (9 tests), every host allowed, allow on a read error, no time limit, render reading the plan of a host given in the request, render ignoring the served overrides, the render default lost, preview answering the stored draft, preview reading the plan of a host given in the request, a draft path reading through `getCurrentPlan`, the entitlements view never taken, always taken, or read for an account given in the request, and every mutant of the read-only check listed in its own record. Survived: `in` instead of `Object.hasOwn`, equivalent, see above.
+
+On 10 November: an Elite plan without a subscription read as Essentials. Caught by the render, preview and `view=entitlements` tests.

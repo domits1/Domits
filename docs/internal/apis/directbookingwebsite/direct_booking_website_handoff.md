@@ -468,7 +468,7 @@ Elite websites can have more than one page. The page settings live in the conten
 - A failed plan read, or one that does not answer within 3 seconds (`WEBSITE_PLAN_READ_TIMEOUT_MS`), drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
 - When Elite ends, the next request no longer serves the key.
 
-`GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil, granted }` for the host in the token, read only. `granted` is true for an Elite plan without a Stripe subscription. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
+`GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil }` for the host in the token, read only. An Elite plan without a Stripe subscription or an end date reads like any other Elite plan. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
 
 Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
 
