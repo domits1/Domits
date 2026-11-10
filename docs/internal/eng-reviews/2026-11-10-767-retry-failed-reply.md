@@ -10,6 +10,7 @@ Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before
 |---|---|
 | feat(messages): retry a failed provider reply through POST /send | 1 P2 fixed before the commit, see Findings |
 | refactor(messages): extract postToSend | no findings; the diff moves the fetch and error handling unchanged, full web suite green |
+| feat(messages): retry service, hook and Retry button | no blocking finding; one P3 below |
 
 ## Findings
 
@@ -18,6 +19,9 @@ Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before
 | P2 (8/10) | backend/functions/UnifiedMessaging/business/messageService.js:509 `metadata: message.metadata` with buildStoredMetadata `typeof payload.metadata === "string" ? { rawMetadata: payload.metadata }` | The `metadata` column is `text`, so the stored row comes back as a string. A retry wrapped the old JSON under `rawMetadata` and every further retry nested it deeper; `isAutomated` and `channel`, which the frontend reads from the top level (`useFetchMessages.js:152`), moved out of reach. | Fixed in the same commit: `parseStoredMetadata` parses the string before it is passed on. One test pins the top-level keys. |
 | P3 (7/10) | backend/functions/UnifiedMessaging/business/messageService.js `retryMessage`, between `claimFailedMessageForRetry` and `updateDeliveryResult` | If the Lambda dies or the database update fails after the claim, the row stays `pending` and shows no Retry button. | Accepted risk, chosen on purpose: sending the same reply to a guest twice is worse than a rare stuck row. Provider calls have a request timeout, so normal failures still end as `failed`. A stuck `pending` row needs a manual database update to `failed`. |
 | P3 (6/10) | docs/partner/integrations/channel_manager/channel_management_api_gateway_authorizer.md | `/{proxy+}` has no authorizer, so a new path would never get claims. | Handled by design: retry goes through the existing `POST /send` with `retryMessageId`, so no new route and no AWS change. The claim check is the same `getAuthenticatedUser` as for a new message. |
+| P3 (6/10) | frontend/web/src/components/messages/ChatMessage.js `canRetry = isOutgoing && deliveryStatus === "failed" && typeof onRetry === "function"` | The button also shows on a failed outgoing message in a Domits-only thread, where the backend answers 409 because there is no provider to resend through. | Accepted: Domits-only messages are saved as `delivered`, never `failed`, so the case does not occur today; the 409 shows the existing toast if it ever does. |
+
+Prettier reports `ChatMessage.js`, `messagingService.js`, `messagingService.test.js` and `messagesV2.scss` as unformatted on `acceptance` already. The diff keeps their existing layout instead of reformatting whole files.
 
 ## Failure modes
 

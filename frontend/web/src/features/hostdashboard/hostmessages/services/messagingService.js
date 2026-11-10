@@ -364,6 +364,10 @@ export async function sendUnifiedMessage({
   return postToSend(payload, token);
 }
 
+export async function retryUnifiedMessage({ messageId, token = null }) {
+  return postToSend({ retryMessageId: messageId }, token);
+}
+
 export async function markThreadRead(threadId, idToken = null) {
   const res = await fetch(`${UNIFIED_MESSAGING_API}/threads/${encodeURIComponent(threadId)}/read`, {
     method: "POST",
