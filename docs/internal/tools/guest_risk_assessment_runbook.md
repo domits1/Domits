@@ -23,14 +23,14 @@ Checked on 2026-10-19: `information_schema.columns` returned no rows for `guest_
 | provider | VARCHAR(50) | no | `truvi` |
 | bookingid | VARCHAR(255) | no | Domits booking id |
 | providerassessmentid | VARCHAR(255) | yes | Truvi verification id |
-| status | VARCHAR(30) | no | `PASSED`, `FLAGGED`, `FAILED`, `ERROR` or `SKIPPED` (later Truvi PRs add `CANCELLED` and `CANCEL_REFUSED`) |
+| status | VARCHAR(30) | no | `PASSED`, `FLAGGED`, `FAILED`, `ERROR`, `SKIPPED` or `RETRY` (later Truvi PRs add `CANCELLED` and `CANCEL_REFUSED`). `RETRY` means the screening run tries the booking again |
 | flaggedreason | TEXT | yes | Reason Truvi gave for a flag |
 | errormessage | TEXT | yes | Short error message (max 200 characters, no guest data) |
 | arrivaldate | BIGINT | yes | Check-in (epoch ms) last sent to Truvi, used to send date changes. Set by the screening run. When Truvi refused a change, it holds the refused date and `errormessage` says why |
 | departuredate | BIGINT | yes | Check-out (epoch ms) last sent to Truvi, same rules as `arrivaldate` |
 | createdat | BIGINT | no | Epoch ms |
 | updatedat | BIGINT | no | Epoch ms |
-| failedattempts | INTEGER | yes | Unexpected Truvi 400 answers since the last saved result of a modify or cancel run. Other 4xx, 5xx and timeouts do not count. After 3 the run gives up, see "Failed Attempts" in `truvi-screening-schedule.md`. Added by `20261104_guest_risk_assessment_failed_attempts.sql` |
+| failedattempts | INTEGER | yes | For a `RETRY` row: the failed screening tries (timeout, 5xx, 408, 429), at most 5. Otherwise: unexpected Truvi 400 answers since the last saved result of a modify or cancel run. Other 4xx, 5xx and timeouts do not count. After 3 the run gives up, see "Failed Attempts" in `truvi-screening-schedule.md`. Added by `20261104_guest_risk_assessment_failed_attempts.sql` |
 
 Index: `guest_risk_assessment_bookingid_idx` (main) and `guest_risk_assessment_bookingid_idx_test` (test) on `bookingid`, created with `CREATE INDEX ASYNC`.
 

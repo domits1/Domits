@@ -12,9 +12,9 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 
 ## What One Run Does
 
-1. Lists up to `limit` bookings (default 10, max 50) with status `Paid`, an arrival date in the future and no row in `guest_risk_assessment`.
-2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`. A booking Domits cannot send (no property location, no host email, no full guest name, no email or phone, an unknown country or no street) is saved as `SKIPPED` without a Truvi call, so it is not tried every run. `ERROR` is only used for an answer from Truvi, and `FAILED` only when Truvi rejected the guest.
-3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
+1. Lists up to `limit` bookings (default 10, max 50) with status `Paid`, an arrival date in the future and either no row in `guest_risk_assessment` or a `RETRY` row. New bookings come first, then the `RETRY` rows, the one tried longest ago first.
+2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`. A booking Domits cannot send (no property location, no host email, no full guest name, no email or phone, an unknown country or no street) is saved as `SKIPPED` without a Truvi call, so it is not tried every run. `ERROR` is only used for an answer from Truvi, and `FAILED` only when Truvi rejected the guest. Only these refusals of the booking data (`TruviInputError` in `util/truviMapper.js`) are saved as `SKIPPED`; any other error, such as a failed secret read, a wrong `extendedAmount` or a bug, is not saved, fails the run and the booking is tried again.
+3. Saves the result. A booking whose Truvi call timed out, got a 5xx, a 408 or a 429 gets a `RETRY` row with `failedattempts` one higher, so it waits behind new bookings and the next run tries it again. After the fifth failed try the run saves `ERROR` with the fixed message, counts it in `gaveUp`, and fails that run once so it shows in CloudWatch. A 401 or 403 means the subscription key is wrong: it is not saved and not counted, because otherwise a wrong key would give every booking an `ERROR`; the booking is tried again and `retryLater` goes up.
    The retry sends the same `echoToken`, because it is derived from the booking id. If the first call did reach Truvi, Truvi answers `400 echoToken (...) already exists from a previous request` with the earlier `verificationId`. The run then reads that verification (`GET /v1/verificationRequests/{id}`) and saves its result, so a booking never gets two Truvi verifications. The same happens when the Truvi call worked but saving the result failed.
    The token is `createEchoToken(bookingId)` in `util/truviMapper.js`: a UUID-shaped sha256 of `domits:truvi:create:<bookingId>`. Only the create uses it. Modify and cancel send a random `echoToken`, because each of those requests is new for Truvi.
    This is on purpose: screening the same booking again later also gives back its first verification, not a new one.
@@ -178,7 +178,7 @@ Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day afte
 
 Before you start, this must be done:
 
-- [ ] Bookings that keep getting an answer the run tries again (a timeout, a 5xx, or a 401, 403, 408 or 429) are capped: they get a `RETRY` row with an attempt count, so they move to the back of the list and stop after a limit. Without it, ten such bookings block every later booking, because the list is sorted on `arrivaldate` with `limit` 10. Not built yet (review of #3587). Do not enable the schedule without it.
+- [x] Bookings that keep getting an answer the run tries again (a timeout, a 5xx, a 408 or a 429) are capped: they get a `RETRY` row with an attempt count, move behind new bookings, and stop after five tries (step 3 of "What One Run Does"). A 401 or 403 is not counted, see step 4 below.
 
 1. Confirm the Truvi code is deployed to the `Truvi-Integration` Lambda.
 2. Set the environment variables, with `TRUVI_SCREENING_ENABLED=false` first.
