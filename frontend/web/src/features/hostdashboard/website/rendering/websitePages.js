@@ -175,13 +175,12 @@ export const resolveSitePageFromPath = (pathname, sitePages) => {
 };
 
 export const isSitePagePath = (pathname) => {
-  const segments = splitPathSegments(pathname);
-  if (segments.length === 0) {
-    return true;
+  if (typeof pathname !== "string") {
+    return false;
   }
 
-  const slug = segments[0].toLowerCase();
-  return segments.length === 1 && CONFIGURABLE_SITE_PAGES.some((page) => page.slug === slug);
+  const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return pathname === "" || CONFIGURABLE_SITE_PAGES.some((page) => page.slug === path.toLowerCase());
 };
 
 export const buildSitePageHref = (basePath, pageKey, search = "") => {

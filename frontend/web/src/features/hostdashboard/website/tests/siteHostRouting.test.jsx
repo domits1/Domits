@@ -422,7 +422,7 @@ describe("marketplace routing for site paths", () => {
     }
   );
 
-  it.each(["unknown", "gallery/photos", "contact", "main"])(
+  it.each(["unknown", "gallery/photos", "contact", "main", "%2F", "%2Fgallery"])(
     "shows the not found page under the live view on %s",
     (sitePath) => {
       renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);

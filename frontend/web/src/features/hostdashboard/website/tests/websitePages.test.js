@@ -441,14 +441,14 @@ describe("resolvePanoramaPageSections", () => {
 });
 
 describe("site page paths under the live view", () => {
-  it.each(["", "/", "gallery", "/gallery/", "GALLERY", "accommodation", "contact-us"])(
+  it.each(["", "gallery", "gallery/", "GALLERY", "accommodation", "contact-us"])(
     "treats %p as the site root or a page",
     (pathname) => {
       expect(isSitePagePath(pathname)).toBe(true);
     }
   );
 
-  it.each(["contact", "main", "unknown", "gallery/photos", "constructor", "__proto__", "website-live"])(
+  it.each(["/", "/gallery", "gallery//", "contact", "main", "unknown", "gallery/photos", "__proto__", null])(
     "treats %p as a path outside the site pages",
     (pathname) => {
       expect(isSitePagePath(pathname)).toBe(false);
