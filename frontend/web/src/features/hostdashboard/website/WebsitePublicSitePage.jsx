@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -36,7 +37,7 @@ import styles from "./WebsitePublicPreviewPage.module.scss";
 const LIVE_SITE_REFRESH_RETRY_INTERVAL_MS = 2000;
 const LIVE_SITE_REFRESH_WINDOW_MS = 8000;
 
-const normalizeWebsiteDomain = (value) => {
+export const normalizeWebsiteDomain = (value) => {
   const normalizedValue = String(value || "").trim().toLowerCase();
   if (!normalizedValue) {
     return "";
@@ -96,7 +97,7 @@ const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDo
   return formatWebsiteTitleFromDomain(requestedDomain) || "Published website unavailable";
 };
 
-function WebsitePublicSitePage() {
+function WebsitePublicSitePage({ onSitePagesLoaded = null }) {
   const { domain: routeDomain = "", "*": routeSitePath = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
@@ -281,6 +282,12 @@ function WebsitePublicSitePage() {
 
   useWebsiteHeadTags({ key: requestedSiteKey, tags: websiteHeadTags });
 
+  useEffect(() => {
+    if (onSitePagesLoaded && publicModel && isRequestedSiteLoaded) {
+      onSitePagesLoaded(publicModel.sitePages);
+    }
+  }, [isRequestedSiteLoaded, onSitePagesLoaded, publicModel]);
+
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
       globalThis.clearInterval(refreshRetryIntervalRef.current);
@@ -454,5 +461,9 @@ function WebsitePublicSitePage() {
     </main>
   );
 }
+
+WebsitePublicSitePage.propTypes = {
+  onSitePagesLoaded: PropTypes.func,
+};
 
 export default WebsitePublicSitePage;

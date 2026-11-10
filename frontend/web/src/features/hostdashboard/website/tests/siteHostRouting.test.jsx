@@ -117,12 +117,15 @@ jest.mock("../rendering/templates/PanoramaLandingTemplate", () => {
 });
 
 const mockTemplateProps = [];
-const { fetchPublicWebsiteRenderModel } = jest.requireMock("../services/websitePublicSiteService");
+const { fetchPublicWebsiteRenderModel, PublicWebsiteRequestError } = jest.requireMock(
+  "../services/websitePublicSiteService"
+);
 
 const SITE_DOMAIN = renderPayload.domain.domain;
 const SITE_ID = renderPayload.site.id;
 const SITE_TITLE = "Wellness Villa Bisous | Ubud, Indonesia";
 const NOT_FOUND_TEXT = "The page you were looking for does not exist or has been removed";
+const INDEX_TITLE = "Domits - Holiday rentals, campers, boats and more...";
 const SITE_HOST_PAYLOAD = { ...renderPayload, domain: { ...renderPayload.domain, domain: "localhost" } };
 const GALLERY_AND_CONTACT_ON = { gallery: { enabled: true }, contact: { enabled: true, navLabel: "Reach us" } };
 
@@ -408,20 +411,6 @@ describe("marketplace routing for site paths", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
   });
 
-  it.each(["gallery", "accommodation", "contact-us", "Gallery/"])(
-    "shows the site as today under the live view on the page path %s",
-    async (sitePath) => {
-      const todaysHtml = await renderTodaysSiteHtml();
-
-      renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
-
-      expect(await readSiteHtml()).toBe(todaysHtml);
-      expect(lastTemplateProps().activePageKey).toBe("main");
-      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
-      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
-    }
-  );
-
   it.each(["unknown", "gallery/photos", "contact", "main", "%2F", "%2Fgallery"])(
     "shows the not found page under the live view on %s",
     (sitePath) => {
@@ -431,6 +420,51 @@ describe("marketplace routing for site paths", () => {
       expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("marketplace live view page paths of a site without that page on", () => {
+  const ALL_ON = { gallery: { enabled: true }, accommodation: { enabled: true }, contact: { enabled: true } };
+  const arrangeSiteWithout = () => fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
+  const arrangePageOff = (pageKey) =>
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSitePages(renderPayload, { ...ALL_ON, [pageKey]: { enabled: false } })
+    );
+  const arrangeUnknownDomain = () =>
+    fetchPublicWebsiteRenderModel.mockRejectedValue(new PublicWebsiteRequestError("Published website not found.", 404));
+  const arrangeLoadFailure = () => fetchPublicWebsiteRenderModel.mockRejectedValue(new TypeError("Failed to fetch"));
+  const CASES = [
+    ["a site without pages", arrangeSiteWithout],
+    ["a site with that page off", arrangePageOff],
+    ["an unknown domain", arrangeUnknownDomain],
+    ["a site that fails to load", arrangeLoadFailure],
+  ];
+  const PAGE_PATHS = [
+    ["gallery", "gallery"],
+    ["accommodation", "accommodation"],
+    ["contact-us", "contact"],
+    ["Gallery/", "gallery"],
+  ];
+
+  beforeEach(() => {
+    document.title = INDEX_TITLE;
+  });
+
+  it.each(
+    CASES.flatMap(([name, arrange]) => PAGE_PATHS.map(([sitePath, pageKey]) => [sitePath, name, arrange, pageKey]))
+  )("shows the not found page as today on %s for %s", async (sitePath, _, arrange, pageKey) => {
+    arrange(pageKey);
+
+    renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
+    expect(document.title).toBe("Domits");
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
 });
 
 describe("live view routing for a site with site pages", () => {
@@ -445,6 +479,7 @@ describe("live view routing for a site with site pages", () => {
 
   it("links every page under the live view and keeps the site id", async () => {
     renderAppAt(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     await screen.findByRole("link", { name: "Home" });
 
     expect(listSectionIds()).toEqual(["gallery"]);
@@ -455,6 +490,21 @@ describe("live view routing for a site with site pages", () => {
       `${LIVE_BASE}/contact-us${SITE_SEARCH}`,
       `${LIVE_BASE}${SITE_SEARCH}#availability`,
     ]);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the not found page once a refresh no longer serves the page", async () => {
+    renderAppAt(`${LIVE_BASE}/gallery${SITE_SEARCH}`);
+    await screen.findByRole("link", { name: "Home" });
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
+    await act(async () => {
+      globalThis.dispatchEvent(
+        new MessageEvent("message", { data: { type: "website-live-site-update", siteId: SITE_ID } })
+      );
+    });
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
   });
 
   it("encodes the domain of the live view in the page links", async () => {
@@ -480,13 +530,5 @@ describe("live view routing for a site with site pages", () => {
     expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
-  });
-
-  it("shows Main under the live view for a page that is off", async () => {
-    renderAppAt(`${LIVE_BASE}/accommodation${SITE_SEARCH}`);
-    await screen.findByTestId("quote-availability");
-
-    expect(lastTemplateProps().activePageKey).toBe("main");
-    expect(listSectionIds()).toEqual(["overview", "about", "features", "lifestyle", "availability"]);
   });
 });
