@@ -50,6 +50,13 @@ Result: no blocking findings so far
 |---|---|---|---|
 | P2 (7/10) | `channexHealthStatus.js`, `alarmReasons` | With the reader returning `MISSING` for an alarm CloudWatch no longer has, the rule still said Healthy: an alarm deleted in a cleanup would leave its failure unwatched without anyone seeing it. | Fixed: `MISSING` gives reason `ALARM_MISSING` and Degraded, with a test; design note D5 updated in the same commit. |
 
+### Commit 7: health service (`services/channexHealthService.js`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P2 (7/10) | `channexHealthService.js`, `readAlarms` | The `try/catch` caught a CloudWatch error but not a call that hangs; the SDK has no request timeout by default and retries, so a slow CloudWatch would run into API Gateway's 29-second limit and lose the database part as well, which D4 is there to prevent. | Fixed: the alarm read gives up after 3 seconds (`Promise.race` with a cleared timer) and answers "alarms unavailable, TIMEOUT", logged like any other alarm failure; tested with Jest's fake timers. |
+| Checked | `getHealth` | The five reads run in parallel; a database failure rejects the request (tested), a CloudWatch failure does not (tested). The log line carries only the error name. | No change. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.
