@@ -335,6 +335,19 @@ describe("website plan change on the real call path", () => {
     });
   });
 
+  describe("withoutPayment that is not a boolean", () => {
+    it.each(["true", 1, 0, null, {}, []])("answers 400 to %p and writes nothing, without Stripe", async (withoutPayment) => {
+      Object.assign(process.env, CHECKOUT_ON, { [SELF_SELECT_VARIABLE]: "*" });
+      const store = buildRatePlanStore({ plans: [] });
+
+      const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment });
+
+      expect(response).toEqual({ statusCode: 400, body: "withoutPayment must be true or false." });
+      expect(store.plans).toEqual([]);
+      expectNoStripeCall();
+    });
+  });
+
   describe("plan answer with self-select", () => {
     it("says self-select is available only to a listed account without a subscription", async () => {
       process.env[SELF_SELECT_VARIABLE] = "host-1";

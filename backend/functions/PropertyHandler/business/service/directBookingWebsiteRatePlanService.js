@@ -208,10 +208,13 @@ export class DirectBookingWebsiteRatePlanService {
     );
   }
 
-  async changePlan({ accountId, targetPlan, customerEmail }) {
+  async changePlan({ accountId, targetPlan, customerEmail, withoutPayment }) {
     if (!accountId) throw serviceError("accountId is required.");
     if (!Object.values(WEBSITE_PLAN_NAMES).includes(targetPlan)) {
       throw serviceError("Unsupported direct booking website plan.");
+    }
+    if (withoutPayment !== undefined && typeof withoutPayment !== "boolean") {
+      throw serviceError("withoutPayment must be true or false.");
     }
 
     const current = await this.getCurrentPlan(accountId);
