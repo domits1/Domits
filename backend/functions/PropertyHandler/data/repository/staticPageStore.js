@@ -70,76 +70,84 @@ export class StaticPageStore {
   }
 
   async putPage({ hostname, html, siteId, revision }) {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: buildStaticPageKey(hostname),
-        Body: html,
-        ContentType: PAGE_CONTENT_TYPE,
-        CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: buildSourceMetadata(siteId, revision),
-      })
-    );
+    await this.#put({
+      key: buildStaticPageKey(hostname),
+      body: html,
+      contentType: PAGE_CONTENT_TYPE,
+      siteId,
+      revision,
+    });
   }
 
   async putSitemap({ hostname, xml, siteId, revision }) {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: buildStaticSitemapKey(hostname),
-        Body: xml,
-        ContentType: SITEMAP_CONTENT_TYPE,
-        CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: buildSourceMetadata(siteId, revision),
-      })
-    );
+    await this.#put({
+      key: buildStaticSitemapKey(hostname),
+      body: xml,
+      contentType: SITEMAP_CONTENT_TYPE,
+      siteId,
+      revision,
+    });
   }
 
   async listPageHostnames() {
     const hostnames = [];
     const etags = {};
     const rejected = [];
-    let scanned = 0;
-    let continuationToken;
-    do {
-      const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.bucketName,
-          Prefix: PAGE_KEY_PREFIX,
-          ContinuationToken: continuationToken,
-        })
-      );
-      for (const object of response?.Contents || []) {
-        const key = String(object?.Key || "");
-        if (isSitemapKey(key)) {
-          continue;
-        }
-        const hostname = hostnameOfKey(key, PAGE_KEY_SUFFIX);
-        if (isStaticPageHostname(hostname)) {
-          hostnames.push(hostname);
-          etags[hostname] = String(object?.ETag || "");
-        } else {
-          rejected.push(key);
-        }
+    await this.#eachObject(PAGE_KEY_PREFIX, (key, etag) => {
+      if (isSitemapKey(key)) {
+        return;
       }
-      scanned += (response?.Contents || []).length;
-      if (scanned > MAX_SCANNED_KEYS) {
-        throw new Error(`More than ${MAX_SCANNED_KEYS} keys under ${PAGE_KEY_PREFIX}; refusing to reconcile blindly.`);
+      const hostname = hostnameOfKey(key, PAGE_KEY_SUFFIX);
+      if (isStaticPageHostname(hostname)) {
+        hostnames.push(hostname);
+        etags[hostname] = etag;
+      } else {
+        rejected.push(key);
       }
-      continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
-    } while (continuationToken);
+    });
 
     return { hostnames, etags, rejected };
   }
 
   async deletePage({ hostname, etag = "" }) {
+    return this.#delete(buildStaticPageKey(hostname), etag);
+  }
+
+  async #put({ key, body, contentType, siteId, revision }) {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        CacheControl: PAGE_CACHE_CONTROL,
+        Metadata: buildSourceMetadata(siteId, revision),
+      })
+    );
+  }
+
+  async #eachObject(prefix, visit) {
+    let scanned = 0;
+    let continuationToken;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({ Bucket: this.bucketName, Prefix: prefix, ContinuationToken: continuationToken })
+      );
+      for (const object of response?.Contents || []) {
+        visit(String(object?.Key || ""), String(object?.ETag || ""));
+      }
+      scanned += (response?.Contents || []).length;
+      if (scanned > MAX_SCANNED_KEYS) {
+        throw new Error(`More than ${MAX_SCANNED_KEYS} keys under ${prefix}; refusing to reconcile blindly.`);
+      }
+      continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken);
+  }
+
+  async #delete(key, etag) {
     try {
       await this.client.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: buildStaticPageKey(hostname),
-          ...(etag ? { IfMatch: etag } : {}),
-        })
+        new DeleteObjectCommand({ Bucket: this.bucketName, Key: key, ...(etag ? { IfMatch: etag } : {}) })
       );
       return true;
     } catch (error) {

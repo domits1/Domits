@@ -24,7 +24,10 @@ const withdrawnPaths = (hostname) => [
   `/${sitemapKey(hostname)}`,
   "/sitemap.xml",
 ];
-const pageOf = (hostname) => ({ [pageKey(hostname)]: `<html>${hostname}</html>`, [sitemapKey(hostname)]: EMPTY_SITEMAP });
+const pageOf = (hostname) => ({
+  [pageKey(hostname)]: `<html>${hostname}</html>`,
+  [sitemapKey(hostname)]: EMPTY_SITEMAP,
+});
 
 const buildTenants = () => ({
   listTenantsForDistribution: jest.fn(async () => [{ id: "dt_wildcard", domains: ["*.direct.domits.com"] }]),
