@@ -40,13 +40,12 @@ describe("GET /property/website/rate-plan?view=entitlements", () => {
       plan: "essentials",
       entitlements: getWebsiteEntitlements("essentials"),
       effectiveUntil: null,
-      granted: false,
     });
     expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(TOKEN_HOST_ID);
     expect(ratePlanRepository.createPlan).not.toHaveBeenCalled();
   });
 
-  it("answers a granted Elite plan with its end date", async () => {
+  it("answers an Elite plan whose end date is still ahead with its end date", async () => {
     const effectiveUntil = new Date(Date.now() + 86_400_000);
     const ratePlanRepository = buildRatePlanRepository(ratePlanRow({ plan: "elite", effective_until: effectiveUntil }));
 
@@ -56,7 +55,6 @@ describe("GET /property/website/rate-plan?view=entitlements", () => {
       plan: "elite",
       entitlements: getWebsiteEntitlements("elite"),
       effectiveUntil: effectiveUntil.toISOString(),
-      granted: true,
     });
   });
 

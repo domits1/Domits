@@ -150,7 +150,6 @@ const toEntitlementsView = (plan) => ({
   plan: plan.plan,
   entitlements: getWebsiteEntitlements(plan.plan),
   effectiveUntil: plan.effective_until ?? null,
-  granted: plan.plan === WEBSITE_PLAN_NAMES.ELITE && !plan.stripe_subscription_id,
 });
 
 export class DirectBookingWebsiteRatePlanService {

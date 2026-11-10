@@ -5,6 +5,7 @@ import {
   WebsiteElitePageSettings,
 } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
 import {
+  ELITE_WITHOUT_SUBSCRIPTION_ROW,
   PAID_ELITE_ROW,
   buildRatePlanRepository,
   expectNoPlanRead,
@@ -14,7 +15,7 @@ import {
 
 const HOST_ID = "host-1";
 const SITE_PAGES = { gallery: { enabled: true, navLabel: "Gallery" } };
-const GRANTED_ELITE_ROW = ratePlanRow({ plan: "elite", effective_until: new Date(Date.now() + 86_400_000) });
+const ENDING_ELITE_ROW = ratePlanRow({ plan: "elite", effective_until: new Date(Date.now() + 86_400_000) });
 const ENDED_ELITE_ROW = ratePlanRow({ plan: "elite", effective_until: new Date(Date.now() - 60_000) });
 
 const overridesWithPages = () => ({ heroTitle: "Villa", sitePages: SITE_PAGES, ctaLabel: "Book" });
@@ -46,7 +47,8 @@ describe("serving page settings in the overrides of a site", () => {
 
   it.each([
     ["a paid Elite plan", PAID_ELITE_ROW],
-    ["a granted Elite plan", GRANTED_ELITE_ROW],
+    ["an Elite plan without a subscription or an end date", ELITE_WITHOUT_SUBSCRIPTION_ROW],
+    ["an Elite plan whose end date is still ahead", ENDING_ELITE_ROW],
   ])("keeps the page settings for a host with %s", async (_label, row) => {
     const ratePlanRepository = buildRatePlanRepository(row);
     const overrides = overridesWithPages();
@@ -166,15 +168,16 @@ describe("serving page settings in a draft preview", () => {
     expect(consoleError).not.toHaveBeenCalled();
   });
 
-  it("keeps page settings in a draft of an Elite host", async () => {
+  it.each([
+    ["a paid Elite plan", PAID_ELITE_ROW],
+    ["an Elite plan without a subscription or an end date", ELITE_WITHOUT_SUBSCRIPTION_ROW],
+  ])("keeps page settings in a draft of a host with %s", async (_label, row) => {
     const storedDraft = draft({
       contentOverrides: { heroTitle: "Draft villa", sitePages: SITE_PAGES },
       publishedContentOverrides: { heroTitle: "Live villa", sitePages: SITE_PAGES },
     });
 
-    const served = await buildPageSettings(buildRatePlanRepository(PAID_ELITE_ROW)).servePageSettingsOnDraft(
-      storedDraft
-    );
+    const served = await buildPageSettings(buildRatePlanRepository(row)).servePageSettingsOnDraft(storedDraft);
 
     expect(served).toBe(storedDraft);
   });
