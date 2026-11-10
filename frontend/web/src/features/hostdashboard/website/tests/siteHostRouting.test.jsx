@@ -238,6 +238,25 @@ describe("site host routing for a site without site pages", () => {
     expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
   });
 
+  it.each(["gallery", "unknown", "gallery/photos"])(
+    "renders the host's own site as today under the live view path %s",
+    async (sitePath) => {
+      const todaysHtml = await renderTodaysSiteHtml();
+
+      renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}`);
+
+      expect(await readSiteHtml()).toBe(todaysHtml);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: "", domain: "localhost" });
+    }
+  );
+
+  it("loads the site of the live view domain as today on the live view root", async () => {
+    renderAppAt(`/website-live/${SITE_DOMAIN}`);
+    await screen.findByTestId("quote-availability");
+
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: "", domain: SITE_DOMAIN });
+  });
+
   it("does not scroll when the site is opened at the availability anchor", async () => {
     placeAvailabilityAt(900);
 

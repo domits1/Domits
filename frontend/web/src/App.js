@@ -218,7 +218,10 @@ function App() {
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
                   <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
-                  <Route path="/website-live/:domain/*" element={<WebsiteLiveSiteRoute />} />
+                  <Route path="/website-live/:domain" element={<WebsiteLiveSiteRoute />} />
+                  {isDirectBookingWebsiteHost ? null : (
+                    <Route path="/website-live/:domain/*" element={<WebsiteLiveSiteRoute />} />
+                  )}
                   <Route path="/website-live" element={<WebsitePublicSitePage />} />
 
                   {/* Chat */}
