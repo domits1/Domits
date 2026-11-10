@@ -282,24 +282,30 @@ class ReservationController {
   }
 
   async acceptInquiry(bookingId, authToken) {
-    const result = await this.bookingService.acceptInquiry(bookingId, authToken);
+    const preparedAcceptance = await this.bookingService.prepareInquiryAcceptance(bookingId, authToken);
+    const paymentData = await this.paymentSerivce.create(
+      preparedAcceptance.hostId,
+      preparedAcceptance.bookingId,
+      preparedAcceptance.propertyId,
+      preparedAcceptance.dates,
+      preparedAcceptance.commission
+    );
+
     try {
-      const { commission, ...acceptedBooking } = result;
-      const paymentData = await this.paymentSerivce.create(
-        result.hostId,
-        result.bookingId,
-        result.propertyId,
-        result.dates,
-        commission
-      );
+      const acceptedBooking = await this.bookingService.completeInquiryAcceptance(preparedAcceptance);
+      const { commission, ...response } = acceptedBooking;
       return {
         statusCode: 200,
         headers: responseHeaderJSON,
-        response: { ...acceptedBooking, stripeClientSecret: paymentData.stripeClientSecret },
+        response: { ...response, stripeClientSecret: paymentData.stripeClientSecret },
       };
-    } catch (stripeError) {
-      console.error("Stripe payment intent creation failed after accept:", stripeError);
-      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+    } catch (error) {
+      try {
+        await this.paymentSerivce.cancel(paymentData.stripePaymentId, bookingId);
+      } catch (cleanupError) {
+        console.error("Failed to cancel payment intent after inquiry acceptance failed:", cleanupError);
+      }
+      throw error;
     }
   }
 
@@ -444,6 +450,8 @@ class ReservationController {
         payment_intent: paymentIntentId,
         amount: amountCents,
         reason: STRIPE_REFUND_REASON,
+        reverse_transfer: true,
+        refund_application_fee: true,
       },
       {
         idempotencyKey: `refund-${paymentIntentId}-${amountCents}`,

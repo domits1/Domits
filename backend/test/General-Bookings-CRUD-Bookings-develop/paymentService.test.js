@@ -1,6 +1,13 @@
+const originalTestEnv = process.env.TEST;
+const hadTestEnv = Object.hasOwn(process.env, "TEST");
 process.env.TEST = "true";
 
 const PaymentService = require("../../functions/General-Bookings-CRUD-Bookings-develop/business/paymentService.js").default;
+
+afterAll(() => {
+  if (hadTestEnv) process.env.TEST = originalTestEnv;
+  else delete process.env.TEST;
+});
 
 describe("PaymentService.create", () => {
   test("passes the preflight commission into Stripe and persists the applied commission", async () => {
@@ -26,6 +33,8 @@ describe("PaymentService.create", () => {
       }),
       updatePaymentId: jest.fn().mockResolvedValue(undefined),
       addPaymentToTable: jest.fn().mockResolvedValue(undefined),
+      cancelPaymentIntent: jest.fn().mockResolvedValue(undefined),
+      clearPaymentId: jest.fn().mockResolvedValue(undefined),
     };
     const service = new PaymentService({ stripeRepository });
 
@@ -51,6 +60,33 @@ describe("PaymentService.create", () => {
       20_000,
       expect.objectContaining({ rate: 0.045, amountCents: 450, year: 2026 })
     );
-    expect(result).toEqual({ stripeClientSecret: "pi_test_secret", bookingId: "booking-1" });
+    expect(result).toEqual({
+      stripeClientSecret: "pi_test_secret",
+      stripePaymentId: "pi_test",
+      bookingId: "booking-1",
+    });
+  });
+
+  test("cancels an unpersisted PaymentIntent when payment persistence fails", async () => {
+    const stripeRepository = {
+      getStripeAccountId: jest.fn().mockResolvedValue("acct_host"),
+      createPaymentIntent: jest.fn().mockResolvedValue({
+        stripePaymentId: "pi_orphan",
+        stripeClientSecret: "pi_orphan_secret",
+        breakdown: { customerPays: 20_000 },
+      }),
+      updatePaymentId: jest.fn().mockRejectedValue(new Error("database unavailable")),
+      addPaymentToTable: jest.fn(),
+      cancelPaymentIntent: jest.fn().mockResolvedValue(undefined),
+      clearPaymentId: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new PaymentService({ stripeRepository });
+
+    await expect(service.create("host-1", "booking-1", "property-1", { arrivalDate: 1000, departureDate: 2000 }))
+      .rejects.toThrow("database unavailable");
+
+    expect(stripeRepository.cancelPaymentIntent).toHaveBeenCalledWith("pi_orphan");
+    expect(stripeRepository.clearPaymentId).toHaveBeenCalledWith("booking-1", "pi_orphan");
+    expect(stripeRepository.addPaymentToTable).not.toHaveBeenCalled();
   });
 });

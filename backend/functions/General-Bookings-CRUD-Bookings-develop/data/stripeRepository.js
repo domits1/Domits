@@ -223,6 +223,22 @@ class StripeRepository {
       throw new Error("Failed to create payment intent.");
     }
   }
+  async cancelPaymentIntent(paymentId) {
+    const stripe = await this.stripeProvider();
+    return stripe.paymentIntents.cancel(paymentId);
+  }
+
+  async clearPaymentId(bookingId, paymentId) {
+    const database = await this.databaseProvider();
+    return database
+      .createQueryBuilder()
+      .update(Booking)
+      .set({ paymentid: "FAILED: " })
+      .where("id = :bookingId", { bookingId })
+      .andWhere("paymentid = :paymentId", { paymentId })
+      .execute();
+  }
+
   // --------
   // Query table "stripe-connected-accounts" and find their respective
   // stripe account_id, and give it back.
@@ -236,8 +252,8 @@ class StripeRepository {
       .where("stripe_connectedaccounts.user_id = :user_id", { user_id: userId })
       .getOne();
 
-    if (query < 1) {
-      throw new NotFoundException("No stripeaccount for userid!");
+    if (!query?.account_id) {
+      throw new NotFoundException("No Stripe account is connected for this host.");
     }
     return query.account_id;
   }
