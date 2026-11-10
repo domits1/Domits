@@ -18,6 +18,7 @@ Missing or empty means off for everyone. The plan answer then has `eliteSelfSele
 - Choosing the plan he is on changes nothing (`unchanged`). Two requests at the same moment leave one current plan. A change that keeps conflicting with another request answers `409`, and so does a paid plan that started in between. A failed write leaves the plan as it was.
 - The account always comes from the token, never from the request body.
 - Taking an id off the list stops new choices only. An Elite chosen before stays until the host switches back to Essentials, which also works with the list empty.
+- The plan card does not offer this option yet. Until it does, use the list only while checkout is off: with checkout on, the card's Elite button can be clicked under the paid price, and a listed host would get Elite without payment.
 
 ## Where it is set
 
