@@ -2,7 +2,7 @@
 
 Pull request: this one
 Issue: #3099
-Reviewed commits: d40a5f18a, 95020259d, 9dbb54a5f, b2c7edcd3 and the documentation commit that adds this file, each as a staged diff before its commit, then the whole branch against `acceptance` in a second, independent review; on 10 November d63c22cce, b32041e4f, 45d928371 and the documentation commit after them, each as a staged diff
+Reviewed commits: d40a5f18a, 95020259d, 9dbb54a5f, b2c7edcd3 and the documentation commit that adds this file, each as a staged diff before its commit, then the whole branch against `acceptance` in a second, independent review; on 10 November d63c22cce, b32041e4f, 45d928371, 17a66ebbb and the documentation commits after them, each as a staged diff, then today's commits in a second, independent review
 Result: no blocking findings; one finding of the second review fixed in b2c7edcd3; one test finding of 10 November fixed before d63c22cce
 
 ## Findings
@@ -38,4 +38,5 @@ Result: no blocking findings; one finding of the second review fixed in b2c7edcd
 
 - d63c22cce pins both cards (every text and both button states) and the end date line for Essentials and paid Elite, also read without the subscription field, with and without a scheduled downgrade. The same test passes on the acceptance version of the card.
 - The line is one copy key, `withoutPayment`, in `en`, `nl`, `de` and `es`, so the wording is one line per language.
-- Mutation check on a copy, 10 mutants, all caught: flag never set, every Elite plan without the subscription check, a missing subscription field counts, flag without the Elite check, price shown, neutral line always shown, old copy key, label keeps "Reactivate Elite", button stays enabled, flag not passed to the card.
+- The second review of 10 November agreed that the code is correct and found two points. A failed switch to Essentials was tested only for an Elite plan read without the subscription field: 17a66ebbb adds it for an Elite plan without a subscription (the card keeps it and shows the change error). The subtitle "The Elite price is shown below" stays as it is: every host sees it today, so changing it is a change for existing hosts. The option to choose Elite on the card can change it for the hosts who may choose.
+- Mutation check on a copy, 10 mutants, all caught: flag never set, every Elite plan without the subscription check, a missing subscription field counts, flag without the Elite check, price shown, neutral line always shown, old copy key, label keeps "Reactivate Elite", button stays enabled, flag not passed to the card. For 17a66ebbb: the busy state never cleared and the displayed plan dropped after a failed switch, both caught.
