@@ -17,7 +17,7 @@ SET refund_status = 'unknown'
 WHERE LOWER(status) IN ('cancelled', 'canceled')
   AND refund_status IS NULL
   AND (
-    (COALESCE(TRIM(paymentid), '') <> '' AND COALESCE(paymentid, '') NOT LIKE 'FAILED%')
+    (paymentid IS NOT NULL AND TRIM(paymentid) <> '' AND paymentid NOT LIKE 'FAILED%')
     OR stripe_refund_id IS NOT NULL
     OR COALESCE(refunded_amount, 0) > 0
     OR refund_error IS NOT NULL
@@ -28,7 +28,7 @@ SET refund_status = 'unknown'
 WHERE LOWER(status) IN ('cancelled', 'canceled')
   AND refund_status IS NULL
   AND (
-    (COALESCE(TRIM(paymentid), '') <> '' AND COALESCE(paymentid, '') NOT LIKE 'FAILED%')
+    (paymentid IS NOT NULL AND TRIM(paymentid) <> '' AND paymentid NOT LIKE 'FAILED%')
     OR stripe_refund_id IS NOT NULL
     OR COALESCE(refunded_amount, 0) > 0
     OR refund_error IS NOT NULL
