@@ -44,6 +44,13 @@ const renderDetailsFor = (reservation) =>
     </MemoryRouter>
   );
 
+const downloadReceiptFor = async (reservation) => {
+  renderDetailsFor(reservation);
+  const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
+  await waitFor(() => expect(downloadButton.disabled).toBe(false));
+  fireEvent.click(downloadButton);
+};
+
 // The date sits in the span right after the payment status text.
 const paymentDateNextTo = (statusText) => screen.getByText(statusText).nextElementSibling.textContent;
 
@@ -69,16 +76,26 @@ describe("HostReservationDetails cancel date (#3585)", () => {
     expect(paymentDateNextTo("Payment received")).toBe("13 Oct");
   });
 
-  test("the receipt of a cancelled reservation carries the cancel date, not the booking date", async () => {
-    renderDetailsFor(booking);
-
-    const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
-    await waitFor(() => expect(downloadButton.disabled).toBe(false));
-    fireEvent.click(downloadButton);
+  test("the receipt of a cancelled reservation carries the cancel date, labelled as such (#3834)", async () => {
+    await downloadReceiptFor(booking);
 
     await waitFor(() =>
       expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
-        expect.objectContaining({ paymentStatusLabel: "Reservation cancelled", paymentDate: CANCELLED_AT })
+        expect.objectContaining({
+          paymentStatusLabel: "Reservation cancelled",
+          paymentDate: CANCELLED_AT,
+          paymentDateLabel: "Cancelled on",
+        })
+      )
+    );
+  });
+
+  test("the receipt of a paid reservation keeps the payment date label", async () => {
+    await downloadReceiptFor({ ...booking, status: "Paid", cancelled_at: null });
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentStatusLabel: "Payment received", paymentDateLabel: "Payment date" })
       )
     );
   });
