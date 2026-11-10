@@ -150,6 +150,9 @@ describe("DirectBookingWebsiteRatePlanRepository.replaceUnpaidPlan", () => {
     expect(result).toEqual({ outcome: "paid_plan_active" });
     expect(store.transactions).toHaveLength(3);
     expect(currentRowsOf(store, "host-1")).toEqual([expect.objectContaining({ stripe_subscription_id: "sub_1" })]);
+    expect(store.plans).toHaveLength(2);
+    const ended = { ...planRow(), status: "EXPIRED", effective_until: expect.any(Date), updated_at: expect.any(Date) };
+    expect(store.plans[0]).toEqual(ended);
   });
 
   it("answers conflict and changes nothing when the conflict outlives the retries", async () => {

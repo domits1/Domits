@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import Stripe from "stripe";
+import Database from "database";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
 import { buildRatePlanStore, conflictError, planRow } from "./support/ratePlanStore.js";
 
@@ -238,6 +239,7 @@ describe("website plan change on the real call path", () => {
       expect(response.body.plan.entitlements).not.toContain("website.unlimited_pages");
       expect(store.transactions).toHaveLength(1);
       expect(store.plans[0]).toMatchObject({ id: "plan-unpaid-elite", status: "EXPIRED" });
+      expect(store.plans[1]).toEqual(OTHER_HOST_PLAN);
       expect(currentRowsOf(store, "host-1")).toEqual([expect.objectContaining({ plan: "essentials" })]);
       expect((await getPlan("token-host-1")).body.plan).toBe("essentials");
       expectNoStripeCall();
@@ -286,7 +288,7 @@ describe("website plan change on the real call path", () => {
       const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment: true });
 
       expect(response).toEqual({ statusCode: 409, body: PAID_REFUSAL });
-      expect(currentRowsOf(store, "host-1")).toEqual([PAID_ELITE]);
+      expect(store.plans).toEqual([{ ...planRow(), status: "EXPIRED", effective_until: expect.any(Date) }, PAID_ELITE]);
       expectNoStripeCall();
     });
 
@@ -304,12 +306,14 @@ describe("website plan change on the real call path", () => {
       Object.assign(process.env, CHECKOUT_ON);
       const store = buildRatePlanStore({ plans: [planRow()] });
       expect((await getPlan("token-host-1")).body.eliteSelfSelectAvailable).toBe(true);
+      Database.getInstance.mockClear();
 
       const responses = [await patchPlan("token-host-2", { plan, withoutPayment: true, accountId: "host-1" })];
       process.env[SELF_SELECT_VARIABLE] = "host-3";
       responses.push(await patchPlan("token-host-1", { plan, withoutPayment: true }));
 
       responses.forEach((response) => expect(response).toEqual({ statusCode: 409, body: NOT_LISTED_REFUSAL }));
+      expect(Database.getInstance).not.toHaveBeenCalled();
       expect(store.plans).toEqual([planRow()]);
       expectNoStripeCall();
     });
@@ -346,12 +350,12 @@ describe("website plan change on the real call path", () => {
 
     it.each(["true", 1, 0, null, {}, []])("answers 400 to %p and writes nothing, without Stripe", async (withoutPayment) => {
       Object.assign(process.env, CHECKOUT_ON);
-      const store = buildRatePlanStore({ plans: [] });
+      buildRatePlanStore({ plans: [] });
 
       const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment });
 
       expect(response).toEqual({ statusCode: 400, body: "withoutPayment must be true or false." });
-      expect(store.plans).toEqual([]);
+      expect(Database.getInstance).not.toHaveBeenCalled();
       expectNoStripeCall();
     });
   });
