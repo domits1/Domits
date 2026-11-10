@@ -1,6 +1,6 @@
 # fix(hostdashboard): label the cancel date on the receipt as "Cancelled on"
 
-Pull request: #<number>
+Pull request: #3837
 Issue: #3834 (part 1)
 Reviewed commit: staged diff on `fix/3834-receipt-cancelled-label`, before the first commit
 Result: no blocking findings
