@@ -2032,6 +2032,43 @@
       "archivedToast": "{name} wurde archiviert.",
       "restoredToast": "{name} wurde wiederhergestellt.",
       "archiveBlocked": "{name} kann noch nicht archiviert werden, weil dieser Eigentümer noch aktuelle oder künftige Eigentumsanteile hat. Entferne {name} zuerst aus den Anteilen dieser Unterkünfte und archiviere dann erneut."
+    },
+    "shares": {
+      "title": "Eigentumsanteile festlegen",
+      "propertyLabel": "Unterkunft",
+      "propertyPlaceholder": "Unterkunft auswählen",
+      "dateLabel": "Anteile gelten ab",
+      "ownerColumn": "Eigentümer",
+      "percentColumn": "Anteil (%)",
+      "chooseOwner": "Eigentümer auswählen",
+      "totalLabel": "Summe",
+      "totalValue": "{percent}% von 100%",
+      "addOwner": "Eigentümer hinzufügen",
+      "removeOwner": "Entfernen",
+      "removeOwnerLabel": "{name} entfernen",
+      "save": "Anteile speichern",
+      "saving": "Wird gespeichert…",
+      "cancel": "Abbrechen",
+      "plannedChangeWarning": "Für diese Unterkunft ist bereits eine Änderung der Eigentumsverhältnisse ab {date} geplant. Beim Speichern wird jede geplante Änderung ab dem gewählten Datum ersetzt.",
+      "savedToast": "Die Anteile von {property} wurden gespeichert. Sie gelten ab {date}.",
+      "upcomingTitle": "Geplant nach dieser Änderung",
+      "errorChangedToday": "Die Eigentumsverhältnisse dieser Unterkunft wurden heute bereits geändert. Wähle morgen oder ein späteres Datum.",
+      "errorArchivedOwner": "Einer dieser Eigentümer ist archiviert, und archivierte Eigentümer können keine Anteile erhalten. Entferne diesen Eigentümer aus der Liste oder stelle ihn zuerst wieder her.",
+      "errorConflict": "Die Eigentumsverhältnisse dieser Unterkunft wurden gleichzeitig geändert. Lade die Seite neu und versuche es noch einmal.",
+      "errors": {
+        "propertyRequired": "Wähle eine Unterkunft aus.",
+        "dateRequired": "Wähle das Datum, ab dem die Anteile gelten.",
+        "dateInvalid": "Gib ein gültiges Datum ein.",
+        "dateBeforeToday": "Das Datum darf nicht vor heute liegen.",
+        "dateTooLate": "Das Datum darf höchstens 5 Jahre nach heute liegen.",
+        "sharesRequired": "Füge mindestens einen Eigentümer hinzu. Eine Unterkunft kann nicht ohne Eigentümer bleiben.",
+        "totalMismatch": "Die Anteile müssen zusammen genau 100% ergeben.",
+        "ownerRequired": "Wähle einen Eigentümer aus.",
+        "ownerDuplicate": "Dieser Eigentümer steht bereits in der Liste.",
+        "percentRequired": "Gib einen Anteil ein.",
+        "percentInvalid": "Gib einen Prozentsatz von 0,01 bis 100 ein, mit höchstens 2 Nachkommastellen.",
+        "percentZero": "Ein Anteil muss mindestens 0,01% betragen. Entferne den Eigentümer stattdessen."
+      }
     }
   }
 }
