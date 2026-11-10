@@ -100,6 +100,11 @@ describe("evaluateChannexHealth (design note D5)", () => {
       { code: HEALTH_REASON.POLL_FAILED },
     ],
     [
+      "an alarm no longer exists in CloudWatch",
+      (input) => input.alarms.items.push({ name: "channex-webhook-missed", state: "MISSING" }),
+      { code: HEALTH_REASON.ALARM_MISSING, alarm: "channex-webhook-missed" },
+    ],
+    [
       "the alarms could not be read",
       (input) => (input.alarms = { available: false, items: [] }),
       { code: HEALTH_REASON.ALARMS_UNAVAILABLE },

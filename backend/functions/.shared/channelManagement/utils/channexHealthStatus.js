@@ -13,6 +13,7 @@ export const HEALTH_REASON = Object.freeze({
   CRITICAL_ALARM: "CRITICAL_ALARM",
   WARNING_ALARM: "WARNING_ALARM",
   ALARMS_UNAVAILABLE: "ALARMS_UNAVAILABLE",
+  ALARM_MISSING: "ALARM_MISSING",
   FAILED_CHANGES: "FAILED_CHANGES",
   STUCK_QUEUE: "STUCK_QUEUE",
   RECONNECT_REQUIRED: "RECONNECT_REQUIRED",
@@ -50,12 +51,13 @@ export const STUCK_QUEUE_MS = CHANNEX_ARI_OUTBOX_DEFAULTS.CAP_MS + 2 * WORKER_IN
 const alarmReasons = (alarms) => {
   if (!alarms?.available) return [{ code: HEALTH_REASON.ALARMS_UNAVAILABLE }];
 
-  return (alarms.items || [])
-    .filter((alarm) => alarm.state === "ALARM")
-    .map((alarm) => ({
-      code: CRITICAL_ALARMS.has(alarm.name) ? HEALTH_REASON.CRITICAL_ALARM : HEALTH_REASON.WARNING_ALARM,
-      alarm: alarm.name,
-    }));
+  return (alarms.items || []).flatMap((alarm) => {
+    // A deleted alarm cannot fire any more, so its failure would go unnoticed.
+    if (alarm.state === "MISSING") return [{ code: HEALTH_REASON.ALARM_MISSING, alarm: alarm.name }];
+    if (alarm.state !== "ALARM") return [];
+    const code = CRITICAL_ALARMS.has(alarm.name) ? HEALTH_REASON.CRITICAL_ALARM : HEALTH_REASON.WARNING_ALARM;
+    return [{ code, alarm: alarm.name }];
+  });
 };
 
 const outboxReasons = (outbox, now) => {

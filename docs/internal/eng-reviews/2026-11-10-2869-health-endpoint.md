@@ -36,6 +36,20 @@ Result: no blocking findings so far
 | Checked | `accounts()` | The account row holds `credentialsRef` and `userId`; only id, display name, status, last error code and the mapping count are returned (tested). Mapping counts are one grouped query, not one per account. | No change. |
 | P3 (6/10) | `accounts()` | The old staging account (DISCONNECTED) still has 3 ACTIVE mappings, so the page will show "Disconnected, 3 properties". The data is correct; it may confuse. | Follow-up, not in this PR: hide disconnected accounts on the page, or deactivate mappings on disconnect. |
 
+### Commit 5: CloudWatch alarm reader (`providers/cloudwatchAlarmReader.js`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (6/10) | `backend/package-lock.json` | Installing `@aws-sdk/client-cloudwatch` also updated 19 existing packages (shared `@aws-sdk` and `@smithy` dependencies) in the lockfile that every backend Lambda uses. | Accepted: the full backend suite is green (one baseline suite, SiteMinder `reservationsMessage`, even started passing, it had failed on a stale local `node_modules`). Named in the PR so reviewers know the lockfile changed beyond the new package. |
+| P3 (4/10) | `backend/package.json` | `npm i` sorted two existing entries and fixed whitespace. | Accepted: formatting only. |
+| Checked | `cloudwatchAlarmReader.js` | The alarm names come from `CHANNEX_HEALTH_ALARMS`, so the endpoint cannot read other alarms; errors are not caught here, the service handles them (D4). `DescribeAlarms` without `AlarmTypes` returns metric alarms, which all seven are. | No change. |
+
+### Commit 6: a missing alarm counts as Degraded
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P2 (7/10) | `channexHealthStatus.js`, `alarmReasons` | With the reader returning `MISSING` for an alarm CloudWatch no longer has, the rule still said Healthy: an alarm deleted in a cleanup would leave its failure unwatched without anyone seeing it. | Fixed: `MISSING` gives reason `ALARM_MISSING` and Degraded, with a test; design note D5 updated in the same commit. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.

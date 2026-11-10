@@ -80,7 +80,7 @@ The first row that matches wins.
 | Status | When |
 |---|---|
 | Down | A critical alarm is in ALARM |
-| Degraded | A warning alarm is in ALARM, or a failed outbox change in the last 24 hours, or the oldest waiting change is older than 7 minutes, or an account is `RECONNECT_REQUIRED`, or the last polling run ended `FAILED`, or the alarms could not be read |
+| Degraded | A warning alarm is in ALARM, or a failed outbox change in the last 24 hours, or the oldest waiting change is older than 7 minutes, or an account is `RECONNECT_REQUIRED`, or the last polling run ended `FAILED`, or the alarms could not be read, or one of the seven alarms no longer exists in CloudWatch (`MISSING`: a deleted alarm can no longer warn anyone) |
 | Healthy | None of the above |
 
 Alarms are split by what they mean, so a probe on the webhook URL does not turn the page to Down:
