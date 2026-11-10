@@ -422,7 +422,7 @@ const DirectBookingWebsitePlanSection = ({
     setNotice("");
 
     try {
-      const result = await changeWebsiteRatePlan(targetPlan);
+      const result = await changeWebsiteRatePlan(targetPlan, { withoutPayment: true });
       if (!isCurrentChange()) {
         return;
       }

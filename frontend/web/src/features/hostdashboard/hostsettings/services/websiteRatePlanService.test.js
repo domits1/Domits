@@ -98,6 +98,25 @@ describe("websiteRatePlanService", () => {
     expect(global.fetch.mock.calls[0][1].body).toBe(expectedBody);
   });
 
+  test.each([
+    ["elite", '{"plan":"elite","withoutPayment":true}'],
+    ["essentials", '{"plan":"essentials","withoutPayment":true}'],
+  ])("sends withoutPayment true with the plan for %s when the change is without payment", async (plan, expectedBody) => {
+    global.fetch.mockResolvedValue(jsonResponse(200, { action: "unchanged" }));
+
+    await changeWebsiteRatePlan(plan, { withoutPayment: true });
+
+    expect(global.fetch.mock.calls[0][1].body).toBe(expectedBody);
+  });
+
+  test.each([false, "true", 1, null])("sends only the plan when withoutPayment is %p", async (withoutPayment) => {
+    global.fetch.mockResolvedValue(jsonResponse(200, { action: "unchanged" }));
+
+    await changeWebsiteRatePlan("elite", { withoutPayment });
+
+    expect(global.fetch.mock.calls[0][1].body).toBe('{"plan":"elite"}');
+  });
+
   test("surfaces failures from the rate-plan PATCH request", async () => {
     global.fetch.mockResolvedValue(
       jsonResponse(503, { message: "Checkout is not configured." })

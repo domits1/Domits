@@ -784,7 +784,7 @@ describe("DirectBookingWebsitePlanSection", () => {
       fireEvent.click(screen.getByRole("button", { name: "Upgrade to Elite" }));
 
       expect(await screen.findByText("Your website plan is now Elite")).toBeInTheDocument();
-      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"]]);
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite", { withoutPayment: true }]]);
       expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
       expect(screen.getByText("Choose the plan for your website")).toBeInTheDocument();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -804,7 +804,10 @@ describe("DirectBookingWebsitePlanSection", () => {
       fireEvent.click(screen.getByRole("button", { name: "Switch to Essentials" }));
 
       expect(await screen.findByText("Downgrade complete")).toBeInTheDocument();
-      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"], ["essentials"]]);
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([
+        ["elite", { withoutPayment: true }],
+        ["essentials", { withoutPayment: true }],
+      ]);
       expect(renderedCards()).toEqual([ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD]);
     });
 
@@ -930,7 +933,7 @@ describe("DirectBookingWebsitePlanSection", () => {
       fireEvent.click(await screen.findByRole("button", { name: "Switch to Essentials" }));
 
       expect(await screen.findByRole("alert")).toHaveTextContent("Could not change plan");
-      expect(changeWebsiteRatePlan.mock.calls).toEqual([["essentials"]]);
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["essentials", { withoutPayment: true }]]);
       expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
       expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
     });
@@ -964,7 +967,10 @@ describe("DirectBookingWebsitePlanSection", () => {
 
       expect(await screen.findByText("Your website plan is now Elite")).toBeInTheDocument();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"], ["elite"]]);
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([
+        ["elite", { withoutPayment: true }],
+        ["elite", { withoutPayment: true }],
+      ]);
     });
 
     test("sends one change when Elite is clicked twice at once, and keeps both buttons disabled while it runs", async () => {
@@ -985,7 +991,7 @@ describe("DirectBookingWebsitePlanSection", () => {
         eliteButton.click();
       });
 
-      expect(changeWebsiteRatePlan).toHaveBeenCalledTimes(1);
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite", { withoutPayment: true }]]);
       expect(renderedCards().map((card) => card.buttonDisabled)).toEqual([true, true]);
       expect(screen.getByRole("button", { name: "Processing..." })).toBeDisabled();
 
