@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import App from "../../../../App";
@@ -104,6 +104,19 @@ jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
   },
 }));
 
+jest.mock("../rendering/templates/PanoramaLandingTemplate", () => {
+  const { createElement } = jest.requireActual("react");
+  const { default: PanoramaLandingTemplate } = jest.requireActual("../rendering/templates/PanoramaLandingTemplate");
+  return {
+    __esModule: true,
+    default: function RecordedPanoramaLandingTemplate(props) {
+      mockTemplateProps.push(props);
+      return createElement(PanoramaLandingTemplate, props);
+    },
+  };
+});
+
+const mockTemplateProps = [];
 const { fetchPublicWebsiteRenderModel } = jest.requireMock("../services/websitePublicSiteService");
 
 const SITE_DOMAIN = renderPayload.domain.domain;
@@ -111,6 +124,19 @@ const SITE_ID = renderPayload.site.id;
 const SITE_TITLE = "Wellness Villa Bisous | Ubud, Indonesia";
 const NOT_FOUND_TEXT = "The page you were looking for does not exist or has been removed";
 const SITE_HOST_PAYLOAD = { ...renderPayload, domain: { ...renderPayload.domain, domain: "localhost" } };
+const GALLERY_AND_CONTACT_ON = { gallery: { enabled: true }, contact: { enabled: true, navLabel: "Reach us" } };
+
+const withSitePages = (payload, sitePages) => ({
+  ...payload,
+  contentOverrides: { ...payload.contentOverrides, sitePages },
+});
+
+const lastTemplateProps = () => mockTemplateProps.at(-1);
+
+const listSectionIds = () =>
+  Array.from(document.querySelectorAll(".publicPreviewCanvas article > section[id]")).map((section) => section.id);
+
+const getTopMenu = () => document.querySelector(".templateTopBarNav");
 
 const buildModel = (payload) =>
   applyWebsiteDraftContentOverrides(
@@ -153,6 +179,7 @@ const readSiteHtml = async () => {
 };
 
 beforeEach(() => {
+  mockTemplateProps.length = 0;
   fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
   jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
   document.title = "Domits";
@@ -170,19 +197,27 @@ describe("site host routing for a site without site pages", () => {
     fetchPublicWebsiteRenderModel.mockResolvedValue(SITE_HOST_PAYLOAD);
   });
 
-  it.each(["/", "/gallery", "/accommodation", "/contact-us", "/Gallery", "/gallery/", "/unknown", "/gallery/photos"])(
-    "renders the site as today on %s",
-    async (url) => {
-      const todaysHtml = await renderTodaysSiteHtml();
+  it.each([
+    "/",
+    "/gallery",
+    "/accommodation",
+    "/contact-us",
+    "/Gallery",
+    "/gallery/",
+    "/unknown",
+    "/gallery/photos",
+    "/gallery?sitePages=%7B%22gallery%22%3A%7B%22enabled%22%3Atrue%7D%7D",
+  ])("renders the site as today on %s", async (url) => {
+    const todaysHtml = await renderTodaysSiteHtml();
 
-      renderAppAt(url);
+    renderAppAt(url);
 
-      expect(await readSiteHtml()).toBe(todaysHtml);
-      expect(document.title).toBe(SITE_TITLE);
-      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
-      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: "", domain: "localhost" });
-    }
-  );
+    expect(await readSiteHtml()).toBe(todaysHtml);
+    expect(lastTemplateProps().activePageKey).toBe("main");
+    expect(document.title).toBe(SITE_TITLE);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: "", domain: "localhost" });
+  });
 
   it.each([
     ["/contact", "Domits contact page"],
@@ -194,6 +229,87 @@ describe("site host routing for a site without site pages", () => {
 
     expect(screen.getByText(pageText)).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
+  });
+});
+
+describe("site host routing for a site with site pages", () => {
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSitePages(SITE_HOST_PAYLOAD, GALLERY_AND_CONTACT_ON));
+  });
+
+  it.each([
+    ["/gallery", "gallery", ["gallery"]],
+    ["/GALLERY/", "gallery", ["gallery"]],
+    ["/contact-us", "contact", ["contact"]],
+    ["/accommodation", "main", ["overview", "about", "features", "lifestyle", "availability"]],
+    ["/unknown", "main", ["overview", "about", "features", "lifestyle", "availability"]],
+    ["/gallery/photos", "main", ["overview", "about", "features", "lifestyle", "availability"]],
+  ])("routes %s to the %s page", async (url, pageKey, sectionIds) => {
+    renderAppAt(url);
+
+    await screen.findByRole("link", { name: "Home" });
+
+    expect(lastTemplateProps().activePageKey).toBe(pageKey);
+    expect(listSectionIds()).toEqual(sectionIds);
+  });
+
+  it.each([
+    ["/contact", "Domits contact page"],
+    ["/about", "Domits about page"],
+    ["/policy", "Domits policy page"],
+    ["/terms", "Domits terms page"],
+  ])("keeps the Domits page on %s", (url, pageText) => {
+    renderAppAt(url);
+
+    expect(screen.getByText(pageText)).toBeInTheDocument();
+    expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
+  });
+
+  it("moves between pages through the menu without loading the site again", async () => {
+    renderAppAt("/");
+    await screen.findByTestId("quote-availability");
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Gallery" }));
+
+    expect(globalThis.location.pathname).toBe("/gallery");
+    expect(listSectionIds()).toEqual(["gallery"]);
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Reach us" }));
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
+
+    expect(globalThis.location.pathname).toBe("/");
+    expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("reveals the sections of the page the guest moves to", async () => {
+    renderAppAt("/");
+    await screen.findByTestId("quote-availability");
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Gallery" }));
+
+    const revealTargets = Array.from(document.querySelectorAll(".publicPreviewCanvas [data-scroll-reveal]"));
+    expect(revealTargets.length).toBeGreaterThan(0);
+    expect(revealTargets.filter((target) => !target.classList.contains("scrollRevealVisible"))).toEqual([]);
+  });
+
+  it("shows the site as today on a page path once the pages are no longer served", async () => {
+    const todaysHtml = await renderTodaysSiteHtml();
+    renderAppAt("/gallery");
+    await screen.findByRole("link", { name: "Home" });
+    expect(listSectionIds()).toEqual(["gallery"]);
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(SITE_HOST_PAYLOAD);
+    await act(async () => {
+      globalThis.dispatchEvent(
+        new MessageEvent("message", { data: { type: "website-live-site-update", domain: "localhost" } })
+      );
+    });
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+    expect(lastTemplateProps().activePageKey).toBe("main");
+    expect(globalThis.location.pathname).toBe("/gallery");
   });
 });
 

@@ -18,6 +18,7 @@ import {
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { resolveSitePageFromPath } from "./rendering/websitePages";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
@@ -96,7 +97,7 @@ const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDo
 };
 
 function WebsitePublicSitePage() {
-  const { domain: routeDomain = "" } = useParams();
+  const { domain: routeDomain = "", "*": routeSitePath = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -197,6 +198,7 @@ function WebsitePublicSitePage() {
     );
   }, [renderPayload, resolution?.templateKey]);
 
+  const activePageKey = resolveSitePageFromPath(routeSitePath, publicModel?.sitePages);
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
@@ -414,6 +416,7 @@ function WebsitePublicSitePage() {
             showBrowserChrome={false}
             enableScrollReveal={isPanoramaTemplate}
             quoteContext={renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null}
+            activePageKey={activePageKey}
           />
         </div>
       </main>
