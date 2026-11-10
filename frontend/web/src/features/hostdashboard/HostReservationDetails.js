@@ -247,7 +247,7 @@ const resolveRefundStatus = (reservation) => {
   const hasRefundEvidence =
     Boolean(refundId) || (Number.isFinite(refundedAmount) && refundedAmount > 0) || Boolean(reservation.refund_error);
 
-  if ((paymentId && !paymentId.startsWith("FAILED:")) || hasRefundEvidence) {
+  if ((paymentId && !paymentId.startsWith("FAILED")) || hasRefundEvidence) {
     return "unknown";
   }
 

@@ -2,26 +2,28 @@
 
 Add the nullable `refund_status` column to both Aurora DSQL booking schemas before deploying code that reads or writes it.
 
-## Order
+## Apply
 
-1. Apply `20261110_booking_refund_status.sql` to the `test` schema.
-2. Confirm the column exists and the migration job completed.
-3. Apply the same migration to the `main` schema.
-4. Confirm the column exists in both schemas.
-5. Deploy the updated Booking entity and booking Lambda only after both schemas are ready.
+Run `20261110_booking_refund_status.sql` once against the Aurora DSQL cluster. The script contains schema-qualified statements and applies the change in this order:
 
-The migration adds the column idempotently and marks historical cancelled bookings with a payment/refund record as `unknown`. It deliberately does not infer a successful refund from `refunded_amount` or `stripe_refund_id`.
+1. Add the column to `test.booking`.
+2. Add the column to `main.booking`.
+3. Mark historical cancelled bookings with payment/refund evidence as `unknown`.
 
-## Verification
+Do not run the complete script separately for each schema; it already contains statements for both.
 
-Run the metadata query from the migration SQL and confirm one nullable `refund_status` VARCHAR(32) row for each schema.
+Deploy the updated Booking entity and booking Lambda only after the migration completes successfully.
 
-The migration also reports the number of historical cancelled bookings whose refund outcome is unknown. This is expected for records that predate persisted Stripe refund statuses.
+## Verify
+
+Run the metadata query in the migration SQL and confirm one nullable `refund_status` VARCHAR(32) row for each schema. Check that no migration job remains submitted or processing.
+
+The migration reports the number of historical cancelled bookings whose refund outcome is unknown. This is expected for records that predate persisted Stripe refund statuses. The migration deliberately does not infer a successful refund from `refunded_amount` or `stripe_refund_id`.
 
 ## Status values
 
 - `refunded`: Stripe refund status is `succeeded`.
-- `not_refunded`: Stripe refund status is `failed`/ `canceled`, or a paid booking had a zero policy refund.
+- `not_refunded`: Stripe refund status is `failed`/`canceled`, or a paid booking had a zero policy refund.
 - `unknown`: refund is pending, could not be verified, or is historical.
 
 ## Rollback

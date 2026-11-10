@@ -397,7 +397,7 @@ class ReservationController {
     let stripeRefundId = null;
     let refundError = null;
     const paymentId = String(booking.paymentid || "").trim();
-    const hasStripePaymentIntent = Boolean(paymentId) && !paymentId.startsWith("FAILED:");
+    const hasStripePaymentIntent = Boolean(paymentId) && !paymentId.startsWith("FAILED");
     let refundStatus =
       hasStripePaymentIntent || booking.stripe_refund_id || Number(booking.refunded_amount) > 0 ? "unknown" : null;
 
