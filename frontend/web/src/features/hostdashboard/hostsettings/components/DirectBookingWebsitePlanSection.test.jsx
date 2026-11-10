@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import DirectBookingWebsitePlanSection from "./DirectBookingWebsitePlanSection";
 import {
   changeWebsiteRatePlan,
@@ -80,6 +80,49 @@ const essentialsPlan = (overrides = {}) => ({
   effectiveUntil: null,
   ...overrides,
 });
+
+const ESSENTIALS_FEATURES = ["Basic website", "Included", "Basic booking", "Basic customization and SEO"];
+const ELITE_FEATURES = [
+  "More tools",
+  "Everything in Essentials, plus",
+  "Custom domain",
+  "Advanced builder",
+  "Multiple languages",
+  "Growth tools",
+];
+const SCHEDULED_END = "2026-12-15T12:00:00.000Z";
+const SCHEDULED_END_LINE = `Elite remains active until ${new Date(SCHEDULED_END).toLocaleDateString("en")}.`;
+
+const ESSENTIALS_CURRENT_CARD = {
+  texts: ["Essentials", "Current plan", "Free", "per month", ...ESSENTIALS_FEATURES, "Current plan"],
+  buttonDisabled: true,
+};
+const ELITE_UPGRADE_CARD = {
+  texts: ["Elite", "€43.00", "per month", ...ELITE_FEATURES, "Upgrade to Elite"],
+  buttonDisabled: false,
+};
+const ESSENTIALS_SWITCH_CARD = {
+  texts: ["Essentials", "Free", "per month", ...ESSENTIALS_FEATURES, "Switch to Essentials"],
+  buttonDisabled: false,
+};
+const ELITE_CURRENT_CARD = {
+  texts: ["Elite", "Current plan", "€43.00", "per month", ...ELITE_FEATURES, "Current plan"],
+  buttonDisabled: true,
+};
+const ESSENTIALS_SCHEDULED_CARD = {
+  texts: ["Essentials", "Scheduled", "Free", "per month", ...ESSENTIALS_FEATURES, "Scheduled"],
+  buttonDisabled: true,
+};
+const ELITE_REACTIVATE_CARD = {
+  texts: ["Elite", "Current plan", "€43.00", "per month", ...ELITE_FEATURES, "Reactivate Elite"],
+  buttonDisabled: false,
+};
+
+const renderedCards = () =>
+  screen.getAllByRole("article").map((card) => ({
+    texts: within(card).getAllByText(/./).map((element) => element.textContent),
+    buttonDisabled: within(card).getByRole("button").disabled,
+  }));
 
 describe("DirectBookingWebsitePlanSection", () => {
   beforeEach(() => {
@@ -548,5 +591,45 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(screen.getAllByText("per month")).toHaveLength(2);
     expect(screen.getByRole("button", { name: eliteButtonName })).toBeInTheDocument();
     expect(screen.queryByText("Granted by Domits")).not.toBeInTheDocument();
+  });
+
+  test.each([
+    ["an Essentials plan", { stripeSubscriptionId: null }, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
+    ["an Essentials plan read without a subscription field", {}, [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD], []],
+    [
+      "a paid Elite plan",
+      { plan: "elite", priceCents: 4300, stripeSubscriptionId: "sub_paid" },
+      [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
+      [],
+    ],
+    [
+      "an Elite plan read without a subscription field",
+      { plan: "elite", priceCents: 4300 },
+      [ESSENTIALS_SWITCH_CARD, ELITE_CURRENT_CARD],
+      [],
+    ],
+    [
+      "a paid Elite plan with a scheduled downgrade",
+      { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END, stripeSubscriptionId: "sub_paid" },
+      [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
+      [SCHEDULED_END_LINE],
+    ],
+    [
+      "an Elite plan with a scheduled downgrade read without a subscription field",
+      { plan: "elite", priceCents: 4300, effectiveUntil: SCHEDULED_END },
+      [ESSENTIALS_SCHEDULED_CARD, ELITE_REACTIVATE_CARD],
+      [SCHEDULED_END_LINE],
+    ],
+  ])("renders both cards of %s as before", async (_label, overrides, expectedCards, expectedEndLines) => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan(overrides));
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    await screen.findAllByRole("article");
+    expect(renderedCards()).toEqual(expectedCards);
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.queryAllByText(/^Elite remains active until /).map((line) => line.textContent)).toEqual(
+      expectedEndLines
+    );
   });
 });
