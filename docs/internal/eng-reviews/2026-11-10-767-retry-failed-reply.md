@@ -2,7 +2,7 @@
 
 Branch: feat/767-retry-failed-reply
 Issue: #767
-Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before the commit. The gate runs again on each later commit; this record is extended with them.
+Result: 1 blocking finding (P1, ChatScreen), reported alone and fixed before its commit; no blocking finding open. 1 P2 in the backend diff, fixed before its commit. The gate ran on every commit.
 
 ## Commits reviewed
 
@@ -12,6 +12,7 @@ Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before
 | refactor(messages): extract postToSend | no findings; the diff moves the fetch and error handling unchanged, full web suite green |
 | feat(messages): retry service, hook and Retry button | no blocking finding; one P3 below |
 | refactor(messages): extract buildSettledMessage | no findings; fallbacks `nowIso` and `optimisticId` equal the optimistic message's own `createdAt` and `id`, full web suite green |
+| feat(messages): retry in ChatScreen | 1 P1 (wrong recipient on retry), fixed before the commit; 1 P3 accepted |
 
 ## Findings
 
@@ -23,6 +24,10 @@ Result: no blocking finding. 1 P2 found in the backend staged diff, fixed before
 | P3 (6/10) | frontend/web/src/components/messages/ChatMessage.js `canRetry = isOutgoing && deliveryStatus === "failed" && typeof onRetry === "function"` | The button also shows on a failed outgoing message in a Domits-only thread, where the backend answers 409 because there is no provider to resend through. | Accepted: Domits-only messages are saved as `delivered`, never `failed`, so the case does not occur today; the 409 shows the existing toast if it ever does. |
 
 Prettier reports `ChatMessage.js`, `messagingService.js`, `messagingService.test.js` and `messagesV2.scss` as unformatted on `acceptance` already. The diff keeps their existing layout instead of reformatting whole files.
+| P1 (8/10) | frontend/web/src/components/messages/ChatScreen.jsx `resendUnsavedMessage` (before) `const result = await sendMessage(resolvedContactId, text, fileUrls, options);`, with `localMessages` merged unscoped (`const merged = [...baseArr, ...localMessages, ...extras];`) and `ChatScreen` rendered without a `key` in `Messages.js:507` | A message that failed before it was saved now stays on screen. It then showed in the next conversation, and Retry sent it to the contact open at retry time. For a first message without a thread, guest A's text would reach guest B. | Fixed before the commit: `retryPayload` stores `recipientId` and the retry uses it; an unsent failed message is only shown when its `recipientId` matches the open contact and, when it has a `threadId`, that matches the open thread. One test switches the contact, checks the message is hidden, and checks the retry goes to the original guest. |
+| P3 (7/10) | frontend/web/src/components/messages/ChatScreen.jsx `uniq.push(m.id && retryOverrides[m.id] ? { ...m, ...retryOverrides[m.id] } : m)` | A retry result is kept for the life of the screen. If a later status such as `delivered` arrives for that message, the screen keeps showing `sent` until a reload. | Accepted: Channex replies end at `sent`, so nothing newer arrives for the channel this feature targets. Revisit if retry is opened for a channel with delivery receipts. |
+
+Follow-up, not in this pull request: `localMessages` is never scoped to the open conversation, so messages that were saved (sent or failed with an id) can also show in another conversation. This existed before this change; the fix above only hides unsent failed messages. To be raised as its own issue (scope `localMessages` by thread or contact, or give `ChatScreen` a `key` per conversation).
 
 ## Failure modes
 
@@ -34,6 +39,8 @@ Prettier reports `ChatMessage.js`, `messagingService.js`, `messagingService.test
 | retryMessage | process dies after the claim | no | row stays `pending` | no, accepted risk above |
 | retryMessage | the message is already sent or delivered | yes (409) | nothing sent | yes |
 | retryMessage | a Domits-only thread has no provider | yes (409) | nothing sent | yes |
+| ChatScreen retry | host switches conversation after an unsent failure | yes | message hidden elsewhere, retry goes to the original recipient | yes, the message is back when the host returns |
+| ChatScreen retry | double click on Retry | yes | ref guard, one request | yes, pending and disabled |
 
 ## What already exists
 
