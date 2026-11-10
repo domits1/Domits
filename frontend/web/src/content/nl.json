@@ -1706,6 +1706,7 @@
         "unchanged": "Je websiteabonnement is al bijgewerkt.",
         "effectiveUntil": "Elite blijft actief tot {date}.",
         "priceUnavailable": "Prijs niet beschikbaar",
+        "withoutPayment": "Geen betaling nodig",
         "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
         "checkoutSuccess": "Je Elite-abonnement is actief.",
         "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
