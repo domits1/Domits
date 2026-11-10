@@ -182,8 +182,6 @@ export class ReviewService {
       public_review: publicReview, updated_at: result.updated_at };
   }
 
-  // Fetch the caller's reviews by scope.
-  // This keeps the profile and dashboard views consistent with the user's written and received history.
   async getReviews(callerUserId, scope = "written") {
     this.assertCaller(callerUserId);
     if (!["written", "received"].includes(scope)) {
@@ -200,8 +198,6 @@ export class ReviewService {
       }));
   }
 
-  // Remove a review only when it still belongs to the caller.
-  // This prevents accidental deletion of someone else's record while preserving the soft-delete audit trail.
   async deleteReview(callerUserId, reviewId) {
     this.assertCaller(callerUserId);
     this.assertId(reviewId, "review ID");
@@ -244,8 +240,6 @@ export class ReviewService {
     }));
   }
 
-  // Fetch one review with the required visibility rules.
-  // This lets the caller read their own review or a published review without revealing hidden content.
   async getReviewById(userId, reviewId) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
@@ -255,8 +249,6 @@ export class ReviewService {
     return toReviewView(review);
   }
 
-  // Update an unpublished draft review safely.
-  // This lets the guest refine their draft while preventing edits after publication or conflicting changes.
   async updateReview(userId, reviewId, changes) {
     this.assertCaller(userId);
     this.assertObject(changes);
@@ -295,8 +287,6 @@ export class ReviewService {
     return toReviewView(updated);
   }
 
-  // Publish a draft review when the reservation is still valid.
-  // This finalizes the guest review only after the booking checks and authorization rules confirm it is eligible.
   assertAdministrator(userId, username) {
     this.assertCaller(userId);
     const admins = String(process.env.PROPERTY_REVIEW_ADMIN_USER_IDS || "").split(/[,\s;]+/).filter(Boolean);
@@ -305,8 +295,6 @@ export class ReviewService {
     }
   }
 
-  // Any host can create team_member rows, so a role alone does not prove Domits staff.
-  // The allowlist establishes that; the role narrows which staff may approve.
   async assertReviewApprover(userId, username, manager) {
     this.assertAdministrator(userId, username);
 
@@ -315,9 +303,20 @@ export class ReviewService {
     }
   }
 
-  async getPendingReviews(userId, username) {
+  async getReviewApprovalQueue(userId, username, status) {
     await this.assertReviewApprover(userId, username);
-    return (await this.repository.findPendingReviews()).map(toPendingReviewView);
+    const reviews = await this.repository.findUnpublishedReviews(status);
+    return reviews.map(status === "PENDING_APPROVAL" ? toPendingReviewView : toReviewView);
+  }
+
+  async getModeratedReviews(userId, username, scope) {
+    await this.assertReviewApprover(userId, username);
+    const statuses = {
+      "admin-published": ["PUBLISHED"],
+      "admin-rejected": ["REJECTED"],
+      "admin-all": ["PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED"],
+    };
+    return (await this.repository.findModeratedReviews(statuses[scope])).map(toPendingReviewView);
   }
 
   async flagReview(userId, username, { review_id: reviewId, reason, notes }) {
@@ -357,7 +356,7 @@ export class ReviewService {
       throw new BadRequestException("A valid review update version is required.");
     }
     const review = await this.requireReview(reviewId);
-    return this.changePublicationState(review, "PENDING_APPROVAL", "PUBLISHED", async (_current, manager) => {
+    return this.changePublicationState(review, "PENDING_APPROVAL", "APPROVED", async (_current, manager) => {
       await this.assertReviewApprover(userId, username, manager);
       return true;
     }, version);
@@ -385,6 +384,17 @@ export class ReviewService {
   async publishReview(userId, reviewId, username) {
     this.assertCaller(userId);
     const review = await this.requireReview(reviewId);
+    if (isPublished(review)) {
+      if (!(await this.canPublishReview({ userId, review }))) {
+        await this.assertReviewApprover(userId, username);
+      }
+      return toReviewView(review);
+    }
+
+    if (review.status === "PENDING_APPROVAL" && await this.canPublishReview({ userId, review })) {
+      return toReviewView(review);
+    }
+
     const authorize = async (current, manager) => {
       if (current.status === "APPROVED") {
         await this.assertReviewApprover(userId, username, manager);
@@ -393,7 +403,6 @@ export class ReviewService {
       return this.canPublishReview({ userId, review: current });
     };
     if (!(await authorize(review))) throw new ForbiddenException("You cannot publish this review.");
-    if (isPublished(review)) return toReviewView(review);
     return this.changePublicationState(review, review.status === "DRAFT" ? "DRAFT" : "APPROVED",
       review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
   }
@@ -421,8 +430,6 @@ export class ReviewService {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new BadRequestException("Request body must be a JSON object.");
   }
 
-  // Create a new guest review for a completed reservation.
-  // This enforces booking eligibility and prevents duplicate or invalid review submissions.
   async createReview(callerUserId, reviewData) {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("An authenticated caller is required.");
@@ -536,8 +543,6 @@ export class ReviewService {
     return this.normalizePublicReview(reviewData.public_review);
   }
 
-  // Normalize and sanitize the written review text before saving it.
-  // This ensures reviews are plain text, within limits, and free of unsafe control characters.
   normalizePublicReview(value) {
     if (value === undefined || value === null) {
       throw new BadRequestException("Please describe your stay before submitting your review.");
@@ -553,12 +558,9 @@ export class ReviewService {
     if (text.length > REVIEW_MAX_LENGTH) {
       throw new BadRequestException(`Your written review must be ${REVIEW_MAX_LENGTH} characters or fewer.`);
     }
-    // Store plain text; React text children escape HTML when displaying it.
     return text;
   }
 
-  // Normalize optional private feedback without letting blanks become stored garbage.
-  // This keeps optional feedback consistent while avoiding empty values in the database.
   normalizeOptionalText(value) {
     if (!value) return null;
 

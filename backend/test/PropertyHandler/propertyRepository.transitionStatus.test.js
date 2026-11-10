@@ -33,6 +33,7 @@ describe("PropertyRepository.transitionStatus", () => {
   };
 
   beforeEach(() => {
+    process.env.TEST = "true";
     jest.spyOn(Date, "now").mockReturnValue(NOW);
     repository = new PropertyRepository({});
   });
@@ -84,7 +85,7 @@ describe("PropertyRepository.transitionStatus", () => {
     await repository.transitionStatus("property-1", ["ARCHIVED"], "PENDING_REVIEW");
 
     expect(client.query).toHaveBeenLastCalledWith(
-      "UPDATE property SET archivedat = NULL, archivereason = NULL WHERE id = $1",
+      'UPDATE "test"."property" SET archivedat = NULL, archivereason = NULL WHERE id = $1',
       ["property-1"]
     );
   });

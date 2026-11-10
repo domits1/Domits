@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "../styles/ReviewPage.module.css";
-import { createReview, getEditableReview, updateReview } from "../services/reviewAPI";
+import { createReview, getEditableReview, submitReviewForApproval, updateReview } from "../services/reviewAPI";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
 import {
   canLeaveReview,
@@ -46,6 +46,8 @@ const ReviewPage = () => {
   const [form, setForm] = useState(INITIAL_FORM);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedDraft, setSavedDraft] = useState(null);
+  const draftId = savedDraft?.bookingId === bookingId ? savedDraft?.id : null;
   const [submitError, setSubmitError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [checkedBookingId, setCheckedBookingId] = useState("");
@@ -180,15 +182,22 @@ const ReviewPage = () => {
       if (reviewId) {
         await updateReview({ reviewId, rating: Number(form.rating), publicReview, updatedAt: editingReview.updated_at });
       } else {
-        await createReview({
-          bookingId,
-          title: form.title.trim(),
-          rating: Number(form.rating),
-          publicReview,
-          privateFeedback: form.privateFeedback.trim(),
-        });
+        let id = draftId;
+        if (!id) {
+          const draft = await createReview({
+            bookingId,
+            title: form.title.trim(),
+            rating: Number(form.rating),
+            publicReview,
+            privateFeedback: form.privateFeedback.trim(),
+          });
+          id = draft.id;
+          setSavedDraft({ bookingId, id });
+        }
+        await submitReviewForApproval(id);
       }
 
+      setSavedDraft(null);
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
     } catch (error) {
@@ -206,7 +215,7 @@ const ReviewPage = () => {
         value={value}
         checked={form.rating === String(value)}
         onChange={updateField("rating")}
-        disabled={isSubmitting}
+        disabled={isSubmitting || Boolean(draftId)}
         required
         aria-label={`${value} ${value === 1 ? "star" : "stars"}: ${RATING_LABELS[value]}`}
         aria-describedby={`rating-description${ratingError ? " rating-error" : ""}`}
@@ -263,7 +272,7 @@ const ReviewPage = () => {
     <main className={styles.main}>
       <h1>{reviewId ? "Edit review" : `Review ${propertyTitle}`}</h1>
       <form onSubmit={handleSubmit} noValidate>
-        <fieldset className={styles.rating} disabled={isSubmitting}>
+        <fieldset className={styles.rating} disabled={isSubmitting || Boolean(draftId)}>
           <legend>Overall experience (required)</legend>
           <div>{[1, 2, 3, 4, 5].map(renderRatingInput)}</div>
           <p id="rating-description" aria-live="polite">
@@ -274,7 +283,7 @@ const ReviewPage = () => {
         {!reviewId && <section className={styles.content}>
           <label htmlFor="title">Review title (required)</label>
           <input id="title" value={form.title} onChange={updateField("title")}
-            maxLength={120} disabled={isSubmitting} required />
+            maxLength={120} disabled={isSubmitting || Boolean(draftId)} required />
         </section>}
         <section className={styles.content}>
           <label htmlFor="publicReview">Written review (required)</label>
@@ -294,7 +303,7 @@ const ReviewPage = () => {
             rows={6}
             aria-invalid={Boolean(reviewError)}
             aria-describedby={`publicReview-help publicReview-count${reviewError ? " publicReview-error" : ""}`}
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(draftId)}
           />
           <p id="publicReview-count">{form.publicReview.length}/{REVIEW_MAX_LENGTH} characters</p>
           {reviewError && <p id="publicReview-error" role="alert">{reviewError}</p>}
@@ -309,7 +318,7 @@ const ReviewPage = () => {
             onChange={updateField("privateFeedback")}
             placeholder="Optional feedback for the host..."
             maxLength={500}
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(draftId)}
           />
           <p>{form.privateFeedback.length}/500</p>
         </section>}

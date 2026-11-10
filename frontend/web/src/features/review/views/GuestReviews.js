@@ -14,9 +14,9 @@ import styles from "../styles/GuestReviews.module.css";
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
-import { requestReview } from "../services/reviewAPI";
+import { requestReview, submitReviewForApproval } from "../services/reviewAPI";
 
-function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
+function ReviewCard({ review, isWritten, deletingId, submittingId, onSubmit, onDelete, navigate }) {
   const rating = Number(review.overall_rating ?? review.rating);
   const hasRating = Number.isFinite(rating) && rating >= 1 && rating <= 5;
   return (
@@ -38,6 +38,14 @@ function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
         </span>
         {isWritten && (
           <div className={styles.actions}>
+            {review.status === "DRAFT" && (
+              <button
+                type="button"
+                disabled={submittingId !== null || deletingId === review.id}
+                onClick={() => onSubmit(review.id)}>
+                {submittingId === review.id ? "Submitting…" : "Submit for approval"}
+              </button>
+            )}
             {review.can_edit && Date.now() < review.edit_expires_at && (
               <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
                 <Pencil size={14} aria-hidden="true" /> Edit review
@@ -46,7 +54,7 @@ function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
             <button
               type="button"
               className={styles.delete}
-              disabled={deletingId === review.id}
+              disabled={deletingId === review.id || submittingId === review.id}
               onClick={() => onDelete(review)}
               aria-label="Delete review">
               <Trash2 size={14} aria-hidden="true" /> {deletingId === review.id ? "Deleting…" : "Delete"}
@@ -58,7 +66,7 @@ function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
   );
 }
 
-function ReviewList({ loading, visibleReviews, isWritten, deletingId, asyncDeleteReview, navigate }) {
+function ReviewList({ loading, visibleReviews, isWritten, deletingId, submittingId, onSubmit, asyncDeleteReview, navigate }) {
   if (loading)
     return (
       <output className={styles.loading}>
@@ -87,6 +95,8 @@ function ReviewList({ loading, visibleReviews, isWritten, deletingId, asyncDelet
           review={review}
           isWritten={isWritten}
           deletingId={deletingId}
+          submittingId={submittingId}
+          onSubmit={onSubmit}
           onDelete={asyncDeleteReview}
           navigate={navigate}
         />
@@ -97,6 +107,7 @@ function ReviewList({ loading, visibleReviews, isWritten, deletingId, asyncDelet
 
 function GuestReviews() {
   const [activeTab, setActiveTab] = useState("written");
+  const [submittingId, setSubmittingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [receivedReviews, setReceivedReviews] = useState([]);
@@ -162,6 +173,21 @@ function GuestReviews() {
 
     retrieveReceivedReviews();
   }, [userId]);
+
+  const submitDraft = async (id) => {
+    setSubmittingId(id);
+    setReviewError("");
+    try {
+      const submitted = await submitReviewForApproval(id);
+      setReviews((current) => current.map((review) => review.id === id
+        ? { ...review, ...submitted, can_edit: false }
+        : review));
+    } catch (error) {
+      setReviewError(error.message);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
 
   const asyncDeleteReview = async (review) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -255,6 +281,8 @@ function GuestReviews() {
               visibleReviews={visibleReviews}
               isWritten={isWritten}
               deletingId={deletingId}
+              submittingId={submittingId}
+              onSubmit={submitDraft}
               asyncDeleteReview={asyncDeleteReview}
               navigate={navigate}
             />

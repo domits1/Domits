@@ -398,12 +398,14 @@ describe('Review transactional writes', () => {
     const empty = { property_id: "p1", overall_score: null, review_count: 0 };
     expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
     await service.publishReview("guest", review.id);
-    committed.get(Review).find((item) => item.id === review.id).status = "APPROVED";
-    await expect(service.publishReview("guest", review.id)).rejects.toMatchObject({ statusCode: 403 });
     const previousAllowlist = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
     process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
     repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValue(true);
     try {
+      const pending = committed.get(Review).find((item) => item.id === review.id);
+      await expect(service.approveReview("staff", "admin", review.id, pending.updated_at))
+        .resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+      await expect(service.publishReview("guest", review.id)).rejects.toMatchObject({ statusCode: 403 });
       await service.publishReview("staff", review.id, "admin");
     } finally {
       if (previousAllowlist === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
@@ -494,11 +496,19 @@ describe('Review transactional writes', () => {
     committed.get(Review)[0].status = "PENDING_APPROVAL";
     repositories.get(Review).update.mockResolvedValueOnce({ affected: 0 });
     expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).toBeNull();
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).toBeNull();
+    expect(repositories.get(Review).update).toHaveBeenCalledWith({
+      id: "r1",
+      status: "PENDING_APPROVAL",
+      publication_status: "UNPUBLISHED",
+      updated_at: draft.updated_at,
+    }, expect.any(Object));
     expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
+    expect(committed.get(Review_Request)[0].status).toBe("OPEN");
+    expect(repositories.get(Review_Request).update).not.toHaveBeenCalled();
     committed.get(Booking)[0].status = "Cancelled";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
   });
 
   it("holds approval until the flag is resolved and retains its audit history", async () => {
@@ -508,15 +518,19 @@ describe('Review transactional writes', () => {
     await expect(repository.createReviewFlag({ ...flag, id: "f2" })).rejects.toMatchObject({ statusCode: 409 });
     expect(committed.get(Review)[0]).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED", updated_at: now });
     const approve = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true });
+      updatedAt: now + 2, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true });
     await expect(approve()).rejects.toThrow("Resolve the pending review flag");
     const resolved = await repository.resolveReviewFlag("f1", "moderator", now + 1);
     expect(resolved).toMatchObject({ status: "RESOLVED", reason: "SPAM", resolved_by: "moderator", updated_at: now + 1 });
     await expect(repository.resolveReviewFlag("f1", "other", now + 2)).resolves.toEqual(resolved);
-    await expect(approve()).resolves.toMatchObject({ status: "PUBLISHED" });
-    await repository.createReviewFlag({ ...flag, id: "f2" });
+    await expect(approve()).resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+    await repository.createReviewFlag({ ...flag, id: "f2", created_at: now + 3, updated_at: now + 3 });
+    const publish = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now + 3,
+      updatedAt: now + 5, from: "APPROVED", to: "PUBLISHED", authorize: async () => true });
+    await expect(publish()).rejects.toThrow("Resolve the pending review flag before publishing");
+    await repository.resolveReviewFlag("f2", "moderator", now + 4);
+    await expect(publish()).resolves.toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
     expect(committed.get(Review_Flag)).toHaveLength(2);
-    expect(committed.get(Review)[0].publication_status).toBe("PUBLISHED");
   });
 
   it.each(["missing", "DELETED"])("refuses to flag a %s review", async (status) => {
@@ -525,24 +539,24 @@ describe('Review transactional writes', () => {
     await expect(repository.createReviewFlag({ review_id })).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it("no longer leaves an approved review waiting to be published", async () => {
+  it("rejects publication that bypasses approval", async () => {
     committed.get(Review)[0].status = "PENDING_APPROVAL";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 409 });
+      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 409 });
     expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
   });
 
-  it("keeps a review pending if request completion fails during approval", async () => {
+  it("keeps a review approved and unpublished if request completion fails during publication", async () => {
     repositories.get(Review_Request).update.mockRejectedValue(new Error("Request failure"));
-    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    committed.get(Review)[0].status = "APPROVED";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
-      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toThrow("Request failure");
-    expect(committed.get(Review)[0]).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
+      updatedAt: now, from: "APPROVED", to: "PUBLISHED", authorize: async () => true })).rejects.toThrow("Request failure");
+    expect(committed.get(Review)[0]).toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
   });
 
-  it("submits, publishes on approval, and rejects duplicate approval transactionally", async () => {
+  it("submits, approves, and publishes separately with version checks", async () => {
     let current = committed.get(Review)[0];
-    for (const [from, to] of [["DRAFT", "PENDING_APPROVAL"], ["PENDING_APPROVAL", "PUBLISHED"]]) {
+    for (const [from, to] of [["DRAFT", "PENDING_APPROVAL"], ["PENDING_APPROVAL", "APPROVED"], ["APPROVED", "PUBLISHED"]]) {
       const version = current.updated_at;
       const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
         updatedAt: now, from, to, authorize: async () => true });

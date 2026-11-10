@@ -46,3 +46,12 @@ export const matchesReviewSearch = (review, query) => {
       .includes(needle)
   );
 };
+
+const REVIEW_STATUS_LABELS = {
+  PENDING_APPROVAL: "Pending approval",
+  APPROVED: "Awaiting publication",
+  PUBLISHED: "Published",
+  REJECTED: "Rejected",
+};
+
+export const getReviewStatusLabel = (status) => REVIEW_STATUS_LABELS[status] ?? "Unknown";

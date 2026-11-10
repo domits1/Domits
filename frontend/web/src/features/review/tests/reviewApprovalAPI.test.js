@@ -29,9 +29,9 @@ test("keeps the status on a refused queue load so the page can tell a missing ro
 });
 
 test("approves with only the version the admin saw", async () => {
-  global.fetch = jest.fn().mockResolvedValue(respond(200, '{"id":"r/1","status":"PUBLISHED"}'));
+  global.fetch = jest.fn().mockResolvedValue(respond(200, '{"id":"r/1","status":"APPROVED"}'));
 
-  expect(await approveReview("r/1", 1790000000000)).toEqual({ id: "r/1", status: "PUBLISHED" });
+  expect(await approveReview("r/1", 1790000000000)).toEqual({ id: "r/1", status: "APPROVED" });
   expect(fetch).toHaveBeenCalledWith(`${API_REVIEW_BASE}/reviews/r%2F1/approve`, {
     method: "POST",
     headers: { Authorization: "token", "Content-Type": "application/json" },

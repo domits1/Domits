@@ -7,11 +7,13 @@ import {
   formatSubmittedAt,
   getGuestInitials,
   getVerificationLabel,
+  getReviewStatusLabel,
   isVerifiedStatus,
 } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
 export default function ReviewApprovalDetails({ review, approving, onApprove, onClose }) {
+  const pending = review.status === "PENDING_APPROVAL";
   const submitted = formatSubmittedAt(review.created_at);
   const location = formatPropertyLocation(review);
   const verificationClassName = isVerifiedStatus(review.verification_status) ? styles.pillVerified : styles.pillNeutral;
@@ -73,7 +75,9 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
       <dl className={styles.facts}>
         <dt>Status</dt>
         <dd>
-          <span className={`${styles.pill} ${styles.pillPending}`}>Pending approval</span>
+          <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
+            {getReviewStatusLabel(review.status)}
+          </span>
         </dd>
         <dt>Verification status</dt>
         <dd>
@@ -85,7 +89,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
         <dd>Guest review</dd>
       </dl>
 
-      <div className={styles.detailsActions}>
+      {pending && <div className={styles.detailsActions}>
         <button
           type="button"
           className={`${styles.approveButton} ${styles.approveButtonLarge}`}
@@ -93,7 +97,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
           onClick={() => onApprove(review)}>
           {approving ? "Approving…" : "Approve review"}
         </button>
-      </div>
+      </div>}
     </aside>
   );
 }

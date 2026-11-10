@@ -7,6 +7,13 @@ import { matchesReviewSearch } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
 const PAGE_SIZE = 8;
+const REVIEW_TABS = [
+  { scope: "pending-approval", label: "Pending approval", tableLabel: "Reviews pending approval",
+    empty: "No reviews are waiting for approval." },
+  { scope: "admin-published", label: "Published", tableLabel: "Published reviews", empty: "No published reviews." },
+  { scope: "admin-rejected", label: "Rejected", tableLabel: "Rejected reviews", empty: "No rejected reviews." },
+  { scope: "admin-all", label: "All reviews", tableLabel: "All reviews", empty: "No submitted reviews." },
+];
 const RATING_OPTIONS = ["5", "4", "3", "2", "1"];
 // undefined follows the first visible review; null means the admin closed the panel.
 const FOLLOW_FIRST = undefined;
@@ -60,7 +67,9 @@ function Pagination({ page, pageCount, total, onChange }) {
 }
 
 export default function ReviewApprovalPage() {
-  const { reviews, queueState, loadError, retry, approve, approvingIds, notice } = useReviewApprovalQueue();
+  const [tabIndex, setTabIndex] = useState(0);
+  const tab = REVIEW_TABS[tabIndex];
+  const { reviews, queueState, loadError, retry, approve, approvingIds, notice } = useReviewApprovalQueue(tab.scope);
   const [query, setQuery] = useState("");
   const [rating, setRating] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -80,9 +89,6 @@ export default function ReviewApprovalPage() {
     ? null
     : (pageReviews.find((review) => review.id === selectedId) ?? pageReviews[0] ?? null);
 
-  if (queueState === QUEUE_STATE.LOADING) {
-    return <StateMessage title="Reviews" message="Loading reviews waiting for approval…" />;
-  }
   if (queueState === QUEUE_STATE.DENIED) {
     return (
       <StateMessage
@@ -91,23 +97,32 @@ export default function ReviewApprovalPage() {
       />
     );
   }
-  if (queueState === QUEUE_STATE.FAILED) {
-    return (
-      <StateMessage title="Reviews" message={loadError}>
-        <button type="button" className={styles.approveButton} onClick={retry}>
-          Retry
-        </button>
-      </StateMessage>
-    );
-  }
-
   const changeFilter = (setter) => (event) => {
     setter(event.target.value);
     setPage(1);
   };
-  const emptyMessage = reviews.length
-    ? "No pending reviews match your search."
-    : "No reviews are waiting for approval.";
+  const changeTab = (index) => {
+    setTabIndex(index);
+    setPage(1);
+    setSelectedId(FOLLOW_FIRST);
+  };
+
+  const handleTabKey = (event) => {
+    const last = REVIEW_TABS.length - 1;
+    const nextIndex = {
+      ArrowLeft: tabIndex === 0 ? last : tabIndex - 1,
+      ArrowRight: tabIndex === last ? 0 : tabIndex + 1,
+      Home: 0,
+      End: last,
+    }[event.key];
+    if (nextIndex === undefined) return;
+    event.preventDefault();
+    event.currentTarget.parentElement.children[nextIndex].focus();
+    changeTab(nextIndex);
+  };
+
+  const noMatches = tabIndex === 0 ? "No pending reviews match your search." : "No reviews match your search or filters.";
+  const emptyMessage = reviews.length ? noMatches : tab.empty;
   const layoutClassName = selectedReview ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
   const closeDetails = () => setSelectedId(CLOSED);
 
@@ -167,50 +182,56 @@ export default function ReviewApprovalPage() {
       <div className={layoutClassName}>
         <div className={styles.listColumn}>
           <div className={styles.tabs} role="tablist" aria-label="Review status">
-            <button
-              type="button"
-              role="tab"
-              id="pending-tab"
-              aria-selected="true"
-              aria-controls="pending-panel"
-              className={styles.tab}>
-              {`Pending approval (${reviews.length})`}
-            </button>
-            {["Published", "Rejected", "All reviews"].map((label) => (
+            {REVIEW_TABS.map(({ scope, label }, index) => (
               <button
                 type="button"
-                key={label}
+                key={scope}
                 role="tab"
-                aria-selected="false"
-                title="This review list is unavailable"
+                id={`review-tab-${scope}`}
+                aria-selected={index === tabIndex}
+                aria-controls="review-status-panel"
+                tabIndex={index === tabIndex ? 0 : -1}
                 className={styles.tab}
-                disabled>
-                {label}
+                onClick={() => changeTab(index)}
+                onKeyDown={handleTabKey}>
+                {index === 0 && tabIndex === 0 && queueState === QUEUE_STATE.READY
+                  ? `${label} (${reviews.length})`
+                  : label}
               </button>
             ))}
           </div>
-          <section id="pending-panel" role="tabpanel" aria-labelledby="pending-tab">
-            {pageReviews.length ? (
-              <>
-                <div className={styles.tableCard}>
-                  <ReviewApprovalTable
-                    reviews={pageReviews}
-                    selectedId={selectedReview?.id}
-                    approvingIds={approvingIds}
-                    onApprove={approve}
-                    onView={setSelectedId}
-                    onClose={closeDetails}
+          <section id="review-status-panel" role="tabpanel" aria-labelledby={`review-tab-${tab.scope}`}>
+            {queueState === QUEUE_STATE.LOADING && <p role="status" className={styles.emptyState}>Loading reviews…</p>}
+            {queueState === QUEUE_STATE.FAILED && (
+              <div className={styles.emptyState}>
+                <p role="alert">{loadError}</p>
+                <button type="button" className={styles.approveButton} onClick={retry}>Retry</button>
+              </div>
+            )}
+            {queueState === QUEUE_STATE.READY && (
+              pageReviews.length ? (
+                <>
+                  <div className={styles.tableCard}>
+                    <ReviewApprovalTable
+                      label={tab.tableLabel}
+                      reviews={pageReviews}
+                      selectedId={selectedReview?.id}
+                      approvingIds={approvingIds}
+                      onApprove={approve}
+                      onView={setSelectedId}
+                      onClose={closeDetails}
+                    />
+                  </div>
+                  <Pagination
+                    page={currentPage}
+                    pageCount={pageCount}
+                    total={visibleReviews.length}
+                    onChange={setPage}
                   />
-                </div>
-                <Pagination
-                  page={currentPage}
-                  pageCount={pageCount}
-                  total={visibleReviews.length}
-                  onChange={setPage}
-                />
-              </>
-            ) : (
-              <p className={styles.emptyState}>{emptyMessage}</p>
+                </>
+              ) : (
+                <p className={styles.emptyState}>{emptyMessage}</p>
+              )
             )}
           </section>
         </div>

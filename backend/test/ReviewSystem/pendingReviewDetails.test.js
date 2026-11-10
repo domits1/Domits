@@ -41,7 +41,7 @@ describe("pending review details for the approval queue", () => {
       { id: "b2", guestid: "someone-else", guestname: "Not the reviewer" },
     ]);
 
-    const [withDetails, withoutDetails] = await new ReviewRepository().findPendingReviews();
+    const [withDetails, withoutDetails] = await new ReviewRepository().findUnpublishedReviews("PENDING_APPROVAL");
 
     expect(withDetails).toMatchObject({ property_title: "Riverside Apartment", property_city: "Amsterdam",
       property_country: "Netherlands", property_image_key: "images/p1/thumb", guest_name: "Jessica Smith" });
@@ -60,13 +60,13 @@ describe("pending review details for the approval queue", () => {
       { image_id: "i1", variant: "web", s3_key: "images/p1/web" },
     ]);
 
-    const [review] = await new ReviewRepository().findPendingReviews();
+    const [review] = await new ReviewRepository().findUnpublishedReviews("PENDING_APPROVAL");
 
     expect(review.property_image_key).toBe("images/p1/web");
   });
 
   it("skips detail queries when nothing is pending", async () => {
-    expect(await new ReviewRepository().findPendingReviews()).toEqual([]);
+    expect(await new ReviewRepository().findUnpublishedReviews("PENDING_APPROVAL")).toEqual([]);
     for (const entity of [Booking, Property, Property_Location, Property_Image, Property_Image_Variant]) {
       expect(repositories.get(entity).find).not.toHaveBeenCalled();
     }
@@ -78,7 +78,7 @@ describe("pending review details for the approval queue", () => {
     try {
       const repository = {
         hasActiveReviewApproverRole: jest.fn().mockResolvedValue(true),
-        findPendingReviews: jest.fn().mockResolvedValue([{ id: "r1", booking_id: "b1", property_id: "p1",
+        findUnpublishedReviews: jest.fn().mockResolvedValue([{ id: "r1", booking_id: "b1", property_id: "p1",
           host_id: "host-1", reviewer_user_id: "guest-1", review_type: "GUEST_TO_PROPERTY", overall_rating: "5.0",
           title: "Great stay!", public_review: "Clean", private_feedback: "secret", status: "PENDING_APPROVAL",
           publication_status: "UNPUBLISHED", verification_status: "VERIFIED", created_at: 1, updated_at: 2,
@@ -86,7 +86,7 @@ describe("pending review details for the approval queue", () => {
           property_image_key: "images/p1/thumb", guest_name: "Jessica Smith" }]),
       };
 
-      const [review] = await new ReviewService({ repository }).getPendingReviews("staff", "admin");
+      const [review] = await new ReviewService({ repository }).getReviewApprovalQueue("staff", "admin", "PENDING_APPROVAL");
 
       expect(review).toMatchObject({ id: "r1", overall_rating: 5, property_title: "Riverside Apartment",
         property_city: "Amsterdam", property_country: "Netherlands", property_image_key: "images/p1/thumb",
