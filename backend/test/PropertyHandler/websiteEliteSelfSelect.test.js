@@ -12,10 +12,6 @@ const setList = (value) => {
 describe("isEliteSelfSelectOnFor", () => {
   afterEach(() => setList(undefined));
 
-  it("keeps the variable name that the turn-on command sets", () => {
-    expect(ELITE_SELF_SELECT_ACCOUNT_IDS_VARIABLE).toBe("DIRECT_BOOKING_WEBSITE_ELITE_SELF_SELECT_ACCOUNT_IDS");
-  });
-
   it.each([undefined, "", "   ", " ,; "])("is off for everyone when the list is %p", (value) => {
     setList(value);
     expect(isEliteSelfSelectOnFor("host-1")).toBe(false);

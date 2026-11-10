@@ -121,6 +121,8 @@ const stripeStatus = (value) => {
   }
 };
 
+const PAID_PLAN_REFUSAL = "This website plan has a paid subscription, so it cannot be changed without payment.";
+
 const canChoosePlanWithoutPayment = (accountId, stripeSubscriptionId) =>
   isEliteSelfSelectOnFor(accountId) && !stripeSubscriptionId;
 
@@ -217,11 +219,9 @@ export class DirectBookingWebsiteRatePlanService {
       throw serviceError("withoutPayment must be true or false.");
     }
 
-    const current = await this.getCurrentPlan(accountId);
+    if (withoutPayment === true) return this.changePlanWithoutPayment(accountId, targetPlan);
 
-    if (canChoosePlanWithoutPayment(accountId, current.stripeSubscriptionId)) {
-      return this.changePlanWithoutPayment(accountId, current, targetPlan);
-    }
+    const current = await this.getCurrentPlan(accountId);
 
     if (current.plan === targetPlan) {
       if (targetPlan === WEBSITE_PLAN_NAMES.ELITE && current.effectiveUntil && current.stripeSubscriptionId) {
@@ -293,13 +293,16 @@ export class DirectBookingWebsiteRatePlanService {
     return { action: "downgraded", plan: toView(essentials) };
   }
 
-  async changePlanWithoutPayment(accountId, current, targetPlan) {
+  async changePlanWithoutPayment(accountId, targetPlan) {
+    if (!isEliteSelfSelectOnFor(accountId)) {
+      throw serviceError("Choosing a website plan without payment is not available for this account.", 409);
+    }
+    const current = await this.getCurrentPlan(accountId);
+    if (current.stripeSubscriptionId) throw serviceError(PAID_PLAN_REFUSAL, 409);
     if (current.plan === targetPlan) return { action: "unchanged", plan: current };
 
     const result = await this.repository.replaceUnpaidPlan({ accountId, targetPlan });
-    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.PAID_PLAN_ACTIVE) {
-      throw serviceError("This website plan has a paid subscription, so it cannot be changed without payment.", 409);
-    }
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.PAID_PLAN_ACTIVE) throw serviceError(PAID_PLAN_REFUSAL, 409);
     if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.CONFLICT) {
       throw serviceError("The website plan changed at the same time. Reload the page and try again.", 409);
     }

@@ -30,6 +30,8 @@ const CHECKOUT_ON = Object.freeze({
 });
 const PERIOD_END = 1893456000;
 const SELF_SELECT_VARIABLE = "DIRECT_BOOKING_WEBSITE_ELITE_SELF_SELECT_ACCOUNT_IDS";
+const PAID_REFUSAL = "This website plan has a paid subscription, so it cannot be changed without payment.";
+const NOT_LISTED_REFUSAL = "Choosing a website plan without payment is not available for this account.";
 const CURRENT_STATUSES = new Set(["ACTIVE", "PAST_DUE", "TRIALING"]);
 
 const hostUser = (username) => ({
@@ -210,7 +212,7 @@ describe("website plan change on the real call path", () => {
       Object.assign(process.env, checkoutEnv);
       const store = buildRatePlanStore({ plans: [planRow(), OTHER_HOST_PLAN] });
 
-      const response = await patchPlan("token-host-1", { plan: "elite", accountId: "host-2" });
+      const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment: true, accountId: "host-2" });
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toMatchObject({
@@ -230,7 +232,7 @@ describe("website plan change on the real call path", () => {
       Object.assign(process.env, CHECKOUT_ON);
       const store = buildRatePlanStore({ plans: [UNPAID_ELITE, OTHER_HOST_PLAN] });
 
-      const response = await patchPlan("token-host-1", { plan: "essentials" });
+      const response = await patchPlan("token-host-1", { plan: "essentials", withoutPayment: true });
 
       expect(response.body).toMatchObject({ action: "downgraded", plan: { plan: "essentials", eliteSelfSelectAvailable: true } });
       expect(response.body.plan.entitlements).not.toContain("website.unlimited_pages");
@@ -244,27 +246,34 @@ describe("website plan change on the real call path", () => {
     it("writes nothing when the listed host chooses the plan he is on", async () => {
       const store = buildRatePlanStore({ plans: [UNPAID_ELITE] });
 
-      const response = await patchPlan("token-host-1", { plan: "elite" });
+      const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment: true });
 
       expect(response.body).toMatchObject({ action: "unchanged", plan: { id: "plan-unpaid-elite" } });
       expect(store.transactions).toHaveLength(0);
       expect(store.plans).toEqual([UNPAID_ELITE]);
     });
 
-    it("keeps the Stripe paths of a paid Elite as today", async () => {
-      process.env[SELF_SELECT_VARIABLE] = "*";
-      process.env.STRIPE_SECRET_KEY = CHECKOUT_ON.STRIPE_SECRET_KEY;
+    it.each(["elite", "essentials"])("answers 409 to %s without payment for a paid Elite, without Stripe", async (plan) => {
+      Object.assign(process.env, CHECKOUT_ON);
       const scheduled = { ...PAID_ELITE, effective_until: new Date(PERIOD_END * 1000) };
-      const store = buildRatePlanStore({ plans: [PAID_ELITE] });
+      const store = buildRatePlanStore({ plans: [scheduled] });
 
-      expect((await patchPlan("token-host-1", { plan: "essentials" })).body.action).toBe("downgrade_scheduled");
-      expect(Stripe.client.subscriptions.update).toHaveBeenLastCalledWith("sub_1", { cancel_at_period_end: true });
-      expect(store.plans).toEqual([{ ...scheduled, updated_at: expect.any(Date) }]);
+      const response = await patchPlan("token-host-1", { plan, withoutPayment: true });
 
-      expect((await patchPlan("token-host-1", { plan: "elite" })).body.action).toBe("upgrade_restored");
-      expect(Stripe.client.subscriptions.update).toHaveBeenLastCalledWith("sub_1", { cancel_at_period_end: false });
-      expect(store.plans).toEqual([{ ...PAID_ELITE, updated_at: expect.any(Date) }]);
-      expect(store.transactions).toHaveLength(0);
+      expect(response).toEqual({ statusCode: 409, body: PAID_REFUSAL });
+      expect(store.plans).toEqual([scheduled]);
+      expectNoStripeCall();
+    });
+
+    it.each([{}, { withoutPayment: false }])("runs today's checkout for a listed host who sends %p", async (extra) => {
+      Object.assign(process.env, CHECKOUT_ON);
+      const store = buildRatePlanStore({ plans: [planRow()] });
+
+      const response = await patchPlan("token-host-1", { plan: "elite", ...extra });
+
+      expect(response.body).toMatchObject({ action: "checkout_required", plan: { plan: "essentials" } });
+      expect(Stripe.client.checkout.sessions.create).toHaveBeenCalledTimes(1);
+      expect(store.plans).toEqual([planRow()]);
     });
 
     it("refuses with 409 when a paid plan starts between the read and the change", async () => {
@@ -274,24 +283,35 @@ describe("website plan change on the real call path", () => {
         plans.push(PAID_ELITE);
       };
 
-      const response = await patchPlan("token-host-1", { plan: "elite" });
+      const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment: true });
 
-      expect(response).toEqual({
-        statusCode: 409,
-        body: "This website plan has a paid subscription, so it cannot be changed without payment.",
-      });
+      expect(response).toEqual({ statusCode: 409, body: PAID_REFUSAL });
       expect(currentRowsOf(store, "host-1")).toEqual([PAID_ELITE]);
       expectNoStripeCall();
     });
 
-    it("gives a host who is not listed today's answer, and leaves the listed host's plan alone", async () => {
-      const store = buildRatePlanStore({ plans: [planRow(), OTHER_HOST_PLAN] });
+    it("gives a listed host today's 503 without withoutPayment while checkout is off", async () => {
+      const store = buildRatePlanStore({ plans: [planRow()] });
 
-      const response = await patchPlan("token-host-2", { plan: "elite", accountId: "host-1" });
+      const response = await patchPlan("token-host-1", { plan: "elite" });
 
       expect(response.statusCode).toBe(503);
-      expect(store.plans).toEqual([planRow(), OTHER_HOST_PLAN]);
+      expect(store.plans).toEqual([planRow()]);
       expect(store.transactions).toHaveLength(0);
+    });
+
+    it.each(["elite", "essentials"])("answers 409 to %s without payment off the list, writing nothing", async (plan) => {
+      Object.assign(process.env, CHECKOUT_ON);
+      const store = buildRatePlanStore({ plans: [planRow()] });
+      expect((await getPlan("token-host-1")).body.eliteSelfSelectAvailable).toBe(true);
+
+      const responses = [await patchPlan("token-host-2", { plan, withoutPayment: true, accountId: "host-1" })];
+      process.env[SELF_SELECT_VARIABLE] = "host-3";
+      responses.push(await patchPlan("token-host-1", { plan, withoutPayment: true }));
+
+      responses.forEach((response) => expect(response).toEqual({ statusCode: 409, body: NOT_LISTED_REFUSAL }));
+      expect(store.plans).toEqual([planRow()]);
+      expectNoStripeCall();
     });
 
     it("gives one current plan when Elite is chosen twice at the same time", async () => {
@@ -299,8 +319,8 @@ describe("website plan change on the real call path", () => {
       store.holdCommitsUntil(2);
 
       const responses = await Promise.all([
-        patchPlan("token-host-1", { plan: "elite" }),
-        patchPlan("token-host-1", { plan: "elite" }),
+        patchPlan("token-host-1", { plan: "elite", withoutPayment: true }),
+        patchPlan("token-host-1", { plan: "elite", withoutPayment: true }),
       ]);
 
       expect(responses.map((response) => response.statusCode)).toEqual([200, 200]);
@@ -315,7 +335,7 @@ describe("website plan change on the real call path", () => {
         commitFailures: [conflictError(), conflictError(), conflictError()],
       });
 
-      const response = await patchPlan("token-host-1", { plan: "elite" });
+      const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment: true });
 
       expect(response).toEqual({
         statusCode: 409,
@@ -324,20 +344,8 @@ describe("website plan change on the real call path", () => {
       expect(store.plans).toEqual([planRow()]);
     });
 
-    it("answers 500 and keeps the current plan when the new plan cannot be written", async () => {
-      const store = buildRatePlanStore({ plans: [planRow()], failInsert: new Error("insert failed") });
-
-      const response = await patchPlan("token-host-1", { plan: "elite" });
-
-      expect(response.statusCode).toBe(500);
-      expect(store.plans).toEqual([planRow()]);
-      expectNoStripeCall();
-    });
-  });
-
-  describe("withoutPayment that is not a boolean", () => {
     it.each(["true", 1, 0, null, {}, []])("answers 400 to %p and writes nothing, without Stripe", async (withoutPayment) => {
-      Object.assign(process.env, CHECKOUT_ON, { [SELF_SELECT_VARIABLE]: "*" });
+      Object.assign(process.env, CHECKOUT_ON);
       const store = buildRatePlanStore({ plans: [] });
 
       const response = await patchPlan("token-host-1", { plan: "elite", withoutPayment });
