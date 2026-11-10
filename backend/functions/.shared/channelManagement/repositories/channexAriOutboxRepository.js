@@ -10,6 +10,7 @@ import {
   URGENT_SOURCES,
 } from "../utils/channexAriOutboxConstants.js";
 import { callTypeOf } from "../utils/channexAriOutboxPlanning.js";
+import { toCount, toTimeOrNull } from "../utils/dbValues.js";
 
 // changetypes is a comma-separated list, so a type is matched as a whole name
 // between commas; "rates" must not match a future "rates_extra".
@@ -75,10 +76,6 @@ const HEALTH_WINDOW = Object.freeze({
   WEEK_MS: 7 * 24 * 60 * 60 * 1000,
   RECENT_FAILURES: 10,
 });
-
-// Postgres returns count() and a bigint min() as strings.
-const toCount = (value) => Number(value ?? 0);
-const toTimeOrNull = (value) => (value === null || value === undefined ? null : Number(value));
 
 // For UPDATE and DELETE, TypeORM's raw query returns [rows, rowCount] instead of the
 // rows, which is why those methods destructure the first element.
