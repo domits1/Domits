@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { DirectBookingWebsiteRatePlanService } from "../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
+import {
+  DirectBookingWebsiteRatePlanService,
+  WEBSITE_PLAN_ENTITLEMENTS,
+} from "../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
 import { WebsitePlanRevokeError } from "../../functions/PropertyHandler/util/exception/WebsitePlanGrantError.js";
 
 const NOW = Date.parse("2026-11-09T12:00:00.000Z");
@@ -49,7 +52,7 @@ describe("DirectBookingWebsiteRatePlanService.revokeElite", () => {
     expect(result.action).toBe("revoked");
     expect(result.revokedPlanId).toBe("plan-grant");
     expect(result.plan).toMatchObject({ id: "plan-essentials", plan: "essentials", priceCents: 0, effectiveUntil: null });
-    expect(result.plan.entitlements).not.toContain("website.unlimited_pages");
+    expect(result.plan.entitlements).toEqual([...WEBSITE_PLAN_ENTITLEMENTS.essentials]);
     expect(cognitoRepository.getUserById).not.toHaveBeenCalled();
   });
 

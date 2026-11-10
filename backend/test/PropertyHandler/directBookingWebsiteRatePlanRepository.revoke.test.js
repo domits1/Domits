@@ -28,6 +28,16 @@ const RUNNING_GRANT = ratePlanRow({
   effective_from: new Date("2026-11-01T00:00:00.000Z"),
   effective_until: new Date("2027-05-01T00:00:00.000Z"),
 });
+const PAID_ACTIVATION = Object.freeze({
+  accountId: "host-1",
+  plan: "elite",
+  priceCents: 4300,
+  currency: "EUR",
+  billingFrequency: "monthly",
+  status: "ACTIVE",
+  effectiveFrom: DB_NOW,
+  stripeSubscriptionId: "sub_1",
+});
 const CURRENT_STATUSES = new Set(["ACTIVE", "PAST_DUE", "TRIALING"]);
 const currentRowsOf = (store) => store.plans.filter((row) => CURRENT_STATUSES.has(row.status));
 const kindsOf = (operations) => operations.map((operation) => operation.kind);
@@ -114,6 +124,16 @@ describe("DirectBookingWebsiteRatePlanRepository.revokeElitePlanGrant", () => {
       expect(store.attempts.map(kindsOf)).toEqual([["read"]]);
     }
   );
+
+  it("refuses a current plan with a subscription before it looks for a grant", async () => {
+    const paidEssentials = ratePlanRow({ id: "plan-paid", stripe_subscription_id: "sub_1" });
+    const store = buildRatePlanStore({ plans: [paidEssentials] });
+
+    await expect(repository.revokeElitePlanGrant(REVOKE)).rejects.toMatchObject({ code: "paid_plan_active" });
+
+    expect(store.plans).toEqual([paidEssentials]);
+    expect(store.events).toEqual([]);
+  });
 
   it.each([
     ["an Essentials plan", [ratePlanRow()]],
@@ -208,19 +228,9 @@ describe("DirectBookingWebsiteRatePlanRepository.revokeElitePlanGrant", () => {
   it("refuses on the retry when a paid plan is activated at the same time", async () => {
     const store = buildRatePlanStore({ plans: [RUNNING_GRANT] });
     store.holdCommitsUntil(2);
-    const paid = {
-      accountId: "host-1",
-      plan: "elite",
-      priceCents: 4300,
-      currency: "EUR",
-      billingFrequency: "monthly",
-      status: "ACTIVE",
-      effectiveFrom: DB_NOW,
-      stripeSubscriptionId: "sub_1",
-    };
 
     const [activation, revoke] = await Promise.allSettled([
-      repository.activatePaidPlan(paid),
+      repository.activatePaidPlan(PAID_ACTIVATION),
       repository.revokeElitePlanGrant(REVOKE),
     ]);
 
@@ -229,6 +239,23 @@ describe("DirectBookingWebsiteRatePlanRepository.revokeElitePlanGrant", () => {
     expect(store.attempts).toHaveLength(3);
     expect(currentRowsOf(store)).toEqual([expect.objectContaining({ stripe_subscription_id: "sub_1" })]);
     expect(store.events).toEqual([]);
+  });
+
+  it("keeps the revoke when it commits before a paid activation, which then fails without a change", async () => {
+    const store = buildRatePlanStore({ plans: [RUNNING_GRANT] });
+    store.holdCommitsUntil(2);
+
+    const [revoke, activation] = await Promise.allSettled([
+      repository.revokeElitePlanGrant(REVOKE),
+      repository.activatePaidPlan(PAID_ACTIVATION),
+    ]);
+
+    expect(revoke.status).toBe("fulfilled");
+    expect(activation.reason).toMatchObject({ code: "40001" });
+    expect(currentRowsOf(store)).toEqual([revoke.value.plan]);
+    expect(payloadsOf(store)).toEqual([
+      expect.objectContaining({ type: WEBSITE_PLAN_GRANT_REVOKED_EVENT, planId: "plan-grant" }),
+    ]);
   });
 
   it("answers conflict when every commit conflicts, and leaves the grant running", async () => {
