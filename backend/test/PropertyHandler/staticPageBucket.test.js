@@ -88,7 +88,7 @@ const domainEntry = (domain, site, overrides = {}) => ({
   ...overrides,
 });
 
-const buildReconciler = (bucket, entries) => {
+const buildReconciler = (bucket, entries, lookup = entries) => {
   const siteRepository = { queueStaticPage: jest.fn(async () => true) };
   const reconciler = new StaticPageReconciler({
     pageStore: bucket.pageStore,
@@ -96,7 +96,7 @@ const buildReconciler = (bucket, entries) => {
     siteRepository,
     domainRepository: {
       listDomainsWithSites: async () => entries,
-      getDomainWithSiteByName: async (domain) => entries.find((entry) => entry.domain === domain) || null,
+      getDomainWithSiteByName: async (domain) => lookup.find((entry) => entry.domain === domain) || null,
     },
     outboxRepository: { listPagesBySiteIds: async () => [] },
   });
@@ -431,6 +431,40 @@ describe("the static page jobs on one bucket", () => {
 
     expect(second).toMatchObject({ stored: 0, removed: 1, errors: [] });
     expect(bucket.client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(GONE)]: EMPTY_SITEMAP });
+  });
+
+  it.each([
+    ["a build rewrote its main page", true, []],
+    ["it was published again", false, [domainEntry(GONE, { id: "site-9", status: "PUBLISHED" })]],
+  ])("keeps every site page of a host when %s between the listing and the delete", async (_label, rewrite, lookup) => {
+    const before = { "index.html": SHELL, ...pageOf(GONE), ...sitePagesOf(GONE, ["gallery"]) };
+    const bucket = buildBucket(before);
+    if (rewrite) {
+      bucket.client.beforeNext("DeleteObjectCommand", pageKey(GONE), () => bucket.client.put(pageKey(GONE), "new"));
+    }
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })], lookup);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toMatchObject({ removed: 0, errors: [] });
+    expect(bucket.client.writes()).toEqual(rewrite ? [`delete ${pageKey(GONE)}`] : []);
+    expect(bucket.client.objects()[buildStaticSitePageKey(GONE, "gallery")]).toBe(
+      before[buildStaticSitePageKey(GONE, "gallery")]
+    );
+  });
+
+  it("queues a published site whose host has site pages but no main page, and leaves those pages alone", async () => {
+    const before = { "index.html": SHELL, ...sitePagesOf(OTHER, ["gallery"]) };
+    const bucket = buildBucket(before);
+    const { reconciler, siteRepository } = buildReconciler(bucket, [
+      domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" }),
+    ]);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toEqual({ stored: 0, expected: 1, removed: 0, queued: 1, stuck: [], errors: [] });
+    expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-2", { evenWhileBusy: false });
+    expect(bucket.client.objects()).toEqual(before);
   });
 
   it("removes nothing when the database lists no website domain while only site pages are stored", async () => {
