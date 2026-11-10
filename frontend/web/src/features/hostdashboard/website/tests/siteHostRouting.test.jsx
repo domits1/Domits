@@ -486,6 +486,23 @@ describe("marketplace live view page paths of a site without that page on", () =
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
     expect(fetchPublicWebsiteRenderModel.mock.calls.length).toBeLessThanOrEqual(1);
   });
+
+  it("loads the site itself as today when the live view moves from a page path to its root", async () => {
+    arrangeSiteWithout();
+    renderAppAt(`/website-live/${SITE_DOMAIN}/gallery?siteId=${SITE_ID}`);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const loadsBefore = fetchPublicWebsiteRenderModel.mock.calls.length;
+
+    await act(async () => {
+      globalThis.history.pushState(null, "", `/website-live/${SITE_DOMAIN}?siteId=${SITE_ID}`);
+      globalThis.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(loadsBefore + 1);
+  });
 });
 
 describe("live view routing for a site with site pages", () => {

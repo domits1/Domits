@@ -62,7 +62,7 @@ export default function WebsiteSiteRoute() {
   return (
     <WebsitePublicSitePage
       onSitePagesLoaded={rememberSitePages}
-      initialRenderPayload={isServedSiteKnown ? servedSite.renderPayload : null}
+      initialRenderPayload={isPageOn ? servedSite.renderPayload : null}
     />
   );
 }
