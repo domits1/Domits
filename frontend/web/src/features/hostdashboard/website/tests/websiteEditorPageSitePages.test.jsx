@@ -248,7 +248,10 @@ describe("website editor for an Elite host", () => {
   });
 
   it("reports no unsaved change for stored pages in another field order", async () => {
-    await renderEditor(buildDraft({ sitePages: STORED_SITE_PAGES, ...renderPayload.contentOverrides }), ELITE);
+    await renderEditor(
+      buildDraft({ sitePages: STORED_SITE_PAGES, ...renderPayload.contentOverrides }, renderPayload.contentOverrides),
+      ELITE
+    );
     openPagesSection();
 
     expect(saveButton()).toBeDisabled();
