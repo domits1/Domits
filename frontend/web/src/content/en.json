@@ -1705,6 +1705,7 @@
         "unchanged": "Your website plan is already up to date.",
         "effectiveUntil": "Elite remains active until {date}.",
         "priceUnavailable": "Price unavailable",
+        "withoutPayment": "No payment needed",
         "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
         "checkoutSuccess": "Your Elite subscription is active.",
         "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
@@ -1969,6 +1970,67 @@
       "pending": "Pending",
       "archived": "Archived",
       "unknown": "Unknown status"
+    },
+    "addOwner": "Add owner",
+    "editOwner": "Edit",
+    "editOwnerLabel": "Edit {name}",
+    "columnActions": "Actions",
+    "form": {
+      "createTitle": "Add owner",
+      "editTitle": "Edit owner",
+      "labels": {
+        "first_name": "First name",
+        "last_name": "Last name",
+        "company_name": "Company name",
+        "email": "Email",
+        "phone": "Phone",
+        "preferred_language": "Preferred language (such as en or nl-NL)",
+        "owner_type": "Owner type",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "chooseOwnerType": "Choose a type",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "close": "Close",
+      "createdToast": "{name} was added.",
+      "updatedToast": "{name} was updated.",
+      "errorNotFound": "This owner no longer exists. Close the form and reload the page.",
+      "errorGeneric": "We could not save the owner. Please try again.",
+      "errors": {
+        "required": "This field is required.",
+        "tooLong": "Use at most {max} characters.",
+        "invalidCharacters": "This field contains characters that are not allowed.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidPhone": "Use at least one digit, and only digits, spaces and + ( ) - .",
+        "invalidLanguage": "Use a language code such as en or nl-NL.",
+        "invalidOwnerType": "Choose an owner type.",
+        "invalidStatus": "Choose a status.",
+        "archivedStatus": "An owner can only be archived with the archive action.",
+        "companyNameRequired": "A company name is required for a company or trust."
+      }
+    },
+    "detail": {
+      "backToOwners": "Back to owners",
+      "loading": "Loading owner…",
+      "errorNotFound": "This owner does not exist or is not one of your owners.",
+      "errorGeneric": "We could not load this owner. Please try again.",
+      "detailsTitle": "Details",
+      "notProvided": "Not provided",
+      "labels": {
+        "created_at": "Created",
+        "updated_at": "Last updated"
+      },
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "restore": "Restore",
+      "restoring": "Restoring…",
+      "archiveConfirmTitle": "Archive this owner?",
+      "archiveConfirmMessage": "{name} will be hidden from your owners list. You can restore this owner later.",
+      "archivedToast": "{name} was archived.",
+      "restoredToast": "{name} was restored.",
+      "archiveBlocked": "{name} cannot be archived yet, because this owner still has current or upcoming ownership shares. First remove {name} from the shares of those properties, then archive again."
     }
   }
 }

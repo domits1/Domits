@@ -1,0 +1,54 @@
+.history {
+  margin-top: clamp(16px, 3vw, 24px);
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  min-width: 0;
+  padding: 12px clamp(12px, 2vw, 16px);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+.head .meta {
+  margin: 0;
+}
+
+.reason {
+  margin: 8px 0 0;
+  padding-left: 12px;
+  border-left: 3px solid #fecaca;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  margin: 0;
+  color: #6b7280;
+}

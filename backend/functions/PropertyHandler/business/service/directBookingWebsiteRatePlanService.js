@@ -92,6 +92,17 @@ const isRatePlanTableUnavailableError = (error) => {
       /(does not exist|doesn't exist|undefined table|unknown table|table not found|relation not found)/.test(message));
 };
 
+const toRatePlanReadError = (error) =>
+  isRatePlanTableUnavailableError(error)
+    ? serviceError(
+      "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+      503
+    )
+    : error;
+
+const hasPlanEnded = (plan) =>
+  Boolean(plan.effective_until) && new Date(plan.effective_until).getTime() <= Date.now();
+
 const fromUnix = (value) =>
   Number.isFinite(Number(value)) ? new Date(Number(value) * 1000) : null;
 
@@ -135,6 +146,12 @@ const toView = (plan) => ({
   entitlements: getWebsiteEntitlements(plan.plan),
 });
 
+const toEntitlementsView = (plan) => ({
+  plan: plan.plan,
+  entitlements: getWebsiteEntitlements(plan.plan),
+  effectiveUntil: plan.effective_until ?? null,
+});
+
 export class DirectBookingWebsiteRatePlanService {
   constructor(
     repository = new DirectBookingWebsiteRatePlanRepository(),
@@ -152,12 +169,7 @@ export class DirectBookingWebsiteRatePlanService {
       if (current) return toView(current);
 
       const latest = await this.repository.findLatestByAccountId(accountId);
-      if (
-        latest &&
-        ACTIVE_PLAN_STATUSES.has(latest.status) &&
-        latest.effective_until &&
-        new Date(latest.effective_until).getTime() <= Date.now()
-      ) {
+      if (latest && ACTIVE_PLAN_STATUSES.has(latest.status) && hasPlanEnded(latest)) {
         await this.repository.updatePlanById(latest.id, { status: "EXPIRED" });
       }
 
@@ -181,13 +193,19 @@ export class DirectBookingWebsiteRatePlanService {
         throw error;
       }
     } catch (error) {
-      if (isRatePlanTableUnavailableError(error)) {
-        throw serviceError(
-          "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
-          503
-        );
-      }
-      throw error;
+      throw toRatePlanReadError(error);
+    }
+  }
+
+  async getCurrentEntitlements(accountId) {
+    if (!accountId) throw serviceError("accountId is required.");
+
+    try {
+      const current = await this.repository.findCurrentByAccountId(accountId);
+      const servedPlan = current && !hasPlanEnded(current) ? current : { plan: WEBSITE_PLAN_NAMES.ESSENTIALS };
+      return toEntitlementsView(servedPlan);
+    } catch (error) {
+      throw toRatePlanReadError(error);
     }
   }
 
