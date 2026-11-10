@@ -86,6 +86,18 @@ describe("websiteRatePlanService", () => {
     });
   });
 
+  test.each([
+    ["elite", '{"plan":"elite"}'],
+    ["essentials", '{"plan":"essentials"}'],
+  ])("sends only the plan in the PATCH body for %s", async (plan, expectedBody) => {
+    global.fetch.mockResolvedValue(jsonResponse(200, { action: "unchanged" }));
+
+    await changeWebsiteRatePlan(plan);
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch.mock.calls[0][1].body).toBe(expectedBody);
+  });
+
   test("surfaces failures from the rate-plan PATCH request", async () => {
     global.fetch.mockResolvedValue(
       jsonResponse(503, { message: "Checkout is not configured." })
