@@ -87,6 +87,27 @@ describe("SiteMinderInventoryService", () => {
     ).rejects.toMatchObject({ code: "SITEMINDER_HOTEL_NOT_MAPPED" });
   });
 
+  test("sends availability for the rooms of every Domits property in the hotel, one villa per room", async () => {
+    const { service, tables, availabilityPusher } = await build({ mapped: false });
+    tables.rows.accounts.push({ id: "account-1", channel: "SITEMINDER" });
+    for (const [propertyId, roomTypeCode] of [
+      ["villa-sea", "SEA"],
+      ["villa-wood", "WOOD"],
+    ]) {
+      const base = { integrationAccountId: "account-1", domitsPropertyId: propertyId, externalPropertyId: "PMSXTEST1" };
+      await tables.props.upsert({ ...base, status: "ACTIVE" });
+      await tables.roomTypes.upsert({ ...base, externalRoomTypeId: roomTypeCode, status: "ACTIVE" });
+    }
+    const items = [
+      { roomTypeCode: "SEA", ...DATES, bookingLimit: 1 },
+      { roomTypeCode: "WOOD", ...DATES, bookingLimit: 0 },
+    ];
+
+    await service.pushAvailability({ hotelCode: "PMSXTEST1", items });
+
+    expect(availabilityPusher.push).toHaveBeenCalledWith({ hotelCode: "PMSXTEST1", items });
+  });
+
   test("ignores a hotel code that belongs to another channel", async () => {
     const { service, tables } = await build({ mapped: false });
     tables.rows.accounts.push({ id: "channex-1", channel: "CHANNEX" });
