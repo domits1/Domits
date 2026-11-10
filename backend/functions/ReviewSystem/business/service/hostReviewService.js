@@ -66,7 +66,6 @@ export class HostReviewService {
     this.now = now;
   }
 
-  // Create, edit, or publish a host response after validating its identity and text.
   async saveHostResponse(user, reviewId, body, action) {
     this.assertHostResponseIdentity(user);
     if (typeof reviewId !== "string" || !reviewId.trim() || reviewId.length > 255) throw new BadRequestException("A valid review ID is required.");
@@ -81,14 +80,12 @@ export class HostReviewService {
     return this.repository.saveHostResponse(user, reviewId.trim(), message, action, this.now());
   }
 
-  // List published reviews that the identified host is allowed to answer.
   async getResponseEligibleReviews(username) {
     if (typeof username !== "string" || !username.trim()) throw new UnauthorizedException("A verified host identity is required.");
     const reviews = await this.repository.findResponseEligibleReviews(username);
     return reviews.map((review) => ({ ...review, content: review.public_review, date: review.created_at }));
   }
 
-  // Confirm that the caller manages the requested property and return its normalized ID.
   async authorizeManagedProperty(callerUserId, propertyId) {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
@@ -103,7 +100,6 @@ export class HostReviewService {
     return normalizedPropertyId;
   }
 
-  // Return paginated rating trends and recent history for the identified host's properties.
   async getPropertyRatingTrends(username, query = {}) {
     if (typeof username !== "string" || !username.trim()) {
       throw new UnauthorizedException("A verified user identity is required.");
@@ -151,7 +147,6 @@ export class HostReviewService {
       properties: trends, next_offset: rows.length > TREND_PAGE_SIZE ? offset + TREND_PAGE_SIZE : null };
   }
 
-  // Aggregate a property's review scores and rating distribution over the requested periods.
   async getPropertyReviewPerformance(userId, propertyId, query = {}) {
     const id = await this.authorizeManagedProperty(userId, propertyId);
     const interval = query.interval === undefined ? "month" : query.interval;
@@ -175,20 +170,17 @@ export class HostReviewService {
       end_date: query.endDate, periods };
   }
 
-  // Return review ratings grouped by category for a managed property.
   async getPropertyCategoryRatings(userId, propertyId) {
     const id = await this.authorizeManagedProperty(userId, propertyId);
     const categories = await this.repository.getPropertyCategoryRatings(id, userId);
     return { property_id: id, categories };
   }
 
-  // Return the aggregate review score for a managed property.
   async getPropertyReviewScore(userId, propertyId) {
     const id = await this.authorizeManagedProperty(userId, propertyId);
     return this.repository.getPropertyReviewScore(id, userId);
   }
 
-  // Delete a host response after validating the same trusted identity used for response updates.
   async deleteReviewResponse(user, reviewId) {
     this.assertHostResponseIdentity(user);
     assertId(reviewId, "review ID");
@@ -197,7 +189,6 @@ export class HostReviewService {
     }
   }
 
-  // Require both a verified username and user ID for host response actions.
   assertHostResponseIdentity(user) {
     if (typeof user?.username !== "string" || !user.username.trim() || typeof user.userId !== "string" || !user.userId.trim()) throw new UnauthorizedException("A verified host identity is required.");
   }
