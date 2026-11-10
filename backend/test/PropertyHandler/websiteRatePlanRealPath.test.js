@@ -29,6 +29,7 @@ const CHECKOUT_ON = Object.freeze({
   DIRECT_BOOKING_WEBSITE_STRIPE_CANCEL_URL: "https://example.test/plans",
 });
 const PERIOD_END = 1893456000;
+const SELF_SELECT_VARIABLE = "DIRECT_BOOKING_WEBSITE_ELITE_SELF_SELECT_ACCOUNT_IDS";
 const CURRENT_STATUSES = new Set(["ACTIVE", "PAST_DUE", "TRIALING"]);
 
 const hostUser = (username) => ({
@@ -95,7 +96,7 @@ describe("website plan change on the real call path", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    Object.keys(CHECKOUT_ON).forEach((name) => delete process.env[name]);
+    [...Object.keys(CHECKOUT_ON), SELF_SELECT_VARIABLE].forEach((name) => delete process.env[name]);
     jest.spyOn(console, "error").mockImplementation(() => undefined);
     Stripe.client.checkout.sessions.create.mockResolvedValue({ id: "cs_1", url: "https://checkout.example.test/cs_1" });
     Stripe.client.subscriptions.update.mockResolvedValue({ items: { data: [{ current_period_end: PERIOD_END }] } });
@@ -190,8 +191,29 @@ describe("website plan change on the real call path", () => {
           stripeCustomerId: null,
           stripeSubscriptionId: null,
           entitlements: ["website.basic", "website.booking", "website.basic_customization", "website.basic_seo"],
+          eliteSelfSelectAvailable: false,
         },
       });
+      expectNoStripeCall();
+    });
+  });
+
+  describe("plan answer with self-select", () => {
+    it("says self-select is available only to a listed account without a subscription", async () => {
+      process.env[SELF_SELECT_VARIABLE] = "host-1";
+      buildRatePlanStore({ plans: [planRow(), OTHER_HOST_PLAN] });
+
+      expect((await getPlan("token-host-1")).body.eliteSelfSelectAvailable).toBe(true);
+      expect((await getPlan("token-host-2")).body.eliteSelfSelectAvailable).toBe(false);
+    });
+
+    it("says self-select is not available to a listed account with a paid Elite", async () => {
+      process.env[SELF_SELECT_VARIABLE] = "*";
+      buildRatePlanStore({ plans: [PAID_ELITE] });
+
+      const response = await getPlan("token-host-1");
+
+      expect(response.body).toMatchObject({ plan: "elite", stripeSubscriptionId: "sub_1", eliteSelfSelectAvailable: false });
       expectNoStripeCall();
     });
   });

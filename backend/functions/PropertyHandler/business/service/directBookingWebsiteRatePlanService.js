@@ -1,5 +1,6 @@
 import { DirectBookingWebsiteRatePlanRepository } from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
 import { DirectBookingWebsiteStripeRepository } from "../../data/repository/directBookingWebsiteStripeRepository.js";
+import { isEliteSelfSelectOnFor } from "../../util/websiteEliteSelfSelect.js";
 
 export const WEBSITE_PLAN_NAMES = Object.freeze({
   ESSENTIALS: "essentials",
@@ -117,6 +118,9 @@ const stripeStatus = (value) => {
   }
 };
 
+const canChoosePlanWithoutPayment = (accountId, stripeSubscriptionId) =>
+  isEliteSelfSelectOnFor(accountId) && !stripeSubscriptionId;
+
 const toView = (plan) => ({
   id: plan.id,
   accountId: plan.account_id,
@@ -133,6 +137,7 @@ const toView = (plan) => ({
   stripeCustomerId: plan.stripe_customer_id || null,
   stripeSubscriptionId: plan.stripe_subscription_id || null,
   entitlements: getWebsiteEntitlements(plan.plan),
+  eliteSelfSelectAvailable: canChoosePlanWithoutPayment(plan.account_id, plan.stripe_subscription_id),
 });
 
 export class DirectBookingWebsiteRatePlanService {
