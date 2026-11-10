@@ -14,6 +14,7 @@ import {
   normalizeSitePages,
   resolvePanoramaPageSections,
   resolveSitePageFromPath,
+  resolveSitePageTitle,
 } from "../rendering/websitePages";
 
 const CONFIGURABLE_PAGE_KEYS = ["gallery", "accommodation", "contact"];
@@ -470,4 +471,23 @@ describe("site page links with a search", () => {
       expect(buildSitePageHref("", "gallery", search)).toBe("/gallery");
     }
   );
+});
+
+describe("site page titles", () => {
+  const SITE_PAGES = { gallery: { enabled: true, navLabel: "Photos" }, contact: { enabled: false } };
+
+  it.each([
+    ["gallery", "Photos"],
+    ["main", ""],
+    ["contact", ""],
+    ["accommodation", ""],
+    ["unknown", ""],
+    ["__proto__", ""],
+  ])("titles the page %p as %p", (pageKey, title) => {
+    expect(resolveSitePageTitle(SITE_PAGES, pageKey)).toBe(title);
+  });
+
+  it("gives no title without site pages", () => {
+    expect(resolveSitePageTitle(undefined, "gallery")).toBe("");
+  });
 });

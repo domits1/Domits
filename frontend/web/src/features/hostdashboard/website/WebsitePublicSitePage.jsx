@@ -18,7 +18,7 @@ import {
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
-import { resolveSitePageFromPath } from "./rendering/websitePages";
+import { resolveSitePageFromPath, resolveSitePageTitle } from "./rendering/websitePages";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
@@ -199,6 +199,7 @@ function WebsitePublicSitePage() {
   }, [renderPayload, resolution?.templateKey]);
 
   const activePageKey = resolveSitePageFromPath(routeSitePath, publicModel?.sitePages);
+  const activePageTitle = resolveSitePageTitle(publicModel?.sitePages, activePageKey);
   const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
   const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
@@ -242,7 +243,7 @@ function WebsitePublicSitePage() {
   const headTagsModel = isRequestedSiteLoaded ? publicModel : null;
   const websiteHeadTags = useMemo(() => {
     if (!isDirectBookingWebsiteHost) {
-      return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false });
+      return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false, pageTitle: activePageTitle });
     }
 
     if (!isRequestedSiteLoaded) {
@@ -250,7 +251,11 @@ function WebsitePublicSitePage() {
     }
 
     if (canRenderPublishedSite) {
-      return buildWebsiteHeadTags({ model: publicModel, fallbackTitle: unavailableWebsiteTitle });
+      return buildWebsiteHeadTags({
+        model: publicModel,
+        fallbackTitle: unavailableWebsiteTitle,
+        pageTitle: activePageTitle,
+      });
     }
 
     if (isLoading) {
@@ -263,6 +268,7 @@ function WebsitePublicSitePage() {
       isMissing: isMissingPublishedWebsite,
     });
   }, [
+    activePageTitle,
     canRenderPublishedSite,
     headTagsModel,
     isDirectBookingWebsiteHost,

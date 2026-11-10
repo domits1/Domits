@@ -154,6 +154,15 @@ export const listSitePageMenuItems = (sitePages) => {
   ];
 };
 
+export const resolveSitePageTitle = (sitePages, pageKey) => {
+  if (pageKey === MAIN_SITE_PAGE_KEY) {
+    return "";
+  }
+
+  const page = listSitePageMenuItems(sitePages).find((item) => item.key === pageKey);
+  return page ? page.navLabel : "";
+};
+
 export const resolveSitePageFromPath = (pathname, sitePages) => {
   const segments = splitPathSegments(pathname);
   if (segments.length !== 1) {

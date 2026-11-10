@@ -331,6 +331,17 @@ describe("site host routing for a site with site pages", () => {
     expect(listSmoothScrolls()).toEqual([[{ top: 882, behavior: "smooth" }]]);
   });
 
+  it("titles each page and gives Main the site title again", async () => {
+    renderAppAt("/contact-us");
+    await screen.findByRole("link", { name: "Home" });
+
+    expect(document.title).toBe("Reach us | Wellness Villa Bisous");
+
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
+
+    expect(document.title).toBe(SITE_TITLE);
+  });
+
   it("reveals the sections of the page the guest moves to", async () => {
     renderAppAt("/");
     await screen.findByTestId("quote-availability");
@@ -418,6 +429,7 @@ describe("live view routing for a site with site pages", () => {
     await screen.findByRole("link", { name: "Home" });
 
     expect(listSectionIds()).toEqual(["gallery"]);
+    expect(document.title).toBe("Gallery | Wellness Villa Bisous");
     expect(readMenuHrefs()).toEqual([
       `${LIVE_BASE}${SITE_SEARCH}`,
       `${LIVE_BASE}/gallery${SITE_SEARCH}`,
