@@ -1,6 +1,6 @@
 # feat(channelmanagement): Channex health endpoint
 
-Pull request: #<number>
+Pull request: #3850
 Issue: #2869 (first slice: internal admin health view; design note `docs/partner/integrations/channel_manager/channex/channex_health_dashboard_design.md`)
 Reviewed commit: staged diff per commit on `feat/2869-channex-health-endpoint`
 Result: no blocking findings so far
