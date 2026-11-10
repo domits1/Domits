@@ -1706,7 +1706,7 @@
         "unchanged": "Dein Website-Tarif ist bereits aktuell.",
         "effectiveUntil": "Elite bleibt bis zum {date} aktiv.",
         "priceUnavailable": "Preis nicht verfügbar",
-        "granted": "Von Domits gewährt",
+        "withoutPayment": "Keine Zahlung nötig",
         "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
         "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
         "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",

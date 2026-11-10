@@ -60,7 +60,7 @@ jest.mock("../hooks/useSettingsTrans", () => ({
         restoreSuccess: "Elite subscription restored",
         unchanged: "Plan unchanged",
         effectiveUntil: "Elite remains active until {date}.",
-        granted: "Granted by Domits",
+        withoutPayment: "No payment needed",
       },
     },
   }),
@@ -528,12 +528,12 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(screen.getByRole("button", { name: "Upgrade to Elite" })).toBeEnabled();
   });
 
-  test("shows an Elite plan granted until an end date as the current plan, not as a plan to reactivate", async () => {
-    const grantEnd = "2026-12-15T12:00:00.000Z";
+  test("shows an Elite plan without a subscription that has an end date as the current plan, not as a plan to reactivate", async () => {
+    const endDate = "2026-12-15T12:00:00.000Z";
     getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
       plan: "elite",
       priceCents: 0,
-      effectiveUntil: grantEnd,
+      effectiveUntil: endDate,
       stripeSubscriptionId: null,
     }));
 
@@ -542,10 +542,10 @@ describe("DirectBookingWebsitePlanSection", () => {
     const eliteButton = await screen.findByRole("button", { name: "Current plan" });
     expect(eliteButton).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Reactivate Elite" })).not.toBeInTheDocument();
-    expect(screen.getByText("Granted by Domits")).toBeInTheDocument();
+    expect(screen.getByText("No payment needed")).toBeInTheDocument();
     expect(screen.queryByText("€43.00")).not.toBeInTheDocument();
     expect(
-      screen.getByText(`Elite remains active until ${new Date(grantEnd).toLocaleDateString("en")}.`)
+      screen.getByText(`Elite remains active until ${new Date(endDate).toLocaleDateString("en")}.`)
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Scheduled" })).toBeDisabled();
 
@@ -565,7 +565,7 @@ describe("DirectBookingWebsitePlanSection", () => {
 
     expect(await screen.findByRole("button", { name: "Reactivate Elite" })).toBeEnabled();
     expect(screen.getByText("€43.00")).toBeInTheDocument();
-    expect(screen.queryByText("Granted by Domits")).not.toBeInTheDocument();
+    expect(screen.queryByText("No payment needed")).not.toBeInTheDocument();
   });
 
   test.each([
@@ -582,7 +582,7 @@ describe("DirectBookingWebsitePlanSection", () => {
       { plan: "elite", priceCents: 4300, effectiveUntil: "2026-12-15T12:00:00.000Z" },
       "Reactivate Elite",
     ],
-  ])("shows the Elite price and no grant for %s", async (_label, overrides, eliteButtonName) => {
+  ])("shows the Elite price and no line about payment for %s", async (_label, overrides, eliteButtonName) => {
     getWebsiteRatePlan.mockResolvedValue(essentialsPlan(overrides));
 
     render(<DirectBookingWebsitePlanSection />);
@@ -590,7 +590,7 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(await screen.findByText("€43.00")).toBeInTheDocument();
     expect(screen.getAllByText("per month")).toHaveLength(2);
     expect(screen.getByRole("button", { name: eliteButtonName })).toBeInTheDocument();
-    expect(screen.queryByText("Granted by Domits")).not.toBeInTheDocument();
+    expect(screen.queryByText("No payment needed")).not.toBeInTheDocument();
   });
 
   test.each([
@@ -631,5 +631,34 @@ describe("DirectBookingWebsitePlanSection", () => {
     expect(screen.queryAllByText(/^Elite remains active until /).map((line) => line.textContent)).toEqual(
       expectedEndLines
     );
+  });
+
+  test("shows an Elite plan without a subscription or an end date as the current plan without a price, and offers Essentials", async () => {
+    getWebsiteRatePlan.mockResolvedValue(essentialsPlan({
+      plan: "elite",
+      priceCents: 0,
+      effectiveUntil: null,
+      stripeSubscriptionId: null,
+    }));
+    changeWebsiteRatePlan.mockResolvedValue({ action: "downgraded", plan: essentialsPlan() });
+
+    render(<DirectBookingWebsitePlanSection />);
+
+    await screen.findAllByRole("article");
+    expect(renderedCards()).toEqual([
+      ESSENTIALS_SWITCH_CARD,
+      {
+        texts: ["Elite", "Current plan", "No payment needed", ...ELITE_FEATURES, "Current plan"],
+        buttonDisabled: true,
+      },
+    ]);
+    expect(screen.queryByRole("button", { name: "Reactivate Elite" })).not.toBeInTheDocument();
+    expect(screen.queryAllByText(/^Elite remains active until /)).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Essentials" }));
+
+    expect(changeWebsiteRatePlan).toHaveBeenCalledWith("essentials");
+    expect(await screen.findByText("Downgrade complete")).toBeInTheDocument();
+    expect(renderedCards()).toEqual([ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD]);
   });
 });

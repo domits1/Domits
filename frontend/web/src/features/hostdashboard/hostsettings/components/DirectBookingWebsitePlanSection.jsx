@@ -133,7 +133,7 @@ const ElitePlanCard = ({
     </div>
     <div className="website-rate-plan-price">
       {eliteWithoutSubscription ? (
-        <strong>{copy.granted}</strong>
+        <strong>{copy.withoutPayment}</strong>
       ) : (
         <>
           <strong>{elitePrice}</strong>
