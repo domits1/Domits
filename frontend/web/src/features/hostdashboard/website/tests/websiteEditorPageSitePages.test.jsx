@@ -33,8 +33,14 @@ jest.mock("../services/websitePlanService", () => ({
 }));
 jest.mock("../rendering/WebsiteTemplatePreview", () => ({
   __esModule: true,
-  default: function WebsiteTemplatePreviewStub({ model }) {
-    return <output data-testid="editor-preview" data-site-pages={JSON.stringify(model.sitePages ?? null)} />;
+  default: function WebsiteTemplatePreviewStub({ model, activePageKey }) {
+    return (
+      <output
+        data-testid="editor-preview"
+        data-page={activePageKey}
+        data-site-pages={JSON.stringify(model.sitePages ?? null)}
+      />
+    );
   },
 }));
 
@@ -70,6 +76,9 @@ const buildDraft = (contentOverrides, publishedContentOverrides = contentOverrid
 });
 
 const previewSitePages = () => JSON.parse(screen.getByTestId("editor-preview").dataset.sitePages);
+const previewPage = () => screen.getByTestId("editor-preview").dataset.page;
+const pagePicker = () => screen.queryByRole("tablist", { name: "Preview page" });
+const pickerTabs = () => screen.getAllByRole("tab", { name: /./ }).filter((tab) => pagePicker().contains(tab));
 
 const renderEditor = async (draft, readEntitlements) => {
   fetchWebsiteDraftByPropertyId.mockResolvedValue(draft);
@@ -127,6 +136,8 @@ describe.each(NON_ELITE_READS)("website editor for a host with %s", (_name, read
     await renderEditor(buildDraft({ ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES }), readEntitlements);
 
     expect(previewSitePages()).toBeNull();
+    expect(previewPage()).toBe("main");
+    expect(pagePicker()).toBeNull();
   });
 
   it("saves the stored site pages as they are and adds none", async () => {
@@ -166,6 +177,30 @@ describe("website editor for an Elite host", () => {
     await renderEditor(buildDraft({ ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES }), ELITE);
 
     expect(previewSitePages()).toEqual({ ...DEFAULT_SITE_PAGES, gallery: { enabled: true, navLabel: "Photos" } });
+    expect(pickerTabs().map((tab) => tab.textContent)).toEqual(["Home", "Photos"]);
+    expect(previewPage()).toBe("main");
+  });
+
+  it("previews each switched-on page and falls back to Home when a page goes off", async () => {
+    await renderEditor(buildDraft(renderPayload.contentOverrides), ELITE);
+    openPagesSection();
+    expect(pagePicker()).toBeNull();
+
+    switchPage("Gallery");
+    expect(previewPage()).toBe("gallery");
+    expect(screen.getByRole("tab", { name: "Gallery" })).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Home" }));
+    expect(previewPage()).toBe("main");
+
+    switchPage("Accommodation");
+    expect(previewPage()).toBe("accommodation");
+    switchPage("Accommodation");
+    expect(previewPage()).toBe("main");
+    expect(pickerTabs().map((tab) => tab.textContent)).toEqual(["Home", "Gallery"]);
+
+    switchPage("Gallery");
+    expect(pagePicker()).toBeNull();
   });
 
   it("saves switched-on pages and their menu labels", async () => {

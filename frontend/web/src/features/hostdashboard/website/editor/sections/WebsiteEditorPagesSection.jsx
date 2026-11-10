@@ -97,6 +97,39 @@ export function WebsiteEditorPagesSection({
   );
 }
 
+export function WebsiteEditorPagePicker({ activePageKey, menuItems, onSelectPage }) {
+  if (menuItems.length < 2) {
+    return null;
+  }
+
+  return (
+    <div className={styles.previewViewportControls} role="tablist" aria-label="Preview page">
+      {menuItems.map((item) => {
+        const isActive = item.key === activePageKey;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            className={`${styles.previewViewportButton} ${isActive ? styles.previewViewportButtonActive : ""}`.trim()}
+            onClick={() => onSelectPage(item.key)}>
+            {item.navLabel}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+WebsiteEditorPagePicker.propTypes = {
+  activePageKey: PropTypes.string.isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({ key: PropTypes.string.isRequired, navLabel: PropTypes.string.isRequired })
+  ).isRequired,
+  onSelectPage: PropTypes.func.isRequired,
+};
+
 WebsiteEditorPagesSection.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onChangeEnabled: PropTypes.func.isRequired,

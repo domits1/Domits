@@ -70,6 +70,7 @@ import { WebsitePreviewSkeleton } from "./rendering/WebsitePreviewSkeleton";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import { WebsiteEditorSidebar } from "./editor/WebsiteEditorSidebar";
+import { WebsiteEditorPagePicker } from "./editor/sections/WebsiteEditorPagesSection";
 import {
   WebsiteEditorActionMenu,
   WebsiteEditorErrorState,
@@ -282,7 +283,8 @@ function WebsiteEditorPage() {
     draftTemplateKey,
     workingOverrides: getDraftWorkingContentOverrides(draftRecord),
   });
-  const { isEliteHost, resetSitePagesEdit, sitePagesEdit } = sitePagesEditor;
+  const { isEliteHost, menuItems, previewPageKey, resetSitePagesEdit, selectPreviewPage, sitePagesEdit } =
+    sitePagesEditor;
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -1118,6 +1120,7 @@ function WebsiteEditorPage() {
         viewport={previewViewport}
         onSelectTarget={handlePreviewTargetSelect}
         activeTargetId={activePreviewTargetId}
+        activePageKey={previewPageKey}
       />
     );
   }
@@ -1314,6 +1317,11 @@ function WebsiteEditorPage() {
                 </div>
               </div>
 
+              <WebsiteEditorPagePicker
+                activePageKey={previewPageKey}
+                menuItems={menuItems}
+                onSelectPage={selectPreviewPage}
+              />
               {previewPanelContent}
             </section>
           </div>
