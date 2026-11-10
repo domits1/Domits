@@ -227,6 +227,16 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       expect(recordGuestRefund).toHaveBeenCalledWith(bookingId, refundInfo);
     };
 
+    const expectRefundRecord = (bookingId, overrides = {}) => {
+      expectCancelRecord(bookingId, {
+        refundedAmount: totalPriceCents,
+        stripeRefundId: null,
+        refundError: null,
+        refundStatus: null,
+        ...overrides,
+      });
+    };
+
     it("cancels the booking before any money moves", async () => {
       const bookingId = "booking_order";
       mockBooking({ id: bookingId, cancellation_policy: "flexible" });
@@ -276,10 +286,9 @@ describe("Refund Logic - 10 Test Scenarios", () => {
         }
       );
 
-      expectCancelRecord(bookingId, {
+      expectRefundRecord(bookingId, {
         refundedAmount: 5000,
         stripeRefundId: "re_test_123456",
-        refundError: null,
         refundStatus: "refunded",
       });
 
@@ -300,10 +309,8 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       expect(mockStripe.paymentIntents.retrieve).not.toHaveBeenCalled();
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
+      expectRefundRecord(bookingId, {
         stripeRefundId: "re_existing_123",
-        refundError: null,
         refundStatus: "refunded",
       });
       expect(result.statusCode).toBe(200);
@@ -321,9 +328,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: null,
+      expectRefundRecord(bookingId, {
         refundError: "Cannot refund usd PaymentIntent pi_test_usd; expected eur.",
         refundStatus: "unknown",
       });
@@ -342,10 +347,8 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
+      expectRefundRecord(bookingId, {
         refundedAmount: 0,
-        stripeRefundId: null,
-        refundError: null,
         refundStatus: "not_refunded",
       });
 
@@ -359,9 +362,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       const result = await controller.cancelBooking(bookingId, authEvent);
 
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: null,
+      expectRefundRecord(bookingId, {
         refundError: "Card declined",
         refundStatus: "unknown",
       });
@@ -378,12 +379,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: null,
-        refundError: null,
-        refundStatus: "unknown",
-      });
+      expectRefundRecord(bookingId, { refundStatus: "unknown" });
 
       expect(result.statusCode).toBe(200);
     });
@@ -397,12 +393,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId: null,
-        refundError: null,
-        refundStatus,
-      });
+      expectRefundRecord(bookingId, { refundStatus });
       expect(result.statusCode).toBe(200);
     });
 
@@ -421,12 +412,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       await controller.cancelBooking(bookingId, authEvent);
 
-      expectCancelRecord(bookingId, {
-        refundedAmount: 10000,
-        stripeRefundId,
-        refundError: null,
-        refundStatus,
-      });
+      expectRefundRecord(bookingId, { stripeRefundId, refundStatus });
     });
 
     it("should correctly round refund amounts in cents", async () => {
