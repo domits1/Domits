@@ -288,13 +288,28 @@ describe("website editor for an Elite host", () => {
     const published = { ...renderPayload.contentOverrides, sitePages: STORED_SITE_PAGES };
     const working = { ...renderPayload.contentOverrides, sitePages: { contact: { enabled: true } } };
     await renderEditor(buildDraft(working, published), ELITE);
+    openPagesSection();
+    switchPage("Accommodation");
 
     fireEvent.click(screen.getByRole("menuitem", { name: "Discard all changes", hidden: true }));
 
     await waitFor(() => expect(upsertWebsiteDraft).toHaveBeenCalledTimes(1));
     expect(upsertWebsiteDraft.mock.calls[0][0].contentOverrides).toBe(published);
-    openPagesSection();
     await waitFor(() => expect(screen.getByRole("checkbox", { name: "Gallery page" })).toBeChecked());
     expect(screen.getByRole("checkbox", { name: "Contact us page" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Accommodation page" })).not.toBeChecked();
+  });
+
+  it("has nothing left to publish once the pages are back to the published ones", async () => {
+    const published = { sitePages: STORED_SITE_PAGES, ...renderPayload.contentOverrides };
+    const working = { ...published, sitePages: { ...STORED_SITE_PAGES, contact: { enabled: true } } };
+    await renderEditor(buildDraft(working, published), ELITE);
+    const discard = screen.getByRole("menuitem", { name: "Discard all changes", hidden: true });
+    expect(discard).toBeEnabled();
+
+    openPagesSection();
+    switchPage("Contact us");
+
+    expect(discard).toBeDisabled();
   });
 });

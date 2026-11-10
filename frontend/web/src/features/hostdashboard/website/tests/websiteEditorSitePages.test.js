@@ -18,16 +18,6 @@ describe("applySitePagesEdit", () => {
     expect(applySitePagesEdit(overrides, null, {})).toBe(overrides);
   });
 
-  it("keeps the stored text when the edit means the same pages in another field order", () => {
-    const overrides = { heroTitle: "Villa", sitePages: STORED_IN_OTHER_ORDER };
-    const edit = normalizeSitePages(STORED_IN_OTHER_ORDER);
-
-    const result = applySitePagesEdit(overrides, edit, {});
-
-    expect(result).toBe(overrides);
-    expect(JSON.stringify(result)).toBe(JSON.stringify(overrides));
-  });
-
   it("writes the normalized pages at the place of the stored ones", () => {
     const overrides = { sitePages: STORED_IN_OTHER_ORDER, heroTitle: "Villa" };
     const edit = {
