@@ -28,11 +28,25 @@ const resolveDatabaseSchemaName = (client) => {
 const qualifyTableName = (client, tableName) =>
   `${quoteIdentifier(resolveDatabaseSchemaName(client))}.${quoteIdentifier(tableName)}`;
 
-export const buildDeterministicChannexBookingId = (integrationAccountId, externalReservationId) => {
-  const seed = `${CHANNEX_BOOKING_PROFILE.channel}:${requireStr(integrationAccountId) || ""}:${requireStr(externalReservationId) || ""}`;
+export const buildDeterministicBookingId = (channel, integrationAccountId, externalReservationId) => {
+  const seed = `${requireStr(channel) || ""}:${requireStr(integrationAccountId) || ""}:${requireStr(externalReservationId) || ""}`;
   const hex = createHash("sha256").update(seed).digest("hex");
   const variant = ((Number.parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, "0");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+};
+
+export const buildDeterministicChannexBookingId = (integrationAccountId, externalReservationId) =>
+  buildDeterministicBookingId(CHANNEX_BOOKING_PROFILE.channel, integrationAccountId, externalReservationId);
+
+const PROFILE_FIELDS = ["channel", "guestIdPrefix", "paymentIdPrefix", "hostName", "bookingType", "fallbackGuestName"];
+
+const requireProfile = (profile) => {
+  for (const field of PROFILE_FIELDS) {
+    if (!requireStr(profile?.[field])) {
+      throw new Error(`booking import profile needs ${field}`);
+    }
+  }
+  return profile;
 };
 
 const normalizeBookingRow = (row) => {
@@ -53,8 +67,9 @@ const normalizeBookingRow = (row) => {
 };
 
 class ChannexExternalBookingImportRepository {
-  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
+  constructor({ channexAriOutboxWriter = new ChannexAriOutboxWriter(), profile = CHANNEX_BOOKING_PROFILE } = {}) {
     this.channexAriOutboxWriter = channexAriOutboxWriter;
+    this.profile = requireProfile(profile);
   }
 
   // An imported booking change that opens or closes nights must reach Channex, so its
@@ -137,18 +152,18 @@ class ChannexExternalBookingImportRepository {
       arrivaldate: Math.trunc(Number(arrivalDateMs)),
       departuredate: Math.trunc(Number(departureDateMs)),
       createdat: now,
-      guestid: `${CHANNEX_BOOKING_PROFILE.guestIdPrefix}:${normalizedExternalReservationId}`,
+      guestid: `${this.profile.guestIdPrefix}:${normalizedExternalReservationId}`,
       // One guest when Channex sends no occupancy, so a booking never counts zero guests.
       guests: guestCount ?? 1,
       hostid: requireStr(hostId),
       latepayment: false,
-      paymentid: `${CHANNEX_BOOKING_PROFILE.paymentIdPrefix}:${normalizedExternalReservationId}`,
+      paymentid: `${this.profile.paymentIdPrefix}:${normalizedExternalReservationId}`,
       property_id: requireStr(propertyId),
       status: BOOKING_STATUS_PAID,
-      guestname: requireStr(guestName) || CHANNEX_BOOKING_PROFILE.fallbackGuestName,
-      hostname: CHANNEX_BOOKING_PROFILE.hostName,
+      guestname: requireStr(guestName) || this.profile.fallbackGuestName,
+      hostname: this.profile.hostName,
       cancellation_policy: null,
-      bookingtype: CHANNEX_BOOKING_PROFILE.bookingType,
+      bookingtype: this.profile.bookingType,
       // What the guest paid on the OTA, and which OTA; the pages show these instead of
       // the Domits listing price and a card payment (#3483).
       total_price: totalPrice,
@@ -218,7 +233,7 @@ class ChannexExternalBookingImportRepository {
           normalizedBookingId,
           Math.trunc(Number(arrivalDateMs)),
           Math.trunc(Number(departureDateMs)),
-          requireStr(guestName) || CHANNEX_BOOKING_PROFILE.fallbackGuestName,
+          requireStr(guestName) || this.profile.fallbackGuestName,
           BOOKING_STATUS_PAID,
           totalPrice,
           guestCount,

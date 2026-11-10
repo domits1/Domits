@@ -5,6 +5,7 @@ jest.mock("../../.shared/integrations/ORM/index.js", () => ({
 
 import Database from "../../.shared/integrations/ORM/index.js";
 import ChannexExternalBookingImportRepository, {
+  buildDeterministicBookingId,
   buildDeterministicChannexBookingId,
 } from "../../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js";
 
@@ -28,10 +29,13 @@ const INSERT_COLUMNS = [
   "booking_source",
 ];
 
-const setup = () => {
+const setup = (options = {}) => {
   const client = { options: { schema: "main" }, query: jest.fn().mockResolvedValue([]) };
   Database.getInstance.mockResolvedValue(client);
-  const repository = new ChannexExternalBookingImportRepository({ channexAriOutboxWriter: { enqueueChannexAriChange: jest.fn() } });
+  const repository = new ChannexExternalBookingImportRepository({
+    channexAriOutboxWriter: { enqueueChannexAriChange: jest.fn() },
+    ...options,
+  });
   repository.getBookingById = jest.fn().mockResolvedValue({ id: "booking-1" });
   return { repository, client };
 };
@@ -86,4 +90,56 @@ describe("Channex booking import values that existing bookings depend on", () =>
 
     expect(client.query.mock.calls[0][1][3]).toBe("Channex guest");
   });
+});
+
+const OTHER_CHANNEL_PROFILE = Object.freeze({
+  channel: "OTHER",
+  guestIdPrefix: "OTHER_GUEST",
+  paymentIdPrefix: "OTHER",
+  hostName: "Other channel",
+  bookingType: "other",
+  fallbackGuestName: "Other channel guest",
+});
+
+describe("booking import for another channel", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test("stores the values of the profile it was given", async () => {
+    const { repository, client } = setup({ profile: OTHER_CHANNEL_PROFILE });
+
+    await repository.createExternalBooking(booking);
+
+    expect(insertedRow(client)).toMatchObject({
+      guestid: "OTHER_GUEST:reservation-1",
+      paymentid: "OTHER:reservation-1",
+      guestname: "Other channel guest",
+      hostname: "Other channel",
+      bookingtype: "other",
+    });
+  });
+
+  test("uses the fallback name of the profile on a modification without a name", async () => {
+    const { repository, client } = setup({ profile: OTHER_CHANNEL_PROFILE });
+
+    await repository.updateImportedBooking({ ...booking, guestName: null });
+
+    expect(client.query.mock.calls[0][1][3]).toBe("Other channel guest");
+  });
+
+  test("builds a booking id per channel, so the same reservation id on two channels never gives the same booking", () => {
+    expect(buildDeterministicBookingId("CHANNEX", "integration-1", "channex-booking-1")).toBe("641f53f0-3f43-4144-a518-67bde24c708f");
+    expect(buildDeterministicBookingId("OTHER", "integration-1", "channex-booking-1")).not.toBe("641f53f0-3f43-4144-a518-67bde24c708f");
+    expect(buildDeterministicBookingId("OTHER", "integration-1", "channex-booking-1")).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+  });
+
+  test.each(["channel", "guestIdPrefix", "paymentIdPrefix", "hostName", "bookingType", "fallbackGuestName"])(
+    "refuses a profile without %s",
+    (field) => {
+      expect(
+        () => new ChannexExternalBookingImportRepository({ profile: { ...OTHER_CHANNEL_PROFILE, [field]: " " } })
+      ).toThrow(`booking import profile needs ${field}`);
+    }
+  );
 });
