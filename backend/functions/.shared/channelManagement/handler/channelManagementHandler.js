@@ -30,6 +30,8 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/connect$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/disconnect$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
+  // Shows every Channex account, so admins only (#2869, design note D1).
+  { methods: ["GET"], pattern: /\/integrations\/channex\/health$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/properties$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/room-types$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/rate-plans$/ },
@@ -166,6 +168,7 @@ const routeDefinitions = [
   ["POST", "/integrations/channex/connect", "connectChannex"],
   ["GET", "/integrations/holidu/status", "checkHoliduStatus"],
   ["GET", "/integrations/channex/status", "checkChannexStatus"],
+  ["GET", "/integrations/channex/health", "getChannexHealth"],
   [
     "GET",
     "/integrations/channex/admin-access",

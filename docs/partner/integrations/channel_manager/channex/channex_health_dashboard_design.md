@@ -18,7 +18,7 @@ One new read-only endpoint, `GET /integrations/channex/health`, collects this fr
 Admin page (Health section)
         │ GET /integrations/channex/health   (Cognito + Channex admin allowlist, else 403)
         ▼
-ChannelManagement Lambda ── channexHealthService
+UnifiedMessaging Lambda (shared channel handler) ── channexHealthService
         ├──▶ DSQL (read-only): channex_ari_outbox, channex_booking_revision,
         │                      integration_sync_state, channel_integration_account,
         │                      channel_integration_property
@@ -159,15 +159,16 @@ The 7-day counts stay correct because cleanup deletes PROCESSED rows after 30 da
 
 ## 8. Platform limits
 
-- **Lambda:** ChannelManagement has reserved concurrency 5 (set by hand in AWS on 7 October 2026, not in the repo), shared with the booking webhook and the outbox worker. One page load is one invocation with a few short queries and one CloudWatch call. No auto-refresh, so the page cannot crowd out the webhook.
+- **Lambda:** API Gateway sends every `/integrations/channex/...` route of API `54s3llwby8` to the UnifiedMessaging Lambda (`/integrations/channex/{proxy+}`, checked 10 November 2026), which runs the same shared channel handler. So the health view does not run in ChannelManagement and cannot use up its reserved concurrency of 5 (set by hand on 7 October 2026), which the booking webhook and the outbox worker need. One page load is one invocation with a few short queries and one CloudWatch call, and there is no auto-refresh.
 - **CloudWatch:** one `DescribeAlarms` call with the seven alarm names (the API accepts up to 100). The names are fixed in code, so the endpoint cannot be used to read other alarms.
 - **DSQL:** read-only, no transaction needed (D7).
 
 ## 9. Infrastructure prerequisites (done by hand)
 
-1. IAM: allow `cloudwatch:DescribeAlarms` on the ChannelManagement Lambda role.
+1. IAM: allow `cloudwatch:DescribeAlarms` on the UnifiedMessaging Lambda role, the Lambda that serves the route (section 8). Without it the page shows "alarms unavailable" and Degraded.
 2. Dependency: `@aws-sdk/client-cloudwatch` in `backend/package.json`.
-3. API Gateway: resource `/integrations/channex/health`, method GET with the Cognito authorizer, CORS, and a deployment of the stage.
+3. API Gateway: nothing to add. The existing `/integrations/channex/{proxy+}` resource with the Cognito authorizer and CORS already catches `/integrations/channex/health`.
+4. Deploy: a change under `backend/functions/.shared/` or in `backend/package-lock.json` makes `deploy.yml` rebuild every Lambda, so UnifiedMessaging gets the new code and the CloudWatch package without a manual step.
 
 ## 10. Testing
 

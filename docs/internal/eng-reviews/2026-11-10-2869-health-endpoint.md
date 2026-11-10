@@ -57,6 +57,14 @@ Result: no blocking findings so far
 | P2 (7/10) | `channexHealthService.js`, `readAlarms` | The `try/catch` caught a CloudWatch error but not a call that hangs; the SDK has no request timeout by default and retries, so a slow CloudWatch would run into API Gateway's 29-second limit and lose the database part as well, which D4 is there to prevent. | Fixed: the alarm read gives up after 3 seconds (`Promise.race` with a cleared timer) and answers "alarms unavailable, TIMEOUT", logged like any other alarm failure; tested with Jest's fake timers. |
 | Checked | `getHealth` | The five reads run in parallel; a database failure rejects the request (tested), a CloudWatch failure does not (tested). The log line carries only the error name. | No change. |
 
+### Commit 8: route `GET /integrations/channex/health`
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P2 (9/10) | design note sections 1, 8 and 9 | The note placed the endpoint in the ChannelManagement Lambda and asked for a new API Gateway resource and IAM on ChannelManagement. `aws apigateway get-integration` on `/integrations/channex/{proxy+}` (`mr5vm8`) shows the route goes to UnifiedMessaging, which runs the same shared handler. IAM on ChannelManagement would leave the page at "alarms unavailable". | Fixed in the same commit: the note names UnifiedMessaging, puts `cloudwatch:DescribeAlarms` on its role, drops the API Gateway step, and notes that a `.shared` or lockfile change redeploys every Lambda. |
+| Checked | `channelManagementHandler.js` | The route is in the admin allowlist; tests cover 200 for an allowlisted admin, 403 for another signed-in user and 401 without claims, and the controller is not called in the last two. | No change. |
+| Checked | `channelManagementApiService.js` | The health service reuses the API service's account repository; every Lambda that builds the API service now also creates a CloudWatch client, which makes no call until the route is used. | No change. |
+
 ## Not in scope
 
 - The database reads, the CloudWatch reader, the route and the frontend section: later commits and PRs of this slice.
