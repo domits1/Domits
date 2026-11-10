@@ -61,6 +61,8 @@ jest.mock("../hooks/useSettingsTrans", () => ({
         unchanged: "Plan unchanged",
         effectiveUntil: "Elite remains active until {date}.",
         withoutPayment: "No payment needed",
+        sectionSubtitleWithoutPayment: "Choose the plan for your website",
+        upgradeSuccess: "Your website plan is now Elite",
       },
     },
   }),
@@ -196,6 +198,15 @@ const PLAN_SHAPES_WITHOUT_SELF_SELECT = SELF_SELECT_OFF_FIELDS.flatMap(([fieldLa
     endLines,
   ])
 );
+
+const CHECKOUT_URL = "https://checkout.stripe.com/cs_test";
+const selfSelectPlan = (overrides = {}) =>
+  essentialsPlan({ eliteSelfSelectAvailable: true, stripeSubscriptionId: null, ...overrides });
+const selfSelectedElitePlan = (overrides = {}) => selfSelectPlan({ plan: "elite", priceCents: 0, ...overrides });
+const ELITE_SELF_SELECT_CARD = {
+  texts: ["Elite", "No payment needed", ...ELITE_FEATURES, "Upgrade to Elite"],
+  buttonDisabled: false,
+};
 
 const renderedCards = () =>
   screen.getAllByRole("article").map((card) => ({
@@ -752,5 +763,118 @@ describe("DirectBookingWebsitePlanSection", () => {
       ESSENTIALS_SWITCH_CARD,
       ELITE_WITHOUT_SUBSCRIPTION_CARD,
     ]);
+  });
+
+  describe("for a host who may choose Elite without payment", () => {
+    test.each([
+      ["while checkout is off and no Elite price is set", { checkoutEnabled: false, elitePriceCents: null }],
+      ["while checkout is on with an Elite price", { checkoutEnabled: true, elitePriceCents: 4300 }],
+    ])("offers Elite without a price and switches to it without checkout %s", async (_label, checkout) => {
+      const redirectToCheckout = jest.fn();
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan(checkout));
+      changeWebsiteRatePlan.mockResolvedValue({ action: "upgraded", plan: selfSelectedElitePlan(checkout) });
+
+      render(<DirectBookingWebsitePlanSection redirectToCheckout={redirectToCheckout} />);
+
+      await screen.findAllByRole("article");
+      expect(renderedCards()).toEqual([ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD]);
+      expect(screen.getByText("Choose the plan for your website")).toBeInTheDocument();
+      expect(screen.queryByText("Choose a plan")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Upgrade to Elite" }));
+
+      expect(await screen.findByText("Your website plan is now Elite")).toBeInTheDocument();
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"]]);
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+      expect(screen.getByText("Choose the plan for your website")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(redirectToCheckout).not.toHaveBeenCalled();
+    });
+
+    test("switches back to Essentials after choosing Elite", async () => {
+      getWebsiteRatePlan.mockResolvedValue(selfSelectPlan());
+      changeWebsiteRatePlan
+        .mockResolvedValueOnce({ action: "upgraded", plan: selfSelectedElitePlan() })
+        .mockResolvedValueOnce({ action: "downgraded", plan: selfSelectPlan() });
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+      await screen.findByText("Your website plan is now Elite");
+      fireEvent.click(screen.getByRole("button", { name: "Switch to Essentials" }));
+
+      expect(await screen.findByText("Downgrade complete")).toBeInTheDocument();
+      expect(changeWebsiteRatePlan.mock.calls).toEqual([["elite"], ["essentials"]]);
+      expect(renderedCards()).toEqual([ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD]);
+    });
+
+    test("reads the plan again when the answer to choosing Elite has no plan", async () => {
+      getWebsiteRatePlan.mockResolvedValueOnce(selfSelectPlan()).mockResolvedValueOnce(selfSelectedElitePlan());
+      changeWebsiteRatePlan.mockResolvedValue({ action: "upgraded" });
+
+      render(<DirectBookingWebsitePlanSection />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+
+      expect(await screen.findByText("Your website plan is now Elite")).toBeInTheDocument();
+      expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
+      expect(renderedCards()).toEqual([ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD]);
+    });
+
+    test.each([
+      [
+        "the change fails and the server still holds Essentials",
+        () => Promise.reject(new Error("Request failed")),
+        () => Promise.resolve(selfSelectPlan()),
+        "Could not change plan",
+        [ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD],
+      ],
+      [
+        "the change fails and the server holds Elite",
+        () => Promise.reject(new Error("The website plan changed at the same time. Reload the page and try again.")),
+        () => Promise.resolve(selfSelectedElitePlan()),
+        "Could not change plan",
+        [ESSENTIALS_SWITCH_CARD, ELITE_WITHOUT_SUBSCRIPTION_CARD],
+      ],
+      [
+        "the server no longer offers Elite without payment and answers with a checkout",
+        () => Promise.resolve({ action: "checkout_required", checkoutUrl: CHECKOUT_URL }),
+        () => Promise.resolve(essentialsPlan({ eliteSelfSelectAvailable: false })),
+        "Could not change plan",
+        [ESSENTIALS_CURRENT_CARD, ELITE_UPGRADE_CARD],
+      ],
+      [
+        "the change fails and the plan cannot be read again",
+        () => Promise.reject(new Error("Request failed")),
+        () => Promise.reject(new Error("Request failed")),
+        "Could not change plan",
+        [ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD],
+      ],
+      [
+        "the session expired",
+        () => Promise.reject(new WebsiteSessionExpiredError()),
+        () => Promise.reject(new WebsiteSessionExpiredError()),
+        WEBSITE_SESSION_EXPIRED_MESSAGE,
+        [ESSENTIALS_CURRENT_CARD, ELITE_SELF_SELECT_CARD],
+      ],
+    ])(
+      "shows one message and the plan the server holds, and starts no checkout, when %s",
+      async (_label, change, readAgain, alertMessage, expectedCards) => {
+        const redirectToCheckout = jest.fn();
+        getWebsiteRatePlan.mockResolvedValueOnce(selfSelectPlan()).mockImplementationOnce(readAgain);
+        changeWebsiteRatePlan.mockImplementation(change);
+
+        render(<DirectBookingWebsitePlanSection redirectToCheckout={redirectToCheckout} />);
+
+        fireEvent.click(await screen.findByRole("button", { name: "Upgrade to Elite" }));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(alertMessage);
+        expect(getWebsiteRatePlan).toHaveBeenCalledTimes(2);
+        expect(renderedCards()).toEqual(expectedCards);
+        expect(screen.queryByText("Processing...")).not.toBeInTheDocument();
+        expect(screen.queryByText("Your website plan is now Elite")).not.toBeInTheDocument();
+        expect(redirectToCheckout).not.toHaveBeenCalled();
+      }
+    );
   });
 });

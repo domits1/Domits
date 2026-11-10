@@ -1667,6 +1667,7 @@
       "websitePlan": {
         "sectionTitle": "Suscripción del sitio web de reserva directa",
         "sectionSubtitle": "Elige el plan para tu sitio web de reservas. El precio de Elite se muestra a continuación.",
+        "sectionSubtitleWithoutPayment": "Elige el plan para tu sitio web de reservas.",
         "loading": "Cargando tu plan del sitio web...",
         "loadError": "No se pudo cargar tu plan actual del sitio web.",
         "essentials": "Essentials",
@@ -1702,6 +1703,7 @@
         "checkoutError": "No se pudo iniciar Stripe Checkout. Inténtalo de nuevo.",
         "downgradeScheduled": "El cambio a Essentials está programado para el final del periodo de facturación actual.",
         "downgradeSuccess": "Tu plan del sitio web ahora es Essentials.",
+        "upgradeSuccess": "Tu plan del sitio web ahora es Elite.",
         "restoreSuccess": "Tu suscripción Elite se ha reactivado.",
         "unchanged": "Tu plan del sitio web ya está actualizado.",
         "effectiveUntil": "Elite seguirá activo hasta el {date}.",

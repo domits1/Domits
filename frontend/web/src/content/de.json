@@ -1667,6 +1667,7 @@
       "websitePlan": {
         "sectionTitle": "Abonnement für die Direct-Booking-Website",
         "sectionSubtitle": "Wähle den Tarif für deine Buchungswebsite. Der Elite-Preis wird unten angezeigt.",
+        "sectionSubtitleWithoutPayment": "Wähle den Tarif für deine Buchungswebsite.",
         "loading": "Dein Website-Tarif wird geladen...",
         "loadError": "Dein aktueller Website-Tarif konnte nicht geladen werden.",
         "essentials": "Essentials",
@@ -1702,6 +1703,7 @@
         "checkoutError": "Stripe Checkout konnte nicht gestartet werden. Bitte versuche es erneut.",
         "downgradeScheduled": "Der Wechsel zu Essentials ist zum Ende des aktuellen Abrechnungszeitraums geplant.",
         "downgradeSuccess": "Dein Website-Tarif ist jetzt Essentials.",
+        "upgradeSuccess": "Dein Website-Tarif ist jetzt Elite.",
         "restoreSuccess": "Dein Elite-Abonnement wurde reaktiviert.",
         "unchanged": "Dein Website-Tarif ist bereits aktuell.",
         "effectiveUntil": "Elite bleibt bis zum {date} aktiv.",

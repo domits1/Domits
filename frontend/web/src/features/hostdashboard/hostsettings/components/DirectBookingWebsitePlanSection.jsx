@@ -19,6 +19,7 @@ const PLAN_CHANGE_NOTICES = Object.freeze({
   downgraded: "downgradeSuccess",
   upgrade_restored: "restoreSuccess",
   unchanged: "unchanged",
+  upgraded: "upgradeSuccess",
 });
 
 const getCheckoutStateFromUrl = () => {
@@ -124,6 +125,7 @@ const ElitePlanCard = ({
   currentPlan,
   eliteIsCurrent,
   eliteWithoutSubscription,
+  eliteSelfSelectAvailable,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -138,7 +140,7 @@ const ElitePlanCard = ({
       )}
     </div>
     <div className="website-rate-plan-price">
-      {eliteWithoutSubscription ? (
+      {eliteWithoutSubscription || eliteSelfSelectAvailable ? (
         <strong>{copy.withoutPayment}</strong>
       ) : (
         <>
@@ -164,7 +166,9 @@ const ElitePlanCard = ({
         busy ||
         eliteIsCurrent ||
         eliteWithoutSubscription ||
-        (currentPlan !== "elite" && (!checkoutEnabled || !hasConfiguredElitePrice))
+        (currentPlan !== "elite" &&
+          !eliteSelfSelectAvailable &&
+          (!checkoutEnabled || !hasConfiguredElitePrice))
       }
       onClick={() => {
         void onPlanChange("elite");
@@ -190,6 +194,7 @@ const WebsiteRatePlanContent = ({
   essentialsIsCurrent,
   eliteIsCurrent,
   eliteWithoutSubscription,
+  eliteSelfSelectAvailable,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -221,6 +226,7 @@ const WebsiteRatePlanContent = ({
         currentPlan={ratePlan.plan === "elite" ? "elite" : "essentials"}
         eliteIsCurrent={eliteIsCurrent}
         eliteWithoutSubscription={eliteWithoutSubscription}
+        eliteSelfSelectAvailable={eliteSelfSelectAvailable}
         eliteDowngradeScheduled={eliteDowngradeScheduled}
         changingPlan={changingPlan}
         checkoutPending={checkoutPending}
@@ -277,6 +283,7 @@ const DirectBookingWebsitePlanSection = ({
     currentPlan === "elite" && ratePlan?.stripeSubscriptionId === null;
   const eliteDowngradeScheduled =
     currentPlan === "elite" && Boolean(ratePlan?.effectiveUntil);
+  const eliteSelfSelectAvailable = ratePlan?.eliteSelfSelectAvailable === true;
 
   useEffect(() => {
     let cancelled = false;
@@ -381,8 +388,42 @@ const DirectBookingWebsitePlanSection = ({
   const formatMoney = (amountCents, currency = "EUR") =>
     formatCurrency(Number(amountCents || 0) / 100, currency, language);
 
+  const showServerPlanAfterFailedChange = async (failureMessage) => {
+    const serverPlan = await getWebsiteRatePlan().catch(() => null);
+    if (serverPlan) {
+      setRatePlan(serverPlan);
+    }
+    setActionError(failureMessage);
+  };
+
+  const choosePlanWithoutPayment = async (targetPlan) => {
+    setChangingPlan(targetPlan);
+    setActionError("");
+    setNotice("");
+
+    try {
+      const result = await changeWebsiteRatePlan(targetPlan);
+      if (result?.action === "checkout_required") {
+        await showServerPlanAfterFailedChange(copy.changeError);
+        return;
+      }
+
+      setRatePlan(result?.plan || (await getWebsiteRatePlan()));
+      setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
+    } catch (error) {
+      await showServerPlanAfterFailedChange(describeFailure(error, copy.changeError));
+    } finally {
+      setChangingPlan(null);
+    }
+  };
+
   const handlePlanChange = async (targetPlan) => {
     if (loading || changingPlan || redirectingToCheckout || checkoutPending) {
+      return;
+    }
+
+    if (eliteSelfSelectAvailable) {
+      await choosePlanWithoutPayment(targetPlan);
       return;
     }
 
@@ -457,7 +498,11 @@ const DirectBookingWebsitePlanSection = ({
   return (
     <section className="personal-data-section website-rate-plan-section">
       <h2 className="personal-data-section-title">{copy.sectionTitle}</h2>
-      <p className="personal-data-subtitle">{copy.sectionSubtitle}</p>
+      <p className="personal-data-subtitle">
+        {eliteSelfSelectAvailable
+          ? copy.sectionSubtitleWithoutPayment
+          : copy.sectionSubtitle}
+      </p>
 
       {loading && (
         <div className="personal-data-card enterprise-rate-plan-loading">
@@ -482,6 +527,7 @@ const DirectBookingWebsitePlanSection = ({
           essentialsIsCurrent={essentialsIsCurrent}
           eliteIsCurrent={eliteIsCurrent}
           eliteWithoutSubscription={eliteWithoutSubscription}
+          eliteSelfSelectAvailable={eliteSelfSelectAvailable}
           eliteDowngradeScheduled={eliteDowngradeScheduled}
           changingPlan={changingPlan}
           checkoutPending={checkoutPending}
