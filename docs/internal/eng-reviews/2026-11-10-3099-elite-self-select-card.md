@@ -2,8 +2,8 @@
 
 Pull request: this one
 Issue: #3099
-Reviewed commits: 851fa909c, 20f52f8f8, 3959b4b5c, d7c1da982, 668c315f1 and the documentation commit that adds this file, each as a staged diff before its commit, then the branch on top of #3809 in a second, independent review before 668c315f1
-Result: no blocking findings; four findings of the second review fixed in 668c315f1
+Reviewed commits: 851fa909c, 20f52f8f8, 3959b4b5c, d7c1da982, 668c315f1 and the documentation commit that adds this file, each as a staged diff before its commit, then the branch on top of #3809 in a second, independent review before 668c315f1; on the same day 22b9b163e, da801a28e and the documentation commit after them, each as a staged diff
+Result: no blocking findings; four findings of the second review fixed in 668c315f1; the open point on a checkout session closed by the request contract in da801a28e
 
 ## Findings
 
@@ -28,9 +28,17 @@ Result: no blocking findings; four findings of the second review fixed in 668c31
 - Choice: a separate handler, `choosePlanWithoutPayment`, entered only when the field is exactly `true`. The existing handler is unchanged apart from the moved notice table.
 - Consequences: on this path the card never redirects to Stripe, a checkout answer is a failed change, and after a failed change the card reads the plan again and shows that plan, or the load message when the read fails. The existing path keeps its own error texts and does not read again.
 
+## Request contract, 10 November
+
+- Context: with only `plan` in the body, a request from the card could fall through to Stripe checkout on the server when the switch was turned off for the host between his plan read and his click while checkout is on. The card did not follow the answer, but could not prevent the checkout session.
+- Options: leave it until checkout opens, or let the request say it is without payment.
+- Choice: the request says it. On the path without payment the card sends `{"plan":"elite","withoutPayment":true}` and `{"plan":"essentials","withoutPayment":true}`. The contract agreed for #3835: it takes the path without payment only for exactly `true`, answers 409 with nothing written and no Stripe call when the switch is off for the caller or the current plan has a subscription, runs today's code when the field is absent or `false`, and answers 400 for any other value.
+- Consequences: a self-select request can no longer start a checkout. A 409 or a 400 takes the card's failure path: it reads the plan again and shows what the server says now, for example the card of #3809 when the switch went off, or the paid Elite plan when a subscription started in between. Every other request keeps the body of #3809 byte for byte (pinned in 22b9b163e as JSON text, in the service and through the card with the real service). `changeWebsiteRatePlan` adds the field only for exactly `true`.
+- Findings on 22b9b163e and da801a28e, all P3 and accepted: a test answer list that runs out turns an extra request into a failure path instead of a clear test error (an extra PATCH is still caught by the exact body list); the list of field values is defined in both card test files; an explicit `null` as the second argument of `changeWebsiteRatePlan` would throw (no caller passes one).
+- Mutation check for the contract, 9 mutants, all caught: the field dropped for Elite, for Essentials, and for both; the field sent on the path of #3809; the service always, never, for any truthy value, or with the raw value sending it; and a redirect on a 409. The 30 mutants above were run again on da801a28e with the same result.
+
 ## Not in scope
 
-- The server can still create a Stripe checkout session for this request when the switch is turned off for the host between his plan read and his click while checkout is on: the PATCH carries only `plan`, and the backend falls through to checkout. The card does not follow it, but cannot prevent the session. Closing it needs the request to say it is without payment, in #3835. Checkout is off today, so the backend answers 503 instead.
 - The 409 text of the backend is English only; the card shows its own translated change message.
 - Showing the option before the backend is deployed: without the field the card stays as with #3809.
 
