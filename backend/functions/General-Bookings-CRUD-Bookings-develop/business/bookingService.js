@@ -19,6 +19,7 @@ import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/ch
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
+import { STANDALONE_SITE_BOOKING_SOURCE } from "../util/directBookingCommission.js";
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
 const BOOKING_STATUS_AWAITING_PAYMENT = "Awaiting Payment";
@@ -294,7 +295,7 @@ class BookingService {
     }
   }
 
-  async acceptInquiry(bookingId, authToken) {
+  async prepareInquiryAcceptance(bookingId, authToken) {
     const user = await this.authManager.authenticateUser(authToken);
     const bookingResult = await this.reservationRepository.getBookingById(bookingId);
     if (!bookingResult?.response) throw new NotFoundException("Booking not found.");
@@ -302,11 +303,30 @@ class BookingService {
     if (booking.hostid !== user.sub) throw new Forbidden("Only the host may accept this inquiry.");
     if (booking.status !== BOOKING_STATUS_INQUIRY) throw new BadRequestException("Booking is not in Inquiry status.");
 
+    const commission =
+      booking.booking_source === STANDALONE_SITE_BOOKING_SOURCE
+        ? await this.stripeRepository.getDirectBookingCommission(bookingId, booking.hostid)
+        : null;
+
+    return {
+      bookingId,
+      hostId: booking.hostid,
+      propertyId: booking.property_id,
+      dates: {
+        arrivalDate: booking.arrivaldate,
+        departureDate: booking.departuredate,
+      },
+      ...(commission ? { commission } : {}),
+    };
+  }
+
+  async completeInquiryAcceptance(preparedAcceptance) {
+    const { bookingId, hostId, propertyId, dates, commission } = preparedAcceptance;
     const result = await this.reservationRepository.acceptInquiryWithOverlapDecline({
       bookingId,
-      propertyId: booking.property_id,
-      arrivalDateMs: booking.arrivaldate,
-      departureDateMs: booking.departuredate,
+      propertyId,
+      arrivalDateMs: dates.arrivalDate,
+      departureDateMs: dates.departureDate,
     });
 
     if (!result.accepted) {
@@ -319,14 +339,17 @@ class BookingService {
     return {
       bookingId,
       status: BOOKING_STATUS_AWAITING_PAYMENT,
-      hostId: booking.hostid,
-      propertyId: booking.property_id,
+      hostId,
+      propertyId,
       declinedCount: result.declinedCount,
-      dates: {
-        arrivalDate: booking.arrivaldate,
-        departureDate: booking.departuredate,
-      },
+      dates,
+      ...(commission ? { commission } : {}),
     };
+  }
+
+  async acceptInquiry(bookingId, authToken) {
+    const preparedAcceptance = await this.prepareInquiryAcceptance(bookingId, authToken);
+    return await this.completeInquiryAcceptance(preparedAcceptance);
   }
 
   async declineInquiry(bookingId, authToken) {

@@ -76,6 +76,45 @@ export const Booking = new EntitySchema({
       nullable: true,
       default: 0,
     },
+    commissionable_accommodation_cents: {
+      type: "bigint",
+      name: "commissionable_accommodation_cents",
+      transformer: {
+        from: (value) => value !== null && value !== undefined ? Number(value) : null,
+        to: (value) => value,
+      },
+      nullable: true,
+    },
+    commission_rate: {
+      type: "numeric",
+      name: "commission_rate",
+      precision: 5,
+      scale: 4,
+      nullable: true,
+    },
+    commission_amount_cents: {
+      type: "bigint",
+      name: "commission_amount_cents",
+      transformer: {
+        from: (value) => value !== null && value !== undefined ? Number(value) : null,
+        to: (value) => value,
+      },
+      nullable: true,
+    },
+    commission_annual_revenue_cents: {
+      type: "bigint",
+      name: "commission_annual_revenue_cents",
+      transformer: {
+        from: (value) => value !== null && value !== undefined ? Number(value) : null,
+        to: (value) => value,
+      },
+      nullable: true,
+    },
+    commission_year: {
+      type: "integer",
+      name: "commission_year",
+      nullable: true,
+    },
     cancellation_policy: {
       type: "varchar",
       name: "cancellation_policy",

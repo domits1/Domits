@@ -105,7 +105,7 @@ class PublicSiteBookingRequestService {
       }
 
       const site = await this.loadPublishedSite(normalizedSiteId, stay.propertyId);
-      const total = await this.confirmLivePrice({ stay, sessionId, requestId });
+      const confirmedPrice = await this.confirmLivePrice({ stay, sessionId, requestId });
       await this.assertDatesStillAvailable(stay);
 
       const hostContact = await this.lookupHostContact(site.hostId);
@@ -118,7 +118,8 @@ class PublicSiteBookingRequestService {
         contact,
         hostContact,
         cancellationPolicy,
-        total,
+        total: confirmedPrice.total,
+        commissionableAccommodationCents: confirmedPrice.commissionableAccommodationCents,
         idempotencyKey: normalizedIdempotencyKey,
       });
       if (booking.replayed) {
@@ -128,7 +129,7 @@ class PublicSiteBookingRequestService {
       await this.recordRequestedEvent({ site, stay, sessionId, requestId, publicBookingRef: booking.publicBookingRef });
       await this.notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef: booking.publicBookingRef });
 
-      return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total });
+      return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total: confirmedPrice.total });
     } catch (error) {
       if (error instanceof PublicBookingRequestError) {
         throw error;
@@ -246,11 +247,20 @@ class PublicSiteBookingRequestService {
       throw publicBookingRequestErrorFromQuoteError({ code: requote.code, message: requote.message });
     }
 
-    const liveTotal = Number(requote.quote?.priceBreakdown?.total);
-    if (!Number.isFinite(liveTotal) || liveTotal !== stay.quotedTotal) {
+    const priceBreakdown = requote.quote?.priceBreakdown || {};
+    const liveTotal = Number(priceBreakdown.total);
+    const commissionableAccommodationCents = Number(priceBreakdown.nightlyBaseTotal);
+    if (
+      !Number.isSafeInteger(liveTotal) ||
+      liveTotal < 0 ||
+      liveTotal !== stay.quotedTotal ||
+      !Number.isSafeInteger(commissionableAccommodationCents) ||
+      commissionableAccommodationCents <= 0 ||
+      commissionableAccommodationCents > liveTotal
+    ) {
       throw new PublicBookingRequestError(CODES.QUOTE_EXPIRED, MESSAGES.priceChanged);
     }
-    return liveTotal;
+    return { total: liveTotal, commissionableAccommodationCents };
   }
 
   async assertDatesStillAvailable(stay) {
@@ -300,7 +310,17 @@ class PublicSiteBookingRequestService {
     }
   }
 
-  buildInsertValues({ stay, site, contact, hostContact, cancellationPolicy, total, idempotencyKey, publicBookingRef }) {
+  buildInsertValues({
+    stay,
+    site,
+    contact,
+    hostContact,
+    cancellationPolicy,
+    total,
+    commissionableAccommodationCents,
+    idempotencyKey,
+    publicBookingRef,
+  }) {
     return {
       id: randomUUID(),
       arrivaldate: stay.arrivalDateMs,
@@ -316,6 +336,7 @@ class PublicSiteBookingRequestService {
       guestname: contact.name,
       hostname: hostContact.name || HOSTNAME_FALLBACK,
       total_price: total / 100,
+      commissionable_accommodation_cents: commissionableAccommodationCents,
       cancellation_policy: cancellationPolicy,
       bookingtype: BOOKING_TYPE_INQUIRY,
       booking_source: BOOKING_SOURCE_STANDALONE_SITE,
@@ -326,7 +347,16 @@ class PublicSiteBookingRequestService {
     };
   }
 
-  async insertBookingRequest({ stay, site, contact, hostContact, cancellationPolicy, total, idempotencyKey }) {
+  async insertBookingRequest({
+    stay,
+    site,
+    contact,
+    hostContact,
+    cancellationPolicy,
+    total,
+    commissionableAccommodationCents,
+    idempotencyKey,
+  }) {
     let publicBookingRef = this.generatePublicBookingRef();
 
     for (let attempt = 1; attempt <= MAX_INSERT_ATTEMPTS; attempt += 1) {
@@ -339,6 +369,7 @@ class PublicSiteBookingRequestService {
             hostContact,
             cancellationPolicy,
             total,
+            commissionableAccommodationCents,
             idempotencyKey,
             publicBookingRef,
           })
