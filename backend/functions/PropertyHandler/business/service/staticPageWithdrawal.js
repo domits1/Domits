@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { buildStaticPageKey, buildStaticSitemapKey } from "../../data/repository/staticPageStore.js";
 import { buildStaticSiteSitemap } from "../../util/staticSiteSitemap.js";
+import { StaticPageRedirects } from "./staticPageRedirects.js";
 
 const DISTRIBUTION_ENV_NAME = "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID";
 
@@ -20,11 +21,13 @@ export class StaticPageWithdrawal {
     tenantRepository,
     domainRepository = null,
     distributionId = process.env[DISTRIBUTION_ENV_NAME],
+    redirects = new StaticPageRedirects(),
   }) {
     this.pageStore = pageStore;
     this.tenantRepository = tenantRepository;
     this.domainRepository = domainRepository;
     this.distributionId = String(distributionId || "").trim();
+    this.redirects = redirects;
   }
 
   async withdrawSite(siteId) {
@@ -33,6 +36,7 @@ export class StaticPageWithdrawal {
 
   async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
     const removed = [];
+    const deleted = [];
     const kept = [];
     const failures = [];
     for (const hostname of [...new Set(hostnames)]) {
@@ -42,24 +46,34 @@ export class StaticPageWithdrawal {
           kept.push(hostname);
           continue;
         }
-        ((await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" })) ? removed : kept).push(hostname);
+        if (!(await this.pageStore.deletePage({ hostname, etag: etags[hostname] || "" }))) {
+          kept.push(hostname);
+          continue;
+        }
+        deleted.push(hostname);
+        await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId: "" });
+        removed.push(hostname);
       } catch (error) {
         failures.push({ hostname, message: error.message });
       }
     }
 
-    return { removed, kept, failures, invalidationErrors: await this.#invalidate(removed) };
+    return { removed, kept, failures, invalidationErrors: await this.#invalidate(deleted) };
   }
 
   async withdraw({ siteId, domains }) {
     const hostnames = [...new Set(domains.map((domain) => domain?.domain).filter(Boolean))];
     hostnames.forEach((hostname) => buildStaticPageKey(hostname));
+    const redirectErrors = await this.redirects.remove(hostnames).then(
+      () => [],
+      (error) => [{ siteId, message: `REDIRECT_REMOVE_FAILED: ${error.message}` }]
+    );
     for (const hostname of hostnames) {
       await this.pageStore.deletePage({ hostname });
       await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId });
     }
 
-    return { siteId, hostnames, invalidationErrors: await this.#invalidate(hostnames) };
+    return { siteId, hostnames, invalidationErrors: await this.#invalidate(hostnames), redirectErrors };
   }
 
   async #invalidate(hostnames) {

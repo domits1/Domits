@@ -1,8 +1,10 @@
 import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
+import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
+import { Property } from "../../ORM/models/Property.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
-import { DataSource } from "typeorm";
+import { DataSource, In, IsNull, Not } from "typeorm";
 import Database from "database";
 import { Review } from "../../ORM/models/Review.js";
 import { Booking } from "../../ORM/models/Booking.js";
@@ -10,8 +12,8 @@ import { Review_Rating } from "../../ORM/models/Review_Rating.js";
 import { Review_Category } from "../../ORM/models/Review_Category.js";
 import { Review_Request } from "../../ORM/models/Review_Request.js";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
-import { CreateReviews20260930 } from "../../ORM/migrations/20260930_create_reviews.js";
 import { Review_Response } from "../../ORM/models/Review_Response.js";
+import { Review_Flag } from "../../ORM/models/Review_Flag.js";
 import { CreateReviewResponse20261014 } from "../../ORM/migrations/20261014_create_review_response.js";
 import { assertReviewResponseSchema } from "../../functions/ReviewSystem/util/assertReviewResponseSchema.js";
 import { execFileSync } from "node:child_process";
@@ -25,7 +27,7 @@ describe("ReviewSystem runtime and deployment preflight", () => {
       const { handler } = await import(${JSON.stringify(handlerUrl)});
       const { Tables } = await import(${JSON.stringify(tablesUrl)});
       const names = Tables.map((table) => table.options.name);
-      for (const name of ["Review_Response", "DirectBookingWebsiteRatePlan"]) {
+      for (const name of ["Review_Response", "Review_Flag", "DirectBookingWebsiteRatePlan"]) {
         if (!names.includes(name)) throw new Error("Missing entity: " + name);
       }
       const response = await handler({ httpMethod: "GET", resource: "/reviews" });
@@ -64,7 +66,7 @@ describe('Review entities and creation persistence', () => {
   let repository;
   // Give each test fresh repositories and a transaction stub so calls cannot leak between tests.
   beforeEach(() => {
-    repositories = new Map([Review, Booking, Review_Rating, Review_Category, Review_Request]
+    repositories = new Map([Review, Booking, Review_Rating, Review_Category, Review_Request, Review_Response]
       .map((entity) => [entity, { find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null),
         save: jest.fn(async (record) => record), update: jest.fn().mockResolvedValue({ affected: 1 }) }]));
     const requestInsert = { insert: jest.fn().mockReturnThis(), values: jest.fn().mockReturnThis(),
@@ -76,7 +78,7 @@ describe('Review entities and creation persistence', () => {
     repository = new ReviewRepository();
   });
 
-  // Entity contract: verify persisted column names, types, defaults and numeric conversions.
+  // Entity contract: verify persisted column names, types, defaults and numeric conversions!!
   it("builds PostgreSQL metadata and SQL for the established review contract without connecting", async () => {
     const source = new DataSource({ type: "postgres", schema: "main", synchronize: false,
       entities: [Review, Review_Rating, Review_Category, Review_Request] });
@@ -154,6 +156,63 @@ describe('Review entities and creation persistence', () => {
     });
   });
 
+// Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
+it("soft deletes only the author while retaining supporting records", async () => {
+  await repository.deleteOwnReview("legacy-review", "guest-1", 123);
+  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
+    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
+  });
+  for (const entity of [Review_Rating, Review_Request, Review_Response]) {
+    expect(repositories.get(entity).update).not.toHaveBeenCalled();
+  }
+});
+
+it("keeps soft-deleted reviews out of dashboard lists after reloading", async () => {
+  await repository.findReviews({ reviewer_user_id: "guest-1" });
+  expect(repositories.get(Review).find.mock.calls[0][0].where).toEqual({
+    reviewer_user_id: "guest-1", status: Not("REJECTED"),
+  });
+});
+
+// Public output: check scores, filtering and published responses while excluding private data.
+it("returns public ratings, averages and published responses without private fields", async () => {
+  repositories.get(Review).find.mockResolvedValue([
+    { id: "r1", overall_rating: 5, public_review: "Good", title: "Stay", created_at: 1,
+      status: "PUBLISHED", verification_status: "VERIFIED_STAY", private_feedback: "secret", reviewer_user_id: "private" },
+    { id: "r2", overall_rating: 3, public_review: "Okay", title: "Stay", created_at: 2, status: "PUBLISHED" },
+  ]);
+  repositories.get(Review_Rating).find.mockResolvedValue([
+    { reviewId: "r1", category: "cleanliness", rating: "5.0" },
+    { reviewId: "r2", category: "cleanliness", rating: "3.0" },
+  ]);
+  repositories.get(Review_Response).find.mockResolvedValue([
+    { id: "response1", reviewId: "r1", status: "published", authorRole: "host", message: "Thanks", publishedAt: 5 },
+    { id: "response2", reviewId: "r2", status: "draft", message: "Hidden" },
+  ]);
+  const result = await repository.findPublicPropertyReviews("p1", { sort: "highest" });
+  expect(repositories.get(Review).find.mock.calls[0][0].where).toEqual({ property_id: "p1",
+    review_type: "GUEST_TO_PROPERTY", status: "PUBLISHED", publication_status: "PUBLISHED" });
+  expect(repositories.get(Review).find.mock.calls[0][0].select).not.toContain("private_feedback");
+  expect(repositories.get(Review_Response).find).toHaveBeenCalledWith({ where: {
+    reviewId: In(["r1", "r2"]), status: "published", deletedAt: IsNull(),
+  } });
+  expect(result).toMatchObject({ totalReviews: 2, overallRating: 4, categoryRatings: { cleanliness: 4 } });
+  expect(result.reviews.map((review) => review.id)).toEqual(["r1", "r2"]);
+  expect(result.reviews[0].response).toMatchObject({ message: "Thanks" });
+  expect(result.reviews[1].response).toBeNull();
+  expect(JSON.stringify(result)).not.toMatch(/secret|private_feedback|reviewer_user_id|Hidden/);
+  expect((await repository.findPublicPropertyReviews("p1", { verifiedOnly: true })).totalReviews).toBe(1);
+  expect((await repository.findPublicPropertyReviews("p1", { category: "missing" })).totalReviews).toBe(0);
+  expect((await repository.findPublicPropertyReviews("p1", { sort: "lowest" })).reviews[0].id).toBe("r2");
+});
+
+it("returns empty public aggregates without querying child tables", async () => {
+  expect(await repository.findPublicPropertyReviews("p1")).toEqual({ reviews: [], totalReviews: 0,
+    overallRating: null, categoryRatings: {} });
+  expect(repositories.get(Review_Rating).find).not.toHaveBeenCalled();
+});
+
+
   // Creation: verify the repository groups related writes and leaves existing requests untouched.
   it("persists review, category ratings and draft request in one transaction", async () => {
     const record = { id: "r1", booking_id: "b1", property_id: "p1", host_id: "h1", reviewer_user_id: "g1",
@@ -212,12 +271,6 @@ describe('Review entities and creation persistence', () => {
     }
   );
 
-  it("keeps the retired review migration inert", async () => {
-    const runner = { query: jest.fn() };
-    await new CreateReviews20260930().up(runner);
-    await new CreateReviews20260930().down(runner);
-    expect(runner.query).not.toHaveBeenCalled();
-  });
 
 });
 
@@ -248,10 +301,12 @@ describe('Review transactional writes', () => {
       [Review_Request, [{ id: "request", bookingId: "b1", guestId: "guest", reviewType: "GUEST_TO_PROPERTY",
         status: "OPEN", nextSendAt: now + 100, claimedAt: now - 100 }]],
       [Review_Response, []],
+      [Review_Flag, []],
     ]);
     active = committed;
     repositories = new Map([...committed.keys()].map((entity) => [entity, {
       findOne: jest.fn(async ({ where }) => active.get(entity).find((row) => matches(row, where)) ?? null),
+      findOneBy: jest.fn(async (where) => active.get(entity).find((row) => matches(row, where)) ?? null),
       find: jest.fn(async ({ where }) => active.get(entity).filter((row) => matches(row, where))),
       update: jest.fn(async (where, fields) => {
         const rows = active.get(entity).filter((row) => matches(row, where));
@@ -267,6 +322,13 @@ describe('Review transactional writes', () => {
         return records;
       }),
     }]));
+    repositories.get(Review_Flag).insert = jest.fn(async (flag) => {
+      const flags = active.get(Review_Flag);
+      if (flags.some((row) => row.review_id === flag.review_id && row.status === "PENDING")) {
+        throw Object.assign(new Error("Duplicate"), { code: "23505", constraint: "review_flag_pending_unique_test" });
+      }
+      flags.push({ ...flag });
+    });
     // Model commit/rollback separately from the transaction's working data.
     source = {
       getRepository: (entity) => repositories.get(entity),
@@ -283,6 +345,78 @@ describe('Review transactional writes', () => {
     };
     Database.getInstance.mockResolvedValue(source);
     repository = new ReviewRepository();
+  });
+
+  it("scores a created unverified review only after publication and excludes it after service deletion", async () => {
+    committed.set(Review, []);
+    committed.set(Property, [{ id: "p1", hostid: "host" }]);
+    repositories.set(Property, { findOne: async ({ where }) =>
+      active.get(Property).find((row) => matches(row, where)) ?? null });
+    repositories.get(Review_Request).createQueryBuilder = () => {
+      const insert = { insert: () => insert, values: () => insert, orIgnore: () => insert,
+        execute: async () => ({}) };
+      return insert;
+    };
+    repositories.get(Review).createQueryBuilder = () => {
+      const filters = [];
+      let fields;
+      let owner;
+      const query = {
+        innerJoin: (_entity, _alias, _sql, parameters) => { owner = parameters.hostId; return query; },
+        select: () => query, addSelect: () => query, update: () => query,
+        set: (values) => { fields = values; return query; },
+        where: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        andWhere: (sql, parameters) => { filters.push([sql, parameters]); return query; },
+        getRawOne: async () => {
+          const rows = active.get(Review).filter((row) =>
+            active.get(Property).some((property) => property.id === row.property_id && property.hostid === owner) &&
+            filters.every(([sql, parameters]) => {
+              if (sql.includes("BETWEEN")) return row.overall_rating >= parameters.minimum && row.overall_rating <= parameters.maximum;
+              if (sql.includes("FLOOR")) return Number.isInteger(row.overall_rating);
+              const field = sql.match(/review\.(\w+)/)[1];
+              return row[field] === Object.values(parameters)[0];
+            }));
+          return { overall_score: rows.length ? rows.reduce((sum, row) => sum + row.overall_rating, 0) / rows.length : null,
+            review_count: String(rows.length) };
+        },
+        execute: async () => {
+          const rows = active.get(Review).filter((row) => filters.every(([sql, parameters]) => {
+            if (sql.includes("NOT IN")) return !parameters.excluded.includes(row.status);
+            const field = sql.split(" = ")[0];
+            return row[field] === Object.values(parameters)[0];
+          }));
+          rows.forEach((row) => Object.assign(row, fields));
+          return { affected: rows.length };
+        },
+      };
+      return query;
+    };
+    const service = new ReviewService({ repository, now: () => now });
+    const review = await service.createReview("guest", { booking_id: "b1", overall_rating: 5,
+      title: "Stay", public_review: "Good" });
+    expect(review.verification_status).toBe("UNVERIFIED");
+    const empty = { property_id: "p1", overall_score: null, review_count: 0 };
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
+    await service.publishReview("guest", review.id);
+    const previousAllowlist = process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+    process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "admin";
+    repository.hasActiveReviewApproverRole = jest.fn().mockResolvedValue(true);
+    try {
+      const pending = committed.get(Review).find((item) => item.id === review.id);
+      await expect(service.approveReview("staff", "admin", review.id, pending.updated_at))
+        .resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+      await expect(service.publishReview("guest", review.id)).rejects.toMatchObject({ statusCode: 403 });
+      await service.publishReview("staff", review.id, "admin");
+    } finally {
+      if (previousAllowlist === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS;
+      else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = previousAllowlist;
+    }
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual({
+      property_id: "p1", overall_score: 5, review_count: 1,
+    });
+    await service.deleteReview("guest", review.id);
+    expect(committed.get(Review)[0].status).toBe("DELETED");
+    expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
   });
 
   it("updates a draft and replaces ratings atomically while advancing its version", async () => {
@@ -358,7 +492,85 @@ describe('Review transactional writes', () => {
     expect(committed.get(Review_Response)).toHaveLength(1);
   });
 
+  it("does not approve when a concurrent write wins the conditional update", async () => {
+    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    repositories.get(Review).update.mockResolvedValueOnce({ affected: 0 });
+    expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).toBeNull();
+    expect(repositories.get(Review).update).toHaveBeenCalledWith({
+      id: "r1",
+      status: "PENDING_APPROVAL",
+      publication_status: "UNPUBLISHED",
+      updated_at: draft.updated_at,
+    }, expect.any(Object));
+    expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
+    expect(committed.get(Review_Request)[0].status).toBe("OPEN");
+    expect(repositories.get(Review_Request).update).not.toHaveBeenCalled();
+    committed.get(Booking)[0].status = "Cancelled";
+    await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
+      updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it("holds approval until the flag is resolved and retains its audit history", async () => {
+    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    const flag = { id: "f1", review_id: "r1", reason: "SPAM", status: "PENDING", created_at: now, updated_at: now };
+    await repository.createReviewFlag(flag);
+    await expect(repository.createReviewFlag({ ...flag, id: "f2" })).rejects.toMatchObject({ statusCode: 409 });
+    expect(committed.get(Review)[0]).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED", updated_at: now });
+    const approve = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now,
+      updatedAt: now + 2, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true });
+    await expect(approve()).rejects.toThrow("Resolve the pending review flag");
+    const resolved = await repository.resolveReviewFlag("f1", "moderator", now + 1);
+    expect(resolved).toMatchObject({ status: "RESOLVED", reason: "SPAM", resolved_by: "moderator", updated_at: now + 1 });
+    await expect(repository.resolveReviewFlag("f1", "other", now + 2)).resolves.toEqual(resolved);
+    await expect(approve()).resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+    await repository.createReviewFlag({ ...flag, id: "f2", created_at: now + 3, updated_at: now + 3 });
+    const publish = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now + 3,
+      updatedAt: now + 5, from: "APPROVED", to: "PUBLISHED", authorize: async () => true });
+    await expect(publish()).rejects.toThrow("Resolve the pending review flag before publishing");
+    await repository.resolveReviewFlag("f2", "moderator", now + 4);
+    await expect(publish()).resolves.toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
+    expect(committed.get(Review_Flag)).toHaveLength(2);
+  });
+
+  it.each(["missing", "DELETED"])("refuses to flag a %s review", async (status) => {
+    committed.get(Review)[0].status = status;
+    const review_id = status === "missing" ? "absent" : "r1";
+    await expect(repository.createReviewFlag({ review_id })).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("rejects publication that bypasses approval", async () => {
+    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
+      updatedAt: now, from: "PENDING_APPROVAL", to: "PUBLISHED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 409 });
+    expect(committed.get(Review)[0].status).toBe("PENDING_APPROVAL");
+  });
+
+  it("keeps a review approved and unpublished if request completion fails during publication", async () => {
+    repositories.get(Review_Request).update.mockRejectedValue(new Error("Request failure"));
+    committed.get(Review)[0].status = "APPROVED";
+    await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
+      updatedAt: now, from: "APPROVED", to: "PUBLISHED", authorize: async () => true })).rejects.toThrow("Request failure");
+    expect(committed.get(Review)[0]).toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+  });
+
+  it("submits, approves, and publishes separately with version checks", async () => {
+    let current = committed.get(Review)[0];
+    for (const [from, to] of [["DRAFT", "PENDING_APPROVAL"], ["PENDING_APPROVAL", "APPROVED"], ["APPROVED", "PUBLISHED"]]) {
+      const version = current.updated_at;
+      const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
+        updatedAt: now, from, to, authorize: async () => true });
+      expect(result.status).toBe(to);
+      expect(result.publication_status).toBe(to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED");
+      expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
+        updatedAt: now, from, to, authorize: async () => true })).toBeNull();
+      expect(committed.get(Review_Request)[0].status).toBe(to === "PUBLISHED" ? "COMPLETED" : "OPEN");
+      current = committed.get(Review)[0];
+    }
+  });
+
   it("publishes and completes the matching request in one transaction without upgrading verification", async () => {
+    committed.get(Review)[0].status = "APPROVED";
     const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true });
     expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
@@ -366,20 +578,23 @@ describe('Review transactional writes', () => {
   });
 
   it("rechecks publication policy and booking eligibility before committing", async () => {
+    committed.get(Review)[0].status = "APPROVED";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => false })).rejects.toMatchObject({ statusCode: 403 });
     committed.get(Booking)[0].status = "Cancelled";
+    committed.get(Review)[0].status = "APPROVED";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
-    expect(committed.get(Review)[0].status).toBe("DRAFT");
+    expect(committed.get(Review)[0].status).toBe("APPROVED");
     expect(committed.get(Review_Request)[0].status).toBe("OPEN");
   });
 
   it("rolls back publication if request completion fails", async () => {
     repositories.get(Review_Request).update.mockRejectedValue(new Error("Request failure"));
+    committed.get(Review)[0].status = "APPROVED";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true })).rejects.toThrow("Request failure");
-    expect(committed.get(Review)[0].status).toBe("DRAFT");
+    expect(committed.get(Review)[0].status).toBe("APPROVED");
   });
 
   it("loads ratings and visible responses through a public allowlist", async () => {

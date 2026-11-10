@@ -426,7 +426,7 @@ export const handleChannelManagementEvent = async (event, context) => {
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
         })
       );
@@ -436,18 +436,18 @@ export const handleChannelManagementEvent = async (event, context) => {
           fullCertificationSyncVersion:
             CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
           stage: "handler_catch",
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
           details: {
             name: error?.name ?? null,
             message:
               error?.message ??
-              "Unhandled Channex full certification sync error.",
+              "Unhandled Channex full sync error.",
           },
         },
       });

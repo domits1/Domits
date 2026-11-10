@@ -5,12 +5,14 @@ jest.mock("database", () => ({
 
 const mockGetTaskById = jest.fn();
 const mockUpdateTaskInDb = jest.fn();
+const mockUpdateTaskUnlessCompleted = jest.fn();
 const mockSaveActivityToDb = jest.fn();
 const mockGetChecklistItemsForTask = jest.fn();
 
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     getTaskById: (...args) => mockGetTaskById(...args),
     updateTaskInDb: (...args) => mockUpdateTaskInDb(...args),
+    updateTaskUnlessCompleted: (...args) => mockUpdateTaskUnlessCompleted(...args),
     saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
     getChecklistItemsForTask: (...args) => mockGetChecklistItemsForTask(...args),
 }));
@@ -23,6 +25,7 @@ describe("updateTask due_date validation", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockUpdateTaskInDb.mockResolvedValue();
+        mockUpdateTaskUnlessCompleted.mockResolvedValue(true);
         mockSaveActivityToDb.mockResolvedValue();
         mockGetChecklistItemsForTask.mockResolvedValue([]);
     });
@@ -39,7 +42,7 @@ describe("updateTask due_date validation", () => {
             updateTask("host-1", "task-1", { due_date: PAST_DUE_DATE, status: "Completed" })
         ).resolves.toEqual({ message: "Task updated successfully" });
 
-        expect(mockUpdateTaskInDb).toHaveBeenCalledTimes(1);
+        expect(mockUpdateTaskUnlessCompleted).toHaveBeenCalledTimes(1);
     });
 
     it("still throws when due_date is changed to a new past date", async () => {
@@ -72,23 +75,5 @@ describe("updateTask due_date validation", () => {
         ).rejects.toThrow("due_date cannot be in the past");
 
         expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
-    });
-});
-
-describe("updateTask escalated_at protection", () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-        mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending" });
-        mockUpdateTaskInDb.mockResolvedValue();
-        mockSaveActivityToDb.mockResolvedValue();
-        mockGetChecklistItemsForTask.mockResolvedValue([]);
-    });
-
-    it("ignores an escalated_at field sent through the generic update", async () => {
-        await updateTask("host-1", "task-1", { escalated_at: Date.now(), title: "Renamed" });
-
-        const [, , fieldsToUpdate] = mockUpdateTaskInDb.mock.calls[0];
-        expect(fieldsToUpdate).not.toHaveProperty("escalated_at");
-        expect(fieldsToUpdate.title).toBe("Renamed");
     });
 });

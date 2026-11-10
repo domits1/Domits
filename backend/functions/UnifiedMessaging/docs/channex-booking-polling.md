@@ -2,53 +2,31 @@
 
 ## Purpose
 
-Domits can poll the Channex Booking Revision Feed so external Channex/OTA bookings are imported into Domits without requiring the Channex diagnostics panel to stay open.
+Bookings reach Domits through the Channex booking webhook (#3281). Polling is the backup (#3576): a scheduled run reads the unacknowledged booking feed of every mapped property and imports what the webhook missed, for example when the webhook was inactive, its secret did not match, or the route was down longer than Channex retries. Normally a poll finds nothing, because the webhook already acknowledged everything.
 
-This document prepares the EventBridge schedule for the backend polling logic in `UnifiedMessaging`. It does not deploy or enable AWS resources by itself.
+## How it works
 
-## Current Scope
+- Every `CONNECTED` Channex account and every `ACTIVE` property mapping is polled, one property at a time.
+- Each property reads the Channex booking revision feed with the host's own API key, imports mapped bookings, and acknowledges a revision only after it is stored.
+- Polling and the webhook share one lock per property (`integration_sync_state`, sync type `booking_poll:<domits property id>`), so they never pull the same property at once. A webhook that arrives during a poll answers `503`, and Channex retries it.
+- When a poll acknowledges a revision, it logs one line, because the webhook should have delivered it:
 
-- Single-unit Domits listings only.
-- Polls Channex booking revisions through the existing backend import flow.
-- Imports mapped external bookings into Domits before acknowledgement.
-- Acknowledges Channex revisions only after Domits booking/link persistence succeeds.
-- Uses `integration_sync_state` as a best-effort app-level lock.
+  ```json
+  {"event":"CHANNEX_BOOKING_POLL_IMPORTED_MISSED","integrationAccountId":"...","domitsPropertyId":"...","ackedCount":1}
+  ```
 
-Out of scope:
+Out of scope: polling per account instead of per property (worth it once many hosts are connected), multi-room bookings.
 
-- 20-30 second polling.
-- Webhook receiving.
-- Broad production polling.
-- Multi-room booking support.
-- Full distributed locking or database uniqueness migrations.
+## Schedule
 
-## Repo Deployment Pattern
+The deploy workflow only updates Lambda code, so the schedule is set up by hand in EventBridge.
 
-The current repository deployment workflow updates Lambda function code from `.github/workflows/deploy.yml`. It does not own EventBridge rules, CloudWatch schedules, SAM, CDK, Terraform, or CloudFormation for this scheduler.
-
-Because of that, Batch 4C uses documented AWS Console/EventBridge setup plus a local Lambda test event fixture.
-
-## EventBridge Rule
-
-Suggested rule name:
-
-```text
-domits-channex-booking-poll-rate-1-minute
-```
-
-Schedule expression:
-
-```text
-rate(1 minute)
-```
-
-Target:
-
-```text
-UnifiedMessaging Lambda
-```
-
-Target input:
+| Setting | Value |
+|---|---|
+| Rule name | `domits-channex-booking-poll` |
+| Schedule | `rate(15 minutes)` |
+| Target | `ChannelManagement` Lambda (the webhook, logs and alarms are there) |
+| Target input | see below |
 
 ```json
 {
@@ -59,88 +37,32 @@ Target input:
 }
 ```
 
-The `enabled: true` event field tells the Lambda that this scheduled event allows polling. It does not override the Lambda environment kill switch. The service still requires `CHANNEX_BOOKING_POLL_ENABLED=true` and explicit staging allowlists before it will list accounts or call Channex.
+`enabled: true` in the event does not override the environment switch below.
 
-## Required Environment Variables
+## Environment variables
 
-Set these on the `UnifiedMessaging` Lambda before enabling the EventBridge rule:
+On the Lambda the rule targets:
 
-```text
-CHANNEX_BOOKING_POLL_ENABLED=true
-CHANNEX_BOOKING_POLL_ACCOUNT_IDS=<staging channel_integration_account.id>
-CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS=<staging Domits property id>
-```
+| Variable | Value | Purpose |
+|---|---|---|
+| `CHANNEX_BOOKING_POLL_ENABLED` | `true` | Kill switch; anything else makes a poll return without calling Channex |
+| `CHANNEX_BOOKING_POLL_ACCOUNT_IDS` | empty | Optional comma-separated `channel_integration_account.id` list. Empty means every connected account |
+| `CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS` | empty | Optional comma-separated Domits property id list. Empty means every active mapping |
+| `CHANNEX_BOOKING_POLL_LOCK_STALE_MS` | optional, default `300000` | After this time a `RUNNING` lock counts as stale |
 
-Optional:
+Set polling up on one Lambda only, so two schedules never poll the same feed.
 
-```text
-CHANNEX_BOOKING_POLL_LOCK_STALE_MS=300000
-```
+## Alarm on missed webhooks
 
-Safety behavior:
+A metric filter on `/aws/lambda/ChannelManagement` with the text pattern `"CHANNEX_BOOKING_POLL_IMPORTED_MISSED"` and an alarm (Sum ≥ 1 in 15 minutes, to the `channex-alerts` topic) emails when a poll had to import a booking. Then check why the webhook missed it: Channex → Webhooks, and the `channex-webhook-*` alarms.
 
-- If `CHANNEX_BOOKING_POLL_ENABLED` is false or missing, polling returns without calling Channex even when the event payload contains `enabled: true`.
-- If account/property allowlists are missing or empty, polling returns without listing accounts or calling Channex.
-- Unknown direct Lambda events do not match the polling branch and fall through to the normal handler behavior.
+## Manual test
 
-## Staging Enablement Steps
+Invoke the target Lambda with `backend/functions/UnifiedMessaging/events/channex-booking-poll.event.json`. Expected response: `action` `poll-latest-bookings`, `syncType` `booking_poll`, `accountsChecked` and `propertiesChecked` for the connected accounts, and normally `ackedCount` 0. Evidence rows and `integration_sync_log` rows are written with sync type `booking_poll`.
 
-1. Confirm the Batch 4B/4C code is deployed to the staging `UnifiedMessaging` Lambda.
-2. Add the required environment variables with the staging Channex account ID and staging Domits property ID.
-3. Create an EventBridge scheduled rule with `rate(1 minute)`.
-4. Set target to the staging `UnifiedMessaging` Lambda.
-5. Use the target input JSON from this document.
-6. Keep the rule disabled until a manual Lambda test event succeeds.
-7. Enable the rule for a short controlled staging window.
-8. Watch CloudWatch logs, `channex_sync_evidence`, and `integration_sync_log`.
-
-## Manual Lambda Test Event
-
-Use `backend/functions/UnifiedMessaging/events/channex-booking-poll.event.json` as the Lambda test event:
-
-```json
-{
-  "source": "domits.channex.booking-poll",
-  "action": "CHANNEX_BOOKING_POLL",
-  "enabled": true,
-  "trigger": "EVENTBRIDGE_POLL"
-}
-```
-
-Expected result when allowlists are configured:
-
-- `action` is `poll-latest-bookings`.
-- `syncType` is `booking_poll`.
-- `calledProvider` is true if at least one allowlisted active mapping is polled.
-- Response includes fetched/raw-persisted/created/updated/cancelled/skipped/acked/unacked counts.
-- Channex sync evidence rows are written with `syncType: booking_poll`.
-- Integration sync log rows are written with `syncType: booking_poll` and `direction: IMPORT`.
-
-Expected result when allowlists are missing:
-
-- No Channex provider call is made.
-- Response includes warning `CHANNEX_BOOKING_POLL_ALLOWLIST_REQUIRED`.
-
-## Rollback / Disable Steps
-
-Fastest disable options:
+## Disable
 
 1. Disable the EventBridge rule.
 2. Set `CHANNEX_BOOKING_POLL_ENABLED=false`.
-3. Clear `CHANNEX_BOOKING_POLL_ACCOUNT_IDS` and `CHANNEX_BOOKING_POLL_DOMITS_PROPERTY_IDS`.
 
-If a poll appears stuck, inspect `integration_sync_state` rows whose `syncType` starts with:
-
-```text
-booking_poll:
-```
-
-The backend treats old `RUNNING` rows as stale after the configured stale threshold.
-
-## What Not To Claim
-
-- Do not claim 20-30 second polling; the prepared cadence is one minute.
-- Do not claim webhooks are implemented.
-- Do not claim broad production polling is enabled or approved.
-- Do not claim the app-level lock is full distributed locking.
-- Do not claim multi-room bookings are supported.
+If a poll appears stuck, inspect `integration_sync_state` rows whose sync type starts with `booking_poll:`; a `RUNNING` row older than the stale threshold is taken over by the next run.

@@ -69,33 +69,41 @@ export class Controller {
     }
   }
 
-  // Create a new review for the authenticated guest.
-  // This keeps the entry point consistent with the service rules for booking eligibility and duplicate prevention.
   async createReview(event) {
+    if (event.queryStringParameters?.scope === "moderation") {
+      return this.executeAuthenticated(event, async (userId, user) =>
+        this.moderationResponse(201, await this.service.flagReview(userId, user.username, parseBody(event))));
+    }
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(201, await this.service.createReview(userId, parseBody(event))));
   }
 
-  // Fetch the caller's review list for the selected scope.
-  // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
   async getReviews(event) {
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
+      if (query.scope === "moderation") {
+        return this.moderationResponse(200, await this.service.getModerationQueue(userId, user.username, query));
+      }
       const propertyScope = ["property-score", "property-categories", "property-performance", "property-trends"].includes(query.scope);
-      if (propertyScope && query.reviewId !== undefined) {
+      if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "respondable") {
+      if (query.scope === "pending-approval" || query.scope === "approved") {
+        const status = query.scope === "approved" ? "APPROVED" : "PENDING_APPROVAL";
+        result = await this.service.getReviewApprovalQueue(userId, user.username, status);
+      } else if (["admin-published", "admin-rejected", "admin-all"].includes(query.scope)) {
+        result = await this.service.getModeratedReviews(userId, user.username, query.scope);
+      } else if (query.scope === "respondable") {
         result = await this.service.getResponseEligibleReviews(user.username);
       } else if (query.scope === "property-trends") {
-        result = await this.service.getPropertyRatingTrends(user.username, query);
+        result = await this.service.getPropertyRatingTrends(userId, query);
       } else if (query.scope === "property-categories") {
-        result = await this.service.getPropertyCategoryRatings(user.username, query.propertyId);
+        result = await this.service.getPropertyCategoryRatings(userId, query.propertyId);
       } else if (query.scope === "property-score") {
-        result = await this.service.getPropertyOverallScore(user.username, query.propertyId);
+        result = await this.service.getPropertyReviewScore(userId, query.propertyId);
       } else if (query.scope === "property-performance") {
-        result = await this.service.getPropertyReviewPerformance(user.username, query.propertyId, query);
+        result = await this.service.getPropertyReviewPerformance(userId, query.propertyId, query);
       } else if (query.reviewId !== undefined) {
         result = await this.service.getEditableReview(userId, query.reviewId);
       } else {
@@ -105,16 +113,16 @@ export class Controller {
     });
   }
 
-  // Fetch a single review with the correct visibility rules.
-  // This ensures the endpoint returns a review only when it is permitted by the service's access checks.
   async getReviewById(event) {
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getReviewById(userId, this.getPathParameter(event, "id"))));
   }
 
-  // Update an unpublished review draft.
-  // This keeps the controller thin while preserving the service's conflict and validation checks.
   async updateReview(event) {
+    if (event.resource === "/reviews" && event.queryStringParameters?.scope === "moderation") {
+      return this.executeAuthenticated(event, async (userId, user) =>
+        this.moderationResponse(200, await this.service.resolveReviewFlag(userId, user.username, parseBody(event).flag_id)));
+    }
     return this.executeAuthenticated(event, async (userId) => {
       const pathId = event.pathParameters?.id;
       const queryId = event.queryStringParameters?.reviewId;
@@ -130,8 +138,11 @@ export class Controller {
     });
   }
 
-  // Return the public review feed for a property.
-  // This endpoint intentionally skips authenticated checks because the public listing data is designed for broad access.
+  moderationResponse(status, result) {
+    const response = this.jsonResponse(status, result);
+    return { ...response, headers: { ...response.headers, "Cache-Control": "no-store" } };
+  }
+
   async getPropertyReviews(event) {
     try {
       return this.jsonResponse(200, await this.service.getPublicPropertyReviews(
@@ -141,45 +152,32 @@ export class Controller {
     }
   }
 
-  // Return private feedback only for authorized callers.
-  // This keeps guest notes hidden from normal public access while still allowing the right user to read them.
   async getPrivateFeedback(event) {
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getPrivateFeedback(userId, this.getPathParameter(event, "id"))));
   }
 
-  // Create a host response to a review.
-  // This routes the host reply through the service so permission and validation rules stay in one place.
-  async createReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(201, await this.service.createReviewResponse(userId, this.getPathParameter(event, "id"), parseBody(event))));
-  }
-
-  // Update a host response.
-  // This keeps the response paths predictable while reusing the same service authorization checks.
-  async updateReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.updateReviewResponse(userId, this.getPathParameter(event, "id"), parseBody(event))));
-  }
-
-  // Delete a host response.
-  // This removes the reply and keeps the controller response format consistent with other idempotent delete routes.
   async deleteReviewResponse(event) {
-    return this.executeAuthenticated(event, async (userId) => {
-      await this.service.deleteReviewResponse(userId, this.getPathParameter(event, "id"));
+    return this.executeAuthenticated(event, async (userId, user) => {
+      await this.service.deleteReviewResponse(user, this.getPathParameter(event, "id"));
       return { statusCode: 204, headers: responseHeaders, body: "" };
     });
   }
 
-  // Publish a review draft after validation.
-  // This allows the guest to finalize a review only when business rules confirm the reservation still qualifies.
-  async publishReview(event) {
-    return this.executeAuthenticated(event, async (userId) =>
-      this.jsonResponse(200, await this.service.publishReview(userId, this.getPathParameter(event, "id"))));
+  async approveReview(event) {
+    return this.executeAuthenticated(event, async (userId, user) => {
+      const body = parseBody(event);
+      if (Object.keys(body).some((key) => key !== "updated_at")) throw new BadRequestException("Only the update version is allowed.");
+      return this.jsonResponse(200, await this.service.approveReview(userId, user.username,
+        this.getPathParameter(event, "id"), body.updated_at));
+    });
   }
 
-  // Delete a review owned by the caller.
-  // This preserves the soft-delete flow while keeping the route consistent with the service contract.
+  async publishReview(event) {
+    return this.executeAuthenticated(event, async (userId, user) =>
+      this.jsonResponse(200, await this.service.publishReview(userId, this.getPathParameter(event, "id"), user.username)));
+  }
+
   async deleteReview(event) {
     return this.executeAuthenticated(event, async (userId) => {
       const reviewId = event.pathParameters?.id ?? event.pathParameters?.reviewId ?? event.queryStringParameters?.reviewId;
@@ -188,7 +186,6 @@ export class Controller {
     });
   }
 
-  // Retain existing direct callers while index uses the individual route methods.
   async manageReviews(event) {
     if (event.httpMethod === "GET") return this.getReviews(event);
     if (event.httpMethod === "PATCH") return this.updateReview(event);
@@ -196,13 +193,10 @@ export class Controller {
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
-  // Retain compatibility with direct callers of the public property review method.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }
 
-  // Hide unexpected failure details because they may expose internal implementation data.
-  // Preserve actionable client errors so callers can correct invalid requests.
   handleError(error) {
     const statusCode = Number.isInteger(error?.statusCode) && error.statusCode >= 400 && error.statusCode <= 599
       ? error.statusCode : 500;

@@ -11,7 +11,7 @@ export class TaskAutomationNotifier {
       const payload = {
         httpMethod: "POST",
         path: "/internal/create-task",
-        headers: {},
+        headers: { "x-internal-secret": process.env.INTERNAL_TASK_SECRET },
         body: JSON.stringify({ hostId, taskData }),
       };
 

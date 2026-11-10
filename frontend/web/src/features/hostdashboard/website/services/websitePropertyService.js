@@ -6,6 +6,7 @@ import {
 } from "../../services/fetchUserProfileById";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import { fetchWithWebsiteSession } from "./websiteSession";
 import {
   fetchWebsiteHostWhatsApp,
   getEmptyWebsiteHostWhatsApp,
@@ -424,17 +425,9 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
     throw new Error("Select a listing before building a website preview.");
   }
 
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to build a website preview.");
-  }
-
-  const response = await fetch(buildSinglePropertyUrl(normalizedPropertyId), {
+  const response = await fetchWithWebsiteSession(buildSinglePropertyUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: {
-      Authorization: accessToken,
-    },
   });
 
   if (!response.ok) {

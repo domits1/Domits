@@ -10,11 +10,13 @@ Connect the same way as for [dsql_static_page_outbox_runbook.md](./dsql_static_p
 
 `main.property_destination` maps one property to the deepest destination its address resolves to, the city, or the country when the city text cannot be turned into a slug, and remembers the `source_country` and `source_city` text it was derived from, so a later address change or a backfill can tell whether a mapping is current. Whether a destination has a page is not stored: it is computed from the mapped properties whose status is `ACTIVE`, with the thresholds of `util/destination/destinationSettings.js`.
 
-Only `main` has the property tables; there is no `test` variant.
+The property tables exist in `main` and `test`. The destination tables are in `main`; `test` follows in #3617. Do not run the backfill with `TEST=true` until then.
 
 ## Why this is safe to run while hosts are working
 
-Every statement is additive: two new tables and three async indexes on empty tables.
+Every statement is additive: two new tables and three async indexes on empty tables. No existing row is read or written, so nothing can hit the DSQL limit of changed rows. Apply it before the pull request that writes the mapping is deployed: with that code live and the tables missing, every location write still succeeds but logs a failed destination mapping, and the backfill script fails at its first query. After the deploy, run `node scripts/backfill-destinations.mjs` from `backend/` with the profile the Lambdas use (dry run first, then `--commit`); it maps every existing property, can be run again at any time and then only touches properties whose mapping is missing or no longer matches their address. Batches are at most 500 properties; a run that stops before the end prints the cursor to continue from with `--after <property id>`. A property whose country is not in the list stays without a mapping and is listed again on every run; that is expected.
+
+Concurrency, on purpose kept simple: a mapping is written in one transaction from the stored address of a property that exists, and only while the stored address, as the transaction sees it, equals the text the decision was based on. That is a check in the writer's own snapshot, not a lock: an address change that lands between that check and the commit leaves a mapping derived from the older address for a live property, until the next address write or the next backfill run repairs it (the backfill's mismatch query finds exactly that case). A DSQL conflict on the shared continent or country rows is attempted up to three times, then logged as a failed mapping and picked up by the backfill. Deleting a property deletes its mapping row in the same transaction as its other rows. A mapping row whose property is gone can still appear when a deletion and a first address write cross; it must never become visible: every reader of the mapping (destination pages, counts, sitemap, in the pull requests that add them) only uses mapping rows whose property exists and is `ACTIVE`, and every backfill run first removes such rows in batches of 500 (`orphansRemoved` in its summary).
 
 ## Blocks in the `.sql` file, in order
 
@@ -32,3 +34,7 @@ Every statement is additive: two new tables and three async indexes on empty tab
 ## Rollback
 
 `20261007_destination_rollback.sql` drops the three indexes and the two tables, one statement per transaction. Everything in them is derived, so a later re-apply plus the backfill task rebuilds the same content.
+
+## Status
+
+Applied in main on 19 October 2026. Test: follows in #3617.

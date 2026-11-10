@@ -2,6 +2,8 @@ import Database from "database";
 import { randomUUID } from "node:crypto";
 import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
+import { WebsitePublishNotAllowedError } from "../../util/exception/WebsitePublishNotAllowedError.js";
+import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
 const PUBLISH_ATTEMPT_LIMIT = 3;
@@ -40,7 +42,11 @@ const resolveSchemaName = (client) => {
 
 const siteTableName = (schemaName) => `${schemaName}.standalone_site`;
 
+const propertyTableName = (schemaName) => `${schemaName}.property`;
+
 const staticPageOutboxTableName = (schemaName) => `${schemaName}.static_page_outbox`;
+
+const siteDomainTableName = (schemaName) => `${schemaName}.standalone_site_domain`;
 
 const OUTBOX_UPSERT_CLAUSE = `ON CONFLICT (site_id)
       DO UPDATE SET
@@ -190,10 +196,15 @@ export class DirectBookingWebsiteSiteRepository {
   }
 
   async deleteSiteByPropertyIdAndHostId(propertyId, hostId) {
+    return retryWebsiteDelete(() => this.deleteSiteByPropertyIdAndHostIdOnce(propertyId, hostId));
+  }
+
+  async deleteSiteByPropertyIdAndHostIdOnce(propertyId, hostId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
     const tableName = siteTableName(schemaName);
     const outboxTableName = staticPageOutboxTableName(schemaName);
+    const domainTableName = siteDomainTableName(schemaName);
 
     return client.transaction(async (manager) => {
       const siteResult = await manager.queryRunner.query(
@@ -212,6 +223,13 @@ export class DirectBookingWebsiteSiteRepository {
 
       await manager.queryRunner.query(
         `DELETE FROM ${outboxTableName}
+      WHERE site_id = $1`,
+        [site.id],
+        true
+      );
+
+      await manager.queryRunner.query(
+        `DELETE FROM ${domainTableName}
       WHERE site_id = $1`,
         [site.id],
         true
@@ -254,6 +272,18 @@ export class DirectBookingWebsiteSiteRepository {
     const now = Date.now();
 
     return client.transaction(async (manager) => {
+      const activePropertyResult = await manager.queryRunner.query(
+        `UPDATE ${propertyTableName(schemaName)}
+      SET updatedat = $2
+      WHERE id = $1 AND status = 'ACTIVE'
+      RETURNING id`,
+        [propertyId, now],
+        true
+      );
+      if (!activePropertyResult?.records?.length) {
+        throw new WebsitePublishNotAllowedError();
+      }
+
       const siteResult = await manager.queryRunner.query(
         `INSERT INTO ${tableName} (
         id,
@@ -467,6 +497,16 @@ export class DirectBookingWebsiteSiteRepository {
     return mapSiteRow(rows?.[0] || null);
   }
 
+  async getSiteByPropertyId(propertyId) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const tableName = siteTableName(schemaName);
+
+    const rows = await client.query(buildSiteSelectQuery(tableName, "WHERE property_id = $1"), [propertyId]);
+
+    return mapSiteRow(rows?.[0] || null);
+  }
+
   async getSiteById(siteId) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -524,5 +564,38 @@ export class DirectBookingWebsiteSiteRepository {
     );
 
     return mapSiteRow(records[0] || null);
+  }
+
+  async listPublishedSitesOfInactiveProperties({ limit } = {}) {
+    const client = await Database.getInstance();
+    const schemaName = resolveSchemaName(client);
+    const normalizedLimit = Number(limit);
+    if (!Number.isSafeInteger(normalizedLimit) || normalizedLimit <= 0) {
+      throw new TypeError("limit must be a positive integer.");
+    }
+
+    const rows = await client.query(
+      `SELECT
+        s.id,
+        s.property_id,
+        s.host_id,
+        p.status AS property_status
+      FROM ${siteTableName(schemaName)} s
+      LEFT JOIN ${schemaName}.property p ON p.id = s.property_id
+      WHERE s.status = 'PUBLISHED'
+        AND (p.id IS NULL OR p.status IS DISTINCT FROM 'ACTIVE')
+      ORDER BY s.id ASC
+      LIMIT $1`,
+      [normalizedLimit + 1]
+    );
+
+    const candidates = (rows || []).map((row) => ({
+      id: String(row.id),
+      propertyId: String(row.property_id),
+      hostId: String(row.host_id),
+      propertyStatus: row.property_status ? String(row.property_status) : null,
+    }));
+
+    return { sites: candidates.slice(0, normalizedLimit), truncated: candidates.length > normalizedLimit };
   }
 }

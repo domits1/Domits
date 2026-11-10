@@ -72,6 +72,10 @@ const nowMs = () => Date.now();
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+const getRevisionTimeMs = (revision) => {
+  const revisionTimeMs = Date.parse(revision?.insertedAt);
+  return Number.isNaN(revisionTimeMs) ? nowMs() : revisionTimeMs;
+};
 // Channex sends the booking total as a string such as "300.00". A missing or unreadable
 // amount becomes null, not 0, so the pages fall back to their own price instead of "free".
 const toAmountOrNull = (value) => {
@@ -1032,6 +1036,7 @@ export default class ChannexBookingRevisionImportService {
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
         totalPrice: toEuroAmountOrNull(revision),
+        guestCount: revision?.guestCount ?? null,
         bookingSource: requireStr(revision?.otaName),
         channexChanges: [
           importedBookingChange(propertyContext.propertyId, {
@@ -1210,6 +1215,7 @@ export default class ChannexBookingRevisionImportService {
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
       totalPrice: toEuroAmountOrNull(revision),
+      guestCount: revision?.guestCount ?? null,
       // The old nights reopen and the new ones close: one change per stay, so the nights
       // between them are not resent (design D9).
       channexChanges: [
@@ -1303,7 +1309,8 @@ export default class ChannexBookingRevisionImportService {
           arrivalMs: bookingBefore.arrivalDateMs,
           departureMs: bookingBefore.departureDateMs,
         }),
-      ]
+      ],
+      getRevisionTimeMs(revision)
     );
     if (!cancelledBooking) {
       return {

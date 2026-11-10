@@ -17,7 +17,7 @@ export const EnterpriseRatePlan = new EntitySchema({
     price_per_property_cents: {
       type: "integer",
       nullable: false,
-      default: 4900,
+      default: 4300,
     },
     currency: {
       type: "varchar",

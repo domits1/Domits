@@ -48,6 +48,8 @@ describe('TaskDetailsModal', () => {
         onDelete: jest.fn(),
         onClose: jest.fn(),
         onEscalate: jest.fn(),
+        onApprove: jest.fn(),
+        onReject: jest.fn(),
     };
 
     beforeEach(() => {
@@ -74,6 +76,23 @@ describe('TaskDetailsModal', () => {
         render(<TaskDetailsModal {...baseProps} editedTask={{ ...baseTask, title: 'Changed' }} />);
         fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
         expect(baseProps.onSave).toHaveBeenCalledTimes(1);
+    });
+
+    test('disables Delete for a completed task and says why, so it cannot be deleted until its status is changed', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status: 'Completed' }} editedTask={{ ...baseTask, status: 'Completed' }} />);
+
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        expect(deleteButton).toBeDisabled();
+        expect(deleteButton).toHaveAttribute('title', 'Change the status of a completed task before deleting it');
+
+        fireEvent.click(deleteButton);
+        expect(baseProps.onDelete).not.toHaveBeenCalled();
+    });
+
+    test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('keeps Delete available for a %s task', (status) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+        expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
     });
 
     test('calls onDelete when Delete is clicked', () => {
@@ -124,6 +143,13 @@ describe('TaskDetailsModal', () => {
         expect(baseProps.onRemoveAttachment).toHaveBeenCalledWith(0);
     });
 
+    test('asks for an attachment link of this task, as the host the user acts for', async () => {
+        render(<TaskDetailsModal {...baseProps} asHostId="host-2" editedTask={{ ...baseTask, attachments: ['tasks/host-2/photo.jpg'] }} />);
+
+        await screen.findByAltText('photo.jpg');
+        expect(getAttachmentViewUrl).toHaveBeenCalledWith('tasks/host-2/photo.jpg', 'task-1', 'host-2');
+    });
+
     test('renders checklist items and wires toggle/remove through to the parent', () => {
         const item = { id: 'item-1', title: 'Strip beds', isRequired: true, isChecked: false };
         render(<TaskDetailsModal {...baseProps} checklistItems={[item]} />);
@@ -146,11 +172,69 @@ describe('TaskDetailsModal', () => {
     test('shows the checklist template loading indicator when applying a template', () => {
         render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
 
-        expect(screen.getByText('Applying template...')).toBeInTheDocument();
+        expect(screen.getByText('Loading checklist...')).toBeInTheDocument();
     });
 
-    test('does not show an Escalate button when the task is not breaching its SLA', () => {
-        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'ON_TRACK' }} />);
+    test('disables Close, Cancel and the backdrop while a template is applying', () => {
+        render(<TaskDetailsModal {...baseProps} isApplyingChecklistTemplate />);
+
+        expect(screen.getByLabelText('Close modal')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    });
+
+    describe('changing the task Type', () => {
+        const switchedTask = { ...baseTask, type: 'Maintenance' };
+
+        test('warns that saving replaces the checklist, once the Type differs from the saved one', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} />);
+
+            expect(screen.getByRole('status')).toHaveTextContent(/saving will replace this checklist with the Maintenance checklist/i);
+        });
+
+        test('shows no warning while the Type is unchanged', () => {
+            render(<TaskDetailsModal {...baseProps} />);
+
+            expect(screen.queryByText(/saving will replace this checklist/i)).not.toBeInTheDocument();
+        });
+
+        test('disables the Type select and Save Changes while a template is being applied', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} isApplyingChecklistTemplate />);
+
+            expect(screen.getByLabelText('Type')).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+        });
+
+        test('keeps the Type select and Save Changes enabled otherwise', () => {
+            render(<TaskDetailsModal {...baseProps} editedTask={switchedTask} />);
+
+            expect(screen.getByLabelText('Type')).toBeEnabled();
+            expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled();
+        });
+    });
+
+    test('does not disable Close or Cancel by default', () => {
+        render(<TaskDetailsModal {...baseProps} />);
+
+        expect(screen.getByLabelText('Close modal')).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
+    });
+
+    test.each([
+        ['on track', { slaStatus: 'ON_TRACK' }],
+        ['at risk', { slaStatus: 'AT_RISK' }],
+        ['without a due date', { slaStatus: null }],
+    ])('shows an Escalate button for an open task that is %s, not only an overdue one', (_label, extra) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status: 'In progress', ...extra }} />);
+        expect(screen.getByRole('button', { name: 'Escalate' })).toBeInTheDocument();
+    });
+
+    test.each(['Completed', 'Cancelled'])('does not show an Escalate button for a %s task', (status) => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status, slaStatus: null }} />);
+        expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
+    });
+
+    test('does not show an Escalate button for a task that was already escalated', () => {
+        render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, slaStatus: 'BREACHED', escalated_at: 1700000000000 }} />);
         expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument();
     });
 
@@ -160,5 +244,55 @@ describe('TaskDetailsModal', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Escalate' }));
 
         expect(baseProps.onEscalate).toHaveBeenCalledTimes(1);
+    });
+
+    test('disables the Escalate button while the escalation is being sent', () => {
+        render(<TaskDetailsModal {...baseProps} isEscalating viewingTask={{ ...baseTask, slaStatus: 'BREACHED' }} />);
+
+        expect(screen.getByRole('button', { name: 'Escalate' })).toBeDisabled();
+    });
+
+    describe('approving or rejecting a completed task', () => {
+        const completedTask = { ...baseTask, status: 'Completed', approved_at: null };
+
+        test('shows Approve and Reject for a completed task nobody has approved yet, and each calls its handler', () => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={completedTask} editedTask={completedTask} />);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+
+            expect(baseProps.onApprove).toHaveBeenCalledTimes(1);
+            expect(baseProps.onReject).toHaveBeenCalledTimes(1);
+        });
+
+        test.each(['Pending', 'In progress', 'Overdue', 'Cancelled'])('does not show Approve or Reject for a %s task', (status) => {
+            render(<TaskDetailsModal {...baseProps} viewingTask={{ ...baseTask, status }} editedTask={{ ...baseTask, status }} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('hides Approve and Reject from someone who may not review this task', () => {
+            render(<TaskDetailsModal {...baseProps} canReview={false} viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
+
+        test('disables Approve and Reject while a decision is being sent', () => {
+            render(<TaskDetailsModal {...baseProps} isReviewing viewingTask={completedTask} editedTask={completedTask} />);
+
+            expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Reject' })).toBeDisabled();
+        });
+
+        test('shows that an approved task is approved, and no longer offers Approve or Reject', () => {
+            const approvedTask = { ...completedTask, approved_at: 1700000000000 };
+            render(<TaskDetailsModal {...baseProps} viewingTask={approvedTask} editedTask={approvedTask} />);
+
+            expect(screen.getByText('Approved')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+        });
     });
 });
