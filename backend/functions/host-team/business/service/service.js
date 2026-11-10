@@ -49,6 +49,14 @@ export class Service {
         return created;
     }
 
+    async getTeamMemberById(memberId, hostId) {
+        const dataSource = await Database.getInstance();
+        const member = await this.repository.findById(dataSource, memberId);
+        if (!member) throw new NotFoundException("Team member not found.");
+        if (member.host_id !== hostId) throw new ForbiddenException("You do not have permission to access this team member.");
+        return member;
+    }
+
     async removeMember(hostId, memberId) {
         const dataSource = await Database.getInstance();
 

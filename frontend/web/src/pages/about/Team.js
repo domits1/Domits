@@ -84,6 +84,7 @@ function Team() {
     { name: "Enes", src: Enes, role: aboutContent.crew.developer },
     { name: "Mounir", src: Mounir, role: aboutContent.crew.developer },
     { name: "Puok", src: Puok, role: aboutContent.crew.developer },
+    { name: "Tufan", src: standard, role: aboutContent.crew.developer },
   ].sort((a, b) => a.name.localeCompare(b.name));
 
   const marketingMembers = [

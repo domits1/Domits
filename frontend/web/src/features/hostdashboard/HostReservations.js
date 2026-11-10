@@ -12,7 +12,11 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { usePagination } from "./hooks/usePagination.js";
 import { resolvePrimaryAccommodationImageUrl } from "../guestdashboard/utils/image";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
-import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import {
+  calculateTotalPayment,
+  isChannexBooking,
+  resolveChannexBookingTotal,
+} from "./utils/reservationCalculations.js";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -24,6 +28,7 @@ const normalizeStatus = (status) => {
   if (normalizedStatus.includes("paid")) return "PAID";
   if (normalizedStatus.includes("await")) return "AWAITING_PAYMENT";
   if (normalizedStatus.includes("fail")) return "FAILED";
+  if (normalizedStatus.startsWith("cancel")) return "CANCELLED";
 
   return status.toUpperCase();
 };
@@ -93,6 +98,7 @@ const labelMap = {
   AWAITING_PAYMENT: "Awaiting payment",
   FAILED: "Failed",
   DECLINED: "Declined",
+  CANCELLED: "Cancelled",
 };
 
 const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : "-");
@@ -572,8 +578,11 @@ const HostReservations = () => {
                       </tr>
                     ) : (
                       paginatedItems.map((booking) => {
-                        const total = calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate);
-                        const commission = (total * 0.1).toFixed(2);
+                        const total =
+                          resolveChannexBookingTotal(booking) ??
+                          calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate);
+                        // Domits takes no commission on a booking made on another channel.
+                        const commission = isChannexBooking(booking) ? "–" : `€${(total * 0.1).toFixed(2)}`;
                         const isInquiryPending = inquiryLoading[booking.id] || false;
 
                         return (
@@ -612,7 +621,7 @@ const HostReservations = () => {
                               </span>
                             </td>
                             <td data-label="Total">€{total}</td>
-                            <td data-label="Commission">€{commission}</td>
+                            <td data-label="Commission">{commission}</td>
                             <td data-label="Policy">{renderPolicyDisplay(booking.cancellationType)}</td>
                             <td data-label="Reservation">{booking.id}</td>
                             <td data-label="Booked">{formatDate(booking.createdat)}</td>

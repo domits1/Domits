@@ -5,7 +5,13 @@ const sentDates = (booking, result) =>
 
 const hasUtcMidnightDates = (booking) => isUtcMidnight(booking.arrivaldate) && isUtcMidnight(booking.departuredate);
 
-const isRetryableError = (error) => !error || error.status === null || error.status === undefined || error.status >= 500;
+const RETRYABLE_CLIENT_STATUSES = new Set([401, 403, 408, 429]);
+
+const isProgrammingError = (error) =>
+  error instanceof TypeError || error instanceof ReferenceError || error instanceof SyntaxError;
+
+const isRetryableError = (error) =>
+  !error || error.status === null || error.status === undefined || error.status >= 500 || RETRYABLE_CLIENT_STATUSES.has(error.status);
 
 export class TruviBookingScreener {
   constructor({ bookingRepository, screeningService, assessmentRepository, contactLookup, extendedAmount, logger = console }) {
@@ -31,7 +37,7 @@ export class TruviBookingScreener {
           summary.notUtcMidnight += 1;
           this.logger.warn(JSON.stringify({ event: "TRUVI_DATE_NOT_UTC_MIDNIGHT", bookingId }));
         }
-        const input = await this.#buildInput(candidate);
+        const input = await this.#buildInput(candidate, now);
         const result = await this.#screen(input);
 
         if (result.status === "ERROR" && isRetryableError(result.error)) {
@@ -52,7 +58,7 @@ export class TruviBookingScreener {
     return summary;
   }
 
-  async #buildInput(candidate) {
+  async #buildInput(candidate, now) {
     const guestEmail = candidate.booking.guest_email || (await this.contactLookup.getGuestEmail(candidate.guestId));
     const host = await this.contactLookup.getHost(candidate.hostId);
 
@@ -64,7 +70,7 @@ export class TruviBookingScreener {
       host: { name: host?.name || candidate.hostName, email: host?.email },
       protection: { extendedAmount: this.extendedAmount },
       channel: candidate.bookingSource || DEFAULT_CHANNEL,
-      now: new Date(),
+      now: new Date(now),
     };
   }
 
@@ -78,6 +84,9 @@ export class TruviBookingScreener {
     try {
       return await this.screeningService.screenBooking(input);
     } catch (error) {
+      if (isProgrammingError(error)) {
+        throw error;
+      }
       return this.#skipped(error.message);
     }
   }

@@ -30,3 +30,15 @@ export const toHostWebsiteDomainView = (record) => {
     lastCheckedAt: record.lastCheckedAt ?? null,
   };
 };
+
+export const toPublicWebsiteDomainView = (record) => {
+  if (!record) {
+    return null;
+  }
+
+  return {
+    domain: record.domain,
+    status: record.status,
+    isPrimary: Boolean(record.isPrimary),
+  };
+};

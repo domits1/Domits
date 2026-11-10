@@ -87,6 +87,14 @@ describe("TruviBookingScreener", () => {
     expect(summary).toEqual({ listed: 1, saved: 1, retryLater: 0, rejected: 0, notUtcMidnight: 0, errors: [] });
   });
 
+  it("sends Truvi the same time as the run, so one run uses one clock", async () => {
+    const { screener, screeningService } = build();
+
+    await screener.run({ now: Date.UTC(2026, 10, 9, 10, 0, 0) });
+
+    expect(screeningService.screenBooking.mock.calls[0][0].now).toEqual(new Date(Date.UTC(2026, 10, 9, 10, 0, 0)));
+  });
+
   it("keeps the email from the booking and uses the booking source as channel", async () => {
     const withEmail = candidate({ bookingSource: "Airbnb" });
     withEmail.booking.guest_email = "guest@example.com";
@@ -120,6 +128,20 @@ describe("TruviBookingScreener", () => {
     expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
     expect(summary.retryLater).toBe(1);
   });
+
+  it.each([401, 403, 408, 429])(
+    "does not save a %p, because it is about the key, the time or the rate limit and not about this booking",
+    async (status) => {
+      const { screener, assessmentRepository } = build({
+        screen: async () => ({ providerAssessmentId: null, status: "ERROR", flaggedReason: null, error: { status, message: "no" } }),
+      });
+
+      const summary = await screener.run({ now: 1000 });
+
+      expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
+      expect(summary.retryLater).toBe(1);
+    }
+  );
 
   it("saves an ERROR when Truvi rejects the request, so it is not sent again every run", async () => {
     const { screener, assessmentRepository } = build({
@@ -160,6 +182,22 @@ describe("TruviBookingScreener", () => {
     );
     expect(summary.rejected).toBe(1);
   });
+
+  it.each([new TypeError("Cannot read properties of undefined"), new ReferenceError("x is not defined")])(
+    "does not save a programming error like %p, but reports it so the run fails and the booking is tried again",
+    async (bug) => {
+      const { screener, assessmentRepository } = build({
+        screen: async () => {
+          throw bug;
+        },
+      });
+
+      const summary = await screener.run({ now: 1000 });
+
+      expect(assessmentRepository.saveResult).not.toHaveBeenCalled();
+      expect(summary.errors).toEqual([{ bookingId: "booking-1", message: bug.message }]);
+    }
+  );
 
   it("saves SKIPPED when the host has no email", async () => {
     const { screener, screeningService, assessmentRepository } = build({ host: null });

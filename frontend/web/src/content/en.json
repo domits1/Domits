@@ -25,6 +25,10 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Destinations",
+      "allIn": "All destinations in"
+    },
     "user": {
       "hello": "Hello",
       "profile": "Profile",
@@ -1162,8 +1166,107 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Track your progress from listing your property to going live."
+        },
+        "homeAutomation": {
+          "title": "Home automation",
+          "desc": "Connect smart locks to give guests access to your properties."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Home automation",
+      "title": "Home automation",
+      "subtitle": "Connect RemoteLock to manage smart locks for your guests.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Last sync",
+        "never": "No sync yet"
+      },
+      "statuses": {
+        "notConnected": "Not connected",
+        "connecting": "Connecting",
+        "connected": "Connected",
+        "authenticationError": "Sign-in failed",
+        "connectionError": "Connection problem",
+        "disconnected": "Disconnected",
+        "expiredCredentials": "Sign-in expired",
+        "unknown": "Status unknown"
+      },
+      "actions": {
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect"
+      },
+      "modal": {
+        "connect": {
+          "title": "Connect RemoteLock",
+          "body": "You'll be sent to RemoteLock to sign in.",
+          "confirm": "Connect",
+          "confirming": "Connecting..."
+        },
+        "reconnect": {
+          "title": "Reconnect RemoteLock",
+          "body": "You'll be sent to RemoteLock to sign in.",
+          "confirm": "Reconnect",
+          "confirming": "Reconnecting..."
+        },
+        "disconnect": {
+          "title": "Disconnect RemoteLock",
+          "body": "Domits will no longer manage your guests' door codes.",
+          "confirm": "Disconnect",
+          "confirming": "Disconnecting..."
+        },
+        "cancel": "Cancel",
+        "error": "Something went wrong. Please try again."
+      },
+      "devices": {
+        "title": "Devices",
+        "notConnected": "Connect to see your devices",
+        "empty": "No devices found in your RemoteLock account.",
+        "loading": "Loading your devices...",
+        "loadError": "We couldn't load your devices.",
+        "retry": "Try again",
+        "truncated": "Not all devices are shown.",
+        "notSupported": "Not supported yet",
+        "columns": {
+          "name": "Name",
+          "type": "Type",
+          "status": "Status",
+          "battery": "Battery",
+          "lastSeen": "Last seen"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Unknown"
+        },
+        "types": {
+          "lock": "Lock",
+          "zwaveLock": "Z-Wave lock",
+          "connectorLock": "Connector lock",
+          "schlageHomeLock": "Schlage Home lock",
+          "resortLock": "Resort lock",
+          "other": "Other device"
+        }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock needs to be reconnected.",
+        "alreadyConnected": "RemoteLock is already connected.",
+        "notConfigured": "RemoteLock isn't available right now. Please contact support.",
+        "tryLater": "RemoteLock is busy. Please try again in a moment.",
+        "startAgain": "The sign-in expired or was already used. Please start again.",
+        "providerError": "RemoteLock reported a problem. Please try again later.",
+        "cancelled": "The RemoteLock sign-in was cancelled.",
+        "missingParams": "This page needs a RemoteLock sign-in. Please start from Home automation."
+      },
+      "callback": {
+        "title": "Connecting RemoteLock",
+        "working": "Finishing the connection...",
+        "back": "Back to Home automation"
+      },
+      "loading": "Loading your RemoteLock connection...",
+      "loadError": "We couldn't load your RemoteLock connection.",
+      "retry": "Try again"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
@@ -1266,6 +1369,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Your listing has been submitted for review.",
+      "pendingReviewNotice": "This listing is awaiting review and will go live once it is approved.",
       "breadcrumb": "Go Live",
       "title": "Go live with {propertyName}",
       "subtitle": "Review the checklist below, then publish your listing.",
@@ -1378,12 +1483,39 @@
         "verified": "Verified",
         "sms": "SMS",
         "authenticatorApp": "Authenticator app",
-        "comingSoon": "Coming soon: SMS and authenticator app sign-in.",
+        "comingSoon": "Coming soon: SMS sign-in.",
         "loading": "Loading your authentication status...",
         "error": "We couldn't load your authentication status. Please refresh the page."
       },
       "pin": {
         "comingSoon": "Coming soon."
+      },
+      "authenticator": {
+        "setUp": "Set up",
+        "setupTitle": "Set up your authenticator app",
+        "scanInstruction": "Scan this QR code with an authenticator app, such as Google Authenticator or Microsoft Authenticator.",
+        "qrAlt": "QR code for adding Domits to your authenticator app",
+        "manualKeyLabel": "Can't scan? Enter this key manually:",
+        "codeLabel": "6-digit code",
+        "verify": "Verify",
+        "verifying": "Verifying...",
+        "cancel": "Cancel",
+        "tryAgain": "Try again",
+        "close": "Close",
+        "success": "Your authenticator app is on. You will be asked for a code when you sign in on a new device.",
+        "turnOff": "Turn off",
+        "disableTitle": "Turn off the authenticator app?",
+        "disableWarning": "Turning it off makes your account less secure. You will no longer be asked for a code from your authenticator app when you sign in.",
+        "confirmTurnOff": "Turn off",
+        "turningOff": "Turning off...",
+        "disabledSuccess": "Your authenticator app is turned off.",
+        "errors": {
+          "invalidCode": "That code is not valid. Enter the current 6-digit code from your app.",
+          "sessionExpired": "Your session has expired. Please sign in again and restart the setup.",
+          "tooManyAttempts": "Too many attempts. Please wait a moment and try again.",
+          "enableFailed": "Your code was accepted, but we couldn't turn on the authenticator app. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        }
       }
     },
     "communicationPreferences": {
@@ -1489,18 +1621,16 @@
       "breadcrumb": "Rate Plans",
       "title": "Rate Plans",
       "subtitle": "Manage your rate plans.",
-      "standardSection": "Standard Rate Plan",
-      "additionalSection": "Additional Plans",
-      "additionalSubtitle": "Additional pricing options for direct bookings.",
+      "ratePlansSection": "Rate Plans",
       "hostOnlyFee": {
-        "title": "Host Only Fee",
-        "sub": "10% of bookings paid by host",
+        "title": "Domits.com Booking Channel",
+        "sub": "10% Host-only fee on bookings via Domits.com",
         "note": "Allows Domits to run the platform 24/7"
       },
       "directBooking": {
-        "cardTitle": "Direct Booking Rate Plan",
-        "cardSubtitle": "4.9% per reservation paid by host",
-        "cardNote": "No monthly or per-property fee; guests pay €0 Domits fee.",
+        "cardTitle": "Direct Booking Website (% Per Reservation)",
+        "cardSubtitle": "All-in reservation fee",
+        "cardNote": "No additional transaction fee",
         "breadcrumb": "Direct Booking Rate Plan",
         "title": "Direct Booking Rate Plan",
         "subtitle": "Performance-based pricing for reservations made through your Direct Booking website.",
@@ -1533,10 +1663,64 @@
         "billingContact": "Billing Contact",
         "billingContactEmpty": "Billing contact management will appear here when billing is enabled."
       },
+      "websitePlan": {
+        "sectionTitle": "Direct Booking Website subscription",
+        "sectionSubtitle": "Choose the plan for your booking website. The Elite price is shown below.",
+        "loading": "Loading your website plan...",
+        "loadError": "We couldn't load your current website plan.",
+        "essentials": "Essentials",
+        "essentialsDescription": "The basics to run your direct booking website.",
+        "essentialsFeaturesTitle": "Included",
+        "featureBasicWebsite": "Basic website and booking features",
+        "featureBasicCustomization": "Basic customization and SEO",
+        "elite": "Elite",
+        "eliteDescription": "More tools to grow and customize your direct booking website.",
+        "eliteFeaturesTitle": "Everything in Essentials, plus",
+        "featureCustomDomain": "Connect your own domain",
+        "featureAdvancedBuilder": "Advanced website builder and unlimited pages",
+        "featureLocalization": "Multilingual and multi-currency support",
+        "featureGrowthTools": "Advanced SEO, analytics, CRM, AI tools, upsells and experiments",
+        "currentPlan": "Current plan",
+        "scheduled": "Scheduled",
+        "status": {
+          "ACTIVE": "Active",
+          "PAST_DUE": "Payment overdue",
+          "TRIALING": "Trial",
+          "INCOMPLETE": "Payment pending",
+          "INCOMPLETE_EXPIRED": "Payment expired",
+          "EXPIRED": "Expired",
+          "CANCELLED": "Cancelled"
+        },
+        "perMonth": "per month",
+        "free": "Free",
+        "upgrade": "Upgrade to Elite",
+        "restoreElite": "Reactivate Elite",
+        "switchToEssentials": "Switch to Essentials",
+        "processing": "Processing...",
+        "changeError": "We couldn't update your website plan. Please try again.",
+        "checkoutError": "Stripe checkout couldn't be started. Please try again.",
+        "downgradeScheduled": "Your switch to Essentials is scheduled for the end of the current billing period.",
+        "downgradeSuccess": "Your website plan is now Essentials.",
+        "restoreSuccess": "Your Elite subscription has been reactivated.",
+        "unchanged": "Your website plan is already up to date.",
+        "effectiveUntil": "Elite remains active until {date}.",
+        "priceUnavailable": "Price unavailable",
+        "withoutPayment": "No payment needed",
+        "checkoutPending": "We're confirming your Elite subscription. This can take a few moments.",
+        "checkoutSuccess": "Your Elite subscription is active.",
+        "checkoutCancelled": "Checkout was cancelled. Your plan has not changed.",
+        "checkoutStillPending": "We haven't received confirmation yet. Your payment may still be processing. Refresh this page in a moment; don't start another checkout.",
+        "cardTitle": "Direct Booking Website (Monthly)",
+        "cardSubtitle": "Start for free",
+        "cardNote": "Accelerate with Elite website",
+        "breadcrumb": "Direct Booking Website Plan",
+        "pageTitle": "Direct Booking Website Plan",
+        "pageSubtitle": "Manage the subscription for your Direct Booking website."
+      },
       "enterprise": {
-        "cardTitle": "Enterprise Rate Plan",
-        "cardSubtitle": "Pricing per active property per month.",
-        "cardNote": "Scales automatically with your active property count.",
+        "cardTitle": "Enterprise Plan",
+        "cardSubtitle": "Pricing per property per month",
+        "cardNote": "Scales with your portfolio",
         "breadcrumb": "Enterprise Rate Plan",
         "title": "Enterprise Rate Plan",
         "subtitle": "Simple pricing that scales with your active property portfolio.",
@@ -1754,6 +1938,99 @@
       "title": "Questions about security?",
       "contactButton": "Contact support",
       "learnMoreButton": "Learn more"
+    }
+  },
+  "hostOwners": {
+    "title": "Owners",
+    "loading": "Loading owners…",
+    "empty": "You have no owners yet.",
+    "allArchived": "All your owners are archived. Turn on \"Show archived owners\" to see them.",
+    "showArchived": "Show archived owners",
+    "retry": "Retry",
+    "errorSignedOut": "Your session has ended. Please sign in again.",
+    "errorForbidden": "Only hosts can manage owners.",
+    "errorGeneric": "We could not load your owners. Please try again.",
+    "columnName": "Name",
+    "columnType": "Type",
+    "columnStatus": "Status",
+    "columnProperties": "Current properties",
+    "propertyShare": "{title}, {percent}%",
+    "unknownShare": "{title}, share unknown",
+    "unknownProperty": "Unknown property",
+    "noProperties": "No current properties",
+    "ownerTypes": {
+      "individual": "Individual",
+      "company": "Company",
+      "trust": "Trust",
+      "unknown": "Unknown type"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "archived": "Archived",
+      "unknown": "Unknown status"
+    },
+    "addOwner": "Add owner",
+    "editOwner": "Edit",
+    "editOwnerLabel": "Edit {name}",
+    "columnActions": "Actions",
+    "form": {
+      "createTitle": "Add owner",
+      "editTitle": "Edit owner",
+      "labels": {
+        "first_name": "First name",
+        "last_name": "Last name",
+        "company_name": "Company name",
+        "email": "Email",
+        "phone": "Phone",
+        "preferred_language": "Preferred language (such as en or nl-NL)",
+        "owner_type": "Owner type",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "chooseOwnerType": "Choose a type",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "close": "Close",
+      "createdToast": "{name} was added.",
+      "updatedToast": "{name} was updated.",
+      "errorNotFound": "This owner no longer exists. Close the form and reload the page.",
+      "errorGeneric": "We could not save the owner. Please try again.",
+      "errors": {
+        "required": "This field is required.",
+        "tooLong": "Use at most {max} characters.",
+        "invalidCharacters": "This field contains characters that are not allowed.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidPhone": "Use at least one digit, and only digits, spaces and + ( ) - .",
+        "invalidLanguage": "Use a language code such as en or nl-NL.",
+        "invalidOwnerType": "Choose an owner type.",
+        "invalidStatus": "Choose a status.",
+        "archivedStatus": "An owner can only be archived with the archive action.",
+        "companyNameRequired": "A company name is required for a company or trust."
+      }
+    },
+    "detail": {
+      "backToOwners": "Back to owners",
+      "loading": "Loading owner…",
+      "errorNotFound": "This owner does not exist or is not one of your owners.",
+      "errorGeneric": "We could not load this owner. Please try again.",
+      "detailsTitle": "Details",
+      "notProvided": "Not provided",
+      "labels": {
+        "created_at": "Created",
+        "updated_at": "Last updated"
+      },
+      "archive": "Archive",
+      "archiving": "Archiving…",
+      "restore": "Restore",
+      "restoring": "Restoring…",
+      "archiveConfirmTitle": "Archive this owner?",
+      "archiveConfirmMessage": "{name} will be hidden from your owners list. You can restore this owner later.",
+      "archivedToast": "{name} was archived.",
+      "restoredToast": "{name} was restored.",
+      "archiveBlocked": "{name} cannot be archived yet, because this owner still has current or upcoming ownership shares. First remove {name} from the shares of those properties, then archive again."
     }
   }
 }

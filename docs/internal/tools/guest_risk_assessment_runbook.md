@@ -36,6 +36,12 @@ Index: `guest_risk_assessment_bookingid_idx` (main) and `guest_risk_assessment_b
 
 No foreign keys or CHECK constraints, because Aurora DSQL does not support them.
 
+## When to run
+
+Run the migration only after #3555 is merged into `acceptance`, and only from the `acceptance` version of the file. The `arrivaldate` and `departuredate` columns were added to this create migration later (commit d8ecd3036), and the date changes run of #3625 needs them. An older copy of the file creates the table without them, and then every save of the screening run and the modify run fails.
+
+Before running, check that the `CREATE TABLE` statements in the file contain `arrivaldate` and `departuredate`. Do not enable the `modify-changed-bookings` schedule before #3625 is merged.
+
 ## How to run
 
 The database is the shared Aurora DSQL cluster in **eu-west-2 (London)**. The host is in Parameter Store under `/aurora/dsql/host` (eu-north-1).

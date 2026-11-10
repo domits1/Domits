@@ -52,6 +52,7 @@ const buildClient = (records) => {
     options: { schema: "main" },
     queryRunner,
     createQueryRunner: jest.fn(() => queryRunner),
+    transaction: jest.fn(async (runInTransaction) => runInTransaction({ queryRunner })),
     query: jest.fn(async () => {
       throw new Error("DataSource.query must not be used for UPDATE or DELETE reads");
     }),

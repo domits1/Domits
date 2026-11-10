@@ -8,4 +8,7 @@ export const TASK_TYPE_OPTIONS = [
     'Inventory',
     'Administration',
     'Issue',
+    'Guest Experience',
+    'Finance',
+    'Revenue',
 ];

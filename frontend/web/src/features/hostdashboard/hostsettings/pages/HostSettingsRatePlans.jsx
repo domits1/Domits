@@ -6,9 +6,9 @@ import useSettingsTrans from "../hooks/useSettingsTrans";
 import SettingsSubPage from "../components/SettingsSubPage";
 import "../styles/hostSettings.css";
 
-const RatePlanCard = ({ to, title, subtitle, note, linkClassName }) => (
-  <div className="personal-data-card enterprise-rate-plan-card">
-    <Link to={to} className={`rate-plan-item ${linkClassName}`}>
+const RatePlanCard = ({ to, title, subtitle, note, linkClassName }) => {
+  const content = (
+    <>
       <div className="host-settings-card-icon">
         <PercentOutlinedIcon />
       </div>
@@ -17,14 +17,26 @@ const RatePlanCard = ({ to, title, subtitle, note, linkClassName }) => (
         <span className="rate-plan-item-sub">{subtitle}</span>
         <span className="rate-plan-item-note">{note}</span>
       </div>
-      <ChevronRightIcon className="host-settings-card-chevron" />
-    </Link>
-  </div>
-);
+      {to ? <ChevronRightIcon className="host-settings-card-chevron" /> : null}
+    </>
+  );
+
+  return (
+    <div className="personal-data-card enterprise-rate-plan-card">
+      {to ? (
+        <Link to={to} className={"rate-plan-item " + linkClassName}>
+          {content}
+        </Link>
+      ) : (
+        <div className="rate-plan-item">{content}</div>
+      )}
+    </div>
+  );
+};
 
 const HostSettingsRatePlans = () => {
   const { t, hub } = useSettingsTrans("ratePlans");
-  const { hostOnlyFee, directBooking, enterprise } = t;
+  const { hostOnlyFee, directBooking, enterprise, websitePlan } = t;
 
   return (
     <SettingsSubPage
@@ -34,26 +46,20 @@ const HostSettingsRatePlans = () => {
       subtitle={t.subtitle}
     >
       <section className="personal-data-section">
-        <h2 className="personal-data-section-title">{t.standardSection}</h2>
-        <div className="personal-data-card">
-          <div className="rate-plan-item">
-            <div className="host-settings-card-icon">
-              <PercentOutlinedIcon />
-            </div>
-            <div className="rate-plan-item-body">
-              <span className="rate-plan-item-title">{hostOnlyFee.title}</span>
-              <span className="rate-plan-item-sub">{hostOnlyFee.sub}</span>
-              <span className="rate-plan-item-note">{hostOnlyFee.note}</span>
-            </div>
-            <ChevronRightIcon className="host-settings-card-chevron" />
-          </div>
-        </div>
-      </section>
-
-      <section className="personal-data-section">
-        <h2 className="personal-data-section-title">{t.additionalSection}</h2>
-        <p className="personal-data-subtitle">{t.additionalSubtitle}</p>
+        <h2 className="personal-data-section-title">{t.ratePlansSection}</h2>
         <div className="host-settings-cards-grid rate-plan-cards-grid">
+          <RatePlanCard
+            title={hostOnlyFee.title}
+            subtitle={hostOnlyFee.sub}
+            note={hostOnlyFee.note}
+          />
+          <RatePlanCard
+            to="/hostdashboard/settings/rate-plans/direct-booking-website"
+            title={websitePlan.cardTitle}
+            subtitle={websitePlan.cardSubtitle}
+            note={websitePlan.cardNote}
+            linkClassName="rate-plan-website-link"
+          />
           <RatePlanCard
             to="/hostdashboard/settings/rate-plans/direct-booking"
             title={directBooking.cardTitle}

@@ -118,6 +118,9 @@ class ChannexExternalBookingImportRepository {
     guestName,
     arrivalDateMs,
     departureDateMs,
+    totalPrice = null,
+    guestCount = null,
+    bookingSource = null,
     channexChanges = [],
   }) {
     const client = await Database.getInstance();
@@ -129,7 +132,8 @@ class ChannexExternalBookingImportRepository {
       departuredate: Math.trunc(Number(departureDateMs)),
       createdat: now,
       guestid: `CHANNEX_GUEST:${normalizedExternalReservationId}`,
-      guests: 1,
+      // One guest when Channex sends no occupancy, so a booking never counts zero guests.
+      guests: guestCount ?? 1,
       hostid: requireStr(hostId),
       latepayment: false,
       paymentid: `CHANNEX:${normalizedExternalReservationId}`,
@@ -139,6 +143,10 @@ class ChannexExternalBookingImportRepository {
       hostname: "Channex",
       cancellation_policy: null,
       bookingtype: BOOKING_TYPE_CHANNEX,
+      // What the guest paid on the OTA, and which OTA; the pages show these instead of
+      // the Domits listing price and a card payment (#3483).
+      total_price: totalPrice,
+      booking_source: requireStr(bookingSource),
     };
 
     await this.#saveWithOutbox(client, channexChanges, (db) =>
@@ -146,9 +154,9 @@ class ChannexExternalBookingImportRepository {
         `
           INSERT INTO ${qualifyTableName(client, "booking")}
             (id, arrivaldate, departuredate, createdat, guestid, guests, hostid, latepayment, paymentid,
-             property_id, status, guestname, hostname, cancellation_policy, bookingtype)
+             property_id, status, guestname, hostname, cancellation_policy, bookingtype, total_price, booking_source)
           VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         `,
         [
           row.id,
@@ -166,6 +174,8 @@ class ChannexExternalBookingImportRepository {
           row.hostname,
           row.cancellation_policy,
           row.bookingtype,
+          row.total_price,
+          row.booking_source,
         ]
       )
     );
@@ -173,7 +183,15 @@ class ChannexExternalBookingImportRepository {
     return this.getBookingById(row.id);
   }
 
-  async updateImportedBooking({ bookingId, guestName, arrivalDateMs, departureDateMs, channexChanges = [] }) {
+  async updateImportedBooking({
+    bookingId,
+    guestName,
+    arrivalDateMs,
+    departureDateMs,
+    totalPrice = null,
+    guestCount = null,
+    channexChanges = [],
+  }) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
@@ -185,7 +203,9 @@ class ChannexExternalBookingImportRepository {
           SET arrivaldate = $2,
               departuredate = $3,
               guestname = $4,
-              status = $5
+              status = $5,
+              total_price = COALESCE($6, total_price),
+              guests = COALESCE($7, guests)
           WHERE id = $1
         `,
         [
@@ -194,6 +214,8 @@ class ChannexExternalBookingImportRepository {
           Math.trunc(Number(departureDateMs)),
           requireStr(guestName) || "Channex guest",
           BOOKING_STATUS_PAID,
+          totalPrice,
+          guestCount,
         ]
       )
     );
@@ -201,7 +223,7 @@ class ChannexExternalBookingImportRepository {
     return this.getBookingById(normalizedBookingId);
   }
 
-  async cancelImportedBooking(bookingId, channexChanges = []) {
+  async cancelImportedBooking(bookingId, channexChanges = [], cancelledAtMs = Date.now()) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
@@ -210,10 +232,11 @@ class ChannexExternalBookingImportRepository {
       db.query(
         `
           UPDATE ${qualifyTableName(client, "booking")}
-          SET status = $2
+          SET status = $2,
+              cancelled_at = COALESCE(cancelled_at, $3)
           WHERE id = $1
         `,
-        [normalizedBookingId, BOOKING_STATUS_CANCELLED]
+        [normalizedBookingId, BOOKING_STATUS_CANCELLED, cancelledAtMs]
       )
     );
 

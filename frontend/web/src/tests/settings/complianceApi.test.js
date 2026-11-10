@@ -20,7 +20,6 @@ const VILLA_PLACEHOLDER = `AUTO-${VILLA_ID}`;
 
 const MISSING = Symbol("missing");
 
-// Copies the real-shaped fixture and replaces (or removes) the registration number of the first listing.
 const fixtureWithRegistration = (value) => {
     const listings = JSON.parse(JSON.stringify(hostDashboardAll));
     if (value === MISSING) {
@@ -78,6 +77,14 @@ describe("complianceApi", () => {
                     registrationNumberAvailable: true,
                 },
             ]);
+        });
+
+        it.each(["PENDING_REVIEW", "REJECTED"])("keeps a %s listing selectable so its registration number can be fixed", async (status) => {
+            const listings = JSON.parse(JSON.stringify(hostDashboardAll));
+            listings[0].property.status = status;
+            global.fetch.mockResolvedValue(okResponse(listings));
+
+            expect(villaOption(await fetchCompliancePropertyOptions())).toMatchObject({ id: VILLA_ID, status });
         });
 
         it.each([

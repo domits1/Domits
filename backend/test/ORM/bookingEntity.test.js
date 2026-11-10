@@ -1,8 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { DataSource } from "typeorm";
 import { Booking } from "database/models/Booking";
+import { extractAddColumnNames, extractCreateTableColumns, loadMigrationSql, loadSchemaSql, sorted } from "./schemaSql";
 
 const CATALOG_COLUMNS = [
   "id",
@@ -23,12 +22,16 @@ const CATALOG_COLUMNS = [
   "refunded_amount",
   "stripe_refund_id",
   "refund_error",
+  "refund_status",
   "total_price",
   "booking_source",
   "site_id",
   "guest_email",
   "public_booking_ref",
   "idempotency_key",
+  "checked_out_at",
+  "special_request",
+  "cancelled_at",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -49,8 +52,6 @@ const CATALOG_NOT_NULL_COLUMNS = [
 
 const DIRECT_BOOKING_WEBSITE_COLUMNS = ["booking_source", "site_id", "guest_email", "public_booking_ref", "idempotency_key"];
 
-const sorted = (values) => [...values].sort((left, right) => left.localeCompare(right));
-
 const loadBookingMetadata = async () => {
   const dataSource = new DataSource({
     type: "postgres",
@@ -62,28 +63,6 @@ const loadBookingMetadata = async () => {
   });
   await dataSource.buildMetadatas();
   return dataSource.getMetadata(Booking);
-};
-
-const loadSchemaSql = () => readFileSync(path.join(process.cwd(), "ORM", "schema.psql"), "utf8");
-
-const extractCreateTableColumns = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  const match = new RegExp(`CREATE TABLE IF NOT EXISTS ${escapedTable} \\(([\\s\\S]*?)\\n\\);`).exec(sql);
-  if (!match) {
-    throw new Error(`No CREATE TABLE block found for ${qualifiedTable} in schema.psql`);
-  }
-  return match[1]
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith("PRIMARY KEY"))
-    .map((line) => line.split(/\s+/)[0].toLowerCase());
-};
-
-const extractAddColumnNames = (sql, qualifiedTable) => {
-  const escapedTable = qualifiedTable.replaceAll(".", "\\.");
-  return [...sql.matchAll(new RegExp(`ALTER TABLE ${escapedTable} ADD COLUMN IF NOT EXISTS (\\w+)`, "g"))].map(
-    (match) => match[1].toLowerCase()
-  );
 };
 
 describe("Booking entity", () => {
@@ -115,7 +94,39 @@ describe("Booking entity", () => {
     });
   });
 
+  it("maps refund_status as a nullable varchar", async () => {
+    const metadata = await loadBookingMetadata();
+    const column = metadata.findColumnWithDatabaseName("refund_status");
+    expect(column).toBeDefined();
+    expect(column.type).toBe("varchar");
+    expect(column.isNullable).toBe(true);
+    expect(column.default).toBeUndefined();
+  });
+
+  it("reads cancelled_at as a number and keeps an empty one empty", async () => {
+    const metadata = await loadBookingMetadata();
+    const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
+    expect(transformer.from("1792281600000")).toBe(1792281600000);
+    expect(transformer.from(null)).toBeNull();
+  });
+
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+});
+
+describe("refund status migration", () => {
+  it("adds refund_status to both booking schemas", () => {
+    const sql = loadMigrationSql("20261110_booking_refund_status.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+  });
+});
+
+describe("cancelled_at migration", () => {
+  it("adds the column to both schemas, because the entity selects it on every booking read", () => {
+    const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+  });
 });
 
 describe("schema.psql booking blocks", () => {

@@ -2,7 +2,6 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChannexDiagnosticsPanel from "./ChannexDiagnosticsPanel";
 import {
-  cancelBooking,
   connectChannex,
   getChannexAriPreview,
   getLatestChannexSyncEvidence,
@@ -19,7 +18,6 @@ import {
 } from "./channexApi";
 
 jest.mock("./channexApi", () => ({
-  cancelBooking: jest.fn(),
   connectChannex: jest.fn(),
   getChannexAriPayloadPreview: jest.fn(),
   getChannexAriPreview: jest.fn(),
@@ -130,17 +128,32 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(syncChannexRestrictions).not.toHaveBeenCalled();
     expect(
       await screen.findByText(
-        "The selected range is 501 days. Channex certification syncs support up to 500 inclusive days."
+        "The selected range is 501 days. Channex syncs support up to 500 inclusive days."
       )
     ).toBeTruthy();
   });
 
-  test("hides numbered certification test cases and keeps demo actions visible", async () => {
+  // The panel is an internal support tool and is shown to Channex during live testing;
+  // Channex rejects a UI that presents itself as built for the certification.
+  test("shows no certification wording in the overview and the manual actions", async () => {
+    const { container } = render(React.createElement(ChannexDiagnosticsPanel, { userId: "user-1" }));
+    await waitFor(() => expect(getChannexStatus).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByRole("navigation", { name: "Channex diagnostics sections" })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/certification/i);
+
+    fillRequiredInputs();
+
+    expect(screen.getByText("Manual actions")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/certification|demo action/i);
+  });
+
+  test("hides numbered test cases and keeps the manual actions visible", async () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
     expect(screen.getByRole("button", { name: "Sync availability" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Full/certification sync" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Full sync" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Modify booking dates" })).toBeTruthy();
     expect(screen.queryByText("Change-only certification test cases")).toBeNull();
     for (const testCaseId of ["2", "3", "4", "5", "6", "7", "8", "9", "10"]) {
@@ -244,6 +257,71 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(screen.getByText("Readiness response")).toBeTruthy();
   });
 
+  describe("full sync message after saving a mapping", () => {
+    const saveMappingThroughSetupTab = async (saveResponse) => {
+      listChannexProperties.mockResolvedValue({
+        properties: [{ externalPropertyId: "external-property-1", externalPropertyName: "Demo Channex property" }],
+      });
+      listChannexRoomTypes.mockResolvedValue({
+        roomTypes: [{ externalRoomTypeId: "room-type-1", externalRoomTypeName: "Demo room" }],
+      });
+      listChannexRatePlans.mockResolvedValue({
+        ratePlans: [{ externalRatePlanId: "rate-plan-1", externalRatePlanName: "Standard rate" }],
+      });
+      saveChannexSetupMapping.mockResolvedValue({
+        scope: "SINGLE_UNIT",
+        integrationAccountId: "integration-account-1",
+        savedMappings: {},
+        ...saveResponse,
+      });
+
+      await renderDiagnosticsPanel();
+      fillRequiredInputs({ openActions: false });
+      fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
+      fireEvent.click(screen.getByRole("button", { name: "Load Channex resources" }));
+      fireEvent.change(await screen.findByLabelText("Channex property"), { target: { value: "external-property-1" } });
+      await waitFor(() => expect(listChannexRoomTypes).toHaveBeenCalledTimes(1));
+      fireEvent.change(await screen.findByLabelText("Channex room type"), { target: { value: "room-type-1" } });
+      await waitFor(() => expect(listChannexRatePlans).toHaveBeenCalledTimes(1));
+      fireEvent.change(await screen.findByLabelText("Channex rate plan"), { target: { value: "rate-plan-1" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save mapping" }));
+      await screen.findByText("Single-unit Channex mapping saved.");
+    };
+
+    test("says a full sync was queued when the response confirms it", async () => {
+      await saveMappingThroughSetupTab({ ready: true, fullSyncQueued: true, readiness: { ready: true, missingMappings: [] } });
+
+      expect(
+        screen.getByText(
+          "Full sync queued. Channex receives all values within a few minutes; see Latest sync evidence."
+        )
+      ).toBeTruthy();
+    });
+
+    test("says why no full sync was queued when the mapping is not ready", async () => {
+      await saveMappingThroughSetupTab({
+        ready: false,
+        fullSyncQueued: false,
+        readiness: { ready: false, missingMappings: ["RATE_PLAN_MAPPING_MISSING"] },
+      });
+
+      expect(
+        screen.getByText("No full sync queued: the mapping is not ready (RATE_PLAN_MAPPING_MISSING).")
+      ).toBeTruthy();
+    });
+
+    // Queueing can fail after a ready save; the backend logs it and saving again retries.
+    test.each([
+      ["queueing failed", { ready: true, fullSyncQueued: false }],
+      ["the response has no fullSyncQueued", { ready: true }],
+    ])("does not claim a full sync when %s", async (_case, response) => {
+      await saveMappingThroughSetupTab({ ...response, readiness: { ready: true, missingMappings: [] } });
+
+      expect(screen.getByText("No full sync queued. Save the mapping again to retry.")).toBeTruthy();
+      expect(screen.queryByText(/^Full sync queued/)).toBeNull();
+    });
+  });
+
   test("shows setup resource load errors", async () => {
     listChannexProperties.mockRejectedValueOnce(new Error("Channex property list failed"));
 
@@ -256,7 +334,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(await screen.findByText("Channex property list failed")).toBeTruthy();
   });
 
-  test("runs full/certification sync from the admin actions UI", async () => {
+  test("runs a full sync from the admin actions UI", async () => {
     syncChannexFull.mockResolvedValue({
       requestCount: 2,
       calledProvider: true,
@@ -283,8 +361,9 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
-    fireEvent.click(screen.getByRole("button", { name: "Full/certification sync" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full sync" }));
 
+    expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringMatching(/^Run a full sync\?/));
     await waitFor(() => expect(syncChannexFull).toHaveBeenCalledTimes(1));
     expect(syncChannexFull).toHaveBeenCalledWith({
       userId: "user-1",
@@ -292,8 +371,8 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       dateFrom: "2026-05-24",
       dateTo: "2027-10-05",
     });
-    expect(await screen.findByText("Full/certification sync completed.")).toBeTruthy();
-    expect(screen.getByText("Full/certification sync summary")).toBeTruthy();
+    expect(await screen.findByText("Full sync completed.")).toBeTruthy();
+    expect(screen.getByText("Full sync summary")).toBeTruthy();
     expect(screen.getByText("Full Sync provider calls: 1 availability, 1 restrictions/rates.")).toBeTruthy();
     expect(screen.getByText("Availability call")).toBeTruthy();
     expect(screen.getByText("Restrictions/rates call")).toBeTruthy();
@@ -369,7 +448,7 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
   test("modifies booking dates from the admin actions UI", async () => {
     modifyBookingDates.mockResolvedValue({
       booking: {
-        id: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+        id: "booking-1",
         arrivaldate: 1780531200000,
         departuredate: 1780704000000,
       },
@@ -382,12 +461,15 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
 
     await renderDiagnosticsPanel();
     fillRequiredInputs();
+    fireEvent.change(screen.getByLabelText("Booking ID"), { target: { value: "booking-1" } });
+    fireEvent.change(screen.getByLabelText("New arrival date"), { target: { value: "2026-06-04" } });
+    fireEvent.change(screen.getByLabelText("New departure date"), { target: { value: "2026-06-06" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Modify booking dates" }));
 
     await waitFor(() => expect(modifyBookingDates).toHaveBeenCalledTimes(1));
     expect(modifyBookingDates).toHaveBeenCalledWith({
-      bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
+      bookingId: "booking-1",
       arrivalDate: "2026-06-04",
       departureDate: "2026-06-06",
     });
@@ -405,58 +487,31 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
-    fireEvent.change(screen.getByLabelText("Booking ID"), {
-      target: { value: "" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Modify booking dates" }));
 
     expect(modifyBookingDates).not.toHaveBeenCalled();
     expect(await screen.findByText("Enter booking ID, new arrival date, and new departure date.")).toBeTruthy();
   });
 
-  test("cancels a booking from the admin actions UI and shows change-only sync evidence", async () => {
-    cancelBooking.mockResolvedValue({
-      booking: {
-        id: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-        status: "Cancelled",
-      },
-      channexAvailabilitySync: {
-        syncType: "booking-availability",
-        trigger: "BOOKING_CANCELLED",
-        requestCount: 1,
-        taskIds: ["task-cancel-availability"],
-        affectedDates: ["2026-06-01", "2026-06-02"],
-        warnings: [{ code: "DEMO_WARNING", message: "Visible cancel warning" }],
-        errors: [],
-        overallSuccess: true,
-      },
-    });
-
+  // Channex rejects hard-coded ids in production code, and a pre-filled id turns one click into a real change.
+  test("starts the booking forms empty", async () => {
     await renderDiagnosticsPanel();
     fillRequiredInputs();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel booking" }));
+    for (const label of ["Booking ID", "New arrival date", "New departure date"]) {
+      expect(screen.getByLabelText(label)).toHaveValue("");
+    }
+  });
 
-    await waitFor(() => expect(cancelBooking).toHaveBeenCalledTimes(1));
-    expect(cancelBooking).toHaveBeenCalledWith({
-      userId: "user-1",
-      domitsPropertyId: "domits-property-1",
-      bookingId: "7434e9b5-a4d1-4aab-9f8a-27a5a42299b0",
-      reason: "Channex certification demo cancellation",
-    });
-    expect(getLatestChannexSyncEvidence).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: "user-1",
-        domitsPropertyId: "domits-property-1",
-      })
-    );
-    expect(await screen.findByText("Booking cancelled.")).toBeTruthy();
-    expect(screen.getByText("Cancellation availability sync summary")).toBeTruthy();
-    expect(screen.getByText("booking-availability")).toBeTruthy();
-    expect(screen.getByText("BOOKING_CANCELLED")).toBeTruthy();
-    expect(screen.getByText("Change-only availability sync. Full Sync and restrictions/rates were not called.")).toBeTruthy();
-    expect(screen.getAllByText(/task-cancel-availability/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/DEMO_WARNING: Visible cancel warning/)).toBeTruthy();
+  // Channex rejects a certification UI built only to trigger test events; cancellations now arrive
+  // from Channex through the booking webhook.
+  test("offers no certification cancel-booking action", async () => {
+    await renderDiagnosticsPanel();
+    fillRequiredInputs();
+
+    expect(screen.getByRole("button", { name: "Modify booking dates" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Cancel booking" })).toBeNull();
+    expect(screen.queryByLabelText("Cancel booking ID")).toBeNull();
   });
 
   test("pulls latest Channex bookings from the booking revisions tab and refreshes the log", async () => {

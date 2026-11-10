@@ -107,7 +107,7 @@ function About() {
           </span>
           <h3 className="about-page__card-title">{cards.partnerSuccess.title}</h3>
           <p className="about-page__card-description">{cards.partnerSuccess.description}</p>
-          <Link to="/partner" className="about-page__card-link">
+          <Link to="/landing" className="about-page__card-link">
             {cards.partnerSuccess.link} <ArrowRight size={16} />
           </Link>
         </article>

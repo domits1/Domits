@@ -1,0 +1,534 @@
+@use "../../../../styles/sass/variables" as *;
+
+$host-owners-error: #c0392b;
+$host-owners-error-bg: #fff5f5;
+
+.host-owners {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  color: $text;
+}
+
+.host-owners-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+}
+
+.host-owners-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  color: $muted;
+
+  p {
+    margin: 0;
+  }
+}
+
+.host-owners-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid $green;
+  border-radius: 0.5rem;
+  background: $green;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  cursor: pointer;
+
+  input {
+    accent-color: $green;
+  }
+}
+
+.host-owners-card {
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.host-owners-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    border-bottom: 1px solid $border;
+    color: $muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  tbody tr + tr {
+    border-top: 1px solid $border;
+  }
+
+  tbody th {
+    font-weight: normal;
+  }
+}
+
+.host-owners-name {
+  display: block;
+  font-weight: 600;
+}
+
+.host-owners-company {
+  display: block;
+  margin-top: 0.125rem;
+}
+
+.host-owners-company,
+.host-owners-muted {
+  color: $muted;
+  font-size: 0.875rem;
+}
+
+.host-owners-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.host-owners-status {
+  display: inline-block;
+  padding: 0.125rem 0.625rem;
+  border: 1px solid $border;
+  border-radius: 999px;
+  color: $muted;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.host-owners-status--active {
+  border-color: $green-light;
+  background: $green-light;
+  color: $green-dark;
+}
+
+.host-owners-status--pending {
+  border-style: dashed;
+  color: $text;
+}
+
+.host-owners-status--archived {
+  background: $border;
+}
+
+@media (max-width: 768px) {
+  .host-owners-card {
+    border: none;
+    overflow: visible;
+  }
+
+  .host-owners-table {
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    tbody,
+    tr,
+    th,
+    td {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    tbody tr {
+      margin-bottom: 0.75rem;
+      border: 1px solid $border;
+      border-radius: 0.75rem;
+    }
+
+    tbody tr + tr {
+      border-top: 1px solid $border;
+    }
+
+    th,
+    td {
+      padding: 0.5rem 1rem;
+    }
+
+    td::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.25rem;
+      color: $muted;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+
+  .host-owners-name-cell {
+    padding-top: 0.75rem;
+  }
+}
+
+.host-owners-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.host-owners-button:disabled,
+.host-owners-button-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.host-owners-button-secondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid $border;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: $text;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: $green-dark;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 3vw, 1.5rem);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.host-owners-modal {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 36rem);
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  color: $text;
+}
+
+.host-owners-modal-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 3vw, 1.5rem) 1rem;
+  border-bottom: 1px solid $border;
+}
+
+.host-owners-modal-title {
+  margin: 0;
+  font-size: clamp(1.125rem, 2.5vw, 1.25rem);
+}
+
+.host-owners-close-button {
+  flex: none;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: $muted;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: $text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.host-owners-form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.host-owners-form-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.875rem;
+  min-height: 0;
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+  overflow-y: auto;
+}
+
+.host-owners-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid $border;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    color: $text;
+    font: inherit;
+
+    &:focus-visible {
+      outline: 2px solid $green;
+      outline-offset: 1px;
+    }
+
+    &[aria-invalid="true"] {
+      border-width: 2px;
+      border-color: $host-owners-error;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.host-owners-field-error,
+.host-owners-form-error {
+  margin: 0;
+  color: $host-owners-error;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.host-owners-form-error {
+  padding: 0.75rem;
+  border: 1px solid $host-owners-error;
+  border-radius: 0.5rem;
+  background: $host-owners-error-bg;
+}
+
+.host-owners-modal-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+  border-top: 1px solid $border;
+}
+
+.host-owners-name {
+  color: inherit;
+  text-decoration: underline;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owners-back-link {
+  align-self: flex-start;
+  color: $green-dark;
+  font-weight: 600;
+
+  &:focus-visible {
+    outline: 2px solid $green-dark;
+    outline-offset: 2px;
+  }
+}
+
+.host-owner-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.host-owner-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.host-owner-detail-heading {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+}
+
+.host-owner-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.host-owner-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+
+  dt {
+    color: $muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.host-owner-detail-notes {
+  white-space: pre-wrap;
+}
+
+.host-owner-detail .confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 3vw, 1.5rem);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.host-owner-detail .confirm-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(100%, 26rem);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  background: #fff;
+  color: $text;
+  text-align: center;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  p {
+    color: $muted;
+  }
+}
+
+.host-owner-detail .confirm-modal-icon {
+  color: $host-owners-error;
+  font-size: 2rem;
+}
+
+.host-owner-detail .confirm-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+
+  button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $green-dark;
+      outline-offset: 2px;
+    }
+  }
+
+  .btn-text {
+    border: 1px solid $border;
+    background: transparent;
+    color: $text;
+  }
+
+  .btn-danger {
+    border: 1px solid $host-owners-error;
+    background: $host-owners-error;
+    color: #fff;
+  }
+}

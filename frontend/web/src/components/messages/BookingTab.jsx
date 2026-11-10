@@ -5,8 +5,12 @@ import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/ho
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
+const getGuestCapacity = (generalDetails) => {
+    const guests = (Array.isArray(generalDetails) ? generalDetails : []).find((detail) => detail?.detail === 'Guests');
+    return guests?.value || null;
+};
 
-const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null }) => {
+const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, propertyId = null, showAccommodation = true }) => {
     const isGuest = dashboardType === 'guest';
     const hostId = isGuest ? contactId : userId;
     const guestId = isGuest ? userId : contactId;
@@ -24,13 +28,15 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
             propertyId,
         }
     );
-    if (bookingDetails?.message === "No data found for the given hostId and guestId") {
-        return;
+    if (!bookingDetails || !accommodation || bookingDetails.message === "No data found for the given hostId and guestId") {
+        return null;
     }
 
+    const guestCapacity = getGuestCapacity(accommodation?.generalDetails);
     const firstImage = resolvePrimaryAccommodationImageUrl(accommodation?.images, "thumb");
     const formatHour = (hour) => {
-        return `${hour}:00`;
+        const [hours, minutes = "00"] = String(hour).split(":");
+        return `${hours}:${minutes}`;
     };
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
@@ -41,16 +47,18 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
         <div className="booking-tab-container">
             {bookingDetails && accommodation && (
                 <div className="booking-tab">
-                    <div className="acco-image">
-                        {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
-                        {firstImage && (
-                            <img
-                                src={firstImage}
-                                onClick={() => setModalImage(firstImage)}
-                                alt="Accommodation"
-                            />
-                        )}
-                    </div>
+                    {showAccommodation && (
+                        <div className="acco-image">
+                            {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
+                            {firstImage && (
+                                <img
+                                    src={firstImage}
+                                    onClick={() => setModalImage(firstImage)}
+                                    alt="Accommodation"
+                                />
+                            )}
+                        </div>
+                    )}
                     {bookingDetails?.Status === 'Accepted' && (
                         <div className="booking-status">
                             <h3>Booking Successful</h3>
@@ -88,10 +96,12 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
                             <p>{formatHour(accommodation?.checkIn.checkOut.from)}-{formatHour(accommodation?.checkIn.checkOut.till)}</p>
                         </div>
                     </div>
-                    <div className="street">
-                        <div className="iconHouse"><FaHome />
-                        </div> <p>{accommodation?.location?.street} {accommodation?.location?.houseNumber}{accommodation?.location?.houseNumberExtension} </p>
-                    </div>
+                    {accommodation?.location?.street && (
+                        <div className="street">
+                            <div className="iconHouse"><FaHome />
+                            </div> <p>{accommodation?.location?.street} {accommodation?.location?.houseNumber}{accommodation?.location?.houseNumberExtension} </p>
+                        </div>
+                    )}
                     <div className="reservation-details">
                         <h3>Reservation Details</h3>
                         <div className="guest-amount">
@@ -106,11 +116,11 @@ const BookingTab = ({ userId, contactId, dashboardType, bookingId = null, proper
 
                         <div className="house-rules">
                             <h4>House rules</h4>
-                            <p>{accommodation?.Capacity} guests maximum</p>
+                            {guestCapacity ? <p>{guestCapacity} guests maximum</p> : null}
                             {accommodation?.rules?.[0]?.value ? <p>Pets allowed</p> : <p>No pets</p>}
 
-                            {accommodation?.rules[1]?.value ? <p>Parties allowed</p> : <p>No parties</p>}
-                            {accommodation?.rules[2]?.value ? <p>Smoking allowed</p> : <p>No smoking</p>}
+                            {accommodation?.rules?.[1]?.value ? <p>Parties allowed</p> : <p>No parties</p>}
+                            {accommodation?.rules?.[2]?.value ? <p>Smoking allowed</p> : <p>No smoking</p>}
                         </div>
 
                     </div>
@@ -159,6 +169,7 @@ BookingTab.propTypes = {
     dashboardType: PropTypes.string,
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    showAccommodation: PropTypes.bool,
 };
 
 export default BookingTab;
