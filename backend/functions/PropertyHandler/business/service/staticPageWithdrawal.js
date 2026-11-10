@@ -81,8 +81,9 @@ export class StaticPageWithdrawal {
       (error) => [{ siteId, message: `REDIRECT_REMOVE_FAILED: ${error.message}` }]
     );
     const removedSitePages = {};
+    const sitePageErrors = [];
     for (const hostname of hostnames) {
-      const sitePageSlugs = Object.keys(await this.pageStore.listSitePages(hostname));
+      const sitePageSlugs = await this.#listSitePageSlugs({ siteId, hostname, errors: sitePageErrors });
       await this.pageStore.deletePage({ hostname });
       for (const slug of sitePageSlugs) {
         await this.pageStore.deleteSitePage({ hostname, slug });
@@ -96,7 +97,17 @@ export class StaticPageWithdrawal {
       hostnames,
       invalidationErrors: await this.#invalidate(hostnames, removedSitePages),
       redirectErrors,
+      sitePageErrors,
     };
+  }
+
+  async #listSitePageSlugs({ siteId, hostname, errors }) {
+    try {
+      return Object.keys(await this.pageStore.listSitePages(hostname));
+    } catch (error) {
+      errors.push({ siteId, hostname, message: `SITE_PAGES_UNLISTED: ${error.message}` });
+      return [];
+    }
   }
 
   async #invalidate(hostnames, removedSitePages = {}) {

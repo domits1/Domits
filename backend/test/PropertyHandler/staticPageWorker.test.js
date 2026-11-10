@@ -252,6 +252,17 @@ describe("StaticPageWorker", () => {
     });
   });
 
+  it("reports site pages a withdrawal could not list, so the run fails loudly, without retrying the withdrawal", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const failure = { siteId: "site-1", hostname: FALLBACK.domain, message: "SITE_PAGES_UNLISTED: AccessDenied" };
+    withdrawal.withdraw.mockResolvedValueOnce({ invalidationErrors: [], sitePageErrors: [failure] });
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN" });
+    expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, withdrawn: 1, errors: [{ ...failure, revision: 4 }] });
+  });
+
   it("reports an invalidation that failed after a withdrawal, so the run fails loudly, without retrying the withdrawal", async () => {
     const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
     withdrawal.withdraw.mockResolvedValueOnce({

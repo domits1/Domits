@@ -142,6 +142,7 @@ describe("the static page jobs on one bucket", () => {
       hostnames: [FALLBACK, CUSTOM],
       invalidationErrors: [],
       redirectErrors: [],
+      sitePageErrors: [],
     });
     expect(invalidations(tenantRepository)).toEqual([
       ["dt_wildcard", withdrawnPaths(FALLBACK)],
@@ -191,20 +192,21 @@ describe("the static page jobs on one bucket", () => {
     ]);
   });
 
-  it("changes nothing on a host whose site pages cannot be listed, and the retry withdraws them", async () => {
-    const before = { "index.html": SHELL, ...pageOf(FALLBACK), ...sitePagesOf(FALLBACK, ["gallery"]) };
-    const { client, tenantRepository, withdrawal } = buildBucket(before);
-    client.failNext("ListObjectsV2Command", `sites/by-host/${FALLBACK}/pages/`, new Error("AccessDenied"));
+  it("still takes a host offline as today when its site pages cannot be listed, reports it, and the hourly check removes them", async () => {
+    const bucket = buildBucket({ "index.html": SHELL, ...pageOf(FALLBACK), ...sitePagesOf(FALLBACK, ["gallery"]) });
+    bucket.client.failNext("ListObjectsV2Command", `sites/by-host/${FALLBACK}/pages/`, new Error("AccessDenied"));
 
-    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] })).rejects.toThrow(
-      "AccessDenied"
-    );
-    expect(client.objects()).toEqual(before);
-    expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
+    const result = await bucket.withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
 
-    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
+    expect(result.sitePageErrors).toEqual([
+      { siteId: "site-1", hostname: FALLBACK, message: "SITE_PAGES_UNLISTED: AccessDenied" },
+    ]);
+    expect(bucket.client.writes()).toEqual([`delete ${pageKey(FALLBACK)}`, `put ${sitemapKey(FALLBACK)}`]);
+    expect(invalidations(bucket.tenantRepository)).toEqual([["dt_wildcard", withdrawnPaths(FALLBACK)]]);
 
-    expect(client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })]);
+    expect(await reconciler.run({ now: 1_790_000_000_000 })).toMatchObject({ removed: 1, errors: [] });
+    expect(bucket.client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
   });
 
   it("stops at a site page that cannot be deleted, invalidates nothing, and the retry removes what is left", async () => {

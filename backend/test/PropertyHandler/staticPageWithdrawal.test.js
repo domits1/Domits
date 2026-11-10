@@ -59,6 +59,7 @@ describe("StaticPageWithdrawal", () => {
       hostnames: [FALLBACK.domain, CUSTOM.domain],
       invalidationErrors: [],
       redirectErrors: [],
+      sitePageErrors: [],
     });
   });
 

@@ -13,11 +13,14 @@ const WITHDRAWN = [
 ];
 const DELETED = [...WITHDRAWN, "invalidate", "delete images", "delete rows"];
 
-const buildS3 = (calls, { failSitemapWrites = 0 } = {}) => {
+const buildS3 = (calls, { failSitemapWrites = 0, failListing = false } = {}) => {
   let remainingFailures = failSitemapWrites;
   return {
     send: jest.fn(async (command) => {
       calls.push(`${command.constructor.name} ${command.input.Key ?? command.input.Prefix}`);
+      if (command.constructor.name === "ListObjectsV2Command" && failListing) {
+        throw new Error("AccessDenied");
+      }
       if (command.constructor.name === "PutObjectCommand" && remainingFailures > 0) {
         remainingFailures -= 1;
         throw new Error("S3 is unavailable");
@@ -27,9 +30,14 @@ const buildS3 = (calls, { failSitemapWrites = 0 } = {}) => {
   };
 };
 
-const buildController = ({ site = { id: "site-1" }, bookingCount = 0, failSitemapWrites = 0 } = {}) => {
+const buildController = ({
+  site = { id: "site-1" },
+  bookingCount = 0,
+  failSitemapWrites = 0,
+  failListing = false,
+} = {}) => {
   const calls = [];
-  const s3 = buildS3(calls, { failSitemapWrites });
+  const s3 = buildS3(calls, { failSitemapWrites, failListing });
   const controller = new PropertyController();
   const service = controller.propertyService;
   let deleted = false;
@@ -99,6 +107,19 @@ describe("deleting a listing takes its static page offline first", () => {
 
     expect(retry.statusCode).toBe(204);
     expect(calls.slice(WITHDRAWN.length)).toEqual(DELETED);
+  });
+
+  it("still deletes the listing when the site pages of its website cannot be listed, and logs it", async () => {
+    const { calls, remove } = buildController({ failListing: true });
+
+    const response = await remove();
+
+    expect(response.statusCode).toBe(204);
+    expect(calls).toEqual(DELETED);
+    expect(console.error).toHaveBeenCalledWith(
+      "[StaticPage] withdrawing site site-1 left a failure:",
+      expect.objectContaining({ hostname: HOST, message: "SITE_PAGES_UNLISTED: AccessDenied" })
+    );
   });
 
   it("deletes a listing without a website without touching the bucket", async () => {
