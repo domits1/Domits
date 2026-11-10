@@ -26,7 +26,7 @@ describe("PaymentService.create", () => {
         breakdown: { customerPays: 20_000, hostReceives: 19_550, platformFeeGross: 450 },
         commission: {
           rate: commission.rate,
-          amountCents: commission.commissionAmountCents,
+          amountCents: commission.amountCents,
           annualRevenueCents: commission.annualRevenueCents,
           year: commission.year,
         },

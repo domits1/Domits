@@ -409,6 +409,8 @@ describe("Refund Logic - 10 Test Scenarios", () => {
           payment_intent: "pi_test_odd",
           amount: expectedRefund,
           reason: "requested_by_customer",
+          reverse_transfer: true,
+          refund_application_fee: true,
         },
         {
           idempotencyKey: `refund-pi_test_odd-${expectedRefund}`,
