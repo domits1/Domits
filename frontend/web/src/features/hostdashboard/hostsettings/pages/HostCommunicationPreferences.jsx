@@ -1,8 +1,9 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
-import NotificationPreferencesForm from "../../../../components/settings/NotificationPreferencesForm";
-import useCommunicationPreferences from "../../../../hooks/useCommunicationPreferences";
+import { getHostNotificationMatrixLabels } from "../../../../content/hostNotificationMatrixLabels";
+import useHostNotificationEventPreferences from "../../../../hooks/useHostNotificationEventPreferences";
+import HostNotificationMatrixForm from "./HostNotificationMatrixForm";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import de from "../../../../content/de.json";
@@ -16,7 +17,8 @@ const HostCommunicationPreferences = () => {
     const { language } = useContext(LanguageContext);
     const settingsContent = contentByLanguage[language]?.settings ?? contentByLanguage.en.settings;
     const t = settingsContent.communicationPreferences;
-    const communicationPreferences = useCommunicationPreferences("host");
+    const eventPreferences = useHostNotificationEventPreferences();
+    const matrixLabels = getHostNotificationMatrixLabels(language);
 
     return (
         <div className="personal-data-page">
@@ -31,7 +33,8 @@ const HostCommunicationPreferences = () => {
                 <p className="personal-data-subtitle">{t.subtitle}</p>
             </div>
 
-            <NotificationPreferencesForm labels={t} {...communicationPreferences} />
+            <HostNotificationMatrixForm labels={matrixLabels} {...eventPreferences} />
+
         </div>
     );
 };

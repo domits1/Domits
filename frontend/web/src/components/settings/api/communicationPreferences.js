@@ -61,3 +61,36 @@ export const saveCommunicationPreferences = (persona, preferences) =>
         body: enforceRequiredCommunicationPreferences(preferences),
         errorMessage: "We could not save your communication preferences. Please try again.",
     });
+
+export const buildHostNotificationPreferencesUrl = () =>
+    `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`;
+
+const requestHostNotificationPreferences = async ({ method, body, errorMessage } = {}) => {
+    const token = await getIdToken();
+    const response = await fetch(buildHostNotificationPreferencesUrl(), {
+        method,
+        cache: "no-store",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(errorMessage);
+    return payload;
+};
+
+export const fetchHostNotificationEventPreferences = () =>
+    requestHostNotificationPreferences({
+        method: "GET",
+        errorMessage: "We could not load your host notification choices. Please try again.",
+    });
+
+export const saveHostNotificationEventPreferences = (preferences) =>
+    requestHostNotificationPreferences({
+        method: "PUT",
+        body: preferences,
+        errorMessage: "We could not save your host notification choices. Please try again.",
+    });
