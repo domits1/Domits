@@ -141,31 +141,6 @@ export class PropertyRepository {
         );
     }
 
-    // Compare-and-set: the single UPDATE only matches while the current status is one of fromStatuses,
-    // so a concurrent approval or rejection is never overwritten. Returns the number of rows changed.
-    // Only a move out of ARCHIVED clears the archive metadata; moving into ARCHIVED (which records
-    // who archived) stays with updatePropertyStatus.
-    async transitionStatus(propertyId, fromStatuses, toStatus) {
-        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
-            throw new TypeError("transitionStatus needs at least one from-status.");
-        }
-
-        const client = await Database.getInstance();
-        const now = Date.now();
-        const result = await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: toStatus, updatedat: now })
-            .where("id = :id AND status IN (:...fromStatuses)", { id: propertyId, fromStatuses })
-            .execute();
-
-        const affected = Number(result?.affected) || 0;
-        if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
-            await this.clearArchiveMetadata(client, propertyId, toStatus, now, resolveSchemaName(client));
-        }
-        return affected;
-    }
-
     async transitionStatusWithEvent(
         propertyId,
         {fromStatuses, toStatus, action, actorId, reason = null, expectedUpdatedAt}
