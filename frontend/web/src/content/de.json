@@ -2033,5 +2033,28 @@
       "restoredToast": "{name} wurde wiederhergestellt.",
       "archiveBlocked": "{name} kann noch nicht archiviert werden, weil dieser Eigentümer noch aktuelle oder künftige Eigentumsanteile hat. Entferne {name} zuerst aus den Anteilen dieser Unterkünfte und archiviere dann erneut."
     }
+  },
+  "hostIntegrations": {
+    "talkToSales": "Vertrieb kontaktieren",
+    "statuses": {
+      "available": "Verfügbar",
+      "in_development": "In Entwicklung",
+      "on_request": "Auf Anfrage"
+    },
+    "categories": {
+      "revenue_management": "Revenue Management",
+      "channel_management": "Channel Management",
+      "guest_protection": "Gästeschutz",
+      "smart_locks": "Smarte Schlösser",
+      "guest_communication": "Gästekommunikation"
+    },
+    "descriptions": {
+      "pricelabs": "Optimiere deine Übernachtungspreise mit dynamischer Preisgestaltung auf Basis der Marktnachfrage und der Leistung deiner Unterkunft.",
+      "channex": "Verwalte Verfügbarkeit, Preise und Reservierungen deiner Unterkunft über mehrere Buchungskanäle mit einer einzigen Verbindung.",
+      "siteminder": "Verbinde deine Verwaltungs- und Vertriebsabläufe mit dem Hospitality-Technologie-Ökosystem von SiteMinder.",
+      "truvi": "Sorge für sicherere Buchungen mit Gäste-Screening und Lösungen für das Risikomanagement.",
+      "remotelock": "Vereinfache den Zugang zu deiner Unterkunft mit vernetzten smarten Schlössern und automatischer Zugangsverwaltung.",
+      "whatsapp": "Kommuniziere mit Gästen über WhatsApp als Teil der Verwaltung deiner Unterkunft."
+    }
   }
 }
