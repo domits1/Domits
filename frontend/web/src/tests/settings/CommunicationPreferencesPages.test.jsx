@@ -80,6 +80,7 @@ describe("Communication Preferences pages", () => {
         expect(getHostToggle("New booking", "Email")).toBeChecked();
         expect(getHostToggle("New booking", "Email")).toBeDisabled();
         expect(getHostToggle("New booking", "SMS")).not.toBeChecked();
+        fireEvent.click(screen.getByRole("tab", { name: /Finance/i }));
         expect(getHostToggle("Chargeback", "Email")).not.toBeDisabled();
         expect(screen.queryByText("Recipients")).not.toBeInTheDocument();
         expect(screen.queryByText("Priority")).not.toBeInTheDocument();
@@ -89,6 +90,7 @@ describe("Communication Preferences pages", () => {
         renderWithLanguage(<HostCommunicationPreferences />);
         await waitForLoadedHostPreferences();
 
+        fireEvent.click(screen.getByRole("tab", { name: /Finance/i }));
         fireEvent.click(getHostToggle("Chargeback", "Email"));
         fireEvent.click(screen.getByRole("button", { name: /save preferences/i }));
 
