@@ -62,6 +62,11 @@ describe('TaskDetailsModal', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
+    test('does not show a booking reference field, because nothing saves it yet', () => {
+        render(<TaskDetailsModal {...baseProps} />);
+        expect(screen.queryByLabelText('Booking Reference')).not.toBeInTheDocument();
+    });
+
     test('shows Delete when the task is unchanged, and Save Changes when it differs', () => {
         const { rerender } = render(<TaskDetailsModal {...baseProps} />);
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
