@@ -29,6 +29,11 @@ const toReviewView = (review) => ({
   verification_status: review.verification_status, publication_status: review.publication_status,
   status: review.status, created_at: review.created_at, updated_at: review.updated_at,
 });
+const toPendingReviewView = (review) => ({
+  ...toReviewView(review), property_title: review.property_title ?? null,
+  property_city: review.property_city ?? null, property_country: review.property_country ?? null,
+  property_image_key: review.property_image_key ?? null, guest_name: review.guest_name ?? null,
+});
 const toResponseView = (response) => ({
   id: response.id, reviewId: response.reviewId, authorRole: response.authorRole,
   status: response.status, message: response.message, createdAt: response.createdAt,
@@ -295,7 +300,18 @@ export class ReviewService {
 
   async getReviewApprovalQueue(userId, username, status) {
     await this.assertReviewApprover(userId, username);
-    return (await this.repository.findUnpublishedReviews(status)).map(toReviewView);
+    const reviews = await this.repository.findUnpublishedReviews(status);
+    return reviews.map(status === "PENDING_APPROVAL" ? toPendingReviewView : toReviewView);
+  }
+
+  async getModeratedReviews(userId, username, scope) {
+    await this.assertReviewApprover(userId, username);
+    const statuses = {
+      "admin-published": ["PUBLISHED"],
+      "admin-rejected": ["REJECTED"],
+      "admin-all": ["PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED"],
+    };
+    return (await this.repository.findModeratedReviews(statuses[scope])).map(toPendingReviewView);
   }
 
   async approveReview(userId, username, reviewId, version) {
@@ -336,6 +352,10 @@ export class ReviewService {
       if (!(await this.canPublishReview({ userId, review }))) {
         await this.assertReviewApprover(userId, username);
       }
+      return toReviewView(review);
+    }
+
+    if (review.status === "PENDING_APPROVAL" && await this.canPublishReview({ userId, review })) {
       return toReviewView(review);
     }
 

@@ -254,6 +254,29 @@ class MessageRepository {
       .getOne();
   }
 
+  async getMessageById(messageId) {
+    if (!messageId) return null;
+    const client = await Database.getInstance();
+    return client.getRepository(UnifiedMessage).findOne({ where: { id: messageId } });
+  }
+
+  async claimFailedMessageForRetry(messageId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ deliveryStatus: "pending" })
+      .where({ id: messageId, deliveryStatus: "failed" })
+      .execute();
+    return result?.affected ?? 0;
+  }
+
+  async updateDeliveryResult(messageId, patch) {
+    const client = await Database.getInstance();
+    await client.createQueryBuilder().update(UnifiedMessage).set(patch).where({ id: messageId }).execute();
+    return this.getMessageById(messageId);
+  }
+
   async markMessageUnread(messageId) {
     const client = await Database.getInstance();
     const result = await client

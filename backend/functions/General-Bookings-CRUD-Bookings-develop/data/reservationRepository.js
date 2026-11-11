@@ -398,6 +398,7 @@ class ReservationRepository {
         "booking.refunded_amount",
         "booking.stripe_refund_id",
         "booking.refund_error",
+        "booking.refund_status",
         "booking.booking_source",
         "booking.site_id",
         "booking.guest_email",
@@ -666,8 +667,11 @@ class ReservationRepository {
     if (refundInfo.stripeRefundId) {
       updateData.stripe_refund_id = refundInfo.stripeRefundId;
     }
-    if (refundInfo.refundError) {
+    if (refundInfo.refundError !== undefined) {
       updateData.refund_error = refundInfo.refundError;
+    }
+    if (refundInfo.refundStatus !== undefined) {
+      updateData.refund_status = refundInfo.refundStatus;
     }
     if (Object.keys(updateData).length) {
       await client.createQueryBuilder().update(Booking).set(updateData).where("id = :id", { id }).execute();

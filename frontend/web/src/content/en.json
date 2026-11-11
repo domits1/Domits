@@ -1666,6 +1666,7 @@
       "websitePlan": {
         "sectionTitle": "Direct Booking Website subscription",
         "sectionSubtitle": "Choose the plan for your booking website. The Elite price is shown below.",
+        "sectionSubtitleWithoutPayment": "Choose the plan for your booking website.",
         "loading": "Loading your website plan...",
         "loadError": "We couldn't load your current website plan.",
         "essentials": "Essentials",
@@ -1701,6 +1702,7 @@
         "checkoutError": "Stripe checkout couldn't be started. Please try again.",
         "downgradeScheduled": "Your switch to Essentials is scheduled for the end of the current billing period.",
         "downgradeSuccess": "Your website plan is now Essentials.",
+        "upgradeSuccess": "Your website plan is now Elite.",
         "restoreSuccess": "Your Elite subscription has been reactivated.",
         "unchanged": "Your website plan is already up to date.",
         "effectiveUntil": "Elite remains active until {date}.",
@@ -2031,6 +2033,43 @@
       "archivedToast": "{name} was archived.",
       "restoredToast": "{name} was restored.",
       "archiveBlocked": "{name} cannot be archived yet, because this owner still has current or upcoming ownership shares. First remove {name} from the shares of those properties, then archive again."
+    },
+    "shares": {
+      "title": "Set ownership shares",
+      "propertyLabel": "Property",
+      "propertyPlaceholder": "Choose a property",
+      "dateLabel": "Shares apply from",
+      "ownerColumn": "Owner",
+      "percentColumn": "Share (%)",
+      "chooseOwner": "Choose an owner",
+      "totalLabel": "Total",
+      "totalValue": "{percent}% of 100%",
+      "addOwner": "Add owner",
+      "removeOwner": "Remove",
+      "removeOwnerLabel": "Remove {name}",
+      "save": "Save shares",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "plannedChangeWarning": "A change to the ownership of this property is already planned from {date}. Saving replaces every planned change from the date you choose.",
+      "savedToast": "The shares of {property} were saved. They apply from {date}.",
+      "upcomingTitle": "Planned after this change",
+      "errorChangedToday": "The ownership of this property already changed today. Choose tomorrow or a later date.",
+      "errorArchivedOwner": "One of these owners is archived, and archived owners cannot receive shares. Remove that owner from the list or restore the owner first.",
+      "errorConflict": "The ownership of this property was changed at the same time. Reload the page and try again.",
+      "errors": {
+        "propertyRequired": "Choose a property.",
+        "dateRequired": "Choose the date the shares apply from.",
+        "dateInvalid": "Enter a valid date.",
+        "dateBeforeToday": "The date cannot be before today.",
+        "dateTooLate": "The date can be at most 5 years from today.",
+        "sharesRequired": "Add at least one owner. A property cannot be left without owners.",
+        "totalMismatch": "The shares must add up to exactly 100%.",
+        "ownerRequired": "Choose an owner.",
+        "ownerDuplicate": "This owner is already in the list.",
+        "percentRequired": "Enter a share.",
+        "percentInvalid": "Enter a percentage from 0.01 to 100, with at most 2 decimals.",
+        "percentZero": "A share must be at least 0.01%. Remove the owner instead."
+      }
     }
   }
 }

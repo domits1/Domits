@@ -2,6 +2,10 @@ import { randomUUID } from "node:crypto";
 import { In } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
+import { Property } from "database/models/Property";
+import { Property_Location } from "database/models/Property_Location";
+import { Property_Image } from "database/models/Property_Image";
+import { Property_Image_Variant } from "database/models/Property_Image_Variant";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
@@ -247,10 +251,69 @@ export class ReviewRepository {
 
   async findUnpublishedReviews(status) {
     const database = await Database.getInstance();
-    return database.getRepository(Review).find({
+    const reviews = await database.getRepository(Review).find({
       where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
+    return status === "PENDING_APPROVAL" ? this.addModerationDetails(database, reviews) : reviews;
+  }
+
+  async findModeratedReviews(statuses) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async addModerationDetails(database, reviews) {
+    if (!reviews.length) return reviews;
+
+    const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
+    const [properties, locations, imageKeys, bookings] = await Promise.all([
+      database.getRepository(Property).find({ where: { id: In(propertyIds) }, select: ["id", "title"] }),
+      database.getRepository(Property_Location).find({
+        where: { property_id: In(propertyIds) }, select: ["property_id", "city", "country"] }),
+      this.findFirstImageKeys(database, propertyIds),
+      database.getRepository(Booking).find({
+        where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+        select: ["id", "guestid", "guestname"] }),
+    ]);
+    const titles = new Map(properties.map((property) => [property.id, property.title]));
+    const locationsById = new Map(locations.map((location) => [location.property_id, location]));
+    const bookingsById = new Map(bookings.map((booking) => [booking.id, booking]));
+
+    return reviews.map((review) => {
+      const location = locationsById.get(review.property_id);
+      const booking = bookingsById.get(review.booking_id);
+      const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
+      const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
+      return { ...review, property_title: titles.get(review.property_id) ?? null,
+        property_city: location?.city ?? null, property_country: location?.country ?? null,
+        property_image_key: imageKeys.get(review.property_id) ?? null, guest_name: guestName };
+    });
+  }
+
+  async findFirstImageKeys(database, propertyIds) {
+    const images = await database.getRepository(Property_Image).find({
+      where: { property_id: In(propertyIds), status: "READY" },
+      select: ["id", "property_id", "sort_order"], order: { sort_order: "ASC" },
+    });
+    const firstImageByProperty = new Map();
+    for (const image of images) {
+      if (!firstImageByProperty.has(image.property_id)) firstImageByProperty.set(image.property_id, image.id);
+    }
+    if (!firstImageByProperty.size) return new Map();
+
+    const variants = await database.getRepository(Property_Image_Variant).find({
+      where: { image_id: In([...firstImageByProperty.values()]), variant: In(["thumb", "web"]) },
+      select: ["image_id", "variant", "s3_key"],
+    });
+    const keyFor = (imageId, variant) =>
+      variants.find((entry) => entry.image_id === imageId && entry.variant === variant)?.s3_key;
+    return new Map([...firstImageByProperty].map(([propertyId, imageId]) =>
+      [propertyId, keyFor(imageId, "thumb") ?? keyFor(imageId, "web") ?? null]));
   }
 
   async findForUser(userId, scope) {
