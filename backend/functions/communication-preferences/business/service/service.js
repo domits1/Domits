@@ -4,21 +4,9 @@ import { DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES, DEFAULT_HOST_NOTIFICATIO
 import { badRequest } from "../../util/httpErrors.js";
 
 export const DEFAULT_COMMUNICATION_PREFERENCES = Object.freeze({
-  reservation: Object.freeze({
-    email: true,
-    sms: false,
-    push: true,
-  }),
-  cancellation: Object.freeze({
-    email: true,
-    sms: true,
-    push: true,
-  }),
-  messages: Object.freeze({
-    email: true,
-    sms: false,
-    push: true,
-  }),
+  reservation: Object.freeze({ email: true, sms: false, push: true }),
+  cancellation: Object.freeze({ email: true, sms: true, push: true }),
+  messages: Object.freeze({ email: true, sms: false, push: true }),
 });
 
 export const ALLOWED_COMMUNICATION_PREFERENCE_PERSONAS = Object.freeze(["HOST", "GUEST"]);
@@ -26,9 +14,8 @@ export const ALLOWED_COMMUNICATION_PREFERENCE_PERSONAS = Object.freeze(["HOST", 
 const EVENT_KEYS = ["reservation", "cancellation", "messages"];
 const CHANNEL_KEYS = ["email", "sms", "push"];
 const SPOOFED_USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
-
-const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const HOST_NOTIFICATION_CHANNEL_KEYS = ["inApp", "email", "sms"];
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
 const cloneHostNotificationDefaults = () => Object.fromEntries(
   Object.entries(DEFAULT_HOST_NOTIFICATION_PREFERENCES).map(([eventKey, channels]) => [
@@ -76,42 +63,34 @@ const LEGACY_EVENT_PREFERENCE_MAP = Object.freeze({
   manager_unanswered_message: "messages",
 });
 
-const mapLegacyHostPreferences = (record) => {
-  const legacy = {
-    reservation: {
-      email: true,
-      sms: record.reservation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.sms,
-      push: record.reservation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.push,
-    },
-    cancellation: {
-      email: true,
-      sms: record.cancellation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.sms,
-      push: record.cancellation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.push,
-    },
-    messages: {
-      email: record.messages_email ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.email,
-      sms: record.messages_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.sms,
-      push: record.messages_push ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.push,
-    },
+const getLegacyChannels = (record, eventKey) => {
+  const defaults = DEFAULT_COMMUNICATION_PREFERENCES[eventKey];
+  return {
+    email: eventKey === "messages"
+      ? record.messages_email ?? defaults.email
+      : true,
+    sms: record[`${eventKey}_sms`] ?? defaults.sms,
+    push: record[`${eventKey}_push`] ?? defaults.push,
   };
+};
 
-  return Object.fromEntries(HOST_NOTIFICATION_EVENT_KEYS.map((eventKey) => {
+const mapLegacyHostPreferences = (record) => Object.fromEntries(
+  HOST_NOTIFICATION_EVENT_KEYS.map((eventKey) => {
     const legacyEvent = LEGACY_EVENT_PREFERENCE_MAP[eventKey];
     if (!legacyEvent) return [eventKey, { ...DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES }];
 
+    const channels = getLegacyChannels(record, legacyEvent);
     return [eventKey, {
-      inApp: legacy[legacyEvent].push,
-      email: isRequiredHostNotificationEmail(eventKey) ? true : legacy[legacyEvent].email,
-      sms: legacy[legacyEvent].sms,
+      inApp: channels.push,
+      email: isRequiredHostNotificationEmail(eventKey) ? true : channels.email,
+      sms: channels.sms,
     }];
-  }));
-};
+  })
+);
 
-const cloneDefaults = () => ({
-  reservation: { ...DEFAULT_COMMUNICATION_PREFERENCES.reservation },
-  cancellation: { ...DEFAULT_COMMUNICATION_PREFERENCES.cancellation },
-  messages: { ...DEFAULT_COMMUNICATION_PREFERENCES.messages },
-});
+const cloneDefaults = () => Object.fromEntries(
+  EVENT_KEYS.map((eventKey) => [eventKey, { ...DEFAULT_COMMUNICATION_PREFERENCES[eventKey] }])
+);
 
 export const normalizePersona = (persona) => {
   const normalized = String(persona || "").trim().toUpperCase();
@@ -275,23 +254,9 @@ export class CommunicationPreferencesService {
   }
 
   toApi(record) {
-    return {
-      reservation: {
-        email: true,
-        sms: record.reservation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.sms,
-        push: record.reservation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.push,
-      },
-      cancellation: {
-        email: true,
-        sms: record.cancellation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.sms,
-        push: record.cancellation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.push,
-      },
-      messages: {
-        email: record.messages_email ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.email,
-        sms: record.messages_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.sms,
-        push: record.messages_push ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.push,
-      },
-    };
+    return Object.fromEntries(
+      EVENT_KEYS.map((eventKey) => [eventKey, getLegacyChannels(record, eventKey)])
+    );
   }
 
   toRecordColumns(preferences) {
