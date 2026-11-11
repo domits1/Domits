@@ -2034,6 +2034,10 @@
     }
   },
   "hostIntegrations": {
+    "title": "Integration marketplace",
+    "subtitle": "Connect the tools you already use to Domits, and see what is coming next.",
+    "listLabel": "Integrations",
+    "setUpWhatsApp": "Set up WhatsApp",
     "talkToSales": "Talk to Sales",
     "statuses": {
       "available": "Available",

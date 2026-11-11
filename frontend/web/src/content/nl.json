@@ -2035,6 +2035,10 @@
     }
   },
   "hostIntegrations": {
+    "title": "Integratie-marketplace",
+    "subtitle": "Koppel de tools die je al gebruikt aan Domits, en zie wat eraan komt.",
+    "listLabel": "Integraties",
+    "setUpWhatsApp": "WhatsApp instellen",
     "talkToSales": "Neem contact op met Sales",
     "statuses": {
       "available": "Beschikbaar",
