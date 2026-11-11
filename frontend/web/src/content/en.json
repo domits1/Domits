@@ -1666,6 +1666,7 @@
       "websitePlan": {
         "sectionTitle": "Direct Booking Website subscription",
         "sectionSubtitle": "Choose the plan for your booking website. The Elite price is shown below.",
+        "sectionSubtitleWithoutPayment": "Choose the plan for your booking website.",
         "loading": "Loading your website plan...",
         "loadError": "We couldn't load your current website plan.",
         "essentials": "Essentials",
@@ -1701,6 +1702,7 @@
         "checkoutError": "Stripe checkout couldn't be started. Please try again.",
         "downgradeScheduled": "Your switch to Essentials is scheduled for the end of the current billing period.",
         "downgradeSuccess": "Your website plan is now Essentials.",
+        "upgradeSuccess": "Your website plan is now Elite.",
         "restoreSuccess": "Your Elite subscription has been reactivated.",
         "unchanged": "Your website plan is already up to date.",
         "effectiveUntil": "Elite remains active until {date}.",

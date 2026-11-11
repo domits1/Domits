@@ -1667,6 +1667,7 @@
       "websitePlan": {
         "sectionTitle": "Direct Booking-websiteabonnement",
         "sectionSubtitle": "Kies het abonnement voor je boekingswebsite. De prijs van Elite wordt hieronder weergegeven.",
+        "sectionSubtitleWithoutPayment": "Kies het abonnement voor je boekingswebsite.",
         "loading": "Je websiteabonnement wordt geladen...",
         "loadError": "Je huidige websiteabonnement kon niet worden geladen.",
         "essentials": "Essentials",
@@ -1702,6 +1703,7 @@
         "checkoutError": "Stripe Checkout kon niet worden gestart. Probeer het opnieuw.",
         "downgradeScheduled": "De overstap naar Essentials staat gepland aan het einde van je huidige factureringsperiode.",
         "downgradeSuccess": "Je websiteabonnement is nu Essentials.",
+        "upgradeSuccess": "Je websiteabonnement is nu Elite.",
         "restoreSuccess": "Je Elite-abonnement is opnieuw geactiveerd.",
         "unchanged": "Je websiteabonnement is al bijgewerkt.",
         "effectiveUntil": "Elite blijft actief tot {date}.",
