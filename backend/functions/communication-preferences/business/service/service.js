@@ -1,4 +1,6 @@
 import { CommunicationPreferencesRepository } from "../../data/repository.js";
+import { HostNotificationPreferencesRepository } from "../../data/hostNotificationPreferencesRepository.js";
+import { DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES, DEFAULT_HOST_NOTIFICATION_PREFERENCES, HOST_NOTIFICATION_EVENT_KEYS, isRequiredHostNotificationEmail } from "../hostNotificationMatrixConfig.js";
 import { badRequest } from "../../util/httpErrors.js";
 
 export const DEFAULT_COMMUNICATION_PREFERENCES = Object.freeze({
@@ -26,6 +28,84 @@ const CHANNEL_KEYS = ["email", "sms", "push"];
 const SPOOFED_USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
 
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+const HOST_NOTIFICATION_CHANNEL_KEYS = ["inApp", "email", "sms"];
+
+const cloneHostNotificationDefaults = () => Object.fromEntries(
+  Object.entries(DEFAULT_HOST_NOTIFICATION_PREFERENCES).map(([eventKey, channels]) => [
+    eventKey,
+    { ...channels },
+  ])
+);
+
+const normalizeStoredHostNotificationChannels = (eventKey, storedChannels) => {
+  let channels;
+  if (typeof storedChannels === "boolean") {
+    channels = storedChannels
+      ? { ...DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES }
+      : { inApp: false, email: false, sms: false };
+  } else if (!storedChannels || typeof storedChannels !== "object" || Array.isArray(storedChannels)) {
+    channels = { ...DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES };
+  } else {
+    channels = Object.fromEntries(HOST_NOTIFICATION_CHANNEL_KEYS.map((channelKey) => [
+      channelKey,
+      typeof storedChannels[channelKey] === "boolean"
+        ? storedChannels[channelKey]
+        : DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES[channelKey],
+    ]));
+  }
+
+  if (isRequiredHostNotificationEmail(eventKey)) channels.email = true;
+  return channels;
+};
+
+const LEGACY_EVENT_PREFERENCE_MAP = Object.freeze({
+  manager_new_booking: "reservation",
+  manager_booking_modification: "reservation",
+  manager_cancellation: "cancellation",
+  booking_inquiry_received: "reservation",
+  booking_created: "reservation",
+  booking_confirmed: "reservation",
+  booking_modified: "reservation",
+  booking_cancelled_by_guest: "cancellation",
+  booking_cancelled_by_host: "cancellation",
+  booking_cancellation_refund_initiated: "cancellation",
+  booking_cancellation_refund_completed: "cancellation",
+  owner_new_booking: "reservation",
+  owner_booking_cancelled: "cancellation",
+  manager_new_guest_message: "messages",
+  manager_unanswered_message: "messages",
+});
+
+const mapLegacyHostPreferences = (record) => {
+  const legacy = {
+    reservation: {
+      email: true,
+      sms: record.reservation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.sms,
+      push: record.reservation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.reservation.push,
+    },
+    cancellation: {
+      email: true,
+      sms: record.cancellation_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.sms,
+      push: record.cancellation_push ?? DEFAULT_COMMUNICATION_PREFERENCES.cancellation.push,
+    },
+    messages: {
+      email: record.messages_email ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.email,
+      sms: record.messages_sms ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.sms,
+      push: record.messages_push ?? DEFAULT_COMMUNICATION_PREFERENCES.messages.push,
+    },
+  };
+
+  return Object.fromEntries(HOST_NOTIFICATION_EVENT_KEYS.map((eventKey) => {
+    const legacyEvent = LEGACY_EVENT_PREFERENCE_MAP[eventKey];
+    if (!legacyEvent) return [eventKey, { ...DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES }];
+
+    return [eventKey, {
+      inApp: legacy[legacyEvent].push,
+      email: isRequiredHostNotificationEmail(eventKey) ? true : legacy[legacyEvent].email,
+      sms: legacy[legacyEvent].sms,
+    }];
+  }));
+};
 
 const cloneDefaults = () => ({
   reservation: { ...DEFAULT_COMMUNICATION_PREFERENCES.reservation },
@@ -42,8 +122,9 @@ export const normalizePersona = (persona) => {
 };
 
 export class CommunicationPreferencesService {
-  constructor({ repository = new CommunicationPreferencesRepository(), now = () => Date.now() } = {}) {
+  constructor({ repository = new CommunicationPreferencesRepository(), hostNotificationRepository = new HostNotificationPreferencesRepository(), now = () => Date.now() } = {}) {
     this.repository = repository;
+    this.hostNotificationRepository = hostNotificationRepository;
     this.now = now;
   }
 
@@ -69,6 +150,84 @@ export class CommunicationPreferencesService {
 
     await this.repository.save(record);
     return this.toApi(record);
+  }
+
+  async getHostNotificationPreferences(userId) {
+    const record = await this.hostNotificationRepository.findByUserId(userId);
+    if (!record) {
+      const legacyRecord = await this.repository.findByUserIdAndPersona(userId, "HOST");
+      return legacyRecord ? mapLegacyHostPreferences(legacyRecord) : cloneHostNotificationDefaults();
+    }
+
+    let stored;
+    try {
+      stored = JSON.parse(record.preferences || "{}");
+    } catch {
+      throw new Error("Stored host notification preferences are invalid.");
+    }
+
+    return Object.fromEntries(
+      HOST_NOTIFICATION_EVENT_KEYS.map((eventKey) => [
+        eventKey,
+        normalizeStoredHostNotificationChannels(eventKey, stored?.[eventKey]),
+      ])
+    );
+  }
+
+  async saveHostNotificationPreferences(userId, payload) {
+    const preferences = this.validateHostNotificationPreferences(payload);
+    const existing = await this.hostNotificationRepository.findByUserId(userId);
+    const now = this.now();
+
+    await this.hostNotificationRepository.save({
+      user_id: userId,
+      preferences: JSON.stringify(preferences),
+      created_at: existing?.created_at ?? now,
+      updated_at: now,
+    });
+
+    return preferences;
+  }
+
+  validateHostNotificationPreferences(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw badRequest("Request body must be a host notification preferences object.");
+    }
+
+    for (const key of Object.keys(payload)) {
+      if (!HOST_NOTIFICATION_EVENT_KEYS.includes(key)) {
+        throw badRequest(`Unknown host notification preference: ${key}.`);
+      }
+    }
+
+    const preferences = {};
+    for (const eventKey of HOST_NOTIFICATION_EVENT_KEYS) {
+      const eventChannels = payload[eventKey];
+      if (!eventChannels || typeof eventChannels !== "object" || Array.isArray(eventChannels)) {
+        throw badRequest(`Host notification channels for ${eventKey} are required.`);
+      }
+
+      for (const channelKey of Object.keys(eventChannels)) {
+        if (!HOST_NOTIFICATION_CHANNEL_KEYS.includes(channelKey)) {
+          throw badRequest(`Unknown host notification channel: ${channelKey}.`);
+        }
+      }
+
+      preferences[eventKey] = {};
+      for (const channelKey of HOST_NOTIFICATION_CHANNEL_KEYS) {
+        if (!hasOwn(eventChannels, channelKey)) {
+          throw badRequest(`Host notification channel ${eventKey}.${channelKey} is required.`);
+        }
+        if (typeof eventChannels[channelKey] !== "boolean") {
+          throw badRequest(`Host notification channel ${eventKey}.${channelKey} must be a boolean.`);
+        }
+        preferences[eventKey][channelKey] = eventChannels[channelKey];
+      }
+
+      if (isRequiredHostNotificationEmail(eventKey)) preferences[eventKey].email = true;
+    }
+
+    return preferences;
   }
 
   validateCompleteMatrix(payload) {
