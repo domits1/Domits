@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
+import ChannexHealthSection from "../channexadmin/health/ChannexHealthSection";
 import {
   connectChannex,
   getChannexAriPayloadPreview,
@@ -20,6 +21,7 @@ import {
 } from "./channexApi";
 
 const SECTION_TABS = [
+  { key: "health", label: "Health" },
   { key: "overview", label: "Overview" },
   { key: "setup", label: "Setup & Connection" },
   { key: "mappings", label: "Mappings" },
@@ -1283,7 +1285,7 @@ const ACTION_CONFIG = [
 ];
 
 function ChannexDiagnosticsPanel({ userId }) {
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState("health");
   const [domitsPropertyId, setDomitsPropertyId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -2231,6 +2233,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         ))}
       </nav>
 
+      {activeSection === "health" ? <ChannexHealthSection /> : null}
       {activeSection === "overview" ? renderOverview() : null}
       {activeSection === "setup" ? renderSetup() : null}
       {activeSection === "mappings" ? renderMappings() : null}

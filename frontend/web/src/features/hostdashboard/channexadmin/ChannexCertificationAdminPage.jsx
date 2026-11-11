@@ -3,7 +3,6 @@ import { UserProvider } from "../hostmessages/context/AuthContext";
 import { useAuth } from "../hostmessages/hooks/useAuth";
 import ChannexDiagnosticsPanel from "../hostintegrations/ChannexDiagnosticsPanel";
 import { checkChannexCertificationAccess } from "./channexCertificationAccess";
-import ChannexHealthSection from "./health/ChannexHealthSection";
 import "../hostintegrations/HostIntegrations.scss";
 
 function ChannexCertificationAdminPageInner() {
@@ -72,7 +71,6 @@ function ChannexCertificationAdminPageInner() {
         </div>
       </header>
 
-      <ChannexHealthSection />
       <ChannexDiagnosticsPanel userId={userId} />
     </main>
   );

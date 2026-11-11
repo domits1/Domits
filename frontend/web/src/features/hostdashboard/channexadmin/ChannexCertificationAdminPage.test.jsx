@@ -29,13 +29,6 @@ jest.mock("../hostintegrations/ChannexDiagnosticsPanel", () => {
   };
 });
 
-jest.mock("./health/ChannexHealthSection", () => {
-  const React = require("react");
-  return function MockChannexHealthSection() {
-    return React.createElement("div", null, "Channex health loaded");
-  };
-});
-
 jest.mock("../hostintegrations/channexApi", () => ({
   getChannexAdminAccess: jest.fn(),
 }));
@@ -59,16 +52,6 @@ describe("ChannexCertificationAdminPage", () => {
     expect(container.textContent).not.toMatch(/certification/i);
   });
 
-  test("shows the health section above the diagnostics panel for an allowed user (#2869)", async () => {
-    getChannexAdminAccess.mockResolvedValue({ allowed: true });
-
-    render(<ChannexCertificationAdminPage />);
-
-    const health = await screen.findByText("Channex health loaded");
-    const diagnostics = screen.getByText("Channex diagnostics loaded");
-    expect(health.compareDocumentPosition(diagnostics) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
   test("shows not authorized when backend admin-access denies the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
 
@@ -76,7 +59,6 @@ describe("ChannexCertificationAdminPage", () => {
 
     expect(await screen.findByText("Not authorized")).toBeTruthy();
     expect(screen.queryByText("Channex diagnostics loaded")).toBeNull();
-    expect(screen.queryByText("Channex health loaded")).toBeNull();
     expect(container.textContent).not.toMatch(/certification/i);
   });
 

@@ -74,8 +74,21 @@ Result: no blocking findings so far
 | P3 (5/10) | `ChannexHealthAlarms.jsx`, `` `channex-health-state--${alarm.state.toLowerCase()}` `` | INSUFFICIENT_DATA becomes `channex-health-state--insufficient_data`, with an underscore, against the kebab-case convention for classes. | Accepted: the class follows the CloudWatch state name; renaming needs a mapping for one class. |
 | P3 (5/10) | `channex-health.scss`, colour variables | The palette repeats the hex values of `HostIntegrations.scss`, which has no shared variables to import. | Accepted: named once in this file; shared tokens are a refactor of the 1,147-line file. |
 
+### Commit 8: Health as the first tab of the diagnostics panel
+
+The visual check showed the section above the whole panel, while the mockup of 9 Nov has Health as the first tab next to Overview. This commit moves it and takes the commit 6 wiring out of the page again.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `ChannexDiagnosticsPanel.jsx`, `SECTION_TABS` and `useState("health")` | Same pattern as the six other tabs: only the active tab is rendered, so the section only loads while Health is open, once per visit; no calls from other tabs. | No change. |
+| Checked | Access | The panel is only rendered after the page's access check, so the section keeps the same protection as in commit 6. | No change. |
+| Checked | `ChannexDiagnosticsPanel.test.js`, health tab tests | They fail when Health is not first or not the default (test 1), or when the section stays mounted on another tab (test 2). The panel's own loads (`getChannexStatus` and others) run on mount whatever tab is open, so the other 25 tests are unchanged. | No change. |
+| Checked | `ChannexCertificationAdminPage.jsx` and its test | The import, the element and the two health asserts are removed; the page is back to its state before this PR. | No change. |
+| P3 (5/10) | `ChannexDiagnosticsPanel.jsx`, `import ChannexHealthSection from "../channexadmin/health/ChannexHealthSection"` | The folders now depend on each other: `channexadmin` imports the panel from `hostintegrations`, and the panel imports the section from `channexadmin`. No module imports itself back, so it is not a cycle. | Accepted: moving the 2,251-line panel into `channexadmin` is a separate refactor. |
+| P3 (4/10) | `ChannexDiagnosticsPanel.jsx`, property and date filters above the tabs | The filters are also shown on the Health tab, where they do nothing. | Accepted: moving them means reworking the panel. |
+
 ## Not in scope
 
 - Phone width: checked by Enes in his own browser; the browser pane was not signed in.
-- Health as the first tab of the diagnostics panel instead of above it (matches the mockup): next commit of this PR.
+- A flaky `HostTasks.test.js` failed once in the full suite under load and passes alone (25/25); not touched by this PR.
 - Until #3850 is deployed the backend has no health route, so the call fails; the section's error state (a later commit) is what a user would see.
