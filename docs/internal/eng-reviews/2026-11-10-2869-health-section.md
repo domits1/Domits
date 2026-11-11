@@ -45,6 +45,15 @@ Result: no blocking findings so far
 | Checked | State | One `phase` instead of several booleans, so "loading and error" at once cannot happen; one `if` per phase instead of nested ternaries. | No change. |
 | P3 (4/10) | `ChannexHealthSection.jsx` | `<section className="channex-health">` is written four times. | Accepted: a wrapper component would add more than it removes. |
 
+### Commit 5: alarms, accounts and recent failures lists
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P1 (10/10), blocking | `ChannexHealthFailures.jsx`, `formatStayDate` | The stay dates were formatted as timestamps, but the outbox stores them as YYYYMMDD numbers (`channexAriOutboxRepository.js`, `requireDateInt`: "must be an integer date in YYYYMMDD form"). `new Date(20261201)` is 1 Jan 1970, so every failure would have shown "1 Jan – 1 Jan". The tests passed because the fixture made the same wrong assumption. | Fixed before the commit: `formatStayDate` reads year, month and day from the number, with a unit test (`20261201` → "1 Dec") and the fixture in the backend's format. Enes decided (option A). |
+| Checked | the other times | `updatedAt` of alarms (`getTime()` in the reader), `lastRevisionAt`, `lastPollAt` and failure `updatedAt` (`toTimeOrNull`) are milliseconds, as `ChannexHealthTime` expects; the 11 Nov live answer showed 27 Oct for the last booking. | No change. |
+| Checked | `ChannexHealthPanel.jsx` | The three lists share one frame (heading, list or empty text); `useId` links the section to its heading, so each list is a named region. React 18.2 has `useId`. | No change. |
+| P3 (5/10) | `ChannexHealthAlarms.jsx` | A MISSING alarm has no time, so it shows "Never" next to MISSING. | Accepted: MISSING already says what is wrong. |
+
 ## Not in scope
 
 - The section, its states and the page wiring: later commits of this PR.

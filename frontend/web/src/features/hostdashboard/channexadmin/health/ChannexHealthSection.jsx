@@ -2,6 +2,9 @@ import React from "react";
 import { getChannexHealth } from "../../hostintegrations/channexApi";
 import ChannexHealthBanner from "./ChannexHealthBanner";
 import ChannexHealthCards from "./ChannexHealthCards";
+import ChannexHealthAlarms from "./ChannexHealthAlarms";
+import ChannexHealthAccounts from "./ChannexHealthAccounts";
+import ChannexHealthFailures from "./ChannexHealthFailures";
 
 const HTTP_FORBIDDEN = 403;
 
@@ -62,6 +65,9 @@ export default function ChannexHealthSection() {
     <section className="channex-health">
       <ChannexHealthBanner status={state.health.status} reasons={state.health.reasons} />
       <ChannexHealthCards outbox={state.health.outbox} bookings={state.health.bookings} />
+      <ChannexHealthAlarms alarms={state.health.alarms} />
+      <ChannexHealthAccounts accounts={state.health.accounts} />
+      <ChannexHealthFailures failures={state.health.outbox.recentFailures} />
     </section>
   );
 }

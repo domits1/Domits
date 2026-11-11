@@ -22,11 +22,35 @@ const degradedHealth = {
     failedLast24Hours: 2,
     failedLast7Days: 2,
     processedLast7Days: 31,
-    recentFailures: [],
+    recentFailures: [
+      {
+        id: "outbox-1",
+        domitsPropertyId: "property-1",
+        dateFrom: 20261201,
+        dateTo: 20261205,
+        failureReason: "NOT_MAPPED",
+        updatedAt: GENERATED_AT - 5 * 60 * 1000,
+      },
+    ],
   },
   bookings: { lastRevisionAt: LAST_REVISION_AT, lastPollAt: LAST_POLL_AT, lastPollStatus: "SUCCESS" },
-  alarms: { available: true, items: [] },
-  accounts: [],
+  alarms: {
+    available: true,
+    items: [
+      { name: "channex-webhook-errors", state: "OK", updatedAt: GENERATED_AT - 60 * 1000 },
+      { name: "channex-webhook-rejected", state: "ALARM", updatedAt: GENERATED_AT - 2 * 60 * 1000 },
+    ],
+  },
+  accounts: [
+    { id: "account-1", displayName: "Villa host", status: "CONNECTED", lastErrorCode: null, mappedProperties: 1 },
+    {
+      id: "account-2",
+      displayName: "Old staging",
+      status: "RECONNECT_REQUIRED",
+      lastErrorCode: "CHANNEX_UNAUTHORIZED",
+      mappedProperties: 3,
+    },
+  ],
 };
 
 const cardNamed = (name) => screen.getByRole("group", { name });
@@ -117,5 +141,72 @@ describe("ChannexHealthSection", () => {
 
     expect(await screen.findByText("You are not allowed to see the Channex health.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+
+  test("lists every alarm with its state", async () => {
+    getChannexHealth.mockResolvedValue(degradedHealth);
+
+    render(<ChannexHealthSection />);
+    await screen.findByRole("heading", { name: "Degraded" });
+
+    const alarms = within(screen.getByRole("region", { name: "Alarms" }));
+    expect(within(alarms.getByText("channex-webhook-errors").closest("li")).getByText("OK")).toBeTruthy();
+    expect(within(alarms.getByText("channex-webhook-rejected").closest("li")).getByText("ALARM")).toBeTruthy();
+  });
+
+  // D4: a CloudWatch failure must not hide the database part.
+  test("says the alarms are unavailable and still shows the numbers when CloudWatch could not be read", async () => {
+    getChannexHealth.mockResolvedValue({
+      ...degradedHealth,
+      alarms: { available: false, reason: "AccessDeniedException", items: [] },
+    });
+
+    render(<ChannexHealthSection />);
+    await screen.findByRole("heading", { name: "Degraded" });
+
+    const alarms = within(screen.getByRole("region", { name: "Alarms" }));
+    expect(alarms.getByText("Alarm states are unavailable (AccessDeniedException).")).toBeTruthy();
+    expect(within(cardNamed("Waiting changes")).getByText("4")).toBeTruthy();
+  });
+
+  test("lists every account with its status, mapped properties and last error", async () => {
+    getChannexHealth.mockResolvedValue(degradedHealth);
+
+    render(<ChannexHealthSection />);
+    await screen.findByRole("heading", { name: "Degraded" });
+
+    const oldStaging = within(
+      within(screen.getByRole("region", { name: "Accounts" })).getByText("Old staging").closest("li")
+    );
+    expect(oldStaging.getByText("RECONNECT_REQUIRED")).toBeTruthy();
+    expect(oldStaging.getByText("3 properties")).toBeTruthy();
+    expect(oldStaging.getByText("CHANNEX_UNAUTHORIZED")).toBeTruthy();
+  });
+
+  test("lists the recent failed changes with property and reason", async () => {
+    getChannexHealth.mockResolvedValue(degradedHealth);
+
+    render(<ChannexHealthSection />);
+    await screen.findByRole("heading", { name: "Degraded" });
+
+    const failure = within(
+      within(screen.getByRole("region", { name: "Recent failed changes" })).getByText("property-1").closest("li")
+    );
+    expect(failure.getByText("NOT_MAPPED")).toBeTruthy();
+    expect(failure.getByText("1 Dec – 5 Dec")).toBeTruthy();
+  });
+
+  test("says so when a list is empty, instead of showing an empty box", async () => {
+    getChannexHealth.mockResolvedValue({
+      ...degradedHealth,
+      outbox: { ...degradedHealth.outbox, recentFailures: [] },
+      accounts: [],
+    });
+
+    render(<ChannexHealthSection />);
+    await screen.findByRole("heading", { name: "Degraded" });
+
+    expect(screen.getByText("No failed changes.")).toBeTruthy();
+    expect(screen.getByText("No Channex accounts.")).toBeTruthy();
   });
 });

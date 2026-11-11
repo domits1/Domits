@@ -1,4 +1,14 @@
-import { describeReason } from "./channexHealthFormat";
+import { describeReason, formatStayDate } from "./channexHealthFormat";
+
+describe("formatStayDate", () => {
+  test.each([
+    [20261201, "1 Dec"],
+    [20270115, "15 Jan"],
+    [20261031, "31 Oct"],
+  ])("reads the outbox date %p as %p", (yyyymmdd, text) => {
+    expect(formatStayDate(yyyymmdd)).toBe(text);
+  });
+});
 
 describe("describeReason", () => {
   test.each([

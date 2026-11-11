@@ -18,5 +18,15 @@ export const STATUS_LABELS = { HEALTHY: "Healthy", DEGRADED: "Degraded", DOWN: "
 export const formatDateTime = (time) =>
   new Date(time).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// The outbox stores stay dates as YYYYMMDD numbers (20261201), not as timestamps:
+// new Date(20261201) would read it as milliseconds and show 1 Jan 1970.
+export const formatStayDate = (yyyymmdd) => {
+  const month = Math.floor(yyyymmdd / 100) % 100;
+  const day = yyyymmdd % 100;
+  return `${day} ${MONTHS[month - 1]}`;
+};
+
 // An unknown code stays visible: a health page must not hide a reason the backend added later.
 export const describeReason = (reason) => REASON_SENTENCES[reason.code]?.(reason) ?? reason.code;
