@@ -2034,6 +2034,43 @@
       "archivedToast": "{name} is gearchiveerd.",
       "restoredToast": "{name} is hersteld.",
       "archiveBlocked": "{name} kan nog niet worden gearchiveerd, omdat deze eigenaar nog huidige of toekomstige eigendomsaandelen heeft. Haal {name} eerst uit de aandelen van die accommodaties en archiveer daarna opnieuw."
+    },
+    "shares": {
+      "title": "Eigendomsaandelen instellen",
+      "propertyLabel": "Accommodatie",
+      "propertyPlaceholder": "Kies een accommodatie",
+      "dateLabel": "Aandelen gelden vanaf",
+      "ownerColumn": "Eigenaar",
+      "percentColumn": "Aandeel (%)",
+      "chooseOwner": "Kies een eigenaar",
+      "totalLabel": "Totaal",
+      "totalValue": "{percent}% van 100%",
+      "addOwner": "Eigenaar toevoegen",
+      "removeOwner": "Verwijderen",
+      "removeOwnerLabel": "{name} verwijderen",
+      "save": "Aandelen opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "plannedChangeWarning": "Voor deze accommodatie staat al een wijziging van het eigendom gepland vanaf {date}. Opslaan vervangt elke geplande wijziging vanaf de datum die je kiest.",
+      "savedToast": "De aandelen van {property} zijn opgeslagen. Ze gelden vanaf {date}.",
+      "upcomingTitle": "Gepland na deze wijziging",
+      "errorChangedToday": "Het eigendom van deze accommodatie is vandaag al gewijzigd. Kies morgen of een latere datum.",
+      "errorArchivedOwner": "Een van deze eigenaren is gearchiveerd, en gearchiveerde eigenaren kunnen geen aandelen krijgen. Haal die eigenaar uit de lijst of herstel de eigenaar eerst.",
+      "errorConflict": "Het eigendom van deze accommodatie is tegelijkertijd gewijzigd. Laad de pagina opnieuw en probeer het nog eens.",
+      "errors": {
+        "propertyRequired": "Kies een accommodatie.",
+        "dateRequired": "Kies de datum waarop de aandelen ingaan.",
+        "dateInvalid": "Vul een geldige datum in.",
+        "dateBeforeToday": "De datum kan niet vóór vandaag liggen.",
+        "dateTooLate": "De datum kan hooguit 5 jaar na vandaag liggen.",
+        "sharesRequired": "Voeg minstens één eigenaar toe. Een accommodatie kan niet zonder eigenaren blijven.",
+        "totalMismatch": "De aandelen moeten samen precies 100% zijn.",
+        "ownerRequired": "Kies een eigenaar.",
+        "ownerDuplicate": "Deze eigenaar staat al in de lijst.",
+        "percentRequired": "Vul een aandeel in.",
+        "percentInvalid": "Vul een percentage in van 0,01 tot 100, met hooguit 2 decimalen.",
+        "percentZero": "Een aandeel moet minstens 0,01% zijn. Verwijder de eigenaar in plaats daarvan."
+      }
     }
   }
 }
