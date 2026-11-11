@@ -1,6 +1,6 @@
 # feat: ask SiteMinder for reservations and confirm them #603
 
-Pull request: not opened yet (branch `feature/603-siteminder-reservations-read`, on top of #3806)
+Pull request: #3813 (branch `feature/603-siteminder-reservations-read`, on `acceptance` since #3806 was merged)
 Issue: #603
 Reviewed commit: dd335b620
 Result: no blocking findings. Each commit was reviewed as a staged diff before it was made, then the branch against `feature/603-siteminder-reservations-parser`.
