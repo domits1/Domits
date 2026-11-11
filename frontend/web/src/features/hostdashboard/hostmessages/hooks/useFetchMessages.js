@@ -159,13 +159,26 @@ const transformApiMessage = (msg, selfUserId, threadIdFallback) => {
   };
 };
 
+const byCreatedAt = (a, b) => new Date(a.createdAt) - new Date(b.createdAt);
+
+const mergeHistoryWithStore = (history, storeMessages, recordedIds) => {
+  const merged = new Map();
+  for (const message of history) merged.set(message.id, message);
+  for (const message of storeMessages || []) {
+    if (recordedIds.has(message.id) || merged.has(message.id)) continue;
+    merged.set(message.id, message);
+  }
+  return [...merged.values()].sort(byCreatedAt);
+};
+
 export const useFetchMessages = (userId) => {
   const wsCtx = useContext(WebSocketContext);
   const wsMessages = wsCtx?.messages || [];
 
   const [messagesByRecipient, setMessagesByRecipient] = useState({});
   const [messagesByThread, setMessagesByThread] = useState({});
-  const cacheRef = useRef({});
+  const storedIdsRef = useRef({});
+  const historyLoadedRef = useRef(new Set());
   const wsSeenRef = useRef(new Set());
 
   const [activeRecipientId, setActiveRecipientId] = useState(null);
@@ -173,6 +186,11 @@ export const useFetchMessages = (userId) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const rememberId = useCallback((key, id) => {
+    if (!storedIdsRef.current[key]) storedIdsRef.current[key] = new Set();
+    storedIdsRef.current[key].add(id);
+  }, []);
 
   const upsertIntoStores = useCallback(
     (newMessage) => {
@@ -183,14 +201,14 @@ export const useFetchMessages = (userId) => {
 
       const threadKey = newMessage.threadId || null;
 
+      rememberId(partnerId, newMessage.id);
+      if (threadKey) rememberId(threadKey, newMessage.id);
+
       setMessagesByRecipient((prev) => {
         const current = prev[partnerId] || [];
         if (current.some((m) => m.id === newMessage.id)) return prev;
 
-        const nextForPartner = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        const next = { ...prev, [partnerId]: nextForPartner };
-        cacheRef.current[partnerId] = nextForPartner;
-        return next;
+        return { ...prev, [partnerId]: [...current, newMessage].sort(byCreatedAt) };
       });
 
       if (threadKey) {
@@ -198,14 +216,11 @@ export const useFetchMessages = (userId) => {
           const current = prev[threadKey] || [];
           if (current.some((m) => m.id === newMessage.id)) return prev;
 
-          const nextForThread = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          const next = { ...prev, [threadKey]: nextForThread };
-          cacheRef.current[threadKey] = nextForThread;
-          return next;
+          return { ...prev, [threadKey]: [...current, newMessage].sort(byCreatedAt) };
         });
       }
     },
-    [userId]
+    [rememberId, userId]
   );
 
   useEffect(() => {
@@ -247,9 +262,7 @@ export const useFetchMessages = (userId) => {
         return;
       }
 
-      const cacheKey = threadId || options.bookingId || recipientId;
-      const cached = cacheRef.current[cacheKey];
-      if (Array.isArray(cached) && cached.length > 0) {
+      if (threadId && historyLoadedRef.current.has(threadId)) {
         setLoading(false);
         return;
       }
@@ -271,11 +284,18 @@ export const useFetchMessages = (userId) => {
 
         if (!useThreadId) {
           clearTimeout(timeoutId);
-          setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: [] }));
-          cacheRef.current[cacheKey] = [];
+          setMessagesByRecipient((prev) => ({
+            ...prev,
+            [recipientId]: (prev[recipientId] || []).filter((message) => !message.threadId),
+          }));
           setLoading(false);
           return;
         }
+
+        const recordedIds = new Set([
+          ...(storedIdsRef.current[recipientId] || []),
+          ...(storedIdsRef.current[useThreadId] || []),
+        ]);
 
         const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(useThreadId)}`, {
           method: "GET",
@@ -293,14 +313,22 @@ export const useFetchMessages = (userId) => {
         const result = await response.json();
 
         if (Array.isArray(result)) {
-          const transformed = result.map((m) => transformApiMessage(m, userId, useThreadId));
-          const sorted = transformed.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          const history = result.map((m) => transformApiMessage(m, userId, useThreadId));
 
-          setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: sorted }));
-          setMessagesByThread((prev) => ({ ...prev, [useThreadId]: sorted }));
+          setMessagesByRecipient((prev) => ({
+            ...prev,
+            [recipientId]: mergeHistoryWithStore(history, prev[recipientId], recordedIds),
+          }));
+          setMessagesByThread((prev) => ({
+            ...prev,
+            [useThreadId]: mergeHistoryWithStore(history, prev[useThreadId], recordedIds),
+          }));
 
-          cacheRef.current[recipientId] = sorted;
-          cacheRef.current[useThreadId] = sorted;
+          for (const message of history) {
+            rememberId(recipientId, message.id);
+            rememberId(useThreadId, message.id);
+          }
+          historyLoadedRef.current.add(useThreadId);
         } else {
           setError("Unexpected response format");
         }
@@ -315,7 +343,7 @@ export const useFetchMessages = (userId) => {
         setLoading(false);
       }
     },
-    [userId]
+    [rememberId, userId]
   );
 
   const addNewMessage = useCallback(

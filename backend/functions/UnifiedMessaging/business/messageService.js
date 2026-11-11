@@ -4,7 +4,7 @@ import BookingRepository from "../data/bookingRepository.js";
 import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import { createDefaultProviderAdapters, resolveProviderAdapter } from "./providerAdapterRegistry.js";
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
-import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
+import { badRequest, conflict, forbidden, notFound } from "../util/httpErrors.js";
 
 const isExternalProviderPayload = (payload) => Boolean(payload.platform) && payload.platform !== "DOMITS";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -80,6 +80,15 @@ const buildGenericProviderFailureResult = (recipientId, platform) => ({
   channel: platform,
   recipientId,
 });
+
+const parseStoredMetadata = (metadata) => {
+  if (typeof metadata !== "string") return metadata;
+  try {
+    return JSON.parse(metadata);
+  } catch {
+    return metadata;
+  }
+};
 
 const buildStoredMetadata = (payload, providerResult) => {
   if (!isExternalProviderPayload(payload)) {
@@ -485,6 +494,53 @@ class MessageService {
         ...message,
         threadId: resolvedThreadId,
         providerResult,
+      },
+    };
+  }
+
+  async retryMessage(messageId, authenticatedUser) {
+    const message = await this.messageRepository.getMessageById(messageId);
+    if (!message) throw notFound("Message not found.");
+
+    if (!idsEqual(message.senderId, authenticatedUser.userId)) {
+      throw forbidden("Only the sender can retry this message.");
+    }
+
+    const thread = await this.threadRepository.getThreadById(message.threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+
+    const retryPayload = {
+      platform: thread.platform,
+      integrationAccountId: thread.integrationAccountId,
+      externalThreadId: thread.externalThreadId,
+      content: message.content,
+      attachments: message.attachments,
+      metadata: parseStoredMetadata(message.metadata),
+    };
+
+    if (message.deliveryStatus !== "failed" || !isExternalProviderPayload(retryPayload)) {
+      throw conflict("Only a failed message on a connected channel can be retried.");
+    }
+    this.assertSupportedProvider(retryPayload);
+
+    const claimed = await this.messageRepository.claimFailedMessageForRetry(message.id);
+    if (!claimed) throw conflict("This message is already being retried.");
+
+    const sendResult = await this.sendViaProviderAdapter(retryPayload, message.recipientId);
+
+    const updated = await this.messageRepository.updateDeliveryResult(message.id, {
+      deliveryStatus: sendResult.deliveryStatus,
+      platformMessageId: sendResult.platformMessageId,
+      errorCode: sendResult.errorCode,
+      errorMessage: sendResult.errorMessage,
+      metadata: buildStoredMetadata(retryPayload, sendResult.providerResult),
+    });
+
+    return {
+      statusCode: sendResult.errorCode ? 502 : 200,
+      response: {
+        ...updated,
+        providerResult: sendResult.providerResult,
       },
     };
   }

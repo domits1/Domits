@@ -9,6 +9,7 @@ import HostReports from "./HostPayments";
 import HostReviews from "../review/views/HostReviews";
 import HostTasks from "./hosttasks/pages/HostTasks";
 import HostOwners from "./hostowners/pages/HostOwners";
+import HostOwnerDetail from "./hostowners/pages/HostOwnerDetail";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
 import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
@@ -38,7 +39,8 @@ import {
   CHANNEX_CERTIFICATION_LEGACY_ADMIN_ROUTE,
 } from "./channexadmin/channexCertificationAccess";
 import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
-import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewAccess";
+import PropertyReviewDetailPage from "./propertyreview/detail/PropertyReviewDetailPage";
+import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewPaths";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -136,6 +138,7 @@ function MainDashboardHost() {
             element={<Navigate to={`../${CHANNEX_CERTIFICATION_ADMIN_ROUTE}`} replace />}
           />
           <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
+          <Route path={`${PROPERTY_REVIEW_ADMIN_ROUTE}/:propertyId`} element={<PropertyReviewDetailPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
 
@@ -147,6 +150,7 @@ function MainDashboardHost() {
           <Route path="distribution" element={<HostChannelDistribution />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="owners" element={<HostOwners />} />
+          <Route path="owners/:id" element={<HostOwnerDetail />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />
           <Route path="website/:propertyId" element={<WebsiteEditorPage />} />

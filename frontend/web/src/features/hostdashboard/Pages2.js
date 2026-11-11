@@ -23,11 +23,13 @@ import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
   checkChannexCertificationAccess,
 } from "./channexadmin/channexCertificationAccess";
-import { PROPERTY_REVIEW_ADMIN_ROUTE, checkPropertyReviewAccess } from "./propertyreview/propertyReviewAccess";
+import {
+  PROPERTY_REVIEW_ACCESS,
+  PROPERTY_REVIEW_ADMIN_ROUTE,
+  checkPropertyReviewAccess,
+} from "./propertyreview/propertyReviewAccess";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
-
-const isGranted = (result) => result.status === "fulfilled" && result.value === true;
 
 const loadChannexAccess = async () => {
   const user = await Auth.currentAuthenticatedUser();
@@ -40,19 +42,13 @@ const NAV = [
   { key: "CalendarPricing", label: "Calendar & Pricing", icon: <CalendarIcon />, to: "calendar-pricing" },
   { key: "Reservations", label: "Reservations", icon: <EventIcon />, to: "reservations" },
   { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
-  {
-    key: "Integrations",
-    label: "Marketplace",
-    icon: <IntegrationInstructionsIcon />,
-    to: "integrations-marketplace",
-  },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
-  { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
   // { key: "MissedRevenue", label: "Missed revenue", icon: <TrendingDownIcon />, to: "hostinsights/missed-revenue" },
   { key: "Distribution", label: "Distribution", icon: <HubIcon />, to: "distribution", internalOnly: "channex" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
   { key: "Owners", label: "Owners", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
   { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
@@ -69,6 +65,12 @@ const NAV = [
     icon: <FactCheckOutlinedIcon />,
     to: PROPERTY_REVIEW_ADMIN_ROUTE,
     internalOnly: "propertyReview",
+  },
+  {
+    key: "Integrations",
+    label: "Marketplace",
+    icon: <IntegrationInstructionsIcon />,
+    to: "integrations-marketplace",
   },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
@@ -90,17 +92,20 @@ function Pages({ onNavigate }) {
   useEffect(() => {
     let mounted = true;
 
-    async function loadAdminAccess() {
-      const [channexResult, propertyReviewResult] = await Promise.allSettled([
-        loadChannexAccess(),
-        checkPropertyReviewAccess(),
-      ]);
-      if (mounted) {
-        setAccess({ channex: isGranted(channexResult), propertyReview: isGranted(propertyReviewResult) });
-      }
+    function grantWhenAllowed(key, check, isAllowed) {
+      void check
+        .then(isAllowed, () => false)
+        .then((granted) => {
+          if (mounted && granted) setAccess((current) => ({ ...current, [key]: true }));
+        });
     }
 
-    void loadAdminAccess();
+    grantWhenAllowed("channex", loadChannexAccess(), (allowed) => allowed === true);
+    grantWhenAllowed(
+      "propertyReview",
+      checkPropertyReviewAccess(),
+      (state) => state === PROPERTY_REVIEW_ACCESS.ALLOWED
+    );
     return () => {
       mounted = false;
     };
@@ -136,8 +141,7 @@ function Pages({ onNavigate }) {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-controls="host-menu"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
+        onClick={() => setOpen((v) => !v)}>
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
@@ -150,11 +154,7 @@ function Pages({ onNavigate }) {
         aria-hidden={!open}
       />
 
-      <nav
-        className={`sidebar ${open ? "open" : ""}`}
-        aria-label="Host navigation"
-        id="host-menu"
-      >
+      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
@@ -164,8 +164,7 @@ function Pages({ onNavigate }) {
                   to={item.to}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
-                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
-                >
+                  className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>
                   <span className="icon" aria-hidden="true">
                     {item.icon}
                   </span>

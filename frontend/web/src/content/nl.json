@@ -1667,6 +1667,7 @@
       "websitePlan": {
         "sectionTitle": "Direct Booking-websiteabonnement",
         "sectionSubtitle": "Kies het abonnement voor je boekingswebsite. De prijs van Elite wordt hieronder weergegeven.",
+        "sectionSubtitleWithoutPayment": "Kies het abonnement voor je boekingswebsite.",
         "loading": "Je websiteabonnement wordt geladen...",
         "loadError": "Je huidige websiteabonnement kon niet worden geladen.",
         "essentials": "Essentials",
@@ -1702,10 +1703,12 @@
         "checkoutError": "Stripe Checkout kon niet worden gestart. Probeer het opnieuw.",
         "downgradeScheduled": "De overstap naar Essentials staat gepland aan het einde van je huidige factureringsperiode.",
         "downgradeSuccess": "Je websiteabonnement is nu Essentials.",
+        "upgradeSuccess": "Je websiteabonnement is nu Elite.",
         "restoreSuccess": "Je Elite-abonnement is opnieuw geactiveerd.",
         "unchanged": "Je websiteabonnement is al bijgewerkt.",
         "effectiveUntil": "Elite blijft actief tot {date}.",
         "priceUnavailable": "Prijs niet beschikbaar",
+        "withoutPayment": "Geen betaling nodig",
         "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
         "checkoutSuccess": "Je Elite-abonnement is actief.",
         "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
@@ -1970,6 +1973,67 @@
       "pending": "In afwachting",
       "archived": "Gearchiveerd",
       "unknown": "Onbekende status"
+    },
+    "addOwner": "Eigenaar toevoegen",
+    "editOwner": "Bewerken",
+    "editOwnerLabel": "{name} bewerken",
+    "columnActions": "Acties",
+    "form": {
+      "createTitle": "Eigenaar toevoegen",
+      "editTitle": "Eigenaar bewerken",
+      "labels": {
+        "first_name": "Voornaam",
+        "last_name": "Achternaam",
+        "company_name": "Bedrijfsnaam",
+        "email": "E-mail",
+        "phone": "Telefoon",
+        "preferred_language": "Voorkeurstaal (zoals en of nl-NL)",
+        "owner_type": "Type eigenaar",
+        "status": "Status",
+        "notes": "Notities"
+      },
+      "chooseOwnerType": "Kies een type",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "close": "Sluiten",
+      "createdToast": "{name} is toegevoegd.",
+      "updatedToast": "{name} is bijgewerkt.",
+      "errorNotFound": "Deze eigenaar bestaat niet meer. Sluit het formulier en laad de pagina opnieuw.",
+      "errorGeneric": "We konden de eigenaar niet opslaan. Probeer het opnieuw.",
+      "errors": {
+        "required": "Dit veld is verplicht.",
+        "tooLong": "Gebruik maximaal {max} tekens.",
+        "invalidCharacters": "Dit veld bevat tekens die niet zijn toegestaan.",
+        "invalidEmail": "Voer een geldig e-mailadres in.",
+        "invalidPhone": "Gebruik minstens één cijfer, en alleen cijfers, spaties en + ( ) - .",
+        "invalidLanguage": "Gebruik een taalcode zoals en of nl-NL.",
+        "invalidOwnerType": "Kies een type eigenaar.",
+        "invalidStatus": "Kies een status.",
+        "archivedStatus": "Een eigenaar kan alleen via archiveren worden gearchiveerd.",
+        "companyNameRequired": "Een bedrijfsnaam is verplicht voor een bedrijf of trust."
+      }
+    },
+    "detail": {
+      "backToOwners": "Terug naar eigenaren",
+      "loading": "Eigenaar laden…",
+      "errorNotFound": "Deze eigenaar bestaat niet of is niet een van jouw eigenaren.",
+      "errorGeneric": "We konden deze eigenaar niet laden. Probeer het opnieuw.",
+      "detailsTitle": "Gegevens",
+      "notProvided": "Niet ingevuld",
+      "labels": {
+        "created_at": "Aangemaakt",
+        "updated_at": "Laatst gewijzigd"
+      },
+      "archive": "Archiveren",
+      "archiving": "Archiveren…",
+      "restore": "Herstellen",
+      "restoring": "Herstellen…",
+      "archiveConfirmTitle": "Deze eigenaar archiveren?",
+      "archiveConfirmMessage": "{name} wordt verborgen in je lijst met eigenaren. Je kunt deze eigenaar later herstellen.",
+      "archivedToast": "{name} is gearchiveerd.",
+      "restoredToast": "{name} is hersteld.",
+      "archiveBlocked": "{name} kan nog niet worden gearchiveerd, omdat deze eigenaar nog huidige of toekomstige eigendomsaandelen heeft. Haal {name} eerst uit de aandelen van die accommodaties en archiveer daarna opnieuw."
     }
   }
 }
