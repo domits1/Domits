@@ -306,7 +306,7 @@ export class ReviewService {
   async getReviewApprovalQueue(userId, username, status) {
     await this.assertReviewApprover(userId, username);
     const reviews = await this.repository.findUnpublishedReviews(status);
-    return reviews.map(status === "PENDING_APPROVAL" ? toPendingReviewView : toReviewView);
+    return reviews.map(toPendingReviewView);
   }
 
   async getModeratedReviews(userId, username, scope) {

@@ -10,6 +10,8 @@ const PAGE_SIZE = 8;
 const REVIEW_TABS = [
   { scope: "pending-approval", label: "Pending approval", tableLabel: "Reviews pending approval",
     empty: "No reviews are waiting for approval." },
+  { scope: "approved", label: "Unpublished", tableLabel: "Approved unpublished reviews",
+    empty: "No approved reviews are awaiting publication." },
   { scope: "admin-published", label: "Published", tableLabel: "Published reviews", empty: "No published reviews." },
   { scope: "admin-rejected", label: "Rejected", tableLabel: "Rejected reviews", empty: "No rejected reviews." },
   { scope: "admin-all", label: "All reviews", tableLabel: "All reviews", empty: "No submitted reviews." },
@@ -69,7 +71,7 @@ function Pagination({ page, pageCount, total, onChange }) {
 export default function ReviewApprovalPage() {
   const [tabIndex, setTabIndex] = useState(0);
   const tab = REVIEW_TABS[tabIndex];
-  const { reviews, queueState, loadError, retry, approve, approvingIds, notice } = useReviewApprovalQueue(tab.scope);
+  const { reviews, queueState, loadError, retry, approve, publish, approvingIds, notice } = useReviewApprovalQueue(tab.scope);
   const [query, setQuery] = useState("");
   const [rating, setRating] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -218,6 +220,7 @@ export default function ReviewApprovalPage() {
                       selectedId={selectedReview?.id}
                       approvingIds={approvingIds}
                       onApprove={approve}
+                      onPublish={publish}
                       onView={setSelectedId}
                       onClose={closeDetails}
                     />
@@ -241,6 +244,7 @@ export default function ReviewApprovalPage() {
             review={selectedReview}
             approving={approvingIds.has(selectedReview.id)}
             onApprove={approve}
+            onPublish={publish}
             onClose={closeDetails}
           />
         )}

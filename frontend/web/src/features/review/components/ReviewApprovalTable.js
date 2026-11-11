@@ -4,13 +4,26 @@ import { normalizeImageUrl } from "../../../utils/accommodationImage";
 import { formatPropertyLocation, formatSubmittedAt, getGuestInitials, getReviewStatusLabel } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
-function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onClose }) {
+function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, onView, onClose }) {
   const pending = review.status === "PENDING_APPROVAL";
   const submitted = formatSubmittedAt(review.created_at);
-  const rowClassName = selected ? styles.selectedRow : undefined;
+  const rowClassName = `${styles.reviewRow} ${selected ? styles.selectedRow : ""}`;
 
   return (
-    <tr className={rowClassName} aria-selected={selected}>
+    <tr
+      className={rowClassName}
+      aria-selected={selected}
+      tabIndex={0}
+      onClick={(event) => {
+        if (!event.target.closest("button, input, a, label")) onView(review.id);
+      }}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && ["Enter", " "].includes(event.key)) {
+          event.preventDefault();
+          onView(review.id);
+        }
+      }}
+    >
       <td className={styles.selection}>
         <input
           type="checkbox"
@@ -63,6 +76,11 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onC
               {approving ? "Approving…" : "Approve"}
             </button>
           )}
+          {review.status === "APPROVED" && review.publication_status === "UNPUBLISHED" && (
+            <button type="button" className={styles.approveButton} disabled={approving} onClick={() => onPublish(review)}>
+              {approving ? "Publishing…" : "Publish"}
+            </button>
+          )}
           <button type="button" className={styles.secondaryButton} onClick={() => onView(review.id)}>
             View
           </button>
@@ -72,7 +90,7 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onView, onC
   );
 }
 
-export default function ReviewApprovalTable({ label, reviews, selectedId, approvingIds, onApprove, onView, onClose }) {
+export default function ReviewApprovalTable({ label, reviews, selectedId, approvingIds, onApprove, onPublish, onView, onClose }) {
   return (
     <table className={styles.table} aria-label={label}>
       <thead>
@@ -95,6 +113,7 @@ export default function ReviewApprovalTable({ label, reviews, selectedId, approv
             selected={review.id === selectedId}
             approving={approvingIds.has(review.id)}
             onApprove={onApprove}
+            onPublish={onPublish}
             onView={onView}
             onClose={onClose}
           />

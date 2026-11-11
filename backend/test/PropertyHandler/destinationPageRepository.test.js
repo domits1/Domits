@@ -12,6 +12,8 @@ jest.mock("database", () => ({
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 
+const oneLine = (statement) => statement.replaceAll(/\s+/g, " ");
+
 const withRows = (rows) => {
   const query = jest.fn(async () => rows);
   Database.getInstance.mockResolvedValue({ options: { schema: "main" }, query });
@@ -130,8 +132,15 @@ describe("the destination page repository", () => {
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
     expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS image_key");
     expect(statement).not.toMatch(/street|postal|house|hostid|latitude/i);
-    expect(statement).toContain("ORDER BY p.createdat DESC, p.id ASC\n      LIMIT $4");
     expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%", 24]);
+  });
+
+  it("sorts the oldest approval first, and a listing with no approval above every approved one", async () => {
+    const query = withRows([]);
+    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain", 24);
+    expect(oneLine(query.mock.calls[0][0])).toContain(
+      `ORDER BY COALESCE( (SELECT MAX(e.created_at) FROM ${SCHEMA}.property_moderation_event e WHERE e.property_id = p.id AND e.action = 'APPROVED'), 0) ASC, p.createdat DESC, p.id ASC LIMIT $4`
+    );
   });
 
   it("escapes the like wildcards of a path so a sibling with an underscore in its name is not swept in", async () => {
