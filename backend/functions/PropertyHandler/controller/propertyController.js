@@ -3884,6 +3884,7 @@ export class PropertyController {
                 accountId: user.Username,
                 targetPlan: body.plan,
                 customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+                withoutPayment: body.withoutPayment,
             });
 
             return {
