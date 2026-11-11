@@ -1,5 +1,6 @@
 import {NotFoundException} from "../../util/exception/NotFoundException.js";
 import {ConflictException} from "../../util/exception/ConflictException.js";
+import {TypeException} from "../../util/exception/TypeException.js";
 import {REGISTRATION_NUMBER_TAKEN_MESSAGE} from "../../util/constant/registrationNumber.js";
 import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import {PaginatedPropertyMapping} from "../../util/mapping/paginatedProperty.js";
@@ -8,6 +9,12 @@ import {Property} from "database/models/Property";
 import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
 import {randomUUID} from "node:crypto";
 import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
+import {
+    afterListingPosition,
+    findListingPosition,
+    joinLatestApproval,
+    orderByListingPosition,
+} from "./listingPosition.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
@@ -363,22 +370,21 @@ export class PropertyRepository {
 
     async getActiveProperties(lastEvaluatedKey) {
         const client = await Database.getInstance();
-        const query = await client
+        let query = client
             .getRepository(Property)
             .createQueryBuilder("property")
-            .where("property.status = :status", { status: "ACTIVE" })
-            .orderBy("property.createdat", "DESC")
-            .addOrderBy("property.id", "DESC")
-            .limit(12)
+            .select(["property.id", "property.createdat"])
+            .where("property.status = :status", { status: "ACTIVE" });
+        query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
         if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            query.andWhere(
-                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
-                {
-                    createdAt: lastEvaluatedKey.createdAt,
-                    id: lastEvaluatedKey.id,
-                }
-            );
+            // Only the id steers the page. createdAt marks that a cursor was sent, and the position is read back
+            // from the row, so a stale or forged value cannot skip or repeat listings.
+            const position = await findListingPosition(client, lastEvaluatedKey.id);
+            if (!position) {
+                throw new TypeException("Unknown pagination cursor.");
+            }
+            query = afterListingPosition(query, position);
         }
 
         const result = await query.getMany();

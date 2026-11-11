@@ -1,8 +1,10 @@
-import { beforeAll, describe, expect, it } from "@jest/globals";
-import { DataSource } from "typeorm";
+import { afterEach, beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { DataSource, SelectQueryBuilder } from "typeorm";
 import { Property } from "database/models/Property";
 import { Property_Moderation_Event } from "database/models/Property_Moderation_Event";
 import {
+  afterListingPosition,
+  findListingPosition,
   joinLatestApproval,
   orderByListingPosition,
 } from "../../functions/PropertyHandler/data/repository/listingPosition.js";
@@ -62,5 +64,101 @@ describe("listing position query", () => {
 
     expect(aggregate).toContain("MAX(");
     expect(aggregate).not.toContain('"property"');
+  });
+});
+
+describe("keyset position", () => {
+  let dataSource;
+  let captured;
+
+  beforeAll(async () => {
+    dataSource = new DataSource({
+      type: "postgres",
+      schema: "test",
+      entities: [Property, Property_Moderation_Event],
+    });
+    await dataSource.buildMetadatas();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("afterListingPosition", () => {
+    const position = { approvedAt: 5000, createdAt: 1700000000100, id: "property-6" };
+
+    const render = () => {
+      const query = joinLatestApproval(dataSource.getRepository(Property).createQueryBuilder("property"));
+      const after = afterListingPosition(query, position);
+      return { sql: after.getQuery(), parameters: after.getParameters() };
+    };
+
+    it("keeps the rows that sort after the position, in three nested branches", () => {
+      const { sql } = render();
+
+      expect(sql).toContain(
+        "WHERE (COALESCE(approval.approved_at, 0) > :cursorApprovedAt" +
+          ' OR (COALESCE(approval.approved_at, 0) = :cursorApprovedAt AND "property"."createdat" < :cursorCreatedAt)' +
+          " OR (COALESCE(approval.approved_at, 0) = :cursorApprovedAt" +
+          ' AND "property"."createdat" = :cursorCreatedAt AND "property"."id" < :cursorId))'
+      );
+    });
+
+    it("binds the three position values and nothing else of its own", () => {
+      const { parameters } = render();
+
+      expect(parameters).toEqual({
+        approvedAction: "APPROVED",
+        cursorApprovedAt: 5000,
+        cursorCreatedAt: 1700000000100,
+        cursorId: "property-6",
+      });
+    });
+  });
+
+  describe("findListingPosition", () => {
+    const read = async (row) => {
+      jest.spyOn(SelectQueryBuilder.prototype, "getRawOne").mockImplementation(function () {
+        captured = { sql: this.getQuery(), parameters: this.getParameters() };
+        return Promise.resolve(row);
+      });
+      return await findListingPosition(dataSource, "property-6");
+    };
+
+    it("reads the row by id and does not filter on status", async () => {
+      await read({ property_id: "property-6", property_createdat: "1", approved_at: "0" });
+
+      expect(captured.sql).toContain('WHERE "property"."id" = :id');
+      expect(captured.sql).not.toContain('"property"."status"');
+      expect(captured.parameters.id).toBe("property-6");
+    });
+
+    it("looks up the latest APPROVED event of that one row", async () => {
+      await read({ property_id: "property-6", property_createdat: "1", approved_at: "0" });
+
+      expect(captured.sql).toContain('COALESCE(MAX("event"."created_at"), 0)');
+      expect(captured.sql).toContain('"event"."property_id" = "property"."id" AND "event"."action" = :approvedAction');
+      expect(captured.parameters.approvedAction).toBe("APPROVED");
+    });
+
+    it("returns numbers, because the driver hands bigint back as text", async () => {
+      const position = await read({
+        property_id: "property-6",
+        property_createdat: "1700000000100",
+        approved_at: "1700000005000",
+      });
+
+      expect(position).toEqual({ approvedAt: 1700000005000, createdAt: 1700000000100, id: "property-6" });
+    });
+
+    it("reads a never-approved row as approvedAt zero", async () => {
+      const position = await read({ property_id: "property-6", property_createdat: "5", approved_at: "0" });
+
+      expect(position.approvedAt).toBe(0);
+    });
+
+    it("returns null when no row has that id", async () => {
+      await expect(read(undefined)).resolves.toBeNull();
+    });
   });
 });
