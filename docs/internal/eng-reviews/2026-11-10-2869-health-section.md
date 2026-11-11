@@ -54,7 +54,17 @@ Result: no blocking findings so far
 | Checked | `ChannexHealthPanel.jsx` | The three lists share one frame (heading, list or empty text); `useId` links the section to its heading, so each list is a named region. React 18.2 has `useId`. | No change. |
 | P3 (5/10) | `ChannexHealthAlarms.jsx` | A MISSING alarm has no time, so it shows "Never" next to MISSING. | Accepted: MISSING already says what is wrong. |
 
+### Commit 6: the section on the admin page
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `ChannexCertificationAdminPage.jsx`, `<ChannexHealthSection />` | The section is rendered only in the last `return`, after `if (!accessState.allowed)`, so a user who is not allowed never mounts it and no health call is made. The not-authorized test asserts it is absent. | No change. |
+| Checked | Page test, `compareDocumentPosition` | The test fails if the section is removed (`findByText`) or placed below the panel (position check). | No change. |
+| Checked | Access rule | The page checks `getChannexAdminAccess`; the backend health route is in `protectedChannexCertificationAdminRoutes`, the same allowlist, so the page and the route cannot disagree on who may see it. | No change. |
+| P3 (5/10) | `ChannexCertificationAdminPage.jsx`, no error boundary | A render error in the section (an answer without `reasons`, for example) would also take down the diagnostics panel. The backend always sends every field; load errors are already caught inside the section. | Accepted: no boundary for a shape the contract excludes. |
+| P3 (3/10) | Page load | The section and the diagnostics panel each make their own call on load, so one page load makes one extra request. | Accepted: one call per load, admins only. |
+
 ## Not in scope
 
-- The section, its states and the page wiring: later commits of this PR.
+- Styles for the section: next commit of this PR.
 - Until #3850 is deployed the backend has no health route, so the call fails; the section's error state (a later commit) is what a user would see.
