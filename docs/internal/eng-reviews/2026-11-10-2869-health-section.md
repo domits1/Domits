@@ -98,6 +98,17 @@ The visual check of commit 8 showed the sticky property and date filters (`.chan
 | Checked | `HostIntegrations.scss`, `position: static` under 640px | Three stacked fields stuck to the top would hide about a third of a phone screen, so on phones the box scrolls away. | No change. |
 | Checked | Tests | Layout only, and jsdom has no layout or scrolling, so there is no test; checked in the browser on desktop and at 375 px. | No change. |
 
+### Commit 10: the sticky filters stop below the site header
+
+The browser check after commit 9 showed only the bottom edge of the filter box while scrolling. Cause: the site header is fixed on top (`header.scss:3-11`, `position: fixed; top: 0; height: 90px; z-index: 1200`), and the filters stuck at `top: 0`, behind it. The earlier screenshot with only "Date to" visible was the same cause: the box was two rows then, and the header covered the first. So the sticky filters never worked since f6c3eefb2; the browser check written under commit 9 was not valid.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `HostIntegrations.scss`, `top: var(--app-header-h, 90px)` | `Header.js:114` measures the header and sets `--app-header-h`, updated by a `ResizeObserver`; the listing page uses it the same way (`listingDetails.scss:141`). `90px` is the header's own height, as a fallback. | No change. |
+| Checked | `z-index: 2` against the header's `1200` | The box slides under the header, not over it. | No change. |
+| Checked | Phones | Under 640px the box is `position: static` (commit 9), so the header height there does not matter. | No change. |
+| Checked | Tests | Layout only; jsdom has no layout. Checked by scrolling in the browser. | No change. |
+
 ## Not in scope
 
 - Phone width: checked by Enes in his own browser; the browser pane was not signed in.

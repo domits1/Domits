@@ -533,9 +533,10 @@
   flex-wrap: wrap;
 }
 
+// The site header is fixed on top; at top: 0 the filters would stick underneath it and stay hidden.
 .channex-diagnostics-control-panel {
   position: sticky;
-  top: 0;
+  top: var(--app-header-h, 90px);
   z-index: 2;
 }
 
