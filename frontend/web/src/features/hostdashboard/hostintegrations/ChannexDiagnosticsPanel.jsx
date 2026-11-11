@@ -2200,7 +2200,7 @@ function ChannexDiagnosticsPanel({ userId }) {
   return (
     <section className="channex-diagnostics">
       <div className="host-integrations-manual-form channex-diagnostics-control-panel">
-        <div className="host-integrations-field-grid">
+        <div className="host-integrations-field-grid channex-diagnostics-filter-grid">
           <label className="host-integrations-field">
             <span>Domits property ID</span>
             <input

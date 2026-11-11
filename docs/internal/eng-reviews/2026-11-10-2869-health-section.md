@@ -87,8 +87,19 @@ The visual check showed the section above the whole panel, while the mockup of 9
 | P3 (5/10) | `ChannexDiagnosticsPanel.jsx`, `import ChannexHealthSection from "../channexadmin/health/ChannexHealthSection"` | The folders now depend on each other: `channexadmin` imports the panel from `hostintegrations`, and the panel imports the section from `channexadmin`. No module imports itself back, so it is not a cycle. | Accepted: moving the 2,251-line panel into `channexadmin` is a separate refactor. |
 | P3 (4/10) | `ChannexDiagnosticsPanel.jsx`, property and date filters above the tabs | The filters are also shown on the Health tab, where they do nothing. | Accepted: moving them means reworking the panel. |
 
+### Commit 9: the sticky filters fit on one row
+
+The visual check of commit 8 showed the sticky property and date filters (`.channex-diagnostics-control-panel`, sticky since f6c3eefb2, 30 Apr) taking two rows and covering the top of the Health tab while scrolling. Removing the sticky rule was tried and dropped before pushing: Enes chose to keep the filters reachable and make them smaller instead.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `ChannexDiagnosticsPanel.jsx`, `channex-diagnostics-filter-grid` | The three columns are a new class on this one row only; the shared `host-integrations-field-grid` keeps two columns for the panel's three other forms. | No change. |
+| Checked | `HostIntegrations.scss`, order of the rules | The new rule comes after `.host-integrations-field-grid`, so it wins on wide screens; the `max-width: 640px` rule comes later still, so phones keep one column. | No change. |
+| Checked | `HostIntegrations.scss`, `position: static` under 640px | Three stacked fields stuck to the top would hide about a third of a phone screen, so on phones the box scrolls away. | No change. |
+| Checked | Tests | Layout only, and jsdom has no layout or scrolling, so there is no test; checked in the browser on desktop and at 375 px. | No change. |
+
 ## Not in scope
 
 - Phone width: checked by Enes in his own browser; the browser pane was not signed in.
 - A flaky `HostTasks.test.js` failed once in the full suite under load and passes alone (25/25); not touched by this PR.
-- Until #3850 is deployed the backend has no health route, so the call fails; the section's error state (a later commit) is what a user would see.
+- #3850 is merged and deployed (live check 11 Nov: HTTP 200, all 7 alarms read), so the section shows real data on acceptance.
