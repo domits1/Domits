@@ -333,12 +333,23 @@ export class PropertyRepository {
 
     async getActivePropertiesByType(type) {
         const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property)
-            .createQueryBuilder("property")
+        const query = client.getRepository(Property).createQueryBuilder("property");
+        const approvedAt = query
+            .subQuery()
+            .select("COALESCE(MAX(event.createdAt), 0)")
+            .from(Property_Moderation_Event, "event")
+            .where("event.propertyId = property.id")
+            .andWhere("event.action = :approved")
+            .getQuery();
+        const result = await query
             .innerJoin("property_type", "pt", "pt.property_id = property.id")
             .where("pt.type = :type", { type: type })
             .andWhere("property.status = :status", { status: "ACTIVE" })
+            .setParameter("approved", "APPROVED")
+            .addSelect(approvedAt, "approved_at")
+            .orderBy("approved_at", "ASC")
+            .addOrderBy("property.createdat", "DESC")
+            .addOrderBy("property.id", "DESC")
             .limit(12)
             .getMany();
 
