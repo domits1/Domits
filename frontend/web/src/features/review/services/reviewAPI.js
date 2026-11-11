@@ -37,6 +37,16 @@ export const getAdminReviews = async (scope) => {
 
 export const getPendingApprovalReviews = () => getAdminReviews("pending-approval");
 
+export const publishApprovedReview = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not publish this review. Please try again.");
+  return payload;
+};
+
 export const hasReviewApprovalAccess = async () => {
   try {
     await getPendingApprovalReviews();

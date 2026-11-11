@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { approveReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
+import { approveReview, publishApprovedReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
 
 export const QUEUE_STATE = Object.freeze({
   LOADING: "loading",
@@ -69,10 +69,30 @@ export default function useReviewApprovalQueue(scope) {
     }
   }, []);
 
+  const publish = useCallback(async (review) => {
+    if (inFlight.current.has(review.id)) return;
+    setApproving(review.id, true);
+    setNotice(null);
+    try {
+      const published = await publishApprovedReview(review.id);
+      setResult((current) => ({
+        ...current,
+        reviews: current.scope === "approved"
+          ? current.reviews.filter((entry) => entry.id !== review.id)
+          : current.reviews.map((entry) => entry.id === review.id ? { ...entry, ...published } : entry),
+      }));
+      setNotice({ type: "success", message: `“${review.title}” is published.` });
+    } catch (error) {
+      setNotice({ type: "error", message: error?.message || "Could not publish this review. Please try again." });
+    } finally {
+      setApproving(review.id, false);
+    }
+  }, []);
+
   const retry = useCallback(() => setAttempt((current) => current + 1), []);
 
   return {
     reviews, queueState: result.scope === scope ? queueState : QUEUE_STATE.LOADING,
-    loadError, retry, approve, approvingIds, notice,
+    loadError, retry, approve, publish, approvingIds, notice,
   };
 }

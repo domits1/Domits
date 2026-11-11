@@ -1,10 +1,11 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ReviewApprovalPage from "../views/ReviewApprovalPage";
-import { approveReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
+import { approveReview, publishApprovedReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
 
 jest.mock("../services/reviewAPI", () => ({
   approveReview: jest.fn(),
+  publishApprovedReview: jest.fn(),
   getPendingApprovalReviews: jest.fn(),
   getAdminReviews: jest.fn(),
 }));
@@ -68,6 +69,56 @@ describe("ReviewApprovalPage", () => {
     expect(screen.getByText("Showing 1–2 of 2 reviews")).toBeInTheDocument();
   });
 
+  test("shows approved reviews awaiting publication in the Unpublished tab", async () => {
+    getAdminReviews.mockResolvedValue([
+      pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" }),
+    ]);
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Unpublished" }));
+
+    const unpublishedTable = await screen.findByRole("table", { name: "Approved unpublished reviews" });
+    expect(getAdminReviews).toHaveBeenCalledWith("approved");
+    expect(within(unpublishedTable).getByText("Great stay!")).toBeInTheDocument();
+    expect(within(unpublishedTable).getByText("Awaiting publication")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+  });
+
+  test.each(["row", "details"])("publishes an approved review from the %s and removes it from Unpublished", async (source) => {
+    getAdminReviews.mockResolvedValue([pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" })]);
+    let finishPublish;
+    publishApprovedReview.mockImplementation(() => new Promise((resolve) => { finishPublish = resolve; }));
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+    fireEvent.click(screen.getByRole("tab", { name: "Unpublished" }));
+    const unpublishedTable = await screen.findByRole("table", { name: "Approved unpublished reviews" });
+
+    fireEvent.click(source === "row"
+      ? within(unpublishedTable).getByRole("button", { name: "Publish" })
+      : within(details()).getByRole("button", { name: "Publish review" }));
+
+    expect(publishApprovedReview).toHaveBeenCalledWith("r1");
+    expect(screen.getAllByRole("button", { name: "Publishing…" })).toHaveLength(2);
+    screen.getAllByRole("button", { name: "Publishing…" }).forEach((button) => expect(button).toBeDisabled());
+    finishPublish(pendingReview({ status: "PUBLISHED", publication_status: "PUBLISHED" }));
+    expect(await screen.findByText("“Great stay!” is published.")).toBeInTheDocument();
+    expect(screen.getByText("No approved reviews are awaiting publication.")).toBeInTheDocument();
+    expect(approveReview).not.toHaveBeenCalled();
+  });
+
+  test("keeps an approved review available when publishing fails", async () => {
+    getAdminReviews.mockResolvedValue([pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" })]);
+    publishApprovedReview.mockRejectedValue(new Error("Publication denied."));
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+    fireEvent.click(screen.getByRole("tab", { name: "Unpublished" }));
+    const unpublishedTable = await screen.findByRole("table", { name: "Approved unpublished reviews" });
+    fireEvent.click(within(unpublishedTable).getByRole("button", { name: "Publish" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Publication denied.");
+    expect(within(unpublishedTable).getByRole("button", { name: "Publish" })).toBeEnabled();
+  });
+
   test("loads status tabs and keeps historical reviews read-only", async () => {
     getAdminReviews.mockImplementation(async (scope) => scope === "admin-rejected" ? [] : [
       pendingReview({ title: "Published stay", status: "PUBLISHED", publication_status: "PUBLISHED" }),
@@ -107,6 +158,20 @@ describe("ReviewApprovalPage", () => {
 
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
     expect(within(details()).getByText("Unverified")).toBeInTheDocument();
+    expect(rowFor("Good location")).toHaveAttribute("aria-selected", "true");
+  });
+
+  test("opens review details by clicking row content or pressing Enter or Space on the row", async () => {
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("complementary", { name: "Review details" });
+
+    fireEvent.click(within(rowFor("Good location")).getByText("City Center Studio"));
+    expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
+
+    fireEvent.keyDown(rowFor("Great stay!"), { key: "Enter" });
+    expect(rowFor("Great stay!")).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(rowFor("Good location"), { key: " " });
     expect(rowFor("Good location")).toHaveAttribute("aria-selected", "true");
   });
 

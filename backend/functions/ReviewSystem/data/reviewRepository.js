@@ -255,7 +255,7 @@ export class ReviewRepository {
       where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
-    return status === "PENDING_APPROVAL" ? this.addModerationDetails(database, reviews) : reviews;
+    return this.addModerationDetails(database, reviews);
   }
 
   async findModeratedReviews(statuses) {
