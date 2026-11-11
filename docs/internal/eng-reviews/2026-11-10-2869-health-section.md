@@ -35,6 +35,16 @@ Result: no blocking findings so far
 | Checked | `ChannexHealthCards.jsx` | The cards only render what the section passes; one call per page load. Cards are found by `role="group"` and their name, so each card has an accessible name. | No change. |
 | Checked | `ChannexHealthTime.jsx` | Tests check `dateTime` (the exact moment), not the readable text, so they pass in every time zone (CI runs in UTC). | No change. |
 
+### Commit 4: error state with Retry, and 403 without Retry
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (6/10) | `ChannexHealthSection.jsx`, `catch` | The error was caught without a trace: the user saw "Couldn't load health." but the cause (500, network, CORS) was lost. | Fixed: `console.error` with the error, with a test. |
+| P3 (5/10) | `ChannexHealthSection.jsx`, `catch` | A 401 (expired login) shows Retry, which fails again. | Accepted: the admin page checks the login before the section renders. |
+| Checked | Retry button | The button is gone while loading, so a double click cannot start two calls. | No change. |
+| Checked | State | One `phase` instead of several booleans, so "loading and error" at once cannot happen; one `if` per phase instead of nested ternaries. | No change. |
+| P3 (4/10) | `ChannexHealthSection.jsx` | `<section className="channex-health">` is written four times. | Accepted: a wrapper component would add more than it removes. |
+
 ## Not in scope
 
 - The section, its states and the page wiring: later commits of this PR.

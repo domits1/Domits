@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import ChannexHealthSection from "./ChannexHealthSection";
 import { getChannexHealth } from "../../hostintegrations/channexApi";
 
@@ -35,6 +35,11 @@ const timeIn = (name) => cardNamed(name).querySelector("time")?.getAttribute("da
 describe("ChannexHealthSection", () => {
   beforeEach(() => {
     getChannexHealth.mockReset();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    console.error.mockRestore();
   });
 
   test("shows a loading message until the health answer arrives", async () => {
@@ -80,5 +85,37 @@ describe("ChannexHealthSection", () => {
     await screen.findByRole("heading", { name: "Degraded" });
 
     expect(within(cardNamed("Last booking")).getByText("Never")).toBeTruthy();
+  });
+
+  test("says the health could not be loaded and loads again on Retry", async () => {
+    getChannexHealth.mockRejectedValueOnce(new Error("network unavailable")).mockResolvedValueOnce(degradedHealth);
+
+    render(<ChannexHealthSection />);
+
+    expect(await screen.findByText("Couldn't load health.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByRole("heading", { name: "Degraded" })).toBeTruthy();
+    expect(getChannexHealth).toHaveBeenCalledTimes(2);
+  });
+
+  test("logs the cause of a failed load, so it can be found in the browser console", async () => {
+    const error = new Error("network unavailable");
+    getChannexHealth.mockRejectedValue(error);
+
+    render(<ChannexHealthSection />);
+    await screen.findByText("Couldn't load health.");
+
+    expect(console.error).toHaveBeenCalledWith("Channex health could not be loaded", error);
+  });
+
+  // Retrying cannot turn a refusal into an answer, so no Retry button is offered.
+  test("says the user is not allowed when the backend answers 403, without a Retry button", async () => {
+    getChannexHealth.mockRejectedValue(Object.assign(new Error("forbidden"), { status: 403 }));
+
+    render(<ChannexHealthSection />);
+
+    expect(await screen.findByText("You are not allowed to see the Channex health.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 });
