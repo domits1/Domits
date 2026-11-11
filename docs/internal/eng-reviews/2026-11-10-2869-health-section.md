@@ -25,6 +25,16 @@ Result: no blocking findings so far
 | P3 (4/10) | `describeReason` | A reason without `alarm` would read "Critical alarm: undefined". The backend always sets `alarm` for the three alarm codes (`channexHealthStatus.js`, `alarmReasons`). | Accepted, no guard for a case the contract excludes. |
 | Checked | `STUCK_QUEUE` | `Math.floor` could print "0 min", but the backend only sends `STUCK_QUEUE` after 7 minutes. | No change. |
 
+### Commit 3: the section with banner and cards (`channexadmin/health/`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (7/10) | `ChannexHealthTime.jsx`, `if (!time)` | The "Never" branch had no test; without it a missing time would show 1 Jan 1970 and every test would still pass. A new account without bookings has `lastRevisionAt: null`. | Fixed: a test for a missing last booking; checked that it fails when the branch is broken. |
+| P2 (8/10) | `ChannexHealthSection.jsx`, `getChannexHealth().then` | No `.catch`: a failed call stays on "Loading health…". | Next commit (error state with Retry). The section is not rendered on any page yet, so no user can reach it. |
+| Checked | `ChannexHealthBanner.jsx`, list `key` | Each reason code comes at most once per answer; the alarm codes differ by `alarm`, so the keys are unique. | No change. |
+| Checked | `ChannexHealthCards.jsx` | The cards only render what the section passes; one call per page load. Cards are found by `role="group"` and their name, so each card has an accessible name. | No change. |
+| Checked | `ChannexHealthTime.jsx` | Tests check `dateTime` (the exact moment), not the readable text, so they pass in every time zone (CI runs in UTC). | No change. |
+
 ## Not in scope
 
 - The section, its states and the page wiring: later commits of this PR.

@@ -13,5 +13,10 @@ const REASON_SENTENCES = {
   POLL_FAILED: () => "Last booking poll failed",
 };
 
+export const STATUS_LABELS = { HEALTHY: "Healthy", DEGRADED: "Degraded", DOWN: "Down" };
+
+export const formatDateTime = (time) =>
+  new Date(time).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
 // An unknown code stays visible: a health page must not hide a reason the backend added later.
 export const describeReason = (reason) => REASON_SENTENCES[reason.code]?.(reason) ?? reason.code;
