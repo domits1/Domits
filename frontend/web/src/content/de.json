@@ -2035,6 +2035,10 @@
     }
   },
   "hostIntegrations": {
+    "title": "Integrations-Marktplatz",
+    "subtitle": "Verbinde die Tools, die du schon nutzt, mit Domits und sieh, was als Nächstes kommt.",
+    "listLabel": "Integrationen",
+    "setUpWhatsApp": "WhatsApp einrichten",
     "talkToSales": "Vertrieb kontaktieren",
     "statuses": {
       "available": "Verfügbar",
