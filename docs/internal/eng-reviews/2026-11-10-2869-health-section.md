@@ -64,7 +64,18 @@ Result: no blocking findings so far
 | P3 (5/10) | `ChannexCertificationAdminPage.jsx`, no error boundary | A render error in the section (an answer without `reasons`, for example) would also take down the diagnostics panel. The backend always sends every field; load errors are already caught inside the section. | Accepted: no boundary for a shape the contract excludes. |
 | P3 (3/10) | Page load | The section and the diagnostics panel each make their own call on load, so one page load makes one extra request. | Accepted: one call per load, admins only. |
 
+### Commit 7: styles (`channexadmin/health/channex-health.scss`)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `channex-health.scss`, card grid | `minmax(min(100%, 12rem), 1fr)` gives four cards on a laptop and one per row on a phone without a media query; sizes use `clamp()`. Checked on desktop against the live answer on 11 Nov. | No change. |
+| Checked | `ChannexHealthSection.jsx`, Retry | Reuses `host-integrations-secondary-btn` (`HostIntegrations.scss:201`), so no new button style. | No change. |
+| P3 (6/10) | `ChannexHealthAccounts.jsx`, `className="channex-health-state"` | The account status pill has no modifier, so RECONNECT_REQUIRED looks as grey as CONNECTED; the problem is only visible in the banner reason. | Accepted for this PR: the banner already names it. Follow-up: a modifier per account status. |
+| P3 (5/10) | `ChannexHealthAlarms.jsx`, `` `channex-health-state--${alarm.state.toLowerCase()}` `` | INSUFFICIENT_DATA becomes `channex-health-state--insufficient_data`, with an underscore, against the kebab-case convention for classes. | Accepted: the class follows the CloudWatch state name; renaming needs a mapping for one class. |
+| P3 (5/10) | `channex-health.scss`, colour variables | The palette repeats the hex values of `HostIntegrations.scss`, which has no shared variables to import. | Accepted: named once in this file; shared tokens are a refactor of the 1,147-line file. |
+
 ## Not in scope
 
-- Styles for the section: next commit of this PR.
+- Phone width: checked by Enes in his own browser; the browser pane was not signed in.
+- Health as the first tab of the diagnostics panel instead of above it (matches the mockup): next commit of this PR.
 - Until #3850 is deployed the backend has no health route, so the call fails; the section's error state (a later commit) is what a user would see.

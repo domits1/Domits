@@ -5,6 +5,7 @@ import ChannexHealthCards from "./ChannexHealthCards";
 import ChannexHealthAlarms from "./ChannexHealthAlarms";
 import ChannexHealthAccounts from "./ChannexHealthAccounts";
 import ChannexHealthFailures from "./ChannexHealthFailures";
+import "./channex-health.scss";
 
 const HTTP_FORBIDDEN = 403;
 
@@ -54,7 +55,7 @@ export default function ChannexHealthSection() {
     return (
       <section className="channex-health">
         <p>Couldn&apos;t load health.</p>
-        <button type="button" onClick={load}>
+        <button type="button" className="host-integrations-secondary-btn" onClick={load}>
           Retry
         </button>
       </section>
