@@ -287,7 +287,6 @@ export class ReviewRepository {
     return reviews.map((review) => {
       const location = locationsById.get(review.property_id);
       const booking = bookingsById.get(review.booking_id);
-      // A booking name only identifies the reviewer when that guest made the booking.
       const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
       const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
       return { ...review, property_title: titles.get(review.property_id) ?? null,

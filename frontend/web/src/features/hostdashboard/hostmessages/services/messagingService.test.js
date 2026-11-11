@@ -5,6 +5,7 @@ import {
   getGuestBookingDetailsByBookingId,
   getHostBookingDetails,
   sendUnifiedMessage,
+  retryUnifiedMessage,
   markThreadRead,
   markThreadUnread,
   closeThread,
@@ -429,5 +430,41 @@ describe("messagingService accommodation requests", () => {
     expect(result.accommodation).toEqual(PUBLIC_LISTING);
     expect(globalThis.fetch.mock.calls[2][0]).toContain("/bookingEngine/listingDetails?property=property-1");
     expect(globalThis.fetch.mock.calls[2][1].headers).not.toHaveProperty("Authorization");
+  });
+  test("retryUnifiedMessage posts only the retryMessageId to /send with bearer auth", async () => {
+    await retryUnifiedMessage({ messageId: "message-1", token: "access-token-1" });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer access-token-1" },
+      })
+    );
+    expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).toEqual({ retryMessageId: "message-1" });
+  });
+
+  test("retryUnifiedMessage does not call /send without a token", async () => {
+    globalThis.fetch.mockClear();
+
+    await expect(retryUnifiedMessage({ messageId: "message-1", token: null })).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REQUIRED",
+    });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("retryUnifiedMessage attaches the updated failed message when the retry returns 502", async () => {
+    const stillFailed = { id: "message-1", deliveryStatus: "failed", errorCode: "UNAUTHORIZED" };
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => JSON.stringify(stillFailed),
+    });
+
+    await expect(retryUnifiedMessage({ messageId: "message-1", token: "access-token-1" })).rejects.toMatchObject({
+      message: expect.stringContaining("502"),
+      savedMessage: stillFailed,
+    });
   });
 });

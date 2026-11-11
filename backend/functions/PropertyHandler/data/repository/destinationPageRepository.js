@@ -78,7 +78,12 @@ export class DestinationPageRepository {
       JOIN ${schemaName}.property_location l ON l.property_id = p.id AND l.country = m.source_country AND l.city = m.source_city
       LEFT JOIN ${schemaName}.property_pricing pr ON pr.property_id = p.id
       WHERE d.path = $2 OR d.path LIKE $3
-      ORDER BY p.createdat DESC, p.id ASC
+      ORDER BY COALESCE(
+          (SELECT MAX(e.created_at)
+           FROM ${schemaName}.property_moderation_event e
+           WHERE e.property_id = p.id AND e.action = 'APPROVED'),
+          0) ASC,
+        p.createdat DESC, p.id ASC
       LIMIT $4`,
       ["ACTIVE", normalizedPath, `${normalizedPath.replaceAll(/[\\%_]/g, String.raw`\$&`)}/%`, limit]
     );
