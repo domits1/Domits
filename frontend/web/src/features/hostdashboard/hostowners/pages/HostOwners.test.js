@@ -5,17 +5,14 @@ import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { Auth } from "aws-amplify";
 import { OwnerApiError, createOwner, listOwners, updateOwner } from "../services/ownerService";
 import HostOwners from "./HostOwners";
-
-jest.mock("../../../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(),
-}));
 
 jest.mock("aws-amplify", () => ({
   Auth: {
     currentAuthenticatedUser: jest.fn(),
+    currentSession: jest.fn(),
   },
 }));
 
@@ -124,20 +121,65 @@ describe("HostOwners", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(text);
     expect(screen.queryByText(/raw server message|REACT_APP_|Failed to fetch/)).toBeNull();
+  });
+
+  test.each([
+    ["401", apiError(401)],
+    ["403", apiError(403)],
+    ["404", apiError(404)],
+  ])("offers no Retry after a %s, because loading again cannot help", async (_label, error) => {
+    listOwners.mockRejectedValue(error);
+
+    renderPage();
+
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: t.retry })).toBeNull();
+  });
+
+  test.each([
+    ["500", apiError(500)],
+    ["a missing API URL", new Error("REACT_APP_PROPERTY_OWNERS_API_URL is not set.")],
+    ["a network failure", new TypeError("Failed to fetch")],
+  ])("offers Retry after %s", async (_label, error) => {
+    listOwners.mockRejectedValue(error);
+
+    renderPage();
+
+    await screen.findByRole("alert");
     expect(screen.getByRole("button", { name: t.retry })).toBeTruthy();
   });
 
-  test("asks the host to sign in again when the client cannot read a sign-in token", async () => {
+  test("asks the host to sign in again, without Retry, when the session cannot be read", async () => {
     const originalEnv = process.env;
     process.env = { ...originalEnv, REACT_APP_PROPERTY_OWNERS_API_URL: "https://owners.example.test/property-owners" };
     global.fetch = jest.fn();
-    getAccessToken.mockReturnValue(null);
+    Auth.currentSession.mockRejectedValue("No current user");
     listOwners.mockImplementation(jest.requireActual("../services/ownerService").listOwners);
 
     try {
       renderPage();
 
       expect((await screen.findByRole("alert")).textContent).toContain(t.errorSignedOut);
+      expect(screen.queryByRole("button", { name: t.retry })).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally {
+      process.env = originalEnv;
+      delete global.fetch;
+    }
+  });
+
+  test("shows the generic error with Retry when the session cannot be refreshed because of the network", async () => {
+    const originalEnv = process.env;
+    process.env = { ...originalEnv, REACT_APP_PROPERTY_OWNERS_API_URL: "https://owners.example.test/property-owners" };
+    global.fetch = jest.fn();
+    Auth.currentSession.mockRejectedValue(Object.assign(new Error("Network error"), { code: "NetworkError" }));
+    listOwners.mockImplementation(jest.requireActual("../services/ownerService").listOwners);
+
+    try {
+      renderPage();
+
+      expect((await screen.findByRole("alert")).textContent).toContain(t.errorGeneric);
+      expect(screen.getByRole("button", { name: t.retry })).toBeTruthy();
       expect(global.fetch).not.toHaveBeenCalled();
     } finally {
       process.env = originalEnv;

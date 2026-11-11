@@ -7,7 +7,7 @@ import OwnersTable from "../components/OwnersTable";
 import OwnerFormModal from "../components/OwnerFormModal";
 import { resolveOwnerContent } from "../utils/ownerContent";
 import { ARCHIVED_OWNER_STATUS } from "../utils/ownerFormRules";
-import { fillTemplate, loadErrorText, ownerName } from "../utils/ownerText";
+import { canRetryLoad, fillTemplate, loadErrorText, ownerName } from "../utils/ownerText";
 import "../styles/HostOwners.scss";
 
 const TITLE_ID = "host-owners-title";
@@ -59,9 +59,11 @@ const HostOwners = () => {
       return (
         <div className="host-owners-message" role="alert">
           <p>{loadErrorText(loadState.error, t)}</p>
-          <button type="button" className="host-owners-button" onClick={loadOwners}>
-            {t.retry}
-          </button>
+          {canRetryLoad(loadState.error) ? (
+            <button type="button" className="host-owners-button" onClick={loadOwners}>
+              {t.retry}
+            </button>
+          ) : null}
         </div>
       );
     }
