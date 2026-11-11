@@ -2607,8 +2607,8 @@ export class PropertyController {
         try {
             const country = event.queryStringParameters.country;
             const lastEvaluatedKey = {
-                id: event.queryStringParameters?.lastEvaluatedKeyId,
-                city: event.queryStringParameters?.lastEvaluatedKeyCity
+                createdAt: parseFloat(event.queryStringParameters?.lastEvaluatedKeyCreatedAt),
+                id: event.queryStringParameters?.lastEvaluatedKeyId
             }
             const properties = await this.propertyService.getActivePropertyCardsByCountry(country, lastEvaluatedKey)
             return {
@@ -3884,6 +3884,7 @@ export class PropertyController {
                 accountId: user.Username,
                 targetPlan: body.plan,
                 customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+                withoutPayment: body.withoutPayment,
             });
 
             return {

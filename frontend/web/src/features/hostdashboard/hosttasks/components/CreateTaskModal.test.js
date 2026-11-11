@@ -42,6 +42,11 @@ describe('CreateTaskModal', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
+    test('does not show a booking reference field, because nothing saves it yet', () => {
+        render(<CreateTaskModal {...baseProps} />);
+        expect(screen.queryByLabelText('Booking Reference')).not.toBeInTheDocument();
+    });
+
     test('renders the property options and every assignee option, host and team members', () => {
         render(<CreateTaskModal {...baseProps} />);
         expect(screen.getByRole('option', { name: 'Villa Sunshine' })).toBeInTheDocument();
