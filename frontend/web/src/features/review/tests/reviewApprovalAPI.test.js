@@ -1,4 +1,4 @@
-import { API_REVIEW_BASE, approveReview, getPendingApprovalReviews } from "../services/reviewAPI";
+import { API_REVIEW_BASE, approveReview, publishApprovedReview, getPendingApprovalReviews } from "../services/reviewAPI";
 
 jest.mock("../../../services/getAccessToken", () => ({ getIdToken: async () => "token" }));
 
@@ -8,6 +8,21 @@ afterEach(() => {
 });
 
 const respond = (status, body) => ({ ok: status < 400, status, text: async () => body });
+
+test("publishes an approved review with the ID token", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, '{"id":"r/1","status":"PUBLISHED"}'));
+  expect(await publishApprovedReview("r/1")).toEqual({ id: "r/1", status: "PUBLISHED" });
+  expect(fetch).toHaveBeenCalledWith(`${API_REVIEW_BASE}/reviews/r%2F1/publish`, {
+    method: "POST", headers: { Authorization: "token" },
+  });
+});
+
+test("surfaces the backend reason when publication is refused", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(403, '{"message":"An active review approver role is required."}'));
+  await expect(publishApprovedReview("r1")).rejects.toMatchObject({
+    status: 403, message: "An active review approver role is required.",
+  });
+});
 
 test("loads the pending-approval scope with the ID token", async () => {
   global.fetch = jest.fn().mockResolvedValue(respond(200, '[{"id":"r1"}]'));

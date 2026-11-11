@@ -95,6 +95,17 @@ Contacts are fetched differently for host vs guest.
   - Body:
     - `UserId`
 
+### Retry a failed provider reply (UnifiedMessaging)
+A reply to an external channel (for example Channex) that the provider refused is saved with `deliveryStatus: "failed"`, an `errorCode` and an `errorMessage`. The host can send it again from the inbox.
+- `POST https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send`
+  - Body: `{ "retryMessageId": "<message id>" }`. Without `retryMessageId` the same route sends a new message.
+  - Same login check as a new message (Cognito claims). No new API Gateway route is needed.
+  - The same row is updated (`deliveryStatus`, `platformMessageId`, `errorCode`, `errorMessage`); no second row is created.
+  - `200` with the updated message when the provider accepted it, `502` with the updated message when it failed again.
+  - `403` when the caller is not the sender or no longer in the conversation, `404` when the message does not exist, `409` when the message is not `failed`, belongs to a Domits-only thread, or another retry already took it.
+  - A retry first sets the row to `pending`. If the Lambda stops before it writes the result, the row stays `pending` and shows no Retry button; set it back to `failed` by hand. This is an accepted risk: sending the same reply to a guest twice is worse.
+- Web: `retryUnifiedMessage` in `messagingService.js`, `retryMessage` in `useSendMessage.js`, and the Retry button in `ChatMessage.js`.
+
 ### Booking context data (web)
 Used to decorate the contact list with booking/property context.
 - **Guest booking details**
