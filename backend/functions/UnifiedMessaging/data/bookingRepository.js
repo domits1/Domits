@@ -62,7 +62,7 @@ class BookingRepository {
     return count === 1;
   }
 
-  async findGuestNamesForHostBookings({ hostId, bookingIds }) {
+  async findBookingDetailsForHostBookings({ hostId, bookingIds }) {
     if (!hostId || !Array.isArray(bookingIds) || bookingIds.length === 0) return {};
 
     const client = await Database.getInstance();

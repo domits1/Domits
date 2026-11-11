@@ -713,25 +713,25 @@ class MessageService {
       visible.map((t) => t.id),
       authenticatedUser.userId
     );
-    const guestNames = await this.findChannexGuestNames(visible, authenticatedUser.userId);
+    const bookingDetails = await this.findChannexBookingDetails(visible, authenticatedUser.userId);
 
     return {
       statusCode: 200,
       response: visible.map((t) => ({
         ...t,
         unreadCount: unreadCounts[t.id] || 0,
-        ...(t.platform === "CHANNEX" ? channexBookingDetails(guestNames[t.bookingId]) : {}),
+        ...(t.platform === "CHANNEX" ? channexBookingDetails(bookingDetails[t.bookingId]) : {}),
       })),
     };
   }
 
-  async findChannexGuestNames(threads, hostId) {
+  async findChannexBookingDetails(threads, hostId) {
     const bookingIds = threads
       .filter((t) => t.platform === "CHANNEX" && t.bookingId && idsEqual(t.hostId, hostId))
       .map((t) => t.bookingId);
     if (bookingIds.length === 0) return {};
 
-    return (await this.bookingRepository.findGuestNamesForHostBookings({ hostId, bookingIds })) || {};
+    return (await this.bookingRepository.findBookingDetailsForHostBookings({ hostId, bookingIds })) || {};
   }
 
   async getMessages(threadId, authenticatedUser) {
