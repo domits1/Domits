@@ -1,9 +1,9 @@
-# feat(channexadmin): Channex health section on the admin page
+# feat(channexadmin): Channex health tab on the diagnostics admin page
 
-Pull request: (to fill in)
+Pull request: #3878
 Issue: #2869 (first slice: internal admin health view; design note `docs/partner/integrations/channel_manager/channex/channex_health_dashboard_design.md`; backend in PR #3850)
 Reviewed commit: staged diff per commit on `feat/2869-channex-health-section`
-Result: no blocking findings so far
+Result: no open blocking findings; the one blocking finding (commit 5, stay dates) was fixed before its commit
 
 ## Findings
 
