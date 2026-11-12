@@ -1,26 +1,32 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { toast } from "react-toastify";
+import { MemoryRouter } from "react-router-dom";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
-import { getAccessToken } from "../../../../services/getAccessToken";
-import { OwnerApiError, listOwners } from "../services/ownerService";
+import { Auth } from "aws-amplify";
+import { OwnerApiError, createOwner, listOwners, updateOwner } from "../services/ownerService";
 import HostOwners from "./HostOwners";
-
-jest.mock("../../../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(),
-}));
 
 jest.mock("aws-amplify", () => ({
   Auth: {
     currentAuthenticatedUser: jest.fn(),
+    currentSession: jest.fn(),
   },
 }));
 
 jest.mock("../services/ownerService", () => {
   const actual = jest.requireActual("../services/ownerService");
-  return { OwnerApiError: actual.OwnerApiError, listOwners: jest.fn() };
+  return {
+    OwnerApiError: actual.OwnerApiError,
+    listOwners: jest.fn(),
+    createOwner: jest.fn(),
+    updateOwner: jest.fn(),
+  };
 });
+
+jest.mock("react-toastify", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 const t = en.hostOwners;
 
@@ -57,9 +63,11 @@ const deferred = () => {
 
 const renderPage = (language = "en") =>
   render(
-    <LanguageContext.Provider value={{ language, setLanguage: jest.fn() }}>
-      <HostOwners />
-    </LanguageContext.Provider>
+    <MemoryRouter>
+      <LanguageContext.Provider value={{ language, setLanguage: jest.fn() }}>
+        <HostOwners />
+      </LanguageContext.Provider>
+    </MemoryRouter>
   );
 
 describe("HostOwners", () => {
@@ -113,20 +121,65 @@ describe("HostOwners", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(text);
     expect(screen.queryByText(/raw server message|REACT_APP_|Failed to fetch/)).toBeNull();
+  });
+
+  test.each([
+    ["401", apiError(401)],
+    ["403", apiError(403)],
+    ["404", apiError(404)],
+  ])("offers no Retry after a %s, because loading again cannot help", async (_label, error) => {
+    listOwners.mockRejectedValue(error);
+
+    renderPage();
+
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: t.retry })).toBeNull();
+  });
+
+  test.each([
+    ["500", apiError(500)],
+    ["a missing API URL", new Error("REACT_APP_PROPERTY_OWNERS_API_URL is not set.")],
+    ["a network failure", new TypeError("Failed to fetch")],
+  ])("offers Retry after %s", async (_label, error) => {
+    listOwners.mockRejectedValue(error);
+
+    renderPage();
+
+    await screen.findByRole("alert");
     expect(screen.getByRole("button", { name: t.retry })).toBeTruthy();
   });
 
-  test("asks the host to sign in again when the client cannot read a sign-in token", async () => {
+  test("asks the host to sign in again, without Retry, when the session cannot be read", async () => {
     const originalEnv = process.env;
     process.env = { ...originalEnv, REACT_APP_PROPERTY_OWNERS_API_URL: "https://owners.example.test/property-owners" };
     global.fetch = jest.fn();
-    getAccessToken.mockReturnValue(null);
+    Auth.currentSession.mockRejectedValue("No current user");
     listOwners.mockImplementation(jest.requireActual("../services/ownerService").listOwners);
 
     try {
       renderPage();
 
       expect((await screen.findByRole("alert")).textContent).toContain(t.errorSignedOut);
+      expect(screen.queryByRole("button", { name: t.retry })).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally {
+      process.env = originalEnv;
+      delete global.fetch;
+    }
+  });
+
+  test("shows the generic error with Retry when the session cannot be refreshed because of the network", async () => {
+    const originalEnv = process.env;
+    process.env = { ...originalEnv, REACT_APP_PROPERTY_OWNERS_API_URL: "https://owners.example.test/property-owners" };
+    global.fetch = jest.fn();
+    Auth.currentSession.mockRejectedValue(Object.assign(new Error("Network error"), { code: "NetworkError" }));
+    listOwners.mockImplementation(jest.requireActual("../services/ownerService").listOwners);
+
+    try {
+      renderPage();
+
+      expect((await screen.findByRole("alert")).textContent).toContain(t.errorGeneric);
+      expect(screen.getByRole("button", { name: t.retry })).toBeTruthy();
       expect(global.fetch).not.toHaveBeenCalled();
     } finally {
       process.env = originalEnv;
@@ -182,13 +235,90 @@ describe("HostOwners", () => {
     expect(screen.getByRole("rowheader", { name: "Bram Jansen" })).toBeTruthy();
   });
 
-  test("offers no write actions yet", async () => {
+  test("offers Add owner and one Edit per row, and nothing else", async () => {
     listOwners.mockResolvedValue([owner()]);
 
     renderPage();
 
     await screen.findByRole("table");
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    const buttons = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
+    expect(buttons).toEqual([t.addOwner, "Edit Anna de Vries"]);
+  });
+
+  test("offers Add owner on the empty page too", async () => {
+    listOwners.mockResolvedValue([]);
+
+    renderPage();
+
+    await screen.findByText(t.empty);
+    expect(screen.getByRole("button", { name: t.addOwner })).toBeTruthy();
+  });
+
+  test("does not offer Add owner while loading or after a load error", async () => {
+    listOwners.mockRejectedValue(apiError(500));
+
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: t.addOwner })).toBeNull();
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: t.addOwner })).toBeNull();
+  });
+
+  test("Add owner opens the empty form, and the new owner appears after saving", async () => {
+    const created = owner({ id: "owner-3", first_name: "Carla", last_name: "Bakker", properties: [] });
+    listOwners.mockResolvedValue([owner()]);
+    createOwner.mockResolvedValue(created);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: t.addOwner }));
+
+    const dialog = screen.getByRole("dialog", { name: t.form.createTitle });
+    expect(within(dialog).getByLabelText(t.form.labels.first_name).value).toBe("");
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.first_name), { target: { value: "Carla" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.last_name), { target: { value: "Bakker" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.email), { target: { value: "carla@example.com" } });
+    fireEvent.change(within(dialog).getByLabelText(t.form.labels.owner_type), { target: { value: "individual" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t.form.save }));
+
+    expect(await screen.findByRole("rowheader", { name: "Carla Bakker" })).toBeTruthy();
+    expect(screen.getByRole("rowheader", { name: "Anna de Vries" })).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith("Carla Bakker was added.");
+    expect(listOwners).toHaveBeenCalledTimes(1);
+  });
+
+  test("Edit opens the form prefilled, and the row updates after saving", async () => {
+    const second = owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" });
+    listOwners.mockResolvedValue([owner(), second]);
+    updateOwner.mockResolvedValue({ ...second, first_name: "Bram", last_name: "Janssen" });
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Bram Jansen" }));
+
+    const dialog = screen.getByRole("dialog", { name: t.form.editTitle });
+    const lastName = within(dialog).getByLabelText(t.form.labels.last_name);
+    expect(lastName.value).toBe("Jansen");
+    fireEvent.change(lastName, { target: { value: "Janssen" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: t.form.save }));
+
+    expect(await screen.findByRole("rowheader", { name: "Bram Janssen" })).toBeTruthy();
+    expect(screen.queryByRole("rowheader", { name: "Bram Jansen" })).toBeNull();
+    expect(screen.getAllByRole("rowheader").map((cell) => cell.textContent)).toEqual(["Anna de Vries", "Bram Janssen"]);
+    expect(updateOwner).toHaveBeenCalledWith("owner-2", { last_name: "Janssen" });
+    expect(toast.success).toHaveBeenCalledWith("Bram Janssen was updated.");
+    expect(listOwners).toHaveBeenCalledTimes(1);
+  });
+
+  test("closing the form changes nothing and shows no toast", async () => {
+    listOwners.mockResolvedValue([owner()]);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Anna de Vries" }));
+    fireEvent.click(screen.getByRole("button", { name: t.form.cancel }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("rowheader", { name: "Anna de Vries" })).toBeTruthy();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   test("uses the selected language", async () => {

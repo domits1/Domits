@@ -75,6 +75,7 @@ const hostDashboardSpecs = [
 const bookingEngineSpecs = [
   ["GET bookingEngine properties by type", "getActivePropertiesCardByType", "byType"],
   ["GET all active properties", "getActivePropertiesCard", "all"],
+  ["GET properties by country", "getActivePropertiesCardByCountry", "byCountry"],
   ["GET properties by hostId", "getActivePropertiesCardByHostId", "byHostId"],
   ["GET set of properties", "getActivePropertiesCardById", "set"],
   ["GET active listing details", "getFullActivePropertyById", "listingDetails"],

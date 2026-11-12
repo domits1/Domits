@@ -11,6 +11,7 @@ import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
+const MODERATION_HISTORY_LIMIT = 50;
 
 const isValidSchemaName = (value) => typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
 
@@ -243,6 +244,29 @@ export class PropertyRepository {
         );
     }
 
+    async getModerationEventsByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .getRepository(Property_Moderation_Event)
+                .createQueryBuilder("event")
+                .select([
+                    "event.id",
+                    "event.action",
+                    "event.fromStatus",
+                    "event.toStatus",
+                    "event.reason",
+                    "event.actorId",
+                    "event.createdAt",
+                ])
+                .where("event.propertyId = :propertyId", {propertyId})
+                .orderBy("event.createdAt", "DESC")
+                .addOrderBy("event.id", "DESC")
+                .limit(MODERATION_HISTORY_LIMIT)
+                .getMany()
+        );
+    }
+
     async clearArchiveMetadata(client, propertyId, status, now, schemaName) {
         const archiveColumns = await this.getArchiveMetadataColumns(client, schemaName);
         const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
@@ -309,12 +333,23 @@ export class PropertyRepository {
 
     async getActivePropertiesByType(type) {
         const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property)
-            .createQueryBuilder("property")
+        const query = client.getRepository(Property).createQueryBuilder("property");
+        const approvedAt = query
+            .subQuery()
+            .select("COALESCE(MAX(event.createdAt), 0)")
+            .from(Property_Moderation_Event, "event")
+            .where("event.propertyId = property.id")
+            .andWhere("event.action = :approved")
+            .getQuery();
+        const result = await query
             .innerJoin("property_type", "pt", "pt.property_id = property.id")
             .where("pt.type = :type", { type: type })
             .andWhere("property.status = :status", { status: "ACTIVE" })
+            .setParameter("approved", "APPROVED")
+            .addSelect(approvedAt, "approved_at")
+            .orderBy("approved_at", "ASC")
+            .addOrderBy("property.createdat", "DESC")
+            .addOrderBy("property.id", "DESC")
             .limit(12)
             .getMany();
 

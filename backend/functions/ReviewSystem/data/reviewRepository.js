@@ -2,16 +2,21 @@ import { randomUUID } from "node:crypto";
 import { In } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
+import { Property } from "database/models/Property";
+import { Property_Location } from "database/models/Property_Location";
+import { Property_Image } from "database/models/Property_Image";
+import { Property_Image_Variant } from "database/models/Property_Image_Variant";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+import { Team_Member } from "database/models/Team_Member";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import { assertEligibleBooking } from "../business/model/reviewRules.js";
 import { HostReviewRepository } from "./hostReviewRepository.js";
 import { PublicReviewRepository } from "./publicReviewRepository.js";
-import { nextTimestamp, runTransaction } from "./reviewRepositoryShared.js";
+import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
 
 const REVIEW_REQUEST_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -117,7 +122,7 @@ export class ReviewRepository {
       .andWhere("created_at <= :timestamp AND created_at > :cutoff", {
         timestamp, cutoff: timestamp - editWindowMs,
       })
-      .andWhere("status NOT IN (:...excluded)", { excluded: ["DELETED", "REJECTED"] })
+      .andWhere("status = :draft AND publication_status = :unpublished", { draft: "DRAFT", unpublished: "UNPUBLISHED" })
       .execute();
     return { affected: result.affected, updated_at: updatedAt };
   }
@@ -233,8 +238,84 @@ export class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
-  // Load a user's review list for the chosen scope.
-  // This gives the profile views a single source of truth for written and received reviews.
+  async hasActiveReviewApproverRole(username, roles, manager) {
+    const database = manager ?? await Database.getInstance();
+
+    return database.getRepository(Team_Member)
+      .createQueryBuilder("member")
+      .where("member.member_user_id = :username", { username })
+      .andWhere("member.status = :status", { status: "active" })
+      .andWhere("member.role IN (:...roles)", { roles })
+      .getExists();
+  }
+
+  async findUnpublishedReviews(status) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
+      select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async findModeratedReviews(statuses) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async addModerationDetails(database, reviews) {
+    if (!reviews.length) return reviews;
+
+    const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
+    const [properties, locations, imageKeys, bookings] = await Promise.all([
+      database.getRepository(Property).find({ where: { id: In(propertyIds) }, select: ["id", "title"] }),
+      database.getRepository(Property_Location).find({
+        where: { property_id: In(propertyIds) }, select: ["property_id", "city", "country"] }),
+      this.findFirstImageKeys(database, propertyIds),
+      database.getRepository(Booking).find({
+        where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+        select: ["id", "guestid", "guestname"] }),
+    ]);
+    const titles = new Map(properties.map((property) => [property.id, property.title]));
+    const locationsById = new Map(locations.map((location) => [location.property_id, location]));
+    const bookingsById = new Map(bookings.map((booking) => [booking.id, booking]));
+
+    return reviews.map((review) => {
+      const location = locationsById.get(review.property_id);
+      const booking = bookingsById.get(review.booking_id);
+      const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
+      const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
+      return { ...review, property_title: titles.get(review.property_id) ?? null,
+        property_city: location?.city ?? null, property_country: location?.country ?? null,
+        property_image_key: imageKeys.get(review.property_id) ?? null, guest_name: guestName };
+    });
+  }
+
+  async findFirstImageKeys(database, propertyIds) {
+    const images = await database.getRepository(Property_Image).find({
+      where: { property_id: In(propertyIds), status: "READY" },
+      select: ["id", "property_id", "sort_order"], order: { sort_order: "ASC" },
+    });
+    const firstImageByProperty = new Map();
+    for (const image of images) {
+      if (!firstImageByProperty.has(image.property_id)) firstImageByProperty.set(image.property_id, image.id);
+    }
+    if (!firstImageByProperty.size) return new Map();
+
+    const variants = await database.getRepository(Property_Image_Variant).find({
+      where: { image_id: In([...firstImageByProperty.values()]), variant: In(["thumb", "web"]) },
+      select: ["image_id", "variant", "s3_key"],
+    });
+    const keyFor = (imageId, variant) =>
+      variants.find((entry) => entry.image_id === imageId && entry.variant === variant)?.s3_key;
+    return new Map([...firstImageByProperty].map(([propertyId, imageId]) =>
+      [propertyId, keyFor(imageId, "thumb") ?? keyFor(imageId, "web") ?? null]));
+  }
+
   async findForUser(userId, scope) {
     const dataSource = await Database.getInstance();
     const field =
@@ -409,6 +490,7 @@ export class ReviewRepository {
     expectedUpdatedAt,
     updatedAt,
     authorize,
+    from = "APPROVED", to = "PUBLISHED", validate = () => {},
   }) {
     return runTransaction(async (manager) => {
       const reviews = manager.getRepository(Review);
@@ -416,10 +498,16 @@ export class ReviewRepository {
         where: { id: reviewId },
       });
 
-      if (!isMatchingDraft(review, expectedUpdatedAt)) {
+      if (!review || review.status !== from || review.publication_status !== "UNPUBLISHED"
+        || review.updated_at !== expectedUpdatedAt) {
         return null;
       }
 
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
+      if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
+        throw new ConflictException("Invalid review transition.");
+      }
+      validate(review);
       await this.assertPublicationAllowed(
         manager,
         review,
@@ -433,15 +521,15 @@ export class ReviewRepository {
       );
 
       const updates = {
-        status: "PUBLISHED",
-        publication_status: "PUBLISHED",
+        status: to,
+        publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED",
         updated_at: timestamp,
       };
 
       const result = await reviews.update(
         {
           id: reviewId,
-          status: "DRAFT",
+          status: from,
           publication_status: "UNPUBLISHED",
           updated_at: expectedUpdatedAt,
         },
@@ -450,7 +538,7 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
-      await this.completeReviewRequest(
+      if (to === "PUBLISHED") await this.completeReviewRequest(
         manager,
         review,
         timestamp
@@ -468,7 +556,7 @@ export class ReviewRepository {
   ) {
     if (
       typeof authorize !== "function" ||
-      !(await authorize(review))
+      !(await authorize(review, manager))
     ) {
       throw new ForbiddenException(
         "You cannot publish this review."

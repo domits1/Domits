@@ -5,6 +5,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { LanguageContext } from "../../context/LanguageContext";
 import HostReservationDetails from "./HostReservationDetails";
 import downloadReservationReceiptPdf from "./services/downloadReservationReceiptPdf.js";
 
@@ -35,14 +36,23 @@ const booking = {
   cancelled_at: CANCELLED_AT,
 };
 
-const renderDetailsFor = (reservation) =>
+const renderDetailsFor = (reservation, language = "en") =>
   render(
-    <MemoryRouter initialEntries={[{ pathname: `/reservations/${reservation.id}`, state: { booking: reservation } }]}>
-      <Routes>
-        <Route path="/reservations/:id" element={<HostReservationDetails />} />
-      </Routes>
-    </MemoryRouter>
+    <LanguageContext.Provider value={{ language }}>
+      <MemoryRouter initialEntries={[{ pathname: `/reservations/${reservation.id}`, state: { booking: reservation } }]}>
+        <Routes>
+          <Route path="/reservations/:id" element={<HostReservationDetails />} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageContext.Provider>
   );
+
+const downloadReceiptFor = async (reservation, language = "en") => {
+  renderDetailsFor(reservation, language);
+  const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
+  await waitFor(() => expect(downloadButton.disabled).toBe(false));
+  fireEvent.click(downloadButton);
+};
 
 // The date sits in the span right after the payment status text.
 const paymentDateNextTo = (statusText) => screen.getByText(statusText).nextElementSibling.textContent;
@@ -69,16 +79,108 @@ describe("HostReservationDetails cancel date (#3585)", () => {
     expect(paymentDateNextTo("Payment received")).toBe("13 Oct");
   });
 
-  test("the receipt of a cancelled reservation carries the cancel date, not the booking date", async () => {
-    renderDetailsFor(booking);
-
-    const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
-    await waitFor(() => expect(downloadButton.disabled).toBe(false));
-    fireEvent.click(downloadButton);
+  test("the receipt of a cancelled reservation carries the cancel date, labelled as such (#3834)", async () => {
+    await downloadReceiptFor(booking);
 
     await waitFor(() =>
       expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
-        expect.objectContaining({ paymentStatusLabel: "Reservation cancelled", paymentDate: CANCELLED_AT })
+        expect.objectContaining({
+          paymentStatusLabel: "Reservation cancelled",
+          paymentDate: CANCELLED_AT,
+          paymentDateLabel: "Cancelled on",
+        })
+      )
+    );
+  });
+
+  test("a cancelled paid booking shows the stored refund status", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid", refund_status: "refunded" });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText("Refund status")).toBeTruthy();
+    expect(screen.getByText("Refunded")).toBeTruthy();
+  });
+
+  test.each([
+    ["not_refunded", "Not refunded"],
+    ["unknown", "Unknown"],
+  ])("a cancelled paid booking can show %s", async (refundStatus, expectedText) => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid", refund_status: refundStatus });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText(expectedText)).toBeTruthy();
+  });
+
+  test("a legacy cancelled paid booking without a stored refund status is shown as unknown", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_paid" });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText("Unknown")).toBeTruthy();
+  });
+
+  test("a cancelled booking without payment evidence does not show a refund status", async () => {
+    renderDetailsFor(booking);
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.queryByText("Refund status")).toBeNull();
+  });
+
+  test("a cancelled booking with an unpaid PaymentIntent and an empty stored status does not show a refund status", async () => {
+    renderDetailsFor({ ...booking, paymentid: "pi_unpaid", refund_status: null });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.queryByText("Refund status")).toBeNull();
+  });
+
+  test("the receipt of a cancelled paid booking includes its refund status", async () => {
+    await downloadReceiptFor({ ...booking, paymentid: "pi_paid", refund_status: "refunded" });
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          refundStatusLabel: "Refund status",
+          refundStatusText: "Refunded",
+        })
+      )
+    );
+  });
+
+  test.each([
+    ["en", "Cancelled on"],
+    ["nl", "Geannuleerd op"],
+    ["de", "Storniert am"],
+    ["es", "Fecha de cancelación"],
+  ])("the cancelled receipt date label is localized in %s", async (language, expectedLabel) => {
+    await downloadReceiptFor(booking, language);
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentDateLabel: expectedLabel })
+      )
+    );
+  });
+
+  test.each([
+    ["en", "Payment date"],
+    ["nl", "Betaaldatum"],
+    ["de", "Zahlungsdatum"],
+    ["es", "Fecha de pago"],
+  ])("the payment receipt date label is localized in %s", async (language, expectedLabel) => {
+    await downloadReceiptFor({ ...booking, status: "Paid", cancelled_at: null }, language);
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentDateLabel: expectedLabel })
+      )
+    );
+  });
+
+  test("the receipt of a paid reservation keeps the payment date label", async () => {
+    await downloadReceiptFor({ ...booking, status: "Paid", cancelled_at: null });
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentStatusLabel: "Payment received", paymentDateLabel: "Payment date" })
       )
     );
   });

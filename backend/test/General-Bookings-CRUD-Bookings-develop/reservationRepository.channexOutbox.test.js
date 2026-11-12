@@ -102,10 +102,20 @@ describe("ReservationRepository Channex outbox rows", () => {
     const read = { where: jest.fn(() => read), getOne: jest.fn().mockResolvedValue({ id: "booking-1" }) };
     client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
 
-    await repository.recordGuestRefund("booking-1", { refundedAmount: 5000, stripeRefundId: "re_1", refundError: null });
+    await repository.recordGuestRefund("booking-1", {
+      refundedAmount: 5000,
+      stripeRefundId: "re_1",
+      refundError: null,
+      refundStatus: "refunded",
+    });
 
     const update = client.createQueryBuilder.mock.results[0].value;
-    expect(update.set).toHaveBeenCalledWith({ refunded_amount: 5000, stripe_refund_id: "re_1" });
+    expect(update.set).toHaveBeenCalledWith({
+      refunded_amount: 5000,
+      stripe_refund_id: "re_1",
+      refund_error: null,
+      refund_status: "refunded",
+    });
     expect(client.transaction).not.toHaveBeenCalled();
     expect(channexAriOutboxWriter.enqueueChannexAriChange).not.toHaveBeenCalled();
   });

@@ -122,8 +122,12 @@ export class PropertyService {
       return;
     }
     try {
-      const { invalidationErrors, redirectErrors = [] } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-      [...invalidationErrors, ...redirectErrors].forEach((failure) => {
+      const {
+        invalidationErrors,
+        redirectErrors = [],
+        sitePageErrors = [],
+      } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+      [...invalidationErrors, ...redirectErrors, ...sitePageErrors].forEach((failure) => {
         console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
       });
     } catch (error) {
@@ -641,7 +645,11 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
+    const [full, history] = await Promise.all([
+      this.getFullPropertyAttributesWithFullLocation(propertyId),
+      this.propertyRepository.getModerationEventsByPropertyId(propertyId),
+    ]);
+    return { ...full, history };
   }
 
   async getFullPropertiesByHostId(hostId) {

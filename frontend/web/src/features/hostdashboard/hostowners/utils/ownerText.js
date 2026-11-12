@@ -2,6 +2,7 @@ const STATUS_BAD_REQUEST = 400;
 const STATUS_UNAUTHORIZED = 401;
 const STATUS_FORBIDDEN = 403;
 const STATUS_NOT_FOUND = 404;
+const STATUS_CONFLICT = 409;
 
 export const hasOwnKey = (object, key) => typeof key === "string" && Object.hasOwn(object, key);
 
@@ -34,3 +35,25 @@ export const saveErrorText = (error, t) => {
   }
   return accessErrorText(error, t) ?? t.form.errorGeneric;
 };
+
+export const isNotFoundError = (error) => error?.status === STATUS_NOT_FOUND;
+
+export const isConflictError = (error) => error?.status === STATUS_CONFLICT;
+
+const OWNER_NOT_FOUND_LOAD_STATUSES = Object.freeze([STATUS_BAD_REQUEST, STATUS_NOT_FOUND]);
+const NOT_RETRYABLE_STATUSES = Object.freeze([STATUS_UNAUTHORIZED, STATUS_FORBIDDEN, ...OWNER_NOT_FOUND_LOAD_STATUSES]);
+
+export const canRetryLoad = (error) => !NOT_RETRYABLE_STATUSES.includes(error?.status);
+
+export const detailLoadErrorText = (error, t) =>
+  OWNER_NOT_FOUND_LOAD_STATUSES.includes(error?.status)
+    ? t.detail.errorNotFound
+    : (accessErrorText(error, t) ?? t.detail.errorGeneric);
+
+const conflictText = (error, t, name) => {
+  const hasServerMessage = typeof error.serverMessage === "string" && error.serverMessage !== "";
+  return hasServerMessage ? error.serverMessage : fillTemplate(t.detail.archiveBlocked, { name });
+};
+
+export const archiveErrorText = (error, t, name) =>
+  error?.status === STATUS_CONFLICT ? conflictText(error, t, name) : saveErrorText(error, t);
