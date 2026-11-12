@@ -2,6 +2,7 @@ import { CommunicationPreferencesRepository } from "../../data/repository.js";
 import { HostNotificationPreferencesRepository } from "../../data/hostNotificationPreferencesRepository.js";
 import { DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES, DEFAULT_HOST_NOTIFICATION_PREFERENCES, HOST_NOTIFICATION_EVENT_KEYS, isRequiredHostNotificationEmail } from "../hostNotificationMatrixConfig.js";
 import { badRequest } from "../../util/httpErrors.js";
+import { withDsqlRetry } from "../../../.shared/dsqlRetry.js";
 
 export const DEFAULT_COMMUNICATION_PREFERENCES = Object.freeze({
   reservation: Object.freeze({ email: true, sms: false, push: true }),
@@ -200,17 +201,20 @@ export class CommunicationPreferencesService {
 
   async saveHostNotificationPreferences(userId, payload) {
     const preferences = this.validateHostNotificationPreferences(payload);
-    const existing = await this.hostNotificationRepository.findByUserId(userId);
-    const now = this.now();
 
-    await this.hostNotificationRepository.save({
-      user_id: userId,
-      preferences: JSON.stringify(preferences),
-      created_at: existing?.created_at ?? now,
-      updated_at: now,
+    return withDsqlRetry(async () => {
+      const existing = await this.hostNotificationRepository.findByUserId(userId);
+      const now = this.now();
+
+      await this.hostNotificationRepository.save({
+        user_id: userId,
+        preferences: JSON.stringify(preferences),
+        created_at: existing?.created_at ?? now,
+        updated_at: now,
+      });
+
+      return preferences;
     });
-
-    return preferences;
   }
 
   validateHostNotificationPreferences(payload) {
