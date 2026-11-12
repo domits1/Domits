@@ -1,4 +1,5 @@
-import { API_REVIEW_BASE, approveReview, publishApprovedReview, getPendingApprovalReviews } from "../services/reviewAPI";
+import { API_REVIEW_BASE, approveReview, publishApprovedReview, getPendingApprovalReviews,
+  getAdminReviews, hasReviewApprovalAccess, submitReviewForApproval } from "../services/reviewAPI";
 
 jest.mock("../../../services/getAccessToken", () => ({ getIdToken: async () => "token" }));
 
@@ -8,6 +9,78 @@ afterEach(() => {
 });
 
 const respond = (status, body) => ({ ok: status < 400, status, text: async () => body });
+
+test.each(["", "null", "{}", '{"reviews":[]}', "invalid JSON"])(
+  "rejects an unexpected successful queue response: %s", async (body) => {
+    global.fetch = jest.fn().mockResolvedValue(respond(200, body));
+    await expect(getPendingApprovalReviews()).rejects.toThrow("The server returned an unexpected response.");
+  },
+);
+
+test("distinguishes an empty queue from an unreadable response", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, "[]"));
+  expect(await getPendingApprovalReviews()).toEqual([]);
+  global.fetch.mockResolvedValue({ ok: true, status: 200, text: async () => { throw new Error("Read failed"); } });
+  await expect(getPendingApprovalReviews()).rejects.toThrow("The server returned an unexpected response.");
+});
+
+test("loads the requested admin scope", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, "[]"));
+  expect(await getAdminReviews("approved")).toEqual([]);
+  expect(fetch).toHaveBeenCalledWith(`${API_REVIEW_BASE}/reviews?scope=approved`, {
+    method: "GET", headers: { Authorization: "token" },
+  });
+});
+
+test("confirms approval access even when the valid queue is empty", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, "[]"));
+  expect(await hasReviewApprovalAccess()).toBe(true);
+});
+
+test.each([401, 403])("denies approval access for HTTP %s", async (status) => {
+  global.fetch = jest.fn().mockResolvedValue(respond(status, ""));
+  expect(await hasReviewApprovalAccess()).toBe(false);
+});
+
+test.each([500, 503])("keeps approval access unknown for HTTP %s", async (status) => {
+  global.fetch = jest.fn().mockResolvedValue(respond(status, ""));
+  expect(await hasReviewApprovalAccess()).toBeNull();
+});
+
+test("keeps approval access unknown during a network failure", async () => {
+  global.fetch = jest.fn().mockRejectedValue(new Error("Network unavailable"));
+  expect(await hasReviewApprovalAccess()).toBeNull();
+});
+
+test("does not confirm approval access from a malformed queue response", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, "{}"));
+  expect(await hasReviewApprovalAccess()).toBeNull();
+});
+
+test("submits an encoded review ID for approval with authentication", async () => {
+  global.fetch = jest.fn().mockResolvedValue(respond(200, '{"id":"r/1","status":"PENDING_APPROVAL"}'));
+  expect(await submitReviewForApproval("r/1")).toEqual({ id: "r/1", status: "PENDING_APPROVAL" });
+  expect(fetch).toHaveBeenCalledWith(`${API_REVIEW_BASE}/reviews/r%2F1/publish`, {
+    method: "POST", headers: { Authorization: "token" },
+  });
+});
+
+test.each([
+  [401, "", "Please log in again before leaving a review."],
+  [403, "", "You can only review your own completed reservations."],
+  [409, "", "This reservation already has a review."],
+  [400, '{"message":"Review is incomplete."}', "Review is incomplete."],
+  [400, "", "Please check your review and try again."],
+  [500, "", "Could not submit your review. Please try again."],
+])("reports submission failure for HTTP %s", async (status, body, message) => {
+  global.fetch = jest.fn().mockResolvedValue(respond(status, body));
+  await expect(submitReviewForApproval("r1")).rejects.toThrow(message);
+});
+
+test("propagates submission network failures", async () => {
+  global.fetch = jest.fn().mockRejectedValue(new Error("Network unavailable"));
+  await expect(submitReviewForApproval("r1")).rejects.toThrow("Network unavailable");
+});
 
 test("publishes an approved review with the ID token", async () => {
   global.fetch = jest.fn().mockResolvedValue(respond(200, '{"id":"r/1","status":"PUBLISHED"}'));
