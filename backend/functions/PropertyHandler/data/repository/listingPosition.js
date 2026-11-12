@@ -33,7 +33,12 @@ export const orderByListingPosition = (query) =>
 // Where a property sits in the feed, read from the row itself. A pagination cursor carries only the id, so the
 // position can never disagree with the sort. One row, so a correlated lookup is cheaper here than the aggregate.
 // The driver returns bigint as text, hence Number().
-export const findListingPosition = async (client, propertyId) => {
+//
+// The optional scope adds the feed's own join and filter to this lookup (a function from builder to builder), so a
+// cursor row outside the feed is treated like a row that does not exist. Without it, an id from another feed would be
+// accepted and the page would silently skip or restart. A scope should not filter on status: a listing archived
+// partway through a walk should still be a valid place to continue from.
+export const findListingPosition = async (client, propertyId, scope = (lookup) => lookup) => {
   const query = client.getRepository(Property).createQueryBuilder("property");
   const approvedAt = query
     .subQuery()
@@ -42,14 +47,16 @@ export const findListingPosition = async (client, propertyId) => {
     .where("event.propertyId = property.id")
     .andWhere(`event.action = :${APPROVED_ACTION_PARAMETER}`)
     .getQuery();
-  const row = await query
+  const lookup = query
     .select(["property.id", "property.createdat"])
     .addSelect(approvedAt, APPROVED_AT_ALIAS)
     .where("property.id = :id", { id: propertyId })
-    .setParameter(APPROVED_ACTION_PARAMETER, APPROVED_ACTION)
-    .getRawOne();
+    .setParameter(APPROVED_ACTION_PARAMETER, APPROVED_ACTION);
+  const row = await scope(lookup).getRawOne();
 
-  if (!row) {
+  // A scope that replaced or widened the id filter (where() or orWhere() in place of andWhere()) would hand back some
+  // other row. Refusing any row but the one asked for makes that a null, and so a 400, and not a wrong page.
+  if (!row || row.property_id !== propertyId) {
     return null;
   }
   return { approvedAt: Number(row.approved_at), createdAt: Number(row.property_createdat), id: row.property_id };

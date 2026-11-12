@@ -262,17 +262,24 @@ describe("guarded SQL", () => {
     // It is defence in depth behind write(), which confirms the target inside itself. It is there to catch an
     // accidental new method call, not a deliberately evasive one.
     it("calls only the repository and controller methods on the allowlist", () => {
-      const ALLOWED = ["repository.getActiveProperties", "controller.getActivePropertiesCard"];
+      const ALLOWED = [
+        "repository.getActiveProperties",
+        "controller.getActivePropertiesCard",
+        "repository.getActivePropertiesByCountry",
+        "controller.getActivePropertiesCardByCountry",
+      ];
       const calls = [...SCRIPT.matchAll(/\b(\w*(?:repository|controller))\.(\w+)\(/gi)].map(([, receiver, method]) => `${receiver}.${method}`);
 
       expect(calls.length).toBeGreaterThan(0);
       expect(calls.filter((call) => !ALLOWED.includes(call))).toEqual([]);
     });
 
-    it("sends every insert and delete through write(): two inserts, two deletes", () => {
-      expect(SCRIPT.match(/await write\(/g)).toHaveLength(4);
-      expect(SCRIPT.match(/INSERT INTO test\./g)).toHaveLength(2);
-      expect(SCRIPT.match(/DELETE FROM test\./g)).toHaveLength(2);
+    // Three tables are written (property, moderation event, location), so three inserts and three deletes. A new
+    // statement changes these numbers, which is the prompt to check it goes through write() and update them here.
+    it("sends every insert and delete through write(): three inserts, three deletes", () => {
+      expect(SCRIPT.match(/await write\(/g)).toHaveLength(6);
+      expect(SCRIPT.match(/INSERT INTO test\./g)).toHaveLength(3);
+      expect(SCRIPT.match(/DELETE FROM test\./g)).toHaveLength(3);
     });
   });
 });

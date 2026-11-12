@@ -1,6 +1,13 @@
 import { LocationMapping } from "../../util/mapping/location.js";
 import { PaginatedPropertyMapping } from "../../util/mapping/paginatedProperty.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import { TypeException } from "../../util/exception/TypeException.js";
+import {
+    afterListingPosition,
+    findListingPosition,
+    joinLatestApproval,
+    orderByListingPosition,
+} from "./listingPosition.js";
 import { geocodeAddress } from "../../util/geocoding.js";
 import Database from "database";
 import {Property_Location} from "database/models/Property_Location";
@@ -85,24 +92,28 @@ export class PropertyLocationRepository {
 
     async getActivePropertiesByCountry(country, lastEvaluatedKey) {
         const client = await Database.getInstance();
-        const query = await client
+        let query = client
             .getRepository(Property)
             .createQueryBuilder("property")
+            .select(["property.id", "property.createdat"])
             .innerJoin("property_location", "pl", "pl.property_id = property.id")
             .where("pl.country = :country", { country: country })
-            .andWhere("property.status = :status", { status: "ACTIVE" })
-            .orderBy("property.createdat", "DESC")
-            .addOrderBy("property.id", "DESC")
-            .limit(12);
+            .andWhere("property.status = :status", { status: "ACTIVE" });
+        query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
         if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            query.andWhere(
-                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
-                {
-                    createdAt: lastEvaluatedKey.createdAt,
-                    id: lastEvaluatedKey.id,
-                }
-            );
+            // Only the id steers the page. createdAt marks that a cursor was sent, and the position is read back
+            // from the row, so a stale or forged value cannot skip or repeat listings.
+            // The lookup is limited to this country: a cursor from another country is a 400, not a skipped page.
+            const inThisCountry = (lookup) =>
+                lookup
+                    .innerJoin("property_location", "pl", "pl.property_id = property.id")
+                    .andWhere("pl.country = :country", { country: country });
+            const position = await findListingPosition(client, lastEvaluatedKey.id, inThisCountry);
+            if (!position) {
+                throw new TypeException("Unknown pagination cursor.");
+            }
+            query = afterListingPosition(query, position);
         }
 
         const result = await query.getMany();

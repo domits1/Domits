@@ -35,8 +35,12 @@
 //   node events/PropertyHandler/listingOrderSmoke.js cleanup --yes --target=<host>    remove the smoke rows
 //   (<host> is the host from the "Connected to" line, typed or pasted by you.)
 //
+// Feeds: `all` is GET /property/bookingEngine/all, `byCountry` is GET /property/bookingEngine/byCountry for
+// Netherlands. The smoke rows also get a location: eight in Netherlands, which has real listings, so the feed spans
+// several pages, and two in "Smokeland", which has nothing else, so the country filter has something to exclude.
+//
 // `walk` exits non-zero when any check fails. To cover another feed, add an entry to FEEDS: the walk steps
-// below only use what a feed supplies (page, reference, helperOrder, controller).
+// below only use what a feed supplies (page, reference, helperOrder, controller, and optional extraSteps).
 
 import { register } from "node:module";
 import {
@@ -69,7 +73,11 @@ const loadFromBackend = (relativePath) => import(new URL(relativePath, BACKEND).
 const { default: Database } = await import("database");
 const { Property } = await import("database/models/Property");
 const { Property_Moderation_Event } = await import("database/models/Property_Moderation_Event");
+const { Property_Location } = await import("database/models/Property_Location");
 const { PropertyRepository } = await loadFromBackend("functions/PropertyHandler/data/repository/propertyRepository.js");
+const { PropertyLocationRepository } = await loadFromBackend(
+  "functions/PropertyHandler/data/repository/propertyLocationRepository.js"
+);
 const { PropertyController } = await loadFromBackend("functions/PropertyHandler/controller/propertyController.js");
 const { NotFoundException } = await loadFromBackend("functions/PropertyHandler/util/exception/NotFoundException.js");
 const { joinLatestApproval, orderByListingPosition } = await loadFromBackend(
@@ -79,14 +87,16 @@ const { joinLatestApproval, orderByListingPosition } = await loadFromBackend(
 const PREFIX = "smoke-piece-b-";
 const PAGE_SIZE = 12;
 const BASE = 1_000_000_000_000; // older than any real row, so the smoke rows form a block inside each group
-const id =(n) => `${PREFIX}${String(n).padStart(2, "0")}`;
+const MAIN_COUNTRY = "Netherlands"; // already holds the real listings, so a feed over it spans several pages
+const OTHER_COUNTRY = "Smokeland"; // holds only smoke rows 02 and 03, a tied pair, to give the country filter work
+const id = (n) => `${PREFIX}${String(n).padStart(2, "0")}`;
 
 // Known timings. `events` are [action, createdAt]. Covers: never approved, ties on createdAt, ties on approval,
-// the latest of several approvals, and events that are not approvals.
+// the latest of several approvals, and events that are not approvals. `country` defaults to MAIN_COUNTRY.
 const SEEDS = [
   { n: 1, createdat: BASE + 1000, events: [] },
-  { n: 2, createdat: BASE + 3000, events: [] },
-  { n: 3, createdat: BASE + 3000, events: [] },
+  { n: 2, createdat: BASE + 3000, events: [], country: OTHER_COUNTRY },
+  { n: 3, createdat: BASE + 3000, events: [], country: OTHER_COUNTRY },
   { n: 4, createdat: BASE + 2000, events: [["SUBMITTED", BASE + 9000], ["REJECTED", BASE + 9500]] },
   { n: 5, createdat: BASE + 100, events: [["APPROVED", BASE + 5000]] },
   { n: 6, createdat: BASE + 100, events: [["APPROVED", BASE + 5000]] },
@@ -96,14 +106,19 @@ const SEEDS = [
   { n: 10, createdat: BASE + 700, events: [["APPROVED", BASE + 4000], ["REJECTED", BASE + 9999]] },
 ];
 
+const countryOf = (seed) => seed.country ?? MAIN_COUNTRY;
 const approvedAtOf = (seed) => Math.max(0, ...seed.events.filter(([action]) => action === "APPROVED").map(([, at]) => at));
-// The order the rules imply, from the seed definitions alone, so the database is not the only judge.
-const EXPECTED_SMOKE_ORDER = [...SEEDS]
-  .sort((a, b) => approvedAtOf(a) - approvedAtOf(b) || b.createdat - a.createdat || (id(a.n) < id(b.n) ? 1 : -1))
-  .map((seed) => id(seed.n));
+// The order the rules imply, from the seed definitions alone, so the database is not the only judge. With a country,
+// only the smoke rows seeded into it.
+const expectedSmokeOrder = (country) =>
+  SEEDS.filter((seed) => country === undefined || countryOf(seed) === country)
+    .sort((a, b) => approvedAtOf(a) - approvedAtOf(b) || b.createdat - a.createdat || (id(a.n) < id(b.n) ? 1 : -1))
+    .map((seed) => id(seed.n));
+const EXPECTED_SMOKE_ORDER = expectedSmokeOrder();
 
-const countWhere = async (client, table) =>
-  Number((await read(client, `SELECT COUNT(*) AS n FROM test.${table} WHERE id LIKE $1`, [`${PREFIX}%`]))[0].n);
+// property_location is keyed by property_id and has no id of its own, so its rows are counted by that column.
+const countWhere = async (client, table, column = "id") =>
+  Number((await read(client, `SELECT COUNT(*) AS n FROM test.${table} WHERE ${column} LIKE $1`, [`${PREFIX}%`]))[0].n);
 
 // ---- connection ------------------------------------------------------------------------------------------------
 const connect = async () => {
@@ -161,62 +176,148 @@ const FEEDS = {
       },
     };
   },
+
+  byCountry: (client) => {
+    const repository = new PropertyLocationRepository({});
+    // Plain SQL, so the reference shares no query-builder code with the method under test.
+    const referenceFor = async (country) => {
+      const rows = await read(
+        client,
+        `SELECT p.id AS id, p.createdat AS created_at,
+           COALESCE((SELECT MAX(e.created_at) FROM test.property_moderation_event e
+                     WHERE e.property_id = p.id AND e.action = 'APPROVED'), 0) AS approved_at
+         FROM test.property p
+         JOIN test.property_location l ON l.property_id = p.id
+         WHERE p.status = 'ACTIVE' AND l.country = $1
+         ORDER BY approved_at ASC, p.createdat DESC, p.id DESC`,
+        [country]
+      );
+      return rows.map((row) => ({ id: row.id, createdAt: Number(row.created_at) }));
+    };
+    return {
+      needsLocations: true,
+      expectedSmokeOrder: expectedSmokeOrder(MAIN_COUNTRY),
+      page: (cursor) => repository.getActivePropertiesByCountry(MAIN_COUNTRY, cursor),
+      pageFor: (country, cursor) => repository.getActivePropertiesByCountry(country, cursor),
+      reference: () => referenceFor(MAIN_COUNTRY),
+      referenceFor,
+      // The join helper's order with the same country join and filter the method uses, to match the reference.
+      helperOrder: async () => {
+        const query = client
+          .getRepository(Property)
+          .createQueryBuilder("property")
+          .select(["property.id", "property.createdat"])
+          .innerJoin(Property_Location, "pl", "pl.property_id = property.id")
+          .where("pl.country = :country", { country: MAIN_COUNTRY })
+          .andWhere("property.status = :status", { status: "ACTIVE" });
+        const rows = await orderByListingPosition(joinLatestApproval(query)).getRawMany();
+        return rows.map((row) => row.property_id);
+      },
+      controller: (queryStringParameters) => {
+        const controller = new PropertyController();
+        controller.propertyService = {
+          getActivePropertyCardsByCountry: (country, cursor) => repository.getActivePropertiesByCountry(country, cursor),
+        };
+        return controller.getActivePropertiesCardByCountry({
+          httpMethod: "GET",
+          queryStringParameters: { country: MAIN_COUNTRY, ...queryStringParameters },
+        });
+      },
+      extraSteps: [checkCountryFilter, checkCrossCountryCursor],
+    };
+  },
 };
 
 // ---- write commands --------------------------------------------------------------------------------------------
-const seed = async () => {
-  const { client, target } = await connect();
-  const existing = await countWhere(client, "property");
-  if (existing === SEEDS.length) {
-    console.log(`Already seeded: ${existing} ${PREFIX}* properties. Nothing written.`);
-    return;
-  }
-  if (existing !== 0) {
-    throw new RefusedError(`Refusing to seed: ${existing} partial ${PREFIX}* rows exist. Run cleanup first.`);
-  }
-  for (const entry of SEEDS) {
+const insertProperty = async (client, target, entry) => {
+  await write(
+    target,
+    process.argv,
+    client,
+    `INSERT INTO test.property (id, title, subtitle, description, registrationnumber, hostid, status, createdat, updatedat)
+     VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $7)`,
+    [
+      id(entry.n),
+      `${PREFIX}test listing ${entry.n}`,
+      PREFIX.slice(0, -1),
+      `Inserted by listingOrderSmoke.js. Remove with: id LIKE '${PREFIX}%'`,
+      `${PREFIX}reg-${entry.n}`,
+      `${PREFIX}host`,
+      entry.createdat,
+    ]
+  );
+};
+
+const insertEvents = async (client, target, entry) => {
+  let sequence = 0;
+  for (const [action, createdAt] of entry.events) {
+    sequence += 1;
     await write(
       target,
       process.argv,
       client,
-      `INSERT INTO test.property (id, title, subtitle, description, registrationnumber, hostid, status, createdat, updatedat)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $7)`,
-      [
-        id(entry.n),
-        `${PREFIX}test listing ${entry.n}`,
-        PREFIX.slice(0, -1),
-        `Inserted by listingOrderSmoke.js. Remove with: id LIKE '${PREFIX}%'`,
-        `${PREFIX}reg-${entry.n}`,
-        `${PREFIX}host`,
-        entry.createdat,
-      ]
+      `INSERT INTO test.property_moderation_event (id, property_id, action, actor_id, from_status, to_status, created_at)
+       VALUES ($1, $2, $3, $4, 'PENDING_REVIEW', $5, $6)`,
+      [`${PREFIX}evt-${String(entry.n).padStart(2, "0")}-${sequence}`, id(entry.n), action, `${PREFIX}actor`, action === "APPROVED" ? "ACTIVE" : action, createdAt]
     );
-    let sequence = 0;
-    for (const [action, createdAt] of entry.events) {
-      sequence += 1;
-      await write(
-        target,
-        process.argv,
-        client,
-        `INSERT INTO test.property_moderation_event (id, property_id, action, actor_id, from_status, to_status, created_at)
-         VALUES ($1, $2, $3, $4, 'PENDING_REVIEW', $5, $6)`,
-        [`${PREFIX}evt-${String(entry.n).padStart(2, "0")}-${sequence}`, id(entry.n), action, `${PREFIX}actor`, action === "APPROVED" ? "ACTIVE" : action, createdAt]
-      );
-    }
   }
-  console.log(`Seeded ${SEEDS.length} ${PREFIX}* properties and their moderation events in schema test.`);
+};
+
+// Only the NOT NULL columns: test.property_location can lag the entity, and the feeds read nothing else from it.
+const insertLocation = async (client, target, entry) => {
+  await write(
+    target,
+    process.argv,
+    client,
+    `INSERT INTO test.property_location (property_id, city, country, housenumber, postalcode, street)
+     VALUES ($1, 'Smoke City', $2, $3, '0000 SM', 'Smoke Street')`,
+    [id(entry.n), countryOf(entry), entry.n]
+  );
+};
+
+const seed = async () => {
+  const { client, target } = await connect();
+  const properties = await countWhere(client, "property");
+  const locations = await countWhere(client, "property_location", "property_id");
+  const complete = SEEDS.length;
+
+  if (properties === complete && locations === complete) {
+    console.log(`Already seeded: ${properties} ${PREFIX}* properties with their locations. Nothing written.`);
+    return;
+  }
+  const onlyLocationsMissing = properties === complete && locations === 0;
+  const nothingYet = properties === 0 && locations === 0;
+  if (!onlyLocationsMissing && !nothingYet) {
+    throw new RefusedError(
+      `Refusing to seed: ${properties} ${PREFIX}* properties and ${locations} locations exist, a partial state. Run cleanup first.`
+    );
+  }
+  for (const entry of SEEDS) {
+    if (nothingYet) {
+      await insertProperty(client, target, entry);
+      await insertEvents(client, target, entry);
+    }
+    await insertLocation(client, target, entry);
+  }
+  console.log(
+    nothingYet
+      ? `Seeded ${complete} ${PREFIX}* properties, their moderation events and their locations in schema test.`
+      : `Added ${complete} locations to the existing ${PREFIX}* properties in schema test.`
+  );
 };
 
 const cleanup = async (confirmed) => {
   const { client, target } = await connect();
   const properties = await countWhere(client, "property");
   const events = await countWhere(client, "property_moderation_event");
-  console.log(`${PREFIX}* rows in schema test: ${properties} properties, ${events} moderation events.`);
+  const locations = await countWhere(client, "property_location", "property_id");
+  console.log(`${PREFIX}* rows in schema test: ${properties} properties, ${events} moderation events, ${locations} locations.`);
   if (!confirmed) {
     console.log(`Nothing deleted. To delete exactly those rows, run again with: --yes ${TARGET_HINT}`);
     return;
   }
   await write(target, process.argv, client, `DELETE FROM test.property_moderation_event WHERE id LIKE $1`, [`${PREFIX}%`]);
+  await write(target, process.argv, client, `DELETE FROM test.property_location WHERE property_id LIKE $1`, [`${PREFIX}%`]);
   await write(target, process.argv, client, `DELETE FROM test.property WHERE id LIKE $1`, [`${PREFIX}%`]);
   console.log("Deleted.");
 };
@@ -228,7 +329,8 @@ const sameList = (left, right) => JSON.stringify(left) === JSON.stringify(right)
 
 const checkReferenceOrder = async (feed, { referenceIds }) => {
   const smokeOrder = referenceIds.filter((rowId) => rowId.startsWith(PREFIX));
-  const results = [result("reference order puts the smoke rows where the rules say", sameList(smokeOrder, EXPECTED_SMOKE_ORDER))];
+  const expected = feed.expectedSmokeOrder ?? EXPECTED_SMOKE_ORDER;
+  const results = [result("reference order puts the smoke rows where the rules say", sameList(smokeOrder, expected))];
   if (feed.helperOrder) {
     results.push(result("join helper order equals the correlated reference", sameList(await feed.helperOrder(), referenceIds)));
   }
@@ -328,6 +430,79 @@ const checkControllerPaths = async (feed, { referenceIds }) => {
   }
 };
 
+// Only a feed with a country filter has this. The main country must hold none of the other country's smoke rows,
+// the other country's feed must be exactly its own rows in the rule order, and a country with nothing is a 404.
+const checkCountryFilter = async (feed, { referenceIds }) => {
+  const otherSmoke = expectedSmokeOrder(OTHER_COUNTRY);
+  const otherRows = await feed.referenceFor(OTHER_COUNTRY);
+  const otherReference = otherRows.map((row) => row.id);
+  const otherPage = await feed.pageFor(OTHER_COUNTRY);
+  const first = otherRows[0];
+  const last = otherRows[otherRows.length - 1];
+  const resumed = await feed.pageFor(OTHER_COUNTRY, { createdAt: first.createdAt, id: first.id });
+  let afterLast;
+  try {
+    await feed.pageFor(OTHER_COUNTRY, { createdAt: last.createdAt, id: last.id });
+  } catch (caught) {
+    afterLast = caught;
+  }
+  let emptyCountry;
+  try {
+    await feed.pageFor("Atlantis");
+  } catch (caught) {
+    emptyCountry = caught;
+  }
+  return [
+    result(
+      "country filter: the main country holds none of the other country's smoke rows",
+      otherSmoke.every((rowId) => !referenceIds.includes(rowId))
+    ),
+    result(
+      "country filter: the other country's feed is exactly its smoke rows, the tie broken by id",
+      sameList(otherReference, otherSmoke) && sameList(otherPage.identifiers, otherSmoke),
+      otherPage.identifiers.join(",")
+    ),
+    result(
+      "country filter: resuming inside the other country continues there, and its end is a 404",
+      sameList(resumed.identifiers, otherSmoke.slice(1)) && afterLast instanceof NotFoundException
+    ),
+    result("country filter: a country with no properties is a 404", emptyCountry instanceof NotFoundException),
+  ];
+};
+
+// A cursor row that belongs to another country is refused like an unknown id. Before the lookup was scoped, a
+// Smokeland cursor against Netherlands returned a 200 that skipped 178 of 186 listings, and a Netherlands cursor
+// against Smokeland returned a 200 that restarted the feed.
+const checkCrossCountryCursor = async (feed, { reference }) => {
+  const fromOther = (await feed.referenceFor(OTHER_COUNTRY))[0];
+  const fromMain = reference[PAGE_SIZE - 1];
+  const refusal = async (country, row) => {
+    try {
+      await feed.pageFor(country, { createdAt: row.createdAt, id: row.id });
+      return undefined;
+    } catch (caught) {
+      return caught;
+    }
+  };
+  const mainWithOtherCursor = await refusal(MAIN_COUNTRY, fromOther);
+  const otherWithMainCursor = await refusal(OTHER_COUNTRY, fromMain);
+
+  const logError = console.error;
+  console.error = () => {}; // the controller logs the expected 400
+  try {
+    const statusVia = async (country, row) =>
+      (await feed.controller({ country, lastEvaluatedKeyCreatedAt: String(row.createdAt), lastEvaluatedKeyId: row.id })).statusCode;
+    const controllerStatuses = [await statusVia(MAIN_COUNTRY, fromOther), await statusVia(OTHER_COUNTRY, fromMain)];
+    return [
+      result("cross-country cursor: a Smokeland cursor against Netherlands is a 400, not a skipped page", mainWithOtherCursor?.statusCode === 400, mainWithOtherCursor?.message),
+      result("cross-country cursor: a Netherlands cursor against Smokeland is a 400, not a restarted page", otherWithMainCursor?.statusCode === 400, otherWithMainCursor?.message),
+      result("cross-country cursor: both are HTTP 400 through the controller", sameList(controllerStatuses, [400, 400]), controllerStatuses.join(",")),
+    ];
+  } finally {
+    console.error = logError;
+  }
+};
+
 const WALK_STEPS = [checkReferenceOrder, checkPageThrough, checkResumeFromEveryCursor, checkUnknownCursor, checkControllerPaths];
 
 const walk = async (feedName) => {
@@ -337,12 +512,15 @@ const walk = async (feedName) => {
     throw new RefusedError(`Expected the ${SEEDS.length} ${PREFIX}* rows. Run: node events/PropertyHandler/listingOrderSmoke.js seed ${TARGET_HINT}`);
   }
   const feed = FEEDS[feedName](client);
+  if (feed.needsLocations && (await countWhere(client, "property_location", "property_id")) !== SEEDS.length) {
+    throw new RefusedError(`Expected the ${SEEDS.length} ${PREFIX}* location rows. Run: node events/PropertyHandler/listingOrderSmoke.js seed ${TARGET_HINT}`);
+  }
   const reference = await feed.reference();
   const context = { reference, referenceIds: reference.map((row) => row.id) };
   console.log(`feed "${feedName}": ${reference.length} rows in the reference order\n`);
 
   const failures = [];
-  for (const step of WALK_STEPS) {
+  for (const step of [...WALK_STEPS, ...(feed.extraSteps ?? [])]) {
     for (const { label, passed, detail } of await step(feed, context)) {
       console.log(`${passed ? "PASS" : "FAIL"}  ${label}${detail ? `  ${detail}` : ""}`);
       if (!passed) failures.push(label);
@@ -358,7 +536,7 @@ try {
   else if (command === "walk") await walk(argument ?? "all");
   else if (command === "cleanup") await cleanup(process.argv.includes("--yes"));
   else {
-    console.log("Usage: node events/PropertyHandler/listingOrderSmoke.js walk [feed] | seed --target=<host> | cleanup [--yes --target=<host>]");
+    console.log("Usage: node events/PropertyHandler/listingOrderSmoke.js walk [all|byCountry] | seed --target=<host> | cleanup [--yes --target=<host>]");
     process.exitCode = 2;
   }
 } catch (error) {

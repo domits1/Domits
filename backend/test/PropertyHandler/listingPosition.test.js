@@ -2,6 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, jest } from "@jest/globals"
 import { DataSource, SelectQueryBuilder } from "typeorm";
 import { Property } from "database/models/Property";
 import { Property_Moderation_Event } from "database/models/Property_Moderation_Event";
+import { Property_Location } from "database/models/Property_Location";
 import {
   afterListingPosition,
   findListingPosition,
@@ -24,7 +25,7 @@ describe("listing position query", () => {
     dataSource = new DataSource({
       type: "postgres",
       schema: "test",
-      entities: [Property, Property_Moderation_Event],
+      entities: [Property, Property_Moderation_Event, Property_Location],
     });
     await dataSource.buildMetadatas();
   });
@@ -75,7 +76,7 @@ describe("keyset position", () => {
     dataSource = new DataSource({
       type: "postgres",
       schema: "test",
-      entities: [Property, Property_Moderation_Event],
+      entities: [Property, Property_Moderation_Event, Property_Location],
     });
     await dataSource.buildMetadatas();
   });
@@ -159,6 +160,97 @@ describe("keyset position", () => {
 
     it("returns null when no row has that id", async () => {
       await expect(read(undefined)).resolves.toBeNull();
+    });
+  });
+
+  describe("findListingPosition with a scope", () => {
+    const inCountry = (lookup) =>
+      lookup
+        .innerJoin("property_location", "pl", "pl.property_id = property.id")
+        .andWhere("pl.country = :country", { country: "Germany" });
+
+    const readScoped = async (scope, row = { property_id: "property-6", property_createdat: "5", approved_at: "0" }) => {
+      jest.spyOn(SelectQueryBuilder.prototype, "getRawOne").mockImplementation(function () {
+        captured = { sql: this.getQuery(), parameters: this.getParameters() };
+        return Promise.resolve(row);
+      });
+      return await findListingPosition(dataSource, "property-6", scope);
+    };
+
+    it("adds the scope's join and filter to the lookup", async () => {
+      await readScoped(inCountry);
+
+      expect(captured.sql).toContain('INNER JOIN "test"."property_location" "pl" ON "pl"."property_id" = "property"."id"');
+      expect(captured.sql).toContain('WHERE "property"."id" = :id AND "pl"."country" = :country');
+      expect(captured.parameters.country).toBe("Germany");
+    });
+
+    it("still looks the row up by id when a scope is given", async () => {
+      await readScoped(inCountry);
+
+      expect(captured.sql).toContain('"property"."id" = :id');
+      expect(captured.parameters.id).toBe("property-6");
+    });
+
+    it("returns the position of a row that passes the scope", async () => {
+      const position = await readScoped(inCountry, {
+        property_id: "property-6",
+        property_createdat: "1700000000100",
+        approved_at: "1700000005000",
+      });
+
+      expect(position).toEqual({ approvedAt: 1700000005000, createdAt: 1700000000100, id: "property-6" });
+    });
+
+    it("returns null for a row the scope filters out, the same as for a row that does not exist", async () => {
+      await expect(readScoped(inCountry, null)).resolves.toBeNull();
+    });
+
+    describe("a scope that weakens the lookup", () => {
+      const OTHER_ROW = { property_id: "some-other-property", property_createdat: "5", approved_at: "0" };
+
+      it("is a real weakening: a scope using where() leaves no id filter in the query", async () => {
+        await readScoped((lookup) => lookup.where("1 = 1"), OTHER_ROW);
+
+        expect(captured.sql).not.toContain('"property"."id" = :id');
+      });
+
+      it("is a real broadening: a scope using orWhere() ORs the id filter with something else", async () => {
+        await readScoped((lookup) => lookup.orWhere("property.status = 'ACTIVE'"), OTHER_ROW);
+
+        expect(captured.sql).toContain('"property"."id" = :id OR');
+      });
+
+      it("returns null when a scope that dropped the id filter lets a different row through", async () => {
+        await expect(readScoped((lookup) => lookup.where("1 = 1"), OTHER_ROW)).resolves.toBeNull();
+      });
+
+      it("returns null when a scope that broadened the id filter lets a different row through", async () => {
+        await expect(
+          readScoped((lookup) => lookup.orWhere("property.status = 'ACTIVE'"), OTHER_ROW)
+        ).resolves.toBeNull();
+      });
+
+      it("returns null for a different row even when no scope is given", async () => {
+        await expect(readScoped(undefined, OTHER_ROW)).resolves.toBeNull();
+      });
+
+      it("still returns the position when the row is the one asked for, whatever the scope", async () => {
+        const position = await readScoped(inCountry, {
+          property_id: "property-6",
+          property_createdat: "1700000000100",
+          approved_at: "1700000005000",
+        });
+
+        expect(position).toEqual({ approvedAt: 1700000005000, createdAt: 1700000000100, id: "property-6" });
+      });
+    });
+
+    it("leaves the lookup unscoped when no scope is given", async () => {
+      await readScoped(undefined);
+
+      expect(captured.sql).not.toContain("property_location");
+      expect(captured.sql).not.toContain("INNER JOIN");
     });
   });
 });
