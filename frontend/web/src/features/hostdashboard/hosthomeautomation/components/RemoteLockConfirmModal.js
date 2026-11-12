@@ -1,7 +1,8 @@
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import PropTypes from "prop-types";
 import ChannexModalShell from "../../hostchanneldistribution/components/ChannexModalShell";
 import { connectRemoteLock, disconnectRemoteLock } from "../services/remoteLockService";
+import { getErrorMessage } from "../utils/remoteLockErrors";
 // The shell and its buttons are styled by the Distribution tab's stylesheet, which this page does not otherwise
 // load, and its colour variables are defined on .host-chdist. Until a shared modal is extracted (follow-up),
 // import it here and render the modal inside that class.
@@ -21,17 +22,34 @@ function RemoteLockConfirmModal({ variant, copy, onClose, onDone }) {
   const { title, body, confirm, confirming } = copy.modal[variant];
   const confirmClass = variant === "disconnect" ? "chdist-btn--danger" : "chdist-btn--primary";
 
+  // Back from RemoteLock can restore this page from the back/forward cache with the modal still waiting.
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) setSubmitting(false);
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   const handleConfirm = async () => {
     setSubmitting(true);
     setErrorMessage("");
+    let redirecting = false;
     try {
-      onDone(await VARIANT_REQUESTS[variant]());
+      const result = await VARIANT_REQUESTS[variant]();
+      if (result.authorizeUrl) {
+        // Stays disabled while the browser leaves for RemoteLock.
+        redirecting = true;
+        window.location.assign(result.authorizeUrl);
+        return;
+      }
+      onDone(result);
     } catch (error) {
       // The host sees a fixed message; the real detail goes to the console.
       console.error(`Failed to ${variant} RemoteLock:`, error?.message || error);
-      setErrorMessage(copy.modal.error);
+      setErrorMessage(getErrorMessage(error?.code, copy));
     } finally {
-      setSubmitting(false);
+      if (!redirecting) setSubmitting(false);
     }
   };
 
@@ -80,6 +98,7 @@ RemoteLockConfirmModal.propTypes = {
       cancel: PropTypes.string.isRequired,
       error: PropTypes.string.isRequired,
     }).isRequired,
+    errors: PropTypes.objectOf(PropTypes.string).isRequired,
   }).isRequired,
   onClose: PropTypes.func.isRequired,
   onDone: PropTypes.func.isRequired,

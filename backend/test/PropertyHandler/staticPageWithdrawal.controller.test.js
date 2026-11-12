@@ -55,6 +55,20 @@ describe("unpublishing a website site queues the withdrawal of its page", () => 
     ).rejects.toThrow("outbox unavailable");
   });
 
+  it("logs every failure a website withdrawal reports, also site pages it could not list, and goes on", async () => {
+    const log = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = new PropertyController();
+    const failure = { siteId: "site-1", hostname: "www.cliffhouse.nl", message: "SITE_PAGES_UNLISTED: AccessDenied" };
+    controller.createStaticPageWithdrawal = () => ({
+      withdrawSite: jest.fn(async () => ({ invalidationErrors: [], redirectErrors: [], sitePageErrors: [failure] })),
+    });
+
+    await controller.withdrawStaticPageSafely(SITE);
+
+    expect(log).toHaveBeenCalledWith("[StaticPage] withdrawing site site-1 left a failure:", failure);
+    log.mockRestore();
+  });
+
   it("gives the worker a withdrawal that shares the page store and talks to the tenants", () => {
     process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = "sites-bucket-under-test";
     const controller = new PropertyController();

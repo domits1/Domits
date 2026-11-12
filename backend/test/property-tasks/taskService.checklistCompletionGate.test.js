@@ -5,12 +5,14 @@ jest.mock("database", () => ({
 
 const mockGetTaskById = jest.fn();
 const mockUpdateTaskInDb = jest.fn();
+const mockUpdateTaskUnlessCompleted = jest.fn();
 const mockSaveActivityToDb = jest.fn();
 const mockGetChecklistItemsForTask = jest.fn();
 
 jest.mock("../../functions/property-tasks/data/taskRepository.js", () => ({
     getTaskById: (...args) => mockGetTaskById(...args),
     updateTaskInDb: (...args) => mockUpdateTaskInDb(...args),
+    updateTaskUnlessCompleted: (...args) => mockUpdateTaskUnlessCompleted(...args),
     saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
     getChecklistItemsForTask: (...args) => mockGetChecklistItemsForTask(...args),
 }));
@@ -22,6 +24,7 @@ describe("updateTask - checklist completion gate", () => {
         jest.clearAllMocks();
         mockGetTaskById.mockResolvedValue({ id: "task-1", host_id: "host-1", status: "Pending", due_date: null });
         mockUpdateTaskInDb.mockResolvedValue();
+        mockUpdateTaskUnlessCompleted.mockResolvedValue(true);
         mockSaveActivityToDb.mockResolvedValue();
     });
 
@@ -35,6 +38,7 @@ describe("updateTask - checklist completion gate", () => {
         ).rejects.toThrow(/required checklist items are not all checked/);
 
         expect(mockUpdateTaskInDb).not.toHaveBeenCalled();
+        expect(mockUpdateTaskUnlessCompleted).not.toHaveBeenCalled();
     });
 
     it("allows completing a task when all required items are checked", async () => {

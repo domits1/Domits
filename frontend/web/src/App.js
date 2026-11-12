@@ -24,7 +24,7 @@ import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import ReviewPage from "./features/review/ReviewPage";
+import ReviewPage from "./features/review/views/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
 import Sustainability from "./features/sustainability/Sustainability";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";

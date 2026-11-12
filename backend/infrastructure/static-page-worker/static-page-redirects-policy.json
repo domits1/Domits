@@ -1,0 +1,11 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadAndUpdateTheRedirectStoreOnly",
+      "Effect": "Allow",
+      "Action": ["cloudfront-keyvaluestore:DescribeKeyValueStore", "cloudfront-keyvaluestore:ListKeys", "cloudfront-keyvaluestore:UpdateKeys"],
+      "Resource": "arn:aws:cloudfront::115462458880:key-value-store/__REDIRECTS_KVS_ID__"
+    }
+  ]
+}

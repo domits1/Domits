@@ -45,7 +45,14 @@ const ContactItem = ({ contact, selected, onActionsClick }) => {
   return (
     <div className={`contact-item-content ${selected ? "selected" : ""}`}>
       <div className="contact-item-image-container">
-        <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
+        <img
+          src={contact.profileImage || profileImage}
+          alt="Profile"
+          className="contact-item-profile-image"
+          onError={(e) => {
+            if (e.currentTarget.getAttribute("src") !== profileImage) e.currentTarget.src = profileImage;
+          }}
+        />
         <span className="contact-online-dot" />
       </div>
 
