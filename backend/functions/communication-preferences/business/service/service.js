@@ -17,6 +17,51 @@ const SPOOFED_USER_ID_KEYS = ["userId", "user_id", "cognitoUserId", "sub"];
 const HOST_NOTIFICATION_CHANNEL_KEYS = ["inApp", "email", "sms"];
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
+const validateBooleanMatrix = (payload, {
+  matrixName,
+  eventKeys,
+  channelKeys,
+  unknownEventMessage,
+  missingEventMessage,
+  unknownChannelMessage,
+  missingChannelMessage,
+  invalidChannelMessage,
+}) => {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw badRequest(`Request body must be ${matrixName}.`);
+  }
+
+  for (const key of Object.keys(payload)) {
+    if (!eventKeys.includes(key)) throw badRequest(unknownEventMessage(key));
+  }
+
+  return Object.fromEntries(eventKeys.map((eventKey) => {
+    const eventChannels = payload[eventKey];
+    if (!eventChannels || typeof eventChannels !== "object" || Array.isArray(eventChannels)) {
+      throw badRequest(missingEventMessage(eventKey));
+    }
+
+    for (const channelKey of Object.keys(eventChannels)) {
+      if (!channelKeys.includes(channelKey)) {
+        throw badRequest(unknownChannelMessage(eventKey, channelKey));
+      }
+    }
+
+    const channels = {};
+    for (const channelKey of channelKeys) {
+      if (!hasOwn(eventChannels, channelKey)) {
+        throw badRequest(missingChannelMessage(eventKey, channelKey));
+      }
+      if (typeof eventChannels[channelKey] !== "boolean") {
+        throw badRequest(invalidChannelMessage(eventKey, channelKey));
+      }
+      channels[channelKey] = eventChannels[channelKey];
+    }
+
+    return [eventKey, channels];
+  }));
+};
+
 const cloneHostNotificationDefaults = () => Object.fromEntries(
   Object.entries(DEFAULT_HOST_NOTIFICATION_PREFERENCES).map(([eventKey, channels]) => [
     eventKey,
@@ -169,40 +214,18 @@ export class CommunicationPreferencesService {
   }
 
   validateHostNotificationPreferences(payload) {
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw badRequest("Request body must be a host notification preferences object.");
-    }
+    const preferences = validateBooleanMatrix(payload, {
+      matrixName: "a host notification preferences object",
+      eventKeys: HOST_NOTIFICATION_EVENT_KEYS,
+      channelKeys: HOST_NOTIFICATION_CHANNEL_KEYS,
+      unknownEventMessage: (eventKey) => `Unknown host notification preference: ${eventKey}.`,
+      missingEventMessage: (eventKey) => `Host notification channels for ${eventKey} are required.`,
+      unknownChannelMessage: (_eventKey, channelKey) => `Unknown host notification channel: ${channelKey}.`,
+      missingChannelMessage: (eventKey, channelKey) => `Host notification channel ${eventKey}.${channelKey} is required.`,
+      invalidChannelMessage: (eventKey, channelKey) => `Host notification channel ${eventKey}.${channelKey} must be a boolean.`,
+    });
 
-    for (const key of Object.keys(payload)) {
-      if (!HOST_NOTIFICATION_EVENT_KEYS.includes(key)) {
-        throw badRequest(`Unknown host notification preference: ${key}.`);
-      }
-    }
-
-    const preferences = {};
     for (const eventKey of HOST_NOTIFICATION_EVENT_KEYS) {
-      const eventChannels = payload[eventKey];
-      if (!eventChannels || typeof eventChannels !== "object" || Array.isArray(eventChannels)) {
-        throw badRequest(`Host notification channels for ${eventKey} are required.`);
-      }
-
-      for (const channelKey of Object.keys(eventChannels)) {
-        if (!HOST_NOTIFICATION_CHANNEL_KEYS.includes(channelKey)) {
-          throw badRequest(`Unknown host notification channel: ${channelKey}.`);
-        }
-      }
-
-      preferences[eventKey] = {};
-      for (const channelKey of HOST_NOTIFICATION_CHANNEL_KEYS) {
-        if (!hasOwn(eventChannels, channelKey)) {
-          throw badRequest(`Host notification channel ${eventKey}.${channelKey} is required.`);
-        }
-        if (typeof eventChannels[channelKey] !== "boolean") {
-          throw badRequest(`Host notification channel ${eventKey}.${channelKey} must be a boolean.`);
-        }
-        preferences[eventKey][channelKey] = eventChannels[channelKey];
-      }
-
       if (isRequiredHostNotificationEmail(eventKey)) preferences[eventKey].email = true;
     }
 
@@ -210,43 +233,24 @@ export class CommunicationPreferencesService {
   }
 
   validateCompleteMatrix(payload) {
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      throw badRequest("Request body must be a communication preferences object.");
-    }
-
-    for (const key of Object.keys(payload)) {
-      if (SPOOFED_USER_ID_KEYS.includes(key)) {
-        throw badRequest("userId must not be provided for communication preferences.");
-      }
-      if (!EVENT_KEYS.includes(key)) {
-        throw badRequest(`Unknown communication preferences field: ${key}.`);
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      for (const key of Object.keys(payload)) {
+        if (SPOOFED_USER_ID_KEYS.includes(key)) {
+          throw badRequest("userId must not be provided for communication preferences.");
+        }
       }
     }
 
-    const preferences = {};
-    for (const eventKey of EVENT_KEYS) {
-      const eventValue = payload[eventKey];
-      if (!eventValue || typeof eventValue !== "object" || Array.isArray(eventValue)) {
-        throw badRequest(`${eventKey} preferences are required.`);
-      }
-
-      for (const key of Object.keys(eventValue)) {
-        if (!CHANNEL_KEYS.includes(key)) {
-          throw badRequest(`Unknown ${eventKey} preference field: ${key}.`);
-        }
-      }
-
-      preferences[eventKey] = {};
-      for (const channelKey of CHANNEL_KEYS) {
-        if (!hasOwn(eventValue, channelKey)) {
-          throw badRequest(`${eventKey}.${channelKey} is required.`);
-        }
-        if (typeof eventValue[channelKey] !== "boolean") {
-          throw badRequest(`${eventKey}.${channelKey} must be a boolean.`);
-        }
-        preferences[eventKey][channelKey] = eventValue[channelKey];
-      }
-    }
+    const preferences = validateBooleanMatrix(payload, {
+      matrixName: "a communication preferences object",
+      eventKeys: EVENT_KEYS,
+      channelKeys: CHANNEL_KEYS,
+      unknownEventMessage: (eventKey) => `Unknown communication preferences field: ${eventKey}.`,
+      missingEventMessage: (eventKey) => `${eventKey} preferences are required.`,
+      unknownChannelMessage: (eventKey, channelKey) => `Unknown ${eventKey} preference field: ${channelKey}.`,
+      missingChannelMessage: (eventKey, channelKey) => `${eventKey}.${channelKey} is required.`,
+      invalidChannelMessage: (eventKey, channelKey) => `${eventKey}.${channelKey} must be a boolean.`,
+    });
 
     preferences.reservation.email = true;
     preferences.cancellation.email = true;
