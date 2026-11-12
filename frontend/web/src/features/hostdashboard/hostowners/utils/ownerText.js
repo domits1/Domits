@@ -38,6 +38,8 @@ export const saveErrorText = (error, t) => {
 
 export const isNotFoundError = (error) => error?.status === STATUS_NOT_FOUND;
 
+export const isConflictError = (error) => error?.status === STATUS_CONFLICT;
+
 const OWNER_NOT_FOUND_LOAD_STATUSES = Object.freeze([STATUS_BAD_REQUEST, STATUS_NOT_FOUND]);
 const NOT_RETRYABLE_STATUSES = Object.freeze([STATUS_UNAUTHORIZED, STATUS_FORBIDDEN, ...OWNER_NOT_FOUND_LOAD_STATUSES]);
 
