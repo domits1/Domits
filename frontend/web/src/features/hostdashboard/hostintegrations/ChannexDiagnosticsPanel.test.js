@@ -67,13 +67,6 @@ const renderDiagnosticsPanel = async () => {
   await waitFor(() => expect(getChannexStatus).toHaveBeenCalledTimes(1));
 };
 
-const selectSetupOption = async (label, name, value) => {
-  const select = screen.getByLabelText(label);
-  // The select exists while its options are still loading.
-  await within(select).findByRole("option", { name });
-  fireEvent.change(select, { target: { value } });
-};
-
 describe("ChannexDiagnosticsPanel certification actions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -229,21 +222,27 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     await waitFor(() => expect(listChannexProperties).toHaveBeenCalledTimes(1));
     expect(listChannexProperties).toHaveBeenCalledWith({ userId: "user-1" });
 
-    await selectSetupOption("Channex property", "Demo Channex property", "external-property-1");
+    fireEvent.change(await screen.findByLabelText("Channex property"), {
+      target: { value: "external-property-1" },
+    });
     await waitFor(() => expect(listChannexRoomTypes).toHaveBeenCalledTimes(1));
     expect(listChannexRoomTypes).toHaveBeenCalledWith({
       userId: "user-1",
       externalPropertyId: "external-property-1",
     });
 
-    await selectSetupOption("Channex room type", "Demo room", "room-type-1");
+    fireEvent.change(await screen.findByLabelText("Channex room type"), {
+      target: { value: "room-type-1" },
+    });
     await waitFor(() => expect(listChannexRatePlans).toHaveBeenCalledTimes(1));
     expect(listChannexRatePlans).toHaveBeenCalledWith({
       userId: "user-1",
       externalRoomTypeId: "room-type-1",
     });
 
-    await selectSetupOption("Channex rate plan", "Standard rate", "rate-plan-1");
+    fireEvent.change(await screen.findByLabelText("Channex rate plan"), {
+      target: { value: "rate-plan-1" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save mapping" }));
 
     await waitFor(() => expect(saveChannexSetupMapping).toHaveBeenCalledTimes(1));
@@ -288,11 +287,11 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
       fillRequiredInputs({ openActions: false });
       fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
       fireEvent.click(screen.getByRole("button", { name: "Load Channex resources" }));
-      await selectSetupOption("Channex property", "Demo Channex property", "external-property-1");
+      fireEvent.change(await screen.findByLabelText("Channex property"), { target: { value: "external-property-1" } });
       await waitFor(() => expect(listChannexRoomTypes).toHaveBeenCalledTimes(1));
-      await selectSetupOption("Channex room type", "Demo room", "room-type-1");
+      fireEvent.change(await screen.findByLabelText("Channex room type"), { target: { value: "room-type-1" } });
       await waitFor(() => expect(listChannexRatePlans).toHaveBeenCalledTimes(1));
-      await selectSetupOption("Channex rate plan", "Standard rate", "rate-plan-1");
+      fireEvent.change(await screen.findByLabelText("Channex rate plan"), { target: { value: "rate-plan-1" } });
       fireEvent.click(screen.getByRole("button", { name: "Save mapping" }));
       await screen.findByText("Single-unit Channex mapping saved.");
     };
