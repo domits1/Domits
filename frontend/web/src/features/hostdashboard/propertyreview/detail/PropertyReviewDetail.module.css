@@ -61,3 +61,23 @@
   color: var(--secondary-color);
   font-weight: 700;
 }
+
+.notice {
+  margin: clamp(12px, 2vw, 16px) 0 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+
+div.dialogScope {
+  display: contents;
+}
+
+.reasonCounter {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  text-align: right;
+}

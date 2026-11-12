@@ -14,6 +14,13 @@ import "../styles/hostSettings.css";
 const CHECKOUT_STATUS_PARAM = "websiteCheckout";
 const CHECKOUT_POLL_ATTEMPTS = 10;
 const CHECKOUT_POLL_INTERVAL_MS = 1500;
+const PLAN_CHANGE_NOTICES = Object.freeze({
+  downgrade_scheduled: "downgradeScheduled",
+  downgraded: "downgradeSuccess",
+  upgrade_restored: "restoreSuccess",
+  unchanged: "unchanged",
+  upgraded: "upgradeSuccess",
+});
 
 const getCheckoutStateFromUrl = () => {
   const checkoutState = new URLSearchParams(window.location.search).get(
@@ -46,14 +53,14 @@ const getEliteButtonLabel = ({
   changingPlan,
   eliteDowngradeScheduled,
   eliteIsCurrent,
-  eliteGranted,
+  eliteWithoutSubscription,
   checkoutPending,
   redirectingToCheckout,
   copy,
 }) => {
   if (checkoutPending) return copy.processing;
   if (redirectingToCheckout || changingPlan === "elite") return copy.processing;
-  if (eliteGranted) return copy.currentPlan;
+  if (eliteWithoutSubscription) return copy.currentPlan;
   if (eliteDowngradeScheduled) return copy.restoreElite;
   if (eliteIsCurrent) return copy.currentPlan;
   return copy.upgrade;
@@ -117,7 +124,8 @@ const ElitePlanCard = ({
   checkoutEnabled,
   currentPlan,
   eliteIsCurrent,
-  eliteGranted,
+  eliteWithoutSubscription,
+  eliteSelfSelectAvailable,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -132,8 +140,8 @@ const ElitePlanCard = ({
       )}
     </div>
     <div className="website-rate-plan-price">
-      {eliteGranted ? (
-        <strong>{copy.granted}</strong>
+      {eliteWithoutSubscription || eliteSelfSelectAvailable ? (
+        <strong>{copy.withoutPayment}</strong>
       ) : (
         <>
           <strong>{elitePrice}</strong>
@@ -157,8 +165,10 @@ const ElitePlanCard = ({
       disabled={
         busy ||
         eliteIsCurrent ||
-        eliteGranted ||
-        (currentPlan !== "elite" && (!checkoutEnabled || !hasConfiguredElitePrice))
+        eliteWithoutSubscription ||
+        (currentPlan !== "elite" &&
+          !eliteSelfSelectAvailable &&
+          (!checkoutEnabled || !hasConfiguredElitePrice))
       }
       onClick={() => {
         void onPlanChange("elite");
@@ -168,7 +178,7 @@ const ElitePlanCard = ({
         changingPlan,
         eliteDowngradeScheduled,
         eliteIsCurrent,
-        eliteGranted,
+        eliteWithoutSubscription,
         checkoutPending,
         redirectingToCheckout,
         copy,
@@ -183,7 +193,8 @@ const WebsiteRatePlanContent = ({
   busy,
   essentialsIsCurrent,
   eliteIsCurrent,
-  eliteGranted,
+  eliteWithoutSubscription,
+  eliteSelfSelectAvailable,
   eliteDowngradeScheduled,
   changingPlan,
   checkoutPending,
@@ -214,7 +225,8 @@ const WebsiteRatePlanContent = ({
         checkoutEnabled={checkoutEnabled}
         currentPlan={ratePlan.plan === "elite" ? "elite" : "essentials"}
         eliteIsCurrent={eliteIsCurrent}
-        eliteGranted={eliteGranted}
+        eliteWithoutSubscription={eliteWithoutSubscription}
+        eliteSelfSelectAvailable={eliteSelfSelectAvailable}
         eliteDowngradeScheduled={eliteDowngradeScheduled}
         changingPlan={changingPlan}
         checkoutPending={checkoutPending}
@@ -265,12 +277,14 @@ const DirectBookingWebsitePlanSection = ({
   );
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
+  const planChangeRef = useRef(null);
 
   const currentPlan = ratePlan?.plan === "elite" ? "elite" : "essentials";
-  const eliteGranted =
+  const eliteWithoutSubscription =
     currentPlan === "elite" && ratePlan?.stripeSubscriptionId === null;
   const eliteDowngradeScheduled =
     currentPlan === "elite" && Boolean(ratePlan?.effectiveUntil);
+  const eliteSelfSelectAvailable = ratePlan?.eliteSelfSelectAvailable === true;
 
   useEffect(() => {
     let cancelled = false;
@@ -372,11 +386,78 @@ const DirectBookingWebsitePlanSection = ({
     };
   }, [checkoutState]);
 
+  useEffect(
+    () => () => {
+      planChangeRef.current = null;
+    },
+    []
+  );
+
   const formatMoney = (amountCents, currency = "EUR") =>
     formatCurrency(Number(amountCents || 0) / 100, currency, language);
 
+  const showServerPlan = async (isCurrentChange, showMessage) => {
+    try {
+      const serverPlan = await getWebsiteRatePlan();
+      if (isCurrentChange()) {
+        setRatePlan(serverPlan);
+        showMessage();
+      }
+    } catch (readError) {
+      if (isCurrentChange()) {
+        setLoadFailure({ error: readError });
+      }
+    }
+  };
+
+  const choosePlanWithoutPayment = async (targetPlan) => {
+    if (planChangeRef.current) {
+      return;
+    }
+    const change = { targetPlan };
+    planChangeRef.current = change;
+    const isCurrentChange = () => planChangeRef.current === change;
+    setChangingPlan(targetPlan);
+    setActionError("");
+    setNotice("");
+
+    try {
+      const result = await changeWebsiteRatePlan(targetPlan, { withoutPayment: true });
+      if (!isCurrentChange()) {
+        return;
+      }
+      if (result?.action === "checkout_required") {
+        await showServerPlan(isCurrentChange, () => setActionError(copy.changeError));
+        return;
+      }
+
+      const showNotice = () => setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
+      if (result?.plan) {
+        setRatePlan(result.plan);
+        showNotice();
+        return;
+      }
+      await showServerPlan(isCurrentChange, showNotice);
+    } catch (error) {
+      if (!isCurrentChange()) {
+        return;
+      }
+      await showServerPlan(isCurrentChange, () => setActionError(describeFailure(error, copy.changeError)));
+    } finally {
+      if (isCurrentChange()) {
+        planChangeRef.current = null;
+        setChangingPlan(null);
+      }
+    }
+  };
+
   const handlePlanChange = async (targetPlan) => {
     if (loading || changingPlan || redirectingToCheckout || checkoutPending) {
+      return;
+    }
+
+    if (eliteSelfSelectAvailable) {
+      await choosePlanWithoutPayment(targetPlan);
       return;
     }
 
@@ -410,13 +491,7 @@ const DirectBookingWebsitePlanSection = ({
         setRatePlan(await getWebsiteRatePlan());
       }
 
-      const messageByAction = {
-        downgrade_scheduled: "downgradeScheduled",
-        downgraded: "downgradeSuccess",
-        upgrade_restored: "restoreSuccess",
-        unchanged: "unchanged",
-      };
-      setNotice(copy[messageByAction[result?.action]] || copy.unchanged);
+      setNotice(copy[PLAN_CHANGE_NOTICES[result?.action]] || copy.unchanged);
     } catch (error) {
       const fallbackMessage =
         targetPlan === "elite" && !isReactivation
@@ -457,7 +532,11 @@ const DirectBookingWebsitePlanSection = ({
   return (
     <section className="personal-data-section website-rate-plan-section">
       <h2 className="personal-data-section-title">{copy.sectionTitle}</h2>
-      <p className="personal-data-subtitle">{copy.sectionSubtitle}</p>
+      <p className="personal-data-subtitle">
+        {eliteSelfSelectAvailable
+          ? copy.sectionSubtitleWithoutPayment
+          : copy.sectionSubtitle}
+      </p>
 
       {loading && (
         <div className="personal-data-card enterprise-rate-plan-loading">
@@ -481,7 +560,8 @@ const DirectBookingWebsitePlanSection = ({
           busy={busy}
           essentialsIsCurrent={essentialsIsCurrent}
           eliteIsCurrent={eliteIsCurrent}
-          eliteGranted={eliteGranted}
+          eliteWithoutSubscription={eliteWithoutSubscription}
+          eliteSelfSelectAvailable={eliteSelfSelectAvailable}
           eliteDowngradeScheduled={eliteDowngradeScheduled}
           changingPlan={changingPlan}
           checkoutPending={checkoutPending}

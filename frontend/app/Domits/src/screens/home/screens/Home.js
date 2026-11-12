@@ -39,8 +39,8 @@ const HomeScreen = () => {
   const [country, setCountry] = useState('');
   const [propertiesByCountry, setPropertiesByCountry] = useState([]);
   const [byCountryLastEvaluatedKey, setByCountryLastEvaluatedKey] = useState({
+    createdAt: null,
     id: null,
-    city: null,
   });
 
   const [loading, setLoading] = useState(false);
@@ -58,7 +58,7 @@ const HomeScreen = () => {
     lastFetchTimeRef.current = now;
 
     setPropertiesByCountry([]);
-    setByCountryLastEvaluatedKey({id: null, city: null});
+    setByCountryLastEvaluatedKey({createdAt: null, id: null});
 
     try {
       const response = await propertyRepository.fetchAllPropertyTypes(
@@ -79,26 +79,31 @@ const HomeScreen = () => {
   }, [lastEvaluatedKey]);
 
   const fetchPropertiesByCountry = useCallback(
-    async country => {
+    async (country, isNewSearch = false) => {
       setLoading(true);
 
       try {
         setProperties([]);
         setLastEvaluatedKey({createdAt: null, id: null});
 
+        const cursor = isNewSearch
+          ? {createdAt: null, id: null}
+          : byCountryLastEvaluatedKey;
+        const previousProperties = isNewSearch ? [] : propertiesByCountry;
+
         const response = await propertyRepository.fetchPropertyByCountry(
           country,
-          byCountryLastEvaluatedKey.id,
-          byCountryLastEvaluatedKey.city,
+          cursor.createdAt,
+          cursor.id,
         );
 
         setByCountryLastEvaluatedKey(
-          response.lastEvaluatedKey ?? {id: null, city: null},
+          response.lastEvaluatedKey ?? {createdAt: null, id: null},
         );
 
         if (response.properties.length > 0) {
           setPropertiesByCountry([
-            ...propertiesByCountry,
+            ...previousProperties,
             ...response.properties,
           ]);
         } else {
@@ -109,7 +114,7 @@ const HomeScreen = () => {
       }
       setLoading(false);
     },
-    [byCountryLastEvaluatedKey],
+    [byCountryLastEvaluatedKey, propertiesByCountry],
   );
 
   const fetchFavorites = useCallback(async () => {
@@ -189,7 +194,7 @@ const HomeScreen = () => {
       !lastEvaluatedKey.createdAt &&
       !lastEvaluatedKey.id &&
       !byCountryLastEvaluatedKey.id &&
-      !byCountryLastEvaluatedKey.city
+      !byCountryLastEvaluatedKey.createdAt
     ) {
       return (
         <View style={styles.indicators}>
@@ -209,7 +214,9 @@ const HomeScreen = () => {
         country={country}
         setCountry={setCountry}
         loading={loading}
-        onSearchButtonPress={fetchPropertiesByCountry}
+        onSearchButtonPress={searchedCountry =>
+          fetchPropertiesByCountry(searchedCountry, true)
+        }
         onCancelButtonPress={fetchProperties}
       />
       <HomeTopBarTabs />

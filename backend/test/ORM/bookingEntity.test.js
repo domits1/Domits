@@ -22,6 +22,7 @@ const CATALOG_COLUMNS = [
   "refunded_amount",
   "stripe_refund_id",
   "refund_error",
+  "refund_status",
   "total_price",
   "booking_source",
   "site_id",
@@ -93,6 +94,15 @@ describe("Booking entity", () => {
     });
   });
 
+  it("maps refund_status as a nullable varchar", async () => {
+    const metadata = await loadBookingMetadata();
+    const column = metadata.findColumnWithDatabaseName("refund_status");
+    expect(column).toBeDefined();
+    expect(column.type).toBe("varchar");
+    expect(column.isNullable).toBe(true);
+    expect(column.default).toBeUndefined();
+  });
+
   it("reads cancelled_at as a number and keeps an empty one empty", async () => {
     const metadata = await loadBookingMetadata();
     const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
@@ -101,6 +111,14 @@ describe("Booking entity", () => {
   });
 
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+});
+
+describe("refund status migration", () => {
+  it("adds refund_status to both booking schemas", () => {
+    const sql = loadMigrationSql("20261110_booking_refund_status.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+  });
 });
 
 describe("cancelled_at migration", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
@@ -250,6 +250,17 @@ describe("StaticPageWorker", () => {
       failed: 0,
       errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }],
     });
+  });
+
+  it("reports site pages a withdrawal could not list, so the run fails loudly, without retrying the withdrawal", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const failure = { siteId: "site-1", hostname: FALLBACK.domain, message: "SITE_PAGES_UNLISTED: AccessDenied" };
+    withdrawal.withdraw.mockResolvedValueOnce({ invalidationErrors: [], sitePageErrors: [failure] });
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN" });
+    expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, withdrawn: 1, errors: [{ ...failure, revision: 4 }] });
   });
 
   it("reports an invalidation that failed after a withdrawal, so the run fails loudly, without retrying the withdrawal", async () => {
@@ -564,6 +575,10 @@ const buildBucket = (objects = {}) => {
       if (command instanceof DeleteObjectCommand) {
         bucket.objects.delete(Key);
         return {};
+      }
+      if (command instanceof ListObjectsV2Command) {
+        const keys = [...bucket.objects.keys()].filter((key) => key.startsWith(command.input.Prefix));
+        return { Contents: keys.map((key) => ({ Key: key })), IsTruncated: false };
       }
       throw new Error(`unexpected ${command.constructor.name}`);
     }),
