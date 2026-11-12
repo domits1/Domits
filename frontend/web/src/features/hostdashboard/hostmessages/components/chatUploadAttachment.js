@@ -1,4 +1,4 @@
-import React, { useRef, useState} from "react";
+import React, { useEffect, useRef, useState} from "react";
 import Icon from "@mdi/react";
 import { mdiLoading, mdiPaperclip } from "@mdi/js";
 import { useUploadUrl } from "../hooks/useUploadURL";
@@ -8,7 +8,15 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
     const [uploading, setUploading] = useState(false);
     const uploadingRef = useRef(false);
     const fileInputRef = useRef(null);
+    const mountedRef = useRef(true);
     const { getUploadUrl } = useUploadUrl();
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
     const handleAddAttachment = async () => {
         fileInputRef.current?.click();
@@ -51,6 +59,10 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
             throw new Error("Failed to upload file");
         }
 
+        if (!mountedRef.current) {
+            return;
+        }
+
         const uploadedFile = {
             name: file.name,
             type: file.type,
@@ -70,10 +82,14 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
         try {
             await uploadFile(droppedFiles[0]);
         } catch {
-            onUploadError?.();
+            if (mountedRef.current) {
+                onUploadError?.();
+            }
         } finally {
             uploadingRef.current = false;
-            setUploading(false);
+            if (mountedRef.current) {
+                setUploading(false);
+            }
         }
     };
 

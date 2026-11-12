@@ -47,8 +47,13 @@ jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttach
   const PropTypes = require("prop-types");
 
   function MockChatUploadAttachment({ onUploadComplete, onUploadError }) {
+    const [busy, setBusy] = require("react").useState(false);
     return (
       <>
+        <button type="button" onClick={() => setBusy(true)}>
+          Start upload
+        </button>
+        {busy ? <span>Uploader busy</span> : null}
         <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
           Attach
         </button>
@@ -385,6 +390,16 @@ describe("ChatScreen reservation messaging", () => {
       />
     );
     const renderHostChat = (platform) => render(hostChat({ platform }));
+
+    test("starts a fresh uploader when the host opens another thread", () => {
+      const { rerender } = render(hostChat());
+      fireEvent.click(screen.getByRole("button", { name: "Start upload" }));
+      expect(screen.getByText("Uploader busy")).toBeInTheDocument();
+
+      rerender(hostChat({ contactId: "guest-2", threadId: "thread-2" }));
+
+      expect(screen.queryByText("Uploader busy")).not.toBeInTheDocument();
+    });
 
     test("drops an unsent attachment, but keeps the typed text, when the host opens another thread", () => {
       const { rerender } = render(hostChat());

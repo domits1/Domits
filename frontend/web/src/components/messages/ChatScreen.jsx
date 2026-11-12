@@ -432,7 +432,11 @@ const ChatScreen = ({
           <div className="message-input-container">
             <div className="message-input-wrapper">
               {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-                <ChatUploadAttachment onUploadComplete={handleUploadComplete} onUploadError={showUploadFailedToast} />
+                <ChatUploadAttachment
+                  key={`${resolvedContactId}::${threadId || ""}`}
+                  onUploadComplete={handleUploadComplete}
+                  onUploadError={showUploadFailedToast}
+                />
               ) : null}
               <textarea
                 value={newMessage}

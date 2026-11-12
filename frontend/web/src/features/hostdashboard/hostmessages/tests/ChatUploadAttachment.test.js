@@ -119,6 +119,35 @@ describe("ChatUploadAttachment", () => {
     });
   });
 
+  test("does not report an upload that finishes after it was unmounted", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    const { unmount, onUploadComplete, onUploadError } = renderAttachment();
+
+    dropPhoto();
+    unmount();
+    await act(async () => {
+      pendingUrl.resolve(UPLOAD_TARGET);
+    });
+
+    expect(onUploadComplete).not.toHaveBeenCalled();
+    expect(onUploadError).not.toHaveBeenCalled();
+  });
+
+  test("does not report a failure that happens after it was unmounted", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    const { unmount, onUploadError } = renderAttachment();
+
+    dropPhoto();
+    unmount();
+    await act(async () => {
+      pendingUrl.resolve({});
+    });
+
+    expect(onUploadError).not.toHaveBeenCalled();
+  });
+
   describe.each([
     ["the upload url request fails", () => mockGetUploadUrl.mockRejectedValue(new Error("Failed to get upload URL"))],
     ["the upload url response is incomplete", () => mockGetUploadUrl.mockResolvedValue({})],
