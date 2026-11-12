@@ -628,7 +628,13 @@
   color: #64748b;
   cursor: pointer;
 
-  &:hover,
+  &:disabled {
+    cursor: default;
+    background: transparent;
+    color: #64748b;
+  }
+
+  &:hover:not(:disabled),
   &:focus-visible {
     background: rgba(15, 23, 42, 0.06);
     color: #0f172a;

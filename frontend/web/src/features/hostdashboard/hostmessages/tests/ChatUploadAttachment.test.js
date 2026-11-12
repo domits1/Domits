@@ -4,43 +4,150 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { mdiLoading, mdiPaperclip } from "@mdi/js";
 import ChatUploadAttachment from "../components/chatUploadAttachment";
 
+const mockGetUploadUrl = jest.fn();
+
 jest.mock("../hooks/useUploadURL", () => ({
-  useUploadUrl: () => ({ getUploadUrl: jest.fn() }),
+  useUploadUrl: () => ({ getUploadUrl: mockGetUploadUrl }),
 }));
 
+const UPLOAD_TARGET = {
+  uploadUrl: "https://upload.example.com",
+  fields: { key: "abc" },
+  fileUrl: "https://files.example.com/photo.jpg",
+};
+
+const photo = new File(["x"], "photo.jpg", { type: "image/jpeg" });
+
+const renderAttachment = (props = {}) => {
+  const onUploadComplete = jest.fn();
+  const onUploadError = jest.fn();
+  const view = render(<ChatUploadAttachment onUploadComplete={onUploadComplete} onUploadError={onUploadError} {...props} />);
+  return { ...view, onUploadComplete, onUploadError };
+};
+
+const attachButton = () => screen.getByRole("button", { name: "Attach file" });
+const iconPath = () => attachButton().querySelector("svg path").getAttribute("d");
+const dropPhoto = () => fireEvent.drop(attachButton(), { dataTransfer: { files: [photo] } });
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+};
+
 describe("ChatUploadAttachment", () => {
+  beforeEach(() => {
+    mockGetUploadUrl.mockReset();
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => "" });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   test("exposes the attach button by its accessible name", () => {
-    render(<ChatUploadAttachment onUploadComplete={jest.fn()} />);
+    renderAttachment();
 
-    const button = screen.getByRole("button", { name: "Attach file" });
-
-    expect(button).toHaveAttribute("type", "button");
-    expect(button).toHaveAttribute("title", "Attach file");
+    expect(attachButton()).toHaveAttribute("type", "button");
+    expect(attachButton()).toHaveAttribute("title", "Attach file");
   });
 
   test("shows an icon instead of a plus sign", () => {
-    render(<ChatUploadAttachment onUploadComplete={jest.fn()} />);
+    renderAttachment();
 
-    const button = screen.getByRole("button", { name: "Attach file" });
-
-    expect(button).not.toHaveTextContent("+");
-    expect(button.querySelector("svg")).toBeInTheDocument();
+    expect(attachButton()).not.toHaveTextContent("+");
+    expect(iconPath()).toBe(mdiPaperclip);
   });
 
   test("opens the file picker of its own hidden input when clicked", () => {
-    const { container } = render(<ChatUploadAttachment onUploadComplete={jest.fn()} />);
-    const fileInput = container.querySelector('input[type="file"]');
-    const pickerSpy = jest.spyOn(fileInput, "click");
+    const { container } = renderAttachment();
+    const pickerSpy = jest.spyOn(container.querySelector('input[type="file"]'), "click");
 
-    fireEvent.click(screen.getByRole("button", { name: "Attach file" }));
+    fireEvent.click(attachButton());
 
     expect(pickerSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("reports the uploaded file url on success", async () => {
+    mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+    const { onUploadComplete, onUploadError } = renderAttachment();
+
+    dropPhoto();
+
+    await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith(UPLOAD_TARGET.fileUrl));
+    expect(onUploadError).not.toHaveBeenCalled();
+  });
+
+  test("shows a spinner and disables the button while the upload runs, then restores it", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    renderAttachment();
+
+    dropPhoto();
+
+    await waitFor(() => expect(attachButton()).toBeDisabled());
+    expect(attachButton()).toHaveAttribute("aria-busy", "true");
+    expect(iconPath()).toBe(mdiLoading);
+
+    await act(async () => {
+      pendingUrl.resolve(UPLOAD_TARGET);
+    });
+
+    await waitFor(() => expect(attachButton()).toBeEnabled());
+    expect(attachButton()).not.toHaveAttribute("aria-busy", "true");
+    expect(iconPath()).toBe(mdiPaperclip);
+  });
+
+  test("ignores a second file dropped while an upload is running", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    renderAttachment();
+
+    dropPhoto();
+    dropPhoto();
+
+    expect(mockGetUploadUrl).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      pendingUrl.resolve(UPLOAD_TARGET);
+    });
+  });
+
+  describe.each([
+    ["the upload url request fails", () => mockGetUploadUrl.mockRejectedValue(new Error("Failed to get upload URL"))],
+    ["the upload url response is incomplete", () => mockGetUploadUrl.mockResolvedValue({})],
+    [
+      "the file transfer fails to connect",
+      () => {
+        mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+        global.fetch = jest.fn().mockRejectedValue(new Error("network"));
+      },
+    ],
+    [
+      "the file transfer is rejected",
+      () => {
+        mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+        global.fetch = jest.fn().mockResolvedValue({ ok: false, text: async () => "denied" });
+      },
+    ],
+  ])("when %s", (_label, arrange) => {
+    test("reports the failure once, restores the button and does not log to the console", async () => {
+      arrange();
+      const { onUploadComplete, onUploadError } = renderAttachment();
+
+      dropPhoto();
+
+      await waitFor(() => expect(onUploadError).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(attachButton()).toBeEnabled());
+      expect(iconPath()).toBe(mdiPaperclip);
+      expect(onUploadComplete).not.toHaveBeenCalled();
+      expect(console.error).not.toHaveBeenCalled();
+    });
   });
 });

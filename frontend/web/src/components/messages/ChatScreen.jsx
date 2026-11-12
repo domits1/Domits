@@ -322,6 +322,12 @@ const ChatScreen = ({
     setShowToast(true);
   };
 
+  const showUploadFailedToast = () => {
+    setError("Failed to upload attachment.");
+    setToastText("Attachment failed to upload");
+    setShowToast(true);
+  };
+
   const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
 
   if (!resolvedContactId) {
@@ -426,7 +432,7 @@ const ChatScreen = ({
           <div className="message-input-container">
             <div className="message-input-wrapper">
               {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-                <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                <ChatUploadAttachment onUploadComplete={handleUploadComplete} onUploadError={showUploadFailedToast} />
               ) : null}
               <textarea
                 value={newMessage}

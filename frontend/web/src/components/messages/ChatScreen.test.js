@@ -14,7 +14,7 @@ const mockFetchMessages = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
-jest.mock("./MessageToast", () => () => <div data-testid="message-toast" />);
+jest.mock("./MessageToast", () => ({ message }) => <div data-testid="message-toast">{message}</div>);
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
   useAuth: () => ({ accessToken: "access-token-1" }),
@@ -39,16 +39,22 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", ()
 jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttachment", () => {
   const PropTypes = require("prop-types");
 
-  function MockChatUploadAttachment({ onUploadComplete }) {
+  function MockChatUploadAttachment({ onUploadComplete, onUploadError }) {
     return (
-      <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
-        Attach
-      </button>
+      <>
+        <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
+          Attach
+        </button>
+        <button type="button" onClick={() => onUploadError()}>
+          Fail upload
+        </button>
+      </>
     );
   }
 
   MockChatUploadAttachment.propTypes = {
     onUploadComplete: PropTypes.func.isRequired,
+    onUploadError: PropTypes.func,
   };
 
   return MockChatUploadAttachment;
@@ -418,6 +424,14 @@ describe("ChatScreen reservation messaging", () => {
       expect(attach.compareDocumentPosition(screen.getByPlaceholderText("Type a message"))).toBe(
         Node.DOCUMENT_POSITION_FOLLOWING
       );
+    });
+
+    test("tells the host when an upload fails", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+
+      expect(screen.getByTestId("message-toast")).toHaveTextContent("Attachment failed to upload");
     });
 
     test("still offers attachments on a Domits thread", () => {
