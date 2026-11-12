@@ -65,13 +65,13 @@ describe("HostNotificationMatrixForm", () => {
     test("renders the notification categories and required delivery channels", () => {
         renderForm();
 
-        expect(screen.getByRole("tab", { name: /Property Manager\\s*1/i })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: /Bookings & Reservations\\s*1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Property Owner\\s*1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Finance\\s*2/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Distribution\\s*1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Compliance\\s*1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Tasks\\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Property Manager\s*1/i })).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByRole("tab", { name: /Bookings & Reservations\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Property Owner\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Finance\s*2/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Distribution\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Compliance\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Tasks\s*1/i })).toBeInTheDocument();
         expect(getChannelToggle("New booking", "inApp")).toBeChecked();
         expect(getChannelToggle("New booking", "email")).toBeChecked();
         expect(getChannelToggle("New booking", "email")).toBeDisabled();
@@ -104,7 +104,7 @@ describe("HostNotificationMatrixForm", () => {
     test("shows only the selected category's notifications", () => {
         renderForm();
 
-        fireEvent.click(screen.getByRole("tab", { name: /Finance\\s*2/i }));
+        fireEvent.click(screen.getByRole("tab", { name: /Finance\s*2/i }));
         expect(screen.getByText("Reconciliation mismatch")).toBeInTheDocument();
         expect(screen.queryByText("New booking")).not.toBeInTheDocument();
     });

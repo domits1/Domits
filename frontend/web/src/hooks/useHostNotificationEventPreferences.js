@@ -62,7 +62,7 @@ export default function useHostNotificationEventPreferences(messages) {
         return () => {
             isMounted = false;
         };
-    }, [retryCount]);
+    }, [messages, retryCount]);
 
     const isDirty = useMemo(
         () => JSON.stringify(preferences) !== JSON.stringify(baseline),

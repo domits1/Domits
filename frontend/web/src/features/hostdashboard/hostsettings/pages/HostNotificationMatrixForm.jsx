@@ -130,6 +130,7 @@ HostNotificationMatrixForm.propTypes = {
         title: PropTypes.string.isRequired,
         description: PropTypes.string.isRequired,
         event: PropTypes.string.isRequired,
+        eventNamesNote: PropTypes.string.isRequired,
         required: PropTypes.string.isRequired,
         loading: PropTypes.string.isRequired,
         retry: PropTypes.string.isRequired,
