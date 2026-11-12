@@ -1,12 +1,23 @@
 import * as taskRepository from "../../data/taskRepository.js";
 import { validateTaskPayload, VALID_TASK_TYPES, VALID_TASK_STATUSES, isPastDueDate, isValidUuid } from "../model/taskValidator.js";
-import { computeSlaStatus, SLA_STATUS } from "../model/slaStatus.js";
+import { computeSlaStatus, RESOLVED_STATUSES } from "../model/slaStatus.js";
+import {
+    findAttachmentOfTask,
+    parseStoredAttachments,
+    attachmentsOfHost,
+    assertAttachmentsOfHost,
+    newAttachmentFile,
+} from "../model/taskAttachments.js";
 import { getHostEmailById, getAssigneeEmailById, sendTaskEscalationEmail } from "./taskEscalationService.js";
+import { notifyTaskAssigned, notifyTaskCompleted } from "./taskNotificationService.js";
+import { notifyTaskApproved, notifyTaskRejected } from "./taskReviewNotificationService.js";
 import Database from "database";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "node:crypto";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { assertOnlyEditableFields, TASK_EDITOR_ROLES } from "../model/editableTaskFields.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
+import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 const s3 = new S3Client({ region: "eu-north-1" });
 const BUCKET_NAME = "domits-task-attachments";
 
@@ -21,6 +32,8 @@ export const createTask = async (hostId, taskData) => {
     const dataSource = await Database.getInstance();
 
     validateTaskPayload(taskData);
+    const attachments = taskData.attachments ?? [];
+    assertAttachmentsOfHost(hostId, attachments);
 
     const assigneeName = taskData.assignee_team_member_id
         ? await resolveAssigneeName(dataSource, hostId, taskData.assignee_team_member_id)
@@ -43,7 +56,7 @@ export const createTask = async (hostId, taskData) => {
         assignee_name: assigneeName,
         assignee_team_member_id: taskData.assignee_team_member_id || null,
         parent_task_id: parentTaskId,
-        attachments: taskData.attachments?.length > 0 ? JSON.stringify(taskData.attachments) : null,
+        attachments: attachments.length > 0 ? JSON.stringify(attachments) : null,
         source: taskData.source || null,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -58,20 +71,22 @@ export const createTask = async (hostId, taskData) => {
         newValue: 'Task created'
     });
 
+    if (newTask.assignee_team_member_id) {
+        await notifyTaskAssigned(hostId, newTask);
+    }
+
     return newTask;
 };
 
-export const updateTask = async (hostId, taskId, updateData) => {
+const applyTaskUpdate = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
     const dataSource = await Database.getInstance();
 
     const oldTask = await taskRepository.getTaskById(dataSource, taskId, hostId);
-    if (!oldTask) throw new Error("Task not found or access denied");
+    if (!oldTask) throw new NotFoundException("Task not found or access denied");
 
     const fieldsToUpdate = Object.fromEntries(
         Object.entries({ ...updateData }).filter(([, v]) => v !== undefined)
     );
-
-    delete fieldsToUpdate.escalated_at;
 
     if (fieldsToUpdate.status !== undefined && !VALID_TASK_STATUSES.includes(fieldsToUpdate.status)) {
         throw new BadRequestException(`Invalid status: ${fieldsToUpdate.status}. Must be one of: ${VALID_TASK_STATUSES.join(", ")}`);
@@ -79,6 +94,10 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
     if (oldTask.status === 'Cancelled' && fieldsToUpdate.status !== undefined && fieldsToUpdate.status !== 'Cancelled') {
         throw new BadRequestException("Cancelled tasks cannot change status");
+    }
+
+    if (fieldsToUpdate.status !== undefined && fieldsToUpdate.status !== oldTask.status) {
+        fieldsToUpdate.approved_at = null;
     }
 
     if (fieldsToUpdate.due_date !== undefined) {
@@ -91,6 +110,11 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
     if (fieldsToUpdate.type && !VALID_TASK_TYPES.includes(fieldsToUpdate.type)) {
         throw new BadRequestException(`Invalid type: ${fieldsToUpdate.type}. Must be one of: ${VALID_TASK_TYPES.join(", ")}`);
+    }
+
+    const isMovedToAnotherProperty = fieldsToUpdate.property_id !== undefined && fieldsToUpdate.property_id !== oldTask.property_id;
+    if (isMovedToAnotherProperty) {
+        await assertPropertyOfHost(dataSource, hostId, fieldsToUpdate.property_id);
     }
 
     if (fieldsToUpdate.assignee_team_member_id !== undefined) {
@@ -114,20 +138,17 @@ export const updateTask = async (hostId, taskId, updateData) => {
         }
     }
 
+    let removedKeys = [];
     if (fieldsToUpdate.attachments !== undefined) {
-        const oldKeys = oldTask.attachments ? JSON.parse(oldTask.attachments) : [];
-        const newKeys = Array.isArray(fieldsToUpdate.attachments) ? fieldsToUpdate.attachments : [];
-        const removedKeys = oldKeys.filter(key => !newKeys.includes(key));
-        if (removedKeys.length > 0) {
-            await s3.send(new DeleteObjectsCommand({
-                Bucket: BUCKET_NAME,
-                Delete: { Objects: removedKeys.map(key => ({ Key: key })) },
-            }));
-        }
+        const oldKeys = parseStoredAttachments(oldTask.attachments);
+        const newKeys = fieldsToUpdate.attachments ?? [];
+        assertAttachmentsOfHost(hostId, newKeys, oldKeys);
+        removedKeys = attachmentsOfHost(hostId, oldKeys.filter(key => !newKeys.includes(key)));
         fieldsToUpdate.attachments = newKeys.length > 0 ? JSON.stringify(newKeys) : null;
     }
 
-    if (fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed') {
+    const isNewlyCompleted = fieldsToUpdate.status === 'Completed' && oldTask.status !== 'Completed';
+    if (isNewlyCompleted) {
         const checklistItems = await taskRepository.getChecklistItemsForTask(dataSource, taskId);
         const hasIncompleteRequiredItems = checklistItems.some(item => item.is_required && !item.is_checked);
         if (hasIncompleteRequiredItems) {
@@ -138,7 +159,18 @@ export const updateTask = async (hostId, taskId, updateData) => {
 
     fieldsToUpdate.updated_at = Date.now();
 
-    await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    if (isNewlyCompleted) {
+        // Two people can complete a task at the same moment. The write only applies while the task is
+        // not completed, so one of them wins and only that one logs and notifies.
+        const applied = await taskRepository.updateTaskUnlessCompleted(dataSource, taskId, fieldsToUpdate);
+        if (!applied) {
+            return { message: "Task updated successfully" };
+        }
+    } else {
+        await taskRepository.updateTaskInDb(dataSource, taskId, fieldsToUpdate);
+    }
+
+    await removeAttachmentsFromStorage(taskId, removedKeys);
 
     await logActivity(dataSource, {
         taskId,
@@ -148,7 +180,25 @@ export const updateTask = async (hostId, taskId, updateData) => {
         newValue: JSON.stringify(fieldsToUpdate)
     });
 
+    const isNewAssignee = Boolean(fieldsToUpdate.assignee_team_member_id)
+        && fieldsToUpdate.assignee_team_member_id !== oldTask.assignee_team_member_id;
+    if (isNewAssignee) {
+        await notifyTaskAssigned(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
+
+    // A host who completes their own task already knows, so only a team member's completion is worth an email.
+    if (isNewlyCompleted && actorIsTeamMember) {
+        await notifyTaskCompleted(hostId, { ...oldTask, ...fieldsToUpdate });
+    }
+
     return { message: "Task updated successfully" };
+};
+
+export const updateTask = async (hostId, taskId, updateData, { actorIsTeamMember = false } = {}) => {
+    if (!taskId) throw new BadRequestException("id is required");
+    const editorRole = actorIsTeamMember ? TASK_EDITOR_ROLES.TEAM_MEMBER : TASK_EDITOR_ROLES.HOST;
+    assertOnlyEditableFields(editorRole, updateData);
+    return await applyTaskUpdate(hostId, taskId, updateData, { actorIsTeamMember });
 };
 
 export const escalateTask = async (hostId, taskId) => {
@@ -162,8 +212,8 @@ export const escalateTask = async (hostId, taskId) => {
         throw new BadRequestException("Task has already been escalated");
     }
 
-    if (computeSlaStatus(task, Date.now()) !== SLA_STATUS.BREACHED) {
-        throw new BadRequestException("Task is not breaching its SLA");
+    if (RESOLVED_STATUSES.has(task.status)) {
+        throw new BadRequestException("Task is already closed");
     }
 
     const escalated_at = Date.now();
@@ -186,55 +236,136 @@ export const escalateTask = async (hostId, taskId) => {
     return { message: "Task escalated successfully" };
 };
 
+const reviewCompletedTask = async ({ hostId, taskId, actorId, claimInDb, actionType, notify, messages }) => {
+    if (!taskId) throw new BadRequestException("id is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    if (!task) throw new NotFoundException("Task not found or access denied");
+
+    if (task.assignee_team_member_id) {
+        const assignee = await taskRepository.getTeamMemberById(dataSource, task.assignee_team_member_id, hostId);
+        if (assignee?.member_user_id === actorId) {
+            throw new UnauthorizedException("You cannot approve or reject a task assigned to you.");
+        }
+    }
+
+    if (task.status !== "Completed") throw new BadRequestException(messages.notCompleted);
+    if (task.approved_at) throw new BadRequestException(messages.alreadyApproved);
+
+    const claimed = await claimInDb(dataSource, taskId, hostId, Date.now());
+    if (!claimed) throw new BadRequestException("Task is no longer waiting for a decision");
+
+    await logActivity(dataSource, { taskId, userId: actorId, actionType });
+    await notify(task);
+
+    return { message: messages.done };
+};
+
+export const approveTask = async (hostId, taskId, actorId) =>
+    await reviewCompletedTask({
+        hostId,
+        taskId,
+        actorId,
+        claimInDb: (...args) => taskRepository.approveCompletedTaskInDb(...args),
+        actionType: "TASK_APPROVED",
+        notify: notifyTaskApproved,
+        messages: {
+            notCompleted: "Only a completed task can be approved",
+            alreadyApproved: "Task has already been approved",
+            done: "Task approved",
+        },
+    });
+
+export const rejectTask = async (hostId, taskId, actorId) =>
+    await reviewCompletedTask({
+        hostId,
+        taskId,
+        actorId,
+        claimInDb: (...args) => taskRepository.rejectCompletedTaskInDb(...args),
+        actionType: "TASK_REJECTED",
+        notify: notifyTaskRejected,
+        messages: {
+            notCompleted: "Only a completed task can be rejected",
+            alreadyApproved: "An approved task cannot be rejected",
+            done: "Task rejected and reopened",
+        },
+    });
+
 export const deleteTask = async (hostId, taskId) => {
+    if (!taskId) throw new BadRequestException("id is required");
     const dataSource = await Database.getInstance();
     const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
 
-    if (task?.attachments) {
-        try {
-            const keys = JSON.parse(task.attachments);
-            if (keys.length > 0) {
-                await s3.send(new DeleteObjectsCommand({
-                    Bucket: BUCKET_NAME,
-                    Delete: { Objects: keys.map(key => ({ Key: key })) },
-                }));
-            }
-        } catch { }
+    if (task?.status === "Completed") {
+        throw new BadRequestException("A completed task cannot be deleted. Change its status first.");
     }
 
-    return await updateTask(hostId, taskId, { is_legacy: true });
+    if (task?.attachments) {
+        await removeAttachmentsFromStorage(taskId, attachmentsOfHost(hostId, parseStoredAttachments(task.attachments)));
+    }
+
+    return await applyTaskUpdate(hostId, taskId, { is_legacy: true });
 };
 
-export const getUploadUrl = async (hostId, fileName, fileType) => {
-    const ext = fileName.split('.').pop();
-    const key = `tasks/${hostId}/${randomUUID()}.${ext}`;
+export const getUploadUrl = async (hostId, fileType, fileSize) => {
+    const file = newAttachmentFile(hostId, fileType, fileSize);
 
     const command = new PutObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
-        ContentType: fileType,
+        Key: file.key,
+        ContentType: file.contentType,
+        ContentLength: file.contentLength,
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    const uploadUrl = await getSignedUrl(s3, command, {
+        expiresIn: 300,
+        signableHeaders: new Set(["content-type", "content-length"]),
+    });
 
     return {
         uploadUrl,
-        key,
+        key: file.key,
     };
 };
 
-export const getViewUrl = async (key) => {
+export const getViewUrl = async (hostId, taskId, key) => {
+    if (!isValidUuid(taskId)) throw new BadRequestException("taskId must be the id of a task");
+    if (typeof key !== "string" || key.length === 0) throw new BadRequestException("key is required");
+
+    const dataSource = await Database.getInstance();
+    const task = await taskRepository.getTaskById(dataSource, taskId, hostId);
+    const storedKey = findAttachmentOfTask(hostId, task, key);
+
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
-        Key: key,
+        Key: storedKey,
     });
     return await getSignedUrl(s3, command, { expiresIn: 3600 });
+};
+
+const removeAttachmentsFromStorage = async (taskId, keys) => {
+    if (keys.length === 0) return;
+    try {
+        const result = await s3.send(new DeleteObjectsCommand({
+            Bucket: BUCKET_NAME,
+            Delete: { Objects: keys.map(key => ({ Key: key })) },
+        }));
+        if (result?.Errors?.length > 0) {
+            console.error(`Failed to remove ${result.Errors.length} attachment(s) of task ${taskId}`, result.Errors);
+        }
+    } catch (error) {
+        console.error(`Failed to remove the attachments of task ${taskId}`, error);
+    }
 };
 
 const resolveAssigneeName = async (dataSource, hostId, teamMemberId) => {
     const teamMember = await taskRepository.getTeamMemberById(dataSource, teamMemberId, hostId);
     if (!teamMember) {
         throw new BadRequestException("assignee_team_member_id does not belong to this host");
+    }
+    if (teamMember.status !== "active") {
+        throw new BadRequestException("assignee_team_member_id must be an active team member of this host");
     }
     return teamMember.member_email;
 };
@@ -245,6 +376,14 @@ const resolveParentTaskId = async (dataSource, hostId, parentTaskId) => {
         throw new BadRequestException("parent_task_id does not belong to this host");
     }
     return parentTaskId;
+};
+
+const assertPropertyOfHost = async (dataSource, hostId, propertyId) => {
+    const isPropertyId = typeof propertyId === "string" && propertyId.length > 0;
+    const isOwnProperty = isPropertyId && await taskRepository.isPropertyOfHost(dataSource, propertyId, hostId);
+    if (!isOwnProperty) {
+        throw new BadRequestException("property_id does not belong to this host");
+    }
 };
 
 export const logActivity = async (dataSource, { taskId, userId, actionType, oldValue = null, newValue = null }) => {

@@ -310,19 +310,20 @@ describe("ChannexProviderClient booking revisions", () => {
       });
     });
 
+    // Channex sends the first name as customer.name and the last name as customer.surname.
     describe("guest name resolution", () => {
       it.each([
         {
-          description: "uses customer.name when present",
-          customer: { name: "Ada Lovelace" },
+          description: "joins name and surname",
+          customer: { name: "Ada", surname: "Lovelace" },
           expected: "Ada Lovelace",
         },
+        { description: "uses the name alone when there is no surname", customer: { name: "Ada" }, expected: "Ada" },
         {
-          description: "joins first and last name when name is absent",
-          customer: { first_name: "Ada", last_name: "Lovelace" },
-          expected: "Ada Lovelace",
+          description: "uses the surname alone when there is no name",
+          customer: { surname: "Lovelace" },
+          expected: "Lovelace",
         },
-        { description: "uses first name alone", customer: { first_name: "Ada" }, expected: "Ada" },
         { description: "is null when no name parts exist", customer: {}, expected: null },
       ])("$description", async ({ customer, expected }) => {
         global.fetch.mockResolvedValue(jsonResponse(200, { data: [revisionRow({ customer })] }));

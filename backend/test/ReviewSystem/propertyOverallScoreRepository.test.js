@@ -41,7 +41,7 @@ describe("property score repository", () => {
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
       ["review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 }],
-      ["review.overall_rating = FLOOR(review.overall_rating)"],
+      ["review.overall_rating * 2 = FLOOR(review.overall_rating * 2)"],
     ]);
     expect(query.select).toHaveBeenCalledWith("AVG(review.overall_rating)", "overall_score");
     expect(query.addSelect).toHaveBeenCalledWith("COUNT(*)", "review_count");
@@ -67,10 +67,10 @@ describe("property score repository", () => {
       property_id: "property-1", overall_score: null, review_count: 0,
     });
   });
-  test("preserves average precision", async () => {
+  test("rounds the average to one decimal", async () => {
     query.getRawOne.mockResolvedValue({ overall_score: "4.333333333333333", review_count: "3" });
     const result = await repository.getPropertyReviewScore("property-1", "host-1");
-    expect(result.overall_score).toBeCloseTo(13 / 3, 12);
+    expect(result.overall_score).toBe(4.3);
     expect(result.review_count).toBe(3);
   });
 });

@@ -2,7 +2,14 @@ import { buildWebsiteTemplateModel } from "../../rendering/buildWebsiteTemplateM
 import { applyWebsiteDraftContentOverrides } from "../../rendering/websiteDraftContentOverrides";
 import { buildStaticSiteMetadata } from "../buildStaticSiteMetadata";
 import { buildPublishedSiteRenderPayload } from "./publishedSiteRenderPayload";
+import { placeholderImage, S3_ACCOMMODATION_URL } from "../../../../../utils/accommodationImage";
 
+const BUCKET = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const PROPERTY_ID = "ecd926d9-67dc-4d0a-9b40-2884d0838406";
+const photoId = (number) => `00000000-0000-4000-8000-${String(number).padStart(12, "0")}`;
+const photoUrl = (number, file = "web.jpg") => `${BUCKET}images/${PROPERTY_ID}/${photoId(number)}/${file}`;
+const FIRST_PHOTO = photoUrl(1);
+const SECOND_PHOTO = photoUrl(2);
 const buildMetadataFor = (payloadOverrides = {}) => {
   const renderPayload = buildPublishedSiteRenderPayload(payloadOverrides);
   const baseModel = buildWebsiteTemplateModel({ propertyDetails: renderPayload.propertySnapshot });
@@ -98,7 +105,7 @@ describe("static site metadata for a published direct booking website", () => {
     expect(JSON.stringify(metadata)).not.toContain("alias.example.com");
   });
 
-  it("keeps the placeholder image out of og:image even though it arrives as an https URL", () => {
+  it("keeps the placeholder image out of og:image", () => {
     const { metadata, model } = buildMetadataFor({
       propertySnapshot: {
         property: { title: "Wellness Villa Bisous" },
@@ -114,12 +121,21 @@ describe("static site metadata for a published direct booking website", () => {
     expect(JSON.stringify(metadata)).not.toContain("data:image");
   });
 
+  it("keeps a placeholder that a stored hero image carries inside a bucket URL out of og:image", () => {
+    const { metadata, model } = buildMetadataFor({
+      propertySnapshot: { property: { title: "Wellness Villa Bisous" }, images: [] },
+      contentOverrides: { heroImage: `${S3_ACCOMMODATION_URL}${placeholderImage}` },
+    });
+
+    expect(model.media.heroImage).toMatch(/^https:\/\/.*data:image\/svg\+xml/);
+    expect(metadata.openGraph["og:image"]).toBeUndefined();
+    expect(JSON.stringify(metadata)).not.toContain("data:image");
+  });
+
   it("uses the first gallery photo as the shared image", () => {
     const { metadata } = buildMetadataFor();
 
-    expect(metadata.openGraph["og:image"]).toBe(
-      "https://accommodation.s3.eu-north-1.amazonaws.com/images/property/first/web.jpg"
-    );
+    expect(metadata.openGraph["og:image"]).toBe(FIRST_PHOTO);
     expect(metadata.openGraph["og:image:alt"]).toBe(metadata.title);
     expect(metadata.twitter["twitter:card"]).toBe("summary_large_image");
   });
@@ -140,20 +156,35 @@ describe("static site metadata for a published direct booking website", () => {
       name: "Wellness Villa Bisous",
       description: metadata.description,
       url: "https://wellness-villa-bisous-bf378265.direct.domits.com/",
+      image: [FIRST_PHOTO, SECOND_PHOTO],
       address: { "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" },
+      amenityFeature: [
+        { "@type": "LocationFeatureSpecification", name: "Freezer", value: true },
+        { "@type": "LocationFeatureSpecification", name: "Oven", value: true },
+      ],
+      checkinTime: "15:00:00",
+      checkoutTime: "11:00:00",
+      containsPlace: {
+        "@type": "Accommodation",
+        occupancy: { "@type": "QuantitativeValue", value: 8 },
+        numberOfBedrooms: 4,
+        numberOfBathroomsTotal: 3,
+      },
     });
     const serializedJsonLd = JSON.stringify(metadata.jsonLd);
     expect(serializedJsonLd).not.toContain("550");
     expect(serializedJsonLd).not.toMatch(/price|offer/i);
   });
 
-  it("claims no photos and no amenities in the structured data, because a template may hide them", () => {
-    const { metadata } = buildMetadataFor();
+  it("claims nothing the page does not show once a host hid the gallery and the amenities", () => {
+    const { metadata } = buildMetadataFor({
+      contentOverrides: { visibility: { gallerySection: false, amenitiesPanel: false } },
+    });
 
-    expect(metadata.jsonLd.image).toBeUndefined();
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
     expect(metadata.jsonLd.amenityFeature).toBeUndefined();
     expect(metadata.jsonLd.alternateName).toBeUndefined();
-    expect(metadata.openGraph["og:image"]).toContain("first/web.jpg");
+    expect(metadata.openGraph["og:image"]).toBe(FIRST_PHOTO);
   });
 
 
@@ -162,7 +193,8 @@ describe("static site metadata for a published direct booking website", () => {
 
     expect(model.stay.bedrooms).toBe(4);
     expect(metadata.jsonLd.numberOfRooms).toBeUndefined();
-    expect(JSON.stringify(metadata.jsonLd)).not.toContain("4");
+    expect(metadata.jsonLd.containsPlace.numberOfRooms).toBeUndefined();
+    expect(metadata.jsonLd.containsPlace.numberOfBedrooms).toBe(4);
   });
 
   it("falls back to the site name when the snapshot carries no listing title", () => {
@@ -185,6 +217,389 @@ describe("static site metadata for a published direct booking website", () => {
     ["nl_NL", "nl_nl", "nl-NL", "nl-nl"].forEach((primaryLocale) => {
       expect(buildMetadataFor({ site: { primaryLocale } }).metadata.openGraph["og:locale"]).toBe("nl_NL");
     });
+  });
+});
+
+describe("the structured data lists the photos the static page shows", () => {
+  it("lists the hero photo first and every gallery photo once", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO, SECOND_PHOTO]);
+    expect(metadata.jsonLd.image[0]).toBe(model.media.heroImage);
+    expect(model.media.galleryImages).toEqual([FIRST_PHOTO, SECOND_PHOTO]);
+  });
+
+  it("keeps only the hero photo when the host hid the gallery section", () => {
+    const { metadata } = buildMetadataFor({ contentOverrides: { visibility: { gallerySection: false } } });
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
+  });
+
+  it("lists a photo once, however often a gallery repeats it, without using up a slot", () => {
+    const photos = [1, 2, 3, 4, 5, 6, 7].map((number) => photoUrl(number));
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: {
+        site: { title: "Villa" },
+        media: { heroImage: photos[0], galleryImages: [photos[0], photos[1], photos[0], photos[1], ...photos.slice(2)] },
+      },
+    });
+
+    expect(metadata.jsonLd.image).toEqual(photos.slice(0, 6));
+  });
+
+  it("stops at the six gallery photos the page renders, even when a model carries more", () => {
+    const photos = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => photoUrl(number));
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { site: { title: "Villa" }, media: { heroImage: photos[0], galleryImages: photos } },
+    });
+
+    expect(metadata.jsonLd.image).toEqual(photos.slice(0, 6));
+  });
+
+  it("lists a hero photo the host picked outside the gallery as an extra image", () => {
+    const hostPick = photoUrl(99);
+    const { metadata } = buildMetadataFor({ contentOverrides: { heroImage: hostPick } });
+
+    expect(metadata.jsonLd.image).toEqual([hostPick, FIRST_PHOTO, SECOND_PHOTO]);
+  });
+
+  it("claims no image at all rather than the placeholder when the listing has no photo", () => {
+    const { metadata, model } = buildMetadataFor({ propertySnapshot: { images: [] } });
+
+    expect(model.media.heroImage).toContain("data:image/svg+xml");
+    expect(metadata.jsonLd.image).toBeUndefined();
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("data:image");
+  });
+});
+
+describe("the structured data names the amenities the static page lists", () => {
+  const FEATURE = "LocationFeatureSpecification";
+
+  it("names each listed amenity as a feature the stay has, in the order of the page", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(metadata.jsonLd.amenityFeature).toEqual([
+      { "@type": FEATURE, name: "Freezer", value: true },
+      { "@type": FEATURE, name: "Oven", value: true },
+    ]);
+    expect(metadata.jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(
+      model.amenities.featured.map((amenity) => amenity.label)
+    );
+  });
+
+  it("claims no amenity when the host hid the amenities panel", () => {
+    const { metadata } = buildMetadataFor({ contentOverrides: { visibility: { amenitiesPanel: false } } });
+
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+
+  it("claims no amenity when the listing has none", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { amenities: [] } });
+
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+
+  it("names only the catalogue amenities among those the page lists, under the catalogue name and in page order", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "12", label: "Oven", category: "Kitchen" },
+          { id: "website-amenity-pool", label: "Heated pool", category: "Outdoor" },
+          { id: "96", label: "Freezer", category: "Kitchen" },
+        ],
+      },
+    });
+
+    expect(model.amenities.featured.map((amenity) => amenity.label)).toEqual(["Oven", "Heated pool", "Freezer"]);
+    expect(metadata.jsonLd.amenityFeature).toEqual([
+      { "@type": FEATURE, name: "Oven", value: true },
+      { "@type": FEATURE, name: "Freezer", value: true },
+    ]);
+  });
+
+  it("writes the catalogue name, not the spacing the host left in a catalogue label", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: { amenities: [{ id: "2", label: "Air  conditioning", category: "Essentials" }] },
+    });
+
+    expect(model.amenities.featured[0].label).toBe("Air  conditioning");
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": FEATURE, name: "Air conditioning", value: true }]);
+  });
+
+  it("leaves out an amenity the host added, renamed or left unnamed, even with a catalogue icon or id", () => {
+    const { metadata, model } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "website-amenity-wifi", iconAmenityId: "1", label: "Wi-Fi", category: "Essentials" },
+          { id: "1", label: "Wi-Fi 300 Mbps", category: "Essentials" },
+          { id: "12", label: "Freezer", category: "Kitchen" },
+          { id: "96", label: "", category: "Kitchen" },
+        ],
+      },
+    });
+
+    expect(model.amenities.featured).toHaveLength(4);
+    expect(metadata.jsonLd.amenityFeature).toBeUndefined();
+  });
+});
+
+describe("the structured data gives the size of the stay", () => {
+  const detail = (name, value) => ({ detail: name, value });
+
+  it("describes the accommodation with its guests, bedrooms and bathrooms", () => {
+    const { metadata } = buildMetadataFor();
+
+    expect(metadata.jsonLd.containsPlace).toEqual({
+      "@type": "Accommodation",
+      occupancy: { "@type": "QuantitativeValue", value: 8 },
+      numberOfBedrooms: 4,
+      numberOfBathroomsTotal: 3,
+    });
+  });
+
+  it("leaves out a count the listing does not have", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { generalDetails: [detail("Guests", 6)] } });
+
+    expect(metadata.jsonLd.containsPlace).toEqual({
+      "@type": "Accommodation",
+      occupancy: { "@type": "QuantitativeValue", value: 6 },
+    });
+  });
+
+  it("leaves the accommodation out when the listing has no counts at all", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { generalDetails: [] } });
+
+    expect(metadata.jsonLd.containsPlace).toBeUndefined();
+  });
+
+  it("ignores a count that reaches it as a fraction, a string or a boolean", () => {
+    const metadata = buildStaticSiteMetadata({
+      renderPayload: buildPublishedSiteRenderPayload(),
+      model: { site: { title: "Villa" }, stay: { guests: 2.5, bedrooms: "3", bathrooms: true } },
+    });
+
+    expect(metadata.jsonLd.containsPlace).toBeUndefined();
+  });
+
+  it("follows the counts the model shows: whole numbers, nothing for a missing or negative count", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: {
+        generalDetails: [detail("Guests", "eight"), detail("Bedrooms", -1), detail("Bathrooms", 2.5), detail("Beds", 4)],
+      },
+    });
+
+    expect(metadata.jsonLd.containsPlace).toEqual({ "@type": "Accommodation", numberOfBathroomsTotal: 2 });
+  });
+});
+
+describe("the structured data gives the check-in and check-out times", () => {
+  it("writes the earliest check-in and the latest check-out as schema.org times", () => {
+    const { metadata, model } = buildMetadataFor();
+
+    expect(model.stay.checkInLabel).toBe("15:00");
+    expect(model.stay.checkOutLabel).toBe("11:00");
+    expect(metadata.jsonLd.checkinTime).toBe("15:00:00");
+    expect(metadata.jsonLd.checkoutTime).toBe("11:00:00");
+  });
+
+  it("accepts the seconds the database stores and keeps them", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: { checkIn: { checkIn: { from: "14:30:15" }, checkOut: { from: "08:00:00", till: "10:45:30" } } },
+    });
+
+    expect(metadata.jsonLd.checkinTime).toBe("14:30:15");
+    expect(metadata.jsonLd.checkoutTime).toBe("10:45:30");
+  });
+
+  it("leaves a time out when the listing has none or it is not a time of day", () => {
+    [
+      { checkIn: {}, checkOut: {} },
+      { checkIn: { from: "whenever" }, checkOut: { till: "25:00" } },
+      { checkIn: { from: "15:60" }, checkOut: { till: "1100" } },
+      { checkIn: { from: 1500 }, checkOut: { till: null } },
+    ].forEach((checkIn) => {
+      const { metadata } = buildMetadataFor({ propertySnapshot: { checkIn } });
+
+      expect(metadata.jsonLd.checkinTime).toBeUndefined();
+      expect(metadata.jsonLd.checkoutTime).toBeUndefined();
+    });
+    expect(buildMetadataFor({ propertySnapshot: { checkIn: null } }).metadata.jsonLd.checkinTime).toBeUndefined();
+  });
+
+  it("keeps one time when only the other is missing", () => {
+    const { metadata } = buildMetadataFor({ propertySnapshot: { checkIn: { checkIn: { from: "16:00" }, checkOut: {} } } });
+
+    expect(metadata.jsonLd.checkinTime).toBe("16:00:00");
+    expect(metadata.jsonLd.checkoutTime).toBeUndefined();
+  });
+});
+
+describe("the boundary of the structured data", () => {
+  const ALLOWED_KEYS = {
+    LodgingBusiness: [
+      "@context",
+      "@type",
+      "name",
+      "description",
+      "url",
+      "image",
+      "address",
+      "amenityFeature",
+      "checkinTime",
+      "checkoutTime",
+      "containsPlace",
+    ],
+    PostalAddress: ["@type", "addressLocality", "addressCountry"],
+    LocationFeatureSpecification: ["@type", "name", "value"],
+    Accommodation: ["@type", "occupancy", "numberOfBedrooms", "numberOfBathroomsTotal"],
+    QuantitativeValue: ["@type", "value"],
+  };
+
+  const collectNodes = (value, nodes = []) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => collectNodes(item, nodes));
+    } else if (value && typeof value === "object") {
+      nodes.push(value);
+      Object.values(value).forEach((item) => collectNodes(item, nodes));
+    }
+    return nodes;
+  };
+
+  it("uses only schema.org properties that belong to the type they sit on", () => {
+    const nodes = collectNodes(buildMetadataFor().metadata.jsonLd);
+
+    expect(nodes.map((node) => node["@type"])).toEqual([
+      "LodgingBusiness",
+      "PostalAddress",
+      "LocationFeatureSpecification",
+      "LocationFeatureSpecification",
+      "Accommodation",
+      "QuantitativeValue",
+    ]);
+    nodes.forEach((node) => {
+      Object.keys(node).forEach((key) => expect(ALLOWED_KEYS[node["@type"]]).toContain(key));
+    });
+  });
+
+  it("never writes a phone number, coordinates, a street or an e-mail address into the structured data", () => {
+    const { metadata } = buildMetadataFor({
+      propertySnapshot: {
+        location: {
+          country: "Indonesia",
+          city: "Ubud",
+          street: "Jalan Raya Sayan",
+          houseNumber: "17",
+          postalCode: "80571",
+          latitude: -8.5069,
+          longitude: 115.2625,
+        },
+        hostProfile: {
+          givenName: "Amara",
+          email: "amara@example.com",
+          whatsapp: {
+            isAvailable: true,
+            connected: true,
+            displayName: "Amara",
+            phoneNumber: "+62 812 3456 7890",
+            phoneNumberDigits: "6281234567890",
+          },
+        },
+      },
+    });
+    const serialized = JSON.stringify(metadata.jsonLd);
+
+    ["telephone", "faxNumber", "email", "geo", "latitude", "longitude", "streetAddress", "postalCode"].forEach((key) =>
+      expect(serialized).not.toContain(`"${key}"`)
+    );
+    ["3456", "6281234567890", "Jalan Raya Sayan", "80571", "115.26", "8.5069", "example.com"].forEach((value) =>
+      expect(serialized).not.toContain(value)
+    );
+    expect(metadata.jsonLd.address).toEqual({ "@type": "PostalAddress", addressLocality: "Ubud", addressCountry: "Indonesia" });
+  });
+
+  it("never copies an amenity name a host typed into the structured data, whatever it holds", () => {
+    const typedNames = [
+      "WhatsApp +62 812 3456 7890",
+      "Mail amara@example.com",
+      "Pool at -8.5069, 115.2625",
+      "See www.example.com",
+      "Kerkstraat 17",
+    ];
+    const { metadata } = buildMetadataFor({
+      contentOverrides: {
+        amenities: [
+          { id: "12", label: "Oven" },
+          ...typedNames.map((label, index) => ({ id: index % 2 === 0 ? `website-amenity-${index}` : "96", label })),
+        ],
+      },
+    });
+
+    expect(metadata.jsonLd.amenityFeature).toEqual([{ "@type": "LocationFeatureSpecification", name: "Oven", value: true }]);
+    const serialized = JSON.stringify(metadata.jsonLd);
+    ["3456", "example.com", "115.2625", "Kerkstraat"].forEach((value) => expect(serialized).not.toContain(value));
+  });
+
+  it("lists only photo keys in the shape the upload code generates", () => {
+    const other = "3f9c1b2a-5d6e-4f70-8a9b-0c1d2e3f4a5b";
+    const kept = [
+      photoUrl(1),
+      photoUrl(1, "thumb.jpg"),
+      photoUrl(1, "original.PNG"),
+      `${BUCKET}images/${PROPERTY_ID}/${other}`,
+    ];
+    const refused = [
+      `https://photos.example.com/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodation.s3.eu-north-1.amazonaws.com.evil.example/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://evil.example/${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodationXs3Xeu-north-1XamazonawsXcom/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `https://accommodatiox.s3.eu-north-1.amazonaws.com/images/${PROPERTY_ID}/${other}/web.jpg`,
+      `${BUCKET}photos/${PROPERTY_ID}/${other}/web.jpg`,
+      `${BUCKET}images/property/${other}/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/Kerkstraat123/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/0612345678/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/amara@example.com/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/Kerkstraat.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.txt`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg/web.jpg`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/web.jpg?v=2`,
+      `${BUCKET}images/${PROPERTY_ID}/${other}/`,
+      `${BUCKET}images/${PROPERTY_ID}`,
+    ];
+    const imagesFor = (imageUrl) =>
+      buildStaticSiteMetadata({
+        renderPayload: buildPublishedSiteRenderPayload(),
+        model: { site: { title: "Villa" }, media: { heroImage: imageUrl, galleryImages: [imageUrl] } },
+      }).jsonLd.image;
+
+    kept.forEach((imageUrl) => expect(imagesFor(imageUrl)).toEqual([imageUrl]));
+    refused.forEach((imageUrl) => expect(imagesFor(imageUrl)).toBeUndefined());
+  });
+
+  it("lists no photo whose address carries a query string or a fragment", () => {
+    const tracked = `${photoUrl(3)}?phone=6281234567890`;
+    const { metadata } = buildMetadataFor({
+      contentOverrides: { heroImage: tracked, galleryImages: [FIRST_PHOTO, `${photoUrl(4)}#tel`] },
+    });
+
+    expect(metadata.jsonLd.image).toEqual([FIRST_PHOTO]);
+    expect(JSON.stringify(metadata.jsonLd)).not.toContain("6281234567890");
+  });
+
+  it("claims no rating, because the published snapshot carries no reviews", () => {
+    const { metadata } = buildMetadataFor();
+
+    expect(metadata.jsonLd.aggregateRating).toBeUndefined();
+    expect(metadata.jsonLd.review).toBeUndefined();
+    expect(JSON.stringify(metadata.jsonLd)).not.toMatch(/rating|review/i);
+  });
+
+  it("still publishes no price", () => {
+    const serialized = JSON.stringify(buildMetadataFor().metadata.jsonLd);
+
+    expect(serialized).not.toContain("550");
+    expect(serialized).not.toMatch(/price|offer/i);
   });
 });
 

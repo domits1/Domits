@@ -71,6 +71,28 @@ describe("bookingToCreateRequest", () => {
     data.location.country = "Atlantis";
     expect(() => bookingToCreateRequest(data)).toThrow("Unsupported country for Truvi: Atlantis");
   });
+
+  test("converts a country outside Europe from a property_location row", () => {
+    const data = input();
+    data.location = { street: "Sukhumvit Road", housenumber: 12, housenumberextension: null, city: "Bangkok", country: "Thailand", postalcode: "10110" };
+    expect(bookingToCreateRequest(data).listing.address).toEqual({
+      addressLine1: "Sukhumvit Road 12",
+      town: "Bangkok",
+      countryIso: "THA",
+      postcode: "10110",
+    });
+  });
+
+  test("rejects a guest name without a last name", () => {
+    const data = input();
+    data.booking.guestname = "John";
+    expect(() => bookingToCreateRequest(data)).toThrow("first and a last name");
+  });
+
+  test("uses Direct web as channel unless another channel is given", () => {
+    expect(bookingToCreateRequest(input()).reservation.channel).toBe("Direct web");
+    expect(bookingToCreateRequest({ ...input(), channel: "Airbnb" }).reservation.channel).toBe("Airbnb");
+  });
 });
 
 describe("toCountryAlpha3", () => {
@@ -79,6 +101,18 @@ describe("toCountryAlpha3", () => {
     ["Nederland", "NLD"],
     ["  germany ", "DEU"],
     ["United Kingdom", "GBR"],
+    ["Thailand", "THA"],
+    ["Indonesia", "IDN"],
+    ["Mexico", "MEX"],
+    ["South Africa", "ZAF"],
+    ["Kenya", "KEN"],
+    ["Morocco", "MAR"],
+    ["Brazil", "BRA"],
+    ["Croatia", "HRV"],
+    ["Bahamas", "BHS"],
+    ["Côte d'Ivoire", "CIV"],
+    ["Curacao", "CUW"],
+    ["Türkiye", "TUR"],
   ])("converts %p to %s", (country, code) => {
     expect(toCountryAlpha3(country)).toBe(code);
   });
@@ -93,10 +127,28 @@ describe("mapCreateResponse", () => {
     ["Approved", "PASSED"],
     ["Flagged", "FLAGGED"],
     ["Rejected", "FAILED"],
-    ["Something new", "ERROR"],
   ])("maps Truvi status %s to %s", (truviStatus, domitsStatus) => {
     const result = mapCreateResponse({ verification: { verificationId: "v-1", status: truviStatus } });
     expect(result).toEqual({ providerAssessmentId: "v-1", status: domitsStatus, flaggedReason: null });
+  });
+
+  test("returns ERROR with the unknown status in the message", () => {
+    const result = mapCreateResponse({ verification: { verificationId: "v-1", status: "Pending" } });
+    expect(result).toEqual({
+      providerAssessmentId: "v-1",
+      status: "ERROR",
+      flaggedReason: null,
+      error: { status: null, message: "Unknown Truvi status: Pending" },
+    });
+  });
+
+  test.each([[{}], [null], [undefined]])("returns ERROR instead of throwing for a response without verification: %p", (response) => {
+    expect(mapCreateResponse(response)).toEqual({
+      providerAssessmentId: null,
+      status: "ERROR",
+      flaggedReason: null,
+      error: { status: null, message: "Truvi response has no verification" },
+    });
   });
 
   test("keeps the flagged reason", () => {

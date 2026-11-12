@@ -43,7 +43,10 @@ export class CognitoRepository {
             "AccessToken": accessToken
         })
         const result = await this.cognitoClient.send(params)
-        return result.Username ? result : NotFoundException("User not found.");
+        if (!result?.Username) {
+            throw new NotFoundException("User not found.");
+        }
+        return result;
     }
 
     async getUserById(id) {
@@ -56,7 +59,10 @@ export class CognitoRepository {
             Username: id
         });
         const result = await this.cognitoClient.send(params);
-        return result.Username ? result : NotFoundException("User not found.");
+        if (!result?.Username) {
+            throw new NotFoundException("User not found.");
+        }
+        return result;
     }
 
 }

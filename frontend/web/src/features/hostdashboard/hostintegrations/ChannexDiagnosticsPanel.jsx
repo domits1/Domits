@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import ChannexBookingRevisionLog from "./ChannexBookingRevisionLog";
+import ChannexHealthSection from "../channexadmin/health/ChannexHealthSection";
 import {
   connectChannex,
   getChannexAriPayloadPreview,
@@ -20,6 +21,7 @@ import {
 } from "./channexApi";
 
 const SECTION_TABS = [
+  { key: "health", label: "Health" },
   { key: "overview", label: "Overview" },
   { key: "setup", label: "Setup & Connection" },
   { key: "mappings", label: "Mappings" },
@@ -375,6 +377,20 @@ const validateSetupMappingPayload = (payload) => {
   if (!payload.externalRoomTypeId) return "Select a Channex room type before saving the mapping.";
   if (!payload.externalRatePlanId) return "Select a Channex rate plan before saving the mapping.";
   return "";
+};
+
+// Saving a ready mapping queues a full sync (#3282). Only a confirmed fullSyncQueued claims one:
+// queueing can fail after a ready save, and the backend then asks for the mapping to be saved again.
+const describeFullSyncQueueResult = (saveResult) => {
+  if (saveResult?.fullSyncQueued === true) {
+    return "Full sync queued. Channex receives all values within a few minutes; see Latest sync evidence.";
+  }
+  if (saveResult?.ready === false) {
+    const missingMappings = saveResult.readiness?.missingMappings ?? [];
+    const reason = missingMappings.length ? ` (${missingMappings.join(", ")})` : "";
+    return `No full sync queued: the mapping is not ready${reason}.`;
+  }
+  return "No full sync queued. Save the mapping again to retry.";
 };
 
 const getPayloadPaginationSummary = (pagination = {}) => {
@@ -1269,7 +1285,7 @@ const ACTION_CONFIG = [
 ];
 
 function ChannexDiagnosticsPanel({ userId }) {
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState("health");
   const [domitsPropertyId, setDomitsPropertyId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -1825,6 +1841,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         {setupMappingState.data ? (
           <>
             <p className="host-integrations-success-banner">Single-unit Channex mapping saved.</p>
+            <p className="host-integrations-muted">{describeFullSyncQueueResult(setupMappingState.data)}</p>
             <DetailGrid
               items={[
                 { label: "Integration account", value: setupMappingState.data.integrationAccountId },
@@ -2183,7 +2200,7 @@ function ChannexDiagnosticsPanel({ userId }) {
   return (
     <section className="channex-diagnostics">
       <div className="host-integrations-manual-form channex-diagnostics-control-panel">
-        <div className="host-integrations-field-grid">
+        <div className="host-integrations-field-grid channex-diagnostics-filter-grid">
           <label className="host-integrations-field">
             <span>Domits property ID</span>
             <input
@@ -2216,6 +2233,7 @@ function ChannexDiagnosticsPanel({ userId }) {
         ))}
       </nav>
 
+      {activeSection === "health" ? <ChannexHealthSection /> : null}
       {activeSection === "overview" ? renderOverview() : null}
       {activeSection === "setup" ? renderSetup() : null}
       {activeSection === "mappings" ? renderMappings() : null}

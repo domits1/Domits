@@ -6,6 +6,7 @@ import { useRemoteLockDevices } from "../hooks/useRemoteLockDevices";
 import RemoteLockStatusCard from "../components/RemoteLockStatusCard";
 import RemoteLockDevicesList from "../components/RemoteLockDevicesList";
 import RemoteLockConfirmModal from "../components/RemoteLockConfirmModal";
+import { getErrorMessageKey } from "../utils/remoteLockErrors";
 import "../../hostsettings/styles/hostSettings.css";
 import "../styles/HomeAutomation.css";
 
@@ -62,8 +63,10 @@ function HomeAutomationView() {
             <RemoteLockDevicesList
               connected={connected}
               devices={devices.devices}
+              truncated={devices.truncated}
               loading={devices.loading}
               error={devices.error}
+              errorText={t.errors[getErrorMessageKey(devices.errorCode)]}
               onRetry={devices.retry}
               copy={t.devices}
               language={language}

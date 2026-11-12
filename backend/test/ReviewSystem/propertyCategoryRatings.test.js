@@ -24,14 +24,20 @@ describe("property category ratings controller/service integration", () => {
     const result = await controller.manageReviews(request({ host_id: "spoofed" }));
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ property_id: "p1", categories });
-    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "host-1");
-    expect(repository.getPropertyCategoryRatings).toHaveBeenCalledWith("p1", "host-1");
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "host-sub");
+    expect(repository.getPropertyCategoryRatings).toHaveBeenCalledWith("p1", "host-sub");
+  });
+  test("uses sub rather than username when only access-token claims are present", async () => {
+    const result = await controller.manageReviews(request({}, { sub: "host-sub", username: "different-username" }));
+    expect(result.statusCode).toBe(200);
+    expect(repository.findManagedProperty).toHaveBeenCalledWith("p1", "host-sub");
+    expect(repository.getPropertyCategoryRatings).toHaveBeenCalledWith("p1", "host-sub");
   });
   test.each([undefined, null, "", " ", 42, [], {}])("rejects invalid ID %j", async (propertyId) => {
     expect((await controller.manageReviews(request({ propertyId }))).statusCode).toBe(400);
     expect(repository.findManagedProperty).not.toHaveBeenCalled();
   });
-  test.each([{}, { sub: "host-sub" }])("requires verified identity %j", async (claims) => {
+  test.each([{}, { "cognito:username": "host-1" }])("requires verified identity %j", async (claims) => {
     expect((await controller.manageReviews(request({}, claims))).statusCode).toBe(401);
     expect(repository.getPropertyCategoryRatings).not.toHaveBeenCalled();
   });

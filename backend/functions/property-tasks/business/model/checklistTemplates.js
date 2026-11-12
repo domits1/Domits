@@ -34,4 +34,28 @@ export const CHECKLIST_TEMPLATES = {
         { title: "Compliance task", isRequired: true },
         { title: "Internal administration", isRequired: true },
     ],
+    "Guest Experience": [
+        { title: "Guest request", isRequired: true },
+        { title: "Concierge request", isRequired: true },
+        { title: "Complaint", isRequired: true },
+        { title: "Special occasion", isRequired: true },
+        { title: "Arrival preparation", isRequired: true },
+        { title: "Check-in assistance", isRequired: true },
+        { title: "During-stay service", isRequired: true },
+        { title: "Checkout assistance", isRequired: true },
+        { title: "Service recovery", isRequired: true },
+    ],
+    Finance: [
+        { title: "Payment investigation", isRequired: true },
+        { title: "Reconciliation", isRequired: true },
+        { title: "Invoice review", isRequired: true },
+        { title: "Owner payout issue", isRequired: true },
+        { title: "Financial exception", isRequired: true },
+    ],
+    Revenue: [
+        { title: "Pricing review", isRequired: true },
+        { title: "Rate-plan update", isRequired: true },
+        { title: "Availability review", isRequired: true },
+        { title: "Revenue exception", isRequired: true },
+    ],
 };
