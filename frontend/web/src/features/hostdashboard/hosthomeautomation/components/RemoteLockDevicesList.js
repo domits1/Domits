@@ -68,13 +68,13 @@ function DevicesTable({ devices, copy, language }) {
 }
 
 // Which of the four states the list is in, so the markup below stays flat.
-function DevicesBody({ connected, devices, loading, error, onRetry, copy, language }) {
+function DevicesBody({ connected, devices, loading, error, errorText, onRetry, copy, language }) {
   if (!connected) return <p className="host-homeauto__message">{copy.notConnected}</p>;
   if (loading) return <output className="host-homeauto__message">{copy.loading}</output>;
   if (error) {
     return (
       <div className="host-homeauto__error" role="alert">
-        <p className="host-homeauto__error-text">{copy.loadError}</p>
+        <p className="host-homeauto__error-text">{errorText || copy.loadError}</p>
         <button type="button" className="host-homeauto__retry" onClick={onRetry}>
           {copy.retry}
         </button>
@@ -85,7 +85,7 @@ function DevicesBody({ connected, devices, loading, error, onRetry, copy, langua
   return <DevicesTable devices={devices} copy={copy} language={language} />;
 }
 
-function RemoteLockDevicesList({ connected, devices, loading, error, onRetry, copy, language }) {
+function RemoteLockDevicesList({ connected, devices, truncated, loading, error, errorText, onRetry, copy, language }) {
   return (
     <section className="host-homeauto__card host-homeauto__devices" aria-label={copy.title}>
       <h2 className="host-homeauto__provider">{copy.title}</h2>
@@ -94,10 +94,12 @@ function RemoteLockDevicesList({ connected, devices, loading, error, onRetry, co
         devices={devices}
         loading={loading}
         error={error}
+        errorText={errorText}
         onRetry={onRetry}
         copy={copy}
         language={language}
       />
+      {truncated && <p className="host-homeauto__message">{copy.truncated}</p>}
     </section>
   );
 }
@@ -109,6 +111,7 @@ const deviceCopy = PropTypes.shape({
   loading: PropTypes.string.isRequired,
   loadError: PropTypes.string.isRequired,
   retry: PropTypes.string.isRequired,
+  truncated: PropTypes.string.isRequired,
   notSupported: PropTypes.string.isRequired,
   columns: PropTypes.objectOf(PropTypes.string).isRequired,
   statuses: PropTypes.objectOf(PropTypes.string).isRequired,
@@ -127,8 +130,10 @@ const devicesListPropTypes = {
       lastSeenAt: PropTypes.number,
     })
   ).isRequired,
+  truncated: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
   error: PropTypes.string,
+  errorText: PropTypes.string,
   onRetry: PropTypes.func.isRequired,
   copy: deviceCopy,
   language: PropTypes.string.isRequired,

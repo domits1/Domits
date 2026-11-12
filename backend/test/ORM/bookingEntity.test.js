@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { DataSource } from "typeorm";
 import { Booking } from "database/models/Booking";
-import { extractAddColumnNames, extractCreateTableColumns, loadSchemaSql, sorted } from "./schemaSql";
+import { extractAddColumnNames, extractCreateTableColumns, loadMigrationSql, loadSchemaSql, sorted } from "./schemaSql";
 
 const CATALOG_COLUMNS = [
   "id",
@@ -22,6 +22,7 @@ const CATALOG_COLUMNS = [
   "refunded_amount",
   "stripe_refund_id",
   "refund_error",
+  "refund_status",
   "total_price",
   "booking_source",
   "site_id",
@@ -30,6 +31,7 @@ const CATALOG_COLUMNS = [
   "idempotency_key",
   "checked_out_at",
   "special_request",
+  "cancelled_at",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -92,7 +94,39 @@ describe("Booking entity", () => {
     });
   });
 
+  it("maps refund_status as a nullable varchar", async () => {
+    const metadata = await loadBookingMetadata();
+    const column = metadata.findColumnWithDatabaseName("refund_status");
+    expect(column).toBeDefined();
+    expect(column.type).toBe("varchar");
+    expect(column.isNullable).toBe(true);
+    expect(column.default).toBeUndefined();
+  });
+
+  it("reads cancelled_at as a number and keeps an empty one empty", async () => {
+    const metadata = await loadBookingMetadata();
+    const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
+    expect(transformer.from("1792281600000")).toBe(1792281600000);
+    expect(transformer.from(null)).toBeNull();
+  });
+
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+});
+
+describe("refund status migration", () => {
+  it("adds refund_status to both booking schemas", () => {
+    const sql = loadMigrationSql("20261110_booking_refund_status.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS refund_status VARCHAR(32);");
+  });
+});
+
+describe("cancelled_at migration", () => {
+  it("adds the column to both schemas, because the entity selects it on every booking read", () => {
+    const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+  });
 });
 
 describe("schema.psql booking blocks", () => {

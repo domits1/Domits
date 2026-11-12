@@ -18,6 +18,7 @@ export default async function publishRealtimeMessage(message) {
 
   const websocketBody = {
     type: "message",
+    ...(message.id ? { id: message.id } : {}),
     senderId,
     userId: senderId,
     recipientId,

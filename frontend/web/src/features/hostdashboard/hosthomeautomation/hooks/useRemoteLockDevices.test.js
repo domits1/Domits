@@ -5,6 +5,7 @@ import { getRemoteLockDevices } from "../services/remoteLockService";
 jest.mock("../services/remoteLockService");
 
 const DEVICES = [{ id: "lock-1", name: "Front door" }];
+const LIST = { devices: DEVICES, truncated: false };
 
 const deferred = () => {
   let resolve;
@@ -27,17 +28,17 @@ describe("useRemoteLockDevices", () => {
   });
 
   it("is loading from the first render when enabled, then returns the devices", async () => {
-    getRemoteLockDevices.mockResolvedValue(DEVICES);
+    getRemoteLockDevices.mockResolvedValue({ devices: DEVICES, truncated: true });
 
     const { result } = renderHook(() => useRemoteLockDevices(true));
 
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current).toMatchObject({ devices: DEVICES, error: null });
+    expect(result.current).toMatchObject({ devices: DEVICES, truncated: true, error: null });
   });
 
   it("fetches on every switch to enabled and forgets the list when disabled", async () => {
-    getRemoteLockDevices.mockResolvedValue(DEVICES);
+    getRemoteLockDevices.mockResolvedValue(LIST);
     const { result, rerender } = renderHook(({ enabled }) => useRemoteLockDevices(enabled), {
       initialProps: { enabled: false },
     });
@@ -61,22 +62,22 @@ describe("useRemoteLockDevices", () => {
     });
 
     rerender({ enabled: false });
-    await act(async () => pending.resolve(DEVICES));
+    await act(async () => pending.resolve(LIST));
 
     expect(result.current).toMatchObject({ devices: [], loading: false });
   });
 
   it("returns the error message, stops loading, and retry fetches again", async () => {
-    getRemoteLockDevices.mockRejectedValueOnce(new Error("boom"));
-    getRemoteLockDevices.mockResolvedValueOnce(DEVICES);
+    getRemoteLockDevices.mockRejectedValueOnce(Object.assign(new Error("boom"), { code: "RATE_LIMITED" }));
+    getRemoteLockDevices.mockResolvedValueOnce(LIST);
     const { result } = renderHook(() => useRemoteLockDevices(true));
 
     await waitFor(() => expect(result.current.error).toBe("boom"));
-    expect(result.current.loading).toBe(false);
+    expect(result.current).toMatchObject({ loading: false, errorCode: "RATE_LIMITED" });
 
     act(() => result.current.retry());
 
     await waitFor(() => expect(result.current.devices).toEqual(DEVICES));
-    expect(result.current.error).toBeNull();
+    expect(result.current).toMatchObject({ error: null, errorCode: null });
   });
 });

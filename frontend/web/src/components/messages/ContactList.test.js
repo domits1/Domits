@@ -340,6 +340,119 @@ describe("ContactList realtime unread sync", () => {
     expect(updated[0].latestMessage.text).toBe("Hello, is this available?");
     expect(markThreadRead).not.toHaveBeenCalled();
   });
+
+  test("a live Channex guest message adds the contact as 'Channex guest' with one unread, without a user lookup", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn();
+
+    try {
+      const { setContacts } = renderWithSocket({
+        contacts: [],
+        wsMessage: {
+          userId: "CHANNEX_GUEST:booking-1",
+          senderId: "CHANNEX_GUEST:booking-1",
+          recipientId: "host-1",
+          text: "What time is check-in?",
+          threadId: "thread-channex-1",
+          platform: "CHANNEX",
+          integrationAccountId: "integration-1",
+          externalThreadId: "channex-thread-1",
+          createdAt: "2026-06-01T10:20:00.000Z",
+        },
+        activeThreadId: "thread-1",
+      });
+
+      await waitFor(() => expect(setContacts.mock.calls.length).toBeGreaterThanOrEqual(2));
+      const [contact] = applyQueuedUpdates(setContacts.mock.calls, []);
+
+      expect(contact.givenName).toBe("Channex guest");
+      expect(contact.unreadCount).toBe(1);
+      expect(contact.platform).toBe("CHANNEX");
+      expect(contact.threadId).toBe("thread-channex-1");
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("a live Channex guest message keeps the real guest name already on the conversation", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn();
+    const namedContact = {
+      hostId: "host-1",
+      guestId: "CHANNEX_GUEST:booking-1",
+      givenName: "Maria Jansen",
+      threadId: "thread-channex-1",
+      platform: "CHANNEX",
+      unreadCount: 0,
+      latestMessage: { text: "Earlier message", createdAt: "2026-06-01T09:00:00.000Z" },
+    };
+
+    try {
+      const { setContacts } = renderWithSocket({
+        contacts: [namedContact],
+        wsMessage: {
+          userId: "CHANNEX_GUEST:booking-1",
+          senderId: "CHANNEX_GUEST:booking-1",
+          recipientId: "host-1",
+          text: "What time is check-in?",
+          threadId: "thread-channex-1",
+          platform: "CHANNEX",
+          createdAt: "2026-06-01T10:20:00.000Z",
+        },
+        activeThreadId: "thread-1",
+      });
+
+      await waitFor(() => expect(setContacts.mock.calls.length).toBeGreaterThanOrEqual(2));
+      const [contact] = applyQueuedUpdates(setContacts.mock.calls, [namedContact]);
+
+      expect(contact.givenName).toBe("Maria Jansen");
+      expect(contact.unreadCount).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("a fetched real name replaces a different real name already on the conversation", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        body: JSON.stringify([{ Attributes: [{ Name: "given_name", Value: "Mariska de Vries" }] }]),
+      }),
+    });
+    const namedContact = {
+      hostId: "host-1",
+      guestId: "guest-uuid-1",
+      givenName: "Maria Jansen",
+      threadId: "thread-2",
+      unreadCount: 0,
+      latestMessage: { text: "Earlier message", createdAt: "2026-06-01T09:00:00.000Z" },
+    };
+
+    try {
+      const { setContacts } = renderWithSocket({
+        contacts: [namedContact],
+        wsMessage: {
+          userId: "guest-uuid-1",
+          senderId: "guest-uuid-1",
+          recipientId: "host-1",
+          text: "What time is check-in?",
+          threadId: "thread-2",
+          createdAt: "2026-06-01T10:20:00.000Z",
+        },
+        activeThreadId: "thread-1",
+      });
+
+      await waitFor(() => expect(setContacts.mock.calls.length).toBeGreaterThanOrEqual(2));
+      const [contact] = applyQueuedUpdates(setContacts.mock.calls, [namedContact]);
+
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      expect(contact.givenName).toBe("Mariska de Vries");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 describe("ContactList manual mark read/unread", () => {

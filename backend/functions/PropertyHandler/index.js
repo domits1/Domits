@@ -1,10 +1,13 @@
 import { PropertyController } from "./controller/propertyController.js";
+import { DestinationPageController } from "./controller/destinationPageController.js";
 
 const STATIC_PAGE_TASK = "build-static-pages";
 const STATIC_PAGE_RECONCILE_TASK = "reconcile-static-pages";
 const STATIC_PAGE_QUEUE_ALL_TASK = "queue-all-static-pages";
+const UNPUBLISH_INACTIVE_SITES_TASK = "unpublish-sites-of-inactive-listings";
 
 let controller = new PropertyController();
+const destinationPageController = new DestinationPageController();
 
 const notFound = (body) => ({
   statusCode: 404,
@@ -12,6 +15,13 @@ const notFound = (body) => ({
 });
 
 const isPath = (event, route) => event.resource === route || event.path === route;
+
+const DESTINATION_PAGE_RESOURCES = new Set(["/destinations", "/destinations/{proxy+}"]);
+
+const isDestinationPageRequest = (event) =>
+  DESTINATION_PAGE_RESOURCES.has(event.resource) ||
+  isPath(event, "/destinations") ||
+  String(event.path || "").startsWith("/destinations/");
 
 const getSubResource = (event, resourceTemplate, pathPrefix) => {
   if (event.resource === resourceTemplate) {
@@ -32,6 +42,12 @@ const handlePost = async (event) => {
   }
   if (isPath(event, "/property/images/confirm")) {
     return controller.confirmImageUploads(event);
+  }
+  if (isPath(event, "/property/review/approve")) {
+    return controller.approveProperty(event);
+  }
+  if (isPath(event, "/property/review/reject")) {
+    return controller.rejectProperty(event);
   }
   if (isPath(event, "/property/website/event")) {
     return controller.recordWebsiteAnalyticsEvent(event);
@@ -109,6 +125,24 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isDestinationPageRequest(event)) {
+    return destinationPageController.getDestinationPage(event);
+  }
+  if (isPath(event, "/property/review/access")) {
+    return controller.getReviewAccess(event);
+  }
+  if (isPath(event, "/property/review/queue")) {
+    return controller.getReviewQueue(event);
+  }
+  if (isPath(event, "/property/review/detail")) {
+    return controller.getReviewDetail(event);
+  }
+  if (isPath(event, "/sitemap-destinations.xml")) {
+    return destinationPageController.getDestinationSitemap(event);
+  }
+  if (isPath(event, "/property/destinations/menu")) {
+    return destinationPageController.getDestinationMenu();
+  }
   if (isPath(event, "/property/website/public/resolve")) {
     return controller.resolvePublicWebsiteSite(event);
   }
@@ -206,6 +240,10 @@ export const handler = async (event) => {
 
   if (event?.task === STATIC_PAGE_QUEUE_ALL_TASK && !event.httpMethod) {
     return controller.queueAllStaticPages(event);
+  }
+
+  if (event?.task === UNPUBLISH_INACTIVE_SITES_TASK && !event.httpMethod) {
+    return controller.unpublishSitesOfInactiveListings(event);
   }
 
   try {

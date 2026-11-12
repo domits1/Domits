@@ -42,10 +42,8 @@ const normalizeChannexBookingRevision = (row) => {
     amount: attributes?.amount ?? null,
     currency: requireStr(attributes?.currency),
     insertedAt: requireStr(attributes?.inserted_at),
-    guestName:
-      requireStr(customer?.name) ||
-      [requireStr(customer?.first_name), requireStr(customer?.last_name)].filter(Boolean).join(" ") ||
-      null,
+    // Channex sends the first name as customer.name and the last name as customer.surname.
+    guestName: [requireStr(customer?.name), requireStr(customer?.surname)].filter(Boolean).join(" ") || null,
     guestCount: resolveGuestCount(attributes, rooms),
     rooms: rooms.map((room) => ({
       roomTypeId: requireStr(room?.room_type_id),
