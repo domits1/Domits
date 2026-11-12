@@ -4,6 +4,17 @@ import {
     saveHostNotificationEventPreferences,
 } from "../components/settings/api/communicationPreferences";
 
+const CHANNEL_KEYS = ["inApp", "email", "sms"];
+
+const isCompletePreferences = (candidate, categories) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return false;
+    const events = categories.flatMap((category) => category.events || []);
+    return events.length > 0 && events.every(({ key }) =>
+        candidate[key] && typeof candidate[key] === "object" && !Array.isArray(candidate[key]) &&
+        CHANNEL_KEYS.every((channel) => typeof candidate[key][channel] === "boolean")
+    );
+};
+
 const clonePreferences = (preferences) => Object.fromEntries(
     Object.entries(preferences).map(([eventKey, channels]) => [
         eventKey,
@@ -11,7 +22,7 @@ const clonePreferences = (preferences) => Object.fromEntries(
     ])
 );
 
-export default function useHostNotificationEventPreferences() {
+export default function useHostNotificationEventPreferences(messages) {
     const [categories, setCategories] = useState([]);
     const [preferences, setPreferences] = useState({});
     const [baseline, setBaseline] = useState({});
@@ -32,16 +43,16 @@ export default function useHostNotificationEventPreferences() {
             setSaveSuccess(false);
             try {
                 const result = await fetchHostNotificationEventPreferences();
-                if (!Array.isArray(result?.categories) || !result?.preferences) {
-                    throw new Error("Invalid host notification preferences response.");
+                if (!Array.isArray(result?.categories) || !isCompletePreferences(result?.preferences, result.categories)) {
+                    throw new Error("INVALID_HOST_NOTIFICATION_PREFERENCES_RESPONSE");
                 }
                 if (!isMounted) return;
                 const loadedPreferences = clonePreferences(result.preferences);
                 setCategories(result.categories);
                 setPreferences(loadedPreferences);
                 setBaseline(loadedPreferences);
-            } catch {
-                if (isMounted) setLoadError("We could not load your notification choices. Retry before making changes.");
+            } catch (error) {
+                if (isMounted) setLoadError(error?.message === "INVALID_HOST_NOTIFICATION_PREFERENCES_RESPONSE" ? messages.invalidResponse : messages.loadFailed);
             } finally {
                 if (isMounted) setIsLoading(false);
             }
@@ -74,16 +85,18 @@ export default function useHostNotificationEventPreferences() {
         setSaveSuccess(false);
         try {
             const saved = await saveHostNotificationEventPreferences(preferences);
-            const normalized = clonePreferences(saved);
+            const savedMatrix = saved?.preferences ?? saved;
+            const nextPreferences = isCompletePreferences(savedMatrix, categories) ? savedMatrix : preferences;
+            const normalized = clonePreferences(nextPreferences);
             setPreferences(normalized);
             setBaseline(normalized);
             setSaveSuccess(true);
         } catch {
-            setError("We could not save your notification choices. Your changes are still here.");
+            setError(messages.saveFailed);
         } finally {
             setIsSaving(false);
         }
-    }, [isDirty, isLoading, isSaving, loadError, preferences]);
+    }, [categories, isDirty, isLoading, isSaving, loadError, messages, preferences]);
 
     const retry = useCallback(() => setRetryCount((count) => count + 1), []);
 

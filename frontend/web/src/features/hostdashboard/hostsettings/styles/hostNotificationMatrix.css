@@ -4,6 +4,13 @@
     line-height: 1.5;
 }
 
+.host-notification-event-names-note {
+    color: #6b7280;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    margin: -8px 0 16px;
+}
+
 .host-notification-bulk-action {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -25,6 +32,8 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 2px 0 14px;
 }
 
@@ -52,9 +61,10 @@
 .host-notification-tab-count {
     border-radius: 999px;
     background: #f3f4f6;
-    color: #6b7280;
+    color: #374151;
     padding: 1px 7px;
     font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .host-notification-matrix-card {
@@ -63,6 +73,8 @@
 
 .host-notification-table-wrap {
     overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .host-notification-table {
@@ -173,4 +185,12 @@
     .host-notification-matrix-footer .pd-save-btn {
         width: 100%;
     }
+}
+
+.host-notification-tab:focus-visible,
+.host-notification-bulk-action:focus-visible,
+.host-notification-error button:focus-visible,
+.host-notification-checkbox-label input:focus-visible {
+    outline: 2px solid #166534;
+    outline-offset: 2px;
 }

@@ -2,9 +2,9 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import HostNotificationMatrixForm from "../../features/hostdashboard/hostsettings/pages/HostNotificationMatrixForm";
-import { getHostNotificationMatrixLabels } from "../../content/hostNotificationMatrixLabels";
+import en from "../../content/en.json";
 
-const labels = getHostNotificationMatrixLabels("en");
+const labels = en.settings.hostNotificationMatrix;
 const updatePreference = jest.fn();
 const REQUIRED_EMAIL_EVENTS = new Set(["manager_new_booking", "booking_created", "owner_new_booking"]);
 const createCategory = (key, labelKey, prefix, events) => ({
@@ -65,18 +65,18 @@ describe("HostNotificationMatrixForm", () => {
     test("renders the notification categories and required delivery channels", () => {
         renderForm();
 
-        expect(screen.getByRole("tab", { name: /Property Manager 1/i })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: /Bookings & Reservations 1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Property Owner 1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Finance 2/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Distribution 1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Compliance 1/i })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /Tasks 1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Property Manager\\s*1/i })).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByRole("tab", { name: /Bookings & Reservations\\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Property Owner\\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Finance\\s*2/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Distribution\\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Compliance\\s*1/i })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /Tasks\\s*1/i })).toBeInTheDocument();
         expect(getChannelToggle("New booking", "inApp")).toBeChecked();
-        expect(getChannelToggle("New booking", "Email")).toBeChecked();
-        expect(getChannelToggle("New booking", "Email")).toBeDisabled();
+        expect(getChannelToggle("New booking", "email")).toBeChecked();
+        expect(getChannelToggle("New booking", "email")).toBeDisabled();
         expect(screen.getByText(labels.required)).toBeInTheDocument();
-        expect(getChannelToggle("New booking", "SMS")).not.toBeChecked();
+        expect(getChannelToggle("New booking", "sms")).not.toBeChecked();
         expect(screen.queryByText("Recipients")).not.toBeInTheDocument();
         expect(screen.queryByText("Priority")).not.toBeInTheDocument();
         expect(screen.queryByText("Action")).not.toBeInTheDocument();
@@ -85,7 +85,7 @@ describe("HostNotificationMatrixForm", () => {
     test("lets a host change an optional channel independently", () => {
         renderForm();
 
-        fireEvent.click(getChannelToggle("New booking", "In-app"));
+        fireEvent.click(getChannelToggle("New booking", "inApp"));
         expect(updatePreference).toHaveBeenCalledWith("manager_new_booking", "inApp", false);
     });
 
@@ -104,7 +104,7 @@ describe("HostNotificationMatrixForm", () => {
     test("shows only the selected category's notifications", () => {
         renderForm();
 
-        fireEvent.click(screen.getByRole("tab", { name: /Finance 2/i }));
+        fireEvent.click(screen.getByRole("tab", { name: /Finance\\s*2/i }));
         expect(screen.getByText("Reconciliation mismatch")).toBeInTheDocument();
         expect(screen.queryByText("New booking")).not.toBeInTheDocument();
     });
@@ -112,7 +112,7 @@ describe("HostNotificationMatrixForm", () => {
     test("disables controls and offers retry after a loading failure", () => {
         renderForm({ loadError: "Load failed" });
 
-        expect(getChannelToggle("New booking", "Email")).toBeDisabled();
+        expect(getChannelToggle("New booking", "email")).toBeDisabled();
         expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     });
 });

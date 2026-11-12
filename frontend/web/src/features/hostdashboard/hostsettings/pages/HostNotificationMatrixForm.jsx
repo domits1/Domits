@@ -36,6 +36,7 @@ const HostNotificationMatrixForm = ({
         <section className="personal-data-section host-notification-matrix">
             <h2 className="personal-data-section-title">{labels.title}</h2>
             <p className="host-notification-matrix-description">{labels.description}</p>
+            <p className="host-notification-event-names-note">{labels.eventNamesNote}</p>
 
             <button
                 type="button"
@@ -84,7 +85,7 @@ const HostNotificationMatrixForm = ({
                         <tbody>
                             {category?.events.map((event) => (
                                 <tr key={event.key}>
-                                    <td className="host-notification-event">{event.event}</td>
+                                    <td className="host-notification-event">{labels.eventNames?.[event.key] || event.event}</td>
                                     {CHANNELS.map((channel) => {
                                         const isRequiredEmail = channel === "email" && event.requiredChannels?.includes("email");
                                         return (
@@ -92,7 +93,7 @@ const HostNotificationMatrixForm = ({
                                                 <label className="host-notification-checkbox-label">
                                                     <input
                                                         type="checkbox"
-                                                        aria-label={event.event + " - " + labels.channels[channel]}
+                                                        aria-label={(labels.eventNames?.[event.key] || event.event) + " - " + labels.channels[channel]}
                                                         checked={Boolean(preferences[event.key]?.[channel])}
                                                         disabled={disabled || Boolean(isRequiredEmail)}
                                                         onChange={(change) => updatePreference(event.key, channel, change.target.checked)}
@@ -111,7 +112,7 @@ const HostNotificationMatrixForm = ({
                 </div>
 
                 <div className="personal-data-card-footer host-notification-matrix-footer">
-                    <div className="host-notification-feedback" aria-live="polite">
+                    <div className="host-notification-feedback" role="status" aria-live="polite">
                         {error && <span className="notification-preferences-error">{error}</span>}
                         {saveSuccess && !error && <span className="notification-preferences-success">{labels.saved}</span>}
                     </div>

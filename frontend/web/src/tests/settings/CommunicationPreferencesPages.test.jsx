@@ -58,7 +58,7 @@ const waitForLoadedGuestPreferences = async () => {
 
 const waitForLoadedHostPreferences = async () => {
     await waitFor(() => expect(fetchHostNotificationEventPreferences).toHaveBeenCalled());
-    await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("Loading notification preferences...")).not.toBeInTheDocument());
 };
 
 describe("Communication Preferences pages", () => {
@@ -99,6 +99,53 @@ describe("Communication Preferences pages", () => {
             finance_chargeback: { inApp: true, email: false, sms: false },
         }));
         expect(await screen.findByText("Notification preferences saved.")).toBeInTheDocument();
+    });
+
+    test("Host keeps submitted preferences when PUT returns the wrapped GET response", async () => {
+        const changedPreferences = {
+            ...hostPreferences,
+            finance_chargeback: { inApp: true, email: false, sms: false },
+        };
+        saveHostNotificationEventPreferences.mockResolvedValueOnce({
+            categories: hostCategories,
+            preferences: changedPreferences,
+        });
+
+        renderWithLanguage(<HostCommunicationPreferences />);
+        await waitForLoadedHostPreferences();
+        fireEvent.click(screen.getByRole("tab", { name: /Finance/i }));
+        fireEvent.click(getHostToggle("Chargeback", "Email"));
+        fireEvent.click(screen.getByRole("button", { name: /Save preferences/i }));
+
+        expect(await screen.findByText("Notification preferences saved.")).toBeInTheDocument();
+        expect(getHostToggle("Chargeback", "Email")).not.toBeChecked();
+    });
+
+    test("Host keeps submitted preferences when PUT succeeds without a response body", async () => {
+        saveHostNotificationEventPreferences.mockResolvedValueOnce(null);
+
+        renderWithLanguage(<HostCommunicationPreferences />);
+        await waitForLoadedHostPreferences();
+        fireEvent.click(screen.getByRole("tab", { name: /Finance/i }));
+        fireEvent.click(getHostToggle("Chargeback", "Email"));
+        fireEvent.click(screen.getByRole("button", { name: /Save preferences/i }));
+
+        expect(await screen.findByText("Notification preferences saved.")).toBeInTheDocument();
+        expect(getHostToggle("Chargeback", "Email")).not.toBeChecked();
+    });
+
+    test("failed Host PUT preserves unsaved changes and allows another save attempt", async () => {
+        saveHostNotificationEventPreferences.mockRejectedValueOnce(new Error("network failed"));
+
+        renderWithLanguage(<HostCommunicationPreferences />);
+        await waitForLoadedHostPreferences();
+        fireEvent.click(screen.getByRole("tab", { name: /Finance/i }));
+        fireEvent.click(getHostToggle("Chargeback", "Email"));
+        fireEvent.click(screen.getByRole("button", { name: /Save preferences/i }));
+
+        expect(await screen.findByText("We could not save your notification choices. Your changes are still here. Please try again.")).toBeInTheDocument();
+        expect(getHostToggle("Chargeback", "Email")).not.toBeChecked();
+        expect(screen.getByRole("button", { name: /Save preferences/i })).toBeEnabled();
     });
 
     test("Guest page keeps its existing channel preference behavior", async () => {

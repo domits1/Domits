@@ -65,7 +65,7 @@ export const saveCommunicationPreferences = (persona, preferences) =>
 export const buildHostNotificationPreferencesUrl = () =>
     `${COMMUNICATION_PREFERENCES_ENDPOINT}?persona=host&view=host-events`;
 
-const requestHostNotificationPreferences = async ({ method, body, errorMessage } = {}) => {
+const requestHostNotificationPreferences = async ({ method, body, errorCode } = {}) => {
     const token = await getIdToken();
     const response = await fetch(buildHostNotificationPreferencesUrl(), {
         method,
@@ -78,19 +78,23 @@ const requestHostNotificationPreferences = async ({ method, body, errorMessage }
     });
 
     const payload = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(errorMessage);
+    if (!response.ok) {
+        const error = new Error(errorCode);
+        error.code = errorCode;
+        throw error;
+    }
     return payload;
 };
 
 export const fetchHostNotificationEventPreferences = () =>
     requestHostNotificationPreferences({
         method: "GET",
-        errorMessage: "We could not load your host notification choices. Please try again.",
+        errorCode: "HOST_NOTIFICATION_PREFERENCES_LOAD_FAILED",
     });
 
 export const saveHostNotificationEventPreferences = (preferences) =>
     requestHostNotificationPreferences({
         method: "PUT",
         body: preferences,
-        errorMessage: "We could not save your host notification choices. Please try again.",
+        errorCode: "HOST_NOTIFICATION_PREFERENCES_SAVE_FAILED",
     });
