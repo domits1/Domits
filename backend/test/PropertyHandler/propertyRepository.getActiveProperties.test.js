@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { PropertyRepository } from "../../functions/PropertyHandler/data/repository/propertyRepository.js";
-import { findListingPosition } from "../../functions/PropertyHandler/data/repository/listingPosition.js";
+import { applyListingCursor } from "../../functions/PropertyHandler/data/repository/listingPosition.js";
 import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
 import Database from "../../ORM/index.js";
 
@@ -11,22 +11,28 @@ jest.mock("../../ORM/index.js", () => ({
   },
 }));
 
+// The cursor rules (what counts as a cursor, the id lookup, the 400) are tested on applyListingCursor itself, in
+// listingPosition.test.js. Here it is replaced, and this suite checks that the feed hands it the right things.
 jest.mock("../../functions/PropertyHandler/data/repository/listingPosition.js", () => ({
   ...jest.requireActual("../../functions/PropertyHandler/data/repository/listingPosition.js"),
-  findListingPosition: jest.fn(),
+  applyListingCursor: jest.fn(),
 }));
 
 const CHAINED_METHODS = ["select", "leftJoin", "where", "andWhere", "addSelect", "orderBy", "addOrderBy", "limit"];
-const CURSOR_POSITION = { approvedAt: 5000, createdAt: 777, id: "property-6" };
 
 describe("PropertyRepository.getActiveProperties", () => {
   let repository;
   let chain;
   let client;
 
+  const buildChain = (rows) => {
+    const builder = Object.fromEntries(CHAINED_METHODS.map((method) => [method, jest.fn().mockReturnThis()]));
+    builder.getMany = jest.fn().mockResolvedValue(rows);
+    return builder;
+  };
+
   const read = async (cursor, rows = [{ id: "p1", createdat: 10 }]) => {
-    chain = Object.fromEntries(CHAINED_METHODS.map((method) => [method, jest.fn().mockReturnThis()]));
-    chain.getMany = jest.fn().mockResolvedValue(rows);
+    chain = buildChain(rows);
     client = { getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => chain) })) };
     Database.getInstance.mockResolvedValue(client);
     return await repository.getActiveProperties(cursor);
@@ -34,11 +40,11 @@ describe("PropertyRepository.getActiveProperties", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    findListingPosition.mockResolvedValue(CURSOR_POSITION);
+    applyListingCursor.mockImplementation(async (_client, query) => query);
     repository = new PropertyRepository({});
   });
 
-  describe("first page", () => {
+  describe("the query", () => {
     it("reads only active properties, twelve at a time", async () => {
       await read(undefined);
 
@@ -62,48 +68,43 @@ describe("PropertyRepository.getActiveProperties", () => {
         ["property.id", "DESC"],
       ]);
     });
-
-    it("does not look up a cursor or filter by position", async () => {
-      await read(undefined);
-
-      expect(findListingPosition).not.toHaveBeenCalled();
-      expect(chain.andWhere).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      ["a controller cursor with NaN and no id", { createdAt: Number.NaN, id: undefined }],
-      ["a cursor with NaN createdAt", { createdAt: Number.NaN, id: "property-6" }],
-      ["a cursor with no id", { createdAt: 777, id: undefined }],
-      ["a cursor whose createdAt is zero", { createdAt: 0, id: "property-6" }],
-    ])("treats %s as no cursor", async (_name, cursor) => {
-      await read(cursor);
-
-      expect(findListingPosition).not.toHaveBeenCalled();
-      expect(chain.andWhere).not.toHaveBeenCalled();
-    });
   });
 
-  describe("later pages", () => {
+  describe("the cursor", () => {
     const cursor = { createdAt: 999, id: "property-6" };
 
-    it("looks the cursor row up by id", async () => {
+    it("hands the client, the query and the cursor to applyListingCursor", async () => {
       await read(cursor);
 
-      expect(findListingPosition).toHaveBeenCalledWith(client, "property-6");
+      expect(applyListingCursor).toHaveBeenCalledTimes(1);
+      expect(applyListingCursor).toHaveBeenCalledWith(client, chain, cursor);
     });
 
-    it("continues after the position the database holds, not the createdAt the client sent", async () => {
+    it("passes the first page's missing cursor on as it is, and leaves the decision to applyListingCursor", async () => {
+      await read(undefined);
+
+      expect(applyListingCursor).toHaveBeenCalledWith(client, chain, undefined);
+    });
+
+    it("passes no scope, so the lookup is not limited to anything beyond the id", async () => {
       await read(cursor);
 
-      expect(chain.andWhere).toHaveBeenCalledWith(expect.stringContaining(":cursorApprovedAt"), {
-        cursorApprovedAt: 5000,
-        cursorCreatedAt: 777,
-        cursorId: "property-6",
-      });
+      expect(applyListingCursor.mock.calls[0]).toHaveLength(3);
     });
 
-    it("rejects an unknown cursor id with a 400 and runs no page query", async () => {
-      findListingPosition.mockResolvedValue(null);
+    it("runs the page query on the query that applyListingCursor returns", async () => {
+      const continued = buildChain([{ id: "later", createdat: 5 }]);
+      applyListingCursor.mockResolvedValue(continued);
+
+      const result = await read(cursor);
+
+      expect(continued.getMany).toHaveBeenCalledTimes(1);
+      expect(chain.getMany).not.toHaveBeenCalled();
+      expect(result.identifiers).toEqual(["later"]);
+    });
+
+    it("runs no page query when applyListingCursor refuses the cursor, and lets the refusal through", async () => {
+      applyListingCursor.mockRejectedValue(Object.assign(new Error("Unknown pagination cursor."), { statusCode: 400 }));
 
       await expect(read(cursor)).rejects.toMatchObject({ statusCode: 400, message: "Unknown pagination cursor." });
       expect(chain.getMany).not.toHaveBeenCalled();

@@ -1,5 +1,6 @@
 import { Property } from "database/models/Property";
 import { Property_Moderation_Event } from "database/models/Property_Moderation_Event";
+import { TypeException } from "../../util/exception/TypeException.js";
 
 const APPROVAL_ALIAS = "approval";
 const APPROVED_ACTION_PARAMETER = "approvedAction";
@@ -72,3 +73,18 @@ export const afterListingPosition = (query, position) =>
       " AND property.id < :cursorId))",
     { cursorApprovedAt: position.approvedAt, cursorCreatedAt: position.createdAt, cursorId: position.id }
   );
+
+// The cursor step both guest feeds share. A request carries a cursor when it has a createdAt and an id: the controller
+// turns a missing or "null" value into NaN, so those mean page 1. Only the id steers the page. createdAt marks that a
+// cursor was sent, and the position is read back from the row, so a stale or forged value cannot skip or repeat
+// listings. A cursor row that is missing, or that the scope rules out, is a 400 and not a restart at page 1.
+export const applyListingCursor = async (client, query, cursor, scope) => {
+  if (!(cursor?.createdAt && cursor?.id)) {
+    return query;
+  }
+  const position = await findListingPosition(client, cursor.id, scope);
+  if (!position) {
+    throw new TypeException("Unknown pagination cursor.");
+  }
+  return afterListingPosition(query, position);
+};

@@ -5,6 +5,7 @@ import { Property_Moderation_Event } from "database/models/Property_Moderation_E
 import { Property_Location } from "database/models/Property_Location";
 import {
   afterListingPosition,
+  applyListingCursor,
   findListingPosition,
   joinLatestApproval,
   orderByListingPosition,
@@ -251,6 +252,88 @@ describe("keyset position", () => {
 
       expect(captured.sql).not.toContain("property_location");
       expect(captured.sql).not.toContain("INNER JOIN");
+    });
+  });
+
+  describe("applyListingCursor", () => {
+    const CURSOR = { createdAt: 999, id: "property-6" };
+    const POSITION_ROW = { property_id: "property-6", property_createdat: "777", approved_at: "5000" };
+    let lookups;
+
+    const newQuery = () => joinLatestApproval(dataSource.getRepository(Property).createQueryBuilder("property"));
+    const withLookupRow = (row) => {
+      lookups = [];
+      jest.spyOn(SelectQueryBuilder.prototype, "getRawOne").mockImplementation(function () {
+        lookups.push({ sql: this.getQuery(), parameters: this.getParameters() });
+        return Promise.resolve(row);
+      });
+    };
+
+    it.each([
+      ["no cursor at all", undefined],
+      ["a null cursor", null],
+      ["a controller cursor with NaN and no id", { createdAt: Number.NaN, id: undefined }],
+      ["a cursor with NaN createdAt", { createdAt: Number.NaN, id: "property-6" }],
+      ["a cursor with no id", { createdAt: 777, id: undefined }],
+      ["a cursor whose createdAt is zero", { createdAt: 0, id: "property-6" }],
+    ])("returns the query untouched, and looks nothing up, for %s", async (_name, cursor) => {
+      withLookupRow(POSITION_ROW);
+      const query = newQuery();
+
+      const result = await applyListingCursor(dataSource, query, cursor);
+
+      expect(result).toBe(query);
+      expect(lookups).toHaveLength(0);
+      expect(result.getQuery()).not.toContain("cursorApprovedAt");
+    });
+
+    it("looks the cursor row up by the id in the cursor", async () => {
+      withLookupRow(POSITION_ROW);
+
+      await applyListingCursor(dataSource, newQuery(), CURSOR);
+
+      expect(lookups).toHaveLength(1);
+      expect(lookups[0].parameters.id).toBe("property-6");
+    });
+
+    it("continues after the position the database holds, not the createdAt the client sent", async () => {
+      withLookupRow(POSITION_ROW);
+
+      const result = await applyListingCursor(dataSource, newQuery(), CURSOR);
+
+      expect(result.getQuery()).toContain(":cursorApprovedAt");
+      expect(result.getParameters()).toMatchObject({ cursorApprovedAt: 5000, cursorCreatedAt: 777, cursorId: "property-6" });
+      expect(result.getParameters().cursorCreatedAt).not.toBe(CURSOR.createdAt);
+    });
+
+    it("hands its scope to the lookup, and not to the page query", async () => {
+      withLookupRow(POSITION_ROW);
+      const scope = (lookup) => lookup.andWhere("property.title = :title", { title: "scoped" });
+
+      const result = await applyListingCursor(dataSource, newQuery(), CURSOR, scope);
+
+      expect(lookups[0].sql).toContain('"property"."title" = :title');
+      expect(lookups[0].parameters.title).toBe("scoped");
+      expect(result.getQuery()).not.toContain('"property"."title" = :title');
+    });
+
+    it("refuses a cursor id that matches no row with a 400", async () => {
+      withLookupRow(null);
+
+      await expect(applyListingCursor(dataSource, newQuery(), CURSOR)).rejects.toMatchObject({
+        statusCode: 400,
+        message: "Unknown pagination cursor.",
+      });
+    });
+
+    it("refuses a cursor row that the scope filters out in the same way", async () => {
+      withLookupRow(null);
+      const scope = (lookup) => lookup.andWhere("property.title = :title", { title: "scoped" });
+
+      await expect(applyListingCursor(dataSource, newQuery(), CURSOR, scope)).rejects.toMatchObject({
+        statusCode: 400,
+        message: "Unknown pagination cursor.",
+      });
     });
   });
 });

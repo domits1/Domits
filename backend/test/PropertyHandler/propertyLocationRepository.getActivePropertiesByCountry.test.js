@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { PropertyLocationRepository } from "../../functions/PropertyHandler/data/repository/propertyLocationRepository.js";
-import { findListingPosition } from "../../functions/PropertyHandler/data/repository/listingPosition.js";
+import { applyListingCursor } from "../../functions/PropertyHandler/data/repository/listingPosition.js";
 import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
 import Database from "../../ORM/index.js";
 
@@ -11,9 +11,12 @@ jest.mock("../../ORM/index.js", () => ({
   },
 }));
 
+// The cursor rules (what counts as a cursor, the id lookup, the 400) are tested on applyListingCursor itself, in
+// listingPosition.test.js. Here it is replaced, and this suite checks what this feed hands it: above all the country
+// scope, because a cursor from another country must not be accepted.
 jest.mock("../../functions/PropertyHandler/data/repository/listingPosition.js", () => ({
   ...jest.requireActual("../../functions/PropertyHandler/data/repository/listingPosition.js"),
-  findListingPosition: jest.fn(),
+  applyListingCursor: jest.fn(),
 }));
 
 const CHAINED_METHODS = [
@@ -27,16 +30,20 @@ const CHAINED_METHODS = [
   "addOrderBy",
   "limit",
 ];
-const CURSOR_POSITION = { approvedAt: 5000, createdAt: 777, id: "property-6" };
 
 describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
   let repository;
   let chain;
   let client;
 
+  const buildChain = (rows) => {
+    const builder = Object.fromEntries(CHAINED_METHODS.map((method) => [method, jest.fn().mockReturnThis()]));
+    builder.getMany = jest.fn().mockResolvedValue(rows);
+    return builder;
+  };
+
   const read = async (cursor, rows = [{ id: "p1", createdat: 10 }], country = "Netherlands") => {
-    chain = Object.fromEntries(CHAINED_METHODS.map((method) => [method, jest.fn().mockReturnThis()]));
-    chain.getMany = jest.fn().mockResolvedValue(rows);
+    chain = buildChain(rows);
     client = { getRepository: jest.fn(() => ({ createQueryBuilder: jest.fn(() => chain) })) };
     Database.getInstance.mockResolvedValue(client);
     return await repository.getActivePropertiesByCountry(country, cursor);
@@ -44,11 +51,11 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    findListingPosition.mockResolvedValue(CURSOR_POSITION);
+    applyListingCursor.mockImplementation(async (_client, query) => query);
     repository = new PropertyLocationRepository({});
   });
 
-  describe("first page", () => {
+  describe("the query", () => {
     it("reads only the properties of the requested country, bound as a parameter", async () => {
       await read(undefined, undefined, "Germany");
 
@@ -85,40 +92,47 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
         ["property.id", "DESC"],
       ]);
     });
-
-    it("does not look up a cursor or filter by position", async () => {
-      await read(undefined);
-
-      expect(findListingPosition).not.toHaveBeenCalled();
-      expect(chain.andWhere).not.toHaveBeenCalledWith(expect.stringContaining(":cursorApprovedAt"), expect.anything());
-    });
-
-    it.each([
-      ["a controller cursor with NaN and no id", { createdAt: Number.NaN, id: undefined }],
-      ["a cursor with NaN createdAt", { createdAt: Number.NaN, id: "property-6" }],
-      ["a cursor with no id", { createdAt: 777, id: undefined }],
-      ["a cursor whose createdAt is zero", { createdAt: 0, id: "property-6" }],
-    ])("treats %s as no cursor", async (_name, cursor) => {
-      await read(cursor);
-
-      expect(findListingPosition).not.toHaveBeenCalled();
-    });
   });
 
-  describe("later pages", () => {
+  describe("the cursor", () => {
     const cursor = { createdAt: 999, id: "property-6" };
 
-    it("looks the cursor row up by id", async () => {
+    it("hands the client, the query, the cursor and a scope to applyListingCursor", async () => {
       await read(cursor);
 
-      expect(findListingPosition).toHaveBeenCalledWith(client, "property-6", expect.any(Function));
+      expect(applyListingCursor).toHaveBeenCalledTimes(1);
+      expect(applyListingCursor).toHaveBeenCalledWith(client, chain, cursor, expect.any(Function));
+    });
+
+    it("keeps the country filter on a later page", async () => {
+      await read(cursor, undefined, "Germany");
+
+      expect(chain.where).toHaveBeenCalledWith("pl.country = :country", { country: "Germany" });
+    });
+
+    it("runs the page query on the query that applyListingCursor returns", async () => {
+      const continued = buildChain([{ id: "later", createdat: 5 }]);
+      applyListingCursor.mockResolvedValue(continued);
+
+      const result = await read(cursor);
+
+      expect(continued.getMany).toHaveBeenCalledTimes(1);
+      expect(chain.getMany).not.toHaveBeenCalled();
+      expect(result.identifiers).toEqual(["later"]);
+    });
+
+    it("runs no page query when applyListingCursor refuses the cursor, and lets the refusal through", async () => {
+      applyListingCursor.mockRejectedValue(Object.assign(new Error("Unknown pagination cursor."), { statusCode: 400 }));
+
+      await expect(read(cursor)).rejects.toMatchObject({ statusCode: 400, message: "Unknown pagination cursor." });
+      expect(chain.getMany).not.toHaveBeenCalled();
     });
 
     // A cursor taken from another country would otherwise be accepted and return a silently wrong page.
     describe("the country scope on the cursor lookup", () => {
       const lookupScopeFor = async (country) => {
         await read(cursor, undefined, country);
-        return findListingPosition.mock.calls[0][2];
+        return applyListingCursor.mock.calls[0][3];
       };
       const fakeLookup = () => {
         const lookup = { innerJoin: jest.fn(), andWhere: jest.fn() };
@@ -144,40 +158,6 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
 
         expect(lookup.andWhere).toHaveBeenCalledWith("pl.country = :country", { country: "France" });
       });
-
-      it("refuses a cursor row outside the country, the same way as an unknown id", async () => {
-        // findListingPosition returns null for a row the scope filters out, exactly as for a row that does not exist.
-        findListingPosition.mockResolvedValue(null);
-
-        await expect(read(cursor, undefined, "Germany")).rejects.toMatchObject({
-          statusCode: 400,
-          message: "Unknown pagination cursor.",
-        });
-        expect(chain.getMany).not.toHaveBeenCalled();
-      });
-    });
-
-    it("continues after the position the database holds, not the createdAt the client sent", async () => {
-      await read(cursor);
-
-      expect(chain.andWhere).toHaveBeenCalledWith(expect.stringContaining(":cursorApprovedAt"), {
-        cursorApprovedAt: 5000,
-        cursorCreatedAt: 777,
-        cursorId: "property-6",
-      });
-    });
-
-    it("keeps the country filter on a later page", async () => {
-      await read(cursor, undefined, "Germany");
-
-      expect(chain.where).toHaveBeenCalledWith("pl.country = :country", { country: "Germany" });
-    });
-
-    it("rejects an unknown cursor id with a 400 and runs no page query", async () => {
-      findListingPosition.mockResolvedValue(null);
-
-      await expect(read(cursor)).rejects.toMatchObject({ statusCode: 400, message: "Unknown pagination cursor." });
-      expect(chain.getMany).not.toHaveBeenCalled();
     });
   });
 

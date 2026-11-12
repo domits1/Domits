@@ -1,10 +1,8 @@
 import { LocationMapping } from "../../util/mapping/location.js";
 import { PaginatedPropertyMapping } from "../../util/mapping/paginatedProperty.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
-import { TypeException } from "../../util/exception/TypeException.js";
 import {
-    afterListingPosition,
-    findListingPosition,
+    applyListingCursor,
     joinLatestApproval,
     orderByListingPosition,
 } from "./listingPosition.js";
@@ -101,20 +99,12 @@ export class PropertyLocationRepository {
             .andWhere("property.status = :status", { status: "ACTIVE" });
         query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
-        if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            // Only the id steers the page. createdAt marks that a cursor was sent, and the position is read back
-            // from the row, so a stale or forged value cannot skip or repeat listings.
-            // The lookup is limited to this country: a cursor from another country is a 400, not a skipped page.
-            const inThisCountry = (lookup) =>
-                lookup
-                    .innerJoin("property_location", "pl", "pl.property_id = property.id")
-                    .andWhere("pl.country = :country", { country: country });
-            const position = await findListingPosition(client, lastEvaluatedKey.id, inThisCountry);
-            if (!position) {
-                throw new TypeException("Unknown pagination cursor.");
-            }
-            query = afterListingPosition(query, position);
-        }
+        // The cursor lookup is limited to this country: a cursor from another country is a 400, not a skipped page.
+        const inThisCountry = (lookup) =>
+            lookup
+                .innerJoin("property_location", "pl", "pl.property_id = property.id")
+                .andWhere("pl.country = :country", { country: country });
+        query = await applyListingCursor(client, query, lastEvaluatedKey, inThisCountry);
 
         const result = await query.getMany();
 
