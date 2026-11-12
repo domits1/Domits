@@ -2,7 +2,7 @@ import { CommunicationPreferencesRepository } from "../../data/repository.js";
 import { HostNotificationPreferencesRepository } from "../../data/hostNotificationPreferencesRepository.js";
 import { DEFAULT_HOST_NOTIFICATION_CHANNEL_PREFERENCES, DEFAULT_HOST_NOTIFICATION_PREFERENCES, HOST_NOTIFICATION_EVENT_KEYS, isRequiredHostNotificationEmail } from "../hostNotificationMatrixConfig.js";
 import { badRequest } from "../../util/httpErrors.js";
-import { withDsqlRetry } from "../../../.shared/dsqlRetry.js";
+import { withDsqlRetry } from "../../util/dsqlRetry.js";
 
 export const DEFAULT_COMMUNICATION_PREFERENCES = Object.freeze({
   reservation: Object.freeze({ email: true, sms: false, push: true }),
