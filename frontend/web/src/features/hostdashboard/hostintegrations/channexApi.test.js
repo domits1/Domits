@@ -1,4 +1,4 @@
-import { connectChannex, getChannexStatus } from "./channexApi";
+import { connectChannex, getChannexHealth, getChannexStatus } from "./channexApi";
 import { getIdToken } from "../../../services/getAccessToken";
 
 jest.mock("../../../services/getAccessToken", () => ({
@@ -9,6 +9,7 @@ jest.mock("../../../services/getAccessToken", () => ({
 const CONNECT_URL = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/connect";
 const STATUS_URL =
   "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/status?userId=user-1";
+const HEALTH_URL = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/health";
 
 const mockResponse = ({ ok = true, status = 200, body = {} } = {}) => ({
   ok,
@@ -100,5 +101,18 @@ describe("Channex GET requests", () => {
       method: "GET",
       headers: { Authorization: "Bearer id-token-1" },
     });
+  });
+
+  // No userId in the query: the backend takes the admin from the token's claims (#2869).
+  test("getChannexHealth reads the health view without a userId and returns the parsed body", async () => {
+    globalThis.fetch.mockResolvedValueOnce(mockResponse({ body: { status: "HEALTHY", reasons: [] } }));
+
+    const result = await getChannexHealth();
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(HEALTH_URL, {
+      method: "GET",
+      headers: { Authorization: "Bearer id-token-1" },
+    });
+    expect(result).toEqual({ status: "HEALTHY", reasons: [] });
   });
 });

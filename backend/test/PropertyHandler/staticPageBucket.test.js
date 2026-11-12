@@ -19,6 +19,7 @@ const FALLBACK = "cliff-house-site-1.direct.domits.com";
 const CUSTOM = "www.cliffhouse.nl";
 const OTHER = "other-site-2.direct.domits.com";
 const GONE = "gone-site-9.direct.domits.com";
+const HALF = "half-site-8.direct.domits.com";
 const pageKey = (hostname) => `sites/by-host/${hostname}/index.html`;
 const sitemapKey = (hostname) => `sites/by-host/${hostname}/sitemap.xml`;
 const withdrawnPaths = (hostname) => [
@@ -87,7 +88,7 @@ const domainEntry = (domain, site, overrides = {}) => ({
   ...overrides,
 });
 
-const buildReconciler = (bucket, entries) => {
+const buildReconciler = (bucket, entries, lookup = entries) => {
   const siteRepository = { queueStaticPage: jest.fn(async () => true) };
   const reconciler = new StaticPageReconciler({
     pageStore: bucket.pageStore,
@@ -95,7 +96,7 @@ const buildReconciler = (bucket, entries) => {
     siteRepository,
     domainRepository: {
       listDomainsWithSites: async () => entries,
-      getDomainWithSiteByName: async (domain) => entries.find((entry) => entry.domain === domain) || null,
+      getDomainWithSiteByName: async (domain) => lookup.find((entry) => entry.domain === domain) || null,
     },
     outboxRepository: { listPagesBySiteIds: async () => [] },
   });
@@ -141,10 +142,93 @@ describe("the static page jobs on one bucket", () => {
       hostnames: [FALLBACK, CUSTOM],
       invalidationErrors: [],
       redirectErrors: [],
+      sitePageErrors: [],
     });
     expect(invalidations(tenantRepository)).toEqual([
       ["dt_wildcard", withdrawnPaths(FALLBACK)],
       ["dt_custom", withdrawnPaths(CUSTOM)],
+    ]);
+  });
+
+  it("withdraws the site pages of a host before its sitemap, and invalidates their paths with the page", async () => {
+    const { client, tenantRepository, withdrawal } = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(FALLBACK),
+      ...sitePagesOf(FALLBACK, ["gallery", "contact-us"]),
+      ...pageOf(CUSTOM),
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+    });
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }, { domain: CUSTOM }] });
+
+    expect(client.writes()).toEqual([
+      `delete ${pageKey(FALLBACK)}`,
+      `delete ${buildStaticSitePageKey(FALLBACK, "contact-us")}`,
+      `delete ${buildStaticSitePageKey(FALLBACK, "gallery")}`,
+      `put ${sitemapKey(FALLBACK)}`,
+      `delete ${pageKey(CUSTOM)}`,
+      `put ${sitemapKey(CUSTOM)}`,
+    ]);
+    expect(client.objects()).toEqual({
+      "index.html": SHELL,
+      [sitemapKey(FALLBACK)]: EMPTY_SITEMAP,
+      [sitemapKey(CUSTOM)]: EMPTY_SITEMAP,
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+    });
+    expect(invalidations(tenantRepository)).toEqual([
+      [
+        "dt_wildcard",
+        [
+          ...withdrawnPaths(FALLBACK),
+          `/${buildStaticSitePageKey(FALLBACK, "contact-us")}`,
+          "/contact-us",
+          `/${buildStaticSitePageKey(FALLBACK, "gallery")}`,
+          "/gallery",
+        ],
+      ],
+      ["dt_custom", withdrawnPaths(CUSTOM)],
+    ]);
+  });
+
+  it("still takes a host offline as today when its site pages cannot be listed, reports it, and the hourly check removes them", async () => {
+    const bucket = buildBucket({ "index.html": SHELL, ...pageOf(FALLBACK), ...sitePagesOf(FALLBACK, ["gallery"]) });
+    bucket.client.failNext("ListObjectsV2Command", `sites/by-host/${FALLBACK}/pages/`, new Error("AccessDenied"));
+
+    const result = await bucket.withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
+
+    expect(result.sitePageErrors).toEqual([
+      { siteId: "site-1", hostname: FALLBACK, message: "SITE_PAGES_UNLISTED: AccessDenied" },
+    ]);
+    expect(bucket.client.writes()).toEqual([`delete ${pageKey(FALLBACK)}`, `put ${sitemapKey(FALLBACK)}`]);
+    expect(invalidations(bucket.tenantRepository)).toEqual([["dt_wildcard", withdrawnPaths(FALLBACK)]]);
+
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })]);
+    expect(await reconciler.run({ now: 1_790_000_000_000 })).toMatchObject({ removed: 1, errors: [] });
+    expect(bucket.client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
+  });
+
+  it("stops at a site page that cannot be deleted, invalidates nothing, and the retry removes what is left", async () => {
+    const gallery = buildStaticSitePageKey(FALLBACK, "gallery");
+    const { client, tenantRepository, withdrawal } = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(FALLBACK),
+      ...sitePagesOf(FALLBACK, ["gallery", "contact-us"]),
+    });
+    client.failNext("DeleteObjectCommand", gallery, new Error("SlowDown"));
+
+    await expect(withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] })).rejects.toThrow(
+      "SlowDown"
+    );
+    expect(Object.keys(client.objects())).toEqual(["index.html", sitemapKey(FALLBACK), gallery]);
+    expect(tenantRepository.createInvalidation).not.toHaveBeenCalled();
+
+    await withdrawal.withdraw({ siteId: "site-1", domains: [{ domain: FALLBACK }] });
+
+    expect(client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(FALLBACK)]: EMPTY_SITEMAP });
+    expect(invalidations(tenantRepository)).toEqual([
+      ["dt_wildcard", [...withdrawnPaths(FALLBACK), `/${gallery}`, "/gallery"]],
     ]);
   });
 
@@ -257,6 +341,145 @@ describe("the static page jobs on one bucket", () => {
     expect(bucket.client.writes()).toEqual([]);
     expect(bucket.client.objects()).toEqual(before);
     expect(siteRepository.queueStaticPage).not.toHaveBeenCalled();
+  });
+
+  it("removes the site pages of every host no published site serves, also of a host with only site pages left", async () => {
+    const bucket = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+      ...pageOf(GONE),
+      ...sitePagesOf(GONE, ["gallery"]),
+      [sitemapKey(HALF)]: EMPTY_SITEMAP,
+      ...sitePagesOf(HALF, ["accommodation"]),
+    });
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })]);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toEqual({ stored: 2, expected: 1, removed: 2, queued: 0, stuck: [], errors: [] });
+    expect(bucket.client.writes()).toEqual([
+      `delete ${pageKey(GONE)}`,
+      `delete ${buildStaticSitePageKey(GONE, "gallery")}`,
+      `put ${sitemapKey(GONE)}`,
+      `delete ${pageKey(HALF)}`,
+      `delete ${buildStaticSitePageKey(HALF, "accommodation")}`,
+      `put ${sitemapKey(HALF)}`,
+    ]);
+    expect(
+      bucket.client.calls.filter((call) => call.name === "DeleteObjectCommand").map((call) => Boolean(call.ifMatch))
+    ).toEqual([true, true, false, true]);
+    expect(bucket.client.objects()).toEqual({
+      "index.html": SHELL,
+      ...pageOf(OTHER),
+      ...sitePagesOf(OTHER, STATIC_SITE_PAGE_SLUGS),
+      [sitemapKey(GONE)]: EMPTY_SITEMAP,
+      [sitemapKey(HALF)]: EMPTY_SITEMAP,
+    });
+    expect(invalidations(bucket.tenantRepository)).toEqual([
+      [
+        "dt_wildcard",
+        [
+          ...new Set([
+            ...withdrawnPaths(GONE),
+            `/${buildStaticSitePageKey(GONE, "gallery")}`,
+            "/gallery",
+            ...withdrawnPaths(HALF),
+            `/${buildStaticSitePageKey(HALF, "accommodation")}`,
+            "/accommodation",
+          ]),
+        ],
+      ],
+    ]);
+  });
+
+  it("keeps a site page that a build rewrote between the listing and its delete, and leaves it out of the invalidation", async () => {
+    const gallery = buildStaticSitePageKey(GONE, "gallery");
+    const bucket = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(OTHER),
+      ...pageOf(GONE),
+      [gallery]: "<html>old</html>",
+    });
+    bucket.client.beforeNext("DeleteObjectCommand", gallery, () => bucket.client.put(gallery, "<html>rebuilt</html>"));
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })]);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toMatchObject({ removed: 1, errors: [] });
+    expect(bucket.client.objects()[gallery]).toBe("<html>rebuilt</html>");
+    expect(invalidations(bucket.tenantRepository)).toEqual([["dt_wildcard", withdrawnPaths(GONE)]]);
+  });
+
+  it("reports a site page it cannot delete, invalidates what it did delete, and finishes that host on the next run", async () => {
+    const gallery = buildStaticSitePageKey(GONE, "gallery");
+    const contact = buildStaticSitePageKey(GONE, "contact-us");
+    const bucket = buildBucket({
+      "index.html": SHELL,
+      ...pageOf(GONE),
+      ...sitePagesOf(GONE, ["gallery", "contact-us"]),
+    });
+    bucket.client.failNext("DeleteObjectCommand", gallery, new Error("SlowDown"));
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })]);
+
+    const first = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(first).toMatchObject({ removed: 0, errors: [{ hostname: GONE, message: "SlowDown" }] });
+    expect(invalidations(bucket.tenantRepository)).toEqual([
+      ["dt_wildcard", [...withdrawnPaths(GONE), `/${contact}`, "/contact-us"]],
+    ]);
+
+    const second = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(second).toMatchObject({ stored: 0, removed: 1, errors: [] });
+    expect(bucket.client.objects()).toEqual({ "index.html": SHELL, [sitemapKey(GONE)]: EMPTY_SITEMAP });
+  });
+
+  it.each([
+    ["a build rewrote its main page", true, []],
+    ["it was published again", false, [domainEntry(GONE, { id: "site-9", status: "PUBLISHED" })]],
+  ])("keeps every site page of a host when %s between the listing and the delete", async (_label, rewrite, lookup) => {
+    const before = { "index.html": SHELL, ...pageOf(GONE), ...sitePagesOf(GONE, ["gallery"]) };
+    const bucket = buildBucket(before);
+    if (rewrite) {
+      bucket.client.beforeNext("DeleteObjectCommand", pageKey(GONE), () => bucket.client.put(pageKey(GONE), "new"));
+    }
+    const { reconciler } = buildReconciler(bucket, [domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" })], lookup);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toMatchObject({ removed: 0, errors: [] });
+    expect(bucket.client.writes()).toEqual(rewrite ? [`delete ${pageKey(GONE)}`] : []);
+    expect(bucket.client.objects()[buildStaticSitePageKey(GONE, "gallery")]).toBe(
+      before[buildStaticSitePageKey(GONE, "gallery")]
+    );
+  });
+
+  it("queues a published site whose host has site pages but no main page, and leaves those pages alone", async () => {
+    const before = { "index.html": SHELL, ...sitePagesOf(OTHER, ["gallery"]) };
+    const bucket = buildBucket(before);
+    const { reconciler, siteRepository } = buildReconciler(bucket, [
+      domainEntry(OTHER, { id: "site-2", status: "PUBLISHED" }),
+    ]);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary).toEqual({ stored: 0, expected: 1, removed: 0, queued: 1, stuck: [], errors: [] });
+    expect(siteRepository.queueStaticPage).toHaveBeenCalledWith("site-2", { evenWhileBusy: false });
+    expect(bucket.client.objects()).toEqual(before);
+  });
+
+  it("removes nothing when the database lists no website domain while only site pages are stored", async () => {
+    const before = { "index.html": SHELL, ...sitePagesOf(HALF, ["gallery"]) };
+    const bucket = buildBucket(before);
+    const { reconciler } = buildReconciler(bucket, []);
+
+    const summary = await reconciler.run({ now: 1_790_000_000_000 });
+
+    expect(summary.errors).toEqual([
+      { message: "The database lists no website domain while 1 pages are stored; nothing was removed." },
+    ]);
+    expect(bucket.client.objects()).toEqual(before);
   });
 
   it("keeps a page that a build rewrote between the listing and the delete", async () => {
