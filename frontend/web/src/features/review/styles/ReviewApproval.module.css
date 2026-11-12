@@ -666,3 +666,35 @@
     position: static;
   }
 }
+
+@media (max-width: 767px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .navigation {
+    padding: 12px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #eef1f2;
+  }
+
+  .navigation h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+
+  .navigation ul {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .navigation a {
+    gap: 8px;
+    min-height: 42px;
+    padding-inline: 12px;
+  }
+
+  .search {
+    flex-basis: 0;
+  }
+}
