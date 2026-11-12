@@ -14,7 +14,14 @@ const mockFetchMessages = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
-jest.mock("./MessageToast", () => ({ message }) => <div data-testid="message-toast">{message}</div>);
+jest.mock("./MessageToast", () => ({ message, onClose }) => (
+  <div data-testid="message-toast">
+    {message}
+    <button type="button" onClick={onClose}>
+      Close toast
+    </button>
+  </div>
+));
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
   useAuth: () => ({ accessToken: "access-token-1" }),
@@ -424,6 +431,17 @@ describe("ChatScreen reservation messaging", () => {
       expect(attach.compareDocumentPosition(screen.getByPlaceholderText("Type a message"))).toBe(
         Node.DOCUMENT_POSITION_FOLLOWING
       );
+    });
+
+    test("removes the failure toast when it asks to close and shows it again on the next failure", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close toast" }));
+      expect(screen.queryByTestId("message-toast")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      expect(screen.getByTestId("message-toast")).toBeInTheDocument();
     });
 
     test("tells the host when an upload fails", () => {
