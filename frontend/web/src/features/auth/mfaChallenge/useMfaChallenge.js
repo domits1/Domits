@@ -52,7 +52,7 @@ export function useMfaChallenge({ onSuccess, onSessionExpired }) {
     setErrorMessage("");
     try {
       await Auth.confirmSignIn(pendingUser, code, SOFTWARE_TOKEN_MFA);
-      await onSuccess();
+      onSuccess();
     } catch (error) {
       handleVerifyError(error);
       stopVerifying();

@@ -3,13 +3,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import Login from "../features/auth/Login";
-import { hasReviewApprovalAccess } from "../features/review/services/reviewAPI";
-
-const mockNavigate = jest.fn();
-
-jest.mock("../features/review/services/reviewAPI", () => ({
-  hasReviewApprovalAccess: jest.fn(),
-}));
 
 jest.mock("aws-amplify", () => ({
   Auth: {
@@ -23,7 +16,7 @@ jest.mock("aws-amplify", () => ({
 
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
-  useNavigate: () => mockNavigate,
+  useNavigate: () => jest.fn(),
 }));
 
 const EMAIL = "host@example.com";
@@ -72,7 +65,6 @@ const expectPasswordFormWithEmailKept = async () => {
 
 describe("Login MFA challenge", () => {
   beforeEach(() => {
-    hasReviewApprovalAccess.mockResolvedValue(false);
     Auth.currentAuthenticatedUser.mockRejectedValue(new Error("not signed in"));
     locationStub = { href: "http://localhost/login", reload: jest.fn() };
     Object.defineProperty(globalThis, "location", { configurable: true, value: locationStub });
@@ -84,27 +76,6 @@ describe("Login MFA challenge", () => {
     globalThis.removeEventListener("authChanged", authChangedListener);
     Object.defineProperty(globalThis, "location", { configurable: true, value: originalLocation });
     jest.clearAllMocks();
-  });
-
-  it("sends an authorized review approver to the admin dashboard even with a guest group", async () => {
-    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { "custom:group": "Traveler" } });
-    hasReviewApprovalAccess.mockResolvedValue(true);
-
-    renderLogin();
-
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(
-      "/hostdashboard/admin/review-approval", { replace: true },
-    ));
-  });
-
-  it("sends an authorized review approver to the admin dashboard instead of a login redirect", async () => {
-    Auth.signIn.mockResolvedValue({ username: "user-123" });
-    hasReviewApprovalAccess.mockResolvedValue(true);
-    renderLogin("/login?redirect=%2Fguestdashboard");
-
-    submitPassword();
-
-    await waitFor(() => expect(locationStub.href).toBe("/hostdashboard/admin/review-approval"));
   });
 
   it("completes a login without a challenge by dispatching authChanged and reloading", async () => {

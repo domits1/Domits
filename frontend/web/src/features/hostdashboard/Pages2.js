@@ -18,7 +18,6 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HubIcon from "@mui/icons-material/Hub";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
-import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
@@ -29,7 +28,6 @@ import {
   PROPERTY_REVIEW_ADMIN_ROUTE,
   checkPropertyReviewAccess,
 } from "./propertyreview/propertyReviewAccess";
-import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
 
@@ -66,14 +64,6 @@ const NAV = [
     label: "Property review",
     icon: <FactCheckOutlinedIcon />,
     to: PROPERTY_REVIEW_ADMIN_ROUTE,
-    internalOnly: "propertyReview",
-  },
-  // Shown to internal admins; the page itself enforces the ReviewSystem approver role.
-  {
-    key: "ReviewApproval",
-    label: "Review approval",
-    icon: <RateReviewOutlinedIcon />,
-    to: REVIEW_APPROVAL_ADMIN_ROUTE,
     internalOnly: "propertyReview",
   },
   {
