@@ -358,6 +358,63 @@ describe("ChatScreen reservation messaging", () => {
     });
   });
 
+  describe("sender roles", () => {
+    const sentOptions = (callIndex = 0) => mockSendMessage.mock.calls[callIndex][3];
+
+    test.each([
+      ["a host-dashboard user who is the guest of the thread", "host", "guest-1", "host-1"],
+      ["a host-dashboard user who is the host of the thread", "host", "host-1", "guest-1"],
+      ["a guest-dashboard user", "guest", "guest-1", "host-1"],
+    ])("leaves the roles to the thread for %s", async (_label, dashboardType, userId, contactId) => {
+      renderChatScreen({
+        dashboardType,
+        userId,
+        contactId,
+        threadId: "thread-1",
+        capabilities: getMessageCapabilities(dashboardType),
+      });
+
+      typeAndSend("Hello");
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(sentOptions()).toEqual(expect.objectContaining({ threadId: "thread-1", hostId: null, guestId: null }));
+    });
+
+    test("sends the roles from the dashboard for a new chat without a thread", async () => {
+      renderChatScreen({
+        dashboardType: "host",
+        userId: "host-1",
+        contactId: "guest-1",
+        capabilities: getMessageCapabilities("host"),
+      });
+
+      typeAndSend("Hello");
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(sentOptions()).toEqual(expect.objectContaining({ hostId: "host-1", guestId: "guest-1" }));
+    });
+
+    test("resends an unsaved message in a thread with the roles left to the thread", async () => {
+      mockSendMessage
+        .mockResolvedValueOnce({ success: false, error: "network error" })
+        .mockResolvedValueOnce({ success: true, saved: { id: "message-2", threadId: "thread-1" } });
+      renderChatScreen({
+        dashboardType: "host",
+        userId: "guest-1",
+        contactId: "host-1",
+        threadId: "thread-1",
+        capabilities: getMessageCapabilities("host"),
+      });
+      typeAndSend("Hello");
+      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(2));
+      expect(sentOptions(1)).toEqual(expect.objectContaining({ hostId: null, guestId: null }));
+    });
+  });
+
   describe("attach button per channel", () => {
     const hostChat = ({ platform = "DOMITS", contactId = "guest-1", threadId = "thread-1" } = {}) => (
       <ChatScreen

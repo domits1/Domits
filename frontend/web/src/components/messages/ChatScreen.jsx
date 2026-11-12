@@ -177,8 +177,11 @@ const ChatScreen = ({
     const effectivePropertyId = propertyId ?? null;
 
     const isGuest = dashboardType === "guest";
-    const hostId = isGuest ? resolvedContactId : userId;
-    const guestId = isGuest ? userId : resolvedContactId;
+    const rolesComeFromThread = Boolean(threadId);
+    const dashboardHostId = isGuest ? resolvedContactId : userId;
+    const dashboardGuestId = isGuest ? userId : resolvedContactId;
+    const hostId = rolesComeFromThread ? null : dashboardHostId;
+    const guestId = rolesComeFromThread ? null : dashboardGuestId;
 
     const nowIso = new Date().toISOString();
 
