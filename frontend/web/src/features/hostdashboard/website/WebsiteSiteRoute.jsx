@@ -53,7 +53,7 @@ export default function WebsiteSiteRoute() {
     }
 
     pendingSiteKeysRef.current.add(siteKey);
-    readServedSitePages({ siteId, domain }).then((sitePages) => {
+    void readServedSitePages({ siteId, domain }).then((sitePages) => {
       pendingSiteKeysRef.current.delete(siteKey);
       if (isMountedRef.current) {
         rememberSitePages(siteKey, sitePages, true);
