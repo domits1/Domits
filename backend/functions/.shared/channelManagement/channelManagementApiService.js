@@ -19,9 +19,11 @@ import ChannexAriOutboxRepository from "./repositories/channexAriOutboxRepositor
 import ChannexBookingRevisionRepository from "./repositories/channexBookingRevisionRepository.js";
 import ChannelManagementSchemaRepository from "./repositories/channelManagementSchemaRepository.js";
 import ChannexExternalBookingImportRepository from "./repositories/channexExternalBookingImportRepository.js";
+import ChannexHealthRepository from "./repositories/channexHealthRepository.js";
 import ChannexSyncEvidenceRepository from "./repositories/channexSyncEvidenceRepository.js";
 import ChannexAriExecutionService from "./services/channexAriExecutionService.js";
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
+import ChannexHealthService from "./services/channexHealthService.js";
 import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
 import { CHANNEL_CHANNEX, isActiveChannexPropertyMapping } from "./utils/channexBookingPollUtils.js";
 import ChannexAriSchemaGuard from "./services/channexAriSchemaGuard.js";
@@ -223,6 +225,13 @@ export default class ChannelManagementApiService {
       schemaGuard: new ChannexAriSchemaGuard(new ChannelManagementSchemaRepository()),
       syncCalendarChange: (...args) => this.syncChannexCalendarChange(...args),
     });
+    this.channexHealthService = new ChannexHealthService({
+      healthRepository: new ChannexHealthRepository({ integrationAccounts: accounts }),
+    });
+  }
+
+  async getChannexHealth() {
+    return this.channexHealthService.getHealth();
   }
 
   async verifyChannexBookingWebhookSecret(headers) {
