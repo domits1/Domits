@@ -29,6 +29,9 @@ const contentByLanguage = { en, nl, de, es };
 const STEP_KEYS = [
   "company",
   "team",
+  "security",
+  "owners",
+  "messaging",
   "listProperties",
   "website",
   "channels",
@@ -45,6 +48,9 @@ const REQUIRED_STEP_KEYS = new Set(["company", "team", "listProperties", "websit
 const STEP_LINKS = {
   company: "/hostdashboard/settings/company",
   team: "/hostdashboard/settings/team",
+  security: "/hostdashboard/settings/privacy-security",
+  owners: "/hostdashboard/owners",
+  messaging: "/hostdashboard/messages",
   listProperties: "/hostdashboard/listings",
   website: "/hostdashboard/website",
   channels: "/hostdashboard/calendar-pricing",

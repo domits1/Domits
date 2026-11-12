@@ -1337,6 +1337,18 @@
             "title": "Team Members",
             "desc": "Invite your team and assign roles across your portfolio."
           },
+          "security": {
+            "title": "Configure Security & Authentication",
+            "desc": "Protect your account with two-step verification."
+          },
+          "owners": {
+            "title": "Configure Owner Management",
+            "desc": "Add property owners and manage their ownership shares."
+          },
+          "messaging": {
+            "title": "Configure Messaging",
+            "desc": "Set up automated messages for your guests."
+          },
           "listProperties": {
             "title": "List Your Properties",
             "desc": "Manage and add listings across your portfolio."

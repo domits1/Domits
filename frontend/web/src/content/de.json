@@ -1338,6 +1338,18 @@
             "title": "Teammitglieder",
             "desc": "Lade dein Team ein und weise Rollen für dein Portfolio zu."
           },
+          "security": {
+            "title": "Sicherheit & Authentifizierung einrichten",
+            "desc": "Schütze dein Konto mit Zwei-Faktor-Authentifizierung."
+          },
+          "owners": {
+            "title": "Eigentümerverwaltung einrichten",
+            "desc": "Füge Eigentümer hinzu und verwalte ihre Eigentumsanteile."
+          },
+          "messaging": {
+            "title": "Nachrichten einrichten",
+            "desc": "Richte automatische Nachrichten für deine Gäste ein."
+          },
           "listProperties": {
             "title": "Unterkünfte eintragen",
             "desc": "Verwalte und füge Unterkünfte in deinem Portfolio hinzu."
