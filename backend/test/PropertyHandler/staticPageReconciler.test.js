@@ -29,7 +29,9 @@ const row = (siteId, status, attemptCount = 0, updatedAt = NOW) => ({
 
 const buildReconciler = ({ stored = [], rejected = [], entries = [], rows = [], now = null, redirects } = {}) => {
   const deps = {
-    pageStore: { listPageHostnames: jest.fn(async () => ({ hostnames: stored, etags: { x: '"e"' }, rejected })) },
+    pageStore: {
+      listPageHostnames: jest.fn(async () => ({ hostnames: stored, etags: { x: '"e"' }, sitePages: {}, rejected })),
+    },
     siteRepository: { queueStaticPage: jest.fn(async () => true) },
     domainRepository: {
       listDomainsWithSites: jest.fn(async () => entries),
