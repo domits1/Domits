@@ -392,6 +392,34 @@ describe("ChatScreen reservation messaging", () => {
       expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
     });
 
+    test("does not offer attachments when the capability is missing", () => {
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={{ ...getMessageCapabilities("host"), canUseAttachments: false }}
+        />
+      );
+
+      expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
+    });
+
+    test("places the attach button in the message row, left of the text field", () => {
+      renderHostChat("DOMITS");
+
+      const row = screen.getByPlaceholderText("Type a message").closest(".message-input-wrapper");
+      const attach = within(row).getByRole("button", { name: "Attach" });
+
+      expect(attach.compareDocumentPosition(screen.getByPlaceholderText("Type a message"))).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    });
+
     test("still offers attachments on a Domits thread", () => {
       renderHostChat("DOMITS");
 

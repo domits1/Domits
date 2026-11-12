@@ -410,10 +410,6 @@ const ChatScreen = ({
 
         <div className="chat-input">
           <div className="attachment-area">
-            {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-              <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-            ) : null}
-
             {uploadedFileUrls.length > 0 && (
               <button
                 className="inline-upload-preview"
@@ -429,6 +425,9 @@ const ChatScreen = ({
 
           <div className="message-input-container">
             <div className="message-input-wrapper">
+              {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
+                <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+              ) : null}
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}

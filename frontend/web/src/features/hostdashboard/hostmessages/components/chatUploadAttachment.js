@@ -1,12 +1,15 @@
-import React, { useState} from "react";
+import React, { useRef, useState} from "react";
+import Icon from "@mdi/react";
+import { mdiPaperclip } from "@mdi/js";
 import { useUploadUrl } from "../hooks/useUploadURL";
 
 const ChatUploadAttachment = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
+    const fileInputRef = useRef(null);
     const { getUploadUrl } = useUploadUrl();
 
     const handleAddAttachment = async () => {
-        document.getElementById('fileInput').click();
+        fileInputRef.current?.click();
     };
 
     const handleDragOver = (e) => {
@@ -69,17 +72,20 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
     return (
         <div className="add-attachment">
             <button
+                type="button"
+                aria-label="Attach file"
+                title="Attach file"
                 onClick={handleAddAttachment}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className="add-file-button"
             >
-                +
+                <Icon path={mdiPaperclip} size={1} />
             </button>
 
             <input
                 type="file"
-                id="fileInput"
+                ref={fileInputRef}
                 multiple
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
