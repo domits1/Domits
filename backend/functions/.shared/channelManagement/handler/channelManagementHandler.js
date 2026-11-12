@@ -30,6 +30,8 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/connect$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/disconnect$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
+  // Shows every Channex account, so admins only (#2869, design note D1).
+  { methods: ["GET"], pattern: /\/integrations\/channex\/health$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/properties$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/room-types$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/rate-plans$/ },
@@ -166,6 +168,7 @@ const routeDefinitions = [
   ["POST", "/integrations/channex/connect", "connectChannex"],
   ["GET", "/integrations/holidu/status", "checkHoliduStatus"],
   ["GET", "/integrations/channex/status", "checkChannexStatus"],
+  ["GET", "/integrations/channex/health", "getChannexHealth"],
   [
     "GET",
     "/integrations/channex/admin-access",
@@ -426,7 +429,7 @@ export const handleChannelManagementEvent = async (event, context) => {
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
         })
       );
@@ -436,18 +439,18 @@ export const handleChannelManagementEvent = async (event, context) => {
           fullCertificationSyncVersion:
             CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
           stage: "handler_catch",
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
           details: {
             name: error?.name ?? null,
             message:
               error?.message ??
-              "Unhandled Channex full certification sync error.",
+              "Unhandled Channex full sync error.",
           },
         },
       });

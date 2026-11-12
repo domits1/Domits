@@ -1,7 +1,11 @@
 import {
+  AccommodationRequestError,
+  getAccommodationByPropertyId,
+  getAccommodationWithPublicFallback,
   getGuestBookingDetailsByBookingId,
   getHostBookingDetails,
   sendUnifiedMessage,
+  retryUnifiedMessage,
   markThreadRead,
   markThreadUnread,
   closeThread,
@@ -68,6 +72,52 @@ describe("messagingService unified REST client", () => {
     });
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("sendUnifiedMessage attaches the saved failed message when /send returns 502", async () => {
+    const savedFailedMessage = {
+      id: "message-1",
+      threadId: "thread-1",
+      content: "Hello guest",
+      deliveryStatus: "failed",
+      errorCode: "THREAD_NOT_FOUND",
+    };
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => JSON.stringify(savedFailedMessage),
+    });
+
+    await expect(
+      sendUnifiedMessage({
+        senderId: "host-1",
+        recipientId: "CHANNEX_GUEST:booking-1",
+        content: "Hello guest",
+        platform: "CHANNEX",
+        token: "access-token-1",
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("502"),
+      savedMessage: savedFailedMessage,
+    });
+  });
+
+  test("sendUnifiedMessage does not attach a saved message when the error body is not a failed message", async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => "Bad Gateway",
+    });
+
+    const error = await sendUnifiedMessage({
+      senderId: "host-1",
+      recipientId: "host-2",
+      content: "Hello",
+      token: "access-token-1",
+    }).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.savedMessage).toBeUndefined();
   });
 
   test("markThreadRead posts to /threads/{id}/read with the Cognito ID token", async () => {
@@ -266,5 +316,155 @@ describe("messagingService unified REST client", () => {
     ).rejects.toThrow("Multiple bookings match this host conversation; bookingId is required.");
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("messagingService accommodation requests", () => {
+  const LISTING = { property: { title: "Sea Cabin" } };
+
+  beforeEach(() => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => LISTING });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("getAccommodationByPropertyId sends the token it is given", async () => {
+    await getAccommodationByPropertyId("hostDashboard/single", "property-1", "host-token-1");
+
+    expect(globalThis.fetch.mock.calls[0][1].headers).toEqual({ Authorization: "host-token-1" });
+  });
+
+  test("getAccommodationByPropertyId sends no Authorization header without a token", async () => {
+    await expect(getAccommodationByPropertyId("bookingEngine/listingDetails", "property-1", null)).resolves.toEqual(
+      LISTING
+    );
+
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  const failed = (status) => ({ ok: false, status, json: async () => "Request failed." });
+  const listed = (payload) => ({ ok: true, status: 200, json: async () => payload });
+  const PUBLIC_LISTING = { property: { title: "Sea Cabin", hostId: "other-host" }, location: { city: "Haarlem" } };
+
+  test("a 403 from the host listing loads the public listing without the token", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403)).mockResolvedValueOnce(listed(PUBLIC_LISTING));
+
+    await expect(
+      getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1")
+    ).resolves.toEqual(PUBLIC_LISTING);
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch.mock.calls[0][0]).toContain("/hostDashboard/single?property=property-1");
+    expect(globalThis.fetch.mock.calls[0][1].headers).toEqual({ Authorization: "host-token-1" });
+    expect(globalThis.fetch.mock.calls[1][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[1][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  test.each([401, 404, 500, 503])("a %i from the host listing is not retried on the public listing", async (status) => {
+    globalThis.fetch.mockResolvedValueOnce(failed(status));
+
+    const request = getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1");
+
+    await expect(request).rejects.toBeInstanceOf(AccommodationRequestError);
+    await expect(request).rejects.toMatchObject({ status });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("a network error on the host listing is not retried on the public listing", async () => {
+    const networkError = new TypeError("Failed to fetch");
+    globalThis.fetch.mockRejectedValueOnce(networkError);
+
+    const request = getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1");
+
+    await expect(request).rejects.toBe(networkError);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("a 403 from the public listing is not retried", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403));
+
+    await expect(
+      getAccommodationWithPublicFallback("bookingEngine/listingDetails", "property-1", null)
+    ).rejects.toMatchObject({ status: 403 });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("the public listing failure is reported when the fallback fails too", async () => {
+    globalThis.fetch.mockResolvedValueOnce(failed(403)).mockResolvedValueOnce(failed(404));
+
+    await expect(
+      getAccommodationWithPublicFallback("hostDashboard/single", "property-1", "host-token-1")
+    ).rejects.toMatchObject({ status: 404, message: "Failed to fetch accommodation" });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test("getHostBookingDetails shows the public listing when the host listing answers 403", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () =>
+          JSON.stringify([
+            {
+              id: "property-1",
+              res: {
+                response: [{ id: "booking-1", hostid: "host-1", guestid: "guest-1", property_id: "property-1" }],
+              },
+            },
+          ]),
+      })
+      .mockResolvedValueOnce(failed(403))
+      .mockResolvedValueOnce(listed(PUBLIC_LISTING));
+
+    const result = await getHostBookingDetails({
+      hostId: "host-1",
+      guestId: "guest-1",
+      propertyId: "property-1",
+      token: "host-token-1",
+      accommodationEndpoint: "hostDashboard/single",
+    });
+
+    expect(result.bookingDetails.id).toBe("booking-1");
+    expect(result.accommodation).toEqual(PUBLIC_LISTING);
+    expect(globalThis.fetch.mock.calls[2][0]).toContain("/bookingEngine/listingDetails?property=property-1");
+    expect(globalThis.fetch.mock.calls[2][1].headers).not.toHaveProperty("Authorization");
+  });
+  test("retryUnifiedMessage posts only the retryMessageId to /send with bearer auth", async () => {
+    await retryUnifiedMessage({ messageId: "message-1", token: "access-token-1" });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer access-token-1" },
+      })
+    );
+    expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).toEqual({ retryMessageId: "message-1" });
+  });
+
+  test("retryUnifiedMessage does not call /send without a token", async () => {
+    globalThis.fetch.mockClear();
+
+    await expect(retryUnifiedMessage({ messageId: "message-1", token: null })).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REQUIRED",
+    });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("retryUnifiedMessage attaches the updated failed message when the retry returns 502", async () => {
+    const stillFailed = { id: "message-1", deliveryStatus: "failed", errorCode: "UNAUTHORIZED" };
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      text: async () => JSON.stringify(stillFailed),
+    });
+
+    await expect(retryUnifiedMessage({ messageId: "message-1", token: "access-token-1" })).rejects.toMatchObject({
+      message: expect.stringContaining("502"),
+      savedMessage: stillFailed,
+    });
   });
 });

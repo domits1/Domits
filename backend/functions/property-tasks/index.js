@@ -2,6 +2,13 @@ import { Controller } from "./controller/controller.js";
 
 let controller = null;
 
+const OVERDUE_SWEEP_TASK = "notify-overdue-tasks";
+const DUE_SOON_SWEEP_TASK = "notify-due-soon-tasks";
+
+const isScheduledRun = (event, task) => event?.task === task && !event.httpMethod;
+const isOverdueSweep = (event) => isScheduledRun(event, OVERDUE_SWEEP_TASK);
+const isDueSoonSweep = (event) => isScheduledRun(event, DUE_SOON_SWEEP_TASK);
+
 const INTERNAL_ROUTES = {
     "/internal/create-task": "internalCreateTask",
 };
@@ -12,13 +19,18 @@ const ACTION_ROUTES = {
         'view-url': 'getViewUrl',
         'checklist': 'getChecklistItems',
         'checklist-templates': 'getChecklistTemplates',
+        'notifications': 'getNotifications',
     },
     POST: {
         'checklist': 'createChecklistItem',
         'escalate': 'escalateTask',
+        'approve': 'approveTask',
+        'reject': 'rejectTask',
     },
     PATCH: {
         'checklist': 'updateChecklistItem',
+        'notification-read': 'markNotificationRead',
+        'notifications-read-all': 'markAllNotificationsRead',
     },
     DELETE: {
         'checklist': 'deleteChecklistItem',
@@ -38,6 +50,14 @@ export const handler = async (event) => {
     try {
         if (!controller) {
             controller = new Controller();
+        }
+
+        if (isOverdueSweep(event)) {
+            return await controller.runOverdueSweep(event);
+        }
+
+        if (isDueSoonSweep(event)) {
+            return await controller.runDueSoonSweep(event);
         }
 
         const path = event.path || "";
@@ -71,6 +91,10 @@ export const handler = async (event) => {
         const methodName = methodRoutes[action] || DEFAULT_ROUTES[event.httpMethod];
         return await controller[methodName](event);
     } catch (error) {
+        // Nobody reads the answer to a scheduled run, so a failed sweep has to fail the invocation.
+        if (isOverdueSweep(event) || isDueSoonSweep(event)) {
+            throw error;
+        }
         return {
             statusCode: 500,
             headers: CORS_HEADERS,

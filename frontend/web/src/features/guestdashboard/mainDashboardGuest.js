@@ -8,7 +8,7 @@ import GuestSettings from "./GuestSettings";
 import GuestSettingsHub from "./GuestSettingsHub";
 import GuestCommunicationPreferences from "./GuestCommunicationPreferences";
 import GuestWishlist from "./GuestWishlist";
-import GuestReviews from "./GuestReviews";
+import GuestReviews from "../review/views/GuestReviews";
 import Messages from "../../components/messages/Messages";
 import ReservationDetails from "./ReservationDetails";
 import InquiryPaymentPage from "./InquiryPaymentPage";

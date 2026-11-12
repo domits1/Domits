@@ -25,17 +25,26 @@ describe('CreateTaskModal', () => {
             { id: 'host', label: 'Alex Host (Host)' },
             { id: 'member-1', label: 'housekeeper@example.com (Property Operations Manager)' },
         ],
+        checklistItems: [],
         onInputChange: jest.fn(),
         onPropertyChange: jest.fn(),
         onAssigneeChange: jest.fn(),
         onFileChange: jest.fn(),
         onSubmit: jest.fn((e) => e.preventDefault()),
         onCancel: jest.fn(),
+        onAddChecklistItem: jest.fn(),
+        onToggleChecklistItem: jest.fn(),
+        onRemoveChecklistItem: jest.fn(),
     };
 
     test('renders nothing when isOpen is false', () => {
         const { container } = render(<CreateTaskModal {...baseProps} isOpen={false} />);
         expect(container).toBeEmptyDOMElement();
+    });
+
+    test('does not show a booking reference field, because nothing saves it yet', () => {
+        render(<CreateTaskModal {...baseProps} />);
+        expect(screen.queryByLabelText('Booking Reference')).not.toBeInTheDocument();
     });
 
     test('renders the property options and every assignee option, host and team members', () => {
@@ -84,5 +93,27 @@ describe('CreateTaskModal', () => {
         render(<CreateTaskModal {...baseProps} />);
 
         expect(screen.getByRole('button', { name: 'Create Task' })).not.toBeDisabled();
+    });
+
+    test('renders draft checklist items and wires toggle/remove through to the parent', () => {
+        const item = { id: 'draft-1', title: 'Deep cleaning', isRequired: true, isChecked: false };
+        const { container } = render(<CreateTaskModal {...baseProps} checklistItems={[item]} />);
+
+        expect(screen.getByText('Deep cleaning')).toBeInTheDocument();
+
+        fireEvent.click(container.querySelector('.checklist-item-row input[type="checkbox"]'));
+        expect(baseProps.onToggleChecklistItem).toHaveBeenCalledWith(item);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove Deep cleaning' }));
+        expect(baseProps.onRemoveChecklistItem).toHaveBeenCalledWith('draft-1');
+    });
+
+    test('adds a checklist item from the form and wires it through to the parent', () => {
+        render(<CreateTaskModal {...baseProps} />);
+
+        fireEvent.change(screen.getByLabelText('New checklist item title'), { target: { value: 'Check AC' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+        expect(baseProps.onAddChecklistItem).toHaveBeenCalledWith({ title: 'Check AC', isRequired: true });
     });
 });

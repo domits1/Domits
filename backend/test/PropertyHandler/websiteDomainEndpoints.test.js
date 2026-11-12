@@ -59,7 +59,10 @@ const buildController = ({
         ? jest.fn().mockRejectedValue(authorizedHostId)
         : jest.fn().mockResolvedValue(authorizedHostId),
   };
-  controller.directBookingWebsiteSiteRepository = { getSiteById: jest.fn().mockResolvedValue(site) };
+  controller.directBookingWebsiteSiteRepository = {
+    getSiteById: jest.fn().mockResolvedValue(site),
+    queueStaticPage: jest.fn().mockResolvedValue(true),
+  };
   controller.directBookingWebsiteDomainRepository = {
     getCustomDomainBySiteId: jest.fn().mockResolvedValue(customDomain),
     listDomainsBySiteId: jest.fn().mockResolvedValue(domains),
@@ -131,6 +134,7 @@ describe("GET /property/website/domains", () => {
     expect(body.domains.map((domain) => domain.domain)).toEqual([FALLBACK_DOMAIN.domain, CUSTOM_DOMAIN.domain]);
     expect(body.domains[1].dnsRecord).toEqual(CUSTOM_DOMAIN.verificationDetails.dnsInstruction);
     expect(response.body).not.toMatch(/dt_1|arn:cert/);
+    expect(controller.directBookingWebsiteSiteRepository.queueStaticPage).not.toHaveBeenCalled();
     expect(response.headers["Cache-Control"]).toContain("no-store");
   });
 
@@ -211,6 +215,8 @@ describe("DELETE /property/website/domains", () => {
       site: SITE,
       domain: "www.example.com",
     });
+    const { queueStaticPage } = controller.directBookingWebsiteSiteRepository;
+    expect(queueStaticPage).toHaveBeenCalledWith(SITE.id, { evenWhileBusy: true });
     expect(parseBody(response).domains.map((entry) => [entry.domain, entry.status, entry.isPrimary])).toEqual([
       [FALLBACK_DOMAIN.domain, expect.any(String), true],
       ["www.example.com", "REMOVING", false],
