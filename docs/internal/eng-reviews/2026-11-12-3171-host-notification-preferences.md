@@ -2,15 +2,16 @@
 
 Pull request: #3857
 Issue: #3171
-Reviewed commit: 14572a48
-Result: 2 findings, both fixed
+Reviewed commit: c439b607
+Result: 3 findings, all fixed
 
 ## Findings
 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
-| P1 (9/10) | `backend/functions/communication-preferences/business/service/service.js:202-217` | The first save performed a read followed by an insert without retrying Aurora DSQL serialization conflicts. Two concurrent first saves could both read no row; one transaction could then fail with `40001`/ `OC001` and return an API error. | Fixed in `253ad83`: retry the complete read/write operation with the existing shared `withDsqlRetry` helper. Added a regression test in `14572a4` that simulates a competing first insert and verifies the retry rereads the row and preserves its original `created_at`. |
+| P1 (9/10) | `backend/functions/communication-preferences/business/service/service.js:202-217` | The first save performed a read followed by an insert without retrying Aurora DSQL serialization conflicts. Two concurrent first saves could both read no row; one transaction could then fail with `40001`/`OC001` and return an API error. | Fixed in `253ad83`, then kept package-safe in `3a15a17`/`c439b60`: retry the complete read/write operation with the package-local `withDsqlRetry` helper. Added a regression test in `14572a4` that simulates a competing first insert and verifies the retry rereads the row and preserves its original `created_at`. |
 | P2 (10/10) | `backend/ORM/migrations/20261109_host_notification_preferences.js:2-26` | The ORM migration only created and dropped `main.host_notification_preferences`, while the accompanying SQL migration and runbook provisioned both `test` and `main`. Running the JavaScript migration alone would leave the schemas inconsistent. | Fixed in `376e746`: the ORM migration now creates both schemas in the same order as the SQL migration and drops them in reverse order. |
+| P2 (10/10) | `backend/functions/communication-preferences/business/service/service.js:5`; `test/infrastructure/lambdaImportBoundary.test.js:94` | Importing the shared retry helper from outside the communication-preferences package violates the repository's Lambda package boundary and fails the boundary test. | Fixed in `3a15a17`/`c439b60`: keep the retry helper in `backend/functions/communication-preferences/util/dsqlRetry.js`, inside the deployable package. It uses the same DSQL conflict codes and bounded retry behavior as the existing shared helper. |
 
 ## Architecture and data flow
 
@@ -27,7 +28,7 @@ CommunicationPreferencesService
         ├── GET: saved matrix → normalize
         │        no saved row → legacy Host preferences → defaults
         │
-        └── PUT: validate → DSQL retry (read + write)
+        └── PUT: validate → package-local DSQL retry (read + write)
                          ▼
              host_notification_preferences
                          │
@@ -40,7 +41,7 @@ The new repository and TypeORM entity are reused for persistence. Existing `comm
 
 ## What already exists
 
-- The shared `withDsqlRetry` helper handles Aurora DSQL conflict codes `40001` and `OC001`; the save path now reuses it rather than adding another retry implementation.
+- The repository already has an Aurora DSQL retry implementation that recognizes `40001` and `OC001`. The communication-preferences Lambda has a package-local equivalent because its import-boundary test prevents dependencies outside the deployable package.
 - The backend catalog supplies seven categories, 87 events and required-channel metadata; the frontend does not duplicate the event-key list.
 - Legacy Host values are mapped to event preferences on first read; missing legacy values use documented defaults.
 - The runbook requires the `test` schema to be applied and verified before `main`, and the table is not created by Lambda at runtime.
@@ -49,9 +50,9 @@ The new repository and TypeORM entity are reused for persistence. Existing `comm
 
 | Failure mode | Test coverage | Handling and user-visible result |
 |---|---|---|
-| Two hosts' browser requests (or duplicate requests for one host) race on the first insert | The new regression test simulates a DSQL `40001` conflict and checks that the retry rereads the winning row. Exhausting all retry attempts is not separately tested. | The full read/write operation retries up to the shared helper's configured limit. If conflicts continue, the error is returned; the UI's save-error state keeps unsaved changes available for retry. |
+| Two concurrent first saves conflict | The regression test simulates a DSQL `40001` conflict and checks that the retry rereads the winning row. Exhausting all retry attempts is not separately tested. | The full read/write operation retries up to three attempts. If conflicts continue, the error is returned; the UI's save-error state keeps unsaved changes available for retry. |
 | No event-matrix row exists for a host | Existing tests cover both legacy-value mapping and defaults when no legacy row exists. | The service returns mapped legacy values or defaults; it does not require a pre-populated matrix row. |
-| One of the schemas is not migrated before the endpoint is enabled | Covered by the SQL runbook's operator verification, not an automated unit test. | Database operations fail rather than silently storing in a different schema. The deployment runbook requires both schemas to be checked before enabling the endpoint. |
+| One schema is not migrated before the endpoint is enabled | Covered by the SQL runbook's operator verification, not an automated unit test. | Database operations fail rather than silently storing in a different schema. The deployment runbook requires both schemas to be checked before enabling the endpoint. |
 | A stored preference JSON value is malformed | No dedicated malformed-JSON test is present. | The service throws an error rather than silently replacing corrupted saved preferences with defaults; the frontend displays its load-error state. |
 
 ## Performance
