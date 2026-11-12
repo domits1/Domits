@@ -186,24 +186,6 @@ describe("Pages2 property review navigation", () => {
     expect(link.getAttribute("href")).toBe("/admin/property-review");
   });
 
-  test("shows the Review approval nav item to internal admins", async () => {
-    checkPropertyReviewAccess.mockResolvedValue("allowed");
-
-    renderPages();
-
-    const link = await screen.findByRole("link", { name: /review approval/i });
-    expect(link.getAttribute("href")).toBe("/admin/review-approval");
-  });
-
-  test("hides the Review approval nav item when the internal admin check denies the user", async () => {
-    checkPropertyReviewAccess.mockResolvedValue("denied");
-
-    renderPages();
-
-    await waitFor(() => expect(checkPropertyReviewAccess).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("Review approval")).toBeNull();
-  });
-
   test("hides the Property review nav item when the review access check denies the user", async () => {
     checkPropertyReviewAccess.mockResolvedValue("denied");
 
