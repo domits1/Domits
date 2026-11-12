@@ -7,6 +7,7 @@ import TeamInviteModal from './TeamInviteModal';
 
 const DEFAULT_SETTINGS = {
     notifEmailAssigned: true,
+    notifEmailDueSoon: true,
     notifEmailOverdue: true,
     notifEmailCompleted: true,
     notifSmsUrgent: false,
@@ -17,29 +18,28 @@ const DEFAULT_SETTINGS = {
     requirePhotoProof: false,
 };
 
-const INTEGRATIONS = [
-    { name: 'Airbnb', logo: '🏠', connected: false },
-    { name: 'Booking.com', logo: '🔵', connected: false },
-    { name: 'Vrbo', logo: '🏡', connected: false },
-];
-
 const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
     const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
     const [settingsDraft, setSettingsDraft] = useState({ ...DEFAULT_SETTINGS });
     const [settingsSaved, setSettingsSaved] = useState(false);
+    const [saveFailed, setSaveFailed] = useState(false);
+    const [settingsLoadStatus, setSettingsLoadStatus] = useState('loading');
     const [teamMembers, setTeamMembers] = useState([]);
     const [teamMemberships, setTeamMemberships] = useState([]);
     const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
 
     const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsDraft);
+    // A save sends every field, so saving over defaults that never loaded would overwrite a saved opt-out.
+    const canSaveSettings = settingsChanged && settingsLoadStatus === 'loaded';
 
     useEffect(() => {
         fetchSettings()
             .then(data => {
                 setSettings(data);
                 setSettingsDraft(data);
+                setSettingsLoadStatus('loaded');
             })
-            .catch(() => {});
+            .catch(() => setSettingsLoadStatus('failed'));
     }, []);
 
     useEffect(() => {
@@ -55,10 +55,12 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
         try {
             await saveSettings(settingsDraft);
             setSettings({ ...settingsDraft });
+            setSaveFailed(false);
             setSettingsSaved(true);
             setTimeout(() => setSettingsSaved(false), 3000);
         } catch {
             setSettingsSaved(false);
+            setSaveFailed(true);
         }
     };
 
@@ -87,14 +89,13 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
         return rows;
     }, [currentUser, teamMembers, teamMemberships, taskContext, managedHostId]);
 
-    const renderSettingsToggle = (key, label, disabled = false) => (
+    const renderSettingsToggle = (key, label) => (
         <div key={key} className="settings-toggle-row">
             <span className="settings-toggle-label">{label}</span>
             <button
-                className={`settings-toggle ${!disabled && settingsDraft[key] ? 'on' : ''} ${disabled ? 'disabled' : ''}`}
-                onClick={() => !disabled && handleSettingChange(key, !settingsDraft[key])}
+                className={`settings-toggle ${settingsDraft[key] ? 'on' : ''}`}
+                onClick={() => handleSettingChange(key, !settingsDraft[key])}
                 aria-label={label}
-                aria-disabled={disabled}
             >
                 <span className="settings-toggle-knob" />
             </button>
@@ -139,47 +140,21 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
                             </tbody>
                         </table>
                     </div>
-
-                    <div className="settings-card">
-                        <div className="settings-card-header">
-                            <h3 className="settings-card-title">Integrations</h3>
-                            <span className="settings-coming-soon">Coming soon</span>
-                        </div>
-                        <div className="settings-integrations-grid">
-                            {INTEGRATIONS.map(integration => (
-                                <div key={integration.name} className="settings-integration-card">
-                                    <div className="settings-integration-top">
-                                        <span className="settings-integration-logo">{integration.logo}</span>
-                                        <span className="settings-integration-name">{integration.name}</span>
-                                    </div>
-                                    {integration.connected ? (
-                                        <button className="settings-integration-btn disconnect">
-                                            ✓ Disconnect
-                                        </button>
-                                    ) : (
-                                        <span className="settings-integration-status disconnected">Not Connected</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </div>
 
                 <div className="settings-right-col">
                     <div className="settings-card">
                         <div className="settings-card-header">
                             <h3 className="settings-card-title">Notifications</h3>
-                            <span className="settings-coming-soon">Coming soon</span>
                         </div>
                         <p className="settings-card-subtitle">Customize your app preferences.</p>
                         <p className="settings-group-label">Email notifications</p>
-                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me', true)}
-                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue', true)}
-                        {renderSettingsToggle('notifEmailCompleted', 'Task completed', true)}
-                        <p className="settings-group-label">SMS notifications</p>
-                        {renderSettingsToggle('notifSmsUrgent', 'Urgent tasks only', true)}
+                        {renderSettingsToggle('notifEmailAssigned', 'Task assigned to me')}
+                        {renderSettingsToggle('notifEmailDueSoon', 'Task due soon')}
+                        {renderSettingsToggle('notifEmailOverdue', 'Task overdue')}
+                        {renderSettingsToggle('notifEmailCompleted', 'Task completed')}
                         <p className="settings-group-label">In-App notifications</p>
-                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications', true)}
+                        {renderSettingsToggle('notifInappEnabled', 'Enable notifications')}
                     </div>
 
                     <div className="settings-card">
@@ -209,8 +184,18 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
 
             <div className="settings-footer">
                 {settingsSaved && <span className="settings-saved-msg"><LuCheck /> Settings saved successfully.</span>}
+                {saveFailed && (
+                    <span className="settings-load-error" role="alert">
+                        Couldn't save your settings. Please try again.
+                    </span>
+                )}
+                {settingsLoadStatus === 'failed' && (
+                    <span className="settings-load-error" role="alert">
+                        Couldn't load your settings. Reload the page to try again.
+                    </span>
+                )}
                 <button className="settings-cancel-btn" onClick={handleCancelSettings} disabled={!settingsChanged}>Cancel</button>
-                <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!settingsChanged}>Save changes</button>
+                <button className="btn-primary-green" onClick={handleSaveSettings} disabled={!canSaveSettings}>Save changes</button>
             </div>
 
             <TeamInviteModal

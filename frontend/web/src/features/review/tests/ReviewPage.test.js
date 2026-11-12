@@ -2,13 +2,14 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Auth } from "aws-amplify";
 import userEvent from "@testing-library/user-event";
-import ReviewPage from "../ReviewPage";
+import ReviewPage from "../views/ReviewPage";
 import { getGuestBookings } from "../../guestdashboard/services/bookingAPI";
-import GuestReviews from "../../guestdashboard/GuestReviews";
+import GuestReviews from "../views/GuestReviews";
 import {
   createReview,
   requestReview,
   getEditableReview,
+  submitReviewForApproval,
   updateReview,
 } from "../services/reviewAPI";
 
@@ -29,9 +30,12 @@ jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
   requestReview: jest.fn(),
   getEditableReview: jest.fn(),
+  submitReviewForApproval: jest.fn(),
   updateReview: jest.fn(),
 }));
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: () => "access-token" }));
+jest.mock("../../../services/getAccessToken", () => ({
+  getIdToken: async () => "id-token",
+}));
 
 const booking = {
   id: "reservation-1",
@@ -138,6 +142,7 @@ beforeEach(() => {
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
   createReview.mockResolvedValue({ id: "review-1" });
+  submitReviewForApproval.mockResolvedValue({ id: "review-1", status: "PENDING_APPROVAL" });
 });
 
 it("hides the form while eligibility is being checked", () => {
@@ -196,6 +201,7 @@ const submitReview = async () => {
 it("submits the reservation and shows confirmation", async () => {
   await submitReview();
   await screen.findByRole("heading", { name: "Review submitted" });
+  expect(submitReviewForApproval).toHaveBeenCalledWith("review-1");
   expect(createReview).toHaveBeenCalledWith({
     bookingId: booking.id,
     rating: 5,
@@ -203,6 +209,32 @@ it("submits the reservation and shows confirmation", async () => {
     publicReview: "Great stay.",
     privateFeedback: "",
   });
+});
+
+it("retries approval submission using the saved draft", async () => {
+  submitReviewForApproval.mockRejectedValueOnce(new Error("Could not submit your review. Please try again."));
+  await submitReview();
+  await screen.findByRole("alert");
+  expect(screen.queryByRole("heading", { name: "Review submitted" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
+
+  await screen.findByRole("heading", { name: "Review submitted" });
+  expect(createReview).toHaveBeenCalledTimes(1);
+  expect(submitReviewForApproval.mock.calls).toEqual([["review-1"], ["review-1"]]);
+});
+
+it("submits an existing draft from the guest review history", async () => {
+  requestReview.mockImplementation(async (_method, { scope }) => ({
+    ok: true,
+    json: async () => scope === "written" ? [{ id: "review-1", status: "DRAFT" }] : [],
+  }));
+  render(<GuestReviews />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Submit for approval" }));
+
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Submit for approval" })).not.toBeInTheDocument());
+  expect(submitReviewForApproval).toHaveBeenCalledWith("review-1");
 });
 
 it.each([
@@ -282,7 +314,7 @@ it("maps the selected rating to overall_rating in the authenticated HTTP request
     const [url, request] = global.fetch.mock.calls[0];
     expect(url).toBe(`${api.API_REVIEW_BASE}/reviews`);
     expect(request.method).toBe("POST");
-    expect(request.headers.Authorization).toBe("access-token");
+    expect(request.headers.Authorization).toBe("id-token");
     expect(JSON.parse(request.body)).toEqual({
       booking_id: booking.id, overall_rating: 4, title: "Great stay", public_review: "Great stay.", private_feedback: "",
     });
@@ -301,7 +333,7 @@ it.each(["GET", "DELETE"])("uses the authenticated review endpoint for web %s", 
     await web.requestReview(method, query);
     const path = method === "GET" ? "/reviews?scope=received" : "/reviews/review-1";
     expect(global.fetch.mock.calls[0]).toEqual([`${web.API_REVIEW_BASE}${path}`,
-      { method, headers: { Authorization: "access-token" } }]);
+      { method, headers: { Authorization: "id-token" } }]);
   } finally { global.fetch = originalFetch; }
 });
 
@@ -329,8 +361,8 @@ it.each(["GET", "PATCH"])("uses the supported review route for editing: %s", asy
     const [url, request] = global.fetch.mock.calls[0];
     expect(url).toBe(`${api.API_REVIEW_BASE}/reviews/review-1`);
     expect(request.method).toBe(method);
-    if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated" });
-    expect(request.headers.Authorization).toBe("access-token");
+    if (method === "PATCH") expect(JSON.parse(request.body)).toEqual({ overall_rating: 4, public_review: "Updated", updated_at: 123 });
+    expect(request.headers.Authorization).toBe("id-token");
   } finally { global.fetch = originalFetch; }
 });
 

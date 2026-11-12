@@ -501,9 +501,24 @@ $color-muted: #6b7280;
   }
 }
 
-.invoices-error {
-  color: $color-danger;
-  font-size: 0.9rem;
+.invoices-state {
+  border: 1px solid #dfe1e5;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.invoices-state--error {
+  border-color: #f0caca;
+  border-left: 4px solid $color-danger;
+  background: #fff1f1;
+
+  strong {
+    color: $color-danger;
+  }
+
+  span {
+    color: #7a0c0c;
+  }
 }
 
 .invoice-status {
@@ -1009,6 +1024,105 @@ $color-muted: #6b7280;
       color: #6b7280;
     }
   }
+}
+
+.finance-monthly-day-picker {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    margin: 0;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+}
+
+.finance-monthly-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.finance-monthly-day-picker .finance-monthly-day-option {
+  position: relative;
+  display: block;
+  min-width: 0;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+    min-height: 32px;
+    padding: 4px 0;
+    border: 1px solid #dedede;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    font-size: 0.75rem;
+    font-weight: 400;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  input:checked + span {
+    border-color: $green;
+    background: $green;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  input:focus-visible + span {
+    outline: 3px solid rgba($green, 0.25);
+    outline-offset: 2px;
+  }
+
+  input:disabled + span {
+    background: #f4f4f4;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  &:hover input:not(:disabled) + span {
+    border-color: $green;
+    background: #f2faf3;
+  }
+
+  &:hover input:checked:not(:disabled) + span {
+    background: darken($green, 5%);
+    color: #fff;
+  }
+}
+
+.finance-monthly-day-help,
+.finance-monthly-day-selection {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.finance-monthly-day-help {
+  color: #4b5563;
+}
+
+.finance-monthly-day-selection {
+  color: #087b16;
+  font-weight: 600;
 }
 
 .finance-stripe-status {

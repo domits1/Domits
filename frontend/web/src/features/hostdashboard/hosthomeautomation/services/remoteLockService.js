@@ -1,91 +1,86 @@
-// Mock service for the RemoteLock page: nothing here calls a backend. Each function keeps the shape of the
-// endpoint named above it, so replacing a mock with the real call later changes this file only.
-//
-// To preview a state: set REMOTELOCK_UI_ENABLED = true (homeAutomationConstants.js) and MOCK_STATUS below to
-// the state you want, look at Settings > Home automation, then revert both before committing. Connect and
-// disconnect change the mocked status in memory, so you can click through NOT_CONNECTED > CONNECTED (devices
-// appear) > DISCONNECTED (devices disappear); a page reload starts again from MOCK_STATUS.
+import { getIdToken } from "../../../../services/getAccessToken";
 
-export const MOCK_STATUS = "NOT_CONNECTED";
-const MOCK_LAST_SYNC_AT = Date.UTC(2026, 9, 8, 9, 30);
+const API_BASE =
+  "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/home-automation/remotelocks";
+const AUTHORIZE_ORIGIN = "https://connect.remotelock.com";
 
-// Types are the values RemoteLock reports. lastSeenAt is epoch milliseconds or null, battery is a percentage or null.
-const MOCK_DEVICES = [
-  {
-    id: "lock-1",
-    name: "Front door",
-    type: "lock",
-    status: "ONLINE",
-    battery: 82,
-    lastSeenAt: Date.UTC(2026, 9, 8, 9, 25),
-  },
-  {
-    id: "lock-2",
-    name: "Back entrance",
-    type: "zwave_lock",
-    status: "OFFLINE",
-    battery: 15,
-    lastSeenAt: Date.UTC(2026, 9, 7, 18, 2),
-  },
-  {
-    id: "lock-3",
-    name: "Garage keypad",
-    type: "connector_lock",
-    status: "UNKNOWN",
-    battery: null,
-    lastSeenAt: null,
-  },
-  {
-    id: "lock-4",
-    name: "Guest cottage",
-    type: "schlage_home_lock",
-    status: "ONLINE",
-    battery: 64,
-    lastSeenAt: Date.UTC(2026, 9, 8, 9, 10),
-  },
-  {
-    id: "lock-5",
-    name: "Pool gate",
-    type: "resort_lock",
-    status: "ONLINE",
-    battery: null,
-    lastSeenAt: Date.UTC(2026, 9, 8, 8, 45),
-  },
-];
+export class RemoteLockRequestError extends Error {
+  constructor({ status = null, code = null, retryable = false, retryAfterSeconds = null } = {}) {
+    // Built from the code alone: a response body or URL can hold a one-time code or a state value.
+    super(`RemoteLock request failed (${code ?? status ?? "network"}).`);
+    this.name = "RemoteLockRequestError";
+    this.status = status;
+    this.code = code;
+    this.retryable = retryable;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
 
-// Held in the module so a later connect or disconnect can change what the next status read returns.
-let currentStatus = MOCK_STATUS;
-
-export const resetMockRemoteLock = () => {
-  currentStatus = MOCK_STATUS;
+const readJson = async (response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 };
 
-export const setMockRemoteLockStatus = (status) => {
-  currentStatus = status;
+const requestRemoteLock = async (path, { method = "GET", body } = {}) => {
+  let response;
+  try {
+    const headers = { Authorization: `Bearer ${await getIdToken()}` };
+    response = await fetch(
+      `${API_BASE}${path}`,
+      body === undefined
+        ? { method, headers }
+        : { method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    );
+  } catch {
+    throw new RemoteLockRequestError({ retryable: true });
+  }
+
+  const data = await readJson(response);
+  if (!response.ok) {
+    throw new RemoteLockRequestError({
+      status: response.status,
+      code: typeof data?.error === "string" ? data.error : null,
+      retryable: data?.retryable === true,
+      retryAfterSeconds: Number.isFinite(data?.retryAfterSeconds) ? data.retryAfterSeconds : null,
+    });
+  }
+  return data;
 };
 
-// Real endpoint (not built yet): GET /integrations/home-automation/remotelocks/status
-// lastSyncAt is epoch milliseconds, or null when nothing has synced.
-export const getRemoteLockStatus = async () => ({
-  status: currentStatus,
-  lastSyncAt: currentStatus === "CONNECTED" ? MOCK_LAST_SYNC_AT : null,
-});
+const toStatus = (data) => ({ status: data?.status ?? null, lastSyncAt: data?.lastSyncAt ?? null });
 
-// Real endpoint (not built yet): POST /integrations/home-automation/remotelocks/connect
-// The real one will hand back a RemoteLock sign-in URL to send the host to; the mock connects straight away.
-// Resolves with the new status, in the shape of getRemoteLockStatus.
+// Only RemoteLock's own sign-in page may be navigated to; origin also covers the scheme and the port.
+const isAuthorizeUrl = (value) => {
+  try {
+    return new URL(value).origin === AUTHORIZE_ORIGIN;
+  } catch {
+    return false;
+  }
+};
+
+// GET /status. lastSyncAt is epoch milliseconds, or null when nothing has synced.
+export const getRemoteLockStatus = async () => toStatus(await requestRemoteLock("/status"));
+
+// POST /connect. Resolves with the RemoteLock sign-in URL to send the host to; the connection is finished by
+// completeRemoteLockConnect when RemoteLock sends the host back.
 export const connectRemoteLock = async () => {
-  currentStatus = "CONNECTED";
-  return getRemoteLockStatus();
+  const data = await requestRemoteLock("/connect", { method: "POST" });
+  if (!isAuthorizeUrl(data?.authorizeUrl)) throw new RemoteLockRequestError({ code: "INVALID_AUTHORIZE_URL" });
+  return { status: data.status ?? null, authorizeUrl: data.authorizeUrl };
 };
 
-// Real endpoint (not built yet): POST /integrations/home-automation/remotelocks/disconnect
-// Resolves with the new status, in the shape of getRemoteLockStatus.
-export const disconnectRemoteLock = async () => {
-  currentStatus = "DISCONNECTED";
-  return getRemoteLockStatus();
-};
+// POST /connect/complete with the one-time code and state from RemoteLock's redirect.
+export const completeRemoteLockConnect = async ({ code, state }) =>
+  toStatus(await requestRemoteLock("/connect/complete", { method: "POST", body: { code, state } }));
 
-// Real endpoint (not built yet): GET /integrations/home-automation/remotelocks/devices
-// Only meaningful while the account is CONNECTED; the page does not call it in any other status.
-export const getRemoteLockDevices = async () => MOCK_DEVICES.map((device) => ({ ...device }));
+// POST /disconnect. Resolves with the new status, in the shape of getRemoteLockStatus.
+export const disconnectRemoteLock = async () => toStatus(await requestRemoteLock("/disconnect", { method: "POST" }));
+
+// GET /devices. Only meaningful while the account is CONNECTED. truncated means the list was cut short.
+export const getRemoteLockDevices = async () => {
+  const data = await requestRemoteLock("/devices");
+  return { devices: Array.isArray(data?.devices) ? data.devices : [], truncated: data?.truncated === true };
+};

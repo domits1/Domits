@@ -10,6 +10,7 @@ import {
   HostPropertyDeleteConfirmModal,
   HostPropertyDeleteReasonsModal,
   HostPropertyListingSummary,
+  HostPropertyRejectionBanner,
   HostPropertyLoadingView,
   HostPropertyTabs,
   HostPropertyUnsavedChangesModal,
@@ -48,6 +49,7 @@ import {
   resolveDeletePhotoErrorMessage,
   resolveSaveErrorMessage,
 } from "../utils/hostPropertyUtils";
+import { getStatusChangeMessage, normalizeListingStatus } from "../utils/listingStatus";
 
 const DELETE_PROPERTY_REASONS = [
   { id: "cannot-host", label: "I am no longer able to host." },
@@ -91,6 +93,7 @@ export default function HostProperty() {
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("INACTIVE");
+  const [latestRejection, setLatestRejection] = useState(null);
   const [bookingType, setBookingType] = useState("direct");
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
@@ -254,6 +257,7 @@ export default function HostProperty() {
         }
         const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
         setStatus(fetchedPropertyData.status);
+        setLatestRejection(fetchedPropertyData.latestRejection);
         setBookingType(fetchedPropertyData.bookingType || "direct");
         setForm(fetchedPropertyData.form);
         setCapacity(fetchedPropertyData.capacity);
@@ -855,21 +859,16 @@ export default function HostProperty() {
     setStatusUpdating(true);
     setError("");
     try {
-      await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
-      setStatus(nextStatus);
+      const result = await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
+      const returnedStatus = normalizeListingStatus(result?.status || nextStatus);
+      setStatus(returnedStatus);
       setHostProperties((previous) =>
         previous.map((accommodation) =>
-          accommodation.id === propertyId ? { ...accommodation, status: nextStatus } : accommodation
+          accommodation.id === propertyId ? { ...accommodation, status: returnedStatus } : accommodation
         )
       );
 
-      if (nextStatus === "ACTIVE") {
-        toast.success("Listing moved to Live.");
-      } else if (nextStatus === "ARCHIVED") {
-        toast.success("Listing moved to Archived.");
-      } else {
-        toast.success("Listing moved to Draft.");
-      }
+      toast.success(getStatusChangeMessage(returnedStatus));
     } catch (statusUpdateError) {
       console.error(statusUpdateError);
       const statusErrorMessage = statusUpdateError?.message || "Failed to update listing status.";
@@ -909,6 +908,7 @@ export default function HostProperty() {
             onStatusChange={handleStatusChange}
             saving={isBusy}
           />
+          <HostPropertyRejectionBanner status={status} latestRejection={latestRejection} />
 
           <HostPropertyTabContent
             selectedTab={selectedTab}

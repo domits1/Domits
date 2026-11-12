@@ -40,7 +40,7 @@ describe("RemoteLockStatusCard", () => {
 
   it.each([
     ["NOT_CONNECTED", ["Connect"]],
-    ["CONNECTING", []],
+    ["CONNECTING", ["Connect"]],
     ["CONNECTED", ["Disconnect"]],
     ["AUTHENTICATION_ERROR", ["Reconnect", "Disconnect"]],
     ["CONNECTION_ERROR", ["Reconnect", "Disconnect"]],
