@@ -42,6 +42,14 @@ describe("review approval formatting", () => {
     expect(formatSubmittedAt(undefined)).toEqual({ date: "Unknown date", time: "" });
   });
 
+  test.each(["", "   ", null, undefined, "invalid"])("treats %p as an unknown timestamp", (value) => {
+    expect(formatSubmittedAt(value)).toEqual({ date: "Unknown date", time: "" });
+  });
+
+  test("accepts the numeric epoch", () => {
+    expect(formatSubmittedAt(0).date).toBe("1 Jan 1970");
+  });
+
   test.each([
     ["VERIFIED", "Verified"],
     ["VERIFIED_STAY", "Verified stay"],
