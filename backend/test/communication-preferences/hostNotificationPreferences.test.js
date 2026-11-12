@@ -49,6 +49,40 @@ describe("Host event notification preferences", () => {
     });
   });
 
+  test("retries a first-save DSQL conflict and preserves the winning row timestamp", async () => {
+    let existing = null;
+    const conflict = Object.assign(new Error("serialization failure"), { code: "40001" });
+    const hostNotificationRepository = {
+      findByUserId: jest.fn(async () => existing),
+      save: jest.fn()
+        .mockImplementationOnce(async (record) => {
+          existing = { ...record, created_at: 90 };
+          throw conflict;
+        })
+        .mockImplementation(async (record) => record),
+    };
+    const repository = { findByUserIdAndPersona: jest.fn(async () => null) };
+    const now = jest.fn().mockReturnValueOnce(100).mockReturnValue(200);
+    const service = new CommunicationPreferencesService({
+      repository,
+      hostNotificationRepository,
+      now,
+    });
+
+    await expect(service.saveHostNotificationPreferences(
+      "host-1",
+      DEFAULT_HOST_NOTIFICATION_PREFERENCES
+    )).resolves.toEqual(DEFAULT_HOST_NOTIFICATION_PREFERENCES);
+
+    expect(hostNotificationRepository.findByUserId).toHaveBeenCalledTimes(2);
+    expect(hostNotificationRepository.save).toHaveBeenCalledTimes(2);
+    expect(hostNotificationRepository.save).toHaveBeenLastCalledWith(expect.objectContaining({
+      user_id: "host-1",
+      created_at: 90,
+      updated_at: 200,
+    }));
+  });
+
   test("keeps the original created timestamp when updating preferences", async () => {
     const record = { user_id: "host-1", preferences: JSON.stringify(DEFAULT_HOST_NOTIFICATION_PREFERENCES), created_at: 50, updated_at: 60 };
     const { service, hostNotificationRepository } = createService({ record, now: 99 });
