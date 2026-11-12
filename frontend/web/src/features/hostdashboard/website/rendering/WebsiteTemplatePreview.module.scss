@@ -856,6 +856,16 @@
   box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.18);
 }
 
+.panoramaTopBarShell .templateTopBarNav [aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.45em;
+}
+
+.panoramaTopBarDrawerNav [aria-current="page"] {
+  box-shadow: inset 0 0 0 2px rgba(31, 78, 121, 0.36);
+}
+
 .panoramaTopBarShellTransparent .templateTopBar {
   background: transparent;
   box-shadow: none;
@@ -1029,6 +1039,44 @@
   font-size: clamp(2.35rem, 1.8rem + 2vw, 5rem);
   line-height: 0.98;
   letter-spacing: -0.04em;
+}
+
+.panoramaPageHeader {
+  margin:
+    calc(0px - var(--template-preview-frame-gutter))
+    calc(0px - var(--template-preview-frame-gutter))
+    0;
+  padding: clamp(40px, 6vw, 72px) var(--template-preview-frame-gutter);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.74)),
+    #111827;
+}
+
+.panoramaPageHeaderWithTopBar {
+  padding-top: calc(clamp(86px, 9vw, 122px) + clamp(24px, 4vw, 48px));
+}
+
+.panoramaPageHeaderEyebrow {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(248, 244, 237, 0.72);
+}
+
+.panoramaPageHeaderTitle {
+  margin: 0;
+  max-width: 100%;
+  color: #f8f4ed;
+  font-size: clamp(2rem, 1.5rem + 1.8vw, 3.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 
 .panoramaHeroBlurb {

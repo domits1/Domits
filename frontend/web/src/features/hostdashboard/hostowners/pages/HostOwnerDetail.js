@@ -8,6 +8,8 @@ import ConfirmDialog from "../../hosttasks/components/ConfirmDialog";
 import { archiveOwner, getOwner, updateOwner } from "../services/ownerService";
 import OwnerFormModal from "../components/OwnerFormModal";
 import { OwnerProperties, percentFormatter, statusClassName } from "../components/OwnersTable";
+import SetSharesModal, { utcDateFormatter } from "../components/SetSharesModal";
+import { dateInputToUtcMidnight } from "../utils/utcDate";
 import { resolveOwnerContent } from "../utils/ownerContent";
 import { ARCHIVED_OWNER_STATUS, DEFAULT_OWNER_STATUS, OWNER_FORM_FIELDS, isFieldShown } from "../utils/ownerFormRules";
 import {
@@ -40,6 +42,7 @@ const OwnerDetail = ({ id }) => {
   const [actionError, setActionError] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSettingShares, setIsSettingShares] = useState(false);
 
   const loadOwner = useCallback(async () => {
     setLoadState({ status: "loading" });
@@ -56,6 +59,18 @@ const OwnerDetail = ({ id }) => {
   }, [loadOwner]);
 
   const closeEditor = useCallback(() => setIsEditing(false), []);
+  const closeShares = useCallback(() => setIsSettingShares(false), []);
+
+  const handleSharesSaved = useCallback(
+    ({ propertyTitle, dateInput }) => {
+      setIsSettingShares(false);
+      setActionError(null);
+      const date = utcDateFormatter(activeLanguage)(dateInputToUtcMidnight(dateInput));
+      toast.success(fillTemplate(t.shares.savedToast, { property: propertyTitle, date }));
+      void loadOwner();
+    },
+    [activeLanguage, loadOwner, t.shares.savedToast]
+  );
 
   if (loadState.status === "loading") {
     return <PulseBarsLoader message={texts.loading} />;
@@ -170,6 +185,15 @@ const OwnerDetail = ({ id }) => {
             disabled={isBusy}>
             {t.editOwner}
           </button>
+          {isArchived ? null : (
+            <button
+              type="button"
+              className="host-owners-button-secondary"
+              onClick={() => setIsSettingShares(true)}
+              disabled={isBusy}>
+              {t.shares.title}
+            </button>
+          )}
           {isArchived ? (
             <button type="button" className="host-owners-button" onClick={restore} disabled={isBusy}>
               {pendingAction === "restore" ? texts.restoring : texts.restore}
@@ -217,6 +241,15 @@ const OwnerDetail = ({ id }) => {
       </section>
       <ConfirmDialog confirmDialog={archiveDialog} onCancel={() => setIsConfirmOpen(false)} />
       {isEditing ? <OwnerFormModal owner={owner} t={t} onClose={closeEditor} onSaved={handleSaved} /> : null}
+      {isSettingShares ? (
+        <SetSharesModal
+          t={t}
+          language={activeLanguage}
+          initialOwnerId={owner.id}
+          onClose={closeShares}
+          onSaved={handleSharesSaved}
+        />
+      ) : null}
     </>
   );
 };
