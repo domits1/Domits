@@ -69,7 +69,7 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
             url: response.fileUrl,
         };
         setFiles((prev) => [...prev, uploadedFile]);
-        onUploadComplete(response.fileUrl);
+        onUploadComplete(uploadedFile);
     };
 
     const handleAttachments = async (droppedFiles) => {

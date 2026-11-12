@@ -81,7 +81,13 @@ describe("ChatUploadAttachment", () => {
 
     dropPhoto();
 
-    await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith(UPLOAD_TARGET.fileUrl));
+    await waitFor(() =>
+      expect(onUploadComplete).toHaveBeenCalledWith({
+        url: UPLOAD_TARGET.fileUrl,
+        name: "photo.jpg",
+        type: "image/jpeg",
+      })
+    );
     expect(onUploadError).not.toHaveBeenCalled();
   });
 
