@@ -18,6 +18,7 @@ export const formatPropertyLocation = (review) =>
   [review.property_city, review.property_country].filter(Boolean).join(", ");
 
 export const formatSubmittedAt = (timestamp) => {
+  if (typeof timestamp === "string" && !timestamp.trim()) return { date: "Unknown date", time: "" };
   const date = new Date(Number(timestamp));
   if (timestamp == null || Number.isNaN(date.getTime())) return { date: "Unknown date", time: "" };
   return {
@@ -25,8 +26,6 @@ export const formatSubmittedAt = (timestamp) => {
     time: date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
   };
 };
-
-export const isVerifiedStatus = (status) => Object.hasOwn(VERIFICATION_LABELS, status);
 
 export const getVerificationLabel = (status) => VERIFICATION_LABELS[status] ?? "Unverified";
 
@@ -46,12 +45,3 @@ export const matchesReviewSearch = (review, query) => {
       .includes(needle)
   );
 };
-
-const REVIEW_STATUS_LABELS = {
-  PENDING_APPROVAL: "Pending approval",
-  APPROVED: "Awaiting publication",
-  PUBLISHED: "Published",
-  REJECTED: "Rejected",
-};
-
-export const getReviewStatusLabel = (status) => REVIEW_STATUS_LABELS[status] ?? "Unknown";
