@@ -12,7 +12,7 @@ import {
 } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
-export default function ReviewApprovalDetails({ review, approving, onApprove, onClose, onFlag }) {
+export default function ReviewApprovalDetails({ review, approving, onApprove, onClose, onFlag, onPublish }) {
   const pending = review.status === "PENDING_APPROVAL";
   const canFlag = ["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status);
   const submitted = formatSubmittedAt(review.created_at);
@@ -106,6 +106,13 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
               {approving ? "Approving…" : "Approve review"}
             </button>
           )}
+        </div>
+      )}
+      {review.status === "APPROVED" && review.publication_status === "UNPUBLISHED" && (
+        <div className={styles.detailsActions}>
+          <button type="button" className={`${styles.approveButton} ${styles.approveButtonLarge}`} disabled={approving} onClick={() => onPublish(review)}>
+            {approving ? "Publishing…" : "Publish review"}
+          </button>
         </div>
       )}
     </aside>

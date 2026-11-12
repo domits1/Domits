@@ -27,6 +27,24 @@ jest.mock("../services/ownerService", () => {
 
 jest.mock("react-toastify", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
+jest.mock("../components/SetSharesModal", () => {
+  const actual = jest.requireActual("../components/SetSharesModal");
+  const FakeSetSharesModal = ({ t: texts, initialOwnerId, onClose, onSaved }) => (
+    <div role="dialog" aria-label={texts.shares.title}>
+      <p>{`Shares for ${initialOwnerId}`}</p>
+      <button type="button" onClick={onClose}>
+        {texts.shares.cancel}
+      </button>
+      <button
+        type="button"
+        onClick={() => onSaved({ result: {}, propertyTitle: "Villa Kalimaya III", dateInput: "2031-01-15" })}>
+        {texts.shares.save}
+      </button>
+    </div>
+  );
+  return { __esModule: true, default: FakeSetSharesModal, utcDateFormatter: actual.utcDateFormatter };
+});
+
 const t = en.hostOwners;
 const texts = t.detail;
 
@@ -210,6 +228,59 @@ describe("HostOwnerDetail", () => {
     expect(getOwner).toHaveBeenCalledTimes(1);
   });
 
+  test("offers Set ownership shares for an active owner, and not for an archived one", async () => {
+    getOwner.mockResolvedValueOnce(owner()).mockResolvedValueOnce(ARCHIVED);
+
+    const { unmount } = renderPage();
+    expect(await screen.findByRole("button", { name: t.shares.title })).toBeTruthy();
+    unmount();
+
+    renderPage();
+    await screen.findByRole("button", { name: texts.restore });
+    expect(screen.queryByRole("button", { name: t.shares.title })).toBeNull();
+  });
+
+  test("Set ownership shares opens the form for this owner, and Cancel closes it", async () => {
+    getOwner.mockResolvedValue(owner());
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: t.shares.title }));
+
+    const dialog = screen.getByRole("dialog", { name: t.shares.title });
+    expect(within(dialog).getByText("Shares for owner-1")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: t.shares.cancel }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(getOwner).toHaveBeenCalledTimes(1);
+  });
+
+  test("after saving shares the form closes, a toast names the property and date, and the owner loads again", async () => {
+    const updated = owner({
+      properties: [
+        {
+          property_id: "property-1",
+          property_title: "Villa Kalimaya III",
+          ownership_basis_points: 10000,
+          effective_from: 1782864000000,
+          effective_to: null,
+        },
+      ],
+    });
+    getOwner.mockResolvedValueOnce(owner()).mockResolvedValueOnce(updated);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: t.shares.title }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: t.shares.save }));
+
+    expect(await screen.findByText("Villa Kalimaya III, 100%")).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(toast.success).toHaveBeenCalledWith(
+      "The shares of Villa Kalimaya III were saved. They apply from January 15, 2031."
+    );
+    expect(getOwner).toHaveBeenCalledTimes(2);
+    expect(getOwner).toHaveBeenLastCalledWith("owner-1");
+  });
+
   test("Archive asks first, then archives and shows the archived owner with a toast", async () => {
     getOwner.mockResolvedValue(owner());
     archiveOwner.mockResolvedValue(ARCHIVED);
@@ -339,6 +410,7 @@ describe("HostOwnerDetail", () => {
 
     expect(screen.getByRole("button", { name: texts.archiving }).disabled).toBe(true);
     expect(screen.getByRole("button", { name: t.editOwner }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: t.shares.title }).disabled).toBe(true);
 
     pending.resolve(ARCHIVED);
     expect(await screen.findByRole("button", { name: texts.restore })).toBeTruthy();

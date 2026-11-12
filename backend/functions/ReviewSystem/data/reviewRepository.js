@@ -257,7 +257,7 @@ export class ReviewRepository {
       where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
-    return status === "PENDING_APPROVAL" ? this.addModerationDetails(database, reviews) : reviews;
+    return this.addModerationDetails(database, reviews);
   }
 
   async findModeratedReviews(statuses) {
@@ -289,7 +289,6 @@ export class ReviewRepository {
     return reviews.map((review) => {
       const location = locationsById.get(review.property_id);
       const booking = bookingsById.get(review.booking_id);
-      // A booking name only identifies the reviewer when that guest made the booking.
       const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
       const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
       return { ...review, property_title: titles.get(review.property_id) ?? null,
