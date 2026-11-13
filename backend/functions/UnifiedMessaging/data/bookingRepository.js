@@ -62,7 +62,7 @@ class BookingRepository {
     return count === 1;
   }
 
-  async findGuestNamesForHostBookings({ hostId, bookingIds }) {
+  async findBookingDetailsForHostBookings({ hostId, bookingIds }) {
     if (!hostId || !Array.isArray(bookingIds) || bookingIds.length === 0) return {};
 
     const client = await Database.getInstance();
@@ -74,13 +74,15 @@ class BookingRepository {
       const chunk = uniqueBookingIds.slice(start, start + GUEST_NAME_CHUNK_SIZE);
       const bookings = await repository
         .createQueryBuilder("booking")
-        .select(["booking.id", "booking.guestname"])
+        .select(["booking.id", "booking.guestname", "booking.booking_source"])
         .where("booking.id IN (:...bookingIds)", { bookingIds: chunk })
         .andWhere("booking.hostid = :hostId", { hostId })
         .getMany();
 
       for (const booking of bookings) {
-        if (booking.guestname) names[booking.id] = booking.guestname;
+        if (booking.guestname || booking.booking_source) {
+          names[booking.id] = { guestName: booking.guestname || null, bookingSource: booking.booking_source || null };
+        }
       }
     }
 
