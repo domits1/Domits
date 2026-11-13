@@ -433,22 +433,50 @@
         "subtitle": "Leidenschaftliche Reisende und Tech-Innovatoren, die die Zukunft der Gastfreundschaft gestalten",
         "moreMembers": "+32 Mitglieder",
         "members": [
-          { "name": "Stefan Hopman", "role": "Gründer" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Entwickler" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Gründer"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Entwickler"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nationalitäten" },
-        { "icon": "users", "value": "+35", "label": "Teammitglieder" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Arbeite von überall" },
-        { "icon": "handHeart", "value": "People-first", "label": "Kultur, die sich kümmert" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nationalitäten"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Teammitglieder"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Arbeite von überall"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Kultur, die sich kümmert"
+        }
       ],
       "cards": {
         "featured": {
           "title": "Die Zukunft des Reisens gestalten",
           "description": "Wir denken neu, wie Menschen Reisen entdecken, buchen und erleben. Gestalte mit uns Technologie, die die Welt näher zusammenbringt.",
-          "tags": ["Globale Wirkung", "Innovation zuerst"]
+          "tags": [
+            "Globale Wirkung",
+            "Innovation zuerst"
+          ]
         },
         "partnerSuccess": {
           "title": "Erfolg für Partner",
@@ -458,12 +486,20 @@
         "culture": {
           "title": "Kultur, die sich kümmert",
           "description": "Remote-first, inklusiv und menschlich. Wir legen Wert auf Work-Life-Balance und sinnvolle Wirkung.",
-          "tags": ["Remote", "Flexibel", "Global"]
+          "tags": [
+            "Remote",
+            "Flexibel",
+            "Global"
+          ]
         },
         "openPositions": {
           "title": "Offene Stellen",
           "description": "Wir stellen in den Bereichen Engineering, Produkt, Design und Partnerschaften ein.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -716,18 +752,36 @@
         "eyebrow": "Für Gäste",
         "heading": "Finde deine perfekte Unterkunft in 3 einfachen Schritten",
         "steps": [
-          { "title": "Suche dein Reiseziel", "description": "Entdecke Ferienunterkünfte mit smarten Filtern für Ort, Daten, Preis und Ausstattung." },
-          { "title": "Buche deinen Aufenthalt", "description": "Wähle deine bevorzugte Unterkunft und bestätige deine Buchung mit nur wenigen Klicks." },
-          { "title": "Erlebe Domits", "description": "Schreibe deinem Gastgeber, verwalte deine Reise und genieße persönliche Unterstützung." }
+          {
+            "title": "Suche dein Reiseziel",
+            "description": "Entdecke Ferienunterkünfte mit smarten Filtern für Ort, Daten, Preis und Ausstattung."
+          },
+          {
+            "title": "Buche deinen Aufenthalt",
+            "description": "Wähle deine bevorzugte Unterkunft und bestätige deine Buchung mit nur wenigen Klicks."
+          },
+          {
+            "title": "Erlebe Domits",
+            "description": "Schreibe deinem Gastgeber, verwalte deine Reise und genieße persönliche Unterstützung."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "Für Gastgeber",
         "heading": "Lass dein Vermietungsgeschäft mühelos wachsen",
         "steps": [
-          { "title": "Inseriere deine Unterkunft", "description": "Füge Fotos, Beschreibung und Ausstattung hinzu und lege in wenigen Minuten Preis und Verfügbarkeit fest." },
-          { "title": "Verwalte Buchungen", "description": "Verfolge Buchungen, verwalte deinen Kalender und kommuniziere mühelos mit Gästen." },
-          { "title": "Werde sicher bezahlt", "description": "Erhalte Zahlungen sicher und verfolge deine Einnahmen und Einblicke in Echtzeit." }
+          {
+            "title": "Inseriere deine Unterkunft",
+            "description": "Füge Fotos, Beschreibung und Ausstattung hinzu und lege in wenigen Minuten Preis und Verfügbarkeit fest."
+          },
+          {
+            "title": "Verwalte Buchungen",
+            "description": "Verfolge Buchungen, verwalte deinen Kalender und kommuniziere mühelos mit Gästen."
+          },
+          {
+            "title": "Werde sicher bezahlt",
+            "description": "Erhalte Zahlungen sicher und verfolge deine Einnahmen und Einblicke in Echtzeit."
+          }
         ]
       }
     },
@@ -1822,6 +1876,39 @@
         "cancel": "Abbrechen",
         "success": "✓ Einladung gesendet an",
         "error": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Benachrichtigungen",
+      "description": "Wähle aus, wie du die einzelnen Benachrichtigungen erhalten möchtest.",
+      "event": "Benachrichtigung",
+      "required": "Erforderlich",
+      "eventNamesNote": "Die Namen der Benachrichtigungen werden derzeit vom Backend auf Englisch bereitgestellt.",
+      "disableAllEmail": "Alle optionalen E-Mail-Benachrichtigungen deaktivieren",
+      "enableAllEmail": "Alle optionalen E-Mail-Benachrichtigungen aktivieren",
+      "loading": "Benachrichtigungseinstellungen werden geladen...",
+      "retry": "Erneut versuchen",
+      "saved": "Benachrichtigungseinstellungen gespeichert.",
+      "saving": "Speichern...",
+      "save": "Einstellungen speichern",
+      "channels": {
+        "inApp": "In-App",
+        "email": "E-Mail",
+        "sms": "SMS"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Buchungen & Reservierungen",
+        "propertyOwner": "Immobilieneigentümer",
+        "finance": "Finanzen",
+        "distribution": "Vertrieb",
+        "compliance": "Compliance",
+        "tasks": "Aufgaben"
+      },
+      "errors": {
+        "loadFailed": "Deine Benachrichtigungseinstellungen konnten nicht geladen werden. Bitte versuche es erneut, bevor du Änderungen vornimmst.",
+        "saveFailed": "Deine Benachrichtigungseinstellungen konnten nicht gespeichert werden. Deine Änderungen sind erhalten geblieben. Bitte versuche es erneut.",
+        "invalidResponse": "Die Antwort zu den Benachrichtigungseinstellungen war ungültig. Bitte versuche es erneut."
       }
     }
   },

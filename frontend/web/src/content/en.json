@@ -432,22 +432,50 @@
         "subtitle": "Passionate travelers and tech innovators building the future of hospitality",
         "moreMembers": "+32 members",
         "members": [
-          { "name": "Stefan Hopman", "role": "Founder" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Developer" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Founder"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Developer"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nationalities" },
-        { "icon": "users", "value": "+35", "label": "Team members" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Work from anywhere" },
-        { "icon": "handHeart", "value": "People-first", "label": "Culture that cares" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nationalities"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Team members"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Work from anywhere"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Culture that cares"
+        }
       ],
       "cards": {
         "featured": {
           "title": "Building the future of travel",
           "description": "We're reimagining how people discover, book, and experience travel. Join us in creating technology that brings the world closer together.",
-          "tags": ["Global Impact", "Innovation First"]
+          "tags": [
+            "Global Impact",
+            "Innovation First"
+          ]
         },
         "partnerSuccess": {
           "title": "Partner success",
@@ -457,12 +485,20 @@
         "culture": {
           "title": "Culture that cares",
           "description": "Remote-first, inclusive, and human. We prioritize work-life balance and meaningful impact.",
-          "tags": ["Remote", "Flexible", "Global"]
+          "tags": [
+            "Remote",
+            "Flexible",
+            "Global"
+          ]
         },
         "openPositions": {
           "title": "Open positions",
           "description": "We're hiring across engineering, product, design, and partnerships.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -715,18 +751,36 @@
         "eyebrow": "For guests",
         "heading": "Find your perfect stay in 3 easy steps",
         "steps": [
-          { "title": "Search your destination", "description": "Explore vacation rentals using smart filters for location, dates, price, and amenities." },
-          { "title": "Book your stay", "description": "Choose your preferred accommodation and confirm your booking in just a few clicks." },
-          { "title": "Experience Domits", "description": "Message your host, manage your trip, and enjoy personalized support." }
+          {
+            "title": "Search your destination",
+            "description": "Explore vacation rentals using smart filters for location, dates, price, and amenities."
+          },
+          {
+            "title": "Book your stay",
+            "description": "Choose your preferred accommodation and confirm your booking in just a few clicks."
+          },
+          {
+            "title": "Experience Domits",
+            "description": "Message your host, manage your trip, and enjoy personalized support."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "For hosts",
         "heading": "Grow your hosting business with ease",
         "steps": [
-          { "title": "List your property", "description": "Add photos, description, amenities and set your price and availability in minutes." },
-          { "title": "Manage bookings", "description": "Track bookings, manage your calendar and communicate with guests easily." },
-          { "title": "Get paid securely", "description": "Receive payments safely and track your earnings and insights in real time." }
+          {
+            "title": "List your property",
+            "description": "Add photos, description, amenities and set your price and availability in minutes."
+          },
+          {
+            "title": "Manage bookings",
+            "description": "Track bookings, manage your calendar and communicate with guests easily."
+          },
+          {
+            "title": "Get paid securely",
+            "description": "Receive payments safely and track your earnings and insights in real time."
+          }
         ]
       }
     },
@@ -1821,6 +1875,39 @@
         "saveBtn": "Save",
         "cancel": "Cancel",
         "error": "Failed to update role. Please try again."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Notifications",
+      "description": "Choose how you want to receive each notification.",
+      "event": "Notification",
+      "required": "Required",
+      "eventNamesNote": "Notification names are currently provided by the backend in English.",
+      "disableAllEmail": "Turn off all optional email notifications",
+      "enableAllEmail": "Turn on all optional email notifications",
+      "loading": "Loading notification preferences...",
+      "retry": "Retry",
+      "saved": "Notification preferences saved.",
+      "saving": "Saving...",
+      "save": "Save preferences",
+      "channels": {
+        "inApp": "In-app",
+        "email": "Email",
+        "sms": "SMS"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Bookings & Reservations",
+        "propertyOwner": "Property Owner",
+        "finance": "Finance",
+        "distribution": "Distribution",
+        "compliance": "Compliance",
+        "tasks": "Tasks"
+      },
+      "errors": {
+        "loadFailed": "We could not load your notification choices. Retry before making changes.",
+        "saveFailed": "We could not save your notification choices. Your changes are still here. Please try again.",
+        "invalidResponse": "The notification preferences response was invalid. Please retry."
       }
     }
   },
