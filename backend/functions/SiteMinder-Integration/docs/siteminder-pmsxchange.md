@@ -69,12 +69,20 @@ The mapping uses the shared `channel_integration_*` tables that Channex also use
 | `channel_integration_room_type` | `externalRoomTypeId` = `roomTypeCode` (also used as `InvTypeCode`) |
 | `channel_integration_rate_plan` | `externalRatePlanId` = `ratePlanCode` |
 
-`SiteMinderMappingService.syncHotel({ userId, domitsPropertyId, hotelCode })`:
+One SiteMinder room type is one Domits property. In SiteMinder a host sells villas, apartments and holiday homes as room types inside one property (the API calls it a hotel), each with a number of units. In Domits one property is one rentable unit. So a villa park with two villas is one SiteMinder hotel with two room types, linked to two Domits properties, and a reservation for both villas becomes two Domits bookings. Decided with Stefan on 9 November 2026; refusing multi-room reservations is not an option, and SiteMinder tests them in its certification.
 
-1. Only the owner of the Domits property may map it.
-2. A hotel code can feed only one Domits property.
-3. Reads Rooms and Rates from SiteMinder and stores the room types and rate plans as `ACTIVE`.
-4. Sets the ones SiteMinder no longer returns to `INACTIVE`.
+Availability for a linked room type must be sent as 1 or 0 per date, taken from the calendar of its Domits property, so SiteMinder never sells one villa twice, even when the room type says more units. The part that builds availability from the calendar is not built yet.
+
+`SiteMinderMappingService.syncRoomType({ userId, domitsPropertyId, hotelCode, roomTypeCode })`:
+
+1. Only the owner of the Domits property may link it.
+2. A hotel belongs to one Domits host. Another host gets `SITEMINDER_HOTEL_ALREADY_MAPPED`.
+3. A room type can be linked to only one Domits property at a time (`SITEMINDER_ROOM_TYPE_ALREADY_MAPPED`), so one villa never gets two calendars.
+4. Reads Rooms and Rates from SiteMinder. A room type that SiteMinder does not have gives `SITEMINDER_ROOM_TYPE_NOT_FOUND` and nothing is stored.
+5. Stores the hotel, the room type and its rate plans as `ACTIVE` for this Domits property.
+6. Sets everything else of this Domits property in this hotel to `INACTIVE`: the room it was linked to before, and rate plans SiteMinder no longer returns. Linking the same room again is safe.
+
+The ARI check (`SiteMinderInventoryService`) accepts the room types of every Domits property of the host in that hotel.
 
 ## Why sending is checked first
 

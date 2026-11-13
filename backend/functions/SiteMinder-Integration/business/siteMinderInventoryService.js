@@ -46,7 +46,7 @@ export class SiteMinderInventoryService {
     if (!property) {
       throw new SiteMinderMappingError("SITEMINDER_HOTEL_NOT_MAPPED", `SiteMinder hotel ${hotelCode} is not mapped to a Domits property`);
     }
-    const ofThisHotel = (row) => row.externalPropertyId === hotelCode && row.domitsPropertyId === property.domitsPropertyId && isActive(row);
+    const ofThisHotel = (row) => row.externalPropertyId === hotelCode && isActive(row);
     const rooms = (await this.roomTypes.listByAccountId(property.integrationAccountId)).filter(ofThisHotel);
     const plans = (await this.ratePlans.listByAccountId(property.integrationAccountId)).filter(ofThisHotel);
     return {
