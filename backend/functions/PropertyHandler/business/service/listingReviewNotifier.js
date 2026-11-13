@@ -1,6 +1,13 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
+import { withinTimeLimit } from "../../util/timeLimit.js";
 
+// The review response waits on this notice, so a hung Cognito or Lambda call must not hold up an approve or reject.
+// One budget covers the lookup and the invoke together. 3000 ms matches the other single dependent read in this
+// function (WEBSITE_PLAN_READ_TIMEOUT_MS): an AdminGetUser plus an async invoke normally take well under a second,
+// and the notice is best effort, so waiting longer buys nothing. It also sits far below API Gateway's 29 s limit.
+export const NOTIFICATION_TIMEOUT_MS = 3000;
+const NOTIFICATION_TIMEOUT_CODE = "NOTIFICATION_TIMEOUT";
 const MAX_SUBJECT_TITLE_LENGTH = 80;
 const FALLBACK_TITLE = "your listing";
 
@@ -38,19 +45,10 @@ export class ListingReviewNotifier {
       return;
     }
     try {
-      const toEmail = await this.getHostEmail(hostId);
-      await this.lambdaClient.send(
-        new InvokeCommand({
-          FunctionName: process.env.EMAIL_NOTIFICATION_LAMBDA_NAME || "EmailNotificationService",
-          InvocationType: "Event",
-          Payload: JSON.stringify({
-            body: {
-              toEmail,
-              subject: `${SUBJECT_PREFIX[outcome]}: ${toSubjectTitle(title)}`,
-              body: buildBody({ outcome, title, reason }),
-            },
-          }),
-        })
+      await withinTimeLimit(
+        this.sendDecisionEmail({ hostId, title, outcome, reason }),
+        NOTIFICATION_TIMEOUT_MS,
+        () => Object.assign(new Error("Listing review notification timed out."), { code: NOTIFICATION_TIMEOUT_CODE })
       );
     } catch (error) {
       console.error("Listing review notification failed", {
@@ -59,6 +57,23 @@ export class ListingReviewNotifier {
         code: error?.code || error?.name || "NOTIFICATION_FAILED",
       });
     }
+  }
+
+  async sendDecisionEmail({ hostId, title, outcome, reason }) {
+    const toEmail = await this.getHostEmail(hostId);
+    await this.lambdaClient.send(
+      new InvokeCommand({
+        FunctionName: process.env.EMAIL_NOTIFICATION_LAMBDA_NAME || "EmailNotificationService",
+        InvocationType: "Event",
+        Payload: JSON.stringify({
+          body: {
+            toEmail,
+            subject: `${SUBJECT_PREFIX[outcome]}: ${toSubjectTitle(title)}`,
+            body: buildBody({ outcome, title, reason }),
+          },
+        }),
+      })
+    );
   }
 
   async getHostEmail(hostId) {

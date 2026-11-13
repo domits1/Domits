@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ListingReviewNotifier } from "../../functions/PropertyHandler/business/service/listingReviewNotifier.js";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import {
+  ListingReviewNotifier,
+  NOTIFICATION_TIMEOUT_MS,
+} from "../../functions/PropertyHandler/business/service/listingReviewNotifier.js";
 
 const HOST_EMAIL = "host@example.com";
 
@@ -33,6 +36,10 @@ describe("ListingReviewNotifier", () => {
     getUserById = jest.fn(async () => cognitoUser());
     notifier = new ListingReviewNotifier({ lambdaClient: { send }, cognitoRepository: { getUserById } });
     errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   it("reads the host's email from Cognito by host id and emails them asynchronously", async () => {
@@ -144,6 +151,78 @@ describe("ListingReviewNotifier", () => {
 
     await expect(notifier.notifyDecision(decision())).resolves.toBeUndefined();
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  describe("when a dependency never answers", () => {
+    const never = () => new Promise(() => {});
+
+    const settleAfterTimeout = async (call) => {
+      jest.useFakeTimers();
+      try {
+        let settled = false;
+        const pending = call().then(() => {
+          settled = true;
+        });
+        await jest.advanceTimersByTimeAsync(NOTIFICATION_TIMEOUT_MS - 1);
+        const settledEarly = settled;
+        await jest.advanceTimersByTimeAsync(1);
+        await pending;
+        return { settledEarly, settled };
+      } finally {
+        jest.useRealTimers();
+      }
+    };
+
+    it("gives up on a hung Cognito lookup after the time limit and does not hang the caller", async () => {
+      getUserById.mockImplementationOnce(never);
+
+      const outcome = await settleAfterTimeout(() => notifier.notifyDecision(decision()));
+
+      expect(outcome).toEqual({ settledEarly: false, settled: true });
+      expect(send).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Listing review notification failed",
+        expect.objectContaining({ propertyId: "property-1", outcome: "APPROVED", code: "NOTIFICATION_TIMEOUT" })
+      );
+    });
+
+    it("gives up on a hung Lambda invoke after the time limit and does not hang the caller", async () => {
+      send.mockImplementationOnce(never);
+
+      const outcome = await settleAfterTimeout(() => notifier.notifyDecision(decision()));
+
+      expect(outcome).toEqual({ settledEarly: false, settled: true });
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Listing review notification failed",
+        expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })
+      );
+    });
+
+    it("shares one time limit between the lookup and the invoke", async () => {
+      jest.useFakeTimers();
+      try {
+        const slow = (value) => new Promise((resolve) => setTimeout(() => resolve(value), NOTIFICATION_TIMEOUT_MS - 500));
+        getUserById.mockImplementationOnce(() => slow(cognitoUser()));
+        send.mockImplementationOnce(() => slow({}));
+
+        const pending = notifier.notifyDecision(decision());
+        await jest.advanceTimersByTimeAsync(NOTIFICATION_TIMEOUT_MS);
+        await pending;
+
+        expect(errorSpy).toHaveBeenCalledWith(
+          "Listing review notification failed",
+          expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })
+        );
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it("does not log a timeout when both calls answer in time", async () => {
+      await notifier.notifyDecision(decision());
+
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
   });
 
   it("keeps the reason and the host's email out of the logs", async () => {
