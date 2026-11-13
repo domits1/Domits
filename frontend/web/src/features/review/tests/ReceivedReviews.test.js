@@ -1,6 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import ReceivedReviews from "../components/ReceivedReviews";
+import { deleteHostResponse } from "../services/reviewAPI";
+jest.mock("../services/reviewAPI", () => ({ deleteHostResponse: jest.fn(), requestReview: jest.fn().mockRejectedValue(new Error("Unavailable")) }));
 jest.mock("../../../services/hostPropertyService", () => ({
   fetchHostPropertySelectOptions: async () => [{ value: "p1", title: "City studio", location: "Amsterdam" }],
 }));
@@ -45,4 +47,27 @@ test("selects a review and searches guest names", async () => {
   expect(screen.queryByRole("region", { name: "Selected review" })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
   expect(within(screen.getByRole("region", { name: "Selected review" })).getByText("Very clean")).toBeInTheDocument();
+});
+
+test("deleted response stays cleared when switching reviews", async () => {
+  deleteHostResponse.mockResolvedValueOnce(undefined);
+  function ResponseWorkspace() {
+    const [respondableReviews, setRespondableReviews] = React.useState({
+      a: { ...reviews[0], response: { status: "published", message: "Old reply" } }, b: reviews[1],
+    });
+    return <ReceivedReviews userId="host" reviews={reviews} loading={false} error=""
+      respondableReviews={respondableReviews} onResponseChange={(id, response) =>
+        setRespondableReviews(current => ({ ...current, [id]: { ...current[id], response } }))} />;
+  }
+  render(<ResponseWorkspace />);
+  await screen.findByText(/City studio.*Amsterdam/);
+  fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete Response" }));
+  fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+  expect(await screen.findByRole("textbox")).toHaveValue("");
+  fireEvent.click(screen.getByRole("button", { name: "Quiet room", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+  expect(screen.queryByLabelText("Host response")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Delete Response" })).toBeDisabled();
+  expect(screen.getByRole("textbox")).toHaveValue("");
 });
