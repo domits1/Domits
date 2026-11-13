@@ -67,10 +67,11 @@ test.each([
 });
 
 test.each([
-  ["approve", approveReview], ["publish", publishApprovedReview],
-])("%s retains failed reviews and releases the guard for retry", async (action, api) => {
+  ["approve", "pending-approval", approveReview],
+  ["publish", "approved", publishApprovedReview],
+])("%s retains failed reviews and releases the guard for retry", async (action, scope, api) => {
   api.mockRejectedValueOnce(new Error("Conflict")).mockResolvedValue({ status: "UPDATED" });
-  const { result } = renderHook(() => useReviewApprovalQueue("published"));
+  const { result } = renderHook(() => useReviewApprovalQueue(scope));
   await waitFor(() => expect(result.current.queueState).toBe(QUEUE_STATE.READY));
   await act(async () => result.current[action](review));
   expect(result.current.reviews).toEqual([review]);
@@ -78,5 +79,7 @@ test.each([
   expect(result.current.approvingIds.size).toBe(0);
   await act(async () => result.current[action](review));
   expect(api).toHaveBeenCalledTimes(2);
-  expect(result.current.reviews[0].status).toBe("UPDATED");
+  expect(result.current.reviews).toEqual([]);
+  expect(result.current.approvingIds.size).toBe(0);
+  expect(result.current.notice.type).toBe("success");
 });
