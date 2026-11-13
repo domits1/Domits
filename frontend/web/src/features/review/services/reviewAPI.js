@@ -32,7 +32,10 @@ export const getAdminReviews = async (scope) => {
   const response = await requestReview("GET", { scope });
   const payload = await parseResponse(response);
   if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews.");
-  return Array.isArray(payload) ? payload : [];
+  if (!Array.isArray(payload)) {
+    throw reviewApprovalError(response, null, "Could not load reviews. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
 };
 
 const requestModeration = async (method, fallback, query = {}, body) => {

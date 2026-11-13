@@ -3,6 +3,8 @@ import {
   formatSubmittedAt,
   getGuestInitials,
   getVerificationLabel,
+  isVerifiedStatus,
+  getReviewStatusLabel,
   matchesReviewSearch,
 } from "../utils/reviewApprovalFormat";
 
@@ -17,6 +19,22 @@ const review = {
 };
 
 describe("review approval formatting", () => {
+  test.each([
+    ["VERIFIED", true], ["VERIFIED_STAY", true],
+    ["UNVERIFIED", false], [undefined, false], ["toString", false],
+  ])("recognizes verified status %p", (status, expected) => {
+    expect(isVerifiedStatus(status)).toBe(expected);
+  });
+
+  test.each([
+    ["PENDING_APPROVAL", "Pending approval"],
+    ["APPROVED", "Awaiting publication"],
+    ["PUBLISHED", "Published"], ["REJECTED", "Rejected"],
+    [undefined, "Unknown"], ["SOMETHING_NEW", "Unknown"],
+  ])("labels review status %p", (status, label) => {
+    expect(getReviewStatusLabel(status)).toBe(label);
+  });
+
   test.each([
     ["Jessica Smith", "JS"],
     ["  michael  k. ", "MK"],
@@ -40,6 +58,14 @@ describe("review approval formatting", () => {
     expect(formatSubmittedAt(timestamp)).toEqual({ date: "21 Jul 2026", time: "10:24" });
     expect(formatSubmittedAt(String(timestamp))).toEqual({ date: "21 Jul 2026", time: "10:24" });
     expect(formatSubmittedAt(undefined)).toEqual({ date: "Unknown date", time: "" });
+  });
+
+  test.each(["", "   ", null, undefined, "invalid"])("treats %p as an unknown timestamp", (value) => {
+    expect(formatSubmittedAt(value)).toEqual({ date: "Unknown date", time: "" });
+  });
+
+  test("accepts the numeric epoch", () => {
+    expect(formatSubmittedAt(0).date).toBe("1 Jan 1970");
   });
 
   test.each([
