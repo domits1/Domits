@@ -1392,6 +1392,18 @@
             "title": "Miembros del equipo",
             "desc": "Invita a tu equipo y asigna roles en toda tu cartera."
           },
+          "security": {
+            "title": "Configurar seguridad y autenticación",
+            "desc": "Protege tu cuenta con la autenticación en dos pasos."
+          },
+          "owners": {
+            "title": "Configurar gestión de propietarios",
+            "desc": "Añade propietarios y gestiona sus participaciones."
+          },
+          "messaging": {
+            "title": "Configurar mensajes",
+            "desc": "Configura mensajes automáticos para tus huéspedes."
+          },
           "listProperties": {
             "title": "Publicar tus alojamientos",
             "desc": "Gestiona y añade alojamientos en toda tu cartera."

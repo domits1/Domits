@@ -1392,6 +1392,18 @@
             "title": "Teamleden",
             "desc": "Nodig je team uit en wijs rollen toe binnen je portefeuille."
           },
+          "security": {
+            "title": "Beveiliging & authenticatie instellen",
+            "desc": "Beveilig je account met tweestapsverificatie."
+          },
+          "owners": {
+            "title": "Eigenaarsbeheer instellen",
+            "desc": "Voeg eigenaren toe en beheer hun eigendomsaandelen."
+          },
+          "messaging": {
+            "title": "Berichten instellen",
+            "desc": "Stel automatische berichten in voor je gasten."
+          },
           "listProperties": {
             "title": "Woningen aanmelden",
             "desc": "Beheer en voeg woningen toe binnen je portefeuille."

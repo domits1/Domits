@@ -12,6 +12,9 @@ import {
   fetchHostProperties,
   checkCompanyStatus,
   checkTeamStatus,
+  checkSecurityStatus,
+  checkOwnersStatus,
+  checkMessagingStatus,
   checkAnyPropertyListedStatus,
   checkAnyWebsiteStatus,
   checkAccountChannelsStatus,
@@ -29,6 +32,9 @@ const contentByLanguage = { en, nl, de, es };
 const STEP_KEYS = [
   "company",
   "team",
+  "security",
+  "owners",
+  "messaging",
   "listProperties",
   "website",
   "channels",
@@ -45,6 +51,9 @@ const REQUIRED_STEP_KEYS = new Set(["company", "team", "listProperties", "websit
 const STEP_LINKS = {
   company: "/hostdashboard/settings/company",
   team: "/hostdashboard/settings/team",
+  security: "/hostdashboard/settings/privacy-security",
+  owners: "/hostdashboard/owners",
+  messaging: "/hostdashboard/messages",
   listProperties: "/hostdashboard/listings",
   website: "/hostdashboard/website",
   channels: "/hostdashboard/calendar-pricing",
@@ -78,21 +87,38 @@ const HostOnboardingEnterprise = () => {
       }
       if (isCancelled) return;
 
-      const [company, team, website, channels, payments, pricing, tasks, marketplace] = await Promise.all([
-        checkCompanyStatus(),
-        checkTeamStatus(),
-        propertiesFailed ? Promise.resolve(UNKNOWN_STATUS) : checkAnyWebsiteStatus(hostProperties),
-        checkAccountChannelsStatus(),
-        checkPaymentsStatus(),
-        checkPricingStatus(),
-        checkTasksStatus(),
-        checkMarketplaceStatus(),
-      ]);
+      const [company, team, security, owners, messaging, website, channels, payments, pricing, tasks, marketplace] =
+        await Promise.all([
+          checkCompanyStatus(),
+          checkTeamStatus(),
+          checkSecurityStatus(),
+          checkOwnersStatus(),
+          checkMessagingStatus(),
+          propertiesFailed ? Promise.resolve(UNKNOWN_STATUS) : checkAnyWebsiteStatus(hostProperties),
+          checkAccountChannelsStatus(),
+          checkPaymentsStatus(),
+          checkPricingStatus(),
+          checkTasksStatus(),
+          checkMarketplaceStatus(),
+        ]);
 
       const listProperties = propertiesFailed ? UNKNOWN_STATUS : checkAnyPropertyListedStatus(hostProperties);
 
       if (!isCancelled) {
-        setStepStatus({ company, team, listProperties, website, channels, payments, pricing, tasks, marketplace });
+        setStepStatus({
+          company,
+          team,
+          security,
+          owners,
+          messaging,
+          listProperties,
+          website,
+          channels,
+          payments,
+          pricing,
+          tasks,
+          marketplace,
+        });
         setIsLoadingStatus(false);
       }
     })();
