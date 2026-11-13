@@ -15,6 +15,7 @@ import { WebsiteEditorGallerySection } from "./sections/WebsiteEditorGallerySect
 import { WebsiteEditorImageSlotsSection } from "./sections/WebsiteEditorImageSlotsSection";
 import { WebsiteEditorCalendarSection } from "./sections/WebsiteEditorCalendarSection";
 import { WebsiteEditorContactSection } from "./sections/WebsiteEditorContactSection";
+import { WebsiteEditorPagesSection } from "./sections/WebsiteEditorPagesSection";
 import { WebsiteEditorImageSlotCard } from "./WebsiteEditorImageSlotCard";
 import { WebsiteEditorSectionVisibilityFieldCard } from "./WebsiteEditorPageSupport";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
@@ -318,6 +319,7 @@ export function WebsiteEditorSidebar({
   setSectionRef,
   setTargetRef,
   showWhatsAppSetupHint,
+  sitePagesEditor,
   standaloneVisibilityFields,
   themeValues,
   toggleSection,
@@ -407,6 +409,18 @@ export function WebsiteEditorSidebar({
       </div>
 
       <div className={styles.editorForm}>
+        {sitePagesEditor.canEditSitePages ? (
+          <WebsiteEditorPagesSection
+            isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.pages])}
+            onChangeEnabled={sitePagesEditor.setSitePageEnabled}
+            onChangeNavLabel={sitePagesEditor.setSitePageNavLabel}
+            onNavLabelKeyDown={handleEditorFieldKeyDown({ component: "input" })}
+            onToggle={toggleSection}
+            sectionRef={setSectionRef(EDITOR_SECTION_KEYS.pages)}
+            sitePages={sitePagesEditor.sitePages}
+          />
+        ) : null}
+
         {renderHeroEditorSection({
           commonTextFields,
           editorValues,
@@ -785,6 +799,12 @@ WebsiteEditorSidebar.propTypes = {
   setSectionRef: PropTypes.func.isRequired,
   setTargetRef: PropTypes.func.isRequired,
   showWhatsAppSetupHint: PropTypes.bool.isRequired,
+  sitePagesEditor: PropTypes.shape({
+    canEditSitePages: PropTypes.bool.isRequired,
+    setSitePageEnabled: PropTypes.func.isRequired,
+    setSitePageNavLabel: PropTypes.func.isRequired,
+    sitePages: PropTypes.object.isRequired,
+  }).isRequired,
   standaloneVisibilityFields: PropTypes.array.isRequired,
   themeValues: PropTypes.object.isRequired,
   toggleSection: PropTypes.func.isRequired,
