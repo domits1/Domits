@@ -3,9 +3,10 @@ import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
 import { withinTimeLimit } from "../../util/timeLimit.js";
 
 // The review response waits on this notice, so a hung Cognito or Lambda call must not hold up an approve or reject.
-// One budget covers the lookup and the invoke together. 3000 ms matches the other single dependent read in this
-// function (WEBSITE_PLAN_READ_TIMEOUT_MS): an AdminGetUser plus an async invoke normally take well under a second,
-// and the notice is best effort, so waiting longer buys nothing. It also sits far below API Gateway's 29 s limit.
+// One budget covers the lookup and the invoke together. 3000 ms copies WEBSITE_PLAN_READ_TIMEOUT_MS (the other
+// single dependent read in this function) as precedent only. There is no latency data behind either value: an
+// AdminGetUser plus an async invoke are assumed to normally take well under a second, not measured. The notice is
+// best effort, so waiting longer buys nothing. It also sits far below API Gateway's 29 s limit.
 export const NOTIFICATION_TIMEOUT_MS = 3000;
 const NOTIFICATION_TIMEOUT_CODE = "NOTIFICATION_TIMEOUT";
 const MAX_SUBJECT_TITLE_LENGTH = 80;
