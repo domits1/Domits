@@ -1,5 +1,9 @@
-import { DirectBookingWebsiteRatePlanRepository } from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
+import {
+  DirectBookingWebsiteRatePlanRepository,
+  UNPAID_PLAN_CHANGE_OUTCOMES,
+} from "../../data/repository/directBookingWebsiteRatePlanRepository.js";
 import { DirectBookingWebsiteStripeRepository } from "../../data/repository/directBookingWebsiteStripeRepository.js";
+import { isEliteSelfSelectOnFor } from "../../util/websiteEliteSelfSelect.js";
 
 export const WEBSITE_PLAN_NAMES = Object.freeze({
   ESSENTIALS: "essentials",
@@ -92,6 +96,17 @@ const isRatePlanTableUnavailableError = (error) => {
       /(does not exist|doesn't exist|undefined table|unknown table|table not found|relation not found)/.test(message));
 };
 
+const toRatePlanReadError = (error) =>
+  isRatePlanTableUnavailableError(error)
+    ? serviceError(
+      "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
+      503
+    )
+    : error;
+
+const hasPlanEnded = (plan) =>
+  Boolean(plan.effective_until) && new Date(plan.effective_until).getTime() <= Date.now();
+
 const fromUnix = (value) =>
   Number.isFinite(Number(value)) ? new Date(Number(value) * 1000) : null;
 
@@ -117,6 +132,11 @@ const stripeStatus = (value) => {
   }
 };
 
+const PAID_PLAN_REFUSAL = "This website plan has a paid subscription, so it cannot be changed without payment.";
+
+const canChoosePlanWithoutPayment = (accountId, stripeSubscriptionId) =>
+  isEliteSelfSelectOnFor(accountId) && !stripeSubscriptionId;
+
 const toView = (plan) => ({
   id: plan.id,
   accountId: plan.account_id,
@@ -133,6 +153,13 @@ const toView = (plan) => ({
   stripeCustomerId: plan.stripe_customer_id || null,
   stripeSubscriptionId: plan.stripe_subscription_id || null,
   entitlements: getWebsiteEntitlements(plan.plan),
+  eliteSelfSelectAvailable: canChoosePlanWithoutPayment(plan.account_id, plan.stripe_subscription_id),
+});
+
+const toEntitlementsView = (plan) => ({
+  plan: plan.plan,
+  entitlements: getWebsiteEntitlements(plan.plan),
+  effectiveUntil: plan.effective_until ?? null,
 });
 
 export class DirectBookingWebsiteRatePlanService {
@@ -152,12 +179,7 @@ export class DirectBookingWebsiteRatePlanService {
       if (current) return toView(current);
 
       const latest = await this.repository.findLatestByAccountId(accountId);
-      if (
-        latest &&
-        ACTIVE_PLAN_STATUSES.has(latest.status) &&
-        latest.effective_until &&
-        new Date(latest.effective_until).getTime() <= Date.now()
-      ) {
+      if (latest && ACTIVE_PLAN_STATUSES.has(latest.status) && hasPlanEnded(latest)) {
         await this.repository.updatePlanById(latest.id, { status: "EXPIRED" });
       }
 
@@ -181,13 +203,19 @@ export class DirectBookingWebsiteRatePlanService {
         throw error;
       }
     } catch (error) {
-      if (isRatePlanTableUnavailableError(error)) {
-        throw serviceError(
-          "Direct booking website rate plans are temporarily unavailable. Complete the database migration before retrying.",
-          503
-        );
-      }
-      throw error;
+      throw toRatePlanReadError(error);
+    }
+  }
+
+  async getCurrentEntitlements(accountId) {
+    if (!accountId) throw serviceError("accountId is required.");
+
+    try {
+      const current = await this.repository.findCurrentByAccountId(accountId);
+      const servedPlan = current && !hasPlanEnded(current) ? current : { plan: WEBSITE_PLAN_NAMES.ESSENTIALS };
+      return toEntitlementsView(servedPlan);
+    } catch (error) {
+      throw toRatePlanReadError(error);
     }
   }
 
@@ -200,11 +228,16 @@ export class DirectBookingWebsiteRatePlanService {
     );
   }
 
-  async changePlan({ accountId, targetPlan, customerEmail }) {
+  async changePlan({ accountId, targetPlan, customerEmail, withoutPayment }) {
     if (!accountId) throw serviceError("accountId is required.");
     if (!Object.values(WEBSITE_PLAN_NAMES).includes(targetPlan)) {
       throw serviceError("Unsupported direct booking website plan.");
     }
+    if (withoutPayment !== undefined && typeof withoutPayment !== "boolean") {
+      throw serviceError("withoutPayment must be true or false.");
+    }
+
+    if (withoutPayment === true) return this.changePlanWithoutPayment(accountId, targetPlan);
 
     const current = await this.getCurrentPlan(accountId);
 
@@ -276,6 +309,26 @@ export class DirectBookingWebsiteRatePlanService {
       stripe_subscription_id: null,
     });
     return { action: "downgraded", plan: toView(essentials) };
+  }
+
+  async changePlanWithoutPayment(accountId, targetPlan) {
+    if (!isEliteSelfSelectOnFor(accountId)) {
+      throw serviceError("Choosing a website plan without payment is not available for this account.", 409);
+    }
+    const current = await this.getCurrentPlan(accountId);
+    if (current.stripeSubscriptionId) throw serviceError(PAID_PLAN_REFUSAL, 409);
+    if (current.plan === targetPlan) return { action: "unchanged", plan: current };
+
+    const result = await this.repository.replaceUnpaidPlan({ accountId, targetPlan });
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.PAID_PLAN_ACTIVE) throw serviceError(PAID_PLAN_REFUSAL, 409);
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.CONFLICT) {
+      throw serviceError("The website plan changed at the same time. Reload the page and try again.", 409);
+    }
+    if (result.outcome === UNPAID_PLAN_CHANGE_OUTCOMES.UNCHANGED) {
+      return { action: "unchanged", plan: toView(result.plan) };
+    }
+    const action = targetPlan === WEBSITE_PLAN_NAMES.ELITE ? "upgraded" : "downgraded";
+    return { action, plan: toView(result.plan) };
   }
 
   async handleCheckoutSessionCompleted(object) {

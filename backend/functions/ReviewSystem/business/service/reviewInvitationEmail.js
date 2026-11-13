@@ -5,6 +5,7 @@ const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, character =
 export const httpsUrl = value => {
   try {
     const url = new URL(value);
+    if (url.username || url.password) return null;
 
     const isHttps = url.protocol === "https:";
     const isLocalhost =

@@ -3,7 +3,8 @@ import { Search, ChevronDown, Star, MapPin, Building2, MessageSquare, ChevronRig
 import { fetchHostPropertySelectOptions } from "../../../services/hostPropertyService";
 import styles from "../styles/ReceivedReviews.module.css";
 import CategoryRatings from "./categoryRatings";
-import HostResponseForm from "./HostResponseForm";
+import RatingStars from "./RatingStars";
+import HostResponseForm from "../views/HostResponseForm";
 
 const rating = (review) => {
   const value = Number(review.rating ?? review.overall_rating);
@@ -26,13 +27,7 @@ const dateLabel = (review) =>
     : "Date unavailable";
 
 function Stars({ value }) {
-  return (
-    <span className={styles.stars} aria-label={`${value} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star key={star} size={17} aria-hidden="true" fill={star <= Math.round(value) ? "currentColor" : "none"} />
-      ))}
-    </span>
-  );
+  return <RatingStars value={value} className={styles.stars} />;
 }
 
 function PropertyImage({ property }) {
@@ -50,13 +45,56 @@ function PropertyImage({ property }) {
   );
 }
 
-export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {}, eligibilityError, onEligibilityRetry }) {
+function SelectedReview({ selected, property, respondableReview, onResponseChange }) {
+  const selectedProperty = property;
+  const selectedName =
+    typeof selected?.guest_name === "string" && selected.guest_name.trim() ? selected.guest_name.trim() : "Guest";
+  const selectedInitials = selectedName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((name) => name[0])
+    .join("")
+    .toUpperCase();
+  return (
+    <section id="selected-review" className={styles.detail} aria-label="Selected review">
+      <header className={styles.detailHeader}>
+        <span className={styles.detailAvatar} aria-hidden="true">
+          {selectedInitials}
+        </span>
+        <div>
+          <strong>{selectedName}</strong>
+          <p>
+            {dateLabel(selected)}
+            {selectedProperty && ` \u00b7 ${selectedProperty.title}`}
+          </p>
+        </div>
+        {rating(selected) !== null && (
+          <div className={styles.detailRating}>
+            <Stars value={rating(selected)} />
+            <strong>{rating(selected).toFixed(1)}</strong>
+          </div>
+        )}
+      </header>
+      <strong className={styles.detailTitle}>{selected.title || selectedProperty?.title || "Guest review"}</strong>
+      <p className={styles.detailText}>{selected.content ?? selected.public_review}</p>
+      {respondableReview ? (
+        <HostResponseForm
+          key={selected.id}
+          review={respondableReview}
+          onResponseChange={onResponseChange}
+        />
+      ) : (
+        <p className={styles.responseUnavailable}>A response is not available for this review.</p>
+      )}
+    </section>
+  );
+}
+
+export default function ReceivedReviews({ userId, reviews, loading, error, onRetry, respondableReviews = {}, onResponseChange }) {
   const [properties, setProperties] = useState({});
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState("newest");
   const [selectedId, setSelectedId] = useState(null);
-  const [savedResponses, setSavedResponses] = useState({});
-  useEffect(() => { setSelectedId(null); setSavedResponses({}); }, [userId]);
+  const [sort, setSort] = useState("newest");
   const listRef = useRef(null);
   useEffect(() => {
     let active = true;
@@ -66,7 +104,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
       .then((items) => {
         if (active) setProperties(Object.fromEntries(items.map((item) => [item.value, item])));
       })
-      .catch(() => {}); // Review content stays available if listing details cannot load.
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -94,8 +132,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
     if (sort === "lowest") results.sort((a, b) => (rating(a) ?? 6) - (rating(b) ?? 6));
     return results;
   }, [sorted, query, sort, properties]);
-  const selected = !loading && !error && visible.find(({ id }) => id === selectedId);
-  const selectedProperty = selected && properties[selected.property_id];
+  const selected = visible.find((review) => review.id === selectedId);
   const scores = reviews.map(rating).filter((value) => value !== null);
   const average = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
   const focusReview = (id) => {
@@ -111,41 +148,57 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
   };
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${!loading && !error && selected ? styles.withDetail : ""}`}>
       <div className={styles.mainColumn}>
-        {eligibilityError && <div><p role="alert">{eligibilityError}</p>
-          <button type="button" onClick={onEligibilityRetry}>Retry response eligibility</button></div>}
         <div className={styles.toolbar}>
           <label className={styles.search}>
             <Search size={20} aria-hidden="true" />
             <input
               type="search"
               aria-label="Search received reviews"
-              placeholder="Search by guest name or property..."
+              placeholder="Search reviews by guest name or property..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
           </label>
-          <details className={styles.sort} onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
-          }} onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.currentTarget.open = false;
-              event.currentTarget.querySelector("summary").focus();
-            }
-          }}>
+          <details
+            className={styles.sort}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.currentTarget.open = false;
+                event.currentTarget.querySelector("summary").focus();
+              }
+            }}>
             <summary aria-label="Sort received reviews">
-              {{ newest: "Newest first", oldest: "Oldest first", highest: "Highest rating", lowest: "Lowest rating" }[sort]}
+              {
+                { newest: "Newest first", oldest: "Oldest first", highest: "Highest rating", lowest: "Lowest rating" }[
+                  sort
+                ]
+              }
               <ChevronDown size={16} aria-hidden="true" />
             </summary>
             <div className={styles.sortOptions} role="group" aria-label="Sort order">
-              {[["newest", "Newest first"], ["oldest", "Oldest first"], ["highest", "Highest rating"], ["lowest", "Lowest rating"]].map(([value, label]) => (
-                <button key={value} type="button" aria-pressed={sort === value} onClick={(event) => {
-                  setSort(value);
-                  const dropdown = event.currentTarget.closest("details");
-                  dropdown.open = false;
-                  dropdown.querySelector("summary").focus();
-                }}>{label}</button>
+              {[
+                ["newest", "Newest first"],
+                ["oldest", "Oldest first"],
+                ["highest", "Highest rating"],
+                ["lowest", "Lowest rating"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={sort === value}
+                  onClick={(event) => {
+                    setSort(value);
+                    const dropdown = event.currentTarget.closest("details");
+                    dropdown.open = false;
+                    dropdown.querySelector("summary").focus();
+                  }}>
+                  {label}
+                </button>
               ))}
             </div>
           </details>
@@ -168,7 +221,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
           {!loading && !error && !visible.length && (
             <div className={styles.empty}>
               <MessageSquare size={30} aria-hidden="true" />
-              <strong>{query ? "No matching reviews" : "No guest reviews yet"}</strong>
+              <strong>{query ? "No matching reviews" : "You haven’t received any reviews yet."}</strong>
               <p>
                 {query
                   ? "Try another review title, property or reservation."
@@ -180,16 +233,33 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             !error &&
             visible.map((review) => {
               const property = properties[review.property_id];
-              const guestName = typeof review.guest_name === "string" && review.guest_name.trim() ? review.guest_name.trim() : "Guest";
-              const initials = guestName.split(/\s+/).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+              const guestName =
+                typeof review.guest_name === "string" && review.guest_name.trim() ? review.guest_name.trim() : "Guest";
+              const initials = guestName
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((name) => name[0])
+                .join("")
+                .toUpperCase();
               const value = rating(review);
               return (
-                <article key={review.id} data-review-id={review.id} tabIndex={-1}
+                <article
+                  key={review.id}
+                  data-review-id={review.id}
+                  tabIndex={-1}
                   className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
-                    <h4><button type="button" className={styles.selectReview} aria-pressed={selected?.id === review.id} aria-controls="selected-review"
-                      onClick={() => setSelectedId(review.id)}>{review.title || property?.title || "Guest review"}</button></h4>
+                    <h4>
+                      <button
+                        type="button"
+                        className={styles.selectReview}
+                        aria-pressed={selected?.id === review.id}
+                        aria-controls="selected-review"
+                        onClick={() => setSelectedId(review.id)}>
+                        {review.title || property?.title || "Guest review"}
+                      </button>
+                    </h4>
                     {property && (
                       <p className={styles.location}>
                         <MapPin size={14} aria-hidden="true" />
@@ -203,7 +273,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                           <strong>{value.toFixed(1)}</strong>
                         </>
                       )}
-                      {review.verification_status === "VERIFIED" && (
+                      {review.verification_status === "VERIFIED_STAY" && (
                         <span className={styles.verified}>Verified stay</span>
                       )}
                     </div>
@@ -224,18 +294,14 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             })}
         </section>
       </div>
-      {selected && <section id="selected-review" className={styles.detailPanel} aria-label="Selected review">
-        <header className={styles.detailHeader}>
-          <span className={styles.avatar} aria-hidden="true">{(selected.guest_name || "Guest").split(/\s+/).slice(0, 2).map((name) => name[0]).join("")}</span>
-          <div><strong>{selected.guest_name || "Guest"}</strong><p>{dateLabel(selected)}{selectedProperty && ` - ${selectedProperty.title}`}</p></div>
-          {rating(selected) !== null && <><Stars value={rating(selected)} /><strong>{rating(selected).toFixed(1)}</strong></>}
-        </header>
-        <h3>{selected.title || selectedProperty?.title || "Guest review"}</h3>
-        <p className={styles.reviewText}>{selected.content ?? selected.public_review}</p>
-        {Object.hasOwn(respondableReviews, selected.id) && <HostResponseForm key={`${userId}-${selected.id}`}
-          review={{ ...respondableReviews[selected.id], response: savedResponses[selected.id] ?? respondableReviews[selected.id].response }}
-          onSaved={(response) => setSavedResponses((previous) => ({ ...previous, [selected.id]: response }))} />}
-      </section>}
+      {!loading && !error && selected && (
+        <SelectedReview
+          selected={selected}
+          property={properties[selected.property_id]}
+          respondableReview={respondableReviews[selected.id]}
+          onResponseChange={(response) => onResponseChange?.(selected.id, response)}
+        />
+      )}
       <aside className={styles.sidebar} aria-label="Guest review insights">
         <section className={styles.summary}>
           <div>
@@ -312,9 +378,14 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
             </p>
           )}
         </section>
-      <CategoryRatings userId={userId} propertyIds={[...Object.keys(properties),
-        ...reviews.map((review) => review.property_id).filter((id) => typeof id === "string" && id.trim())]} />
-    </aside>
+        <CategoryRatings
+          userId={userId}
+          propertyIds={[
+            ...Object.keys(properties),
+            ...reviews.map((review) => review.property_id).filter((id) => typeof id === "string" && id.trim()),
+          ]}
+        />
+      </aside>
     </div>
   );
 }

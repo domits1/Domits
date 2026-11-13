@@ -4,12 +4,14 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Messages from "./Messages";
 import { getIdToken } from "../../services/getAccessToken";
 import { markThreadRead } from "../../features/hostdashboard/hostmessages/services/messagingService";
+import { mockJsonResponse } from "../../features/hostdashboard/testUtils/authorizedFetchMocks";
 
+let mockAuthState = { userId: "guest-1", accessToken: "access-token-1" };
 let mockContacts = [];
 let mockSetContacts = jest.fn();
 
@@ -37,7 +39,7 @@ jest.mock("../../features/hostdashboard/hostmessages/context/AuthContext", () =>
 
   return {
     UserProvider: MockUserProvider,
-    useUser: () => ({ userId: "guest-1", accessToken: "access-token-1" }),
+    useUser: () => mockAuthState,
   };
 });
 
@@ -57,7 +59,7 @@ jest.mock("../../features/hostdashboard/hostmessages/context/webSocketContext", 
 });
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
-  useAuth: () => ({ userId: "guest-1", accessToken: "access-token-1" }),
+  useAuth: () => mockAuthState,
 }));
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchContacts", () => ({
@@ -114,7 +116,7 @@ jest.mock("./ContactList", () => {
 jest.mock("./ChatScreen", () => {
   const PropTypes = require("prop-types");
 
-  function MockChatScreen({ contactId, threadId, bookingId, propertyId }) {
+  function MockChatScreen({ contactId, threadId, bookingId, propertyId, bookingInDetailsPanel }) {
     return (
       <div
         data-testid="chat-screen"
@@ -122,6 +124,7 @@ jest.mock("./ChatScreen", () => {
         data-thread-id={threadId || ""}
         data-booking-id={bookingId || ""}
         data-property-id={propertyId || ""}
+        data-booking-in-details-panel={String(Boolean(bookingInDetailsPanel))}
       />
     );
   }
@@ -131,9 +134,31 @@ jest.mock("./ChatScreen", () => {
     threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    bookingInDetailsPanel: PropTypes.bool,
   };
 
   return MockChatScreen;
+});
+
+jest.mock("./BookingTab", () => {
+  const PropTypes = require("prop-types");
+
+  function MockBookingTab({ bookingId, showAccommodation }) {
+    return (
+      <div
+        data-testid="booking-tab"
+        data-booking-id={bookingId || ""}
+        data-show-accommodation={String(showAccommodation)}
+      />
+    );
+  }
+
+  MockBookingTab.propTypes = {
+    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    showAccommodation: PropTypes.bool,
+  };
+
+  return MockBookingTab;
 });
 
 jest.mock("./NewContactModal", () => () => null);
@@ -150,6 +175,7 @@ const renderMessages = (entry) =>
 
 describe("Messages booking URL context", () => {
   beforeEach(() => {
+    mockAuthState = { userId: "guest-1", accessToken: "access-token-1" };
     mockSetContacts = jest.fn();
     getIdToken.mockReset();
     getIdToken.mockResolvedValue("id-token-1");
@@ -253,5 +279,184 @@ describe("Messages booking URL context", () => {
     const updaterFn = mockSetContacts.mock.calls.at(-1)[0];
     const updatedContacts = updaterFn(mockContacts);
     expect(updatedContacts.find((c) => c.threadId === "thread-1").unreadCount).toBe(0);
+  });
+
+  describe("on a desktop screen", () => {
+    const originalInnerWidth = window.innerWidth;
+
+    beforeEach(() => {
+      window.innerWidth = 1440;
+    });
+
+    afterEach(() => {
+      window.innerWidth = originalInnerWidth;
+    });
+
+    test("shows the reservation under the listing in the details panel instead of in the chat", async () => {
+      renderMessages("/guestdashboard/messages?bookingId=booking-1");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("booking-tab")).toHaveAttribute("data-booking-id", "booking-1");
+      });
+      expect(screen.getByTestId("booking-tab")).toHaveAttribute("data-show-accommodation", "false");
+      expect(screen.getByTestId("listing-panel")).toBeInTheDocument();
+      expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-booking-in-details-panel", "true");
+    });
+  });
+
+  test("leaves the reservation in the chat when the screen is too small for the details panel", () => {
+    renderMessages("/guestdashboard/messages?bookingId=booking-1");
+
+    expect(screen.queryByTestId("booking-tab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("chat-screen")).toHaveAttribute("data-booking-in-details-panel", "false");
+  });
+});
+
+const hostMessages = () => (
+  <MemoryRouter initialEntries={["/hostdashboard/messages"]}>
+    <Routes>
+      <Route path="/hostdashboard/messages" element={<Messages dashboardType="host" />} />
+    </Routes>
+  </MemoryRouter>
+);
+
+const createDeferred = () => {
+  let resolve;
+  const promise = new Promise((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+};
+
+const flushPromises = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+
+const WHATSAPP_BANNER = "Connect your WhatsApp Business";
+const CONNECTED_WHATSAPP = [{ channel: "WHATSAPP", externalAccountId: "phone-1" }];
+
+describe("Messages integrations request", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    mockAuthState = { userId: "host-1", accessToken: null };
+    mockContacts = [];
+    mockSetContacts = jest.fn();
+    getIdToken.mockReset();
+    globalThis.fetch = jest.fn().mockResolvedValue(mockJsonResponse([]));
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  test("waits for the ID token before the first request and sends it with the user's own id", async () => {
+    const token = createDeferred();
+    getIdToken.mockReturnValue(token.promise);
+
+    render(hostMessages());
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    token.resolve("id-token-1");
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    const [url, options] = globalThis.fetch.mock.calls[0];
+    expect(url).toMatch(/\/integrations\?userId=host-1$/);
+    expect(options.headers.Authorization).toBe("Bearer id-token-1");
+  });
+
+  test("hides the banner when the request reports a connected WhatsApp account", async () => {
+    getIdToken.mockResolvedValue("id-token-1");
+    globalThis.fetch.mockResolvedValue(mockJsonResponse(CONNECTED_WHATSAPP));
+
+    render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    await flushPromises();
+
+    expect(screen.queryByText(WHATSAPP_BANNER)).not.toBeInTheDocument();
+  });
+
+  test.each([
+    ["the session cannot be loaded", () => getIdToken.mockRejectedValue(new Error("No current user"))],
+    ["the session has no ID token", () => getIdToken.mockResolvedValue("")],
+  ])("sends no request and shows the failed load state when %s", async (_label, arrangeSession) => {
+    arrangeSession();
+
+    render(hostMessages());
+
+    expect(await screen.findByText(WHATSAPP_BANNER)).toBeInTheDocument();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("sends one request when the context token arrives after the user", async () => {
+    getIdToken.mockResolvedValue("id-token-1");
+    const { rerender } = render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    mockAuthState = { userId: "host-1", accessToken: "id-token-1" };
+    rerender(hostMessages());
+    await flushPromises();
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("sends one request when the effect runs twice while the token is loading", async () => {
+    const token = createDeferred();
+    getIdToken.mockReturnValue(token.promise);
+
+    render(<React.StrictMode>{hostMessages()}</React.StrictMode>);
+    expect(getIdToken).toHaveBeenCalledTimes(2);
+
+    token.resolve("id-token-1");
+    await flushPromises();
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("sends no request when the page unmounts while the token is loading", async () => {
+    const token = createDeferred();
+    getIdToken.mockReturnValue(token.promise);
+    const { unmount } = render(hostMessages());
+
+    unmount();
+    token.resolve("id-token-1");
+    await flushPromises();
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test("keeps the newer empty result when an older connected answer arrives later", async () => {
+    const olderResponse = createDeferred();
+    getIdToken.mockResolvedValue("id-token-1");
+    globalThis.fetch.mockReturnValueOnce(olderResponse.promise);
+    const { rerender } = render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    mockAuthState = { userId: "host-2", accessToken: null };
+    rerender(hostMessages());
+    expect(await screen.findByText(WHATSAPP_BANNER)).toBeInTheDocument();
+
+    olderResponse.resolve(mockJsonResponse(CONNECTED_WHATSAPP));
+    await flushPromises();
+
+    expect(screen.getByText(WHATSAPP_BANNER)).toBeInTheDocument();
+  });
+
+  test("keeps the newer connected result when an older request fails later", async () => {
+    const olderResponse = createDeferred();
+    getIdToken.mockResolvedValue("id-token-1");
+    globalThis.fetch.mockReturnValueOnce(olderResponse.promise);
+    const { rerender } = render(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    globalThis.fetch.mockResolvedValue(mockJsonResponse(CONNECTED_WHATSAPP));
+    mockAuthState = { userId: "host-2", accessToken: null };
+    rerender(hostMessages());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
+    await flushPromises();
+
+    olderResponse.resolve(mockJsonResponse([], false));
+    await flushPromises();
+
+    expect(screen.queryByText(WHATSAPP_BANNER)).not.toBeInTheDocument();
   });
 });

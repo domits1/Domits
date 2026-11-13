@@ -30,6 +30,7 @@ const INITIAL_FORM = {
   title: "",
   publicReview: "",
   privateFeedback: "",
+  domitsPrivateFeedback: "",
 };
 
 // Retain the existing nonblank requirement and 500-character limit.
@@ -59,6 +60,7 @@ const ReviewForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [pendingPublicationId, setPendingPublicationId] = useState("");
   const [checkedBookingId, setCheckedBookingId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
@@ -66,6 +68,7 @@ const ReviewForm = () => {
   const [hoveredRating, setHoveredRating] = useState(0);
   const displayedRating = hoveredRating || Number(form.rating);
   const [reviewError, setReviewError] = useState("");
+  const [domitsFeedbackError, setDomitsFeedbackError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -84,6 +87,7 @@ const ReviewForm = () => {
     setRatingError("");
     setHoveredRating(0);
     setReviewError("");
+    setDomitsFeedbackError("");
 
     const checkEligibility = async () => {
       try {
@@ -102,7 +106,7 @@ const ReviewForm = () => {
           const review = await getEditableReview(reviewId);
           if (!active) return;
           setEditingReview(review);
-          setForm({ title: "", rating: String(review.overall_rating), publicReview: review.public_review || "", privateFeedback: "" });
+          setForm({ ...INITIAL_FORM, rating: String(review.overall_rating), publicReview: review.public_review || "" });
           return;
         }
         if (!bookingId) {
@@ -171,13 +175,15 @@ const ReviewForm = () => {
     }
     setForm((current) => ({ ...current, [field]: value }));
     if (field === "publicReview") setReviewError("");
+    if (field === "domitsPrivateFeedback") setDomitsFeedbackError("");
   };
 
   const publishSavedReview = async (id) => {
     setIsSubmitting(true);
     setSubmitError("");
     try {
-      await publishReview(id);
+      const result = await publishReview(id);
+      setAwaitingApproval(result.status === "PENDING_APPROVAL");
       setPendingPublicationId("");
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
@@ -224,6 +230,19 @@ const ReviewForm = () => {
       return;
     }
 
+    const domitsPrivateFeedback = form.domitsPrivateFeedback.replace(/\r\n?/g, "\n").trim();
+    if (!reviewId) {
+      const feedbackError = INVALID_TEXT_CONTROLS.test(form.domitsPrivateFeedback)
+        ? "Please remove unsupported control characters from your Domits feedback."
+        : domitsPrivateFeedback.length > REVIEW_MAX_LENGTH
+          ? `Domits feedback must be ${REVIEW_MAX_LENGTH} characters or fewer.` : "";
+      if (feedbackError) {
+        setDomitsFeedbackError(feedbackError);
+        event.currentTarget.querySelector("#domitsPrivateFeedback")?.focus();
+        return;
+      }
+    }
+
     const missingCategory = !reviewId && CATEGORIES.find(label => ![1, 2, 3, 4, 5].includes(categoryRatings[categoryKey(label)]));
     if (missingCategory) {
       setCategoryError("Please rate every category before submitting your review.");
@@ -245,6 +264,7 @@ const ReviewForm = () => {
           rating: Number(form.rating),
           publicReview,
           privateFeedback: form.privateFeedback.trim(),
+          ...(domitsPrivateFeedback ? { domitsPrivateFeedback } : {}),
           ...(Object.keys(categoryRatings).length ? { categoryRatings } : {}),
         });
         if (typeof draft?.id !== "string" || !draft.id.trim()) {
@@ -341,8 +361,9 @@ const ReviewForm = () => {
       <main className={`${styles.main} ${styles.publicationPage}`}>
         <section className={styles.statusCard}>
           <span className={styles.eyebrow}>THANK YOU FOR SHARING</span>
-          <h1>{reviewId ? "Review updated" : "Your review is published"}</h1>
+          <h1>{reviewId ? "Review updated" : awaitingApproval ? "Your review is awaiting approval" : "Your review is published"}</h1>
           <p role="status">{reviewId ? "Your changes have been saved as a draft for review."
+            : awaitingApproval ? "Your review has been submitted and will appear after approval."
             : "Your experience can now help future guests choose their next stay."}</p>
           <button type="button" onClick={() => navigate("/guestdashboard/reviews")}>
             View my reviews
@@ -440,6 +461,31 @@ const ReviewForm = () => {
           <p className={styles.characterCount}>{form.privateFeedback.length}/500 characters</p>
         </section>}
 
+        {!reviewId && <section className={styles.content}>
+          <label htmlFor="domitsPrivateFeedback">Private Feedback to Domits</label>
+          <p id="domitsFeedback-help">
+            Optional. Share concerns, suggestions, or experiences about your booking,
+            property, or the platform. Visible only to you and authorized Domits staff.
+            This feedback will not be shared with your Host or published.
+          </p>
+          <textarea
+            id="domitsPrivateFeedback"
+            className={styles.textarea}
+            value={form.domitsPrivateFeedback}
+            onChange={updateField("domitsPrivateFeedback")}
+            placeholder="What would you like Domits to know?"
+            maxLength={REVIEW_MAX_LENGTH}
+            rows={3}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(domitsFeedbackError)}
+            aria-describedby={`domitsFeedback-help domitsFeedback-count${domitsFeedbackError ? " domitsFeedback-error" : ""}`}
+          />
+          <p id="domitsFeedback-count" className={styles.characterCount}>
+            {form.domitsPrivateFeedback.length}/{REVIEW_MAX_LENGTH} characters
+          </p>
+          {domitsFeedbackError && <p id="domitsFeedback-error" role="alert">{domitsFeedbackError}</p>}
+        </section>}
+
         {submitError && <p role="alert">{submitError}</p>}
 
         <div className={styles.buttonBox}>
@@ -461,7 +507,7 @@ const ReviewForm = () => {
         <p>Your perspective helps hosts improve and fellow travellers feel at home.</p>
         <div className={styles.tip}><span className={styles.tipIcon}><MessageSquare aria-hidden="true" /></span><div><h3>Keep it personal</h3><p>Share what stood out, from a warm welcome to a favourite corner.</p></div></div>
         <div className={styles.tip}><span className={styles.tipIcon}><ShieldCheck aria-hidden="true" /></span><div><h3>Keep it helpful</h3><p>Describe your experience honestly, including what could be better.</p></div></div>
-        <div className={styles.tip}><span className={styles.tipIcon}><LockKeyhole aria-hidden="true" /></span><div><h3>Keep some things private</h3><p>Use private feedback for details you only want your host to see.</p></div></div>
+        <div className={styles.tip}><span className={styles.tipIcon}><LockKeyhole aria-hidden="true" /></span><div><h3>Keep some things private</h3><p>Use Host feedback for notes to your Host, or Private Feedback to Domits for concerns intended for authorized Domits staff.</p></div></div>
         <p className={styles.guidanceFooter}>Every experience has a story.</p>
       </aside>
       </div>

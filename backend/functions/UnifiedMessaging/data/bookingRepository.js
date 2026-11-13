@@ -2,6 +2,8 @@ import Database from "../.shared/integrations/ORM/index.js";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 
+const GUEST_NAME_CHUNK_SIZE = 100;
+
 const normalizeBooking = (booking) => {
   if (!booking) return null;
 
@@ -58,6 +60,33 @@ class BookingRepository {
     const client = await Database.getInstance();
     const count = await client.getRepository(Property).count({ where: { id: propertyId, hostid: hostId } });
     return count === 1;
+  }
+
+  async findBookingDetailsForHostBookings({ hostId, bookingIds }) {
+    if (!hostId || !Array.isArray(bookingIds) || bookingIds.length === 0) return {};
+
+    const client = await Database.getInstance();
+    const repository = client.getRepository(Booking);
+    const uniqueBookingIds = [...new Set(bookingIds)];
+    const names = {};
+
+    for (let start = 0; start < uniqueBookingIds.length; start += GUEST_NAME_CHUNK_SIZE) {
+      const chunk = uniqueBookingIds.slice(start, start + GUEST_NAME_CHUNK_SIZE);
+      const bookings = await repository
+        .createQueryBuilder("booking")
+        .select(["booking.id", "booking.guestname", "booking.booking_source"])
+        .where("booking.id IN (:...bookingIds)", { bookingIds: chunk })
+        .andWhere("booking.hostid = :hostId", { hostId })
+        .getMany();
+
+      for (const booking of bookings) {
+        if (booking.guestname || booking.booking_source) {
+          names[booking.id] = { guestName: booking.guestname || null, bookingSource: booking.booking_source || null };
+        }
+      }
+    }
+
+    return names;
   }
 }
 

@@ -36,7 +36,12 @@ test("omits missing details and unsafe image URLs", () => {
   expect(email.html).not.toMatch(/undefined|Invalid Date|NaN/);
 });
 
-test.each(["http://localhost:3000", "javascript:alert(1)", undefined, "https://user:password@example.com"])(
+test("supports the local development frontend", () => {
+  expect(buildReviewInvitationEmail({ ...input, frontendUrl: "http://localhost:3000" }).text)
+    .toContain("http://localhost:3000/review?bookingId=");
+});
+
+test.each(["http://example.com", "javascript:alert(1)", undefined, "https://user:password@example.com"])(
   "rejects invalid frontend URL %s", frontendUrl => {
     expect(() => buildReviewInvitationEmail({ ...input, frontendUrl })).toThrow("HTTPS");
   });

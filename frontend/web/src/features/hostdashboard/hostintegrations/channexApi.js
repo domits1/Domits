@@ -131,6 +131,9 @@ export const getChannexAdminAccess = ({ userId }) =>
     query: { userId },
   });
 
+// The backend takes the admin from the token's claims, so no userId is sent (#2869).
+export const getChannexHealth = () => requestChannex("/integrations/channex/health");
+
 export const connectChannex = ({ userId, apiKey, displayName }) =>
   requestChannex("/integrations/channex/connect", {
     method: "POST",
