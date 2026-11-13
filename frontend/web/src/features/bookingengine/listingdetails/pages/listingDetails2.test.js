@@ -223,11 +223,18 @@ describe("ListingDetails2 availability", () => {
 });
 
 describe("RangeCalendar effective availability", () => {
+  const toLocaleDateString = Date.prototype.toLocaleDateString;
+
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(new Date("2026-06-01T12:00:00.000Z"));
+    // Keep accessible date labels stable across developer and CI locales.
+    jest.spyOn(Date.prototype, "toLocaleDateString").mockImplementation(function (locales, options) {
+      return toLocaleDateString.call(this, locales ?? "en-US", options);
+    });
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.useRealTimers();
     jest.clearAllMocks();
   });

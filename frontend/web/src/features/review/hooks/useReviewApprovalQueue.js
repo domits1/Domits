@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { approveReview, publishApprovedReview, getAdminReviews, getPendingApprovalReviews } from "../services/reviewAPI";
+import { approveReview, publishApprovedReview, getAdminReviews } from "../services/reviewAPI";
 
 export const QUEUE_STATE = Object.freeze({
   LOADING: "loading",
@@ -10,7 +10,6 @@ export const QUEUE_STATE = Object.freeze({
 
 export default function useReviewApprovalQueue(scope) {
   const [result, setResult] = useState({ scope, reviews: [] });
-  const pending = scope === "pending-approval";
   const reviews = result.scope === scope ? result.reviews : [];
   const [queueState, setQueueState] = useState(QUEUE_STATE.LOADING);
   const [loadError, setLoadError] = useState("");
@@ -25,7 +24,7 @@ export default function useReviewApprovalQueue(scope) {
     let mounted = true;
     setQueueState(QUEUE_STATE.LOADING);
 
-    (pending ? getPendingApprovalReviews() : getAdminReviews(scope))
+    getAdminReviews(scope)
       .then((reviews) => {
         if (!mounted) return;
         setResult({ scope, reviews });
@@ -42,7 +41,7 @@ export default function useReviewApprovalQueue(scope) {
     return () => {
       mounted = false;
     };
-  }, [attempt, pending, scope]);
+  }, [attempt, scope]);
 
   const setApproving = (reviewId, approving) => {
     if (approving) inFlight.current.add(reviewId);
