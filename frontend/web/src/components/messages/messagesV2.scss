@@ -606,6 +606,47 @@
   gap: 10px;
 }
 
+.messages-v2 .chat-input .message-input-wrapper .add-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 44px;
+}
+
+.messages-v2 .chat-input .message-input-wrapper .add-attachment button.add-file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: #64748b;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    background: transparent;
+    color: #64748b;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(13, 152, 19, 0.55);
+    outline-offset: 2px;
+  }
+}
+
 .messages-v2 .message-input-textarea {
   flex: 1;
   resize: none;
