@@ -8,6 +8,7 @@ import { getWebsiteTemplateById, getWebsiteTemplateCopy } from "../websiteTempla
 import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
 import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
+import { MAIN_SITE_PAGE_KEY } from "./websitePages";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -187,13 +188,16 @@ export function WebsiteTemplateSurface({
   onSelectTarget,
   activeTargetId = "",
   quoteContext = null,
+  activePageKey = MAIN_SITE_PAGE_KEY,
+  pageBasePath = "",
+  pageSearch = "",
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
   const isPanoramaTemplate = template.id === "panorama-landing";
   const previewCanvasRef = useWebsiteScrollReveal({
     enabled: enableScrollReveal,
-    deps: [templateId, model],
+    deps: [templateId, model, activePageKey],
   });
   const previewCanvasViewportClassName =
     styles[PREVIEW_CANVAS_VIEWPORT_CLASS_NAMES[viewport] || ""] || "";
@@ -234,6 +238,9 @@ export function WebsiteTemplateSurface({
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
             quoteContext={quoteContext}
+            activePageKey={activePageKey}
+            pageBasePath={pageBasePath}
+            pageSearch={pageSearch}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -261,6 +268,9 @@ WebsiteTemplateSurface.propTypes = {
   browserTitle: PropTypes.string,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  activePageKey: PropTypes.string,
+  pageBasePath: PropTypes.string,
+  pageSearch: PropTypes.string,
 };
 
 export default function WebsiteTemplatePreview({

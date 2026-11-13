@@ -80,6 +80,9 @@ const selectWebsiteHeadSource = (model) => ({
   ],
 });
 
+const buildWebsitePageHeadTitle = (headSource, pageTitle) =>
+  pageTitle && headSource.title ? `${pageTitle} | ${headSource.title}` : buildWebsiteHeadTitle(headSource);
+
 const buildRobotsOnlyTags = (title) => ({
   title,
   metaByName: { [WEBSITE_HEAD_ROBOTS_META_NAME]: WEBSITE_HEAD_ROBOTS_NOINDEX },
@@ -89,15 +92,17 @@ const buildRobotsOnlyTags = (title) => ({
 export const buildWebsiteHeadTags = ({
   model = null,
   fallbackTitle = "",
+  pageTitle = "",
   isDirectBookingHost = true,
   isUnavailable = false,
   isMissing = false,
 } = {}) => {
   const headSource = selectWebsiteHeadSource(model);
   const normalizedFallbackTitle = normalizeWebsiteHeadText(fallbackTitle);
+  const normalizedPageTitle = normalizeWebsiteHeadText(pageTitle);
 
   if (!isDirectBookingHost) {
-    return buildRobotsOnlyTags(buildWebsiteHeadTitle(headSource) || normalizedFallbackTitle);
+    return buildRobotsOnlyTags(buildWebsitePageHeadTitle(headSource, normalizedPageTitle) || normalizedFallbackTitle);
   }
 
   if (isUnavailable || !headSource.title) {
@@ -113,7 +118,7 @@ export const buildWebsiteHeadTags = ({
     };
   }
 
-  const headTitle = buildWebsiteHeadTitle(headSource);
+  const headTitle = buildWebsitePageHeadTitle(headSource, normalizedPageTitle);
   const headDescription = truncateWebsiteHeadText(headSource.description);
   const headImageUrl = resolveWebsiteHeadImageUrl(headSource.images);
   const metaByName = {};

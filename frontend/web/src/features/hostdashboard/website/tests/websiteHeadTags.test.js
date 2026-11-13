@@ -228,6 +228,25 @@ describe("buildWebsiteHeadTags", () => {
   });
 });
 
+describe("buildWebsiteHeadTags on a site page", () => {
+  const PAGE_TITLE = "The villa | Wellness Villa Bisous";
+
+  it("puts the page title before the site name and keeps the description", () => {
+    const tags = buildWebsiteHeadTags({ model: buildModel(), pageTitle: "  The   villa " });
+
+    expect(tags.title).toBe(PAGE_TITLE);
+    expect(tags.metaByProperty["og:title"]).toBe(PAGE_TITLE);
+    expect(tags.metaByProperty["og:image:alt"]).toBe(PAGE_TITLE);
+    expect(tags.metaByName.description).toBe(buildWebsiteHeadTags({ model: buildModel() }).metaByName.description);
+  });
+
+  it.each(["", "   ", undefined, null])("keeps the tags of Main for the page title %p", (pageTitle) => {
+    expect(buildWebsiteHeadTags({ model: buildModel(), pageTitle })).toEqual(
+      buildWebsiteHeadTags({ model: buildModel() })
+    );
+  });
+});
+
 describe("buildWebsiteHeadTags through the real model builder", () => {
   const propertySnapshot = {
     property: {

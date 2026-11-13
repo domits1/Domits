@@ -60,7 +60,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 import WebsitePublicPreviewPage from "./features/hostdashboard/website/WebsitePublicPreviewPage.jsx";
-import WebsitePublicSitePage from "./features/hostdashboard/website/WebsitePublicSitePage.jsx";
+import WebsiteSiteRoute from "./features/hostdashboard/website/WebsiteSiteRoute.jsx";
 import { resolveDirectBookingWebsiteSurface } from "./features/hostdashboard/website/directBookingWebsiteSurface";
 import MarketplaceCanonicalLink from "./features/seo/MarketplaceCanonicalLink";
 import { isWebsitePublicSitePageActive } from "./features/hostdashboard/website/seo/websiteHeadTagsRegistry";
@@ -195,7 +195,7 @@ function App() {
                 ) : null}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} searchInProgress={loading} />} />
-                  <Route path="/" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <Homepage />} />
+                  <Route path="/" element={isDirectBookingWebsiteHost ? <WebsiteSiteRoute /> : <Homepage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/team" element={<Team />} />
                   <Route path="/data-safety" element={<Datasafety />} />
@@ -217,8 +217,11 @@ function App() {
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
                   <Route path="/website-preview/:draftId" element={<WebsitePublicPreviewPage />} />
-                  <Route path="/website-live/:domain" element={<WebsitePublicSitePage />} />
-                  <Route path="/website-live" element={<WebsitePublicSitePage />} />
+                  <Route path="/website-live/:domain" element={<WebsiteSiteRoute />} />
+                  {isDirectBookingWebsiteHost ? null : (
+                    <Route path="/website-live/:domain/*" element={<WebsiteSiteRoute />} />
+                  )}
+                  <Route path="/website-live" element={<WebsiteSiteRoute />} />
 
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -297,7 +300,7 @@ function App() {
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
                   {/* 404 */}
-                  <Route path="/*" element={isDirectBookingWebsiteHost ? <WebsitePublicSitePage /> : <PageNotFound />} />
+                  <Route path="/*" element={isDirectBookingWebsiteHost ? <WebsiteSiteRoute /> : <PageNotFound />} />
                 </Routes>
                 {renderFooter()}
                 {renderChatWidget()}

@@ -351,3 +351,22 @@ describe("Panorama page changes", () => {
     expect(await screen.findByTestId("photo-browser")).toBeInTheDocument();
   });
 });
+
+describe("Panorama scroll to availability", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    globalThis.history.replaceState(null, "", "/");
+  });
+
+  it("scrolls the call to action to availability below the top bar and keeps the anchor", () => {
+    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
+    const { container } = renderTemplate(buildModel());
+    container.querySelector("[data-panorama-top-bar-inner]").getBoundingClientRect = () => ({ top: 0, height: 64 });
+    container.querySelector("#availability").getBoundingClientRect = () => ({ top: 900, height: 0 });
+
+    fireEvent.click(container.querySelector('[data-preview-target-id="common.ctaLabel"]'));
+
+    expect(globalThis.scrollTo).toHaveBeenCalledWith({ top: 818, behavior: "smooth" });
+    expect(globalThis.location.hash).toBe("#availability");
+  });
+});
