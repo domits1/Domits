@@ -18,6 +18,7 @@ export const formatPropertyLocation = (review) =>
   [review.property_city, review.property_country].filter(Boolean).join(", ");
 
 export const formatSubmittedAt = (timestamp) => {
+  if (typeof timestamp === "string" && !timestamp.trim()) return { date: "Unknown date", time: "" };
   const date = new Date(Number(timestamp));
   if (timestamp == null || Number.isNaN(date.getTime())) return { date: "Unknown date", time: "" };
   return {
