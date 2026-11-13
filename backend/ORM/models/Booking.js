@@ -155,5 +155,13 @@ export const Booking = new EntitySchema({
       },
       nullable: true,
     },
+    // ISO 4217 code of total_price, for bookings imported from a channel in another currency (#3583).
+    // Empty means euros: every booking from before this column, and every Domits booking.
+    currency: {
+      type: "varchar",
+      length: 3,
+      name: "currency",
+      nullable: true,
+    },
   },
 });
