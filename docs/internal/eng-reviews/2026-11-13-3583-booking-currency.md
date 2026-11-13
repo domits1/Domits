@@ -32,6 +32,12 @@ list / details / receipt show "£250.00"     PriceLabs + missed revenue skip non
 | Checked | runbook, Steps | The steps match the `.sql` file in order (column check, jobs check, two `ALTER`s, column check, two `SELECT`s); step 4 names `character_maximum_length`, which the script selects. | No change. |
 | Checked | runbook, "Apply it to both schemas before the pull request merges" | Answers the P2 of commit 1: apply before merge, because the `backend/ORM/` change redeploys every Lambda. | No change. |
 
+### Commit 4: table-driven column and migration tests (Sonar duplication)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| Checked | `bookingEntity.test.js` | Sonar failed the PR on 9.0% duplication: the new `currency` tests repeated the `refund_status` and `cancelled_at` blocks line for line. Now one `it.each` checks both nullable varchar columns, one `it.each` checks all three migrations in both schemas, and the 3-letter length has its own test. The same assertions run as before (14 tests, all green). | Test-only refactor, committed on its own. |
+
 ## Failure modes
 
 | Failure | Test | Handling | Visible |
