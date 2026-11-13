@@ -244,6 +244,7 @@ export const createReview = async ({
   title,
   publicReview,
   privateFeedback,
+  categoryRatings,
 }) => {
   const token = await getIdToken();
 
@@ -259,6 +260,7 @@ export const createReview = async ({
       title,
       public_review: publicReview,
       private_feedback: privateFeedback,
+      ...(categoryRatings ? { category_ratings: categoryRatings } : {}),
     }),
   });
 
@@ -282,3 +284,18 @@ export async function reviewSchedule(propertyId, settings, signal) {
   if (!response.ok) throw new Error(payload?.message || "Could not save review preferences.");
   return payload;
 }
+
+export const publishReview = async (reviewId) => {
+  const response = await fetch(
+    `${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`,
+    { method: "POST", headers: { Authorization: await getIdToken() } }
+  );
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not publish your review. Please try again.");
+  const published = payload?.status === "PUBLISHED" && payload?.publication_status === "PUBLISHED";
+  const pending = payload?.status === "PENDING_APPROVAL" && payload?.publication_status === "UNPUBLISHED";
+  if (!published && !pending) {
+    throw new Error("Publication could not be confirmed. Please retry.");
+  }
+  return payload;
+};
