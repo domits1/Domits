@@ -78,7 +78,20 @@ export class Controller {
       this.jsonResponse(201, await this.service.createReview(userId, parseBody(event))));
   }
 
+  // Fetch the caller's review list for the selected scope.
+  // This lets the profile and dashboard view show written or received reviews without duplicating business logic.
+  async manageReviewSchedule(event) {
+    return this.executeAuthenticated(event, async userId => {
+      const query = event.queryStringParameters ?? {};
+      if (event.pathParameters?.id !== undefined ||
+          Object.keys(query).some(key => !["scope", "propertyId"].includes(key))) throw new BadRequestException("Unexpected scheduling parameter.");
+      return this.jsonResponse(200, await this.service.reviewSchedule(userId, query.propertyId,
+        event.httpMethod === "PATCH" ? parseBody(event) : undefined));
+    });
+  }
+
   async getReviews(event) {
+    if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
       if (query.scope === "moderation") {
@@ -131,6 +144,7 @@ export class Controller {
   }
 
   async updateReview(event) {
+    if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     if (event.resource === "/reviews" && event.queryStringParameters?.scope === "moderation") {
       return this.executeAuthenticated(event, async (userId, user) =>
         this.moderationResponse(200, await this.service.resolveReviewFlag(userId, user.username, parseBody(event).flag_id)));
