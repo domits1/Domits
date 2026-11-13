@@ -66,6 +66,8 @@ class StripeRepository {
           dates: JSON.stringify(dates),
           bookingId,
         },
+      }, {
+        idempotencyKey: `booking-payment-${bookingId}`,
       });
 
       return {
@@ -78,8 +80,11 @@ class StripeRepository {
         },
       };
     } catch (error) {
-      console.error("Error creating payment intent:", error);
-      throw new Error("Failed to create payment intent.");
+      console.error("Error creating payment intent:", {
+        code: error?.code || error?.type || error?.name || "PAYMENT_INTENT_CREATE_FAILED",
+        message: error?.message,
+      });
+      throw error;
     }
   }
 
@@ -96,7 +101,7 @@ class StripeRepository {
       .where("stripe_connectedaccounts.user_id = :user_id", { user_id: userId })
       .getOne();
 
-    if (query < 1) {
+    if (!query?.account_id) {
       throw new NotFoundException("No stripeaccount for userid!");
     }
     return query.account_id;
@@ -112,6 +117,7 @@ class StripeRepository {
         stripepaymentid: paymentData.stripePaymentId,
         stripeclientsecret: paymentData.stripeClientSecret,
       })
+      .orIgnore()
       .execute();
 
     try {

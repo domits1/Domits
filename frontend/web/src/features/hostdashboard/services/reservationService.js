@@ -11,9 +11,13 @@ export const updateInquiryStatus = async (bookingId, action, token) => {
     body: JSON.stringify({ action, bookingId }),
   });
 
+  const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(`Failed to update inquiry status: ${response.status}`);
+    const error = new Error(data?.message || `Failed to update inquiry status: ${response.status}`);
+    error.status = response.status;
+    error.response = data;
+    throw error;
   }
 
-  return response.json();
+  return data;
 };
