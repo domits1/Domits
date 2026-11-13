@@ -27,20 +27,22 @@ describe("Guest review publication", () => {
     repository = {
       findById: jest.fn().mockImplementation(async () => ({ ...draft })),
       findBookingById: jest.fn().mockImplementation(async () => ({ ...booking })),
-      publishDraft: jest.fn().mockImplementation(async () => published()),
+      publishDraft: jest.fn().mockImplementation(async () => ({ ...draft,
+        status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED", updated_at: now })),
     };
     service = new ReviewService({ repository, now: () => now });
   });
 
-  it("publishes an eligible draft without exposing private feedback", async () => {
+  it("submits an eligible draft for approval without exposing private feedback", async () => {
     const result = await service.publishReview("guest-1", draft.id);
     expect(result).toMatchObject({
-      id: draft.id, status: "PUBLISHED", publication_status: "PUBLISHED",
+      id: draft.id, status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED",
     });
     expect(result).not.toHaveProperty("private_feedback");
     const options = repository.publishDraft.mock.calls[0][0];
     expect(options).toMatchObject({
       reviewId: draft.id, expectedUpdatedAt: draft.updated_at, updatedAt: now,
+      from: "DRAFT", to: "PENDING_APPROVAL",
     });
     await expect(options.authorize(draft)).resolves.toBe(true);
     await expect(options.authorize({ ...draft, reviewer_user_id: "other" })).resolves.toBe(false);
@@ -60,6 +62,15 @@ describe("Guest review publication", () => {
     const result = await service.publishReview("guest-1", draft.id);
     expect(result).toMatchObject({ status: "PUBLISHED" });
     expect(result).not.toHaveProperty("private_feedback");
+    expect(repository.publishDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a concurrent submission for approval without publishing it", async () => {
+    repository.findById.mockResolvedValueOnce({ ...draft }).mockResolvedValueOnce({ ...draft,
+      status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED", updated_at: now });
+    repository.publishDraft.mockResolvedValue(null);
+    await expect(service.publishReview("guest-1", draft.id)).resolves.toMatchObject({
+      status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
     expect(repository.publishDraft).toHaveBeenCalledTimes(1);
   });
 

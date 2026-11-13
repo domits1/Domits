@@ -5,12 +5,23 @@ const GUEST_BOOKINGS_API =
 const HOST_BOOKINGS_API = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings";
 const BOOKING_DETAILS_API_BASE =
   "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/booking";
+const HOST_LISTING_ENDPOINT = "hostDashboard/single";
+const PUBLIC_LISTING_ENDPOINT = "bookingEngine/listingDetails";
+const FORBIDDEN_STATUS = 403;
 
 export class MessagingAuthenticationError extends Error {
   constructor(message = "Authentication token is required.") {
     super(message);
     this.name = "MessagingAuthenticationError";
     this.code = "AUTH_TOKEN_REQUIRED";
+  }
+}
+
+export class AccommodationRequestError extends Error {
+  constructor(status) {
+    super("Failed to fetch accommodation");
+    this.name = "AccommodationRequestError";
+    this.status = status;
   }
 }
 
@@ -160,7 +171,7 @@ export async function getHostBookingDetails({
   propertyId = null,
   bookingId = null,
   token = null,
-  accommodationEndpoint = "hostDashboard/single",
+  accommodationEndpoint = HOST_LISTING_ENDPOINT,
 }) {
   const authToken = requireMessagingToken(token);
   const requestUrl = new URL(HOST_BOOKINGS_API);
@@ -221,7 +232,7 @@ export async function getHostBookingDetails({
 
   const accommodation =
     bookingPropertyId && accommodationEndpoint
-      ? await getAccommodationByPropertyId(accommodationEndpoint, bookingPropertyId, authToken)
+      ? await getAccommodationWithPublicFallback(accommodationEndpoint, bookingPropertyId, authToken)
       : null;
 
   return { bookingDetails: booking, accommodation };
@@ -244,14 +255,22 @@ export async function getAccommodationByBookingId(bookingId, token) {
 export async function getAccommodationByPropertyId(accommodationEndpoint, propertyId, token) {
   const response = await fetch(`${ACCOMMODATION_API_BASE}/${accommodationEndpoint}?property=${propertyId}`, {
     method: "GET",
-    headers: {
-      Authorization: token,
-    },
+    headers: token ? { Authorization: token } : {},
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch accommodation");
+    throw new AccommodationRequestError(response.status);
   }
   return response.json();
+}
+
+export async function getAccommodationWithPublicFallback(accommodationEndpoint, propertyId, token) {
+  try {
+    return await getAccommodationByPropertyId(accommodationEndpoint, propertyId, token);
+  } catch (error) {
+    const isHostAccessDenied = accommodationEndpoint === HOST_LISTING_ENDPOINT && error?.status === FORBIDDEN_STATUS;
+    if (!isHostAccessDenied) throw error;
+    return getAccommodationByPropertyId(PUBLIC_LISTING_ENDPOINT, propertyId, null);
+  }
 }
 
 const guessFileType = (url = "") => {
@@ -281,6 +300,24 @@ const parseSavedFailedMessage = (text) => {
   } catch {
     return null;
   }
+};
+
+const postToSend = async (payload, token) => {
+  const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
+    method: "POST",
+    headers: buildAuthHeaders(token, { requireAuth: true }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    const error = new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
+    const savedMessage = parseSavedFailedMessage(txt);
+    if (savedMessage) error.savedMessage = savedMessage;
+    throw error;
+  }
+
+  return res.json();
 };
 
 export async function sendUnifiedMessage({
@@ -324,21 +361,11 @@ export async function sendUnifiedMessage({
     externalThreadId,
   };
 
-  const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
-    method: "POST",
-    headers: buildAuthHeaders(token, { requireAuth: true }),
-    body: JSON.stringify(payload),
-  });
+  return postToSend(payload, token);
+}
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    const error = new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
-    const savedMessage = parseSavedFailedMessage(txt);
-    if (savedMessage) error.savedMessage = savedMessage;
-    throw error;
-  }
-
-  return res.json();
+export async function retryUnifiedMessage({ messageId, token = null }) {
+  return postToSend({ retryMessageId: messageId }, token);
 }
 
 export async function markThreadRead(threadId, idToken = null) {

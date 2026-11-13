@@ -257,6 +257,10 @@ export default class ChannelManagementController {
     );
   }
 
+  async getChannexHealth() {
+    return { statusCode: 200, response: await this.channelManagementApiService.getChannexHealth() };
+  }
+
   async processChannexAriOutbox(event, context) {
     return this.channelManagementApiService.processChannexAriOutbox({
       remainingTimeMs: context?.getRemainingTimeInMillis?.(),

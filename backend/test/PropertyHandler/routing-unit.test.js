@@ -31,6 +31,9 @@ const directRouteSpecs = [
   ["PATCH property activation request", "activateProperty", "PATCH", "/property", 200],
   ["POST property review approve request", "approveProperty", "POST", "/property/review/approve", 200],
   ["POST property review reject request", "rejectProperty", "POST", "/property/review/reject", 200],
+  ["GET property review access request", "getReviewAccess", "GET", "/property/review/access", 200],
+  ["GET property review queue request", "getReviewQueue", "GET", "/property/review/queue", 200],
+  ["GET property review detail request", "getReviewDetail", "GET", "/property/review/detail", 200],
   ["POST website analytics event request", "recordWebsiteAnalyticsEvent", "POST", "/property/website/event", 204],
   ["POST public website quote request", "createPublicWebsiteQuote", "POST", "/property/website/public/quote", 200],
   ["POST website site publish request", "publishWebsiteSite", "POST", "/property/website/site/publish", 200],
@@ -72,6 +75,7 @@ const hostDashboardSpecs = [
 const bookingEngineSpecs = [
   ["GET bookingEngine properties by type", "getActivePropertiesCardByType", "byType"],
   ["GET all active properties", "getActivePropertiesCard", "all"],
+  ["GET properties by country", "getActivePropertiesCardByCountry", "byCountry"],
   ["GET properties by hostId", "getActivePropertiesCardByHostId", "byHostId"],
   ["GET set of properties", "getActivePropertiesCardById", "set"],
   ["GET active listing details", "getFullActivePropertyById", "listingDetails"],
@@ -241,6 +245,31 @@ describe("Routing unit tests", () => {
 
     expect(response.statusCode).toBe(200);
     expect(queueAllStaticPages).toHaveBeenCalledWith({ task: "queue-all-static-pages" });
+  });
+
+  it("should route the website cleanup task to the controller with its payload", async () => {
+    const unpublishSitesOfInactiveListings = jest
+      .spyOn(PropertyController.prototype, "unpublishSitesOfInactiveListings")
+      .mockResolvedValue({ statusCode: 200, body: "{}" });
+    const event = { task: "unpublish-sites-of-inactive-listings", apply: true, limit: 7 };
+
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(unpublishSitesOfInactiveListings).toHaveBeenCalledWith(event);
+  });
+
+  it("should not run the website cleanup for an HTTP request that carries the task name", async () => {
+    const unpublishSitesOfInactiveListings = jest.spyOn(
+      PropertyController.prototype,
+      "unpublishSitesOfInactiveListings"
+    );
+    jest.spyOn(PropertyController.prototype, "create").mockResolvedValue({ statusCode: 201, body: "1" });
+
+    const response = await handler({ httpMethod: "POST", task: "unpublish-sites-of-inactive-listings", apply: true });
+
+    expect(response.statusCode).toBe(201);
+    expect(unpublishSitesOfInactiveListings).not.toHaveBeenCalled();
   });
 
   it("should route an HTTP request that also carries the task name as an HTTP request", async () => {

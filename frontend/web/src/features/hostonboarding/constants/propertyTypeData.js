@@ -8,6 +8,7 @@ import Cottage from "../../../images/icons/cottage.png";
 export const accommodationData = {
   accommodation: {
     types: ["Villa", "House", "Apartment", "Boat", "Camper", "Cottage"],
+    visibleTypes: ["Villa", "House", "Apartment"],
     icons: {
       Villa,
       House,

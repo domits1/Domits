@@ -5,6 +5,8 @@ const mockUpdateTaskUnlessCompleted = jest.fn();
 const mockSaveActivityToDb = jest.fn();
 const mockGetTeamMemberById = jest.fn();
 const mockGetChecklistItemsForTask = jest.fn();
+const mockApproveCompletedTaskInDb = jest.fn();
+const mockRejectCompletedTaskInDb = jest.fn();
 
 const resetTaskRepositoryMocks = () => {
     jest.clearAllMocks();
@@ -13,6 +15,8 @@ const resetTaskRepositoryMocks = () => {
     mockUpdateTaskUnlessCompleted.mockResolvedValue(true);
     mockSaveActivityToDb.mockResolvedValue();
     mockGetChecklistItemsForTask.mockResolvedValue([]);
+    mockApproveCompletedTaskInDb.mockResolvedValue(true);
+    mockRejectCompletedTaskInDb.mockResolvedValue(true);
 };
 
 const databaseMock = {
@@ -28,6 +32,8 @@ const taskRepositoryMock = {
     saveActivityToDb: (...args) => mockSaveActivityToDb(...args),
     getTeamMemberById: (...args) => mockGetTeamMemberById(...args),
     getChecklistItemsForTask: (...args) => mockGetChecklistItemsForTask(...args),
+    approveCompletedTaskInDb: (...args) => mockApproveCompletedTaskInDb(...args),
+    rejectCompletedTaskInDb: (...args) => mockRejectCompletedTaskInDb(...args),
 };
 
 module.exports = {
@@ -38,6 +44,8 @@ module.exports = {
     mockSaveActivityToDb,
     mockGetTeamMemberById,
     mockGetChecklistItemsForTask,
+    mockApproveCompletedTaskInDb,
+    mockRejectCompletedTaskInDb,
     resetTaskRepositoryMocks,
     databaseMock,
     taskRepositoryMock,

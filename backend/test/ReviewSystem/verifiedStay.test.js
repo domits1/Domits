@@ -1,9 +1,12 @@
 import { DataSource } from "typeorm";
+import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 import { Review } from "database/models/Review";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { completedStayError } from "../../functions/ReviewSystem/util/verifiedStay.js";
+
+jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 
 test.each(["paid", "confirmed", " CONFIRMED "])("accepts a completed %s reservation", (status) => {
   expect(completedStayError({ status, departuredate: 1000 }, 2000)).toBeNull();
@@ -14,10 +17,16 @@ test.each([{ status: "cancelled", departuredate: 1000 }, { status: "pending", de
   "rejects an ineligible reservation %j", (booking) => {
     expect(completedStayError(booking, 2000)).not.toBeNull();
   });
-test("requires a matching reservation, guest, property, without a stored verification filter", async () => {
+test("requires a matching completed reservation without a stored verification filter", async () => {
   const database = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Property, Review] });
   await database.buildMetadatas();
-  const query = new ReviewRepository().filteredPublicReviewQuery(database, "p1", { verificationNow: 2000 });
+  const query = database.getRepository(Review).createQueryBuilder("review");
+  jest.spyOn(query, "getRawOne").mockResolvedValue({ score: null, count: "0" });
+  jest.spyOn(query, "getMany").mockResolvedValue([]);
+  jest.spyOn(database, "getRepository").mockImplementation((entity) => entity === Property
+    ? { findOne: async () => ({ id: "p1" }) } : { createQueryBuilder: () => query });
+  Database.getInstance.mockResolvedValue(database);
+  await new ReviewRepository().getPublicReviewPage("p1", 0, { verificationNow: 2000 });
   const sql = query.getQuery();
   expect(sql).toContain('INNER JOIN "main"."booking"');
   for (const [bookingField, reviewField] of [["id", "booking_id"], ["guestid", "reviewer_user_id"], ["property_id", "property_id"]]) {

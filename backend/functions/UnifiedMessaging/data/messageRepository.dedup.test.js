@@ -61,7 +61,13 @@ describe("MessageRepository external message de-duplication", () => {
       platformMessageId: "platform-msg-1",
     });
 
-    expect(result).toBe(true);
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        threadId: "thread-1",
+        platformMessageId: "platform-msg-1",
+      })
+    );
     expect(insertExecute).toHaveBeenCalledTimes(1);
   });
 
@@ -158,8 +164,9 @@ describe("MessageRepository external message de-duplication", () => {
       platformMessageId: null,
     });
 
-    expect(first).toBe(true);
-    expect(second).toBe(true);
+    expect(first).toEqual(expect.objectContaining({ id: expect.any(String), content: "Hi" }));
+    expect(second).toEqual(expect.objectContaining({ id: expect.any(String), content: "Hi again" }));
+    expect(second.id).not.toBe(first.id);
     expect(insertExecute).toHaveBeenCalledTimes(2);
   });
 });
