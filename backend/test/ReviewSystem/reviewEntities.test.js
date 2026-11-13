@@ -13,6 +13,7 @@ import { Review_Category } from "../../ORM/models/Review_Category.js";
 import { Review_Request } from "../../ORM/models/Review_Request.js";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { Review_Response } from "../../ORM/models/Review_Response.js";
+import { Review_Flag } from "../../ORM/models/Review_Flag.js";
 import { CreateReviewResponse20261014 } from "../../ORM/migrations/20261014_create_review_response.js";
 import { assertReviewResponseSchema } from "../../functions/ReviewSystem/util/assertReviewResponseSchema.js";
 import { execFileSync } from "node:child_process";
@@ -26,7 +27,7 @@ describe("ReviewSystem runtime and deployment preflight", () => {
       const { handler } = await import(${JSON.stringify(handlerUrl)});
       const { Tables } = await import(${JSON.stringify(tablesUrl)});
       const names = Tables.map((table) => table.options.name);
-      for (const name of ["Review_Response", "DirectBookingWebsiteRatePlan"]) {
+      for (const name of ["Review_Response", "Review_Flag", "DirectBookingWebsiteRatePlan"]) {
         if (!names.includes(name)) throw new Error("Missing entity: " + name);
       }
       const response = await handler({ httpMethod: "GET", resource: "/reviews" });
@@ -155,12 +156,16 @@ describe('Review entities and creation persistence', () => {
     });
   });
 
-// Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
+// Deletion retains supporting records and scopes the update to the author.
 it("soft deletes only the author while retaining supporting records", async () => {
+  const query = { execute: jest.fn().mockResolvedValue({ affected: 1 }) };
+  for (const method of ["update", "set", "where", "andWhere"]) query[method] = jest.fn(() => query);
+  repositories.get(Review).createQueryBuilder = jest.fn(() => query);
   await repository.deleteOwnReview("legacy-review", "guest-1", 123);
-  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
-    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
-  });
+  expect(query.where).toHaveBeenCalledWith("id = :id", { id: "legacy-review" });
+  expect(query.andWhere).toHaveBeenCalledWith("reviewer_user_id = :reviewerUserId", { reviewerUserId: "guest-1" });
+  expect(query.set).toHaveBeenCalledWith({ status: "DELETED", updated_at: 123 });
+  expect(query.execute).toHaveBeenCalledTimes(1);
   for (const entity of [Review_Rating, Review_Request, Review_Response]) {
     expect(repositories.get(entity).update).not.toHaveBeenCalled();
   }
@@ -300,10 +305,12 @@ describe('Review transactional writes', () => {
       [Review_Request, [{ id: "request", bookingId: "b1", guestId: "guest", reviewType: "GUEST_TO_PROPERTY",
         status: "OPEN", nextSendAt: now + 100, claimedAt: now - 100 }]],
       [Review_Response, []],
+      [Review_Flag, []],
     ]);
     active = committed;
     repositories = new Map([...committed.keys()].map((entity) => [entity, {
       findOne: jest.fn(async ({ where }) => active.get(entity).find((row) => matches(row, where)) ?? null),
+      findOneBy: jest.fn(async (where) => active.get(entity).find((row) => matches(row, where)) ?? null),
       find: jest.fn(async ({ where }) => active.get(entity).filter((row) => matches(row, where))),
       update: jest.fn(async (where, fields) => {
         const rows = active.get(entity).filter((row) => matches(row, where));
@@ -319,6 +326,13 @@ describe('Review transactional writes', () => {
         return records;
       }),
     }]));
+    repositories.get(Review_Flag).insert = jest.fn(async (flag) => {
+      const flags = active.get(Review_Flag);
+      if (flags.some((row) => row.review_id === flag.review_id && row.status === "PENDING")) {
+        throw Object.assign(new Error("Duplicate"), { code: "23505", constraint: "review_flag_pending_unique_test" });
+      }
+      flags.push({ ...flag });
+    });
     // Model commit/rollback separately from the transaction's working data.
     source = {
       getRepository: (entity) => repositories.get(entity),
@@ -501,6 +515,34 @@ describe('Review transactional writes', () => {
       updatedAt: now, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true })).rejects.toMatchObject({ statusCode: 400 });
   });
 
+  it("holds approval until the flag is resolved and retains its audit history", async () => {
+    committed.get(Review)[0].status = "PENDING_APPROVAL";
+    const flag = { id: "f1", review_id: "r1", reason: "SPAM", status: "PENDING", created_at: now, updated_at: now };
+    await repository.createReviewFlag(flag);
+    await expect(repository.createReviewFlag({ ...flag, id: "f2" })).rejects.toMatchObject({ statusCode: 409 });
+    expect(committed.get(Review)[0]).toMatchObject({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED", updated_at: now });
+    const approve = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now,
+      updatedAt: now + 2, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true });
+    await expect(approve()).rejects.toThrow("Resolve the pending review flag");
+    const resolved = await repository.resolveReviewFlag("f1", "moderator", now + 1);
+    expect(resolved).toMatchObject({ status: "RESOLVED", reason: "SPAM", resolved_by: "moderator", updated_at: now + 1 });
+    await expect(repository.resolveReviewFlag("f1", "other", now + 2)).resolves.toEqual(resolved);
+    await expect(approve()).resolves.toMatchObject({ status: "APPROVED", publication_status: "UNPUBLISHED" });
+    await repository.createReviewFlag({ ...flag, id: "f2", created_at: now + 3, updated_at: now + 3 });
+    const publish = () => repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: now + 3,
+      updatedAt: now + 5, from: "APPROVED", to: "PUBLISHED", authorize: async () => true });
+    await expect(publish()).rejects.toThrow("Resolve the pending review flag before publishing");
+    await repository.resolveReviewFlag("f2", "moderator", now + 4);
+    await expect(publish()).resolves.toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
+    expect(committed.get(Review_Flag)).toHaveLength(2);
+  });
+
+  it.each(["missing", "DELETED"])("refuses to flag a %s review", async (status) => {
+    committed.get(Review)[0].status = status;
+    const review_id = status === "missing" ? "absent" : "r1";
+    await expect(repository.createReviewFlag({ review_id })).rejects.toMatchObject({ statusCode: 404 });
+  });
+
   it("rejects publication that bypasses approval", async () => {
     committed.get(Review)[0].status = "PENDING_APPROVAL";
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
@@ -531,12 +573,13 @@ describe('Review transactional writes', () => {
     }
   });
 
-  it("publishes and completes the matching request in one transaction without upgrading verification", async () => {
+  it.each(["OPEN", "SENDING", "SENT", "FAILED", "CANCELLED"])("publishes and completes a %s request without upgrading verification", async (status) => {
+    committed.get(Review_Request)[0].status = status;
     committed.get(Review)[0].status = "APPROVED";
     const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true });
     expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
-    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: null });
+    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: now - 100 });
   });
 
   it("rechecks publication policy and booking eligibility before committing", async () => {
