@@ -9,7 +9,6 @@ import {
   createReview,
   requestReview,
   getEditableReview,
-  submitReviewForApproval,
   updateReview,
 } from "../services/reviewAPI";
 
@@ -30,7 +29,6 @@ jest.mock("../services/reviewAPI", () => ({
   createReview: jest.fn(),
   requestReview: jest.fn(),
   getEditableReview: jest.fn(),
-  submitReviewForApproval: jest.fn(),
   updateReview: jest.fn(),
 }));
 jest.mock("../../../services/getAccessToken", () => ({
@@ -142,7 +140,6 @@ beforeEach(() => {
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
   createReview.mockResolvedValue({ id: "review-1" });
-  submitReviewForApproval.mockResolvedValue({ id: "review-1", status: "PENDING_APPROVAL" });
 });
 
 it("hides the form while eligibility is being checked", () => {
@@ -201,7 +198,6 @@ const submitReview = async () => {
 it("submits the reservation and shows confirmation", async () => {
   await submitReview();
   await screen.findByRole("heading", { name: "Review submitted" });
-  expect(submitReviewForApproval).toHaveBeenCalledWith("review-1");
   expect(createReview).toHaveBeenCalledWith({
     bookingId: booking.id,
     rating: 5,
@@ -209,32 +205,6 @@ it("submits the reservation and shows confirmation", async () => {
     publicReview: "Great stay.",
     privateFeedback: "",
   });
-});
-
-it("retries approval submission using the saved draft", async () => {
-  submitReviewForApproval.mockRejectedValueOnce(new Error("Could not submit your review. Please try again."));
-  await submitReview();
-  await screen.findByRole("alert");
-  expect(screen.queryByRole("heading", { name: "Review submitted" })).not.toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole("button", { name: "Submit review" }));
-
-  await screen.findByRole("heading", { name: "Review submitted" });
-  expect(createReview).toHaveBeenCalledTimes(1);
-  expect(submitReviewForApproval.mock.calls).toEqual([["review-1"], ["review-1"]]);
-});
-
-it("submits an existing draft from the guest review history", async () => {
-  requestReview.mockImplementation(async (_method, { scope }) => ({
-    ok: true,
-    json: async () => scope === "written" ? [{ id: "review-1", status: "DRAFT" }] : [],
-  }));
-  render(<GuestReviews />);
-
-  fireEvent.click(await screen.findByRole("button", { name: "Submit for approval" }));
-
-  await waitFor(() => expect(screen.queryByRole("button", { name: "Submit for approval" })).not.toBeInTheDocument());
-  expect(submitReviewForApproval).toHaveBeenCalledWith("review-1");
 });
 
 it.each([
