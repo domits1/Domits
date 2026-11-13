@@ -31,6 +31,26 @@ const getMessageKey = (message) => {
   return `${sender}-${recipient}-${time}-${text}`;
 };
 
+const isUnsentMessageOfOtherConversation = (message, contactId, threadId) => {
+  if (!message.retryPayload) return false;
+  const isOtherRecipient = String(message.recipientId) !== String(contactId);
+  const isOtherThread = Boolean(message.threadId) && String(message.threadId) !== String(threadId || "");
+  return isOtherRecipient || isOtherThread;
+};
+
+const buildSettledMessage = (pending, result, fallbackPlatform) => {
+  const saved = result?.saved || {};
+  return {
+    ...pending,
+    id: saved.id || pending.id,
+    createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : pending.createdAt,
+    threadId: saved.threadId || pending.threadId,
+    bookingId: saved.bookingId || pending.bookingId,
+    platform: saved.platform || fallbackPlatform,
+    deliveryStatus: result.success ? saved.deliveryStatus : "failed",
+  };
+};
+
 const ChatScreen = ({
   userId,
   contactId,
@@ -48,6 +68,7 @@ const ChatScreen = ({
   capabilities: providedCapabilities = null,
   handleContactListMessage,
   testMessages = [],
+  bookingInDetailsPanel = false,
 }) => {
   const { accessToken } = useAuth();
   const capabilities = useMemo(
@@ -63,8 +84,11 @@ const ChatScreen = ({
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
 
   const [localMessages, setLocalMessages] = useState([]);
+  const [retryingIds, setRetryingIds] = useState({});
+  const [retryOverrides, setRetryOverrides] = useState({});
+  const retryingRef = useRef(new Set());
 
-  const { sendMessage, sending } = useSendMessage(userId, accessToken);
+  const { sendMessage, retryMessage, sending } = useSendMessage(userId, accessToken);
   const { fetchMessages, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
 
   const scrollContainerRef = useRef(null);
@@ -75,6 +99,11 @@ const ChatScreen = ({
   const resolvedContactId = contactId || null;
   const resolvedPlatform = String(platform || "DOMITS").toUpperCase();
   const isWhatsApp = resolvedPlatform === "WHATSAPP";
+
+  // An unsent upload belongs to the thread it was attached in; the next thread may not accept attachments.
+  useEffect(() => {
+    setUploadedFileUrls([]);
+  }, [resolvedContactId, threadId]);
 
   useEffect(() => {
     if (!resolvedContactId) {
@@ -99,7 +128,10 @@ const ChatScreen = ({
     const baseArr = Array.isArray(base) ? base : [];
 
     const extras = Array.isArray(testMessages) ? testMessages : [];
-    const merged = [...baseArr, ...localMessages, ...extras];
+    const visibleLocalMessages = localMessages.filter(
+      (m) => !isUnsentMessageOfOtherConversation(m, resolvedContactId, threadId)
+    );
+    const merged = [...baseArr, ...visibleLocalMessages, ...extras];
 
     const uniq = [];
     const seen = new Set();
@@ -112,11 +144,11 @@ const ChatScreen = ({
         );
       if (seen.has(id)) continue;
       seen.add(id);
-      uniq.push(m);
+      uniq.push(m.id && retryOverrides[m.id] ? { ...m, ...retryOverrides[m.id] } : m);
     }
 
     return uniq.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
-  }, [messagesByRecipient, messagesByThread, resolvedContactId, threadId, localMessages, testMessages]);
+  }, [messagesByRecipient, messagesByThread, resolvedContactId, threadId, localMessages, retryOverrides, testMessages]);
 
   const computeNearBottom = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -164,6 +196,18 @@ const ChatScreen = ({
 
     const optimisticId = `tmp-${nowIso}-${makeClientId()}`;
 
+    const sendOptions = {
+      threadId: threadId || null,
+      propertyId: effectivePropertyId,
+      bookingId: bookingId || null,
+      hostId,
+      guestId,
+      metadata: { isAutomated: false },
+      platform: resolvedPlatform,
+      integrationAccountId: integrationAccountId ?? null,
+      externalThreadId: externalThreadId || resolvedContactId,
+    };
+
     const optimistic = {
       id: optimisticId,
       userId,
@@ -185,42 +229,90 @@ const ChatScreen = ({
     setLocalMessages((prev) => [...prev, optimistic]);
 
     try {
-      const result = await sendMessage(resolvedContactId, newMessage.trim(), uploadedFileUrls, {
-        threadId: threadId || null,
-        propertyId: effectivePropertyId,
-        bookingId: bookingId || null,
-        hostId,
-        guestId,
-        metadata: { isAutomated: false },
-        platform: resolvedPlatform,
-        integrationAccountId: integrationAccountId ?? null,
-        externalThreadId: externalThreadId || resolvedContactId,
-      });
+      const result = await sendMessage(resolvedContactId, optimistic.text, optimistic.fileUrls, sendOptions);
 
       const saved = result?.saved || {};
       if (!result?.success && !saved.id) throw new Error(result?.error || "send failed");
 
-      const finalMsg = {
-        ...optimistic,
-        id: saved.id || optimisticId,
-        createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
-        threadId: saved.threadId || optimistic.threadId,
-        bookingId: saved.bookingId || optimistic.bookingId,
-        platform: saved.platform || resolvedPlatform,
-        deliveryStatus: result.success ? saved.deliveryStatus : "failed",
-      };
+      const finalMsg = buildSettledMessage(optimistic, result, resolvedPlatform);
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
       handleContactListMessage?.(finalMsg);
 
-      setNewMessage("");
-      setUploadedFileUrls([]);
-      setShowPreviewPopover(false);
+      clearComposer();
 
       if (!result.success) showSendFailedToast();
     } catch {
-      setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      const unsentMessage = {
+        ...optimistic,
+        deliveryStatus: "failed",
+        retryPayload: {
+          recipientId: resolvedContactId,
+          text: optimistic.text,
+          fileUrls: optimistic.fileUrls,
+          options: sendOptions,
+        },
+      };
+      setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? unsentMessage : m)));
+      clearComposer();
       showSendFailedToast();
+    }
+  };
+
+  const clearComposer = () => {
+    setNewMessage("");
+    setUploadedFileUrls([]);
+    setShowPreviewPopover(false);
+  };
+
+  const retrySavedMessage = async (message) => {
+    const result = await retryMessage(message.id);
+    const saved = result?.saved || {};
+    const deliveryStatus = result?.success ? saved.deliveryStatus || "sent" : "failed";
+
+    setRetryOverrides((prev) => ({
+      ...prev,
+      [message.id]: { deliveryStatus, errorCode: saved.errorCode ?? null, errorMessage: saved.errorMessage ?? null },
+    }));
+
+    if (!result?.success) showSendFailedToast();
+  };
+
+  const resendUnsavedMessage = async (message) => {
+    const { recipientId, text, fileUrls, options } = message.retryPayload;
+    const result = await sendMessage(recipientId, text, fileUrls, options);
+    const saved = result?.saved || {};
+
+    if (!result?.success && !saved.id) {
+      showSendFailedToast();
+      return;
+    }
+
+    const settledMessage = { ...buildSettledMessage(message, result, resolvedPlatform), retryPayload: undefined };
+    setLocalMessages((prev) => prev.map((m) => (m.id === message.id ? settledMessage : m)));
+    handleContactListMessage?.(settledMessage);
+
+    if (!result.success) showSendFailedToast();
+  };
+
+  const handleRetry = async (message) => {
+    if (retryingRef.current.has(message.id)) return;
+    retryingRef.current.add(message.id);
+    setRetryingIds((prev) => ({ ...prev, [message.id]: true }));
+
+    try {
+      if (message.retryPayload) {
+        await resendUnsavedMessage(message);
+      } else {
+        await retrySavedMessage(message);
+      }
+    } finally {
+      retryingRef.current.delete(message.id);
+      setRetryingIds((prev) => {
+        const next = { ...prev };
+        delete next[message.id];
+        return next;
+      });
     }
   };
 
@@ -293,6 +385,8 @@ const ChatScreen = ({
               userId={userId}
               contactName={headerName}
               contactImage={contactImage}
+              onRetry={handleRetry}
+              isRetrying={Boolean(retryingIds[message.id])}
             />
           ))
         )}
@@ -300,20 +394,25 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        {isWhatsApp || !capabilities.canViewBookingContext ? null : (
-          <BookingTab
-            userId={userId}
-            contactId={resolvedContactId}
-            contactName={headerName}
-            dashboardType={dashboardType}
-            bookingId={bookingId || null}
-            propertyId={propertyId || null}
-          />
+        {isWhatsApp || bookingInDetailsPanel || !capabilities.canViewBookingContext ? null : (
+          <details className="chat-booking-details">
+            <summary>Reservation details</summary>
+            <BookingTab
+              userId={userId}
+              contactId={resolvedContactId}
+              contactName={headerName}
+              dashboardType={dashboardType}
+              bookingId={bookingId || null}
+              propertyId={propertyId || null}
+            />
+          </details>
         )}
 
         <div className="chat-input">
           <div className="attachment-area">
-            {capabilities.canUseAttachments ? <ChatUploadAttachment onUploadComplete={handleUploadComplete} /> : null}
+            {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
+              <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+            ) : null}
 
             {uploadedFileUrls.length > 0 && (
               <button
@@ -396,6 +495,7 @@ ChatScreen.propTypes = {
   capabilities: PropTypes.object,
   handleContactListMessage: PropTypes.func,
   testMessages: PropTypes.arrayOf(PropTypes.object),
+  bookingInDetailsPanel: PropTypes.bool,
 };
 
 export default ChatScreen;

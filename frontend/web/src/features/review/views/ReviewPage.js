@@ -59,6 +59,7 @@ const ReviewForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [pendingPublicationId, setPendingPublicationId] = useState("");
   const [checkedBookingId, setCheckedBookingId] = useState("");
   const [eligibilityError, setEligibilityError] = useState("");
@@ -177,7 +178,8 @@ const ReviewForm = () => {
     setIsSubmitting(true);
     setSubmitError("");
     try {
-      await publishReview(id);
+      const result = await publishReview(id);
+      setAwaitingApproval(result.status === "PENDING_APPROVAL");
       setPendingPublicationId("");
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
@@ -341,8 +343,9 @@ const ReviewForm = () => {
       <main className={`${styles.main} ${styles.publicationPage}`}>
         <section className={styles.statusCard}>
           <span className={styles.eyebrow}>THANK YOU FOR SHARING</span>
-          <h1>{reviewId ? "Review updated" : "Your review is published"}</h1>
+          <h1>{reviewId ? "Review updated" : awaitingApproval ? "Your review is awaiting approval" : "Your review is published"}</h1>
           <p role="status">{reviewId ? "Your changes have been saved as a draft for review."
+            : awaitingApproval ? "Your review has been submitted and will appear after approval."
             : "Your experience can now help future guests choose their next stay."}</p>
           <button type="button" onClick={() => navigate("/guestdashboard/reviews")}>
             View my reviews

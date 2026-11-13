@@ -25,6 +25,41 @@ export default function HostReviews() {
   const [eligibilityRetry, setEligibilityRetry] = useState(0);
   const navigate = useNavigate();
 
+  function updateReviewResponse(reviewId, response) {
+    setRespondableReviews((reviews) => {
+      const review = reviews[reviewId];
+      return review ? { ...reviews, [reviewId]: { ...review, response } } : reviews;
+    });
+  }
+
+  useEffect(() => {
+    let active = true;
+    setRespondableReviews({});
+    setEligibilityError("");
+    if (userId) {
+      const retrieveEligibility = async () => {
+        try {
+          const response = await requestReview("GET", { scope: "respondable" });
+          if (!response.ok) throw new Error("Could not load response eligibility");
+          const data = await response.json();
+          if (!Array.isArray(data) || data.some((review) => typeof review?.id !== "string")) {
+            throw new Error("Invalid response eligibility");
+          }
+          if (active) setRespondableReviews(Object.fromEntries(data.map((review) => [review.id, review])));
+        } catch {
+          if (active)
+            setEligibilityError(
+              "Could not check which reviews you can respond to. Your received reviews are still available."
+            );
+        }
+      };
+      void retrieveEligibility();
+    }
+    return () => {
+      active = false;
+    };
+  }, [userId, eligibilityRetry]);
+
   useEffect(() => {
     let active = true;
     Auth.currentUserInfo()
@@ -65,30 +100,11 @@ export default function HostReviews() {
     };
   }, [userId, retry]);
 
-  useEffect(() => {
-    let active = true;
-    setRespondableReviews({});
-    setEligibilityError("");
-    if (userId) {
-      requestReview("GET", { scope: "respondable" }).then(async (response) => {
-        if (!response.ok) throw new Error("Could not load response eligibility");
-        const data = await response.json();
-        if (!Array.isArray(data) || data.some((review) => typeof review?.id !== "string")) {
-          throw new Error("Invalid response eligibility");
-        }
-        if (active) setRespondableReviews(Object.fromEntries(data.map((review) => [review.id, review])));
-      }).catch(() => {
-        if (active) setEligibilityError("Could not check which reviews you can respond to. Your received reviews are still available.");
-      });
-    }
-    return () => { active = false; };
-  }, [userId, eligibilityRetry]);
-
   return (
     <main className={`page-body ${styles.page}`}>
       <header className={styles.pageHeading}>
         <h2>Reviews</h2>
-        <p>Manage guest feedback and track your performance.</p>
+        <p>Manage guest feedback, reply to reviews and track your performance.</p>
       </header>
       <nav className={styles.viewMenu} aria-label="Review views">
         {REVIEW_VIEWS.map(({ key, label }) => (
@@ -107,16 +123,25 @@ export default function HostReviews() {
         {activeView === "trends" && userId && <DecliningPropertyRatings userId={userId} />}
         {activeView !== "reviews" && !userId && <p role="status">Loading your account...</p>}
         {activeView === "reviews" && (
-          <ReceivedReviews
-            userId={userId}
-            reviews={receivedReviews}
-            respondableReviews={respondableReviews}
-            eligibilityError={eligibilityError}
-            onEligibilityRetry={() => setEligibilityRetry((value) => value + 1)}
-            loading={loading}
-            error={error}
-            onRetry={() => setRetry((value) => value + 1)}
-          />
+          <>
+            {eligibilityError && (
+              <div role="alert">
+                {eligibilityError}
+                <button type="button" onClick={() => setEligibilityRetry((value) => value + 1)}>
+                  Retry response eligibility
+                </button>
+              </div>
+            )}
+            <ReceivedReviews
+              respondableReviews={respondableReviews}
+              onResponseChange={updateReviewResponse}
+              userId={userId}
+              reviews={receivedReviews}
+              loading={loading}
+              error={error}
+              onRetry={() => setRetry((value) => value + 1)}
+            />
+          </>
         )}
       </div>
     </main>

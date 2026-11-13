@@ -1,33 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { getPropertyReviewPerformance } from "../services/reviewAPI";
+import React from "react";
 
-export default function PropertyRatingSparkline({ propertyId, endDate, days, declining }) {
-  const [scores, setScores] = useState(null);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    let active = true;
-    setScores(null);
-    setFailed(false);
-    (async () => {
-      const values = [];
-      const endExclusive = Date.parse(`${endDate}T00:00:00Z`) + 86400000;
-      // Exact adjacent windows match the selected comparison length, including partial calendar months.
-      for (let index = 5; index >= 0; index--) {
-        if (!active) return;
-        const end = endExclusive - index * days * 86400000;
-        const start = end - days * 86400000;
-        const result = await getPropertyReviewPerformance({ propertyId, interval: "month",
-          startDate: new Date(start).toISOString().slice(0, 10), endDate: new Date(end - 1).toISOString().slice(0, 10) });
-        if (!Array.isArray(result?.periods)) throw new Error("Missing history");
-        const count = result.periods.reduce((sum, period) => sum + period.review_count, 0);
-        values.push(count ? result.periods.reduce((sum, period) => sum + (period.average_score ?? 0) * period.review_count, 0) / count : null);
-      }
-      if (active) setScores(values);
-    })().catch(() => { if (active) setFailed(true); });
-    return () => { active = false; };
-  }, [propertyId, endDate, days]);
-  if (failed) return <small>History unavailable</small>;
-  if (!scores) return <small>Loading history...</small>;
+export default function PropertyRatingSparkline({ history, declining }) {
+  if (!Array.isArray(history) || history.length !== 6 || !history.every((period) =>
+    period && Number.isSafeInteger(period.review_count) && period.review_count >= 0
+    && (period.review_count === 0 ? period.average_rating === null
+      : Number.isFinite(period.average_rating) && period.average_rating >= 1 && period.average_rating <= 5))) {
+    return <small>History unavailable</small>;
+  }
+  const scores = history.map((period) => period.average_rating);
   const color = declining ? "#e33232" : "#23844b";
   return <svg viewBox="0 0 160 48" role="img" aria-label={`Last six periods: ${scores.map((value) => value == null ? "no reviews" : value.toFixed(2)).join(", ")}`}>
     {scores.map((value, index) => {

@@ -123,6 +123,18 @@ describe("ReservationDetails", () => {
     });
   });
 
+  describe("reservation id", () => {
+    test("shows the full booking id, not the unpaid 'FAILED: ' payment placeholder", async () => {
+      getGuestBookings.mockResolvedValue([{ ...booking, paymentid: "FAILED: " }]);
+
+      renderReservation();
+      await waitForReservation();
+
+      expect(screen.getByText("booking-1", { selector: "span" })).toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent("FAILED");
+    });
+  });
+
   describe("check-in line", () => {
     test("shows the window without seconds when both from and till exist", async () => {
       renderReservation();
