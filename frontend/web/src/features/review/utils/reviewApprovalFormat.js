@@ -3,6 +3,20 @@ const VERIFICATION_LABELS = Object.freeze({
   VERIFIED_STAY: "Verified stay",
 });
 
+export const isVerifiedStatus = (status) => status === "VERIFIED" || status === "VERIFIED_STAY";
+
+const REVIEW_STATUS_LABELS = Object.freeze({
+  PENDING_APPROVAL: "Pending approval", APPROVED: "Approved", PUBLISHED: "Published", REJECTED: "Rejected",
+});
+export const getReviewStatusLabel = (status) =>
+  Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";
+
+export const getReviewRating = (value) => {
+  if (value == null || (typeof value === "string" && !value.trim())) return null;
+  const rating = Number(value);
+  return Number.isFinite(rating) && rating >= 1 && rating <= 5 ? rating : null;
+};
+
 export const getGuestInitials = (name) => {
   const parts = String(name ?? "")
     .trim()

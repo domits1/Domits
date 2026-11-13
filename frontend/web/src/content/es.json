@@ -433,22 +433,50 @@
         "subtitle": "Viajeros apasionados e innovadores tecnológicos que construyen el futuro de la hospitalidad",
         "moreMembers": "+32 miembros",
         "members": [
-          { "name": "Stefan Hopman", "role": "Fundador" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Desarrollador" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Fundador"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Desarrollador"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nacionalidades" },
-        { "icon": "users", "value": "+35", "label": "Miembros del equipo" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Trabaja desde cualquier lugar" },
-        { "icon": "handHeart", "value": "People-first", "label": "Una cultura que se preocupa" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nacionalidades"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Miembros del equipo"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Trabaja desde cualquier lugar"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Una cultura que se preocupa"
+        }
       ],
       "cards": {
         "featured": {
           "title": "Construyendo el futuro de los viajes",
           "description": "Estamos reimaginando cómo las personas descubren, reservan y viven los viajes. Únete a nosotros para crear tecnología que acerque al mundo.",
-          "tags": ["Impacto global", "Innovación primero"]
+          "tags": [
+            "Impacto global",
+            "Innovación primero"
+          ]
         },
         "partnerSuccess": {
           "title": "Éxito de los socios",
@@ -458,12 +486,20 @@
         "culture": {
           "title": "Una cultura que se preocupa",
           "description": "Remote-first, inclusiva y humana. Priorizamos el equilibrio entre vida y trabajo y el impacto significativo.",
-          "tags": ["Remoto", "Flexible", "Global"]
+          "tags": [
+            "Remoto",
+            "Flexible",
+            "Global"
+          ]
         },
         "openPositions": {
           "title": "Vacantes abiertas",
           "description": "Estamos contratando en ingeniería, producto, diseño y alianzas.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -716,18 +752,36 @@
         "eyebrow": "Para huéspedes",
         "heading": "Encuentra tu estancia perfecta en 3 sencillos pasos",
         "steps": [
-          { "title": "Busca tu destino", "description": "Explora alquileres vacacionales con filtros inteligentes por ubicación, fechas, precio y comodidades." },
-          { "title": "Reserva tu estancia", "description": "Elige tu alojamiento preferido y confirma tu reserva en solo unos clics." },
-          { "title": "Vive Domits", "description": "Escribe a tu anfitrión, gestiona tu viaje y disfruta de soporte personalizado." }
+          {
+            "title": "Busca tu destino",
+            "description": "Explora alquileres vacacionales con filtros inteligentes por ubicación, fechas, precio y comodidades."
+          },
+          {
+            "title": "Reserva tu estancia",
+            "description": "Elige tu alojamiento preferido y confirma tu reserva en solo unos clics."
+          },
+          {
+            "title": "Vive Domits",
+            "description": "Escribe a tu anfitrión, gestiona tu viaje y disfruta de soporte personalizado."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "Para anfitriones",
         "heading": "Haz crecer tu negocio de alquiler con facilidad",
         "steps": [
-          { "title": "Publica tu propiedad", "description": "Añade fotos, descripción y comodidades y fija tu precio y disponibilidad en minutos." },
-          { "title": "Gestiona reservas", "description": "Haz seguimiento de las reservas, gestiona tu calendario y comunícate fácilmente con los huéspedes." },
-          { "title": "Cobra de forma segura", "description": "Recibe pagos de forma segura y haz seguimiento de tus ingresos e información en tiempo real." }
+          {
+            "title": "Publica tu propiedad",
+            "description": "Añade fotos, descripción y comodidades y fija tu precio y disponibilidad en minutos."
+          },
+          {
+            "title": "Gestiona reservas",
+            "description": "Haz seguimiento de las reservas, gestiona tu calendario y comunícate fácilmente con los huéspedes."
+          },
+          {
+            "title": "Cobra de forma segura",
+            "description": "Recibe pagos de forma segura y haz seguimiento de tus ingresos e información en tiempo real."
+          }
         ]
       }
     },
@@ -1810,6 +1864,39 @@
         "cancel": "Cancelar",
         "success": "✓ Invitación enviada a",
         "error": "Error al enviar la invitación. Por favor, inténtalo de nuevo."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Notificaciones",
+      "description": "Elige cómo quieres recibir cada notificación.",
+      "event": "Notificación",
+      "required": "Obligatorio",
+      "eventNamesNote": "Los nombres de las notificaciones se reciben actualmente del backend en inglés.",
+      "disableAllEmail": "Desactivar todas las notificaciones opcionales por correo",
+      "enableAllEmail": "Activar todas las notificaciones opcionales por correo",
+      "loading": "Cargando preferencias de notificación...",
+      "retry": "Reintentar",
+      "saved": "Preferencias de notificación guardadas.",
+      "saving": "Guardando...",
+      "save": "Guardar preferencias",
+      "channels": {
+        "inApp": "En la app",
+        "email": "Correo",
+        "sms": "SMS"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Reservas",
+        "propertyOwner": "Propietario",
+        "finance": "Finanzas",
+        "distribution": "Distribución",
+        "compliance": "Cumplimiento",
+        "tasks": "Tareas"
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar tus preferencias de notificación. Vuelve a intentarlo antes de realizar cambios.",
+        "saveFailed": "No se pudieron guardar tus preferencias de notificación. Se han conservado tus cambios. Vuelve a intentarlo.",
+        "invalidResponse": "La respuesta de preferencias de notificación no es válida. Vuelve a intentarlo."
       }
     }
   },
