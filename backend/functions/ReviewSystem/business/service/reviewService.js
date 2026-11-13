@@ -9,7 +9,7 @@ import { assertCaller, assertEligibleBooking, assertId, INVALID_TEXT_CONTROLS, i
 import { DomitsAdminReviewService } from "./domitsAdminReviewService.js";
 import { HostReviewService } from "./hostReviewService.js";
 
-const REVIEWABLE_STATUSES = new Set(["paid", "confirmed"]);
+import { completedStayError } from "../../util/verifiedStay.js";
 
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
@@ -103,6 +103,7 @@ export class ReviewService {
     }
     const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
       minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort, cursor,
+      verificationNow: this.now(),
     });
     if (!result) throw new NotFoundException("Property not found.");
     return result;
@@ -493,19 +494,9 @@ export class ReviewService {
       throw new ForbiddenException("You cannot review your own property.");
     }
 
-    const status = String(booking.status || "")
-      .trim()
-      .toLowerCase();
-    const checkoutAt = Number(booking.departuredate);
     const now = this.now();
-
-    if (!REVIEWABLE_STATUSES.has(status)) {
-      throw new BadRequestException("Only paid or confirmed reservations can be reviewed.");
-    }
-
-    if (!Number.isFinite(checkoutAt) || checkoutAt <= 0 || checkoutAt > now) {
-      throw new BadRequestException("You can only review a reservation after checkout.");
-    }
+    const stayError = completedStayError(booking, now);
+    if (stayError) throw new BadRequestException(stayError);
 
     const duplicateKey = { booking_id: bookingId, review_type: GUEST_REVIEW_TYPE, reviewer_user_id: callerUserId };
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {

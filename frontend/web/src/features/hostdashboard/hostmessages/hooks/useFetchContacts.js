@@ -6,6 +6,7 @@ import {
 } from "../../services/fetchUserProfileById";
 import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 import { CHANNEX_GUEST_DISPLAY_NAME, CHANNEX_GUEST_ID_PREFIX } from "../../../../utils/channexGuest";
+import { resolveChannelLabel } from "../../../../utils/channelLabel";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -159,6 +160,7 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
         unreadCount: t.unreadCount ?? 0,
         guestName: t.guestName || null,
+        bookingSource: t.bookingSource || null,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -261,7 +263,8 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
     propertyTitle,
     bookingId: contact?.bookingId || contact?.bookingid || null,
     platform,
-    channelLabel: platform === "WHATSAPP" ? "WhatsApp" : platform,
+    bookingSource: contact?.bookingSource || null,
+    channelLabel: resolveChannelLabel({ platform, bookingSource: contact?.bookingSource }),
     isWhatsApp,
     externalThreadId: contact?.externalThreadId || null,
     integrationAccountId: contact?.integrationAccountId || null,

@@ -1,10 +1,12 @@
 import { In, IsNull, Not } from "typeorm";
 import Database from "database";
+import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Response } from "database/models/Review_Response";
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { attachPublicDetails, eligibleReviewQuery, REVIEW_FIELDS } from "./reviewRepositoryShared.js";
 
 const average = (values) => {
@@ -40,9 +42,13 @@ export class PublicReviewRepository {
       where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
     });
     if (!property) return null;
-    const eligible = () => eligibleReviewQuery(database, propertyId)
+    const verificationNow = filters.verificationNow ?? Date.now();
+    const eligible = () => applyCompletedStayConditions(eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
-        { propertyStatus: "ACTIVE" });
+        { propertyStatus: "ACTIVE" })
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
+      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }),
+      verificationNow);
     const matchingReviews = () => {
       const query = eligible().andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
         filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
@@ -54,7 +60,7 @@ export class PublicReviewRepository {
     const summary = await eligible().select("AVG(review.overall_rating)", "score").getRawOne();
     const matching = await matchingReviews().select("COUNT(*)", "count").getRawOne();
     const page = matchingReviews()
-      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
+      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
     const recent = !filters.sort || filters.sort === "recent";
     if (filters.sort === "highest" || filters.sort === "lowest") {
       page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
@@ -89,7 +95,7 @@ export class PublicReviewRepository {
       review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
       next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
-        text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",
+        text: review.public_review, date: Number(review.created_at), verified: true,
         response: responses.filter((response) => response.reviewId === review.id)
           .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
         categories: ratings.filter((rating) => rating.review_id === review.id)
