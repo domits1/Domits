@@ -66,7 +66,7 @@ export async function runTransaction(callback) {
   return retryTransaction(dataSource, callback);
 }
 
-export async function attachPublicDetails(dataSource, reviews) {
+export async function attachPublicDetails(dataSource, reviews, includeDrafts = false) {
   if (!reviews.length) return reviews;
 
   const reviewIds = reviews.map((review) => review.id);
@@ -78,7 +78,7 @@ export async function attachPublicDetails(dataSource, reviews) {
     dataSource.getRepository(Review_Response).find({
       where: {
         reviewId: In(reviewIds),
-        status: "published",
+        status: includeDrafts ? In(["draft", "published"]) : "published",
         deletedAt: IsNull(),
       },
     }),

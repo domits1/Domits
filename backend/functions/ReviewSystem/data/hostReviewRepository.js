@@ -27,7 +27,7 @@ export class HostReviewRepository {
     const database = await Database.getInstance();
     const reviews = await this.hostResponseQuery(database, username)
       .select(REVIEW_FIELDS.map((field) => `review.${field}`)).orderBy("review.created_at", "DESC").getMany();
-    return attachPublicDetails(database, reviews);
+    return attachPublicDetails(database, reviews, true);
   }
 
   async saveHostResponse(user, reviewId, message, action, now) {
@@ -35,6 +35,10 @@ export class HostReviewRepository {
       return await runTransaction(async (manager) => {
         const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
         if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
+        const parentUpdate = await manager.getRepository(Review).update(
+          { id: reviewId, status: "PUBLISHED", publication_status: "PUBLISHED", updated_at: review.updated_at },
+          { updated_at: nextTimestamp(now, review.updated_at) });
+        if (parentUpdate.affected !== 1) throw new ConflictException("Review changed. Retry your response.");
         const repository = manager.getRepository(Review_Response);
         const existing = await repository.findOne({ where: { reviewId } });
         if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");

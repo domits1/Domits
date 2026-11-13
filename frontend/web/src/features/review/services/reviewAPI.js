@@ -4,9 +4,10 @@ import { getIdToken } from "../../../services/getAccessToken";
 export const API_REVIEW_BASE =
   "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
-export const saveHostResponse = async (reviewId, message) => {
-  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response/publish`, {
-    method: "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+export const saveHostResponse = async (reviewId, message, action = "publish") => {
+  const suffix = action === "publish" ? "/publish" : "";
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response${suffix}`, {
+    method: action === "edit" ? "PATCH" : "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
   const payload = await parseResponse(response);

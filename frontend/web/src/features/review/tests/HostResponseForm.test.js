@@ -100,3 +100,24 @@ test("disables all actions while publishing", async () => {
   expect(screen.getByRole("button", { name: "Edit" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
 });
+
+test("saves, edits and publishes a private draft", async () => {
+  const onResponseChange = jest.fn();
+  saveHostResponse.mockResolvedValueOnce({ id: "d1", status: "draft", message: "Private reply" });
+  render(<HostResponseForm review={{ id: "r1" }} onResponseChange={onResponseChange} />);
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Private reply" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("not publicly visible");
+  expect(saveHostResponse).toHaveBeenLastCalledWith("r1", "Private reply", "draft");
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Updated reply" } });
+  saveHostResponse.mockResolvedValueOnce({ id: "d1", status: "draft", message: "Updated reply" });
+  fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
+  await screen.findByLabelText("Host response");
+  expect(saveHostResponse).toHaveBeenLastCalledWith("r1", "Updated reply", "edit");
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  saveHostResponse.mockResolvedValueOnce({ id: "d1", status: "published", message: "Updated reply" });
+  fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+  expect(await screen.findByText("Published")).toBeInTheDocument();
+  expect(onResponseChange).toHaveBeenLastCalledWith(expect.objectContaining({ status: "published" }));
+});
