@@ -11,6 +11,12 @@ export const FLAG_REASONS = {
   OTHER: "Other",
 };
 
+export const getReviewRating = (value) => {
+  if (value == null || (typeof value === "string" && !value.trim())) return null;
+  const rating = Number(value);
+  return Number.isFinite(rating) && rating >= 1 && rating <= 5 ? rating : null;
+};
+
 export const getGuestInitials = (name) => {
   const parts = String(name ?? "")
     .trim()
@@ -63,4 +69,5 @@ const REVIEW_STATUS_LABELS = {
   REJECTED: "Rejected",
 };
 
-export const getReviewStatusLabel = (status) => REVIEW_STATUS_LABELS[status] ?? "Unknown";
+export const getReviewStatusLabel = (status) =>
+  Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";
