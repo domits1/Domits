@@ -33,4 +33,4 @@ Only drop the column with the `_rollback.sql` file after that revert is deployed
 
 ## Status
 
-Not applied yet.
+Applied on 2026-11-13 to the `test` schema first, then `main`, and verified: both columns are `character varying(3)`, nullable, no default, and both `SELECT currency` statements ran. The `sys.jobs` check showed one submitted `ANALYZE` job on `main.property_ical_source`, an automatic statistics job on another table, which does not block an `ALTER` on `booking`.
