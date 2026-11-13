@@ -1,3 +1,4 @@
+import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
 import { In } from "typeorm";
 import Database from "database";
@@ -37,6 +38,26 @@ const buildRatingRecords = (reviewId, categoryRatings, createdAt) =>
   }));
 
 export class ReviewRepository {
+  async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
+    const database = await Database.getInstance();
+    const query = database.getRepository(Review).createQueryBuilder("review")
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`))
+      .where("review.reviewer_user_id = :guestId", { guestId })
+      .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+    if (id !== undefined) query.andWhere("review.id = :id", { id });
+    // A guest's own history includes rejected entries and properties no longer publicly active.
+    const reviews = await query.orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
+      .offset(offset).limit(id === undefined ? 11 : 1).getMany();
+    if (!reviews.length) return [];
+    const properties = await database.getRepository(Property).find({
+      where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
+    });
+    const names = new Map(properties.map((property) => [property.id, property.title]));
+    const detailed = await attachPublicDetails(database, reviews);
+    return detailed.map((review) => ({ ...review, property_name: names.get(review.property_id) ?? null }));
+  }
+
   #hostReviews = new HostReviewRepository();
   #publicReviews = new PublicReviewRepository();
 
@@ -471,16 +492,7 @@ export class ReviewRepository {
   }
 
   async deleteOwnReview(id, reviewerUserId, now) {
-    const dataSource = await Database.getInstance();
-
-    return dataSource.getRepository(Review).update(
-      { id, reviewer_user_id: reviewerUserId },
-      {
-        status: "REJECTED",
-        publication_status: "REJECTED",
-        updated_at: now,
-      }
-    );
+    return this.softDelete(id, reviewerUserId, now);
   }
 
   // Manual moderation

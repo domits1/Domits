@@ -13,6 +13,7 @@ import { completedStayError } from "../../util/verifiedStay.js";
 
 const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
+
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
 const REVIEW_APPROVER_ROLES = [
   "Guest Experience Manager",
@@ -474,9 +475,7 @@ export class ReviewService {
   }
 
   async createReview(callerUserId, reviewData) {
-    if (typeof callerUserId !== "string" || !callerUserId.trim()) {
-      throw new UnauthorizedException("An authenticated caller is required.");
-    }
+    this.assertCaller(callerUserId);
     const publicReview = this.validateReviewPayload(reviewData);
 
     const bookingId = reviewData.booking_id.trim();
@@ -511,25 +510,22 @@ export class ReviewService {
     }
 
     try {
-      return await this.repository.create(
-        {
-          id: randomUUID(),
-          ...duplicateKey,
-          property_id: booking.property_id,
-          host_id: booking.hostid,
-          reviewee_user_id: booking.hostid,
-          overall_rating: reviewData.overall_rating,
-          title: reviewData.title.trim(),
-          public_review: publicReview,
-          private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-          verification_status: "UNVERIFIED",
-          publication_status: "UNPUBLISHED",
-          status: "DRAFT",
-          created_at: now,
-          updated_at: now,
-        },
-        categoryRatings
-      );
+      return await this.repository.create({
+        id: randomUUID(),
+        ...duplicateKey,
+        property_id: booking.property_id,
+        host_id: booking.hostid,
+        reviewee_user_id: booking.hostid,
+        overall_rating: reviewData.overall_rating,
+        title: reviewData.title.trim(),
+        public_review: publicReview,
+        private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
+        verification_status: "UNVERIFIED",
+        publication_status: "UNPUBLISHED",
+        status: "DRAFT",
+        created_at: now,
+        updated_at: now,
+      }, categoryRatings);
     } catch (error) {
       if (isDuplicateBookingReviewError(error)) {
         throw new ConflictException(
@@ -600,4 +596,43 @@ export class ReviewService {
     const text = value.trim();
     return text || null;
   }
+
+  // Map a guest's own review to history fields, including response and editability.
+  guestHistoryItem(review, timestamp) {
+    const deadline = this.editDeadline(review);
+    return { id: review.id, property_id: review.property_id, property_name: review.property_name,
+      title: review.title, overall_rating: Number(review.overall_rating), public_review: review.public_review,
+      created_at: Number(review.created_at), updated_at: Number(review.updated_at), status: review.status,
+      publication_status: review.publication_status, verification_status: review.verification_status,
+      category_ratings: review.categoryRatings || {},
+      response: review.response ? { message: review.response.message, published_at: review.response.publishedAt } : null,
+      can_edit: timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
+  }
+
+  async getGuestReviewHistory(callerUserId, query = {}) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
+    if (Object.keys(query).some((key) => !["scope", "offset"].includes(key))) {
+      throw new BadRequestException("Unsupported review history parameter.");
+    }
+    const offset = query.offset ?? "0";
+    if (typeof offset !== "string" || !/^(0|[1-9]\d*)$/.test(offset)
+      || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
+      throw new BadRequestException("Invalid review history offset.");
+    }
+    const rows = await this.repository.findGuestReviewHistory(callerUserId, { offset: Number(offset) });
+    const timestamp = this.now();
+    return { reviews: rows.slice(0, 10).map((review) => this.guestHistoryItem(review, timestamp)),
+      next_offset: rows.length > 10 ? Number(offset) + 10 : null };
+  }
+
+  async getGuestReviewDetail(callerUserId, reviewId) {
+    if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
+    if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
+      throw new BadRequestException("A valid review ID is required.");
+    }
+    const reviews = await this.repository.findGuestReviewHistory(callerUserId, { id: reviewId });
+    if (!reviews.length) throw new NotFoundException("Review not found.");
+    return this.guestHistoryItem(reviews[0], this.now());
+  }
+
 }

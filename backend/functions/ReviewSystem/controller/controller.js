@@ -89,7 +89,14 @@ export class Controller {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.scope === "pending-approval" || query.scope === "approved") {
+      if (query.reviewId !== undefined && query.view !== undefined) {
+        if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
+          throw new BadRequestException("Unsupported review detail parameter.");
+        }
+        result = await this.service.getGuestReviewDetail(userId, query.reviewId);
+      } else if (query.scope === "guest-history") {
+        result = await this.service.getGuestReviewHistory(userId, query);
+      } else if (query.scope === "pending-approval" || query.scope === "approved") {
         const status = query.scope === "approved" ? "APPROVED" : "PENDING_APPROVAL";
         result = await this.service.getReviewApprovalQueue(userId, user.username, status);
       } else if (["admin-published", "admin-rejected", "admin-all"].includes(query.scope)) {
@@ -114,6 +121,11 @@ export class Controller {
   }
 
   async getReviewById(event) {
+    if (event.queryStringParameters?.view !== undefined) {
+      return this.getReviews({ ...event, queryStringParameters: {
+        ...event.queryStringParameters, reviewId: event.pathParameters?.id,
+      } });
+    }
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(200, await this.service.getReviewById(userId, this.getPathParameter(event, "id"))));
   }
@@ -187,12 +199,14 @@ export class Controller {
   }
 
   async manageReviews(event) {
-    if (event.httpMethod === "GET") return this.getReviews(event);
+    if (event.httpMethod === "GET") return event.pathParameters?.id !== undefined
+      ? this.getReviewById(event) : this.getReviews(event);
     if (event.httpMethod === "PATCH") return this.updateReview(event);
     if (event.httpMethod === "DELETE") return this.deleteReview(event);
     return this.jsonResponse(405, { message: "Method not supported." });
   }
 
+  // Retain compatibility with direct callers of the public property review method.
   async getPublicPropertyReviews(event) {
     return this.getPropertyReviews(event);
   }
