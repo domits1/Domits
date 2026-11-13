@@ -32,6 +32,7 @@ const CATALOG_COLUMNS = [
   "checked_out_at",
   "special_request",
   "cancelled_at",
+  "currency",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -110,6 +111,17 @@ describe("Booking entity", () => {
     expect(transformer.from(null)).toBeNull();
   });
 
+  // Empty means euros, so the bookings that exist before this column keep showing in euros (#3583).
+  it("maps currency as a nullable 3-letter varchar with no default", async () => {
+    const metadata = await loadBookingMetadata();
+    const column = metadata.findColumnWithDatabaseName("currency");
+    expect(column).toBeDefined();
+    expect(column.type).toBe("varchar");
+    expect(column.length).toBe("3");
+    expect(column.isNullable).toBe(true);
+    expect(column.default).toBeUndefined();
+  });
+
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
 });
 
@@ -126,6 +138,14 @@ describe("cancelled_at migration", () => {
     const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
     expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
     expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+  });
+});
+
+describe("currency migration", () => {
+  it("adds the column to both schemas, because the entity selects it on every booking read", () => {
+    const sql = loadMigrationSql("20261113_booking_currency.sql");
+    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS currency VARCHAR(3);");
+    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS currency VARCHAR(3);");
   });
 });
 
