@@ -30,6 +30,13 @@ describe("ListingReviewNotifier", () => {
 
   const emailCalls = () => send.mock.calls.map(([command]) => command.input);
   const sentEmail = () => JSON.parse(emailCalls()[0].Payload).body;
+  // Each failure must be one JSON string so CloudWatch can filter on its fields.
+  const loggedEvents = () =>
+    errorSpy.mock.calls.map((args) => {
+      expect(args).toHaveLength(1);
+      expect(typeof args[0]).toBe("string");
+      return JSON.parse(args[0]);
+    });
 
   beforeEach(() => {
     send = jest.fn(async () => ({}));
@@ -153,6 +160,29 @@ describe("ListingReviewNotifier", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  it("logs one structured failure event with exactly the event, property, outcome and code", async () => {
+    send.mockRejectedValueOnce(Object.assign(new Error("throttled"), { code: "ThrottlingException" }));
+
+    await notifier.notifyDecision(decision({ outcome: "REJECTED", reason: "Secret reason text" }));
+
+    expect(loggedEvents()).toEqual([
+      {
+        event: "LISTING_REVIEW_EMAIL_FAILED",
+        propertyId: "property-1",
+        outcome: "REJECTED",
+        code: "ThrottlingException",
+      },
+    ]);
+  });
+
+  it("falls back to the error name as the code when the failure has no code", async () => {
+    getUserById.mockRejectedValueOnce(new TypeError("boom"));
+
+    await notifier.notifyDecision(decision());
+
+    expect(loggedEvents()).toEqual([expect.objectContaining({ code: "TypeError" })]);
+  });
+
   describe("when a dependency never answers", () => {
     const never = () => new Promise(() => {});
 
@@ -180,10 +210,14 @@ describe("ListingReviewNotifier", () => {
 
       expect(outcome).toEqual({ settledEarly: false, settled: true });
       expect(send).not.toHaveBeenCalled();
-      expect(errorSpy).toHaveBeenCalledWith(
-        "Listing review notification failed",
-        expect.objectContaining({ propertyId: "property-1", outcome: "APPROVED", code: "NOTIFICATION_TIMEOUT" })
-      );
+      expect(loggedEvents()).toEqual([
+        {
+          event: "LISTING_REVIEW_EMAIL_FAILED",
+          propertyId: "property-1",
+          outcome: "APPROVED",
+          code: "NOTIFICATION_TIMEOUT",
+        },
+      ]);
     });
 
     it("gives up on a hung Lambda invoke after the time limit and does not hang the caller", async () => {
@@ -192,10 +226,7 @@ describe("ListingReviewNotifier", () => {
       const outcome = await settleAfterTimeout(() => notifier.notifyDecision(decision()));
 
       expect(outcome).toEqual({ settledEarly: false, settled: true });
-      expect(errorSpy).toHaveBeenCalledWith(
-        "Listing review notification failed",
-        expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })
-      );
+      expect(loggedEvents()).toEqual([expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })]);
     });
 
     it("shares one time limit between the lookup and the invoke", async () => {
@@ -209,10 +240,7 @@ describe("ListingReviewNotifier", () => {
         await jest.advanceTimersByTimeAsync(NOTIFICATION_TIMEOUT_MS);
         await pending;
 
-        expect(errorSpy).toHaveBeenCalledWith(
-          "Listing review notification failed",
-          expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })
-        );
+        expect(loggedEvents()).toEqual([expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })]);
       } finally {
         jest.useRealTimers();
       }

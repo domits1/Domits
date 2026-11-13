@@ -9,6 +9,7 @@ import { withinTimeLimit } from "../../util/timeLimit.js";
 // best effort, so waiting longer buys nothing. It also sits far below API Gateway's 29 s limit.
 export const NOTIFICATION_TIMEOUT_MS = 3000;
 const NOTIFICATION_TIMEOUT_CODE = "NOTIFICATION_TIMEOUT";
+const NOTIFICATION_FAILED_EVENT = "LISTING_REVIEW_EMAIL_FAILED";
 const MAX_SUBJECT_TITLE_LENGTH = 80;
 const FALLBACK_TITLE = "your listing";
 
@@ -52,11 +53,15 @@ export class ListingReviewNotifier {
         () => Object.assign(new Error("Listing review notification timed out."), { code: NOTIFICATION_TIMEOUT_CODE })
       );
     } catch (error) {
-      console.error("Listing review notification failed", {
-        propertyId,
-        outcome,
-        code: error?.code || error?.name || "NOTIFICATION_FAILED",
-      });
+      // One JSON line so CloudWatch can filter on the event. Only ids and codes: never the host's email or the reason.
+      console.error(
+        JSON.stringify({
+          event: NOTIFICATION_FAILED_EVENT,
+          propertyId,
+          outcome,
+          code: error?.code || error?.name || "NOTIFICATION_FAILED",
+        })
+      );
     }
   }
 
