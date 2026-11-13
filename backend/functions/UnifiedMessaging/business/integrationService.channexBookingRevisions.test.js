@@ -758,7 +758,7 @@ describe("IntegrationService Channex booking pull import", () => {
         dateTo: "2026-06-02",
         source: "CHANNEX_IMPORT",
       },
-    ]);
+    ], Date.parse("2026-05-21T10:00:00Z"));
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         externalReservationId: "booking-ota-1",
@@ -773,6 +773,36 @@ describe("IntegrationService Channex booking pull import", () => {
     );
     expectChannexRevisionAcknowledged(channexProviderClient, "revision-cancelled-1");
     expectImportItemWithoutDirectSync(result.response.items[0]);
+  });
+
+  test.each([
+    ["the revision time", "2026-05-21T10:00:00Z", Date.parse("2026-05-21T10:00:00Z")],
+    ["now when the revision time is missing", null, 1792281600000],
+    ["now when the revision time is unreadable", "not-a-date", 1792281600000],
+  ])("a cancelled revision stores %s as the cancel time", async (_name, insertedAt, expectedMs) => {
+    jest.spyOn(Date, "now").mockReturnValue(1792281600000);
+    const { service, externalBookingImportRepository } = createService({
+      existingLink: buildReservationLinkRow(),
+      initialBookings: [buildImportedBookingRow({ id: "domits-booking-1" })],
+      feedRevisions: [
+        buildFeedRevision({
+          revisionId: "revision-cancelled-1",
+          bookingId: "booking-ota-1",
+          status: "cancelled",
+          insertedAt,
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith(
+      "domits-booking-1",
+      expect.any(Array),
+      expectedMs
+    );
+    Date.now.mockRestore();
   });
 
   test("redacts sensitive payment fields from persisted revision and imported reservation link raw payloads", async () => {

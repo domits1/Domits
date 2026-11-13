@@ -49,7 +49,7 @@ const buildService = ({
         status: "Awaiting Payment",
       }),
       updateBookingStatus: jest.fn(),
-      markBookingPaidWithOutbox: jest.fn(),
+      markBookingPaidWithOutbox: jest.fn().mockResolvedValue(true),
       getBookingById: jest.fn(),
       updateBookingDates: jest.fn(),
       ...reservationRepository,
@@ -282,7 +282,7 @@ describe("BookingService Channex booking availability hooks", () => {
   test("payment success writes no second outbox change", async () => {
     const { service, dependencies } = buildService();
 
-    await expect(service.confirmPayment("pi_1")).resolves.toBe(true);
+    await expect(service.confirmPayment("pi_1")).resolves.toMatchObject({ paymentConfirmed: true, newlyPaid: true });
 
     expect(dependencies.reservationRepository.markBookingPaidWithOutbox).toHaveBeenCalledWith("booking-1");
   });

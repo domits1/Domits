@@ -1,24 +1,27 @@
-import { randomInt, randomUUID } from "node:crypto";
-import { In, IsNull, Not } from "typeorm";
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
+import { attachPublicDetails } from "./reviewRepositoryShared.js";
+import { randomUUID } from "node:crypto";
+import { In } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
+import { Property_Location } from "database/models/Property_Location";
+import { Property_Image } from "database/models/Property_Image";
+import { Property_Image_Variant } from "database/models/Property_Image_Variant";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
-import { Review_Response } from "database/models/Review_Response";
+import { Review_Flag } from "database/models/Review_Flag";
 import { Team_Member } from "database/models/Team_Member";
 import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
-import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
-import {
-  assertEligibleBooking,
-  assertHostResponseAccess,
-} from "../business/reviewRules.js";
+import { assertEligibleBooking } from "../business/model/reviewRules.js";
+import { HostReviewRepository } from "./hostReviewRepository.js";
+import { PublicReviewRepository } from "./publicReviewRepository.js";
+import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
 
-const MAX_TRANSACTION_ATTEMPTS = 3;
 const REVIEW_REQUEST_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const reviewRequestCutoff = (now) => {
@@ -28,32 +31,6 @@ const reviewRequestCutoff = (now) => {
   }
   return Math.max(startAt, now - REVIEW_REQUEST_DURATION_MS);
 };
-
-const REVIEW_FIELDS = [
-  "id",
-  "booking_id",
-  "property_id",
-  "host_id",
-  "reviewer_user_id",
-  "reviewee_user_id",
-  "review_type",
-  "overall_rating",
-  "title",
-  "public_review",
-  "verification_status",
-  "publication_status",
-  "status",
-  "created_at",
-  "updated_at",
-];
-
-const average = (values) => {
-  const numbers = values.map(Number).filter(Number.isFinite);
-  return numbers.length ? Math.round(numbers.reduce((sum, n) => sum + n, 0) / numbers.length * 10) / 10 : null;
-};
-
-const nextTimestamp = (requestedAt, previousAt) =>
-  Math.max(requestedAt, Number(previousAt) + 1);
 
 const isMatchingDraft = (review, expectedUpdatedAt) =>
   review?.status === "DRAFT" &&
@@ -69,308 +46,7 @@ const buildRatingRecords = (reviewId, categoryRatings, createdAt) =>
     createdAt,
   }));
 
-const toPublicReview = (review) => ({
-  id: review.id,
-  overallRating: Number(review.overall_rating),
-  title: review.title,
-  publicReview: review.public_review,
-  verificationStatus: review.verification_status,
-  status: review.status,
-  createdAt: review.created_at,
-  categoryRatings: review.categoryRatings || {},
-  response:
-    review.response?.status === "published" &&
-    review.response.deletedAt == null
-      ? {
-          id: review.response.id,
-          authorRole: review.response.authorRole,
-          message: review.response.message,
-          publishedAt: review.response.publishedAt,
-        }
-      : null,
-});
-
-const retryTransaction = async (dataSource, callback, attempt = 1) => {
-  try {
-    return await dataSource.transaction(callback);
-  } catch (error) {
-    const databaseError = error?.driverError || error;
-
-    if (
-      databaseError?.code !== "40001" ||
-      attempt >= MAX_TRANSACTION_ATTEMPTS
-    ) {
-      throw error;
-    }
-
-    const delayMs = 25 * 2 ** (attempt - 1) + randomInt(25);
-
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-
-    return retryTransaction(dataSource, callback, attempt + 1);
-  }
-};
-
 export class ReviewRepository {
-  eligibleReviewQuery(database, propertyId) {
-    return database.getRepository(Review).createQueryBuilder("review")
-      .where(propertyId === undefined ? "1 = 1" : "review.property_id = :propertyId", { propertyId })
-      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
-      .andWhere("review.status = :status", { status: "PUBLISHED" })
-      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
-      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)");
-  }
-
-  hostResponseQuery(database, username) {
-    return this.eligibleReviewQuery(database)
-      .innerJoin(Property, "property", "property.id = review.property_id")
-      .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :username AND member.status = :active AND member.role = :role",
-        { username, active: "active", role: "Property Operations Manager" })
-      .andWhere("(property.hostid = :username OR member.id IS NOT NULL)", { username })
-      .andWhere("property.status = :propertyStatus", { propertyStatus: "ACTIVE" })
-      .andWhere("TRIM(review.public_review) <> ''");
-  }
-
-  async findResponseEligibleReviews(username) {
-    const database = await Database.getInstance();
-    const reviews = await this.hostResponseQuery(database, username)
-      .select(REVIEW_FIELDS.map((field) => `review.${field}`)).orderBy("review.created_at", "DESC").getMany();
-    return this.attachPublicDetails(database, reviews);
-  }
-
-  async saveHostResponse(user, reviewId, message, action, now) {
-    try {
-      const database = await Database.getInstance();
-      return await database.transaction(async (manager) => {
-        const review = await this.hostResponseQuery(manager, user.username).andWhere("review.id = :reviewId", { reviewId }).getOne();
-        if (!review) throw new NotFoundException("An eligible review you can respond to was not found.");
-        const repository = manager.getRepository(Review_Response);
-        const existing = await repository.findOne({ where: { reviewId } });
-        if (action === "edit" && (!existing || existing.deletedAt != null)) throw new NotFoundException("Host response not found.");
-        if (action === "draft" && existing?.status === "published") throw new ConflictException("A published response cannot become a draft.");
-        let status = "draft";
-        if (action === "edit") {
-          status = existing.status;
-        } else if (action === "publish") {
-          status = "published";
-        }
-        const saved = await repository.save({ ...existing, id: existing?.id || randomUUID(), reviewId,
-          authorId: user.userId, authorRole: "host", message, status, createdAt: existing?.createdAt ?? now,
-          updatedAt: now, publishedAt: status === "published" ? existing?.publishedAt ?? now : null, deletedAt: null });
-        return { id: saved.id, message: saved.message, status: saved.status, createdAt: saved.createdAt,
-          updatedAt: saved.updatedAt, publishedAt: saved.publishedAt };
-      });
-    } catch (error) {
-      const cause = error.driverError || error;
-      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_response_review_unique")) {
-        throw new ConflictException("A response already exists. Reload the review before editing.");
-      }
-      throw error;
-    }
-  }
-
-  filteredPublicReviewQuery(database, propertyId, filters = {}) {
-    const query = this.eligibleReviewQuery(database, propertyId)
-      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
-        { propertyStatus: "ACTIVE" })
-      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
-      .andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
-        filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
-      });
-    applyCompletedStayConditions(query, filters.verificationNow ?? Date.now());
-    if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
-    if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
-    return query;
-  }
-
-  async getPublicReviewPage(propertyId, offset, filters = {}) {
-    const database = await Database.getInstance();
-    const property = await database.getRepository(Property).findOne({
-      where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
-    });
-    if (!property) return null;
-    const eligible = () => this.filteredPublicReviewQuery(database, propertyId, filters);
-    const summaryQuery = this.eligibleReviewQuery(database, propertyId)
-      .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
-        { propertyStatus: "ACTIVE" })
-      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id");
-    applyCompletedStayConditions(summaryQuery, filters.verificationNow ?? Date.now());
-    const summary = await summaryQuery.select("AVG(review.overall_rating)", "score").getRawOne();
-    const matching = await eligible().select("COUNT(*)", "count").getRawOne();
-    const page = eligible().select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
-    const recent = !filters.sort || filters.sort === "recent";
-    if (filters.sort === "highest" || filters.sort === "lowest") {
-      page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
-        .addOrderBy("review.created_at", "DESC");
-    } else {
-      page.orderBy("review.created_at", "DESC");
-      if (filters.cursor) page.andWhere(
-        "(review.created_at < :cursorDate OR (review.created_at = :cursorDate AND review.id < :cursorId))",
-        { cursorDate: filters.cursor.date, cursorId: filters.cursor.id });
-    }
-    // Fetch one extra row to detect another page without applying the cursor to the matching count.
-    const rows = await page.addOrderBy("review.id", "DESC").offset(offset).limit(recent ? 11 : 10).getMany();
-    const reviews = rows.slice(0, 10), last = reviews[reviews.length - 1];
-    const nextCursor = recent && rows.length > 10 ? Buffer.from(JSON.stringify({
-      propertyId, date: Number(last.created_at), id: last.id,
-    })).toString("base64url") : null;
-    const ids = reviews.map((review) => review.id);
-    const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
-      .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",
-        { active: true, reviewType: "GUEST_TO_PROPERTY" })
-      .select("rating.reviewId", "review_id").addSelect("category.key", "key")
-      .addSelect("category.label", "label").addSelect("rating.rating", "rating")
-      .where("rating.reviewId IN (:...ids)", { ids })
-      .andWhere("rating.rating BETWEEN 1 AND 5")
-      .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
-    const count = Number(matching.count);
-    const responses = ids.length ? await database.getRepository(Review_Response).find({
-      where: { reviewId: In(ids), status: "published", deletedAt: IsNull() },
-      select: ["reviewId", "message", "publishedAt"],
-    }) : [];
-    return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
-      review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
-      next_cursor: nextCursor,
-      reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
-        text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",
-        response: responses.filter((response) => response.reviewId === review.id)
-          .map(({ message, publishedAt }) => ({ message, publishedAt }))[0] || null,
-        categories: ratings.filter((rating) => rating.review_id === review.id)
-          .map(({ key, label, rating }) => ({ key, label, rating: Number(rating) })) })) };
-  }
-
-  async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval = "month") {
-    const expressions = {
-      week: "DATE_TRUNC('week', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
-      month: "DATE_TRUNC('month', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
-      year: "DATE_TRUNC('year', TO_TIMESTAMP(review.created_at / 1000.0) AT TIME ZONE 'UTC')",
-    };
-    if (!["week", "month", "year"].includes(interval)) throw new TypeError("Unsupported review interval.");
-    const period = expressions[interval];
-    const database = await Database.getInstance();
-    return this.eligibleReviewQuery(database, propertyId)
-      .innerJoin(Property, "property",
-        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
-      .andWhere("review.created_at >= :start", { start })
-      .andWhere("review.created_at < :endExclusive", { endExclusive })
-      .select(`TO_CHAR(${period}, 'YYYY-MM-DD')`, "period")
-      .addSelect("AVG(review.overall_rating)", "average_score")
-      .addSelect("COUNT(*)", "review_count")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 1 THEN 1 END)", "stars_1")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 2 THEN 1 END)", "stars_2")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 3 THEN 1 END)", "stars_3")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 4 THEN 1 END)", "stars_4")
-      .addSelect("COUNT(CASE WHEN review.overall_rating = 5 THEN 1 END)", "stars_5")
-      .groupBy(period).orderBy(period, "ASC").getRawMany();
-  }
-
-  async getPropertyCategoryRatings(propertyId, hostId) {
-    const database = await Database.getInstance();
-    const rows = await database.getRepository(Review_Category).createQueryBuilder("category")
-      .innerJoin(Property, "property", "property.id = :propertyId AND property.hostid = :hostId")
-      .leftJoin((query) => query
-        .select("definition.key", "category_key")
-        .addSelect("AVG(rating.rating)", "average_rating")
-        .addSelect("COUNT(*)", "rating_count")
-        .from(Review_Rating, "rating")
-        // Historical ratings store display labels; group both formats under the canonical key.
-        .innerJoin(Review_Category, "definition",
-          `(LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.key))
-            OR LOWER(TRIM(rating.category)) = LOWER(TRIM(definition.label)))
-            AND definition.isActive = :active AND definition.reviewType = :reviewType`)
-        .innerJoin(Review, "review", "review.id = rating.reviewId")
-        .where("review.property_id = :propertyId")
-        .andWhere("review.publication_status = :published")
-        .andWhere("review.status = :published")
-        .andWhere("review.review_type = :reviewType")
-        .andWhere("rating.rating BETWEEN :minimum AND :maximum")
-        .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
-        .groupBy("definition.key"),
-      "aggregate", "aggregate.category_key = category.key")
-      .select("category.key", "category_key")
-      .addSelect("category.label", "label")
-      .addSelect("aggregate.average_rating", "average_rating")
-      .addSelect("category.sortOrder", "sort_order")
-      .addSelect("COALESCE(aggregate.rating_count, 0)", "rating_count")
-      .where("category.isActive = :active")
-      .andWhere("category.reviewType = :reviewType")
-      .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
-        minimum: 1, maximum: 5, active: true })
-      .orderBy("category.sortOrder", "ASC").addOrderBy("category.key", "ASC").getRawMany();
-    return rows.map((row) => ({ category_key: row.category_key, label: row.label,
-      average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
-      rating_count: Number(row.rating_count), sort_order: Number(row.sort_order ?? 0) }));
-  }
-
-  async findManagedProperty(propertyId, hostId) {
-    const dataSource = await Database.getInstance();
-    return dataSource.getRepository(Property).findOne({
-      where: { id: propertyId, hostid: hostId }, select: ["id"],
-    });
-  }
-
-  async getPropertyRatingTrendPage(hostId, options) {
-    const database = await Database.getInstance();
-    const aggregates = database.getRepository(Property).createQueryBuilder("property")
-      .leftJoin(Review, "review", `review.property_id = property.id
-        AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
-        AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
-        AND review.overall_rating = FLOOR(review.overall_rating)
-        AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
-      .where("property.hostid = :hostId")
-      .select("property.id", "property_id")
-      .addSelect("AVG(CASE WHEN review.created_at < :currentStart THEN review.overall_rating END)", "previous_average_rating")
-      .addSelect("AVG(CASE WHEN review.created_at >= :currentStart THEN review.overall_rating END)", "current_average_rating")
-      .addSelect("COUNT(CASE WHEN review.created_at < :currentStart THEN 1 END)", "previous_review_count")
-      .addSelect("COUNT(CASE WHEN review.created_at >= :currentStart THEN 1 END)", "current_review_count")
-      .groupBy("property.id");
-    const classified = database.createQueryBuilder().from(`(${aggregates.getQuery()})`, "scores")
-      .select("scores.*")
-      .addSelect(`CASE WHEN previous_review_count < :minimumReviews OR current_review_count < :minimumReviews
-          OR previous_average_rating IS NULL OR current_average_rating IS NULL THEN 'INSUFFICIENT_DATA'
-        WHEN current_average_rating - previous_average_rating <= -:boundary THEN 'DECLINING'
-        WHEN current_average_rating - previous_average_rating >= :boundary THEN 'IMPROVING'
-        ELSE 'STABLE' END`, "trend_status");
-    const page = database.createQueryBuilder().from(`(${classified.getQuery()})`, "trends")
-      .select("trends.*")
-      .addSelect("CASE WHEN trends.trend_status = 'INSUFFICIENT_DATA' THEN NULL ELSE current_average_rating - previous_average_rating END", "rating_change")
-      .setParameters({ hostId, previousStart: options.previousStart, currentStart: options.currentStart,
-        endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
-        boundary: options.threshold * (1 - 1e-12),
-        publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
-    if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
-    if (options.sort === "declining-first") {
-      page.orderBy("CASE WHEN trends.trend_status = 'DECLINING' THEN 0 ELSE 1 END", "ASC");
-    }
-    const rows = await page.addOrderBy("trends.property_id", "ASC").offset(options.offset).limit(26).getRawMany();
-    return rows.map((row) => ({ ...row,
-      rating_change: row.rating_change == null ? null : Number(row.rating_change),
-      previous_average_rating: row.previous_average_rating == null ? null : Number(row.previous_average_rating),
-      current_average_rating: row.current_average_rating == null ? null : Number(row.current_average_rating),
-      previous_review_count: Number(row.previous_review_count), current_review_count: Number(row.current_review_count) }));
-  }
-
-  async getPropertyReviewScore(propertyId, hostId) {
-    const dataSource = await Database.getInstance();
-    // Recheck ownership during aggregation in case the property changed owners.
-    const query = dataSource.getRepository(Review).createQueryBuilder("review")
-      .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
-      .andWhere("review.status = :status", { status: "PUBLISHED" })
-      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
-      .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
-      .andWhere("review.overall_rating = FLOOR(review.overall_rating)")
-      .innerJoin(Property, "property",
-        "property.id = review.property_id AND property.hostid = :hostId", { hostId })
-      .select("AVG(review.overall_rating)", "overall_score")
-      .addSelect("COUNT(*)", "review_count");
-    const result = await query.getRawOne();
-    const reviewCount = Number(result.review_count);
-    return { property_id: propertyId,
-      overall_score: reviewCount === 0 || result.overall_score == null ? null : Math.round(Number(result.overall_score) * 10) / 10, review_count: reviewCount };
-  }
-
   async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
     const database = await Database.getInstance();
     const query = database.getRepository(Review).createQueryBuilder("review")
@@ -387,8 +63,75 @@ export class ReviewRepository {
       where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
     });
     const names = new Map(properties.map((property) => [property.id, property.title]));
-    const detailed = await this.attachPublicDetails(database, reviews);
+    const detailed = await attachPublicDetails(database, reviews);
     return detailed.map((review) => ({ ...review, property_name: names.get(review.property_id) ?? null }));
+  }
+
+  #hostReviews = new HostReviewRepository();
+  #publicReviews = new PublicReviewRepository();
+
+  async findResponseEligibleReviews(username) {
+    return this.#hostReviews.findResponseEligibleReviews(username);
+  }
+
+  async saveHostResponse(user, reviewId, message, action, now) {
+    return this.#hostReviews.saveHostResponse(user, reviewId, message, action, now);
+  }
+
+  async deleteHostResponse(user, reviewId, deletedAt) {
+    return this.#hostReviews.deleteHostResponse(user, reviewId, deletedAt);
+  }
+
+  async getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval) {
+    return this.#hostReviews.getPropertyReviewPerformance(propertyId, hostId, start, endExclusive, interval);
+  }
+
+  async getPropertyCategoryRatings(propertyId, hostId) {
+    return this.#hostReviews.getPropertyCategoryRatings(propertyId, hostId);
+  }
+
+  async findManagedProperty(propertyId, hostId) {
+    return this.#hostReviews.findManagedProperty(propertyId, hostId);
+  }
+
+  async getPropertyRatingHistory(hostId, propertyIds, options) {
+    return this.#hostReviews.getPropertyRatingHistory(hostId, propertyIds, options);
+  }
+
+  async getPropertyRatingTrendPage(hostId, options) {
+    return this.#hostReviews.getPropertyRatingTrendPage(hostId, options);
+  }
+
+  async getPropertyReviewScore(propertyId, hostId) {
+    return this.#hostReviews.getPropertyReviewScore(propertyId, hostId);
+  }
+
+  async createResponse(record) {
+    return this.#hostReviews.createResponse(record);
+  }
+
+  async updateResponse(changes) {
+    return this.#hostReviews.updateResponse(changes);
+  }
+
+  async softDeleteResponse(changes) {
+    return this.#hostReviews.softDeleteResponse(changes);
+  }
+
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
+  }
+
+  async findReviews(where) {
+    return this.#publicReviews.findReviews(where);
+  }
+
+  async findPublicForProperty(propertyId, pagination) {
+    return this.#publicReviews.findPublicForProperty(propertyId, pagination);
+  }
+
+  async findPublicPropertyReviews(propertyId, options) {
+    return this.#publicReviews.findPublicPropertyReviews(propertyId, options);
   }
 
   async findReviewById(id) {
@@ -411,7 +154,7 @@ export class ReviewRepository {
       .andWhere("created_at <= :timestamp AND created_at > :cutoff", {
         timestamp, cutoff: timestamp - editWindowMs,
       })
-      .andWhere("status NOT IN (:...excluded)", { excluded: ["DELETED", "REJECTED"] })
+      .andWhere("status = :draft AND publication_status = :unpublished", { draft: "DRAFT", unpublished: "UNPUBLISHED" })
       .execute();
     return { affected: result.affected, updated_at: updatedAt };
   }
@@ -421,7 +164,7 @@ export class ReviewRepository {
   // Create a review and persist its rating breakdown.
   // This keeps the review record, category ratings, and request state in one transactional unit.
   async create(record, categoryRatings = {}) {
-    return this.runTransaction(async (manager) => {
+    return runTransaction(async (manager) => {
       const review = await this.saveReview(manager, record);
 
       await this.saveCategoryRatings(
@@ -481,30 +224,6 @@ export class ReviewRepository {
       })
       .orIgnore()
       .execute();
-  }
-
-  async createResponse(record) {
-    return this.mutateResponse(
-      record.reviewId,
-      record.authorId,
-      record.updatedAt,
-      async (responses) => {
-        const existing = await responses.findOne({
-          where: {
-            reviewId: record.reviewId,
-            deletedAt: IsNull(),
-          },
-        });
-
-        if (existing) {
-          throw new ConflictException(
-            "This review already has a response."
-          );
-        }
-
-        return responses.save(record);
-      }
-    );
   }
 
   // Reads
@@ -628,8 +347,84 @@ export class ReviewRepository {
     return new Set(categories.map((category) => category.key));
   }
 
-  // Load a user's review list for the chosen scope.
-  // This gives the profile views a single source of truth for written and received reviews.
+  async hasActiveReviewApproverRole(username, roles, manager) {
+    const database = manager ?? await Database.getInstance();
+
+    return database.getRepository(Team_Member)
+      .createQueryBuilder("member")
+      .where("member.member_user_id = :username", { username })
+      .andWhere("member.status = :status", { status: "active" })
+      .andWhere("member.role IN (:...roles)", { roles })
+      .getExists();
+  }
+
+  async findUnpublishedReviews(status) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
+      select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async findModeratedReviews(statuses) {
+    const database = await Database.getInstance();
+    const reviews = await database.getRepository(Review).find({
+      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
+    });
+    return this.addModerationDetails(database, reviews);
+  }
+
+  async addModerationDetails(database, reviews) {
+    if (!reviews.length) return reviews;
+
+    const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
+    const [properties, locations, imageKeys, bookings] = await Promise.all([
+      database.getRepository(Property).find({ where: { id: In(propertyIds) }, select: ["id", "title"] }),
+      database.getRepository(Property_Location).find({
+        where: { property_id: In(propertyIds) }, select: ["property_id", "city", "country"] }),
+      this.findFirstImageKeys(database, propertyIds),
+      database.getRepository(Booking).find({
+        where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
+        select: ["id", "guestid", "guestname"] }),
+    ]);
+    const titles = new Map(properties.map((property) => [property.id, property.title]));
+    const locationsById = new Map(locations.map((location) => [location.property_id, location]));
+    const bookingsById = new Map(bookings.map((booking) => [booking.id, booking]));
+
+    return reviews.map((review) => {
+      const location = locationsById.get(review.property_id);
+      const booking = bookingsById.get(review.booking_id);
+      const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
+      const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
+      return { ...review, property_title: titles.get(review.property_id) ?? null,
+        property_city: location?.city ?? null, property_country: location?.country ?? null,
+        property_image_key: imageKeys.get(review.property_id) ?? null, guest_name: guestName };
+    });
+  }
+
+  async findFirstImageKeys(database, propertyIds) {
+    const images = await database.getRepository(Property_Image).find({
+      where: { property_id: In(propertyIds), status: "READY" },
+      select: ["id", "property_id", "sort_order"], order: { sort_order: "ASC" },
+    });
+    const firstImageByProperty = new Map();
+    for (const image of images) {
+      if (!firstImageByProperty.has(image.property_id)) firstImageByProperty.set(image.property_id, image.id);
+    }
+    if (!firstImageByProperty.size) return new Map();
+
+    const variants = await database.getRepository(Property_Image_Variant).find({
+      where: { image_id: In([...firstImageByProperty.values()]), variant: In(["thumb", "web"]) },
+      select: ["image_id", "variant", "s3_key"],
+    });
+    const keyFor = (imageId, variant) =>
+      variants.find((entry) => entry.image_id === imageId && entry.variant === variant)?.s3_key;
+    return new Map([...firstImageByProperty].map(([propertyId, imageId]) =>
+      [propertyId, keyFor(imageId, "thumb") ?? keyFor(imageId, "web") ?? null]));
+  }
+
   async findForUser(userId, scope) {
     const dataSource = await Database.getInstance();
     const field =
@@ -659,7 +454,6 @@ export class ReviewRepository {
 
     const reviews = await query.getMany();
     if (scope !== "received" || !reviews.length) return reviews;
-    // Match both identities so a mismatched review cannot expose another booking's guest name.
     const bookings = await dataSource.getRepository(Booking).find({
       where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
       select: ["id", "guestid", "guestname"],
@@ -670,86 +464,6 @@ export class ReviewRepository {
       return { ...review, guest_name: booking?.guestid === review.reviewer_user_id
         ? booking.guestname?.trim() || null : null };
     });
-  }
-
-  async findReviews(where) {
-    const dataSource = await Database.getInstance();
-
-    const visibleWhere = (Array.isArray(where) ? where : [where]).map(
-      (filter) => ({
-        ...filter,
-        status: filter.status ?? Not("REJECTED"),
-      })
-    );
-
-    const reviews = await dataSource.getRepository(Review).find({
-      where: Array.isArray(where) ? visibleWhere : visibleWhere[0],
-      order: { created_at: "DESC", id: "DESC" },
-      select: REVIEW_FIELDS,
-    });
-
-    return this.attachPublicDetails(dataSource, reviews);
-  }
-
-  // Fetch the published review feed for a property.
-  // This supports the public property page without exposing unpublished or hidden review content.
-  async findPublicForProperty(propertyId, { limit, offset }) {
-    const dataSource = await Database.getInstance();
-
-    const reviews = await dataSource
-      .getRepository(Review)
-      .createQueryBuilder("review")
-      .select([
-        "review.id",
-        "review.property_id",
-        "review.overall_rating",
-        "review.title",
-        "review.public_review",
-        "review.created_at",
-      ])
-      .where("review.property_id = :propertyId", { propertyId })
-      .andWhere("review.review_type = :reviewType", {
-        reviewType: "GUEST_TO_PROPERTY",
-      })
-      .andWhere("review.publication_status = :published", {
-        published: "PUBLISHED",
-      })
-      .andWhere("review.status = :publishedStatus", {
-        publishedStatus: "PUBLISHED",
-      })
-      .orderBy("review.created_at", "DESC")
-      .addOrderBy("review.id", "DESC")
-      .skip(offset)
-      .take(limit)
-      .getMany();
-
-    return this.attachPublicDetails(dataSource, reviews);
-  }
-
-  async findPublicPropertyReviews(
-    propertyId,
-    {
-      sort = "recent",
-      verifiedOnly = false,
-      category = null,
-    } = {}
-  ) {
-    const reviews = await this.findReviews({
-      property_id: propertyId,
-      review_type: "GUEST_TO_PROPERTY",
-      status: "PUBLISHED",
-      publication_status: "PUBLISHED",
-    });
-
-    const filtered = this.filterPublicReviews(
-      reviews,
-      verifiedOnly,
-      category
-    );
-
-    this.sortPublicReviews(filtered, sort);
-
-    return this.buildPublicSummary(filtered);
   }
 
   // Updates
@@ -763,7 +477,7 @@ export class ReviewRepository {
     fields,
     categoryRatings,
   }) {
-    return this.runTransaction(async (manager) => {
+    return runTransaction(async (manager) => {
       const reviews = manager.getRepository(Review);
       const current = await reviews.findOne({
         where: { id: reviewId },
@@ -843,63 +557,6 @@ export class ReviewRepository {
     );
   }
 
-  async updateResponse({
-    reviewId,
-    authorId,
-    message,
-    updatedAt,
-  }) {
-    return this.mutateResponse(
-      reviewId,
-      authorId,
-      updatedAt,
-      async (responses) => {
-        const current = await responses.findOne({
-          where: {
-            reviewId,
-            authorId,
-            deletedAt: IsNull(),
-          },
-        });
-
-        if (!current) return null;
-
-        return this.saveResponseUpdate(
-          responses,
-          current,
-          message,
-          updatedAt
-        );
-      }
-    );
-  }
-
-  async saveResponseUpdate(
-    responses,
-    current,
-    message,
-    updatedAt
-  ) {
-    const changes = {
-      message,
-      updatedAt: nextTimestamp(updatedAt, current.updatedAt),
-    };
-
-    const result = await responses.update(
-      {
-        id: current.id,
-        authorId: current.authorId,
-        deletedAt: IsNull(),
-        updatedAt: current.updatedAt,
-      },
-      changes
-    );
-
-    return result.affected === 1
-      ? { ...current, ...changes }
-      : null;
-  }
-
   // Deletion
 
   async softDelete(id, reviewerUserId, updatedAt) {
@@ -924,28 +581,57 @@ export class ReviewRepository {
     return this.softDelete(id, reviewerUserId, now);
   }
 
-  async softDeleteResponse({ reviewId, authorId, deletedAt }) {
-    return this.mutateResponse(
-      reviewId,
-      authorId,
-      deletedAt,
-      async (responses) => {
-        const result = await responses.update(
-          {
-            reviewId,
-            authorId,
-            deletedAt: IsNull(),
-          },
-          {
-            status: "deleted",
-            deletedAt,
-            updatedAt: deletedAt,
-          }
-        );
+  // Manual moderation
 
-        return result.affected === 1;
+  async createReviewFlag(flag) {
+    try {
+      return await runTransaction(async (manager) => {
+        const reviews = manager.getRepository(Review);
+        const review = await reviews.findOneBy({ id: flag.review_id });
+        if (!review || ["DELETED", "REJECTED"].includes(review.status)) {
+          throw new NotFoundException("Review not found.");
+        }
+        if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)) {
+          throw new ConflictException("Only submitted reviews can be flagged.");
+        }
+        // Serialize flagging with approval and deletion through a shared review write.
+        const result = await reviews.update({ id: review.id, updated_at: review.updated_at },
+          { updated_at: nextTimestamp(flag.created_at, review.updated_at) });
+        if (result.affected !== 1) throw new ConflictException("Review changed. Reload before continuing.");
+        await manager.getRepository(Review_Flag).insert(flag);
+        return flag;
+      });
+    } catch (error) {
+      const cause = error.driverError || error;
+      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_flag_pending_unique")) {
+        throw new ConflictException("This review already has a pending flag.");
       }
-    );
+      throw error;
+    }
+  }
+
+  async findReviewFlags({ status, limit, offset }) {
+    const database = await Database.getInstance();
+    const rows = await database.getRepository(Review_Flag).createQueryBuilder("flag")
+      .innerJoin(Review, "review", "review.id = flag.review_id")
+      .select("flag.*").addSelect("review.title", "title").addSelect("review.public_review", "public_review")
+      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status })
+      .orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
+    return rows.map((row) => ({ ...row, overall_rating: Number(row.overall_rating),
+      created_at: Number(row.created_at), updated_at: Number(row.updated_at) }));
+  }
+
+  async resolveReviewFlag(id, userId, now) {
+    return runTransaction(async (manager) => {
+      const flags = manager.getRepository(Review_Flag);
+      const flag = await flags.findOneBy({ id });
+      if (!flag) throw new NotFoundException("Review flag not found.");
+      if (flag.status === "RESOLVED") return flag;
+      const updates = { status: "RESOLVED", resolved_by: userId, updated_at: nextTimestamp(now, flag.updated_at) };
+      const result = await flags.update({ id, status: "PENDING" }, updates);
+      if (result.affected !== 1) throw new ConflictException("Review flag changed. Reload before continuing.");
+      return { ...flag, ...updates };
+    });
   }
 
   // Publication
@@ -957,23 +643,35 @@ export class ReviewRepository {
     expectedUpdatedAt,
     updatedAt,
     authorize,
+    from = "APPROVED", to = "PUBLISHED", validate = () => {},
   }) {
-    return this.runTransaction(async (manager) => {
+    return runTransaction(async (manager) => {
       const reviews = manager.getRepository(Review);
       const review = await reviews.findOne({
         where: { id: reviewId },
       });
 
-      if (!isMatchingDraft(review, expectedUpdatedAt)) {
+      if (!review || review.status !== from || review.publication_status !== "UNPUBLISHED"
+        || review.updated_at !== expectedUpdatedAt) {
         return null;
       }
 
+      const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
+      if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
+        throw new ConflictException("Invalid review transition.");
+      }
+      validate(review);
       await this.assertPublicationAllowed(
         manager,
         review,
         updatedAt,
         authorize
       );
+      if ((to === "APPROVED" || to === "PUBLISHED") &&
+          await manager.getRepository(Review_Flag).findOneBy({ review_id: reviewId, status: "PENDING" })) {
+        const action = to === "APPROVED" ? "approving" : "publishing";
+        throw new ConflictException(`Resolve the pending review flag before ${action} this review.`);
+      }
 
       const timestamp = nextTimestamp(
         updatedAt,
@@ -981,15 +679,15 @@ export class ReviewRepository {
       );
 
       const updates = {
-        status: "PUBLISHED",
-        publication_status: "PUBLISHED",
+        status: to,
+        publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED",
         updated_at: timestamp,
       };
 
       const result = await reviews.update(
         {
           id: reviewId,
-          status: "DRAFT",
+          status: from,
           publication_status: "UNPUBLISHED",
           updated_at: expectedUpdatedAt,
         },
@@ -998,7 +696,7 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
-      await this.completeReviewRequest(
+      if (to === "PUBLISHED") await this.completeReviewRequest(
         manager,
         review,
         timestamp
@@ -1016,7 +714,7 @@ export class ReviewRepository {
   ) {
     if (
       typeof authorize !== "function" ||
-      !(await authorize(review))
+      !(await authorize(review, manager))
     ) {
       throw new ForbiddenException(
         "You cannot publish this review."
@@ -1057,170 +755,6 @@ export class ReviewRepository {
         updatedAt: timestamp,
         nextSendAt: null,
       }
-    );
-  }
-
-  // Shared transaction helpers
-
-  async runTransaction(callback) {
-    const dataSource = await Database.getInstance();
-
-    return retryTransaction(dataSource, callback);
-  }
-
-  async mutateResponse(reviewId, authorId, timestamp, callback) {
-    return this.runTransaction(async (manager) => {
-      await this.touchResponseParent(
-        manager,
-        reviewId,
-        authorId,
-        timestamp
-      );
-
-      return callback(manager.getRepository(Review_Response));
-    });
-  }
-
-  async touchResponseParent(
-    manager,
-    reviewId,
-    authorId,
-    timestamp
-  ) {
-    const reviews = manager.getRepository(Review);
-    const review = await reviews.findOne({
-      where: { id: reviewId },
-    });
-
-    assertHostResponseAccess(review, authorId);
-
-    // A shared parent write serializes concurrent response mutations.
-    const result = await reviews.update(
-      {
-        id: reviewId,
-        host_id: authorId,
-        status: "PUBLISHED",
-        publication_status: "PUBLISHED",
-        updated_at: review.updated_at,
-      },
-      {
-        updated_at: nextTimestamp(timestamp, review.updated_at),
-      }
-    );
-
-    if (result.affected !== 1) {
-      throw new ConflictException(
-        "Review changed. Retry your response."
-      );
-    }
-  }
-
-  // Public review details and summaries
-
-  async attachPublicDetails(dataSource, reviews) {
-    if (!reviews.length) return reviews;
-
-    const reviewIds = reviews.map((review) => review.id);
-
-    const [ratings, responses] = await Promise.all([
-      dataSource.getRepository(Review_Rating).find({
-        where: { reviewId: In(reviewIds) },
-      }),
-      dataSource.getRepository(Review_Response).find({
-        where: {
-          reviewId: In(reviewIds),
-          status: "published",
-          deletedAt: IsNull(),
-        },
-      }),
-    ]);
-
-    const ratingsByReview = this.groupRatings(ratings);
-    const responsesByReview = new Map(
-      responses.map((response) => [response.reviewId, response])
-    );
-
-    return reviews.map((review) => ({
-      ...review,
-      categoryRatings: ratingsByReview.get(review.id) || {},
-      response: responsesByReview.get(review.id) || null,
-    }));
-  }
-
-  groupRatings(ratings) {
-    const grouped = new Map();
-
-    for (const rating of ratings) {
-      if (!grouped.has(rating.reviewId)) {
-        grouped.set(rating.reviewId, Object.create(null));
-      }
-
-      grouped.get(rating.reviewId)[rating.category] =
-        Number(rating.rating);
-    }
-
-    return grouped;
-  }
-
-  filterPublicReviews(reviews, verifiedOnly, category) {
-    return reviews.filter(
-      (review) =>
-        (!verifiedOnly ||
-          review.verification_status === "VERIFIED_STAY") &&
-        (!category ||
-          review.categoryRatings?.[category] !== undefined)
-    );
-  }
-
-  sortPublicReviews(reviews, sort) {
-    reviews.sort((a, b) => {
-      let ratingOrder = 0;
-
-      if (sort === "highest") {
-        ratingOrder =
-          Number(b.overall_rating) - Number(a.overall_rating);
-      } else if (sort === "lowest") {
-        ratingOrder =
-          Number(a.overall_rating) - Number(b.overall_rating);
-      }
-
-      return (
-        ratingOrder ||
-        Number(b.created_at) - Number(a.created_at) ||
-        b.id.localeCompare(a.id)
-      );
-    });
-  }
-
-  buildPublicSummary(reviews) {
-    return {
-      reviews: reviews.map(toPublicReview),
-      totalReviews: reviews.length,
-      overallRating: average(
-        reviews.map((review) => review.overall_rating)
-      ),
-      categoryRatings: this.calculateCategoryAverages(reviews),
-    };
-  }
-
-  calculateCategoryAverages(reviews) {
-    const categories = new Map();
-
-    for (const review of reviews) {
-      for (const [key, rating] of Object.entries(
-        review.categoryRatings || {}
-      )) {
-        if (!categories.has(key)) categories.set(key, []);
-
-        categories.get(key).push(rating);
-      }
-    }
-
-    return Object.fromEntries(
-      [...categories].map(([key, ratings]) => [
-        key,
-        average(ratings),
-      ])
     );
   }
 }

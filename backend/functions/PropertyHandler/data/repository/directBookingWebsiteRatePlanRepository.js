@@ -1,7 +1,65 @@
 import Database from "database";
+import { randomUUID } from "node:crypto";
 import { DirectBookingWebsiteRatePlan } from "database/models/DirectBookingWebsiteRatePlan";
+import { isDsqlConflict, withDsqlRetry } from "../../.shared/dsqlRetry.js";
 
 const CURRENT_STATUSES = ["ACTIVE", "PAST_DUE", "TRIALING"];
+const UNIQUE_VIOLATION_CODE = "23505";
+const END_CURRENT_PERIOD_NOW =
+  "CASE WHEN effective_until IS NULL OR effective_until > CURRENT_TIMESTAMP THEN CURRENT_TIMESTAMP ELSE effective_until END";
+
+export const UNPAID_PLAN_CHANGE_OUTCOMES = Object.freeze({
+  CHANGED: "changed",
+  UNCHANGED: "unchanged",
+  PAID_PLAN_ACTIVE: "paid_plan_active",
+  CONFLICT: "conflict",
+});
+
+const isUniqueViolation = (error) =>
+  [error?.code, error?.driverError?.code].includes(UNIQUE_VIOLATION_CODE);
+
+const replaceUnpaidPlanInTransaction = async (manager, { accountId, targetPlan }) => {
+  const currentPlans = await manager.getRepository(DirectBookingWebsiteRatePlan)
+    .createQueryBuilder("plan")
+    .where("plan.account_id = :accountId", { accountId })
+    .andWhere("plan.status IN (:...statuses)", { statuses: CURRENT_STATUSES })
+    .getMany();
+  if (currentPlans.some((plan) => plan.stripe_subscription_id)) {
+    return { outcome: UNPAID_PLAN_CHANGE_OUTCOMES.PAID_PLAN_ACTIVE };
+  }
+  const alreadyOnTarget = currentPlans.find((plan) => plan.plan === targetPlan && plan.effective_until === null);
+  if (alreadyOnTarget) {
+    return { outcome: UNPAID_PLAN_CHANGE_OUTCOMES.UNCHANGED, plan: alreadyOnTarget };
+  }
+
+  if (currentPlans.length > 0) {
+    await manager.createQueryBuilder()
+      .update(DirectBookingWebsiteRatePlan)
+      .set({ status: "EXPIRED", effective_until: () => END_CURRENT_PERIOD_NOW, updated_at: () => "CURRENT_TIMESTAMP" })
+      .where("account_id = :accountId", { accountId })
+      .andWhere("status IN (:...statuses)", { statuses: CURRENT_STATUSES })
+      .execute();
+  }
+
+  const inserted = await manager.createQueryBuilder()
+    .insert()
+    .into(DirectBookingWebsiteRatePlan)
+    .values({
+      id: randomUUID(),
+      account_id: accountId,
+      plan: targetPlan,
+      price_cents: 0,
+      currency: "EUR",
+      billing_frequency: "monthly",
+      status: "ACTIVE",
+      effective_until: null,
+      stripe_customer_id: currentPlans.find((plan) => plan.stripe_customer_id)?.stripe_customer_id ?? null,
+      stripe_subscription_id: null,
+    })
+    .returning("*")
+    .execute();
+  return { outcome: UNPAID_PLAN_CHANGE_OUTCOMES.CHANGED, plan: inserted.raw[0] };
+};
 
 const applyCurrentScope = (queryBuilder) =>
   queryBuilder
@@ -123,6 +181,18 @@ export class DirectBookingWebsiteRatePlanRepository {
       if (String(error?.code || "") === "23505" && accountId) {
         const current = await this.findCurrentByAccountId(accountId);
         if (current) return current;
+      }
+      throw error;
+    }
+  }
+
+  async replaceUnpaidPlan(change) {
+    const client = await Database.getInstance();
+    try {
+      return await withDsqlRetry(() => client.transaction((manager) => replaceUnpaidPlanInTransaction(manager, change)));
+    } catch (error) {
+      if (isDsqlConflict(error) || isUniqueViolation(error)) {
+        return { outcome: UNPAID_PLAN_CHANGE_OUTCOMES.CONFLICT };
       }
       throw error;
     }

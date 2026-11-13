@@ -1,17 +1,23 @@
 import { randomUUID } from "node:crypto";
-import { buildStaticPageKey, buildStaticSitemapKey } from "../../data/repository/staticPageStore.js";
+import {
+  buildStaticPageKey,
+  buildStaticSitePageKey,
+  buildStaticSitemapKey,
+} from "../../data/repository/staticPageStore.js";
 import { buildStaticSiteSitemap } from "../../util/staticSiteSitemap.js";
+import { StaticPageRedirects } from "./staticPageRedirects.js";
 
 const DISTRIBUTION_ENV_NAME = "DIRECT_BOOKING_WEBSITE_CLOUDFRONT_DISTRIBUTION_ID";
 
 const parentOf = (hostname) => hostname.split(".").slice(1).join(".");
 
-const pathsFor = (hostname) => [
+const pathsFor = (hostname, sitePageSlugs = []) => [
   "/" + buildStaticPageKey(hostname),
   "/",
   "/index.html",
   "/" + buildStaticSitemapKey(hostname),
   "/sitemap.xml",
+  ...sitePageSlugs.flatMap((slug) => ["/" + buildStaticSitePageKey(hostname, slug), "/" + slug]),
 ];
 
 export class StaticPageWithdrawal {
@@ -20,22 +26,25 @@ export class StaticPageWithdrawal {
     tenantRepository,
     domainRepository = null,
     distributionId = process.env[DISTRIBUTION_ENV_NAME],
+    redirects = new StaticPageRedirects(),
   }) {
     this.pageStore = pageStore;
     this.tenantRepository = tenantRepository;
     this.domainRepository = domainRepository;
     this.distributionId = String(distributionId || "").trim();
+    this.redirects = redirects;
   }
 
   async withdrawSite(siteId) {
     return this.withdraw({ siteId, domains: await this.domainRepository.listDomainsBySiteId(siteId) });
   }
 
-  async removePages(hostnames, { keep = async () => false, etags = {} } = {}) {
+  async removePages(hostnames, { keep = async () => false, etags = {}, sitePages = {} } = {}) {
     const removed = [];
     const deleted = [];
     const kept = [];
     const failures = [];
+    const removedSitePages = {};
     for (const hostname of [...new Set(hostnames)]) {
       try {
         buildStaticPageKey(hostname);
@@ -48,6 +57,12 @@ export class StaticPageWithdrawal {
           continue;
         }
         deleted.push(hostname);
+        removedSitePages[hostname] = [];
+        for (const [slug, etag] of Object.entries(sitePages[hostname] || {})) {
+          if (await this.pageStore.deleteSitePage({ hostname, slug, etag })) {
+            removedSitePages[hostname].push(slug);
+          }
+        }
         await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId: "" });
         removed.push(hostname);
       } catch (error) {
@@ -55,21 +70,47 @@ export class StaticPageWithdrawal {
       }
     }
 
-    return { removed, kept, failures, invalidationErrors: await this.#invalidate(deleted) };
+    return { removed, kept, failures, invalidationErrors: await this.#invalidate(deleted, removedSitePages) };
   }
 
   async withdraw({ siteId, domains }) {
     const hostnames = [...new Set(domains.map((domain) => domain?.domain).filter(Boolean))];
     hostnames.forEach((hostname) => buildStaticPageKey(hostname));
+    const redirectErrors = await this.redirects.remove(hostnames).then(
+      () => [],
+      (error) => [{ siteId, message: `REDIRECT_REMOVE_FAILED: ${error.message}` }]
+    );
+    const removedSitePages = {};
+    const sitePageErrors = [];
     for (const hostname of hostnames) {
+      const sitePageSlugs = await this.#listSitePageSlugs({ siteId, hostname, errors: sitePageErrors });
       await this.pageStore.deletePage({ hostname });
+      for (const slug of sitePageSlugs) {
+        await this.pageStore.deleteSitePage({ hostname, slug });
+      }
+      removedSitePages[hostname] = sitePageSlugs;
       await this.pageStore.putSitemap({ hostname, xml: buildStaticSiteSitemap([]), siteId });
     }
 
-    return { siteId, hostnames, invalidationErrors: await this.#invalidate(hostnames) };
+    return {
+      siteId,
+      hostnames,
+      invalidationErrors: await this.#invalidate(hostnames, removedSitePages),
+      redirectErrors,
+      sitePageErrors,
+    };
   }
 
-  async #invalidate(hostnames) {
+  async #listSitePageSlugs({ siteId, hostname, errors }) {
+    try {
+      return Object.keys(await this.pageStore.listSitePages(hostname));
+    } catch (error) {
+      errors.push({ siteId, hostname, message: `SITE_PAGES_UNLISTED: ${error.message}` });
+      return [];
+    }
+  }
+
+  async #invalidate(hostnames, removedSitePages = {}) {
     const errors = [];
     const pathsByTenant = new Map();
     const wildcardTenants = this.#wildcardTenantsOnce();
@@ -80,7 +121,10 @@ export class StaticPageWithdrawal {
           errors.push({ hostname, message: "no tenant serves this hostname" });
           continue;
         }
-        pathsByTenant.set(tenantId, [...(pathsByTenant.get(tenantId) || []), ...pathsFor(hostname)]);
+        pathsByTenant.set(tenantId, [
+          ...(pathsByTenant.get(tenantId) || []),
+          ...pathsFor(hostname, removedSitePages[hostname]),
+        ]);
       } catch (error) {
         errors.push({ hostname, message: error.message });
       }
