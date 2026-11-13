@@ -12,7 +12,9 @@ Scope: check the supplied review feedback and implement local corrections.
 - Hook behavior lacked direct tests. Added mocked API tests for initial loading,
   stale loads after a scope switch, 401/403 denial versus other failures, retry,
   duplicate actions before re-render, queue removal on approval/publication,
-  retained rows and released guards after action failure, and updates in other scopes.
+  retained rows and released guards after action failure. Failure/retry tests use
+  pending-approval for approve and approved for publish; successful retries remove
+  the review from the corresponding queue and clear the in-flight guard.
 - Empty and whitespace timestamps became the epoch. They now return Unknown date;
   numeric zero remains valid. Regression tests cover both cases.
 - Removed unused verification/status helpers and route constants. Future UI slices
@@ -42,6 +44,12 @@ rebase #3852 onto acceptance and trim its overlapping queue/format changes.
 Resolve shared files against the dashboard integration available at that point
 and run combined page/flagging tests. The current merge simulation still reports
 conflicts; merge order does not resolve them automatically. No other PR was closed.
+
+Follow-up verification against refreshed origin/acceptance at 05ab73836 confirms
+that #3852 still has modify/delete conflicts in ReviewApprovalPage.js and its test,
+as well as ReviewApprovalDetails.js, ReviewApproval.module.css,
+useReviewApprovalQueue.js and reviewApprovalFormat.js. The rebase remains deferred
+until this PR lands; this client-test correction does not resolve those conflicts.
 
 ## Verification
 
