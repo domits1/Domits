@@ -12,6 +12,9 @@ import {
   fetchHostProperties,
   checkCompanyStatus,
   checkTeamStatus,
+  checkSecurityStatus,
+  checkOwnersStatus,
+  checkMessagingStatus,
   checkAnyPropertyListedStatus,
   checkAnyWebsiteStatus,
   checkAccountChannelsStatus,
@@ -84,21 +87,38 @@ const HostOnboardingEnterprise = () => {
       }
       if (isCancelled) return;
 
-      const [company, team, website, channels, payments, pricing, tasks, marketplace] = await Promise.all([
-        checkCompanyStatus(),
-        checkTeamStatus(),
-        propertiesFailed ? Promise.resolve(UNKNOWN_STATUS) : checkAnyWebsiteStatus(hostProperties),
-        checkAccountChannelsStatus(),
-        checkPaymentsStatus(),
-        checkPricingStatus(),
-        checkTasksStatus(),
-        checkMarketplaceStatus(),
-      ]);
+      const [company, team, security, owners, messaging, website, channels, payments, pricing, tasks, marketplace] =
+        await Promise.all([
+          checkCompanyStatus(),
+          checkTeamStatus(),
+          checkSecurityStatus(),
+          checkOwnersStatus(),
+          checkMessagingStatus(),
+          propertiesFailed ? Promise.resolve(UNKNOWN_STATUS) : checkAnyWebsiteStatus(hostProperties),
+          checkAccountChannelsStatus(),
+          checkPaymentsStatus(),
+          checkPricingStatus(),
+          checkTasksStatus(),
+          checkMarketplaceStatus(),
+        ]);
 
       const listProperties = propertiesFailed ? UNKNOWN_STATUS : checkAnyPropertyListedStatus(hostProperties);
 
       if (!isCancelled) {
-        setStepStatus({ company, team, listProperties, website, channels, payments, pricing, tasks, marketplace });
+        setStepStatus({
+          company,
+          team,
+          security,
+          owners,
+          messaging,
+          listProperties,
+          website,
+          channels,
+          payments,
+          pricing,
+          tasks,
+          marketplace,
+        });
         setIsLoadingStatus(false);
       }
     })();
