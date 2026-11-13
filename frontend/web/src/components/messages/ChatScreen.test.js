@@ -14,7 +14,14 @@ const mockFetchMessages = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
-jest.mock("./MessageToast", () => () => <div data-testid="message-toast" />);
+jest.mock("./MessageToast", () => ({ message, onClose }) => (
+  <div data-testid="message-toast">
+    {message}
+    <button type="button" onClick={onClose}>
+      Close toast
+    </button>
+  </div>
+));
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
   useAuth: () => ({ accessToken: "access-token-1" }),
@@ -39,16 +46,38 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", ()
 jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttachment", () => {
   const PropTypes = require("prop-types");
 
-  function MockChatUploadAttachment({ onUploadComplete }) {
+  function MockChatUploadAttachment({ onUploadComplete, onUploadError }) {
+    const [busy, setBusy] = require("react").useState(false);
     return (
-      <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
-        Attach
-      </button>
+      <>
+        <button type="button" onClick={() => setBusy(true)}>
+          Start upload
+        </button>
+        {busy ? <span>Uploader busy</span> : null}
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({ url: "https://example.com/photo.jpg", name: "photo.jpg", type: "image/jpeg" })
+          }>
+          Attach
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({ url: "https://example.com/lease.pdf", name: "lease.pdf", type: "application/pdf" })
+          }>
+          Attach PDF
+        </button>
+        <button type="button" onClick={() => onUploadError()}>
+          Fail upload
+        </button>
+      </>
     );
   }
 
   MockChatUploadAttachment.propTypes = {
     onUploadComplete: PropTypes.func.isRequired,
+    onUploadError: PropTypes.func,
   };
 
   return MockChatUploadAttachment;
@@ -373,16 +402,26 @@ describe("ChatScreen reservation messaging", () => {
     );
     const renderHostChat = (platform) => render(hostChat({ platform }));
 
+    test("starts a fresh uploader when the host opens another thread", () => {
+      const { rerender } = render(hostChat());
+      fireEvent.click(screen.getByRole("button", { name: "Start upload" }));
+      expect(screen.getByText("Uploader busy")).toBeInTheDocument();
+
+      rerender(hostChat({ contactId: "guest-2", threadId: "thread-2" }));
+
+      expect(screen.queryByText("Uploader busy")).not.toBeInTheDocument();
+    });
+
     test("drops an unsent attachment, but keeps the typed text, when the host opens another thread", () => {
       const { rerender } = render(hostChat());
 
       fireEvent.click(screen.getByRole("button", { name: "Attach" }));
       fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Draft reply" } });
-      expect(screen.getByAltText("First attachment preview")).toBeInTheDocument();
+      expect(screen.getByRole("listitem", { name: "photo.jpg" })).toBeInTheDocument();
 
       rerender(hostChat({ platform: "CHANNEX", contactId: "guest-2", threadId: "thread-2" }));
 
-      expect(screen.queryByAltText("First attachment preview")).not.toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument();
       expect(screen.getByPlaceholderText("Type a message")).toHaveValue("Draft reply");
     });
 
@@ -392,10 +431,185 @@ describe("ChatScreen reservation messaging", () => {
       expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
     });
 
+    test("does not offer attachments when the capability is missing", () => {
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={{ ...getMessageCapabilities("host"), canUseAttachments: false }}
+        />
+      );
+
+      expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
+    });
+
+    test("places the attach button in the message row, left of the text field", () => {
+      renderHostChat("DOMITS");
+
+      const row = screen.getByPlaceholderText("Type a message").closest(".message-input-wrapper");
+      const attach = within(row).getByRole("button", { name: "Attach" });
+
+      expect(attach.compareDocumentPosition(screen.getByPlaceholderText("Type a message"))).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    });
+
+    test("removes the failure toast when it asks to close and shows it again on the next failure", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close toast" }));
+      expect(screen.queryByTestId("message-toast")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      expect(screen.getByTestId("message-toast")).toBeInTheDocument();
+    });
+
+    test("tells the host when an upload fails", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+
+      expect(screen.getByTestId("message-toast")).toHaveTextContent("Attachment failed to upload");
+    });
+
     test("still offers attachments on a Domits thread", () => {
       renderHostChat("DOMITS");
 
       expect(screen.getByRole("button", { name: "Attach" })).toBeInTheDocument();
+    });
+  });
+
+  describe("attachment chips", () => {
+    const renderHostChat = () =>
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+    const attach = (name) => fireEvent.click(screen.getByRole("button", { name }));
+    const chip = (name) => screen.getByRole("listitem", { name });
+
+    test("shows the thumbnail of an image attachment", () => {
+      renderHostChat();
+
+      attach("Attach");
+
+      expect(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" })).toHaveAttribute(
+        "src",
+        "https://example.com/photo.jpg"
+      );
+    });
+
+    test("shows the file name and no image for a PDF attachment", () => {
+      renderHostChat();
+
+      attach("Attach PDF");
+
+      expect(within(chip("lease.pdf")).getByText("lease.pdf")).toBeInTheDocument();
+      expect(chip("lease.pdf").querySelector("img")).toBeNull();
+    });
+
+    test("falls back to the file name when the image cannot be loaded", () => {
+      renderHostChat();
+      attach("Attach");
+
+      fireEvent.error(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" }));
+
+      expect(chip("photo.jpg").querySelector("img")).toBeNull();
+      expect(within(chip("photo.jpg")).getByText("photo.jpg")).toBeInTheDocument();
+    });
+
+    test("gives the list and every chip an accessible name and a remove button", () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+
+      const list = screen.getByRole("list", { name: "Attachments" });
+
+      expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+      expect(within(chip("photo.jpg")).getByRole("button", { name: "Remove attachment" })).toBeInTheDocument();
+      expect(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" })).toBeInTheDocument();
+    });
+
+    test("removes only the attachment whose remove button was clicked", () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+
+      fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+      expect(screen.queryByRole("listitem", { name: "lease.pdf" })).not.toBeInTheDocument();
+      expect(chip("photo.jpg")).toBeInTheDocument();
+    });
+
+    test("sends the remaining attachment urls and then clears the chips", async () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+      fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+      fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+      fireEvent.click(screen.getByTitle("Send"));
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+      await waitFor(() => expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument());
+    });
+
+    describe("preview popover", () => {
+      const openPreview = () => fireEvent.click(screen.getByRole("button", { name: "Preview photo.jpg" }));
+
+      test("lists only the image attachments", () => {
+        renderHostChat();
+        attach("Attach");
+        attach("Attach PDF");
+
+        openPreview();
+
+        const dialog = screen.getByRole("dialog", { name: "Attachment previews" });
+        expect(within(dialog).getAllByRole("img")).toHaveLength(1);
+        expect(within(dialog).getByRole("img", { name: "photo.jpg" })).toBeInTheDocument();
+      });
+
+      test("closes with its close button", () => {
+        renderHostChat();
+        attach("Attach");
+        openPreview();
+
+        fireEvent.click(screen.getByRole("button", { name: "Close attachment previews" }));
+
+        expect(screen.queryByRole("dialog", { name: "Attachment previews" })).not.toBeInTheDocument();
+      });
+
+      test("closes with the Escape key", () => {
+        renderHostChat();
+        attach("Attach");
+        openPreview();
+
+        fireEvent.keyDown(document, { key: "Escape" });
+
+        expect(screen.queryByRole("dialog", { name: "Attachment previews" })).not.toBeInTheDocument();
+      });
+
+      test("offers no preview for a PDF", () => {
+        renderHostChat();
+        attach("Attach PDF");
+
+        expect(screen.queryByRole("button", { name: /^Preview/ })).not.toBeInTheDocument();
+      });
     });
   });
 });

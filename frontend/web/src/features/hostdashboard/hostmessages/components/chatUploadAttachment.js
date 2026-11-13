@@ -1,12 +1,25 @@
-import React, { useState} from "react";
+import React, { useEffect, useRef, useState} from "react";
+import Icon from "@mdi/react";
+import { mdiLoading, mdiPaperclip } from "@mdi/js";
 import { useUploadUrl } from "../hooks/useUploadURL";
 
-const ChatUploadAttachment = ({ onUploadComplete }) => {
+const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
     const [files, setFiles] = useState([]);
+    const [uploading, setUploading] = useState(false);
+    const uploadingRef = useRef(false);
+    const fileInputRef = useRef(null);
+    const mountedRef = useRef(true);
     const { getUploadUrl } = useUploadUrl();
 
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
+
     const handleAddAttachment = async () => {
-        document.getElementById('fileInput').click();
+        fileInputRef.current?.click();
     };
 
     const handleDragOver = (e) => {
@@ -24,13 +37,11 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         }
     };
 
-    const handleAttachments = async (droppedFiles) => {
-        const file = droppedFiles[0];
+    const uploadFile = async (file) => {
         const response = await getUploadUrl(file.type);
 
         if (!response.uploadUrl || !response.fields) {
-            console.error("Failed to retrieve an upload URL");
-            return;
+            throw new Error("Failed to retrieve an upload URL");
         }
 
         const formData = new FormData();
@@ -45,15 +56,40 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         });
 
         if (!uploadResponse.ok) {
-            console.error("Failed to upload file", await uploadResponse.text());
-        } else {
-            const uploadedFile = {
-                name: file.name,
-                type: file.type,
-                url: response.fileUrl,
-            };
-            setFiles((prev) => [...prev, uploadedFile]);
-            onUploadComplete(response.fileUrl);
+            throw new Error("Failed to upload file");
+        }
+
+        if (!mountedRef.current) {
+            return;
+        }
+
+        const uploadedFile = {
+            name: file.name,
+            type: file.type,
+            url: response.fileUrl,
+        };
+        setFiles((prev) => [...prev, uploadedFile]);
+        onUploadComplete(uploadedFile);
+    };
+
+    const handleAttachments = async (droppedFiles) => {
+        if (uploadingRef.current) {
+            return;
+        }
+
+        uploadingRef.current = true;
+        setUploading(true);
+        try {
+            await uploadFile(droppedFiles[0]);
+        } catch {
+            if (mountedRef.current) {
+                onUploadError?.();
+            }
+        } finally {
+            uploadingRef.current = false;
+            if (mountedRef.current) {
+                setUploading(false);
+            }
         }
     };
 
@@ -69,17 +105,22 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
     return (
         <div className="add-attachment">
             <button
+                type="button"
+                aria-label="Attach file"
+                title="Attach file"
+                disabled={uploading}
+                aria-busy={uploading}
                 onClick={handleAddAttachment}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className="add-file-button"
             >
-                +
+                <Icon path={uploading ? mdiLoading : mdiPaperclip} size={1} spin={uploading} />
             </button>
 
             <input
                 type="file"
-                id="fileInput"
+                ref={fileInputRef}
                 multiple
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}

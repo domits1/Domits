@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import profileImage from './domits-logo.jpg';
 import './MessageToast.scss';
 
-const MessageToast = ({ contactName, contactImage, message }) => {
+const AUTO_CLOSE_MS = 5000;
+
+const MessageToast = ({ contactName, contactImage, message, onClose }) => {
     const maxLength = 80;
     const truncatedMessage =
         message && message.length > maxLength
             ? `${message.substring(0, maxLength)}...`
             : message;
+
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
+    const isClosable = Boolean(onClose);
+
+    useEffect(() => {
+        if (!isClosable) {
+            return undefined;
+        }
+        const timerId = setTimeout(() => onCloseRef.current?.(), AUTO_CLOSE_MS);
+        return () => clearTimeout(timerId);
+    }, [isClosable, message]);
 
     return (
         <div className="message-toast">
@@ -24,9 +38,18 @@ const MessageToast = ({ contactName, contactImage, message }) => {
                     {truncatedMessage}
                 </div>
             </div>
+            {isClosable && (
+                <button
+                    type="button"
+                    className="message-toast__close"
+                    aria-label="Close notification"
+                    onClick={onClose}
+                >
+                    ✕
+                </button>
+            )}
         </div>
     );
 };
 
 export default MessageToast;
-

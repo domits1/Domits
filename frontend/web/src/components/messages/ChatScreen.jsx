@@ -6,6 +6,9 @@ import MessageToast from "./MessageToast";
 import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/useSendMessage";
 import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
+import AttachmentChip from "../../features/hostdashboard/hostmessages/components/AttachmentChip";
+import Icon from "@mdi/react";
+import { mdiClose } from "@mdi/js";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 import { getMessageCapabilities } from "./messageCapabilities";
@@ -80,8 +83,14 @@ const ChatScreen = ({
   const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [toastText, setToastText] = useState("");
-  const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+  const uploadedFileUrls = useMemo(() => attachments.map((attachment) => attachment.url), [attachments]);
+  const imageAttachments = useMemo(
+    () => attachments.filter((attachment) => attachment.type?.startsWith("image/")),
+    [attachments]
+  );
+  const isPreviewOpen = showPreviewPopover && imageAttachments.length > 0;
 
   const [localMessages, setLocalMessages] = useState([]);
   const [retryingIds, setRetryingIds] = useState({});
@@ -102,8 +111,17 @@ const ChatScreen = ({
 
   // An unsent upload belongs to the thread it was attached in; the next thread may not accept attachments.
   useEffect(() => {
-    setUploadedFileUrls([]);
+    setAttachments([]);
   }, [resolvedContactId, threadId]);
+
+  useEffect(() => {
+    if (!isPreviewOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setShowPreviewPopover(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [isPreviewOpen]);
 
   useEffect(() => {
     if (!resolvedContactId) {
@@ -261,7 +279,7 @@ const ChatScreen = ({
 
   const clearComposer = () => {
     setNewMessage("");
-    setUploadedFileUrls([]);
+    setAttachments([]);
     setShowPreviewPopover(false);
   };
 
@@ -322,7 +340,15 @@ const ChatScreen = ({
     setShowToast(true);
   };
 
-  const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
+  const showUploadFailedToast = () => {
+    setError("Failed to upload attachment.");
+    setToastText("Attachment failed to upload");
+    setShowToast(true);
+  };
+
+  const handleUploadComplete = (attachment) => setAttachments((prev) => [...prev, attachment]);
+
+  const handleRemoveAttachment = (url) => setAttachments((prev) => prev.filter((attachment) => attachment.url !== url));
 
   if (!resolvedContactId) {
     return (
@@ -410,25 +436,29 @@ const ChatScreen = ({
 
         <div className="chat-input">
           <div className="attachment-area">
-            {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-              <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-            ) : null}
-
-            {uploadedFileUrls.length > 0 && (
-              <button
-                className="inline-upload-preview"
-                onClick={() => setShowPreviewPopover((s) => !s)}
-                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-                type="button"
-              >
-                <img src={uploadedFileUrls[0]} alt="First attachment preview" />
-                {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
-              </button>
+            {attachments.length > 0 && (
+              <ul className="attachment-chips" aria-label="Attachments">
+                {attachments.map((attachment) => (
+                  <AttachmentChip
+                    key={attachment.url}
+                    attachment={attachment}
+                    onRemove={handleRemoveAttachment}
+                    onPreview={() => setShowPreviewPopover((open) => !open)}
+                  />
+                ))}
+              </ul>
             )}
           </div>
 
           <div className="message-input-container">
             <div className="message-input-wrapper">
+              {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
+                <ChatUploadAttachment
+                  key={`${resolvedContactId}::${threadId || ""}`}
+                  onUploadComplete={handleUploadComplete}
+                  onUploadError={showUploadFailedToast}
+                />
+              ) : null}
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -453,21 +483,25 @@ const ChatScreen = ({
             </div>
           </div>
 
-          {showPreviewPopover && uploadedFileUrls.length > 0 && (
+          {isPreviewOpen && (
             <div className="preview-popover" role="dialog" aria-label="Attachment previews">
               <div className="preview-popover-header">
                 <h4>Attachments</h4>
-                <button onClick={() => setShowPreviewPopover(false)} aria-label="Close" type="button">
-                  ✕
+                <button
+                  className="preview-popover-close"
+                  onClick={() => setShowPreviewPopover(false)}
+                  aria-label="Close attachment previews"
+                  type="button">
+                  <Icon path={mdiClose} size={0.9} />
                 </button>
               </div>
-              <div className="preview-popover-body">
-                {uploadedFileUrls.map((url, idx) => (
-                  <div key={url} className="preview-item">
-                    <img src={url} alt={`Attachment ${idx + 1}`} />
-                  </div>
+              <ul className="preview-popover-grid">
+                {imageAttachments.map((attachment) => (
+                  <li key={attachment.url} className="preview-item">
+                    <img src={attachment.url} alt={attachment.name} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </div>
