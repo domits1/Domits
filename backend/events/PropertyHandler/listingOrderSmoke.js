@@ -62,8 +62,8 @@ const SHARED = new URL("functions/.shared/", BACKEND).href;
 register(
   "data:text/javascript," +
     encodeURIComponent(
-      `export async function resolve(specifier, context, nextResolve) {
-         const match = /^(?:\\.\\.\\/)+\\.shared\\/(.+)$/.exec(specifier);
+      String.raw`export async function resolve(specifier, context, nextResolve) {
+         const match = /^(?:\.\.\/)+\.shared\/(.+)$/.exec(specifier);
          return nextResolve(match ? new URL(match[1], ${JSON.stringify(SHARED)}).href : specifier, context);
        }`
     )
@@ -120,6 +120,26 @@ const EXPECTED_SMOKE_ORDER = expectedSmokeOrder();
 const countWhere = async (client, table, column = "id") =>
   Number((await read(client, `SELECT COUNT(*) AS n FROM test.${table} WHERE ${column} LIKE $1`, [`${PREFIX}%`]))[0].n);
 
+// Runs fn and hands back what it returned or what it threw, so a check can assert on a refusal without a try/catch.
+const attempt = async (fn) => {
+  try {
+    return { value: await fn() };
+  } catch (error_) {
+    return { error: error_ };
+  }
+};
+
+// The controller logs the 400s these checks provoke on purpose; keep that out of the report.
+const withQuietErrors = async (fn) => {
+  const logError = console.error;
+  console.error = () => {};
+  try {
+    return await fn();
+  } finally {
+    console.error = logError;
+  }
+};
+
 // ---- connection ------------------------------------------------------------------------------------------------
 const connect = async () => {
   const client = await Database.getInstance();
@@ -130,6 +150,15 @@ const connect = async () => {
 };
 
 // ---- feeds -----------------------------------------------------------------------------------------------------
+// The join helper's order for a feed. `scope` adds the feed's own join and filter, matching the reference.
+const helperOrderFor = (client, scope) => async () => {
+  const query = scope(
+    client.getRepository(Property).createQueryBuilder("property").select(["property.id", "property.createdat"])
+  ).andWhere("property.status = :status", { status: "ACTIVE" });
+  const rows = await orderByListingPosition(joinLatestApproval(query)).getRawMany();
+  return rows.map((row) => row.property_id);
+};
+
 // A feed supplies: page(cursor) -> the shipped repository call; reference() -> every row in the expected order,
 // built without the code under test; helperOrder() -> the join helper's order; controller(params) -> the real
 // controller, for the string query path.
@@ -160,15 +189,7 @@ const FEEDS = {
           .getRawMany();
         return rows.map((row) => ({ id: row.property_id, createdAt: Number(row.property_createdat) }));
       },
-      helperOrder: async () => {
-        const query = client
-          .getRepository(Property)
-          .createQueryBuilder("property")
-          .select(["property.id", "property.createdat"])
-          .where("property.status = :status", { status: "ACTIVE" });
-        const rows = await orderByListingPosition(joinLatestApproval(query)).getRawMany();
-        return rows.map((row) => row.property_id);
-      },
+      helperOrder: helperOrderFor(client, (query) => query),
       controller: (queryStringParameters) => {
         const controller = new PropertyController();
         controller.propertyService = { getActivePropertyCards: (cursor) => repository.getActiveProperties(cursor) };
@@ -202,17 +223,11 @@ const FEEDS = {
       reference: () => referenceFor(MAIN_COUNTRY),
       referenceFor,
       // The join helper's order with the same country join and filter the method uses, to match the reference.
-      helperOrder: async () => {
-        const query = client
-          .getRepository(Property)
-          .createQueryBuilder("property")
-          .select(["property.id", "property.createdat"])
+      helperOrder: helperOrderFor(client, (query) =>
+        query
           .innerJoin(Property_Location, "pl", "pl.property_id = property.id")
           .where("pl.country = :country", { country: MAIN_COUNTRY })
-          .andWhere("property.status = :status", { status: "ACTIVE" });
-        const rows = await orderByListingPosition(joinLatestApproval(query)).getRawMany();
-        return rows.map((row) => row.property_id);
-      },
+      ),
       controller: (queryStringParameters) => {
         const controller = new PropertyController();
         controller.propertyService = {
@@ -229,11 +244,13 @@ const FEEDS = {
 };
 
 // ---- write commands --------------------------------------------------------------------------------------------
-const insertProperty = async (client, target, entry) => {
-  await write(
-    target,
-    process.argv,
+// The one call shape every statement here shares. write() in smokeSafety.js still decides whether it may run.
+const writeSql = (client, target, sql, params) => write(target, process.argv, client, sql, params);
+
+const insertProperty = (client, target, entry) =>
+  writeSql(
     client,
+    target,
     `INSERT INTO test.property (id, title, subtitle, description, registrationnumber, hostid, status, createdat, updatedat)
      VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7, $7)`,
     [
@@ -246,16 +263,14 @@ const insertProperty = async (client, target, entry) => {
       entry.createdat,
     ]
   );
-};
 
 const insertEvents = async (client, target, entry) => {
   let sequence = 0;
   for (const [action, createdAt] of entry.events) {
     sequence += 1;
-    await write(
-      target,
-      process.argv,
+    await writeSql(
       client,
+      target,
       `INSERT INTO test.property_moderation_event (id, property_id, action, actor_id, from_status, to_status, created_at)
        VALUES ($1, $2, $3, $4, 'PENDING_REVIEW', $5, $6)`,
       [`${PREFIX}evt-${String(entry.n).padStart(2, "0")}-${sequence}`, id(entry.n), action, `${PREFIX}actor`, action === "APPROVED" ? "ACTIVE" : action, createdAt]
@@ -264,16 +279,14 @@ const insertEvents = async (client, target, entry) => {
 };
 
 // Only the NOT NULL columns: test.property_location can lag the entity, and the feeds read nothing else from it.
-const insertLocation = async (client, target, entry) => {
-  await write(
-    target,
-    process.argv,
+const insertLocation = (client, target, entry) =>
+  writeSql(
     client,
+    target,
     `INSERT INTO test.property_location (property_id, city, country, housenumber, postalcode, street)
      VALUES ($1, 'Smoke City', $2, $3, '0000 SM', 'Smoke Street')`,
     [id(entry.n), countryOf(entry), entry.n]
   );
-};
 
 const seed = async () => {
   const { client, target } = await connect();
@@ -316,9 +329,9 @@ const cleanup = async (confirmed) => {
     console.log(`Nothing deleted. To delete exactly those rows, run again with: --yes ${TARGET_HINT}`);
     return;
   }
-  await write(target, process.argv, client, `DELETE FROM test.property_moderation_event WHERE id LIKE $1`, [`${PREFIX}%`]);
-  await write(target, process.argv, client, `DELETE FROM test.property_location WHERE property_id LIKE $1`, [`${PREFIX}%`]);
-  await write(target, process.argv, client, `DELETE FROM test.property WHERE id LIKE $1`, [`${PREFIX}%`]);
+  await writeSql(client, target, `DELETE FROM test.property_moderation_event WHERE id LIKE $1`, [`${PREFIX}%`]);
+  await writeSql(client, target, `DELETE FROM test.property_location WHERE property_id LIKE $1`, [`${PREFIX}%`]);
+  await writeSql(client, target, `DELETE FROM test.property WHERE id LIKE $1`, [`${PREFIX}%`]);
   console.log("Deleted.");
 };
 
@@ -338,20 +351,16 @@ const checkReferenceOrder = async (feed, { referenceIds }) => {
 };
 
 // What a client does: JSON in, parseFloat on the number, id as is.
-const toClientCursor = (key) => key && { createdAt: parseFloat(String(key.createdAt)), id: key.id };
+const toClientCursor = (key) => key && { createdAt: Number.parseFloat(String(key.createdAt)), id: key.id };
 
 const walkWholeFeed = async (feed) => {
   const ids = [];
   const pageSizes = [];
   let cursor;
   for (let guard = 0; guard < 1000; guard++) {
-    let page;
-    try {
-      page = await feed.page(cursor);
-    } catch (error) {
-      if (error instanceof NotFoundException) break;
-      throw error;
-    }
+    const { value: page, error } = await attempt(() => feed.page(cursor));
+    if (error instanceof NotFoundException) break;
+    if (error) throw error;
     pageSizes.push(page.identifiers.length);
     ids.push(...page.identifiers);
     cursor = toClientCursor(page.lastEvaluatedKey);
@@ -377,13 +386,7 @@ const checkResumeFromEveryCursor = async (feed, { reference, referenceIds }) => 
   let lastCursorEndsWith404 = false;
   for (let i = 0; i < reference.length; i++) {
     const expected = referenceIds.slice(i + 1, i + 1 + PAGE_SIZE);
-    let page;
-    let error;
-    try {
-      page = await feed.page({ createdAt: reference[i].createdAt, id: reference[i].id });
-    } catch (caught) {
-      error = caught;
-    }
+    const { value: page, error } = await attempt(() => feed.page({ createdAt: reference[i].createdAt, id: reference[i].id }));
     if (expected.length === 0) {
       lastCursorEndsWith404 = error instanceof NotFoundException;
     } else if (error || !sameList(page.identifiers, expected)) {
@@ -397,19 +400,12 @@ const checkResumeFromEveryCursor = async (feed, { reference, referenceIds }) => 
 };
 
 const checkUnknownCursor = async (feed) => {
-  let error;
-  try {
-    await feed.page({ createdAt: 1700000000000, id: `${PREFIX}does-not-exist` });
-  } catch (caught) {
-    error = caught;
-  }
+  const { error } = await attempt(() => feed.page({ createdAt: 1700000000000, id: `${PREFIX}does-not-exist` }));
   return [result("unknown cursor id is a 400 from the repository", error?.statusCode === 400, error?.message)];
 };
 
 const checkControllerPaths = async (feed, { referenceIds }) => {
-  const logError = console.error;
-  console.error = () => {}; // the controller logs the expected 400
-  try {
+  return withQuietErrors(async () => {
     const firstPage = JSON.parse((await feed.controller(undefined)).body);
     const secondPage = await feed.controller({
       lastEvaluatedKeyCreatedAt: String(firstPage.lastEvaluatedKey.createdAt),
@@ -425,9 +421,7 @@ const checkControllerPaths = async (feed, { referenceIds }) => {
       result("controller: unknown cursor id is HTTP 400", unknownCursor.statusCode === 400),
       result('controller: "null" strings from an old client return page 1', sameList(JSON.parse(nullStrings.body).identifiers, firstPage.identifiers)),
     ];
-  } finally {
-    console.error = logError;
-  }
+  });
 };
 
 // Only a feed with a country filter has this. The main country must hold none of the other country's smoke rows,
@@ -440,18 +434,8 @@ const checkCountryFilter = async (feed, { referenceIds }) => {
   const first = otherRows[0];
   const last = otherRows[otherRows.length - 1];
   const resumed = await feed.pageFor(OTHER_COUNTRY, { createdAt: first.createdAt, id: first.id });
-  let afterLast;
-  try {
-    await feed.pageFor(OTHER_COUNTRY, { createdAt: last.createdAt, id: last.id });
-  } catch (caught) {
-    afterLast = caught;
-  }
-  let emptyCountry;
-  try {
-    await feed.pageFor("Atlantis");
-  } catch (caught) {
-    emptyCountry = caught;
-  }
+  const { error: afterLast } = await attempt(() => feed.pageFor(OTHER_COUNTRY, { createdAt: last.createdAt, id: last.id }));
+  const { error: emptyCountry } = await attempt(() => feed.pageFor("Atlantis"));
   return [
     result(
       "country filter: the main country holds none of the other country's smoke rows",
@@ -476,20 +460,12 @@ const checkCountryFilter = async (feed, { referenceIds }) => {
 const checkCrossCountryCursor = async (feed, { reference }) => {
   const fromOther = (await feed.referenceFor(OTHER_COUNTRY))[0];
   const fromMain = reference[PAGE_SIZE - 1];
-  const refusal = async (country, row) => {
-    try {
-      await feed.pageFor(country, { createdAt: row.createdAt, id: row.id });
-      return undefined;
-    } catch (caught) {
-      return caught;
-    }
-  };
+  const refusal = async (country, row) =>
+    (await attempt(() => feed.pageFor(country, { createdAt: row.createdAt, id: row.id }))).error;
   const mainWithOtherCursor = await refusal(MAIN_COUNTRY, fromOther);
   const otherWithMainCursor = await refusal(OTHER_COUNTRY, fromMain);
 
-  const logError = console.error;
-  console.error = () => {}; // the controller logs the expected 400
-  try {
+  return withQuietErrors(async () => {
     const statusVia = async (country, row) =>
       (await feed.controller({ country, lastEvaluatedKeyCreatedAt: String(row.createdAt), lastEvaluatedKeyId: row.id })).statusCode;
     const controllerStatuses = [await statusVia(MAIN_COUNTRY, fromOther), await statusVia(OTHER_COUNTRY, fromMain)];
@@ -498,34 +474,40 @@ const checkCrossCountryCursor = async (feed, { reference }) => {
       result("cross-country cursor: a Netherlands cursor against Smokeland is a 400, not a restarted page", otherWithMainCursor?.statusCode === 400, otherWithMainCursor?.message),
       result("cross-country cursor: both are HTTP 400 through the controller", sameList(controllerStatuses, [400, 400]), controllerStatuses.join(",")),
     ];
-  } finally {
-    console.error = logError;
-  }
+  });
 };
 
 const WALK_STEPS = [checkReferenceOrder, checkPageThrough, checkResumeFromEveryCursor, checkUnknownCursor, checkControllerPaths];
 
-const walk = async (feedName) => {
-  if (!FEEDS[feedName]) throw new RefusedError(`Unknown feed "${feedName}". Known: ${Object.keys(FEEDS).join(", ")}`);
-  const { client } = await connect();
-  if ((await countWhere(client, "property")) !== SEEDS.length) {
-    throw new RefusedError(`Expected the ${SEEDS.length} ${PREFIX}* rows. Run: node events/PropertyHandler/listingOrderSmoke.js seed ${TARGET_HINT}`);
+const requireSeedRows = async (client, kind, table, column) => {
+  if ((await countWhere(client, table, column)) !== SEEDS.length) {
+    throw new RefusedError(`Expected the ${SEEDS.length} ${PREFIX}* ${kind}. Run: node events/PropertyHandler/listingOrderSmoke.js seed ${TARGET_HINT}`);
   }
-  const feed = FEEDS[feedName](client);
-  if (feed.needsLocations && (await countWhere(client, "property_location", "property_id")) !== SEEDS.length) {
-    throw new RefusedError(`Expected the ${SEEDS.length} ${PREFIX}* location rows. Run: node events/PropertyHandler/listingOrderSmoke.js seed ${TARGET_HINT}`);
-  }
-  const reference = await feed.reference();
-  const context = { reference, referenceIds: reference.map((row) => row.id) };
-  console.log(`feed "${feedName}": ${reference.length} rows in the reference order\n`);
+};
 
+// Runs every step, prints each result, and returns the labels of the checks that failed.
+const runSteps = async (steps, feed, context) => {
   const failures = [];
-  for (const step of [...WALK_STEPS, ...(feed.extraSteps ?? [])]) {
+  for (const step of steps) {
     for (const { label, passed, detail } of await step(feed, context)) {
       console.log(`${passed ? "PASS" : "FAIL"}  ${label}${detail ? `  ${detail}` : ""}`);
       if (!passed) failures.push(label);
     }
   }
+  return failures;
+};
+
+const walk = async (feedName) => {
+  if (!FEEDS[feedName]) throw new RefusedError(`Unknown feed "${feedName}". Known: ${Object.keys(FEEDS).join(", ")}`);
+  const { client } = await connect();
+  await requireSeedRows(client, "rows", "property");
+  const feed = FEEDS[feedName](client);
+  if (feed.needsLocations) await requireSeedRows(client, "location rows", "property_location", "property_id");
+  const reference = await feed.reference();
+  const context = { reference, referenceIds: reference.map((row) => row.id) };
+  console.log(`feed "${feedName}": ${reference.length} rows in the reference order\n`);
+
+  const failures = await runSteps([...WALK_STEPS, ...(feed.extraSteps ?? [])], feed, context);
   console.log(failures.length === 0 ? "\nALL CHECKS PASSED" : `\n${failures.length} CHECK(S) FAILED`);
   process.exitCode = failures.length === 0 ? 0 : 1;
 };

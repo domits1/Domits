@@ -274,10 +274,13 @@ describe("guarded SQL", () => {
       expect(calls.filter((call) => !ALLOWED.includes(call))).toEqual([]);
     });
 
-    // Three tables are written (property, moderation event, location), so three inserts and three deletes. A new
-    // statement changes these numbers, which is the prompt to check it goes through write() and update them here.
+    // Three tables are written (property, moderation event, location), so three inserts and three deletes. Every one
+    // goes through writeSql, which has the script's only direct write() call. A new statement changes these numbers,
+    // which is the prompt to check it goes through writeSql and update them here.
     it("sends every insert and delete through write(): three inserts, three deletes", () => {
-      expect(SCRIPT.match(/await write\(/g)).toHaveLength(6);
+      expect(SCRIPT.match(/=> write\(/g)).toHaveLength(1);
+      expect(SCRIPT.match(/await write\(/g)).toBeNull();
+      expect(SCRIPT.match(/writeSql\(/g)).toHaveLength(6);
       expect(SCRIPT.match(/INSERT INTO test\./g)).toHaveLength(3);
       expect(SCRIPT.match(/DELETE FROM test\./g)).toHaveLength(3);
     });
