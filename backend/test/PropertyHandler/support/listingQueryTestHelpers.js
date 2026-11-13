@@ -20,7 +20,7 @@ jest.mock("../../../functions/PropertyHandler/data/repository/listingPosition.js
   applyListingCursor: jest.fn(),
 }));
 
-export { Database, applyListingCursor };
+export { applyListingCursor };
 
 const BASE_CHAINED_METHODS = ["select", "leftJoin", "where", "andWhere", "addSelect", "orderBy", "addOrderBy", "limit"];
 
@@ -29,7 +29,7 @@ const BASE_CHAINED_METHODS = ["select", "leftJoin", "where", "andWhere", "addSel
  * getMany resolves to the rows. A feed that uses a method the base list lacks (innerJoin, for byCountry) passes it
  * in as an extra.
  */
-export const createChainBuilder = (extraMethods = []) => {
+const createChainBuilder = (extraMethods = []) => {
   const methods = [...BASE_CHAINED_METHODS, ...extraMethods];
   return (rows) => {
     const builder = Object.fromEntries(methods.map((method) => [method, jest.fn().mockReturnThis()]));
@@ -39,14 +39,14 @@ export const createChainBuilder = (extraMethods = []) => {
 };
 
 /**
- * The per-test setup both feed suites share. `run(rows, callFeed)` installs a fresh fake query builder and client,
- * then calls the suite's own feed; `state.chain` and `state.client` always hold those of the latest run, so a test
- * can assert on what the feed did to them. `resetMocks` belongs in the suite's beforeEach.
- *
- *   const { state, run, resetMocks } = createFeedHarness(buildChain);
- *   const read = (cursor, rows, country) => run(rows, () => repository.getActivePropertiesByCountry(country, cursor));
+ * The per-test setup both feed suites share. `extraMethods` are the query-builder methods this feed uses beyond the
+ * base list (byCountry adds innerJoin). `run(rows, callFeed)` installs a fresh fake query builder and client, then
+ * calls the suite's own feed; `state.chain` and `state.client` always hold those of the latest run, so a test can
+ * assert on what the feed did to them. `resetMocks` belongs in the suite's beforeEach, and `buildChain` is for tests
+ * that need a second builder of the same shape.
  */
-export const createFeedHarness = (buildChain) => {
+export const createFeedHarness = (extraMethods = []) => {
+  const buildChain = createChainBuilder(extraMethods);
   const state = { chain: undefined, client: undefined };
 
   const run = async (rows, callFeed) => {
@@ -61,7 +61,7 @@ export const createFeedHarness = (buildChain) => {
     applyListingCursor.mockImplementation(async (_client, query) => query);
   };
 
-  return { state, run, resetMocks };
+  return { state, run, resetMocks, buildChain };
 };
 
 /**

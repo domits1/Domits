@@ -1,19 +1,11 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
 // Imported first on purpose: it installs the Database and applyListingCursor mocks before the repository loads.
-import {
-  applyListingCursor,
-  createChainBuilder,
-  createFeedHarness,
-  describeCursorContract,
-  describeFeedResult,
-} from "./support/listingQueryTestHelpers.js";
+import * as feed from "./support/listingQueryTestHelpers.js";
 import { PropertyRepository } from "../../functions/PropertyHandler/data/repository/propertyRepository.js";
-
-const buildChain = createChainBuilder();
 
 describe("PropertyRepository.getActiveProperties", () => {
   let repository;
-  const { state, run, resetMocks } = createFeedHarness(buildChain);
+  const { state, run, resetMocks, buildChain } = feed.createFeedHarness();
 
   const read = (cursor, rows = [{ id: "p1", createdat: 10 }]) =>
     run(rows, () => repository.getActiveProperties(cursor));
@@ -59,24 +51,24 @@ describe("PropertyRepository.getActiveProperties", () => {
     it("hands the client, the query and the cursor to applyListingCursor", async () => {
       await read(cursor);
 
-      expect(applyListingCursor).toHaveBeenCalledTimes(1);
-      expect(applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, cursor);
+      expect(feed.applyListingCursor).toHaveBeenCalledTimes(1);
+      expect(feed.applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, cursor);
     });
 
     it("passes the first page's missing cursor on as it is, and leaves the decision to applyListingCursor", async () => {
       await read(undefined);
 
-      expect(applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, undefined);
+      expect(feed.applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, undefined);
     });
 
     it("passes no scope, so the lookup is not limited to anything beyond the id", async () => {
       await read(cursor);
 
-      expect(applyListingCursor.mock.calls[0]).toHaveLength(3);
+      expect(feed.applyListingCursor.mock.calls[0]).toHaveLength(3);
     });
 
-    describeCursorContract({ read, state, buildChain });
+    feed.describeCursorContract({ read, state, buildChain });
   });
 
-  describeFeedResult(read);
+  feed.describeFeedResult(read);
 });

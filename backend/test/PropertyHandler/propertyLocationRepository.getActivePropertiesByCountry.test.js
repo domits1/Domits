@@ -1,19 +1,11 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 // Imported first on purpose: it installs the Database and applyListingCursor mocks before the repository loads.
-import {
-  applyListingCursor,
-  createChainBuilder,
-  createFeedHarness,
-  describeCursorContract,
-  describeFeedResult,
-} from "./support/listingQueryTestHelpers.js";
+import * as feed from "./support/listingQueryTestHelpers.js";
 import { PropertyLocationRepository } from "../../functions/PropertyHandler/data/repository/propertyLocationRepository.js";
-
-const buildChain = createChainBuilder(["innerJoin"]);
 
 describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
   let repository;
-  const { state, run, resetMocks } = createFeedHarness(buildChain);
+  const { state, run, resetMocks, buildChain } = feed.createFeedHarness(["innerJoin"]);
 
   const read = (cursor, rows = [{ id: "p1", createdat: 10 }], country = "Netherlands") =>
     run(rows, () => repository.getActivePropertiesByCountry(country, cursor));
@@ -72,8 +64,8 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
     it("hands the client, the query, the cursor and a scope to applyListingCursor", async () => {
       await read(cursor);
 
-      expect(applyListingCursor).toHaveBeenCalledTimes(1);
-      expect(applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, cursor, expect.any(Function));
+      expect(feed.applyListingCursor).toHaveBeenCalledTimes(1);
+      expect(feed.applyListingCursor).toHaveBeenCalledWith(state.client, state.chain, cursor, expect.any(Function));
     });
 
     it("keeps the country filter on a later page", async () => {
@@ -82,13 +74,13 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
       expect(state.chain.where).toHaveBeenCalledWith("pl.country = :country", { country: "Germany" });
     });
 
-    describeCursorContract({ read, state, buildChain });
+    feed.describeCursorContract({ read, state, buildChain });
 
     // A cursor taken from another country would otherwise be accepted and return a silently wrong page.
     describe("the country scope on the cursor lookup", () => {
       const lookupScopeFor = async (country) => {
         await read(cursor, undefined, country);
-        return applyListingCursor.mock.calls[0][3];
+        return feed.applyListingCursor.mock.calls[0][3];
       };
       const fakeLookup = () => {
         const lookup = { innerJoin: jest.fn(), andWhere: jest.fn() };
@@ -117,5 +109,5 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
     });
   });
 
-  describeFeedResult(read);
+  feed.describeFeedResult(read);
 });
