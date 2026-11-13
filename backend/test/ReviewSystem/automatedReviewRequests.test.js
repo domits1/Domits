@@ -8,6 +8,8 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { ReviewRequestNotifier } from "../../functions/ReviewSystem/business/service/reviewRequestNotifier.js";
+const invitationRepository = { getDetails: jest.fn().mockResolvedValue({ propertyTitle: "Canal Loft", city: "Amsterdam" }) };
+const notifierOptions = { repository: invitationRepository };
 const now = 1800000000000;
 const booking = { id: "b1", guestid: "g1", hostid: "h1", property_id: "p1", departuredate: now - 1, status: "paid" };
 let repository, notifier, service;
@@ -75,10 +77,12 @@ test("integrates repository claims, email delivery and acknowledgement without d
   const real = new ReviewRepository();
   real.findBookingById = repository.findBookingById;
   real.findReviewByBookingTypeAndReviewer = repository.findReviewByBookingTypeAndReviewer;
-  service = new ReviewService({ repository: real, notifier: new ReviewRequestNotifier(client), now: () => now });
+  service = new ReviewService({ repository: real, notifier: new ReviewRequestNotifier(client, notifierOptions), now: () => now });
   const results = await Promise.all([service.processReviewRequest(booking), service.processReviewRequest(booking)]);
   expect(results.map(result => result.status).sort()).toEqual(["SENT", "SKIPPED"]);
   const payload = JSON.parse(Buffer.from(client.send.mock.calls[1][0].input.Payload).toString());
+  expect(payload.body.htmlBody).toContain("Canal Loft");
+  expect(payload.body.htmlBody).toContain("Share your experience");
   expect(payload.body.toEmail).toBe("guest@example.com");
   expect(payload.body.body).toContain("/review?bookingId=b1");
   const query = jest.spyOn(SelectQueryBuilder.prototype, "getMany").mockResolvedValue([]);
@@ -88,7 +92,7 @@ test("integrates repository claims, email delivery and acknowledgement without d
 });
 test("rejects email Lambda failures and missing addresses", async () => {
   const client = { send: jest.fn().mockResolvedValue({ FunctionError: "Unhandled", Payload: Buffer.from("{}") }) };
-  await expect(new ReviewRequestNotifier(client).send(booking)).rejects.toThrow("dependency failed");
+  await expect(new ReviewRequestNotifier(client, notifierOptions).send(booking)).rejects.toThrow("dependency failed");
 });
 test("dispatches scheduled events without affecting HTTP routes", async () => {
   const run = jest.spyOn(ReviewService.prototype, "processReviewRequests").mockResolvedValue([]);
@@ -104,7 +108,7 @@ test("does not deliver without an email or after a failed email response", async
   const failed = { send: jest.fn().mockResolvedValueOnce(payload(JSON.stringify([
     { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
   ]))).mockResolvedValueOnce({ Payload: Buffer.from('{"statusCode":500}') }) };
-  await expect(new ReviewRequestNotifier(failed).send(booking)).rejects.toThrow("dependency failed");
+  await expect(new ReviewRequestNotifier(failed, notifierOptions).send(booking)).rejects.toThrow("dependency failed");
 });
 
 test("continues the batch after a claim or acknowledgement failure", async () => {
