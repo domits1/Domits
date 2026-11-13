@@ -2072,5 +2072,28 @@
         "percentZero": "Een aandeel moet minstens 0,01% zijn. Verwijder de eigenaar in plaats daarvan."
       }
     }
+  },
+  "hostIntegrations": {
+    "talkToSales": "Neem contact op met Sales",
+    "statuses": {
+      "available": "Beschikbaar",
+      "in_development": "In ontwikkeling",
+      "on_request": "Op aanvraag"
+    },
+    "categories": {
+      "revenue_management": "Revenue management",
+      "channel_management": "Channel management",
+      "guest_protection": "Gastbescherming",
+      "smart_locks": "Slimme sloten",
+      "guest_communication": "Gastcommunicatie"
+    },
+    "descriptions": {
+      "pricelabs": "Optimaliseer je nachtprijzen met dynamische prijzen op basis van de vraag in de markt en de prestaties van je accommodatie.",
+      "channex": "Beheer de beschikbaarheid, prijzen en reserveringen van je accommodatie op meerdere boekingskanalen via één koppeling.",
+      "siteminder": "Verbind je beheer- en distributieprocessen met het hospitality-technologie-ecosysteem van SiteMinder.",
+      "truvi": "Zorg voor veiligere boekingen met gastscreening en oplossingen voor risicobeheer.",
+      "remotelock": "Maak toegang tot je accommodatie eenvoudiger met verbonden slimme sloten en automatisch toegangsbeheer.",
+      "whatsapp": "Communiceer met gasten via WhatsApp als onderdeel van je accommodatiebeheer."
+    }
   }
 }

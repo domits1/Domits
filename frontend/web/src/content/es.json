@@ -2072,5 +2072,28 @@
         "percentZero": "Una participación debe ser de al menos 0,01%. Quita al propietario en su lugar."
       }
     }
+  },
+  "hostIntegrations": {
+    "talkToSales": "Hablar con ventas",
+    "statuses": {
+      "available": "Disponible",
+      "in_development": "En desarrollo",
+      "on_request": "Bajo petición"
+    },
+    "categories": {
+      "revenue_management": "Gestión de ingresos",
+      "channel_management": "Gestión de canales",
+      "guest_protection": "Protección de huéspedes",
+      "smart_locks": "Cerraduras inteligentes",
+      "guest_communication": "Comunicación con huéspedes"
+    },
+    "descriptions": {
+      "pricelabs": "Optimiza tus tarifas por noche con precios dinámicos basados en la demanda del mercado y el rendimiento de tu alojamiento.",
+      "channex": "Gestiona la disponibilidad, las tarifas y las reservas de tu alojamiento en varios canales de reserva con una sola conexión.",
+      "siteminder": "Conecta tus procesos de gestión y distribución con el ecosistema de tecnología hotelera de SiteMinder.",
+      "truvi": "Ofrece reservas más seguras con la verificación de huéspedes y soluciones de gestión de riesgos.",
+      "remotelock": "Simplifica el acceso a tu alojamiento con cerraduras inteligentes conectadas y gestión automática de accesos.",
+      "whatsapp": "Comunícate con los huéspedes por WhatsApp como parte de la gestión de tu alojamiento."
+    }
   }
 }

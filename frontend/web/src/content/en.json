@@ -2071,5 +2071,28 @@
         "percentZero": "A share must be at least 0.01%. Remove the owner instead."
       }
     }
+  },
+  "hostIntegrations": {
+    "talkToSales": "Talk to Sales",
+    "statuses": {
+      "available": "Available",
+      "in_development": "In development",
+      "on_request": "On request"
+    },
+    "categories": {
+      "revenue_management": "Revenue management",
+      "channel_management": "Channel management",
+      "guest_protection": "Guest protection",
+      "smart_locks": "Smart locks",
+      "guest_communication": "Guest communication"
+    },
+    "descriptions": {
+      "pricelabs": "Optimize your nightly rates with dynamic pricing based on market demand and property performance.",
+      "channex": "Manage property availability, rates and reservations across multiple booking channels through one connection.",
+      "siteminder": "Connect your property management and distribution workflows with SiteMinder's hospitality technology ecosystem.",
+      "truvi": "Support safer bookings with guest screening and risk management solutions.",
+      "remotelock": "Simplify property access with connected smart locks and automated access management.",
+      "whatsapp": "Communicate with guests through WhatsApp as part of your property management workflow."
+    }
   }
 }
