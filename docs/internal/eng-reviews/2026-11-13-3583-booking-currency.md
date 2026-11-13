@@ -1,6 +1,6 @@
 # feat(orm): store the currency of a booking
 
-Pull request: (to be linked)
+Pull request: #3900
 Issue: #3583 (sub-issue of #3579); this pull request adds only the column, a second one writes and shows it
 Reviewed commit: staged diff per commit on `feat/3583-booking-currency-column`
 Result: no blocking findings
