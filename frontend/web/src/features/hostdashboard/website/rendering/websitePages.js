@@ -140,6 +140,19 @@ const listEnabledSitePages = (sitePages) => {
 
 export const hasActiveSitePages = (sitePages) => listEnabledSitePages(sitePages).length > 0;
 
+export const listSitePageMenuItems = (sitePages) => {
+  const normalizedSitePages = normalizeSitePages(sitePages);
+  const mainPage = SITE_PAGE_DEFINITIONS.find((page) => page.key === MAIN_SITE_PAGE_KEY);
+
+  return [
+    { key: mainPage.key, navLabel: mainPage.defaultNavLabel },
+    ...listEnabledSitePages(sitePages).map((page) => ({
+      key: page.key,
+      navLabel: normalizedSitePages[page.key].navLabel,
+    })),
+  ];
+};
+
 export const resolveSitePageFromPath = (pathname, sitePages) => {
   const segments = splitPathSegments(pathname);
   if (segments.length !== 1) {
