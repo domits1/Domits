@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { WebsiteDeleteConflictError } from "../../functions/PropertyHandler/util/exception/WebsiteDeleteConflictError.js";
 
 const HOST_ID = "host-1";
 const PROPERTY_ID = "property-1";
@@ -42,7 +43,6 @@ const buildController = ({ customDomain = null, service = null, serviceFactory =
   controller.directBookingWebsiteDomainRepository = {
     getCustomDomainBySiteId: jest.fn().mockResolvedValue(customDomain),
     listDomainsBySiteId: jest.fn().mockResolvedValue(customDomain ? [customDomain] : []),
-    deleteDomainsBySiteId: jest.fn().mockResolvedValue(undefined),
   };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn().mockResolvedValue(undefined) };
   controller.createStaticPageWithdrawal = jest.fn(() => ({
@@ -57,7 +57,7 @@ const buildController = ({ customDomain = null, service = null, serviceFactory =
 };
 
 describe("DELETE /property/website/draft and the custom domain tenant", () => {
-  it("disables the tenant before the domain rows are deleted when the custom domain has one", async () => {
+  it("disables the tenant before the site and its domain rows are deleted when the custom domain has one", async () => {
     const service = { releaseTenantForSite: jest.fn().mockResolvedValue({ id: "dt_1", enabled: false }) };
     const controller = buildController({ customDomain: CUSTOM_WITH_TENANT, service });
 
@@ -66,9 +66,8 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     expect(response.statusCode).toBe(204);
     expect(service.releaseTenantForSite).toHaveBeenCalledWith({ site: SITE, record: CUSTOM_WITH_TENANT });
     expect(service.releaseTenantForSite.mock.invocationCallOrder[0]).toBeLessThan(
-      controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId.mock.invocationCallOrder[0]
+      controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId.mock.invocationCallOrder[0]
     );
-    expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
     expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalledWith(
       PROPERTY_ID,
       HOST_ID
@@ -90,7 +89,10 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
 
       expect(response.statusCode).toBe(204);
       expect(serviceFactory).not.toHaveBeenCalled();
-      expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
+      expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalledWith(
+        PROPERTY_ID,
+        HOST_ID
+      );
       expect(controller.directBookingWebsiteDraftRepository.deleteDraftByPropertyIdAndHostId).toHaveBeenCalledWith(
         PROPERTY_ID,
         HOST_ID
@@ -108,7 +110,6 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
       const response = await controller.deleteWebsiteDraft(buildEvent());
 
       expect(response.statusCode).toBe(204);
-      expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
       expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalledWith(
         PROPERTY_ID,
         HOST_ID
@@ -136,13 +137,16 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
 
       expect(response.statusCode).toBe(204);
       expect(serviceFactory).toHaveBeenCalledTimes(1);
-      expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
+      expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalledWith(
+        PROPERTY_ID,
+        HOST_ID
+      );
     } finally {
       consoleError.mockRestore();
     }
   });
 
-  it("withdraws the page before the domain rows are deleted", async () => {
+  it("withdraws the page and disables the tenant before the site and its domain rows are deleted", async () => {
     const controller = buildController({ customDomain: CUSTOM_WITH_TENANT });
     const order = [];
     controller.createStaticPageWithdrawal = jest.fn(() => ({
@@ -155,14 +159,15 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
       order.push(["releaseTenant"]);
       return null;
     });
-    controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId.mockImplementation(async () => {
-      order.push(["deleteDomains"]);
+    controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId.mockImplementation(async () => {
+      order.push(["deleteSite"]);
+      return SITE;
     });
 
     const response = await controller.deleteWebsiteDraft(buildEvent());
 
     expect(response.statusCode).toBe(204);
-    expect(order).toEqual([["withdraw", SITE.id], ["releaseTenant"], ["deleteDomains"]]);
+    expect(order).toEqual([["withdraw", SITE.id], ["releaseTenant"], ["deleteSite"]]);
   });
 
   it("still deletes the website when the withdrawal fails, and leaves the page to the reconciler", async () => {
@@ -175,7 +180,37 @@ describe("DELETE /property/website/draft and the custom domain tenant", () => {
     const response = await controller.deleteWebsiteDraft(buildEvent());
 
     expect(response.statusCode).toBe(204);
-    expect(controller.directBookingWebsiteDomainRepository.deleteDomainsBySiteId).toHaveBeenCalledWith(SITE.id);
     expect(controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the site and its domain rows", "directBookingWebsiteSiteRepository", "deleteSiteByPropertyIdAndHostId"],
+    ["the draft", "directBookingWebsiteDraftRepository", "deleteDraftByPropertyIdAndHostId"],
+  ])("answers 409 with the conflict message when deleting %s keeps conflicting", async (_label, repository, method) => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = buildController();
+    controller[repository][method].mockRejectedValue(new WebsiteDeleteConflictError());
+
+    const response = await controller.deleteWebsiteDraft(buildEvent());
+
+    expect(response.statusCode).toBe(409);
+    expect(response.headers).toMatchObject({ "Access-Control-Allow-Origin": "*", "Cache-Control": expect.any(String) });
+    expect(JSON.parse(response.body)).toEqual({
+      code: "delete_conflict",
+      message: expect.stringMatching(/delete it again/),
+    });
+    expect(controller.directBookingWebsiteEventRepository.recordEvent).not.toHaveBeenCalled();
+  });
+
+  it("still answers 500 when deleting fails for another reason", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = buildController();
+    controller.directBookingWebsiteSiteRepository.deleteSiteByPropertyIdAndHostId.mockRejectedValue(
+      Object.assign(new Error("connection terminated"), { code: "57P01" })
+    );
+
+    const response = await controller.deleteWebsiteDraft(buildEvent());
+
+    expect(response.statusCode).toBe(500);
   });
 });

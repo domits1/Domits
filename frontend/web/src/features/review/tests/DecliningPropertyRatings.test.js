@@ -6,7 +6,10 @@ import { fetchHostPropertySelectOptions } from "../../../services/hostPropertySe
 jest.mock("../services/reviewAPI", () => ({ getPropertyRatingTrends: jest.fn() }));
 jest.mock("../../../services/hostPropertyService", () => ({ fetchHostPropertySelectOptions: jest.fn() }));
 const property = (id, status) => ({ property_id: id, trend_status: status, previous_average_rating: 4.5,
-  current_average_rating: 4, rating_change: -0.5, previous_review_count: 3, current_review_count: 4 });
+  current_average_rating: 4, rating_change: -0.5, previous_review_count: 3, current_review_count: 4,
+  history: [4.5, 4.5, null, 3.5, 4.5, 4].map((average_rating) => ({
+    average_rating, review_count: average_rating === null ? 0 : 3,
+  })) });
 const result = { properties: [property("p1", "DECLINING"), property("p2", "STABLE")],
   previous_period: { start_date: "2026-08-08", end_date: "2026-09-06" },
   current_period: { start_date: "2026-09-07", end_date: "2026-10-06" },
@@ -25,6 +28,7 @@ test("shows declining property names, averages, change, counts, periods and serv
   expect(screen.queryByText("p2")).not.toBeInTheDocument();
   expect(screen.getByText(/decrease of at least 0.5/)).toBeInTheDocument();
   expect(screen.getByText(/2026-08-08 to 2026-09-06/)).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: "Last six periods: 4.50, 4.50, no reviews, 3.50, 4.50, 4.00" })).toBeInTheDocument();
 });
 test("always filters to declining properties and hides the removed checkbox", async () => {
   render(<DecliningPropertyRatings userId="host" />);

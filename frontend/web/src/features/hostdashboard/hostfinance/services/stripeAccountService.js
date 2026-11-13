@@ -2,6 +2,10 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 
 const API = "https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments";
 
+export const isStripePayoutSetupComplete = (details) => Boolean(
+  details?.accountId && details?.onboardingComplete && details?.chargesEnabled && details?.payoutsEnabled
+);
+
 export async function getStripeAccountDetails() {
   const token = await getAccessToken();
   const response = await fetch(API, {

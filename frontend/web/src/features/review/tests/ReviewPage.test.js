@@ -65,6 +65,14 @@ it("retries publication without creating another draft", async () => {
   expect(mockNavigate).toHaveBeenCalledWith("/guestdashboard/reviews");
 });
 
+it("confirms submission for approval without claiming the review is published", async () => {
+  publishReview.mockResolvedValueOnce({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
+  await submitReview();
+  await screen.findByRole("heading", { name: "Your review is awaiting approval" });
+  expect(screen.queryByRole("heading", { name: "Your review is published" })).not.toBeInTheDocument();
+  expect(createReview).toHaveBeenCalledTimes(1);
+});
+
 it("does not publish when creation fails", async () => {
   createReview.mockRejectedValueOnce(new Error("Save failed"));
   await submitReview();
@@ -84,13 +92,14 @@ it.each([
   { ok: false, payload: { message: "Access denied" } },
   { ok: true, payload: { status: "DRAFT", publication_status: "UNPUBLISHED" } },
   { ok: true, payload: { status: "PUBLISHED", publication_status: "PUBLISHED" } },
+  { ok: true, payload: { status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" } },
 ])("validates the publication API response: %o", async ({ ok, payload }) => {
   const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   global.fetch = jest.fn().mockResolvedValue({ ok, text: async () => JSON.stringify(payload) });
   try {
     const result = api.publishReview("review/1");
-    if (ok && payload.status === "PUBLISHED") await expect(result).resolves.toEqual(payload);
+    if (ok && ["PUBLISHED", "PENDING_APPROVAL"].includes(payload.status)) await expect(result).resolves.toEqual(payload);
     else await expect(result).rejects.toThrow();
     expect(global.fetch).toHaveBeenCalledWith(
       `${api.API_REVIEW_BASE}/reviews/review%2F1/publish`,
@@ -230,10 +239,10 @@ it.each([true, false])("renders plain text and gates the edit action: %s", async
 
 beforeEach(() => {
   jest.clearAllMocks();
+  buildPropertySummary.mockResolvedValue({});
   mockSearch = "?bookingId=reservation-1";
   Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: booking.guestid } });
   getGuestBookings.mockResolvedValue([{ ...booking }]);
-  buildPropertySummary.mockResolvedValue({});
   createReview.mockResolvedValue({ id: "review-1" });
   publishReview.mockResolvedValue({ status: "PUBLISHED", publication_status: "PUBLISHED" });
 });

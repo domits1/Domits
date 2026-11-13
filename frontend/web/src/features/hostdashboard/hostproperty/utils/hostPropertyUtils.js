@@ -712,6 +712,26 @@ export const createPendingPhotoFromFile = async (file) => {
   };
 };
 
+const MIN_REJECTED_AT_MS = 1e11;
+
+export const normalizeLatestRejection = (latestRejection) => {
+  const isRejectionObject =
+    latestRejection !== null && typeof latestRejection === "object" && !Array.isArray(latestRejection);
+  if (!isRejectionObject) {
+    return null;
+  }
+
+  const hasReason = typeof latestRejection.reason === "string" && latestRejection.reason.trim() !== "";
+  const { rejectedAt } = latestRejection;
+  const hasRejectedAt =
+    typeof rejectedAt === "number" && rejectedAt >= MIN_REJECTED_AT_MS && !Number.isNaN(new Date(rejectedAt).getTime());
+
+  return {
+    reason: hasReason ? latestRejection.reason : null,
+    rejectedAt: hasRejectedAt ? rejectedAt : null,
+  };
+};
+
 export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
@@ -765,6 +785,7 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
 
   return {
     status: property.status || "INACTIVE",
+    latestRejection: normalizeLatestRejection(data?.latestRejection),
     bookingType: property.bookingType || "direct",
     form: {
       title: property.title || "",
