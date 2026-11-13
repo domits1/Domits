@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ReviewApprovalPage from "../views/ReviewApprovalPage";
-import { approveReview, publishApprovedReview, flagReview, getAdminReviews, getPendingApprovalReviews, getReviewFlags, resolveReviewFlag } from "../services/reviewAPI";
+import { approveReview, publishApprovedReview, flagReview, getAdminReviews, getReviewFlags, resolveReviewFlag } from "../services/reviewAPI";
 
 jest.mock("../services/reviewAPI", () => ({
   approveReview: jest.fn(),
@@ -52,8 +52,8 @@ const details = () => screen.getByRole("complementary", { name: "Review details"
 
 describe("ReviewApprovalPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    getPendingApprovalReviews.mockResolvedValue([pendingReview(), secondReview]);
+    jest.resetAllMocks();
+    getAdminReviews.mockResolvedValue([pendingReview(), secondReview]);
   });
 
   test("flags a review, resolves it from the moderation queue and views resolved flags", async () => {
@@ -100,6 +100,7 @@ describe("ReviewApprovalPage", () => {
     getAdminReviews.mockResolvedValue([
       pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" }),
     ]);
+    getAdminReviews.mockResolvedValueOnce([pendingReview(), secondReview]);
     render(<ReviewApprovalPage />);
     await screen.findByRole("tab", { name: "Pending approval (2)" });
 
@@ -116,6 +117,7 @@ describe("ReviewApprovalPage", () => {
     getAdminReviews.mockResolvedValue([pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" })]);
     let finishPublish;
     publishApprovedReview.mockImplementation(() => new Promise((resolve) => { finishPublish = resolve; }));
+    getAdminReviews.mockResolvedValueOnce([pendingReview(), secondReview]);
     render(<ReviewApprovalPage />);
     await screen.findByRole("tab", { name: "Pending approval (2)" });
     fireEvent.click(screen.getByRole("tab", { name: "Unpublished" }));
@@ -137,6 +139,7 @@ describe("ReviewApprovalPage", () => {
   test("keeps an approved review available when publishing fails", async () => {
     getAdminReviews.mockResolvedValue([pendingReview({ status: "APPROVED", publication_status: "UNPUBLISHED" })]);
     publishApprovedReview.mockRejectedValue(new Error("Publication denied."));
+    getAdminReviews.mockResolvedValueOnce([pendingReview(), secondReview]);
     render(<ReviewApprovalPage />);
     await screen.findByRole("tab", { name: "Pending approval (2)" });
     fireEvent.click(screen.getByRole("tab", { name: "Unpublished" }));
@@ -150,6 +153,7 @@ describe("ReviewApprovalPage", () => {
     getAdminReviews.mockImplementation(async (scope) => scope === "admin-rejected" ? [] : [
       pendingReview({ title: "Published stay", status: "PUBLISHED", publication_status: "PUBLISHED" }),
     ]);
+    getAdminReviews.mockResolvedValueOnce([pendingReview(), secondReview]);
     render(<ReviewApprovalPage />);
     await screen.findByRole("tab", { name: "Pending approval (2)" });
 
@@ -166,7 +170,7 @@ describe("ReviewApprovalPage", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "All reviews" }));
     expect(await screen.findByRole("table", { name: "All reviews" })).toBeInTheDocument();
-    expect(getAdminReviews.mock.calls).toEqual([["admin-published"], ["admin-rejected"], ["admin-all"]]);
+    expect(getAdminReviews.mock.calls).toEqual([["pending-approval"], ["admin-published"], ["admin-rejected"], ["admin-all"]]);
   });
 
   test("opens the first review in the details panel and switches on View", async () => {
@@ -302,7 +306,7 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("pages through more than eight reviews", async () => {
-    getPendingApprovalReviews.mockResolvedValue(
+    getAdminReviews.mockResolvedValue(
       Array.from({ length: 9 }, (_, index) =>
         pendingReview({ id: `r${index}`, title: `Review ${index + 1}`, booking_id: `B${index}` })
       )
@@ -323,7 +327,7 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("says so when nothing is waiting for approval", async () => {
-    getPendingApprovalReviews.mockResolvedValue([]);
+    getAdminReviews.mockResolvedValue([]);
     render(<ReviewApprovalPage />);
 
     expect(await screen.findByText("No reviews are waiting for approval.")).toBeInTheDocument();
@@ -331,7 +335,7 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("tells a caller without an approver role that access is limited", async () => {
-    getPendingApprovalReviews.mockRejectedValue(
+    getAdminReviews.mockRejectedValue(
       Object.assign(new Error("Administrator access is required."), {
         status: 403,
       })
@@ -343,13 +347,13 @@ describe("ReviewApprovalPage", () => {
   });
 
   test("offers a retry when the queue cannot load", async () => {
-    getPendingApprovalReviews.mockRejectedValueOnce(new Error("Could not load reviews waiting for approval."));
+    getAdminReviews.mockRejectedValueOnce(new Error("Could not load reviews waiting for approval."));
     render(<ReviewApprovalPage />);
 
     expect(await screen.findByText("Could not load reviews waiting for approval.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await waitFor(() => rowFor("Great stay!"))).toBeInTheDocument();
-    expect(getPendingApprovalReviews).toHaveBeenCalledTimes(2);
+    expect(getAdminReviews).toHaveBeenCalledTimes(2);
   });
 });
