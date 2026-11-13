@@ -244,6 +244,7 @@ export const createReview = async ({
   title,
   publicReview,
   privateFeedback,
+  domitsPrivateFeedback,
   categoryRatings,
 }) => {
   const token = await getIdToken();
@@ -260,6 +261,7 @@ export const createReview = async ({
       title,
       public_review: publicReview,
       private_feedback: privateFeedback,
+      ...(domitsPrivateFeedback ? { domits_private_feedback: domitsPrivateFeedback } : {}),
       ...(categoryRatings ? { category_ratings: categoryRatings } : {}),
     }),
   });
