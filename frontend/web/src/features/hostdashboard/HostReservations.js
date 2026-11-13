@@ -439,8 +439,23 @@ const HostReservations = () => {
       } else {
         toast.success("Request declined.");
       }
-    } catch {
-      toast.error("Failed to update request status.");
+    } catch (updateError) {
+      if (action === "accept-inquiry" && updateError?.status === 502 && updateError?.response?.paymentSetupFailed) {
+        const declinedCount = Number(updateError.response.declinedCount || 0);
+        setBookings((currentBookings) => {
+          const targetBooking = currentBookings.find((booking) => booking.id === bookingId);
+          return currentBookings.map((booking) => {
+            if (booking.id === bookingId) return { ...booking, status: "AWAITING_PAYMENT" };
+            if (declinedCount > 0 && isOverlappingInquiry(booking, targetBooking)) {
+              return { ...booking, status: "DECLINED" };
+            }
+            return booking;
+          });
+        });
+        toast.warning(updateError.message);
+      } else {
+        toast.error("Failed to update request status.");
+      }
     } finally {
       setInquiryLoading((currentState) => ({
         ...currentState,

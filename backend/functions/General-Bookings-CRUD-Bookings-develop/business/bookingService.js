@@ -329,6 +329,31 @@ class BookingService {
     };
   }
 
+  async getPaymentRetryDetails(bookingId, authToken) {
+    const user = await this.authManager.authenticateUser(authToken);
+    const bookingResult = await this.reservationRepository.getBookingById(bookingId);
+    const booking = bookingResult?.response || bookingResult;
+
+    if (!booking?.id) throw new NotFoundException("Booking not found.");
+    if (booking.guestid !== user.sub) {
+      throw new Forbidden("Only the guest of this booking may retry payment setup.");
+    }
+    if (normalizeStatus(booking.status) !== normalizeStatus(BOOKING_STATUS_AWAITING_PAYMENT)) {
+      throw new BadRequestException("Payment setup can only be retried for bookings awaiting payment.");
+    }
+
+    return {
+      bookingId: booking.id,
+      hostId: booking.hostid,
+      propertyId: getPropertyId(booking),
+      dates: {
+        arrivalDate: booking.arrivaldate,
+        departureDate: booking.departuredate,
+      },
+      paymentId: isUnreadablePaymentId(booking.paymentid) ? null : booking.paymentid,
+    };
+  }
+
   async declineInquiry(bookingId, authToken) {
     const user = await this.authManager.authenticateUser(authToken);
     const bookingResult = await this.reservationRepository.getBookingById(bookingId);
