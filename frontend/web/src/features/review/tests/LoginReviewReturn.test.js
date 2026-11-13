@@ -2,8 +2,8 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
-import Login from "../../features/auth/Login";
-import { safeReviewDestination } from "../../features/auth/safeReviewDestination";
+import Login from "../../auth/Login";
+import { safeReviewDestination } from "../../auth/safeReviewDestination";
 
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({

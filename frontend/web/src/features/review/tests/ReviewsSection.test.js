@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import ReviewsSection from "../ReviewsSection";
+import ReviewsSection from "../components/ReviewsSection";
 
 test.each([[4.2, 4, 0], [4.7, 5, 1]])("renders %s without filling an extra full star", (rating, filled, halves) => {
   render(<ReviewsSection reviews={[{ id: "r1", name: "Guest", rating, text: "Stay" }]} />);

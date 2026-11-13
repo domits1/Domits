@@ -523,8 +523,17 @@ export class ReviewService {
       return this.canPublishReview({ userId, review: current });
     };
     if (!(await authorize(review))) throw new ForbiddenException("You cannot publish this review.");
-    return this.changePublicationState(review, review.status === "DRAFT" ? "DRAFT" : "APPROVED",
-      review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
+    try {
+      return await this.changePublicationState(review, review.status === "DRAFT" ? "DRAFT" : "APPROVED",
+        review.status === "DRAFT" ? "PENDING_APPROVAL" : "PUBLISHED", authorize);
+    } catch (error) {
+      if (error.statusCode !== 409) throw error;
+      const current = await this.requireReview(review.id);
+      if (!(await authorize(current))) throw new ForbiddenException("You cannot publish this review.");
+      if (isPublished(current) || (review.status === "DRAFT" && current.status === "PENDING_APPROVAL"
+        && current.publication_status === "UNPUBLISHED")) return toReviewView(current);
+      throw error;
+    }
   }
 
   assertPublicationBooking(booking, review, now) {

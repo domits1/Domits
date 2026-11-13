@@ -15,7 +15,6 @@ import { attachPublicDetails, eligibleReviewQuery, nextTimestamp, REVIEW_FIELDS,
 export class HostReviewRepository {
   hostResponseQuery(database, username) {
     return eligibleReviewQuery(database)
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" })
       .innerJoin(Property, "property", "property.id = review.property_id")
       .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :username AND member.status = :active AND member.role = :role",
         { username, active: "active", role: "Property Operations Manager" })
