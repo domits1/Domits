@@ -1,0 +1,5 @@
+.filters { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 0.5rem; min-width: 0; }
+.filters legend { font-weight: 600; }
+.filters label { display: flex; flex-direction: column; gap: 0.25rem; max-width: 100%; }
+.filters select, .filters input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; font: inherit; max-width: 100%; }
+.filters button { padding: 0.5rem 1rem; align-self: end; border-radius: 0.25rem; border: 1px solid #0a760f; background: white; color: #0a760f; cursor: pointer; }

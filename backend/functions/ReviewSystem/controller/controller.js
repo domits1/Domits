@@ -37,8 +37,9 @@ export class Controller {
 
   async getPublicReviews(event) {
     try {
+      const { offset = "0", ...filters } = event.queryStringParameters ?? {};
       return this.jsonResponse(200, await this.service.getPublicReviews(
-        this.getPathParameter(event, "propertyId"), event.queryStringParameters?.offset ?? "0"));
+        this.getPathParameter(event, "propertyId"), offset, filters));
     } catch (error) {
       return this.handleError(error);
     }
@@ -69,6 +70,10 @@ export class Controller {
   }
 
   async createReview(event) {
+    if (event.queryStringParameters?.scope === "moderation") {
+      return this.executeAuthenticated(event, async (userId, user) =>
+        this.moderationResponse(201, await this.service.flagReview(userId, user.username, parseBody(event))));
+    }
     return this.executeAuthenticated(event, async (userId) =>
       this.jsonResponse(201, await this.service.createReview(userId, parseBody(event))));
   }
@@ -76,6 +81,9 @@ export class Controller {
   async getReviews(event) {
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
+      if (query.scope === "moderation") {
+        return this.moderationResponse(200, await this.service.getModerationQueue(userId, user.username, query));
+      }
       const propertyScope = ["property-score", "property-categories", "property-performance", "property-trends"].includes(query.scope);
       if (propertyScope && (query.reviewId !== undefined || event.pathParameters?.id !== undefined)) {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
@@ -111,6 +119,10 @@ export class Controller {
   }
 
   async updateReview(event) {
+    if (event.resource === "/reviews" && event.queryStringParameters?.scope === "moderation") {
+      return this.executeAuthenticated(event, async (userId, user) =>
+        this.moderationResponse(200, await this.service.resolveReviewFlag(userId, user.username, parseBody(event).flag_id)));
+    }
     return this.executeAuthenticated(event, async (userId) => {
       const pathId = event.pathParameters?.id;
       const queryId = event.queryStringParameters?.reviewId;
@@ -124,6 +136,11 @@ export class Controller {
       }
       return this.jsonResponse(200, await this.service.updateReview(userId, this.getPathParameter(event, "id"), data));
     });
+  }
+
+  moderationResponse(status, result) {
+    const response = this.jsonResponse(status, result);
+    return { ...response, headers: { ...response.headers, "Cache-Control": "no-store" } };
   }
 
   async getPropertyReviews(event) {

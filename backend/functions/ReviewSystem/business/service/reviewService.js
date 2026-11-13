@@ -53,7 +53,7 @@ export class ReviewService {
   #hostReviewService;
   #domitsAdminReviewService;
 
-  async getPublicReviews(propertyId, offset = "0") {
+  async getPublicReviews(propertyId, offset = "0", filters = {}) {
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       throw new BadRequestException("A property ID is required.");
     }
@@ -61,7 +61,37 @@ export class ReviewService {
       || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
       throw new BadRequestException("Invalid review page offset.");
     }
-    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset));
+    const allowed = ["minRating", "maxRating", "startDate", "endDate", "sort"];
+    if (Object.keys(filters).some((key) => !allowed.includes(key))) {
+      throw new BadRequestException("Unsupported review filter.");
+    }
+    const rating = (value, fallback) => {
+      if (value === undefined) return fallback;
+      if (typeof value !== "string" || !/^[1-5]$/.test(value)) {
+        throw new BadRequestException("Ratings must be whole numbers from 1 to 5.");
+      }
+      return Number(value);
+    };
+    const date = (value) => {
+      if (value === undefined) return undefined;
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        throw new BadRequestException("Dates must use YYYY-MM-DD.");
+      }
+      const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+      if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+        throw new BadRequestException("Invalid review date.");
+      }
+      return timestamp;
+    };
+    const minRating = rating(filters.minRating, 1), maxRating = rating(filters.maxRating, 5);
+    const start = date(filters.startDate), end = date(filters.endDate), sort = filters.sort ?? "recent";
+    if (minRating > maxRating || (start !== undefined && end !== undefined && start > end)) {
+      throw new BadRequestException("Invalid review filter range.");
+    }
+    if (!["recent", "highest", "lowest"].includes(sort)) throw new BadRequestException("Unsupported review sort.");
+    const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
+      minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort,
+    });
     if (!result) throw new NotFoundException("Property not found.");
     return result;
   }
@@ -212,8 +242,7 @@ export class ReviewService {
     if (result.affected !== 1) throw new NotFoundException("Review not found.");
   }
 
-  async getPublicPropertyReviews(propertyId, query = {}) {
-    this.assertId(propertyId, "property ID");
+  parseReviewPagination(query) {
     for (const key of ["limit", "offset"]) {
       if (query[key] !== undefined && (typeof query[key] !== "string" || !/^\d+$/.test(query[key]))) {
         throw new BadRequestException("Pagination values must be integers.");
@@ -225,7 +254,13 @@ export class ReviewService {
         !Number.isSafeInteger(offset) || offset < 0) {
       throw new BadRequestException("limit must be between 1 and 100; offset must be a non-negative integer.");
     }
-    const reviews = await this.repository.findPublicForProperty(propertyId.trim(), { limit, offset });
+    return { limit, offset };
+  }
+
+  // Return the published review feed without exposing private feedback or unreleased drafts.
+  async getPublicPropertyReviews(propertyId, query = {}) {
+    this.assertId(propertyId, "property ID");
+    const reviews = await this.repository.findPublicForProperty(propertyId.trim(), this.parseReviewPagination(query));
     return reviews.map((review) => ({
       id: review.id, property_id: review.property_id, overall_rating: Number(review.overall_rating),
       title: review.title, public_review: review.public_review, created_at: review.created_at,
@@ -312,6 +347,37 @@ export class ReviewService {
       "admin-all": ["PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED"],
     };
     return (await this.repository.findModeratedReviews(statuses[scope])).map(toPendingReviewView);
+  }
+
+  async flagReview(userId, username, { review_id: reviewId, reason, notes }) {
+    await this.assertReviewApprover(userId, username);
+    this.assertId(reviewId, "review ID");
+    if (!["INAPPROPRIATE_CONTENT", "SUSPICIOUS_REVIEW", "SPAM", "POLICY_VIOLATION", "OTHER"].includes(reason)) {
+      throw new BadRequestException("A valid flag reason is required.");
+    }
+    if (notes != null && (typeof notes !== "string" || notes.length > 2000 || INVALID_TEXT_CONTROLS.test(notes))) {
+      throw new BadRequestException("Flag notes must be plain text of at most 2000 characters.");
+    }
+    const now = this.now();
+    return this.repository.createReviewFlag({
+      id: randomUUID(), review_id: reviewId.trim(), flagged_by: userId, reason,
+      notes: this.normalizeOptionalText(notes), status: "PENDING", created_at: now, updated_at: now, resolved_by: null,
+    });
+  }
+
+  async getModerationQueue(userId, username, query) {
+    await this.assertReviewApprover(userId, username);
+    const { status = "PENDING" } = query;
+    if (!["PENDING", "RESOLVED"].includes(status)) throw new BadRequestException("Invalid flag status.");
+    const { limit, offset } = this.parseReviewPagination(query);
+    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset });
+    return { flags: rows.slice(0, limit), next_offset: rows.length > limit ? offset + limit : null };
+  }
+
+  async resolveReviewFlag(userId, username, flagId) {
+    await this.assertReviewApprover(userId, username);
+    this.assertId(flagId, "flag ID");
+    return this.repository.resolveReviewFlag(flagId.trim(), userId, this.now());
   }
 
   async approveReview(userId, username, reviewId, version) {
