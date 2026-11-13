@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ListingReviewNotifier } from "../../functions/PropertyHandler/business/service/listingReviewNotifier.js";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import {
+  ListingReviewNotifier,
+  NOTIFICATION_TIMEOUT_MS,
+} from "../../functions/PropertyHandler/business/service/listingReviewNotifier.js";
 
 const HOST_EMAIL = "host@example.com";
 
@@ -27,12 +30,23 @@ describe("ListingReviewNotifier", () => {
 
   const emailCalls = () => send.mock.calls.map(([command]) => command.input);
   const sentEmail = () => JSON.parse(emailCalls()[0].Payload).body;
+  // Each failure must be one JSON string so CloudWatch can filter on its fields.
+  const loggedEvents = () =>
+    errorSpy.mock.calls.map((args) => {
+      expect(args).toHaveLength(1);
+      expect(typeof args[0]).toBe("string");
+      return JSON.parse(args[0]);
+    });
 
   beforeEach(() => {
     send = jest.fn(async () => ({}));
     getUserById = jest.fn(async () => cognitoUser());
     notifier = new ListingReviewNotifier({ lambdaClient: { send }, cognitoRepository: { getUserById } });
     errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   it("reads the host's email from Cognito by host id and emails them asynchronously", async () => {
@@ -144,6 +158,99 @@ describe("ListingReviewNotifier", () => {
 
     await expect(notifier.notifyDecision(decision())).resolves.toBeUndefined();
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("logs one structured failure event with exactly the event, property, outcome and code", async () => {
+    send.mockRejectedValueOnce(Object.assign(new Error("throttled"), { code: "ThrottlingException" }));
+
+    await notifier.notifyDecision(decision({ outcome: "REJECTED", reason: "Secret reason text" }));
+
+    expect(loggedEvents()).toEqual([
+      {
+        event: "LISTING_REVIEW_EMAIL_FAILED",
+        propertyId: "property-1",
+        outcome: "REJECTED",
+        code: "ThrottlingException",
+      },
+    ]);
+  });
+
+  it("falls back to the error name as the code when the failure has no code", async () => {
+    getUserById.mockRejectedValueOnce(new TypeError("boom"));
+
+    await notifier.notifyDecision(decision());
+
+    expect(loggedEvents()).toEqual([expect.objectContaining({ code: "TypeError" })]);
+  });
+
+  describe("when a dependency never answers", () => {
+    const never = () => new Promise(() => {});
+
+    const settleAfterTimeout = async (call) => {
+      jest.useFakeTimers();
+      try {
+        let settled = false;
+        const pending = call().then(() => {
+          settled = true;
+        });
+        await jest.advanceTimersByTimeAsync(NOTIFICATION_TIMEOUT_MS - 1);
+        const settledEarly = settled;
+        await jest.advanceTimersByTimeAsync(1);
+        await pending;
+        return { settledEarly, settled };
+      } finally {
+        jest.useRealTimers();
+      }
+    };
+
+    it("gives up on a hung Cognito lookup after the time limit and does not hang the caller", async () => {
+      getUserById.mockImplementationOnce(never);
+
+      const outcome = await settleAfterTimeout(() => notifier.notifyDecision(decision()));
+
+      expect(outcome).toEqual({ settledEarly: false, settled: true });
+      expect(send).not.toHaveBeenCalled();
+      expect(loggedEvents()).toEqual([
+        {
+          event: "LISTING_REVIEW_EMAIL_FAILED",
+          propertyId: "property-1",
+          outcome: "APPROVED",
+          code: "NOTIFICATION_TIMEOUT",
+        },
+      ]);
+    });
+
+    it("gives up on a hung Lambda invoke after the time limit and does not hang the caller", async () => {
+      send.mockImplementationOnce(never);
+
+      const outcome = await settleAfterTimeout(() => notifier.notifyDecision(decision()));
+
+      expect(outcome).toEqual({ settledEarly: false, settled: true });
+      expect(loggedEvents()).toEqual([expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })]);
+    });
+
+    it("shares one time limit between the lookup and the invoke", async () => {
+      jest.useFakeTimers();
+      try {
+        const slow = (value) => new Promise((resolve) => setTimeout(() => resolve(value), NOTIFICATION_TIMEOUT_MS - 500));
+        getUserById.mockImplementationOnce(() => slow(cognitoUser()));
+        send.mockImplementationOnce(() => slow({}));
+
+        const pending = notifier.notifyDecision(decision());
+        await jest.advanceTimersByTimeAsync(NOTIFICATION_TIMEOUT_MS);
+        await pending;
+
+        expect(loggedEvents()).toEqual([expect.objectContaining({ code: "NOTIFICATION_TIMEOUT" })]);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it("does not log a timeout when both calls answer in time", async () => {
+      await notifier.notifyDecision(decision());
+
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
   });
 
   it("keeps the reason and the host's email out of the logs", async () => {

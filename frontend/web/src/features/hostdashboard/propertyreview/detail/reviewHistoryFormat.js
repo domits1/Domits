@@ -55,5 +55,17 @@ const toRow = (entry, hostId, index) => {
   };
 };
 
-export const buildReviewHistoryRows = (history, hostId) =>
-  Array.isArray(history) ? history.map((entry, index) => toRow(entry, hostId, index)).filter(Boolean) : [];
+// Entries carry the actor and the rejection reason, so the warnings report counts only, never entry contents.
+export const buildReviewHistoryRows = (history, hostId) => {
+  if (!Array.isArray(history)) {
+    console.warn("Review history is not a list, so nothing was shown.");
+    return [];
+  }
+
+  const rows = history.map((entry, index) => toRow(entry, hostId, index)).filter(Boolean);
+  const dropped = history.length - rows.length;
+  if (dropped > 0) {
+    console.warn(`Review history skipped ${dropped} unreadable ${dropped === 1 ? "entry" : "entries"}.`);
+  }
+  return rows;
+};
