@@ -1,3 +1,5 @@
+import { applyCompletedStayConditions } from "../util/verifiedStay.js";
+import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
 import { In } from "typeorm";
 import Database from "database";
@@ -10,7 +12,9 @@ import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+import { Review_Flag } from "database/models/Review_Flag";
 import { Team_Member } from "database/models/Team_Member";
+import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import { assertEligibleBooking } from "../business/model/reviewRules.js";
@@ -19,6 +23,14 @@ import { PublicReviewRepository } from "./publicReviewRepository.js";
 import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
 
 const REVIEW_REQUEST_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
+
+const reviewRequestCutoff = (now) => {
+  const startAt = Number(process.env.REVIEW_REQUEST_START_AT);
+  if (!Number.isSafeInteger(startAt) || startAt <= 0) {
+    throw new Error("REVIEW_REQUEST_START_AT must be a positive epoch timestamp.");
+  }
+  return Math.max(startAt, now - REVIEW_REQUEST_DURATION_MS);
+};
 
 const isMatchingDraft = (review, expectedUpdatedAt) =>
   review?.status === "DRAFT" &&
@@ -35,6 +47,26 @@ const buildRatingRecords = (reviewId, categoryRatings, createdAt) =>
   }));
 
 export class ReviewRepository {
+  async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
+    const database = await Database.getInstance();
+    const query = database.getRepository(Review).createQueryBuilder("review")
+      .select(REVIEW_FIELDS.map((field) => `review.${field}`))
+      .where("review.reviewer_user_id = :guestId", { guestId })
+      .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
+      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+    if (id !== undefined) query.andWhere("review.id = :id", { id });
+    // A guest's own history includes rejected entries and properties no longer publicly active.
+    const reviews = await query.orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
+      .offset(offset).limit(id === undefined ? 11 : 1).getMany();
+    if (!reviews.length) return [];
+    const properties = await database.getRepository(Property).find({
+      where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
+    });
+    const names = new Map(properties.map((property) => [property.id, property.title]));
+    const detailed = await attachPublicDetails(database, reviews);
+    return detailed.map((review) => ({ ...review, property_name: names.get(review.property_id) ?? null }));
+  }
+
   #hostReviews = new HostReviewRepository();
   #publicReviews = new PublicReviewRepository();
 
@@ -86,8 +118,8 @@ export class ReviewRepository {
     return this.#hostReviews.softDeleteResponse(changes);
   }
 
-  async getPublicReviewPage(propertyId, offset) {
-    return this.#publicReviews.getPublicReviewPage(propertyId, offset);
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
   }
 
   async findReviews(where) {
@@ -202,6 +234,48 @@ export class ReviewRepository {
     return dataSource.getRepository(Review).findOne({
       where: { id },
     });
+  }
+
+  async findReviewRequestCandidates(now) {
+    const db = await Database.getInstance();
+    const query = db.getRepository(Booking).createQueryBuilder("stay")
+      .leftJoin(Review_Request, "request", "request.bookingId = stay.id AND request.guestId = stay.guestid AND request.reviewType = :type", { type: "GUEST_TO_PROPERTY" })
+      .leftJoin(Review, "existing", "existing.booking_id = stay.id AND existing.reviewer_user_id = stay.guestid AND existing.review_type = :type")
+      .where("existing.id IS NULL")
+      .andWhere("(request.id IS NULL OR (request.status = :open AND request.claimedAt IS NULL AND request.lastSentAt IS NULL AND request.expiresAt > :now))", { open: "OPEN", now });
+    for (const field of ["guestid", "hostid", "property_id"]) query.andWhere(`TRIM(stay.${field}) <> ''`);
+    applyCompletedStayConditions(query, now);
+    query.andWhere("stay.departuredate >= :requestCutoff", { requestCutoff: reviewRequestCutoff(now) });
+    return query.orderBy("stay.departuredate", "ASC").addOrderBy("stay.id", "ASC").take(50).getMany();
+  }
+
+  async claimReviewRequest(booking, now) {
+    const db = await Database.getInstance();
+    const requests = db.getRepository(Review_Request);
+    const key = { bookingId: booking.id, guestId: booking.guestid, reviewType: "GUEST_TO_PROPERTY" };
+    await requests.createQueryBuilder().insert().values({
+      ...key, id: randomUUID(), propertyId: booking.property_id, hostId: booking.hostid,
+      status: "OPEN", requestedAt: now, expiresAt: Number(booking.departuredate) + REVIEW_REQUEST_DURATION_MS,
+      createdAt: now, updatedAt: now, sendCount: 0,
+    }).orIgnore().execute();
+    const request = await requests.findOne({ where: key });
+    if (!request) return null;
+    const result = await requests.createQueryBuilder().update(Review_Request)
+      .set({ status: "SENDING", claimedAt: now, updatedAt: now, sendCount: 1 })
+      .where("id = :id", { id: request.id }).andWhere("status = :open", { open: "OPEN" })
+      .andWhere("claimed_at IS NULL AND last_sent_at IS NULL")
+      .andWhere("expires_at > :now", { now }).execute();
+    return Number(result.affected) === 1 ? request : null;
+  }
+
+  async finishReviewRequest(id, status, now) {
+    const db = await Database.getInstance();
+    const requests = db.getRepository(Review_Request);
+    if (status === "SENT") {
+      // Publication may have completed the request while delivery was in flight.
+      await requests.update({ id, status: In(["SENDING", "COMPLETED"]) }, { lastSentAt: now });
+    }
+    return requests.update({ id, status: "SENDING" }, { status, updatedAt: now });
   }
 
   async findBookingById(bookingId) {
@@ -469,16 +543,60 @@ export class ReviewRepository {
   }
 
   async deleteOwnReview(id, reviewerUserId, now) {
-    const dataSource = await Database.getInstance();
+    return this.softDelete(id, reviewerUserId, now);
+  }
 
-    return dataSource.getRepository(Review).update(
-      { id, reviewer_user_id: reviewerUserId },
-      {
-        status: "REJECTED",
-        publication_status: "REJECTED",
-        updated_at: now,
+  // Manual moderation
+
+  async createReviewFlag(flag) {
+    try {
+      return await runTransaction(async (manager) => {
+        const reviews = manager.getRepository(Review);
+        const review = await reviews.findOneBy({ id: flag.review_id });
+        if (!review || ["DELETED", "REJECTED"].includes(review.status)) {
+          throw new NotFoundException("Review not found.");
+        }
+        if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)) {
+          throw new ConflictException("Only submitted reviews can be flagged.");
+        }
+        // Serialize flagging with approval and deletion through a shared review write.
+        const result = await reviews.update({ id: review.id, updated_at: review.updated_at },
+          { updated_at: nextTimestamp(flag.created_at, review.updated_at) });
+        if (result.affected !== 1) throw new ConflictException("Review changed. Reload before continuing.");
+        await manager.getRepository(Review_Flag).insert(flag);
+        return flag;
+      });
+    } catch (error) {
+      const cause = error.driverError || error;
+      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_flag_pending_unique")) {
+        throw new ConflictException("This review already has a pending flag.");
       }
-    );
+      throw error;
+    }
+  }
+
+  async findReviewFlags({ status, limit, offset }) {
+    const database = await Database.getInstance();
+    const rows = await database.getRepository(Review_Flag).createQueryBuilder("flag")
+      .innerJoin(Review, "review", "review.id = flag.review_id")
+      .select("flag.*").addSelect("review.title", "title").addSelect("review.public_review", "public_review")
+      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status })
+      .orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
+    return rows.map((row) => ({ ...row, overall_rating: Number(row.overall_rating),
+      created_at: Number(row.created_at), updated_at: Number(row.updated_at) }));
+  }
+
+  async resolveReviewFlag(id, userId, now) {
+    return runTransaction(async (manager) => {
+      const flags = manager.getRepository(Review_Flag);
+      const flag = await flags.findOneBy({ id });
+      if (!flag) throw new NotFoundException("Review flag not found.");
+      if (flag.status === "RESOLVED") return flag;
+      const updates = { status: "RESOLVED", resolved_by: userId, updated_at: nextTimestamp(now, flag.updated_at) };
+      const result = await flags.update({ id, status: "PENDING" }, updates);
+      if (result.affected !== 1) throw new ConflictException("Review flag changed. Reload before continuing.");
+      return { ...flag, ...updates };
+    });
   }
 
   // Publication
@@ -514,6 +632,11 @@ export class ReviewRepository {
         updatedAt,
         authorize
       );
+      if ((to === "APPROVED" || to === "PUBLISHED") &&
+          await manager.getRepository(Review_Flag).findOneBy({ review_id: reviewId, status: "PENDING" })) {
+        const action = to === "APPROVED" ? "approving" : "publishing";
+        throw new ConflictException(`Resolve the pending review flag before ${action} this review.`);
+      }
 
       const timestamp = nextTimestamp(
         updatedAt,
@@ -589,14 +712,13 @@ export class ReviewRepository {
         bookingId: review.booking_id,
         reviewType: review.review_type,
         guestId: review.reviewer_user_id,
-        status: "OPEN",
+        status: In(["OPEN", "SENDING", "SENT", "FAILED", "CANCELLED"]),
       },
       {
         status: "COMPLETED",
         completedAt: timestamp,
         updatedAt: timestamp,
         nextSendAt: null,
-        claimedAt: null,
       }
     );
   }
