@@ -5,6 +5,8 @@ import {
   getEmptyUserProfile,
 } from "../../services/fetchUserProfileById";
 import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
+import { CHANNEX_GUEST_DISPLAY_NAME, CHANNEX_GUEST_ID_PREFIX } from "../../../../utils/channexGuest";
+import { resolveChannelLabel } from "../../../../utils/channelLabel";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
@@ -48,6 +50,12 @@ const looksLikePhoneIdentifier = (value) => {
   return /^[\d+\-\s()]+$/.test(raw);
 };
 
+const resolveExternalGuestName = (value) => {
+  if (looksLikePhoneIdentifier(value)) return normalizePhoneDisplay(value);
+  if (String(value || "").startsWith(CHANNEX_GUEST_ID_PREFIX)) return CHANNEX_GUEST_DISPLAY_NAME;
+  return null;
+};
+
 const requireToken = (token) => {
   const normalized = String(token || "").trim();
   if (!normalized) throw new Error("Authentication token is required.");
@@ -64,10 +72,11 @@ const fetchResolvedUserProfile = async (targetUserId) => {
     return getEmptyUserProfile(targetUserId);
   }
 
-  if (looksLikePhoneIdentifier(targetUserId)) {
+  const externalGuestName = resolveExternalGuestName(targetUserId);
+  if (externalGuestName) {
     return {
       ...getEmptyUserProfile(targetUserId),
-      givenName: normalizePhoneDisplay(targetUserId),
+      givenName: externalGuestName,
       userId: targetUserId,
       profileImage: null,
     };
@@ -150,6 +159,8 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         externalThreadId: t.externalThreadId || null,
         integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
         unreadCount: t.unreadCount ?? 0,
+        guestName: t.guestName || null,
+        bookingSource: t.bookingSource || null,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -225,7 +236,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
       : null;
 
   const contactNameFallback =
-    normalizePhoneDisplay(partnerId) ||
+    resolveExternalGuestName(partnerId) ||
     contact?.givenName ||
     contact?.name ||
     contact?.fullName ||
@@ -240,7 +251,7 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
     recipientId: partnerId,
     userId: partnerId,
 
-    givenName: resolvedInfoName || contactNameFallback,
+    givenName: contact?.guestName || resolvedInfoName || contactNameFallback,
     profileImage: contact?.profileImage || userInfo?.profileImage || null,
 
     latestMessage,
@@ -252,7 +263,8 @@ const hydrateOneContact = async ({ contact, userId, role, token = null }) => {
     propertyTitle,
     bookingId: contact?.bookingId || contact?.bookingid || null,
     platform,
-    channelLabel: platform === "WHATSAPP" ? "WhatsApp" : platform,
+    bookingSource: contact?.bookingSource || null,
+    channelLabel: resolveChannelLabel({ platform, bookingSource: contact?.bookingSource }),
     isWhatsApp,
     externalThreadId: contact?.externalThreadId || null,
     integrationAccountId: contact?.integrationAccountId || null,

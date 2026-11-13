@@ -1,4 +1,5 @@
-import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl, escalateTask } from "../business/service/taskService.js";
+import { getTasks, createTask, updateTask, deleteTask, getUploadUrl, getViewUrl, escalateTask, approveTask, rejectTask } from "../business/service/taskService.js";
+import { canReviewCompletedTasks } from "../business/model/reviewRoles.js";
 import {
     getChecklistItems,
     createChecklistItem,
@@ -30,7 +31,7 @@ export class Controller {
     async resolveHost(event) {
         const { username, role } = await this.authManager.getUser(event.headers?.Authorization);
         const asHostId = event.queryStringParameters?.asHostId || null;
-        return await resolveEffectiveHostId(username, role, asHostId);
+        return { ...(await resolveEffectiveHostId(username, role, asHostId)), username, role };
     }
 
     async getChecklistTemplates(event) {
@@ -108,12 +109,9 @@ export class Controller {
 
     async getViewUrl(event) {
         try {
-            await this.authManager.getHostId(event.headers?.Authorization);
-            const { key } = event.queryStringParameters || {};
-            if (!key) {
-                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "key is required" }) };
-            }
-            const viewUrl = await getViewUrl(key);
+            const { effectiveHostId } = await this.resolveHost(event);
+            const { taskId, key } = event.queryStringParameters || {};
+            const viewUrl = await getViewUrl(effectiveHostId, taskId, key);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ viewUrl }) };
         } catch (error) {
             return this.handleError(error);
@@ -123,11 +121,8 @@ export class Controller {
     async getUploadUrl(event) {
         try {
             const { effectiveHostId } = await this.resolveHost(event);
-            const { fileName, fileType } = event.queryStringParameters || {};
-            if (!fileName || !fileType) {
-                return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ message: "fileName and fileType are required" }) };
-            }
-            const result = await getUploadUrl(effectiveHostId, fileName, fileType);
+            const { fileType, fileSize } = event.queryStringParameters || {};
+            const result = await getUploadUrl(effectiveHostId, fileType, fileSize);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);
@@ -180,6 +175,28 @@ export class Controller {
             const { effectiveHostId } = await this.resolveHost(event);
             const taskId = event.queryStringParameters?.id;
             const result = await escalateTask(effectiveHostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async approveTask(event) {
+        return await this.reviewTask(event, approveTask);
+    }
+
+    async rejectTask(event) {
+        return await this.reviewTask(event, rejectTask);
+    }
+
+    async reviewTask(event, review) {
+        try {
+            const { effectiveHostId, username, role } = await this.resolveHost(event);
+            if (!canReviewCompletedTasks(role)) {
+                throw new UnauthorizedException("Only the host or a manager can approve or reject a task.");
+            }
+            const taskId = event.queryStringParameters?.id;
+            const result = await review(effectiveHostId, taskId, username);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             return this.handleError(error);

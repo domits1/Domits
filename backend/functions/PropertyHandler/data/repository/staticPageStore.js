@@ -16,7 +16,11 @@ const MAX_HOSTNAME_LENGTH = 253;
 const PAGE_KEY_PREFIX = "sites/by-host/";
 const PAGE_KEY_SUFFIX = "/index.html";
 const SITEMAP_KEY_SUFFIX = "/sitemap.xml";
+const SITE_PAGE_DIRECTORY = "/pages/";
+const SITE_PAGE_EXTENSION = ".html";
 const MAX_SCANNED_KEYS = 20000;
+
+export const STATIC_SITE_PAGE_SLUGS = Object.freeze(["gallery", "accommodation", "contact-us"]);
 
 export const isStaticPageHostname = (hostname) => {
   const labels = typeof hostname === "string" ? hostname.split(".") : [];
@@ -40,6 +44,19 @@ export const buildStaticPageKey = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyH
 export const buildStaticSitemapKey = (hostname) =>
   `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}${SITEMAP_KEY_SUFFIX}`;
 
+const requireSitePageSlug = (slug) => {
+  if (!STATIC_SITE_PAGE_SLUGS.includes(slug)) {
+    throw new TypeError("A site page key needs a slug from the fixed page list.");
+  }
+
+  return slug;
+};
+
+const buildSitePagesPrefix = (hostname) => `${PAGE_KEY_PREFIX}${requireKeyHostname(hostname)}${SITE_PAGE_DIRECTORY}`;
+
+export const buildStaticSitePageKey = (hostname, slug) =>
+  `${buildSitePagesPrefix(hostname)}${requireSitePageSlug(slug)}${SITE_PAGE_EXTENSION}`;
+
 const buildSourceMetadata = (siteId, revision) => ({
   "site-id": String(siteId),
   ...(revision === undefined ? {} : { revision: String(revision) }),
@@ -49,6 +66,12 @@ const hostnameOfKey = (key, suffix) =>
   key.startsWith(PAGE_KEY_PREFIX) && key.endsWith(suffix) ? key.slice(PAGE_KEY_PREFIX.length, -suffix.length) : "";
 
 const isSitemapKey = (key) => isStaticPageHostname(hostnameOfKey(key, SITEMAP_KEY_SUFFIX));
+
+const sitePageOfKey = (key) =>
+  STATIC_SITE_PAGE_SLUGS.map((slug) => ({
+    slug,
+    hostname: hostnameOfKey(key, `${SITE_PAGE_DIRECTORY}${slug}${SITE_PAGE_EXTENSION}`),
+  })).find(({ hostname }) => isStaticPageHostname(hostname)) || null;
 
 export class StaticPageStore {
   constructor({ client = new S3Client({}) } = {}) {
@@ -70,76 +93,116 @@ export class StaticPageStore {
   }
 
   async putPage({ hostname, html, siteId, revision }) {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: buildStaticPageKey(hostname),
-        Body: html,
-        ContentType: PAGE_CONTENT_TYPE,
-        CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: buildSourceMetadata(siteId, revision),
-      })
-    );
+    await this.#put({
+      key: buildStaticPageKey(hostname),
+      body: html,
+      contentType: PAGE_CONTENT_TYPE,
+      siteId,
+      revision,
+    });
   }
 
   async putSitemap({ hostname, xml, siteId, revision }) {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: buildStaticSitemapKey(hostname),
-        Body: xml,
-        ContentType: SITEMAP_CONTENT_TYPE,
-        CacheControl: PAGE_CACHE_CONTROL,
-        Metadata: buildSourceMetadata(siteId, revision),
-      })
-    );
+    await this.#put({
+      key: buildStaticSitemapKey(hostname),
+      body: xml,
+      contentType: SITEMAP_CONTENT_TYPE,
+      siteId,
+      revision,
+    });
+  }
+
+  async putSitePage({ hostname, slug, html, siteId, revision }) {
+    await this.#put({
+      key: buildStaticSitePageKey(hostname, slug),
+      body: html,
+      contentType: PAGE_CONTENT_TYPE,
+      siteId,
+      revision,
+    });
   }
 
   async listPageHostnames() {
     const hostnames = [];
     const etags = {};
+    const sitePages = {};
     const rejected = [];
+    await this.#eachObject(PAGE_KEY_PREFIX, (key, etag) => {
+      if (isSitemapKey(key)) {
+        return;
+      }
+      const page = sitePageOfKey(key);
+      if (page) {
+        sitePages[page.hostname] = { ...sitePages[page.hostname], [page.slug]: etag };
+        return;
+      }
+      const hostname = hostnameOfKey(key, PAGE_KEY_SUFFIX);
+      if (isStaticPageHostname(hostname)) {
+        hostnames.push(hostname);
+        etags[hostname] = etag;
+      } else {
+        rejected.push(key);
+      }
+    });
+
+    return { hostnames, etags, sitePages, rejected };
+  }
+
+  async listSitePages(hostname) {
+    const pages = {};
+    await this.#eachObject(buildSitePagesPrefix(hostname), (key, etag) => {
+      const page = sitePageOfKey(key);
+      if (page) {
+        pages[page.slug] = etag;
+      }
+    });
+
+    return pages;
+  }
+
+  async deletePage({ hostname, etag = "" }) {
+    return this.#delete(buildStaticPageKey(hostname), etag);
+  }
+
+  async deleteSitePage({ hostname, slug, etag = "" }) {
+    return this.#delete(buildStaticSitePageKey(hostname, slug), etag);
+  }
+
+  async #put({ key, body, contentType, siteId, revision }) {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        CacheControl: PAGE_CACHE_CONTROL,
+        Metadata: buildSourceMetadata(siteId, revision),
+      })
+    );
+  }
+
+  async #eachObject(prefix, visit) {
     let scanned = 0;
     let continuationToken;
     do {
       const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.bucketName,
-          Prefix: PAGE_KEY_PREFIX,
-          ContinuationToken: continuationToken,
-        })
+        new ListObjectsV2Command({ Bucket: this.bucketName, Prefix: prefix, ContinuationToken: continuationToken })
       );
       for (const object of response?.Contents || []) {
-        const key = String(object?.Key || "");
-        if (isSitemapKey(key)) {
-          continue;
-        }
-        const hostname = hostnameOfKey(key, PAGE_KEY_SUFFIX);
-        if (isStaticPageHostname(hostname)) {
-          hostnames.push(hostname);
-          etags[hostname] = String(object?.ETag || "");
-        } else {
-          rejected.push(key);
-        }
+        visit(String(object?.Key || ""), String(object?.ETag || ""));
       }
       scanned += (response?.Contents || []).length;
       if (scanned > MAX_SCANNED_KEYS) {
-        throw new Error(`More than ${MAX_SCANNED_KEYS} keys under ${PAGE_KEY_PREFIX}; refusing to reconcile blindly.`);
+        throw new Error(`More than ${MAX_SCANNED_KEYS} keys under ${prefix}; refusing to reconcile blindly.`);
       }
       continuationToken = response?.IsTruncated ? response.NextContinuationToken : undefined;
     } while (continuationToken);
-
-    return { hostnames, etags, rejected };
   }
 
-  async deletePage({ hostname, etag = "" }) {
+  async #delete(key, etag) {
     try {
       await this.client.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucketName,
-          Key: buildStaticPageKey(hostname),
-          ...(etag ? { IfMatch: etag } : {}),
-        })
+        new DeleteObjectCommand({ Bucket: this.bucketName, Key: key, ...(etag ? { IfMatch: etag } : {}) })
       );
       return true;
     } catch (error) {

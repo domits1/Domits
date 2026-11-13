@@ -39,7 +39,15 @@ jest.mock("./channexApi", () => ({
   syncChannexRestrictions: jest.fn(),
 }));
 
-const fillRequiredInputs = ({ dateTo = "2027-10-05", openActions = true } = {}) => {
+// The health section has its own tests; here it only matters where and when it is shown.
+jest.mock("../channexadmin/health/ChannexHealthSection", () => {
+  const React = require("react");
+  return function MockChannexHealthSection() {
+    return React.createElement("div", null, "Channex health loaded");
+  };
+});
+
+const fillRequiredInputs =({ dateTo = "2027-10-05", openActions = true } = {}) => {
   fireEvent.change(screen.getByLabelText("Domits property ID"), {
     target: { value: "domits-property-1" },
   });
@@ -255,6 +263,71 @@ describe("ChannexDiagnosticsPanel certification actions", () => {
     expect(await screen.findByText("Single-unit Channex mapping saved.")).toBeTruthy();
     expect(screen.getAllByText("Ready").length).toBeGreaterThan(0);
     expect(screen.getByText("Readiness response")).toBeTruthy();
+  });
+
+  describe("full sync message after saving a mapping", () => {
+    const saveMappingThroughSetupTab = async (saveResponse) => {
+      listChannexProperties.mockResolvedValue({
+        properties: [{ externalPropertyId: "external-property-1", externalPropertyName: "Demo Channex property" }],
+      });
+      listChannexRoomTypes.mockResolvedValue({
+        roomTypes: [{ externalRoomTypeId: "room-type-1", externalRoomTypeName: "Demo room" }],
+      });
+      listChannexRatePlans.mockResolvedValue({
+        ratePlans: [{ externalRatePlanId: "rate-plan-1", externalRatePlanName: "Standard rate" }],
+      });
+      saveChannexSetupMapping.mockResolvedValue({
+        scope: "SINGLE_UNIT",
+        integrationAccountId: "integration-account-1",
+        savedMappings: {},
+        ...saveResponse,
+      });
+
+      await renderDiagnosticsPanel();
+      fillRequiredInputs({ openActions: false });
+      fireEvent.click(screen.getByRole("button", { name: "Setup & Connection" }));
+      fireEvent.click(screen.getByRole("button", { name: "Load Channex resources" }));
+      fireEvent.change(await screen.findByLabelText("Channex property"), { target: { value: "external-property-1" } });
+      await waitFor(() => expect(listChannexRoomTypes).toHaveBeenCalledTimes(1));
+      fireEvent.change(await screen.findByLabelText("Channex room type"), { target: { value: "room-type-1" } });
+      await waitFor(() => expect(listChannexRatePlans).toHaveBeenCalledTimes(1));
+      fireEvent.change(await screen.findByLabelText("Channex rate plan"), { target: { value: "rate-plan-1" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save mapping" }));
+      await screen.findByText("Single-unit Channex mapping saved.");
+    };
+
+    test("says a full sync was queued when the response confirms it", async () => {
+      await saveMappingThroughSetupTab({ ready: true, fullSyncQueued: true, readiness: { ready: true, missingMappings: [] } });
+
+      expect(
+        screen.getByText(
+          "Full sync queued. Channex receives all values within a few minutes; see Latest sync evidence."
+        )
+      ).toBeTruthy();
+    });
+
+    test("says why no full sync was queued when the mapping is not ready", async () => {
+      await saveMappingThroughSetupTab({
+        ready: false,
+        fullSyncQueued: false,
+        readiness: { ready: false, missingMappings: ["RATE_PLAN_MAPPING_MISSING"] },
+      });
+
+      expect(
+        screen.getByText("No full sync queued: the mapping is not ready (RATE_PLAN_MAPPING_MISSING).")
+      ).toBeTruthy();
+    });
+
+    // Queueing can fail after a ready save; the backend logs it and saving again retries.
+    test.each([
+      ["queueing failed", { ready: true, fullSyncQueued: false }],
+      ["the response has no fullSyncQueued", { ready: true }],
+    ])("does not claim a full sync when %s", async (_case, response) => {
+      await saveMappingThroughSetupTab({ ...response, readiness: { ready: true, missingMappings: [] } });
+
+      expect(screen.getByText("No full sync queued. Save the mapping again to retry.")).toBeTruthy();
+      expect(screen.queryByText(/^Full sync queued/)).toBeNull();
+    });
   });
 
   test("shows setup resource load errors", async () => {
@@ -604,5 +677,33 @@ describe("ChannexDiagnosticsPanel connect form", () => {
     expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "password");
     fireEvent.click(screen.getByRole("button", { name: "Show API key" }));
     expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "text");
+  });
+});
+
+describe("ChannexDiagnosticsPanel health tab (#2869)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getChannexStatus.mockResolvedValue({ status: "CONNECTED" });
+    getLatestChannexSyncEvidence.mockResolvedValue({ item: null });
+    listChannexBookingRevisions.mockResolvedValue({ revisions: [], count: 0 });
+  });
+
+  test("opens on the Health tab, the first of the sections", async () => {
+    await renderDiagnosticsPanel();
+
+    const tabs = within(screen.getByRole("navigation", { name: "Channex diagnostics sections" })).getAllByRole("button");
+    expect(tabs[0].textContent).toBe("Health");
+    expect(screen.getByText("Channex health loaded")).toBeTruthy();
+  });
+
+  // The section loads on mount, so leaving the tab also stops it from calling the backend.
+  test("hides the health section on another tab and shows it again on Health", async () => {
+    await renderDiagnosticsPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    expect(screen.queryByText("Channex health loaded")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Health" }));
+    expect(screen.getByText("Channex health loaded")).toBeTruthy();
   });
 });

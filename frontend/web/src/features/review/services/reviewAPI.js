@@ -14,6 +14,80 @@ export const saveHostResponse = async (reviewId, message) => {
   return payload.response;
 };
 
+export const deleteHostResponse = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response`, {
+    method: "DELETE", headers: { Authorization: await getIdToken() },
+  });
+  if (!response.ok) {
+    const payload = await parseResponse(response);
+    throw new Error(payload?.message || "Could not delete your response. Please try again.");
+  }
+};
+
+// The status lets the admin page tell "no approver role" apart from a failed request.
+const reviewApprovalError = (response, payload, fallback) =>
+  Object.assign(new Error(payload?.message || fallback), { status: response.status });
+
+export const getAdminReviews = async (scope) => {
+  const response = await requestReview("GET", { scope });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews.");
+  if (!Array.isArray(payload)) {
+    throw reviewApprovalError(response, null, "Could not load reviews. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
+};
+
+const requestModeration = async (method, fallback, query = {}, body) => {
+  const response = await requestReview(method, { ...query, scope: "moderation" }, body);
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, fallback);
+  return payload;
+};
+
+export const getReviewFlags = (query) =>
+  requestModeration("GET", "Could not load the moderation queue.", query);
+
+export const flagReview = (reviewId, reason, notes) =>
+  requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });
+
+export const resolveReviewFlag = (flagId) =>
+  requestModeration("PATCH", "Could not resolve this flag.", {}, { flag_id: flagId });
+
+export const getPendingApprovalReviews = () => getAdminReviews("pending-approval");
+
+export const publishApprovedReview = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not publish this review. Please try again.");
+  return payload;
+};
+
+export const hasReviewApprovalAccess = async () => {
+  try {
+    await getPendingApprovalReviews();
+    return true;
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) return false;
+    return null;
+  }
+};
+
+// updatedAt is the version the admin saw; the backend refuses the approval if the review changed since.
+export const approveReview = async (reviewId, updatedAt) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/approve`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ updated_at: updatedAt }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not approve this review. Please try again.");
+  return payload;
+};
+
 export const getPropertyRatingTrends = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-trends" });
   const payload = await parseResponse(response);
@@ -127,7 +201,7 @@ export const updateReview = async ({
 };
 
 // Fetch written or received reviews
-export const requestReview = async (method = "GET", query = {}) => {
+export const requestReview = async (method = "GET", query = {}, body) => {
   const token = await getIdToken();
 
   const { reviewId, ...parameters } = query;
@@ -146,9 +220,21 @@ export const requestReview = async (method = "GET", query = {}) => {
       method,
       headers: {
         Authorization: token,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }
   );
+};
+
+export const submitReviewForApproval = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(getReviewErrorMessage(response.status, payload));
+  return payload;
 };
 
 // Create a new review

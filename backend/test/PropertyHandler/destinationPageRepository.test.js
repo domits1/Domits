@@ -12,6 +12,8 @@ jest.mock("database", () => ({
 
 const SCHEMA = process.env.TEST === "true" ? "test" : "main";
 
+const oneLine = (statement) => statement.replaceAll(/\s+/g, " ");
+
 const withRows = (rows) => {
   const query = jest.fn(async () => rows);
   Database.getInstance.mockResolvedValue({ options: { schema: "main" }, query });
@@ -94,7 +96,10 @@ describe("the destination page repository", () => {
       },
     ]);
 
-    const listings = await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain");
+    const listings = await new DestinationPageRepository().listActiveListingsUnderPath(
+      "/destinations/europe/spain",
+      24
+    );
 
     expect(listings).toEqual([
       {
@@ -127,20 +132,39 @@ describe("the destination page repository", () => {
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
     expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS image_key");
     expect(statement).not.toMatch(/street|postal|house|hostid|latitude/i);
-    expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%"]);
+    expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%", 24]);
+  });
+
+  it("sorts the oldest approval first, and a listing with no approval above every approved one", async () => {
+    const query = withRows([]);
+    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain", 24);
+    expect(oneLine(query.mock.calls[0][0])).toContain(
+      `ORDER BY COALESCE( (SELECT MAX(e.created_at) FROM ${SCHEMA}.property_moderation_event e WHERE e.property_id = p.id AND e.action = 'APPROVED'), 0) ASC, p.createdat DESC, p.id ASC LIMIT $4`
+    );
   });
 
   it("escapes the like wildcards of a path so a sibling with an underscore in its name is not swept in", async () => {
     const query = withRows([]);
-    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/x/y_z%");
-    expect(query.mock.calls[0][1]).toEqual(["ACTIVE", "/destinations/x/y_z%", "/destinations/x/y\\_z\\%/%"]);
+    await new DestinationPageRepository().listActiveListingsUnderPath("/destinations/x/y_z%", 24);
+    expect(query.mock.calls[0][1]).toEqual(["ACTIVE", "/destinations/x/y_z%", "/destinations/x/y\\_z\\%/%", 24]);
   });
 
   it("answers an empty list for an empty path without asking the database", async () => {
     const query = withRows([]);
-    expect(await new DestinationPageRepository().listActiveListingsUnderPath("  ")).toEqual([]);
+    expect(await new DestinationPageRepository().listActiveListingsUnderPath("  ", 24)).toEqual([]);
     expect(query).not.toHaveBeenCalled();
   });
+
+  it.each([undefined, 0, -1, 2.5, "24", Number.NaN])(
+    "refuses a listing limit of %p before it asks the database",
+    async (limit) => {
+      const query = withRows([]);
+      await expect(
+        new DestinationPageRepository().listActiveListingsUnderPath("/destinations/europe/spain", limit)
+      ).rejects.toThrow("A positive whole listing limit is required.");
+      expect(query).not.toHaveBeenCalled();
+    }
+  );
 
   it("builds image urls from the accommodation bucket and nothing for an empty key", () => {
     expect(buildAccommodationImageUrl("/images/p1/web.jpg")).toBe(
