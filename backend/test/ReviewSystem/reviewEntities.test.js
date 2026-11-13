@@ -156,12 +156,16 @@ describe('Review entities and creation persistence', () => {
     });
   });
 
-// Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
+// Deletion retains supporting records and scopes the update to the author.
 it("soft deletes only the author while retaining supporting records", async () => {
+  const query = { execute: jest.fn().mockResolvedValue({ affected: 1 }) };
+  for (const method of ["update", "set", "where", "andWhere"]) query[method] = jest.fn(() => query);
+  repositories.get(Review).createQueryBuilder = jest.fn(() => query);
   await repository.deleteOwnReview("legacy-review", "guest-1", 123);
-  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
-    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
-  });
+  expect(query.where).toHaveBeenCalledWith("id = :id", { id: "legacy-review" });
+  expect(query.andWhere).toHaveBeenCalledWith("reviewer_user_id = :reviewerUserId", { reviewerUserId: "guest-1" });
+  expect(query.set).toHaveBeenCalledWith({ status: "DELETED", updated_at: 123 });
+  expect(query.execute).toHaveBeenCalledTimes(1);
   for (const entity of [Review_Rating, Review_Request, Review_Response]) {
     expect(repositories.get(entity).update).not.toHaveBeenCalled();
   }
@@ -569,12 +573,13 @@ describe('Review transactional writes', () => {
     }
   });
 
-  it("publishes and completes the matching request in one transaction without upgrading verification", async () => {
+  it.each(["OPEN", "SENDING", "SENT", "FAILED", "CANCELLED"])("publishes and completes a %s request without upgrading verification", async (status) => {
+    committed.get(Review_Request)[0].status = status;
     committed.get(Review)[0].status = "APPROVED";
     const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true });
     expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
-    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: null });
+    expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: now - 100 });
   });
 
   it("rechecks publication policy and booking eligibility before committing", async () => {

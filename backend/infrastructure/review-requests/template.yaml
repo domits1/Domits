@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Scheduled post-checkout review requests using the existing ReviewSystem Lambda.
+Parameters:
+  ReviewSystemLambdaArn:
+    Type: String
+  ReviewSystemRoleName:
+    Type: String
+Resources:
+  Schedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: domits-review-requests
+      ScheduleExpression: rate(15 minutes)
+      State: ENABLED
+      Targets:
+        - Id: ReviewRequests
+          Arn: !Ref ReviewSystemLambdaArn
+  Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReviewSystemLambdaArn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt Schedule.Arn
+  EmailInvocation:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: review-request-email
+      Roles: [!Ref ReviewSystemRoleName]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:GetUserInfo'
+              - !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:EmailNotificationService'

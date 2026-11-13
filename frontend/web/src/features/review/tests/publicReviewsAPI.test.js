@@ -1,4 +1,4 @@
-jest.mock("../../../services/getAccessToken", () => ({ getAccessToken: jest.fn() }));
+jest.mock("../../../services/getAccessToken", () => ({ getIdToken: jest.fn() }));
 import { getPublicReviews } from "../services/reviewAPI";
 test("encodes the selected property and fetches public reviews without credentials", async () => {
   const originalFetch = global.fetch;
