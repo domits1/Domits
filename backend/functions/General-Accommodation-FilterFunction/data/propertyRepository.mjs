@@ -9,6 +9,11 @@ export const fetchProperties = async (lastEvaluatedKeyCreatedAt, lastEvaluatedKe
     if (lastEvaluatedKeyId) url.searchParams.set("lastEvaluatedKeyId", lastEvaluatedKeyId);
 
     const response = await fetch(url.toString());
+    // An error body has no properties/lastEvaluatedKey, so parsing it anyway would
+    // look like an empty last page and silently truncate the catalog walk.
+    if (!response.ok) {
+      throw new Error(`properties API responded with status ${response.status}`);
+    }
     const raw = await response.json();
     return {
       properties: raw.properties ?? [],
@@ -16,7 +21,7 @@ export const fetchProperties = async (lastEvaluatedKeyCreatedAt, lastEvaluatedKe
     };
   } catch (err) {
     console.error("error fetching properties:", err);
-    throw new Error("failed to fetch properties");
+    throw new Error("failed to fetch properties", { cause: err });
   }
 };
 
