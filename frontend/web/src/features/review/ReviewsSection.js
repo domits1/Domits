@@ -52,10 +52,13 @@ const ReviewCard = ({ review }) => (
     </div>
     <div className="reviews-section__card-sub">
       <StarRating value={review.rating} />
-      <span className="reviews-section__card-time">{review.timeAgo}</span>
-      {review.verified && (
-        <span className="reviews-section__card-verified">
-          <CheckCircleIcon fontSize="inherit" /> Verified stay
+      {Number.isFinite(review.date) && Number.isFinite(new Date(review.date).getTime()) ?
+        <time className="reviews-section__card-time" dateTime={new Date(review.date).toISOString()}>
+          Reviewed on {new Date(review.date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+        </time> : <span className="reviews-section__card-time">{review.timeAgo}</span>}
+      {review.verified === true && (
+        <span className="reviews-section__card-verified" title="Linked to a paid or confirmed reservation whose checkout has passed.">
+          <CheckCircleIcon fontSize="inherit" aria-hidden="true" /> Verified Stay
         </span>
       )}
     </div>
@@ -76,6 +79,7 @@ const ReviewsSection = ({
   totalReviews = 0,
   categoryScores = {},
   onShowAll,
+  emptyMessage = "No reviews yet.",
 }) => {
   const hasReviews = reviews.length > 0;
   const hasCategories = Object.keys(categoryScores).length > 0;
@@ -129,7 +133,7 @@ const ReviewsSection = ({
           )}
         </>
       ) : (
-        <p className="reviews-section__empty">No reviews yet.</p>
+        emptyMessage && <p className="reviews-section__empty">{emptyMessage}</p>
       )}
     </div>
   );
@@ -147,6 +151,7 @@ ReviewCard.propTypes = {
     location: PropTypes.string,
     rating: PropTypes.number,
     timeAgo: PropTypes.string,
+    date: PropTypes.number,
     verified: PropTypes.bool,
     text: PropTypes.string,
     response: PropTypes.shape({ message: PropTypes.string }),
@@ -169,6 +174,7 @@ ReviewsSection.propTypes = {
     value: PropTypes.number,
   }),
   onShowAll: PropTypes.func,
+  emptyMessage: PropTypes.string,
 };
 
 export default ReviewsSection;

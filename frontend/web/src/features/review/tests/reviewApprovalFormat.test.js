@@ -3,6 +3,8 @@ import {
   formatSubmittedAt,
   getGuestInitials,
   getVerificationLabel,
+  isVerifiedStatus,
+  getReviewStatusLabel,
   matchesReviewSearch,
 } from "../utils/reviewApprovalFormat";
 
@@ -17,6 +19,22 @@ const review = {
 };
 
 describe("review approval formatting", () => {
+  test.each([
+    ["VERIFIED", true], ["VERIFIED_STAY", true],
+    ["UNVERIFIED", false], [undefined, false], ["toString", false],
+  ])("recognizes verified status %p", (status, expected) => {
+    expect(isVerifiedStatus(status)).toBe(expected);
+  });
+
+  test.each([
+    ["PENDING_APPROVAL", "Pending approval"],
+    ["APPROVED", "Awaiting publication"],
+    ["PUBLISHED", "Published"], ["REJECTED", "Rejected"],
+    [undefined, "Unknown"], ["SOMETHING_NEW", "Unknown"],
+  ])("labels review status %p", (status, label) => {
+    expect(getReviewStatusLabel(status)).toBe(label);
+  });
+
   test.each([
     ["Jessica Smith", "JS"],
     ["  michael  k. ", "MK"],

@@ -78,6 +78,8 @@ import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
 import { Review_Response } from "../../models/Review_Response.js";
+import { Review_Flag } from "../../models/Review_Flag.js";
+import { Review_Alert } from "../../models/Review_Alert.js";
 
 
 export const Tables = [
@@ -159,5 +161,7 @@ export const Tables = [
   Review_Category,
   Review_Request,
   Review_Response,
+  Review_Flag,
+  Review_Alert,
   DirectBookingWebsiteRatePlan,
 ];
