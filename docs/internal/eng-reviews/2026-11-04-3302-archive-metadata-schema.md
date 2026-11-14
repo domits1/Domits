@@ -13,7 +13,7 @@ Scope: `PropertyRepository` archive metadata helpers
 | Production effect | Archiving never recorded `archivedat`, `archivedby` or `archivereason`, and resubmitting an ARCHIVED listing (ARCHIVED to PENDING_REVIEW) never cleared them. Verified read-only: the columns exist in `main` only and `public.property` does not exist. | Fixed by the two changes above. |
 | Transaction | The transaction manager has no `options`, so it cannot resolve the schema itself. | `transitionStatusWithEvent` resolves the schema once from the outer client and passes it in. |
 | Resolver | Same rule as the other PropertyHandler repositories: `TEST=true` gives `test`, otherwise `client.options.schema` validated against `/^[A-Za-z_]\w*$/`, lowercased, `public` mapped to `main`, fallback `main`, identifier quoted. | Private resolver in `propertyRepository.js`. A shared helper in `.shared` stays a separate refactor. |
-| `transitionStatus` | No production caller; scheduled for removal. | Kept working, not otherwise changed. |
+| `transitionStatus` | No production caller; scheduled for removal. | Kept working, not otherwise changed. Removed in #3860 (see `2026-11-11-3302-remove-transitionstatus.md`). |
 
 ## Verification
 
