@@ -41,6 +41,8 @@ export const formatSubmittedAt = (timestamp) => {
   };
 };
 
+export const isVerifiedStatus = (status) => Object.hasOwn(VERIFICATION_LABELS, status);
+
 export const getVerificationLabel = (status) => VERIFICATION_LABELS[status] ?? "Unverified";
 
 export const matchesReviewSearch = (review, query) => {
@@ -59,3 +61,12 @@ export const matchesReviewSearch = (review, query) => {
       .includes(needle)
   );
 };
+
+const REVIEW_STATUS_LABELS = {
+  PENDING_APPROVAL: "Pending approval",
+  APPROVED: "Awaiting publication",
+  PUBLISHED: "Published",
+  REJECTED: "Rejected",
+};
+
+export const getReviewStatusLabel = (status) => REVIEW_STATUS_LABELS[status] ?? "Unknown";
