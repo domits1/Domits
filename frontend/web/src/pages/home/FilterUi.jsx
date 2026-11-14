@@ -97,6 +97,10 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues(newValues);
   };
 
+  const handleSliderCommit = (_event, newValues) => {
+    fetchFilteredAccommodations({ priceValues: newValues });
+  };
+
   const handleMinInputChange = (event) => {
     const rawValue = event.target.value;
     setMinInputValue(rawValue);
@@ -175,6 +179,7 @@ const FilterUi = ({ onFilterApplied }) => {
             }}
             value={priceValues}
             onChange={handleSliderChange}
+            onChangeCommitted={handleSliderCommit}
             valueLabelDisplay="auto"
             min={priceBounds[0]}
             max={priceBounds[1]}
