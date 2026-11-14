@@ -399,10 +399,6 @@ $primary-domits-color: #0d9813;
   overflow: hidden;
 }
 
-.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
-  color: inherit;
-}
-
 .search-title-guest.hidden {
   display: none;
 }
