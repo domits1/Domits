@@ -52,7 +52,8 @@ export class ReviewAlertNotificationService {
           const settings = JSON.parse(record?.preferences || "{}");
           const keys = [PREFERENCE_KEYS[event.type],
             ...(["LOW_RATING", "DECLINING_RATING"].includes(event.type) ? ["owner_negative_review"] : [])].filter(Boolean);
-          if (keys.some(key => settings[key]?.email === false)) {
+          // Existing preferences accept both legacy booleans and per-channel objects.
+          if (keys.some(key => settings[key] === false || settings[key]?.email === false)) {
             results.push({ recipient, status: "EMAIL_DISABLED" }); continue;
           }
           const body = await this.notifier.invoke("GetUserInfo", { UserId: recipient });

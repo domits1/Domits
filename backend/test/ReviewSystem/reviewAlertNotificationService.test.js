@@ -87,6 +87,13 @@ test("content and logs exclude arbitrary review fields and destinations", async 
   for (const secret of ["SECRET", "UNPUBLISHED", "HIDDEN", "evil.example", "attacker"]) expect(output).not.toContain(secret);
 });
 
+test.each(["manager_review_received", "manager_low_review", "owner_negative_review"])("honors legacy boolean opt-out for %s", async key => {
+  preferences.findByUserId.mockResolvedValue({ preferences: JSON.stringify({ [key]: false }) });
+  const type = key === "manager_review_received" ? "NEW_REVIEW" : "LOW_RATING";
+  expect((await service.deliver({ ...event, type })).every(result => result.status === "EMAIL_DISABLED")).toBe(true);
+  expect(notifier.invoke).not.toHaveBeenCalled();
+});
+
 test.each([{ type: "INVALID" }, { propertyId: "p\nInjected" }, { eventTimestamp: NaN }, { reviewId: undefined }])(
   "rejects malformed events %j", async changes => {
     expect(await service.deliver({ ...event, ...changes })).toEqual([]);
