@@ -296,7 +296,7 @@ const BookingOverview = () => {
             </div>
           </div>
 
-          <CancellationPolicySection rules={pricingObject?.rules} />
+          <CancellationPolicySection rules={pricingObject?.rules} policy={pricingObject?.cancellationPolicy} />
 
           {showAuthenticationPrompt ? (
             <div>
