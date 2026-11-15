@@ -1017,7 +1017,7 @@ const HostTasks = () => {
                                 className={`task-context-btn ${taskContext === 'managed' ? 'active' : ''}`}
                                 onClick={() => setTaskContext('managed')}
                             >
-                                Co-host tasks
+                                Management tasks
                             </button>
                         </div>
                     )}

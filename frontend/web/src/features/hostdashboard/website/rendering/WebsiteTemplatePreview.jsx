@@ -281,6 +281,7 @@ export default function WebsiteTemplatePreview({
   showBrowserChrome = false,
   onSelectTarget,
   activeTargetId = "",
+  activePageKey = undefined,
 }) {
   const isCompactVariant = variant === "compact";
   const showContactWidget =
@@ -348,6 +349,7 @@ export default function WebsiteTemplatePreview({
               browserTitle={model.site.title || "Website preview"}
               onSelectTarget={onSelectTarget}
               activeTargetId={activeTargetId}
+              activePageKey={activePageKey}
             />
           </div>
         </div>
@@ -364,4 +366,5 @@ WebsiteTemplatePreview.propTypes = {
   showBrowserChrome: PropTypes.bool,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  activePageKey: PropTypes.string,
 };

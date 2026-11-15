@@ -145,4 +145,37 @@ describe("PropertyReviewDetailPage", () => {
     expect(screen.getByText("Loading the listing…")).toBeTruthy();
     expect(fetchReviewDetail).toHaveBeenLastCalledWith("p2", { signal: expect.any(AbortSignal) });
   });
+
+  test("shows the review history under the facts", async () => {
+    fetchReviewDetail.mockResolvedValue(
+      makeDetail({
+        history: [
+          {
+            id: "e1",
+            action: "REJECTED",
+            fromStatus: "PENDING_REVIEW",
+            toStatus: "REJECTED",
+            reason: "Photos are blurry",
+            actorId: "admin-7",
+            createdAt: UPDATED_AT,
+          },
+        ],
+      })
+    );
+
+    renderAt("p1");
+
+    expect(await screen.findByRole("heading", { name: "Review history" })).toBeTruthy();
+    expect(screen.getByText("Admin admin-7")).toBeTruthy();
+    expect(screen.getByRole("blockquote").textContent).toBe("Photos are blurry");
+  });
+
+  test("still renders a payload without history and shows the history fallback", async () => {
+    fetchReviewDetail.mockResolvedValue(makeDetail());
+
+    renderAt("p1");
+
+    expect(await screen.findByRole("heading", { name: "Canal house" })).toBeTruthy();
+    expect(screen.getByText("No review history yet.")).toBeTruthy();
+  });
 });

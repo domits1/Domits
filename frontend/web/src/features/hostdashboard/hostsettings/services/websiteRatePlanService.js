@@ -34,7 +34,7 @@ export const getWebsiteRatePlan = async () => {
   return readResponse(response);
 };
 
-export const changeWebsiteRatePlan = async (plan) => {
+export const changeWebsiteRatePlan = async (plan, { withoutPayment = false } = {}) => {
   if (!["essentials", "elite"].includes(plan)) {
     throw new Error("Unsupported website rate plan.");
   }
@@ -42,7 +42,7 @@ export const changeWebsiteRatePlan = async (plan) => {
   const response = await fetchWithWebsiteSession(RATE_PLAN_URL, {
     method: "PATCH",
     headers: JSON_HEADERS,
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify(withoutPayment === true ? { plan, withoutPayment: true } : { plan }),
   });
 
   return readResponse(response);

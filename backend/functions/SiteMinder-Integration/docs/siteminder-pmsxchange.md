@@ -15,8 +15,37 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 | Rates (Per Day Pricing) | `util/ratesMessage.js`, `business/siteMinderRatesPusher.js` | Domits -> SiteMinder | `OTA_HotelRateAmountNotifRQ` |
 | Mapping | `business/siteMinderMappingService.js` | - | shared tables |
 | Checked sending | `business/siteMinderInventoryService.js` | Domits -> SiteMinder | - |
+| Reading reservations | `util/reservationsMessage.js` | SiteMinder -> Domits | `OTA_ResRetrieveRS` |
 
-Not built yet: receiving reservations, the Lambda handler and schedule, and the host screen.
+Not built yet: asking for and confirming reservations, saving them as bookings, the Lambda handler and schedule, and the host screen.
+
+## Receiving reservations
+
+Domits pulls reservations, it does not get them pushed. Pull fits what is already here: the same SOAP client and WS-Security login, and a schedule like the Truvi Lambda. Push would need a public SOAP endpoint in API Gateway. Source: [Reservations Pull](https://developer.siteminder.com/pmsxchange-api/reference/reservations/pull.md).
+
+1. Every 2 to 5 minutes (SiteMinder allows nothing outside that range), Domits sends `OTA_ReadRQ` with `SelectionType="Undelivered"`.
+2. SiteMinder answers `OTA_ResRetrieveRS` with zero or more reservations. Each one is `Book`, `Modify` or `Cancel`.
+3. Domits creates, changes or cancels the booking.
+4. Domits confirms with `OTA_NotifReportRQ`: saved reservations in one message, failed ones with an `Errors` block in another. SiteMinder does not allow both in one message.
+5. Domits sends the new availability with `OTA_HotelAvailNotifRQ`.
+
+A reservation that is not confirmed comes back on the next `OTA_ReadRQ`. After 20 reads, or one hour after the first delivery, SiteMinder marks it failed and emails the hotel. That is a fail-safe, not a retry plan: a reservation Domits cannot save must be reported as failed.
+
+`readReservations` reads only what Domits needs from each reservation:
+
+| Field | From |
+| ----- | ---- |
+| `status` | `@ResStatus` (`Book`, `Modify`, `Cancel`) |
+| `siteMinderId` | `UniqueID Type="14"`, the same for every change of the reservation |
+| `messageId` | `UniqueID Type="16"`, needed to confirm this delivery |
+| `createdAt`, `lastModifiedAt` | `@CreateDateTime` (Book) and `@LastModifyDateTime` (Modify, Cancel), as sent |
+| `hotelCode` | `ResGlobalInfo/BasicPropertyInfo`, else the first room |
+| `channel` | the primary `BookingChannel`, for example `EXP` Expedia |
+| `rooms` | per `RoomStay`: room type, every rate plan, arrival and departure, adults, children and infants, and the room total. Room type and rate plans are empty when SiteMinder has no mapping for them |
+| `guest` | the primary guest: first and last name, email and the first phone number |
+| `total` | `ResGlobalInfo/Total`, which SiteMinder calls the total for the whole reservation |
+
+It never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id throws, because it can be neither saved nor confirmed. A response with a `DOCTYPE` is refused.
 
 ## When a send is tried again
 

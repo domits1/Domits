@@ -533,10 +533,16 @@
   flex-wrap: wrap;
 }
 
+// The site header is fixed on top; at top: 0 the filters would stick underneath it and stay hidden.
 .channex-diagnostics-control-panel {
   position: sticky;
-  top: 0;
+  top: var(--app-header-h, 90px);
   z-index: 2;
+}
+
+// One row keeps the sticky filters low, so they cover little of the tab below while scrolling.
+.channex-diagnostics-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .channex-diagnostics-tabs {
@@ -1108,6 +1114,11 @@
 @media (max-width: 640px) {
   .host-integrations-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  // Stacked on a phone the filters are three rows high; stuck to the top they would hide a third of the screen.
+  .channex-diagnostics-control-panel {
+    position: static;
   }
 
   .channex-diagnostics-detail-grid {

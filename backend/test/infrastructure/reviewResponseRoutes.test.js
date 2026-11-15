@@ -6,6 +6,7 @@ const template = JSON.parse(fs.readFileSync(path.join(__dirname,
 const resources = template.Resources;
 
 test.each([
+  ["ApproveReview", "ApproveResource", "POST", "approve"],
   ["SaveDraft", "ResponseResource", "POST", "response"],
   ["EditResponse", "ResponseResource", "PATCH", "response"],
   ["PublishResponse", "PublishResource", "POST", "response/publish"],
@@ -24,7 +25,7 @@ test.each([
     "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*/" + method + "/reviews/*/" + suffix);
 });
 
-test.each(["Response", "Publish"])("%s preflight is unauthenticated and allows authorization headers", (name) => {
+test.each(["Response", "Publish", "Approve"])("%s preflight is unauthenticated and allows authorization headers", (name) => {
   const config = resources[`${name}OptionsMethod`].Properties;
   expect(config).toMatchObject({ HttpMethod: "OPTIONS", AuthorizationType: "NONE", ApiKeyRequired: false });
   expect(config.Integration.Type).toBe("MOCK");

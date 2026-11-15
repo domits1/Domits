@@ -29,11 +29,11 @@ class PropertyRepository {
 
   async fetchPropertyByCountry(
     country,
+    lastEvaluatedKeyCreatedAt,
     lastEvaluatedKeyId,
-    lastEvaluatedKeyCity,
   ) {
     const response = await fetch(
-      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyId=${lastEvaluatedKeyId}&lastEvaluatedKeyCity=${lastEvaluatedKeyCity}`,
+      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyCreatedAt=${lastEvaluatedKeyCreatedAt}&lastEvaluatedKeyId=${lastEvaluatedKeyId}`,
     );
     if (!response.ok) {
       throw new Error(

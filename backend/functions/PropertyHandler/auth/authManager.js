@@ -14,6 +14,7 @@ const REJECTED_TOKEN_ERRORS = new Set([
     "UserNotFoundException",
     "PasswordResetRequiredException",
     "UserNotConfirmedException",
+    "NotFoundException",
 ]);
 
 export class AuthManager {

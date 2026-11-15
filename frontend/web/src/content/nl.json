@@ -433,22 +433,50 @@
         "subtitle": "Gepassioneerde reizigers en tech-innovators die de toekomst van gastvrijheid bouwen",
         "moreMembers": "+32 leden",
         "members": [
-          { "name": "Stefan Hopman", "role": "Oprichter" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Ontwikkelaar" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Oprichter"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Ontwikkelaar"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nationaliteiten" },
-        { "icon": "users", "value": "+35", "label": "Teamleden" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Werk van overal" },
-        { "icon": "handHeart", "value": "People-first", "label": "Cultuur die geeft om mensen" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nationaliteiten"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Teamleden"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Werk van overal"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Cultuur die geeft om mensen"
+        }
       ],
       "cards": {
         "featured": {
           "title": "De toekomst van reizen bouwen",
           "description": "We bedenken opnieuw hoe mensen reizen ontdekken, boeken en beleven. Doe met ons mee in het creëren van technologie die de wereld dichter bij elkaar brengt.",
-          "tags": ["Wereldwijde impact", "Innovatie voorop"]
+          "tags": [
+            "Wereldwijde impact",
+            "Innovatie voorop"
+          ]
         },
         "partnerSuccess": {
           "title": "Succes voor partners",
@@ -458,12 +486,20 @@
         "culture": {
           "title": "Cultuur die geeft om mensen",
           "description": "Remote-first, inclusief en menselijk. Wij geven prioriteit aan werk-privébalans en betekenisvolle impact.",
-          "tags": ["Remote", "Flexibel", "Wereldwijd"]
+          "tags": [
+            "Remote",
+            "Flexibel",
+            "Wereldwijd"
+          ]
         },
         "openPositions": {
           "title": "Openstaande functies",
           "description": "We nemen mensen aan binnen engineering, product, design en partnerschappen.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -716,18 +752,36 @@
         "eyebrow": "Voor gasten",
         "heading": "Vind je perfecte verblijf in 3 eenvoudige stappen",
         "steps": [
-          { "title": "Zoek je bestemming", "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen." },
-          { "title": "Boek je verblijf", "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken." },
-          { "title": "Beleef Domits", "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning." }
+          {
+            "title": "Zoek je bestemming",
+            "description": "Ontdek vakantieverhuur met slimme filters voor locatie, datums, prijs en voorzieningen."
+          },
+          {
+            "title": "Boek je verblijf",
+            "description": "Kies je favoriete accommodatie en bevestig je boeking in slechts een paar klikken."
+          },
+          {
+            "title": "Beleef Domits",
+            "description": "Stuur je host een bericht, beheer je reis en geniet van persoonlijke ondersteuning."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "Voor hosts",
         "heading": "Laat je verhuurbedrijf moeiteloos groeien",
         "steps": [
-          { "title": "Plaats je accommodatie", "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in." },
-          { "title": "Beheer boekingen", "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten." },
-          { "title": "Word veilig betaald", "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime." }
+          {
+            "title": "Plaats je accommodatie",
+            "description": "Voeg foto's, beschrijving en voorzieningen toe en stel in enkele minuten je prijs en beschikbaarheid in."
+          },
+          {
+            "title": "Beheer boekingen",
+            "description": "Volg boekingen, beheer je agenda en communiceer eenvoudig met gasten."
+          },
+          {
+            "title": "Word veilig betaald",
+            "description": "Ontvang betalingen veilig en volg je inkomsten en inzichten in realtime."
+          }
         ]
       }
     },
@@ -1338,6 +1392,18 @@
             "title": "Teamleden",
             "desc": "Nodig je team uit en wijs rollen toe binnen je portefeuille."
           },
+          "security": {
+            "title": "Beveiliging & authenticatie instellen",
+            "desc": "Beveilig je account met tweestapsverificatie."
+          },
+          "owners": {
+            "title": "Eigenaarsbeheer instellen",
+            "desc": "Voeg eigenaren toe en beheer hun eigendomsaandelen."
+          },
+          "messaging": {
+            "title": "Berichten instellen",
+            "desc": "Stel automatische berichten in voor je gasten."
+          },
           "listProperties": {
             "title": "Woningen aanmelden",
             "desc": "Beheer en voeg woningen toe binnen je portefeuille."
@@ -1667,6 +1733,7 @@
       "websitePlan": {
         "sectionTitle": "Direct Booking-websiteabonnement",
         "sectionSubtitle": "Kies het abonnement voor je boekingswebsite. De prijs van Elite wordt hieronder weergegeven.",
+        "sectionSubtitleWithoutPayment": "Kies het abonnement voor je boekingswebsite.",
         "loading": "Je websiteabonnement wordt geladen...",
         "loadError": "Je huidige websiteabonnement kon niet worden geladen.",
         "essentials": "Essentials",
@@ -1702,10 +1769,12 @@
         "checkoutError": "Stripe Checkout kon niet worden gestart. Probeer het opnieuw.",
         "downgradeScheduled": "De overstap naar Essentials staat gepland aan het einde van je huidige factureringsperiode.",
         "downgradeSuccess": "Je websiteabonnement is nu Essentials.",
+        "upgradeSuccess": "Je websiteabonnement is nu Elite.",
         "restoreSuccess": "Je Elite-abonnement is opnieuw geactiveerd.",
         "unchanged": "Je websiteabonnement is al bijgewerkt.",
         "effectiveUntil": "Elite blijft actief tot {date}.",
         "priceUnavailable": "Prijs niet beschikbaar",
+        "withoutPayment": "Geen betaling nodig",
         "checkoutPending": "We bevestigen je Elite-abonnement. Dit kan even duren.",
         "checkoutSuccess": "Je Elite-abonnement is actief.",
         "checkoutCancelled": "De betaling is geannuleerd. Je abonnement is niet gewijzigd.",
@@ -1807,6 +1876,39 @@
         "cancel": "Annuleren",
         "success": "✓ Uitnodiging verstuurd naar",
         "error": "Uitnodiging verzenden mislukt. Probeer het opnieuw."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Meldingen",
+      "description": "Kies hoe je elke melding wilt ontvangen.",
+      "event": "Melding",
+      "required": "Verplicht",
+      "eventNamesNote": "De namen van meldingen worden momenteel door de backend in het Engels aangeleverd.",
+      "disableAllEmail": "Alle optionele e-mailmeldingen uitzetten",
+      "enableAllEmail": "Alle optionele e-mailmeldingen aanzetten",
+      "loading": "Meldingvoorkeuren laden...",
+      "retry": "Opnieuw proberen",
+      "saved": "Meldingvoorkeuren opgeslagen.",
+      "saving": "Opslaan...",
+      "save": "Voorkeuren opslaan",
+      "channels": {
+        "inApp": "In-app",
+        "email": "E-mail",
+        "sms": "Sms"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Boekingen & reserveringen",
+        "propertyOwner": "Woning eigenaar",
+        "finance": "Financiën",
+        "distribution": "Distributie",
+        "compliance": "Compliance",
+        "tasks": "Taken"
+      },
+      "errors": {
+        "loadFailed": "Je meldingsvoorkeuren konden niet worden geladen. Probeer het opnieuw voordat je wijzigingen aanbrengt.",
+        "saveFailed": "Je meldingsvoorkeuren konden niet worden opgeslagen. Je wijzigingen zijn bewaard. Probeer het opnieuw.",
+        "invalidResponse": "De ontvangen meldingsvoorkeuren zijn ongeldig. Probeer het opnieuw."
       }
     }
   },
@@ -1970,6 +2072,104 @@
       "pending": "In afwachting",
       "archived": "Gearchiveerd",
       "unknown": "Onbekende status"
+    },
+    "addOwner": "Eigenaar toevoegen",
+    "editOwner": "Bewerken",
+    "editOwnerLabel": "{name} bewerken",
+    "columnActions": "Acties",
+    "form": {
+      "createTitle": "Eigenaar toevoegen",
+      "editTitle": "Eigenaar bewerken",
+      "labels": {
+        "first_name": "Voornaam",
+        "last_name": "Achternaam",
+        "company_name": "Bedrijfsnaam",
+        "email": "E-mail",
+        "phone": "Telefoon",
+        "preferred_language": "Voorkeurstaal (zoals en of nl-NL)",
+        "owner_type": "Type eigenaar",
+        "status": "Status",
+        "notes": "Notities"
+      },
+      "chooseOwnerType": "Kies een type",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "close": "Sluiten",
+      "createdToast": "{name} is toegevoegd.",
+      "updatedToast": "{name} is bijgewerkt.",
+      "errorNotFound": "Deze eigenaar bestaat niet meer. Sluit het formulier en laad de pagina opnieuw.",
+      "errorGeneric": "We konden de eigenaar niet opslaan. Probeer het opnieuw.",
+      "errors": {
+        "required": "Dit veld is verplicht.",
+        "tooLong": "Gebruik maximaal {max} tekens.",
+        "invalidCharacters": "Dit veld bevat tekens die niet zijn toegestaan.",
+        "invalidEmail": "Voer een geldig e-mailadres in.",
+        "invalidPhone": "Gebruik minstens één cijfer, en alleen cijfers, spaties en + ( ) - .",
+        "invalidLanguage": "Gebruik een taalcode zoals en of nl-NL.",
+        "invalidOwnerType": "Kies een type eigenaar.",
+        "invalidStatus": "Kies een status.",
+        "archivedStatus": "Een eigenaar kan alleen via archiveren worden gearchiveerd.",
+        "companyNameRequired": "Een bedrijfsnaam is verplicht voor een bedrijf of trust."
+      }
+    },
+    "detail": {
+      "backToOwners": "Terug naar eigenaren",
+      "loading": "Eigenaar laden…",
+      "errorNotFound": "Deze eigenaar bestaat niet of is niet een van jouw eigenaren.",
+      "errorGeneric": "We konden deze eigenaar niet laden. Probeer het opnieuw.",
+      "detailsTitle": "Gegevens",
+      "notProvided": "Niet ingevuld",
+      "labels": {
+        "created_at": "Aangemaakt",
+        "updated_at": "Laatst gewijzigd"
+      },
+      "archive": "Archiveren",
+      "archiving": "Archiveren…",
+      "restore": "Herstellen",
+      "restoring": "Herstellen…",
+      "archiveConfirmTitle": "Deze eigenaar archiveren?",
+      "archiveConfirmMessage": "{name} wordt verborgen in je lijst met eigenaren. Je kunt deze eigenaar later herstellen.",
+      "archivedToast": "{name} is gearchiveerd.",
+      "restoredToast": "{name} is hersteld.",
+      "archiveBlocked": "{name} kan nog niet worden gearchiveerd, omdat deze eigenaar nog huidige of toekomstige eigendomsaandelen heeft. Haal {name} eerst uit de aandelen van die accommodaties en archiveer daarna opnieuw."
+    },
+    "shares": {
+      "title": "Eigendomsaandelen instellen",
+      "propertyLabel": "Accommodatie",
+      "propertyPlaceholder": "Kies een accommodatie",
+      "dateLabel": "Aandelen gelden vanaf",
+      "ownerColumn": "Eigenaar",
+      "percentColumn": "Aandeel (%)",
+      "chooseOwner": "Kies een eigenaar",
+      "totalLabel": "Totaal",
+      "totalValue": "{percent}% van 100%",
+      "addOwner": "Eigenaar toevoegen",
+      "removeOwner": "Verwijderen",
+      "removeOwnerLabel": "{name} verwijderen",
+      "save": "Aandelen opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "plannedChangeWarning": "Voor deze accommodatie staat al een wijziging van het eigendom gepland vanaf {date}. Opslaan vervangt elke geplande wijziging vanaf de datum die je kiest.",
+      "savedToast": "De aandelen van {property} zijn opgeslagen. Ze gelden vanaf {date}.",
+      "upcomingTitle": "Gepland na deze wijziging",
+      "errorChangedToday": "Het eigendom van deze accommodatie is vandaag al gewijzigd. Kies morgen of een latere datum.",
+      "errorArchivedOwner": "Een van deze eigenaren is gearchiveerd, en gearchiveerde eigenaren kunnen geen aandelen krijgen. Haal die eigenaar uit de lijst of herstel de eigenaar eerst.",
+      "errorConflict": "Het eigendom van deze accommodatie is tegelijkertijd gewijzigd. Laad de pagina opnieuw en probeer het nog eens.",
+      "errors": {
+        "propertyRequired": "Kies een accommodatie.",
+        "dateRequired": "Kies de datum waarop de aandelen ingaan.",
+        "dateInvalid": "Vul een geldige datum in.",
+        "dateBeforeToday": "De datum kan niet vóór vandaag liggen.",
+        "dateTooLate": "De datum kan hooguit 5 jaar na vandaag liggen.",
+        "sharesRequired": "Voeg minstens één eigenaar toe. Een accommodatie kan niet zonder eigenaren blijven.",
+        "totalMismatch": "De aandelen moeten samen precies 100% zijn.",
+        "ownerRequired": "Kies een eigenaar.",
+        "ownerDuplicate": "Deze eigenaar staat al in de lijst.",
+        "percentRequired": "Vul een aandeel in.",
+        "percentInvalid": "Vul een percentage in van 0,01 tot 100, met hooguit 2 decimalen.",
+        "percentZero": "Een aandeel moet minstens 0,01% zijn. Verwijder de eigenaar in plaats daarvan."
+      }
     }
   }
 }

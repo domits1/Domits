@@ -4,6 +4,7 @@ import { getListingStatusLabel, getListingStatusTone } from "../../hostproperty/
 import { PROPERTY_REVIEW_LIST_PATH } from "../propertyReviewPaths";
 import { formatReviewPrice, formatReviewUpdated } from "../queue/reviewQueueFormat";
 import { formatReviewAddress, formatReviewCleaning, textOrEmpty } from "./reviewDetailFormat";
+import ReviewHistory from "./ReviewHistory";
 import styles from "./PropertyReviewDetail.module.css";
 
 function Fact({ label, children }) {
@@ -31,6 +32,7 @@ function ReviewDetailSummary({ detail }) {
         <Fact label="Cleaning fee">{formatReviewCleaning(pricing)}</Fact>
         <Fact label="Description">{textOrEmpty(property?.description)}</Fact>
       </dl>
+      <ReviewHistory history={detail.history} hostId={property?.hostId} />
       <Link className={styles.backLink} to={PROPERTY_REVIEW_LIST_PATH}>
         Back to the queue
       </Link>

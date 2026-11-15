@@ -259,6 +259,7 @@ describe("PropertyService.getFullPropertyForReview", () => {
   beforeEach(() => {
     service = new PropertyService();
     service.directBookingWebsiteSiteRepository = {};
+    service.propertyRepository = { getModerationEventsByPropertyId: jest.fn(async () => []) };
     service.getBasePropertyInfo = jest.fn();
     service.getFullPropertyAttributesWithFullLocation = jest.fn(async (id) => ({ property: { id } }));
   });
@@ -271,6 +272,7 @@ describe("PropertyService.getFullPropertyForReview", () => {
     expect(error).toBeInstanceOf(NotFoundException);
     expect(error.statusCode).toBe(404);
     expect(service.getFullPropertyAttributesWithFullLocation).not.toHaveBeenCalled();
+    expect(service.propertyRepository.getModerationEventsByPropertyId).not.toHaveBeenCalled();
   });
 
   it.each(Object.values(PROPERTY_STATUS))("returns the full property with its full location when it is %s", async (status) => {
@@ -278,7 +280,7 @@ describe("PropertyService.getFullPropertyForReview", () => {
 
     const result = await service.getFullPropertyForReview("property-1");
 
-    expect(result).toEqual({ property: { id: "property-1" } });
+    expect(result).toEqual({ property: { id: "property-1" }, history: [] });
     expect(service.getFullPropertyAttributesWithFullLocation).toHaveBeenCalledWith("property-1");
   });
 
@@ -289,4 +291,72 @@ describe("PropertyService.getFullPropertyForReview", () => {
 
     expect(service.getFullPropertyAttributesWithFullLocation.mock.calls[0]).toHaveLength(1);
   });
+
+  it("adds the moderation history in repository order", async () => {
+    const history = [
+      { id: "e2", action: "REJECTED", createdAt: 20 },
+      { id: "e1", action: "SUBMITTED", createdAt: 10 },
+    ];
+    service.getBasePropertyInfo.mockResolvedValue({ id: "property-1", status: "DRAFT" });
+    service.propertyRepository.getModerationEventsByPropertyId.mockResolvedValue(history);
+
+    const result = await service.getFullPropertyForReview("property-1");
+
+    expect(result.history).toEqual(history);
+    expect(service.propertyRepository.getModerationEventsByPropertyId).toHaveBeenCalledWith("property-1");
+  });
+
+  it("returns an empty history for a listing without events", async () => {
+    service.getBasePropertyInfo.mockResolvedValue({ id: "property-1", status: "ACTIVE" });
+
+    const result = await service.getFullPropertyForReview("property-1");
+
+    expect(result.history).toEqual([]);
+  });
+});
+
+const STUBBED_READS = {
+  getAmenities: [],
+  getAvailability: [],
+  getAvailabilityRestrictions: [],
+  getCheckIn: {},
+  getGeneralDetails: [],
+  getImages: [],
+  getLocation: {},
+  getFullLocation: {},
+  getPricing: {},
+  getRules: [],
+  getPropertyTestStatus: {},
+  getCancellationPolicy: {},
+  getLateCheckin: {},
+  getHouseRules: {},
+  getCustomRules: [],
+  getPublicCalendarAvailability: {},
+};
+
+describe("PropertyService reads outside the admin review never carry the moderation history", () => {
+  let service;
+
+  beforeEach(() => {
+    service = new PropertyService();
+    service.directBookingWebsiteSiteRepository = {};
+    service.propertyRepository = { getModerationEventsByPropertyId: jest.fn(async () => [{ id: "e1", actorId: "admin-1" }]) };
+    service.getBasePropertyInfo = jest.fn(async (id) => ({ id, status: "ACTIVE" }));
+    service.getPropertyType = jest.fn(async () => ({ property_type: "House" }));
+    service.getCardPropertyAttributes = jest.fn(async (id) => ({ property: { id, status: "ACTIVE" } }));
+    service.attachAmenities = jest.fn(async (cards) => cards);
+    Object.entries(STUBBED_READS).forEach(([method, value]) => {
+      service[method] = jest.fn(async () => value);
+    });
+  });
+
+  it.each(["getFullPropertyByIdAsHost", "getFullActivePropertyById", "getActivePropertyCardById"])(
+    "%s does not read or return history",
+    async (method) => {
+      const result = await service[method]("property-1");
+
+      expect(service.propertyRepository.getModerationEventsByPropertyId).not.toHaveBeenCalled();
+      expect(result).not.toHaveProperty("history");
+    }
+  );
 });

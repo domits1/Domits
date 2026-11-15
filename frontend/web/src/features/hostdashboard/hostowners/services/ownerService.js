@@ -1,9 +1,10 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { Auth } from "aws-amplify";
 import { getOwnerApiUrl } from "./ownerApiConfig";
 
 const SIGNED_OUT_MESSAGE = "We could not read your sign-in. Please sign in again.";
 const INVALID_RESPONSE_MESSAGE = "The property owners service returned an unreadable response.";
 const UNAUTHORIZED_STATUS = 401;
+const SESSION_NETWORK_ERROR_CODE = "NetworkError";
 
 export class OwnerApiError extends Error {
   constructor(message, { status, serverMessage }) {
@@ -38,12 +39,26 @@ const readPayload = async (response) => {
 const readServerMessage = (payload) =>
   payload !== null && typeof payload === "object" && typeof payload.message === "string" ? payload.message : null;
 
+const signedOutError = () =>
+  new OwnerApiError(SIGNED_OUT_MESSAGE, { status: UNAUTHORIZED_STATUS, serverMessage: null });
+
+const readAccessToken = async () => {
+  let session;
+  try {
+    session = await Auth.currentSession();
+  } catch (error) {
+    throw error?.code === SESSION_NETWORK_ERROR_CODE ? error : signedOutError();
+  }
+  const token = session?.getAccessToken?.()?.getJwtToken?.();
+  if (typeof token !== "string" || token === "") {
+    throw signedOutError();
+  }
+  return token;
+};
+
 const request = async ({ method, query = {}, body }) => {
   const url = buildUrl(query);
-  const token = getAccessToken();
-  if (!token) {
-    throw new OwnerApiError(SIGNED_OUT_MESSAGE, { status: UNAUTHORIZED_STATUS, serverMessage: null });
-  }
+  const token = await readAccessToken();
   const hasBody = body !== undefined;
   const headers = hasBody ? { Authorization: token, "Content-Type": "application/json" } : { Authorization: token };
   const response = await fetch(url, { method, headers, ...(hasBody ? { body: JSON.stringify(body) } : {}) });

@@ -21,6 +21,9 @@ class MessageController {
   async sendMessage(event) {
     const authenticatedUser = getAuthenticatedUser(event);
     const body = parseBody(event);
+    if (body.retryMessageId) {
+      return await this.messageService.retryMessage(body.retryMessageId, authenticatedUser);
+    }
     return await this.messageService.sendMessage(body, authenticatedUser);
   }
 

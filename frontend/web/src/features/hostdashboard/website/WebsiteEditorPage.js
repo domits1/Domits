@@ -70,6 +70,7 @@ import { WebsitePreviewSkeleton } from "./rendering/WebsitePreviewSkeleton";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import { WebsiteEditorSidebar } from "./editor/WebsiteEditorSidebar";
+import { WebsiteEditorPagePicker } from "./editor/sections/WebsiteEditorPagesSection";
 import {
   WebsiteEditorActionMenu,
   WebsiteEditorErrorState,
@@ -79,6 +80,8 @@ import {
 import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
+import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
+import { applySitePagesEdit, omitSitePages } from "./editor/websiteEditorSitePages";
 import {
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
@@ -276,6 +279,12 @@ function WebsiteEditorPage() {
     setImagePickerState,
     setPreviewTargetId,
   });
+  const sitePagesEditor = useWebsiteEditorSitePages({
+    draftTemplateKey,
+    workingOverrides: getDraftWorkingContentOverrides(draftRecord),
+  });
+  const { isEliteHost, menuItems, previewPageKey, resetSitePagesEdit, selectPreviewPage, sitePagesEdit } =
+    sitePagesEditor;
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -286,8 +295,16 @@ function WebsiteEditorPage() {
   }, [baseModel, draftTemplateKey, editorValues]);
 
   const mergedContentOverrides = useMemo(
-    () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
-    [contentOverridePatch, draftRecord]
+    () =>
+      mergeWebsiteDraftContentOverrides(
+        applySitePagesEdit(
+          getDraftWorkingContentOverrides(draftRecord),
+          sitePagesEdit,
+          getDraftPublishedContentOverrides(draftRecord)
+        ),
+        contentOverridePatch
+      ),
+    [contentOverridePatch, draftRecord, sitePagesEdit]
   );
 
   const publishedContentOverrides = useMemo(
@@ -313,8 +330,9 @@ function WebsiteEditorPage() {
     }
 
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
-    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides, draftTemplateKey);
-  }, [baseModel, draftTemplateKey, mergedContentOverrides, mergedThemeOverrides]);
+    const previewContentOverrides = isEliteHost ? mergedContentOverrides : omitSitePages(mergedContentOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, previewContentOverrides, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, isEliteHost, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
@@ -831,6 +849,7 @@ function WebsiteEditorPage() {
     const nextTemplateKey = String(persistedDraft.templateKey || draftTemplateKey).trim();
 
     setDraftRecord(persistedDraft);
+    resetSitePagesEdit();
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, nextTemplateKey));
     }
@@ -1101,6 +1120,7 @@ function WebsiteEditorPage() {
         viewport={previewViewport}
         onSelectTarget={handlePreviewTargetSelect}
         activeTargetId={activePreviewTargetId}
+        activePageKey={previewPageKey}
       />
     );
   }
@@ -1263,6 +1283,7 @@ function WebsiteEditorPage() {
               setSectionRef={setSectionRef}
               setTargetRef={setTargetRef}
               showWhatsAppSetupHint={showWhatsAppSetupHint}
+              sitePagesEditor={sitePagesEditor}
               standaloneVisibilityFields={standaloneVisibilityFields}
               themeValues={themeValues}
               toggleSection={toggleSection}
@@ -1296,6 +1317,11 @@ function WebsiteEditorPage() {
                 </div>
               </div>
 
+              <WebsiteEditorPagePicker
+                activePageKey={previewPageKey}
+                menuItems={menuItems}
+                onSelectPage={selectPreviewPage}
+              />
               {previewPanelContent}
             </section>
           </div>

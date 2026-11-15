@@ -1,10 +1,13 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
+  STATIC_SITE_PAGE_SLUGS,
   StaticPageStore,
   buildStaticPageKey,
+  buildStaticSitePageKey,
   buildStaticSitemapKey,
 } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
+import { buildFakeSitesBucketClient } from "./fakeSitesBucketClient.js";
 
 const BUCKET = "sites-bucket-under-test";
 
@@ -156,6 +159,7 @@ describe("StaticPageStore", () => {
     expect(listed).toEqual({
       hostnames: ["a.direct.domits.com", "www.b.nl"],
       etags: { "a.direct.domits.com": '"e1"', "www.b.nl": "" },
+      sitePages: {},
       rejected: [
         "sites/by-host/a.direct.domits.com/old.html",
         "sites/by-host/index.html",
@@ -179,7 +183,43 @@ describe("StaticPageStore", () => {
     expect(listed).toEqual({
       hostnames: ["a.direct.domits.com"],
       etags: { "a.direct.domits.com": '"e1"' },
+      sitePages: {},
       rejected: [],
+    });
+  });
+
+  it("lists the page keys of each host apart, with their etags, and still reports any other key under a host", async () => {
+    const send = jest.fn(async () => ({
+      Contents: [
+        { Key: "sites/by-host/a.direct.domits.com/index.html", ETag: '"e1"' },
+        { Key: "sites/by-host/a.direct.domits.com/pages/gallery.html", ETag: '"g1"' },
+        { Key: "sites/by-host/a.direct.domits.com/pages/contact-us.html", ETag: '"c1"' },
+        { Key: "sites/by-host/www.b.nl/pages/accommodation.html", ETag: '"a2"' },
+        { Key: "sites/by-host/a.direct.domits.com/pages/contact.html" },
+        { Key: "sites/by-host/a.direct.domits.com/pages/Gallery.html" },
+        { Key: "sites/by-host/a.direct.domits.com/pages/index.html" },
+        { Key: "sites/by-host/UPPER.example/pages/gallery.html" },
+        { Key: "sites/by-host/a.direct.domits.com/x/pages/gallery.html" },
+      ],
+      IsTruncated: false,
+    }));
+
+    const listed = await buildStore(send).listPageHostnames();
+
+    expect(listed).toEqual({
+      hostnames: ["a.direct.domits.com"],
+      etags: { "a.direct.domits.com": '"e1"' },
+      sitePages: {
+        "a.direct.domits.com": { gallery: '"g1"', "contact-us": '"c1"' },
+        "www.b.nl": { accommodation: '"a2"' },
+      },
+      rejected: [
+        "sites/by-host/a.direct.domits.com/pages/contact.html",
+        "sites/by-host/a.direct.domits.com/pages/Gallery.html",
+        "sites/by-host/a.direct.domits.com/pages/index.html",
+        "sites/by-host/UPPER.example/pages/gallery.html",
+        "sites/by-host/a.direct.domits.com/x/pages/gallery.html",
+      ],
     });
   });
 
@@ -245,5 +285,120 @@ describe("the key a sitemap is stored under", () => {
     expect(() => buildStaticSitemapKey(hostname)).toThrow(
       new TypeError("A static page key needs a lowercase hostname.")
     );
+  });
+});
+
+describe("the key a site page is stored under", () => {
+  it("names one file per page under the hostname, for the fixed pages only", () => {
+    expect(STATIC_SITE_PAGE_SLUGS).toEqual(["gallery", "accommodation", "contact-us"]);
+    expect(STATIC_SITE_PAGE_SLUGS.map((slug) => buildStaticSitePageKey("www.villasensual.nl", slug))).toEqual([
+      "sites/by-host/www.villasensual.nl/pages/gallery.html",
+      "sites/by-host/www.villasensual.nl/pages/accommodation.html",
+      "sites/by-host/www.villasensual.nl/pages/contact-us.html",
+    ]);
+  });
+
+  it.each([
+    [""],
+    ["index"],
+    ["contact"],
+    ["Gallery"],
+    ["gallery.html"],
+    ["gallery/x"],
+    ["../index"],
+    ["toString"],
+    [undefined],
+    [["gallery"]],
+  ])("refuses the slug %j", (slug) => {
+    expect(() => buildStaticSitePageKey("www.villasensual.nl", slug)).toThrow(
+      new TypeError("A site page key needs a slug from the fixed page list.")
+    );
+  });
+
+  it.each([["Www.Villasensual.nl"], ["../index.html"], ["www.villasensual.nl/pages"]])(
+    "refuses the hostname %j like the page key",
+    (hostname) => {
+      expect(() => buildStaticSitePageKey(hostname, "gallery")).toThrow(
+        new TypeError("A static page key needs a lowercase hostname.")
+      );
+    }
+  );
+});
+
+describe("the site pages in the store", () => {
+  const HOST = "www.villasensual.nl";
+
+  beforeEach(() => {
+    process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET = BUCKET;
+  });
+
+  afterEach(() => {
+    delete process.env.DIRECT_BOOKING_WEBSITE_SITES_BUCKET;
+  });
+
+  it("writes a site page as html under its key, tagged with the site and revision it came from", async () => {
+    const send = jest.fn(async () => ({}));
+
+    await buildStore(send).putSitePage({
+      hostname: HOST,
+      slug: "gallery",
+      html: "<html>g</html>",
+      siteId: "s1",
+      revision: 4,
+    });
+
+    expect(send.mock.calls[0][0]).toBeInstanceOf(PutObjectCommand);
+    expect(send.mock.calls[0][0].input).toEqual({
+      Bucket: BUCKET,
+      Key: "sites/by-host/www.villasensual.nl/pages/gallery.html",
+      Body: "<html>g</html>",
+      ContentType: "text/html; charset=utf-8",
+      CacheControl: "public, max-age=300",
+      Metadata: { "site-id": "s1", revision: "4" },
+    });
+  });
+
+  it("refuses to write or delete a site page outside the fixed pages, before the bucket is asked", async () => {
+    const send = jest.fn();
+    const store = buildStore(send);
+
+    await expect(store.putSitePage({ hostname: HOST, slug: "../index", html: "x", siteId: "s1" })).rejects.toThrow(
+      TypeError
+    );
+    await expect(store.deleteSitePage({ hostname: HOST, slug: "index" })).rejects.toThrow(TypeError);
+    await expect(store.listSitePages("../index.html")).rejects.toThrow(TypeError);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("lists only the fixed pages of the one host, across pages of the listing, never a longer hostname", async () => {
+    const client = buildFakeSitesBucketClient({
+      pageSize: 2,
+      objects: {
+        [`sites/by-host/${HOST}/index.html`]: "main",
+        [`sites/by-host/${HOST}/pages/accommodation.html`]: "a",
+        [`sites/by-host/${HOST}/pages/old.html`]: "old",
+        [`sites/by-host/${HOST}/pages/contact-us.html`]: "c",
+        [`sites/by-host/${HOST}.example.com/pages/gallery.html`]: "other host",
+      },
+    });
+
+    const pages = await new StaticPageStore({ client }).listSitePages(HOST);
+
+    expect(pages).toEqual({ accommodation: expect.stringMatching(/^"v\d+"$/), "contact-us": expect.any(String) });
+    expect(client.calls.map((call) => [call.name, call.key])).toEqual([
+      ["ListObjectsV2Command", `sites/by-host/${HOST}/pages/`],
+      ["ListObjectsV2Command", `sites/by-host/${HOST}/pages/`],
+    ]);
+  });
+
+  it("deletes a site page by its key, only the listed version when given its etag", async () => {
+    const client = buildFakeSitesBucketClient({ objects: { [`sites/by-host/${HOST}/pages/gallery.html`]: "g" } });
+    const store = new StaticPageStore({ client });
+
+    expect(await store.deleteSitePage({ hostname: HOST, slug: "gallery", etag: '"stale"' })).toBe(false);
+    expect(client.objects()).toEqual({ [`sites/by-host/${HOST}/pages/gallery.html`]: "g" });
+    expect(await store.deleteSitePage({ hostname: HOST, slug: "gallery", etag: '"v1"' })).toBe(true);
+    expect(client.objects()).toEqual({});
+    expect(await store.deleteSitePage({ hostname: HOST, slug: "gallery" })).toBe(true);
   });
 });

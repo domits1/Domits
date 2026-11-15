@@ -76,10 +76,6 @@ const CreateTaskModal = ({
                                 <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} min={getTodayString()} onChange={onInputChange} onClick={(e) => e.target.showPicker?.()} required />
                             </div>
                             <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference</label>
-                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} placeholder="Coming soon" disabled />
-                            </div>
-                            <div className="form-group">
                                 <label htmlFor='task-priority'>Priority</label>
                                 <select id='task-priority' name="priority" value={newTask.priority} onChange={onInputChange} required>
                                     <option value="Low">Low</option>

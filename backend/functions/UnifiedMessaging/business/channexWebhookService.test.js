@@ -77,7 +77,12 @@ const buildService = ({
   getById = jest.fn().mockResolvedValue(integrationAccount),
   ingestExternalThread = jest.fn().mockResolvedValue({
     statusCode: 200,
-    response: { ok: true, threadId: "thread-xyz", insertedMessages: 1 },
+    response: {
+      ok: true,
+      threadId: "thread-xyz",
+      insertedMessages: 1,
+      insertedMessageIds: { "channex-msg-1": "stored-1" },
+    },
   }),
   normalizeInboundMessage = jest.fn().mockReturnValue(normalizedPayload),
   findExternalThread = jest.fn().mockResolvedValue(existingThread),
@@ -171,7 +176,12 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
     expect(deps.ingestionService.ingestExternalThread).toHaveBeenCalledWith(normalizedPayload);
     expect(result).toEqual({
       statusCode: 200,
-      response: { ok: true, threadId: "thread-xyz", insertedMessages: 1 },
+      response: {
+        ok: true,
+        threadId: "thread-xyz",
+        insertedMessages: 1,
+        insertedMessageIds: { "channex-msg-1": "stored-1" },
+      },
     });
   });
 
@@ -487,6 +497,7 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
 
   describe("live delivery to the host's open inbox", () => {
     const publishedMessage = {
+      id: "stored-1",
       senderId: "CHANNEX_GUEST:channex-booking-1",
       userId: "CHANNEX_GUEST:channex-booking-1",
       recipientId: "host-1",
@@ -511,10 +522,32 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
       expect(deps.realtimePublisher).toHaveBeenCalledWith(publishedMessage);
     });
 
+    test("only the messages that were inserted are published, each with its stored id", async () => {
+      const normalizeInboundMessage = jest.fn().mockReturnValue({
+        ...normalizedPayload,
+        messages: [
+          { ...normalizedPayload.messages[0], platformMessageId: "pm-1", content: "already stored" },
+          { ...normalizedPayload.messages[0], platformMessageId: "pm-2", content: "new one" },
+        ],
+      });
+      const ingestExternalThread = jest.fn().mockResolvedValue({
+        statusCode: 200,
+        response: { ok: true, threadId: "thread-xyz", insertedMessages: 1, insertedMessageIds: { "pm-2": "stored-2" } },
+      });
+      const { service, deps } = buildService({ normalizeInboundMessage, ingestExternalThread });
+
+      await service.handleWebhookEvent(buildLambdaEvent({ body: baseChannexWebhookEvent() }));
+
+      expect(deps.realtimePublisher).toHaveBeenCalledTimes(1);
+      expect(deps.realtimePublisher).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "stored-2", content: "new one", threadId: "thread-xyz" })
+      );
+    });
+
     test("a duplicate delivery (nothing inserted) is not published again", async () => {
       const ingestExternalThread = jest.fn().mockResolvedValue({
         statusCode: 200,
-        response: { ok: true, threadId: "thread-xyz", insertedMessages: 0 },
+        response: { ok: true, threadId: "thread-xyz", insertedMessages: 0, insertedMessageIds: {} },
       });
       const { service, deps } = buildService({ ingestExternalThread });
 
@@ -589,7 +622,12 @@ describe("ChannexWebhookService.handleWebhookEvent", () => {
 
       expect(result).toEqual({
         statusCode: 200,
-        response: { ok: true, threadId: "thread-xyz", insertedMessages: 1 },
+        response: {
+          ok: true,
+          threadId: "thread-xyz",
+          insertedMessages: 1,
+          insertedMessageIds: { "channex-msg-1": "stored-1" },
+        },
       });
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();

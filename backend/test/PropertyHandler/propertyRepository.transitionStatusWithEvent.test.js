@@ -22,6 +22,7 @@ const buildHarness = ({
   insertError,
   updateMatchesNothing = false,
   beforeAttempt,
+  schema,
 } = {}) => {
   const state = { row: row ? { ...row } : null };
   const committed = [];
@@ -75,6 +76,7 @@ const buildHarness = ({
 
   let attemptIndex = 0;
   const client = {
+    options: schema ? { schema } : undefined,
     query: jest.fn(() => {
       throw new Error("client.query used outside the transaction");
     }),
@@ -115,6 +117,7 @@ describe("PropertyRepository.transitionStatusWithEvent", () => {
   let repository;
 
   beforeEach(() => {
+    process.env.TEST = "true";
     jest.spyOn(Date, "now").mockReturnValue(NOW);
     repository = new PropertyRepository({});
   });
@@ -371,10 +374,27 @@ describe("PropertyRepository.transitionStatusWithEvent", () => {
       const clearing = committed.filter((operation) => operation.kind === "sql");
       expect(clearing).toHaveLength(1);
       expect(clearing[0].statement).toBe(
-        "UPDATE property SET archivedat = NULL, archivedby = NULL, archivereason = NULL WHERE id = $1"
+        'UPDATE "test"."property" SET archivedat = NULL, archivedby = NULL, archivereason = NULL WHERE id = $1'
       );
       expect(clearing[0].params).toEqual(["property-1"]);
-      expect(managers[0].query).toHaveBeenCalledWith(expect.stringContaining("information_schema"));
+      expect(managers[0].query).toHaveBeenCalledWith(expect.stringContaining("information_schema"), ["test"]);
+      expect(client.query).not.toHaveBeenCalled();
+    });
+
+    it("resolves the schema from the outer client and uses it on the manager only", async () => {
+      process.env.TEST = "false";
+      const { committed, managers, client } = buildHarness({
+        row: { status: "ARCHIVED", updatedat: 5 },
+        archiveColumns: ["archivedat"],
+        schema: "main",
+      });
+
+      await repository.transitionStatusWithEvent("property-1", leaveArchive);
+
+      expect(managers[0].query).toHaveBeenCalledWith(expect.stringContaining("table_schema = $1"), ["main"]);
+      expect(committed.filter((operation) => operation.kind === "sql")[0].statement).toBe(
+        'UPDATE "main"."property" SET archivedat = NULL WHERE id = $1'
+      );
       expect(client.query).not.toHaveBeenCalled();
     });
 
@@ -387,7 +407,7 @@ describe("PropertyRepository.transitionStatusWithEvent", () => {
       await repository.transitionStatusWithEvent("property-1", reviewArguments());
 
       expect(committed.filter((operation) => operation.kind === "sql")).toEqual([]);
-      expect(managers[0].query).not.toHaveBeenCalledWith(expect.stringContaining("information_schema"));
+      expect(managers[0].query).not.toHaveBeenCalled();
     });
 
     it("does not clear it when the change did not apply", async () => {

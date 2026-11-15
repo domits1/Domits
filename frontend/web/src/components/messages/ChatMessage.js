@@ -18,7 +18,7 @@ const DELIVERY_STATUS_INDICATORS = {
   failed: "!",
 };
 
-const ChatMessage = ({ message, userId, contactName, contactImage }) => {
+const ChatMessage = ({ message, userId, contactName, contactImage, onRetry, isRetrying = false }) => {
   const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType, deliveryStatus } = message;
 
   const formatTime = (v) => {
@@ -37,6 +37,8 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
     isOutgoing = Boolean(isSent);
   }
   const isIncoming = isOutgoing === false;
+  const shownDeliveryStatus = isRetrying ? "pending" : deliveryStatus;
+  const canRetry = isOutgoing && deliveryStatus === "failed" && typeof onRetry === "function";
   const directionClass = isOutgoing ? "sent" : "received";
 
   const [modalImage, setModalImage] = useState(null);
@@ -121,8 +123,13 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
         <div className="message-footer">
           <span>{formatTime(createdAt)}</span>
-          {isOutgoing && DELIVERY_STATUS_INDICATORS[deliveryStatus] ? (
-            <span className="message-status">{DELIVERY_STATUS_INDICATORS[deliveryStatus]}</span>
+          {isOutgoing && DELIVERY_STATUS_INDICATORS[shownDeliveryStatus] ? (
+            <span className="message-status">{DELIVERY_STATUS_INDICATORS[shownDeliveryStatus]}</span>
+          ) : null}
+          {canRetry ? (
+            <button type="button" className="message-retry-button" disabled={isRetrying} onClick={() => onRetry(message)}>
+              Retry
+            </button>
           ) : null}
         </div>
       </div>
@@ -152,6 +159,8 @@ ChatMessage.propTypes = {
   userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   contactName: PropTypes.string,
   contactImage: PropTypes.string,
+  onRetry: PropTypes.func,
+  isRetrying: PropTypes.bool,
   message: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

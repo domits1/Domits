@@ -3,8 +3,10 @@ import { getAccessToken } from "../../../../services/getAccessToken";
 import {
   PropertyReviewApiError,
   REVIEW_API_ERROR_CODE,
+  approveListing,
   fetchReviewDetail,
   fetchReviewQueue,
+  rejectListing,
   requestPropertyReview,
 } from "./propertyReviewApi";
 
@@ -198,6 +200,69 @@ describe("propertyReviewApi", () => {
 
       expect(error.code).toBe(REVIEW_API_ERROR_CODE.NOT_FOUND);
       expect(error.status).toBe(404);
+    });
+  });
+
+  describe("POST requests", () => {
+    test("sends the method, a JSON body, the content type and the raw access token", async () => {
+      global.fetch.mockResolvedValue(respondWith(200, { ok: true }));
+
+      await requestPropertyReview("/review/approve", { method: "POST", body: { propertyId: "p1" } });
+
+      expect(global.fetch).toHaveBeenCalledWith(`${PROPERTY_API_BASE}/review/approve`, {
+        method: "POST",
+        headers: { Authorization: "raw-access-token", "Content-Type": "application/json" },
+        body: JSON.stringify({ propertyId: "p1" }),
+        signal: expect.any(AbortSignal),
+      });
+    });
+
+    test.each([
+      [409, { message: "Changed", code: "stale_review" }, REVIEW_API_ERROR_CODE.STALE_REVIEW],
+      [409, { message: "Reviewed", code: "wrong_status" }, REVIEW_API_ERROR_CODE.WRONG_STATUS],
+      [409, { message: "Odd", code: "something_else" }, REVIEW_API_ERROR_CODE.SERVER],
+      [409, { message: "No code" }, REVIEW_API_ERROR_CODE.SERVER],
+      [400, { message: "Reason is required" }, REVIEW_API_ERROR_CODE.BAD_REQUEST],
+      [503, { message: "Try again" }, REVIEW_API_ERROR_CODE.UNAVAILABLE],
+    ])("maps a %s response with %j to %s and keeps the server message", async (status, body, code) => {
+      global.fetch.mockResolvedValue(respondWith(status, body));
+
+      const error = await captureError(() => requestPropertyReview("/review/approve", { method: "POST", body: {} }));
+
+      expect(error).toBeInstanceOf(PropertyReviewApiError);
+      expect(error.code).toBe(code);
+      expect(error.message).toBe(body.message);
+    });
+  });
+
+  describe("approveListing", () => {
+    test("posts the property id and the updated-at it was loaded with", async () => {
+      global.fetch.mockResolvedValue(respondWith(200, { propertyId: "p1", status: "LIVE", updatedAt: 2 }));
+
+      const body = await approveListing("p1", 1);
+
+      expect(body).toEqual({ propertyId: "p1", status: "LIVE", updatedAt: 2 });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${PROPERTY_API_BASE}/review/approve`,
+        expect.objectContaining({ method: "POST", body: JSON.stringify({ propertyId: "p1", updatedAt: 1 }) })
+      );
+    });
+  });
+
+  describe("rejectListing", () => {
+    test("posts the property id, the loaded updated-at and the reason", async () => {
+      global.fetch.mockResolvedValue(respondWith(200, { propertyId: "p1", status: "REJECTED", updatedAt: 2 }));
+
+      const body = await rejectListing("p1", 1, "Photos are missing");
+
+      expect(body).toEqual({ propertyId: "p1", status: "REJECTED", updatedAt: 2 });
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${PROPERTY_API_BASE}/review/reject`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ propertyId: "p1", updatedAt: 1, reason: "Photos are missing" }),
+        })
+      );
     });
   });
 });

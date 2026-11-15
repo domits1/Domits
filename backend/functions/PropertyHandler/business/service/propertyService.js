@@ -9,6 +9,7 @@ import { PropertyCheckInRepository } from "../../data/repository/propertyCheckIn
 import { PropertyGeneralDetailRepository } from "../../data/repository/propertyGeneralDetailRepository.js";
 import { PropertyLocationRepository } from "../../data/repository/propertyLocationRepository.js";
 import { DestinationMappingService } from "./destinationMappingService.js";
+import { ListingReviewNotifier } from "./listingReviewNotifier.js";
 import { PropertyPricingRepository } from "../../data/repository/propertyPricingRepository.js";
 import { PropertyRuleRepository } from "../../data/repository/propertyRuleRepository.js";
 import { PropertyTechnicalDetailRepository } from "../../data/repository/propertyTechnicalDetailRepository.js";
@@ -104,6 +105,7 @@ export class PropertyService {
       eventRepository: this.directBookingWebsiteEventRepository,
     });
     this.destinationMappingService = new DestinationMappingService();
+    this.listingReviewNotifier = new ListingReviewNotifier();
   }
 
   createStaticPageWithdrawal() {
@@ -120,8 +122,12 @@ export class PropertyService {
       return;
     }
     try {
-      const { invalidationErrors, redirectErrors = [] } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-      [...invalidationErrors, ...redirectErrors].forEach((failure) => {
+      const {
+        invalidationErrors,
+        redirectErrors = [],
+        sitePageErrors = [],
+      } = await this.createStaticPageWithdrawal().withdrawSite(site.id);
+      [...invalidationErrors, ...redirectErrors, ...sitePageErrors].forEach((failure) => {
         console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
       });
     } catch (error) {
@@ -273,6 +279,13 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
+    await this.listingReviewNotifier.notifyDecision({
+      hostId: property.hostId,
+      propertyId,
+      title: property.title,
+      outcome: transition.action,
+      reason: transition.reason,
+    });
     return property;
   }
 
@@ -566,9 +579,17 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId, {
+    const property = await this.getFullPropertyAttributesWithFullLocation(propertyId, {
       includeCalendarAvailability: true,
     });
+    const latestRejection =
+      basePropertyInfo.status === PROPERTY_STATUS.REJECTED ? await this.getLatestRejection(propertyId) : null;
+    return { ...property, latestRejection };
+  }
+
+  async getLatestRejection(propertyId) {
+    const rejection = await this.propertyRepository.getLatestRejection(propertyId);
+    return rejection ? { reason: rejection.reason, rejectedAt: rejection.createdAt } : null;
   }
 
   async getFullPropertyByBookingId(bookingId) {
@@ -624,7 +645,11 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
-    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
+    const [full, history] = await Promise.all([
+      this.getFullPropertyAttributesWithFullLocation(propertyId),
+      this.propertyRepository.getModerationEventsByPropertyId(propertyId),
+    ]);
+    return { ...full, history };
   }
 
   async getFullPropertiesByHostId(hostId) {

@@ -13,7 +13,7 @@ class TestPropertyRepository {
         return propertyTypes
     }
 
-    async fetchPropertyByCountry(country, lastEvaluatedKeyId, lastEvaluatedKeyCity) {
+    async fetchPropertyByCountry(country, lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId) {
         return propertyTypes
     }
 

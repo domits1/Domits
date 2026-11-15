@@ -299,7 +299,10 @@ export async function downloadReservationReceiptPdf(receipt) {
   }
   writeWrappedValue(doc, cursor, "Total", formatMoney(receipt.total));
   writeWrappedValue(doc, cursor, "Payment status", receipt.paymentStatusLabel);
-  writeWrappedValue(doc, cursor, "Payment date", formatDate(receipt.paymentDate));
+  if (receipt.refundStatusText) {
+    writeWrappedValue(doc, cursor, receipt.refundStatusLabel || "Refund status", receipt.refundStatusText);
+  }
+  writeWrappedValue(doc, cursor, receipt.paymentDateLabel || "Payment date", formatDate(receipt.paymentDate));
   writeWrappedValue(doc, cursor, "Payment method", receipt.paymentMethod);
 
   writeSectionHeader(doc, cursor, "Policies");

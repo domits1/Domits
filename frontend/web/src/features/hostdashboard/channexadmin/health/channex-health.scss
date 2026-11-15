@@ -1,0 +1,132 @@
+// Same colours as HostIntegrations.scss, named once so the banner and the state pills use one palette.
+$health-green-text: #166534;
+$health-green-border: #bbf7d0;
+$health-green-background: #f0fdf4;
+$health-amber-text: #92400e;
+$health-amber-border: #fde68a;
+$health-amber-background: #fffbeb;
+$health-red-text: #991b1b;
+$health-red-border: #fecaca;
+$health-red-background: #fff5f5;
+$health-grey-text: #4b5563;
+$health-grey-border: #e5e7eb;
+$health-grey-background: #f3f4f6;
+
+@mixin health-colours($text, $border, $background) {
+  color: $text;
+  border-color: $border;
+  background: $background;
+}
+
+.channex-health {
+  display: grid;
+  gap: clamp(0.75rem, 0.5rem + 1vw, 1.25rem);
+}
+
+.channex-health-banner {
+  border: 1px solid $health-grey-border;
+  border-radius: 14px;
+  padding: clamp(0.75rem, 0.5rem + 1vw, 1.25rem);
+
+  h2 {
+    margin: 0;
+    font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  }
+
+  ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    line-height: 1.5;
+  }
+}
+
+.channex-health-banner--healthy {
+  @include health-colours($health-green-text, $health-green-border, $health-green-background);
+}
+
+.channex-health-banner--degraded {
+  @include health-colours($health-amber-text, $health-amber-border, $health-amber-background);
+}
+
+.channex-health-banner--down {
+  @include health-colours($health-red-text, $health-red-border, $health-red-background);
+}
+
+// min(100%, …) lets a card take the full width on a phone instead of overflowing.
+.channex-health-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: clamp(0.75rem, 0.5rem + 1vw, 1.25rem);
+}
+
+.channex-health-card {
+  display: grid;
+  gap: 0.25rem;
+  align-content: start;
+
+  strong {
+    font-size: clamp(1.5rem, 1.3rem + 0.75vw, 2rem);
+    line-height: 1.1;
+  }
+
+  span {
+    color: $health-grey-text;
+  }
+}
+
+.channex-health-panel {
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.05rem, 1rem + 0.25vw, 1.2rem);
+  }
+
+  ul {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // One row per item; on a narrow screen the parts wrap instead of squeezing.
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid $health-grey-border;
+    overflow-wrap: anywhere;
+  }
+
+  li:first-child {
+    border-top: 0;
+  }
+
+  li > span:first-child {
+    flex: 1 1 12rem;
+    font-weight: 600;
+  }
+}
+
+.channex-health-state {
+  display: inline-flex;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid $health-grey-border;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  @include health-colours($health-grey-text, $health-grey-border, $health-grey-background);
+}
+
+.channex-health-state--ok {
+  @include health-colours($health-green-text, $health-green-border, $health-green-background);
+}
+
+.channex-health-state--alarm {
+  @include health-colours($health-red-text, $health-red-border, $health-red-background);
+}
+
+.channex-health-state--insufficient_data,
+.channex-health-state--missing {
+  @include health-colours($health-amber-text, $health-amber-border, $health-amber-background);
+}

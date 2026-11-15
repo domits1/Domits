@@ -63,6 +63,7 @@ import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checkli
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Task_Notification } from "../../models/Task_Notification.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
+import { Host_Notification_Preferences } from "../../models/Host_Notification_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
@@ -143,6 +144,7 @@ export const Tables = [
   Host_Settings,
   Task_Notification,
   Communication_Preferences,
+  Host_Notification_Preferences,
   Company_Profile,
   Kpi_Snapshot,
   PriceLabs_Connection,

@@ -6,6 +6,7 @@ const mockChannelManagementControllerMethods = {
   pollLatestChannexBookings: jest.fn(),
   pullLatestChannexBookings: jest.fn(),
   receiveChannexBookingWebhook: jest.fn(),
+  getChannexHealth: jest.fn(),
 };
 
 jest.mock("../.shared/channelManagement/controller/channelManagementController.js", () => ({
@@ -179,6 +180,36 @@ describe("ChannelManagement handler contracts", () => {
 
     expect(response).toBeNull();
     expect(mockChannelManagementControllerMethods.receiveChannexBookingWebhook).not.toHaveBeenCalled();
+  });
+
+  // The health view shows every Channex account, so only the Channex admin allowlist may read it (#2869, D1).
+  test("GET /integrations/channex/health answers an allowlisted admin", async () => {
+    mockChannelManagementControllerMethods.getChannexHealth.mockResolvedValue({
+      statusCode: 200,
+      response: { status: "HEALTHY" },
+    });
+
+    const response = await handler(buildHttpEvent({ path: "/default/integrations/channex/health", sub: "host-1" }));
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ status: "HEALTHY" });
+    expect(mockChannelManagementControllerMethods.getChannexHealth).toHaveBeenCalledTimes(1);
+  });
+
+  test("GET /integrations/channex/health refuses a signed-in user who is not on the allowlist", async () => {
+    const response = await handler(
+      buildHttpEvent({ path: "/default/integrations/channex/health", sub: "someone-else" })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockChannelManagementControllerMethods.getChannexHealth).not.toHaveBeenCalled();
+  });
+
+  test("GET /integrations/channex/health requires Cognito claims", async () => {
+    const response = await handler(buildHttpEvent({ path: "/default/integrations/channex/health" }));
+
+    expect(response.statusCode).toBe(401);
+    expect(mockChannelManagementControllerMethods.getChannexHealth).not.toHaveBeenCalled();
   });
 
   test("unsupported channel routes return a clean 404 without invoking polling", async () => {

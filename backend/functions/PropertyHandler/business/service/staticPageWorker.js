@@ -142,6 +142,7 @@ export class StaticPageWorker {
         message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
       })),
       ...(result.redirectErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
+      ...(result.sitePageErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
     ];
     return this.#record(
       job,

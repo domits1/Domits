@@ -13,3 +13,5 @@ export const unauthorized = (message = "Authentication is required.") =>
 export const forbidden = (message = "You are not allowed to access this resource.") =>
   new HttpError(403, message, "FORBIDDEN");
 export const notFound = (message = "Resource not found.") => new HttpError(404, message, "NOT_FOUND");
+export const conflict = (message = "The resource is not in a state that allows this action.") =>
+  new HttpError(409, message, "CONFLICT");

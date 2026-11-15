@@ -5,6 +5,7 @@ import renderPayload from "../../../../../../../backend/prerender/__fixtures__/r
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
 import PanoramaLandingTemplate from "../rendering/templates/PanoramaLandingTemplate";
+import WebsiteTemplatePreview from "../rendering/WebsiteTemplatePreview";
 
 jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
   __esModule: true,
@@ -47,6 +48,19 @@ const listSectionIds = (container) =>
 const listPageHeadings = () => screen.getAllByRole("heading", { level: 1 }).map((heading) => heading.textContent);
 
 describe("Panorama with site pages switched on", () => {
+  it("renders the page the editor preview asks for", () => {
+    const { container } = render(
+      <WebsiteTemplatePreview
+        templateId="panorama-landing"
+        model={buildModel({ sitePages: ALL_PAGES_ON })}
+        onSelectTarget={jest.fn()}
+        activePageKey="gallery"
+      />
+    );
+
+    expect(listSectionIds(container)).toEqual(["gallery"]);
+  });
+
   it("keeps the hero, the stay, availability and the quote panel on Main", async () => {
     const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }));
 

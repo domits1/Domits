@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { Auth } from "aws-amplify";
 import {
   OwnerApiError,
   archiveOwner,
@@ -9,14 +9,24 @@ import {
   updateOwner,
 } from "./ownerService";
 
-jest.mock("../../../../services/getAccessToken", () => ({
-  getAccessToken: jest.fn(),
+jest.mock("aws-amplify", () => ({
+  Auth: {
+    currentSession: jest.fn(),
+  },
 }));
 
 const BASE_URL = "https://owners.example.test/default/property-owners";
 const OWNER_ID = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
 const TOKEN = "access-token";
 const ORIGINAL_ENV = process.env;
+
+const SIGNED_OUT = {
+  status: 401,
+  serverMessage: null,
+  message: "We could not read your sign-in. Please sign in again.",
+};
+
+const sessionWith = (token) => ({ getAccessToken: () => ({ getJwtToken: () => token }) });
 
 const jsonResponse = (status, payload) => ({
   ok: status >= 200 && status < 300,
@@ -39,7 +49,7 @@ const lastRequest = () => {
 
 beforeEach(() => {
   process.env = { ...ORIGINAL_ENV, REACT_APP_PROPERTY_OWNERS_API_URL: BASE_URL };
-  getAccessToken.mockReturnValue(TOKEN);
+  Auth.currentSession.mockResolvedValue(sessionWith(TOKEN));
   global.fetch = jest.fn(async () => jsonResponse(200, { ok: true }));
 });
 
@@ -119,6 +129,21 @@ describe("routes", () => {
       effective_from: 1793491200000,
       shares,
     });
+  });
+
+  test("reads the session for every request and sends its token unchanged", async () => {
+    const firstToken = "eyJraWQiOiJhIn0.first.signature";
+    const refreshedToken = "eyJraWQiOiJhIn0.refreshed.signature";
+    Auth.currentSession
+      .mockResolvedValueOnce(sessionWith(firstToken))
+      .mockResolvedValueOnce(sessionWith(refreshedToken));
+
+    await listOwners();
+    await getOwner(OWNER_ID);
+
+    expect(Auth.currentSession).toHaveBeenCalledTimes(2);
+    expect(global.fetch.mock.calls[0][1].headers).toEqual({ Authorization: firstToken });
+    expect(global.fetch.mock.calls[1][1].headers).toEqual({ Authorization: refreshedToken });
   });
 
   test("returns the parsed response of a successful write", async () => {
@@ -202,17 +227,44 @@ describe("errors", () => {
     await expect(listOwners()).rejects.toBe(networkError);
   });
 
-  test.each([null, undefined, ""])("refuses to call the API without an access token (%p)", async (token) => {
-    getAccessToken.mockReturnValue(token);
+  test.each([null, undefined, ""])("refuses to call the API when the session token is %p", async (token) => {
+    Auth.currentSession.mockResolvedValue(sessionWith(token));
 
     const failure = listOwners();
 
     await expect(failure).rejects.toBeInstanceOf(OwnerApiError);
-    await expect(failure).rejects.toMatchObject({
-      status: 401,
-      serverMessage: null,
-      message: "We could not read your sign-in. Please sign in again.",
-    });
+    await expect(failure).rejects.toMatchObject(SIGNED_OUT);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["there is no signed-in user", "No current user"],
+    ["the session expired and cannot be refreshed", new Error("Refresh Token has expired")],
+  ])("refuses to call the API when %s", async (_label, reason) => {
+    Auth.currentSession.mockRejectedValue(reason);
+
+    const failure = listOwners();
+
+    await expect(failure).rejects.toBeInstanceOf(OwnerApiError);
+    await expect(failure).rejects.toMatchObject(SIGNED_OUT);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("passes a network failure while reading the session on unchanged, not as signed out", async () => {
+    const networkError = Object.assign(new Error("Network error"), { code: "NetworkError" });
+    Auth.currentSession.mockRejectedValue(networkError);
+
+    await expect(listOwners()).rejects.toBe(networkError);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["null", null],
+    ["without an access token", {}],
+  ])("refuses to call the API when the session is %s", async (_label, session) => {
+    Auth.currentSession.mockResolvedValue(session);
+
+    await expect(listOwners()).rejects.toMatchObject(SIGNED_OUT);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
