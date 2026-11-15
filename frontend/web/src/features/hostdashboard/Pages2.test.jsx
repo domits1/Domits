@@ -84,7 +84,7 @@ describe("Pages2 menu order", () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
-  test("puts Reviews directly before Owners and Marketplace directly before Settings for a host", async () => {
+  test("keeps Reviews before Owners without a separate notifications tab and Marketplace before Settings", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
 
     renderPages();
@@ -93,6 +93,7 @@ describe("Pages2 menu order", () => {
     await screen.findByRole("link", { name: "Owners" });
     const labels = visibleLabels();
     expect(labels.indexOf("Owners")).toBe(labels.indexOf("Reviews") + 1);
+    expect(screen.queryByRole("link", { name: /review notifications/i })).not.toBeInTheDocument();
     expect(labels.indexOf("Settings")).toBe(labels.indexOf("Marketplace") + 1);
   });
 

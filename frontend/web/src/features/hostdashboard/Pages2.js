@@ -51,7 +51,6 @@ const NAV = [
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
   { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
-  { key: "ReviewNotifications", label: "Review notifications", icon: <StarBorderIcon />, to: "review-notifications" },
   { key: "Owners", label: "Owners", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
   { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
