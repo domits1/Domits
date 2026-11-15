@@ -1,4 +1,5 @@
 .root { position: relative; flex-shrink: 0; color: #10132b; }
+.viewAll { display: block; padding: 16px; text-align: center; color: #008000; font-weight: 700; }
 .bell { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: #f5f8f6; color: inherit; cursor: pointer; font-size: 24px; }
 .badge { position: absolute; top: -4px; right: -3px; padding: 2px 5px; border-radius: 12px; background: #d71920; color: white; font-size: 12px; font-weight: 700; }
 .dropdown { position: absolute; top: calc(100% + 12px); right: 0; z-index: 1001; width: min(420px, calc(100vw - 32px)); max-height: min(560px, 70vh); overflow: auto; border: 1px solid #e3e8ec; border-radius: 10px; background: white; box-shadow: 0 6px 20px #0003; text-align: left; font-size: 14px; }

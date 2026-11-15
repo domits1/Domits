@@ -2,7 +2,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import { FiBell, FiStar, FiTrendingDown, FiClock } from "react-icons/fi";
 import styles from "./Notifications.module.css";
 
-const types = {
+export const notificationTypes = {
   review: { label: "New review", Icon: FiStar },
   low: { label: "Low rating", Icon: FiStar },
   declining: { label: "Declining ratings", Icon: FiTrendingDown },
@@ -20,7 +20,7 @@ export function NotificationDropdown({ id, alerts, loading, error, panelRef }) {
         alerts.length === 0 ? <p role="status">No notifications yet.</p> : (
           <ul className={styles.list}>
             {alerts.map((alert) => {
-              const { label, Icon } = types[alert.type] || types.review;
+              const { label, Icon } = notificationTypes[alert.type] || notificationTypes.review;
               return (
                 <li key={alert.id} className={styles.item}>
                   <span className={`${styles.icon} ${styles[alert.type] || styles.review}`} aria-hidden="true"><Icon /></span>
@@ -37,6 +37,7 @@ export function NotificationDropdown({ id, alerts, loading, error, panelRef }) {
             })}
           </ul>
         )}
+      <a className={styles.viewAll} href="/hostdashboard/review-notifications">View all notifications</a>
     </section>
   );
 }

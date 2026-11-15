@@ -7,6 +7,7 @@ import HostReservations from "./HostReservations";
 import HostMessagingPage from "./hostmessages/HostMessagingPage";
 import HostReports from "./HostPayments";
 import HostReviews from "../review/views/HostReviews";
+import ReviewNotifications from "./notifications/ReviewNotifications";
 import HostTasks from "./hosttasks/pages/HostTasks";
 import HostOwners from "./hostowners/pages/HostOwners";
 import HostOwnerDetail from "./hostowners/pages/HostOwnerDetail";
@@ -67,7 +68,7 @@ import HostSettingsEnterpriseRatePlan from "./hostsettings/pages/HostSettingsEnt
 import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettingsDirectBookingRatePlan";
 import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
-function MainDashboardHost() {
+function MainDashboardHost({ reviewAlerts = [], reviewAlertsLoading = false, reviewAlertsError = false }) {
   const isReviewApproval = useMatch(REVIEW_APPROVAL_ADMIN_PATH);
 
   if (isReviewApproval) {
@@ -154,6 +155,8 @@ function MainDashboardHost() {
           <Route path={`${PROPERTY_REVIEW_ADMIN_ROUTE}/:propertyId`} element={<PropertyReviewDetailPage />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="reviews" element={<HostReviews />} />
+          <Route path="review-notifications" element={<ReviewNotifications alerts={reviewAlerts}
+            loading={reviewAlertsLoading} error={reviewAlertsError} />} />
 
           <Route path="tasks" element={<HostTasks />} />
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />

@@ -57,6 +57,9 @@ test("supports keyboard activation and closes when tabbing away", async () => {
   await user.keyboard("{Enter}");
   expect(screen.getByRole("region")).toHaveFocus();
   await user.tab();
+  expect(screen.getByRole("link", { name: "View all notifications" })).toHaveFocus();
+  expect(screen.getByRole("link", { name: "View all notifications" })).toHaveAttribute("href", "/hostdashboard/review-notifications");
+  await user.tab();
   expect(screen.getByRole("button", { name: "Next control" })).toHaveFocus();
   expect(screen.queryByRole("region")).not.toBeInTheDocument();
   trigger().focus();
