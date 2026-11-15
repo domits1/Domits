@@ -1,4 +1,5 @@
 import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
+import { ReviewAlertProcessingService } from "./reviewAlertProcessingService.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -115,9 +116,10 @@ export class ReviewService {
     canReadPrivateFeedback = async ({ userId, review }) =>
       review.reviewer_user_id === userId || review.host_id === userId,
     canPublishReview = async ({ userId, review }) => review.reviewer_user_id === userId,
-    notifier, editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
+    notifier, alerts = new ReviewAlertProcessingService(), editWindowMs = Number(process.env.REVIEW_EDIT_WINDOW_MS) } = {}) {
     this.repository = repository;
     this.notifier = notifier;
+    this.alerts = alerts;
     this.now = now;
     this.canReadPrivateFeedback = canReadPrivateFeedback;
     this.canPublishReview = canPublishReview;
@@ -471,6 +473,10 @@ export class ReviewService {
     const result = await this.repository.publishDraft({ reviewId: review.id,
       expectedUpdatedAt: version, updatedAt: this.now(), from, to, validate, authorize });
     if (!result) throw new ConflictException("Review changed. Reload before continuing.");
+    if (to === "PUBLISHED") {
+      try { await this.alerts.afterPublication(result); }
+      catch { console.error(JSON.stringify({ event: "REVIEW_ALERT_PROCESSING_FAILED" })); }
+    }
     return toReviewView(result);
   }
 

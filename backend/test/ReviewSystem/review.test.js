@@ -1,6 +1,7 @@
 jest.mock("../../functions/ReviewSystem/data/reviewRepository.js", () => ({
   ReviewRepository: jest.fn(),
 }));
+jest.mock("../../functions/ReviewSystem/business/service/reviewAlertProcessingService.js", () => ({ ReviewAlertProcessingService: jest.fn(() => ({ afterPublication: jest.fn() })) }));
 
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { AuthManager } from "../../functions/ReviewSystem/auth/authManager.js";

@@ -1,5 +1,7 @@
 import { CreateReviewCategories20261005 } from "../../ORM/migrations/20261005_create_review_categories.js";
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
+jest.mock("../../functions/ReviewSystem/business/service/reviewAlertProcessingService.js", () => ({ ReviewAlertProcessingService: jest.fn(() => ({ afterPublication: jest.fn() })) }));
+import { Review_Alert_Work } from "../../ORM/models/Review_Alert_Work.js";
 import { Property } from "../../ORM/models/Property.js";
 // Mock database access; metadata and SQL generation below use TypeORM without a live connection.
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
@@ -306,6 +308,7 @@ describe('Review transactional writes', () => {
         status: "OPEN", nextSendAt: now + 100, claimedAt: now - 100 }]],
       [Review_Response, []],
       [Review_Flag, []],
+      [Review_Alert_Work, []],
     ]);
     active = committed;
     repositories = new Map([...committed.keys()].map((entity) => [entity, {
@@ -326,6 +329,12 @@ describe('Review transactional writes', () => {
         return records;
       }),
     }]));
+    repositories.get(Review_Alert_Work).createQueryBuilder = () => {
+      let record;
+      const query = { insert: () => query, values: value => { record = value; return query; }, onConflict: () => query,
+        execute: async () => { if (!active.get(Review_Alert_Work).some(row => row.id === record.id)) active.get(Review_Alert_Work).push(record); } };
+      return query;
+    };
     repositories.get(Review_Flag).insert = jest.fn(async (flag) => {
       const flags = active.get(Review_Flag);
       if (flags.some((row) => row.review_id === flag.review_id && row.status === "PENDING")) {
@@ -569,6 +578,7 @@ describe('Review transactional writes', () => {
       expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
         updatedAt: now, from, to, authorize: async () => true })).toBeNull();
       expect(committed.get(Review_Request)[0].status).toBe(to === "PUBLISHED" ? "COMPLETED" : "OPEN");
+      expect(committed.get(Review_Alert_Work)).toHaveLength(to === "PUBLISHED" ? 1 : 0);
       current = committed.get(Review)[0];
     }
   });
@@ -600,6 +610,7 @@ describe('Review transactional writes', () => {
     await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true })).rejects.toThrow("Request failure");
     expect(committed.get(Review)[0].status).toBe("APPROVED");
+    expect(committed.get(Review_Alert_Work)).toEqual([]);
   });
 
   it("loads ratings and visible responses through a public allowlist", async () => {

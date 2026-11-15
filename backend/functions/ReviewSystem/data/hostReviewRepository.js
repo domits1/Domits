@@ -195,6 +195,8 @@ export class HostReviewRepository {
         declineBoundary: -options.threshold * (1 - 1e-12),
         publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
+    if (options.propertyId !== undefined) page.andWhere("trends.property_id = :trendPropertyId", { trendPropertyId: options.propertyId });
+    if (options.afterProperty !== undefined) page.andWhere("trends.property_id > :afterProperty", { afterProperty: options.afterProperty });
     if (options.sort === "declining-first") {
       page.orderBy("CASE WHEN trends.trend_status = 'DECLINING' THEN 0 ELSE 1 END", "ASC");
     }

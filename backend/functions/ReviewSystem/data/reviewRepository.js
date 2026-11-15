@@ -1,4 +1,5 @@
 import { applyCompletedStayConditions } from "../util/verifiedStay.js";
+import { enqueueReviewAlertWork } from "./reviewAlertWorkRepository.js";
 import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
 import { In } from "typeorm";
@@ -661,6 +662,8 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
+      if (to === "PUBLISHED") await enqueueReviewAlertWork(manager, review.id,
+        { reviewId: review.id, publishedAt: timestamp, phase: "publication" }, timestamp);
       if (to === "PUBLISHED") await this.completeReviewRequest(
         manager,
         review,

@@ -1,9 +1,11 @@
 import { ReviewService } from "./business/service/reviewService.js";
+import { ReviewAlertProcessingService } from "./business/service/reviewAlertProcessingService.js";
 import { Controller } from "./controller/controller.js";
 import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
 
 let controller;
 let scheduledService;
+let alertProcessor;
 
 const routes = new Map([
   ["/reviews/alerts", new Map([["GET", "manageReviewAlerts"]])],
@@ -37,6 +39,11 @@ const jsonResponse = (statusCode, message, extraHeaders = {}) => ({
 
 export const handler = async (event) => {
   try {
+    if (event?.source === "aws.events" && event?.["detail-type"] === "Scheduled Event" &&
+        event?.resources?.some(arn => arn.endsWith("/domits-review-alerts"))) {
+      alertProcessor ??= new ReviewAlertProcessingService();
+      return { statusCode: 200, body: JSON.stringify(await alertProcessor.run()) };
+    }
     if (event?.source === "aws.events" && event?.["detail-type"] === "Scheduled Event" &&
         event?.resources?.some(arn => arn.endsWith("/domits-review-requests"))) {
       scheduledService ??= new ReviewService();

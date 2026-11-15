@@ -20,9 +20,12 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
     const rows = await new ReviewRepository().getPropertyRatingTrendPage("host-1", {
       previousStart: 1000, currentStart: 2000, endExclusive: 3000,
       threshold: 0.5, minimumReviews: 3, offset: 25, status, sort: "declining-first",
+      propertyId: "p1", afterProperty: "p0",
     });
     expect(read).toHaveBeenCalledTimes(1);
     const sql = executed.getQuery();
+    expect(sql).toContain("trends.property_id = :trendPropertyId");
+    expect(sql).toContain("trends.property_id > :afterProperty");
     // The production PostgreSQL parser rejects unary minus on an unknown bind parameter (42725).
     const [parameterizedSql, parameters] = executed.getQueryAndParameters();
     expect(parameterizedSql).not.toMatch(/-\s*\$\d+/);

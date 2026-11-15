@@ -1,4 +1,5 @@
 import { User_Table } from "../../models/User_Table.js";
+import { Review_Alert_Work } from "../../models/Review_Alert_Work.js";
 import { Amenities } from "../../models/Amenities.js";
 import { Amenity_And_Category } from "../../models/Amenity_And_Category.js";
 import { Amenity_Categories } from "../../models/Amenity_Categories.js";
@@ -163,5 +164,6 @@ export const Tables = [
   Review_Response,
   Review_Flag,
   Review_Alert,
+  Review_Alert_Work,
   DirectBookingWebsiteRatePlan,
 ];

@@ -19,7 +19,7 @@ export class ReviewAlertNotificationService {
     Object.assign(this, { repository, recipients, preferences, notifier, logger });
   }
 
-  async deliver(event = {}) {
+  async deliver(event = {}, { isEligible = async () => true } = {}) {
     try {
       if (!Object.values(ALERT_TYPES).includes(event.type) || !validId(event.propertyId)
         || (event.reviewId !== undefined && !validId(event.reviewId))
@@ -42,6 +42,7 @@ export class ReviewAlertNotificationService {
       const results = [];
       for (const recipient of new Set(await this.recipients.resolve(event))) {
         try {
+          if (!(await isEligible())) { results.push({ recipient, status: "INELIGIBLE" }); continue; }
           const created = await this.repository.createAlertIfMissing({ recipient_user_id: recipient,
             property_id: event.propertyId, review_id: event.reviewId ?? null,
             alert_type: event.type, event_key: eventKey });
