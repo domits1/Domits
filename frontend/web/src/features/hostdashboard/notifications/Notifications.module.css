@@ -1,0 +1,23 @@
+.root { position: relative; flex-shrink: 0; color: #10132b; }
+.bell { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: #f5f8f6; color: inherit; cursor: pointer; font-size: 24px; }
+.badge { position: absolute; top: -4px; right: -3px; padding: 2px 5px; border-radius: 12px; background: #d71920; color: white; font-size: 12px; font-weight: 700; }
+.dropdown { position: absolute; top: calc(100% + 12px); right: 0; z-index: 1001; width: min(420px, calc(100vw - 32px)); max-height: min(560px, 70vh); overflow: auto; border: 1px solid #e3e8ec; border-radius: 10px; background: white; box-shadow: 0 6px 20px #0003; text-align: left; font-size: 14px; }
+.dropdown h2 { margin: 0; padding: 18px; border-bottom: 1px solid #e3e8ec; font-size: 18px; }
+.dropdown > p { padding: 18px; margin: 0; }
+.list { padding: 0 16px; margin: 0; list-style: none; }
+.item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid #e3e8ec; }
+.item:last-child { border-bottom: 0; }
+.icon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 8px; font-size: 24px; }
+.review { color: #008a00; background: #e4f8e7; }
+.low { color: #c91d27; background: #ffedef; }
+.declining { color: #916300; background: #fff7db; }
+.overdue { color: #7135cb; background: #f0e9ff; }
+.content { min-width: 0; overflow-wrap: anywhere; }
+.meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.content p { margin: 5px 0; }
+.content time, .read { color: #536078; font-size: 12px; }
+.unread { color: #008000; font-size: 12px; font-weight: 700; }
+.bell:focus-visible, .dropdown:focus-visible { outline: 2px solid #008a00; outline-offset: 3px; }
+@media (max-width: 768px) {
+  .dropdown { position: fixed; top: calc(var(--app-header-h, 80px) + 8px); right: 16px; max-height: 65vh; }
+}

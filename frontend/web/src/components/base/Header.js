@@ -21,11 +21,12 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
 import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
 import DestinationsMenu from "../../features/destinations/components/DestinationsMenu";
+import NotificationBell from "../../features/hostdashboard/notifications/NotificationBell";
 import { useDestinationMenu } from "../../features/destinations/hooks/useDestinationMenu";
 
 const contentByLanguage = { en, nl, de, es };
 
-function Header({ setSearchResults, setLoading }) {
+function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { setFlowState } = useContext(FlowContext);
@@ -465,6 +466,12 @@ function Header({ setSearchResults, setLoading }) {
               </motion.div>
             )}
 
+            {(location.pathname === "/hostdashboard" || location.pathname.startsWith("/hostdashboard/")) && (
+              <NotificationBell key={location.pathname} alerts={notificationAlerts} onOpen={() => {
+                setDropdownVisible(false);
+                setAppsMenuOpen(false);
+              }} />
+            )}
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>
                 <img src={profile} alt="Profile Icon" />
@@ -522,6 +529,14 @@ function Header({ setSearchResults, setLoading }) {
 }
 
 Header.propTypes = {
+  notificationAlerts: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    type: PropTypes.oneOf(["review", "low", "declining", "overdue"]).isRequired,
+    property: PropTypes.string.isRequired,
+    message: PropTypes.string.isRequired,
+    timestamp: PropTypes.string.isRequired,
+    read: PropTypes.bool.isRequired,
+  })),
   setSearchResults: PropTypes.func.isRequired,
   setLoading: PropTypes.func.isRequired,
 };
