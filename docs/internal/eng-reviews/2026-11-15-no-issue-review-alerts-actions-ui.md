@@ -5,7 +5,7 @@ Issue: not supplied
 Reviewed base: 26ab80cd6 (feat/review-alerts-actions-ui)
 Reviewed target: uncommitted working-tree changes, including the untracked
 ReviewAlertsProvider.js and ReviewAlertsProvider.test.js.
-Result: no blocking findings; one P2 finding fixed, one P2 accepted, four P3 findings recorded.
+Follow-up review of commit 2894ed996: blocked on strict line limit; 383 additions + 18 deletions = 401 changed lines before this review edit. Decision pending: shorten this report while preserving findings. Earlier implementation findings and decisions follow.
 
 ## Findings
 
