@@ -187,6 +187,7 @@ export function WebsiteTemplateSurface({
   onSelectTarget,
   activeTargetId = "",
   quoteContext = null,
+  activePageKey = undefined,
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -234,6 +235,7 @@ export function WebsiteTemplateSurface({
             onSelectTarget={onSelectTarget}
             activeTargetId={activeTargetId}
             quoteContext={quoteContext}
+            activePageKey={activePageKey}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -261,6 +263,7 @@ WebsiteTemplateSurface.propTypes = {
   browserTitle: PropTypes.string,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  activePageKey: PropTypes.string,
 };
 
 export default function WebsiteTemplatePreview({
@@ -271,6 +274,7 @@ export default function WebsiteTemplatePreview({
   showBrowserChrome = false,
   onSelectTarget,
   activeTargetId = "",
+  activePageKey = undefined,
 }) {
   const isCompactVariant = variant === "compact";
   const showContactWidget =
@@ -338,6 +342,7 @@ export default function WebsiteTemplatePreview({
               browserTitle={model.site.title || "Website preview"}
               onSelectTarget={onSelectTarget}
               activeTargetId={activeTargetId}
+              activePageKey={activePageKey}
             />
           </div>
         </div>
@@ -354,4 +359,5 @@ WebsiteTemplatePreview.propTypes = {
   showBrowserChrome: PropTypes.bool,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  activePageKey: PropTypes.string,
 };
