@@ -3,7 +3,7 @@ import { ReviewAlertRepository } from "../../data/reviewAlertRepository.js";
 import { ReviewAlertRecipientRepository } from "../../data/reviewAlertRecipientRepository.js";
 import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
 import { ALERT_TYPES } from "../model/reviewAlertRules.js";
-import { HostNotificationPreferencesRepository } from "../../../communication-preferences/data/hostNotificationPreferencesRepository.js";
+import { ReviewAlertPreferencesRepository } from "../../data/reviewAlertPreferencesRepository.js";
 
 const PREFERENCE_KEYS = {
   NEW_REVIEW: "manager_review_received", LOW_RATING: "manager_low_review",
@@ -14,7 +14,7 @@ const rating = value => typeof value === "number" && Number.isFinite(value) && v
 // Internal delivery boundary for ReviewAlertRules candidates; no publication hooks.
 export class ReviewAlertNotificationService {
   constructor({ repository = new ReviewAlertRepository(), recipients = new ReviewAlertRecipientRepository(),
-    preferences = new HostNotificationPreferencesRepository(), notifier = new ReviewRequestNotifier(),
+    preferences = new ReviewAlertPreferencesRepository(), notifier = new ReviewRequestNotifier(),
     logger = console } = {}) {
     Object.assign(this, { repository, recipients, preferences, notifier, logger });
   }

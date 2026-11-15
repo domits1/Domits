@@ -4,7 +4,7 @@ Pull request: not opened. Issue: not supplied.
 Date: 2026-11-14. Reviewed commit: `711051c7b`, plus the approved preference fix in the working tree.
 Workflow: [eng-review](../../../.claude/skills/eng-review/SKILL.md).
 Scope: the three notification-delivery files introduced by that commit.
-Result: one blocking deployment finding and two requirement gaps await decisions; boolean email opt-out fixed.
+Result: deployment boundary and boolean email opt-out fixed; two requirement gaps await decisions.
 
 ## Findings and decisions
 
@@ -13,7 +13,7 @@ An independent reviewer confirmed all four findings; no disagreement on the defe
 
 | Severity | Where (paths relative to backend/) | Finding | Decision |
 |---|---|---|---|
-| P1 (10/10) | functions/ReviewSystem/business/service/reviewAlertNotificationService.js:6 | Imports a sibling Lambda directory absent from deployed packages. Import fails when the service is integrated. | Pending approval: use a local adapter over the existing ORM preference model. No deployment or publication hook was added. |
+| P1 (10/10) | functions/ReviewSystem/business/service/reviewAlertNotificationService.js:6 | Imports a sibling Lambda directory absent from deployed packages. Import fails when the service is integrated. | Fixed with user approval on 2026-11-15: local read-only ReviewAlertPreferencesRepository uses the existing ORM preference model. No deployment or publication hook was added. |
 | P2 (10/10) | functions/ReviewSystem/business/service/reviewAlertNotificationService.js:55 | Stored boolean false bypasses the email opt-out. | User approved a fix: recognize legacy false alongside per-channel email false; add three regression cases. |
 | P2 (9/10) | functions/ReviewSystem/business/service/reviewAlertNotificationService.js:45 | UNREAD alert is inserted before preferences are read; supported inApp false is ignored. | Pending decision: separate email claims from visible alerts, or explicitly accept always persisting alerts in this scope. Do not silently repurpose READ/DISMISSED as delivery state. |
 | P2 (9/10) | functions/ReviewSystem/business/service/reviewAlertNotificationService.js:37 | Direct rule candidates contain no rating fields, so relevant rating information is omitted. | Pending decision: enrich through trusted repository data or require a documented validated enrichment contract. |
@@ -41,7 +41,7 @@ Line references below describe reviewed commit `711051c7b`, before the preferenc
 
 Reuse ReviewAlertRepository's atomic unique-key insert and UNREAD default, ReviewAlertRules event identities,
 ReviewRequestNotifier's synchronous Lambda contract and maxAttempts: 1, property ownership and active manager
-relationships, and the existing preference schema. The sibling import needs correction for actual packaging.
+relationships, and the existing preference schema. A local read-only adapter preserves Lambda package boundaries.
 Content allowlisting and the fixed HTTPS dashboard URL exclude private feedback and unpublished review text.
 
 ## Failure modes
@@ -57,7 +57,7 @@ Content allowlisting and the fixed HTTPS dashboard URL exclude private feedback 
 | Preference lookup/JSON fails | Catch exists; dedicated tests absent | FAILED; alert remains; no retry |
 | User email missing | Covered; no email invocation | EMAIL_UNAVAILABLE; alert remains |
 | Email send times out or acknowledgement is ambiguous | Covered through injected delivery failure; catch logs | FAILED; alert remains; duplicate replay never resends |
-| Packaged module import fails | Packaging contract verified; packaged import test absent | Service unavailable on integration; blocker above |
+| Packaged module import fails | Existing lambdaImportBoundary regression suite checks every relative import; cross-Lambda import removed | Boundary violation fixed; no live AWS deployment tested |
 | Real candidate has no ratings / in-app disabled | Missing integration coverage; findings above | Missing rating content / unwanted UNREAD alert |
 
 ## Delivery decision and performance
@@ -88,6 +88,7 @@ Trusted event ▶ validate ▶ property/published review + active managers
 
 Baseline: 23 ReviewSystem suites / 594 tests passed before review; 18 focused delivery cases.
 Post-review preference regression run: 1 focused suite / 21 tests passed, including all three boolean opt-outs.
+2026-11-15 packaging fix: lambdaImportBoundary and reviewAlertNotificationService suites passed, 60 tests total.
 The review record and fixes must remain within the story's strictly fewer than 400 changed lines.
 
 - [ ] Engineering review findings resolved or explicitly accepted; remaining decisions above are pending.
