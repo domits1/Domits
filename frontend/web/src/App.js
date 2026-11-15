@@ -23,6 +23,7 @@ import BookingConfirmationOverview from "./features/bookingengine/BookingConfirm
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
+import ReviewAlertsProvider from "./features/hostdashboard/notifications/ReviewAlertsProvider";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import ReviewPage from "./features/review/views/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
@@ -189,6 +190,7 @@ function App() {
           <ScrollToTop />
           <AuthProvider>
             <UserProvider>
+              <ReviewAlertsProvider>
               <div className="App" aria-busy={loading}>
                 {shouldRenderStandardHeader ? (
                   <Header setSearchResults={setSearchResults} setLoading={setLoading} />
@@ -302,6 +304,7 @@ function App() {
                 {renderFooter()}
                 {renderChatWidget()}
               </div>
+              </ReviewAlertsProvider>
             </UserProvider>
           </AuthProvider>
           {shouldRenderNavbar ? <Navbar /> : null}

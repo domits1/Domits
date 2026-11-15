@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { FiBell, FiStar, FiTrendingDown, FiClock } from "react-icons/fi";
 import styles from "./Notifications.module.css";
+import { useReviewAlerts } from "./ReviewAlertsProvider";
 
 export const notificationTypes = {
   review: { label: "New review", Icon: FiStar },
@@ -10,13 +11,13 @@ export const notificationTypes = {
 };
 
 // Alert shape: { id, type, property, message, timestamp (ISO), read }.
-export function NotificationDropdown({ id, alerts, loading, error, panelRef }) {
+export function NotificationDropdown({ id, alerts, loading, error, panelRef, refresh }) {
   return (
     <section id={id} ref={panelRef} tabIndex={-1} aria-label="Review notifications"
       className={styles.dropdown} aria-busy={loading || undefined}>
       <h2>Notifications</h2>
       {loading ? <p role="status">Loading notifications…</p> : error ?
-        <p role="alert">Unable to load notifications. Please try again later.</p> :
+        <p role="alert">Unable to load notifications. Please try again later. {refresh && <button onClick={refresh}>Retry</button>}</p> :
         alerts.length === 0 ? <p role="status">No notifications yet.</p> : (
           <ul className={styles.list}>
             {alerts.map((alert) => {
@@ -43,12 +44,14 @@ export function NotificationDropdown({ id, alerts, loading, error, panelRef }) {
 }
 
 export default function NotificationBell({ alerts = [], loading = false, error = false, onOpen }) {
+  const live = useReviewAlerts();
+  if (live) { alerts = live.alerts; loading = live.loading; error = live.error; }
   const [open, setOpen] = useState(false);
   const root = useRef(null);
   const bell = useRef(null);
   const panel = useRef(null);
   const id = useId();
-  const unread = alerts.filter((alert) => !alert.read).length;
+  const unread = live ? live.unreadCount : alerts.filter((alert) => !alert.read).length;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -79,7 +82,7 @@ export default function NotificationBell({ alerts = [], loading = false, error =
         <FiBell aria-hidden="true" />
         {unread > 0 && <span className={styles.badge} aria-hidden="true">{unread > 99 ? "99+" : unread}</span>}
       </button>
-      {open && <NotificationDropdown id={id} panelRef={panel} alerts={alerts} loading={loading} error={error} />}
+      {open && <NotificationDropdown id={id} panelRef={panel} alerts={alerts} loading={loading} error={error} refresh={live?.refresh} />}
     </div>
   );
 }

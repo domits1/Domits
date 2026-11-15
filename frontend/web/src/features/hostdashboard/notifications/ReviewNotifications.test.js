@@ -79,7 +79,7 @@ test("renders loading, error, empty and no-match states", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("Unable to load notifications");
   expect(screen.queryByRole("list")).not.toBeInTheDocument();
   rerender(page({}));
-  expect(screen.getByRole("status")).toHaveTextContent("No review notifications yet");
+  expect(screen.getByRole("status")).toHaveTextContent("No notifications yet");
   rerender(page({ alerts: [alerts[0]] }));
   filter("Unread notifications");
   expect(screen.getByRole("status")).toHaveTextContent("No notifications match this filter");
@@ -103,12 +103,16 @@ test("hands keyboard focus to the first new link for intermediate and final batc
   expect(rows()).toHaveLength(10);
   expect(within(rows()[5]).getByRole("link")).toHaveFocus();
   await user.tab();
+  expect(within(rows()[6]).getByRole("checkbox")).toHaveFocus();
+  await user.tab();
   expect(within(rows()[6]).getByRole("link")).toHaveFocus();
   screen.getByRole("button", { name: "Load more notifications" }).focus();
   await user.keyboard(" ");
   expect(rows()).toHaveLength(12);
   expect(screen.queryByRole("button", { name: "Load more notifications" })).not.toBeInTheDocument();
   expect(within(rows()[10]).getByRole("link")).toHaveFocus();
+  await user.tab();
+  expect(within(rows()[11]).getByRole("checkbox")).toHaveFocus();
   await user.tab();
   expect(within(rows()[11]).getByRole("link")).toHaveFocus();
 });
