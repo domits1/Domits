@@ -1,5 +1,6 @@
 import { AuthManager } from "../auth/authManager.js";
 import { ReviewService } from "../business/service/reviewService.js";
+import { ReviewAlertService } from "../business/service/reviewAlertService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
 import { UnauthorizedException } from "../util/exception/unauthorizedException.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -30,9 +31,28 @@ export class Controller {
       return this.jsonResponse(200, { response });
     });
   }
-  constructor({ service = new ReviewService(), authManager = new AuthManager() } = {}) {
+  constructor({ service = new ReviewService(), authManager = new AuthManager(), alertService = new ReviewAlertService() } = {}) {
     this.service = service;
     this.authManager = authManager;
+    this.alertService = alertService;
+  }
+
+  async manageReviewAlerts(event) {
+    return this.executeAuthenticated(event, async recipient => {
+      if (event.body && Object.keys(parseBody(event)).length) throw new BadRequestException("Alert requests do not accept body fields.");
+      if (event.multiValueQueryStringParameters && Object.values(event.multiValueQueryStringParameters).some(values => values.length !== 1)) {
+        throw new BadRequestException("Repeated query parameters are not supported.");
+      }
+      const query = event.queryStringParameters ?? {};
+      let result;
+      if (event.httpMethod === "GET") result = await this.alertService.list(recipient, query);
+      else {
+        if (Object.keys(query).length) throw new BadRequestException("Alert updates do not accept query parameters.");
+        result = await this.alertService.update(recipient, event.pathParameters?.id,
+          event.resource.endsWith("/dismiss") ? "dismiss" : "read");
+      }
+      return this.moderationResponse(200, result);
+    });
   }
 
   async getPublicReviews(event) {

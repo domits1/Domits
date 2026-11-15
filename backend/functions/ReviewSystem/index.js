@@ -6,6 +6,9 @@ let controller;
 let scheduledService;
 
 const routes = new Map([
+  ["/reviews/alerts", new Map([["GET", "manageReviewAlerts"]])],
+  ["/reviews/alerts/{id}/read", new Map([["PATCH", "manageReviewAlerts"]])],
+  ["/reviews/alerts/{id}/dismiss", new Map([["PATCH", "manageReviewAlerts"]])],
   ["/reviews/{id}/approve", new Map([["POST", "approveReview"]])],
   ["/reviews", new Map([["GET", "getReviews"], ["POST", "createReview"], ["PATCH", "updateReview"]])],
   ["/reviews/{id}", new Map([["GET", "getReviewById"], ["PATCH", "updateReview"], ["DELETE", "deleteReview"]])],

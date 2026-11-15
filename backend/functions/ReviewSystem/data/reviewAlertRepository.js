@@ -64,6 +64,16 @@ export class ReviewAlertRepository {
     });
   }
 
+  countUnreadForRecipient(recipientUserId) {
+    text(recipientUserId, "recipient");
+    return this.execute(repository => repository.count({ where: { recipient_user_id: recipientUserId, status: "UNREAD" } }));
+  }
+
+  findAlertForRecipient(recipientUserId, alertId) {
+    text(recipientUserId, "recipient"); text(alertId, "alert ID");
+    return this.execute(repository => repository.findOne({ where: { id: alertId, recipient_user_id: recipientUserId } }));
+  }
+
   markAlertAsRead(recipientUserId, alertId) {
     return this.changeStatus(recipientUserId, alertId, "READ", ["UNREAD"]);
   }
