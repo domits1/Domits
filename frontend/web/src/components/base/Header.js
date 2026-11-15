@@ -22,6 +22,7 @@ import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animatio
 import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
 import DestinationsMenu from "../../features/destinations/components/DestinationsMenu";
 import NotificationBell from "../../features/hostdashboard/notifications/NotificationBell";
+import notificationStyles from "../../features/hostdashboard/notifications/Notifications.module.css";
 import { useDestinationMenu } from "../../features/destinations/hooks/useDestinationMenu";
 
 const contentByLanguage = { en, nl, de, es };
@@ -29,6 +30,7 @@ const contentByLanguage = { en, nl, de, es };
 function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isHostDashboard = location.pathname === "/hostdashboard" || location.pathname.startsWith("/hostdashboard/");
   const { setFlowState } = useContext(FlowContext);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -368,7 +370,7 @@ function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
   return (
     <>
       <header
-        className="app-header"
+        className={`app-header ${isHostDashboard ? notificationStyles.hostHeader : ""}`}
         style={
           isMobileListingDetails
             ? {
@@ -466,7 +468,7 @@ function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
               </motion.div>
             )}
 
-            {(location.pathname === "/hostdashboard" || location.pathname.startsWith("/hostdashboard/")) && (
+            {isHostDashboard && (
               <NotificationBell key={location.pathname} alerts={notificationAlerts} onOpen={() => {
                 setDropdownVisible(false);
                 setAppsMenuOpen(false);

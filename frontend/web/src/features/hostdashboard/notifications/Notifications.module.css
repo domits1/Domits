@@ -21,3 +21,6 @@
 @media (max-width: 768px) {
   .dropdown { position: fixed; top: calc(var(--app-header-h, 80px) + 8px); right: 16px; max-height: 65vh; }
 }
+@media (max-width: 360px) {
+  .hostHeader :global(.logo) img { width: clamp(100px, calc(100vw - 212px), 150px); height: auto; }
+}
