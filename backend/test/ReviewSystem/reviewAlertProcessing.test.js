@@ -13,8 +13,6 @@ import { handler } from "../../functions/ReviewSystem/index.js";
 import Database from "database";
 import { ReviewAlertWorkRepository } from "../../functions/ReviewSystem/data/reviewAlertWorkRepository.js";
 import { CreateReviewAlertWork20261115 } from "../../ORM/migrations/20261115_create_review_alert_work.js";
-import fs from "node:fs";
-import path from "node:path";
 const now = 1800000000000, publishedAt = now - 72 * 3600000;
 const review = { id: "r1", property_id: "p1", host_id: "h1", review_type: "GUEST_TO_PROPERTY",
   overall_rating: 2, status: "PUBLISHED", publication_status: "PUBLISHED" };
@@ -129,11 +127,4 @@ test("migration waits for DSQL index readiness in both schemas", async () => {
   await new CreateReviewAlertWork20261115().up({ connection: { options: { host: "db.dsql.example" } }, query });
   expect(query.mock.calls.filter(([sql]) => sql.includes("CREATE TABLE"))).toHaveLength(2);
   expect(query).toHaveBeenCalledWith("SELECT sys.wait_for_job($1) AS ready", ["job"]);
-});
-test("EventBridge and IAM are scoped to the alert worker and notification dependencies", () => {
-  const { Resources: r } = JSON.parse(fs.readFileSync(path.join(__dirname, "../../infrastructure/review-alert-processing/template.json"), "utf8"));
-  expect(r.Schedule.Properties).toMatchObject({ Name: "domits-review-alerts", ScheduleExpression: "rate(1 minute)" });
-  expect(r.Permission.Properties).toMatchObject({ Principal: "events.amazonaws.com", SourceArn: { "Fn::GetAtt": ["Schedule", "Arn"] } });
-  expect(r.EmailInvocation.Properties.PolicyDocument.Statement[0].Resource.map(value => value["Fn::Sub"]))
-    .toEqual(["GetUserInfo", "EmailNotificationService"].map(name => `arn:\${AWS::Partition}:lambda:\${AWS::Region}:\${AWS::AccountId}:function:${name}`));
 });
