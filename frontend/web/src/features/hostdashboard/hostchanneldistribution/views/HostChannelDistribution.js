@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
+import { useLatestSyncEvidence } from "../hooks/useLatestSyncEvidence";
 import { MAPPED_PROPERTIES_STATE, useMappedProperties } from "../hooks/useMappedProperties";
 import {
   MOCK_CONNECT_FLOW_ENABLED,
@@ -35,9 +36,8 @@ function HostChannelDistribution() {
   const userId = useFetchUser();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
 
-  // No property is passed, so getLatestSyncEvidence cannot run: the Last sync card is still mock
-  // data behind MOCK_PREVIEW_SECTIONS_ENABLED. The picker below needs the status first.
-  const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution();
+  // The picker below needs the status first, so the status hook knows nothing about properties.
+  const { status, loading, error, errorStatus, reload } = useChannexDistribution();
   const [activeModal, setActiveModal] = useState(null);
   const [propertyMappings, setPropertyMappings] = useState([]);
 
@@ -53,6 +53,11 @@ function HostChannelDistribution() {
   // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
   const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
   const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
+  const selectedPropertyName = propertyOptions.find((option) => option.value === selectedPropertyId)?.label ?? "";
+  // Real data, requested only once a property is selected.
+  const { item: latestSyncItem, loadState: latestSyncLoadState } = useLatestSyncEvidence({
+    domitsPropertyId: selectedPropertyId,
+  });
   const isLoadingProperties = propertiesLoadState === MAPPED_PROPERTIES_STATE.LOADING;
   const hasPropertyLoadError = propertiesLoadState === MAPPED_PROPERTIES_STATE.ERROR;
   // The unavailable state (HTTP 409) deliberately shows nothing: the status card already explains it.
@@ -61,8 +66,9 @@ function HostChannelDistribution() {
   const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
   const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
-  // Without a property nothing was queried, so "No sync yet" would claim something we never checked.
-  const showLastSync = MOCK_PREVIEW_SECTIONS_ENABLED && isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
+  // Without a property nothing is queried, so "No sync yet" would claim something we never checked.
+  // The card hides itself when the integration is not found (HTTP 404): the status card explains it.
+  const showLastSync = isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
   // Narrower than isConnectedOrNeedsAttention: excludes PENDING_PROVIDER_VALIDATION, since
   // there's nothing confirmed to map against mid-validation.
   const showPropertyMapping =
@@ -170,7 +176,9 @@ function HostChannelDistribution() {
               </select>
             </label>
           )}
-          {showLastSync && <LastSyncCard syncEvidence={syncEvidence} />}
+          {showLastSync && (
+            <LastSyncCard propertyName={selectedPropertyName} loadState={latestSyncLoadState} item={latestSyncItem} />
+          )}
         </div>
       )}
 

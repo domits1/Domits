@@ -1,13 +1,15 @@
 import {
   getChannexStatus as fetchRealChannexStatus,
+  getLatestChannexSyncEvidence,
   getLinkedChannexRoomTypes,
 } from "../../hostintegrations/channexApi";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { fetchListingsFromHostDashboard } from "../../../../services/hostPropertyService";
-import { getChannexStatus, getMappedProperties } from "./channexDistributionService";
+import { getChannexStatus, getLatestSyncEvidence, getMappedProperties } from "./channexDistributionService";
 
 jest.mock("../../hostintegrations/channexApi", () => ({
   getChannexStatus: jest.fn(),
+  getLatestChannexSyncEvidence: jest.fn(),
   getLinkedChannexRoomTypes: jest.fn(),
 }));
 jest.mock("../../../../services/getAccessToken", () => ({ getAccessToken: jest.fn() }));
@@ -36,6 +38,30 @@ describe("channexDistributionService getChannexStatus", () => {
     fetchRealChannexStatus.mockRejectedValue(error);
 
     await expect(getChannexStatus()).rejects.toBe(error);
+  });
+});
+
+describe("channexDistributionService getLatestSyncEvidence", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("asks the real endpoint for the given property only, without a userId, and returns its result", async () => {
+    const response = { channel: "CHANNEX", domitsPropertyId: "property-1", item: null };
+    getLatestChannexSyncEvidence.mockResolvedValue(response);
+
+    const result = await getLatestSyncEvidence({ domitsPropertyId: "property-1" });
+
+    // The backend takes the user from the token, so only the property is sent.
+    expect(getLatestChannexSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" });
+    expect(result).toBe(response);
+  });
+
+  test("propagates a thrown error, including its status and body, unchanged", async () => {
+    const error = Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } });
+    getLatestChannexSyncEvidence.mockRejectedValue(error);
+
+    await expect(getLatestSyncEvidence({ domitsPropertyId: "property-1" })).rejects.toBe(error);
   });
 });
 
