@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./eliteSitePage.module.scss";
 import {
@@ -128,6 +128,7 @@ export default function EliteAccommodationPage({
   const price = buildElitePrice(model.stay);
   const hasPriceCard = Boolean(price.amount || availabilityHref);
   const photos = selectEliteAccommodationPhotos(model.media);
+  const stillPhotoModel = useMemo(() => ({ ...model, media: { ...model.media, imageRotation: {} } }), [model]);
   const highlights = viewState.showAmenitiesPanel ? listEliteHighlights(viewState.featuredAmenities) : [];
   const canShowAllAmenities = viewState.allAmenities.length > 0;
   const houseRules = listEliteHouseRules(model.policies);
@@ -173,7 +174,7 @@ export default function EliteAccommodationPage({
           {photos.map((slot) => (
             <TemplateImageSlotVisual
               key={`${slot.kind}-${slot.index ?? 0}`}
-              model={model}
+              model={stillPhotoModel}
               slot={slot}
               frameClassName={styles.elitePhotoFrame}
               imageClassName={styles.elitePhoto}

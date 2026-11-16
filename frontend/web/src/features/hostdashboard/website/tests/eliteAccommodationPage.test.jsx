@@ -124,11 +124,25 @@ describe("the Elite accommodation page", () => {
     );
     const photos = elitePage(container).querySelector("[data-photo-count]");
 
+    const headerPhoto = elitePage(container).querySelector("header img").getAttribute("src");
+    const rowPhotos = Array.from(photos.querySelectorAll("img"));
+
     expect(photos.dataset.photoCount).toBe("2");
-    expect(Array.from(photos.querySelectorAll("img")).map((image) => image.alt)).toEqual([
+    expect(rowPhotos.map((image) => image.alt)).toEqual([
       "Wellness Villa Bisous residence view",
       "Wellness Villa Bisous view 3",
     ]);
+    expect(new Set([headerPhoto, ...rowPhotos.map((image) => image.getAttribute("src"))]).size).toBe(3);
+  });
+
+  it("keeps the photo row still when the host turned on photo rotation", () => {
+    const images = renderPayload.propertySnapshot.images;
+    const thirdImage = { ...images[1], image_id: "third", sort_order: 2, web_key: "images/property/third/web.jpg" };
+    const snapshot = buildSnapshot({ snapshot: { images: [...images, thirdImage] } });
+    const overrides = { imageRotation: { residence: true, gallery: [true, true, true] } };
+    const { container } = renderPage(buildModel({ snapshot, overrides }));
+
+    expect(elitePage(container).querySelectorAll("[data-photo-count] img")).toHaveLength(2);
   });
 
   it("opens and closes the rest of a long description", () => {
@@ -142,6 +156,9 @@ describe("the Elite accommodation page", () => {
     expect(more).toBeVisible();
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(toggle).toHaveTextContent("Read less");
+    fireEvent.click(toggle);
+    expect(more).not.toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
 
   it("opens the full amenities panel from the highlights", () => {
