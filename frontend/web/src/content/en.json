@@ -2193,5 +2193,17 @@
       "remotelock": "Simplify property access with connected smart locks and automated access management.",
       "whatsapp": "Communicate with guests through WhatsApp as part of your property management workflow."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Owner Management",
+    "owners": "Owners",
+    "statements": "Statements"
+  },
+  "hostOwnerStatements": {
+    "title": "Owner Statements",
+    "description": "This section is being prepared. Owner statement generation is not available yet.",
+    "emptyTitle": "No statements generated yet",
+    "emptyDescription": "When statement generation is available, this area will show each owner's reporting period, income, deductions, net earnings and outstanding balance.",
+    "payoutNote": "A statement shows what an owner is owed. It does not initiate a bank transfer or replace recorded payout transactions."
   }
 }
