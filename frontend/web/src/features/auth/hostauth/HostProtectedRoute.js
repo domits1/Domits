@@ -47,9 +47,8 @@ const HostProtectedRoute = ({ children }) => {
 
   const isAdmin = isAdminRole || (needsApprovalCheck && approvalAccess?.allowed);
   if (isAdmin && !isAdminPath) return <Navigate to={REVIEW_APPROVAL_ADMIN_PATH} replace />;
-  if (hasHostAccess && needsApprovalCheck && approvalAccess?.allowed === null) {
-    return <div role="alert">Could not verify dashboard access. Refresh the page to try again.</div>;
-  }
+  // A review-service outage must not revoke an existing host entitlement.
+  // Confirmed approvers still redirect above; backend routes enforce permissions.
   if (isAdmin || hasHostAccess) return children;
 
   return <Navigate to="/" replace />;
