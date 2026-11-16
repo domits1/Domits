@@ -1,11 +1,13 @@
 # feat: search and filter the integration marketplace #3794
 
-Pull request: not opened yet (branch `feature/3794-integration-search`, on top of #3879)
+Pull request: #3914 (branch `feature/3794-integration-search`, on top of #3879)
 Issue: #3794 (part of #3789, under #433)
-Reviewed commits: fa54c42bd (filter rules), b6165c06b (controls on the page)
-Result: no blocking findings. Both commits were reviewed as a staged diff before they were made. One finding was fixed before the commit.
+Reviewed commits: fa54c42bd (filter rules), b6165c06b (controls on the page), 218cbbb8d (WhatsApp status)
+Result: no blocking findings. All three commits were reviewed as a staged diff before they were made. One finding was fixed before the commit.
 
 Last of three pull requests for the Integration Marketplace MVP. The list of integrations came in #3854 and the cards in #3879. This one adds the search, the two filters and the empty state.
+
+Product change (Ilan, 16 November 2026): WhatsApp is now "Available" instead of "In development", because hosts can already connect it on the same page. This closes the open point from the reviews of #3854 and #3879. It is done here and not in #3854, so the approvals there stay valid.
 
 ## Findings
 
