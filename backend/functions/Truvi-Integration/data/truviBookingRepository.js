@@ -101,7 +101,7 @@ export class TruviBookingRepository {
     const schema = resolveSchemaName(client);
 
     const rows = await client.query(
-      `SELECT g.bookingid, g.providerassessmentid
+      `SELECT g.bookingid, g.providerassessmentid, g.failedattempts
       FROM ${schema}.guest_risk_assessment g
       JOIN ${schema}.booking b ON b.id = g.bookingid
       WHERE g.provider = $1
@@ -116,6 +116,7 @@ export class TruviBookingRepository {
     return (Array.isArray(rows) ? rows : []).map((row) => ({
       bookingId: row.bookingid,
       verificationId: row.providerassessmentid,
+      failedAttempts: toNumber(row.failedattempts),
     }));
   }
 
@@ -124,7 +125,7 @@ export class TruviBookingRepository {
     const schema = resolveSchemaName(client);
 
     const rows = await client.query(
-      `SELECT g.bookingid, g.providerassessmentid,
+      `SELECT g.bookingid, g.providerassessmentid, g.failedattempts,
         g.arrivaldate AS sent_arrivaldate, g.departuredate AS sent_departuredate,
         b.arrivaldate, b.departuredate
       FROM ${schema}.guest_risk_assessment g
@@ -146,6 +147,7 @@ export class TruviBookingRepository {
       verificationId: row.providerassessmentid,
       sent: { arrivaldate: toNumber(row.sent_arrivaldate), departuredate: toNumber(row.sent_departuredate) },
       current: { arrivaldate: toNumber(row.arrivaldate), departuredate: toNumber(row.departuredate) },
+      failedAttempts: toNumber(row.failedattempts),
     }));
   }
 }

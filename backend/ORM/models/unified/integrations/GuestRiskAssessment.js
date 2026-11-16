@@ -23,5 +23,6 @@ export const GuestRiskAssessment = new EntitySchema({
     departureDate: { name: "departuredate", ...bigintNumber, nullable: true },
     createdAt: { name: "createdat", ...bigintNumber, nullable: false },
     updatedAt: { name: "updatedat", ...bigintNumber, nullable: false },
+    failedAttempts: { name: "failedattempts", type: "integer", nullable: true },
   },
 });
