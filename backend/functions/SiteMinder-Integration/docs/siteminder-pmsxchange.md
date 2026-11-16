@@ -17,6 +17,8 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 | Checked sending | `business/siteMinderInventoryService.js` | Domits -> SiteMinder | - |
 | Reading reservations | `util/reservationsMessage.js` | SiteMinder -> Domits | `OTA_ResRetrieveRS` |
 | Asking for, confirming and failing reservations | `util/reservationsMessage.js`, `business/siteMinderReservationsReader.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
+| Saving reservations as Domits bookings | `util/reservationBookings.js`, `business/siteMinderReservationImporter.js` | SiteMinder -> Domits | shared booking import |
+| One reservations run: read, save, confirm or fail | `business/siteMinderReservationSync.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
 
 Not built yet: saving reservations as bookings, the Lambda handler and schedule, and the host screen.
 
@@ -57,6 +59,50 @@ A reservation that is not confirmed comes back on the next `OTA_ReadRQ`. After 2
 Each call has its own `EchoToken`. A refused or failed call throws `SiteMinderSoapError`, like the ARI calls.
 
 `readReservations` never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id can be neither saved nor confirmed, so it is skipped and counted in `skipped`; the other reservations in the same answer are still read. A response with a `DOCTYPE` is refused.
+
+## Saving reservations
+
+`SiteMinderReservationSync.run()` does steps 1 to 4 above. `reservationSync` in `createSiteMinderServices` builds it. Nothing calls it on a schedule yet.
+
+Every room of a reservation becomes one Domits booking, because one SiteMinder room type is one Domits property (see Mapping). The bookings are written by the shared `ChannexExternalBookingImportRepository` with `SITEMINDER_BOOKING_PROFILE`: host name `SiteMinder`, booking type `siteminder`, guest id `SITEMINDER_GUEST:<room key>` and payment id `SITEMINDER:<room key>`.
+
+| Thing | Value |
+| ----- | ----- |
+| Room key | `<siteMinderId>:<roomTypeCode>:<n>`, where `n` counts rooms of the same room type in the reservation. It does not depend on the room order, so a later change finds the same room |
+| Domits booking id | `buildDeterministicBookingId("SITEMINDER", <account id>, <room key>)`, so saving the same room again never makes a second booking |
+| Reservation link | one `channel_reservation_link` row per reservation (`externalReservationId` = `siteMinderId`) with the room keys in `rawPayload`. A change or cancel reads the rooms from here, so it still finds them after the host unlinked a room type |
+| Booking id sent to SiteMinder | the booking of the first room. A cancel for a reservation Domits never saved is confirmed with the deterministic id of the reservation itself |
+| Guest | first and last name of the primary guest, else `SiteMinder guest`. Email and phone are not saved |
+| Guests | adults plus children of the room, or 1 when both are 0 |
+| Price | the room total after tax, else before tax, only when it is in `SITEMINDER_CURRENCY`. Another currency saves no price rather than a wrong one |
+| Source | the booking channel name, else its code, else `SiteMinder` |
+
+| Status | What Domits does |
+| ------ | ---------------- |
+| `Book` | saves every room. A room that already exists (the same reservation delivered again) is updated, not saved twice |
+| `Modify` | updates the rooms that exist, saves new rooms, and cancels rooms that are no longer in the reservation. A change for a reservation Domits never saved is saved as new |
+| `Cancel` | cancels every room in the reservation link. A room that is already cancelled is left alone |
+
+Every save, change and cancel also writes a `SITEMINDER_IMPORT` row to the Channex ARI outbox in the same transaction: the new nights close and the old nights open again on Channex. `SITEMINDER_IMPORT` is urgent like `CHANNEX_IMPORT`, so it skips the quiet period. A property without a Channex mapping is skipped by the worker (`NOT_MAPPED`).
+
+Everything is checked before anything is written. A reservation Domits can never save is reported to SiteMinder with a fixed text (no guest data), and nothing is saved:
+
+| Problem | Type | Code | Text |
+| ------- | ---- | ---- | ---- |
+| The hotel is not linked to a Domits host through SiteMinder | 3 | 392 | Hotel is not linked to a Domits host |
+| A room type is not linked, its link is turned off, or its Domits property no longer exists | 3 | 402 | Room type is not linked to a Domits property |
+| No rooms, a room without a room type, or no valid stay (departure must be after arrival) | 3 | 321 | Reservation has no rooms or no valid stay dates |
+
+Type 3 is the OTA type "Biz rule", and the codes come from SiteMinder's [error codes](https://developer.siteminder.com/pmsxchange-api/additional-resources/reference-tables/error-codes). Check them in the certification.
+
+Any other error, for example the database, is not reported. The reservation stays unconfirmed and comes back on the next read. The run logs `SITEMINDER_RESERVATION_RETRY_LATER` with the message id, status and error code or name, and at the end `SITEMINDER_RESERVATIONS_RUN` with only counts: `read`, `skipped`, `saved`, `failed`, `retryLater`. It never logs the SiteMinder answer or guest data. When the confirmation itself does not reach SiteMinder, the run fails; the saved reservations come back and are saved again without a second booking.
+
+Not built yet:
+
+- The schedule (every 2 to 5 minutes) and the Lambda handler.
+- Step 5: sending the new availability to SiteMinder after a reservation.
+- What to do when the nights are already taken in Domits (an overbooking). The booking is saved like a Channex import; how to warn the host is still a product decision.
+- The frontend shows `bookingtype = siteminder` like any other booking. `isChannexBooking` only knows `channex`.
 
 ## When a send is tried again
 
