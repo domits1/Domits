@@ -2194,5 +2194,17 @@
       "remotelock": "Maak toegang tot je accommodatie eenvoudiger met verbonden slimme sloten en automatisch toegangsbeheer.",
       "whatsapp": "Communiceer met gasten via WhatsApp als onderdeel van je accommodatiebeheer."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Eigenaarbeheer",
+    "owners": "Eigenaren",
+    "statements": "Overzichten"
+  },
+  "hostOwnerStatements": {
+    "title": "Eigenaarsoverzichten",
+    "description": "Dit onderdeel wordt voorbereid. Het genereren van eigenaarsoverzichten is nog niet beschikbaar.",
+    "emptyTitle": "Er zijn nog geen overzichten gegenereerd",
+    "emptyDescription": "Zodra het genereren van overzichten beschikbaar is, zie je hier per eigenaar de verslagperiode, inkomsten, inhoudingen, netto-opbrengst en het openstaande saldo.",
+    "payoutNote": "Een overzicht laat zien welk bedrag een eigenaar tegoed heeft. Het start geen bankoverschrijving en vervangt geen geregistreerde uitbetalingen."
   }
 }
