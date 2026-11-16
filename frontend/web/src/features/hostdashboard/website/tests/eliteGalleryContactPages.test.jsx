@@ -96,6 +96,19 @@ describe("the Elite gallery page", () => {
     expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
   });
 
+  it("shows a host's own header photo without Browse when the listing has no gallery photos", () => {
+    const model = buildModel();
+    const heroOnlyModel = {
+      ...model,
+      media: { ...model.media, galleryImages: [] },
+      gallery: { ...model.gallery, images: [] },
+    };
+    const { container } = renderPage("gallery", heroOnlyModel);
+
+    expect(galleryLayout(container)).toBe("single");
+    expect(screen.queryByRole("button", { name: "Browse" })).toBeNull();
+  });
+
   it("opens the photo browser at the photo the guest picks", async () => {
     const { container } = renderPage("gallery", buildModel({ images: withImageCount(4) }));
 
@@ -125,6 +138,15 @@ describe("the Elite contact page", () => {
     expect(within(page).getByText("Hosted by")).toBeInTheDocument();
     expect(page.querySelector("#contact")).toBeNull();
     expect(screen.getByRole("link", { name: "Check live availability" })).toBeInTheDocument();
+  });
+
+  it("keeps the gallery line of the host on the gallery page only", () => {
+    const { container } = renderPage(
+      "contact",
+      buildModel({ overrides: { galleryDescription: "Sunset over the pool." } })
+    );
+
+    expect(elitePage(container, "contact").querySelector("header")).not.toHaveTextContent("Sunset over the pool.");
   });
 
   it("drops the contact block when the host hid it", () => {
