@@ -1,6 +1,6 @@
 # feat(distribution): guard the Distribution route with the Channex allowlist check (#506)
 
-Pull request: #TBD (fill in when the pull request is opened)
+Pull request: #3917
 Issue: #506
 Reviewed commits: `c110ae303` (refactor), `9e196a6c1` (guard)
 Result: no blocking findings
