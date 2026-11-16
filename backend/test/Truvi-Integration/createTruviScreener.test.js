@@ -11,7 +11,7 @@ describe("createTruviScreener", () => {
   it("builds a screener with the key from the secret and the amount from the environment", async () => {
     const secretRepository = { getSubscriptionKey: jest.fn(async () => "key-from-secret") };
 
-    const screener = await createTruviScreener({ env: { TRUVI_EXTENDED_AMOUNT: "1000" }, secretRepository });
+    const screener = await createTruviScreener({ env: { TRUVI_EXTENDED_AMOUNT: "1000", TRUVI_BASE_URL: "https://truvi.example" }, secretRepository });
 
     expect(screener).toBeInstanceOf(TruviBookingScreener);
     expect(screener.extendedAmount).toBe(1000);

@@ -17,6 +17,7 @@ describe("TruviBookingRepository.listVerificationsToModify", () => {
         sent_departuredate: null,
         arrivaldate: "2000",
         departuredate: "3000",
+        failedattempts: 2,
       },
     ]);
     Database.getInstance.mockResolvedValue({ query, options: {} });
@@ -29,9 +30,11 @@ describe("TruviBookingRepository.listVerificationsToModify", () => {
         verificationId: "v-1",
         sent: { arrivaldate: 1000, departuredate: null },
         current: { arrivaldate: 2000, departuredate: 3000 },
+        failedAttempts: 2,
       },
     ]);
     const [sql, params] = query.mock.calls[0];
+    expect(sql).toContain("g.failedattempts");
     expect(sql).toContain("FROM test.guest_risk_assessment g");
     expect(sql).toContain("b.departuredate > $7");
     expect(sql).toContain("g.arrivaldate <> b.arrivaldate OR g.departuredate <> b.departuredate");

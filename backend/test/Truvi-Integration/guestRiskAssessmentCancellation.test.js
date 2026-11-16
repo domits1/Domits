@@ -8,7 +8,7 @@ jest.mock("database", () => ({
 }));
 
 describe("GuestRiskAssessmentRepository.saveCancellation", () => {
-  it("updates only the status, error message and updatedAt of the Truvi row", async () => {
+  it("updates the status, error message and updatedAt of the Truvi row and clears the failed attempts", async () => {
     const update = jest.fn(async () => undefined);
     Database.getInstance.mockResolvedValue({ getRepository: jest.fn(() => ({ update })) });
 
@@ -21,7 +21,12 @@ describe("GuestRiskAssessmentRepository.saveCancellation", () => {
 
     expect(update).toHaveBeenCalledWith(
       { id: "truvi:booking-1" },
-      { status: "CANCEL_REFUSED", errorMessage: "checkIn is in the past, and can no longer be cancelled.", updatedAt: 2000 }
+      {
+        status: "CANCEL_REFUSED",
+        errorMessage: "checkIn is in the past, and can no longer be cancelled.",
+        failedAttempts: null,
+        updatedAt: 2000,
+      }
     );
   });
 

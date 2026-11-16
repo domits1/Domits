@@ -10,7 +10,10 @@ export const readTruviConfig = (env = process.env) => {
     throw new Error("TRUVI_EXTENDED_AMOUNT must be one of 250, 500, 1000, 10000, 50000");
   }
 
-  const baseUrl = String(env.TRUVI_BASE_URL ?? "").trim() || TRUVI_SANDBOX_URL;
+  const baseUrl = String(env.TRUVI_BASE_URL ?? "").trim();
+  if (!baseUrl) {
+    throw new Error(`TRUVI_BASE_URL is required: the production URL from Truvi, or ${TRUVI_SANDBOX_URL} for the sandbox`);
+  }
   if (!baseUrl.startsWith("https://")) {
     throw new Error("TRUVI_BASE_URL must use https");
   }
