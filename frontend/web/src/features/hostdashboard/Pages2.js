@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Auth } from "aws-amplify";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
@@ -19,10 +18,7 @@ import HubIcon from "@mui/icons-material/Hub";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
-import {
-  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
-  checkChannexCertificationAccess,
-} from "./channexadmin/channexCertificationAccess";
+import { CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccess } from "./channexadmin/channexCertificationAccess";
 import {
   PROPERTY_REVIEW_ACCESS,
   PROPERTY_REVIEW_ADMIN_ROUTE,
@@ -30,11 +26,6 @@ import {
 } from "./propertyreview/propertyReviewAccess";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
-
-const loadChannexAccess = async () => {
-  const user = await Auth.currentAuthenticatedUser();
-  return checkChannexCertificationAccess(user?.attributes?.sub);
-};
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
