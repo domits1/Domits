@@ -41,9 +41,12 @@ describe("clock times on Elite site pages", () => {
     expect(formatEliteClockTime(value)).toBe(expected);
   });
 
-  it.each([["Flexible"], ["25:00"], ["12:60"], ["15h00"]])("keeps %p as the host wrote it", (value) => {
-    expect(formatEliteClockTime(value)).toBe(value);
-  });
+  it.each([["Flexible"], ["25:00"], ["25:00:00"], ["12:60"], ["12:60:00"], ["15h00"]])(
+    "keeps %p as the host wrote it",
+    (value) => {
+      expect(formatEliteClockTime(value)).toBe(value);
+    }
+  );
 
   it.each([[""], [null], [undefined], [{}]])("shows nothing for %p", (value) => {
     expect(formatEliteClockTime(value)).toBe("");
