@@ -37,7 +37,7 @@ No financial totals, statements, exports, approvals, or payment allocations are 
 
 ## Review follow-up
 
-- The branch changes are being rebuilt on the current `acceptance` head to include the intervening changes.
+- The PR branch was rebased onto the current `acceptance` head (`ce716e4fa1e7019320a72a88ebebe54ba68f6d31`) and is no longer behind the base branch.
 - Desktop and mobile screenshots were requested but are not attached: the UI could not be launched in this environment. Visual verification and screenshot evidence remain outstanding and must not be treated as completed.
 
 ## Next implementation dependencies
