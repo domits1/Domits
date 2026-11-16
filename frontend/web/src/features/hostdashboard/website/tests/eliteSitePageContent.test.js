@@ -153,6 +153,7 @@ describe("the description on Elite site pages", () => {
     ["Close to the U.S. Embassy and No. 5 Market. It has a pool.", "Close to the U.S. Embassy and No. 5 Market."],
     ["Walk to the beach, e.g. Ocean Bay. It has a pool.", "Walk to the beach, e.g. Ocean Bay."],
     ["Ten minutes to the Spa. It has a pool.", "Ten minutes to the Spa."],
+    ["Approx. ten minutes to the sea. It has a pool.", "Approx. ten minutes to the sea."],
   ])("ends the first sentence of %p at the right full stop", (description, lead) => {
     expect(buildEliteDescription({ description })).toEqual({
       lead,
