@@ -1316,3 +1316,104 @@
     transform: none;
   }
 }
+
+.host-integrations-market {
+  display: grid;
+  gap: clamp(12px, 1.4vw, 16px);
+}
+
+.host-integrations-market-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: clamp(14px, 1.6vw, 18px);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+}
+
+.host-integrations-market-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.host-integrations-market-field label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.host-integrations-market-field input,
+.host-integrations-market-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  font: inherit;
+  font-size: 0.925rem;
+  color: #111827;
+}
+
+.host-integrations-market-field input:focus-visible,
+.host-integrations-market-field select:focus-visible {
+  outline: 3px solid #bbf7d0;
+  outline-offset: 1px;
+  border-color: #15803d;
+  background: #ffffff;
+}
+
+.host-integrations-market-count {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.host-integrations-market-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: clamp(28px, 5vw, 48px) 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed #d1d5db;
+  border-radius: 18px;
+}
+
+.host-integrations-market-empty h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #111827;
+}
+
+.host-integrations-market-empty p {
+  margin: 0 0 8px;
+  max-width: 42ch;
+  color: #4b5563;
+}
+
+button.host-integrations-market-action {
+  align-self: center;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .host-integrations-market-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .host-integrations-market-field.is-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .host-integrations-market-filters {
+    grid-template-columns: 1fr;
+  }
+}

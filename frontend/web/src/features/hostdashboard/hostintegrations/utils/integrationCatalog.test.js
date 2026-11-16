@@ -75,4 +75,19 @@ describe("integration catalog", () => {
     INTEGRATION_CATALOG.forEach((integration) => expect(texts.descriptions[integration.id]?.trim()).toBeTruthy());
     expect(texts.talkToSales?.trim()).toBeTruthy();
   });
+  const keysOf = (value, prefix = "") =>
+    Object.entries(value).flatMap(([key, child]) =>
+      typeof child === "object" && child !== null ? keysOf(child, `${prefix}${key}.`) : [`${prefix}${key}`]
+    );
+
+  test.each(["nl", "de", "es"])(
+    "has exactly the same texts in %s as in English, so no label is ever empty",
+    (language) => {
+      expect(keysOf(LANGUAGES[language].hostIntegrations).sort()).toEqual(keysOf(en.hostIntegrations).sort());
+      keysOf(LANGUAGES[language].hostIntegrations).forEach((key) => {
+        const text = key.split(".").reduce((node, part) => node[part], LANGUAGES[language].hostIntegrations);
+        expect(String(text).trim()).not.toBe("");
+      });
+    }
+  );
 });
