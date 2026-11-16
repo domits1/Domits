@@ -145,14 +145,10 @@ function HostChannelDistribution() {
             manageEnabled={MOCK_CONNECT_FLOW_ENABLED}
           />
           {isLoadingProperties && (
-            <p className="host-chdist__empty-text" role="status">
-              {PROPERTIES_LOADING_MESSAGE}
-            </p>
+            <output className="host-chdist__empty-text">{PROPERTIES_LOADING_MESSAGE}</output>
           )}
           {hasNoLinkedProperties && (
-            <p className="host-chdist__empty-text" role="status">
-              {NO_LINKED_PROPERTIES_MESSAGE}
-            </p>
+            <output className="host-chdist__empty-text">{NO_LINKED_PROPERTIES_MESSAGE}</output>
           )}
           {hasPropertyLoadError && (
             <p className="host-chdist__error-text" role="alert">
