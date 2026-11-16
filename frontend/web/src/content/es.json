@@ -2194,5 +2194,17 @@
       "remotelock": "Simplifica el acceso a tu alojamiento con cerraduras inteligentes conectadas y gestión automática de accesos.",
       "whatsapp": "Comunícate con los huéspedes por WhatsApp como parte de la gestión de tu alojamiento."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Gestión de propietarios",
+    "owners": "Propietarios",
+    "statements": "Extractos"
+  },
+  "hostOwnerStatements": {
+    "title": "Extractos de propietarios",
+    "description": "Esta sección está en preparación. La generación de extractos para propietarios aún no está disponible.",
+    "emptyTitle": "Todavía no se han generado extractos",
+    "emptyDescription": "Cuando esté disponible la generación de extractos, aquí se mostrarán por propietario el período, los ingresos, las deducciones, las ganancias netas y el saldo pendiente.",
+    "payoutNote": "Un extracto muestra cuánto se debe a un propietario. No inicia una transferencia bancaria ni sustituye los pagos registrados."
   }
 }
