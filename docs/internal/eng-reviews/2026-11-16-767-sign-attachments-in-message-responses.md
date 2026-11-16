@@ -1,7 +1,7 @@
 # Sign attachment URLs in message responses: engineering review
 
 Branch: `fix/767-sign-chat-attachment-urls`
-Reviewed: the staged diff for the message-service commit (4 files, +227 -5, including this record)
+Reviewed: the staged diff for the message-service commit (3 files, +179 -5, including this record)
 Builds on: `2026-11-16-767-attachment-url-signer.md`
 
 ## Decision
