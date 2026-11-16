@@ -9,10 +9,12 @@ import {
   formatEliteClockTime,
   formatEliteNightlyPrice,
   hasEliteHeaderPhoto,
+  isEliteRestyledPage,
   listEliteHighlights,
   listEliteHouseRules,
   resolveEliteGalleryIntro,
   resolveEliteGalleryLayout,
+  resolveEliteHeaderTone,
   resolveEliteLocation,
   selectEliteAccommodationPhotos,
   selectEliteGallerySlots,
@@ -287,5 +289,25 @@ describe("the gallery intro and the location on Elite site pages", () => {
     );
     expect(resolveEliteLocation({ site: {}, location: { label: "Geneva" } })).toBe("Geneva");
     expect(resolveEliteLocation({})).toBe("");
+  });
+});
+
+describe("which Elite pages get the new style", () => {
+  it.each([
+    ["accommodation", true],
+    ["main", false],
+    ["gallery", false],
+    ["contact", false],
+    ["", false],
+    [undefined, false],
+    ["constructor", false],
+  ])("restyles %p: %p", (pageKey, expected) => {
+    expect(isEliteRestyledPage(pageKey)).toBe(expected);
+  });
+
+  it("uses a photo header only with a real photo", () => {
+    expect(resolveEliteHeaderTone({ heroImage: "https://images/one.webp" })).toBe("photo");
+    expect(resolveEliteHeaderTone({ heroImage: placeholderImage })).toBe("light");
+    expect(resolveEliteHeaderTone(undefined)).toBe("light");
   });
 });

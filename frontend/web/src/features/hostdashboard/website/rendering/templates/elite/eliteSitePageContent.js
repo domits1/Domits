@@ -158,6 +158,12 @@ export const listEliteHouseRules = (policies = {}) => {
 
 export const hasEliteHeaderPhoto = (media = {}) => isRealImage(media?.heroImage);
 
+export const ELITE_RESTYLED_PAGE_KEYS = Object.freeze(["accommodation"]);
+
+export const isEliteRestyledPage = (pageKey) => ELITE_RESTYLED_PAGE_KEYS.includes(pageKey);
+
+export const resolveEliteHeaderTone = (media = {}) => (hasEliteHeaderPhoto(media) ? "photo" : "light");
+
 export const selectEliteAccommodationPhotos = (media = {}) => {
   const heroImage = cleanText(media?.heroImage);
   const residenceImage = cleanText(media?.residenceImage);
