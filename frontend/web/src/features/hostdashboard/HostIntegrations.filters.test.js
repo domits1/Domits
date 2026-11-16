@@ -83,7 +83,7 @@ describe("HostIntegrations search and filters", () => {
 
     fireEvent.change(statusFilter(), { target: { value: "available" } });
 
-    expect(shownNames()).toEqual(["PriceLabs", "Channex"]);
+    expect(shownNames()).toEqual(["PriceLabs", "Channex", "WhatsApp"]);
   });
 
   test("combines the search with both filters", async () => {

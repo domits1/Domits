@@ -35,7 +35,7 @@ describe("filterIntegrations", () => {
 
   test("filters on one public status", () => {
     const result = filterIntegrations(INTEGRATION_CATALOG, { ...NO_FILTERS, status: INTEGRATION_STATUS.AVAILABLE });
-    expect(idsOf(result)).toEqual(["pricelabs", "channex"]);
+    expect(idsOf(result)).toEqual(["pricelabs", "channex", "whatsapp"]);
   });
 
   test("combines search, category and status, so an integration must match all three", () => {

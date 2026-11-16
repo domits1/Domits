@@ -49,7 +49,7 @@ describe("integration catalog", () => {
       siteminder: INTEGRATION_STATUS.IN_DEVELOPMENT,
       truvi: INTEGRATION_STATUS.IN_DEVELOPMENT,
       remotelock: INTEGRATION_STATUS.IN_DEVELOPMENT,
-      whatsapp: INTEGRATION_STATUS.IN_DEVELOPMENT,
+      whatsapp: INTEGRATION_STATUS.AVAILABLE,
     });
   });
 
