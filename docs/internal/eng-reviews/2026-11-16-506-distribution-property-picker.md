@@ -1,6 +1,6 @@
 # feat(distribution): load the property picker from real data (#506)
 
-Pull request: #TBD
+Pull request: #3920
 Issue: #506
 Reviewed commit: `752bccc95`
 Result: no blocking findings
@@ -12,6 +12,8 @@ Result: no blocking findings
 | P3 (8/10) | `frontend/web/src/features/hostdashboard/hostchanneldistribution/services/channexDistributionService.js:196` | `.map((mapping) => mapping?.domitsPropertyId)` let `undefined` into the set of linked ids. A mapping without an id made `size` 1, so `hostDashboard/all` was called when nothing was linked, and a listing without an id would have matched. | Fixed before the commit: the ids are filtered with `.filter(Boolean)`. The test "ignores mappings without a property id" failed first and now passes. |
 | P3 (8/10) | `frontend/web/src/features/hostdashboard/hostchanneldistribution/views/HostChannelDistribution.js:65` and `:40` | `showLastSync` is still reachable with `MOCK_PREVIEW_SECTIONS_ENABLED = true`, but `useChannexDistribution()` (line 40) no longer receives a property, so sync evidence is never fetched. With the flag on, the card could say "No sync yet" about something that was never queried, which the comment on line 64 warns against. | Accepted, because the flag is `false` and only for local preview, and the evidence fetch moves into its own hook in the next PR (Last sync card on real data). The picker needs the status first, and the status comes from the same hook that used to need the picked property. |
 | P4 (5/10) | `frontend/web/src/features/hostdashboard/hostchanneldistribution/hooks/useMappedProperties.js:56` | When `enabled` goes false and then true again, the first render after re-enabling returns the previous result for one frame, before the effect sets the loading state. | Accepted, because it needs a disconnect followed by a reconnect and the stale frame is not visible in practice. |
+| Sonar | `frontend/web/src/features/hostdashboard/hostchanneldistribution/views/HostChannelDistribution.js:148` | "Use `<output>` instead of the "status" role to ensure accessibility across all devices." The loading sentence was a `<p role="status">`. | Fixed in `c52211141`: it is now an `<output>` with the same class and no `role`. No layout change, because it sits in the flex column `.chdist-card-list`, where `<output>` is laid out as a block like the paragraph was. |
+| Sonar | `frontend/web/src/features/hostdashboard/hostchanneldistribution/views/HostChannelDistribution.js:153` | Same message. The "No properties are linked to Channex yet." sentence was a `<p role="status">`. | Fixed in `c52211141`, the same way. The `role="alert"` error sentence is unchanged. |
 
 ## Architecture and data flow
 
