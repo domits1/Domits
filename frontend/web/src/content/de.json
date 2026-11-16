@@ -2194,5 +2194,17 @@
       "remotelock": "Vereinfache den Zugang zu deiner Unterkunft mit vernetzten smarten Schlössern und automatischer Zugangsverwaltung.",
       "whatsapp": "Kommuniziere mit Gästen über WhatsApp als Teil der Verwaltung deiner Unterkunft."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Eigentümerverwaltung",
+    "owners": "Eigentümer",
+    "statements": "Abrechnungen"
+  },
+  "hostOwnerStatements": {
+    "title": "Eigentümerabrechnungen",
+    "description": "Dieser Bereich wird vorbereitet. Die Erstellung von Eigentümerabrechnungen ist noch nicht verfügbar.",
+    "emptyTitle": "Noch keine Abrechnungen erstellt",
+    "emptyDescription": "Sobald die Erstellung von Abrechnungen verfügbar ist, werden hier je Eigentümer der Berichtszeitraum, Einnahmen, Abzüge, Nettoerlöse und offene Beträge angezeigt.",
+    "payoutNote": "Eine Abrechnung zeigt, welchen Betrag ein Eigentümer erhalten soll. Sie löst keine Banküberweisung aus und ersetzt keine erfassten Auszahlungen."
   }
 }
