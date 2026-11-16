@@ -15,12 +15,19 @@ jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
 }));
 
 const ACCOMMODATION_ON = Object.freeze({ accommodation: { enabled: true, navLabel: "The villa" } });
+const LONG_SENTENCE = `The terrace ${"looks over the rice fields and the river ".repeat(7).trim()}.`;
 
 const buildSnapshot = (changes = {}) => ({
   ...renderPayload.propertySnapshot,
   property: { ...renderPayload.propertySnapshot.property, ...changes.property },
   checkIn: { checkIn: { from: "15:00:00" }, checkOut: { till: "11:00:00" } },
   pricing: { ...renderPayload.propertySnapshot.pricing, roomRate: 2733 },
+  rules: [
+    { rule: "SmokingAllowed", value: false },
+    { rule: "PetsAllowed", value: false },
+    { rule: "CancellationPolicy:Strict", value: true },
+    { rule: "QuietHours", value: true },
+  ],
   ...changes.snapshot,
 });
 
@@ -94,6 +101,47 @@ describe("the Elite accommodation page", () => {
     ]);
   });
 
+  it("lists every house rule with its own icon", () => {
+    renderPage();
+    const rules = within(screen.getByRole("region", { name: "House rules" })).getAllByRole("listitem");
+
+    expect(rules.map((rule) => [rule.textContent, rule.dataset.houseRule])).toEqual([
+      ["No smoking", "SmokingAllowed"],
+      ["No pets", "PetsAllowed"],
+      ["Limited (Cancel up to 14 days before)", "CancellationPolicy:Strict"],
+      ["Quiet Hours", "other"],
+    ]);
+    expect(rules.every((rule) => rule.querySelector("svg[aria-hidden='true']"))).toBe(true);
+  });
+
+  it("shows two photos that are not the header photo", () => {
+    const images = renderPayload.propertySnapshot.images;
+    const thirdImage = { ...images[1], image_id: "third", sort_order: 2, web_key: "images/property/third/web.jpg" };
+    const { container } = renderPage(
+      buildModel({ snapshot: buildSnapshot({ snapshot: { images: [...images, thirdImage] } }) })
+    );
+    const photos = elitePage(container).querySelector("[data-photo-count]");
+
+    expect(photos.dataset.photoCount).toBe("2");
+    expect(Array.from(photos.querySelectorAll("img")).map((image) => image.alt)).toEqual([
+      "Wellness Villa Bisous residence view",
+      "Wellness Villa Bisous view 3",
+    ]);
+  });
+
+  it("opens and closes the rest of a long description", () => {
+    const description = ["A quiet villa.", LONG_SENTENCE, LONG_SENTENCE, LONG_SENTENCE].join(" ");
+    renderPage(buildModel({ snapshot: buildSnapshot({ property: { description } }) }));
+    const toggle = screen.getByRole("button", { name: "Read more" });
+    const more = document.getElementById(toggle.getAttribute("aria-controls"));
+
+    expect(more).not.toBeVisible();
+    fireEvent.click(toggle);
+    expect(more).toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveTextContent("Read less");
+  });
+
   it("opens the full amenities panel from the highlights", () => {
     renderPage();
 
@@ -104,11 +152,12 @@ describe("the Elite accommodation page", () => {
 });
 
 describe("the Elite accommodation page with little data", () => {
-  it("leaves out the facts, the description and the highlights the listing does not have", () => {
+  it("leaves out the facts, description, highlights, house rules and photos the listing does not have", () => {
     const snapshot = buildSnapshot({
       property: { description: "" },
       snapshot: {
         amenities: [],
+        rules: [],
         images: [],
         generalDetails: [],
         availabilityRestrictions: [],
@@ -121,6 +170,9 @@ describe("the Elite accommodation page with little data", () => {
     expect(page.querySelector("[data-preview-target-id='residence.description']")).toBeNull();
     expect(page.textContent).not.toContain("Ubud, Indonesia for");
     expect(screen.queryByRole("region", { name: "Facts" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "House rules" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Read more" })).toBeNull();
+    expect(page.querySelector("[data-photo-count]")).toBeNull();
     expect(page.querySelector("header img")).toBeNull();
     expect(page.querySelector("header").dataset.eliteHeader).toBe("light");
     expect(topBar(container)).toHaveClass("panoramaTopBarShellElite", "panoramaTopBarShellEliteLight");
