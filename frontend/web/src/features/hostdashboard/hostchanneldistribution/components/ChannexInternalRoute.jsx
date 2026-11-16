@@ -29,9 +29,7 @@ function ChannexInternalRoute({ children }) {
   if (allowed === null) {
     return (
       <div className="host-chdist">
-        <p className="host-chdist__empty-text" role="status">
-          {CHECKING_MESSAGE}
-        </p>
+        <output className="host-chdist__empty-text">{CHECKING_MESSAGE}</output>
       </div>
     );
   }
