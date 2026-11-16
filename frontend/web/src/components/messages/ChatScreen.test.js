@@ -406,9 +406,9 @@ describe("ChatScreen reservation messaging", () => {
         capabilities: getMessageCapabilities("host"),
       });
       typeAndSend("Hello");
-      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+      const retryButton = await screen.findByRole("button", { name: "Retry" });
 
-      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      fireEvent.click(retryButton);
 
       await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(2));
       expect(sentOptions(1)).toEqual(expect.objectContaining({ hostId: null, guestId: null }));
