@@ -1,6 +1,6 @@
 # chore(distribution): remove the per-channel toggles placeholder card (#506)
 
-Pull request: #TBD
+Pull request: #3919
 Issue: #506
 Reviewed commit: `5fde1afa1`
 Result: no blocking findings
