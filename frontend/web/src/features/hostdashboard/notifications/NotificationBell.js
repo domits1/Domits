@@ -16,9 +16,9 @@ export function NotificationDropdown({ id, alerts, loading, error, panelRef, ref
     <section id={id} ref={panelRef} tabIndex={-1} aria-label="Review notifications"
       className={styles.dropdown} aria-busy={loading || undefined}>
       <h2>Notifications</h2>
-      {loading ? <p role="status">Loading notifications…</p> : error ?
+      {loading ? <output>Loading notifications…</output> : error ?
         <p role="alert">Unable to load notifications. Please try again later. {refresh && <button onClick={refresh}>Retry</button>}</p> :
-        alerts.length === 0 ? <p role="status">No notifications yet.</p> : (
+        alerts.length === 0 ? <output>No notifications yet.</output> : (
           <ul className={styles.list}>
             {alerts.map((alert) => {
               const { label, Icon } = notificationTypes[alert.type] || notificationTypes.review;

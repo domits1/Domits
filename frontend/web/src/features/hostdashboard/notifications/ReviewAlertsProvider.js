@@ -65,7 +65,7 @@ export default function ReviewAlertsProvider({ children }) {
       data.current = { alerts: [], unreadCount: 0, loading: false, error: "", hasMore: false };
       setState(data.current);
       const epoch = generation.current;
-      Promise.resolve().then(() => { if (epoch === generation.current) void load(); });
+      void Promise.resolve().then(() => { if (epoch === generation.current) void load(); });
     };
     reset();
     const refresh = () => { if (document.visibilityState === "visible") void load(); };

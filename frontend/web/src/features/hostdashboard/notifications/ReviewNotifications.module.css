@@ -1,4 +1,5 @@
 .page { width: 100%; }
+.page > output { display: block; margin: 16px 0; }
 .filters { display: flex; flex-wrap: wrap; gap: 0; margin: 24px 0; border-bottom: 1px solid #dbe4ea; }
 .filters button, .footer button, .action { border: 1px solid #dbe4ea; border-radius: 7px; padding: 10px 14px; background: white; color: #101d2e; font: inherit; cursor: pointer; }
 .filters button { border: 0; border-radius: 0; border-bottom: 2px solid transparent; }

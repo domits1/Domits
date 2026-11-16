@@ -15,12 +15,19 @@ const filters = [
 const matches = (alert, filter) => filter === "all" || (filter === "unread" ? !alert.read : alert.type === filter);
 const PAGE_SIZE = 5;
 const dateValue = (timestamp) => Date.parse(timestamp) || 0;
+const notificationData = (live, alerts, loading, error) => live ?
+  { alerts: live.alerts, loading: live.loading && !live.alerts.length, error: live.error } : { alerts, loading, error };
+const toggleSelection = (selected, id, checked) => {
+  const next = new Set(selected);
+  if (checked) { next.add(id); } else { next.delete(id); }
+  return next;
+};
 
 // Extends the bell alert shape with optional propertyId, rating, previousRating.
 // The caller owns fetching and read status; this page performs no requests.
 export default function ReviewNotifications({ alerts = [], loading = false, error = false }) {
   const live = useReviewAlerts();
-  if (live) { alerts = live.alerts; loading = live.loading && !alerts.length; error = live.error; }
+  ({ alerts, loading, error } = notificationData(live, alerts, loading, error));
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [bulkPending, setBulkPending] = useState(false);
@@ -92,9 +99,9 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
         </select>
       </div>
       {live && error && !live.authorizationError && <p role="alert">{error} <button onClick={live.refresh} disabled={live.loading || live.pending}>Retry</button></p>}
-      {loading ? <p role="status">Loading notifications…</p> : error && !live ?
+      {loading ? <output>Loading notifications…</output> : error && !live ?
         <p role="alert">Unable to load notifications. Please try again later.</p> :
-        filtered.length === 0 ? <><p role="status">{alerts.length ? "No notifications match this filter." : "No notifications yet."}</p>
+        filtered.length === 0 ? <><output>{alerts.length ? "No notifications match this filter." : "No notifications yet."}</output>
           {live?.hasMore && <button disabled={live.loading || live.pending} onClick={live.loadMore}>Load more notifications</button>}</> : (
           <>
             <div className={`${styles.row} ${styles.tableHeading}`}><input type="checkbox" aria-label="Select visible notifications" checked={visible.length > 0 && visible.every((a) => selected.has(a.id))}
@@ -106,7 +113,7 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
                 return (
                   <li key={alert.id} className={`${styles.row} ${!alert.read ? styles.unreadRow : ""}`}>
                     <input type="checkbox" aria-label={`Select notification ${alert.id} for ${alert.property}`} checked={selected.has(alert.id)}
-                      onChange={(e) => { const next = new Set(selected); if (e.target.checked) next.add(alert.id); else next.delete(alert.id); setSelected(next); }} />
+                      onChange={(e) => setSelected(toggleSelection(selected, alert.id, e.target.checked))} />
                     <span aria-hidden="true" className={`${alertStyles.icon} ${alertStyles[alert.type] || alertStyles.review}`}><Icon /></span>
                     <div className={styles.description}>
                       <strong>{label}</strong><span>{alert.property}</span><p>{alert.message}</p>
@@ -136,7 +143,7 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
               })}
             </ul>
             <footer className={styles.footer}>
-              <p role="status">Showing {visible.length} of {filtered.length} notifications</p>
+              <output>Showing {visible.length} of {filtered.length} notifications</output>
               {(visible.length < filtered.length || live?.hasMore) && <button type="button" disabled={live?.loading || live?.pending} onClick={() => {
                 nextFocus.current = visible.length;
                 setLimit((current) => current + PAGE_SIZE);
