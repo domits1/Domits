@@ -97,7 +97,7 @@ const toReservation = (reservation) => {
   const siteMinderId = uniqueId(reservation, UNIQUE_ID_TYPE.RESERVATION);
   const messageId = uniqueId(reservation, UNIQUE_ID_TYPE.MESSAGE);
   if (!siteMinderId || !messageId) {
-    throw new Error("SiteMinder reservation is missing its id or message id");
+    return null;
   }
   const roomStays = list(reservation.RoomStays?.RoomStay);
   return {
@@ -121,7 +121,9 @@ export function readReservations(xml) {
     throw new Error("SiteMinder reservations response must not contain a DOCTYPE");
   }
   const response = parser.parse(source)?.Envelope?.Body?.OTA_ResRetrieveRS;
-  return list(response?.ReservationsList?.HotelReservation).map(toReservation);
+  const read = list(response?.ReservationsList?.HotelReservation).map(toReservation);
+  const reservations = read.filter(Boolean);
+  return { reservations, skipped: read.length - reservations.length };
 }
 
 export function buildReservationsRead({ requestorId, echoToken, now }) {

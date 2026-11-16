@@ -50,13 +50,13 @@ A reservation that is not confirmed comes back on the next `OTA_ReadRQ`. After 2
 
 | Call | Sends | Notes |
 | ---- | ----- | ----- |
-| `readUndelivered()` | `OTA_ReadRQ` for the whole PMS (`RequestorID` = `SITEMINDER_PMS_CODE`, no `HotelCode`) | SiteMinder asks for one level only, and ARI already works per PMS. Returns the list from `readReservations` |
+| `readUndelivered()` | `OTA_ReadRQ` for the whole PMS (`RequestorID` = `SITEMINDER_PMS_CODE`, no `HotelCode`) | SiteMinder asks for one level only, and ARI already works per PMS. Returns what `readReservations` returns: the reservations and how many were skipped |
 | `confirm(reservations)` | one `OTA_NotifReportRQ` with `<Success/>` | per reservation: status, message id, the Domits booking id as `ResID_Value` (`ResID_Type="14"`), and the time Domits saved it (`CreateDateTime` for `Book`, `LastModifyDateTime` for `Modify` and `Cancel`). Sends nothing when the list is empty |
 | `reportFailure(reservation, error)` | one `OTA_NotifReportRQ` with `<Errors>` and that one reservation, without a booking id | the error type and code come from SiteMinder's error tables. The text is cut to 200 characters and must not contain guest data, because the hotel can see it |
 
 Each call has its own `EchoToken`. A refused or failed call throws `SiteMinderSoapError`, like the ARI calls.
 
-`readReservations` never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id throws, because it can be neither saved nor confirmed. A response with a `DOCTYPE` is refused.
+`readReservations` never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id can be neither saved nor confirmed, so it is skipped and counted in `skipped`; the other reservations in the same answer are still read. A response with a `DOCTYPE` is refused.
 
 ## When a send is tried again
 
