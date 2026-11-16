@@ -207,6 +207,9 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 
 .eliteTextButton {
   align-self: flex-start;
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
   padding: 0 0 2px;
   border: 0;
   border-bottom: 1px solid $accent;

@@ -117,11 +117,17 @@ describe("the Elite gallery page", () => {
     expect(await screen.findByTestId("photo-browser")).toHaveAttribute("data-initial-index", "2");
   });
 
-  it("drops the photos and the closing call when the host hid them", () => {
-    const model = buildModel({ overrides: { visibility: { gallerySection: false, availabilityCalendar: false } } });
+  it("drops the photos, the gallery line and the closing call when the host hid them", () => {
+    const model = buildModel({
+      overrides: {
+        galleryDescription: "Sunset over the pool.",
+        visibility: { gallerySection: false, availabilityCalendar: false },
+      },
+    });
     const { container } = renderPage("gallery", model);
 
     expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
+    expect(elitePage(container, "gallery").querySelector("header")).not.toHaveTextContent("Sunset over the pool.");
     expect(screen.queryByRole("link", { name: "Check live availability" })).toBeNull();
     expect(elitePage(container, "gallery").querySelector("footer")).toHaveTextContent(renderPayload.site.siteName);
   });
@@ -157,6 +163,16 @@ describe("the Elite contact page", () => {
   });
 });
 
+describe("the content of each Elite page", () => {
+  it.each(["gallery", "accommodation", "contact"])("shows none of today's page sections on the %s page", (pageKey) => {
+    const model = buildModel({ overrides: { sitePages: { ...PAGES_ON, accommodation: { enabled: true } } } });
+    const { container } = renderPage(pageKey, model);
+
+    expect(elitePage(container, pageKey)).not.toBeNull();
+    expect(container.querySelectorAll("article > section")).toHaveLength(0);
+  });
+});
+
 describe("the Elite gallery and contact pages in the editor preview", () => {
   const renderPreview = (pageKey, onSelectTarget) =>
     render(
@@ -176,6 +192,22 @@ describe("the Elite gallery and contact pages in the editor preview", () => {
 
     expect(onSelectTarget).toHaveBeenCalledWith(expect.objectContaining({ sectionId: "gallery" }));
     expect(screen.queryByRole("link", { name: "Check live availability" })).toBeNull();
+  });
+
+  it("lets the host pick the gallery line in the header", () => {
+    const onSelectTarget = jest.fn();
+    render(
+      <WebsiteTemplatePreview
+        templateId="panorama-landing"
+        model={buildModel({ overrides: { galleryDescription: "Sunset over the pool." } })}
+        onSelectTarget={onSelectTarget}
+        activePageKey="gallery"
+      />
+    );
+
+    fireEvent.click(screen.getByText("Sunset over the pool."));
+
+    expect(onSelectTarget).toHaveBeenCalledWith({ sectionId: "gallery", targetId: "gallery.description" });
   });
 
   it("lets the host pick the contact caption", () => {

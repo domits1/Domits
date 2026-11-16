@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "./eliteSitePage.module.scss";
-import { TemplateImageSlotVisual } from "../templateSharedSections";
+import { getInteractiveTargetProps, TemplateImageSlotVisual } from "../templateSharedSections";
 
 export default function ElitePageHeader({
   title,
@@ -39,7 +39,17 @@ export default function ElitePageHeader({
           {eyebrow ? <p className={styles.eliteEyebrow}>{eyebrow}</p> : null}
           <h1 className={styles.eliteHeaderTitle}>{title}</h1>
         </div>
-        {intro ? <p className={styles.eliteHeaderIntro}>{intro}</p> : null}
+        {intro ? (
+          <p
+            {...getInteractiveTargetProps(
+              styles.eliteHeaderIntro,
+              onSelectTarget,
+              { sectionId: "gallery", targetId: "gallery.description" },
+              activeTargetId
+            )}>
+            {intro}
+          </p>
+        ) : null}
       </div>
     </header>
   );

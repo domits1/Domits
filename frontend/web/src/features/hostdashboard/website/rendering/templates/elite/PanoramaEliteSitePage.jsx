@@ -49,6 +49,7 @@ export default function PanoramaEliteSitePage({
   const location = resolveEliteLocation(model);
   const isInteractivePreview = Boolean(onSelectTarget);
   const showsClosingCallToAction = pageKey !== "accommodation" && Boolean(availabilityHref);
+  const showsGalleryIntro = pageKey === "gallery" && viewState.showGallerySection;
 
   return (
     <div
@@ -57,7 +58,7 @@ export default function PanoramaEliteSitePage({
       <ElitePageHeader
         title={pageTitle}
         eyebrow={location}
-        intro={pageKey === "gallery" ? resolveEliteGalleryIntro(model.gallerySection) : ""}
+        intro={showsGalleryIntro ? resolveEliteGalleryIntro(model.gallerySection) : ""}
         tone={headerTone}
         model={model}
         headerRef={headerRef}
@@ -118,7 +119,10 @@ PanoramaEliteSitePage.propTypes = {
     site: PropTypes.shape({ title: PropTypes.string }).isRequired,
     gallerySection: PropTypes.shape({ description: PropTypes.string }),
   }).isRequired,
-  viewState: PropTypes.shape({ showTopBar: PropTypes.bool.isRequired }).isRequired,
+  viewState: PropTypes.shape({
+    showTopBar: PropTypes.bool.isRequired,
+    showGallerySection: PropTypes.bool.isRequired,
+  }).isRequired,
   availabilityHref: PropTypes.string.isRequired,
   headerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]).isRequired,
   onShowAllAmenities: PropTypes.func.isRequired,
