@@ -15,7 +15,6 @@ import {
   TemplateImageSlotVisual,
   TemplateTopBar,
 } from "./templateSharedSections";
-import PanoramaPageHeader from "./PanoramaPageHeader";
 import PanoramaPageLink from "./PanoramaPageLink";
 import { buildPanoramaContactContent } from "./panoramaContactContent";
 import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
@@ -1273,7 +1272,7 @@ export default function PanoramaLandingTemplate({
   );
   const currentPageKey = pageState?.currentPage.key;
   const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
-  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media) : "";
+  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
   const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
@@ -1380,17 +1379,12 @@ export default function PanoramaLandingTemplate({
         }
         headerRef={heroSectionRef}
         onShowAllAmenities={() => setShowAmenitiesModal(true)}
+        onOpenGalleryBrowser={handleOpenGalleryBrowser}
+        canOpenGalleryBrowser={canOpenGalleryBrowser}
         onSelectTarget={onSelectTarget}
         activeTargetId={activeTargetId}
       />
-    ) : (
-      <PanoramaPageHeader
-        title={pageState.currentPage.navLabel}
-        siteTitle={model.site.title}
-        headerRef={heroSectionRef}
-        showTopBar={viewState.showTopBar}
-      />
-    );
+    ) : null;
 
   return (
     <>

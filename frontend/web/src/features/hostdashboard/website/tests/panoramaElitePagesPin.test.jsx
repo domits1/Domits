@@ -73,11 +73,3 @@ describe("the Elite home page", () => {
     expect(container.innerHTML).toMatchSnapshot();
   });
 });
-
-describe("the Elite pages this change leaves alone", () => {
-  it.each(["gallery", "contact"])("renders the %s page as acceptance does", (pageKey) => {
-    const { container } = renderPublicPage(pageKey);
-
-    expect(container.innerHTML).toMatchSnapshot();
-  });
-});

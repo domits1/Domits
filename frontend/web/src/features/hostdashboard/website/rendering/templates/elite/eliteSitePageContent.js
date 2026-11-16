@@ -5,6 +5,7 @@ export const ELITE_LEAD_MAX_LENGTH = 200;
 export const ELITE_PARAGRAPH_TARGET_LENGTH = 260;
 export const ELITE_VISIBLE_PARAGRAPH_COUNT = 2;
 export const TEMPLATE_GALLERY_INTRO = "A more editorial presentation of the property";
+export const DEFAULT_ELITE_AVAILABILITY_LABEL = "Check availability";
 
 const CLOCK_TIME_PATTERN = /^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/;
 const SENTENCE_END_PATTERN = /[.!?…]["'”’)\]]*$/u;
@@ -158,11 +159,15 @@ export const listEliteHouseRules = (policies = {}) => {
 
 export const hasEliteHeaderPhoto = (media = {}) => isRealImage(media?.heroImage);
 
-export const ELITE_RESTYLED_PAGE_KEYS = Object.freeze(["accommodation"]);
+export const ELITE_RESTYLED_PAGE_KEYS = Object.freeze(["accommodation", "gallery", "contact"]);
 
 export const isEliteRestyledPage = (pageKey) => ELITE_RESTYLED_PAGE_KEYS.includes(pageKey);
 
-export const resolveEliteHeaderTone = (media = {}) => (hasEliteHeaderPhoto(media) ? "photo" : "light");
+export const resolveEliteHeaderTone = (media = {}, pageKey = "") =>
+  pageKey !== "gallery" && hasEliteHeaderPhoto(media) ? "photo" : "light";
+
+export const resolveEliteAvailabilityLabel = (model = {}) =>
+  cleanText(model?.callToAction?.label) || DEFAULT_ELITE_AVAILABILITY_LABEL;
 
 export const selectEliteAccommodationPhotos = (media = {}) => {
   const heroImage = cleanText(media?.heroImage);
@@ -178,9 +183,15 @@ export const selectEliteAccommodationPhotos = (media = {}) => {
   ].filter(Boolean);
 };
 
+const readGalleryImages = (media) => (Array.isArray(media?.galleryImages) ? media.galleryImages : []);
+
+export const hasEliteGalleryPhotos = (media = {}) => readGalleryImages(media).some(isRealImage);
+
 export const selectEliteGallerySlots = (gallerySlots, media = {}) =>
-  (Array.isArray(gallerySlots) ? gallerySlots : []).filter(
-    (gallerySlot) => gallerySlot?.slot?.kind !== "hero" || isRealImage(media?.heroImage)
+  (Array.isArray(gallerySlots) ? gallerySlots : []).filter((gallerySlot) =>
+    gallerySlot?.slot?.kind === "hero"
+      ? isRealImage(media?.heroImage)
+      : isRealImage(readGalleryImages(media)[gallerySlot?.slot?.index])
   );
 
 export const resolveEliteGalleryLayout = (photoCount) => {
