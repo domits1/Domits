@@ -17,7 +17,6 @@ import "../styles/HostChannelDistribution.css";
 
 const COMING_SOON_CARDS = [
   { title: "Room & rate mapping", description: "Map your Domits rooms and rates to each channel's rooms and rates." },
-  { title: "Per-channel toggles", description: "Turn distribution on or off for each channel individually." },
   { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
 

@@ -40,6 +40,19 @@ describe("HostChannelDistribution", () => {
     service.MOCK_PREVIEW_SECTIONS_ENABLED = false;
   });
 
+  test("shows Sync health as a Coming soon card and offers no per-channel toggles", async () => {
+    getChannexStatus.mockRejectedValue(Object.assign(new Error("forbidden"), { status: 403 }));
+
+    render(<HostChannelDistribution />);
+
+    await screen.findByText("No channel connected yet");
+    // Each placeholder card carries one badge, so as many badges as cards means Sync health has its own.
+    expect(screen.getByText("Sync health")).toBeInTheDocument();
+    expect(screen.getByText("Room & rate mapping")).toBeInTheDocument();
+    expect(screen.getAllByText("Coming soon")).toHaveLength(2);
+    expect(screen.queryByText("Per-channel toggles")).not.toBeInTheDocument();
+  });
+
   test("treats a 403 as the normal not-connected state, not as an error", async () => {
     getChannexStatus.mockRejectedValue(Object.assign(new Error("forbidden"), { status: 403 }));
 
