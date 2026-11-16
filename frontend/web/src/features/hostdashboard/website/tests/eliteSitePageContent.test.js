@@ -147,6 +147,20 @@ describe("the description on Elite site pages", () => {
     });
   });
 
+  it.each([
+    ["Stay in St. Ives. It has a pool.", "Stay in St. Ives."],
+    ["Dr. Ana and Mrs. Lee host the villa. It has a pool.", "Dr. Ana and Mrs. Lee host the villa."],
+    ["Close to the U.S. Embassy and No. 5 Market. It has a pool.", "Close to the U.S. Embassy and No. 5 Market."],
+    ["Walk to the beach, e.g. Ocean Bay. It has a pool.", "Walk to the beach, e.g. Ocean Bay."],
+    ["Ten minutes to the Spa. It has a pool.", "Ten minutes to the Spa."],
+  ])("ends the first sentence of %p at the right full stop", (description, lead) => {
+    expect(buildEliteDescription({ description })).toEqual({
+      lead,
+      paragraphs: ["It has a pool."],
+      moreParagraphs: [],
+    });
+  });
+
   it("keeps a single short sentence as the lead only", () => {
     expect(buildEliteDescription({ description: "A quiet cabin." })).toEqual({
       lead: "A quiet cabin.",
