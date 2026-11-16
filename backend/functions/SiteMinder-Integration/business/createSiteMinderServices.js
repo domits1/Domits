@@ -4,6 +4,7 @@ import IntegrationPropertyRepository from "../.shared/integrations/repositories/
 import IntegrationRoomTypeRepository from "../.shared/integrations/repositories/integrationRoomTypeRepository.js";
 import IntegrationRatePlanRepository from "../.shared/integrations/repositories/integrationRatePlanRepository.js";
 import ChannexExternalBookingImportRepository from "../.shared/channelManagement/repositories/channexExternalBookingImportRepository.js";
+import ReservationLinkRepository from "../.shared/integrations/repositories/reservationLinkRepository.js";
 import { SiteMinderRestClient } from "../data/siteMinderRestClient.js";
 import { SiteMinderSoapClient } from "../data/siteMinderSoapClient.js";
 import { SiteMinderSecretRepository } from "../data/siteMinderSecretRepository.js";
@@ -14,6 +15,9 @@ import { SiteMinderRatesPusher } from "./siteMinderRatesPusher.js";
 import { SiteMinderMappingService } from "./siteMinderMappingService.js";
 import { SiteMinderInventoryService } from "./siteMinderInventoryService.js";
 import { SiteMinderReservationsReader } from "./siteMinderReservationsReader.js";
+import { SiteMinderReservationImporter } from "./siteMinderReservationImporter.js";
+import { SiteMinderReservationSync } from "./siteMinderReservationSync.js";
+import { SITEMINDER_BOOKING_PROFILE } from "../util/reservationBookings.js";
 
 export const createSiteMinderServices = async ({ env = process.env, secretRepository } = {}) => {
   const config = readSiteMinderConfig(env);
@@ -28,6 +32,7 @@ export const createSiteMinderServices = async ({ env = process.env, secretReposi
     ratePlans: new IntegrationRatePlanRepository(),
   };
   const soapClient = new SiteMinderSoapClient(login);
+  const reservations = new SiteMinderReservationsReader({ soapClient });
 
   return {
     mapping: new SiteMinderMappingService({
@@ -45,7 +50,16 @@ export const createSiteMinderServices = async ({ env = process.env, secretReposi
       ratesPusher: new SiteMinderRatesPusher({ soapClient }),
       currency: config.currency,
     }),
-    reservations: new SiteMinderReservationsReader({ soapClient }),
+    reservations,
+    reservationSync: new SiteMinderReservationSync({
+      reader: reservations,
+      importer: new SiteMinderReservationImporter({
+        ...tables,
+        bookings: new ChannexExternalBookingImportRepository({ profile: SITEMINDER_BOOKING_PROFILE }),
+        resLinks: new ReservationLinkRepository(),
+        currency: config.currency,
+      }),
+    }),
   };
 };
 
