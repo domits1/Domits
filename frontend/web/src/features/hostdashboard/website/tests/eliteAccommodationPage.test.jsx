@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
@@ -105,11 +105,13 @@ describe("the Elite accommodation page", () => {
     renderPage();
     const rules = within(screen.getByRole("region", { name: "House rules" })).getAllByRole("listitem");
 
-    expect(rules.map((rule) => [rule.textContent, rule.dataset.houseRule])).toEqual([
-      ["No smoking", "SmokingAllowed"],
-      ["No pets", "PetsAllowed"],
-      ["Limited (Cancel up to 14 days before)", "CancellationPolicy:Strict"],
-      ["Quiet Hours", "other"],
+    expect(
+      rules.map((rule) => [rule.textContent, rule.dataset.houseRule, rule.querySelector("svg").dataset.testid])
+    ).toEqual([
+      ["No smoking", "SmokingAllowed", "SmokeFreeRoundedIcon"],
+      ["No pets", "PetsAllowed", "PetsRoundedIcon"],
+      ["Limited (Cancel up to 14 days before)", "CancellationPolicy:Strict", "EventAvailableRoundedIcon"],
+      ["Quiet Hours", "other", "RuleRoundedIcon"],
     ]);
     expect(rules.every((rule) => rule.querySelector("svg[aria-hidden='true']"))).toBe(true);
   });
@@ -122,11 +124,25 @@ describe("the Elite accommodation page", () => {
     );
     const photos = elitePage(container).querySelector("[data-photo-count]");
 
+    const headerPhoto = elitePage(container).querySelector("header img").getAttribute("src");
+    const rowPhotos = Array.from(photos.querySelectorAll("img"));
+
     expect(photos.dataset.photoCount).toBe("2");
-    expect(Array.from(photos.querySelectorAll("img")).map((image) => image.alt)).toEqual([
+    expect(rowPhotos.map((image) => image.alt)).toEqual([
       "Wellness Villa Bisous residence view",
       "Wellness Villa Bisous view 3",
     ]);
+    expect(new Set([headerPhoto, ...rowPhotos.map((image) => image.getAttribute("src"))]).size).toBe(3);
+  });
+
+  it("keeps the photo row still when the host turned on photo rotation", () => {
+    const images = renderPayload.propertySnapshot.images;
+    const thirdImage = { ...images[1], image_id: "third", sort_order: 2, web_key: "images/property/third/web.jpg" };
+    const snapshot = buildSnapshot({ snapshot: { images: [...images, thirdImage] } });
+    const overrides = { imageRotation: { residence: true, gallery: [true, true, true] } };
+    const { container } = renderPage(buildModel({ snapshot, overrides }));
+
+    expect(elitePage(container).querySelectorAll("[data-photo-count] img")).toHaveLength(2);
   });
 
   it("opens and closes the rest of a long description", () => {
@@ -140,6 +156,9 @@ describe("the Elite accommodation page", () => {
     expect(more).toBeVisible();
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(toggle).toHaveTextContent("Read less");
+    fireEvent.click(toggle);
+    expect(more).not.toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
 
   it("opens the full amenities panel from the highlights", () => {
@@ -179,6 +198,31 @@ describe("the Elite accommodation page with little data", () => {
     expect(screen.queryByText("Show all")).toBeNull();
   });
 
+  it("leaves out the highlights when the host hid the amenities", () => {
+    renderPage(buildModel({ overrides: { visibility: { amenitiesPanel: false } } }));
+
+    expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
+    expect(screen.queryByText(buildModel().amenities.all[0].label)).toBeNull();
+  });
+
+  it("shows only the site name in the header and footer when the listing has no location", () => {
+    const { container } = renderPage(buildModel({ snapshot: buildSnapshot({ snapshot: { location: {} } }) }));
+    const page = elitePage(container);
+
+    expect(page.querySelectorAll("footer span")).toHaveLength(1);
+    expect(page.querySelector("header p")).toBeNull();
+  });
+
+  it("turns the dark top bar of a light header solid once the guest scrolls past it", async () => {
+    const { container } = renderPage(buildModel({ snapshot: buildSnapshot({ snapshot: { images: [] } }) }));
+    elitePage(container).querySelector("header").getBoundingClientRect = () => ({ top: -200, height: 300 });
+
+    fireEvent.scroll(globalThis);
+
+    await waitFor(() => expect(topBar(container)).toHaveClass("panoramaTopBarShellSolid"));
+    expect(topBar(container)).not.toHaveClass("panoramaTopBarShellEliteLight");
+  });
+
   it("leaves out the price card when there is no price and availability is hidden", () => {
     const snapshot = buildSnapshot({ snapshot: { pricing: { roomRate: 0 } } });
     renderPage(buildModel({ snapshot, overrides: { visibility: { availabilityCalendar: false } } }));
@@ -198,22 +242,16 @@ describe("the Elite accommodation page with little data", () => {
 
 describe("where the Elite accommodation page does not appear", () => {
   it.each([
-    ["no stored pages", {}],
-    ["the accommodation page switched off", { sitePages: { accommodation: { enabled: false } } }],
-  ])("renders no Elite page with %s", (_, overrides) => {
+    ["no stored pages", {}, "accommodation"],
+    ["the accommodation page switched off", { sitePages: { accommodation: { enabled: false } } }, "accommodation"],
+    ["the home page of an Elite site", { sitePages: ACCOMMODATION_ON }, "main"],
+  ])("renders no Elite page with %s", (_, overrides, activePageKey) => {
     const model = applyWebsiteDraftContentOverrides(
       buildWebsiteTemplateModel({ propertyDetails: buildSnapshot(), summaryProperty: null }),
       overrides,
       "panorama-landing"
     );
-    const { container } = renderPage(model);
-
-    expect(container.querySelector("[data-elite-page]")).toBeNull();
-    expect(topBar(container)).not.toHaveClass("panoramaTopBarShellElite");
-  });
-
-  it("leaves the home page of an Elite site without the Elite style", () => {
-    const { container } = renderPage(buildModel(), { activePageKey: "main" });
+    const { container } = renderPage(model, { activePageKey });
 
     expect(container.querySelector("[data-elite-page]")).toBeNull();
     expect(topBar(container)).not.toHaveClass("panoramaTopBarShellElite");

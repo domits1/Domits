@@ -10,6 +10,8 @@ export const DEFAULT_ELITE_AVAILABILITY_LABEL = "Check availability";
 const CLOCK_TIME_PATTERN = /^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/;
 const SENTENCE_END_PATTERN = /[.!?…]["'”’)\]]*$/u;
 const SENTENCE_START_PATTERN = /^["'“‘([]*[\p{Lu}\p{N}]/u;
+const DOTTED_ABBREVIATION_PATTERN = /^(?:\p{L}\.){2,}$/u;
+const ABBREVIATIONS = new Set("St. Dr. Mr. Mrs. Ms. Mt. No. Nr. Jr. Sr. Ave. Rd. vs. etc.".split(" "));
 const NIGHTLY_PRICE_FORMAT = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "EUR",
@@ -104,7 +106,11 @@ const splitSentences = (text) => {
   words.forEach((word, index) => {
     currentWords.push(word);
     const nextWord = words[index + 1];
-    const endsSentence = SENTENCE_END_PATTERN.test(word) && SENTENCE_START_PATTERN.test(nextWord || "");
+    const endsSentence =
+      SENTENCE_END_PATTERN.test(word) &&
+      !ABBREVIATIONS.has(word) &&
+      !DOTTED_ABBREVIATION_PATTERN.test(word) &&
+      SENTENCE_START_PATTERN.test(nextWord || "");
     if (nextWord === undefined || endsSentence) {
       sentences.push(currentWords.join(" "));
       currentWords = [];
