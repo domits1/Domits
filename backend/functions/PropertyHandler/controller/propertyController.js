@@ -22,6 +22,7 @@ import { WebsiteCleanupService } from "../business/service/websiteCleanupService
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
+import { listOtherSitePropertyIds, withNormalizedSiteProperties } from "../business/service/websiteSiteProperties.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -1477,6 +1478,22 @@ export class PropertyController {
         );
     }
 
+    async authorizeSitePropertyOwners(accessToken, mainPropertyId, overridesList) {
+        const sitePropertyIds = new Set(
+            overridesList.flatMap((overrides) => listOtherSitePropertyIds(overrides, mainPropertyId))
+        );
+        for (const sitePropertyId of sitePropertyIds) {
+            try {
+                await this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId);
+            } catch (error) {
+                if (error instanceof NotFoundException) {
+                    throw new TypeError("siteProperties lists a property that does not exist.");
+                }
+                throw error;
+            }
+        }
+    }
+
     parseWebsiteOverridePayload(payload, fieldName) {
         if (payload === undefined || payload === null) {
             return {};
@@ -2169,6 +2186,7 @@ export class PropertyController {
             error?.message?.startsWith("Missing eventType") ||
             error?.message?.startsWith("Missing templateKey") ||
             error?.message?.includes("must be a plain object") ||
+            error?.message?.startsWith("siteProperties ") ||
             error?.message?.includes("deleteReasons must be an array") ||
             error?.message?.includes("Unsupported website eventType") ||
             error?.message?.includes("Listing data could not be loaded for this live site.") ||
@@ -2863,7 +2881,13 @@ export class PropertyController {
                 return this.badRequest("Missing templateKey.");
             }
 
+            const checkedContentOverrides = withNormalizedSiteProperties(contentOverrides, propertyId);
+            const checkedPublishedContentOverrides = withNormalizedSiteProperties(publishedContentOverrides, propertyId);
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authorizeSitePropertyOwners(accessToken, propertyId, [
+                checkedContentOverrides,
+                checkedPublishedContentOverrides,
+            ]);
             const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
 
             const draft = await this.directBookingWebsiteDraftRepository.upsertDraft({
@@ -2871,9 +2895,9 @@ export class PropertyController {
                 propertyId,
                 templateKey,
                 status,
-                contentOverrides,
+                contentOverrides: checkedContentOverrides,
                 themeOverrides,
-                publishedContentOverrides,
+                publishedContentOverrides: checkedPublishedContentOverrides,
                 publishedThemeOverrides,
             });
 
@@ -3067,6 +3091,7 @@ export class PropertyController {
                 };
             }
 
+            await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
             const siteSummary = await this.publishDirectBookingWebsiteForDraft({
                 draft,
                 hostId,
