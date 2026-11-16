@@ -41,9 +41,12 @@ describe("clock times on Elite site pages", () => {
     expect(formatEliteClockTime(value)).toBe(expected);
   });
 
-  it.each([["Flexible"], ["25:00"], ["12:60"], ["15h00"]])("keeps %p as the host wrote it", (value) => {
-    expect(formatEliteClockTime(value)).toBe(value);
-  });
+  it.each([["Flexible"], ["25:00"], ["25:00:00"], ["12:60"], ["12:60:00"], ["15h00"]])(
+    "keeps %p as the host wrote it",
+    (value) => {
+      expect(formatEliteClockTime(value)).toBe(value);
+    }
+  );
 
   it.each([[""], [null], [undefined], [{}]])("shows nothing for %p", (value) => {
     expect(formatEliteClockTime(value)).toBe("");
@@ -139,6 +142,21 @@ describe("the description on Elite site pages", () => {
 
     expect(buildEliteDescription({ description })).toEqual({
       lead: "The beach is 3.5 km away, e.g. a short drive.",
+      paragraphs: ["It has a pool."],
+      moreParagraphs: [],
+    });
+  });
+
+  it.each([
+    ["Stay in St. Ives. It has a pool.", "Stay in St. Ives."],
+    ["Dr. Ana and Mrs. Lee host the villa. It has a pool.", "Dr. Ana and Mrs. Lee host the villa."],
+    ["Close to the U.S. Embassy and No. 5 Market. It has a pool.", "Close to the U.S. Embassy and No. 5 Market."],
+    ["Walk to the beach, e.g. Ocean Bay. It has a pool.", "Walk to the beach, e.g. Ocean Bay."],
+    ["Ten minutes to the Spa. It has a pool.", "Ten minutes to the Spa."],
+    ["Approx. ten minutes to the sea. It has a pool.", "Approx. ten minutes to the sea."],
+  ])("ends the first sentence of %p at the right full stop", (description, lead) => {
+    expect(buildEliteDescription({ description })).toEqual({
+      lead,
       paragraphs: ["It has a pool."],
       moreParagraphs: [],
     });

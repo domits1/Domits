@@ -225,22 +225,16 @@ describe("the Elite accommodation page with little data", () => {
 
 describe("where the Elite accommodation page does not appear", () => {
   it.each([
-    ["no stored pages", {}],
-    ["the accommodation page switched off", { sitePages: { accommodation: { enabled: false } } }],
-  ])("renders no Elite page with %s", (_, overrides) => {
+    ["no stored pages", {}, "accommodation"],
+    ["the accommodation page switched off", { sitePages: { accommodation: { enabled: false } } }, "accommodation"],
+    ["the home page of an Elite site", { sitePages: ACCOMMODATION_ON }, "main"],
+  ])("renders no Elite page with %s", (_, overrides, activePageKey) => {
     const model = applyWebsiteDraftContentOverrides(
       buildWebsiteTemplateModel({ propertyDetails: buildSnapshot(), summaryProperty: null }),
       overrides,
       "panorama-landing"
     );
-    const { container } = renderPage(model);
-
-    expect(container.querySelector("[data-elite-page]")).toBeNull();
-    expect(topBar(container)).not.toHaveClass("panoramaTopBarShellElite");
-  });
-
-  it("leaves the home page of an Elite site without the Elite style", () => {
-    const { container } = renderPage(buildModel(), { activePageKey: "main" });
+    const { container } = renderPage(model, { activePageKey });
 
     expect(container.querySelector("[data-elite-page]")).toBeNull();
     expect(topBar(container)).not.toHaveClass("panoramaTopBarShellElite");

@@ -26,7 +26,6 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 
 .eliteSection {
   box-sizing: border-box;
-  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 32px;
@@ -272,7 +271,6 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 
 .eliteButton:hover {
   background: #33302b;
-  color: $ivory;
 }
 
 .elitePriceNote {
@@ -403,6 +401,11 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 }
 
 @media (max-width: 720px) {
+  .elitePage {
+    margin-inline: -14px;
+    margin-bottom: -14px;
+  }
+
   .elitePageWithTopBar {
     margin-top: calc(-18px - #{$frame-gutter});
   }
