@@ -6,6 +6,9 @@ const LOADING_MESSAGE = "Loading the last sync…";
 const NO_SYNC_MESSAGE = "No sync has run for this property yet.";
 const ERROR_MESSAGE = "We couldn't load the last sync.";
 
+// A rejected request is written with errors, but the status alone is enough to call it a failure.
+const FAILED_STATUSES = new Set(["FAILED", "INVALID_REQUEST"]);
+
 // Evidence statuses that are neither a success nor a failure. Both are written on every sync
 // attempt that had nothing to send or was not ready. Any other unknown status falls back to the
 // warnings outcome.
@@ -29,11 +32,24 @@ function describeOutcome(item) {
   }
 
   const finishedOn = formatDateTime(item.finishedAt);
+  const warningsOutcome = {
+    tone: "pending",
+    label: "Warnings",
+    sentence: `Last sync finished with warnings on ${finishedOn}.`,
+  };
 
+  // The backend sets overallSuccess to true for COMPLETED_WITH_WARNINGS, so warnings are checked
+  // before success.
+  if (item.status === "COMPLETED_WITH_WARNINGS" || (item.overallSuccess && item.warningCount > 0)) {
+    return warningsOutcome;
+  }
   if (item.overallSuccess) {
     return { tone: "success", label: "Synced", sentence: `Last sync succeeded on ${finishedOn}.` };
   }
-  if (item.errorCount > 0 || item.status === "FAILED") {
+  if (item.status === "PARTIAL") {
+    return { tone: "error", label: "Partly failed", sentence: `Last sync partly failed on ${finishedOn}.` };
+  }
+  if (item.errorCount > 0 || FAILED_STATUSES.has(item.status)) {
     return { tone: "error", label: "Failed", sentence: `Last sync failed on ${finishedOn}.` };
   }
 
@@ -41,7 +57,7 @@ function describeOutcome(item) {
   if (neutral) {
     return { tone: "pending", label: neutral.label, sentence: neutral.describe(finishedOn) };
   }
-  return { tone: "pending", label: "Warnings", sentence: `Last sync finished with warnings on ${finishedOn}.` };
+  return warningsOutcome;
 }
 
 function LastSyncCardBody({ loadState, item }) {
@@ -67,6 +83,7 @@ const ITEM_SHAPE = PropTypes.shape({
   overallSuccess: PropTypes.bool,
   startedAt: PropTypes.number,
   finishedAt: PropTypes.number,
+  warningCount: PropTypes.number,
   errorCount: PropTypes.number,
 });
 
