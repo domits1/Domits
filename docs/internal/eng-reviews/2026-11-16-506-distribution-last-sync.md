@@ -1,6 +1,6 @@
 # feat(distribution): load the Last sync card from real data (#506)
 
-Pull request: #TBD
+Pull request: #3923
 Issue: #506
 Reviewed commits: `cf114e107`, `727377c0c` (outcome-rule fix)
 Result: no blocking findings
