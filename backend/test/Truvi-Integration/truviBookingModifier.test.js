@@ -46,7 +46,7 @@ describe("TruviBookingModifier", () => {
       errorMessage: null,
       now: NOW,
     });
-    expect(summary).toEqual({ listed: 1, modified: 1, recorded: 0, refused: 0, retryLater: 0, errors: [] });
+    expect(summary).toEqual({ listed: 1, modified: 1, recorded: 0, refused: 0, retryLater: 0, gaveUp: 0, errors: [] });
   });
 
   it("only records the dates of a row that has none yet, without calling Truvi", async () => {
@@ -118,14 +118,72 @@ describe("TruviBookingModifier", () => {
     expect(summary.retryLater).toBe(2);
   });
 
-  it("reports an unexpected 400 as an error and moves the booking to the back of the queue", async () => {
-    const { modifier, assessmentRepository } = build({ modify: failWith(400, "checkIn must be before checkOut.") });
+  it("reports an unexpected 400 as an error, counts it and moves the booking to the back of the queue", async () => {
+    const { modifier, assessmentRepository } = build({
+      verifications: [verification(), verification({ bookingId: "booking-2", failedAttempts: 1 })],
+      modify: failWith(400, "checkIn must be before checkOut."),
+    });
 
     const summary = await modifier.run({ now: NOW });
 
     expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
-    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
+    expect(assessmentRepository.markAttempt.mock.calls).toEqual([
+      [{ bookingId: "booking-1", failedAttempts: 1, now: NOW }],
+      [{ bookingId: "booking-2", failedAttempts: 2, now: NOW }],
+    ]);
+    expect(summary.errors).toEqual([
+      { bookingId: "booking-1", message: "Truvi refused the request with status 400" },
+      { bookingId: "booking-2", message: "Truvi refused the request with status 400" },
+    ]);
+    expect(summary.gaveUp).toBe(0);
+  });
+
+  it("stops sending a date change after the third unexpected answer, and saves it with the fixed message", async () => {
+    const { modifier, apiClient, assessmentRepository } = build({
+      verifications: [verification({ failedAttempts: 2 })],
+      modify: failWith(400, "Guest Jane Doe jane@example.com is not valid."),
+    });
+
+    const summary = await modifier.run({ now: NOW });
+
+    expect(apiClient.modifyVerification).toHaveBeenCalledTimes(1);
+    expect(assessmentRepository.markAttempt).not.toHaveBeenCalled();
+    expect(assessmentRepository.saveTruviDates).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      arrivalDate: Date.UTC(2026, 10, 20),
+      departureDate: Date.UTC(2026, 10, 24),
+      errorMessage: "Truvi refused the request with status 400",
+      now: NOW,
+    });
+    expect(summary.gaveUp).toBe(1);
     expect(summary.errors).toEqual([{ bookingId: "booking-1", message: "Truvi refused the request with status 400" }]);
+  });
+
+  it.each([401, 403, 429])("does not count a %p as a failed attempt, because it is not about this request", async (status) => {
+    const { modifier, assessmentRepository } = build({
+      verifications: [verification({ failedAttempts: 2 })],
+      modify: failWith(status, "Not allowed"),
+    });
+
+    const summary = await modifier.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
+    expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ gaveUp: 0 });
+    expect(summary.errors).toEqual([{ bookingId: "booking-1", message: `Truvi refused the request with status ${status}` }]);
+  });
+
+  it("does not count a timeout or a 5xx as a failed attempt", async () => {
+    const { modifier, assessmentRepository } = build({
+      verifications: [verification({ failedAttempts: 2 })],
+      modify: failWith(503, "Service unavailable"),
+    });
+
+    const summary = await modifier.run({ now: NOW });
+
+    expect(assessmentRepository.markAttempt).toHaveBeenCalledWith({ bookingId: "booking-1", now: NOW });
+    expect(assessmentRepository.saveTruviDates).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ retryLater: 1, gaveUp: 0 });
   });
 
   it("keeps going with the next booking when saving one fails", async () => {

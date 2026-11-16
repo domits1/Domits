@@ -27,6 +27,13 @@ const extractCreateTableColumns = (sql, qualifiedTable) =>
     .map((line) => line.split(/\s+/)[0].toLowerCase());
 
 const MIGRATION_FILE = "20261012_create_guest_risk_assessment.sql";
+const FAILED_ATTEMPTS_MIGRATION_FILE = "20261104_guest_risk_assessment_failed_attempts.sql";
+
+const extractAddedColumns = (sql, qualifiedTable) => {
+  const escapedTable = qualifiedTable.replaceAll(".", String.raw`\.`);
+  const pattern = new RegExp(String.raw`ALTER TABLE ${escapedTable} ADD COLUMN IF NOT EXISTS (\w+)`, "g");
+  return [...sql.matchAll(pattern)].map((match) => match[1].toLowerCase());
+};
 
 const CATALOG_COLUMNS = [
   "id",
@@ -40,9 +47,17 @@ const CATALOG_COLUMNS = [
   "departuredate",
   "createdat",
   "updatedat",
+  "failedattempts",
 ];
 
-const NULLABLE_COLUMNS = ["providerassessmentid", "flaggedreason", "errormessage", "arrivaldate", "departuredate"];
+const NULLABLE_COLUMNS = [
+  "providerassessmentid",
+  "flaggedreason",
+  "errormessage",
+  "arrivaldate",
+  "departuredate",
+  "failedattempts",
+];
 
 const loadMetadata = async () => {
   const dataSource = new DataSource({
@@ -76,14 +91,32 @@ describe("GuestRiskAssessment entity", () => {
   });
 });
 
+describe.each(["main", "test"])("the migrations of %s.guest_risk_assessment", (schema) => {
+  it("create the same columns as the entity, with the failed attempts column added later", async () => {
+    const metadata = await loadMetadata();
+    const table = `${schema}.guest_risk_assessment`;
+    const created = extractCreateTableColumns(loadMigrationSql(MIGRATION_FILE), table);
+    const added = extractAddedColumns(loadMigrationSql(FAILED_ATTEMPTS_MIGRATION_FILE), table);
+    expect(added).toEqual(["failedattempts"]);
+    expect(sorted([...created, ...added])).toEqual(sorted(metadata.columns.map((column) => column.databaseName)));
+  });
+
+  it("add the failed attempts column without NOT NULL or DEFAULT, which DSQL does not allow", () => {
+    expect(loadMigrationSql(FAILED_ATTEMPTS_MIGRATION_FILE)).toContain(
+      `ALTER TABLE ${schema}.guest_risk_assessment ADD COLUMN IF NOT EXISTS failedattempts INTEGER;`
+    );
+  });
+});
+
 describe.each([
   ["schema.psql", loadSchemaSql],
   [MIGRATION_FILE, () => loadMigrationSql(MIGRATION_FILE)],
-])("%s guest_risk_assessment blocks", (_label, loadSql) => {
-  it.each(["main", "test"])("declares the same columns as the entity for %s.guest_risk_assessment", async (schema) => {
+])("%s guest_risk_assessment blocks", (label, loadSql) => {
+  it.each(["main", "test"])("declares the columns of the entity for %s.guest_risk_assessment", async (schema) => {
     const metadata = await loadMetadata();
     const entityColumns = metadata.columns.map((column) => column.databaseName);
-    expect(sorted(extractCreateTableColumns(loadSql(), `${schema}.guest_risk_assessment`))).toEqual(sorted(entityColumns));
+    const expected = label === MIGRATION_FILE ? entityColumns.filter((column) => column !== "failedattempts") : entityColumns;
+    expect(sorted(extractCreateTableColumns(loadSql(), `${schema}.guest_risk_assessment`))).toEqual(sorted(expected));
   });
 
   it.each(["main", "test"])("declares the bookingid index for %s with CREATE INDEX ASYNC", (schema) => {
