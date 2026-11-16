@@ -200,4 +200,36 @@ describe("Inquiry payment setup recovery", () => {
       null
     );
   });
+  test("returns a guest-safe 502 when retry setup fails", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    const bookingService = {
+      getPaymentRetryDetails: jest.fn().mockResolvedValue({
+        bookingId: "booking-1",
+        hostId: "host-1",
+        propertyId: "property-1",
+        dates: { arrivalDate: 1790899200000, departureDate: 1791072000000 },
+        paymentId: null,
+      }),
+    };
+    const paymentService = {
+      create: jest.fn().mockRejectedValue(new Error("No such account: acct_private_123")),
+    };
+    const controller = new ReservationController({ bookingService, paymentService });
+
+    const response = await controller.patch({
+      headers: { Authorization: "Bearer guest-token" },
+      body: JSON.stringify({ action: "retry-payment-setup", bookingId: "booking-1" }),
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(response.response).toEqual({
+      bookingId: "booking-1",
+      status: "Awaiting Payment",
+      paymentSetupFailed: true,
+      message: "We could not prepare your payment. Please try again later.",
+    });
+    expect(JSON.stringify(response.response)).not.toContain("acct_private_123");
+    consoleError.mockRestore();
+  });
+
 });

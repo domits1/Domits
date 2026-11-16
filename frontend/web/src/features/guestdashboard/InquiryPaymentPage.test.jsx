@@ -80,13 +80,13 @@ describe("InquiryPaymentPage payment setup retry", () => {
       .mockResolvedValueOnce({
         ok: false,
         status: 502,
-        json: async () => ({ message: "Stripe could not prepare payment." }),
+        json: async () => ({ message: "We could not prepare your payment. Please try again later." }),
       });
 
     render(<InquiryPaymentPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Retry payment" }));
 
-    expect(await screen.findByText("Stripe could not prepare payment.")).toBeInTheDocument();
+    expect(await screen.findByText("We could not prepare your payment. Please try again later.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry payment" })).toBeEnabled();
   });
 });

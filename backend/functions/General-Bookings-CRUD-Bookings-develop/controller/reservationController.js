@@ -340,22 +340,40 @@ class ReservationController {
 
   async retryPaymentSetup(bookingId, authToken) {
     const booking = await this.bookingService.getPaymentRetryDetails(bookingId, authToken);
-    const paymentData = await this.paymentSerivce.create(
-      booking.hostId,
-      booking.bookingId,
-      booking.propertyId,
-      booking.dates,
-      booking.paymentId
-    );
 
-    return {
-      statusCode: 200,
-      headers: responseHeaderJSON,
-      response: {
-        bookingId: booking.bookingId,
-        stripeClientSecret: paymentData.stripeClientSecret,
-      },
-    };
+    try {
+      const paymentData = await this.paymentSerivce.create(
+        booking.hostId,
+        booking.bookingId,
+        booking.propertyId,
+        booking.dates,
+        booking.paymentId
+      );
+
+      return {
+        statusCode: 200,
+        headers: responseHeaderJSON,
+        response: {
+          bookingId: booking.bookingId,
+          stripeClientSecret: paymentData.stripeClientSecret,
+        },
+      };
+    } catch (error) {
+      console.error("Stripe payment intent retry failed:", {
+        code: error?.code || error?.type || error?.name || "PAYMENT_INTENT_RETRY_FAILED",
+      });
+
+      return {
+        statusCode: 502,
+        headers: responseHeaderJSON,
+        response: {
+          bookingId: booking.bookingId,
+          status: "Awaiting Payment",
+          paymentSetupFailed: true,
+          message: "We could not prepare your payment. Please try again later.",
+        },
+      };
+    }
   }
 
   async handlePaymentPatch(body) {

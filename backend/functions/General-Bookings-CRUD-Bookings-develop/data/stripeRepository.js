@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import SystemManagerRepository from "./systemManagerRepository.js";
@@ -53,7 +53,7 @@ class StripeRepository {
 
       const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentParameters = {
         amount: Math.round(totalCents),
         currency: "eur",
         payment_method_types: ["card", "ideal", "klarna"],
@@ -66,8 +66,13 @@ class StripeRepository {
           dates: JSON.stringify(dates),
           bookingId,
         },
-      }, {
-        idempotencyKey: `booking-payment-${bookingId}`,
+      };
+      const requestFingerprint = createHash("sha256")
+        .update(JSON.stringify(paymentIntentParameters))
+        .digest("hex");
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParameters, {
+        idempotencyKey: "booking-payment-" + requestFingerprint,
       });
 
       return {
