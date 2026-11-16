@@ -1,6 +1,6 @@
 # feat(channex): store and show the currency of imported bookings
 
-Pull request: (to be linked)
+Pull request: #3915 (stacked on #3900)
 Issue: #3583 (sub-issue of #3579); second of two pull requests, after the column in #3900
 Reviewed commit: staged diff per commit on `feat/3583-booking-currency-import`
 Result: no open blocking findings; two P2s were fixed before their commit (commit 3, ambiguous "$"; commit 5, revenue efficiency), two P2s of commit 1 closed by commit 2
