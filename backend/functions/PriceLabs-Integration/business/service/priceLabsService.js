@@ -3,6 +3,7 @@ import * as api     from "./priceLabsApiClient.js";
 import { verifyPriceLabsSignature } from "./priceLabsWebhookVerifier.js";
 import { Repository }               from "../../data/repository.js";
 import { SystemManagerRepository }  from "../../data/systemManagerRepository.js";
+import { isEuroBooking }            from "../../util/bookingCurrency.js";
 
 const SSM_TOKEN_KEY = "/pricelabs/integration_token";
 const SSM_NAME_KEY  = "/pricelabs/integration_name";
@@ -191,7 +192,10 @@ export class PriceLabsService {
     ]);
 
     const cleaningFeeByProperty = _cleaningFeeMap(properties);
-    const grouped = _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty);
+    // Every reservation goes to PriceLabs as euros, so one paid in another currency is left out
+    // (#3583). Its nights stay blocked: pushCalendar builds the booked dates from all bookings.
+    const euroBookings = bookings.filter(isEuroBooking);
+    const grouped = _groupReservationsByListing(hostId, euroBookings, cleaningFeeByProperty);
 
     const reservations = Object.values(grouped);
     const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
