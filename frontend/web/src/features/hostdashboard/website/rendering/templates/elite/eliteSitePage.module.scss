@@ -1,0 +1,382 @@
+@use "./eliteFonts" as fonts;
+
+@include fonts.elite-font-faces;
+
+$ivory: #f7f4ee;
+$ink: #1c1b19;
+$muted: #6b6458;
+$body-ink: #3d3830;
+$rule: #d9d1c4;
+$card-rule: #e4dccf;
+$accent: #7a5c3e;
+$paper: #ffffff;
+$header-eyebrow: #f1e9dc;
+$top-bar-room: clamp(86px, 9vw, 122px);
+$frame-gutter: var(--template-preview-frame-gutter, 0px);
+
+.elitePage {
+  container-type: inline-size;
+  margin: calc(0px - #{$frame-gutter}) calc(0px - #{$frame-gutter}) calc(0px - #{$frame-gutter});
+  background: $ivory;
+  color: $ink;
+  font-family: fonts.$elite-sans-stack;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.eliteSection {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.eliteHeader {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.eliteHeaderPhoto {
+  min-height: 440px;
+  padding: 120px 0 56px;
+  background: $ink;
+  color: $paper;
+}
+
+.eliteHeaderPhoto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 18, 15, 0.15) 0%, rgba(20, 18, 15, 0.55) 100%);
+  pointer-events: none;
+}
+
+.eliteHeaderLight {
+  padding: 56px 0 40px;
+}
+
+.eliteHeaderPhoto.eliteHeaderWithTopBar {
+  padding-top: calc(#{$top-bar-room} + 24px);
+}
+
+.eliteHeaderLight.eliteHeaderWithTopBar {
+  padding-top: calc(#{$top-bar-room} + 32px);
+}
+
+.eliteHeader .eliteHeaderPhotoFrame {
+  position: absolute;
+  inset: 0;
+}
+
+.eliteHeader .eliteHeaderPhotoImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 60%;
+}
+
+.eliteHeaderInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eliteHeaderCopy {
+  min-width: 0;
+}
+
+.eliteEyebrow {
+  margin: 0 0 12px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: $accent;
+  overflow-wrap: anywhere;
+}
+
+.eliteHeaderPhoto .eliteEyebrow {
+  color: $header-eyebrow;
+}
+
+.eliteHeaderTitle {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: clamp(2.75rem, 1.6rem + 4.4cqi, 4.75rem);
+  font-weight: 500;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.eliteHeading {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: clamp(2rem, 1.5rem + 1.8cqi, 2.75rem);
+  font-weight: 500;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.eliteFactsSection {
+  padding-top: 72px;
+}
+
+.eliteFacts {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  border-top: 1px solid $rule;
+  border-bottom: 1px solid $rule;
+}
+
+.eliteFact {
+  flex: 1 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 22px 0;
+}
+
+.eliteFactLabel {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: $muted;
+}
+
+.eliteFactValue {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: 30px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.eliteIntro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 64px;
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+.eliteDescription {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.eliteDescriptionText {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.eliteDescriptionLead {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: clamp(1.625rem, 1.25rem + 1.4cqi, 2.125rem);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.eliteDescriptionParagraph {
+  margin: 0;
+  max-width: 620px;
+  font-size: 17px;
+  line-height: 1.75;
+  color: $body-ink;
+  overflow-wrap: anywhere;
+}
+
+.eliteTextButton {
+  align-self: flex-start;
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 1px solid $accent;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: $accent;
+  cursor: pointer;
+}
+
+.eliteTextButton:focus-visible,
+.eliteButton:focus-visible {
+  outline: 2px solid $accent;
+  outline-offset: 4px;
+}
+
+.elitePriceCard {
+  flex: 1 1 320px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid $card-rule;
+  border-radius: 18px;
+  background: $paper;
+}
+
+.elitePrice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+
+.elitePriceAmount {
+  font-family: fonts.$elite-serif-stack;
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+.elitePriceUnit {
+  font-size: 15px;
+  color: $muted;
+}
+
+.eliteButton {
+  display: block;
+  box-sizing: border-box;
+  padding: 16px 28px;
+  border-radius: 999px;
+  background: $ink;
+  color: $ivory;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.eliteButton:hover {
+  background: #33302b;
+  color: $ivory;
+}
+
+.elitePriceNote {
+  margin: 0;
+  font-size: 13px;
+  color: $muted;
+  text-align: center;
+}
+
+.eliteHighlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 64px;
+  padding-top: 88px;
+  padding-bottom: 88px;
+}
+
+.eliteHighlightsHeading {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.eliteHighlightsBody {
+  flex: 2 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.eliteHighlightsList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eliteHighlightsList li {
+  padding: 18px 0;
+  border-bottom: 1px solid $rule;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.eliteFooter {
+  padding: 40px 0;
+  background: $ink;
+  color: $rule;
+}
+
+.eliteFooterInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.eliteFooterName {
+  font-family: fonts.$elite-serif-stack;
+  font-size: 22px;
+  color: $ivory;
+}
+
+@media (max-width: 720px) {
+  .elitePageWithTopBar {
+    margin-top: calc(-18px - #{$frame-gutter});
+  }
+}
+
+@container (max-width: 720px) {
+  .eliteSection {
+    padding: 0 20px;
+  }
+
+  .eliteHeaderPhoto {
+    min-height: 360px;
+    padding-bottom: 40px;
+  }
+
+  .eliteFactsSection {
+    padding-top: 48px;
+  }
+
+  .eliteFactValue {
+    font-size: 26px;
+  }
+
+  .eliteIntro {
+    gap: 40px;
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .elitePriceCard {
+    padding: 24px;
+  }
+
+  .eliteHighlights {
+    gap: 32px;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .eliteHighlightsList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
