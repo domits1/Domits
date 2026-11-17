@@ -248,15 +248,22 @@ describe("saving a list that the stored draft already holds", () => {
     expect(flow.store.draft.contentOverrides.siteProperties).toEqual([storedList[0]]);
   });
 
-  it("keeps a property that only the stored live list holds when the draft goes back to the live version", async () => {
+  it.each([
+    ["the stored live list holds, when the draft goes back to the live version", [storedList[0]], storedList, false],
+    ["the stored working list holds, when the live site is updated from it", storedList, [storedList[0]], true],
+  ])("keeps a property that only %s", async (_label, workingList, liveList, sendsLiveList) => {
     const flow = await flowWithStoredList({ ratePlanRow: ratePlanRow() });
     await saveDraft(flow, {
-      contentOverrides: { siteProperties: [storedList[0]] },
-      publishedContentOverrides: flow.store.draft.publishedContentOverrides,
+      contentOverrides: { siteProperties: workingList },
+      publishedContentOverrides: { siteProperties: liveList },
     });
     flow.owners.delete(OWN);
+    const body = { siteProperties: storedList };
 
-    const saved = await saveDraft(flow, { contentOverrides: flow.store.draft.publishedContentOverrides });
+    const saved = await saveDraft(flow, {
+      contentOverrides: body,
+      publishedContentOverrides: sendsLiveList ? body : undefined,
+    });
 
     expect(saved.statusCode).toBe(200);
     expect(flow.store.draft.contentOverrides.siteProperties).toEqual(storedList);
