@@ -3,7 +3,7 @@
 Pull request: `public-site-render-fields`, from `acceptance`.
 Issue: #3099
 Reviewed: before each commit, then the pull request as a whole, then each guard broken on purpose.
-Result: no blocking findings. 9 mutants, all caught. Second review of the first version (fields to leave out): no defects.
+Result: no blocking findings. 9 mutants, all caught. Second review of both versions (fields to leave out, then fields to keep): no defects.
 
 The public render of a live site (`GET /property/website/public/render`) and the static pages send the listing location through one allowlist: `PUBLIC_LOCATION_FIELDS` (`country`, `city`) and `toPublicLocationView` in `util/websitePropertySnapshotView.js`. Every other field is left out, also fields added to the listing later. A missing location stays missing; anything that is not an object becomes `null`. A first version listed the fields to leave out; Karim asked for a list of fields to keep, so nothing new can slip through.
 
