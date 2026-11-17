@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   MAX_SITE_PROPERTIES,
+  listNewSitePropertyIds,
   listOtherSitePropertyIds,
   normalizeSiteProperties,
   withNormalizedSiteProperties,
@@ -81,6 +82,38 @@ describe("overrides that may carry a property list", () => {
   it("refuses an invalid list instead of skipping it", () => {
     expect(() => listOtherSitePropertyIds({ siteProperties: "property-2" }, MAIN)).toThrow(TypeError);
     expect(() => withNormalizedSiteProperties({ siteProperties: [entry("property-2", "two")] }, MAIN)).toThrow(
+      /must list the main property/
+    );
+  });
+});
+
+describe("the properties a save has not stored yet", () => {
+  const overrides = { siteProperties: [entry(MAIN, "main"), entry("property-2", "two"), entry("property-3", "three")] };
+
+  it("leaves out the main property and every property either stored list holds", () => {
+    const stored = [
+      { siteProperties: [entry(" property-2 ", "old-slug")] },
+      { siteProperties: [entry("property-3", "three")] },
+    ];
+
+    expect(listNewSitePropertyIds(overrides, MAIN, stored)).toEqual([]);
+    expect(listNewSitePropertyIds(overrides, MAIN, [stored[1]])).toEqual(["property-2"]);
+    expect(listNewSitePropertyIds(overrides, MAIN, [])).toEqual(["property-2", "property-3"]);
+  });
+
+  it.each([
+    ["no stored draft", [undefined, undefined]],
+    ["a stored list that is not an array", [{ siteProperties: "property-2" }, null]],
+    [
+      "stored entries that are not objects or have no id",
+      [{ siteProperties: [null, "property-2", { slug: "two" }] }, {}],
+    ],
+  ])("trusts nothing from %s and never throws on it", (_label, stored) => {
+    expect(listNewSitePropertyIds(overrides, MAIN, stored)).toEqual(["property-2", "property-3"]);
+  });
+
+  it("still refuses an invalid new list", () => {
+    expect(() => listNewSitePropertyIds({ siteProperties: [entry("property-2", "two")] }, MAIN, [overrides])).toThrow(
       /must list the main property/
     );
   });
