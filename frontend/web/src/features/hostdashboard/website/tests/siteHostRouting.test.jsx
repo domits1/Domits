@@ -163,6 +163,13 @@ const buildModel = (payload) =>
     payload.site.templateKey
   );
 
+const findSettledQuoteStub = async () => {
+  await screen.findByTestId("quote-availability");
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
 const renderTodaysSiteHtml = async () => {
   const model = buildModel(renderPayload);
   const { container, unmount } = render(
@@ -177,7 +184,7 @@ const renderTodaysSiteHtml = async () => {
       />
     </MemoryRouter>
   );
-  await screen.findByTestId("quote-availability");
+  await findSettledQuoteStub();
   const html = container.innerHTML;
   unmount();
   return html;
@@ -195,7 +202,7 @@ const moveTo = (url) =>
   });
 
 const readSiteHtml = async () => {
-  await screen.findByTestId("quote-availability");
+  await findSettledQuoteStub();
   return document.querySelector(".publicPreviewCanvas").innerHTML;
 };
 
