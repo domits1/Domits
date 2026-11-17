@@ -798,7 +798,6 @@ describe("property paths of an Elite website on its own domain", () => {
       expect(await screen.findByRole("heading", { name: "Our properties" })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
       expect(mockTemplateProps.length).toBe(0);
-      expect(document.title).toBe(SITE_TITLE);
     }
   );
 

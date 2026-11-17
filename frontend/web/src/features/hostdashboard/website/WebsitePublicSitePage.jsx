@@ -457,12 +457,8 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     );
   }
 
-  const isSitePropertiesHome =
-    isCurrentRequestSettled &&
-    !sitePropertyRoute &&
-    activePageKey === MAIN_SITE_PAGE_KEY &&
-    servedSiteProperties.length > 0;
-  if (canRenderPublishedSite && isSitePropertiesHome) {
+  const isHomePage = isCurrentRequestSettled && !sitePropertyRoute && activePageKey === MAIN_SITE_PAGE_KEY;
+  if (canRenderPublishedSite && isHomePage && servedSiteProperties.length > 0) {
     return (
       <EliteSitePropertiesHome
         siteModel={publicModel}

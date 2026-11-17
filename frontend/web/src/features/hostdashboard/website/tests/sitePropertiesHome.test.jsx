@@ -96,7 +96,6 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
   delete global.fetch;
-  globalThis.history.replaceState(null, "", "/");
 });
 
 describe("the home page of an Elite website with its properties", () => {
