@@ -3,15 +3,15 @@
 Pull request: `public-site-render-fields`, from `acceptance`.
 Issue: #3099
 Reviewed: before each commit, then the pull request as a whole, then each guard broken on purpose.
-Result: no blocking findings. 3 mutants, all caught.
+Result: no blocking findings. 9 mutants, all caught. Second review: no defects.
 
-The public render of a live site (`GET /property/website/public/render`) sends the listing location through `toPublicWebsitePropertySnapshotView`. It now leaves out `street`, `houseNumber`, `houseNumberExtension` and `postalCode`, the same fields the static pages already leave out. The list lives in one place, `PRIVATE_LOCATION_FIELDS` in `util/websitePropertySnapshotView.js`, and the static page renderer imports it.
+The public render of a live site (`GET /property/website/public/render`) and the static pages send the listing location through one allowlist: `PUBLIC_LOCATION_FIELDS` (`country`, `city`) and `toPublicLocationView` in `util/websitePropertySnapshotView.js`. Every other field is left out, also fields added to the listing later. A missing location stays missing; anything that is not an object becomes `null`. A first version listed the fields to leave out; Karim asked for a list of fields to keep, so nothing new can slip through.
 
 ## Who reads the location
 
 | Reader | Fields it reads |
 |---|---|
-| `buildWebsiteTemplateModel.js` (live site, static pages, editor) | `city`, `country` |
+| `buildWebsiteTemplateModel.js` (live site, static pages, editor) | `city`, `country` (no template reads `region`) |
 | `websiteHeadTags` | `city`, `country`; its tests already require that the other fields never appear |
 | Static pages (`staticPageRenderer.js`) | own payload, same four fields already left out |
 | Editor preview | `/property/website/preview`, not this view; unchanged |
@@ -22,6 +22,8 @@ The public render of a live site (`GET /property/website/public/render`) sends t
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P4 (8/10) | `websitePropertySnapshotView.js` | A listing without a location sends `location: null`. | Unchanged, and pinned by a test. |
+| P4 (7/10) | `websitePropertySnapshotView.js` | `property_id` also leaves the public location. | Accepted: no template reads it, and the render pin never had it. |
+| P4 (6/10) | `websitePropertySnapshotView.test.js` | Checking `view.location` instead of the key let an empty string through. | Covered: an empty location gives `null`; the mutant is caught. |
 
 ## Not in scope
 
