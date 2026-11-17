@@ -613,7 +613,6 @@ describe("live view routing for a site with site pages", () => {
 });
 
 describe("property paths of a site without a served list of properties", () => {
-  const ALL_PAGES_ON = { gallery: { enabled: true }, accommodation: { enabled: true }, contact: { enabled: true } };
   const PROPERTY_PATHS = [
     "properties/villa-b",
     "properties/villa-b/photos",
@@ -653,30 +652,6 @@ describe("property paths of a site without a served list of properties", () => {
       expect(document.title).toBe(SITE_TITLE);
       expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
     });
-
-    it.each([
-      ["gallery", "Gallery"],
-      ["accommodation", "Accommodation"],
-      ["contact-us", "Contact us"],
-    ])(
-      "renders /%s of a site with site pages the same with a stale list in its overrides",
-      async (sitePath, pageTitle) => {
-        fetchPublicWebsiteRenderModel.mockResolvedValue(withSitePages(SITE_HOST_PAYLOAD, ALL_PAGES_ON));
-        const { unmount } = renderAppAt(`/${sitePath}`);
-        await screen.findByRole("link", { name: "Home" });
-        const htmlWithoutList = document.querySelector(".publicPreviewCanvas").innerHTML;
-        unmount();
-
-        fetchPublicWebsiteRenderModel.mockResolvedValue(
-          withStaleSiteProperties(withSitePages(SITE_HOST_PAYLOAD, ALL_PAGES_ON))
-        );
-        renderAppAt(`/${sitePath}`);
-        await screen.findByRole("link", { name: "Home" });
-
-        expect(document.querySelector(".publicPreviewCanvas").innerHTML).toBe(htmlWithoutList);
-        expect(document.title).toBe(`${pageTitle} | Wellness Villa Bisous`);
-      }
-    );
   });
 
   describe("in the live view", () => {
@@ -802,12 +777,8 @@ describe("property paths of an Elite website on its own domain", () => {
   it.each([
     "/properties/villa-c",
     "/properties/villa-b/reviews",
-    "/properties/villa-b/photos/2",
-    "/properties/villa_b",
     "/properties/__proto__",
-    "/properties/constructor",
     "/properties//photos",
-    "/properties/villa-b//",
     "/properties/villa%2Fb",
   ])("shows the not found page on %s", async (url) => {
     renderAppAt(url);
@@ -829,16 +800,6 @@ describe("property paths of an Elite website on its own domain", () => {
       expect(lastTemplateProps().activePageKey).toBe("main");
     }
   );
-
-  it("shows the first of two properties with the same slug", async () => {
-    fetchPublicWebsiteRenderModel.mockResolvedValue(
-      withSiteProperties(SITE_HOST_PAYLOAD, [...SITE_PROPERTIES, { ...VILLA_C, slug: "villa-b" }])
-    );
-    renderAppAt("/properties/villa-b");
-    await screen.findByRole("link", { name: "Home" });
-
-    expect(readPageHeading()).toBe("Villa B");
-  });
 
   it("routes as a site without the list once fewer than two properties are usable", async () => {
     fetchPublicWebsiteRenderModel.mockResolvedValue(

@@ -42,13 +42,7 @@ describe("isMissingPublishedWebsiteError", () => {
 });
 
 describe("fetchPublicWebsiteRenderModel", () => {
-  const RENDER_ANSWER = {
-    site: { id: "site-1" },
-    propertySnapshot: { property: { id: "property-a" } },
-    contentOverrides: {},
-    themeOverrides: {},
-    renderSource: "published_site",
-  };
+  const RENDER_ANSWER = { site: { id: "site-1" }, propertySnapshot: { property: { id: "property-a" } } };
   const answerWith = (body) =>
     jest.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, status: 200, json: async () => body });
 
