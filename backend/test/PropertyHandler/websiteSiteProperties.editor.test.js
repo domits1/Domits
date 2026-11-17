@@ -231,18 +231,26 @@ describe("publishing the properties of a website for a host without the plan", (
     expect(flow.loadedListings().withoutAddress).toEqual([]);
   });
 
-  it("refuses to publish a list when the plan cannot be read, and publishes nothing", async () => {
-    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  it("publishes the rest of the site and leaves the property snapshots alone when the plan cannot be read", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
     const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
-    await flow.save({ siteProperties: ownList() });
+    await flow.save({ heroTitle: "Villa", siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), title: "Beach house, renovated" });
+    await flow.save({ heroTitle: "Villa by the sea", siteProperties: ownList() });
     jest
       .spyOn(flow.controller.directBookingWebsiteRatePlanService, "getCurrentEntitlements")
       .mockRejectedValue(new Error("connection timed out"));
 
     const published = await flow.publish();
 
-    expect(published.statusCode).toBe(500);
-    expect(flow.store.site).toBeNull();
+    expect(published.statusCode).toBe(200);
+    expect(flow.store.site.publishedContentOverrides.heroTitle).toBe("Villa by the sea");
+    expect(flow.store.sitePropertySnapshots.map(({ propertySnapshot }) => propertySnapshot.property.title)).toEqual([
+      "Beach house",
+    ]);
+    expect(flow.loadedListings().withoutAddress).toEqual([OWN]);
+    expect(consoleError).toHaveBeenCalled();
   });
 });
 

@@ -24,12 +24,7 @@ const buildSnapshots = ({ listings = {}, snapshots = [], states = [], readTimeou
     getFullPropertyAttributes: jest.fn(loadListing(PUBLIC_LOCATION)),
     getFullPropertyAttributesWithFullLocation: jest.fn(loadListing(FULL_LOCATION)),
   };
-  const pageSettings = {
-    allowsSiteProperties: jest.fn(async () => {
-      if (allowed instanceof Error) throw allowed;
-      return allowed;
-    }),
-  };
+  const pageSettings = { allowsSiteProperties: jest.fn(async () => allowed) };
   const siteRepository = {
     getPublishedSitePropertySnapshots: jest.fn(async () => snapshots),
     getSitePropertyStates: jest.fn(async () => states),
@@ -72,12 +67,6 @@ describe("deciding which properties a publish snapshots", () => {
     const { service } = buildSnapshots({ allowed: false });
 
     expect(await listForPublish(service, { siteProperties: [entry("property-2")] })).toBeNull();
-  });
-
-  it("fails the publish when the plan cannot be read, instead of publishing without the properties", async () => {
-    const { service } = buildSnapshots({ allowed: new Error("The website plan read did not answer in time.") });
-
-    await expect(listForPublish(service, { siteProperties: [entry("property-main")] })).rejects.toThrow("did not answer in time");
   });
 });
 

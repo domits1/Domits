@@ -55,21 +55,17 @@ export class WebsiteElitePageSettings {
   }
 
   async allowsSiteProperties(hostId) {
-    return (await this.loadEntitlements(hostId)).includes(SITE_PROPERTIES_ENTITLEMENT);
-  }
-
-  async loadEntitlements(hostId) {
-    const { entitlements } = await withinTimeLimit(
-      this.ratePlanService.getCurrentEntitlements(hostId),
-      this.planReadTimeoutMs,
-      () => new Error("The website plan read did not answer in time.")
-    );
-    return entitlements;
+    return (await this.readEntitlements(hostId)).includes(SITE_PROPERTIES_ENTITLEMENT);
   }
 
   async readEntitlements(hostId) {
     try {
-      return await this.loadEntitlements(hostId);
+      const { entitlements } = await withinTimeLimit(
+        this.ratePlanService.getCurrentEntitlements(hostId),
+        this.planReadTimeoutMs,
+        () => new Error("The website plan read did not answer in time.")
+      );
+      return entitlements;
     } catch (error) {
       console.error(
         `[WebsitePageSettings] the website plan of host ${hostId} could not be read, so Elite page settings are not served.`,
