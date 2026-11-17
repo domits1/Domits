@@ -31,7 +31,7 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
   const abortControllerRef = useRef(null);
 
   const submitBookingRequest = useCallback(
-    async ({ quote, guest, message }) => {
+    async ({ quote, guest, message, idempotencyScope = quote.quoteId }) => {
       abortControllerRef.current?.abort();
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -51,13 +51,13 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
       try {
         let result;
         try {
-          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: quote.quoteId }));
+          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: idempotencyScope }));
         } catch (error) {
           if (error?.code !== IDEMPOTENCY_KEY_REUSED_CODE) {
             throw error;
           }
           clearBookingIdempotencyKey(siteId);
-          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: quote.quoteId }));
+          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: idempotencyScope }));
         }
 
         if (abortController.signal.aborted) {

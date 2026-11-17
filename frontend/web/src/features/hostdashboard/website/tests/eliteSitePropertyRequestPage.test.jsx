@@ -28,7 +28,11 @@ const QUOTE = {
   quoteToken: "token-1",
 };
 const SENT = { publicBookingRef: "DBW-ABCDEFGHJK", status: "REQUESTED", ...STAY, total: 85000, currency: "EUR" };
-const MODEL = { site: { title: "Wellness Villa Bisous", locationLabel: "Ubud, Indonesia" }, stay: { guests: 4 } };
+const MODEL = {
+  site: { title: "Wellness Villa Bisous", locationLabel: "Ubud, Indonesia" },
+  stay: { guests: 4 },
+  media: {},
+};
 const PAGE = {
   kind: "request",
   pageKey: "accommodation",
@@ -179,6 +183,8 @@ describe("the request to book page of an Elite property", () => {
     await send();
 
     expect(screen.getByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
+    const { guest, message: sentMessage } = requestPublicSiteBooking.mock.calls[1][0];
+    expect([guest.phone, sentMessage]).toContain("+31 6 1234 5678");
     expect(new Set(sentKeys()).size).toBe(1);
   });
 
@@ -217,21 +223,31 @@ describe("the request to book page of an Elite property", () => {
     expect(new Set(sentKeys()).size).toBe(1);
   });
 
-  it("quotes again when the price expired at the send and keeps what the guest typed", async () => {
-    requestPublicWebsiteQuote
-      .mockResolvedValueOnce(QUOTE)
-      .mockResolvedValueOnce({ ...QUOTE, quoteId: "quote-2", quoteToken: "token-2" });
-    requestPublicSiteBooking.mockRejectedValueOnce(bookingError("quote_expired", "", 409)).mockResolvedValueOnce(SENT);
+  it("keeps the key of the stay when the price is checked again after an unknown outcome", async () => {
+    const newPrice = {
+      ...QUOTE,
+      quoteId: "quote-2",
+      quoteToken: "token-2",
+      priceBreakdown: { ...PRICE, total: 90000 },
+    };
+    requestPublicWebsiteQuote.mockResolvedValueOnce(QUOTE).mockResolvedValueOnce(newPrice);
+    requestPublicSiteBooking
+      .mockRejectedValueOnce(bookingError("network_error", "", 0))
+      .mockRejectedValueOnce(bookingError("quote_expired", "", 409))
+      .mockResolvedValueOnce(SENT);
     await renderFilledForm();
 
     await send();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
 
     expect(await screen.findByText(/^The price changed/)).toBeInTheDocument();
-    expect(requestPublicWebsiteQuote).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText("€900.00")).toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toHaveValue("ana@example.com");
     await send();
-    expect(requestPublicSiteBooking.mock.calls[1][0].quoteToken).toBe("token-2");
-    expect(new Set(sentKeys()).size).toBe(2);
+    expect(requestPublicSiteBooking.mock.calls[2][0].quoteToken).toBe("token-2");
+    expect(new Set(sentKeys()).size).toBe(1);
   });
 
   it.each([

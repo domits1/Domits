@@ -147,6 +147,7 @@ export default function EliteSitePropertyRequestContent({
       quote,
       guest: { ...contact, phone: guest.phone.trim() },
       message: guest.message.trim(),
+      idempotencyScope: [propertyId, quote.checkIn, quote.checkOut, quote.guestCount].join(" "),
     });
     isSendingRef.current = false;
     if (outcome.ok) {
