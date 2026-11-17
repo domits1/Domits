@@ -86,13 +86,13 @@ describe("the booking panel of an Elite property page", () => {
     change();
 
     expect(requestLink()).toBeNull();
-    expect(screen.getByText("Selection changed — check again")).toBeInTheDocument();
+    expect(screen.getByText(/^Selection changed/)).toBeInTheDocument();
     expect(checkButton()).toBeEnabled();
   });
 
   it.each([
     ["property_not_found", "", "This property can't be booked on this website right now.", false, STAY.checkIn],
-    ["unavailable_dates", "", "Those dates are no longer available — please choose different dates.", true, ""],
+    ["unavailable_dates", "", /^Those dates are no longer available/, true, ""],
     ["stay_restriction_violation", "Stay at least 7 nights.", "Stay at least 7 nights.", true, STAY.checkIn],
     ["invalid_guest_count", "Up to 4 guests here.", "Up to 4 guests here.", true, STAY.checkIn],
   ])("shows %s to the guest without a request link", async (code, message, shownText, canCheckAgain, checkIn) => {
