@@ -699,7 +699,17 @@ describe("property paths of a site without a served list of properties", () => {
         expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
         expect(document.title).toBe("Domits");
         expect(document.head.querySelectorAll("meta").length).toBe(metaTagsBefore);
-        expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(0);
+        expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each(["properties/villa_b", "properties/villa-b/reviews", "properties/villa-b/photos/2"])(
+      "shows the not found page without a request on %s",
+      (sitePath) => {
+        renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+
+        expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+        expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
       }
     );
   });
@@ -862,5 +872,76 @@ describe("property paths of an Elite website on its own domain", () => {
     await sendSiteUpdate({ domain: "localhost" });
 
     expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+});
+
+describe("property paths of an Elite website in the live view", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+
+  beforeEach(() => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload));
+  });
+
+  it.each(["properties/villa-b", "properties/villa-b/photos", "properties/villa-b/request"])(
+    "opens %s after the check and links under the live view",
+    async (sitePath) => {
+      renderAppAt(`${LIVE_BASE}/${sitePath}${SITE_SEARCH}`);
+      expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+      await screen.findByRole("link", { name: "Home" });
+
+      expect(readPageHeading()).toBe("Villa B");
+      expect(readMenuItems()).toEqual([
+        ["Home", `${LIVE_BASE}${SITE_SEARCH}`],
+        ["Villa B", `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`],
+      ]);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenLastCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
+    }
+  );
+
+  it("keeps the not found page for an unknown slug after the check", async () => {
+    renderAppAt(`${LIVE_BASE}/properties/villa-c${SITE_SEARCH}`);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.length).toBe(0);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves from the home page to a property page without loading the site again", async () => {
+    renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
+    await screen.findByTestId("quote-availability");
+
+    await moveTo(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`);
+
+    expect(readPageHeading()).toBe("Villa B");
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the not found page, not the previous site, while another site's property loads", async () => {
+    renderAppAt(`${LIVE_BASE}/properties/villa-b`);
+    await screen.findByRole("link", { name: "Home" });
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+    mockTemplateProps.length = 0;
+
+    await moveTo("/website-live/b.example/properties/villa-b");
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.length).toBe(0);
+  });
+
+  it("shows the not found page once a refresh no longer serves the property", async () => {
+    renderAppAt(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`);
+    await screen.findByRole("link", { name: "Home" });
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
+    mockTemplateProps.length = 0;
+    await sendSiteUpdate({ siteId: SITE_ID });
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.filter((props) => props.activePageKey === "main").length).toBe(0);
   });
 });
