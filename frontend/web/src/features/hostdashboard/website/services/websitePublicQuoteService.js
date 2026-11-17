@@ -140,3 +140,50 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
 
   return quote;
 };
+
+const readText = (value) => (typeof value === "string" ? value : "");
+
+const toPublicWebsiteQuoteAnswer = (entry, propertyId) => {
+  const quote = normalizePublicWebsiteQuote(entry.quote);
+  if (quote?.propertyId === propertyId) {
+    return { quote };
+  }
+
+  const code = readText(entry.error?.code) || WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE;
+  return { error: { code, message: readText(entry.error?.message) } };
+};
+
+export const requestPublicWebsiteQuotes = async ({
+  siteId,
+  propertyIds,
+  checkIn,
+  checkOut,
+  guests,
+  sessionId,
+  signal,
+}) => {
+  const { payload, status } = await postPublicWebsiteQuote(
+    {
+      siteId,
+      propertyIds,
+      checkIn,
+      checkOut,
+      guests,
+      currency: QUOTE_CURRENCY,
+      session: { sessionId, source: QUOTE_SESSION_SOURCE },
+    },
+    signal
+  );
+  if (payload?.siteId !== siteId || !Array.isArray(payload.quotes)) {
+    throw unexpectedQuoteResponse(status);
+  }
+
+  const answers = new Map();
+  payload.quotes.forEach((entry) => {
+    const propertyId = readText(entry?.propertyId);
+    if (propertyId && !answers.has(propertyId)) {
+      answers.set(propertyId, toPublicWebsiteQuoteAnswer(entry, propertyId));
+    }
+  });
+  return answers;
+};
