@@ -27,6 +27,7 @@ import {
   resolveSitePropertyRoute,
 } from "./rendering/websiteSiteProperties";
 import { SITE_PROPERTY_PAGES } from "./rendering/WebsiteSitePropertyPage";
+import { buildEliteContactContext } from "./rendering/templates/elite/eliteContactContent";
 import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
@@ -214,6 +215,8 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     () => normalizeServedSiteProperties(renderPayload?.siteProperties),
     [renderPayload?.siteProperties]
   );
+
+  const contactContext = useMemo(() => buildEliteContactContext(renderPayload), [renderPayload]);
 
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const isCurrentRequestSettled = settledRequestKeyRef.current === requestKey;
@@ -493,6 +496,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
               activePageKey={activePageKey}
               pageBasePath={pageBasePath}
               pageSearch={pageSearch}
+              contactContext={contactContext}
             />
           )}
         </div>

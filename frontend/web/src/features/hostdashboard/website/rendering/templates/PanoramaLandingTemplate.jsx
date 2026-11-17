@@ -57,6 +57,7 @@ import {
   resolveWebsiteAmenityIconColor,
 } from "../../config/websiteAmenitiesConfig";
 import { resolveWebsiteHeroContentAlignment } from "../../config/websiteHeroSectionConfig";
+import EliteContactForm, { eliteContactContextPropType } from "./elite/EliteContactForm";
 import {
   MAIN_SITE_PAGE_KEY,
   buildSitePageHref,
@@ -1290,6 +1291,7 @@ export default function PanoramaLandingTemplate({
   pageBasePath = "",
   pageSearch = "",
   currentPageHref = "",
+  contactContext = null,
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
@@ -1305,6 +1307,7 @@ export default function PanoramaLandingTemplate({
   const isInteractivePreview = Boolean(onSelectTarget);
   const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
+  const showsContactForm = currentPageKey === "contact" && Boolean(contactContext) && !isInteractivePreview;
   const isInRouter = useInRouterContext();
   const canScrollAfterPageChange = Boolean(pageState) && isInRouter && !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
@@ -1484,6 +1487,7 @@ export default function PanoramaLandingTemplate({
               shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
+        {showsContactForm ? <EliteContactForm contactContext={contactContext} /> : null}
       </article>
       {canScrollAfterPageChange ? <PanoramaAvailabilityScrollAfterPageChange pageKey={currentPageKey} /> : null}
 
@@ -1564,4 +1568,5 @@ PanoramaLandingTemplate.propTypes = {
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
   currentPageHref: PropTypes.string,
+  contactContext: eliteContactContextPropType,
 };

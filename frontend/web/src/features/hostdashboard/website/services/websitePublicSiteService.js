@@ -63,6 +63,7 @@ const normalizePublicWebsiteRenderPayload = (payload) => {
     themeOverrides: payload.themeOverrides && typeof payload.themeOverrides === "object" ? payload.themeOverrides : {},
     renderSource: String(payload.renderSource || "").trim(),
     ...(Array.isArray(payload.siteProperties) ? { siteProperties: payload.siteProperties } : {}),
+    ...(payload.acceptsContactMessages === true ? { acceptsContactMessages: true } : {}),
   };
 };
 

@@ -1,0 +1,103 @@
+@use "./eliteFonts" as fonts;
+
+@include fonts.elite-font-faces;
+
+$ink: #1c1b19;
+$rule: #d9d1c4;
+$error: #9b2c2c;
+
+.eliteContactFormSection {
+  container-type: inline-size;
+  padding: 0 clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px);
+  color: $ink;
+  font-family: fonts.$elite-sans-stack;
+}
+
+.eliteContactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(20px, 5cqi, 32px);
+  border: 1px solid #e4dccf;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.eliteContactFormTitle {
+  margin: 0;
+  font: 500 clamp(1.75rem, 1.4rem + 1.6cqi, 2.25rem) / 1.1 fonts.$elite-serif-stack;
+}
+
+.eliteContactFieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.eliteContactField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.eliteContactInput {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid $rule;
+  border-radius: 10px;
+  background: #fbf9f5;
+  color: $ink;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.eliteContactInputInvalid {
+  border-color: $error;
+}
+
+.eliteContactFieldError,
+.eliteContactNotice {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.eliteContactFieldError,
+.eliteContactNoticeError {
+  color: $error;
+}
+
+.eliteContactButton {
+  align-self: flex-start;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 999px;
+  background: $ink;
+  color: #f7f4ee;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.7;
+  }
+}
+
+@container (max-width: 640px) {
+  .eliteContactFieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .eliteContactButton {
+    align-self: stretch;
+  }
+}

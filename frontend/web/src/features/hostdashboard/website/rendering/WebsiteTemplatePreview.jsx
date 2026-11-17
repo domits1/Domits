@@ -9,6 +9,7 @@ import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
 import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
 import { MAIN_SITE_PAGE_KEY } from "./websitePages";
+import { eliteContactContextPropType } from "./templates/elite/EliteContactForm";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -192,6 +193,7 @@ export function WebsiteTemplateSurface({
   pageBasePath = "",
   pageSearch = "",
   currentPageHref = "",
+  contactContext = null,
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -243,6 +245,7 @@ export function WebsiteTemplateSurface({
             pageBasePath={pageBasePath}
             pageSearch={pageSearch}
             currentPageHref={currentPageHref}
+            contactContext={contactContext}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -274,6 +277,7 @@ WebsiteTemplateSurface.propTypes = {
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
   currentPageHref: PropTypes.string,
+  contactContext: eliteContactContextPropType,
 };
 
 export default function WebsiteTemplatePreview({

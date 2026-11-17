@@ -65,4 +65,16 @@ describe("fetchPublicWebsiteRenderModel", () => {
       expect(await fetchPublicWebsiteRenderModel({ siteId: "site-1" })).not.toHaveProperty("siteProperties");
     }
   );
+
+  it.each([
+    [true, true],
+    ["true", undefined],
+    [1, undefined],
+    [false, undefined],
+    [undefined, undefined],
+  ])("passes acceptsContactMessages %p on as %p", async (acceptsContactMessages, expected) => {
+    answerWith({ ...RENDER_ANSWER, acceptsContactMessages });
+
+    expect((await fetchPublicWebsiteRenderModel({ siteId: "site-1" })).acceptsContactMessages).toBe(expected);
+  });
 });
