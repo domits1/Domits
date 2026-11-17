@@ -6,6 +6,11 @@ import { getStripeAccountDetails, isStripePayoutSetupComplete } from "../../host
 import { getPriceLabsStatus } from "../../hostpricelabs/services/priceLabsService";
 import { fetchTeamMembers } from "../../services/teamService";
 import { fetchCompanyProfile } from "../../../../components/settings/api/companyProfile";
+import { Auth } from "aws-amplify";
+import { normalizePreferredMfa } from "../../../../components/settings/utils/settingsFormatters";
+import { listOwners } from "../../hostowners/services/ownerService";
+import { ARCHIVED_OWNER_STATUS } from "../../hostowners/utils/ownerFormRules";
+import { listAutomations } from "../../hostmessages/services/automationService";
 
 // NOTE: this only lists published properties (GET /property/hostDashboard/all).
 // There is currently no backend endpoint to list a host's in-progress
@@ -132,6 +137,40 @@ export const checkTeamStatus = async () => {
   try {
     const members = await fetchTeamMembers();
     return { complete: Array.isArray(members) && members.length > 0, scope: "account" };
+  } catch {
+    return { complete: false, scope: "account", unknown: true };
+  }
+};
+
+export const checkSecurityStatus = async () => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+    const preferredMfa = normalizePreferredMfa(await Auth.getPreferredMFA(user));
+    return { complete: preferredMfa !== "NOMFA", scope: "account" };
+  } catch {
+    return { complete: false, scope: "account", unknown: true };
+  }
+};
+
+export const checkOwnersStatus = async () => {
+  try {
+    const owners = await listOwners();
+    if (!Array.isArray(owners)) {
+      return { complete: false, scope: "account", unknown: true };
+    }
+    return { complete: owners.some((owner) => owner?.status !== ARCHIVED_OWNER_STATUS), scope: "account" };
+  } catch {
+    return { complete: false, scope: "account", unknown: true };
+  }
+};
+
+export const checkMessagingStatus = async () => {
+  try {
+    const automations = await listAutomations();
+    if (!Array.isArray(automations)) {
+      return { complete: false, scope: "account", unknown: true };
+    }
+    return { complete: automations.some((automation) => automation?.status === "ACTIVE"), scope: "account" };
   } catch {
     return { complete: false, scope: "account", unknown: true };
   }

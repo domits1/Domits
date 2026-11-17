@@ -189,7 +189,7 @@ describe("ReviewApprovalPage", () => {
 
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
     expect(within(details()).getByText("Unverified")).toBeInTheDocument();
-    expect(rowFor("Good location")).toHaveAttribute("aria-selected", "true");
+    expect(within(rowFor("Good location")).getByRole("checkbox", { name: "Show review details for Good location" })).toBeChecked();
   });
 
   test("opens review details by clicking row content or pressing Enter or Space on the row", async () => {
@@ -200,10 +200,12 @@ describe("ReviewApprovalPage", () => {
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
 
     fireEvent.keyDown(rowFor("Great stay!"), { key: "Enter" });
-    expect(rowFor("Great stay!")).toHaveAttribute("aria-selected", "true");
+    expect(within(rowFor("Great stay!")).getByRole("checkbox", { name: "Show review details for Great stay!" })).toBeChecked();
+    expect(within(details()).getByText("The apartment was clean, modern and well equipped.")).toBeInTheDocument();
 
     fireEvent.keyDown(rowFor("Good location"), { key: " " });
-    expect(rowFor("Good location")).toHaveAttribute("aria-selected", "true");
+    expect(within(rowFor("Good location")).getByRole("checkbox", { name: "Show review details for Good location" })).toBeChecked();
+    expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
   });
 
   test("closes the details panel", async () => {
