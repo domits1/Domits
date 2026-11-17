@@ -48,8 +48,8 @@ beforeEach(() => {
 });
 
 describe("the booking panel of an Elite property page", () => {
-  it("asks for the dates first and quotes the stay the guest picks", async () => {
-    requestPublicWebsiteQuote.mockResolvedValue({ ...QUOTE, guestCount: 2 });
+  it("asks for the dates first and links the stay the price is for", async () => {
+    requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
     renderPanel(NO_STAY);
 
     expect(requestPublicWebsiteQuote).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("the booking panel of an Elite property page", () => {
 
     expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
       "href",
-      "/properties/villa-b/request?checkIn=2099-01-10&guests=2"
+      "/properties/villa-b/request?checkIn=2099-01-10&guests=3"
     );
     expect(checkButton()).toBeNull();
     expect(requestPublicWebsiteQuote).toHaveBeenCalledWith(expect.objectContaining({ ...STAY, guests: 2 }));
@@ -104,6 +104,14 @@ describe("the booking panel of an Elite property page", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(Boolean(checkButton())).toBe(canCheckAgain);
     expect(screen.getByLabelText("Check in")).toHaveValue(checkIn);
+  });
+
+  it("takes the request link away once the price has expired", async () => {
+    requestPublicWebsiteQuote.mockResolvedValue({ ...QUOTE, expiresAt: "2000-01-01T00:00:00.000Z" });
+    renderPanel();
+
+    expect(await screen.findByText(/^Price expired/)).toBeInTheDocument();
+    expect(requestLink()).toBeNull();
   });
 
   it("offers a retry when the price cannot be checked", async () => {

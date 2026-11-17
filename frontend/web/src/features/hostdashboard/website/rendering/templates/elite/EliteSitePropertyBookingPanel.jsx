@@ -28,6 +28,7 @@ export default function EliteSitePropertyBookingPanel({ model, siteId, propertyI
   const selection = { checkIn: range.checkIn, checkOut: range.checkOut, guests };
   const hasStay = countStayNights(range.checkIn, range.checkOut) > 0 && range.checkIn >= todayKey;
   const canRequestToBook = quoteView.isQuoted;
+  const quotedStay = canRequestToBook ? { ...quoteState.quote, guests: quoteState.quote.guestCount } : null;
   const hideAction = Boolean(quoteView.panelError?.hideAction);
   const price = buildElitePrice(model.stay);
 
@@ -111,7 +112,7 @@ export default function EliteSitePropertyBookingPanel({ model, siteId, propertyI
         <QuoteBreakdown quote={quoteState.quote} isStale={quoteView.isStale} staleReason={quoteState.staleReason} />
       ) : null}
       {canRequestToBook ? (
-        <PanoramaPageLink href={buildRequestHref(selection)} className={styles.eliteButton}>
+        <PanoramaPageLink href={buildRequestHref(quotedStay)} className={styles.eliteButton}>
           Request to book
         </PanoramaPageLink>
       ) : null}
