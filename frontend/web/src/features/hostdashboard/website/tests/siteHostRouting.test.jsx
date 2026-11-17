@@ -828,14 +828,13 @@ describe("property paths of an Elite website on its own domain", () => {
   });
 
   it.each(["/", "/properties", "/gallery", "/website-live/localhost/properties/villa-b"])(
-    "renders %s as a site without the list",
+    "shows the overview of all properties on %s",
     async (url) => {
-      const todaysHtml = await renderTodaysSiteHtml();
-
       renderAppAt(url);
 
-      expect(await readSiteHtml()).toBe(todaysHtml);
-      expect(lastTemplateProps().activePageKey).toBe("main");
+      expect(await screen.findByRole("heading", { name: "Our properties" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
+      expect(mockTemplateProps.length).toBe(0);
     }
   );
 
@@ -846,6 +845,15 @@ describe("property paths of an Elite website on its own domain", () => {
     const todaysHtml = await renderTodaysSiteHtml();
 
     renderAppAt("/properties/villa-b");
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+
+  it("shows the home page as today once fewer than two properties are usable", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0]]));
+    const todaysHtml = await renderTodaysSiteHtml();
+
+    renderAppAt("/");
 
     expect(await readSiteHtml()).toBe(todaysHtml);
   });
@@ -948,9 +956,7 @@ describe("property paths of an Elite website in the live view", () => {
 
   it("moves from the home page to a property page without loading the site again", async () => {
     renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
-    await screen.findByTestId("quote-availability");
-
-    await moveTo(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`);
+    fireEvent.click(await screen.findByRole("link", { name: /^Villa B/ }));
 
     expect(readPageHeading()).toBe("Villa B");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);

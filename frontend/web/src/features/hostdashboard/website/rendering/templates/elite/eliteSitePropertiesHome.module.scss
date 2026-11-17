@@ -1,0 +1,198 @@
+@use "./eliteFonts" as fonts;
+
+@include fonts.elite-font-faces;
+
+$ivory: #f7f4ee;
+$ink: #1c1b19;
+$muted: #6b6458;
+
+.eliteHome {
+  container-type: inline-size;
+  min-height: 100vh;
+  background: $ivory;
+  color: $ink;
+  font: 16px/1.5 fonts.$elite-sans-stack;
+}
+
+.eliteHomeHeader {
+  position: relative;
+  isolation: isolate;
+  padding: 28px 0 clamp(40px, 6cqi, 64px);
+  background: $ink;
+  color: #ffffff;
+}
+
+.eliteHomeHeaderImage {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.62);
+}
+
+.eliteHomeNav,
+.eliteHomeIntro,
+.eliteHomeSection {
+  display: grid;
+  gap: 12px;
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4cqi, 32px);
+}
+
+.eliteHomeNav,
+.eliteHomeChips,
+.eliteHomeSearch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.eliteHomeNav {
+  gap: 12px 28px;
+  letter-spacing: 1px;
+}
+
+.eliteHomeNav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.eliteHomeNav a:first-child {
+  margin-right: auto;
+  font: 600 28px fonts.$elite-serif-stack;
+}
+
+.eliteHomeIntro {
+  padding-top: clamp(56px, 10cqi, 140px);
+}
+
+.eliteHomeEyebrow,
+.eliteHomeField {
+  margin: 0;
+  color: #f1e9dc;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.eliteHomeTitle,
+.eliteHomeHeading,
+.eliteHomeCardTitle {
+  margin: 0;
+  font: 500 clamp(1.6rem, 1.3rem + 0.8cqi, 2rem) / 1.05 fonts.$elite-serif-stack;
+  overflow-wrap: anywhere;
+}
+
+.eliteHomeTitle {
+  font-size: clamp(2.75rem, 1.6rem + 4.4cqi, 4.75rem);
+}
+
+.eliteHomeSearch {
+  max-width: 880px;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.eliteHomeField {
+  display: grid;
+  flex: 1 1 140px;
+  gap: 4px;
+  padding: 8px 14px;
+  color: $muted;
+  font-size: 11px;
+}
+
+.eliteHomeField input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+}
+
+.eliteHomeButton,
+.eliteHomeChips button,
+.eliteHomeTextButton {
+  padding: 9px 16px;
+  border: 1px solid #d9d1c4;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.eliteHomeButton,
+.eliteHomeChips button[aria-pressed="true"] {
+  background: $ink;
+  color: $ivory;
+}
+
+.eliteHomeButton {
+  flex: 1 0 auto;
+  min-height: 52px;
+  border-radius: 12px;
+}
+
+.eliteHomeSearch p,
+.eliteHomeSection > p[role="alert"] {
+  flex-basis: 100%;
+  margin: 0;
+  color: #9b2c2c;
+}
+
+.eliteHomeSection {
+  gap: 24px;
+  padding-block: 48px 96px;
+}
+
+.eliteHomeMuted {
+  margin: 0;
+  color: $muted;
+}
+
+.eliteHomeTextButton {
+  justify-self: start;
+  color: #7a5c3e;
+}
+
+.eliteHomeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 28px 20px;
+}
+
+.eliteHomeCard {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.eliteHomeCard img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.eliteHomePrice {
+  color: #7a5c3e;
+  font-size: 1.25rem;
+}
+
+.eliteHomeNotFree {
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px dashed #cfc5b5;
+  border-radius: 14px;
+  color: $muted;
+}
