@@ -440,14 +440,16 @@ describe("quoting another property of an Elite website", () => {
     expect(afterRepublish.body).toBe(expectedQuoteBody(JSON.parse(afterRepublish.body).quoteId, OWN));
   });
 
-  it("does not count the main property as another property of the site", async () => {
-    const flow = await publishedFlow();
-    const sitePropertySnapshots = flow.controller.getWebsiteSitePropertySnapshots();
+  it("lists only the other properties the site serves, never the main property", async () => {
+    const flow = buildQuoteFlow();
+    await flow.publishList(LIST_OF_THREE);
+    flow.listings.set(CABIN, { ...flow.listings.get(CABIN), status: "INACTIVE" });
 
-    expect(await sitePropertySnapshots.servesOtherSiteProperty({ site: flow.store.site, propertyId: MAIN })).toBe(
-      false
-    );
-    expect(await sitePropertySnapshots.servesOtherSiteProperty({ site: flow.store.site, propertyId: OWN })).toBe(true);
+    const served = await flow.controller
+      .getWebsiteSitePropertySnapshots()
+      .listServedOtherPropertyIds({ site: flow.store.site, propertyIds: [MAIN, CABIN] });
+
+    expect(served).toEqual(new Set([OWN]));
   });
 
   it.each([
