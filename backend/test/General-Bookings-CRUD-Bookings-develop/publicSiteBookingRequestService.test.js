@@ -36,6 +36,7 @@ const DEPARTURE_MS = parseBookingDateToMs("2026-10-05", "checkOut");
 const EXISTING_ROW = {
   id: "booking-existing",
   site_id: "site-1",
+  property_id: "property-1",
   arrivaldate: ARRIVAL_MS,
   departuredate: DEPARTURE_MS,
   guests: 2,
@@ -270,6 +271,19 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
       await expectError(service.createBookingRequest(REQUEST), "idempotency_key_reused");
     });
 
+    it("rejects a key used for another property of the site as idempotency_key_reused", async () => {
+      const { service, deps } = buildService({
+        reservationRepository: {
+          getByIdempotencyKey: jest.fn().mockResolvedValue({ ...EXISTING_ROW, property_id: "property-2" }),
+          createPublicSiteBookingRequest: jest.fn(),
+          assertNoBookingConflict: jest.fn(),
+        },
+      });
+
+      await expectError(service.createBookingRequest(REQUEST), "idempotency_key_reused");
+      expect(deps.reservationRepository.createPublicSiteBookingRequest).not.toHaveBeenCalled();
+    });
+
     it("replays when a concurrent request wins the insert race on the same key", async () => {
       const { service, deps } = buildService({
         reservationRepository: {
@@ -335,11 +349,36 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
       await expectError(service.createBookingRequest({ ...REQUEST, siteId: "site-2" }), "quote_token_invalid");
     });
 
-    it("rejects a token whose property does not match the site as quote_token_invalid", async () => {
-      const { service } = buildService({
+    it("re-quotes a token for another property of the site with that property, and refuses it when the quote does", async () => {
+      const { service, deps } = buildService({
         standaloneSiteRepository: { getSiteById: jest.fn().mockResolvedValue({ ...SITE, propertyId: "property-9" }) },
+        quoteRevalidationClient: {
+          requoteSite: jest.fn().mockResolvedValue({ ok: false, status: 404, code: "property_not_found", message: "" }),
+        },
       });
-      await expectError(service.createBookingRequest(REQUEST), "quote_token_invalid");
+
+      const promise = service.createBookingRequest(REQUEST);
+
+      await expect(promise).rejects.toMatchObject({
+        code: "property_not_found",
+        statusCode: 404,
+        message: "This property can no longer be booked on this website.",
+      });
+      expect(deps.quoteRevalidationClient.requoteSite).toHaveBeenCalledWith(
+        expect.objectContaining({ siteId: "site-1", propertyId: "property-1" })
+      );
+      expect(deps.reservationRepository.createPublicSiteBookingRequest).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["no property", { propertyId: undefined }],
+      ["an empty property", { propertyId: "  " }],
+    ])("rejects a token with %s as quote_token_invalid before reading the site", async (_label, change) => {
+      const { service, deps } = buildService();
+      const quoteToken = signWebsiteQuoteToken({ ...TOKEN_PAYLOAD, ...change }, SECRET);
+
+      await expectError(service.createBookingRequest({ ...REQUEST, quoteToken }), "quote_token_invalid");
+      expect(deps.standaloneSiteRepository.getSiteById).not.toHaveBeenCalled();
     });
 
     it.each([

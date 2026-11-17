@@ -16,6 +16,7 @@ import {
   buildStoringSiteRepository,
   expectNoPlanRead,
   hostEvent,
+  ratePlanRow,
 } from "../PropertyHandler/support/existingSiteRender.js";
 
 jest.mock("@aws-sdk/credential-provider-node", () => ({
@@ -155,6 +156,7 @@ const buildBookingSide = (store, quoteController) => {
     propertyHandlerLambda,
     emailLambda,
     eventRepository,
+    reservationRepository,
   };
 };
 
@@ -213,7 +215,8 @@ const buildFlow = ({ site = null } = {}) => {
   return {
     store,
     listings,
-    ...propertyHandler,
+    quoteController: propertyHandler.controller,
+    ratePlanRepository: propertyHandler.ratePlanRepository,
     ...booking,
     publish,
     quote,
@@ -371,5 +374,191 @@ describe("booking the site's own property", () => {
 
     expectMainBookingAsToday(flow, response, quoteId);
     expectNoPlanRead(flow.ratePlanRepository);
+  });
+});
+
+const encodePayload = (response) => ({ Payload: new TextEncoder().encode(JSON.stringify(response)) });
+const errorBody = (code, message) => JSON.stringify({ error: { code, message, requestId: "req-book" } });
+const LIVE_QUOTE_UNCONFIRMED = "Live pricing and availability could not be confirmed. Please try again.";
+
+const publishedFlow = async () => {
+  const flow = buildFlow();
+  await flow.publish(LIST);
+  return flow;
+};
+
+const expectNothingStored = (flow) => {
+  expect(flow.rows).toEqual([]);
+  expect(flow.sentEmails()).toEqual([]);
+  expect(flow.bookingEvents()).toEqual([]);
+};
+
+const changedToken = (quoteToken, change) => {
+  const [encoded, signature] = quoteToken.slice("qtok_".length).split(".");
+  const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+  return `qtok_${Buffer.from(JSON.stringify({ ...payload, ...change }), "utf8").toString("base64url")}.${signature}`;
+};
+
+describe("booking another property of an Elite website", () => {
+  it("re-quotes the token's property and books it under that property, its name and its cancellation policy", async () => {
+    const flow = await publishedFlow();
+    const { quoteId, quoteToken } = await flow.quote({ propertyId: OWN });
+    jest.clearAllMocks();
+
+    const response = await flow.book(quoteToken);
+
+    const publicBookingRef = "DBW-AAAAAAAAA1";
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toBe(expectedAnswer({ publicBookingRef, total: 51000 }));
+    expect(flow.requoteEvents()).toEqual([["PropertyHandler", expectedRequoteEvent({ propertyId: OWN })]]);
+    expect(flow.ratePlanRepository.findCurrentByAccountId.mock.calls).toEqual([[HOST]]);
+    expect(storedRows(flow)).toEqual([expectedRow({ propertyId: OWN, total: 51000, publicBookingRef })]);
+    expect(flow.bookingEvents()).toEqual([
+      expectedBookingEvent({ quoteId, publicBookingRef, payloadFields: { propertyId: OWN } }),
+    ]);
+    expect(flow.sentEmails()).toEqual(expectedEmails({ propertyName: TITLES[OWN], publicBookingRef }));
+  });
+
+  it("uses the token's property, not a property or a site named in the body", async () => {
+    const flow = await publishedFlow();
+    const { quoteToken } = await flow.quote({ propertyId: OWN });
+
+    const response = await flow.book(quoteToken, { body: { propertyId: MAIN, siteId: "site-other" } });
+
+    expect(response.statusCode).toBe(201);
+    expect(flow.requoteEvents()).toEqual([["PropertyHandler", expectedRequoteEvent({ propertyId: OWN })]]);
+    expect(flow.rows.map((row) => [row.site_id, row.property_id])).toEqual([[SITE_ID, OWN]]);
+  });
+
+  it.each([
+    ["changed to the main property", { change: { propertyId: MAIN } }, 409, "quote_expired"],
+    ["changed to another site", { change: { siteId: "site-other" } }, 409, "quote_expired"],
+    ["sent to another site's path", { siteId: "site-other" }, 401, "quote_token_invalid"],
+  ])("refuses a token of another property %s before the re-quote", async (_label, request, status, code) => {
+    const flow = await publishedFlow();
+    const { quoteToken } = await flow.quote({ propertyId: OWN });
+    const token = request.change ? changedToken(quoteToken, request.change) : quoteToken;
+
+    const response = await flow.book(token, { siteId: request.siteId });
+
+    expect([response.statusCode, JSON.parse(response.body).error.code]).toEqual([status, code]);
+    expect(flow.requoteEvents()).toEqual([]);
+    expectNothingStored(flow);
+  });
+
+  it.each([
+    ["is deactivated", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" })],
+    ["moves to another host", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), hostId: "host-other" })],
+    ["is removed from the list and the site is published again", (flow) => flow.publish([LIST[0]])],
+    [
+      "belongs to a host whose Elite ended",
+      (flow) => flow.ratePlanRepository.findCurrentByAccountId.mockResolvedValue(ratePlanRow()),
+    ],
+    [
+      "belongs to a host whose plan cannot be read",
+      (flow) => flow.ratePlanRepository.findCurrentByAccountId.mockRejectedValue(new Error("connection reset")),
+    ],
+  ])(
+    "refuses a property that after the quote %s, stores nothing, and still books the main property",
+    async (_label, change) => {
+      jest.spyOn(console, "error").mockImplementation(() => undefined);
+      const flow = await publishedFlow();
+      const { quoteToken } = await flow.quote({ propertyId: OWN });
+      await change(flow);
+
+      const response = await flow.book(quoteToken);
+
+      expect(response.statusCode).toBe(404);
+      expect(response.body).toBe(
+        errorBody("property_not_found", "This property can no longer be booked on this website.")
+      );
+      expect(flow.requoteEvents()).toEqual([["PropertyHandler", expectedRequoteEvent({ propertyId: OWN })]]);
+      expectNothingStored(flow);
+      const main = await flow.quote();
+      expect((await flow.book(main.quoteToken, { idempotencyKey: "idem-2" })).statusCode).toBe(201);
+      expect(flow.rows.map((row) => row.property_id)).toEqual([MAIN]);
+    }
+  );
+
+  it("refuses a re-quote that answers for the main property, before it compares the price", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const flow = await publishedFlow();
+    const { quoteToken } = await flow.quote({ propertyId: OWN });
+    flow.propertyHandlerLambda.send.mockImplementationOnce(async (command) => {
+      const event = JSON.parse(command.input.Payload);
+      const { propertyId, ...bodyWithoutProperty } = JSON.parse(event.body);
+      return encodePayload(
+        await flow.quoteController.createPublicWebsiteQuote({ ...event, body: JSON.stringify(bodyWithoutProperty) })
+      );
+    });
+
+    const response = await flow.book(quoteToken);
+
+    expect(response.statusCode).toBe(503);
+    expect(response.body).toBe(errorBody("booking_service_unavailable", LIVE_QUOTE_UNCONFIRMED));
+    expect(consoleError).toHaveBeenCalledWith("Quote revalidation answered for another property.", {
+      siteId: SITE_ID,
+      requestId: "req-book",
+    });
+    expectNothingStored(flow);
+  });
+
+  it.each([
+    ["the invoke fails", () => Promise.reject(Object.assign(new Error("socket hang up"), { name: "TimeoutError" }))],
+    [
+      "the quote Lambda times out",
+      async () => ({
+        FunctionError: "Unhandled",
+        ...encodePayload({ errorType: "Sandbox.Timedout", errorMessage: "Task timed out after 30.00 seconds" }),
+      }),
+    ],
+  ])("asks the guest to try again and stores nothing when %s", async (_label, answer) => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const flow = await publishedFlow();
+    const { quoteToken } = await flow.quote({ propertyId: OWN });
+    flow.propertyHandlerLambda.send.mockImplementationOnce(answer);
+
+    const response = await flow.book(quoteToken);
+
+    expect(response.statusCode).toBe(503);
+    expect(response.body).toBe(errorBody("booking_service_unavailable", LIVE_QUOTE_UNCONFIRMED));
+    expectNothingStored(flow);
+  });
+
+  it("stores two requests of two guests for the same property and dates, each under that property", async () => {
+    const flow = await publishedFlow();
+    const first = await flow.quote({ propertyId: OWN });
+    const second = await flow.quote({ propertyId: OWN });
+
+    const responses = await Promise.all([
+      flow.book(first.quoteToken, { idempotencyKey: "idem-1" }),
+      flow.book(second.quoteToken, { idempotencyKey: "idem-2" }),
+    ]);
+
+    expect(responses.map((response) => response.statusCode)).toEqual([201, 201]);
+    expect(flow.rows.map((row) => [row.property_id, row.status, row.idempotency_key]).sort()).toEqual([
+      [OWN, "Inquiry", "idem-1"],
+      [OWN, "Inquiry", "idem-2"],
+    ]);
+    expect(flow.reservationRepository.assertNoBookingConflict.mock.calls).toEqual([
+      [{ propertyId: OWN, arrivalDateMs: ARRIVAL_MS, departureDateMs: DEPARTURE_MS }],
+      [{ propertyId: OWN, arrivalDateMs: ARRIVAL_MS, departureDateMs: DEPARTURE_MS }],
+    ]);
+  });
+
+  it("refuses dates taken on that property, not dates taken on the main property", async () => {
+    const flow = await publishedFlow();
+    const taken = { arrivalDateMs: ARRIVAL_MS, departureDateMs: DEPARTURE_MS };
+    flow.blockingBookings.push({ propertyId: MAIN, ...taken });
+    const free = await flow.quote({ propertyId: OWN });
+    expect((await flow.book(free.quoteToken, { idempotencyKey: "idem-1" })).statusCode).toBe(201);
+
+    flow.blockingBookings.push({ propertyId: OWN, ...taken });
+    const blocked = await flow.quote({ propertyId: OWN });
+    const response = await flow.book(blocked.quoteToken, { idempotencyKey: "idem-2" });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.body).toBe(errorBody("unavailable_dates", "The selected dates are no longer available."));
+    expect(flow.rows.map((row) => row.idempotency_key)).toEqual(["idem-1"]);
   });
 });

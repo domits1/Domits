@@ -7,6 +7,7 @@ export const PUBLIC_BOOKING_REQUEST_ERROR_CODES = Object.freeze({
   INVALID_DATE_RANGE: "invalid_date_range",
   QUOTE_TOKEN_INVALID: "quote_token_invalid",
   SITE_NOT_FOUND: "site_not_found",
+  PROPERTY_NOT_FOUND: "property_not_found",
   SITE_NOT_PUBLISHED: "site_not_published",
   UNAVAILABLE_DATES: "unavailable_dates",
   STAY_RESTRICTION_VIOLATION: "stay_restriction_violation",
@@ -28,6 +29,7 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_DATE_RANGE]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.QUOTE_TOKEN_INVALID]: 401,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.SITE_NOT_FOUND]: 404,
+  [PUBLIC_BOOKING_REQUEST_ERROR_CODES.PROPERTY_NOT_FOUND]: 404,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.SITE_NOT_PUBLISHED]: 409,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.UNAVAILABLE_DATES]: 409,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.STAY_RESTRICTION_VIOLATION]: 409,
@@ -67,6 +69,9 @@ export class PublicBookingRequestError extends Error {
 
 export const publicBookingRequestErrorFromQuoteError = (quoteError) => {
   const code = String(quoteError?.code || "");
+  if (code === PUBLIC_BOOKING_REQUEST_ERROR_CODES.PROPERTY_NOT_FOUND) {
+    return new PublicBookingRequestError(code, "This property can no longer be booked on this website.");
+  }
   if (QUOTE_ENDPOINT_PASSTHROUGH_CODES.has(code)) {
     return new PublicBookingRequestError(code, String(quoteError?.message || "The quote could not be confirmed."));
   }
