@@ -68,14 +68,10 @@ const normalizePublicWebsiteQuote = (payload) => {
   };
 };
 
-const unexpectedQuoteResponse = (status) =>
-  new WebsitePublicQuoteError({
-    code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
-    message: "The quote service returned an unexpected response.",
-    status,
-  });
-
-const postPublicWebsiteQuote = async (requestBody, signal) => {
+const postPublicWebsiteQuote = async (
+  { propertyIds, siteId, checkIn, checkOut, guests, sessionId, signal },
+  readAnswer
+) => {
   let response;
   try {
     response = await fetch(PUBLIC_WEBSITE_QUOTE_URL, {
@@ -83,7 +79,15 @@ const postPublicWebsiteQuote = async (requestBody, signal) => {
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
       signal,
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        siteId,
+        propertyIds,
+        checkIn,
+        checkOut,
+        guests,
+        currency: QUOTE_CURRENCY,
+        session: { sessionId, source: QUOTE_SESSION_SOURCE },
+      }),
     });
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -114,36 +118,30 @@ const postPublicWebsiteQuote = async (requestBody, signal) => {
         status: response.status,
       });
     }
-    throw unexpectedQuoteResponse(response.status);
+    throw new WebsitePublicQuoteError({
+      code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      message: "The quote service returned an unexpected response.",
+      status: response.status,
+    });
   }
 
-  return { payload, status: response.status };
-};
-
-export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, guests, sessionId, signal }) => {
-  const { payload, status } = await postPublicWebsiteQuote(
-    {
-      siteId,
-      checkIn,
-      checkOut,
-      guests,
-      currency: QUOTE_CURRENCY,
-      session: { sessionId, source: QUOTE_SESSION_SOURCE },
-    },
-    signal
-  );
-
-  const quote = normalizePublicWebsiteQuote(payload);
-  if (!quote) {
-    throw unexpectedQuoteResponse(status);
+  const answer = readAnswer(payload);
+  if (!answer) {
+    throw new WebsitePublicQuoteError({
+      code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+      message: "The quote service returned an unexpected response.",
+      status: response.status,
+    });
   }
 
-  return quote;
+  return answer;
 };
+
+export const requestPublicWebsiteQuote = (request) => postPublicWebsiteQuote(request, normalizePublicWebsiteQuote);
 
 const readText = (value) => (typeof value === "string" ? value : "");
 
-const toPublicWebsiteQuoteAnswer = (entry, propertyId) => {
+const readQuoteAnswer = (entry, propertyId) => {
   const quote = normalizePublicWebsiteQuote(entry.quote);
   if (quote?.propertyId === propertyId) {
     return { quote };
@@ -153,37 +151,20 @@ const toPublicWebsiteQuoteAnswer = (entry, propertyId) => {
   return { error: { code, message: readText(entry.error?.message) } };
 };
 
-export const requestPublicWebsiteQuotes = async ({
-  siteId,
-  propertyIds,
-  checkIn,
-  checkOut,
-  guests,
-  sessionId,
-  signal,
-}) => {
-  const { payload, status } = await postPublicWebsiteQuote(
-    {
-      siteId,
-      propertyIds,
-      checkIn,
-      checkOut,
-      guests,
-      currency: QUOTE_CURRENCY,
-      session: { sessionId, source: QUOTE_SESSION_SOURCE },
-    },
-    signal
-  );
+const readQuoteAnswers = (payload, siteId) => {
   if (payload?.siteId !== siteId || !Array.isArray(payload.quotes)) {
-    throw unexpectedQuoteResponse(status);
+    return null;
   }
 
   const answers = new Map();
   payload.quotes.forEach((entry) => {
     const propertyId = readText(entry?.propertyId);
     if (propertyId && !answers.has(propertyId)) {
-      answers.set(propertyId, toPublicWebsiteQuoteAnswer(entry, propertyId));
+      answers.set(propertyId, readQuoteAnswer(entry, propertyId));
     }
   });
   return answers;
 };
+
+export const requestPublicWebsiteQuotes = (request) =>
+  postPublicWebsiteQuote(request, (payload) => readQuoteAnswers(payload, request.siteId));
