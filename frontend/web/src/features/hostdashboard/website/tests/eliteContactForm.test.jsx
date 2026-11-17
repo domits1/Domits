@@ -27,7 +27,10 @@ const failure = (code, extra = {}) => ({ error: { code, ...extra } });
 
 const answer = (status, body) => ({
   status,
-  text: async () => (typeof body === "string" ? body : JSON.stringify(body)),
+  text: async () => {
+    if (body === undefined) throw new Error("lost");
+    return typeof body === "string" ? body : JSON.stringify(body);
+  },
 });
 const answerFetch = (...answers) => {
   const fetchMock = jest.spyOn(globalThis, "fetch");
@@ -128,6 +131,9 @@ describe("a message the server did not confirm or refused", () => {
   it.each([
     ["a 200 without SENT", 200, { status: "QUEUED" }, TEXT.unconfirmed],
     ["a 200 that is not JSON", 200, "<html>", TEXT.unconfirmed],
+    ["a 200 whose body is lost", 200, undefined, TEXT.unconfirmed],
+    ["an unexpected 204", 204, "", TEXT.unconfirmed],
+    ["message_not_confirmed on a 400", 400, failure("message_not_confirmed"), TEXT.unconfirmed],
     ["message_not_confirmed", 504, failure("message_not_confirmed", { message: "Sent." }), TEXT.unconfirmed],
     ["a gateway 504", 504, { message: "Endpoint request timed out" }, TEXT.unconfirmed],
     ["a gateway 502", 502, { message: "Internal server error" }, TEXT.unconfirmed],
@@ -238,7 +244,7 @@ describe("a slow or repeated send", () => {
     expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
   });
 
-  it("stops waiting after the time limit, shows not confirmed and lets the guest send again", async () => {
+  it("stops waiting after the time limit, shows not confirmed, and sends again without a timer left", async () => {
     jest.useFakeTimers();
     const fetchMock = holdFetch();
     await sendWith(SITE, GUEST);
@@ -249,7 +255,10 @@ describe("a slow or repeated send", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent(TEXT.unconfirmed);
     expect(valueOf("Message")).toBe(GUEST.Message);
+    fetchMock.mockResolvedValueOnce(answer(200, { status: "SENT" }));
     await send();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(TEXT.sent);
+    expect(jest.getTimerCount()).toBe(0);
   });
 });
