@@ -2,7 +2,7 @@
 
 Runbook for the hand-applied migration `backend/ORM/migrations/20261117_standalone_site_property_snapshots.{js,sql}` and its rollback `20261117_standalone_site_property_snapshots_rollback.sql`.
 
-The `.js` file is the migration record; nothing in this repository executes it. Connect and run the statements the same way as for [dsql_static_page_outbox_runbook.md](./dsql_static_page_outbox_runbook.md): one DDL statement per transaction in autocommit, never DDL inside `BEGIN`. A warm Lambda can fail one statement with SQLSTATE `40001` / `OC001` right after the DDL and succeeds on retry.
+The `.js` file is the migration record; nothing in this repository executes it. Connect the same way as for [dsql_static_page_outbox_runbook.md](./dsql_static_page_outbox_runbook.md). Run every statement in autocommit, one at a time, except block 5: run the smoke test `BEGIN; SELECT ... FOR UPDATE; ROLLBACK;` as one explicit transaction. Never put the DDL inside `BEGIN`. A warm Lambda can fail one statement with SQLSTATE `40001` / `OC001` right after the DDL and succeeds on retry.
 
 ## What this migration adds
 
@@ -34,4 +34,4 @@ An Aurora DSQL column holds at most 1 MiB and a row at most 2 MiB. Publishing re
 
 ## Rollback
 
-`20261117_standalone_site_property_snapshots_rollback.sql` drops the column. The snapshots are lost; a site with a list then shows its main property only, and publishing a list fails until the column is back. Publishes without a list keep working. Roll back only together with the deploy that uses the column.
+`20261117_standalone_site_property_snapshots_rollback.sql` drops the column, in autocommit. Aurora DSQL supports `ALTER TABLE ... DROP COLUMN` ([ALTER TABLE](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/alter-table-syntax-support.html), checked 2026-11-17): the column disappears at once, its space is reclaimed as rows are updated, and it keeps counting toward the limit of 1,600 columns over the lifetime of the table. The snapshots are lost; a site with a list then shows its main property only, and publishing a list fails until the column is back. Publishes without a list keep working. Roll back only together with the deploy that uses the column.
