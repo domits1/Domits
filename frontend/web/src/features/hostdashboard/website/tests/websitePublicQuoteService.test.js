@@ -70,6 +70,34 @@ describe("requestPublicWebsiteQuote", () => {
     });
   });
 
+  it.each([
+    ["another property", "property-b", { propertyId: "property-b" }],
+    ["an empty property id", "", {}],
+  ])("sends the property id only for %s", async (_, propertyId, propertyFields) => {
+    mockFetchResponse({ body: { ...QUOTE_RESPONSE, propertyId: propertyId || "property-1" } });
+
+    await requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId });
+
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      siteId: "site-1",
+      ...propertyFields,
+      checkIn: "2026-10-01",
+      checkOut: "2026-10-05",
+      guests: 2,
+      currency: "EUR",
+      session: { sessionId: "visitor-1", source: "standalone_site" },
+    });
+  });
+
+  it("refuses a quote of another property than the one asked for", async () => {
+    mockFetchResponse({ body: QUOTE_RESPONSE });
+
+    await expectQuoteError(
+      requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId: "property-b" }),
+      WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.PROPERTY_NOT_FOUND
+    );
+  });
+
   it("returns the normalized quote on success", async () => {
     mockFetchResponse({ body: QUOTE_RESPONSE });
 

@@ -37,6 +37,16 @@ describe("resolveQuoteErrorPresentation", () => {
     }
   );
 
+  it("tells the guest the property can no longer be booked here, without a retry", () => {
+    const presentation = resolveQuoteErrorPresentation(buildError("property_not_found", { status: 404 }));
+    expect(presentation).toMatchObject({
+      scope: QUOTE_ERROR_SCOPES.PANEL,
+      message: "This property can't be booked on this website right now.",
+      hideAction: true,
+      canRetry: false,
+    });
+  });
+
   it("offers the host contact for quote_unavailable", () => {
     const presentation = resolveQuoteErrorPresentation(buildError("quote_unavailable", { status: 422 }));
     expect(presentation.scope).toBe(QUOTE_ERROR_SCOPES.PANEL);

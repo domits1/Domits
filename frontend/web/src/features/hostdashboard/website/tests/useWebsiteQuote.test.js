@@ -85,3 +85,21 @@ describe("useWebsiteQuote selection changes", () => {
     expect(result.current.quote.quoteId).toBe("quote_1");
   });
 });
+
+describe("useWebsiteQuote for one property of a website", () => {
+  it.each([
+    ["another property", { propertyId: "property-b" }, "property-b"],
+    ["the site's own property", {}, ""],
+  ])("asks the quote of %s", async (_, options, propertyId) => {
+    requestPublicWebsiteQuote.mockReset().mockResolvedValue(QUOTE);
+    const { result } = renderHook(() => useWebsiteQuote({ siteId: "site-1", sessionId: "visitor-test", ...options }));
+
+    await act(async () => {
+      await result.current.requestQuote(STAY);
+    });
+
+    expect(requestPublicWebsiteQuote).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "site-1", propertyId, ...STAY })
+    );
+  });
+});
