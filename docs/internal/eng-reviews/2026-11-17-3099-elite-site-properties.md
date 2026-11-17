@@ -32,15 +32,21 @@ publish ▶ main snapshot + ACTIVE ▶ list? ─no─▶ the same three statemen
 render  ▶ plan filter ▶ list of 2 or more? ▶ snapshots ∥ live host and status (3 s) ▶ ACTIVE and same host only
 ```
 
-Mutants: 25, all caught.
+Mutants: 31, all caught. One first survived: once the publish checks the plan, nothing tested that the render filters by plan on its own; a host who loses the plan after publish now covers it.
 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
+| P1 (10/10) | `websiteSitePropertySnapshots.js`, publish | The snapshots came from the full-address read, and the public view copies `location` as it is, so the render served the street, house number and postal code of the other properties. | Fixed: the extras are read with the public location (country and city). Tested on the stored and the served snapshot. |
+| P2 (10/10) | `propertyController.js`, publish | A host without the plan who still had a list in the draft got new publish failures: an owner check, and an inactive or missing extra property, for properties his site does not show. | Fixed: the plan is read first. Without it, the list is not checked or snapshotted and the column is left alone. A failed plan read stops the publish with an error instead of publishing without the properties. Tested. |
+| P2 (10/10) | `websiteSitePropertySnapshots.js`, render | A republish between reading the site and reading the snapshots could mix two publishes. | Fixed: the snapshots are read at the `static_page_revision` of the site row. On a mismatch, that one render shows the main property. Tested. |
+| P3 (10/10) | `websiteSitePropertySnapshots.repository.test.js` | The fake client always answered with a structured result, so dropping the `true` flag would still pass. | Fixed: the flag is asserted on the check and the write. |
 | P2 (9/10) | design | The first version loaded every extra property live on every public render. | Replaced: snapshots at publish, one read of the snapshots and one status query at render. A test proves the render loads no listing. |
 | P3 (9/10) | `websiteSitePropertySnapshots.test.js` | A missing listing was faked as `null`, while the service returns `{ property: null }`, so a weaker check passed. | Fixed: the fake returns the real shape. The mutant is caught. |
 | P3 (6/10) | `directBookingWebsiteSiteRepository.js`, publish check | `FOR UPDATE` next to `hostid` and `status` is not yet proven on this cluster. | The migration file runs it once inside `BEGIN ... ROLLBACK` as a smoke test. |
 | P3 (8/10) | `propertyController.js`, render | The plan read and the snapshot read run one after the other, so a slow database can add up to 6 s to a multi-property render. | Accepted: only Elite sites with a list, well within the 29 s of API Gateway. |
 | P4 (7/10) | `directBookingWebsiteSiteRepository.js`, publish | A publish that drops the whole list leaves the old snapshots in the row. | Accepted: the render needs the list, so they are never served. A list with only the main property clears them. Tested. |
+
+Outside this change, and raised with Karim: the main property's snapshot is taken with the full address, and the live render serves it through the same view, so live sites already send the street, house number and postal code of the main property in their render data. Changing that changes the render of every existing site.
 
 Why a new column: nesting the extras in `published_property_snapshot_json` needs no migration, but the static page renderer reads that column through a list of keys to strip, so full addresses of the other properties would reach the static pages. The new column is kept out of the shared site columns, so a deploy before the migration breaks nothing; only publishing a list fails until the column exists.
 

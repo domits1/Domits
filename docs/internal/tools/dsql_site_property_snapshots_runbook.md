@@ -6,13 +6,13 @@ The `.js` file is the migration record; nothing in this repository executes it. 
 
 ## What this migration adds
 
-`main.standalone_site.published_site_properties_json` (`TEXT NULL`) holds the snapshots of the other properties of an Elite website, written in the publish transaction next to `published_property_snapshot_json`. It is a JSON array of `{ propertyId, propertySnapshot }`, one entry per property in `siteProperties` other than the main one. The snapshots leave out calendar availability: availability and prices are read live when a guest searches on dates.
+`main.standalone_site.published_site_properties_json` (`TEXT NULL`) holds the snapshots of the other properties of an Elite website, written in the publish transaction next to `published_property_snapshot_json`. It is a JSON array of `{ propertyId, propertySnapshot }`, one entry per property in `siteProperties` other than the main one. The snapshots leave out calendar availability, because availability and prices are read live when a guest searches on dates. They also leave out the street, house number and postal code: only country and city are stored. A publish writes the column only for a host with the `website.multi_property` plan. The render reads it only at the `static_page_revision` of the site row it renders, so it never mixes two publishes.
 
 Only `main` has the standalone tables, so there is no `test` variant.
 
 ## Why the order does not matter
 
-The new code never puts the column in the shared site columns. It reads the column only to render a site whose served `siteProperties` hold two or more properties, and writes it only when a publish carries `siteProperties`. No live site has that list today.
+The new code never puts the column in the shared site columns. It reads the column only to render a site whose served `siteProperties` hold two or more properties. It writes the column only when a publish carries `siteProperties` for a host with the plan. No live site has that list today.
 
 - Migration first, then deploy: the column stays `NULL` until a host publishes a list.
 - Deploy first: every existing site renders and publishes as before. Publishing a list fails until the column exists, and a site with a list shows its main property only.
