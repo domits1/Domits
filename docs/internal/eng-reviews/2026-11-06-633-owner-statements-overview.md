@@ -3,7 +3,7 @@
 Pull request: #3798
 Issue: #633
 Review basis: focused branch diff against `acceptance`
-Result: review follow-up implemented; reviewer validation and Node.js CI passed
+Result: review follow-up implemented; reviewer validation passed; latest documentation-only CI run pending
 
 ## Scope
 
@@ -33,7 +33,7 @@ No financial totals, statements, exports, approvals, or payment allocations are 
 - Reworded the page description so it does not imply that statement generation is already available.
 - Reformatted the four translation files as consistently indented JSON.
 - Reviewer validation: 14 test suites and 499 tests passed.
-- Node.js CI for the current PR head completed successfully.
+- Node.js CI passed on the implementation head. This follow-up changes only the engineering-review document; its CI run is pending.
 - No database changes, migrations, new packages, or payout actions.
 
 ## Review follow-up
