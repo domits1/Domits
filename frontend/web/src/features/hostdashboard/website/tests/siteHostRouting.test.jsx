@@ -812,7 +812,7 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(await readSiteHtml()).toBe(todaysHtml);
   });
 
-  it("shows the not found page once a refresh no longer serves the property", async () => {
+  it("shows the not found page once a refresh no longer serves the property, also while it reloads", async () => {
     renderAppAt("/properties/villa-b");
     await screen.findByRole("link", { name: "Home" });
 
@@ -820,8 +820,12 @@ describe("property paths of an Elite website on its own domain", () => {
       withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
     );
     await sendSiteUpdate({ domain: "localhost" });
-
     expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+    await sendSiteUpdate({ domain: "localhost" });
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
   });
 
   it("shows the home page as today once a refresh no longer serves the list", async () => {

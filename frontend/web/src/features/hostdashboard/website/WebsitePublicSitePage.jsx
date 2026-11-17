@@ -234,7 +234,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     [activeSiteProperty, publicModel, renderPayload?.contentOverrides, renderPayload?.themeOverrides, templateId]
   );
   const isActivePageFound = sitePropertyRoute ? sitePropertyRoute.isFound : activePageKey !== MAIN_SITE_PAGE_KEY;
-  const isMissingSiteProperty = !isLoading && sitePropertyRoute?.isFound === false;
+  const isMissingSiteProperty = sitePropertyRoute?.isFound === false;
   const isMissingRequiredPage =
     isMissingSiteProperty || (requiresActivePage && (!isCurrentRequestSettled || (!isLoading && !isActivePageFound)));
   const pageModel = sitePropertyModel || publicModel;
