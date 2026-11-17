@@ -474,6 +474,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
         <div className={publicPreviewCanvasClassName}>
           {SitePropertyPage ? (
             <SitePropertyPage
+              pageKind={sitePropertyRoute.pageKind}
               templateId={templateId}
               model={sitePropertyModel}
               property={activeSiteProperty}

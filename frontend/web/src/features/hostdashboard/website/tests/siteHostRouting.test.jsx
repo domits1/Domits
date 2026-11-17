@@ -723,12 +723,12 @@ describe("property paths of an Elite website on its own domain", () => {
   });
 
   it.each([
-    "/properties/villa-b",
-    "/properties/villa-b/photos",
-    "/properties/villa-b/request",
-    "/Properties/Villa-B/",
-    "/properties/villa%2Db",
-  ])("shows the Accommodation page of the other property on %s", async (url) => {
+    ["/properties/villa-b", "/properties/villa-b"],
+    ["/properties/villa-b/photos", "/properties/villa-b/photos"],
+    ["/properties/villa-b/request", "/properties/villa-b/request"],
+    ["/Properties/Villa-B/", "/properties/villa-b"],
+    ["/properties/villa%2Db", "/properties/villa-b"],
+  ])("shows the Accommodation page of the other property on %s", async (url, currentPageHref) => {
     renderAppAt(url);
     await screen.findByRole("link", { name: "Home" });
 
@@ -739,7 +739,7 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(listSectionIds()).toEqual(["about", "features"]);
     expect(readMenuItems()).toEqual([
       ["Home", "/"],
-      ["Villa B", "/properties/villa-b"],
+      ["Villa B", currentPageHref],
     ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
     expect(document.title).toBe("Villa B | Wellness Villa Bisous");
@@ -854,7 +854,7 @@ describe("property paths of an Elite website in the live view", () => {
       expect(readPageHeading()).toBe("Villa B");
       expect(readMenuItems()).toEqual([
         ["Home", `${LIVE_BASE}${SITE_SEARCH}`],
-        ["Villa B", `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`],
+        ["Villa B", `${LIVE_BASE}/${sitePath}${SITE_SEARCH}`],
       ]);
       expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
       expect(fetchPublicWebsiteRenderModel).toHaveBeenLastCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });

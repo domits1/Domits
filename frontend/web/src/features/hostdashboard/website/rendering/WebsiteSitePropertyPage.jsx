@@ -15,7 +15,15 @@ const buildAccommodationPageModel = (model, property) => ({
   visibility: property.isMainProperty ? model.visibility : { ...model.visibility, availabilityCalendar: false },
 });
 
-function SitePropertyAccommodationPage({ templateId, model, property, quoteContext, pageBasePath, pageSearch }) {
+function SitePropertyAccommodationPage({
+  pageKind,
+  templateId,
+  model,
+  property,
+  quoteContext,
+  pageBasePath,
+  pageSearch,
+}) {
   const pageModel = useMemo(() => buildAccommodationPageModel(model, property), [model, property]);
 
   return (
@@ -29,17 +37,13 @@ function SitePropertyAccommodationPage({ templateId, model, property, quoteConte
       activePageKey={ACCOMMODATION_PAGE_KEY}
       pageBasePath={pageBasePath}
       pageSearch={pageSearch}
-      currentPageHref={buildSitePropertyHref(
-        pageBasePath,
-        property.slug,
-        SITE_PROPERTY_PAGE_KINDS.property,
-        pageSearch
-      )}
+      currentPageHref={buildSitePropertyHref(pageBasePath, property.slug, pageKind, pageSearch)}
     />
   );
 }
 
 SitePropertyAccommodationPage.propTypes = {
+  pageKind: PropTypes.oneOf(Object.values(SITE_PROPERTY_PAGE_KINDS)).isRequired,
   templateId: PropTypes.string.isRequired,
   model: PropTypes.shape({ hero: PropTypes.shape({ title: PropTypes.string }).isRequired }).isRequired,
   property: PropTypes.shape({ slug: PropTypes.string.isRequired, isMainProperty: PropTypes.bool.isRequired })
