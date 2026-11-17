@@ -425,6 +425,21 @@ describe("quoting another property of an Elite website", () => {
     await expectMainStillQuotes(flow);
   });
 
+  it("refuses a listed property when the site is published again between reading the site and its snapshots", async () => {
+    const flow = await publishedFlow();
+    const siteBeforeRepublish = flow.store.site;
+    await flow.publishList(LIST);
+    flow.controller.directBookingWebsiteSiteRepository.getSiteById.mockResolvedValueOnce(siteBeforeRepublish);
+
+    expectRefused(flow, await flow.quote({ propertyId: OWN }));
+    expect(flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots).toHaveBeenCalledWith(
+      EXISTING_SITE.id,
+      siteBeforeRepublish.staticPageRevision
+    );
+    const afterRepublish = await flow.quote({ propertyId: OWN });
+    expect(afterRepublish.body).toBe(expectedQuoteBody(JSON.parse(afterRepublish.body).quoteId, OWN));
+  });
+
   it("does not count the main property as another property of the site", async () => {
     const flow = await publishedFlow();
     const sitePropertySnapshots = flow.controller.getWebsiteSitePropertySnapshots();
