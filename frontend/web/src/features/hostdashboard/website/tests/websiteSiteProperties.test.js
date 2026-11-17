@@ -4,9 +4,11 @@ import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftCont
 import {
   buildSitePropertyHref,
   buildSitePropertyModel,
+  buildSitePropertyStayQuery,
   isSitePropertyPath,
   normalizeServedSiteProperties,
   parseSitePropertyPath,
+  readSitePropertyStayQuery,
   resolveSitePropertyPageTitle,
   resolveSitePropertyRoute,
 } from "../rendering/websiteSiteProperties";
@@ -229,5 +231,84 @@ describe("buildSitePropertyModel", () => {
 
     expect(resolveSitePropertyPageTitle(buildVillaB(siteModel))).toBe("Villa B");
     expect(resolveSitePropertyPageTitle({ ...siteModel, hero: { title: siteModel.site.title } })).toBe("");
+  });
+});
+
+describe("readSitePropertyStayQuery", () => {
+  const TODAY = "2026-11-17";
+  const NO_DATES = { checkIn: null, checkOut: null };
+
+  it.each([
+    ["?checkIn=2026-12-01&checkOut=2026-12-08&guests=4", { checkIn: "2026-12-01", checkOut: "2026-12-08", guests: 4 }],
+    [
+      "?siteId=site-1&checkIn=2026-11-17&checkOut=2026-11-18",
+      { checkIn: "2026-11-17", checkOut: "2026-11-18", guests: null },
+    ],
+    [
+      "?checkIn=2026-12-01&checkOut=2027-12-01&guests=99",
+      { checkIn: "2026-12-01", checkOut: "2027-12-01", guests: 99 },
+    ],
+    ["?guests=2", { ...NO_DATES, guests: 2 }],
+  ])("reads %s", (search, stay) => {
+    expect(readSitePropertyStayQuery(search, TODAY)).toEqual(stay);
+  });
+
+  it.each([
+    ["a check-in in the past", "?checkIn=2026-11-16&checkOut=2026-11-20"],
+    ["a check-out before the check-in", "?checkIn=2026-12-08&checkOut=2026-12-01"],
+    ["the same day twice", "?checkIn=2026-12-01&checkOut=2026-12-01"],
+    ["a day that does not exist", "?checkIn=2027-02-27&checkOut=2027-02-30"],
+    ["a year before 100", "?checkIn=0027-02-27&checkOut=0027-03-02"],
+    ["another date format", "?checkIn=01-12-2026&checkOut=08-12-2026"],
+    ["a date with a time", "?checkIn=2026-12-01T10:00&checkOut=2026-12-08"],
+    ["a stay longer than a year", "?checkIn=2026-12-01&checkOut=2027-12-02"],
+    ["one date only", "?checkIn=2026-12-01"],
+    ["a date given twice", "?checkIn=2026-12-01&checkIn=2026-12-02&checkOut=2026-12-08"],
+  ])("ignores the dates for %s and keeps the guests", (_, search) => {
+    expect(readSitePropertyStayQuery(`${search}&guests=3`, TODAY)).toEqual({ ...NO_DATES, guests: 3 });
+  });
+
+  it.each(["0", "-2", "1.5", "02", "100", "two", ""])("ignores the guests %p and keeps the dates", (guests) => {
+    expect(readSitePropertyStayQuery(`?checkIn=2026-12-01&checkOut=2026-12-08&guests=${guests}`, TODAY)).toEqual({
+      checkIn: "2026-12-01",
+      checkOut: "2026-12-08",
+      guests: null,
+    });
+  });
+
+  it.each([undefined, "", "?siteId=site-1"])("reads no stay from %p", (search) => {
+    expect(readSitePropertyStayQuery(search, TODAY)).toEqual({ ...NO_DATES, guests: null });
+  });
+});
+
+describe("buildSitePropertyStayQuery", () => {
+  const STAY = { checkIn: "2026-12-01", checkOut: "2026-12-08", guests: 4 };
+
+  it.each([
+    ["", STAY, "?checkIn=2026-12-01&checkOut=2026-12-08&guests=4"],
+    ["?siteId=site-1", STAY, "?siteId=site-1&checkIn=2026-12-01&checkOut=2026-12-08&guests=4"],
+    [
+      "?siteId=site-1&checkIn=2026-01-01&guests=9",
+      { checkIn: null, checkOut: null, guests: 2 },
+      "?siteId=site-1&guests=2",
+    ],
+    ["?siteId=site-1", { checkIn: "2026-12-01", checkOut: "", guests: 0 }, "?siteId=site-1"],
+    ["?siteId=site-1", { ...STAY, checkIn: "1 Dec", guests: 1.5 }, "?siteId=site-1"],
+    ["", undefined, ""],
+  ])("builds from %p and %p", (search, stay, query) => {
+    expect(buildSitePropertyStayQuery(search, stay)).toBe(query);
+  });
+
+  it("builds a request link under the live view", () => {
+    expect(
+      buildSitePropertyHref(
+        "/website-live/a.example",
+        "villa-b",
+        "request",
+        buildSitePropertyStayQuery("?siteId=s-1", STAY)
+      )
+    ).toBe(
+      "/website-live/a.example/properties/villa-b/request?siteId=s-1&checkIn=2026-12-01&checkOut=2026-12-08&guests=4"
+    );
   });
 });
