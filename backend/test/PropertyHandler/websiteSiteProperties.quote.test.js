@@ -570,6 +570,16 @@ describe("quoting several properties of a website in one request", () => {
     expect(flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots).not.toHaveBeenCalled();
   });
 
+  it("quotes a batch of only the main property of an Elite site without reading the plan or a snapshot", async () => {
+    const flow = await publishedThree();
+
+    const response = await flow.quote({ propertyIds: [MAIN] });
+
+    expectQuoted(entriesOf(response)[0], MAIN);
+    expectNoPlanRead(flow.ratePlanRepository);
+    expect(flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots).not.toHaveBeenCalled();
+  });
+
   it("quotes each served property in the order asked, reading the plan and the snapshots once", async () => {
     const flow = await publishedThree();
 
