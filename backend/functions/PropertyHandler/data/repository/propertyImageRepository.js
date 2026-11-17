@@ -167,8 +167,8 @@ export class PropertyImageRepository {
         return Number(newCount || 0) + Number(legacyCount || 0);
     }
 
-    async getImageByPropertyIdAndKey(id, key) {
-        const client = await Database.getInstance();
+    async getImageByPropertyIdAndKey(id, key, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Image_Legacy)
             .createQueryBuilder("property_image_legacy")
@@ -178,8 +178,8 @@ export class PropertyImageRepository {
         return result ? result : null;
     }
 
-    async create(image) {
-        const client = await Database.getInstance();
+    async create(image, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         image.key = await this.uploadImageToS3(image.image, image.property_id);
         await client
             .createQueryBuilder()
@@ -190,7 +190,7 @@ export class PropertyImageRepository {
                 key: image.key
             })
             .execute();
-        const result = await this.getImageByPropertyIdAndKey(image.property_id, image.key);
+        const result = await this.getImageByPropertyIdAndKey(image.property_id, image.key, transactionManager);
         return result ? result : null;
     }
 

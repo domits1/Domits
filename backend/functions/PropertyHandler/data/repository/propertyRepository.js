@@ -35,8 +35,8 @@ export class PropertyRepository {
         this.systemManager = systemManager
     }
 
-    async create(property) {
-        const client = await Database.getInstance();
+    async create(property, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -54,7 +54,7 @@ export class PropertyRepository {
                 bookingtype: property.bookingType || "direct",
             })
             .execute();
-        const result = await this.getPropertyById(property.id);
+        const result = await this.getPropertyById(property.id, transactionManager);
         return result ? result : null;
     }
 
@@ -457,8 +457,8 @@ export class PropertyRepository {
         }
     }
 
-    async getPropertyById(id) {
-        const client = await Database.getInstance();
+    async getPropertyById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property)
             .createQueryBuilder("property")
