@@ -192,10 +192,7 @@ export class PriceLabsService {
     ]);
 
     const cleaningFeeByProperty = _cleaningFeeMap(properties);
-    // Every reservation goes to PriceLabs as euros, so one paid in another currency is left out
-    // (#3583). Its nights stay blocked: pushCalendar builds the booked dates from all bookings.
-    const euroBookings = bookings.filter(isEuroBooking);
-    const grouped = _groupReservationsByListing(hostId, euroBookings, cleaningFeeByProperty);
+    const grouped = _groupReservationsByListing(hostId, bookings, cleaningFeeByProperty);
 
     const reservations = Object.values(grouped);
     const totalCount = reservations.reduce((sum, r) => sum + r.data.length, 0);
@@ -376,7 +373,9 @@ function _buildReservationEntry(b, cleaningFeeByProperty) {
     end_date:       checkout,
     booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
     total_days:     _dateDiff(checkin, checkout),
-    total_cost:     b.total_price || 0,
+    // Sent as euros, so an amount in another currency becomes 0 (#3583). The booking itself is still
+    // sent: PriceLabs updates reservations by id, so a left-out one would keep its old entry after a cancel.
+    total_cost:     isEuroBooking(b) ? b.total_price || 0 : 0,
     currency:       "EUR",
     status,
     booking_source: b.booking_source || "direct",

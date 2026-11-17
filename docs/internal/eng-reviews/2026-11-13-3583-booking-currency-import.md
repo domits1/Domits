@@ -3,7 +3,7 @@
 Pull request: #3915 (stacked on #3900)
 Issue: #3583 (sub-issue of #3579); second of two pull requests, after the column in #3900
 Reviewed commit: staged diff per commit on `feat/3583-booking-currency-import`
-Result: no open blocking findings; two P2s were fixed before their commit (commit 3, ambiguous "$"; commit 5, revenue efficiency), two P2s of commit 1 closed by commit 2
+Result: no open blocking findings; two P2s were fixed before their commit (commit 3, ambiguous "$"; commit 5, revenue efficiency), two P2s of commit 1 closed by commit 2; Puok's review point on the PriceLabs push fixed in commit 8
 
 ```
 Channex revision { amount, currency }
@@ -19,7 +19,7 @@ list / details / receipt              PriceLabs + missed revenue skip non-EUR (d
 
 - The repository writes `currency` on create and on update (commit 2).
 - The reservation list, details page and receipt show the stored currency (commits 3 and 4).
-- PriceLabs and the missed-revenue total leave non-euro bookings out (commits 5 and 6).
+- The missed-revenue total leaves non-euro bookings out (commit 5); the PriceLabs push sends them with amount 0 (commit 8, replacing the filter of commit 6).
 - #3900 is merged and its migration applied (done 13 Nov).
 
 ## Findings
@@ -79,6 +79,13 @@ list / details / receipt              PriceLabs + missed revenue skip non-EUR (d
 | Checked | `priceLabsService.js`, `pushReservations`: `bookings.filter(isEuroBooking)` before `_groupReservationsByListing` | Every entry is sent with `currency: "EUR"` (`_buildReservationEntry`), which is true again because only euro bookings reach it. `pushCalendar` still builds the booked dates from all bookings, so a GBP booking's nights stay blocked in PriceLabs. All callers (connect, `syncForBookingChange`, `POST /push/reservations`) go through this one method. | No change. |
 | P3 (6/10) | same filter | A reservation that PriceLabs already received and that later becomes non-euro is no longer sent, so PriceLabs keeps its old entry, also after a cancel. Only a Channex booking imported before #3583 with a non-euro amount (stored then as no amount, no currency) and later filled by a modification or the #3582 backfill can get there. Availability is not affected: the calendar push stays correct. | Accepted: no such booking exists (no real host connected); revisit with #3582, which writes the currency of old bookings. |
 | Checked | test harness `pushReservations.currency.test.js` | The API client, repository and SSM store are mocked, so the test touches no AWS, database or PriceLabs; implementations are set per test because the Jest config resets mocks. First test file for `priceLabsService.js`. | No change. |
+
+### Commit 8: PriceLabs push keeps non-euro bookings, with amount 0 (review by Puok on #3915)
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P2 (review) | `priceLabsService.js`, `pushReservations`: the filter of commit 6 | Puok: a booking PriceLabs already has would go stale once it is left out, also after a cancel. PriceLabs' integration docs are not public, but our own code sends cancellations as entries (`status: "canceled"`, `cancel_time`), which points to updates per `reservation_id`. This replaces the accepted P3 of commit 6. | Changed: no filter; `_buildReservationEntry` sends `total_cost: 0` for a non-euro booking. That is what PriceLabs received for these bookings before #3583 (their amount was dropped on import), so status and cancels keep syncing and no non-euro amount is sent as euros. |
+| Checked | `pushReservations.currency.test.js` | Two tests: all three bookings sent with GBP at 0; a cancelled GBP booking is sent as canceled. Both are red against the commit-6 code (checked by stashing the change). The first version of the second test read `mock.calls[0]`, the call of the test before; fixed with `jest.clearAllMocks()` in `beforeEach`. | No change. |
 
 ## Failure modes
 
