@@ -109,6 +109,7 @@ The current website foundation routes inside `PropertyHandler` are:
 - `POST /property/website/site/unpublish`
 - `GET /property/website/public/resolve`
 - `GET /property/website/public/render`
+- `POST /property/website/public/contact`
 - `GET /property/website/preview`
 - `GET /property/website/kpis`
 
@@ -474,6 +475,11 @@ Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements
 
 `backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
 
+## Contact messages from Elite websites
+
+`POST /property/website/public/contact` (`siteId`, optional `propertyId`, `name`, `email`, optional `phone`, `message`) emails the guest's message as plain text to the site's host, with the guest as reply-to, through `EmailNotificationService`. Nothing of the message is stored. Off (503 `contact_unavailable`) until `DIRECT_BOOKING_WEBSITE_CONTACT_ENABLED` is `true`.
+- Only a `PUBLISHED` site whose host has `website.unlimited_pages`, else 404 `site_not_found` (also for a failed plan read). `propertyId`: the site's own active property or one `serveForRender` serves, else 404 `property_not_found`. At most 20 a host an hour (`SITE_CONTACT_MESSAGE_REQUESTED` rows, ids only, written before each send), else 429. 15 s before the send, 8 s for it. 200 only when the email Lambda confirms the reply-to; 503 `message_not_sent` when nothing went out, 504 `message_not_confirmed` when it may have.
+
 ## Environment and runtime assumptions
 
 Current Direct Booking Website config depends on these active env names:
@@ -490,6 +496,7 @@ Backend:
 - `DIRECT_BOOKING_WEBSITE_COST_PER_LIVE_SYNC_EUR`
 - `DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_PREVIEW_OPEN_EUR`
 - `DIRECT_BOOKING_WEBSITE_COST_PER_PUBLIC_SITE_OPEN_EUR`
+- `DIRECT_BOOKING_WEBSITE_CONTACT_ENABLED` (contact messages, off unless `true`)
 
 Frontend:
 
