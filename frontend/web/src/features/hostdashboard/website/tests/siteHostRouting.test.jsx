@@ -1025,6 +1025,7 @@ describe("the booking panel on the property page of an Elite website", () => {
       "href",
       `/properties/villa-c/request?${STAY_QUERY}`
     );
+    expect(document.querySelector(".stepperValue").textContent).toBe("3");
     expect(JSON.parse(globalThis.fetch.mock.calls.at(-1)[1].body).propertyId).toBe("property-c");
   });
 
