@@ -280,7 +280,8 @@
     flex: 1 1 auto;
   }
 
-  .templateTopBarBrand span {
+  .templateTopBarBrand span,
+  .templateTopBarBrand .templateTopBarBrandLink {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -627,6 +628,12 @@
 .templateTopBarBrand {
   color: #0f172a;
   font-weight: 800;
+}
+
+.templateTopBarBrandLink {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 
 .templateTopBarMark {
@@ -2700,7 +2707,8 @@
     flex: 1 1 auto;
   }
 
-  .templateTopBarBrand span {
+  .templateTopBarBrand span,
+  .templateTopBarBrand .templateTopBarBrandLink {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;

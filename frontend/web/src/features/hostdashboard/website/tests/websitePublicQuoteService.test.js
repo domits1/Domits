@@ -70,17 +70,14 @@ describe("requestPublicWebsiteQuote", () => {
     });
   });
 
-  it.each([
-    ["another property", "property-b", { propertyId: "property-b" }],
-    ["an empty property id", "", {}],
-  ])("sends the property id only for %s", async (_, propertyId, propertyFields) => {
-    mockFetchResponse({ body: { ...QUOTE_RESPONSE, propertyId: propertyId || "property-1" } });
+  it("sends the property id of another property", async () => {
+    mockFetchResponse({ body: { ...QUOTE_RESPONSE, propertyId: "property-b" } });
 
-    await requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId });
+    await requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId: "property-b" });
 
     expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
       siteId: "site-1",
-      ...propertyFields,
+      propertyId: "property-b",
       checkIn: "2026-10-01",
       checkOut: "2026-10-05",
       guests: 2,
