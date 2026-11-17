@@ -43,7 +43,11 @@ import {
 import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
 import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
-import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
+import {
+    WebsitePublicHostService,
+    buildEmptyPublicWebsiteHost,
+    servePublicWebsiteHostForSite,
+} from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -3250,7 +3254,7 @@ export class PropertyController {
                     resolutionResult.domain,
                     propertySnapshot,
                     primaryDomain,
-                    host,
+                    servePublicWebsiteHostForSite(host, contentOverrides),
                     contentOverrides
                 )),
             };
