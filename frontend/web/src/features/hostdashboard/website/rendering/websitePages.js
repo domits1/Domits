@@ -68,6 +68,7 @@ export const RESERVED_SITE_PATH_SEGMENTS = Object.freeze([
   "login",
   "performance",
   "policy",
+  "properties",
   "register",
   "release",
   "review",
