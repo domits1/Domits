@@ -67,6 +67,21 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
   };
 };
 
+const buildSitePropertyRequestPage = (pageArgs) => {
+  const page = buildSitePropertyPage(pageArgs);
+  const { pageBasePath, pageSearch, property } = pageArgs;
+  return {
+    ...page,
+    headerTone: "light",
+    propertyHref: buildSitePropertyHref(
+      pageBasePath,
+      property.slug,
+      SITE_PROPERTY_PAGE_KINDS.property,
+      buildSitePropertyStayQuery(pageSearch, page.stay)
+    ),
+  };
+};
+
 function SitePropertyAccommodationPage({
   pageKind,
   templateId,
@@ -97,13 +112,16 @@ function SitePropertyAccommodationPage({
 function SitePropertyElitePage({ pageKind, templateId, model, property, quoteContext, pageBasePath, pageSearch }) {
   const { search } = useLocation();
   const quoteSiteId = resolveQuotePanelSiteId({ quoteContext, model });
+  const buildPage =
+    pageKind === SITE_PROPERTY_PAGE_KINDS.request ? buildSitePropertyRequestPage : buildSitePropertyPage;
   const sitePropertyPage = useMemo(
-    () => buildSitePropertyPage({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }),
-    [model, pageBasePath, pageKind, pageSearch, property, quoteSiteId, search]
+    () => buildPage({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }),
+    [buildPage, model, pageBasePath, pageKind, pageSearch, property, quoteSiteId, search]
   );
 
   return (
     <WebsiteTemplateSurface
+      key={pageKind}
       templateId={templateId}
       model={model}
       showContactWidget={model.visibility?.chatWidget ?? true}
@@ -143,5 +161,5 @@ SitePropertyPage.propTypes = sitePropertyPagePropTypes;
 export const SITE_PROPERTY_PAGES = Object.freeze({
   [SITE_PROPERTY_PAGE_KINDS.property]: SitePropertyPage,
   [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyAccommodationPage,
-  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyAccommodationPage,
+  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyPage,
 });

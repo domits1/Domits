@@ -778,7 +778,6 @@ describe("property paths of an Elite website on its own domain", () => {
 
   it.each([
     ["/properties/villa-b/photos", "/properties/villa-b/photos"],
-    ["/properties/villa-b/request", "/properties/villa-b/request"],
   ])("shows the Accommodation page of the other property on %s", async (url, currentPageHref) => {
     renderAppAt(url);
     await screen.findByRole("link", { name: "Home" });
@@ -910,7 +909,7 @@ describe("property paths of an Elite website in the live view", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
   });
 
-  it.each(["properties/villa-b/photos", "properties/villa-b/request"])(
+  it.each(["properties/villa-b/photos"])(
     "opens %s after the check and links under the live view",
     async (sitePath) => {
       renderAppAt(`${LIVE_BASE}/${sitePath}${SITE_SEARCH}`);
@@ -1066,5 +1065,89 @@ describe("the booking panel on the property page of an Elite website", () => {
 
     expect(readPageHeading()).toBe(longTitle);
     expect(screen.queryByLabelText("Check in")).toBeNull();
+  });
+});
+
+describe("the request to book page of an Elite website", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+  const SENT = { publicBookingRef: "DBW-ABCDEFGHJK", status: "REQUESTED", siteId: SITE_ID, total: 80000 };
+  const bookingResponse = { ok: true, status: 201, text: async () => JSON.stringify(SENT) };
+  const mockSiteFetch = (propertyId) => {
+    globalThis.fetch = jest.fn(async (url) =>
+      String(url).endsWith("/bookings") ? bookingResponse : quoteResponse(propertyId)
+    );
+  };
+  const readSentBodies = (path) =>
+    globalThis.fetch.mock.calls.filter(([url]) => String(url).endsWith(path)).map(([, { body }]) => JSON.parse(body));
+  const readCrumbLinks = () =>
+    Array.from(document.querySelectorAll("[data-panorama-page-header] a")).map((link) => [
+      link.textContent,
+      link.getAttribute("href"),
+    ]);
+  const findSendButton = async () => {
+    const button = await screen.findByRole("button", { name: "Send request" });
+    await waitFor(() => expect(button).toBeEnabled());
+    return button;
+  };
+
+  beforeEach(() => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD));
+  });
+
+  it.each([
+    ["the other property", "villa-b", "property-b", "property-b"],
+    ["the main property", "villa-a", renderPayload.site.propertyId, undefined],
+  ])("quotes %s on its request page and sends its request", async (_, slug, propertyId, propertyIdSent) => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    mockSiteFetch(propertyId);
+    renderAppAt(`/properties/${slug}/request?${STAY_QUERY}`);
+    const sendButton = await findSendButton();
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Guest" } });
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ana@example.com" } });
+
+    fireEvent.click(sendButton);
+
+    expect(await screen.findByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
+    expect(readSentBodies("/website/public/quote").map((body) => body.propertyId)).toEqual([propertyIdSent]);
+    expect(readSentBodies("/bookings")).toEqual([
+      {
+        quoteToken: "token-1",
+        guest: { name: "Ana Guest", email: "ana@example.com" },
+        session: { sessionId: expect.any(String), source: "standalone_site" },
+      },
+    ]);
+  });
+
+  it("opens from the property page with a light header and quotes the stay again", async () => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    mockSiteFetch("property-b");
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+
+    fireEvent.click(await screen.findByRole("link", { name: "Request to book" }));
+    await findSendButton();
+
+    expect(readPageHeading()).toBe("Request to book");
+    expect(listSectionIds()).toEqual(["request"]);
+    expect(readCrumbLinks()).toEqual([
+      ["Our properties", "/"],
+      ["Villa B", `/properties/villa-b?${STAY_QUERY}`],
+    ]);
+    expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
+    expect(document.querySelector("[data-panorama-top-bar]").className).toContain("panoramaTopBarShellEliteLight");
+    expect(readSentBodies("/website/public/quote")).toHaveLength(2);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("links the property and the overview under the live view", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload));
+    mockSiteFetch("property-b");
+    renderAppAt(`${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}&${STAY_QUERY}`);
+    await findSendButton();
+
+    expect(readCrumbLinks()).toEqual([
+      ["Our properties", `${LIVE_BASE}${SITE_SEARCH}`],
+      ["Villa B", `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`],
+    ]);
   });
 });

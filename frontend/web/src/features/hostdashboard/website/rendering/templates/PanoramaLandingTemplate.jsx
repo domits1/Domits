@@ -19,6 +19,7 @@ import PanoramaPageLink from "./PanoramaPageLink";
 import { buildPanoramaContactContent } from "./panoramaContactContent";
 import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
 import EliteSitePropertyPage from "./elite/EliteSitePropertyPage";
+import EliteSitePropertyRequestPage from "./elite/EliteSitePropertyRequestPage";
 import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
@@ -63,6 +64,7 @@ import {
   listSitePageMenuItems,
   resolvePanoramaPageSections,
 } from "../websitePages";
+import { SITE_PROPERTY_PAGE_KINDS } from "../websiteSiteProperties";
 
 const PANORAMA_TOP_BAR_SOLID_THRESHOLD_PX = 24;
 const PANORAMA_TOP_BAR_SELECTOR = "[data-panorama-top-bar]";
@@ -1281,7 +1283,9 @@ export default function PanoramaLandingTemplate({
   );
   const currentPageKey = sitePropertyPage?.pageKey || pageState?.currentPage.key;
   const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
-  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
+  const eliteHeaderTone = elitePageKey
+    ? sitePropertyPage?.headerTone || resolveEliteHeaderTone(model.media, elitePageKey)
+    : "";
   const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
@@ -1376,6 +1380,19 @@ export default function PanoramaLandingTemplate({
   );
 
   const renderPageOpening = () => {
+    if (sitePropertyPage?.kind === SITE_PROPERTY_PAGE_KINDS.request) {
+      return (
+        <EliteSitePropertyRequestPage
+          key={sitePropertyPage.propertyHref}
+          sitePropertyPage={sitePropertyPage}
+          headerTone={eliteHeaderTone}
+          model={model}
+          viewState={viewState}
+          headerRef={heroSectionRef}
+        />
+      );
+    }
+
     if (sitePropertyPage) {
       return (
         <EliteSitePropertyPage

@@ -155,6 +155,8 @@ export const sitePropertyPagePropType = PropTypes.shape({
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
   booking: PropTypes.shape({ key: PropTypes.string, siteId: PropTypes.string, propertyId: PropTypes.string }),
   buildRequestHref: PropTypes.func.isRequired,
+  headerTone: PropTypes.oneOf(["photo", "light"]),
+  propertyHref: PropTypes.string,
 });
 
 export const templateInteractionPropTypes = {

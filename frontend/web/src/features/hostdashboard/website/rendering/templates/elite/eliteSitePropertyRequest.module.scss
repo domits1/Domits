@@ -1,0 +1,117 @@
+@use "./eliteFonts" as fonts;
+
+$muted: #6b6458;
+$body-ink: #3d3830;
+
+.request {
+  padding-top: clamp(24px, 4cqi, 40px);
+  padding-bottom: clamp(72px, 9cqi, 104px);
+}
+
+.layout {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: clamp(32px, 4cqi, 48px);
+}
+
+.main,
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
+.summary {
+  flex: 1 1 340px;
+}
+
+.summaryTitle,
+.sentReference {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: 30px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.summaryLocation {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.summaryLocation,
+.facts dt {
+  color: $muted;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+}
+
+.facts div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.facts dd {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+}
+
+.form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.sendButton {
+  align-self: flex-start;
+  max-width: 100%;
+  border: 0;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sendButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}
+
+.sent {
+  max-width: 640px;
+}
+
+.sentText {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: $body-ink;
+}
