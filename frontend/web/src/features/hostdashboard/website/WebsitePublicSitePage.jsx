@@ -27,6 +27,7 @@ import {
   resolveSitePropertyRoute,
 } from "./rendering/websiteSiteProperties";
 import { SITE_PROPERTY_PAGES } from "./rendering/WebsiteSitePropertyPage";
+import EliteSitePropertiesHome from "./rendering/templates/elite/EliteSitePropertiesHome";
 import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
@@ -452,6 +453,28 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
         <div className={styles.publicPreviewCanvas}>
           <WebsitePreviewSkeleton viewport={skeletonViewport} />
         </div>
+      </main>
+    );
+  }
+
+  const isSitePropertiesHome =
+    isCurrentRequestSettled &&
+    !sitePropertyRoute &&
+    activePageKey === MAIN_SITE_PAGE_KEY &&
+    servedSiteProperties.length > 0;
+  if (canRenderPublishedSite && isSitePropertiesHome) {
+    return (
+      <main>
+        <EliteSitePropertiesHome
+          siteModel={publicModel}
+          siteProperties={servedSiteProperties}
+          contentOverrides={renderPayload.contentOverrides}
+          themeOverrides={renderPayload.themeOverrides}
+          templateKey={templateId}
+          siteId={String(renderPayload.site?.id || "")}
+          pageBasePath={pageBasePath}
+          pageSearch={pageSearch}
+        />
       </main>
     );
   }

@@ -25,6 +25,13 @@ const toUtcDay = (dateKey) => {
   return Date.UTC(year, month - 1, day);
 };
 
+export const formatCount = (count, word, plural = `${word}s`) => `${count} ${count === 1 ? word : plural}`;
+
+export const describeSitePropertyCard = ({ location, guests, bedrooms }) =>
+  [location, guests ? formatCount(guests, "guest") : "", bedrooms ? formatCount(bedrooms, "bedroom") : ""]
+    .filter(Boolean)
+    .join(" · ");
+
 export const countSearchNights = (checkIn, checkOut) => Math.round((toUtcDay(checkOut) - toUtcDay(checkIn)) / DAY_MS);
 
 export const buildSitePropertyCards = ({ siteModel, siteProperties, contentOverrides, themeOverrides, templateKey }) =>
@@ -71,27 +78,21 @@ export const validateSitePropertySearch = ({ checkIn, checkOut, guests }, todayK
   return isGuestCount ? "" : `Choose 1 to ${MAX_SITE_PROPERTY_SEARCH_GUESTS} guests.`;
 };
 
-const resolveNotFreeReason = (error) => {
-  const code = error?.code;
-  if (!Object.hasOwn(NOT_FREE_REASONS, code)) {
-    return "";
-  }
-  return (SERVER_REASON_CODES.has(code) && cleanText(error.message)) || NOT_FREE_REASONS[code];
-};
+const resolveNotFreeReason = ({ code, message } = {}) =>
+  Object.hasOwn(NOT_FREE_REASONS, code)
+    ? (SERVER_REASON_CODES.has(code) && cleanText(message)) || NOT_FREE_REASONS[code]
+    : "";
 
 export const groupSitePropertySearchResults = (cards, answers, criteria) => {
   const groups = { free: [], notFree: [], failed: [] };
   cards.forEach((card) => {
-    const answer = answers.get(card.propertyId);
-    const reason = resolveNotFreeReason(answer?.error);
-    if (answer?.error?.code === PROPERTY_NOT_FOUND_CODE) {
-      return;
-    }
-    if (answer?.quote && quoteMatchesSelection(answer.quote, criteria)) {
-      groups.free.push({ card, quote: answer.quote });
+    const { quote, error } = answers.get(card.propertyId) || {};
+    const reason = resolveNotFreeReason(error);
+    if (quote && quoteMatchesSelection(quote, criteria)) {
+      groups.free.push({ card, quote });
     } else if (reason) {
       groups.notFree.push({ card, reason });
-    } else {
+    } else if (error?.code !== PROPERTY_NOT_FOUND_CODE) {
       groups.failed.push(card);
     }
   });
