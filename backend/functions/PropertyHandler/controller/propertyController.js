@@ -22,6 +22,7 @@ import { WebsiteCleanupService } from "../business/service/websiteCleanupService
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
+import { servesContactMessages } from "../business/service/websiteContactAvailability.js";
 import {
     MAX_SITE_PROPERTIES,
     SITE_PROPERTIES_OVERRIDE_KEY,
@@ -3320,19 +3321,21 @@ export class PropertyController {
                 site: resolutionResult.site,
                 overrides: contentOverrides,
             });
+            const renderPayload = this.buildPublicDirectBookingWebsiteRenderPayload(
+                resolutionResult.site,
+                resolutionResult.domain,
+                propertySnapshot,
+                primaryDomain,
+                host,
+                contentOverrides,
+                siteProperties
+            );
+            const acceptsContactMessages = Boolean(renderPayload) && servesContactMessages(contentOverrides);
 
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
-                body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
-                    resolutionResult.site,
-                    resolutionResult.domain,
-                    propertySnapshot,
-                    primaryDomain,
-                    host,
-                    contentOverrides,
-                    siteProperties
-                )),
+                body: JSON.stringify(acceptsContactMessages ? { ...renderPayload, acceptsContactMessages } : renderPayload),
             };
         } catch (error) {
             console.error(error);
