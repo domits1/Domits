@@ -126,7 +126,11 @@ export const publishWebsiteSite = async (propertyId, { draftSavedAt } = {}) => {
     return recoverPublishedSiteSummaryOrThrow(normalizedPropertyId, draftSavedAt, publishError);
   }
 
-  return normalizeWebsiteSiteSummary(await response.json());
+  try {
+    return normalizeWebsiteSiteSummary(await response.json());
+  } catch (error) {
+    return recoverPublishedSiteSummaryOrThrow(normalizedPropertyId, draftSavedAt, error);
+  }
 };
 
 export const unpublishWebsiteSite = async (propertyId) => {

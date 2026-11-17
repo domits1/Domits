@@ -140,20 +140,40 @@ describe("publishWebsiteSite when the outcome of the publish is unknown", () => 
 
   it("keeps looking when the first read still shows the site from before", async () => {
     answerPublishThenSiteReads(jsonResponse(504, { message: "Endpoint request timed out" }), staleSite(), freshSite());
+    const startedAt = Date.now();
 
     await expect(publishWebsiteSite(PROPERTY_ID, { draftSavedAt: DRAFT_SAVED_AT })).resolves.toEqual(
       liveSiteSummary(DRAFT_SAVED_AT + 1200)
     );
 
     expect(siteReadCount()).toBe(2);
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(240);
   });
 
   it("does not count a site published before the draft was saved", async () => {
     answerPublishThenSiteReads(jsonResponse(500, { message: SERVER_ERROR }), staleSite());
+    const startedAt = Date.now();
 
     await expect(publishWebsiteSite(PROPERTY_ID, { draftSavedAt: DRAFT_SAVED_AT })).rejects.toThrow(SERVER_ERROR);
 
     expect(siteReadCount()).toBe(3);
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(950);
+  });
+
+  it("returns the live site when the answer of a publish that worked cannot be read", async () => {
+    const unreadableAnswer = { ok: true, status: 200, json: () => Promise.reject(new TypeError("network error")) };
+    answerPublishThenSiteReads(unreadableAnswer, freshSite());
+
+    await expect(publishWebsiteSite(PROPERTY_ID, { draftSavedAt: DRAFT_SAVED_AT })).resolves.toEqual(
+      liveSiteSummary(DRAFT_SAVED_AT + 1200)
+    );
+  });
+
+  it("shows the read error when the answer cannot be read and the site is still the one from before", async () => {
+    const readError = new TypeError("network error");
+    answerPublishThenSiteReads({ ok: true, status: 200, json: () => Promise.reject(readError) }, staleSite());
+
+    await expect(publishWebsiteSite(PROPERTY_ID, { draftSavedAt: DRAFT_SAVED_AT })).rejects.toBe(readError);
   });
 
   it("shows a dropped connection as failed when the site is still the one from before", async () => {
@@ -190,6 +210,7 @@ describe("publishWebsiteSite when the outcome of the publish is unknown", () => 
     ["no draft save time", undefined],
     ["an empty draft save time", null],
     ["a draft save time of zero", 0],
+    ["a negative draft save time", -1],
   ])("does not look for the live site with %s", async (_name, draftSavedAt) => {
     answerPublishThenSiteReads(jsonResponse(500, { message: SERVER_ERROR }), freshSite());
 
