@@ -24,7 +24,7 @@ import styles from "./eliteSitePropertiesHome.module.scss";
 const ALL_CITIES = Object.freeze({ key: "", label: "All" });
 
 function SearchForm({ isSearching, onSearch }) {
-  const todayKey = useMemo(() => getTodayDateKey(), []);
+  const todayKey = getTodayDateKey();
   const [stay, setStay] = useState({ checkIn: "", checkOut: "", guests: "2" });
   const [problem, setProblem] = useState("");
   const fields = [
@@ -36,7 +36,7 @@ function SearchForm({ isSearching, onSearch }) {
   const handleSubmit = (event) => {
     event.preventDefault();
     const criteria = { ...stay, guests: Number(stay.guests) };
-    const nextProblem = validateSitePropertySearch(criteria, todayKey);
+    const nextProblem = validateSitePropertySearch(criteria, getTodayDateKey());
     setProblem(nextProblem);
     if (!nextProblem) {
       onSearch(criteria);
@@ -81,10 +81,11 @@ const renderSearchResults = ({ cards, search, pageBasePath, pageSearch }) => {
   const nights = formatCount(countSearchNights(criteria.checkIn, criteria.checkOut), "night");
   const stayHrefSearch = buildSitePropertyStayQuery(pageSearch, criteria);
   const heading = free.length ? `${free.length} of ${answered} ${free.length === 1 ? "is" : "are"} free` : "";
+  const emptyHeading = failed.length ? "Not all prices could be loaded" : "No property is free for this stay";
 
   return (
     <section className={styles.eliteHomeSection} aria-label="Search results">
-      <h2 className={styles.eliteHomeHeading}>{heading || "No property is free for this stay"}</h2>
+      <h2 className={styles.eliteHomeHeading}>{heading || emptyHeading}</h2>
       <p className={styles.eliteHomeMuted}>
         {`${formatStayDate(criteria.checkIn)} to ${formatStayDate(criteria.checkOut)} · ${nights} · `}
         {`${formatCount(criteria.guests, "guest")}. Prices are for the whole stay.`}

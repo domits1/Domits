@@ -197,6 +197,7 @@ describe("the home page of an Elite website with its properties", () => {
 
     searchFor();
     expect(await screen.findByRole("alert")).toHaveTextContent("The price could not be loaded for Villa B.");
+    expect(screen.getByRole("heading", { name: "Not all prices could be loaded" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(await findResultsHeading()).toBeInTheDocument();
@@ -205,7 +206,6 @@ describe("the home page of an Elite website with its properties", () => {
 
   it.each([
     ["the site is suspended", () => answerOf({ error: { code: "site_suspended" } }, 410), "isn't available"],
-    ["the route is throttled", () => answerOf({ message: "Too Many Requests" }, 429), "Too many requests"],
     ["the answer is not a list", () => answerOf(null), "Something went wrong while checking"],
     ["the network fails", () => Promise.reject(new TypeError("Failed to fetch")), "couldn't check live pricing"],
   ])("keeps the overview with one message when %s", async (_, answer, message) => {

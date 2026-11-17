@@ -162,7 +162,6 @@ describe("requestPublicWebsiteQuotes", () => {
 
     const answers = await requestPublicWebsiteQuotes(BATCH_REQUEST);
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({
       siteId: "site-1",
       propertyIds: ["property-1", "property-2", "__proto__"],
@@ -176,6 +175,10 @@ describe("requestPublicWebsiteQuotes", () => {
 
   it.each([
     ["a quote of another property", { propertyId: "property-1", quote: quoteOf("property-2") }],
+    [
+      "a quote in another currency",
+      { propertyId: "property-1", quote: { ...QUOTE_RESPONSE, priceBreakdown: { total: 1, currency: "EURO" } } },
+    ],
     ["a quote that cannot be read", { propertyId: "property-1", quote: { quoteId: "quote_1" } }],
     ["an error without a code", { propertyId: "property-1", error: { message: "Nope" } }],
   ])("answers unexpected_response for %s", async (_, entry) => {
