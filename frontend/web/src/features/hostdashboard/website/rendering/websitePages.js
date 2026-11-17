@@ -183,13 +183,17 @@ export const isSitePagePath = (pathname) => {
   return pathname === "" || CONFIGURABLE_SITE_PAGES.some((page) => page.slug === path.toLowerCase());
 };
 
-export const buildSitePageHref = (basePath, pageKey, search = "") => {
-  const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
+export const buildSiteHref = (basePath, siteSegments, search = "") => {
   const baseSegments = splitPathSegments(basePath);
   const isSafeBasePath = baseSegments.every((segment) => SAFE_BASE_PATH_SEGMENT_PATTERN.test(segment));
   const segments = isSafeBasePath ? baseSegments : [];
   const safeSearch = typeof search === "string" && SAFE_SEARCH_PATTERN.test(search) ? search : "";
-  return `/${(page ? [...segments, page.slug] : segments).join("/")}${safeSearch}`;
+  return `/${[...segments, ...siteSegments].join("/")}${safeSearch}`;
+};
+
+export const buildSitePageHref = (basePath, pageKey, search = "") => {
+  const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
+  return buildSiteHref(basePath, page ? [page.slug] : [], search);
 };
 
 export const resolvePanoramaPageSections = (sitePages, pageKey) => {
