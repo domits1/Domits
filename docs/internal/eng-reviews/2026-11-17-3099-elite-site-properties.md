@@ -19,7 +19,33 @@ Mutants: 20, all caught.
 | P2 (8/10) | `propertyController.js`, `upsertWebsiteDraft` | The controller calls the draft repository directly. | Not in scope: existing structure, unchanged by this pull request. |
 | P2 (7/10) | `propertyController.js`, website errors | A missing main property returns a 500. | Not in scope: existing behaviour. A missing extra property returns a clear 400. |
 
+## Snapshots at publish, served at render (`elite-site-properties-render`)
+
+Every listed property other than the main one is snapshotted when the site publishes, the same way as the main property, but without calendar availability: availability and prices are read live when a guest searches on dates. The snapshots go to the new column `standalone_site.published_site_properties_json` (migration `20261117_standalone_site_property_snapshots`, see `docs/internal/tools/dsql_site_property_snapshots_runbook.md`). The publish transaction checks each of them with `FOR UPDATE` on host and `ACTIVE`. The render reads the snapshots and the live host and status of each property, and serves only the ones that still pass.
+
+```
+publish ▶ main snapshot + ACTIVE ▶ list? ─no─▶ the same three statements as before
+                                     │yes
+                                     ▼ load 4 at a time, no calendar, at most 768 KiB
+          transaction: main UPDATE ▶ each extra: SELECT ... hostid, ACTIVE FOR UPDATE ▶ site INSERT
+                       ▶ UPDATE published_site_properties_json ▶ outbox ▶ commit (40001 ▶ again)
+render  ▶ plan filter ▶ list of 2 or more? ▶ snapshots ∥ live host and status (3 s) ▶ ACTIVE and same host only
+```
+
+Mutants: 25, all caught.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P2 (9/10) | design | The first version loaded every extra property live on every public render. | Replaced: snapshots at publish, one read of the snapshots and one status query at render. A test proves the render loads no listing. |
+| P3 (9/10) | `websiteSitePropertySnapshots.test.js` | A missing listing was faked as `null`, while the service returns `{ property: null }`, so a weaker check passed. | Fixed: the fake returns the real shape. The mutant is caught. |
+| P3 (6/10) | `directBookingWebsiteSiteRepository.js`, publish check | `FOR UPDATE` next to `hostid` and `status` is not yet proven on this cluster. | The migration file runs it once inside `BEGIN ... ROLLBACK` as a smoke test. |
+| P3 (8/10) | `propertyController.js`, render | The plan read and the snapshot read run one after the other, so a slow database can add up to 6 s to a multi-property render. | Accepted: only Elite sites with a list, well within the 29 s of API Gateway. |
+| P4 (7/10) | `directBookingWebsiteSiteRepository.js`, publish | A publish that drops the whole list leaves the old snapshots in the row. | Accepted: the render needs the list, so they are never served. A list with only the main property clears them. Tested. |
+
+Why a new column: nesting the extras in `published_property_snapshot_json` needs no migration, but the static page renderer reads that column through a list of keys to strip, so full addresses of the other properties would reach the static pages. The new column is kept out of the shared site columns, so a deploy before the migration breaks nothing; only publishing a list fails until the column exists.
+
 ## Not in scope
 
 - Moving the website code in the controller into a business service: a separate refactor, not mixed with behaviour.
 - Saving a list without the plan: allowed, the same as `sitePages`. The plan is checked where the list is served.
+- The editor preview with several properties, and static pages for them: later pull requests in the plan.
