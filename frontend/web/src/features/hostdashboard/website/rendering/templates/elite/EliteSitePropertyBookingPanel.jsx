@@ -8,12 +8,7 @@ import { QuoteBreakdown, QuotePanelAlert, deriveQuoteView } from "../../booking/
 import { useWebsiteQuote } from "../../booking/useWebsiteQuote";
 import { resolveQuoteErrorPresentation } from "../../booking/quoteErrorCopy";
 import { resolveDefaultGuestCount, resolveGuestCapacity, resolveHostContactHref } from "../../booking/quoteModel";
-import {
-  EMPTY_STAY_RANGE,
-  countStayNights,
-  getTodayDateKey,
-  quoteMatchesSelection,
-} from "../../booking/quoteSelection";
+import { EMPTY_STAY_RANGE, countStayNights, getTodayDateKey } from "../../booking/quoteSelection";
 import { getOrCreateVisitorId } from "../../../services/websiteVisitorId";
 import { buildElitePrice } from "./eliteSitePageContent";
 
@@ -32,7 +27,7 @@ export default function EliteSitePropertyBookingPanel({ model, siteId, propertyI
   const quoteView = deriveQuoteView(quoteState);
   const selection = { checkIn: range.checkIn, checkOut: range.checkOut, guests };
   const hasStay = countStayNights(range.checkIn, range.checkOut) > 0 && range.checkIn >= todayKey;
-  const canRequestToBook = quoteView.isQuoted && quoteMatchesSelection(quoteState.quote, selection);
+  const canRequestToBook = quoteView.isQuoted;
   const hideAction = Boolean(quoteView.panelError?.hideAction);
   const price = buildElitePrice(model.stay);
 
