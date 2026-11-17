@@ -14,6 +14,7 @@ const renderGuard = (path = "/hostdashboard") => render(
     <Routes>
       <Route path="/" element={<div>Public home</div>} />
       <Route path="/hostdashboard" element={<HostProtectedRoute><div>Host dashboard</div></HostProtectedRoute>} />
+      <Route path="/hostdashboard/reservations" element={<HostProtectedRoute><div>Host reservations</div></HostProtectedRoute>} />
       <Route path="/hostdashboard/admin/review-approval" element={<HostProtectedRoute><div>Review administration</div></HostProtectedRoute>} />
       <Route path="/hostdashboard/admin/property-review" element={<HostProtectedRoute><div>Property administration</div></HostProtectedRoute>} />
     </Routes>
@@ -93,4 +94,17 @@ test("preserves property operations membership during a review outage", async ()
   hasReviewApprovalAccess.mockResolvedValue(null);
   renderGuard();
   expect(await screen.findByText("Host dashboard")).toBeInTheDocument();
+});
+
+test("preserves a nested host page during a review outage", async () => {
+  hasReviewApprovalAccess.mockResolvedValue(null);
+  renderGuard("/hostdashboard/reservations");
+  expect(await screen.findByText("Host reservations")).toBeInTheDocument();
+});
+
+test("redirects a host with confirmed approval access away from a nested host page", async () => {
+  hasReviewApprovalAccess.mockResolvedValue(true);
+  renderGuard("/hostdashboard/reservations");
+  expect(await screen.findByText("Review administration")).toBeInTheDocument();
+  expect(screen.queryByText("Host reservations")).not.toBeInTheDocument();
 });
