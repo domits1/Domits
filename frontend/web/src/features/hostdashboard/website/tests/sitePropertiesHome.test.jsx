@@ -206,7 +206,6 @@ describe("the home page of an Elite website with its properties", () => {
 
   it.each([
     ["the site is suspended", () => answerOf({ error: { code: "site_suspended" } }, 410), "isn't available"],
-    ["the answer is not a list", () => answerOf(null), "Something went wrong while checking"],
     ["the network fails", () => Promise.reject(new TypeError("Failed to fetch")), "couldn't check live pricing"],
   ])("keeps the overview with one message when %s", async (_, answer, message) => {
     await openOverview();

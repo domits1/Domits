@@ -143,7 +143,8 @@ const readText = (value) => (typeof value === "string" ? value : "");
 
 const readQuoteAnswer = (entry, propertyId) => {
   const quote = normalizePublicWebsiteQuote(entry.quote);
-  if (quote?.propertyId === propertyId && quote.priceBreakdown.currency === QUOTE_CURRENCY) {
+  const isQuoteOfProperty = quote?.propertyId === propertyId && quote.priceBreakdown.currency === QUOTE_CURRENCY;
+  if (isQuoteOfProperty && Number.isInteger(entry.quote.priceBreakdown.total)) {
     return { quote };
   }
 

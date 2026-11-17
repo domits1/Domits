@@ -179,7 +179,7 @@ describe("requestPublicWebsiteQuotes", () => {
       "a quote in another currency",
       { propertyId: "property-1", quote: { ...QUOTE_RESPONSE, priceBreakdown: { total: 1, currency: "EURO" } } },
     ],
-    ["a quote that cannot be read", { propertyId: "property-1", quote: { quoteId: "quote_1" } }],
+    ["an empty total", { propertyId: "property-1", quote: { ...QUOTE_RESPONSE, priceBreakdown: { total: "" } } }],
     ["an error without a code", { propertyId: "property-1", error: { message: "Nope" } }],
   ])("answers unexpected_response for %s", async (_, entry) => {
     answerWith([entry]);
