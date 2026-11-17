@@ -43,15 +43,15 @@ describe("sending a text email through the email service", () => {
 
   it("needs no reply-to confirmation for an email without a reply-to, but still a 200", async () => {
     const sent = buildRepository(answer({ statusCode: 200, body: "{}" }));
-    const refused = buildRepository(answer({ statusCode: 500, body: "{}" }));
+    const failed = buildRepository(answer({ statusCode: 500, body: "{}" }));
     await expect(sent.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).resolves.toBeUndefined();
-    await expect(refused.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).rejects.toThrow("status 500");
+    await expect(failed.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).rejects.toThrow();
   });
 
   const named = (name) => Object.assign(new Error(name), { name });
 
   it.each([
-    ["the service answers 500, as it does when SES refuses", answer({ statusCode: 500, body: "{}" }), false],
+    ["the service answers 500, as it does for any SES error", answer({ statusCode: 500, body: "{}" }), true],
     ["the service answers 400, as it does for a missing field", answer({ statusCode: 400 }), false],
     ["Lambda refuses the call", named("AccessDeniedException"), false],
     ["Lambda throttles the call", named("TooManyRequestsException"), false],

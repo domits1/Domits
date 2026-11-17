@@ -11,7 +11,7 @@ const parseJson = (text) => {
 };
 
 const REFUSED_CALLS = new Set(["AccessDeniedException", "ResourceNotFoundException", "TooManyRequestsException"]);
-const NOT_SENT_STATUSES = new Set([400, 500]);
+const NOT_SENT_STATUSES = new Set([400]);
 
 const readAnswer = (response) =>
   response?.FunctionError || !response?.Payload ? null : parseJson(Buffer.from(response.Payload).toString("utf8"));

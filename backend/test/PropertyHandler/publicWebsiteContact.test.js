@@ -261,7 +261,8 @@ describe("telling the guest the message was not sent, or could not be confirmed"
   };
 
   it.each([
-    ["the email service answers 500", 1, answering({ statusCode: 500 })],
+    ["the email service answers 400", 1, answering({ statusCode: 400 })],
+    ["the email service answers 500, as for any SES error", 1, answering({ statusCode: 500 }), UNCONFIRMED],
     ["the email service sends without the reply-to, as it does today", 1, answering({ statusCode: 200 }), UNCONFIRMED],
     ["Lambda refuses the call", 1, (c) => c.lambdaClient.send.mockRejectedValue(REFUSED)],
     ["the call fails on the way back", 1, (c) => c.lambdaClient.send.mockRejectedValue(DOWN), UNCONFIRMED],
