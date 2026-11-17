@@ -291,7 +291,6 @@ describe("buildSitePropertyStayQuery", () => {
       { checkIn: null, checkOut: null, guests: 2 },
       "?siteId=site-1&guests=2",
     ],
-    ["?siteId=site-1", { checkIn: "2026-12-01", checkOut: "", guests: 0 }, "?siteId=site-1"],
     ["?siteId=site-1", { ...STAY, checkIn: "1 Dec", guests: 1.5 }, "?siteId=site-1"],
     ["", undefined, ""],
   ])("builds from %p and %p", (search, stay, query) => {

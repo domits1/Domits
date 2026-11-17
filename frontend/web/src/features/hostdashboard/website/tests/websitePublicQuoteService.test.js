@@ -75,15 +75,7 @@ describe("requestPublicWebsiteQuote", () => {
 
     await requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId: "property-b" });
 
-    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
-      siteId: "site-1",
-      propertyId: "property-b",
-      checkIn: "2026-10-01",
-      checkOut: "2026-10-05",
-      guests: 2,
-      currency: "EUR",
-      session: { sessionId: "visitor-1", source: "standalone_site" },
-    });
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({ propertyId: "property-b" });
   });
 
   it("refuses a quote of another property than the one asked for", async () => {

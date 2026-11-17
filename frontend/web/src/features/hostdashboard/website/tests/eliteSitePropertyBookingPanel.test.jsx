@@ -52,8 +52,9 @@ describe("the booking panel of an Elite property page", () => {
     requestPublicWebsiteQuote.mockResolvedValue({ ...QUOTE, guestCount: 2 });
     renderPanel(NO_STAY);
 
-    expect(checkButton()).toBeDisabled();
+    expect(requestPublicWebsiteQuote).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText("Check in"), { target: { value: STAY.checkIn } });
+    expect(checkButton()).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Check out"), { target: { value: STAY.checkOut } });
     fireEvent.click(checkButton());
 
@@ -70,12 +71,15 @@ describe("the booking panel of an Elite property page", () => {
     expect(checkButton()).toBeDisabled();
   });
 
-  it("takes the request link away once the guests change after the quote", async () => {
+  it.each([
+    ["the guests", () => fireEvent.click(screen.getByRole("button", { name: "Add a guest" }))],
+    ["the check-out", () => fireEvent.change(screen.getByLabelText("Check out"), { target: { value: "2099-01-15" } })],
+  ])("takes the request link away once %s change after the quote", async (_, change) => {
     requestPublicWebsiteQuote.mockResolvedValue(QUOTE);
     renderPanel();
     await screen.findByRole("link", { name: "Request to book" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Add a guest" }));
+    change();
 
     expect(requestLink()).toBeNull();
     expect(screen.getByText("Selection changed — check again")).toBeInTheDocument();
@@ -85,26 +89,15 @@ describe("the booking panel of an Elite property page", () => {
   it.each([
     ["property_not_found", "", "This property can't be booked on this website right now.", false, STAY.checkIn],
     ["unavailable_dates", "", "Those dates are no longer available — please choose different dates.", true, ""],
-    [
-      "stay_restriction_violation",
-      "The minimum stay is 7 nights.",
-      "The minimum stay is 7 nights.",
-      true,
-      STAY.checkIn,
-    ],
-    [
-      "invalid_guest_count",
-      "This property sleeps at most 4 guests.",
-      "This property sleeps at most 4 guests.",
-      true,
-      STAY.checkIn,
-    ],
+    ["stay_restriction_violation", "Stay at least 7 nights.", "Stay at least 7 nights.", true, STAY.checkIn],
+    ["invalid_guest_count", "Up to 4 guests here.", "Up to 4 guests here.", true, STAY.checkIn],
   ])("shows %s to the guest without a request link", async (code, message, shownText, canCheckAgain, checkIn) => {
     requestPublicWebsiteQuote.mockRejectedValue(quoteError(code, message));
     renderPanel({ ...STAY, guests: 9 });
 
     expect(await screen.findByText(shownText)).toBeInTheDocument();
     expect(requestLink()).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(Boolean(checkButton())).toBe(canCheckAgain);
     expect(screen.getByLabelText("Check in")).toHaveValue(checkIn);
   });
