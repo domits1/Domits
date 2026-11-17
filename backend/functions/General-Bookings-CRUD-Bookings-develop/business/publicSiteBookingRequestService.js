@@ -9,6 +9,7 @@ import ExternalCalendarService from "./externalCalendarService.js";
 import QuoteRevalidationClient from "./quoteRevalidationClient.js";
 import defaultGetHostContactById from "./getHostContactById.js";
 import defaultSendBookingRequestEmails from "./sendBookingRequestEmails.js";
+import { readGuestNote } from "./bookingRequestGuestNote.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 import { generatePublicBookingRef as defaultGeneratePublicBookingRef } from "../util/publicBookingRef.js";
 import ConflictException from "../util/exception/ConflictException.js";
@@ -59,7 +60,8 @@ const cleanText = (value) => String(value ?? "").trim();
 const isUniqueViolationOn = (error, constraintFragment) =>
   error?.code === UNIQUE_VIOLATION_CODE && String(error?.constraint || "").includes(constraintFragment);
 
-const otherPropertyFields = (site, stay) => (stay.propertyId === site.propertyId ? {} : { propertyId: stay.propertyId });
+const otherPropertyFields = (site, stay) =>
+  stay.propertyId === site.propertyId ? {} : { propertyId: stay.propertyId };
 
 const isAvailabilityConflict = (error) =>
   error instanceof ConflictException || error?.name === "ConflictException" || error?.statusCode === 409;
@@ -92,9 +94,10 @@ class PublicSiteBookingRequestService {
     this.quoteTokenSecretPromise = null;
   }
 
-  async createBookingRequest({ siteId, idempotencyKey, quoteToken, guest, session, requestId }) {
+  async createBookingRequest({ siteId, idempotencyKey, quoteToken, guest, message, session, requestId }) {
     const normalizedIdempotencyKey = this.validateIdempotencyKey(idempotencyKey);
     const contact = this.validateGuestContact(guest);
+    const hostNote = readGuestNote({ phone: guest?.phone, message });
     const normalizedSiteId = cleanText(siteId);
     const sessionId = cleanText(session?.sessionId) || null;
 
@@ -128,7 +131,14 @@ class PublicSiteBookingRequestService {
       }
 
       await this.recordRequestedEvent({ site, stay, sessionId, requestId, publicBookingRef: booking.publicBookingRef });
-      await this.notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef: booking.publicBookingRef });
+      await this.notifyParties({
+        stay,
+        contact,
+        hostContact,
+        propertyName,
+        hostNote,
+        publicBookingRef: booking.publicBookingRef,
+      });
 
       return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total });
     } catch (error) {
@@ -426,11 +436,12 @@ class PublicSiteBookingRequestService {
     }
   }
 
-  async notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef }) {
+  async notifyParties({ stay, contact, hostContact, propertyName, hostNote, publicBookingRef }) {
     try {
       await this.sendBookingRequestEmails({
         hostEmail: hostContact.email,
         guestEmail: contact.email,
+        hostNote,
         bookingInfo: {
           publicBookingRef,
           propertyName: propertyName || "the property",

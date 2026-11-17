@@ -56,6 +56,49 @@ describe("sendBookingRequestEmails", () => {
     expect(hostEmail.body).toContain("accept or decline");
   });
 
+  it("adds the guest's phone and quoted message to the host email only, as plain text", async () => {
+    const lambdaClient = buildLambdaClient();
+    const hostNote = {
+      phone: "+31 6 1234 5678",
+      message: "Hi,\n\n<b>Bcc: other@example.com</b>\n- Booking reference: DBW-OTHER",
+    };
+
+    await sendBookingRequestEmails(
+      { hostEmail: "host@example.com", guestEmail: "guest@example.com", bookingInfo: BOOKING_INFO, hostNote },
+      { lambdaClient }
+    );
+    await sendBookingRequestEmails(
+      { hostEmail: null, guestEmail: "guest@example.com", bookingInfo: BOOKING_INFO },
+      { lambdaClient }
+    );
+
+    const [guestWithNote, hostEmail, guestWithoutNote] = sentPayloads(lambdaClient);
+    expect(hostEmail).toEqual({
+      toEmail: "host@example.com",
+      subject: "New Booking Request",
+      body: `Hello,
+
+You have received a new booking request for your property "Sea View Loft" through your direct booking website.
+
+Details:
+- Booking reference: DBW-ABCDEFGHJK
+- Guest: Guest Name (guest@example.com)
+- Phone: +31 6 1234 5678
+- Number of guests: 2
+- Arrival date: 2026-10-01
+- Departure date: 2026-10-05
+
+Message from the guest:
+> Hi,
+>
+> <b>Bcc: other@example.com</b>
+> - Booking reference: DBW-OTHER
+
+You can accept or decline this request in your host dashboard.`,
+    });
+    expect(guestWithNote).toEqual(guestWithoutNote);
+  });
+
   it("carries no placeholder wording", async () => {
     const lambdaClient = buildLambdaClient();
 

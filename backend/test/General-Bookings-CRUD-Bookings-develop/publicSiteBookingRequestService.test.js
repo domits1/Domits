@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import { inspect } from "node:util";
+import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import PublicSiteBookingRequestService from "../../functions/General-Bookings-CRUD-Bookings-develop/business/publicSiteBookingRequestService.js";
 import { PublicBookingRequestError } from "../../functions/General-Bookings-CRUD-Bookings-develop/util/exception/PublicBookingRequestError.js";
 import ConflictException from "../../functions/General-Bookings-CRUD-Bookings-develop/util/exception/ConflictException.js";
@@ -435,6 +436,97 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
         standaloneSiteRepository: { getSiteById: jest.fn().mockRejectedValue(new Error("connection reset")) },
       });
       await expectError(service.createBookingRequest(REQUEST), "booking_service_unavailable");
+    });
+  });
+
+  describe("phone and message", () => {
+    const PHONE = "+31 (0)6 12.34-56 78";
+    const withNote = (guest, message) => ({ ...REQUEST, guest: { ...REQUEST.guest, ...guest }, message });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("gives the phone and message only to the host email, and keeps them out of the row, the event and the logs", async () => {
+      const consoleCalls = [jest.spyOn(console, "error"), jest.spyOn(console, "log")].map((spy) =>
+        spy.mockImplementation(() => undefined)
+      );
+      const { service, deps } = buildService({
+        sendBookingRequestEmails: jest.fn().mockRejectedValue(new Error("mail down")),
+      });
+
+      await service.createBookingRequest(withNote({ phone: ` ${PHONE} ` }, "We arrive\r\nafter 22:00."));
+
+      const [emailInput] = deps.sendBookingRequestEmails.mock.calls[0];
+      expect(emailInput.hostNote).toEqual({ phone: PHONE, message: "We arrive\nafter 22:00." });
+      const elsewhere = JSON.stringify([
+        emailInput.bookingInfo,
+        deps.reservationRepository.createPublicSiteBookingRequest.mock.calls,
+        deps.standaloneSiteEventRepository.recordEvent.mock.calls,
+        consoleCalls.map((spy) => spy.mock.calls.map((args) => args.map((arg) => inspect(arg, { depth: 10 })))),
+      ]);
+      expect(consoleCalls[0]).toHaveBeenCalled();
+      expect(elsewhere).not.toMatch(/12\.34|22:00/);
+    });
+
+    it.each([
+      ["absent", undefined, undefined, { phone: null, message: null }],
+      ["null", null, null, { phone: null, message: null }],
+      ["only spaces", "   ", " \n\t ", { phone: null, message: null }],
+      ["at the limits", "123456", "m".repeat(2000), { phone: "123456", message: "m".repeat(2000) }],
+      ["with 15 digits", "+123 456 789 012 345", "a", { phone: "+123 456 789 012 345", message: "a" }],
+      [
+        "of 32 characters",
+        `+31 6 ${"- ".repeat(9)}12345678`,
+        "a",
+        { phone: `+31 6 ${"- ".repeat(9)}12345678`, message: "a" },
+      ],
+      ["with old line breaks and tabs", undefined, "a\rb\r\n\tc", { phone: null, message: "a\nb\n c" }],
+      ["with many empty lines", undefined, "a\n\n\n\n\nb", { phone: null, message: "a\n\nb" }],
+      [
+        "with control and direction characters",
+        undefined,
+        "a\u0000\u0007b\u202Ec\u2028d\uFEFF",
+        { phone: null, message: "abc\nd" },
+      ],
+      [
+        "with HTML and header lines",
+        undefined,
+        "<script>x</script>\nSubject: hi",
+        { phone: null, message: "<script>x</script>\nSubject: hi" },
+      ],
+    ])("accepts a phone and message %s", async (_label, phone, message, hostNote) => {
+      const { service, deps } = buildService();
+
+      await expect(service.createBookingRequest(withNote({ phone }, message))).resolves.toMatchObject({
+        statusCode: 201,
+      });
+
+      expect(deps.sendBookingRequestEmails.mock.calls[0][0].hostNote).toEqual(hostNote);
+    });
+
+    it.each([
+      ["a phone with a line break", { phone: "+31 6 1234\nBcc: x@example.com" }, undefined, "invalid_guest_phone"],
+      ["a phone with letters", { phone: "call me 123456" }, undefined, "invalid_guest_phone"],
+      ["a phone with a + inside", { phone: "31+612345678" }, undefined, "invalid_guest_phone"],
+      ["a phone with 5 digits", { phone: "12-345" }, undefined, "invalid_guest_phone"],
+      ["a phone with 16 digits", { phone: "1234567890123456" }, undefined, "invalid_guest_phone"],
+      ["a phone of 33 characters", { phone: `+31 6 ${"- ".repeat(9)}123456789` }, undefined, "invalid_guest_phone"],
+      ["a phone that is a number", { phone: 31612345678 }, undefined, "invalid_guest_phone"],
+      ["a message of 2001 characters", {}, "m".repeat(2001), "invalid_guest_message"],
+      ["a very long message", {}, "m".repeat(1_000_000), "invalid_guest_message"],
+      ["a message that is not text", {}, { text: "hi" }, "invalid_guest_message"],
+    ])("refuses %s with a 400 before reading anything", async (_label, guest, message, code) => {
+      const { service, deps } = buildService();
+
+      const promise = service.createBookingRequest(withNote(guest, message));
+
+      await expect(promise).rejects.toMatchObject({ code, statusCode: 400 });
+      await expect(promise).rejects.toThrow(
+        code === "invalid_guest_phone" ? /phone number of 6 to 15 digits/ : /at most 2000 characters/
+      );
+      expect(deps.systemManagerRepository.getSystemManagerParameter).not.toHaveBeenCalled();
+      expect(deps.standaloneSiteRepository.getSiteById).not.toHaveBeenCalled();
     });
   });
 

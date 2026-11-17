@@ -22,7 +22,18 @@ Thank you for your request!`,
   },
 });
 
-const buildHostPayload = (hostEmail, bookingInfo) => ({
+const quoteGuestMessage = (message) =>
+  message
+    .split("\n")
+    .map((line) => `> ${line}`.trimEnd())
+    .join("\n");
+
+const hostPhoneLine = (hostNote) => (hostNote?.phone ? `\n- Phone: ${hostNote.phone}` : "");
+
+const hostMessageBlock = (hostNote) =>
+  hostNote?.message ? `\n\nMessage from the guest:\n${quoteGuestMessage(hostNote.message)}` : "";
+
+const buildHostPayload = (hostEmail, bookingInfo, hostNote) => ({
   body: {
     toEmail: hostEmail,
     subject: "New Booking Request",
@@ -32,17 +43,17 @@ You have received a new booking request for your property "${bookingInfo.propert
 
 Details:
 - Booking reference: ${bookingInfo.publicBookingRef}
-- Guest: ${bookingInfo.guestName} (${bookingInfo.guestEmail})
+- Guest: ${bookingInfo.guestName} (${bookingInfo.guestEmail})${hostPhoneLine(hostNote)}
 - Number of guests: ${bookingInfo.guests}
 - Arrival date: ${bookingInfo.checkIn}
-- Departure date: ${bookingInfo.checkOut}
+- Departure date: ${bookingInfo.checkOut}${hostMessageBlock(hostNote)}
 
 You can accept or decline this request in your host dashboard.`,
   },
 });
 
 const sendBookingRequestEmails = async (
-  { hostEmail, guestEmail, bookingInfo },
+  { hostEmail, guestEmail, bookingInfo, hostNote },
   { lambdaClient = defaultLambdaClient } = {}
 ) => {
   const payloads = [];
@@ -50,7 +61,7 @@ const sendBookingRequestEmails = async (
     payloads.push(buildGuestPayload(guestEmail, bookingInfo));
   }
   if (hostEmail) {
-    payloads.push(buildHostPayload(hostEmail, bookingInfo));
+    payloads.push(buildHostPayload(hostEmail, bookingInfo, hostNote));
   }
 
   let firstFailure = null;
