@@ -31,7 +31,7 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
   const abortControllerRef = useRef(null);
 
   const submitBookingRequest = useCallback(
-    async ({ quote, guest }) => {
+    async ({ quote, guest, message }) => {
       abortControllerRef.current?.abort();
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -42,6 +42,7 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
           siteId,
           quoteToken: quote.quoteToken,
           guest,
+          message,
           sessionId,
           idempotencyKey,
           signal: abortController.signal,
