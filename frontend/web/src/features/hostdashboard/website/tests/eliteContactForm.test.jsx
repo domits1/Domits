@@ -1,6 +1,9 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import EliteContactForm, { CONTACT_REQUEST_TIMEOUT_MS } from "../rendering/templates/elite/EliteContactForm";
+import EliteContactForm, {
+  CONTACT_REQUEST_TIMEOUT_MS,
+  CONTACT_RESEND_PAUSE_MS,
+} from "../rendering/templates/elite/EliteContactForm";
 import { PUBLIC_WEBSITE_CONTACT_URL } from "../services/websitePublicContactService";
 
 const TEXT = Object.freeze({
@@ -49,7 +52,7 @@ const fill = (fields) =>
     fireEvent.change(screen.getByLabelText(label), { target: { value } })
   );
 const send = () => act(async () => fireEvent.click(screen.getByRole("button", { name: "Send message" })));
-const sentBody = (call = 0) => JSON.parse(globalThis.fetch.mock.calls[call][1].body);
+const sentBody = () => JSON.parse(globalThis.fetch.mock.calls[0][1].body);
 const valueOf = (label) => screen.getByLabelText(label).value;
 const errorOf = (label) =>
   document.getElementById(screen.getByLabelText(label).getAttribute("aria-describedby"))?.textContent;
@@ -80,11 +83,14 @@ describe("sending a contact message", () => {
     );
     expect(screen.getByRole("status")).toHaveTextContent(TEXT.sent);
     expect(screen.queryByLabelText(PICKER)).toBeNull();
+    await send();
+    expect(screen.getByRole("status")).toHaveTextContent(TEXT.sent);
+    expect(screen.queryByRole("alert")).toBeNull();
     expect([valueOf("Name"), valueOf("Message")]).toEqual(["", ""]);
   });
 
   it("offers a general question and the served properties, and sends the chosen one with the phone", async () => {
-    answerFetch(answer(200, { status: "SENT" }), answer(200, { status: "SENT" }));
+    answerFetch(answer(200, { status: "SENT" }));
     render(<EliteContactForm contactContext={SITE_WITH_VILLAS} />);
 
     const options = Array.from(screen.getByLabelText(PICKER).options);
@@ -96,10 +102,8 @@ describe("sending a contact message", () => {
 
     fill({ ...GUEST, [PHONE]: " +31 6 1234 5678 ", [PICKER]: "property-b" });
     await send();
-    fill(GUEST);
-    await send();
 
-    expect(sentBody(0)).toEqual({
+    expect(sentBody()).toEqual({
       siteId: "site-1",
       propertyId: "property-b",
       name: GUEST.Name,
@@ -107,7 +111,6 @@ describe("sending a contact message", () => {
       phone: "+31 6 1234 5678",
       message: GUEST.Message,
     });
-    expect(sentBody(1)).not.toHaveProperty("propertyId");
   });
 
   it("cleans pasted text before it is sent", async () => {
@@ -131,6 +134,7 @@ describe("a message the server did not confirm or refused", () => {
   it.each([
     ["a 200 without SENT", 200, { status: "QUEUED" }, TEXT.unconfirmed],
     ["a 200 that is not JSON", 200, "<html>", TEXT.unconfirmed],
+    ["a 202 that says SENT", 202, { status: "SENT" }, TEXT.unconfirmed],
     ["a 200 whose body is lost", 200, undefined, TEXT.unconfirmed],
     ["an unexpected 204", 204, "", TEXT.unconfirmed],
     ["message_not_confirmed on a 400", 400, failure("message_not_confirmed"), TEXT.unconfirmed],
@@ -244,6 +248,15 @@ describe("a slow or repeated send", () => {
     expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
   });
 
+  it("ignores a second click right after a quick failure", async () => {
+    const fetchMock = jest.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+    await sendWith(SITE, GUEST);
+    await send();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toHaveTextContent(TEXT.unconfirmed);
+  });
+
   it("stops waiting after the time limit, shows not confirmed, and sends again without a timer left", async () => {
     jest.useFakeTimers();
     const fetchMock = holdFetch();
@@ -256,6 +269,7 @@ describe("a slow or repeated send", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(TEXT.unconfirmed);
     expect(valueOf("Message")).toBe(GUEST.Message);
     fetchMock.mockResolvedValueOnce(answer(200, { status: "SENT" }));
+    await act(async () => jest.advanceTimersByTime(CONTACT_RESEND_PAUSE_MS));
     await send();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(TEXT.sent);

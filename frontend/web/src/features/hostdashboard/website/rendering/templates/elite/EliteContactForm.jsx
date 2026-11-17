@@ -5,6 +5,7 @@ import { cleanContactValues, findContactFieldErrors } from "./eliteContactConten
 import { CONTACT_TEXTS, sendWebsiteContactMessage } from "../../../services/websitePublicContactService";
 
 export const CONTACT_REQUEST_TIMEOUT_MS = 35000;
+export const CONTACT_RESEND_PAUSE_MS = 1000;
 
 const EMPTY_VALUES = Object.freeze({ name: "", email: "", phone: "", message: "", propertyId: "" });
 const GUEST_FIELDS = Object.freeze([
@@ -28,6 +29,7 @@ export default function EliteContactForm({ contactContext }) {
   const [isSending, setIsSending] = useState(false);
   const isSendingRef = useRef(false);
   const requestRef = useRef(null);
+  const answeredAtRef = useRef(Number.NEGATIVE_INFINITY);
   const { properties } = contactContext;
   const hasPicker = properties.length > 0;
 
@@ -67,7 +69,7 @@ export default function EliteContactForm({ contactContext }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (isSendingRef.current) {
+    if (isSendingRef.current || Date.now() - answeredAtRef.current < CONTACT_RESEND_PAUSE_MS) {
       return;
     }
 
@@ -92,6 +94,7 @@ export default function EliteContactForm({ contactContext }) {
     const message = { siteId: contactContext.siteId, propertyId, ...cleanValues };
     const answer = await sendWebsiteContactMessage(message, request.signal);
     globalThis.clearTimeout(timer);
+    answeredAtRef.current = Date.now();
     isSendingRef.current = false;
     setIsSending(false);
     showAnswer(answer);

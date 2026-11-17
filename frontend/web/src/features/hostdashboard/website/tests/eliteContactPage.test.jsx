@@ -126,16 +126,11 @@ describe("the Contact us page of a site that accepts messages", () => {
 });
 
 describe("the contact context of a render answer", () => {
-  it("takes the site id from the render", () => {
-    const context = buildEliteContactContext({ ...renderPayload, acceptsContactMessages: true });
-
-    expect(context).toEqual({ siteId: renderPayload.site.id, properties: [] });
-  });
-
   it.each([
-    ["without the field", { acceptsContactMessages: undefined }],
-    ["without a site id", { acceptsContactMessages: true, site: { ...renderPayload.site, id: " " } }],
-  ])("is empty %s", (_label, fields) => {
-    expect(buildEliteContactContext({ ...renderPayload, ...fields })).toBeNull();
+    ["the site id of the render", { acceptsContactMessages: true }, { siteId: renderPayload.site.id, properties: [] }],
+    ["nothing without the field", { acceptsContactMessages: undefined }, null],
+    ["nothing without a site id", { acceptsContactMessages: true, site: { ...renderPayload.site, id: " " } }, null],
+  ])("gives %s", (_label, fields, expected) => {
+    expect(buildEliteContactContext({ ...renderPayload, ...fields })).toEqual(expected);
   });
 });
