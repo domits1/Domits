@@ -770,7 +770,6 @@ describe("property paths of an Elite website on its own domain", () => {
   );
 
   it.each([
-    ["/properties/villa-b/photos", "/properties/villa-b/photos"],
     ["/properties/villa-b/request", "/properties/villa-b/request"],
   ])("shows the Accommodation page of the other property on %s", async (url, currentPageHref) => {
     renderAppAt(url);
@@ -903,7 +902,7 @@ describe("property paths of an Elite website in the live view", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
   });
 
-  it.each(["properties/villa-b/photos", "properties/villa-b/request"])(
+  it.each(["properties/villa-b/request"])(
     "opens %s after the check and links under the live view",
     async (sitePath) => {
       renderAppAt(`${LIVE_BASE}/${sitePath}${SITE_SEARCH}`);
@@ -979,6 +978,102 @@ describe("property paths of an Elite website in the live view", () => {
 
     expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(mockTemplateProps.filter((props) => props.activePageKey === "main").length).toBe(0);
+  });
+});
+
+describe("the photos page of a property of an Elite website", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+  const withPhotos = (count) => ({
+    ...SITE_PROPERTIES[1],
+    propertySnapshot: {
+      ...VILLA_B_SNAPSHOT,
+      images: Array.from({ length: count }, (_, index) => ({
+        ...VILLA_B_SNAPSHOT.images[0],
+        image_id: `image-b${index}`,
+        sort_order: index,
+        web_key: `images/property-b/image-b${index}/web.jpg`,
+      })),
+    },
+  });
+  const readCrumbHrefs = () =>
+    Array.from(document.querySelectorAll("[data-panorama-page-header] p a")).map((link) => link.getAttribute("href"));
+  const listPhotoSources = () =>
+    within(screen.getByRole("region", { name: "Photos" }))
+      .getAllByRole("img")
+      .map((image) => image.getAttribute("src"));
+
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    globalThis.fetch = jest.fn();
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], withPhotos(5)])
+    );
+  });
+
+  it("shows every photo of the other property, without a quote, and links back with the stay", async () => {
+    renderAppAt(`/properties/villa-b/photos?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      `/properties/villa-b?${STAY_QUERY}`
+    );
+    expect(readPageHeading()).toBe("Photos of Villa B");
+    expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
+    expect(document.querySelector("[data-panorama-page-header] p").textContent).toBe(
+      "Our properties / Villa B / Photos"
+    );
+    expect(readCrumbHrefs()).toEqual(["/", `/properties/villa-b?${STAY_QUERY}`]);
+    expect(listPhotoSources()).toEqual(
+      Array.from({ length: 5 }, (_, index) => expect.stringContaining(`image-b${index}/`))
+    );
+    expect(listSectionIds()).toEqual(["property-photos"]);
+    expect(readMenuItems()).toEqual([["Our properties", "/"]]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("keeps only a valid stay in the way back", async () => {
+    renderAppAt("/properties/villa-b/photos?checkIn=2000-01-01&checkOut=2000-01-05&guests=3&ref=mail");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      "/properties/villa-b?guests=3"
+    );
+  });
+
+  it("links under the live view and keeps the site id", async () => {
+    delete process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE;
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(renderPayload, [SITE_PROPERTIES[0], withPhotos(2)])
+    );
+    renderAppAt(`${LIVE_BASE}/properties/villa-b/photos${SITE_SEARCH}&${STAY_QUERY}`);
+    const propertyHref = `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`;
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute("href", propertyHref);
+    expect(readCrumbHrefs()).toEqual([`${LIVE_BASE}${SITE_SEARCH}`, propertyHref]);
+  });
+
+  it("shows the main property's own photos still, also when the site rotates them", async () => {
+    const contentOverrides = { ...SITE_HOST_PAYLOAD.contentOverrides, imageRotation: { gallery: [true, true] } };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, contentOverrides }));
+    renderAppAt("/properties/villa-a/photos");
+    await screen.findByRole("link", { name: /^Back to / });
+
+    expect(listPhotoSources()).toEqual([
+      expect.stringContaining("00000000-0000-4000-8000-000000000001/"),
+      expect.stringContaining("00000000-0000-4000-8000-000000000002/"),
+    ]);
+  });
+
+  it("says so when the property has no photos and keeps the way back", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c/photos");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa C" })).toHaveAttribute("href", "/properties/villa-c");
+    expect(screen.getByText("This property has no photos yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
   });
 });
 
