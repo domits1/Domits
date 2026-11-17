@@ -464,18 +464,16 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     servedSiteProperties.length > 0;
   if (canRenderPublishedSite && isSitePropertiesHome) {
     return (
-      <main>
-        <EliteSitePropertiesHome
-          siteModel={publicModel}
-          siteProperties={servedSiteProperties}
-          contentOverrides={renderPayload.contentOverrides}
-          themeOverrides={renderPayload.themeOverrides}
-          templateKey={templateId}
-          siteId={String(renderPayload.site?.id || "")}
-          pageBasePath={pageBasePath}
-          pageSearch={pageSearch}
-        />
-      </main>
+      <EliteSitePropertiesHome
+        siteModel={publicModel}
+        siteProperties={servedSiteProperties}
+        contentOverrides={renderPayload.contentOverrides}
+        themeOverrides={renderPayload.themeOverrides}
+        templateKey={templateId}
+        siteId={String(renderPayload.site?.id || "")}
+        pageBasePath={pageBasePath}
+        pageSearch={pageSearch}
+      />
     );
   }
 

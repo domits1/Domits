@@ -6,7 +6,7 @@ import { resolveQuoteErrorPresentation } from "../../booking/quoteErrorCopy";
 import { formatMinorUnits, formatStayDate, getTodayDateKey } from "../../booking/quoteSelection";
 import { SITE_PROPERTY_SEARCH_STATUS, useSitePropertySearch } from "../../booking/useSitePropertySearch";
 import { getOrCreateVisitorId } from "../../../services/websiteVisitorId";
-import { MAIN_SITE_PAGE_KEY, buildSitePageHref } from "../../websitePages";
+import { MAIN_SITE_PAGE_KEY, buildSitePageHref, listSitePageMenuItems } from "../../websitePages";
 import { buildSitePropertyHref } from "../../websiteSiteProperties";
 import {
   MAX_SITE_PROPERTY_SEARCH_GUESTS,
@@ -141,13 +141,20 @@ export default function EliteSitePropertiesHome({
   const headerPhoto = cards.find((card) => card.imageUrl)?.imageUrl;
 
   return (
-    <div className={styles.eliteHome}>
+    <main className={styles.eliteHome}>
       <header className={styles.eliteHomeHeader}>
         {headerPhoto ? <img className={styles.eliteHomeHeaderImage} src={headerPhoto} alt="" /> : null}
         <nav className={styles.eliteHomeNav} aria-label="Site menu">
           <PanoramaPageLink href={buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch)}>
             {siteModel.site.title}
           </PanoramaPageLink>
+          {listSitePageMenuItems(siteModel.sitePages)
+            .slice(1)
+            .map((item) => (
+              <PanoramaPageLink key={item.key} href={buildSitePageHref(pageBasePath, item.key, pageSearch)}>
+                {item.navLabel}
+              </PanoramaPageLink>
+            ))}
         </nav>
         <div className={styles.eliteHomeIntro}>
           <p className={styles.eliteHomeEyebrow}>{formatCount(cards.length, "property", "properties")}</p>
@@ -189,7 +196,7 @@ export default function EliteSitePropertiesHome({
           </div>
         </section>
       )}
-    </div>
+    </main>
   );
 }
 

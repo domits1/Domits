@@ -100,12 +100,14 @@ afterEach(() => {
 
 describe("the home page of an Elite website with its properties", () => {
   it("shows a card for every property and filters them by location, without a request", async () => {
-    await openOverview();
+    const galleryOn = { ...SITE_HOST_PAYLOAD, contentOverrides: { sitePages: { gallery: { enabled: true } } } };
+    await openOverview("/", withSiteProperties(galleryOn));
 
     expect(screen.getByRole("link", { name: /Ubud, Indonesia/ })).toHaveAttribute("href", "/properties/villa-a");
     expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
     expect(screen.getByText("Canggu, Indonesia · 4 guests · 2 bedrooms")).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Filter by location" })).toHaveTextContent("AllUbudCanggu");
+    expect(screen.getByRole("link", { name: "Gallery" })).toHaveAttribute("href", "/gallery");
 
     fireEvent.click(screen.getByRole("button", { name: "Canggu" }));
 
