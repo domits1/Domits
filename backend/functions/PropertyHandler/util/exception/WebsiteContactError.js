@@ -5,7 +5,7 @@ export const WEBSITE_CONTACT_ERROR_CODES = Object.freeze({
   RATE_LIMITED: "rate_limited",
   CONTACT_UNAVAILABLE: "contact_unavailable",
   MESSAGE_NOT_SENT: "message_not_sent",
-  INTERNAL_ERROR: "internal_error",
+  MESSAGE_NOT_CONFIRMED: "message_not_confirmed",
 });
 
 const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
@@ -15,7 +15,7 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
   [WEBSITE_CONTACT_ERROR_CODES.RATE_LIMITED]: 429,
   [WEBSITE_CONTACT_ERROR_CODES.CONTACT_UNAVAILABLE]: 503,
   [WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT]: 503,
-  [WEBSITE_CONTACT_ERROR_CODES.INTERNAL_ERROR]: 500,
+  [WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_CONFIRMED]: 504,
 });
 
 export class WebsiteContactError extends Error {

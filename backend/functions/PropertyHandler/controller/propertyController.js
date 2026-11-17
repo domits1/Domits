@@ -3445,7 +3445,7 @@ export class PropertyController {
         } catch (error) {
             const isContactFailure = error instanceof WebsiteContactError;
             if (!isContactFailure) console.error("Website contact message failed.", error);
-            const failure = isContactFailure ? error : websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.INTERNAL_ERROR);
+            const failure = isContactFailure ? error : websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT);
             const field = failure.field ? { field: failure.field } : {};
             const answer = { error: { code: failure.code, message: failure.message, ...field, requestId } };
             return { statusCode: failure.statusCode, headers: draftResponseHeaders, body: JSON.stringify(answer) };

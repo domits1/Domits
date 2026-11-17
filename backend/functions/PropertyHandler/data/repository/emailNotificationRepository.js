@@ -31,7 +31,9 @@ export class EmailNotificationRepository {
       throw new Error(`The email service did not send the email (status ${answer?.statusCode ?? "unknown"}).`);
     }
     if (replyTo && parseJson(answer.body)?.replyTo !== replyTo) {
-      throw new Error("The email service did not confirm the reply-to address.");
+      throw Object.assign(new Error("The email service did not confirm the reply-to address."), {
+        deliveryUnknown: true,
+      });
     }
   }
 }

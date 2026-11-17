@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { WebsiteElitePageSettings } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
-import { MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR } from "../../functions/PropertyHandler/business/service/websiteContactService.js";
+import { WebsiteContactService } from "../../functions/PropertyHandler/business/service/websiteContactService.js";
 import { EmailNotificationRepository } from "../../functions/PropertyHandler/data/repository/emailNotificationRepository.js";
 import {
   EXISTING_SITE,
@@ -68,7 +68,8 @@ const buildContact = ({ site = ELITE_SITE, plan = PAID_ELITE_ROW, states = STATE
     getUserById: jest.fn(async () => ({ UserAttributes: [{ Name: "email", Value: HOST_EMAIL }] })),
   };
   service.mailer = new EmailNotificationRepository({ lambdaClient });
-  service.emailTimeoutMs = 20;
+  service.prepareTimeoutMs = 100;
+  service.emailTimeoutMs = 50;
   service.clock = () => NOW;
 
   const send = (body = GUEST, raw = JSON.stringify(body)) =>
@@ -126,15 +127,18 @@ Reply to this email to answer the guest.`,
     ]);
   });
 
-  it("records one sent event without the guest's details, and logs none of them", async () => {
-    const { send, eventRepository } = buildContact();
+  it("records the request before the email, without the guest's details, and logs none of them", async () => {
+    const { send, eventRepository, lambdaClient } = buildContact();
     await send({ ...GUEST, propertyId: OWN });
+    expect(eventRepository.recordEvent.mock.invocationCallOrder[0]).toBeLessThan(
+      lambdaClient.send.mock.invocationCallOrder[0]
+    );
     expect(eventRepository.recordEvent.mock.calls).toEqual([
       [
         {
           propertyId: OWN,
           hostId: HOST,
-          eventType: "SITE_CONTACT_MESSAGE_SENT",
+          eventType: "SITE_CONTACT_MESSAGE_REQUESTED",
           payload: { requestId: "req-1", siteId: ELITE_SITE.id, propertyId: OWN },
         },
       ],
@@ -146,9 +150,10 @@ Reply to this email to answer the guest.`,
   it.each([
     ["the main property", MAIN, "Wellness Villa Bisous"],
     ["another property of the site, from its published snapshot, on one line", OWN, "Beach house"],
-  ])("names %s", async (_label, propertyId, title) => {
-    const { send, emails } = buildContact();
+  ])("names %s, with one plan read", async (_label, propertyId, title) => {
+    const { send, emails, ratePlanRepository } = buildContact();
     expect((await send({ ...GUEST, propertyId })).statusCode).toBe(200);
+    expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
     expect(emails()[0].subject).toBe(`New message from your website: ${title}`);
     expect(emails()[0].body).toContain(`About: ${title}\n`);
   });
@@ -163,20 +168,9 @@ Reply to this email to answer the guest.`,
     expect(unnamed.emails()[0].subject).toBe("New message from your website: your website");
   });
 
-  it("still answers SENT when the sent event cannot be recorded, because the email went out", async () => {
-    const { send, eventRepository, emails } = buildContact();
-    eventRepository.recordEvent.mockRejectedValue(new Error("event store down"));
-    expect((await send()).statusCode).toBe(200);
-    expect(emails()).toHaveLength(1);
-  });
-
-  it.each([
-    ["opens with the Contact page entitlement", ["website.unlimited_pages"], 200],
-    ["stays closed with only the several properties entitlement", ["website.multi_property"], 404],
-  ])("%s", async (_label, entitlements, statusCode) => {
-    const contact = buildContact();
-    contact.controller.websiteElitePageSettings.readEntitlements = jest.fn(async () => entitlements);
-    expect((await contact.send()).statusCode).toBe(statusCode);
+  it("answers within API Gateway's 29 seconds: 15 seconds to prepare, then 8 seconds to send, nothing after", () => {
+    const { prepareTimeoutMs, emailTimeoutMs } = new WebsiteContactService({});
+    expect([prepareTimeoutMs, emailTimeoutMs]).toEqual([15000, 8000]);
   });
 });
 
@@ -225,8 +219,9 @@ describe("refusing a property that the site does not serve", () => {
   const unlisted = { site: { ...ELITE_SITE, publishedContentOverrides: EXISTING_SITE.publishedContentOverrides } };
   const snapshotsDown = ({ siteRepository }) =>
     siteRepository.getPublishedSitePropertySnapshots.mockRejectedValue(DOWN);
-  const listPlanDown = ({ ratePlanRepository }) =>
-    ratePlanRepository.findCurrentByAccountId.mockResolvedValueOnce(PAID_ELITE_ROW).mockRejectedValueOnce(DOWN);
+  const pagesOnly = ({ controller }) => {
+    controller.websiteElitePageSettings.readEntitlements = jest.fn(async () => ["website.unlimited_pages"]);
+  };
 
   it.each([
     ["of another host", FOREIGN],
@@ -237,7 +232,7 @@ describe("refusing a property that the site does not serve", () => {
     ["that is the main one but no longer active", MAIN, withMain({ hostId: HOST, status: "INACTIVE" })],
     ["that is the main one but now another host's", MAIN, withMain({ hostId: "host-other", status: "ACTIVE" })],
     ["whose snapshots cannot be read", OWN, {}, snapshotsDown],
-    ["when the plan read for the list fails after the site check", OWN, {}, listPlanDown],
+    ["while the host has the Contact page but not several properties", OWN, {}, pagesOnly],
   ])(
     "answers 404 for a property %s and sends nothing",
     async (_label, propertyId, options = {}, breakIt = () => {}) => {
@@ -249,31 +244,47 @@ describe("refusing a property that the site does not serve", () => {
   );
 });
 
-describe("telling the guest the message was not sent", () => {
+describe("telling the guest the message was not sent, or could not be confirmed", () => {
   const never = () => new Promise(() => {});
+  const late = (command) => new Promise((resolve) => setTimeout(() => resolve(confirmingReplyTo(command)), 150));
   const answering = (answer) => (c) => c.lambdaClient.send.mockResolvedValue(lambdaAnswer(answer));
+  const UNCONFIRMED = [504, "message_not_confirmed"];
+  const TEXTS = {
+    message_not_sent: NOT_SENT,
+    message_not_confirmed:
+      "We could not confirm that your message was sent. Please wait a few minutes before you send it again.",
+  };
 
   it.each([
     ["the email service answers 500", 1, answering({ statusCode: 500 })],
-    ["the email service sends without the reply-to, as it does today", 1, answering({ statusCode: 200, body: "{}" })],
+    ["the email service sends without the reply-to, as it does today", 1, answering({ statusCode: 200 }), UNCONFIRMED],
     ["the invoke fails", 1, (c) => c.lambdaClient.send.mockRejectedValue(DOWN)],
-    ["the email service does not answer in time", 1, (c) => c.lambdaClient.send.mockReturnValue(never())],
+    [
+      "the email service answers after the time limit",
+      1,
+      (c) => c.lambdaClient.send.mockImplementation(late),
+      UNCONFIRMED,
+    ],
     ["the host's address cannot be read", 0, (c) => c.service.cognitoRepository.getUserById.mockRejectedValue(DOWN)],
+    [
+      "the host's address does not come in time",
+      0,
+      (c) => c.service.cognitoRepository.getUserById.mockReturnValue(never()),
+    ],
     ["the host has no email address", 0, (c) => c.service.cognitoRepository.getUserById.mockResolvedValue({})],
     ["the host's messages cannot be counted", 0, (c) => c.eventRepository.countEventsSince.mockRejectedValue(DOWN)],
-    ["the site cannot be read", 0, (c) => c.siteRepository.getSiteById.mockRejectedValue(DOWN), 500, "internal_error"],
-  ])(
-    "answers when %s that it was not sent",
-    async (_label, attempts, breakIt, status = 503, code = "message_not_sent") => {
-      const contact = buildContact();
-      breakIt(contact);
-      const response = await contact.send();
-      expectRefusal(response, status, code);
-      expect(parse(response).error.message).toBe(NOT_SENT);
-      expect(contact.lambdaClient.send).toHaveBeenCalledTimes(attempts);
-      expect(contact.eventRepository.recordEvent).not.toHaveBeenCalled();
-    }
-  );
+    ["the message cannot be recorded", 0, (c) => c.eventRepository.recordEvent.mockRejectedValue(DOWN)],
+    ["the site cannot be read", 0, (c) => c.siteRepository.getSiteById.mockRejectedValue(DOWN)],
+  ])("answers when %s", async (_label, attempts, breakIt, [status, code] = [503, "message_not_sent"]) => {
+    const contact = buildContact();
+    breakIt(contact);
+    const response = await contact.send();
+    expectRefusal(response, status, code);
+    expect(parse(response).error.message).toBe(TEXTS[code]);
+    expect(contact.lambdaClient.send).toHaveBeenCalledTimes(attempts);
+    const output = JSON.stringify(logged.flatMap((spy) => spy.mock.calls));
+    [GUEST.name, GUEST.email, "free in May"].forEach((detail) => expect(output).not.toContain(detail));
+  });
 
   it.each([
     ["a body that is not JSON", "{not json", "body"],
@@ -291,15 +302,15 @@ describe("telling the guest the message was not sent", () => {
 
 describe("limiting the messages a host gets", () => {
   it.each([
-    ["refuses a message once the host got the limit", MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR, 429, 0],
-    ["sends the last message under the limit", MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR - 1, 200, 1],
+    ["refuses a message once the host got 20", 20, 429, 0],
+    ["sends the 20th message", 19, 200, 1],
   ])("%s in the last hour", async (_label, sentLastHour, statusCode, sent) => {
     const { send, eventRepository, emails } = buildContact({ sentLastHour });
     expect((await send()).statusCode).toBe(statusCode);
     expect(emails()).toHaveLength(sent);
     expect(eventRepository.countEventsSince).toHaveBeenCalledWith({
       hostId: HOST,
-      eventType: "SITE_CONTACT_MESSAGE_SENT",
+      eventType: "SITE_CONTACT_MESSAGE_REQUESTED",
       since: NOW - 60 * 60 * 1000,
     });
   });

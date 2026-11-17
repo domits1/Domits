@@ -45,21 +45,20 @@ describe("sending a text email through the email service", () => {
   });
 
   it.each([
-    ["the service answers 500, as it does when SES refuses", answer({ statusCode: 500, body: "{}" })],
-    ["the service answers 400, as it does for a missing field", answer({ statusCode: 400 })],
-    ["the function fails, whatever its payload says", { ...answer(sent()), FunctionError: "Unhandled" }],
-    [
-      "the service sent it without the reply-to, as the service does today",
-      answer({ statusCode: 200, body: JSON.stringify({ message: "Email sent successfully!" }) }),
-    ],
-    ["the service confirms another reply-to", answer(sent("someone@example.com"))],
-    ["the service answers 200 with a body that is not JSON", answer({ statusCode: 200, body: "sent" })],
-    ["the answer has no payload", { StatusCode: 200 }],
-    ["the answer is not JSON", { StatusCode: 200, Payload: new TextEncoder().encode("not json") }],
-    ["the answer has no status", answer({ message: "Email sent successfully!" })],
-    ["the invoke itself fails", new Error("AccessDeniedException")],
-  ])("rejects when %s, so no caller reports a sent email", async (_label, response) => {
+    ["the service answers 500, as it does when SES refuses", answer({ statusCode: 500, body: "{}" }), false],
+    ["the service answers 400, as it does for a missing field", answer({ statusCode: 400 }), false],
+    ["the function fails, whatever its payload says", { ...answer(sent()), FunctionError: "Unhandled" }, false],
+    ["the service sent it without the reply-to, as it does today", answer({ statusCode: 200, body: "{}" }), true],
+    ["the service confirms another reply-to", answer(sent("someone@example.com")), true],
+    ["the service answers 200 with a body that is not JSON", answer({ statusCode: 200, body: "sent" }), true],
+    ["the answer has no payload", { StatusCode: 200 }, false],
+    ["the answer is not JSON", { StatusCode: 200, Payload: new TextEncoder().encode("not json") }, false],
+    ["the answer has no status", answer({ message: "Email sent successfully!" }), false],
+    ["the invoke itself fails", new Error("AccessDeniedException"), false],
+  ])("rejects when %s, and says whether it may have been sent", async (_label, response, deliveryUnknown) => {
     const { repository } = buildRepository(response);
-    await expect(repository.sendTextEmail(EMAIL)).rejects.toThrow();
+    const error = await repository.sendTextEmail(EMAIL).catch((failure) => failure);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.deliveryUnknown === true).toBe(deliveryUnknown);
   });
 });

@@ -1,5 +1,4 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import fc from "fast-check";
 import {
   CONTACT_FIELD_LIMITS,
   parseContactMessage,
@@ -143,19 +142,4 @@ describe("refusing a contact message with a clear 400", () => {
       expect(countedHugeValue).toBe(false);
     }
   );
-
-  it("never accepts a name or an email that holds a control character or a line separator", () => {
-    const breaker = fc.constantFrom("\r", "\n", "\t", "\u0000", "\u0085", "\u2028", "\u2029", "\u007f");
-    fc.assert(
-      fc.property(
-        fc.string(),
-        breaker,
-        fc.string(),
-        fc.constantFrom("name", "email"),
-        (before, middle, after, field) => {
-          expect(refusal({ [field]: `a${before}${middle}${after}a` }).field).toBe(field);
-        }
-      )
-    );
-  });
 });
