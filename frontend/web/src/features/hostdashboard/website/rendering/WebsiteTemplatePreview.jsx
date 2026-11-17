@@ -191,6 +191,7 @@ export function WebsiteTemplateSurface({
   activePageKey = MAIN_SITE_PAGE_KEY,
   pageBasePath = "",
   pageSearch = "",
+  currentPageHref = "",
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -241,6 +242,7 @@ export function WebsiteTemplateSurface({
             activePageKey={activePageKey}
             pageBasePath={pageBasePath}
             pageSearch={pageSearch}
+            currentPageHref={currentPageHref}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -271,6 +273,7 @@ WebsiteTemplateSurface.propTypes = {
   activePageKey: PropTypes.string,
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
+  currentPageHref: PropTypes.string,
 };
 
 export default function WebsiteTemplatePreview({

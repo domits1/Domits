@@ -1,4 +1,5 @@
 import {
+  fetchPublicWebsiteRenderModel,
   isMissingPublishedWebsiteError,
   PublicWebsiteRequestError,
 } from "../services/websitePublicSiteService";
@@ -38,4 +39,36 @@ describe("isMissingPublishedWebsiteError", () => {
     expect(new PublicWebsiteRequestError("Published website not found.", 404).status).toBe(404);
     expect(new PublicWebsiteRequestError("Missing status.").status).toBe(0);
   });
+});
+
+describe("fetchPublicWebsiteRenderModel", () => {
+  const RENDER_ANSWER = {
+    site: { id: "site-1" },
+    propertySnapshot: { property: { id: "property-a" } },
+    contentOverrides: {},
+    themeOverrides: {},
+    renderSource: "published_site",
+  };
+  const answerWith = (body) =>
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, status: 200, json: async () => body });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("passes the served list of properties on", async () => {
+    const siteProperties = [{ propertyId: "property-a", slug: "villa-a", isMainProperty: true }];
+    answerWith({ ...RENDER_ANSWER, siteProperties });
+
+    expect((await fetchPublicWebsiteRenderModel({ siteId: "site-1" })).siteProperties).toEqual(siteProperties);
+  });
+
+  it.each([[undefined], [{ villa: "a" }], ["villa-a"]])(
+    "adds no list for an answer with the list %p",
+    async (siteProperties) => {
+      answerWith({ ...RENDER_ANSWER, siteProperties });
+
+      expect(await fetchPublicWebsiteRenderModel({ siteId: "site-1" })).not.toHaveProperty("siteProperties");
+    }
+  );
 });
