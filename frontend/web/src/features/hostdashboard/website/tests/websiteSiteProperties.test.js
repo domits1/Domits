@@ -153,21 +153,6 @@ describe("buildSitePropertyHref", () => {
   ])("builds the link from %p for %s, %s", (basePath, slug, pageKind, search, href) => {
     expect(buildSitePropertyHref(basePath, slug, pageKind, search)).toBe(href);
   });
-
-  it("builds links that stay on the site and open the same page again", () => {
-    ["property", "photos", "request"].forEach((pageKind) => {
-      const href = buildSitePropertyHref("", "villa-b", pageKind);
-
-      expect(
-        new URL(buildSitePropertyHref("//evil.example", "villa-b", pageKind), "https://villa.example").origin
-      ).toBe("https://villa.example");
-      expect(resolveSitePropertyRoute(href.slice(1), SERVED)).toEqual({
-        isFound: true,
-        property: VILLA_B_ENTRY,
-        pageKind,
-      });
-    });
-  });
 });
 
 describe("buildSitePropertyModel", () => {

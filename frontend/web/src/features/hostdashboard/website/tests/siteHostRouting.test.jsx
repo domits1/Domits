@@ -743,6 +743,7 @@ describe("property paths of an Elite website on its own domain", () => {
     ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
     expect(document.title).toBe("Villa B | Wellness Villa Bisous");
+    expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
   });
 
@@ -865,8 +866,24 @@ describe("property paths of an Elite website in the live view", () => {
     }
   );
 
-  it("keeps the not found page for an unknown slug after the check", async () => {
-    renderAppAt(`${LIVE_BASE}/properties/villa-c${SITE_SEARCH}`);
+  it.each([
+    [
+      "an unknown slug",
+      "villa-c",
+      () => fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload)),
+    ],
+    [
+      "a property without a snapshot",
+      "villa-b",
+      () =>
+        fetchPublicWebsiteRenderModel.mockResolvedValue(
+          withSiteProperties(renderPayload, [SITE_PROPERTIES[0], { ...SITE_PROPERTIES[1], propertySnapshot: null }])
+        ),
+    ],
+    ["a check that fails", "villa-b", () => fetchPublicWebsiteRenderModel.mockRejectedValue(new TypeError("Failed"))],
+  ])("keeps the not found page after the check for %s", async (_, slug, arrange) => {
+    arrange();
+    renderAppAt(`${LIVE_BASE}/properties/${slug}${SITE_SEARCH}`);
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
