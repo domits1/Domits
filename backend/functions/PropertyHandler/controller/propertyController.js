@@ -3436,16 +3436,9 @@ export class PropertyController {
 
     async sendPublicWebsiteContactMessage(event) {
         const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
-        let body = null;
-        try {
-            body = JSON.parse(event?.body || "");
-        } catch {
-            body = null;
-        }
         try {
             const result = await this.getWebsiteContactService().sendMessage({
-                body,
-                sourceIp: cleanWebsiteText(event?.requestContext?.identity?.sourceIp),
+                body: this.parseWebsiteDomainRequestBody(event),
                 requestId,
             });
             return { statusCode: 200, headers: draftResponseHeaders, body: JSON.stringify(result) };

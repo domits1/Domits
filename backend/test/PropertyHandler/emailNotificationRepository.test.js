@@ -37,9 +37,11 @@ describe("sending a text email through the email service", () => {
     expect(send.mock.calls[0][0].input.FunctionName).toBe("EmailNotificationService-test");
   });
 
-  it("needs no reply-to confirmation for an email without a reply-to", async () => {
-    const { repository } = buildRepository(answer({ statusCode: 200, body: "{}" }));
-    await expect(repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).resolves.toBeUndefined();
+  it("needs no reply-to confirmation for an email without a reply-to, but still a 200", async () => {
+    const sent = buildRepository(answer({ statusCode: 200, body: "{}" }));
+    const refused = buildRepository(answer({ statusCode: 500, body: "{}" }));
+    await expect(sent.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).resolves.toBeUndefined();
+    await expect(refused.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).rejects.toThrow("status 500");
   });
 
   it.each([

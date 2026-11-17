@@ -9,9 +9,6 @@ import { WebsiteContactError, WEBSITE_CONTACT_ERROR_CODES as CODES } from "../..
 export const WEBSITE_CONTACT_ENTITLEMENT = SITE_PAGES_ENTITLEMENT;
 export const WEBSITE_CONTACT_SENT_EVENT = "SITE_CONTACT_MESSAGE_SENT";
 export const MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR = 20;
-export const MAX_CONTACT_MESSAGES_PER_SENDER = 5;
-export const CONTACT_SENDER_WINDOW_MS = 10 * 60 * 1000;
-export const MAX_TRACKED_CONTACT_SENDERS = 1000;
 export const CONTACT_EMAIL_TIMEOUT_MS = 8000;
 const HOUR_MS = 60 * 60 * 1000;
 const MAX_SUBJECT_NAME_LENGTH = 80;
@@ -74,21 +71,16 @@ export class WebsiteContactService {
     this.mailer = mailer;
     this.emailTimeoutMs = emailTimeoutMs;
     this.clock = clock;
-    this.sendsBySender = new Map();
   }
 
-  async sendMessage({ body, sourceIp, requestId }) {
+  async sendMessage({ body, requestId }) {
     if (!isWebsiteContactEnabled()) throw websiteContactFailure(CODES.CONTACT_UNAVAILABLE);
     const message = parseContactMessage(body);
-    const senderKey = sourceIp ? `${message.siteId} ${sourceIp}` : null;
-    if (!this.senderHasRoom(senderKey)) throw websiteContactFailure(CODES.RATE_LIMITED);
-
     const site = await this.loadContactableSite(message.siteId);
     const property = await this.resolveProperty(site, message.propertyId);
     await this.assertHostHasRoom(site);
     const hostEmail = await this.readHostEmail(site);
     await this.deliver({ site, property, message, hostEmail });
-    this.rememberSend(senderKey);
     await this.recordSent({ site, property, requestId });
     return { status: "SENT", requestId };
   }
@@ -185,25 +177,6 @@ export class WebsiteContactService {
       });
     } catch (error) {
       console.error(`[WebsiteContact] a sent message for site ${site.id} was not recorded.`, error);
-    }
-  }
-
-  senderHasRoom(senderKey) {
-    return !senderKey || this.recentSends(senderKey).length < MAX_CONTACT_MESSAGES_PER_SENDER;
-  }
-
-  recentSends(senderKey) {
-    const windowStart = this.clock() - CONTACT_SENDER_WINDOW_MS;
-    return (this.sendsBySender.get(senderKey) || []).filter((sentAt) => sentAt > windowStart);
-  }
-
-  rememberSend(senderKey) {
-    if (!senderKey) return;
-    const sends = [...this.recentSends(senderKey), this.clock()];
-    this.sendsBySender.delete(senderKey);
-    this.sendsBySender.set(senderKey, sends);
-    if (this.sendsBySender.size > MAX_TRACKED_CONTACT_SENDERS) {
-      this.sendsBySender.delete(this.sendsBySender.keys().next().value);
     }
   }
 }
