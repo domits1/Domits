@@ -1,6 +1,6 @@
 # refactor(property): add create tests and optional transaction manager to property repositories (#3921)
 
-Pull request: #TBD (fill in when the pull request is opened)
+Pull request: #3935
 Issue: #3921 (part 1 of 2, the issue is closed by part 2)
 Reviewed commits: `541c0e5ff` (tests of `propertyService.create`), `08cb91ace` (optional transaction manager)
 Result: no blocking findings
