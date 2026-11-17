@@ -23,11 +23,13 @@ import { StaticPageReconciler } from "../business/service/staticPageReconciler.j
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
 import {
+    MAX_SITE_PROPERTIES,
     SITE_PROPERTIES_OVERRIDE_KEY,
     listOtherSitePropertyIds,
     withNormalizedSiteProperties,
 } from "../business/service/websiteSiteProperties.js";
-import { WebsiteSitePropertySnapshots } from "../business/service/websiteSitePropertySnapshots.js";
+import { WebsiteSitePropertySnapshots, loadInBatches } from "../business/service/websiteSitePropertySnapshots.js";
+import { withinTimeLimit } from "../util/timeLimit.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -95,6 +97,16 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
 const WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE = "No property was found for this website.";
+const WEBSITE_QUOTE_SLOW_MESSAGE = "Live pricing and availability could not be checked. Please try again.";
+export const WEBSITE_QUOTE_BATCH_ENTRY_TIMEOUT_MS = 6000;
+const isNonEmptyText = (value) => typeof value === "string" && value.trim() !== "";
+const parseWebsiteQuotePropertyIds = (value) => {
+    if (!Array.isArray(value) || value.length < 1 || value.length > MAX_SITE_PROPERTIES || !value.every(isNonEmptyText)) {
+        return null;
+    }
+    const propertyIds = value.map((propertyId) => propertyId.trim());
+    return new Set(propertyIds).size === propertyIds.length ? propertyIds : null;
+};
 const otherQuotedPropertyFields = (site, quotedPropertyId) =>
     quotedPropertyId === site.propertyId ? {} : { propertyId: quotedPropertyId };
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
@@ -3349,6 +3361,12 @@ export class PropertyController {
             if (requestedPropertyId !== null && (typeof requestedPropertyId !== "string" || !requestedPropertyId.trim())) {
                 return this.websiteQuoteErrorResponse(400, "invalid_request", "propertyId must be a non-empty string.", requestId);
             }
+            const requestedPropertyIds = requestBody.propertyIds ?? null;
+            const batchPropertyIds = requestedPropertyIds === null ? null : parseWebsiteQuotePropertyIds(requestedPropertyIds);
+            if (requestedPropertyIds !== null && (requestedPropertyId !== null || batchPropertyIds === null)) {
+                const message = `propertyIds must list 1 to ${MAX_SITE_PROPERTIES} different property ids, without propertyId.`;
+                return this.websiteQuoteErrorResponse(400, "invalid_request", message, requestId);
+            }
 
             site = await this.directBookingWebsiteSiteRepository.getSiteById(siteId);
             if (!site) {
@@ -3361,11 +3379,34 @@ export class PropertyController {
                 return this.websiteQuoteErrorResponse(409, "site_not_published", "This website is not published.", requestId);
             }
 
+            if (batchPropertyIds) {
+                return await this.createPublicWebsiteQuoteBatch({ site, propertyIds: batchPropertyIds, requestBody, requestId });
+            }
             quotedPropertyId = await this.resolveWebsiteQuotePropertyId(site, requestedPropertyId);
             return await this.quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId });
         } catch (error) {
             return this.websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId });
         }
+    }
+
+    async createPublicWebsiteQuoteBatch({ site, propertyIds, requestBody, requestId }) {
+        const servedOtherIds = await this.getWebsiteSitePropertySnapshots().listServedOtherPropertyIds({ site, propertyIds });
+        const quotes = await loadInBatches(propertyIds, async (propertyId) => {
+            if (propertyId !== site.propertyId && !servedOtherIds.has(propertyId)) {
+                const code = WEBSITE_QUOTE_ERROR_CODES.PROPERTY_NOT_FOUND;
+                return { propertyId, error: { code, message: WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE } };
+            }
+            const response = await withinTimeLimit(
+                this.quoteWebsiteProperty({ site, quotedPropertyId: propertyId, requestBody, requestId }),
+                WEBSITE_QUOTE_BATCH_ENTRY_TIMEOUT_MS,
+                () => new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.PRICING_SERVICE_UNAVAILABLE, WEBSITE_QUOTE_SLOW_MESSAGE)
+            ).catch((error) => this.websiteQuoteFailureResponse({ error, site, quotedPropertyId: propertyId, requestId }));
+            const answer = JSON.parse(response.body);
+            return response.statusCode === 200
+                ? { propertyId, quote: answer }
+                : { propertyId, error: { code: answer.error.code, message: answer.error.message } };
+        });
+        return { statusCode: 200, headers: draftResponseHeaders, body: JSON.stringify({ siteId: site.id, quotes }) };
     }
 
     async quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId }) {
