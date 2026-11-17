@@ -53,13 +53,21 @@ const sendBookingRequestEmails = async (
     payloads.push(buildHostPayload(hostEmail, bookingInfo));
   }
 
+  let firstFailure = null;
   for (const payload of payloads) {
-    await lambdaClient.send(
-      new InvokeCommand({
-        FunctionName: "EmailNotificationService",
-        Payload: JSON.stringify(payload),
-      })
-    );
+    try {
+      await lambdaClient.send(
+        new InvokeCommand({
+          FunctionName: "EmailNotificationService",
+          Payload: JSON.stringify(payload),
+        })
+      );
+    } catch (error) {
+      firstFailure = firstFailure ?? error;
+    }
+  }
+  if (firstFailure) {
+    throw firstFailure;
   }
 };
 

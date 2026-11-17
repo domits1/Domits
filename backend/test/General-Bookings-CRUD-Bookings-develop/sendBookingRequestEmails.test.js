@@ -87,4 +87,19 @@ describe("sendBookingRequestEmails", () => {
       )
     ).rejects.toThrow("mail down");
   });
+
+  it("still sends the host email when the guest email fails, and then reports the failure", async () => {
+    const lambdaClient = { send: jest.fn().mockRejectedValueOnce(new Error("guest mail down")).mockResolvedValue({}) };
+
+    await expect(
+      sendBookingRequestEmails(
+        { hostEmail: "host@example.com", guestEmail: "guest@example.com", bookingInfo: BOOKING_INFO },
+        { lambdaClient }
+      )
+    ).rejects.toThrow("guest mail down");
+    expect(sentPayloads(lambdaClient).map((payload) => payload.toEmail)).toEqual([
+      "guest@example.com",
+      "host@example.com",
+    ]);
+  });
 });
