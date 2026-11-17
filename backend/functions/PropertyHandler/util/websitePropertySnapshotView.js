@@ -1,6 +1,6 @@
 const PUBLIC_PROPERTY_FIELDS = ["id", "title", "subtitle", "description", "status"];
 
-export const PRIVATE_LOCATION_FIELDS = Object.freeze(["street", "houseNumber", "houseNumberExtension", "postalCode"]);
+export const PUBLIC_LOCATION_FIELDS = Object.freeze(["country", "city"]);
 
 const PUBLIC_SNAPSHOT_SECTIONS = [
   "amenities",
@@ -42,6 +42,8 @@ const pickFields = (source, fields) => {
   return view;
 };
 
+export const toPublicLocationView = (location) => (isObject(location) ? pickFields(location, PUBLIC_LOCATION_FIELDS) : null);
+
 export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   if (!isObject(snapshot)) {
     return {};
@@ -54,10 +56,8 @@ export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   if (isObject(snapshot.calendarAvailability)) {
     view.calendarAvailability = pickFields(snapshot.calendarAvailability, PUBLIC_CALENDAR_FIELDS);
   }
-  if (isObject(snapshot.location)) {
-    view.location = Object.fromEntries(
-      Object.entries(snapshot.location).filter(([field]) => !PRIVATE_LOCATION_FIELDS.includes(field))
-    );
+  if ("location" in view) {
+    view.location = toPublicLocationView(view.location);
   }
 
   return view;

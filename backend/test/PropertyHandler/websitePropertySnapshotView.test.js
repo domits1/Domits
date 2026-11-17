@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { toPublicWebsitePropertySnapshotView } from "../../functions/PropertyHandler/util/websitePropertySnapshotView.js";
+import { FULL_LOCATION } from "./support/publicLocation.js";
 
 const STORED_SNAPSHOT = {
   property: {
@@ -92,24 +93,19 @@ describe("the public property snapshot view", () => {
     expect(JSON.stringify(view)).not.toContain("REG-1");
   });
 
-  it("keeps the location fields the templates read and leaves out the street, house number and postal code", () => {
-    const view = toPublicWebsitePropertySnapshotView({
-      location: {
-        property_id: "property-1",
-        country: "Indonesia",
-        city: "Ubud",
-        street: "Jalan Raya Sayan",
-        houseNumber: 17,
-        houseNumberExtension: "B",
-        postalCode: "80571",
-      },
-    });
+  it("keeps only the location fields the templates read", () => {
+    const view = toPublicWebsitePropertySnapshotView({ location: FULL_LOCATION });
 
-    expect(view.location).toEqual({ property_id: "property-1", country: "Indonesia", city: "Ubud" });
+    expect(view.location).toEqual({ country: "Indonesia", city: "Ubud" });
   });
 
-  it("passes a location that is not an object through as before", () => {
-    expect(toPublicWebsitePropertySnapshotView({ location: null })).toEqual({ location: null });
+  it.each([
+    ["no location", {}, {}],
+    ["a location of null", { location: null }, { location: null }],
+    ["a location that is not an object", { location: "Jalan Raya Sayan 17, Ubud" }, { location: null }],
+    ["an empty location", { location: "" }, { location: null }],
+  ])("keeps %s without any address in it", (_label, snapshot, expected) => {
+    expect(toPublicWebsitePropertySnapshotView(snapshot)).toEqual(expected);
   });
 
   it("answers an empty object for a missing or malformed snapshot", () => {

@@ -1,4 +1,4 @@
-import { PRIVATE_LOCATION_FIELDS } from "../../util/websitePropertySnapshotView.js";
+import { toPublicLocationView } from "../../util/websitePropertySnapshotView.js";
 
 const RENDER_SOURCE = "published_site";
 const LIVE_SNAPSHOT_KEYS = ["pricing", "calendarAvailability"];
@@ -9,8 +9,8 @@ const withoutKeys = (object, keys) =>
 
 const stripLiveAndPrivateDetails = (snapshot) => {
   const publicSnapshot = withoutKeys(snapshot, LIVE_SNAPSHOT_KEYS);
-  if (publicSnapshot.location && typeof publicSnapshot.location === "object") {
-    publicSnapshot.location = withoutKeys(publicSnapshot.location, PRIVATE_LOCATION_FIELDS);
+  if ("location" in publicSnapshot) {
+    publicSnapshot.location = toPublicLocationView(publicSnapshot.location);
   }
 
   return publicSnapshot;
