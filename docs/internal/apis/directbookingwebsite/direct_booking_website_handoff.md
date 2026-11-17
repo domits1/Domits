@@ -472,6 +472,8 @@ Elite websites can have more than one page. The page settings live in the conten
 
 Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
 
+Editor: a host with `website.multi_property` on Panorama edits `siteProperties` in a Properties section (`editor/hooks/useWebsiteEditorSiteProperties.js`), from his own listings (`fetchHostPropertySelectOptions`); the editor checks the server's list rules before a save and holds back a publish with a listing that is not live. Other hosts get no section and no listings read; a stored list is saved back unchanged.
+
 `backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
 
 ## Environment and runtime assumptions
