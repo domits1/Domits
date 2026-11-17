@@ -4,7 +4,7 @@ import { CognitoRepository } from "../../data/repository/cognitoRepository.js";
 import { EmailNotificationRepository } from "../../data/repository/emailNotificationRepository.js";
 import { PROPERTY_STATUS } from "../../util/propertyStatus.js";
 import { withinTimeLimit } from "../../util/timeLimit.js";
-import { WebsiteContactError, WEBSITE_CONTACT_ERROR_CODES } from "../../util/exception/WebsiteContactError.js";
+import { WebsiteContactError, WEBSITE_CONTACT_ERROR_CODES as CODES } from "../../util/exception/WebsiteContactError.js";
 
 export const WEBSITE_CONTACT_ENTITLEMENT = SITE_PAGES_ENTITLEMENT;
 export const WEBSITE_CONTACT_SENT_EVENT = "SITE_CONTACT_MESSAGE_SENT";
@@ -20,15 +20,14 @@ const PUBLISHED_SITE_STATUS = "PUBLISHED";
 export const isWebsiteContactEnabled = () =>
   String(process.env.DIRECT_BOOKING_WEBSITE_CONTACT_ENABLED || "").trim() === "true";
 
+const NOT_SENT = "Your message could not be sent. Please try again later.";
 const MESSAGES = Object.freeze({
-  [WEBSITE_CONTACT_ERROR_CODES.CONTACT_UNAVAILABLE]:
-    "Messages cannot be sent from this website yet. Your message was not sent.",
-  [WEBSITE_CONTACT_ERROR_CODES.SITE_NOT_FOUND]: "This website cannot receive messages. Your message was not sent.",
-  [WEBSITE_CONTACT_ERROR_CODES.PROPERTY_NOT_FOUND]: "This property is not on this website. Your message was not sent.",
-  [WEBSITE_CONTACT_ERROR_CODES.RATE_LIMITED]:
-    "Too many messages were sent. Your message was not sent. Please try again later.",
-  [WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT]: "Your message could not be sent. Please try again later.",
-  [WEBSITE_CONTACT_ERROR_CODES.INTERNAL_ERROR]: "Your message could not be sent. Please try again later.",
+  [CODES.CONTACT_UNAVAILABLE]: "Messages cannot be sent from this website yet. Your message was not sent.",
+  [CODES.SITE_NOT_FOUND]: "This website cannot receive messages. Your message was not sent.",
+  [CODES.PROPERTY_NOT_FOUND]: "This property is not on this website. Your message was not sent.",
+  [CODES.RATE_LIMITED]: "Too many messages were sent. Your message was not sent. Please try again later.",
+  [CODES.MESSAGE_NOT_SENT]: NOT_SENT,
+  [CODES.INTERNAL_ERROR]: NOT_SENT,
 });
 
 export const websiteContactFailure = (code) => new WebsiteContactError(code, MESSAGES[code]);
@@ -42,22 +41,19 @@ const titleOf = (snapshot) => oneLine(snapshot?.property?.title);
 const buildSubject = (name) =>
   `New message from your website: ${Array.from(name).slice(0, MAX_SUBJECT_NAME_LENGTH).join("")}`;
 
-const buildBody = ({ siteName, propertyTitle, message }) =>
-  [
-    "Hello,",
-    "",
-    `A guest sent you a message through your website "${siteName}".`,
-    "",
-    `About: ${propertyTitle || "no specific property"}`,
-    `Name: ${message.name}`,
-    `Email: ${message.email}`,
-    `Phone: ${message.phone || "not given"}`,
-    "",
-    "Message:",
-    message.message,
-    "",
-    "Reply to this email to answer the guest.",
-  ].join("\n");
+const buildBody = ({ siteName, propertyTitle, message }) => `Hello,
+
+A guest sent you a message through your website "${siteName}".
+
+About: ${propertyTitle || "no specific property"}
+Name: ${message.name}
+Email: ${message.email}
+Phone: ${message.phone || "not given"}
+
+Message:
+${message.message}
+
+Reply to this email to answer the guest.`;
 
 export class WebsiteContactService {
   constructor({
@@ -82,14 +78,10 @@ export class WebsiteContactService {
   }
 
   async sendMessage({ body, sourceIp, requestId }) {
-    if (!isWebsiteContactEnabled()) {
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.CONTACT_UNAVAILABLE);
-    }
+    if (!isWebsiteContactEnabled()) throw websiteContactFailure(CODES.CONTACT_UNAVAILABLE);
     const message = parseContactMessage(body);
     const senderKey = sourceIp ? `${message.siteId} ${sourceIp}` : null;
-    if (!this.senderHasRoom(senderKey)) {
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.RATE_LIMITED);
-    }
+    if (!this.senderHasRoom(senderKey)) throw websiteContactFailure(CODES.RATE_LIMITED);
 
     const site = await this.loadContactableSite(message.siteId);
     const property = await this.resolveProperty(site, message.propertyId);
@@ -106,23 +98,17 @@ export class WebsiteContactService {
     const isContactable =
       site?.status === PUBLISHED_SITE_STATUS &&
       (await this.pageSettings.readEntitlements(site.hostId)).includes(WEBSITE_CONTACT_ENTITLEMENT);
-    if (!isContactable) {
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.SITE_NOT_FOUND);
-    }
+    if (!isContactable) throw websiteContactFailure(CODES.SITE_NOT_FOUND);
     return site;
   }
 
   async resolveProperty(site, propertyId) {
-    if (!propertyId) {
-      return { propertyId: null, title: "" };
-    }
+    if (!propertyId) return { propertyId: null, title: "" };
     const title =
       propertyId === site.propertyId
         ? await this.readMainPropertyTitle(site)
         : await this.readServedPropertyTitle(site, propertyId);
-    if (title === null) {
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.PROPERTY_NOT_FOUND);
-    }
+    if (title === null) throw websiteContactFailure(CODES.PROPERTY_NOT_FOUND);
     return { propertyId, title };
   }
 
@@ -152,25 +138,21 @@ export class WebsiteContactService {
       });
     } catch (error) {
       console.error(`[WebsiteContact] the recent messages for site ${site.id} could not be counted.`, error);
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT);
+      throw websiteContactFailure(CODES.MESSAGE_NOT_SENT);
     }
-    if (sentLastHour >= MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR) {
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.RATE_LIMITED);
-    }
+    if (sentLastHour >= MAX_CONTACT_MESSAGES_PER_HOST_PER_HOUR) throw websiteContactFailure(CODES.RATE_LIMITED);
   }
 
   async readHostEmail(site) {
     try {
       const user = await this.cognitoRepository.getUserById(site.hostId);
       const email = user?.UserAttributes?.find((attribute) => attribute?.Name === "email")?.Value;
-      if (email) {
-        return email;
-      }
+      if (email) return email;
       console.error(`[WebsiteContact] the host of site ${site.id} has no email address.`);
     } catch (error) {
       console.error(`[WebsiteContact] the email address of the host of site ${site.id} could not be read.`, error);
     }
-    throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT);
+    throw websiteContactFailure(CODES.MESSAGE_NOT_SENT);
   }
 
   async deliver({ site, property, message, hostEmail }) {
@@ -189,7 +171,7 @@ export class WebsiteContactService {
       );
     } catch (error) {
       console.error(`[WebsiteContact] the message for site ${site.id} was not sent.`, error);
-      throw websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.MESSAGE_NOT_SENT);
+      throw websiteContactFailure(CODES.MESSAGE_NOT_SENT);
     }
   }
 
@@ -202,10 +184,7 @@ export class WebsiteContactService {
         payload: { requestId, siteId: site.id, propertyId: property.propertyId },
       });
     } catch (error) {
-      console.error(
-        `[WebsiteContact] a sent message for site ${site.id} was not recorded, so the host limit misses it.`,
-        error
-      );
+      console.error(`[WebsiteContact] a sent message for site ${site.id} was not recorded.`, error);
     }
   }
 
@@ -219,9 +198,7 @@ export class WebsiteContactService {
   }
 
   rememberSend(senderKey) {
-    if (!senderKey) {
-      return;
-    }
+    if (!senderKey) return;
     const sends = [...this.recentSends(senderKey), this.clock()];
     this.sendsBySender.delete(senderKey);
     this.sendsBySender.set(senderKey, sends);

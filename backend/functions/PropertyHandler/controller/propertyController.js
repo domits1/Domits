@@ -3451,16 +3451,11 @@ export class PropertyController {
             return { statusCode: 200, headers: draftResponseHeaders, body: JSON.stringify(result) };
         } catch (error) {
             const isContactFailure = error instanceof WebsiteContactError;
-            if (!isContactFailure) {
-                console.error("Website contact message failed.", error);
-            }
+            if (!isContactFailure) console.error("Website contact message failed.", error);
             const failure = isContactFailure ? error : websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.INTERNAL_ERROR);
             const field = failure.field ? { field: failure.field } : {};
-            return {
-                statusCode: failure.statusCode,
-                headers: draftResponseHeaders,
-                body: JSON.stringify({ error: { code: failure.code, message: failure.message, ...field, requestId } }),
-            };
+            const answer = { error: { code: failure.code, message: failure.message, ...field, requestId } };
+            return { statusCode: failure.statusCode, headers: draftResponseHeaders, body: JSON.stringify(answer) };
         }
     }
 

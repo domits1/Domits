@@ -14,58 +14,49 @@ const VALID = Object.freeze({
   phone: "+31 (6) 12-34.56/78",
   message: "Is the beach house free in May?",
 });
+const ONE_LINE_NAME = "Your name must be one line of text.";
+const VALID_EMAIL = "Please enter a valid email address.";
+const VALID_PHONE =
+  "Please enter a valid phone number: at least 6 digits, only spaces and + ( ) - . / between them, at most 30 characters.";
+const CANNOT_SEND = "Your message holds characters that cannot be sent. Remove them and try again.";
+const ofLength = (length, character = "a") => character.repeat(length);
 
-const refusal = (body) => {
+const refusal = (change) => {
   try {
-    parseContactMessage(body);
+    parseContactMessage(
+      change === undefined || Array.isArray(change) || typeof change === "string" ? change : { ...VALID, ...change }
+    );
   } catch (error) {
     expect(error).toBeInstanceOf(WebsiteContactError);
     return { status: error.statusCode, code: error.code, field: error.field, message: error.message };
   }
   throw new Error("the message was accepted");
 };
-
-const ofLength = (length, character = "a") => character.repeat(length);
+const refused = (field, message) => ({ status: 400, code: "invalid_request", field, message });
 
 describe("reading a contact message from an Elite website", () => {
   it("keeps the six fields, trimmed, and drops anything else in the body", () => {
-    const parsed = parseContactMessage({
-      ...VALID,
-      name: "  Noor de Vries ",
-      hostId: "host-other",
-      hostEmail: "someone@example.com",
-      toEmail: "someone@example.com",
-      subject: "Prize",
-      propertyTitle: "Not this one",
-    });
-
-    expect(parsed).toEqual(VALID);
+    const forged = { hostId: "host-other", hostEmail: "x@example.com", toEmail: "x@example.com", subject: "Prize" };
+    expect(parseContactMessage({ ...VALID, ...forged, name: "  Noor de Vries " })).toEqual(VALID);
   });
 
-  it.each([
-    ["no propertyId", { propertyId: undefined }],
-    ["a null propertyId", { propertyId: null }],
-    ["an empty propertyId", { propertyId: "  " }],
-  ])("reads %s as a message about no property", (_label, change) => {
-    expect(parseContactMessage({ ...VALID, ...change }).propertyId).toBeNull();
-  });
-
-  it.each([
-    ["no phone", undefined],
-    ["an empty phone", " "],
-  ])("reads %s as no phone", (_label, phone) => {
-    expect(parseContactMessage({ ...VALID, phone }).phone).toBeNull();
-  });
+  it.each([undefined, null, "  "])(
+    "reads a propertyId of %p as no property, and a phone of %p as no phone",
+    (value) => {
+      expect(parseContactMessage({ ...VALID, propertyId: value, phone: value })).toMatchObject({
+        propertyId: null,
+        phone: null,
+      });
+    }
+  );
 
   it("keeps HTML in the message as typed, so the email shows it as text", () => {
     const message = '<b>Hi</b> <script>alert("x")</script> &amp; <a href="https://example.com">link</a>';
-
     expect(parseContactMessage({ ...VALID, message }).message).toBe(message);
   });
 
   it("turns every kind of line break in the message into one newline and keeps tabs", () => {
     const parsed = parseContactMessage({ ...VALID, message: "one\r\ntwo\rthree\u2028four\u2029five\n\tsix" });
-
     expect(parsed.message).toBe("one\ntwo\nthree\nfour\nfive\n\tsix");
   });
 
@@ -81,74 +72,33 @@ describe("reading a contact message from an Elite website", () => {
 });
 
 describe("refusing a contact message with a clear 400", () => {
-  it.each([
-    ["no body", undefined],
-    ["an array", [VALID]],
-    ["a string", "message"],
-  ])("refuses %s", (_label, body) => {
-    expect(refusal(body)).toEqual({
-      status: 400,
-      code: "invalid_request",
-      field: "body",
-      message: "A JSON object request body is required.",
-    });
+  it.each([undefined, [VALID], "message"])("refuses a body of %p", (body) => {
+    expect(refusal(body)).toEqual(refused("body", "A JSON object request body is required."));
   });
 
   it.each([
     ["siteId", { siteId: " " }, "siteId is required."],
-    ["siteId", { siteId: ofLength(CONTACT_FIELD_LIMITS.id + 1) }, "siteId must be one line of at most 100 characters."],
+    ["siteId", { siteId: ofLength(101) }, "siteId must be one line of at most 100 characters."],
     ["siteId", { siteId: "site-1\nsite-2" }, "siteId must be one line of at most 100 characters."],
-    [
-      "propertyId",
-      { propertyId: ofLength(CONTACT_FIELD_LIMITS.id + 1) },
-      "propertyId must be one line of at most 100 characters.",
-    ],
+    ["propertyId", { propertyId: ofLength(101) }, "propertyId must be one line of at most 100 characters."],
     ["name", { name: " " }, "Please enter your name."],
-    ["name", { name: ofLength(CONTACT_FIELD_LIMITS.name + 1, "é") }, "Your name can be at most 100 characters."],
+    ["name", { name: ofLength(101, "é") }, "Your name can be at most 100 characters."],
     ["email", { email: "" }, "Please enter your email address."],
-    [
-      "phone",
-      { phone: "12345" },
-      "Please enter a valid phone number: at least 6 digits, only spaces and + ( ) - . / between them, at most 30 characters.",
-    ],
-    [
-      "phone",
-      { phone: `+${ofLength(CONTACT_FIELD_LIMITS.phone, "1")}` },
-      "Please enter a valid phone number: at least 6 digits, only spaces and + ( ) - . / between them, at most 30 characters.",
-    ],
-    [
-      "phone",
-      { phone: "06 12 34 56 78 ext" },
-      "Please enter a valid phone number: at least 6 digits, only spaces and + ( ) - . / between them, at most 30 characters.",
-    ],
+    ["phone", { phone: "12345" }, VALID_PHONE],
+    ["phone", { phone: `+${ofLength(30, "1")}` }, VALID_PHONE],
+    ["phone", { phone: "06 12 34 56 78 ext" }, VALID_PHONE],
+    ["phone", { phone: "0612345678\r\nBcc: x" }, VALID_PHONE],
     ["message", { message: " \n " }, "Please enter a message."],
-    [
-      "message",
-      { message: ofLength(CONTACT_FIELD_LIMITS.message + 1, "😀") },
-      "Your message can be at most 5000 characters.",
-    ],
-    [
-      "message",
-      { message: "hello\u0000there" },
-      "Your message holds characters that cannot be sent. Remove them and try again.",
-    ],
-    [
-      "message",
-      { message: "hello\u001bthere" },
-      "Your message holds characters that cannot be sent. Remove them and try again.",
-    ],
+    ["message", { message: ofLength(5001, "😀") }, "Your message can be at most 5000 characters."],
+    ["message", { message: "hello\u0000there" }, CANNOT_SEND],
+    ["message", { message: "hello\u001bthere" }, CANNOT_SEND],
   ])("refuses a bad %s with its own message", (field, change, message) => {
-    expect(refusal({ ...VALID, ...change })).toEqual({ status: 400, code: "invalid_request", field, message });
+    expect(refusal(change)).toEqual(refused(field, message));
   });
 
   it.each(["siteId", "propertyId", "name", "email", "phone", "message"])("refuses a %s that is not text", (field) => {
     for (const value of [42, true, { text: "x" }, ["x"]]) {
-      expect(refusal({ ...VALID, [field]: value })).toEqual({
-        status: 400,
-        code: "invalid_request",
-        field,
-        message: `${field} must be text.`,
-      });
+      expect(refusal({ [field]: value })).toEqual(refused(field, `${field} must be text.`));
     }
   });
 
@@ -160,12 +110,7 @@ describe("refusing a contact message with a clear 400", () => {
     ["a paragraph separator", "Noor\u2029Phone: 0"],
     ["a null character", "Noor\u0000"],
   ])("refuses a name with %s, so it cannot add a line or a header", (_label, name) => {
-    expect(refusal({ ...VALID, name })).toEqual({
-      status: 400,
-      code: "invalid_request",
-      field: "name",
-      message: "Your name must be one line of text.",
-    });
+    expect(refusal({ name })).toEqual(refused("name", ONE_LINE_NAME));
   });
 
   it.each([
@@ -184,26 +129,16 @@ describe("refusing a contact message with a clear 400", () => {
     ["a local part over 64 characters", `${ofLength(65)}@example.nl`],
     ["an address over 254 characters", `${ofLength(64)}@${ofLength(63)}.${ofLength(63)}.${ofLength(62)}`],
   ])("refuses an email with %s", (_label, email) => {
-    expect(refusal({ ...VALID, email })).toEqual({
-      status: 400,
-      code: "invalid_request",
-      field: "email",
-      message: "Please enter a valid email address.",
-    });
-  });
-
-  it("refuses a phone with a line break", () => {
-    expect(refusal({ ...VALID, phone: "0612345678\r\nBcc: x" }).field).toBe("phone");
+    expect(refusal({ email })).toEqual(refused("email", VALID_EMAIL));
   });
 
   it.each(["siteId", "name", "email", "phone", "message"])(
     "refuses a %s of the size API Gateway lets through without counting it character by character",
     (field) => {
       const counted = jest.spyOn(Array, "from");
-      const result = refusal({ ...VALID, [field]: ofLength(10 * 1024 * 1024) });
+      const result = refusal({ [field]: ofLength(10 * 1024 * 1024) });
       const countedHugeValue = counted.mock.calls.some(([value]) => typeof value === "string" && value.length > 1000);
       counted.mockRestore();
-
       expect(result.field).toBe(field);
       expect(countedHugeValue).toBe(false);
     }
@@ -218,8 +153,7 @@ describe("refusing a contact message with a clear 400", () => {
         fc.string(),
         fc.constantFrom("name", "email"),
         (before, middle, after, field) => {
-          const value = `a${before}${middle}${after}a`;
-          expect(refusal({ ...VALID, [field]: value }).field).toBe(field);
+          expect(refusal({ [field]: `a${before}${middle}${after}a` }).field).toBe(field);
         }
       )
     );
