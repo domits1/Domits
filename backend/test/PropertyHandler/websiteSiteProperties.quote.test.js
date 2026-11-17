@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { Forbidden } from "../../functions/PropertyHandler/util/exception/Forbidden.js";
 import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
 import { WebsiteQuoteService } from "../../functions/PropertyHandler/business/service/websiteQuoteService.js";
-import { WEBSITE_QUOTE_BATCH_ENTRY_TIMEOUT_MS } from "../../functions/PropertyHandler/controller/propertyController.js";
+import { WEBSITE_QUOTE_BATCH_TIMEOUT_MS } from "../../functions/PropertyHandler/controller/propertyController.js";
 import { WEBSITE_PLAN_READ_TIMEOUT_MS } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
 import { SITE_PROPERTY_READ_TIMEOUT_MS } from "../../functions/PropertyHandler/business/service/websiteSitePropertySnapshots.js";
 import { signWebsiteQuoteToken, verifyWebsiteQuoteToken } from "../../functions/.shared/websiteQuoteToken.js";
@@ -38,7 +38,7 @@ const buildQuotePropertyService = (listings, blockedNights) => {
     if (propertyId !== MAIN && !listings.has(propertyId)) {
       throw Object.assign(new Error("not found"), { statusCode: 404 });
     }
-    return LIVE_RATES[propertyId];
+    return LIVE_RATES[propertyId] ?? LIVE_RATES[CABIN];
   };
   const listingDetails = (propertyId, location) => ({
     property: { id: propertyId, ...listings.get(propertyId) },
@@ -556,16 +556,17 @@ describe("quoting several properties of a website in one request", () => {
       })
     );
     expect(flow.recordedEvents().map((event) => JSON.stringify(event))).toEqual(expectedMainEvents(quoteId));
-    expect(consoleLog.mock.calls.map(([line]) => JSON.parse(line))).toEqual([
-      {
-        scope: "websiteQuote",
-        outcome: "returned",
-        requestId: "req-1",
-        siteId: EXISTING_SITE.id,
-        propertyId: MAIN,
-        quoteId,
-      },
-    ]);
+    const logLine = (outcome, extra = {}) => ({
+      scope: "websiteQuote",
+      outcome,
+      requestId: "req-1",
+      siteId: EXISTING_SITE.id,
+      propertyId: MAIN,
+      ...extra,
+    });
+    const logs = consoleLog.mock.calls.map(([line]) => JSON.parse(line));
+    expect(logs).toHaveLength(2);
+    expect(logs).toEqual(expect.arrayContaining([logLine("returned", { quoteId }), logLine("property_not_found")]));
     expectNoPlanRead(flow.ratePlanRepository);
     expect(flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots).not.toHaveBeenCalled();
   });
@@ -600,23 +601,24 @@ describe("quoting several properties of a website in one request", () => {
     expect(flow.controller.directBookingWebsiteSiteRepository.getSitePropertyStates).toHaveBeenCalledTimes(1);
   });
 
-  it("answers each property on its own when one is unavailable and one does not finish in time", async () => {
+  it("answers each property on its own when one is unavailable and one fails unexpectedly", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
     const flow = await publishedThree();
     flow.blockedNights.set(OWN, ["2026-10-02"]);
-    replaceRead(flow, "getPricing", (propertyId, read) =>
-      propertyId === CABIN ? new Promise(() => undefined) : read(propertyId)
-    );
-    jest.useFakeTimers();
+    const service = flow.controller.websiteQuoteService;
+    const createQuote = service.createQuote.bind(service);
+    service.createQuote = async (input) =>
+      input.propertyId === CABIN ? Promise.reject(new TypeError("boom")) : createQuote(input);
 
-    const pending = flow.quote({ propertyIds: [MAIN, OWN, CABIN] });
-    await jest.advanceTimersByTimeAsync(WEBSITE_QUOTE_BATCH_ENTRY_TIMEOUT_MS);
-    const response = await pending;
+    const response = await flow.quote({ propertyIds: [MAIN, OWN, CABIN] });
 
     expect(outcomesOf(response)).toEqual([
       [MAIN, "quoted"],
       [OWN, "unavailable_dates"],
-      [CABIN, "pricing_service_unavailable"],
+      [CABIN, "internal_error"],
     ]);
+    expect(entriesOf(response)[2].error.message).toBe("We could not complete this quote request. Please try again.");
+    expect(consoleError).toHaveBeenCalledTimes(1);
     const failureLogs = consoleLog.mock.calls
       .map(([line]) => JSON.parse(line))
       .filter(({ outcome }) => outcome !== "returned");
@@ -627,13 +629,6 @@ describe("quoting several properties of a website in one request", () => {
         requestId: "req-1",
         siteId: EXISTING_SITE.id,
         propertyId: OWN,
-      },
-      {
-        scope: "websiteQuote",
-        outcome: "pricing_service_unavailable",
-        requestId: "req-1",
-        siteId: EXISTING_SITE.id,
-        propertyId: CABIN,
       },
     ]);
     const conflicts = flow.recordedEvents().filter(({ eventType }) => eventType === "SITE_QUOTE_CONFLICTED");
@@ -655,43 +650,34 @@ describe("quoting several properties of a website in one request", () => {
     expect(flow.ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
   });
 
-  it("answers internal_error for a property whose quote fails unexpectedly, and logs it", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
-    const flow = buildQuoteFlow({ site: EXISTING_SITE });
-    flow.controller.websiteQuoteService.quoteTokenSecretProvider = async () => {
-      throw new Error("parameter store unavailable");
-    };
-
-    const response = await flow.quote({ propertyIds: [MAIN] });
-
-    expect(response.statusCode).toBe(200);
-    expect(entriesOf(response)).toEqual([
-      {
-        propertyId: MAIN,
-        error: { code: "internal_error", message: "We could not complete this quote request. Please try again." },
-      },
-    ]);
-    expect(consoleError).toHaveBeenCalledTimes(1);
-  });
-
-  it("quotes at most four properties at the same time", async () => {
+  it("quotes at most four properties at the same time, and answers one that never finishes as unavailable", async () => {
     const flow = buildQuoteFlow();
     const more = ["property-own-4", "property-own-5", "property-own-6"];
     more.forEach((propertyId) => flow.listings.set(propertyId, { hostId: HOST, status: "ACTIVE", title: propertyId }));
     await flow.publishList([...LIST_OF_THREE, ...more.map((propertyId) => ({ propertyId, slug: propertyId }))]);
     let running = 0;
     let mostAtOnce = 0;
-    replaceRead(flow, "getBasePropertyInfo", async (propertyId, read) => {
+    const service = flow.controller.websiteQuoteService;
+    const createQuote = service.createQuote.bind(service);
+    service.createQuote = async (input) => {
       running += 1;
       mostAtOnce = Math.max(mostAtOnce, running);
       await new Promise((resolve) => setImmediate(resolve));
+      const quote = input.propertyId === OWN ? await new Promise(() => undefined) : await createQuote(input);
       running -= 1;
-      return read(propertyId);
-    });
+      return quote;
+    };
+    jest.useFakeTimers();
 
-    const response = await flow.quote({ propertyIds: [MAIN, OWN, CABIN, ...more] });
+    const pending = flow.quote({ propertyIds: [MAIN, OWN, CABIN, ...more] });
+    await jest.advanceTimersByTimeAsync(WEBSITE_QUOTE_BATCH_TIMEOUT_MS);
 
-    expect(entriesOf(response)).toHaveLength(6);
+    expect(outcomesOf(await pending)).toEqual(
+      [MAIN, OWN, CABIN, ...more].map((propertyId) => [
+        propertyId,
+        propertyId === OWN ? "pricing_service_unavailable" : "quoted",
+      ])
+    );
     expect(mostAtOnce).toBe(4);
   });
 

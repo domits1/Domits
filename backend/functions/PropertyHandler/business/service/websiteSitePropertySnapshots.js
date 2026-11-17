@@ -9,7 +9,7 @@ const ACTIVE_PROPERTY_STATUS = "ACTIVE";
 
 const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-export const loadInBatches = async (items, load) => {
+const loadInBatches = async (items, load) => {
   const results = [];
   for (let start = 0; start < items.length; start += SITE_PROPERTY_LOAD_BATCH_SIZE) {
     results.push(...(await Promise.all(items.slice(start, start + SITE_PROPERTY_LOAD_BATCH_SIZE).map(load))));
