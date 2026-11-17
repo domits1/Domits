@@ -23,13 +23,13 @@ const NOW = Date.parse("2026-09-02T10:00:00.000Z");
 const HOST = EXISTING_SITE.hostId;
 const MAIN = EXISTING_SITE.propertyId;
 const OWN = "property-own-2";
-const OWN_UNLISTED = "property-own-3";
+const CABIN = "property-own-3";
 const FOREIGN = "property-foreign";
 const STAY = Object.freeze({ checkIn: "2026-10-01", checkOut: "2026-10-05", guests: 2 });
 const LIVE_RATES = Object.freeze({
   [MAIN]: { roomRate: 190, cleaning: 50, minimumStay: 2 },
   [OWN]: { roomRate: 120, cleaning: 30, minimumStay: 3 },
-  [OWN_UNLISTED]: { roomRate: 150, cleaning: 40, minimumStay: 2 },
+  [CABIN]: { roomRate: 150, cleaning: 40, minimumStay: 2 },
 });
 
 const buildQuotePropertyService = (listings, blockedNights) => {
@@ -73,7 +73,7 @@ const buildQuoteFlow = ({ site = null, planRow = PAID_ELITE_ROW } = {}) => {
   const store = { draft: null, site };
   const listings = new Map([
     [OWN, { hostId: HOST, status: "ACTIVE", title: "Beach house" }],
-    [OWN_UNLISTED, { hostId: HOST, status: "ACTIVE", title: "Forest cabin" }],
+    [CABIN, { hostId: HOST, status: "ACTIVE", title: "Forest cabin" }],
     [FOREIGN, { hostId: "host-other", status: "ACTIVE", title: "Not this host's" }],
   ]);
   const blockedNights = new Map();
@@ -272,6 +272,7 @@ const LIST = Object.freeze([
   { propertyId: MAIN, slug: "villa" },
   { propertyId: OWN, slug: "beach-house" },
 ]);
+const LIST_OF_THREE = Object.freeze([...LIST, { propertyId: CABIN, slug: "forest-cabin" }]);
 const NOT_FOUND = Object.freeze({
   error: { code: "property_not_found", message: "No property was found for this website.", requestId: "req-1" },
 });
@@ -316,6 +317,7 @@ describe("quoting another property of an Elite website", () => {
       propertyId: OWN,
       priceBreakdown: { total: 51000 },
     });
+    expect(flow.ratePlanRepository.findCurrentByAccountId.mock.calls).toEqual([[HOST]]);
     expect(QUOTE_READS.flatMap((name) => flow.controller.propertyService[name].mock.calls)).toEqual(
       QUOTE_READS.map(() => [OWN])
     );
@@ -358,7 +360,7 @@ describe("quoting another property of an Elite website", () => {
 
   it.each([
     ["a property of another host", FOREIGN],
-    ["a property of the host that is not listed", OWN_UNLISTED],
+    ["a property of the host that is not listed", CABIN],
     ["the id of a website", "site-other"],
     ["an id that exists nowhere", "property-nowhere"],
     ["a very long id", "p".repeat(100_000)],
@@ -376,37 +378,62 @@ describe("quoting another property of an Elite website", () => {
 
   it("refuses a property that is only in the draft list, and quotes it once the site is published with it", async () => {
     const flow = await publishedFlow();
-    const withUnlisted = [...LIST, { propertyId: OWN_UNLISTED, slug: "forest-cabin" }];
-    await flow.saveList(withUnlisted);
+    await flow.saveList(LIST_OF_THREE);
     jest.clearAllMocks();
 
-    expectRefused(flow, await flow.quote({ propertyId: OWN_UNLISTED }));
+    expectRefused(flow, await flow.quote({ propertyId: CABIN }));
 
-    await flow.publishList(withUnlisted);
-    const published = await flow.quote({ propertyId: OWN_UNLISTED });
-    expect(published.body).toBe(expectedQuoteBody(JSON.parse(published.body).quoteId, OWN_UNLISTED));
+    await flow.publishList(LIST_OF_THREE);
+    const published = await flow.quote({ propertyId: CABIN });
+    expect(published.body).toBe(expectedQuoteBody(JSON.parse(published.body).quoteId, CABIN));
   });
 
   it.each([
     ["is deactivated", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" })],
     ["moves to another host", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), hostId: "host-other" })],
     ["is deleted", (flow) => flow.listings.delete(OWN)],
-    ["has no published snapshot", (flow) => Object.assign(flow.store, { sitePropertySnapshots: [] })],
     [
-      "belongs to a host whose Elite ended",
-      (flow) => flow.ratePlanRepository.findCurrentByAccountId.mockResolvedValue(ratePlanRow()),
+      "has no published snapshot",
+      (flow) => {
+        flow.store.sitePropertySnapshots = flow.store.sitePropertySnapshots.filter(
+          ({ propertyId }) => propertyId !== OWN
+        );
+      },
     ],
-    ["is removed from the list and the site is published again", (flow) => flow.publishList([LIST[0]])],
-  ])(
-    "stops quoting a listed property that after publish %s, and still quotes the main property",
-    async (_label, change) => {
-      const flow = await publishedFlow();
-      await change(flow);
+    [
+      "is removed from the list and the site is published again",
+      (flow) => flow.publishList([LIST[0], LIST_OF_THREE[2]]),
+    ],
+  ])("stops quoting a listed property that after publish %s, and still quotes the others", async (_label, change) => {
+    const flow = buildQuoteFlow();
+    await flow.publishList(LIST_OF_THREE);
+    await change(flow);
 
-      expectRefused(flow, await flow.quote({ propertyId: OWN }));
-      await expectMainStillQuotes(flow);
-    }
-  );
+    expectRefused(flow, await flow.quote({ propertyId: OWN }));
+    const cabin = await flow.quote({ propertyId: CABIN });
+    expect(cabin.body).toBe(expectedQuoteBody(JSON.parse(cabin.body).quoteId, CABIN));
+    await expectMainStillQuotes(flow);
+  });
+
+  it("stops quoting the other properties when the host's Elite ends after publish, and still quotes the main property", async () => {
+    const flow = buildQuoteFlow();
+    await flow.publishList(LIST_OF_THREE);
+    flow.ratePlanRepository.findCurrentByAccountId.mockResolvedValue(ratePlanRow());
+
+    expectRefused(flow, await flow.quote({ propertyId: OWN }));
+    expectRefused(flow, await flow.quote({ propertyId: CABIN }));
+    await expectMainStillQuotes(flow);
+  });
+
+  it("does not count the main property as another property of the site", async () => {
+    const flow = await publishedFlow();
+    const sitePropertySnapshots = flow.controller.getWebsiteSitePropertySnapshots();
+
+    expect(await sitePropertySnapshots.servesOtherSiteProperty({ site: flow.store.site, propertyId: MAIN })).toBe(
+      false
+    );
+    expect(await sitePropertySnapshots.servesOtherSiteProperty({ site: flow.store.site, propertyId: OWN })).toBe(true);
+  });
 
   it.each([
     ["the plan read", (flow) => flow.ratePlanRepository.findCurrentByAccountId],
@@ -475,16 +502,16 @@ describe("quoting another property of an Elite website", () => {
 
   it("quotes every property of the site for the same dates at the same time, each from its own data", async () => {
     const flow = buildQuoteFlow();
-    await flow.publishList([...LIST, { propertyId: OWN_UNLISTED, slug: "forest-cabin" }]);
+    await flow.publishList(LIST_OF_THREE);
 
     const responses = await Promise.all([
       flow.quote(),
       flow.quote({ propertyId: OWN }),
-      flow.quote({ propertyId: OWN_UNLISTED }),
+      flow.quote({ propertyId: CABIN }),
     ]);
 
     expect(responses.map(({ body }) => body)).toEqual(
-      [MAIN, OWN, OWN_UNLISTED].map((propertyId, index) =>
+      [MAIN, OWN, CABIN].map((propertyId, index) =>
         expectedQuoteBody(JSON.parse(responses[index].body).quoteId, propertyId)
       )
     );
