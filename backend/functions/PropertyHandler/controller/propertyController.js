@@ -94,7 +94,6 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 // validation 400s are guest input errors, not conflicts.
 const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
-const WEBSITE_QUOTE_INTERNAL_ERROR_MESSAGE = "We could not complete this quote request. Please try again.";
 const WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE = "No property was found for this website.";
 const otherQuotedPropertyFields = (site, quotedPropertyId) =>
     quotedPropertyId === site.propertyId ? {} : { propertyId: quotedPropertyId };
@@ -3363,95 +3362,97 @@ export class PropertyController {
             }
 
             quotedPropertyId = await this.resolveWebsiteQuotePropertyId(site, requestedPropertyId);
-            const quote = await this.quoteWebsiteSiteProperty({ site, propertyId: quotedPropertyId, requestBody, requestId });
+            return await this.quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId });
+        } catch (error) {
+            return this.websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId });
+        }
+    }
+
+    async quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId }) {
+        try {
+            const quotedPropertyFields = otherQuotedPropertyFields(site, quotedPropertyId);
+            const sessionId = cleanWebsiteText(requestBody.session?.sessionId) || null;
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType: "SITE_QUOTE_REQUESTED",
+                payload: {
+                    requestId,
+                    siteId: site.id,
+                    ...quotedPropertyFields,
+                    sessionId,
+                    checkIn: requestBody.checkIn ?? null,
+                    checkOut: requestBody.checkOut ?? null,
+                    guests: requestBody.guests ?? null,
+                },
+            });
+
+            const quote = await this.getWebsiteQuoteService().createQuote({
+                siteId: site.id,
+                propertyId: quotedPropertyId,
+                checkIn: requestBody.checkIn,
+                checkOut: requestBody.checkOut,
+                guests: requestBody.guests,
+                currency: requestBody.currency,
+            });
+
+            await this.recordStandaloneWebsiteEventSafely({
+                draftId: null,
+                propertyId: site.propertyId,
+                hostId: site.hostId,
+                eventType: "SITE_QUOTE_RETURNED",
+                payload: {
+                    requestId,
+                    siteId: site.id,
+                    ...quotedPropertyFields,
+                    sessionId,
+                    quoteId: quote.quoteId,
+                    nights: quote.nights,
+                    total: quote.priceBreakdown?.total ?? null,
+                },
+            });
+
+            console.log(JSON.stringify({
+                scope: "websiteQuote",
+                outcome: "returned",
+                requestId,
+                siteId: site.id,
+                propertyId: quotedPropertyId,
+                quoteId: quote.quoteId,
+            }));
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify(quote),
             };
         } catch (error) {
-            if (error instanceof WebsiteQuoteError) {
-                console.log(JSON.stringify({
-                    scope: "websiteQuote",
-                    outcome: error.code,
-                    requestId,
-                    siteId: site?.id ?? null,
-                    propertyId: quotedPropertyId ?? site?.propertyId ?? null,
-                }));
-                return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
-            }
-            console.error("Website quote request failed.", error);
-            return this.websiteQuoteErrorResponse(500, "internal_error", WEBSITE_QUOTE_INTERNAL_ERROR_MESSAGE, requestId);
+            return this.websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId });
         }
     }
 
-    async quoteWebsiteSiteProperty({ site, propertyId, requestBody, requestId }) {
-        const quotedPropertyFields = otherQuotedPropertyFields(site, propertyId);
-        const sessionId = cleanWebsiteText(requestBody.session?.sessionId) || null;
-        await this.recordStandaloneWebsiteEventSafely({
-            draftId: null,
-            propertyId: site.propertyId,
-            hostId: site.hostId,
-            eventType: "SITE_QUOTE_REQUESTED",
-            payload: {
-                requestId,
-                siteId: site.id,
-                ...quotedPropertyFields,
-                sessionId,
-                checkIn: requestBody.checkIn ?? null,
-                checkOut: requestBody.checkOut ?? null,
-                guests: requestBody.guests ?? null,
-            },
-        });
-
-        let quote;
-        try {
-            quote = await this.getWebsiteQuoteService().createQuote({
-                siteId: site.id,
-                propertyId,
-                checkIn: requestBody.checkIn,
-                checkOut: requestBody.checkOut,
-                guests: requestBody.guests,
-                currency: requestBody.currency,
-            });
-        } catch (error) {
-            if (error instanceof WebsiteQuoteError && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
+    async websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId }) {
+        if (error instanceof WebsiteQuoteError) {
+            if (site && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
                 await this.recordStandaloneWebsiteEventSafely({
                     draftId: null,
                     propertyId: site.propertyId,
                     hostId: site.hostId,
                     eventType: "SITE_QUOTE_CONFLICTED",
-                    payload: { requestId, siteId: site.id, ...quotedPropertyFields, code: error.code },
+                    payload: { requestId, siteId: site.id, ...otherQuotedPropertyFields(site, quotedPropertyId), code: error.code },
                 });
             }
-            throw error;
-        }
-
-        await this.recordStandaloneWebsiteEventSafely({
-            draftId: null,
-            propertyId: site.propertyId,
-            hostId: site.hostId,
-            eventType: "SITE_QUOTE_RETURNED",
-            payload: {
+            console.log(JSON.stringify({
+                scope: "websiteQuote",
+                outcome: error.code,
                 requestId,
-                siteId: site.id,
-                ...quotedPropertyFields,
-                sessionId,
-                quoteId: quote.quoteId,
-                nights: quote.nights,
-                total: quote.priceBreakdown?.total ?? null,
-            },
-        });
-
-        console.log(JSON.stringify({
-            scope: "websiteQuote",
-            outcome: "returned",
-            requestId,
-            siteId: site.id,
-            propertyId,
-            quoteId: quote.quoteId,
-        }));
-        return quote;
+                siteId: site?.id ?? null,
+                propertyId: quotedPropertyId ?? site?.propertyId ?? null,
+            }));
+            return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
+        }
+        console.error("Website quote request failed.", error);
+        return this.websiteQuoteErrorResponse(500, "internal_error", "We could not complete this quote request. Please try again.", requestId);
     }
 
     // -------------------------
