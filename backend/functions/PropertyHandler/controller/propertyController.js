@@ -2106,17 +2106,16 @@ export class PropertyController {
         return buildLiveSiteDomain(site.siteName, site.id) === normalizedDomain ? site : null;
     }
 
-    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
+    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId, sitePropertyIds = null }) {
         const publishStartedAt = Date.now();
         const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
             propertyId,
             { includeCalendarAvailability: true }
         );
         this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
-        const sitePropertySnapshots = await this.getWebsiteSitePropertySnapshots().buildForPublish({
-            mainPropertyId: propertyId,
-            overrides: draft.publishedContentOverrides,
-        });
+        const sitePropertySnapshots = sitePropertyIds
+            ? await this.getWebsiteSitePropertySnapshots().buildForPublish(sitePropertyIds)
+            : undefined;
 
         const siteName = this.buildDirectBookingWebsiteName({
             draft,
@@ -3107,11 +3106,19 @@ export class PropertyController {
                 };
             }
 
-            await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
+            const sitePropertyIds = await this.getWebsiteSitePropertySnapshots().listForPublish({
+                hostId,
+                mainPropertyId: propertyId,
+                overrides: draft.publishedContentOverrides,
+            });
+            if (sitePropertyIds) {
+                await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
+            }
             const siteSummary = await this.publishDirectBookingWebsiteForDraft({
                 draft,
                 hostId,
                 propertyId,
+                sitePropertyIds,
             });
 
             return {
@@ -3590,6 +3597,7 @@ export class PropertyController {
         this.websiteSitePropertySnapshots ??= new WebsiteSitePropertySnapshots({
             propertyService: this.propertyService,
             siteRepository: this.directBookingWebsiteSiteRepository,
+            pageSettings: this.getWebsiteElitePageSettings(),
         });
         return this.websiteSitePropertySnapshots;
     }

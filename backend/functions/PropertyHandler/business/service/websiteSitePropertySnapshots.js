@@ -18,19 +18,26 @@ const loadInBatches = async (items, load) => {
 };
 
 export class WebsiteSitePropertySnapshots {
-  constructor({ propertyService, siteRepository, readTimeoutMs = SITE_PROPERTY_READ_TIMEOUT_MS }) {
+  constructor({ propertyService, siteRepository, pageSettings, readTimeoutMs = SITE_PROPERTY_READ_TIMEOUT_MS }) {
     this.propertyService = propertyService;
     this.siteRepository = siteRepository;
+    this.pageSettings = pageSettings;
     this.readTimeoutMs = readTimeoutMs;
   }
 
-  async buildForPublish({ mainPropertyId, overrides }) {
+  async listForPublish({ hostId, mainPropertyId, overrides }) {
     if (!isPlainObject(overrides) || !Object.hasOwn(overrides, SITE_PROPERTIES_OVERRIDE_KEY)) {
-      return undefined;
+      return null;
     }
+    if (!(await this.pageSettings.allowsSiteProperties(hostId))) {
+      return null;
+    }
+    return listOtherSitePropertyIds(overrides, mainPropertyId);
+  }
 
-    const snapshots = await loadInBatches(listOtherSitePropertyIds(overrides, mainPropertyId), async (propertyId) => {
-      const propertySnapshot = await this.propertyService.getFullPropertyAttributesWithFullLocation(propertyId);
+  async buildForPublish(propertyIds) {
+    const snapshots = await loadInBatches(propertyIds, async (propertyId) => {
+      const propertySnapshot = await this.propertyService.getFullPropertyAttributes(propertyId);
       if (!isPlainObject(propertySnapshot?.property)) {
         throw new TypeError("siteProperties lists a property whose listing data could not be loaded.");
       }
@@ -78,7 +85,7 @@ export class WebsiteSitePropertySnapshots {
 
   async readPublishedSiteProperties(site, otherPropertyIds) {
     const [snapshots, states] = await Promise.all([
-      this.siteRepository.getPublishedSitePropertySnapshots(site.id),
+      this.siteRepository.getPublishedSitePropertySnapshots(site.id, site.staticPageRevision),
       this.siteRepository.getSitePropertyStates(otherPropertyIds),
     ]);
     return {

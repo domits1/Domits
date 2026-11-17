@@ -5,31 +5,42 @@ import {
   WebsiteSitePropertySnapshots,
 } from "../../functions/PropertyHandler/business/service/websiteSitePropertySnapshots.js";
 
-const SITE = Object.freeze({ id: "site-1", hostId: "host-1", propertyId: "property-main" });
+const SITE = Object.freeze({ id: "site-1", hostId: "host-1", propertyId: "property-main", staticPageRevision: 7 });
+const PUBLIC_LOCATION = { city: "Bergen", country: "Norway" };
+const FULL_LOCATION = { ...PUBLIC_LOCATION, street: "Strandgata", houseNumber: "4", postalCode: "5013" };
 const entry = (propertyId) => ({ propertyId, slug: propertyId.replace("property-", "") });
 const listing = (propertyId) => ({
   property: { id: propertyId, hostId: "host-1", status: "ACTIVE", title: `Listing ${propertyId}` },
   images: [{ key: `${propertyId}.jpg` }],
   pricing: { roomRate: 120 },
-  location: { city: "Bergen" },
+  location: PUBLIC_LOCATION,
 });
 const activeState = (id) => ({ id, hostId: "host-1", status: "ACTIVE" });
 
-const buildSnapshots = ({ listings = {}, snapshots = [], states = [], readTimeoutMs } = {}) => {
+const buildSnapshots = ({ listings = {}, snapshots = [], states = [], readTimeoutMs, allowed = true } = {}) => {
+  const loadListing = (location) => async (propertyId) =>
+    listings[propertyId] ? { ...listings[propertyId], location } : { property: null, images: [], pricing: null };
   const propertyService = {
-    getFullPropertyAttributesWithFullLocation: jest.fn(
-      async (propertyId) => listings[propertyId] ?? { property: null, images: [], pricing: null }
-    ),
+    getFullPropertyAttributes: jest.fn(loadListing(PUBLIC_LOCATION)),
+    getFullPropertyAttributesWithFullLocation: jest.fn(loadListing(FULL_LOCATION)),
+  };
+  const pageSettings = {
+    allowsSiteProperties: jest.fn(async () => {
+      if (allowed instanceof Error) throw allowed;
+      return allowed;
+    }),
   };
   const siteRepository = {
     getPublishedSitePropertySnapshots: jest.fn(async () => snapshots),
     getSitePropertyStates: jest.fn(async () => states),
   };
-  const service = new WebsiteSitePropertySnapshots({ propertyService, siteRepository, readTimeoutMs });
-  return { service, propertyService, siteRepository };
+  const service = new WebsiteSitePropertySnapshots({ propertyService, siteRepository, pageSettings, readTimeoutMs });
+  return { service, propertyService, siteRepository, pageSettings };
 };
 
-const publish = (service, overrides) => service.buildForPublish({ mainPropertyId: SITE.propertyId, overrides });
+const listForPublish = (service, overrides) =>
+  service.listForPublish({ hostId: SITE.hostId, mainPropertyId: SITE.propertyId, overrides });
+const publish = async (service, overrides) => service.buildForPublish(await listForPublish(service, overrides));
 const render = (service, list) => service.serveForRender({ site: SITE, overrides: { siteProperties: list } });
 
 afterEach(() => {
@@ -37,8 +48,41 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+describe("deciding which properties a publish snapshots", () => {
+  it("lists every property but the main one for a host with the plan", async () => {
+    const { service, pageSettings } = buildSnapshots();
+
+    const propertyIds = await listForPublish(service, { siteProperties: [entry("property-3"), entry("property-main")] });
+
+    expect(propertyIds).toEqual(["property-3"]);
+    expect(pageSettings.allowsSiteProperties).toHaveBeenCalledWith("host-1");
+  });
+
+  it.each([
+    ["overrides without a list", { heroTitle: "Villa" }],
+    ["no overrides", undefined],
+  ])("lists nothing and reads no plan for %s, so the publish stays as it is today", async (_label, overrides) => {
+    const { service, pageSettings } = buildSnapshots();
+
+    expect(await listForPublish(service, overrides)).toBeNull();
+    expect(pageSettings.allowsSiteProperties).not.toHaveBeenCalled();
+  });
+
+  it("lists nothing for a host without the plan, even when the stored list is not valid any more", async () => {
+    const { service } = buildSnapshots({ allowed: false });
+
+    expect(await listForPublish(service, { siteProperties: [entry("property-2")] })).toBeNull();
+  });
+
+  it("fails the publish when the plan cannot be read, instead of publishing without the properties", async () => {
+    const { service } = buildSnapshots({ allowed: new Error("The website plan read did not answer in time.") });
+
+    await expect(listForPublish(service, { siteProperties: [entry("property-main")] })).rejects.toThrow("did not answer in time");
+  });
+});
+
 describe("taking the snapshots of a website's properties at publish", () => {
-  it("snapshots every property but the main one, in the host's order, without calendar availability", async () => {
+  it("snapshots every property but the main one, in the host's order, without calendar availability or address", async () => {
     const listings = { "property-2": listing("property-2"), "property-3": listing("property-3") };
     const { service, propertyService } = buildSnapshots({ listings });
 
@@ -50,17 +94,9 @@ describe("taking the snapshots of a website's properties at publish", () => {
       { propertyId: "property-3", propertySnapshot: listings["property-3"] },
       { propertyId: "property-2", propertySnapshot: listings["property-2"] },
     ]);
-    expect(propertyService.getFullPropertyAttributesWithFullLocation.mock.calls).toEqual([["property-3"], ["property-2"]]);
-  });
-
-  it.each([
-    ["overrides without a list", { heroTitle: "Villa" }],
-    ["no overrides", undefined],
-  ])("returns nothing to write for %s, so the publish stays as it is today", async (_label, overrides) => {
-    const { service, propertyService } = buildSnapshots();
-
-    expect(await publish(service, overrides)).toBeUndefined();
+    expect(propertyService.getFullPropertyAttributes.mock.calls).toEqual([["property-3"], ["property-2"]]);
     expect(propertyService.getFullPropertyAttributesWithFullLocation).not.toHaveBeenCalled();
+    expect(snapshots[0].propertySnapshot.location).toEqual({ city: "Bergen", country: "Norway" });
   });
 
   it.each([
@@ -99,7 +135,7 @@ describe("taking the snapshots of a website's properties at publish", () => {
     let running = 0;
     let mostAtOnce = 0;
     const { service, propertyService } = buildSnapshots();
-    propertyService.getFullPropertyAttributesWithFullLocation.mockImplementation(async (propertyId) => {
+    propertyService.getFullPropertyAttributes.mockImplementation(async (propertyId) => {
       running += 1;
       mostAtOnce = Math.max(mostAtOnce, running);
       await new Promise((resolve) => setImmediate(resolve));
@@ -133,12 +169,12 @@ describe("serving the published properties of a website", () => {
           property: { id: "property-2", status: "ACTIVE", title: "Listing property-2" },
           images: [{ key: "property-2.jpg" }],
           pricing: { roomRate: 120 },
-          location: { city: "Bergen" },
+          location: { city: "Bergen", country: "Norway" },
         },
       },
       { propertyId: "property-main", slug: "main", isMainProperty: true },
     ]);
-    expect(siteRepository.getPublishedSitePropertySnapshots).toHaveBeenCalledWith("site-1");
+    expect(siteRepository.getPublishedSitePropertySnapshots).toHaveBeenCalledWith("site-1", 7);
     expect(siteRepository.getSitePropertyStates).toHaveBeenCalledWith(["property-2"]);
     expect(propertyService.getFullPropertyAttributesWithFullLocation).not.toHaveBeenCalled();
   });

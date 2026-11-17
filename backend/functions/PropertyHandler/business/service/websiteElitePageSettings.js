@@ -54,14 +54,22 @@ export class WebsiteElitePageSettings {
     };
   }
 
+  async allowsSiteProperties(hostId) {
+    return (await this.loadEntitlements(hostId)).includes(SITE_PROPERTIES_ENTITLEMENT);
+  }
+
+  async loadEntitlements(hostId) {
+    const { entitlements } = await withinTimeLimit(
+      this.ratePlanService.getCurrentEntitlements(hostId),
+      this.planReadTimeoutMs,
+      () => new Error("The website plan read did not answer in time.")
+    );
+    return entitlements;
+  }
+
   async readEntitlements(hostId) {
     try {
-      const { entitlements } = await withinTimeLimit(
-        this.ratePlanService.getCurrentEntitlements(hostId),
-        this.planReadTimeoutMs,
-        () => new Error("The website plan read did not answer in time.")
-      );
-      return entitlements;
+      return await this.loadEntitlements(hostId);
     } catch (error) {
       console.error(
         `[WebsitePageSettings] the website plan of host ${hostId} could not be read, so Elite page settings are not served.`,

@@ -543,11 +543,14 @@ export class DirectBookingWebsiteSiteRepository {
     return mapSiteRow(rows?.[0] || null);
   }
 
-  async getPublishedSitePropertySnapshots(siteId) {
+  async getPublishedSitePropertySnapshots(siteId, staticPageRevision) {
     const client = await Database.getInstance();
     const tableName = siteTableName(resolveSchemaName(client));
 
-    const rows = await client.query(`SELECT published_site_properties_json FROM ${tableName} WHERE id = $1`, [siteId]);
+    const rows = await client.query(
+      `SELECT published_site_properties_json FROM ${tableName} WHERE id = $1 AND static_page_revision = $2`,
+      [siteId, staticPageRevision]
+    );
     const snapshots = safeParseJson(rows?.[0]?.published_site_properties_json, []);
 
     return Array.isArray(snapshots) ? snapshots : [];

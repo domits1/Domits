@@ -72,12 +72,14 @@ describe("publishing the snapshots of a website's properties", () => {
       ["property-2", "host-1"],
       ["property-3", "host-1"],
     ]);
+    expect(checks.every(({ useStructuredResult }) => useStructuredResult === true)).toBe(true);
     expect(checks[0].statement).toMatch(
       new RegExp(`FROM ${SCHEMA}\\.property\\s+WHERE id = \\$1 AND hostid = \\$2 AND status = 'ACTIVE'\\s+FOR UPDATE`)
     );
     const write = client.statements.find(({ statement }) => isSnapshotWrite(statement));
     expect(write.statement).toMatch(new RegExp(`UPDATE ${SCHEMA}\\.standalone_site\\s+SET published_site_properties_json = \\$2\\s+WHERE id = \\$1`));
     expect(write.parameters).toEqual(["site-1", JSON.stringify(SNAPSHOTS)]);
+    expect(write.useStructuredResult).toBe(true);
     expect(client.committed).toBe(true);
   });
 
@@ -152,25 +154,25 @@ describe("reading the published properties of a website", () => {
     return client;
   };
 
-  it("reads the snapshots of one site", async () => {
+  it("reads the snapshots of the same publish as the site that is rendering", async () => {
     const client = readClient([{ published_site_properties_json: JSON.stringify(SNAPSHOTS) }]);
 
-    expect(await new DirectBookingWebsiteSiteRepository().getPublishedSitePropertySnapshots("site-1")).toEqual(SNAPSHOTS);
+    expect(await new DirectBookingWebsiteSiteRepository().getPublishedSitePropertySnapshots("site-1", 4)).toEqual(SNAPSHOTS);
     expect(client.query).toHaveBeenCalledWith(
-      `SELECT published_site_properties_json FROM ${SCHEMA}.standalone_site WHERE id = $1`,
-      ["site-1"]
+      `SELECT published_site_properties_json FROM ${SCHEMA}.standalone_site WHERE id = $1 AND static_page_revision = $2`,
+      ["site-1", 4]
     );
   });
 
   it.each([
     ["a site that never published a list", [{ published_site_properties_json: null }]],
-    ["a missing site", []],
+    ["a missing site, or a newer publish than the one rendering", []],
     ["a value that is not a list", [{ published_site_properties_json: '{"propertyId":"property-2"}' }]],
     ["a value that is not JSON", [{ published_site_properties_json: "not json" }]],
   ])("reads no snapshots for %s", async (_label, rows) => {
     readClient(rows);
 
-    expect(await new DirectBookingWebsiteSiteRepository().getPublishedSitePropertySnapshots("site-1")).toEqual([]);
+    expect(await new DirectBookingWebsiteSiteRepository().getPublishedSitePropertySnapshots("site-1", 4)).toEqual([]);
   });
 
   it("reads the live host and status of the listed properties in one query", async () => {
