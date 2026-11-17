@@ -55,9 +55,7 @@ export const useWebsiteEditorSiteProperties = ({
   workingOverrides,
 }) => {
   const canEditSiteProperties =
-    Boolean(mainPropertyId) &&
-    draftTemplateKey === "panorama-landing" &&
-    hasEntitlement(WEBSITE_ENTITLEMENT_MULTI_PROPERTY);
+    draftTemplateKey === "panorama-landing" && hasEntitlement(WEBSITE_ENTITLEMENT_MULTI_PROPERTY);
   const [listingsRead, setListingsRead] = useState(LISTINGS_LOADING);
   const [listingsAttempt, setListingsAttempt] = useState(0);
   const [editedEntries, setEditedEntries] = useState(null);
@@ -114,7 +112,7 @@ export const useWebsiteEditorSiteProperties = ({
       editEntries((current) =>
         current.map((e) => (e.propertyId === propertyId ? { ...e, slug: slug.toLowerCase() } : e))
       ),
-    sitePropertiesEdit: canEditSiteProperties ? editedEntries : null,
+    sitePropertiesEdit: editedEntries,
     resetSitePropertiesEdit: () => setEditedEntries(null),
     findSitePropertiesProblem: ({ forPublish }) => (isReady ? findSitePropertiesProblem(entries, { forPublish }) : ""),
     explainSitePropertiesSaveError: (error) => (canEditSiteProperties ? explainSitePropertiesSaveError(error) : error),

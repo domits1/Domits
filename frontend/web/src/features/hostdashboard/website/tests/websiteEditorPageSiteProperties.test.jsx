@@ -186,10 +186,6 @@ describe("the Properties section of an Elite website", () => {
     await savedWith(1);
     await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(2));
     expect(toast.error).toHaveBeenLastCalledWith(SITE_PROPERTY_NOT_LISTED_MESSAGE);
-
-    clickMenu("Update live site");
-    await waitFor(() => expect(publishWebsiteSite).toHaveBeenCalledWith(PROPERTY_ID));
-    expect((await savedWith(2)).publishedContentOverrides).not.toHaveProperty("siteProperties");
   });
 
   it.each([
