@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useWebsiteEntitlements } from "../../hooks/useWebsiteEntitlements";
 import { WEBSITE_ENTITLEMENT_UNLIMITED_PAGES } from "../../services/websitePlanService";
 import {
   MAIN_SITE_PAGE_KEY,
@@ -10,9 +9,8 @@ import {
 
 const SITE_PAGES_TEMPLATE_KEY = "panorama-landing";
 
-export const useWebsiteEditorSitePages = ({ draftTemplateKey, workingOverrides }) => {
-  const { has } = useWebsiteEntitlements();
-  const isEliteHost = has(WEBSITE_ENTITLEMENT_UNLIMITED_PAGES);
+export const useWebsiteEditorSitePages = ({ draftTemplateKey, hasEntitlement, workingOverrides }) => {
+  const isEliteHost = hasEntitlement(WEBSITE_ENTITLEMENT_UNLIMITED_PAGES);
   const canEditSitePages = isEliteHost && draftTemplateKey === SITE_PAGES_TEMPLATE_KEY;
   const [editedSitePages, setEditedSitePages] = useState(null);
   const [selectedPageKey, setSelectedPageKey] = useState(MAIN_SITE_PAGE_KEY);
